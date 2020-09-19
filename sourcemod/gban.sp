@@ -1,17 +1,21 @@
 #pragma semicolon 1
-
+#pragma tabsize 4
 #define DEBUG
 
 #define PLUGIN_AUTHOR "Leigh MacDonald"
 #define PLUGIN_VERSION "0.00"
-#defind PLUGIN_NAME "gban"
+#define PLUGIN_NAME "gban"
 
 #include <sourcemod>
 #include <sdktools>
 #include <tf2>
 #include <tf2_stocks>
-#include <httpreq>
+#include <ripext>
 //#include <sdkhooks>
+
+HTTPClient httpClient; 
+
+bool PlayerAllowed[MAXPLAYERS+1];
 
 public Plugin myinfo = 
 {
@@ -24,39 +28,62 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	RegAdminCmd("gb_ban", CommandBan, ADMINFLAG_SLAY)
-	PrintToServer("Hi")
+	//RegAdminCmd("gb_ban", CommandBan);
+	CreateConVar("sb_version", PLUGIN_VERSION, _, FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
+	PrintToServer("Hi");
+	httpClient = new HTTPClient("http://172.16.1.22:6969");
+	JSONObject authReq = new JSONObject(); 
+	authReq.SetString("server_id", "af-1");
+	authReq.SetString("key", "opensesame");
+	httpClient.Post("v1/auth", authReq, OnAuthReqReceived); 
+	delete authReq;
 }
 
-public Action CommandBan(int client, int args) {
+void OnAuthReqReceived(HTTPResponse response, any value)
+{
+    if (response.Status != HTTPStatus_OK) {
+        return;
+    }
+    if (response.Data == null) {
+        // Invalid JSON response
+        return;
+    }
 
+    JSONObject authResp = view_as<JSONObject>(response.Data);
+    bool status = authResp.GetBool("status");
+	char buff[20];
+	authResp.GetString("token", buff, 20);
+    PrintToServer("%d %s", status, buff);
+}  
+
+public Action CommandBan(int client, int args) {
+	PrintToServer("Ban");
 }
 
 
 public bool OnClientConnect(int client, char[] rejectmsg, int maxlen)
 {
-	PlayerStatus[client] = false;
+	PlayerAllowed[client] = false;
 	return true;
 }
 
 public void OnClientAuthorized(int client, const char[] auth)
 {
 	/* Do not check bots nor check player with lan steamid. */
-	if (auth[0] == 'B' || auth[9] == 'L' || DB == INVALID_HANDLE)
+	if (auth[0] == 'B' || auth[9] == 'L')
 	{
-		PlayerStatus[client] = true;
+		//PlayerStatus[client] = true;
 		return;
 	}
 
-	char Query[256], ip[30];
+	char ip[30];
+
 
 	GetClientIP(client, ip, sizeof(ip));
 
-	FormatEx(Query, sizeof(Query), "SELECT bid, ip FROM %s_bans WHERE ((type = 0 AND authid REGEXP '^STEAM_[0-9]:%s$') OR (type = 1 AND ip = '%s')) AND (length = '0' OR ends > UNIX_TIMESTAMP()) AND RemoveType IS NULL", DatabasePrefix, auth[8], ip);
-
 	#if defined DEBUG
-	LogToFile(logFile, "Checking ban for: %s", auth);
+	PrintToServer("Checking ban for: %s", auth);
 	#endif
 
-	DB.Query(VerifyBan, Query, GetClientUserId(client), DBPrio_High);
+	//DB.Query(VerifyBan, Query, GetClientUserId(client), DBPrio_High);
 }
