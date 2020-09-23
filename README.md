@@ -15,6 +15,7 @@ authentication token.
 - Built using [Go](https://golang.org/) & [SQLite](https://www.sqlite.org/index.html). This enables trivial deployment as its just a matter of running the binary. It has a built-in 
 webserver that is safe to directly expose to the internet. This means its not necessary to setup MySQL, 
 Nginx/Apache and PHP on your server.
+- Non-legacy codebase that is (hopefully) not a nightmare to hack on. Sourcebans++, while updated, is still very clearly a legacy PHP codebase. It uses no framework or real conventions, Still uses globals, Mixes PHP/JS code, Uses tables for layout. I am in no way trying to put them down, they have done a good job volunteering their time over the years, But i think its time to move on from this legacy stuff.
 
 ## Features
 
@@ -22,7 +23,7 @@ Nginx/Apache and PHP on your server.
 - [ ] Import/Export of gban databases
 - [ ] 3rd party ban lists (eg: [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json))
 - [ ] Discord notifications
-- [ ] Multi server support
+- [x] Multi server support
 - [ ] Global and local server bans
 - [ ] Official docker images
 - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
