@@ -1,5 +1,5 @@
 # scp -i ~/.ssh/pk-putty-nopass.key extensions/rip.ext.so tf2server@$TF2_HOST:~/serverfiles/tf/addons/sourcemod/extensions
-cp -v extensions/rip.ext.dll /s/tf2server/steamapps/common/Team\ Fortress\ 2\ Dedicated\ Server/tf/addons/sourcemod/extensions
+cp -v extensions/system2.ext.dll /s/tf2server/steamapps/common/Team\ Fortress\ 2\ Dedicated\ Server/tf/addons/sourcemod/extensions
 mkdir -p plugins
 rm -f "../plugins/gban.smx"
 spcomp.exe "gban.sp" && \

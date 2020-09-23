@@ -8,10 +8,11 @@ create table if not exists ban
 			primary key autoincrement,
 	steam_id INTEGER not null,
 	author_id INTEGER default 0 not null,
-	banned_by INTEGER not null,
+	ban_type integer not null,
 	reason integer not null,
 	reason_text TEXT default '' not null,
 	note text default '' not null,
+	until integer default 0 not null,
 	created_on integer default 0 not null,
 	updated_on integer default 0 not null
 );

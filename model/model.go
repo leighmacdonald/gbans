@@ -1,6 +1,13 @@
 package model
 
-import "github.com/leighmacdonald/steamid/steamid"
+import (
+	"github.com/leighmacdonald/steamid/steamid"
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrDuplicate = errors.New("Duplicate entity")
+)
 
 type BanType int
 
@@ -36,26 +43,44 @@ func ReasonString(reason Reason) string {
 }
 
 type Ban struct {
-	BanID      int64         `db:"ban_id" json:"ban_id"`
-	SteamID    steamid.SID64 `db:"steam_id" json:"steam_id"`
-	AuthorID   steamid.SID64 `db:"author_id" json:"author_id"`
-	Reason     Reason        `db:"reason" json:"reason"`
-	IP         string        `db:"ip" json:"ip"`
-	ReasonText string        `db:"reason_text" json:"reason_text"`
-	Note       string        `db:"note" json:"note"`
-	CreatedOn  int64         `db:"created_on" json:"created_on"`
-	UpdatedOn  int64         `db:"updated_on" json:"updated_on"`
+	BanID int64 `db:"ban_id" json:"ban_id"`
+	// SteamID is the steamID of the banned person
+	SteamID steamid.SID64 `db:"steam_id" json:"steam_id"`
+	// AuthorID is the steamID of the person making the ban
+	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
+	// Reason defines the overall ban classification
+	BanType BanType `db:"ban_type" json:"ban_type"`
+	// Reason defines the overall ban classification
+	Reason Reason `db:"reason" json:"reason"`
+	// IP is the banned client ip, currently only ipv4 as that is all that srcds supports i believe
+	IP string `db:"ip" json:"ip"`
+	// ReasonText is returned to the client when kicked trying to join the server
+	ReasonText string `db:"reason_text" json:"reason_text"`
+	// Note is a supplementary note added by admins that is hidden from normal view
+	Note string `db:"note" json:"note"`
+	// Until is when the ban will be no longer valid. 0 denotes forever
+	Until     int64 `json:"until" db:"until"`
+	CreatedOn int64 `db:"created_on" json:"created_on"`
+	UpdatedOn int64 `db:"updated_on" json:"updated_on"`
 }
 
 type Server struct {
-	ServerID       int64  `db:"server_id"`
-	ServerName     string `db:"server_name"`
-	Token          string `db:"token"`
-	Address        string `db:"address"`
-	Port           int    `db:"port"`
-	RCON           string `db:"rcon"`
-	Password       string `db:"password"`
-	TokenCreatedOn int64  `db:"token_created_on"`
-	CreatedOn      int64  `db:"created_on"`
-	UpdatedOn      int64  `db:"updated_on"`
+	// Auto generated id
+	ServerID int64 `db:"server_id"`
+	// ServerName is a short reference name for the server eg: us-1
+	ServerName string `db:"server_name"`
+	// Token is the current valid authentication token that the server uses to make authenticated requests
+	Token string `db:"token"`
+	// Address is the ip of the server
+	Address string `db:"address"`
+	// Port is the port of the server
+	Port int `db:"port"`
+	// RCON is the RCON password for the server
+	RCON string `db:"rcon"`
+	// Password is what the server uses to generate a token to make authenticated calls
+	Password string `db:"password"`
+	// TokenCreatedOn is set when changing the token
+	TokenCreatedOn int64 `db:"token_created_on"`
+	CreatedOn      int64 `db:"created_on"`
+	UpdatedOn      int64 `db:"updated_on"`
 }

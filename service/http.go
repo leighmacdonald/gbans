@@ -5,6 +5,7 @@ import (
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/steamid"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
@@ -22,8 +23,29 @@ type StatusResponse struct {
 
 func init() {
 	router = gin.Default()
-	router.GET("/v1/ban", onGetBan())
 	router.POST("/v1/auth", onPostAuth())
+	authed := router.Group("/", checkServerAuth)
+	authed.GET("/v1/ban", onGetBan())
+	authed.POST("/v1/check", onPostCheck())
+}
+
+func checkServerAuth(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	if token == "" || len(token) != 40 {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+	log.Debugf("Authed as: %s", token)
+	if !store.TokenValid(token) {
+		log.Warnf("Received invalid server token from %s", c.ClientIP())
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+	c.Next()
 }
 
 func Listen(addr string) {
@@ -46,7 +68,7 @@ func onPostAuth() gin.HandlerFunc {
 		var req authReq
 		if err := c.BindJSON(&req); err != nil {
 			log.Errorf("Failed to decode auth request: %v", err)
-			//c.JSON(500, authResp{Status: false})
+			c.JSON(500, authResp{Status: false})
 			return
 		}
 		srv, err := store.GetServerByName(req.ServerName)
@@ -70,12 +92,13 @@ func onPostAuth() gin.HandlerFunc {
 
 func onPostBan() gin.HandlerFunc {
 	type req struct {
-		SteamID    string       `json:"steam_id"`
-		AuthorID   string       `json:"author_id"`
-		Duration   string       `json:"duration"`
-		IP         string       `json:"ip"`
-		Reason     model.Reason `json:"reason"`
-		ReasonText string       `json:"reason_text"`
+		SteamID    string        `json:"steam_id"`
+		AuthorID   string        `json:"author_id"`
+		Duration   string        `json:"duration"`
+		IP         string        `json:"ip"`
+		BanType    model.BanType `json:"ban_type"`
+		Reason     model.Reason  `json:"reason"`
+		ReasonText string        `json:"reason_text"`
 	}
 
 	return func(c *gin.Context) {
@@ -96,7 +119,7 @@ Valid time units are "ns", "us", "ms", "s", "m", "h".`,
 			})
 		}
 		ip := net.ParseIP(r.IP)
-		if err := Ban(r.SteamID, r.AuthorID, duration, ip, r.Reason, r.ReasonText); err != nil {
+		if err := Ban(c, r.SteamID, r.AuthorID, duration, ip, r.BanType, r.Reason, r.ReasonText); err != nil {
 			c.JSON(http.StatusNotAcceptable, StatusResponse{
 				Success: false,
 				Message: "Failed to perform ban",
@@ -104,25 +127,66 @@ Valid time units are "ns", "us", "ms", "s", "m", "h".`,
 		}
 	}
 }
-
+func onPostCheck() gin.HandlerFunc {
+	type checkRequest struct {
+		ClientID int    `json:"client_id"`
+		SteamID  string `json:"steam_id"`
+		IP       string `json:"ip"`
+	}
+	type checkResponse struct {
+		ClientID int           `json:"client_id"`
+		SteamID  string        `json:"steam_id"`
+		BanType  model.BanType `json:"ban_type"`
+		Msg      string        `json:"msg"`
+	}
+	return func(c *gin.Context) {
+		var req checkRequest
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(500, checkResponse{
+				BanType: model.Unknown,
+				Msg:     "Error determining state",
+			})
+			return
+		}
+		resp := checkResponse{
+			ClientID: req.ClientID,
+			SteamID:  req.SteamID,
+			BanType:  model.Unknown,
+			Msg:      "",
+		}
+		steamID := steamid.ResolveSID64(req.SteamID)
+		if !steamID.Valid() {
+			resp.Msg = "Invalid steam id"
+			c.JSON(500, resp)
+		}
+		ban, err := store.GetBan(steamID)
+		if err != nil {
+			resp.Msg = "Error determining state"
+			c.JSON(500, resp)
+			return
+		}
+		resp.BanType = ban.BanType
+		resp.Msg = ban.ReasonText
+		c.JSON(200, resp)
+	}
+}
 func onGetBan() gin.HandlerFunc {
 	type banStateRequest struct {
 		SteamID string `json:"steam_id"`
 	}
-
 	type banStateResponse struct {
-		SteamID  string        `json:"steam_id"`
-		BanState model.BanType `json:"ban_type"`
-		Msg      string        `json:"msg"`
+		SteamID string        `json:"steam_id"`
+		BanType model.BanType `json:"ban_type"`
+		Msg     string        `json:"msg"`
 	}
 	return func(c *gin.Context) {
 		var req banStateRequest
 
 		if err := c.BindJSON(&req); err != nil {
 			c.JSON(500, banStateResponse{
-				SteamID:  "",
-				BanState: model.Unknown,
-				Msg:      "Error determining state",
+				SteamID: "",
+				BanType: model.Unknown,
+				Msg:     "Error determining state",
 			})
 			return
 		}
