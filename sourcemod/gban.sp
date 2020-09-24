@@ -86,12 +86,13 @@ void CheckPlayer(int client, const char[] auth, const char[] ip) {
 	char encoded[1024];
 	obj.Encode(encoded, sizeof(encoded));
 	obj.Cleanup();
-
+	delete obj;
 	System2HTTPRequest req = newReq(OnCheckResp, "/v1/check");
 	req.SetData(encoded);
 	req.POST();
 	delete req;  
 }
+
 
 void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response, HTTPRequestMethod method)
 {

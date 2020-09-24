@@ -18,3 +18,4 @@ sourcepawn
 .idea/
 sourcemod/.vscode/
 db.sqlite
+/gbans.yaml

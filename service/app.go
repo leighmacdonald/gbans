@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/bot"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/rcon/rcon"
@@ -36,7 +38,14 @@ func Start(database string, addr string) {
 		net.ParseIP("172.16.1.22"), model.Banned, model.Racism, "bad words!"); err != nil && err != model.ErrDuplicate {
 		log.Errorf("Failed to add test ban: %v", err)
 	}
-	Listen(addr)
+	startHTTP(addr)
+	if config.Discord.Enabled {
+		if config.Discord.Token != "" {
+			bot.Start(config.Discord.Token)
+		} else {
+			log.Fatalf("Discord enabled, but bot token invalid")
+		}
+	}
 }
 
 func Ban(ctx context.Context, sidStr string, author string, duration time.Duration, ip net.IP,

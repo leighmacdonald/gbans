@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/steamid"
 	log "github.com/sirupsen/logrus"
+	"github.com/toorop/gin-logrus"
 	"net"
 	"net/http"
 	"time"
@@ -19,14 +20,6 @@ var (
 type StatusResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
-}
-
-func init() {
-	router = gin.Default()
-	router.POST("/v1/auth", onPostAuth())
-	authed := router.Group("/", checkServerAuth)
-	authed.GET("/v1/ban", onGetBan())
-	authed.POST("/v1/check", onPostCheck())
 }
 
 func checkServerAuth(c *gin.Context) {
@@ -48,7 +41,13 @@ func checkServerAuth(c *gin.Context) {
 	c.Next()
 }
 
-func Listen(addr string) {
+func startHTTP(addr string) {
+	router = gin.New()
+	router.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
+	router.POST("/v1/auth", onPostAuth())
+	authed := router.Group("/", checkServerAuth)
+	authed.GET("/v1/ban", onGetBan())
+	authed.POST("/v1/check", onPostCheck())
 	log.Infof("Starting gbans service")
 	if err := router.Run(addr); err != nil {
 		log.Errorf("Error shutting down service: %v", err)
@@ -114,8 +113,8 @@ func onPostBan() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusNotAcceptable, StatusResponse{
 				Success: false,
-				Message: `Invalid duration. Examples: "300ms", "-1.5h" or "2h45m". 
-Valid time units are "ns", "us", "ms", "s", "m", "h".`,
+				Message: `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
+Valid time units are "s", "m", "h".`,
 			})
 		}
 		ip := net.ParseIP(r.IP)
@@ -127,6 +126,7 @@ Valid time units are "ns", "us", "ms", "s", "m", "h".`,
 		}
 	}
 }
+
 func onPostCheck() gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int    `json:"client_id"`
@@ -170,6 +170,7 @@ func onPostCheck() gin.HandlerFunc {
 		c.JSON(200, resp)
 	}
 }
+
 func onGetBan() gin.HandlerFunc {
 	type banStateRequest struct {
 		SteamID string `json:"steam_id"`

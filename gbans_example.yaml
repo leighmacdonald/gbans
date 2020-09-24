@@ -1,0 +1,19 @@
+http:
+  host: 0.0.0.0
+  port: 6969
+  # release, debug, test
+  mode: "release"
+
+database:
+  path: "db.sqlite"
+
+discord:
+  enabled: false
+  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+logging:
+  level: info
+  force_colours: false
+  disable_colours: false
+  report_caller: false
+  full_timestamp: false
