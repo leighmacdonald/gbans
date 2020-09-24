@@ -26,7 +26,7 @@ create table if not exists server
 		constraint server_pk
 			primary key autoincrement,
 	server_name text not null,
-	token text,
+	token text default '' not null,
 	address text not null,
 	port integer not null,
 	rcon text not null,
@@ -38,9 +38,5 @@ create table if not exists server
 
 create unique index if not exists server_name_uindex
 	on server (server_name);
-
-create unique index if not exists server_token_uindex
-	on server (token);
-
 
 `

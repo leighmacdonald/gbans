@@ -7,7 +7,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"os"
 )
 
 type rootConfig struct {
@@ -32,9 +31,11 @@ func (h HTTPConfig) Addr() string {
 }
 
 type DiscordConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Token   string `mapstructure:"token"`
-	Perms   int    `mapstructure:"perms"`
+	Enabled     bool     `mapstructure:"enabled"`
+	Token       string   `mapstructure:"token"`
+	Perms       int      `mapstructure:"perms"`
+	Prefix      string   `mapstructure:"prefix"`
+	ModChannels []string `mapstructure:"mod_channel_ids"`
 }
 
 type LogConfig struct {
@@ -59,7 +60,8 @@ var (
 		Enabled: false,
 		Token:   "",
 		// Kick / Ban / Send Msg / Manage msg / embed / attach file / read history
-		Perms: 125958,
+		Perms:  125958,
+		Prefix: "!",
 	}
 	Log = LogConfig{
 		Level:          "info",
@@ -79,8 +81,7 @@ func Read(cfgFile string) {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatalf("Failed to get HOME dir: %v", err)
 		}
 		viper.AddConfigPath(home)
 		viper.AddConfigPath(".")

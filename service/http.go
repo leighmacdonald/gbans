@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
@@ -41,7 +42,7 @@ func checkServerAuth(c *gin.Context) {
 	c.Next()
 }
 
-func startHTTP(addr string) {
+func startHTTP(ctx context.Context, addr string) {
 	router = gin.New()
 	router.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
 	router.POST("/v1/auth", onPostAuth())
@@ -49,9 +50,12 @@ func startHTTP(addr string) {
 	authed.GET("/v1/ban", onGetBan())
 	authed.POST("/v1/check", onPostCheck())
 	log.Infof("Starting gbans service")
-	if err := router.Run(addr); err != nil {
-		log.Errorf("Error shutting down service: %v", err)
-	}
+	go func() {
+		if err := router.Run(addr); err != nil {
+			log.Errorf("Error shutting down service: %v", err)
+		}
+	}()
+	<-ctx.Done()
 }
 
 func onPostAuth() gin.HandlerFunc {

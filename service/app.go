@@ -16,11 +16,10 @@ import (
 	"time"
 )
 
-func Start(database string, addr string) {
-	store.Init(database)
+func testData() {
 	servers := []model.Server{
 		{
-			ServerName:     "default",
+			ServerName:     "af-1",
 			Address:        "172.16.1.22",
 			Port:           27015,
 			RCON:           "testpass",
@@ -38,14 +37,22 @@ func Start(database string, addr string) {
 		net.ParseIP("172.16.1.22"), model.Banned, model.Racism, "bad words!"); err != nil && err != model.ErrDuplicate {
 		log.Errorf("Failed to add test ban: %v", err)
 	}
-	startHTTP(addr)
+}
+
+func Start(database string, addr string) {
+	ctx := context.Background()
+	store.Init(database)
+	// TODO remove for real release
+	testData()
+
 	if config.Discord.Enabled {
 		if config.Discord.Token != "" {
-			bot.Start(config.Discord.Token)
+			go bot.Start(ctx, config.Discord.Token, config.Discord.ModChannels)
 		} else {
 			log.Fatalf("Discord enabled, but bot token invalid")
 		}
 	}
+	startHTTP(ctx, addr)
 }
 
 func Ban(ctx context.Context, sidStr string, author string, duration time.Duration, ip net.IP,
@@ -79,7 +86,7 @@ func Ban(ctx context.Context, sidStr string, author string, duration time.Durati
 	}
 	servers, err := store.GetServers()
 	if err != nil {
-		log.Errorf("Failed to get server for ban propogation")
+		log.Errorf("Failed to get server for ban propagation")
 	}
 	ExecRCON(ctx, servers, "gb_kick ")
 	return nil

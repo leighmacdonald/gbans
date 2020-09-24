@@ -1,12 +1,15 @@
 package model
 
 import (
+	"fmt"
 	"github.com/leighmacdonald/steamid/steamid"
 	"github.com/pkg/errors"
 )
 
 var (
+	ErrNoResult  = errors.New("No results found")
 	ErrDuplicate = errors.New("Duplicate entity")
+	ErrRCON      = errors.New("RCON error")
 )
 
 type BanType int
@@ -83,4 +86,8 @@ type Server struct {
 	TokenCreatedOn int64 `db:"token_created_on"`
 	CreatedOn      int64 `db:"created_on"`
 	UpdatedOn      int64 `db:"updated_on"`
+}
+
+func (s Server) Addr() string {
+	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }

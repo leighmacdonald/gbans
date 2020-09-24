@@ -19,3 +19,4 @@ sourcepawn
 sourcemod/.vscode/
 db.sqlite
 /gbans.yaml
+*.txt

@@ -180,5 +180,8 @@ func DBErr(err error) error {
 			return model.ErrDuplicate
 		}
 	}
+	if err.Error() == "sql: no rows in result set" {
+
+	}
 	return err
 }
