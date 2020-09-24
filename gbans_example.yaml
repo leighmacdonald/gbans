@@ -1,19 +1,39 @@
 http:
+  # Listen on this ip address
+  # 0.0.0.0 = Any
   host: 0.0.0.0
-  port: 6969
-  # release, debug, test
-  mode: "release"
+  # Listen on this port
+  port: 6006
+  # Run mode for the HTTP service
+  # Should normally be "release"
+  mode: "release" # release, debug, test
 
 database:
+  # Path to your database
   path: "db.sqlite"
 
 discord:
+  # Enable optional discord integration
   enabled: false
-  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  # Your discord bot token
+  # See: https://discord.com/developers/applications
+  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  # People in these channels automatically have moderator privilege
+  # To find these, Right click the channel -> copy id
+  mod_channel_ids:
+    - "123456789012345678"
+    - "234567890123456789"
+  # Commands all start with this character
+  prefix: "!"
 
 logging:
-  level: info
-  force_colours: false
+  # Set the debug log level
+  level: debug
+  # Force console colours when it cant guess. This is mostly useful on windows
+  force_colours: true
+  # Force disable any colouring
   disable_colours: false
+  # Show the function + line number where the log message was created
   report_caller: false
+  # Show full timestamps in the logs
   full_timestamp: false
