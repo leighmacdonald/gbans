@@ -12,6 +12,9 @@ import (
 
 var (
 	db *sqlx.DB
+
+	ErrNoResult  = errors.New("No results found")
+	ErrDuplicate = errors.New("Duplicate entity")
 )
 
 func Init(path string) {
@@ -131,7 +134,7 @@ func DropServer(serverID int64) error {
 
 func GetBan(steamID steamid.SID64) (model.Ban, error) {
 	const q = `
-		SELECT b.ban_id, b.steam_id, b.ban_type, b.reason, b.note, b.created_on, b.updated_on, b.reason_text 
+		SELECT b.ban_id, b.steam_id, b.ban_type, b.reason, b.note, b.created_on, b.updated_on, b.reason_text, b.active
 		FROM ban b 
 		WHERE steam_id = $1`
 	var b model.Ban
@@ -142,16 +145,18 @@ func GetBan(steamID steamid.SID64) (model.Ban, error) {
 }
 
 func SaveBan(ban *model.Ban) error {
+	ban.UpdatedOn = time.Now().Unix()
 	if ban.BanID > 0 {
 		return updateBan(ban)
 	}
+	ban.CreatedOn = time.Now().Unix()
 	return insertBan(ban)
 }
 
 func insertBan(ban *model.Ban) error {
 	const q = `
-		INSERT INTO ban (steam_id, author_id,ban_type, reason, reason_text, note, until, created_on, updated_on) 
-		VALUES (:steam_id, :author_id, :ban_type, :reason, :reason_text, :note, :until, :created_on, :updated_on)`
+		INSERT INTO ban (steam_id, author_id,ban_type, reason, reason_text, note, until, active, created_on, updated_on) 
+		VALUES (:steam_id, :author_id, :ban_type, :reason, :reason_text, :note, :until, :active, :created_on, :updated_on)`
 	res, err := db.NamedExec(q, ban)
 	if err != nil {
 		return DBErr(err)
@@ -166,7 +171,9 @@ func insertBan(ban *model.Ban) error {
 
 func updateBan(ban *model.Ban) error {
 	const q = `
-		UPDATE ban SET ban_type = :ban_type, reason = :reason, reason_text = :reason_text, note = :note, updated_on = :updated_on 
+		UPDATE ban 
+		SET ban_type = :ban_type, reason = :reason, reason_text = :reason_text, 
+			note = :note, active = :active, updated_on = :updated_on 
 		WHERE ban_id = :ban_id`
 	if _, err := db.NamedExec(q, ban); err != nil {
 		return DBErr(err)
@@ -177,11 +184,11 @@ func updateBan(ban *model.Ban) error {
 func DBErr(err error) error {
 	if sqliteErr, ok := err.(sqlite3.Error); ok {
 		if sqliteErr.Code == sqlite3.ErrConstraint {
-			return model.ErrDuplicate
+			return ErrDuplicate
 		}
 	}
 	if err.Error() == "sql: no rows in result set" {
-
+		return ErrNoResult
 	}
 	return err
 }

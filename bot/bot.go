@@ -21,18 +21,21 @@ type cmdDef struct {
 }
 
 var (
-	dg                 *discordgo.Session
-	modChannelIDs      []string
-	cmdMap             map[string]cmdDef
-	errUnknownCommand  = errors.New("Unknown command")
-	errCommandFailed   = errors.New("Command failed")
+	dg                *discordgo.Session
+	modChannelIDs     []string
+	cmdMap            map[string]cmdDef
+	errUnknownCommand = errors.New("Unknown command")
+	errInvalidSID     = errors.New("Invalid steamid")
+	errUnknownID      = errors.New("Could not find matching player")
+	errCommandFailed  = errors.New("Command failed")
+
 	reStatusPlayerFull *regexp.Regexp
 	reStatusPlayer     *regexp.Regexp
 )
 
-func newCmd(help string, handler cmdHandler, minArgs int, maxArgs int) cmdDef {
+func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs int) cmdDef {
 	return cmdDef{
-		help:    help,
+		help:    fmt.Sprintf("%s -- `%s%s`", help, config.Discord.Prefix, args),
 		handler: handler,
 		minArgs: minArgs,
 		maxArgs: maxArgs,
@@ -43,17 +46,19 @@ func init() {
 	reStatusPlayerFull = regexp.MustCompile(`^#\s+(\d+)\s+"(.+?)"\s+(\[U:\d:\d+])\s+(.+?)\s+(\d+)\s+(\d+)\s+(.+?)\s(.+?):(.+?)$`)
 	reStatusPlayer = regexp.MustCompile(`^#\s+(\d+)\s+"(.+?)"\s+(\[U:\d:\d+])\s+(\d+:\d+)\s+(\d+)\s+(\d+)\s+(.+?)$`)
 	cmdMap = map[string]cmdDef{
-		"help":    newCmd("Returns the command list", onHelp, 0, 1),
-		"ban":     newCmd("Ban a player | !ban <steam_id|name>", onBan, 1, 3),
-		"banIP":   newCmd("Ban a IP", onBanIP, 1, 3),
-		"check":   newCmd("Check if a user is banned -- !check <steam_id|ip>", onCheck, 1, 1),
-		"unban":   newCmd("Unban a player -- !unban <steam_id>", onUnban, 1, 1),
-		"kick":    newCmd("Kick a player -- !kick <server> <steam_id|name> [reason]", onKick, 1, 2),
-		"players": newCmd("Get the players in the server -- !players <server>", onPlayers, 1, 1),
-		"psay":    newCmd("Send a private message to the user", onPSay, 3, -1),
-		"csay":    newCmd("Send a centered message to the server", onCSay, 3, -1),
-		"say":     newCmd("Send a message to the server", onSay, 3, -1),
-		"servers": newCmd("Get the server status for all servers", onServers, 0, 1),
+		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
+		"ban":     newCmd("Ban a player", "ban <id>", onBan, 1, 3),
+		"banip":   newCmd("Ban an IP", "banip <ip>", onBanIP, 1, 3),
+		"find":    newCmd("Find a user on the servers", "find <id>", onFind, 1, 1),
+		"mute":    newCmd("Mute a player", "mute <steam_id> <duration> [reason]", onMute, 1, -1),
+		"check":   newCmd("Check if a user is banned", "check <id>", onCheck, 1, 1),
+		"unban":   newCmd("Unban a player", "unban <id>", onUnban, 1, 1),
+		"kick":    newCmd("Kick a player", "kick <server> <id> [reason]", onKick, 1, 2),
+		"players": newCmd("Get the players in the server", "players <server>", onPlayers, 1, 1),
+		"psay":    newCmd("Send a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
+		"csay":    newCmd("Send a centered message to the server", "csay <server> <message>", onCSay, 3, -1),
+		"say":     newCmd("Send a message to the server", "say <server> <message>", onSay, 3, -1),
+		"servers": newCmd("Get the server status for all servers", "servers", onServers, 0, 1),
 	}
 }
 
@@ -148,8 +153,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func sendMsg(s *discordgo.Session, cid string, msg string) error {
-	_, err := s.ChannelMessageSend(cid, msg)
+func sendMsg(s *discordgo.Session, cid string, msg string, args ...interface{}) error {
+	_, err := s.ChannelMessageSend(cid, fmt.Sprintf(msg, args...))
 	return err
 }
 

@@ -28,13 +28,13 @@ func testData() {
 		},
 	}
 	for _, s := range servers {
-		if err := store.SaveServer(&s); err != nil && err != model.ErrDuplicate {
+		if err := store.SaveServer(&s); err != nil && err != store.ErrDuplicate {
 			log.Errorf("Failed to add default server: %v", err)
 		}
 	}
 	dur, _ := time.ParseDuration("0s")
 	if err := Ban(context.Background(), "STEAM_0:0:431710372", "STEAM_0:1:61934148", dur,
-		net.ParseIP("172.16.1.22"), model.Banned, model.Racism, "bad words!"); err != nil && err != model.ErrDuplicate {
+		net.ParseIP("172.16.1.22"), model.Banned, model.Racism, "bad words!"); err != nil && err != store.ErrDuplicate {
 		log.Errorf("Failed to add test ban: %v", err)
 	}
 }

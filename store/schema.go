@@ -14,8 +14,12 @@ create table if not exists ban
 	note text default '' not null,
 	until integer default 0 not null,
 	created_on integer default 0 not null,
-	updated_on integer default 0 not null
+	updated_on integer default 0 not null,
+	active integer default 1
 );
+
+create index if not exists ban_active_index
+	on ban (active);
 
 create unique index if not exists ban_steam_id_uindex
 	on ban (steam_id);

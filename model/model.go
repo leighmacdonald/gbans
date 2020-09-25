@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/steamid/steamid"
 	"github.com/pkg/errors"
+	"net"
+	"time"
 )
 
 var (
-	ErrNoResult  = errors.New("No results found")
-	ErrDuplicate = errors.New("Duplicate entity")
-	ErrRCON      = errors.New("RCON error")
+	ErrRCON = errors.New("RCON error")
 )
 
 type BanType int
@@ -45,6 +45,29 @@ func ReasonString(reason Reason) string {
 	return reasonStr[reason]
 }
 
+type Status struct {
+	PlayersCount int
+	PlayersMax   int
+	ServerName   string
+	Version      string
+	Edicts       []int
+	Tags         []string
+	Map          string
+	Players      []Player
+}
+
+type Player struct {
+	UserID        int
+	Name          string
+	SID           steamid.SID64
+	ConnectedTime time.Duration
+	Ping          int
+	Loss          int
+	State         string
+	IP            net.IP
+	Port          int
+}
+
 type Ban struct {
 	BanID int64 `db:"ban_id" json:"ban_id"`
 	// SteamID is the steamID of the banned person
@@ -63,6 +86,7 @@ type Ban struct {
 	Note string `db:"note" json:"note"`
 	// Until is when the ban will be no longer valid. 0 denotes forever
 	Until     int64 `json:"until" db:"until"`
+	Active    bool  `json:"active" db:"active"`
 	CreatedOn int64 `db:"created_on" json:"created_on"`
 	UpdatedOn int64 `db:"updated_on" json:"updated_on"`
 }
