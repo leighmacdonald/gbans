@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+var (
+	BuildVersion = "master"
+)
+
 func Start(database string, addr string) {
 	ctx := context.Background()
 	store.Init(database)

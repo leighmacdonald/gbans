@@ -100,8 +100,8 @@ func SaveServer(server *model.Server) error {
 func insertServer(server *model.Server) error {
 	const q = `
 		INSERT INTO server (
-		    short_name, token, address, port, rcon, token_created_on, created_on, updated_on) 
-		VALUES (:short_name, :token, :address, :port, :rcon, :token_created_on, :created_on, :updated_on);`
+		    short_name, token, address, port, rcon, token_created_on, created_on, updated_on, password) 
+		VALUES (:short_name, :token, :address, :port, :rcon, :token_created_on, :created_on, :updated_on, :password);`
 	server.CreatedOn = time.Now().Unix()
 	server.UpdatedOn = time.Now().Unix()
 	res, err := db.NamedExec(q, server)
