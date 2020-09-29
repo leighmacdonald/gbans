@@ -13,7 +13,7 @@
 
 #define PLUGIN_AUTHOR "Leigh MacDonald"
 #define PLUGIN_VERSION "0.00"
-#define PLUGIN_NAME "gban"
+#define PLUGIN_NAME "gbans"
 
 // Ban states retured from server
 #define BSUnknown -1 // Fail-open unknown status
@@ -39,41 +39,50 @@ char g_token[TOKEN_LEN + 1]; // tokens are 40 chars + term
 
 PlayerInfo g_players[MAXPLAYERS + 1];
 
-ConVar g_gb_host;
-ConVar g_gb_port;
-ConVar g_gb_server_name;
-ConVar g_gb_key;
+int g_port;
+char g_host[128];
+char g_server_name[128];
+char g_server_key[41];
 
 public
-Plugin myinfo = {name = PLUGIN_NAME, author = PLUGIN_AUTHOR, description = "gban game client", version = PLUGIN_VERSION,
-                 url = "https://github.com/leighmacdonald/gban"};
+Plugin myinfo = {name = PLUGIN_NAME, author = PLUGIN_AUTHOR, description = "gbans game client",
+                 version = PLUGIN_VERSION, url = "https://github.com/leighmacdonald/gbans"};
 
 public
 void OnPluginStart() {
     LoadTranslations("common.phrases.txt");
     ReadConfig();
     AuthenticateServer();
-}
 
-void ReadConfig() {
-    g_gb_host = CreateConVar("gb_host", "http://172.16.1.22", "Remote gban server host");
-    g_gb_port = CreateConVar("gb_port", "6006", "Remote gban server port");
-    g_gb_server_name = CreateConVar("gb_server_name", "af-1", "Unique server name for this server");
-    g_gb_key = CreateConVar("gb_key", "test_auth", "The authentication key used to retrieve a auth token");
-    RegConsoleCmd("gb_version", Command_Version, "Get gban version");
+    RegConsoleCmd("gb_version", Command_Version, "Get gbans version");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_BAN);
 }
 
+void ReadConfig() {
+    char localPath[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, localPath, sizeof(localPath), "configs/%s", "gbans.cfg");
+#if defined DEBUG
+    PrintToServer("[GB] Using config file: %s", localPath);
+#endif
+    KeyValues kv = new KeyValues("gbans");
+    if (!kv.ImportFromFile(localPath)) {
+        PrintToServer("[GB] No config file could be found");
+    } else {
+        kv.GetString("host", g_host, sizeof(g_host), "http://localhost");
+        g_port = kv.GetNum("port", 6006);
+        kv.GetString("server_name", g_server_name, sizeof(g_server_name), "default");
+        kv.GetString("server_key", g_server_key, sizeof(g_server_key), "");
+    }
+    delete kv;
+}
+
 System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
-    char addr[256];
     char fullAddr[1024];
-    g_gb_host.GetString(addr, sizeof(addr));
-    Format(fullAddr, sizeof(fullAddr), "%s%s", addr, path);
-    int port = g_gb_port.IntValue;
+    Format(fullAddr, sizeof(fullAddr), "%s%s", g_host, path);
     System2HTTPRequest httpRequest = new System2HTTPRequest(cb, fullAddr);
-    httpRequest.SetPort(port);
+    httpRequest.SetPort(g_port);
     httpRequest.SetHeader("Content-Type", "application/json");
     if (strlen(g_token) == TOKEN_LEN) {
         httpRequest.SetHeader("Authorization", g_token);
@@ -128,8 +137,9 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
         g_players[client_id].authed = true;
         g_players[client_id].ip = ip;
         g_players[client_id].ban_type = ban_type;
-        PrintToServer("[GB] Successfully authenticated with gban server");
+        PrintToServer("[GB] Successfully authenticated with gbans server");
         if (g_players[client_id].ban_type == BSNoComm) {
+            // I believe to alleviate a race condition?
             if (IsClientInGame(client_id)) {
                 OnClientPutInServer(client_id);
             }
@@ -153,17 +163,13 @@ Authenicates the server with the backend API system.
 
 Send unauthenticated request for token to -> API /v1/auth
 Recv Token <- API
-Send authenticated commands with header "Authorization $token" set for subsequen calls -> API /v1/<path>
+Send authenticated commands with header "Authorization $token" set for subsequent calls -> API /v1/<path>
 
 */
 void AuthenticateServer() {
-    char server_name[40];
-    char key[40];
-    g_gb_server_name.GetString(server_name, sizeof(server_name));
-    g_gb_key.GetString(key, sizeof(key));
     JSON_Object obj = new JSON_Object();
-    obj.SetString("server_name", server_name);
-    obj.SetString("key", key);
+    obj.SetString("server_name", g_server_name);
+    obj.SetString("key", g_server_key);
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
@@ -205,7 +211,7 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
             return;
         }
         g_token = token;
-        PrintToServer("[GB] Successfully authenticated with gban server");
+        PrintToServer("[GB] Successfully authenticated with gbans server");
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
@@ -287,10 +293,8 @@ void OnClientAuthorized(int client, const char[] auth) {
         g_players[client].ban_type = BSUnknown;
         return;
     }
-
 #if defined DEBUG
-    PrintToServer("Checking ban for: %s", auth);
+    PrintToServer("[GB] Checking ban state for: %s", auth);
 #endif
-
     CheckPlayer(client, auth, ip);
 }

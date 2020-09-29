@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"regexp"
 	"strings"
 )
 
@@ -21,16 +20,17 @@ type cmdDef struct {
 }
 
 var (
-	dg                *discordgo.Session
-	modChannelIDs     []string
-	cmdMap            map[string]cmdDef
-	errUnknownCommand = errors.New("Unknown command")
-	errInvalidSID     = errors.New("Invalid steamid")
-	errUnknownID      = errors.New("Could not find matching player")
-	errCommandFailed  = errors.New("Command failed")
-
-	reStatusPlayerFull *regexp.Regexp
-	reStatusPlayer     *regexp.Regexp
+	dg                  *discordgo.Session
+	modChannelIDs       []string
+	cmdMap              map[string]cmdDef
+	errUnknownCommand   = errors.New("Unknown command")
+	errInvalidSID       = errors.New("Invalid steamid")
+	errUnknownID        = errors.New("Could not find matching player/steamid")
+	errCommandFailed    = errors.New("Command failed")
+	errDuplicateBan     = errors.New("Duplicate ban")
+	errInvalidDuration  = errors.New("Invalid duration")
+	errInvalidArguments = errors.New("Invalid arguments")
+	errInvalidIP        = errors.New("Invalid ip")
 )
 
 func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs int) cmdDef {
@@ -43,14 +43,12 @@ func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs i
 }
 
 func init() {
-	reStatusPlayerFull = regexp.MustCompile(`^#\s+(\d+)\s+"(.+?)"\s+(\[U:\d:\d+])\s+(.+?)\s+(\d+)\s+(\d+)\s+(.+?)\s(.+?):(.+?)$`)
-	reStatusPlayer = regexp.MustCompile(`^#\s+(\d+)\s+"(.+?)"\s+(\[U:\d:\d+])\s+(\d+:\d+)\s+(\d+)\s+(\d+)\s+(.+?)$`)
 	cmdMap = map[string]cmdDef{
 		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
-		"ban":     newCmd("Ban a player", "ban <id>", onBan, 1, 3),
-		"banip":   newCmd("Ban an IP", "banip <ip>", onBanIP, 1, 3),
+		"ban":     newCmd("Ban a player", "ban <name/id> <duration> [reason]", onBan, 1, -1),
+		"banip":   newCmd("Ban an IP", "banip <CIDR> <duration> [reason]", onBanIP, 1, -1),
 		"find":    newCmd("Find a user on the servers", "find <id>", onFind, 1, 1),
-		"mute":    newCmd("Mute a player", "mute <steam_id> <duration> [reason]", onMute, 1, -1),
+		"mute":    newCmd("Mute a player", "mute <name/id> <duration> [reason]", onMute, 1, -1),
 		"check":   newCmd("Check if a user is banned", "check <id>", onCheck, 1, 1),
 		"unban":   newCmd("Unban a player", "unban <id>", onUnban, 1, 1),
 		"kick":    newCmd("Kick a player", "kick <server> <id> [reason]", onKick, 1, 2),

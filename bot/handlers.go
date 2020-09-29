@@ -10,20 +10,20 @@ import (
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/rcon/rcon"
-	"github.com/leighmacdonald/steamid/steamid"
+	"github.com/leighmacdonald/steamid/v2/extra"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
 type PlayerInfo struct {
-	player model.Player
-	server model.Server
+	player *extra.Player
+	server *model.Server
 	sid    steamid.SID64
 	inGame bool
 	valid  bool
@@ -37,36 +37,49 @@ type PlayerInfo struct {
 //
 // valid will be set to true if the value is a valid steamid, even if the player is not
 // actively connected
-func findPlayer(playerStr string) PlayerInfo {
+func findPlayer(playerStr string, ip string) PlayerInfo {
 	var (
-		player   model.Player
-		server   model.Server
+		player   *extra.Player
+		server   *model.Server
 		err      error
+		sid      steamid.SID64
 		inGame   = false
 		foundSid steamid.SID64
+		valid    = false
 	)
-	sid := steamid.SID64FromString(playerStr)
-	if sid.Valid() {
-		foundSid = sid
-		player, server, err = findPlayerBySID(sid)
-		if err != nil {
-			return PlayerInfo{player, server, sid, false, true}
+	if ip != "" {
+		player, server, err = findPlayerByIP(net.ParseIP(ip))
+		if err == nil {
+			foundSid = player.SID
+			inGame = true
 		}
-		inGame = true
 	} else {
-		player, server, err = findPlayerByName(playerStr)
-		if err != nil {
-			return PlayerInfo{player, server, 0, inGame, false}
+		sid, err := steamid.SID64FromString(playerStr)
+		if err == nil && sid.Valid() {
+			foundSid = sid
+			player, server, err = findPlayerBySID(sid)
+			if err == nil {
+				inGame = true
+				foundSid = sid
+			}
+		} else {
+			player, server, err = findPlayerByName(playerStr)
+			if err == nil {
+				foundSid = player.SID
+				inGame = true
+			}
 		}
-		foundSid = player.SID
-		inGame = true
 	}
-	return PlayerInfo{player, server, foundSid, inGame, true}
+	if sid.Valid() || foundSid.Valid() {
+		valid = true
+	}
+
+	return PlayerInfo{player, server, foundSid, inGame, valid}
 }
 
 func onFind(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
 	const f = "Found player `%s` (%d) @ %s"
-	pi := findPlayer(args[0])
+	pi := findPlayer(args[0], "")
 	if !pi.valid || !pi.inGame {
 		return errUnknownID
 	}
@@ -78,7 +91,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		err      error
 		duration = time.Duration(0)
 	)
-	pi := findPlayer(args[0])
+	pi := findPlayer(args[0], "")
 	if !pi.valid {
 		return errUnknownID
 	}
@@ -101,12 +114,11 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 			SteamID:  pi.sid,
 			AuthorID: 0,
 			Reason:   1,
-			IP:       "",
 			Note:     "",
 		}
 	}
 	if ban.BanType == model.Banned {
-		return errors.New("Player is already banned")
+		return errors.New("Person is already banned")
 	}
 	ban.BanType = model.NoComm
 	ban.ReasonText = reasonStr
@@ -116,7 +128,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		return errors.New("Failed to save mute state")
 	}
 	if pi.inGame {
-		resp, err := execServerRCON(pi.server, fmt.Sprintf(`sm_gag "#%s"`, steamid.SID64ToSID3(pi.sid)))
+		resp, err := execServerRCON(*pi.server, fmt.Sprintf(`sm_gag "#%s"`, steamid.SID64ToSID3(pi.sid)))
 		if err != nil {
 			log.Errorf("Failed to gag active user: %v", err)
 		} else {
@@ -127,7 +139,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 				} else {
 					dStr = duration.String()
 				}
-				return sendMsg(s, m.ChannelID, fmt.Sprintf("Player gagged successfully for: %s", dStr))
+				return sendMsg(s, m.ChannelID, fmt.Sprintf("Person gagged successfully for: %s", dStr))
 			} else {
 				return sendMsg(s, m.ChannelID, "Failed to gag player in-game")
 			}
@@ -137,44 +149,133 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	return nil
+	var reason string
+	if len(args) > 2 {
+		reason = strings.Join(args[2:], " ")
+	}
+	duration, err := util.ParseDuration(args[1])
+	if err != nil {
+		return errInvalidDuration
+	}
+	_, err = store.GetBanNet(args[0])
+	if err != nil && store.DBErr(err) != store.ErrNoResult {
+		return errCommandFailed
+	}
+	if err == nil {
+		return errDuplicateBan
+	}
+	ban, err := model.NewBanNet(args[0], reason, duration, model.Bot)
+	if err != nil {
+		return errCommandFailed
+	}
+	if err := store.SaveBanNet(&ban); err != nil {
+		return errCommandFailed
+	}
+	pi, srv, err := findPlayerByCIDR(args[0])
+	if err == nil {
+		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi.Name)); err != nil {
+			log.Debug(resp)
+		}
+	}
+	return sendMsg(s, m.ChannelID, "IP ban created successfully")
 }
 
+func isIP4(ip net.IP) bool {
+	if ip.To4() != nil {
+		return true
+	}
+	return false
+}
+
+// onBan !ban <id> <duration> [reason]
 func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-
-	return nil
-}
-
-func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	const f = "[%d] Banned: `%v` -- IsMuted: `%v` -- IP: `%s` -- Updated: `%s`"
-	pi := findPlayer(args[0])
+	var reason string
+	if len(args) > 2 {
+		reason = strings.Join(args[2:], " ")
+	}
+	duration, err := util.ParseDuration(args[1])
+	if err != nil {
+		return errInvalidDuration
+	}
+	pi := findPlayer(args[0], "")
 	if !pi.valid {
 		return errUnknownID
 	}
+	exists := false
 	ban, err := store.GetBan(pi.sid)
-	if err != nil {
-		if err == store.ErrNoResult {
-			return sendMsg(s, m.ChannelID, "[%d] No record found", pi.sid.Int64())
-		} else {
-			return errCommandFailed
+	if err != nil && store.DBErr(err) != store.ErrNoResult {
+		return errCommandFailed
+	}
+	if ban.BanID > 0 {
+		exists = true
+	}
+	if ban.BanType == model.Banned {
+		return errDuplicateBan
+	}
+	ban.SteamID = pi.sid
+	ban.BanType = model.Banned
+	ban.Until = time.Now().Add(duration).Unix()
+	ban.ReasonText = reason
+	ban.Source = model.Bot
+	if err := store.SaveBan(&ban); err != nil {
+		return errCommandFailed
+	}
+	pi2, srv, err := findPlayerBySID(pi.sid)
+	if err == nil {
+		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi2.Name)); err != nil {
+			log.Debug(resp)
 		}
 	}
-	ip := ban.IP
-	if ip == "" {
-		ip = "Unknown"
+	if exists {
+		return sendMsg(s, m.ChannelID, "Ban updated successfully")
+	} else {
+		return sendMsg(s, m.ChannelID, "Ban created successfully")
 	}
-	return sendMsg(s, m.ChannelID, f,
-		pi.sid.Int64(),
-		ban.BanType == model.Banned,
-		ban.BanType == model.NoComm,
-		ip,
-		time.Unix(ban.UpdatedOn, 0).String(),
-	)
+}
+
+//goland:noinspection ALL
+func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+	const f = "[%s] Banned: `%v` -- Muted: `%v` -- IP: `%s` -- Expires In: `%s` Reason: `%s`"
+	pi := findPlayer(args[0], "")
+	if !pi.valid {
+		return errUnknownID
+	}
+	ban, err1 := store.GetBan(pi.sid)
+	if err1 != nil && err1 != store.ErrNoResult {
+		return errCommandFailed
+	}
+	banIp, err2 := store.GetBanNet(args[0])
+	if err2 != nil && err2 != store.ErrNoResult {
+		return errCommandFailed
+	}
+	if err1 == store.ErrNoResult && err2 == store.ErrNoResult {
+		return sendMsg(s, m.ChannelID, "No ban for user in db")
+	}
+	sid := ""
+	var until time.Time
+	reason := ""
+	var remaining time.Duration
+	if ban.BanID > 0 {
+		sid = pi.sid.String()
+		until = time.Unix(ban.Until, 0)
+		reason = ban.ReasonText
+		remaining = until.Sub(time.Now())
+	}
+	ip := "N/A"
+	if banIp.NetID > 0 {
+		ip = banIp.CIDR
+		until = time.Unix(banIp.Until, 0)
+		reason = banIp.Reason
+		remaining = until.Sub(time.Now())
+	}
+	r := strings.Split(remaining.String(), ".")
+	return sendMsg(s, m.ChannelID, f, sid,
+		ban.BanType == model.Banned, ban.BanType == model.NoComm, ip, r[0], reason)
 }
 
 func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	sid := steamid.SID64FromString(args[0])
-	if !sid.Valid() {
+	sid, err := steamid.SID64FromString(args[0])
+	if err != nil || !sid.Valid() {
 		return errInvalidSID
 	}
 	ban, err := store.GetBan(sid)
@@ -185,11 +286,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 			return errCommandFailed
 		}
 	}
-	if !ban.Active {
-		return errors.New("Ban is already inactive")
-	}
-	ban.Active = false
-	if err := store.SaveBan(&ban); err != nil {
+	if err := store.DropBan(ban); err != nil {
 		return errCommandFailed
 	}
 	return sendMsg(s, m.ChannelID, "User ban is now inactive")
@@ -253,7 +350,7 @@ func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 		return errors.New("Failed to fetch servers")
 	}
 	mu := &sync.RWMutex{}
-	results := make(map[string]model.Status)
+	results := make(map[string]extra.Status)
 	var failed []string
 	wg := &sync.WaitGroup{}
 	for _, s := range servers {
@@ -300,26 +397,26 @@ func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 	return sendMsg(s, m.ChannelID, msg.String())
 }
 
-func getServerStatus(server model.Server) (model.Status, error) {
+func getServerStatus(server model.Server) (extra.Status, error) {
 	resp, err := execServerRCON(server, "status")
 	if err != nil {
 		log.Errorf("Failed to exec rcon command: %v", err)
-		return model.Status{}, err
+		return extra.Status{}, err
 	}
-	status, err := ParseStatus(resp, true)
+	status, err := extra.ParseStatus(resp, true)
 	if err != nil {
 		log.Errorf("Failed to parse status output: %v", err)
-		return model.Status{}, err
+		return extra.Status{}, err
 	}
 	return status, nil
 }
 
-func getAllServerStatus() (map[model.Server]model.Status, error) {
+func getAllServerStatus() (map[model.Server]extra.Status, error) {
 	servers, err := store.GetServers()
 	if err != nil {
 		return nil, err
 	}
-	statuses := make(map[model.Server]model.Status)
+	statuses := make(map[model.Server]extra.Status)
 	mu := &sync.RWMutex{}
 	wg := &sync.WaitGroup{}
 	for _, s := range servers {
@@ -340,35 +437,69 @@ func getAllServerStatus() (map[model.Server]model.Status, error) {
 	return statuses, nil
 }
 
-func findPlayerByName(name string) (model.Player, model.Server, error) {
+func findPlayerByName(name string) (*extra.Player, *model.Server, error) {
 	name = strings.ToLower(name)
 	statuses, err := getAllServerStatus()
 	if err != nil {
-		return model.Player{}, model.Server{}, err
+		return nil, nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if strings.Contains(strings.ToLower(player.Name), name) {
-				return player, server, nil
+				return &player, &server, nil
 			}
 		}
 	}
-	return model.Player{}, model.Server{}, errUnknownID
+	return nil, nil, errUnknownID
 }
 
-func findPlayerBySID(sid steamid.SID64) (model.Player, model.Server, error) {
+func findPlayerBySID(sid steamid.SID64) (*extra.Player, *model.Server, error) {
 	statuses, err := getAllServerStatus()
 	if err != nil {
-		return model.Player{}, model.Server{}, err
+		return nil, nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if player.SID == sid {
-				return player, server, nil
+				return &player, &server, nil
 			}
 		}
 	}
-	return model.Player{}, model.Server{}, errUnknownID
+	return nil, nil, errUnknownID
+}
+
+func findPlayerByIP(ip net.IP) (*extra.Player, *model.Server, error) {
+	statuses, err := getAllServerStatus()
+	if err != nil {
+		return nil, nil, err
+	}
+	for server, status := range statuses {
+		for _, player := range status.Players {
+			if ip.Equal(player.IP) {
+				return &player, &server, nil
+			}
+		}
+	}
+	return nil, nil, errUnknownID
+}
+
+func findPlayerByCIDR(ipNet string) (*extra.Player, *model.Server, error) {
+	_, n, err := net.ParseCIDR(ipNet)
+	if err != nil {
+		return nil, nil, err
+	}
+	statuses, err := getAllServerStatus()
+	if err != nil {
+		return nil, nil, err
+	}
+	for server, status := range statuses {
+		for _, player := range status.Players {
+			if n.Contains(player.IP) {
+				return &player, &server, nil
+			}
+		}
+	}
+	return nil, nil, errUnknownID
 }
 
 func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
@@ -412,104 +543,6 @@ func onHelp(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		msg = cmd.help
 	}
 	return sendMsg(s, m.ChannelID, msg)
-}
-
-// ParseStatus will parse a status command output into a struct
-// If full is true, it will also parse the address/port of the player.
-// This only works for status commands via RCON/CLI
-func ParseStatus(status string, full bool) (model.Status, error) {
-	var s model.Status
-	for _, line := range strings.Split(status, "\n") {
-		parts := strings.SplitN(line, ": ", 2)
-		if len(parts) == 2 {
-			switch strings.TrimRight(parts[0], " ") {
-			case "hostname":
-				s.ServerName = parts[1]
-			case "version":
-				s.Version = parts[1]
-			case "map":
-				s.Map = strings.Split(parts[1], " ")[0]
-			case "tags":
-				s.Tags = strings.Split(parts[1], ",")
-			case "players":
-				ps := strings.Split(strings.ReplaceAll(parts[1], "(", ""), " ")
-				m, err := strconv.ParseUint(ps[4], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				s.PlayersMax = int(m)
-			case "edicts":
-				ed := strings.Split(parts[1], " ")
-				l, err := strconv.ParseUint(ed[0], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				m, err := strconv.ParseUint(ed[3], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				s.Edicts = []int{int(l), int(m)}
-			}
-			continue
-		} else {
-			var m []string
-			if full {
-				m = reStatusPlayerFull.FindStringSubmatch(line)
-			} else {
-				m = reStatusPlayer.FindStringSubmatch(line)
-			}
-			if (!full && len(m) == 8) || (full && len(m) == 10) {
-				userID, err := strconv.ParseUint(m[1], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				ping, err := strconv.ParseUint(m[5], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				loss, err := strconv.ParseUint(m[6], 10, 64)
-				if err != nil {
-					return model.Status{}, err
-				}
-				tp := strings.Split(m[4], ":")
-				for i, j := 0, len(tp)-1; i < j; i, j = i+1, j-1 {
-					tp[i], tp[j] = tp[j], tp[i]
-				}
-				var totalSec int
-				for i, vStr := range tp {
-					v, err := strconv.ParseUint(vStr, 10, 64)
-					if err != nil {
-						return model.Status{}, err
-					}
-					totalSec += int(v) * []int{1, 60, 3600}[i]
-				}
-				dur, err := time.ParseDuration(fmt.Sprintf("%ds", totalSec))
-				if err != nil {
-					return model.Status{}, err
-				}
-				p := model.Player{
-					UserID:        int(userID),
-					Name:          m[2],
-					SID:           steamid.SID3ToSID64(steamid.SID3(m[3])),
-					ConnectedTime: dur,
-					Ping:          int(ping),
-					Loss:          int(loss),
-					State:         m[7],
-				}
-				if full {
-					port, err := strconv.ParseUint(m[9], 10, 64)
-					if err != nil {
-						return model.Status{}, err
-					}
-					p.IP = net.ParseIP(m[8])
-					p.Port = int(port)
-				}
-				s.Players = append(s.Players, p)
-			}
-		}
-	}
-	s.PlayersCount = len(s.Players)
-	return s, nil
 }
 
 func execServerRCON(server model.Server, cmd string) (string, error) {

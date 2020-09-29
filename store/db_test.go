@@ -49,3 +49,19 @@ func TestServer(t *testing.T) {
 	require.Equal(t, s1.ServerID, s1Get.ServerID)
 	require.NoError(t, DropServer(s1.ServerID))
 }
+
+func TestBanNet(t *testing.T) {
+	n1, _ := model.NewBanNet("172.16.1.0/24", "testing", time.Hour*100, model.System)
+	require.NoError(t, SaveBanNet(&n1))
+	require.Less(t, int64(0), n1.NetID)
+	b1, err := GetBanNet("172.16.1.100")
+	require.NoError(t, err)
+	require.Equal(t, b1.Reason, n1.Reason)
+}
+
+func TestBan(t *testing.T) {
+	p1 := model.Person{
+		SteamID: 76561199093644873,
+	}
+	require.NoError(t, SavePlayer(&p1))
+}

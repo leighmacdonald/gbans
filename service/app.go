@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/rcon/rcon"
-	"github.com/leighmacdonald/steamid/steamid"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
@@ -16,35 +16,9 @@ import (
 	"time"
 )
 
-func testData() {
-	servers := []model.Server{
-		{
-			ServerName:     "af-1",
-			Address:        "172.16.1.22",
-			Port:           27015,
-			RCON:           "testpass",
-			Password:       "test_auth",
-			TokenCreatedOn: time.Now().Unix(),
-		},
-	}
-	for _, s := range servers {
-		if err := store.SaveServer(&s); err != nil && err != store.ErrDuplicate {
-			log.Errorf("Failed to add default server: %v", err)
-		}
-	}
-	dur, _ := time.ParseDuration("0s")
-	if err := Ban(context.Background(), "STEAM_0:0:431710372", "STEAM_0:1:61934148", dur,
-		net.ParseIP("172.16.1.22"), model.Banned, model.Racism, "bad words!"); err != nil && err != store.ErrDuplicate {
-		log.Errorf("Failed to add test ban: %v", err)
-	}
-}
-
 func Start(database string, addr string) {
 	ctx := context.Background()
 	store.Init(database)
-	// TODO remove for real release
-	testData()
-
 	if config.Discord.Enabled {
 		if config.Discord.Token != "" {
 			go bot.Start(ctx, config.Discord.Token, config.Discord.ModChannels)
@@ -52,17 +26,54 @@ func Start(database string, addr string) {
 			log.Fatalf("Discord enabled, but bot token invalid")
 		}
 	}
+	go banSweeper(ctx)
 	startHTTP(ctx, addr)
 }
 
+func banSweeper(ctx context.Context) {
+	log.Debug("Ban sweeper routine started")
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ticker.C:
+			bans, err := store.GetExpiredBans()
+			if err != nil {
+				log.Warnf("Failed to get expired bans")
+			} else {
+				for _, ban := range bans {
+					if err := store.DropBan(ban); err != nil {
+						log.Errorf("Failed to drop expired ban: %v", err)
+					} else {
+						log.Infof("Ban expired: %v", ban)
+					}
+				}
+			}
+			netBans, err := store.GetExpiredNetBans()
+			if err != nil {
+				log.Warnf("Failed to get expired bans")
+			} else {
+				for _, ban := range netBans {
+					if err := store.DropNetBan(ban); err != nil {
+						log.Errorf("Failed to drop expired network ban: %v", err)
+					} else {
+						log.Infof("Network ban expired: %v", ban)
+					}
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func Ban(ctx context.Context, sidStr string, author string, duration time.Duration, ip net.IP,
-	banType model.BanType, reason model.Reason, reasonText string) error {
-	sid := steamid.StringToSID64(sidStr)
-	if !sid.Valid() {
+	banType model.BanType, reason model.Reason, reasonText string, source model.BanSource) error {
+	sid, err := steamid.StringToSID64(sidStr)
+	if err != nil || !sid.Valid() {
 		return errors.Errorf("Failed to get steam id from; %s", sidStr)
 	}
-	aid := steamid.StringToSID64(author)
-	if !aid.Valid() {
+	aid, err := steamid.StringToSID64(author)
+	if err != nil || !aid.Valid() {
 		return errors.Errorf("Failed to get steam id from; %s", sidStr)
 	}
 	var until int64
@@ -75,9 +86,9 @@ func Ban(ctx context.Context, sidStr string, author string, duration time.Durati
 		BanType:    banType,
 		Reason:     reason,
 		ReasonText: reasonText,
-		IP:         ip.String(),
 		Note:       "naughty",
 		Until:      until,
+		Source:     source,
 		CreatedOn:  time.Now().Unix(),
 		UpdatedOn:  time.Now().Unix(),
 	}

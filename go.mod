@@ -4,17 +4,13 @@ go 1.15
 
 require (
 	github.com/bwmarrin/discordgo v0.22.0
-	github.com/etdub/goparsetime v0.0.0-20160315173935-ea17b0ac3318 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
-	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/karrick/tparse v2.4.2+incompatible
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.3
-	github.com/leighmacdonald/steamid v1.2.0
+	github.com/leighmacdonald/steamid/v2 v2.0.1
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-sqlite3 v1.14.3
 	github.com/microcosm-cc/bluemonday v1.0.4 // indirect
@@ -22,6 +18,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/common v0.14.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.4.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -38,5 +35,4 @@ require (
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/ini.v1 v1.61.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/steamid"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"github.com/toorop/gin-logrus"
 	"net"
@@ -122,7 +122,7 @@ Valid time units are "s", "m", "h".`,
 			})
 		}
 		ip := net.ParseIP(r.IP)
-		if err := Ban(c, r.SteamID, r.AuthorID, duration, ip, r.BanType, r.Reason, r.ReasonText); err != nil {
+		if err := Ban(c, r.SteamID, r.AuthorID, duration, ip, r.BanType, r.Reason, r.ReasonText, model.Web); err != nil {
 			c.JSON(http.StatusNotAcceptable, StatusResponse{
 				Success: false,
 				Message: "Failed to perform ban",
@@ -158,13 +158,27 @@ func onPostCheck() gin.HandlerFunc {
 			BanType:  model.Unknown,
 			Msg:      "",
 		}
-		steamID := steamid.ResolveSID64(req.SteamID)
-		if !steamID.Valid() {
+		// Check IP first
+		banNet, err := store.GetBanNet(req.IP)
+		if err == nil {
+			resp.BanType = model.Banned
+			resp.Msg = banNet.Reason
+			c.JSON(200, resp)
+			return
+		}
+		// Check SteamID
+		steamID, err := steamid.ResolveSID64(context.Background(), req.SteamID)
+		if err != nil || !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
 			c.JSON(500, resp)
 		}
 		ban, err := store.GetBan(steamID)
 		if err != nil {
+			if store.DBErr(err) == store.ErrNoResult {
+				resp.BanType = model.OK
+				c.JSON(200, resp)
+				return
+			}
 			resp.Msg = "Error determining state"
 			c.JSON(500, resp)
 			return
