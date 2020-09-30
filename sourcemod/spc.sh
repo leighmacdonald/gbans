@@ -3,7 +3,7 @@ cp -v extensions/system2.ext.dll /s/tf2server/steamapps/common/Team\ Fortress\ 2
 mkdir -p plugins
 rm -f "../plugins/gbans.smx"
 clang-format --assume-filename="gbans.cpp" -i gbans.sp && \
-spcomp.exe "gbans.sp" && \
+spcomp.exe -v2 -E "gbans.sp" && \
 mv "gbans.smx" "plugins/" && \
 #scp -i ~/.ssh/pk-putty-nopass.key plugins/gbans.smx tf2server@$TF2_HOST:~/serverfiles/tf/addons/sourcemod/plugins
 cp -v plugins/gbans.smx /s/tf2server/steamapps/common/Team\ Fortress\ 2\ Dedicated\ Server/tf/addons/sourcemod/plugins

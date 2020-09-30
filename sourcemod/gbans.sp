@@ -91,17 +91,17 @@ System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
 }
 
 void CheckPlayer(int client, const char[] auth, const char[] ip) {
+    char encoded[1024];
     JSON_Object obj = new JSON_Object();
     obj.SetString("steam_id", auth);
     obj.SetInt("client_id", client);
     obj.SetString("ip", ip);
-    char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
-    delete obj;
     System2HTTPRequest req = newReq(OnCheckResp, "/v1/check");
     req.SetData(encoded);
     req.POST();
+    delete obj;
     delete req;
 }
 
@@ -253,6 +253,9 @@ Action AdminCmdBan(int client, int argc) {
         return Plugin_Handled;
     }
     PrintToServer(auth_id);
+    if (time > 0) {
+        PrintToServer("Non permanent");
+    }
     return Plugin_Handled;
 }
 
