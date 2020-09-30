@@ -20,3 +20,4 @@ sourcemod/.vscode/
 db.sqlite
 /gbans.yaml
 *.txt
+/gbans

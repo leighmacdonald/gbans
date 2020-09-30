@@ -19,7 +19,7 @@ func init() {
 
 // ParseDuration works exactly like time.ParseDuration except that
 // it supports durations longer than hours
-// Formats: s, m, h, w, M, y
+// Formats: s, m, h, d, w, M, y
 func ParseDuration(s string) (time.Duration, error) {
 	if s == "0" {
 		// 10 Years
