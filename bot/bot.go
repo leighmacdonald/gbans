@@ -23,6 +23,7 @@ var (
 	dg                  *discordgo.Session
 	modChannelIDs       []string
 	cmdMap              map[string]cmdDef
+	connected           bool
 	errUnknownCommand   = errors.New("Unknown command")
 	errInvalidSID       = errors.New("Invalid steamid")
 	errUnknownID        = errors.New("Could not find matching player/steamid")
@@ -104,9 +105,11 @@ func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	if err := s.UpdateStatusComplex(d); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")
 	}
+	connected = true
 }
 
 func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+	connected = false
 	log.Info("Disconnected from session ws API")
 }
 
@@ -152,11 +155,19 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func sendMsg(s *discordgo.Session, cid string, msg string, args ...interface{}) error {
+	if !connected {
+		log.Warnf("Tried to send message to disconnected client")
+		return nil
+	}
 	_, err := s.ChannelMessageSend(cid, fmt.Sprintf(msg, args...))
 	return err
 }
 
 func sendErr(s *discordgo.Session, cid string, err error) {
+	if !connected {
+		log.Warnf("Tried to send error to disconnected client")
+		return
+	}
 	if _, err := s.ChannelMessageSend(cid, err.Error()); err != nil {
 		log.Errorf("Failed to send error message: %v", err)
 	}
