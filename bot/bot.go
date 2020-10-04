@@ -55,7 +55,7 @@ func init() {
 		"kick":    newCmd("Kick a player", "kick <server> <id> [reason]", onKick, 1, 2),
 		"players": newCmd("Get the players in the server", "players <server>", onPlayers, 1, 1),
 		"psay":    newCmd("Send a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
-		"csay":    newCmd("Send a centered message to the server", "csay <server> <message>", onCSay, 3, -1),
+		"csay":    newCmd("Send a centered message to the server", "csay <server> <message>", onCSay, 2, -1),
 		"say":     newCmd("Send a message to the server", "say <server> <message>", onSay, 3, -1),
 		"servers": newCmd("Get the server status for all servers", "servers", onServers, 0, 1),
 	}
