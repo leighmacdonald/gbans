@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "newLine": "LF",
+    "outDir": "./lib/",
+    "target": "es6",
+    "sourceMap": true,
+    "declaration": true,
+    "noEmit": true,
+    "jsx": "react"
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "lib": [
+        "es2017",
+        "dom",
+        "dom.iterable",
+        "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "src/*.tsx"
+  ],
+  "exclude": [
+    ".git",
+    "node_modules"
+  ]
+}

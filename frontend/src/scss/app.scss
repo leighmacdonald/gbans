@@ -1,0 +1,77 @@
+@import 'foundationSettings';
+@import '~foundation-sites/scss/util/util';
+@import '~foundation-sites/scss/util/mixins';
+@import '~foundation-sites/scss/components/dropdown-menu';
+@import '~foundation-sites/scss/components/dropdown';
+@import '~foundation-sites/scss/components/menu';
+@import '~foundation-sites/scss/components/button';
+@import '~foundation-sites/scss/components/table';
+@import '~foundation-sites/scss/xy-grid/xy-grid';
+@import '~foundation-sites/scss/components/callout';
+@import "~motion-ui/motion-ui";
+@import "icons";
+
+.global_round {
+    border-radius: 5px;
+}
+
+#header_nav {
+    li > a {
+        font-weight: 700;
+    }
+    li > ul {
+        border: 0;
+    }
+    li:hover {
+        background-color: lighten($body-background, 3%);
+    }
+}
+
+.paginator {
+    .number_input {
+        color: $primary-color;
+        border: 0;
+        font-weight: 700;
+        //border: 1px solid $primary-color;
+        width: 5em;
+        text-align: center;
+    }
+}
+
+.news_editor {
+    textarea {
+        min-height: 500px;
+    }
+    input[type="date"] {
+        width: 150px;
+    }
+}
+
+#admin_news_list {
+    .news_row {
+        @extend .global_round;
+        background-color: lighten($body-background, 2%);
+        &:hover {
+            background-color: lighten($body-background, 5%);
+        }
+        margin-bottom: 1em;
+        
+        p, h6 {
+            padding: $button-padding;
+            margin-bottom: 0;
+        }
+        .button {
+            margin-bottom: 0;
+        }
+    }
+    
+}
+
+#footer {
+    text-align: center;
+}
+
+html {
+    background-image: url("../img/prism.png");
+    background-repeat: repeat;
+}
