@@ -21,3 +21,5 @@ db.sqlite
 /gbans.yaml
 *.txt
 /gbans
+/frontend/dist/
+/frontend/node_modules/

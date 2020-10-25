@@ -1,22 +1,28 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
-	"github.com/toorop/gin-logrus"
+	"html/template"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
-var (
-	router *gin.Engine
-)
+// Arg map for templates
+type M map[string]interface{}
 
 type StatusResponse struct {
 	Success bool   `json:"success"`
@@ -42,20 +48,172 @@ func checkServerAuth(c *gin.Context) {
 	c.Next()
 }
 
-func startHTTP(ctx context.Context, addr string) {
-	router = gin.New()
-	router.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
-	router.POST("/v1/auth", onPostAuth())
-	authed := router.Group("/", checkServerAuth)
-	authed.GET("/v1/ban", onGetBan())
-	authed.POST("/v1/check", onPostCheck())
-	log.Infof("Starting gbans service")
+func initHTTP() {
+	log.Infof("Starting gbans HTTP service")
 	go func() {
-		if err := router.Run(addr); err != nil {
+		if err := router.Run(config.HTTP.Addr()); err != nil {
 			log.Errorf("Error shutting down service: %v", err)
 		}
 	}()
 	<-ctx.Done()
+}
+
+func routeRaw(name string) string {
+	routePath, ok := routes[Route(name)]
+	if !ok {
+		return "/xxx"
+	}
+	return routePath
+}
+
+// route will return a route for the simple name provided. If the route has parameters, the function
+// will ensure that they are supplied.
+func route(name string, args ...interface{}) string {
+	const sep = ":"
+	routePath := routeRaw(name)
+	if !strings.Contains(routePath, sep) {
+		return routePath
+	}
+	cnt := strings.Count(routePath, sep)
+	if len(args) != cnt {
+		log.Errorf("Route args count mismatch. Have: %d Want: %d", len(args), cnt)
+		return routePath
+	}
+	varIdx := 0
+	p := strings.Split(routePath, "/")
+	p = p[1:]
+	for i, part := range p {
+		if strings.HasPrefix(part, sep) {
+			p[i] = fmt.Sprintf("%s", args[varIdx])
+			varIdx++
+			if varIdx == len(args) {
+				break
+			}
+		}
+	}
+	return "/" + strings.Join(p, "/")
+}
+
+func authMiddleWare() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		s := sessions.Default(c)
+		guest := model.NewPlayer()
+		var p model.Player
+		var err error
+		v := s.Get("person_id")
+		if v != nil {
+			pId, ok := v.(int)
+			if ok {
+				p, err = store.GetPersonBySteamID(steamid.SID64(pId))
+				if err != nil {
+					log.Errorf("Failed to load persons session user: %v", err)
+					p = guest
+				}
+			} else {
+				// Delete the bad value
+				s.Delete("person_id")
+				if err := s.Save(); err != nil {
+					log.Errorf("Failed to save session")
+				}
+			}
+		} else {
+			p = guest
+		}
+		c.Set("person", p)
+		c.Next()
+	}
+}
+
+func currentPerson(c *gin.Context) model.Player {
+	p, found := c.Get("person")
+	if !found {
+		return model.NewPlayer()
+	}
+	person, ok := p.(model.Player)
+	if !ok {
+		log.Warnf("Count not cast store.Player from session")
+		return model.NewPlayer()
+	}
+	return person
+}
+
+func defaultArgs(c *gin.Context) M {
+	args := M{}
+	args["site_name"] = config.HTTP.SiteName
+	args["person"] = currentPerson(c)
+	return args
+}
+
+func newTmpl(files ...string) *template.Template {
+	var tFuncMap = template.FuncMap{
+		"icon": func(class string) template.HTML {
+			return template.HTML(fmt.Sprintf(`<i class="%s"></i>`, class))
+		},
+		"currentYear": func() template.HTML {
+			return template.HTML(fmt.Sprintf("%d", time.Now().UTC().Year()))
+		},
+		"datetime": func(t time.Time) template.HTML {
+			return template.HTML(t.Format(time.RFC822))
+		},
+		"fmtFloat": func(f float64, size int) template.HTML {
+			ft := fmt.Sprintf("%%.%df", size)
+			return template.HTML(fmt.Sprintf(ft, f))
+		},
+		"route": func(name string) template.HTML {
+			return template.HTML(route(name))
+		},
+	}
+	tmpl, err := template.New("layout").Funcs(tFuncMap).ParseFiles(files...)
+	if err != nil {
+		log.Panicf("Failed to load template: %v", err)
+	}
+	return tmpl
+}
+
+func initTemplates() {
+	var templateFiles []string
+	root := "templates"
+	if err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if strings.HasSuffix(info.Name(), ".gohtml") {
+			if !strings.Contains(path, "_") && !strings.Contains(path, "/partials") {
+				templateFiles = append(templateFiles, info.Name())
+			}
+		}
+		return nil
+	}); err != nil {
+		log.Fatalf("Failed to read templates: %v", err)
+	}
+	var newPagesSet = func(path string) []string {
+		return []string{
+			fmt.Sprintf("templates/%s.gohtml", path),
+			//"templates/partials/page_header.gohtml",
+			"templates/_layout.gohtml",
+		}
+	}
+	for _, p := range templateFiles {
+		pageN := strings.ReplaceAll(p, ".gohtml", "")
+		templates[pageN] = newTmpl(newPagesSet(pageN)...)
+	}
+}
+
+func render(c *gin.Context, t string, args M) {
+	var buf bytes.Buffer
+	tmpl := templates[t]
+	if err := tmpl.ExecuteTemplate(&buf, "layout", args); err != nil {
+		log.Errorf("Failed to execute template: %v", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.Data(200, gin.MIMEHTML, buf.Bytes())
+}
+
+func onIndex() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		render(c, "home", defaultArgs(c))
+	}
 }
 
 func onPostAuth() gin.HandlerFunc {

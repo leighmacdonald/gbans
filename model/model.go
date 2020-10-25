@@ -61,7 +61,7 @@ var reasonStr = map[Reason]string{
 	External:   "3rd party",
 	Cheating:   "Cheating",
 	Racism:     "Racism",
-	Harassment: "Person Harassment",
+	Harassment: "Player Harassment",
 	Exploiting: "Exploiting",
 }
 
@@ -152,11 +152,23 @@ func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }
 
-type Person struct {
+type Player struct {
 	PlayerID  int64         `db:"player_id"`
 	Name      string        `db:"name"`
 	SteamID   steamid.SID64 `db:"steam_id"`
 	IPAddr    string        `db:"ip_addr"`
 	CreatedOn int64         `db:"created_on"`
 	UpdatedOn int64         `db:"updated_on"`
+}
+
+// EqualID is used for html templates which assume int and not int64 types
+func (p *Player) EqualID(id int) bool {
+	return p.PlayerID == int64(id)
+}
+
+func NewPlayer() Player {
+	return Player{
+		CreatedOn: time.Now().Unix(),
+		UpdatedOn: time.Now().Unix(),
+	}
 }

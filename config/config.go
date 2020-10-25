@@ -4,16 +4,38 @@ import "C"
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/util"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"time"
 )
+
+type BanListType string
+
+const (
+	CIDR     BanListType = "cidr"
+	Socks5   BanListType = "socks5"
+	Socks4   BanListType = "socks4"
+	Web      BanListType = "http"
+	Snort    BanListType = "snort"
+	ValveNet BanListType = "valve_net"
+	ValveSID BanListType = "valve_steamid"
+	TF2BD    BanListType = "tf2bd"
+)
+
+type BanList struct {
+	URL  string      `mapstructure:"url"`
+	Name string      `mapstructure:"name"`
+	Type BanListType `mapstructure:"type"`
+}
 
 type rootConfig struct {
 	HTTP    HTTPConfig    `mapstructure:"http"`
 	DB      DBConfig      `mapstructure:"database"`
 	Discord DiscordConfig `mapstructure:"discord"`
 	Log     LogConfig     `mapstructure:"logging"`
+	NetBans NetBans       `mapstructure:"network_bans"`
 }
 
 type DBConfig struct {
@@ -21,9 +43,13 @@ type DBConfig struct {
 }
 
 type HTTPConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
-	Mode string `mapstructure:"mode"`
+	Host                  string `mapstructure:"host"`
+	Port                  int    `mapstructure:"port"`
+	Mode                  string `mapstructure:"mode"`
+	StaticPath            string `mapstructure:"static_path"`
+	SiteName              string `mapstructure:"site_name"`
+	ClientTimeout         string `mapstructure:"client_timeout"`
+	ClientTimeoutDuration time.Duration
 }
 
 func (h HTTPConfig) Addr() string {
@@ -46,12 +72,23 @@ type LogConfig struct {
 	FullTimestamp  bool   `mapstructure:"full_timestamp"`
 }
 
+type NetBans struct {
+	Enabled   bool      `mapstructure:"enabled"`
+	MaxAge    string    `mapstructure:"max_age"`
+	CachePath string    `mapstructure:"cache_path"`
+	Sources   []BanList `mapstructure:"sources"`
+}
+
 // Default config values. Anything defined in the config or env will overwrite them
 var (
 	HTTP = HTTPConfig{
-		Host: "127.0.0.1",
-		Port: 6970,
-		Mode: "release",
+		Host:                  "127.0.0.1",
+		Port:                  6970,
+		Mode:                  "release",
+		StaticPath:            "frontend/dist",
+		SiteName:              "gbans",
+		ClientTimeout:         "30s",
+		ClientTimeoutDuration: time.Second * 30,
 	}
 	DB = DBConfig{
 		Path: "db.sqlite",
@@ -69,6 +106,12 @@ var (
 		ForceColours:   false,
 		ReportCaller:   false,
 		FullTimestamp:  false,
+	}
+	Net = NetBans{
+		Enabled:   false,
+		MaxAge:    "1w",
+		CachePath: ".cache",
+		Sources:   []BanList{},
 	}
 )
 
@@ -95,10 +138,16 @@ func Read(cfgFile string) {
 		if err := viper.Unmarshal(&cfg); err != nil {
 			log.Fatalf("Invalid config file format: %v", err)
 		}
+		d, err := util.ParseDuration(cfg.HTTP.ClientTimeout)
+		if err != nil {
+			log.Fatalf("Could not parse http client timeout duration: %v", err)
+		}
+		cfg.HTTP.ClientTimeoutDuration = d
 		HTTP = cfg.HTTP
 		Discord = cfg.Discord
 		DB = cfg.DB
 		Log = cfg.Log
+		Net = cfg.NetBans
 		found = true
 	}
 	configureLogger(log.StandardLogger())

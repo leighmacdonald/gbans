@@ -118,7 +118,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		}
 	}
 	if ban.BanType == model.Banned {
-		return errors.New("Person is already banned")
+		return errors.New("Player is already banned")
 	}
 	ban.BanType = model.NoComm
 	ban.ReasonText = reasonStr
@@ -139,7 +139,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 				} else {
 					dStr = duration.String()
 				}
-				return sendMsg(s, m.ChannelID, fmt.Sprintf("Person gagged successfully for: %s", dStr))
+				return sendMsg(s, m.ChannelID, fmt.Sprintf("Player gagged successfully for: %s", dStr))
 			} else {
 				return sendMsg(s, m.ChannelID, "Failed to gag player in-game")
 			}

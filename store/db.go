@@ -199,7 +199,7 @@ func updateBan(ban *model.Ban) error {
 	return nil
 }
 
-func SavePlayer(player *model.Person) error {
+func SavePlayer(player *model.Player) error {
 	player.UpdatedOn = time.Now().Unix()
 	if player.PlayerID > 0 {
 		return updatePlayer(player)
@@ -208,7 +208,7 @@ func SavePlayer(player *model.Person) error {
 	return insertPlayer(player)
 }
 
-func updatePlayer(player *model.Person) error {
+func updatePlayer(player *model.Player) error {
 	const q = `
 		UPDATE person
 		SET name = :name, steam_id = :steam_id, updated_on = :updated_on
@@ -219,7 +219,7 @@ func updatePlayer(player *model.Person) error {
 	return nil
 }
 
-func insertPlayer(player *model.Person) error {
+func insertPlayer(player *model.Player) error {
 	const q = `
 		INSERT INTO person (name, created_on, updated_on, steam_id) 
 		VALUES (:name, :created_on, :updated_on, :steam_id)`
@@ -235,17 +235,17 @@ func insertPlayer(player *model.Person) error {
 	return nil
 }
 
-func GetOrCreatePlayerBySteamID(sid steamid.SID64) (model.Person, error) {
+func GetOrCreatePlayerBySteamID(sid steamid.SID64) (model.Player, error) {
 	const q = `SELECT * FROM player WHERE steam_id = $1`
-	var p model.Person
+	var p model.Player
 	err := db.Get(&p, q, sid)
 	if err != nil && DBErr(err) == ErrNoResult {
 		p.SteamID = sid
 		if err := SavePlayer(&p); err != nil {
-			return model.Person{}, err
+			return model.Player{}, err
 		}
 	} else if err != nil {
-		return model.Person{}, err
+		return model.Player{}, err
 	}
 	return p, nil
 }
@@ -326,6 +326,15 @@ func GetExpiredNetBans() ([]model.BanNet, error) {
 		return nil, err
 	}
 	return bans, nil
+}
+
+func GetPersonBySteamID(sid steamid.SID64) (model.Player, error) {
+	var p model.Player
+	if !sid.Valid() {
+		return p, ErrNoResult
+	}
+
+	return p, ErrNoResult
 }
 
 func DBErr(err error) error {

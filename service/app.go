@@ -3,14 +3,17 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/bot"
 	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/external"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"html/template"
 	"net"
 	"sync"
 	"time"
@@ -18,23 +21,68 @@ import (
 
 var (
 	BuildVersion = "master"
+	router       *gin.Engine
+	templates    map[string]*template.Template
+	routes       map[Route]string
+	ctx          context.Context
 )
 
-func Start(database string, addr string) {
-	ctx := context.Background()
-	store.Init(database)
-	if config.Discord.Enabled {
-		if config.Discord.Token != "" {
-			go bot.Start(ctx, config.Discord.Token, config.Discord.ModChannels)
-		} else {
-			log.Fatalf("Discord enabled, but bot token invalid")
-		}
-	}
-	go banSweeper(ctx)
-	startHTTP(ctx, addr)
+func init() {
+	templates = make(map[string]*template.Template)
+	ctx = context.Background()
+	router = gin.New()
 }
 
-func banSweeper(ctx context.Context) {
+// Start is the main application entry point
+//
+func Start() {
+	// Load in the external network block / ip ban lists to memory if enabled
+	if config.Net.Enabled {
+		initNetBans()
+	} else {
+		log.Warnf("External Network ban lists not enabled")
+	}
+	// Load the HTML templated into memory
+	initTemplates()
+	// Setup the HTTP router
+	initRouter()
+	// Setup the storage backend
+	initStore()
+	// Start the discord service
+	if config.Discord.Enabled {
+		initDiscord()
+	} else {
+		log.Warnf("Discord bot not enabled")
+	}
+	// Start the background goroutine workers
+	initWorkers()
+	// Start the HTTP server
+	initHTTP()
+}
+func initStore() {
+	store.Init(config.DB.Path)
+}
+func initWorkers() {
+	go banSweeper()
+}
+
+func initDiscord() {
+	if config.Discord.Token != "" {
+		go bot.Start(ctx, config.Discord.Token, config.Discord.ModChannels)
+	} else {
+		log.Fatalf("Discord enabled, but bot token invalid")
+	}
+}
+
+func initNetBans() {
+	for _, list := range config.Net.Sources {
+		if err := external.Import(list); err != nil {
+			log.Errorf("Failed to import list: %v", err)
+		}
+	}
+}
+
+func banSweeper() {
 	log.Debug("Ban sweeper routine started")
 	ticker := time.NewTicker(time.Second * 5)
 	for {

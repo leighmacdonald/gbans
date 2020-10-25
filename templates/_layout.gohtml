@@ -1,0 +1,90 @@
+{{define "layout"}}
+    <!doctype html>
+    <html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>{{ .site_name }} - {{ template "title" }}</title>
+        {{/*        <link rel="apple-touch-icon" sizes="180x180" href="{{ route "dist" }}/img/apple-touch-icon.png">*/}}
+        {{/*        <link rel="icon" type="image/png" sizes="32x32" href="{{ route "dist" }}/img/favicon-32x32.png">*/}}
+        {{/*        <link rel="icon" type="image/png" sizes="16x16" href="{{ route "dist" }}/img/favicon-16x16.png">*/}}
+        {{/*        <link rel="manifest" href="{{ route "dist" }}/img/site.webmanifest">*/}}
+        <link rel="stylesheet" href="{{ route "dist" }}/index.css"/>
+    </head>
+    <body>
+    <header class="grid-container full">
+        <nav class="grid-x" id="header_nav">
+            <div class="cell">
+                <div class="top-bar">
+                    <div class="top-bar-left">
+                        <ul class="dropdown menu" data-dropdown-menu>
+                            <li class="menu-text">{{ .site_name }}</li>
+                            <li>
+                                <a href="{{ route "home" }}"><i class="fi-home"></i> Home</a>
+                                <ul class="menu vertical">
+                                    <li><a href="/servers">Servers</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="{{ route "bans" }}"><i class="fi-torsos-all"></i> Entries</a>
+                                <ul class="menu vertical">
+                                    <li><a href="{{ route "bans" }}">Bans</a></li>
+                                    <li><a href="{{ route "mutes" }}">Mutes</a></li>
+                                    <li><a href="{{ route "appeal" }}">Appeal</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="top-bar-right">
+
+                        {{ if .player.EqualID 0 -}}
+                        <ul class="menu">
+                            <li>
+                                <a href="{{ route "login" }}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_small.png"/></a>
+                            </li>
+                        </ul>
+                        {{ else }}
+                        <ul class="dropdown menu" data-dropdown-menu>
+                            <li><a href="{{ route "donate" }}"><i class="fi-bitcoin"></i> Donate</a></li>
+                            <li>
+                                <a href="{{ route "admin" }}"><i class="fi-widget"></i> Admin</a>
+                                <ul class="menu vertical">
+                                    <li><a href="{{ route "admin_people_browse" }}">People</a></li>
+                                    <li><a href="{{ route "admin_news_browse" }}">News</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="{{ route "profile" }}"><i class="fi-torso"></i> {{ .player.Name }}</a>
+                                <ul class="menu vertical">
+                                    <li><a href="{{ route "inbox" }}">Inbox</a></li>
+                                    <li><a href="{{ route "invites" }}">Invites</a></li>
+                                    <li><a href="{{ route "history" }}">History</a></li>
+                                    <li><a href="{{ route "notifications" }}">Notifications</a></li>
+                                    <li><a href="{{ route "settings" }}">Settings</a></li>
+                                    <li><a href="{{ route "logout" }}">Logout</a></li>
+                                </ul>
+                            </li>
+                            {{ end }}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    {{ template "content" . }}
+
+    <footer class="grid-container full">
+        <div class="grid-x grid-padding-x" id="footer">
+            <div class="cell">
+                <p>Powered By: <a href="https://github.com/leighmacdonald/gbans">gbans</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/dist/index.js"></script>
+    </body>
+    </html>
+
+{{end}}

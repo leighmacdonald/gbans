@@ -7,6 +7,8 @@ http:
   # Run mode for the HTTP service
   # Should normally be "release"
   mode: "release" # release, debug, test
+  static_path: frontend/dist
+  client_timeout: 20s
 
 database:
   # Path to your database
@@ -37,3 +39,30 @@ logging:
   report_caller: false
   # Show full timestamps in the logs
   full_timestamp: false
+
+network_bans:
+  enabled: true
+  max_age: 1d
+  cache_path: .cache
+  sources:
+    - name: tf2bd
+      url: https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/staging/cfg/playerlist.official.json
+      type: tf2bd
+    - name: bdd
+      url: https://tf2bdd.pazer.us/v1/steamids
+      type: tf2bd
+    - name: erjv
+      url: https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt
+      type: cidr
+    - name: proxy-list-socks5
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt
+      type: s5
+    - name: proxy-list-socks4
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt
+      type: s4
+    - name: proxy-list-http
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt
+      type: http
+    - name: ET
+      url: https://rules.emergingthreats.net/open-nogpl/snort-2.9.0/emerging.rules.tar.gz
+      type: snort
