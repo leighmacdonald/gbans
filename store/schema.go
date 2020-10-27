@@ -39,26 +39,26 @@ create unique index if not exists ban_net_cidr_uindex
 
 create table if not exists person
 (
-	player_id integer
+	steam_id integer
 		constraint player_pk
-			primary key autoincrement,
+			primary key,
 	created_on integer not null,
 	updated_on integer not null,
-	steam_id interger not null,
-	name text default '' not null,
-	ip_addr text default '' not null
-);
-
-create table if not exists player
-(
-	player_id integer
-		constraint player_pk
-			primary key autoincrement,
-	created_on integer not null,
-	updated_on integer not null,
-	steam_id integer not null,
-	name text default '' not null,
-	ip_addr text default '' not null
+	ip_addr text default '' not null,
+	communityvisibilitystate int default 0 not null,
+	profilestate int not null,
+	personaname text not null,
+	profileurl text not null,
+	avatar text not null,
+	avatarmedium text not null,
+	avatarfull text not null,
+	avatarhash text not null,
+	personastate int not null,
+	realname text not null,
+	timecreated int not null,
+	loccountrycode text not null,
+	locstatecode text not null,
+	loccityid int not null
 );
 
 create table if not exists server
@@ -79,6 +79,4 @@ create table if not exists server
 
 create unique index if not exists server_name_uindex
 	on server (short_name);
-
-
 `

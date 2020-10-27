@@ -56,6 +56,7 @@ func Start() {
 	}
 	// Start the background goroutine workers
 	initWorkers()
+
 	// Start the HTTP server
 	initHTTP()
 }

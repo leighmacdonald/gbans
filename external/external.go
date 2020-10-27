@@ -57,7 +57,7 @@ func Import(list config.BanList) error {
 		if err != nil {
 			return errors.Wrapf(err, "Failed to stat cached file")
 		}
-		if time.Now().Sub(f.ModTime()) < maxAge {
+		if time.Now().Sub(f.ModTime()) > maxAge {
 			expired = true
 		}
 	} else {

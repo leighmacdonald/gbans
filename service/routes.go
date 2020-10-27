@@ -2,10 +2,9 @@ package service
 
 import (
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/memstore"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/golib"
 )
 
 type Route string
@@ -13,37 +12,47 @@ type Route string
 const (
 	routeDist           Route = "dist"
 	routeHome           Route = "home"
-	routeServerAPIBan   Route = "server_api_ban"
-	routeServerAPICheck Route = "server_api_check"
+	routeServers        Route = "servers"
+	routeLogin          Route = "login"
+	routeLogout         Route = "logout"
+	routeLoginCallback  Route = "login_callback"
+	routeServerAPIAuth  Route = "sapi_auth"
+	routeServerAPIBan   Route = "sapi_ban"
+	routeServerAPICheck Route = "sapi_check"
 )
 
 func initRouter() {
-	s := memstore.NewStore([]byte(golib.RandomString(64)))
-	ses := sessions.Sessions("gbans", s)
+	ses := sessions.Sessions("gbans", cookie.NewStore([]byte(config.HTTP.CookieKey)))
+	router.Use(gin.Logger())
 	session := router.Group("")
-	session.Use(ses)
-	routesApply(router, session)
-}
+	session.Use(ses, authMiddleWare())
 
-func routesApply(r *gin.Engine, session *gin.RouterGroup) {
-	// Guest User
-	r.Static(routeRaw("dist"), config.HTTP.StaticPath)
-	r.GET(routeRaw("home"), onIndex())
-	r.POST("/v1/auth", onPostAuth())
-	// Authenticated User
-	session.Use(authMiddleWare())
+	// Dont use session for static assets
+	router.Static(routeRaw("dist"), config.HTTP.StaticPath)
 
-	// API
+	session.GET(routeRaw(string(routeHome)), onIndex())
+	session.GET(routeRaw(string(routeServers)), onServers())
+	session.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
+	session.GET(routeRaw(string(routeLogin)), onGetLogin())
+	session.GET(routeRaw(string(routeLogout)), onGetLogout())
+	session.POST(routeRaw(string(routeServerAPIAuth)), onPostServerAuth())
+
+	// Game server specific API
 	authed := router.Group("/", checkServerAuth)
-	authed.GET(string(routeServerAPIBan), onGetBan())
-	authed.POST(string(routeServerAPICheck), onPostCheck())
+	authed.GET(string(routeServerAPIBan), onGetServerBan())
+	authed.POST(string(routeServerAPICheck), onPostServerCheck())
 }
 
 func init() {
 	routes = map[Route]string{
 		routeHome:           "/",
 		routeDist:           "/dist",
-		routeServerAPIBan:   "/v1/ban",
-		routeServerAPICheck: "/v1/check",
+		routeServers:        "/servers",
+		routeLogin:          "/auth/login",
+		routeLoginCallback:  "/auth/callback",
+		routeLogout:         "/auth/logout",
+		routeServerAPIAuth:  "/sapi/v1/auth",
+		routeServerAPIBan:   "/sapi/v1/ban",
+		routeServerAPICheck: "/sapi/v1/check",
 	}
 }

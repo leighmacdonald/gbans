@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
@@ -94,53 +93,29 @@ func route(name string, args ...interface{}) string {
 	return "/" + strings.Join(p, "/")
 }
 
-func authMiddleWare() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		s := sessions.Default(c)
-		guest := model.NewPlayer()
-		var p model.Player
-		var err error
-		v := s.Get("person_id")
-		if v != nil {
-			pId, ok := v.(int)
-			if ok {
-				p, err = store.GetPersonBySteamID(steamid.SID64(pId))
-				if err != nil {
-					log.Errorf("Failed to load persons session user: %v", err)
-					p = guest
-				}
-			} else {
-				// Delete the bad value
-				s.Delete("person_id")
-				if err := s.Save(); err != nil {
-					log.Errorf("Failed to save session")
-				}
-			}
-		} else {
-			p = guest
-		}
-		c.Set("person", p)
-		c.Next()
-	}
-}
-
-func currentPerson(c *gin.Context) model.Player {
+func currentPerson(c *gin.Context) model.Person {
 	p, found := c.Get("person")
 	if !found {
-		return model.NewPlayer()
+		return model.NewPerson()
 	}
-	person, ok := p.(model.Player)
+	person, ok := p.(model.Person)
 	if !ok {
-		log.Warnf("Count not cast store.Player from session")
-		return model.NewPlayer()
+		log.Warnf("Count not cast store.Person from session")
+		return model.NewPerson()
 	}
 	return person
 }
 
-func defaultArgs(c *gin.Context) M {
-	args := M{}
-	args["site_name"] = config.HTTP.SiteName
-	args["person"] = currentPerson(c)
+type TmplArgs struct {
+	Person   model.Person
+	SiteName string
+	V        M
+}
+
+func defaultArgs(c *gin.Context) TmplArgs {
+	args := TmplArgs{}
+	args.SiteName = config.HTTP.SiteName
+	args.Person = currentPerson(c)
 	return args
 }
 
@@ -199,7 +174,7 @@ func initTemplates() {
 	}
 }
 
-func render(c *gin.Context, t string, args M) {
+func render(c *gin.Context, t string, args TmplArgs) {
 	var buf bytes.Buffer
 	tmpl := templates[t]
 	if err := tmpl.ExecuteTemplate(&buf, "layout", args); err != nil {
@@ -216,7 +191,13 @@ func onIndex() gin.HandlerFunc {
 	}
 }
 
-func onPostAuth() gin.HandlerFunc {
+func onServers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		render(c, "servers", defaultArgs(c))
+	}
+}
+
+func onPostServerAuth() gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`
@@ -289,7 +270,7 @@ Valid time units are "s", "m", "h".`,
 	}
 }
 
-func onPostCheck() gin.HandlerFunc {
+func onPostServerCheck() gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int    `json:"client_id"`
 		SteamID  string `json:"steam_id"`
@@ -347,7 +328,7 @@ func onPostCheck() gin.HandlerFunc {
 	}
 }
 
-func onGetBan() gin.HandlerFunc {
+func onGetServerBan() gin.HandlerFunc {
 	type banStateRequest struct {
 		SteamID string `json:"steam_id"`
 	}

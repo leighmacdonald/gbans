@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"net"
@@ -61,7 +62,7 @@ var reasonStr = map[Reason]string{
 	External:   "3rd party",
 	Cheating:   "Cheating",
 	Racism:     "Racism",
-	Harassment: "Player Harassment",
+	Harassment: "Person Harassment",
 	Exploiting: "Exploiting",
 }
 
@@ -152,22 +153,22 @@ func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }
 
-type Player struct {
-	PlayerID  int64         `db:"player_id"`
-	Name      string        `db:"name"`
+type Person struct {
 	SteamID   steamid.SID64 `db:"steam_id"`
+	Name      string        `db:"name"`
 	IPAddr    string        `db:"ip_addr"`
 	CreatedOn int64         `db:"created_on"`
 	UpdatedOn int64         `db:"updated_on"`
+	extra.PlayerSummary
 }
 
 // EqualID is used for html templates which assume int and not int64 types
-func (p *Player) EqualID(id int) bool {
-	return p.PlayerID == int64(id)
+func (p Person) LoggedIn() bool {
+	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
-func NewPlayer() Player {
-	return Player{
+func NewPerson() Person {
+	return Person{
 		CreatedOn: time.Now().Unix(),
 		UpdatedOn: time.Now().Unix(),
 	}

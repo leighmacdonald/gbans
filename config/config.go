@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/util"
+	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -31,6 +33,7 @@ type BanList struct {
 }
 
 type rootConfig struct {
+	General GeneralConfig `mapstructure:"general"`
 	HTTP    HTTPConfig    `mapstructure:"http"`
 	DB      DBConfig      `mapstructure:"database"`
 	Discord DiscordConfig `mapstructure:"discord"`
@@ -46,14 +49,20 @@ type HTTPConfig struct {
 	Host                  string `mapstructure:"host"`
 	Port                  int    `mapstructure:"port"`
 	Mode                  string `mapstructure:"mode"`
+	Domain                string `mapstructure:"domain"`
 	StaticPath            string `mapstructure:"static_path"`
 	SiteName              string `mapstructure:"site_name"`
+	CookieKey             string `mapstructure:"cookie_key"`
 	ClientTimeout         string `mapstructure:"client_timeout"`
 	ClientTimeoutDuration time.Duration
 }
 
 func (h HTTPConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", h.Host, h.Port)
+}
+
+type GeneralConfig struct {
+	SteamKey string `mapstructure:"steam_key"`
 }
 
 type DiscordConfig struct {
@@ -81,12 +90,17 @@ type NetBans struct {
 
 // Default config values. Anything defined in the config or env will overwrite them
 var (
+	General = GeneralConfig{
+		SteamKey: "",
+	}
 	HTTP = HTTPConfig{
 		Host:                  "127.0.0.1",
 		Port:                  6970,
 		Mode:                  "release",
+		Domain:                "http://localhost:6006",
 		StaticPath:            "frontend/dist",
 		SiteName:              "gbans",
+		CookieKey:             golib.RandomString(32),
 		ClientTimeout:         "30s",
 		ClientTimeoutDuration: time.Second * 30,
 	}
@@ -144,6 +158,7 @@ func Read(cfgFile string) {
 		}
 		cfg.HTTP.ClientTimeoutDuration = d
 		HTTP = cfg.HTTP
+		General = cfg.General
 		Discord = cfg.Discord
 		DB = cfg.DB
 		Log = cfg.Log
@@ -152,6 +167,7 @@ func Read(cfgFile string) {
 	}
 	configureLogger(log.StandardLogger())
 	gin.SetMode(HTTP.Mode)
+	steamid.SetKey(General.SteamKey)
 	if found {
 		log.Infof("Using config file: %s", viper.ConfigFileUsed())
 	} else {

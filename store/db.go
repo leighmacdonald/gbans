@@ -21,7 +21,7 @@ var (
 func Init(path string) {
 	db = sqlx.MustConnect("sqlite3", path)
 	db.MustExec(schema)
-	_, err := GetOrCreatePlayerBySteamID(0)
+	_, err := GetOrCreatePersonBySteamID(1)
 	if err != nil {
 		log.Fatalf("Error loading system user: %v", err)
 	}
@@ -199,53 +199,80 @@ func updateBan(ban *model.Ban) error {
 	return nil
 }
 
-func SavePlayer(player *model.Player) error {
-	player.UpdatedOn = time.Now().Unix()
-	if player.PlayerID > 0 {
-		return updatePlayer(player)
+func SavePerson(person *model.Person) error {
+	person.UpdatedOn = time.Now().Unix()
+	if person.CreatedOn > 0 {
+		return updatePerson(person)
 	}
-	player.CreatedOn = player.UpdatedOn
-	return insertPlayer(player)
+	person.CreatedOn = person.UpdatedOn
+	return insertPerson(person)
 }
 
-func updatePlayer(player *model.Player) error {
+func updatePerson(p *model.Person) error {
 	const q = `
 		UPDATE person
-		SET name = :name, steam_id = :steam_id, updated_on = :updated_on
-		WHERE player_id = :player_id`
-	if _, err := db.NamedExec(q, player); err != nil {
+		SET updated_on = $1, steam_id = $2, ip_addr = $3, communityvisibilitystate = $4, 
+			profilestate = $5, personaname = $6, profileurl = $7, avatar = $8, avatarmedium = $9, avatarfull = $10, 
+			avatarhash = $11, personastate = $12, realname = $13, timecreated = $14, loccountrycode = $15,
+			locstatecode = $16, loccityid = $17
+		WHERE steam_id = $18`
+	p.UpdatedOn = time.Now().Unix()
+	if _, err := db.Exec(q, p.UpdatedOn, p.SteamID, p.IPAddr,
+		p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
+		p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
+		p.LocCountryCode, p.LocStateCode, p.LocCityID, p.SteamID); err != nil {
 		return DBErr(err)
 	}
 	return nil
 }
 
-func insertPlayer(player *model.Player) error {
+func insertPerson(p *model.Person) error {
 	const q = `
-		INSERT INTO person (name, created_on, updated_on, steam_id) 
-		VALUES (:name, :created_on, :updated_on, :steam_id)`
-	res, err := db.NamedExec(q, player)
+		INSERT INTO person (
+			created_on, updated_on, steam_id, ip_addr, communityvisibilitystate, profilestate, personaname,
+			profileurl, avatar, avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated, loccountrycode,
+			locstatecode, loccityid
+		) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`
+	_, err := db.Exec(q, p.CreatedOn, p.UpdatedOn, p.SteamID, p.IPAddr,
+		p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
+		p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
+		p.LocCountryCode, p.LocStateCode, p.LocCityID)
 	if err != nil {
 		return DBErr(err)
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return DBErr(err)
-	}
-	player.PlayerID = id
 	return nil
 }
 
-func GetOrCreatePlayerBySteamID(sid steamid.SID64) (model.Player, error) {
-	const q = `SELECT * FROM player WHERE steam_id = $1`
-	var p model.Player
+func GetPersonBySteamID(sid steamid.SID64) (model.Person, error) {
+	const q = `SELECT * FROM person WHERE steam_id = $1`
+	var p model.Person
+	if !sid.Valid() {
+		return p, ErrNoResult
+	}
 	err := db.Get(&p, q, sid)
 	if err != nil && DBErr(err) == ErrNoResult {
 		p.SteamID = sid
-		if err := SavePlayer(&p); err != nil {
-			return model.Player{}, err
+		if err := SavePerson(&p); err != nil {
+			return model.Person{}, err
 		}
 	} else if err != nil {
-		return model.Player{}, err
+		return model.Person{}, err
+	}
+	return p, nil
+}
+
+func GetOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
+	const q = `SELECT * FROM person WHERE steam_id = $1`
+	var p model.Person
+	err := db.Get(&p, q, sid)
+	if err != nil && DBErr(err) == ErrNoResult {
+		p.SteamID = sid
+		if err := SavePerson(&p); err != nil {
+			return model.Person{}, err
+		}
+	} else if err != nil {
+		return model.Person{}, err
 	}
 	return p, nil
 }
@@ -326,15 +353,6 @@ func GetExpiredNetBans() ([]model.BanNet, error) {
 		return nil, err
 	}
 	return bans, nil
-}
-
-func GetPersonBySteamID(sid steamid.SID64) (model.Player, error) {
-	var p model.Player
-	if !sid.Valid() {
-		return p, ErrNoResult
-	}
-
-	return p, ErrNoResult
 }
 
 func DBErr(err error) error {

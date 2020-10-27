@@ -5,7 +5,7 @@
         <meta charset="utf-8"/>
         <meta http-equiv="x-ua-compatible" content="ie=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <title>{{ .site_name }} - {{ template "title" }}</title>
+        <title>{{ .SiteName }} - {{ template "title" }}</title>
         {{/*        <link rel="apple-touch-icon" sizes="180x180" href="{{ route "dist" }}/img/apple-touch-icon.png">*/}}
         {{/*        <link rel="icon" type="image/png" sizes="32x32" href="{{ route "dist" }}/img/favicon-32x32.png">*/}}
         {{/*        <link rel="icon" type="image/png" sizes="16x16" href="{{ route "dist" }}/img/favicon-16x16.png">*/}}
@@ -19,7 +19,7 @@
                 <div class="top-bar">
                     <div class="top-bar-left">
                         <ul class="dropdown menu" data-dropdown-menu>
-                            <li class="menu-text">{{ .site_name }}</li>
+                            <li class="menu-text">{{ .SiteName }}</li>
                             <li>
                                 <a href="{{ route "home" }}"><i class="fi-home"></i> Home</a>
                                 <ul class="menu vertical">
@@ -38,15 +38,18 @@
                     </div>
                     <div class="top-bar-right">
 
-                        {{ if .player.EqualID 0 -}}
+
                         <ul class="menu">
-                            <li>
-                                <a href="{{ route "login" }}"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_small.png"/></a>
-                            </li>
+
                         </ul>
-                        {{ else }}
+
+
                         <ul class="dropdown menu" data-dropdown-menu>
-                            <li><a href="{{ route "donate" }}"><i class="fi-bitcoin"></i> Donate</a></li>
+                            {{ if not .Person.LoggedIn -}}
+                            <li>
+                                <a href="{{ route "login" }}"><div class="btn_login"></div></a>
+                            </li>
+                            {{ else }}
                             <li>
                                 <a href="{{ route "admin" }}"><i class="fi-widget"></i> Admin</a>
                                 <ul class="menu vertical">
@@ -55,7 +58,7 @@
                                 </ul>
                             </li>
                             <li>
-                                <a href="{{ route "profile" }}"><i class="fi-torso"></i> {{ .player.Name }}</a>
+                                <a href="{{ route "profile" }}"><i class="fi-torso"></i> {{ .Person.PersonaName }}</a>
                                 <ul class="menu vertical">
                                     <li><a href="{{ route "inbox" }}">Inbox</a></li>
                                     <li><a href="{{ route "invites" }}">Invites</a></li>

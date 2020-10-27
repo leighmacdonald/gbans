@@ -60,8 +60,8 @@ func TestBanNet(t *testing.T) {
 }
 
 func TestBan(t *testing.T) {
-	p1 := model.Player{
+	p1 := model.Person{
 		SteamID: 76561199093644873,
 	}
-	require.NoError(t, SavePlayer(&p1))
+	require.NoError(t, SavePerson(&p1))
 }

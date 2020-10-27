@@ -72,6 +72,13 @@
 }
 
 html {
-    background-image: url("../img/prism.png");
-    background-repeat: repeat;
+    //background-image: url("../img/prism.png");
+    //background-repeat: repeat;
+}
+
+.btn_login {
+    background-image: url("../img/steam_login_sm.png");
+    width: 154px;
+    height: 23px;
+    background-repeat: no-repeat;
 }

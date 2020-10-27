@@ -9,6 +9,8 @@ http:
   mode: "release" # release, debug, test
   static_path: frontend/dist
   client_timeout: 20s
+  # Encryption key for cookies
+  cookie_key:
 
 database:
   # Path to your database
@@ -27,6 +29,9 @@ discord:
     - "234567890123456789"
   # Commands all start with this character
   prefix: "!"
+
+general:
+  steam_key:
 
 logging:
   # Set the debug log level
