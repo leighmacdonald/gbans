@@ -1,8 +1,8 @@
 .PHONY: all test clean build install
 GIT_TAG =
-GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
+GO_FLAGS = -ldflags "--tags fts5 -X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
-# .RECIPEPREFIX = >
+
 all: build
 
 vet:

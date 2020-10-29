@@ -128,6 +128,29 @@ func (b Ban) String() string {
 		b.SteamID.Int64(), b.Source, b.ReasonText, b.BanType)
 }
 
+type BannedPerson struct {
+	BanID    int64         `db:"ban_id" json:"ban_id"`
+	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
+	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
+	// Reason defines the overall ban classification
+	BanType BanType `db:"ban_type" json:"ban_type"`
+	// Reason defines the overall ban classification
+	Reason Reason `db:"reason" json:"reason"`
+	// ReasonText is returned to the client when kicked trying to join the server
+	ReasonText string `db:"reason_text" json:"reason_text"`
+	// Note is a supplementary note added by admins that is hidden from normal view
+	Note   string    `db:"note" json:"note"`
+	Source BanSource `json:"ban_source" db:"ban_source"`
+	// Until is when the ban will be no longer valid. 0 denotes forever
+	Until        int64  `json:"until" db:"until"`
+	CreatedOn    int64  `db:"created_on" json:"created_on"`
+	UpdatedOn    int64  `db:"updated_on" json:"updated_on"`
+	PersonaName  string `json:"personaname" db:"personaname"`
+	ProfileURL   string `json:"profileurl" db:"profileurl"`
+	Avatar       string `json:"avatar" db:"avatar"`
+	AvatarMedium string `json:"avatarmedium" db:"avatarmedium"`
+}
+
 type Server struct {
 	// Auto generated id
 	ServerID int64 `db:"server_id"`
@@ -140,7 +163,8 @@ type Server struct {
 	// Port is the port of the server
 	Port int `db:"port"`
 	// RCON is the RCON password for the server
-	RCON string `db:"rcon"`
+	RCON          string `db:"rcon"`
+	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
 	Password string `db:"password"`
 	// TokenCreatedOn is set when changing the token
@@ -151,6 +175,10 @@ type Server struct {
 
 func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
+}
+
+func (s Server) Slots(statusSlots int) int {
+	return statusSlots - s.ReservedSlots
 }
 
 type Person struct {

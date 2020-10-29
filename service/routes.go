@@ -16,6 +16,7 @@ const (
 	routeLogin          Route = "login"
 	routeLogout         Route = "logout"
 	routeLoginCallback  Route = "login_callback"
+	routeAPIBans        Route = "api_bans"
 	routeServerAPIAuth  Route = "sapi_auth"
 	routeServerAPIBan   Route = "sapi_ban"
 	routeServerAPICheck Route = "sapi_check"
@@ -35,6 +36,7 @@ func initRouter() {
 	session.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
 	session.GET(routeRaw(string(routeLogin)), onGetLogin())
 	session.GET(routeRaw(string(routeLogout)), onGetLogout())
+	session.GET(routeRaw(string(routeAPIBans)), onGetBans())
 	session.POST(routeRaw(string(routeServerAPIAuth)), onPostServerAuth())
 
 	// Game server specific API
@@ -51,6 +53,7 @@ func init() {
 		routeLogin:          "/auth/login",
 		routeLoginCallback:  "/auth/callback",
 		routeLogout:         "/auth/logout",
+		routeAPIBans:        "/api/v1/bans",
 		routeServerAPIAuth:  "/sapi/v1/auth",
 		routeServerAPIBan:   "/sapi/v1/ban",
 		routeServerAPICheck: "/sapi/v1/check",

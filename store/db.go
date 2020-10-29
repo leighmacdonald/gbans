@@ -1,13 +1,14 @@
 package store
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
 )
@@ -17,6 +18,37 @@ var (
 	ErrNoResult  = errors.New("No results found")
 	ErrDuplicate = errors.New("Duplicate entity")
 )
+
+type QueryOpts struct {
+	Limit     int
+	Offset    int
+	OrderDesc bool
+	OrderBy   string
+}
+
+func (o QueryOpts) Order() string {
+	if o.OrderDesc {
+		return "DESC"
+	}
+	return "ASC"
+}
+
+func NewQueryOpts() QueryOpts {
+	return QueryOpts{
+		Limit:     100,
+		Offset:    0,
+		OrderDesc: false,
+		OrderBy:   "",
+	}
+}
+
+func NewSearchQueryOpts(query string) SearchQueryOpts {
+	o := NewQueryOpts()
+	return SearchQueryOpts{
+		query,
+		o,
+	}
+}
 
 func Init(path string) {
 	db = sqlx.MustConnect("sqlite3", path)
@@ -54,7 +86,7 @@ func GetServer(serverID int64) (model.Server, error) {
 	const q = `
 		SELECT 
 		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on 
+			token_created_on, created_on, updated_on, reserved_slots
 		FROM server
 		WHERE server_id = $1`
 	if err := db.Get(&s, q, serverID); err != nil {
@@ -68,7 +100,7 @@ func GetServers() ([]model.Server, error) {
 	const q = `
 		SELECT 
 		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on 
+			token_created_on, created_on, updated_on, reserved_slots
 		FROM server`
 	if err := db.Select(&s, q); err != nil {
 		return []model.Server{}, err
@@ -81,7 +113,7 @@ func GetServerByName(serverName string) (model.Server, error) {
 	const q = `
 		SELECT 
 		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on 
+			token_created_on, created_on, updated_on, reserved_slots
 		FROM server
 		WHERE short_name = $1`
 	if err := db.Get(&s, q, serverName); err != nil {
@@ -100,8 +132,8 @@ func SaveServer(server *model.Server) error {
 func insertServer(server *model.Server) error {
 	const q = `
 		INSERT INTO server (
-		    short_name, token, address, port, rcon, token_created_on, created_on, updated_on, password) 
-		VALUES (:short_name, :token, :address, :port, :rcon, :token_created_on, :created_on, :updated_on, :password);`
+		    short_name, token, address, port, rcon, token_created_on, created_on, updated_on, password, reserved_slots) 
+		VALUES (:short_name, :token, :address, :port, :rcon, :token_created_on, :created_on, :updated_on, :password, :reserved_slots);`
 	server.CreatedOn = time.Now().Unix()
 	server.UpdatedOn = time.Now().Unix()
 	res, err := db.NamedExec(q, server)
@@ -120,7 +152,8 @@ func updateServer(server *model.Server) error {
 	const q = `
 		UPDATE server 
 		SET short_name = :short_name, token = :token, address = :address, port = :port,
-		    rcon = :rcon, token_created_on = :token_created_on, updated_on = :updated_on
+		    rcon = :rcon, token_created_on = :token_created_on, updated_on = :updated_on,
+		    reserved_slots = :reserved_slots
 		WHERE server_id = :server_id`
 	server.UpdatedOn = time.Now().Unix()
 	if _, err := db.NamedExec(q, server); err != nil {
@@ -346,6 +379,46 @@ func GetExpiredBans() ([]model.Ban, error) {
 	return bans, nil
 }
 
+type SearchQueryOpts struct {
+	SearchTerm string
+	QueryOpts
+}
+
+func GetBans(o SearchQueryOpts) ([]model.BannedPerson, error) {
+	//goland:noinspection SqlResolve
+	const q = `
+		SELECT 
+		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
+			b.until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
+		FROM ban b 
+		LEFT OUTER JOIN person p on b.steam_id = p.steam_id
+		ORDER BY $1 %s LIMIT $2 OFFSET $3
+	`
+	q2 := fmt.Sprintf(q, o.Order())
+	var bans []model.BannedPerson
+	if err := db.Select(&bans, q2, o.OrderBy, o.Limit, o.Offset); err != nil {
+		return nil, err
+	}
+	return bans, nil
+}
+
+func GetBansTotal() int {
+	var c int
+	if err := db.QueryRowx(`SELECT count(ban_id) FROM ban`).Scan(&c); err != nil {
+		return 0
+	}
+	return c
+}
+
+func GetBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
+	const q = `SELECT * FROM ban WHERE updated_on < $1 LIMIT $2 OFFSET $3`
+	var bans []model.Ban
+	if err := db.Select(&bans, q, t.Unix(), o.Limit, o.Offset); err != nil {
+		return nil, err
+	}
+	return bans, nil
+}
+
 func GetExpiredNetBans() ([]model.BanNet, error) {
 	const q = `SELECT * FROM ban_net WHERE until < $1`
 	var bans []model.BanNet
@@ -365,4 +438,38 @@ func DBErr(err error) error {
 		return ErrNoResult
 	}
 	return err
+}
+
+func UpdateIndex() error {
+	const q = "INSERT INTO ban_search (ban_id, steam_id, personaname, reasontext) VALUES ($1, $2, $3, $4)"
+	o := NewSearchQueryOpts("")
+	o.Limit = 1000000
+	bans, err := GetBans(o)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("DELETE FROM ban_search")
+	if err != nil {
+		return err
+	}
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	p, err := tx.Prepare(q)
+	if err != nil {
+		return err
+	}
+	for _, b := range bans {
+		if _, err := p.Exec(b.BanID, b.SteamID, b.PersonaName, b.ReasonText); err != nil {
+			if err := tx.Rollback(); err != nil {
+				log.Errorf("Failed to rollback")
+			}
+			return err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }

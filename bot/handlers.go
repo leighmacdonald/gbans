@@ -214,7 +214,11 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	}
 	ban.SteamID = pi.sid
 	ban.BanType = model.Banned
-	ban.Until = time.Now().Add(duration).Unix()
+	if duration > 0 {
+		ban.Until = time.Now().Add(duration).Unix()
+	} else {
+		ban.Until = 0
+	}
 	ban.ReasonText = reason
 	ban.Source = model.Bot
 	if err := store.SaveBan(&ban); err != nil {

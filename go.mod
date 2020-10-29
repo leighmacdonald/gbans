@@ -21,6 +21,7 @@ require (
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.14.0 // indirect
+	github.com/rumblefrog/go-a2s v1.0.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.4.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect

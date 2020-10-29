@@ -2,33 +2,78 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"encoding/gob"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/bot"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/external"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
-	"github.com/leighmacdonald/rcon/rcon"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 )
 
 var (
-	BuildVersion = "master"
-	router       *gin.Engine
-	templates    map[string]*template.Template
-	routes       map[Route]string
-	ctx          context.Context
+	BuildVersion  = "master"
+	router        *gin.Engine
+	templates     map[string]*template.Template
+	routes        map[Route]string
+	ctx           context.Context
+	serverStateMu *sync.RWMutex
+	serverState   map[string]ServerState
 )
 
+type gameType string
+
+const (
+	unknown gameType = "Unknown"
+	tf2     gameType = "Team Fortress 2"
+	cs      gameType = "Counter-Strike"
+	csgo    gameType = "Counter-Strike: Global Offensive"
+)
+
+type ServerState struct {
+	Addr     string
+	Port     int
+	Slots    int
+	GameType gameType
+	A2SInfo  *a2s.ServerInfo
+	extra.Status
+}
+
+func (s ServerState) OS() template.HTML {
+	switch s.A2SInfo.ServerOS {
+	case a2s.ServerOS_Linux:
+		return "linux"
+	case a2s.ServerOS_Windows:
+		return "windows"
+	case a2s.ServerOS_Mac:
+		return "mac"
+	default:
+		return "unknown"
+	}
+}
+
+func (s ServerState) VacStatus() template.HTML {
+	if s.A2SInfo.VAC {
+		return "on"
+	}
+	return "off"
+}
+
 func init() {
+	gob.Register(Flash{})
 	templates = make(map[string]*template.Template)
+	serverState = make(map[string]ServerState)
+	serverStateMu = &sync.RWMutex{}
 	ctx = context.Background()
 	router = gin.New()
 }
@@ -60,11 +105,16 @@ func Start() {
 	// Start the HTTP server
 	initHTTP()
 }
+
 func initStore() {
 	store.Init(config.DB.Path)
 }
+
 func initWorkers() {
 	go banSweeper()
+	go serverStateUpdater()
+	go profileUpdater()
+	go updateSearchIndex()
 }
 
 func initDiscord() {
@@ -79,42 +129,6 @@ func initNetBans() {
 	for _, list := range config.Net.Sources {
 		if err := external.Import(list); err != nil {
 			log.Errorf("Failed to import list: %v", err)
-		}
-	}
-}
-
-func banSweeper() {
-	log.Debug("Ban sweeper routine started")
-	ticker := time.NewTicker(time.Second * 5)
-	for {
-		select {
-		case <-ticker.C:
-			bans, err := store.GetExpiredBans()
-			if err != nil {
-				log.Warnf("Failed to get expired bans")
-			} else {
-				for _, ban := range bans {
-					if err := store.DropBan(ban); err != nil {
-						log.Errorf("Failed to drop expired ban: %v", err)
-					} else {
-						log.Infof("Ban expired: %v", ban)
-					}
-				}
-			}
-			netBans, err := store.GetExpiredNetBans()
-			if err != nil {
-				log.Warnf("Failed to get expired bans")
-			} else {
-				for _, ban := range netBans {
-					if err := store.DropNetBan(ban); err != nil {
-						log.Errorf("Failed to drop expired network ban: %v", err)
-					} else {
-						log.Infof("Network ban expired: %v", ban)
-					}
-				}
-			}
-		case <-ctx.Done():
-			return
 		}
 	}
 }
@@ -152,33 +166,15 @@ func Ban(ctx context.Context, sidStr string, author string, duration time.Durati
 	if err != nil {
 		log.Errorf("Failed to get server for ban propagation")
 	}
-	ExecRCON(ctx, servers, "gb_kick ")
+	QueryRCON(ctx, servers, "gb_kick ")
 	return nil
 }
 
-func ExecRCON(ctx context.Context, servers []model.Server, commands ...string) {
-	timeout := time.Second * 10
-	wg := &sync.WaitGroup{}
-	for _, s := range servers {
-		wg.Add(1)
-		go func(server model.Server) {
-			defer wg.Done()
-			lCtx, cancel := context.WithTimeout(ctx, timeout)
-			defer cancel()
-			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
-			conn, err := rcon.Dial(lCtx, addr, server.RCON, timeout)
-			if err != nil {
-				log.Errorf("Failed to connect to server %s: %v", server.ServerName, err)
-				return
-			}
-			for _, command := range commands {
-				resp, err := conn.Exec(command)
-				if err != nil {
-					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, err)
-				}
-				log.Debugf("rcon %s: %s", server.ServerName, resp)
-			}
-		}(s)
+func queryInt(c *gin.Context, key string) int {
+	valStr := c.Query(key)
+	val, err := strconv.ParseInt(valStr, 10, 32)
+	if err != nil {
+		log.Panicf("Failed to parse query (Use a validator): \"%v\"", valStr)
 	}
-	wg.Wait()
+	return int(val)
 }

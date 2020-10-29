@@ -22,8 +22,7 @@ func init() {
 // Formats: s, m, h, d, w, M, y
 func ParseDuration(s string) (time.Duration, error) {
 	if s == "0" {
-		// 10 Years
-		return time.Hour * 8760 * 10, nil
+		return 0, nil
 	}
 	m := reDuration.FindStringSubmatch(s)
 	if m == nil {

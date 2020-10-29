@@ -51,7 +51,6 @@ type HTTPConfig struct {
 	Mode                  string `mapstructure:"mode"`
 	Domain                string `mapstructure:"domain"`
 	StaticPath            string `mapstructure:"static_path"`
-	SiteName              string `mapstructure:"site_name"`
 	CookieKey             string `mapstructure:"cookie_key"`
 	ClientTimeout         string `mapstructure:"client_timeout"`
 	ClientTimeoutDuration time.Duration
@@ -62,6 +61,7 @@ func (h HTTPConfig) Addr() string {
 }
 
 type GeneralConfig struct {
+	SiteName string `mapstructure:"site_name"`
 	SteamKey string `mapstructure:"steam_key"`
 }
 
@@ -91,6 +91,7 @@ type NetBans struct {
 // Default config values. Anything defined in the config or env will overwrite them
 var (
 	General = GeneralConfig{
+		SiteName: "gbans",
 		SteamKey: "",
 	}
 	HTTP = HTTPConfig{
@@ -99,7 +100,6 @@ var (
 		Mode:                  "release",
 		Domain:                "http://localhost:6006",
 		StaticPath:            "frontend/dist",
-		SiteName:              "gbans",
 		CookieKey:             golib.RandomString(32),
 		ClientTimeout:         "30s",
 		ClientTimeoutDuration: time.Second * 30,

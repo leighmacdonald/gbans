@@ -17,7 +17,7 @@ sbpp
 sourcepawn
 .idea/
 sourcemod/.vscode/
-db.sqlite
+*.sqlite
 /gbans.yaml
 *.txt
 /gbans

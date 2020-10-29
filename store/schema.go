@@ -61,6 +61,9 @@ create table if not exists person
 	loccityid int not null
 );
 
+CREATE INDEX if not exists idx_personaname_lower
+ON person(LOWER(personaname));
+
 create table if not exists server
 (
 	server_id integer
@@ -79,4 +82,7 @@ create table if not exists server
 
 create unique index if not exists server_name_uindex
 	on server (short_name);
+
+CREATE VIRTUAL TABLE ban_search
+USING fts5(ban_id, steam_id, personaname, reasontext);
 `

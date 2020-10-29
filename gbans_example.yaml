@@ -31,6 +31,7 @@ discord:
   prefix: "!"
 
 general:
+  site_name: "gbans"
   steam_key:
 
 logging:
