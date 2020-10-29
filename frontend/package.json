@@ -23,6 +23,7 @@
   "dependencies": {
     "@types/react": "^16.9.43",
     "@types/react-dom": "^16.9.8",
+    "date-fns": "^2.16.1",
     "foundation-sites": "^6.6.3",
     "jquery": "^3.5.0",
     "moment": "^2.27.0",

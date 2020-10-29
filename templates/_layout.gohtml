@@ -23,7 +23,7 @@
                             <li>
                                 <a href="{{ route "home" }}"><i class="fi-home"></i> Home</a>
                                 <ul class="menu vertical">
-                                    <li><a href="/servers">Servers</a></li>
+                                    <li><a href="{{ route "servers" }}">Servers</a></li>
                                 </ul>
                             </li>
                             <li>
@@ -37,13 +37,6 @@
                         </ul>
                     </div>
                     <div class="top-bar-right">
-
-
-                        <ul class="menu">
-
-                        </ul>
-
-
                         <ul class="dropdown menu" data-dropdown-menu>
                             {{ if not .Person.LoggedIn -}}
                             <li>
@@ -58,12 +51,8 @@
                                 </ul>
                             </li>
                             <li>
-                                <a href="{{ route "profile" }}"><i class="fi-torso"></i> {{ .Person.PersonaName }}</a>
+                                <a href="{{ route "profile" }}"><img class="avatar" alt="Avatar" src="{{.Person.Avatar}}"> {{ .Person.PersonaName }}</a>
                                 <ul class="menu vertical">
-                                    <li><a href="{{ route "inbox" }}">Inbox</a></li>
-                                    <li><a href="{{ route "invites" }}">Invites</a></li>
-                                    <li><a href="{{ route "history" }}">History</a></li>
-                                    <li><a href="{{ route "notifications" }}">Notifications</a></li>
                                     <li><a href="{{ route "settings" }}">Settings</a></li>
                                     <li><a href="{{ route "logout" }}">Logout</a></li>
                                 </ul>

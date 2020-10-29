@@ -13,6 +13,7 @@ import $ from 'jquery'
 import 'what-input'
 import {render} from "react-dom";
 import * as React from "react";
+import BanBrowser from "./component/BanBrowser";
 
 globalThis.jQuery = $
 
@@ -21,6 +22,10 @@ function main() {
 
     // Dumb "router"
     const p = window.location.pathname.toLowerCase()
+    switch (p.toLowerCase()) {
+        case "/":
+            render(<BanBrowser/>, document.getElementById("ban_list"));
+    }
 }
 
 document.addEventListener("DOMContentLoaded", main)
