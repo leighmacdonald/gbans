@@ -297,7 +297,18 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 }
 
 func onKick(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	return nil
+	pi := findPlayer(args[0], "")
+	if !pi.valid || !pi.inGame {
+		return errUnknownID
+	}
+	reason := ""
+	if len(args) > 1 {
+		reason = strings.Join(args[1:], " ")
+	}
+	if _, err := execServerRCON(*pi.server, fmt.Sprintf("sm_kick #%d %s", pi.player.UserID, reason)); err != nil {
+		return err
+	}
+	return sendMsg(s, m.ChannelID, "[%s] User kicked: %s", pi.server.ServerName, pi.player.Name)
 }
 
 func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
