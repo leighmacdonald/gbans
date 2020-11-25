@@ -23,3 +23,6 @@ sourcemod/.vscode/
 /gbans
 /frontend/dist/
 /frontend/node_modules/
+/tf2server/
+/.cache/
+/frontend/.cache/

@@ -31,10 +31,15 @@ type BanList struct {
 	Name string      `mapstructure:"name"`
 	Type BanListType `mapstructure:"type"`
 }
+type Relayconfig struct {
+	Enabled    bool     `mapstructure:"enabled"`
+	ChannelIDs []string `mapstructure:"channel_ids"`
+}
 
 type rootConfig struct {
 	General GeneralConfig `mapstructure:"general"`
 	HTTP    HTTPConfig    `mapstructure:"http"`
+	Relay   Relayconfig   `mapstructure:"relay"`
 	DB      DBConfig      `mapstructure:"database"`
 	Discord DiscordConfig `mapstructure:"discord"`
 	Log     LogConfig     `mapstructure:"logging"`
@@ -104,6 +109,10 @@ var (
 		ClientTimeout:         "30s",
 		ClientTimeoutDuration: time.Second * 30,
 	}
+	Relay = Relayconfig{
+		Enabled:    false,
+		ChannelIDs: []string{},
+	}
 	DB = DBConfig{
 		Path: "db.sqlite",
 	}
@@ -160,6 +169,7 @@ func Read(cfgFile string) {
 		HTTP = cfg.HTTP
 		General = cfg.General
 		Discord = cfg.Discord
+		Relay = cfg.Relay
 		DB = cfg.DB
 		Log = cfg.Log
 		Net = cfg.NetBans

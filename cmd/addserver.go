@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-// addserverCmd represents the addserver command
+// relayCmd represents the addserver command
 var addserverCmd = &cobra.Command{
 	Use:   "addserver",
 	Short: "Add a new server",

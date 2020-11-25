@@ -4,7 +4,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/bot"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/golib"
@@ -13,6 +16,35 @@ import (
 	"net/http"
 	"time"
 )
+
+func onPostLogMessage() gin.HandlerFunc {
+	type logReq struct {
+		ServerID  string        `json:"server_id"`
+		SteamID   steamid.SID64 `json:"steam_id"`
+		Name      string        `json:"name"`
+		Message   string        `json:"message"`
+		TeamSay   bool          `json:"team_say"`
+		Timestamp int           `json:"timestamp"`
+	}
+	return func(c *gin.Context) {
+		var req logReq
+		if err := c.BindJSON(&req); err != nil {
+			log.Errorf("Failed to decode log message: %v", err)
+			c.Status(http.StatusBadRequest)
+			return
+		}
+		// [us-2] 76561198017946808 name: message
+		msgBody := req.Message
+		if req.TeamSay {
+			msgBody = "(Team) " + msgBody
+		}
+		msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
+		for _, channelID := range config.Relay.ChannelIDs {
+			bot.Send(bot.NewMessage(channelID, msg))
+		}
+		c.Status(200)
+	}
+}
 
 func onPostServerAuth() gin.HandlerFunc {
 	type authReq struct {

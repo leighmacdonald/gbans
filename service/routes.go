@@ -10,16 +10,17 @@ import (
 type Route string
 
 const (
-	routeDist           Route = "dist"
-	routeHome           Route = "home"
-	routeServers        Route = "servers"
-	routeLogin          Route = "login"
-	routeLogout         Route = "logout"
-	routeLoginCallback  Route = "login_callback"
-	routeAPIBans        Route = "api_bans"
-	routeServerAPIAuth  Route = "sapi_auth"
-	routeServerAPIBan   Route = "sapi_ban"
-	routeServerAPICheck Route = "sapi_check"
+	routeDist             Route = "dist"
+	routeHome             Route = "home"
+	routeServers          Route = "servers"
+	routeLogin            Route = "login"
+	routeLogout           Route = "logout"
+	routeLoginCallback    Route = "login_callback"
+	routeAPIBans          Route = "api_bans"
+	routeServerAPIAuth    Route = "sapi_auth"
+	routeServerAPIBan     Route = "sapi_ban"
+	routeServerAPICheck   Route = "sapi_check"
+	routeServerAPIMessage Route = "sapi_message"
 )
 
 func initRouter() {
@@ -43,19 +44,21 @@ func initRouter() {
 	authed := router.Group("/", checkServerAuth)
 	authed.GET(string(routeServerAPIBan), onGetServerBan())
 	authed.POST(string(routeServerAPICheck), onPostServerCheck())
+	authed.POST(routeRaw(string(routeServerAPIMessage)), onPostLogMessage())
 }
 
 func init() {
 	routes = map[Route]string{
-		routeHome:           "/",
-		routeDist:           "/dist",
-		routeServers:        "/servers",
-		routeLogin:          "/auth/login",
-		routeLoginCallback:  "/auth/callback",
-		routeLogout:         "/auth/logout",
-		routeAPIBans:        "/api/v1/bans",
-		routeServerAPIAuth:  "/sapi/v1/auth",
-		routeServerAPIBan:   "/sapi/v1/ban",
-		routeServerAPICheck: "/sapi/v1/check",
+		routeHome:             "/",
+		routeDist:             "/dist",
+		routeServers:          "/servers",
+		routeLogin:            "/auth/login",
+		routeLoginCallback:    "/auth/callback",
+		routeLogout:           "/auth/logout",
+		routeAPIBans:          "/api/v1/bans",
+		routeServerAPIAuth:    "/sapi/v1/auth",
+		routeServerAPIBan:     "/sapi/v1/ban",
+		routeServerAPICheck:   "/sapi/v1/check",
+		routeServerAPIMessage: "/sapi/v1/message",
 	}
 }

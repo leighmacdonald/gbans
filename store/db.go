@@ -52,7 +52,8 @@ func NewSearchQueryOpts(query string) SearchQueryOpts {
 
 func Init(path string) {
 	db = sqlx.MustConnect("sqlite3", path)
-	db.MustExec(schema)
+	// FIXME
+	//db.MustExec(schema)
 	_, err := GetOrCreatePersonBySteamID(1)
 	if err != nil {
 		log.Fatalf("Error loading system user: %v", err)

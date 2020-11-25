@@ -4,14 +4,17 @@ go 1.15
 
 require (
 	github.com/bwmarrin/discordgo v0.22.0
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
+	github.com/hpcloud/tail v1.0.0
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/leighmacdonald/discord_log_relay v1.0.3
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.3
+	github.com/leighmacdonald/steamid v1.2.0 // indirect
 	github.com/leighmacdonald/steamid/v2 v2.0.1
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-sqlite3 v1.14.3

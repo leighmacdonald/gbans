@@ -75,6 +75,7 @@ create table if not exists server
 	port integer not null,
 	rcon text not null,
 	token_created_on integer,
+	reserved_slots integer not null,
 	created_on integer not null,
 	updated_on integer not null,
 	password text default '' not null

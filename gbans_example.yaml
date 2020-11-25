@@ -12,6 +12,13 @@ http:
   # Encryption key for cookies
   cookie_key:
 
+relay:
+  # Enable/disable the log relay functionality
+  enabled: true
+  # Output messages to these channels
+  channel_ids:
+    - "13141312312312313"
+
 database:
   # Path to your database
   path: "db.sqlite"

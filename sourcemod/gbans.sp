@@ -53,11 +53,70 @@ void OnPluginStart() {
     LoadTranslations("common.phrases.txt");
     ReadConfig();
     AuthenticateServer();
-
     RegConsoleCmd("gb_version", Command_Version, "Get gbans version");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_BAN);
+
+    AddCommandListener(onUserSay, "say");
+    AddCommandListener(onUserTeamSay, "say_team");
+}
+
+public
+Action sendMessage(int client, const char[] msg, bool team_say) {
+    char auth_id[50];
+    if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id), true)) {
+        ReplyToCommand(client, "Failed to get auth_id of user: %d", client);
+        return Plugin_Continue;
+    }
+
+    char name[64];
+    if (!GetClientName(client, name, sizeof(name))) {
+        PrintToServer("Failed to get user name?");
+        return Plugin_Continue;
+    }
+
+    PrintToServer(name);
+    JSON_Object obj = new JSON_Object();
+    obj.SetString("steam_id", auth_id);
+    obj.SetString("message", msg);
+    obj.SetString("name", name);
+    obj.SetBool("team_say", team_say);
+    obj.SetString("server_id", g_server_name);
+    obj.SetInt("timestamp", GetTime());
+
+    char encoded[2048];
+    obj.Encode(encoded, sizeof(encoded));
+    obj.Cleanup();
+    System2HTTPRequest req = newReq(ignoreResponse, "/sapi/v1/message");
+    req.SetData(encoded);
+    req.POST();
+    delete obj;
+    delete req;
+    return Plugin_Continue;
+}
+
+public
+Action onUserSay(int client, const char[] command, int args) {
+    char msg[128];
+    GetCmdArgString(msg, sizeof(msg));
+    StripQuotes(msg);
+    return sendMessage(client, msg, false);
+}
+
+public
+Action onUserTeamSay(int client, const char[] command, int args) {
+    char msg[128];
+    GetCmdArgString(msg, sizeof(msg));
+    StripQuotes(msg);
+    return sendMessage(client, msg, true);
+}
+
+void ignoreResponse(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+                    HTTPRequestMethod method) {
+    if (!success) {
+        PrintToServer("Invalid response to message payload");
+    }
 }
 
 void ReadConfig() {
@@ -98,7 +157,7 @@ void CheckPlayer(int client, const char[] auth, const char[] ip) {
     obj.SetString("ip", ip);
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
-    System2HTTPRequest req = newReq(OnCheckResp, "/v1/check");
+    System2HTTPRequest req = newReq(OnCheckResp, "/sapi/v1/check");
     req.SetData(encoded);
     req.POST();
     delete obj;
@@ -174,7 +233,7 @@ void AuthenticateServer() {
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
     delete obj;
-    System2HTTPRequest req = newReq(OnAuthReqReceived, "/v1/auth");
+    System2HTTPRequest req = newReq(OnAuthReqReceived, "/sapi/v1/auth");
     req.SetData(encoded);
     req.POST();
     delete req;

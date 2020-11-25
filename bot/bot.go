@@ -21,6 +21,7 @@ type cmdDef struct {
 
 var (
 	dg                  *discordgo.Session
+	messageQueue        chan DiscordMessage
 	modChannelIDs       []string
 	cmdMap              map[string]cmdDef
 	connected           bool
@@ -44,6 +45,7 @@ func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs i
 }
 
 func init() {
+	messageQueue = make(chan DiscordMessage)
 	cmdMap = map[string]cmdDef{
 		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
 		"ban":     newCmd("Ban a player", "ban <name/id> <duration> [reason]", onBan, 1, -1),
@@ -87,10 +89,21 @@ func Start(ctx context.Context, token string, channelIDs []string) {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-
+	go queueConsumer(ctx)
 	// Wait here until CTRL-C or other term signal is received.
 	log.Infof("Bot is now running.  Press CTRL-C to exit.")
 	<-ctx.Done()
+}
+
+func queueConsumer(ctx context.Context) {
+	for {
+		select {
+		case dm := <-messageQueue:
+			if err := sendMsg(dg, dm.ChannelID, dm.Body); err != nil {
+				log.Errorf("Failed to send queue message: %v", err)
+			}
+		}
+	}
 }
 
 func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
@@ -170,5 +183,23 @@ func sendErr(s *discordgo.Session, cid string, err error) {
 	}
 	if _, err := s.ChannelMessageSend(cid, err.Error()); err != nil {
 		log.Errorf("Failed to send error message: %v", err)
+	}
+}
+
+type DiscordMessage struct {
+	ChannelID string
+	Body      string
+}
+
+func NewMessage(channel string, body string) DiscordMessage {
+	return DiscordMessage{
+		ChannelID: channel,
+		Body:      body,
+	}
+}
+
+func Send(message DiscordMessage) {
+	if config.Discord.Enabled {
+		messageQueue <- message
 	}
 }
