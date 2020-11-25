@@ -13,9 +13,10 @@
     "build": "cross-env NODE_ENV=production parcel build --public-url /dist/ src/index.tsx"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.4",
-    "@babel/preset-env": "^7.10.4",
+    "@babel/core": "^7.0.0-0",
+    "@babel/preset-env": "^7.12.7",
     "cross-env": "^7.0.2",
+    "node-forge": "^0.10.0",
     "parcel-bundler": "^1.12.4",
     "sass": "^1.26.10",
     "typescript": "^3.9.7"
