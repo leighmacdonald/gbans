@@ -31,15 +31,25 @@ type BanList struct {
 	Name string      `mapstructure:"name"`
 	Type BanListType `mapstructure:"type"`
 }
-type Relayconfig struct {
+
+type RelayConfig struct {
 	Enabled    bool     `mapstructure:"enabled"`
 	ChannelIDs []string `mapstructure:"channel_ids"`
+}
+
+type FilterConfig struct {
+	Enabled         bool     `mapstructure:"enabled"`
+	IsWarning       bool     `mapstructure:"is_warning"`
+	PingDiscord     bool     `mapstructure:"ping_discord"`
+	ExternalEnabled bool     `mapstructure:"external_enabled"`
+	ExternalSource  []string `mapstructure:"external_source"`
 }
 
 type rootConfig struct {
 	General GeneralConfig `mapstructure:"general"`
 	HTTP    HTTPConfig    `mapstructure:"http"`
-	Relay   Relayconfig   `mapstructure:"relay"`
+	Relay   RelayConfig   `mapstructure:"relay"`
+	Filter  FilterConfig  `mapstructure:"word_filter"`
 	DB      DBConfig      `mapstructure:"database"`
 	Discord DiscordConfig `mapstructure:"discord"`
 	Log     LogConfig     `mapstructure:"logging"`
@@ -66,13 +76,16 @@ func (h HTTPConfig) Addr() string {
 }
 
 type GeneralConfig struct {
-	SiteName string `mapstructure:"site_name"`
-	SteamKey string `mapstructure:"steam_key"`
+	SiteName       string        `mapstructure:"site_name"`
+	SteamKey       string        `mapstructure:"steam_key"`
+	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
+	WarningLimit   int           `mapstructure:"warning_limit"`
 }
 
 type DiscordConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
 	Token       string   `mapstructure:"token"`
+	ModRoleID   int      `mapstructure:"mod_role_id"`
 	Perms       int      `mapstructure:"perms"`
 	Prefix      string   `mapstructure:"prefix"`
 	ModChannels []string `mapstructure:"mod_channel_ids"`
@@ -96,8 +109,9 @@ type NetBans struct {
 // Default config values. Anything defined in the config or env will overwrite them
 var (
 	General = GeneralConfig{
-		SiteName: "gbans",
-		SteamKey: "",
+		SiteName:       "gbans",
+		SteamKey:       "",
+		WarningTimeout: time.Hour * 6,
 	}
 	HTTP = HTTPConfig{
 		Host:                  "127.0.0.1",
@@ -109,7 +123,14 @@ var (
 		ClientTimeout:         "30s",
 		ClientTimeoutDuration: time.Second * 30,
 	}
-	Relay = Relayconfig{
+	Filter = FilterConfig{
+		Enabled:         false,
+		IsWarning:       true,
+		PingDiscord:     false,
+		ExternalEnabled: false,
+		ExternalSource:  nil,
+	}
+	Relay = RelayConfig{
 		Enabled:    false,
 		ChannelIDs: []string{},
 	}
@@ -117,8 +138,9 @@ var (
 		Path: "db.sqlite",
 	}
 	Discord = DiscordConfig{
-		Enabled: false,
-		Token:   "",
+		Enabled:   false,
+		Token:     "",
+		ModRoleID: 0,
 		// Kick / Ban / Send Msg / Manage msg / embed / attach file / read history
 		Perms:  125958,
 		Prefix: "!",
@@ -168,6 +190,7 @@ func Read(cfgFile string) {
 		cfg.HTTP.ClientTimeoutDuration = d
 		HTTP = cfg.HTTP
 		General = cfg.General
+		Filter = cfg.Filter
 		Discord = cfg.Discord
 		Relay = cfg.Relay
 		DB = cfg.DB

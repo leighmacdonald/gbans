@@ -86,4 +86,17 @@ create unique index if not exists server_name_uindex
 
 CREATE VIRTUAL TABLE ban_search
 USING fts5(ban_id, steam_id, personaname, reasontext);
+
+create table if not exists filtered_word
+(
+	word_id integer
+		constraint filtered_word_pk
+			primary key autoincrement,
+	word text not null
+);
+
+create unique index if not exists  filtered_word_word_uindex
+	on filtered_word (word);
+
+
 `

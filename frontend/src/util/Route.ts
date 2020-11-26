@@ -4,6 +4,7 @@ export const Route = {
     Home: "/",
     Dist: "/dist",
     APIBans: "/api/v1/bans",
+    APIFilteredWords: "/api/v1/filtered_words"
 }
 
 export function route(r: any, args: null|object): string {

@@ -8,6 +8,25 @@ import (
 	"net/http"
 )
 
+func onGetFilteredWords() gin.HandlerFunc {
+	type resp struct {
+		Count int `json:"count"`
+		Words []string `json:"words"`
+	}
+	return func(c *gin.Context) {
+		words, err := store.GetFilteredWords()
+		if err != nil{
+			c.JSON(http.StatusInternalServerError, gin.H{})
+			return
+		}
+		c.JSON(http.StatusOK, resp{
+			Count: len(words),
+			Words: words,
+		})
+	}
+
+}
+
 func onGetBans() gin.HandlerFunc {
 	type resp struct {
 		Total int                  `json:"total"`

@@ -55,6 +55,7 @@ const (
 	Racism     Reason = 4
 	Harassment Reason = 5
 	Exploiting Reason = 6
+	WarningsExceeded Reason = 7
 )
 
 var reasonStr = map[Reason]string{

@@ -54,7 +54,7 @@ func init() {
 		"mute":    newCmd("Mute a player", "mute <name/id> <duration> [reason]", onMute, 1, -1),
 		"check":   newCmd("Check if a user is banned", "check <id>", onCheck, 1, 1),
 		"unban":   newCmd("Unban a player", "unban <id>", onUnban, 1, 1),
-		"kick":    newCmd("Kick a player", "kick <server> <id> [reason]", onKick, 1, 2),
+		"kick":    newCmd("Kick a player", "kick <id> [reason]", onKick, 1, -1),
 		"players": newCmd("Get the players in the server", "players <server>", onPlayers, 1, 1),
 		"psay":    newCmd("Send a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
 		"csay":    newCmd("Send a centered message to the server", "csay <server> <message>", onCSay, 2, -1),

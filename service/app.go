@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/external"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
+	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -29,7 +30,67 @@ var (
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
 	serverState   map[string]ServerState
+	warnings map[steamid.SID64][]UserWarning
+	warningsMu *sync.RWMutex
 )
+
+type WarnReason int
+
+const (
+	warnLanguage WarnReason = iota
+)
+
+type UserWarning struct {
+	WarnReason WarnReason
+	CreatedOn time.Time
+}
+
+// warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
+func warnWorker() {
+	t := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <- t.C:
+			now := time.Now().UTC()
+			warningsMu.Lock()
+			for k := range warnings {
+				for i, w := range warnings[k] {
+					if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
+						if len(warnings[k]) > 1 {
+							warnings[k] = append(warnings[k][:i], warnings[k][i+1])
+						} else {
+							warnings[k] = nil
+						}
+					}
+					if len(warnings[k]) == 0 {
+						delete(warnings, k)
+					}
+				}
+			}
+			warningsMu.Unlock()
+		}
+	}
+}
+// addWarning records a user warning into memory. This is not persistent, so application
+// restarts will wipe the users history.
+//
+// Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
+func addWarning(sid64 steamid.SID64, reason WarnReason) {
+	warningsMu.Lock()
+	defer warningsMu.Unlock()
+	_, found := warnings[sid64]
+	if !found {
+		warnings[sid64] = []UserWarning{}
+	}
+	warnings[sid64] = append(warnings[sid64], UserWarning{
+		WarnReason: reason,
+		CreatedOn:  time.Now(),
+	})
+	if len(warnings[sid64]) >= config.General.WarningLimit {
+		Ban(ctx, sid64.String(), "system", 0,
+			nil, model.Banned, model.WarningsExceeded, "Warning limit exceeded", model.System)
+	}
+}
 
 type gameType string
 
@@ -71,6 +132,8 @@ func (s ServerState) VacStatus() template.HTML {
 
 func init() {
 	gob.Register(Flash{})
+	warningsMu = &sync.RWMutex{}
+	warnings = make(map[steamid.SID64][]UserWarning)
 	templates = make(map[string]*template.Template)
 	serverState = make(map[string]ServerState)
 	serverStateMu = &sync.RWMutex{}
@@ -99,11 +162,27 @@ func Start() {
 	} else {
 		log.Warnf("Discord bot not enabled")
 	}
+
 	// Start the background goroutine workers
 	initWorkers()
 
+	// Load the filtered word set into memory
+	if config.Filter.Enabled {
+		initFilters()
+	}
+
 	// Start the HTTP server
 	initHTTP()
+}
+
+func initFilters() {
+	// TODO load external lists via http
+	words, err := store.GetFilteredWords()
+	if err != nil {
+		log.Fatal("Failed to load word list")
+	}
+	util.ImportFilteredWords(words)
+	log.Debugf("Loaded %d filtered words", len(words))
 }
 
 func initStore() {
@@ -115,6 +194,7 @@ func initWorkers() {
 	go serverStateUpdater()
 	go profileUpdater()
 	go updateSearchIndex()
+	go warnWorker()
 }
 
 func initDiscord() {

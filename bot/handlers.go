@@ -226,7 +226,7 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	}
 	pi2, srv, err := findPlayerBySID(pi.sid)
 	if err == nil {
-		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi2.Name)); err != nil {
+		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick #%d %s", pi2.UserID, ban.ReasonText)); err != nil {
 			log.Debug(resp)
 		}
 	}

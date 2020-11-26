@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/gbans/store"
+	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +33,13 @@ func onPostLogMessage() gin.HandlerFunc {
 			log.Errorf("Failed to decode log message: %v", err)
 			c.Status(http.StatusBadRequest)
 			return
+		}
+		filtered, word := util.IsFilteredWord(req.Message)
+		if filtered {
+			addWarning(req.SteamID, warnLanguage)
+			for _, c := range config.Relay.ChannelIDs {
+				bot.Send(bot.NewMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
+			}
 		}
 		// [us-2] 76561198017946808 name: message
 		msgBody := req.Message

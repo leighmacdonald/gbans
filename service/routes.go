@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
+	"net/http"
 )
 
 type Route string
@@ -17,6 +18,7 @@ const (
 	routeLogout           Route = "logout"
 	routeLoginCallback    Route = "login_callback"
 	routeAPIBans          Route = "api_bans"
+	routeAPIFilteredWords Route = "filtered_words"
 	routeServerAPIAuth    Route = "sapi_auth"
 	routeServerAPIBan     Route = "sapi_ban"
 	routeServerAPICheck   Route = "sapi_check"
@@ -26,11 +28,11 @@ const (
 func initRouter() {
 	ses := sessions.Sessions("gbans", cookie.NewStore([]byte(config.HTTP.CookieKey)))
 	router.Use(gin.Logger())
+	// Dont use session for static assets
+	router.StaticFS("/dist", http.Dir("frontend/dist"))
+
 	session := router.Group("")
 	session.Use(ses, authMiddleWare())
-
-	// Dont use session for static assets
-	router.Static(routeRaw("dist"), config.HTTP.StaticPath)
 
 	session.GET(routeRaw(string(routeHome)), onIndex())
 	session.GET(routeRaw(string(routeServers)), onServers())
@@ -38,6 +40,7 @@ func initRouter() {
 	session.GET(routeRaw(string(routeLogin)), onGetLogin())
 	session.GET(routeRaw(string(routeLogout)), onGetLogout())
 	session.GET(routeRaw(string(routeAPIBans)), onGetBans())
+	session.GET(routeRaw(string(routeAPIFilteredWords)), onGetFilteredWords())
 	session.POST(routeRaw(string(routeServerAPIAuth)), onPostServerAuth())
 
 	// Game server specific API
@@ -55,6 +58,7 @@ func init() {
 		routeLogin:            "/auth/login",
 		routeLoginCallback:    "/auth/callback",
 		routeLogout:           "/auth/logout",
+		routeAPIFilteredWords: "/api/v1/filtered_words",
 		routeAPIBans:          "/api/v1/bans",
 		routeServerAPIAuth:    "/sapi/v1/auth",
 		routeServerAPIBan:     "/sapi/v1/ban",

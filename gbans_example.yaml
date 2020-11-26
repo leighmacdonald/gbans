@@ -12,6 +12,14 @@ http:
   # Encryption key for cookies
   cookie_key:
 
+word_filter:
+  enabled: false
+  warnings: 3
+  ping_discord: false
+  external_enabled: false
+  external_sources:
+    - https://raw.githubusercontent.com/RobertJGabriel/Google-profanity-words/master/list.txt
+
 relay:
   # Enable/disable the log relay functionality
   enabled: true
@@ -29,6 +37,7 @@ discord:
   # Your discord bot token
   # See: https://discord.com/developers/applications
   token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  mod_role_id:
   # People in these channels automatically have moderator privilege
   # To find these, Right click the channel -> copy id
   mod_channel_ids:

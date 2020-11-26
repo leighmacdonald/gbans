@@ -429,6 +429,23 @@ func GetExpiredNetBans() ([]model.BanNet, error) {
 	return bans, nil
 }
 
+func GetFilteredWords() ([]string, error) {
+	const q = `SELECT word FROM filtered_word`
+	var words []string
+	if err := db.Select(&words, q); err != nil {
+		return nil, err
+	}
+	return words, nil
+}
+
+func SaveFilteredWord(word string) error {
+	const q = `INSERT INTO filtered_word (word) VALUES ($1)`
+	if _, err := db.Exec(q, word); err != nil {
+			return DBErr(err)
+	}
+	return nil
+}
+
 func DBErr(err error) error {
 	if sqliteErr, ok := err.(sqlite3.Error); ok {
 		if sqliteErr.Code == sqlite3.ErrConstraint {
