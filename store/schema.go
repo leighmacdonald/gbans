@@ -84,7 +84,7 @@ create table if not exists server
 create unique index if not exists server_name_uindex
 	on server (short_name);
 
-CREATE VIRTUAL TABLE ban_search
+CREATE VIRTUAL TABLE if not exists ban_search
 USING fts5(ban_id, steam_id, personaname, reasontext);
 
 create table if not exists filtered_word
@@ -97,6 +97,23 @@ create table if not exists filtered_word
 
 create unique index if not exists  filtered_word_word_uindex
 	on filtered_word (word);
+
+create table if not exists ban_appeal
+(
+	appeal_id integer
+		constraint ban_appeal_pk
+			primary key autoincrement,
+	ban_id integer not null
+		references ban,
+	appeal_text text not null,
+	appeal_state interger default 0 not null,
+	email text not null,
+	created_on integer not null,
+	updated_on integer not null
+);
+
+create unique index if not exists ban_appeal_ban_id_uindex
+	on ban_appeal (ban_id);
 
 
 `

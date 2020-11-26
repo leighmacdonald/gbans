@@ -39,24 +39,29 @@
                     <div class="top-bar-right">
                         <ul class="dropdown menu" data-dropdown-menu>
                             {{ if not .Person.LoggedIn -}}
-                            <li>
-                                <a href="{{ route "login" }}"><div class="btn_login"></div></a>
-                            </li>
+                                <li>
+                                    <a href="{{ route "login" }}">
+                                        <div class="btn_login"></div>
+                                    </a>
+                                </li>
                             {{ else }}
-                            <li>
-                                <a href="{{ route "admin" }}"><i class="fi-widget"></i> Admin</a>
-                                <ul class="menu vertical">
-                                    <li><a href="{{ route "admin_people_browse" }}">People</a></li>
-                                    <li><a href="{{ route "admin_news_browse" }}">News</a></li>
-                                </ul>
-                            </li>
-                            <li>
-                                <a href="{{ route "profile" }}"><img class="avatar" alt="Avatar" src="{{.Person.Avatar}}"> {{ .Person.PersonaName }}</a>
-                                <ul class="menu vertical">
-                                    <li><a href="{{ route "settings" }}">Settings</a></li>
-                                    <li><a href="{{ route "logout" }}">Logout</a></li>
-                                </ul>
-                            </li>
+                                <li>
+                                    <a href="{{ route "admin" }}"><i class="fi-widget"></i> Admin</a>
+                                    <ul class="menu vertical">
+                                        <li><a href="{{ route "admin_people_browse" }}">People</a></li>
+                                        <li><a href="{{ route "admin_news_browse" }}">News</a></li>
+                                        <li><a href="{{ route "admin_filtered_words" }}">Filtered Words</a></li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a href="{{ route "profile" }}"><img class="avatar" alt="Avatar"
+                                                                         src="{{.Person.Avatar}}"> {{ .Person.PersonaName }}
+                                    </a>
+                                    <ul class="menu vertical">
+                                        <li><a href="{{ route "settings" }}">Settings</a></li>
+                                        <li><a href="{{ route "logout" }}">Logout</a></li>
+                                    </ul>
+                                </li>
                             {{ end }}
                         </ul>
                     </div>
@@ -64,7 +69,19 @@
             </div>
         </nav>
     </header>
-
+    {{ if .Flashes}}
+        {{ range .Flashes}}
+            <div class="cell">
+                <div class="callout flash flash-{{ .Level }}" data-closable>
+                    <h5>{{ .Heading}}</h5>
+                    <p>{{ .Message }}</p>
+                    <button class="close-button" aria-label="Dismiss alert" type="button" data-close>
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        {{ end }}
+    {{ end}}
     {{ template "content" . }}
 
     <footer class="grid-container full">

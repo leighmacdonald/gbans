@@ -53,7 +53,7 @@ func NewSearchQueryOpts(query string) SearchQueryOpts {
 func Init(path string) {
 	db = sqlx.MustConnect("sqlite3", path)
 	// FIXME
-	//db.MustExec(schema)
+	db.MustExec(schema)
 	_, err := GetOrCreatePersonBySteamID(1)
 	if err != nil {
 		log.Fatalf("Error loading system user: %v", err)
@@ -191,6 +191,51 @@ func GetBan(steamID steamid.SID64) (model.Ban, error) {
 		return model.Ban{}, DBErr(err)
 	}
 	return b, nil
+}
+
+func GetAppeal(banID int) (model.Appeal, error) {
+	const q = `SELECT appeal_id, ban_id, appeal_text, appeal_state, 
+       email, created_on, updated_on FROM ban_appeal a
+       WHERE a.ban_id = $1`
+	var a model.Appeal
+	if err := db.Get(&a, q, banID); err != nil {
+		return model.Appeal{}, err
+	}
+	return a, nil
+}
+
+func updateAppeal(appeal *model.Appeal) error {
+	const q = `UPDATE ban_appeal SET appeal_text = :appeal_text, appeal_state = :appeal_state, email = :email,
+		updated_on = :updated_on WHERE appeal_id = :appeal_id`
+	_, err := db.NamedExec(q, appeal)
+	if err != nil {
+		return DBErr(err)
+	}
+	return nil
+}
+
+func insertAppeal(appeal *model.Appeal) error {
+	const q = `INSERT INTO ban_appeal (ban_id, appeal_text, appeal_state, email, created_on, updated_on)
+		VALUES (:ban_id, :appeal_text, :appeal_state, :email, :created_on, :updated_on)`
+	res, err := db.NamedExec(q, appeal)
+	if err != nil {
+		return DBErr(err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return DBErr(err)
+	}
+	appeal.AppealID = int(id)
+	return nil
+}
+
+func SaveAppeal(appeal *model.Appeal) error {
+	appeal.UpdatedOn = time.Now().Unix()
+	if appeal.AppealID > 0 {
+		return updateAppeal(appeal)
+	}
+	appeal.CreatedOn = time.Now().Unix()
+	return insertAppeal(appeal)
 }
 
 func SaveBan(ban *model.Ban) error {
@@ -441,9 +486,32 @@ func GetFilteredWords() ([]string, error) {
 func SaveFilteredWord(word string) error {
 	const q = `INSERT INTO filtered_word (word) VALUES ($1)`
 	if _, err := db.Exec(q, word); err != nil {
-			return DBErr(err)
+		return DBErr(err)
 	}
 	return nil
+}
+
+func GetStats() (model.Stats, error) {
+	const q = `
+		SELECT
+    (SELECT COUNT(ban_id) FROM ban) as bans_total,
+    (SELECT COUNT(ban_id) FROM ban WHERE created_on
+         BETWEEN ((julianday('now') - 2440587.5)*86400.0 - 86400) AND (julianday('now') - 2440587.5)*86400.0) as bans_day,
+    (SELECT COUNT(ban_id) FROM ban WHERE created_on
+         BETWEEN ((julianday('now') - 2440587.5)*86400.0 - (86400 * 24)) AND (julianday('now') - 2440587.5)*86400.0) as bans_month,
+    (SELECT COUNT(net_id) FROM ban_net) as ban_cidr,
+    (SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 0 ) as appeals_open,
+    (SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 1 OR appeal_state = 2 ) as appeals_closed,
+    (SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
+    (SELECT COUNT(server_id) FROM server) as servers_total
+`
+	var stats model.Stats
+	if err := db.Get(&stats, q); err != nil {
+		log.Errorf("Failed to fetch stats: %v", err)
+		return model.Stats{}, DBErr(err)
+	}
+	return stats, nil
+
 }
 
 func DBErr(err error) error {

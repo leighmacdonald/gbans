@@ -49,12 +49,12 @@ func (s BanSource) String() string {
 type Reason int
 
 const (
-	Custom     Reason = 1
-	External   Reason = 2
-	Cheating   Reason = 3
-	Racism     Reason = 4
-	Harassment Reason = 5
-	Exploiting Reason = 6
+	Custom           Reason = 1
+	External         Reason = 2
+	Cheating         Reason = 3
+	Racism           Reason = 4
+	Harassment       Reason = 5
+	Exploiting       Reason = 6
 	WarningsExceeded Reason = 7
 )
 
@@ -201,4 +201,35 @@ func NewPerson() Person {
 		CreatedOn: time.Now().Unix(),
 		UpdatedOn: time.Now().Unix(),
 	}
+}
+
+type AppealState int
+
+const (
+	ASNew     AppealState = 0
+	ASDenied  AppealState = 1
+	ASGranted AppealState = 2
+)
+
+type Appeal struct {
+	AppealID    int         `db:"appeal_id" json:"appeal_id"`
+	BanID       int         `db:"ban_id" json:"ban_id"`
+	AppealText  string      `db:"appeal_text" json:"appeal_text"`
+	AppealState AppealState `db:"appeal_state" json:"appeal_state"`
+	Email       string      `db:"email" json:"email"`
+	CreatedOn   int64       `db:"created_on" json:"created_on"`
+	UpdatedOn   int64       `db:"updated_on" json:"updated_on"`
+}
+
+type Stats struct {
+	BansTotal     int `json:"bans_total"`
+	BansDay       int `json:"bans_day"`
+	BansWeek      int `json:"bans_week"`
+	BansMonth     int `json:"bans_month"`
+	BansCIDRTotal int `json:"bans_cidr_total"`
+	AppealsOpen   int `json:"appeals_open"`
+	AppealsClosed int `json:"appeals_closed"`
+	FilteredWords int `json:"filtered_words"`
+	ServersAlive  int `json:"servers_alive"`
+	ServersTotal  int `json:"servers_total"`
 }

@@ -14,6 +14,7 @@ import 'what-input'
 import {render} from "react-dom";
 import * as React from "react";
 import BanBrowser from "./component/BanBrowser";
+import {AppealForm} from "./component/AppealForm";
 
 globalThis.jQuery = $
 
@@ -25,6 +26,8 @@ function main() {
     switch (p.toLowerCase()) {
         case "/":
             render(<BanBrowser/>, document.getElementById("ban_list"));
+        case "/appeal":
+            render(<AppealForm />, document.getElementById("appeal_form"))
     }
 }
 

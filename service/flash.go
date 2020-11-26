@@ -17,12 +17,14 @@ const (
 
 type Flash struct {
 	Level   Level  `json:"level"`
+	Heading string `json:"heading"`
 	Message string `json:"message"`
 }
 
-func flash(c *gin.Context, level Level, msg string) {
+func flash(c *gin.Context, level Level, heading string, msg string) {
 	s := sessions.Default(c)
 	s.AddFlash(Flash{
+		Heading: heading,
 		Level:   level,
 		Message: msg,
 	})
@@ -33,17 +35,17 @@ func flash(c *gin.Context, level Level, msg string) {
 	log.Infof("Flashed: [%v] %s", level, msg)
 }
 
-func successFlash(c *gin.Context, msg string, path string) {
-	flash(c, lSuccess, msg)
+func successFlash(c *gin.Context, heading string, msg string, path string) {
+	flash(c, lSuccess, heading, msg)
 	c.Redirect(http.StatusTemporaryRedirect, path)
 }
 
-func abortFlash(c *gin.Context, msg string, path string) {
-	flash(c, lError, msg)
+func abortFlash(c *gin.Context, heading string, msg string, path string) {
+	flash(c, lError, heading, msg)
 	c.Redirect(http.StatusTemporaryRedirect, path)
 }
 
-func abortFlashErr(c *gin.Context, msg string, path string, err error) {
-	abortFlash(c, msg, path)
+func abortFlashErr(c *gin.Context, heading string, msg string, path string, err error) {
+	abortFlash(c, msg, heading, path)
 	log.Error(err)
 }

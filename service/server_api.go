@@ -54,7 +54,7 @@ func onPostLogMessage() gin.HandlerFunc {
 	}
 }
 
-func onPostServerAuth() gin.HandlerFunc {
+func onSAPIPostServerAuth() gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`

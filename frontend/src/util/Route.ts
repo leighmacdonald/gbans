@@ -3,6 +3,7 @@ import {fmt} from "./text";
 export const Route = {
     Home: "/",
     Dist: "/dist",
+    APIAppeal: "/api/v1/appeal",
     APIBans: "/api/v1/bans",
     APIFilteredWords: "/api/v1/filtered_words"
 }

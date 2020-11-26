@@ -8,14 +8,14 @@ import (
 	"net/http"
 )
 
-func onGetFilteredWords() gin.HandlerFunc {
+func onAPIGetFilteredWords() gin.HandlerFunc {
 	type resp struct {
-		Count int `json:"count"`
+		Count int      `json:"count"`
 		Words []string `json:"words"`
 	}
 	return func(c *gin.Context) {
 		words, err := store.GetFilteredWords()
-		if err != nil{
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{})
 			return
 		}
@@ -27,7 +27,26 @@ func onGetFilteredWords() gin.HandlerFunc {
 
 }
 
-func onGetBans() gin.HandlerFunc {
+func onAPIGetStats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		stats, err := store.GetStats()
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		serverStateMu.RLock()
+		defer serverStateMu.RUnlock()
+		for _, server := range serverState {
+			if server.Alive {
+				stats.ServersAlive++
+			}
+		}
+		c.JSON(http.StatusOK, stats)
+	}
+
+}
+
+func onAPIGetBans() gin.HandlerFunc {
 	type resp struct {
 		Total int                  `json:"total"`
 		Bans  []model.BannedPerson `json:"bans"`

@@ -203,7 +203,7 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	}
 	exists := false
 	ban, err := store.GetBan(pi.sid)
-	if err != nil && store.DBErr(err) != store.ErrNoResult {
+	if err != nil && !errors.Is(store.DBErr(err), store.ErrNoResult) {
 		return errCommandFailed
 	}
 	if ban.BanID > 0 {

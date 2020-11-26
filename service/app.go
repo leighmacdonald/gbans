@@ -30,8 +30,8 @@ var (
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
 	serverState   map[string]ServerState
-	warnings map[steamid.SID64][]UserWarning
-	warningsMu *sync.RWMutex
+	warnings      map[steamid.SID64][]UserWarning
+	warningsMu    *sync.RWMutex
 )
 
 type WarnReason int
@@ -42,7 +42,7 @@ const (
 
 type UserWarning struct {
 	WarnReason WarnReason
-	CreatedOn time.Time
+	CreatedOn  time.Time
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
@@ -50,7 +50,7 @@ func warnWorker() {
 	t := time.NewTicker(1 * time.Second)
 	for {
 		select {
-		case <- t.C:
+		case <-t.C:
 			now := time.Now().UTC()
 			warningsMu.Lock()
 			for k := range warnings {
@@ -71,6 +71,7 @@ func warnWorker() {
 		}
 	}
 }
+
 // addWarning records a user warning into memory. This is not persistent, so application
 // restarts will wipe the users history.
 //
@@ -108,6 +109,8 @@ type ServerState struct {
 	GameType gameType
 	A2SInfo  *a2s.ServerInfo
 	extra.Status
+	// TODO Find better way to track this
+	Alive bool
 }
 
 func (s ServerState) OS() template.HTML {

@@ -23,6 +23,11 @@ Basic steps to build the binary:
     1. git clone git@github.com:leighmacdonald/gbans.git && cd gbans
     2. make
     
+Note that the fts5 sqlite extension is used here. You can manually do the following as well if you
+do not want to use the makefile.
+
+    1. go build --tags "fts5"  
+ 
 You should now have a binary in the project root called `gbans` or `gbans.exe` if on windows.
 
 ## Configuration

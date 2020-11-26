@@ -179,3 +179,19 @@ html {
   @extend .img_32;
   background-image: url("../img/game-730.png");
 }
+
+.flash {
+  color: $white;
+}
+
+.flash-alert {
+  background-color: get-color(alert);
+}
+
+.flash-warning {
+  background-color: get-color(warning);
+}
+
+.flash-success {
+  background-color: get-color(success);
+}

@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"fmt"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
@@ -107,12 +108,30 @@ type TmplArgs struct {
 	Person   model.Person
 	SiteName string
 	V        M
+	Flashes  []Flash
+}
+
+func getFlashes(c *gin.Context) []Flash {
+	var flashes []Flash
+	sesh := sessions.Default(c)
+	for _, flash := range sesh.Flashes() {
+		f, ok := flash.(Flash)
+		if !ok {
+			log.Errorf("failed to cast flash??")
+		}
+		flashes = append(flashes, f)
+	}
+	if err := sesh.Save(); err != nil {
+		log.Errorf("Failed to save session after flashes: %v", err)
+	}
+	return flashes
 }
 
 func defaultArgs(c *gin.Context) TmplArgs {
 	args := TmplArgs{}
 	args.SiteName = config.General.SiteName
 	args.Person = currentPerson(c)
+	args.Flashes = getFlashes(c)
 	args.V = M{}
 	return args
 }
@@ -151,7 +170,7 @@ func initTemplates() {
 			return err
 		}
 		if strings.HasSuffix(info.Name(), ".gohtml") {
-			if !strings.Contains(path, "_") && !strings.Contains(path, "/partials") {
+			if !strings.HasPrefix(path, "_") && !strings.Contains(path, "/partials") {
 				templateFiles = append(templateFiles, info.Name())
 			}
 		}
@@ -170,6 +189,11 @@ func initTemplates() {
 		pageN := strings.ReplaceAll(p, ".gohtml", "")
 		templates[pageN] = newTmpl(newPagesSet(pageN)...)
 	}
+	var tpls []string
+	for k := range templates {
+		tpls = append(tpls, k)
+	}
+	log.Debug("Loaded templates: %v", tpls)
 }
 
 func render(c *gin.Context, t string, args TmplArgs) {
