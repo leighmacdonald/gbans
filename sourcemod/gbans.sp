@@ -53,11 +53,12 @@ void OnPluginStart() {
     LoadTranslations("common.phrases.txt");
     ReadConfig();
     AuthenticateServer();
-    RegConsoleCmd("gb_version", Command_Version, "Get gbans version");
+    RegConsoleCmd("gb_version", CmdVersion, "Get gbans version");
+    RegConsoleCmd("gb_mod", CmdMod, "Ping a moderator");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
-    RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_BAN);
-
+    RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_KICK);
+    RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
     AddCommandListener(onUserSay, "say");
     AddCommandListener(onUserTeamSay, "say_team");
 }
@@ -182,14 +183,20 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             return;
         }
         JSON_Object resp = json_decode(content);
-        bool client_id = resp.GetBool("client_id");
+        int client_id = resp.GetInt("client_id");
         int ban_type = resp.GetInt("ban_type");
         char msg[256];
         resp.GetString("msg", msg, sizeof(msg));
         PrintToServer("[GB] Ban state: %d", ban_type);
-        if (ban_type >= BSBanned) {
-            KickClient(client_id, msg);
-            return;
+        switch (ban_type) {
+            case BSBanned: {
+                KickClient(client_id, msg);
+                return;
+            }
+            case BSNoComm: {
+                BaseComm_SetClientGag(client_id, true);
+                BaseComm_SetClientMute(client_id, true);
+            }
         }
         char ip[16];
         GetClientIP(client_id, ip, sizeof(ip));
@@ -315,6 +322,7 @@ Action AdminCmdBan(int client, int argc) {
     if (time > 0) {
         PrintToServer("Non permanent");
     }
+
     return Plugin_Handled;
 }
 
@@ -331,8 +339,85 @@ Action AdminCmdMute(int client, int argc) {
 }
 
 public
-Action Command_Version(int client, int args) {
+Action CmdVersion(int client, int args) {
     ReplyToCommand(client, "[GB] Version %s", PLUGIN_VERSION);
+    return Plugin_Handled;
+}
+
+/**
+Ping the moderators through discord
+*/
+public
+Action CmdMod(int client, int argc) {
+    if (argc < 1) {
+        ReplyToCommand(client, "Must supply a reason message for pinging");
+        return Plugin_Handled;
+    }
+    char reason[256];
+    for (int i = 1; i <= argc; i++) {
+        if (i > 1) {
+            StrCat(reason, sizeof(reason), " ");
+        }
+        char buff[128];
+        GetCmdArg(i, buff, sizeof(buff));
+        StrCat(reason, sizeof(reason), buff);
+    }
+    char auth_id[50];
+    if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id), true)) {
+        ReplyToCommand(client, "Failed to get auth_id of user: %d", client);
+        return Plugin_Continue;
+    }
+    char name[64];
+    if (!GetClientName(client, name, sizeof(name))) {
+        PrintToServer("Failed to get user name?");
+        return Plugin_Continue;
+    }
+    JSON_Object obj = new JSON_Object();
+    obj.SetString("server_name", g_server_name);
+    obj.SetString("steam_id", auth_id);
+    obj.SetString("name", name);
+    obj.SetString("reason", reason);
+    obj.SetInt("client", client);
+    char encoded[1024];
+    obj.Encode(encoded, sizeof(encoded));
+    obj.Cleanup();
+    delete obj;
+    System2HTTPRequest req = newReq(OnPingModRespRecieved, "/sapi/v1/ping_mod");
+    req.SetData(encoded);
+    req.POST();
+    delete req;
+
+    return Plugin_Handled;
+}
+
+void OnPingModRespRecieved(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+                           HTTPRequestMethod method) {
+    if (!success) {
+        return;
+    }
+    if (response.StatusCode != HTTP_STATUS_OK) {
+        PrintToServer("[GB] Bad status on authentication request: %s", error);
+        return;
+    }
+    char[] content = new char[response.ContentLength + 1];
+    char message[250];
+    int client;
+    response.GetContent(content, response.ContentLength + 1);
+    JSON_Object resp = json_decode(content);
+    resp.GetString("message", message, sizeof(message));
+    resp.GetInt("client");
+    ReplyToCommand(client, message);
+}
+
+public
+Action CmdHelp(int client, int argc) {
+    CmdVersion(client, argc);
+    ReplyToCommand(client, "gb_ban #user duration [reason]");
+    ReplyToCommand(client, "gb_ban_ip #user duration [reason]");
+    ReplyToCommand(client, "gb_kick #user [reason]");
+    ReplyToCommand(client, "gb_mute #user duration [reason]");
+    ReplyToCommand(client, "gb_mod reason");
+    ReplyToCommand(client, "gb_version -- Show the current version");
     return Plugin_Handled;
 }
 

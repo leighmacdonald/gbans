@@ -4,7 +4,12 @@ if(!(Test-Path -Path "..\tf2server\steamapps\common\Team Fortress 2 Dedicated Se
 if(!(Test-Path -Path ".\plugins" )){
     New-Item -ItemType Directory -Path ".\plugins"
 }
-Remove-Item -Path "plugins\gbans.smx"
+if((Test-Path -Path ".\plugins\gbans.smx" )){ 
+    Remove-Item -Path "plugins\gbans.smx"
+}
+
+Copy-Item -Path ".\adminmenu_custom.txt" -Force -Destination "..\tf2server\steamapps\common\Team Fortress 2 Dedicated Server\tf\addons\sourcemod\configs\"
+
 clang-format --assume-filename="gbans.cpp" -i gbans.sp
 if (0 -ne $LastExitCode) {
     Write-Host "Clang-Format failed"

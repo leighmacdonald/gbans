@@ -1,0 +1,182 @@
+"Commands"
+{
+	"GBans Admin"
+	{
+		"Kick Player"
+		{
+			"cmd"			"gb_kick #1 #2"
+			"admin"			"sm_kick"
+			"execute"		"player"
+			"1"
+			{
+				"type" 		"player"
+				"method"	"name"
+				"title"		"Player To Kick"
+ 
+			}
+			"2"
+			{
+				"type" 		"list"
+				"title"		"Reason"
+				"1"		"harassment"
+				"1."		"Harassment"
+				"2"		"exploitng"
+				"2."		"Exploiting"
+				"3"		"afk"
+				"3."		"AFK"
+				"4"		"other"
+				"4."		"Other"
+			}
+ 
+		}
+		"Ban Player"
+		{
+			"cmd"			"gb_ban #1 #2 #3"
+			"admin"			"sm_ban"
+			"execute"		"player"
+			"1"
+			{
+				"type" 		"player"
+				"method"	"name"
+				"title"		"Player To Ban"
+ 
+			}
+			"2"
+			{
+				"type" "list"
+				"title" "Duration"
+				"1" "0"
+				"1." "Forever"
+				"2" "1m"
+				"2." "1 Minute"
+				"3" "5m"
+				"3." "5 Minutes"
+				"4" "1h"
+				"4." "1 Hour"
+				"5" "12h"
+				"5." "12 Hours"
+				"6" "1d"
+				"6." "1day"
+				"7" "1w"
+				"7." "1 Week"
+				"8" "1M"
+				"8." "1 Month"
+				"9" "1y"
+				"9" "1 year"
+			}
+			"3"
+			{
+				"type" 		"list"
+				"title"		"Reason"
+				"1"		"harassment"
+				"1."		"Harassment"
+				"2"		"exploitng"
+				"2."		"Exploiting"
+				"3"		"cheating"
+				"3."		"Cheating"
+				"4"		"other"
+				"4."		"Other"
+			}
+ 
+		}
+		"Ban Player IP"
+		{
+			"cmd"			"gb_ban_ip #1 #2"
+			"admin"			"sm_ban"
+			"execute"		"player"
+			"1"
+			{
+				"type" 		"player"
+				"method"	"ip"
+				"title"		"Player IP To Ban"
+ 
+			}
+			"2"
+			{
+				"type" "list"
+				"title" "Duration"
+				"1" "0"
+				"1." "Forever"
+				"2" "1m"
+				"2." "1 Minute"
+				"3" "5m"
+				"3." "5 Minutes"
+				"4" "1h"
+				"4." "1 Hour"
+				"5" "12h"
+				"5." "12 Hours"
+				"6" "1d"
+				"6." "1day"
+				"7" "1w"
+				"7." "1 Week"
+				"8" "1M"
+				"8." "1 Month"
+				"9" "1y"
+				"9" "1 year"
+				
+			}
+			"3"
+			{
+				"type" 		"list"
+				"title"		"Reason"
+				"1"		"harassment"
+				"1."		"Harassment"
+				"2"		"exploitng"
+				"2."		"Exploiting"
+				"3"		"cheating"
+				"3."		"Cheating"
+				"4"		"other"
+				"4."		"Other"
+			}
+ 
+		}
+		"Mute & Gag Player"
+		{
+			"cmd"			"gb_mute #1 #2 #3"
+			"admin"			"sm_kick"
+			"execute"		"player"
+			"1"
+			{
+				"type" 		"player"
+				"method"	"name"
+				"title"		"Player To Mute"
+ 
+			}
+			"2"
+			{
+				"type" "list"
+				"title" "Duration"
+				"1" "0"
+				"1." "Forever"
+				"2" "1m"
+				"2." "1 Minute"
+				"3" "5m"
+				"3." "5 Minutes"
+				"4" "1h"
+				"4." "1 Hour"
+				"5" "12h"
+				"5." "12 Hours"
+				"6" "1d"
+				"6." "1day"
+				"7" "1w"
+				"7." "1 Week"
+				"8" "1M"
+				"8." "1 Month"
+				"9" "1y"
+				"9" "1 year"
+			}
+			"3"
+			{
+				"type" 		"list"
+				"title"		"Reason"
+				"1"		"harassment"
+				"1."		"Harassment"
+				"2"		"spam"
+				"2."		"Spamming"
+				"3"		"other"
+				"3."		"Other"
+			}
+ 
+		}
+	}
+}
