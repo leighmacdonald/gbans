@@ -26,3 +26,5 @@ sourcemod/.vscode/
 /tf2server/
 /.cache/
 /frontend/.cache/
+*.yaml
+*.yml
