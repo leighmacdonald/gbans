@@ -2,8 +2,8 @@ create table if not exists person
 (
     steam_id                 bigint
         constraint player_pk primary key,
-    created_on               timestamp         not null,
-    updated_on               timestamp         not null,
+    created_on               timestamp       not null,
+    updated_on               timestamp       not null,
     ip_addr                  text default '' not null,
     communityvisibilitystate int  default 0  not null,
     profilestate             int             not null,
@@ -24,28 +24,29 @@ create table if not exists person
 CREATE INDEX if not exists idx_personaname_lower ON person (LOWER(personaname));
 
 -- GDPR violation?
-CREATE TABLE IF NOT EXISTS person_names (
+CREATE TABLE IF NOT EXISTS person_names
+(
     personaname_id SERIAL PRIMARY KEY,
-    steam_id                 bigint,
-    personaname text not null,
-    created_on               timestamp         not null,
-    CONSTRAINT fk_steam_id FOREIGN KEY(steam_id) REFERENCES person(steam_id)
+    steam_id       bigint,
+    personaname    text      not null,
+    created_on     timestamp not null,
+    CONSTRAINT fk_steam_id FOREIGN KEY (steam_id) REFERENCES person (steam_id)
 );
 
 create table if not exists ban
 (
     ban_id      SERIAL PRIMARY KEY,
     steam_id    bigint            not null,
-    author_id   int default 0  not null,
-    ban_type    int            not null,
-    reason      int            not null,
-    reason_text text    default '' not null,
-    note        text    default '' not null,
-    until       timestamp  not null,
-    created_on  timestamp  not null,
-    updated_on  timestamp  not null,
-    ban_source  int     default 0  not null,
-    CONSTRAINT fk_person FOREIGN KEY(steam_id) REFERENCES person(steam_id)
+    author_id   bigint default 0  not null,
+    ban_type    int               not null,
+    reason      int               not null,
+    reason_text text   default '' not null,
+    note        text   default '' not null,
+    until       timestamp         not null,
+    created_on  timestamp         not null,
+    updated_on  timestamp         not null,
+    ban_source  int    default 0  not null,
+    CONSTRAINT fk_person FOREIGN KEY (steam_id) REFERENCES person (steam_id)
 );
 
 create table if not exists ban_net
@@ -53,10 +54,10 @@ create table if not exists ban_net
     net_id     SERIAL PRIMARY KEY,
     cidr       cidr            not null,
     source     int  default 0  not null,
-    created_on timestamp         not null,
-    updated_on timestamp         not null,
+    created_on timestamp       not null,
+    updated_on timestamp       not null,
     reason     text default '' not null,
-    until      timestamp         not null
+    until      timestamp       not null
 );
 
 create unique index if not exists ban_net_cidr_uindex
@@ -67,14 +68,14 @@ create table if not exists server
     server_id        SERIAL PRIMARY KEY,
     short_name       varchar(32)            not null,
     token            varchar(40) default '' not null,
-    address          varchar(128)            not null,
-    port             int         not null,
-    rcon             varchar(128)            not null,
+    address          varchar(128)           not null,
+    port             int                    not null,
+    rcon             varchar(128)           not null,
     token_created_on timestamp,
-    reserved_slots   smallint         not null,
-    created_on       timestamp         not null,
-    updated_on       timestamp         not null,
-    password         varchar(20) not null
+    reserved_slots   smallint               not null,
+    created_on       timestamp              not null,
+    updated_on       timestamp              not null,
+    password         varchar(20)            not null
 );
 
 create unique index if not exists server_name_uindex
@@ -99,7 +100,7 @@ create table if not exists ban_appeal
     email        text          not null,
     created_on   integer       not null,
     updated_on   integer       not null,
-    CONSTRAINT fk_ban_id FOREIGN KEY (ban_id) REFERENCES ban(ban_id)
+    CONSTRAINT fk_ban_id FOREIGN KEY (ban_id) REFERENCES ban (ban_id)
 );
 
 create unique index if not exists ban_appeal_ban_id_uindex

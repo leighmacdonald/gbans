@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
+	"github.com/leighmacdonald/gbans/service"
 	"github.com/leighmacdonald/golib"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -19,7 +19,7 @@ var addserverCmd = &cobra.Command{
 gban addserver <server_name> <addr> <port> <rcon>
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		store.Init(config.DB.Path)
+		service.Init(config.DB.DSN)
 		if len(args) != 4 {
 			log.Fatalf("Invalid arg count")
 		}
@@ -36,7 +36,7 @@ gban addserver <server_name> <addr> <port> <rcon>
 			RCON:       args[3],
 			Password:   golib.RandomString(20),
 		}
-		if err := store.SaveServer(&s); err != nil {
+		if err := service.SaveServer(&s); err != nil {
 			log.Fatalf("Could not create server: %v", err)
 		}
 		log.Infof("Added server %s with token %s", s.ServerName, s.Password)

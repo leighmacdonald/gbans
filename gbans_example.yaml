@@ -1,13 +1,27 @@
+general:
+  site_name: "gbans"
+  steam_key:
+  owner: 76561198000000000
+  # Run mode for the HTTP service
+  # Should normally be "release"
+  mode: "release" # release, debug, test
+
 http:
   # Listen on this ip address
   # 0.0.0.0 = Any
   host: 0.0.0.0
   # Listen on this port
   port: 6006
-  # Run mode for the HTTP service
-  # Should normally be "release"
-  mode: "release" # release, debug, test
-  domain: https://your.host
+  # Enable TLS?
+  # If running behind a reverse proxy that performs TLS for you its safe to leave this as false
+  # However if you are exposing the service directly to the internet, then you are *highly* advised to enable this.
+  tls: false
+  # tls_auto: enable or disable the generation of SSL certs through let's encrypt for free. This is only
+  # used if tls is also enabled.
+  tls_auto: false
+  # External URL that people will access your site through
+  # This is also used for tls_auto when requesting a new certificate
+  domain: https://gbans.domain.com
   static_path: frontend/dist
   client_timeout: 20s
   # Encryption key for cookies
@@ -29,8 +43,9 @@ relay:
     - "13141312312312313"
 
 database:
-  # Path to your database
-  path: "db.sqlite"
+  # DSN/URL to your database
+  # eg: "postgresql://user:password@host_name:5432/database"
+  dsn: ""
 
 discord:
   # Enable optional discord integration
@@ -46,10 +61,6 @@ discord:
     - "234567890123456789"
   # Commands all start with this character
   prefix: "!"
-
-general:
-  site_name: "gbans"
-  steam_key:
 
 logging:
   # Set the debug log level

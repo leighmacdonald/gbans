@@ -4,20 +4,19 @@ import (
 	"context"
 	"encoding/gob"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/bot"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/external"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
 	"html/template"
-	"net"
+	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,6 +31,7 @@ var (
 	serverState   map[string]ServerState
 	warnings      map[steamid.SID64][]UserWarning
 	warningsMu    *sync.RWMutex
+	httpServer    *http.Server
 )
 
 type WarnReason int
@@ -51,7 +51,7 @@ func warnWorker() {
 	for {
 		select {
 		case <-t.C:
-			now := time.Now().UTC()
+			now := config.Now()
 			warningsMu.Lock()
 			for k := range warnings {
 				for i, w := range warnings[k] {
@@ -85,11 +85,13 @@ func addWarning(sid64 steamid.SID64, reason WarnReason) {
 	}
 	warnings[sid64] = append(warnings[sid64], UserWarning{
 		WarnReason: reason,
-		CreatedOn:  time.Now(),
+		CreatedOn:  config.Now(),
 	})
 	if len(warnings[sid64]) >= config.General.WarningLimit {
-		Ban(ctx, sid64.String(), "system", 0,
-			nil, model.Banned, model.WarningsExceeded, "Warning limit exceeded", model.System)
+		if err := BanPlayer(ctx, sid64, config.General.Owner, 0, model.WarningsExceeded,
+			"Warning limit exceeded", model.System); err != nil {
+			log.Errorf("Failed to ban player after too many warnings: %s", err)
+		}
 	}
 }
 
@@ -142,6 +144,7 @@ func init() {
 	serverStateMu = &sync.RWMutex{}
 	ctx = context.Background()
 	router = gin.New()
+
 }
 
 // Start is the main application entry point
@@ -155,6 +158,19 @@ func Start() {
 	}
 	// Load the HTML templated into memory
 	initTemplates()
+
+	// Watch for template changes and reload so we dont have to recompile on every edit
+	if config.General.Mode == "debug" {
+		rx := regexp.MustCompile(`.+?\.gohtml$`)
+		go util.WatchDir(ctx, "templates", func(path string) error {
+			if !strings.HasPrefix(path, "_") && rx.MatchString(path) {
+				log.Debugf("Template modified: %s", path)
+				initTemplates()
+			}
+			return nil
+		})
+	}
+
 	// Setup the HTTP router
 	initRouter()
 	// Setup the storage backend
@@ -180,7 +196,7 @@ func Start() {
 
 func initFilters() {
 	// TODO load external lists via http
-	words, err := store.GetFilteredWords()
+	words, err := GetFilteredWords()
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
@@ -189,20 +205,19 @@ func initFilters() {
 }
 
 func initStore() {
-	store.Init(config.DB.Path)
+	Init(config.DB.DSN)
 }
 
 func initWorkers() {
 	go banSweeper()
 	go serverStateUpdater()
 	go profileUpdater()
-	go updateSearchIndex()
 	go warnWorker()
 }
 
 func initDiscord() {
 	if config.Discord.Token != "" {
-		go bot.Start(ctx, config.Discord.Token, config.Discord.ModChannels)
+		go StartDiscord(ctx, config.Discord.Token, config.Discord.ModChannels)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}
@@ -214,43 +229,6 @@ func initNetBans() {
 			log.Errorf("Failed to import list: %v", err)
 		}
 	}
-}
-
-func Ban(ctx context.Context, sidStr string, author string, duration time.Duration, ip net.IP,
-	banType model.BanType, reason model.Reason, reasonText string, source model.BanSource) error {
-	sid, err := steamid.StringToSID64(sidStr)
-	if err != nil || !sid.Valid() {
-		return errors.Errorf("Failed to get steam id from; %s", sidStr)
-	}
-	aid, err := steamid.StringToSID64(author)
-	if err != nil || !aid.Valid() {
-		return errors.Errorf("Failed to get steam id from; %s", sidStr)
-	}
-	var until int64
-	if duration.Seconds() != 0 {
-		until = time.Now().Add(duration).Unix()
-	}
-	ban := model.Ban{
-		SteamID:    sid,
-		AuthorID:   aid,
-		BanType:    banType,
-		Reason:     reason,
-		ReasonText: reasonText,
-		Note:       "naughty",
-		Until:      until,
-		Source:     source,
-		CreatedOn:  time.Now().Unix(),
-		UpdatedOn:  time.Now().Unix(),
-	}
-	if err := store.SaveBan(&ban); err != nil {
-		return store.DBErr(err)
-	}
-	servers, err := store.GetServers()
-	if err != nil {
-		log.Errorf("Failed to get server for ban propagation")
-	}
-	QueryRCON(ctx, servers, "gb_kick ")
-	return nil
 }
 
 func queryInt(c *gin.Context, key string) int {

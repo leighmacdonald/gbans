@@ -4,7 +4,6 @@ import "C"
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/go-homedir"
@@ -57,14 +56,15 @@ type rootConfig struct {
 }
 
 type DBConfig struct {
-	Path string `mapstructure:"path"`
+	DSN string `mapstructure:"dsn"`
 }
 
 type HTTPConfig struct {
 	Host                  string `mapstructure:"host"`
 	Port                  int    `mapstructure:"port"`
-	Mode                  string `mapstructure:"mode"`
 	Domain                string `mapstructure:"domain"`
+	TLS                   bool   `mapstructure:"tls"`
+	TLSAuto               bool   `mapstructure:"tls_auto"`
 	StaticPath            string `mapstructure:"static_path"`
 	CookieKey             string `mapstructure:"cookie_key"`
 	ClientTimeout         string `mapstructure:"client_timeout"`
@@ -78,8 +78,11 @@ func (h HTTPConfig) Addr() string {
 type GeneralConfig struct {
 	SiteName       string        `mapstructure:"site_name"`
 	SteamKey       string        `mapstructure:"steam_key"`
+	Owner          steamid.SID64 `mapstructure:"owner"`
+	Mode           string        `mapstructure:"mode"`
 	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
 	WarningLimit   int           `mapstructure:"warning_limit"`
+	UseUTC         bool          `mapstructure:"use_utc"`
 }
 
 type DiscordConfig struct {
@@ -111,13 +114,18 @@ var (
 	General = GeneralConfig{
 		SiteName:       "gbans",
 		SteamKey:       "",
+		Mode:           "release",
+		Owner:          76561198084134025,
 		WarningTimeout: time.Hour * 6,
+		WarningLimit:   3,
+		UseUTC:         true,
 	}
 	HTTP = HTTPConfig{
 		Host:                  "127.0.0.1",
 		Port:                  6970,
-		Mode:                  "release",
 		Domain:                "http://localhost:6006",
+		TLS:                   false,
+		TLSAuto:               false,
 		StaticPath:            "frontend/dist",
 		CookieKey:             golib.RandomString(32),
 		ClientTimeout:         "30s",
@@ -135,7 +143,7 @@ var (
 		ChannelIDs: []string{},
 	}
 	DB = DBConfig{
-		Path: "db.sqlite",
+		DSN: "db.sqlite",
 	}
 	Discord = DiscordConfig{
 		Enabled:   false,
@@ -183,7 +191,7 @@ func Read(cfgFile string) {
 		if err := viper.Unmarshal(&cfg); err != nil {
 			log.Fatalf("Invalid config file format: %v", err)
 		}
-		d, err := util.ParseDuration(cfg.HTTP.ClientTimeout)
+		d, err := ParseDuration(cfg.HTTP.ClientTimeout)
 		if err != nil {
 			log.Fatalf("Could not parse http client timeout duration: %v", err)
 		}
@@ -199,7 +207,7 @@ func Read(cfgFile string) {
 		found = true
 	}
 	configureLogger(log.StandardLogger())
-	gin.SetMode(HTTP.Mode)
+	gin.SetMode(General.Mode)
 	steamid.SetKey(General.SteamKey)
 	if found {
 		log.Infof("Using config file: %s", viper.ConfigFileUsed())

@@ -1,3 +1,3 @@
 #!/bin/bash
-echo "Starting mika..."
+echo "Starting gbans..."
 exec "$@"

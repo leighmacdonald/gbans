@@ -2,15 +2,14 @@ package service
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
 	log "github.com/sirupsen/logrus"
 	"html/template"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,7 +34,7 @@ func checkServerAuth(c *gin.Context) {
 		return
 	}
 	log.Debugf("Authed as: %s", token)
-	if !store.TokenValid(token) {
+	if !TokenValid(token) {
 		log.Warnf("Received invalid server token from %s", c.ClientIP())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized",
@@ -46,9 +45,38 @@ func checkServerAuth(c *gin.Context) {
 }
 
 func initHTTP() {
-	log.Infof("Starting gbans HTTP service")
+	log.Infof("Starting HTTP service")
 	go func() {
-		if err := router.Run(config.HTTP.Addr()); err != nil {
+		httpServer = &http.Server{
+			Addr:           config.HTTP.Addr(),
+			Handler:        router,
+			ReadTimeout:    10 * time.Second,
+			WriteTimeout:   10 * time.Second,
+			MaxHeaderBytes: 1 << 20,
+		}
+		if config.HTTP.TLS {
+			tls := &tls.Config{
+				// Causes servers to use Go's default ciphersuite preferences,
+				// which are tuned to avoid attacks. Does nothing on clients.
+				PreferServerCipherSuites: true,
+				// Only use curves which have assembly implementations
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP256,
+					tls.X25519, // Go 1.8 only
+				},
+				MinVersion: tls.VersionTLS12,
+				CipherSuites: []uint16{
+					tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+					tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8 only
+					tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8 only
+					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				},
+			}
+			httpServer.TLSConfig = tls
+		}
+		if err := httpServer.ListenAndServe(); err != nil {
 			log.Errorf("Error shutting down service: %v", err)
 		}
 	}()
@@ -113,15 +141,15 @@ type TmplArgs struct {
 
 func getFlashes(c *gin.Context) []Flash {
 	var flashes []Flash
-	sesh := sessions.Default(c)
-	for _, flash := range sesh.Flashes() {
+	session := sessions.Default(c)
+	for _, flash := range session.Flashes() {
 		f, ok := flash.(Flash)
 		if !ok {
 			log.Errorf("failed to cast flash??")
 		}
 		flashes = append(flashes, f)
 	}
-	if err := sesh.Save(); err != nil {
+	if err := session.Save(); err != nil {
 		log.Errorf("Failed to save session after flashes: %v", err)
 	}
 	return flashes
@@ -142,7 +170,7 @@ func newTmpl(files ...string) *template.Template {
 			return template.HTML(fmt.Sprintf(`<i class="%s"></i>`, class))
 		},
 		"currentYear": func() template.HTML {
-			return template.HTML(fmt.Sprintf("%d", time.Now().UTC().Year()))
+			return template.HTML(fmt.Sprintf("%d", config.Now().Year()))
 		},
 		"datetime": func(t time.Time) template.HTML {
 			return template.HTML(t.Format(time.RFC822))
@@ -191,9 +219,11 @@ func initTemplates() {
 	}
 	var tpls []string
 	for k := range templates {
-		tpls = append(tpls, k)
+		if !strings.Contains(k, "%s") && !strings.HasPrefix(k, "_") {
+			tpls = append(tpls, k)
+		}
 	}
-	log.Debug("Loaded templates: %v", tpls)
+	log.Debugf("Loaded templates: %s", strings.Join(tpls, ", "))
 }
 
 func render(c *gin.Context, t string, args TmplArgs) {
@@ -205,42 +235,4 @@ func render(c *gin.Context, t string, args TmplArgs) {
 		return
 	}
 	c.Data(200, gin.MIMEHTML, buf.Bytes())
-}
-
-func onPostBan() gin.HandlerFunc {
-	type req struct {
-		SteamID    string        `json:"steam_id"`
-		AuthorID   string        `json:"author_id"`
-		Duration   string        `json:"duration"`
-		IP         string        `json:"ip"`
-		BanType    model.BanType `json:"ban_type"`
-		Reason     model.Reason  `json:"reason"`
-		ReasonText string        `json:"reason_text"`
-	}
-
-	return func(c *gin.Context) {
-		var r req
-		if err := c.BindJSON(&r); err != nil {
-			c.JSON(http.StatusBadRequest, StatusResponse{
-				Success: false,
-				Message: "Failed to perform ban",
-			})
-			return
-		}
-		duration, err := time.ParseDuration(r.Duration)
-		if err != nil {
-			c.JSON(http.StatusNotAcceptable, StatusResponse{
-				Success: false,
-				Message: `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
-Valid time units are "s", "m", "h".`,
-			})
-		}
-		ip := net.ParseIP(r.IP)
-		if err := Ban(c, r.SteamID, r.AuthorID, duration, ip, r.BanType, r.Reason, r.ReasonText, model.Web); err != nil {
-			c.JSON(http.StatusNotAcceptable, StatusResponse{
-				Success: false,
-				Message: "Failed to perform ban",
-			})
-		}
-	}
 }

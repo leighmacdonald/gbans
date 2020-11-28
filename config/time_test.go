@@ -1,4 +1,4 @@
-package util
+package config
 
 import (
 	"github.com/stretchr/testify/require"

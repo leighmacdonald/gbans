@@ -1,15 +1,11 @@
-package bot
+package service
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
-	"github.com/leighmacdonald/gbans/util"
-	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -96,7 +92,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		return errUnknownID
 	}
 	if len(args) > 1 {
-		duration, err = util.ParseDuration(args[1])
+		duration, err = config.ParseDuration(args[1])
 		if err != nil {
 			return err
 		}
@@ -105,8 +101,8 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	if len(args) > 2 {
 		reasonStr = strings.Join(args[2:], " ")
 	}
-	ban, err := store.GetBan(pi.sid)
-	if err != nil && store.DBErr(err) != store.ErrNoResult {
+	ban, err := GetBan(pi.sid)
+	if err != nil && DBErr(err) != ErrNoResult {
 		log.Errorf("Error getting ban from db: %v", err)
 		return errors.New("Internal DB Error")
 	} else if err != nil {
@@ -122,8 +118,8 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	}
 	ban.BanType = model.NoComm
 	ban.ReasonText = reasonStr
-	ban.Until = time.Now().Add(duration).Unix()
-	if err := store.SaveBan(&ban); err != nil {
+	ban.Until = config.Now().Add(duration)
+	if err := SaveBan(&ban); err != nil {
 		log.Errorf("Failed to save ban: %v", err)
 		return errors.New("Failed to save mute state")
 	}
@@ -153,12 +149,12 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if len(args) > 2 {
 		reason = strings.Join(args[2:], " ")
 	}
-	duration, err := util.ParseDuration(args[1])
+	duration, err := config.ParseDuration(args[1])
 	if err != nil {
 		return errInvalidDuration
 	}
-	_, err = store.GetBanNet(args[0])
-	if err != nil && store.DBErr(err) != store.ErrNoResult {
+	_, err = GetBanNet(args[0])
+	if err != nil && DBErr(err) != ErrNoResult {
 		return errCommandFailed
 	}
 	if err == nil {
@@ -168,7 +164,7 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil {
 		return errCommandFailed
 	}
-	if err := store.SaveBanNet(&ban); err != nil {
+	if err := SaveBanNet(&ban); err != nil {
 		return errCommandFailed
 	}
 	pi, srv, err := findPlayerByCIDR(args[0])
@@ -180,20 +176,13 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	return sendMsg(s, m.ChannelID, "IP ban created successfully")
 }
 
-func isIP4(ip net.IP) bool {
-	if ip.To4() != nil {
-		return true
-	}
-	return false
-}
-
 // onBan !ban <id> <duration> [reason]
 func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
 	var reason string
 	if len(args) > 2 {
 		reason = strings.Join(args[2:], " ")
 	}
-	duration, err := util.ParseDuration(args[1])
+	duration, err := config.ParseDuration(args[1])
 	if err != nil {
 		return errInvalidDuration
 	}
@@ -201,40 +190,15 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	if !pi.valid {
 		return errUnknownID
 	}
-	exists := false
-	ban, err := store.GetBan(pi.sid)
-	if err != nil && !errors.Is(store.DBErr(err), store.ErrNoResult) {
-		return errCommandFailed
-	}
-	if ban.BanID > 0 {
-		exists = true
-	}
-	if ban.BanType == model.Banned {
-		return errDuplicateBan
-	}
-	ban.SteamID = pi.sid
-	ban.BanType = model.Banned
-	if duration > 0 {
-		ban.Until = time.Now().Add(duration).Unix()
-	} else {
-		ban.Until = 0
-	}
-	ban.ReasonText = reason
-	ban.Source = model.Bot
-	if err := store.SaveBan(&ban); err != nil {
-		return errCommandFailed
-	}
-	pi2, srv, err := findPlayerBySID(pi.sid)
-	if err == nil {
-		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick #%d %s", pi2.UserID, ban.ReasonText)); err != nil {
-			log.Debug(resp)
+	err = BanPlayer(ctx, pi.sid, config.General.Owner, duration, model.Custom, reason, model.Bot)
+	if err != nil {
+		if err == ErrDuplicate {
+			return sendMsg(s, m.ChannelID, "ID already banned")
+		} else {
+			return sendMsg(s, m.ChannelID, "Error banning: %s", err)
 		}
 	}
-	if exists {
-		return sendMsg(s, m.ChannelID, "Ban updated successfully")
-	} else {
-		return sendMsg(s, m.ChannelID, "Ban created successfully")
-	}
+	return sendMsg(s, m.ChannelID, "Ban created successfully")
 }
 
 //goland:noinspection ALL
@@ -244,33 +208,30 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if !pi.valid {
 		return errUnknownID
 	}
-	ban, err1 := store.GetBan(pi.sid)
-	if err1 != nil && err1 != store.ErrNoResult {
+	ban, err1 := GetBan(pi.sid)
+	if err1 != nil && err1 != ErrNoResult {
 		return errCommandFailed
 	}
-	banIp, err2 := store.GetBanNet(args[0])
-	if err2 != nil && err2 != store.ErrNoResult {
+	banIp, err2 := GetBanNet(args[0])
+	if err2 != nil && err2 != ErrNoResult {
 		return errCommandFailed
 	}
-	if err1 == store.ErrNoResult && err2 == store.ErrNoResult {
+	if err1 == ErrNoResult && err2 == ErrNoResult {
 		return sendMsg(s, m.ChannelID, "No ban for user in db")
 	}
 	sid := ""
-	var until time.Time
 	reason := ""
 	var remaining time.Duration
 	if ban.BanID > 0 {
 		sid = pi.sid.String()
-		until = time.Unix(ban.Until, 0)
 		reason = ban.ReasonText
-		remaining = until.Sub(time.Now())
+		remaining = ban.Until.Sub(config.Now())
 	}
 	ip := "N/A"
 	if banIp.NetID > 0 {
 		ip = banIp.CIDR
-		until = time.Unix(banIp.Until, 0)
 		reason = banIp.Reason
-		remaining = until.Sub(time.Now())
+		remaining = ban.Until.Sub(config.Now())
 	}
 	r := strings.Split(remaining.String(), ".")
 	return sendMsg(s, m.ChannelID, f, sid,
@@ -282,15 +243,15 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil || !sid.Valid() {
 		return errInvalidSID
 	}
-	ban, err := store.GetBan(sid)
+	ban, err := GetBan(sid)
 	if err != nil {
-		if err == store.ErrNoResult {
+		if err == ErrNoResult {
 			return errors.New("SteamID does not exist in database")
 		} else {
 			return errCommandFailed
 		}
 	}
-	if err := store.DropBan(ban); err != nil {
+	if err := DropBan(ban); err != nil {
 		return errCommandFailed
 	}
 	return sendMsg(s, m.ChannelID, "User ban is now inactive")
@@ -312,7 +273,7 @@ func onKick(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := store.GetServerByName(args[0])
+	server, err := GetServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -329,7 +290,7 @@ func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 }
 
 func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := store.GetServerByName(args[0])
+	server, err := GetServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -346,7 +307,7 @@ func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := store.GetServerByName(args[0])
+	server, err := GetServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -360,7 +321,7 @@ func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	servers, err := store.GetServers()
+	servers, err := GetServers()
 	if err != nil {
 		return errors.New("Failed to fetch servers")
 	}
@@ -427,7 +388,7 @@ func getServerStatus(server model.Server) (extra.Status, error) {
 }
 
 func getAllServerStatus() (map[model.Server]extra.Status, error) {
-	servers, err := store.GetServers()
+	servers, err := GetServers()
 	if err != nil {
 		return nil, err
 	}
@@ -518,12 +479,12 @@ func findPlayerByCIDR(ipNet string) (*extra.Player, *model.Server, error) {
 }
 
 func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := store.GetServerByName(args[0])
+	server, err := GetServerByName(args[0])
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("Invalid server name")
 		}
-		return store.DBErr(err)
+		return DBErr(err)
 	}
 	status, err := getServerStatus(server)
 	if err != nil {
@@ -558,16 +519,4 @@ func onHelp(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		msg = cmd.help
 	}
 	return sendMsg(s, m.ChannelID, msg)
-}
-
-func execServerRCON(server model.Server, cmd string) (string, error) {
-	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
-	if err != nil {
-		return "", errors.Errorf("Failed to dial server: %s", server.ServerName)
-	}
-	resp, err2 := r.Exec(cmd)
-	if err2 != nil {
-		return "", errors.Errorf("Failed to exec command: %v", err)
-	}
-	return resp, nil
 }

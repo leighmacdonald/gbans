@@ -27,12 +27,14 @@
                                 </ul>
                             </li>
                             <li>
-                                <a href="{{ route "bans" }}"><i class="fi-torsos-all"></i> Entries</a>
+                                <a href="{{ route "bans" }}"><i class="fi-torsos-all"></i> Bans</a>
                                 <ul class="menu vertical">
-                                    <li><a href="{{ route "bans" }}">Bans</a></li>
-                                    <li><a href="{{ route "mutes" }}">Mutes</a></li>
+                                    <li><a href="{{ route "bans" }}">All Bans</a></li>
                                     <li><a href="{{ route "appeal" }}">Appeal</a></li>
                                 </ul>
+                            </li>
+                            <li>
+                                <a href="{{ route "report" }}">Report</a>
                             </li>
                         </ul>
                     </div>
@@ -48,9 +50,10 @@
                                 <li>
                                     <a href="{{ route "admin" }}"><i class="fi-widget"></i> Admin</a>
                                     <ul class="menu vertical">
-                                        <li><a href="{{ route "admin_people_browse" }}">People</a></li>
-                                        <li><a href="{{ route "admin_news_browse" }}">News</a></li>
+                                        <li><a href="{{ route "admin_people" }}">People</a></li>
+                                        <li><a href="{{ route "admin_import" }}">Import</a></li>
                                         <li><a href="{{ route "admin_filtered_words" }}">Filtered Words</a></li>
+                                        <li><a href="{{ route "admin_servers" }}">Servers</a></li>
                                     </ul>
                                 </li>
                                 <li>
@@ -58,7 +61,7 @@
                                                                          src="{{.Person.Avatar}}"> {{ .Person.PersonaName }}
                                     </a>
                                     <ul class="menu vertical">
-                                        <li><a href="{{ route "settings" }}">Settings</a></li>
+                                        <li><a href="{{ route "profile_settings" }}">Settings</a></li>
                                         <li><a href="{{ route "logout" }}">Logout</a></li>
                                     </ul>
                                 </li>

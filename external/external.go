@@ -2,7 +2,6 @@ package external
 
 import (
 	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -14,7 +13,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 )
 
 var (
@@ -47,7 +45,7 @@ func Import(list config.BanList) error {
 		}
 	}
 	filePath := path.Join(config.Net.CachePath, list.Name)
-	maxAge, err := util.ParseDuration(config.Net.MaxAge)
+	maxAge, err := config.ParseDuration(config.Net.MaxAge)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to parse cache max age")
 	}
@@ -57,7 +55,7 @@ func Import(list config.BanList) error {
 		if err != nil {
 			return errors.Wrapf(err, "Failed to stat cached file")
 		}
-		if time.Now().Sub(f.ModTime()) > maxAge {
+		if config.Now().Sub(f.ModTime()) > maxAge {
 			expired = true
 		}
 	} else {
@@ -128,7 +126,7 @@ func load(src []byte, listType config.BanListType) (count int, err error) {
 		}
 		return addSIDs(ids), nil
 	default:
-		return 0, errors.Errorf("Unimplemented list type: %d", listType)
+		return 0, errors.Errorf("Unimplemented list type: %v", listType)
 	}
 }
 

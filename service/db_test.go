@@ -1,34 +1,12 @@
-package store
+package service
 
 import (
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/golib"
 	"github.com/stretchr/testify/require"
-	"log"
-	"os"
 	"testing"
 	"time"
 )
-
-func TestMain(m *testing.M) {
-	dbPath := "./test.sqlite"
-	var drop = func() {
-		if golib.Exists(dbPath) {
-			if err := os.Remove(dbPath); err != nil {
-				log.Fatalf("Failed to delete existing database")
-			}
-		}
-	}
-	drop()
-	Init(dbPath)
-	defer func() {
-		if err := Close(); err != nil {
-			log.Fatalf("Failed to close database")
-		}
-		drop()
-	}()
-	os.Exit(m.Run())
-}
 
 func TestServer(t *testing.T) {
 	s1 := model.Server{
@@ -38,9 +16,9 @@ func TestServer(t *testing.T) {
 		Port:           27015,
 		RCON:           "test",
 		Password:       "test",
-		TokenCreatedOn: time.Now().Unix(),
-		CreatedOn:      time.Now().Unix(),
-		UpdatedOn:      time.Now().Unix(),
+		TokenCreatedOn: config.Now(),
+		CreatedOn:      config.Now(),
+		UpdatedOn:      config.Now(),
 	}
 	require.NoError(t, SaveServer(&s1))
 	require.True(t, s1.ServerID > 0)
@@ -59,9 +37,20 @@ func TestBanNet(t *testing.T) {
 	require.Equal(t, b1.Reason, n1.Reason)
 }
 
-func TestBan(t *testing.T) {
+func TestPerson(t *testing.T) {
 	p1 := model.Person{
 		SteamID: 76561199093644873,
 	}
+	p2 := model.Person{
+		SteamID: 76561198084134025,
+	}
 	require.NoError(t, SavePerson(&p1))
+	p2Fetched, err := GetOrCreatePersonBySteamID(p2.SteamID)
+	require.NoError(t, err)
+	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
+
+	pBadID, err := GetPersonBySteamID(-1)
+	require.Error(t, err)
+	require.Equal(t, pBadID.SteamID, 0)
+
 }

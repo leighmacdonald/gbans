@@ -62,6 +62,18 @@ func QueryRCON(ctx context.Context, servers []model.Server, commands ...string) 
 	return responses
 }
 
+func execServerRCON(server model.Server, cmd string) (string, error) {
+	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
+	if err != nil {
+		return "", errors.Errorf("Failed to dial server: %s", server.ServerName)
+	}
+	resp, err2 := r.Exec(cmd)
+	if err2 != nil {
+		return "", errors.Errorf("Failed to exec command: %v", err)
+	}
+	return resp, nil
+}
+
 func QueryA2SInfo(ctx context.Context, servers []model.Server) map[string]*a2s.ServerInfo {
 	responses := make(map[string]*a2s.ServerInfo)
 	mu := &sync.RWMutex{}

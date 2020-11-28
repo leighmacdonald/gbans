@@ -6,17 +6,38 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/bot"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"time"
 )
+
+func onPostPingMod() gin.HandlerFunc {
+	type pingReq struct {
+		ServerName string        `json:"server_name"`
+		Name       string        `json:"name"`
+		SteamID    steamid.SID64 `json:"steam_id"`
+		Reason     string        `json:"reason"`
+		Client     int           `json:"client"`
+	}
+	return func(c *gin.Context) {
+		var req pingReq
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		for _, c := range config.Discord.ModChannels {
+			Send(NewMessage(c, fmt.Sprintf("<@&%d> %s", config.Discord.ModRoleID, req.Reason)))
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"client":  req.Client,
+			"message": "Moderators have been notified",
+		})
+	}
+}
 
 func onPostLogMessage() gin.HandlerFunc {
 	type logReq struct {
@@ -38,7 +59,7 @@ func onPostLogMessage() gin.HandlerFunc {
 		if filtered {
 			addWarning(req.SteamID, warnLanguage)
 			for _, c := range config.Relay.ChannelIDs {
-				bot.Send(bot.NewMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
+				Send(NewMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
 			}
 		}
 		// [us-2] 76561198017946808 name: message
@@ -48,7 +69,7 @@ func onPostLogMessage() gin.HandlerFunc {
 		}
 		msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
 		for _, channelID := range config.Relay.ChannelIDs {
-			bot.Send(bot.NewMessage(channelID, msg))
+			Send(NewMessage(channelID, msg))
 		}
 		c.Status(200)
 	}
@@ -70,14 +91,14 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 			c.JSON(500, authResp{Status: false})
 			return
 		}
-		srv, err := store.GetServerByName(req.ServerName)
+		srv, err := GetServerByName(req.ServerName)
 		if err != nil {
 			c.JSON(http.StatusNotFound, authResp{Status: false})
 			return
 		}
 		srv.Token = golib.RandomString(40)
-		srv.TokenCreatedOn = time.Now().Unix()
-		if err := store.SaveServer(&srv); err != nil {
+		srv.TokenCreatedOn = config.Now()
+		if err := SaveServer(&srv); err != nil {
 			log.Errorf("Failed to updated server token: %v", err)
 			c.JSON(500, authResp{Status: false})
 			return
@@ -117,7 +138,7 @@ func onPostServerCheck() gin.HandlerFunc {
 			Msg:      "",
 		}
 		// Check IP first
-		banNet, err := store.GetBanNet(req.IP)
+		banNet, err := GetBanNet(req.IP)
 		if err == nil {
 			resp.BanType = model.Banned
 			resp.Msg = banNet.Reason
@@ -130,9 +151,9 @@ func onPostServerCheck() gin.HandlerFunc {
 			resp.Msg = "Invalid steam id"
 			c.JSON(500, resp)
 		}
-		ban, err := store.GetBan(steamID)
+		ban, err := GetBan(steamID)
 		if err != nil {
-			if store.DBErr(err) == store.ErrNoResult {
+			if DBErr(err) == ErrNoResult {
 				resp.BanType = model.OK
 				c.JSON(200, resp)
 				return

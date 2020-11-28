@@ -3,7 +3,6 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -14,7 +13,7 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 		Words []string `json:"words"`
 	}
 	return func(c *gin.Context) {
-		words, err := store.GetFilteredWords()
+		words, err := GetFilteredWords()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{})
 			return
@@ -29,7 +28,7 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 
 func onAPIGetStats() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		stats, err := store.GetStats()
+		stats, err := GetStats()
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
@@ -52,7 +51,7 @@ func onAPIGetBans() gin.HandlerFunc {
 		Bans  []model.BannedPerson `json:"bans"`
 	}
 	return func(c *gin.Context) {
-		o := store.NewSearchQueryOpts(c.GetString("q"))
+		o := NewSearchQueryOpts(c.GetString("q"))
 		o.Limit = queryInt(c, "limit")
 		if o.Limit > 100 {
 			o.Limit = 100
@@ -75,13 +74,13 @@ func onAPIGetBans() gin.HandlerFunc {
 			o.OrderBy = "created_on"
 		}
 		log.Println(o)
-		bans, err := store.GetBans(o)
+		bans, err := GetBans(o)
 		if err != nil {
 			log.Errorf("Failed to fetch bans")
 			c.JSON(http.StatusInternalServerError, M{})
 			return
 		}
-		total := store.GetBansTotal()
+		total := GetBansTotal()
 		c.JSON(200, resp{
 			Total: total,
 			Bans:  bans,

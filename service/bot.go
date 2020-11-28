@@ -1,4 +1,4 @@
-package bot
+package service
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func init() {
 	}
 }
 
-func Start(ctx context.Context, token string, channelIDs []string) {
+func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 	modChannelIDs = channelIDs
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {

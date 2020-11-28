@@ -1,4 +1,4 @@
-package util
+package config
 
 import (
 	"github.com/pkg/errors"
@@ -7,9 +7,12 @@ import (
 	"time"
 )
 
-var (
-	reDuration *regexp.Regexp
+const (
+	expirationYears = 25
+)
 
+var (
+	reDuration         *regexp.Regexp
 	errInvalidDuration = errors.New("Invalid duration")
 )
 
@@ -51,4 +54,15 @@ func ParseDuration(s string) (time.Duration, error) {
 		return day * 365 * value, nil
 	}
 	return 0, errInvalidDuration
+}
+
+func Now() time.Time {
+	if General.UseUTC {
+		return time.Now().UTC()
+	}
+	return time.Now()
+}
+
+func DefaultExpiration() time.Time {
+	return Now().AddDate(expirationYears, 0, 0)
 }

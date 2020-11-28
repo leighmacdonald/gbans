@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -56,15 +57,18 @@ const (
 	Harassment       Reason = 5
 	Exploiting       Reason = 6
 	WarningsExceeded Reason = 7
+	Spam             Reason = 8
 )
 
 var reasonStr = map[Reason]string{
-	Custom:     "",
-	External:   "3rd party",
-	Cheating:   "Cheating",
-	Racism:     "Racism",
-	Harassment: "Person Harassment",
-	Exploiting: "Exploiting",
+	Custom:           "",
+	External:         "3rd party",
+	Cheating:         "Cheating",
+	Racism:           "Racism",
+	Harassment:       "Person Harassment",
+	Exploiting:       "Exploiting",
+	WarningsExceeded: "Warnings Exceeding",
+	Spam:             "Spam",
 }
 
 func ReasonString(reason Reason) string {
@@ -76,9 +80,9 @@ type BanNet struct {
 	CIDR      string    `db:"cidr"`
 	Source    BanSource `source:"source"`
 	Reason    string    `db:"reason"`
-	CreatedOn int64     `db:"created_on" json:"created_on"`
-	UpdatedOn int64     `db:"updated_on" json:"updated_on"`
-	Until     int64     `db:"until"`
+	CreatedOn time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn time.Time `db:"updated_on" json:"updated_on"`
+	Until     time.Time `db:"until"`
 }
 
 func NewBanNet(cidr string, reason string, duration time.Duration, source BanSource) (BanNet, error) {
@@ -94,9 +98,9 @@ func NewBanNet(cidr string, reason string, duration time.Duration, source BanSou
 		CIDR:      cidr,
 		Source:    source,
 		Reason:    reason,
-		CreatedOn: time.Now().Unix(),
-		UpdatedOn: time.Now().Unix(),
-		Until:     time.Now().Add(duration).Unix(),
+		CreatedOn: config.Now(),
+		UpdatedOn: config.Now(),
+		Until:     config.Now().Add(duration),
 	}, nil
 }
 
@@ -119,9 +123,9 @@ type Ban struct {
 	Note   string    `db:"note" json:"note"`
 	Source BanSource `json:"ban_source" db:"ban_source"`
 	// Until is when the ban will be no longer valid. 0 denotes forever
-	Until     int64 `json:"until" db:"until"`
-	CreatedOn int64 `db:"created_on" json:"created_on"`
-	UpdatedOn int64 `db:"updated_on" json:"updated_on"`
+	Until     time.Time `json:"until" db:"until"`
+	CreatedOn time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn time.Time `db:"updated_on" json:"updated_on"`
 }
 
 func (b Ban) String() string {
@@ -143,13 +147,13 @@ type BannedPerson struct {
 	Note   string    `db:"note" json:"note"`
 	Source BanSource `json:"ban_source" db:"ban_source"`
 	// Until is when the ban will be no longer valid. 0 denotes forever
-	Until        int64  `json:"until" db:"until"`
-	CreatedOn    int64  `db:"created_on" json:"created_on"`
-	UpdatedOn    int64  `db:"updated_on" json:"updated_on"`
-	PersonaName  string `json:"personaname" db:"personaname"`
-	ProfileURL   string `json:"profileurl" db:"profileurl"`
-	Avatar       string `json:"avatar" db:"avatar"`
-	AvatarMedium string `json:"avatarmedium" db:"avatarmedium"`
+	Until        time.Time `json:"until" db:"until"`
+	CreatedOn    time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn    time.Time `db:"updated_on" json:"updated_on"`
+	PersonaName  string    `json:"personaname" db:"personaname"`
+	ProfileURL   string    `json:"profileurl" db:"profileurl"`
+	Avatar       string    `json:"avatar" db:"avatar"`
+	AvatarMedium string    `json:"avatarmedium" db:"avatarmedium"`
 }
 
 type Server struct {
@@ -169,9 +173,9 @@ type Server struct {
 	// Password is what the server uses to generate a token to make authenticated calls
 	Password string `db:"password"`
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn int64 `db:"token_created_on"`
-	CreatedOn      int64 `db:"created_on"`
-	UpdatedOn      int64 `db:"updated_on"`
+	TokenCreatedOn time.Time `db:"token_created_on"`
+	CreatedOn      time.Time `db:"created_on"`
+	UpdatedOn      time.Time `db:"updated_on"`
 }
 
 func (s Server) Addr() string {
@@ -186,8 +190,8 @@ type Person struct {
 	SteamID   steamid.SID64 `db:"steam_id"`
 	Name      string        `db:"name"`
 	IPAddr    string        `db:"ip_addr"`
-	CreatedOn int64         `db:"created_on"`
-	UpdatedOn int64         `db:"updated_on"`
+	CreatedOn time.Time     `db:"created_on"`
+	UpdatedOn time.Time     `db:"updated_on"`
 	extra.PlayerSummary
 }
 
@@ -198,8 +202,8 @@ func (p Person) LoggedIn() bool {
 
 func NewPerson() Person {
 	return Person{
-		CreatedOn: time.Now().Unix(),
-		UpdatedOn: time.Now().Unix(),
+		CreatedOn: config.Now(),
+		UpdatedOn: config.Now(),
 	}
 }
 
@@ -217,8 +221,8 @@ type Appeal struct {
 	AppealText  string      `db:"appeal_text" json:"appeal_text"`
 	AppealState AppealState `db:"appeal_state" json:"appeal_state"`
 	Email       string      `db:"email" json:"email"`
-	CreatedOn   int64       `db:"created_on" json:"created_on"`
-	UpdatedOn   int64       `db:"updated_on" json:"updated_on"`
+	CreatedOn   time.Time   `db:"created_on" json:"created_on"`
+	UpdatedOn   time.Time   `db:"updated_on" json:"updated_on"`
 }
 
 type Stats struct {

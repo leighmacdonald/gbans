@@ -27,9 +27,9 @@ Nginx/Apache and PHP on your server.
 - [x] Global bans
 - [x] Subnet & IP bans (CIDR)
 - [x] Database support
-    [x] Sqlite (default)
-    [ ] Postgresql, if there is demand for it
-    [ ] MySQL, if there is demand for it
+    [x] Postgresql
+    [?] MySQL, if there is demand (or pr) for it
+    [?] Sqlite, if there is demand (or pr) for it
  - [x] Docker support
     - [ ] Published official images
 - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates

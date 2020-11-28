@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/store"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
@@ -39,7 +38,7 @@ func authMiddleWare() gin.HandlerFunc {
 		var err error
 		v := s.Get("steam_id")
 		if v != nil {
-			p, err = store.GetPersonBySteamID(steamid.SID64(v.(int64)))
+			p, err = GetPersonBySteamID(steamid.SID64(v.(int64)))
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				p = guest
@@ -114,7 +113,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		p, err := store.GetOrCreatePersonBySteamID(sid)
+		p, err := GetOrCreatePersonBySteamID(sid)
 		if err != nil {
 			log.Errorf("Failed to get person: %v", err)
 			c.Redirect(302, ref)
@@ -124,7 +123,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 		p.SteamID = sid
 		p.IPAddr = c.Request.RemoteAddr
 		p.PlayerSummary = s
-		if err := store.SavePerson(&p); err != nil {
+		if err := SavePerson(&p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
 			c.Redirect(302, ref)
 			return

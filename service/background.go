@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/store"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/rumblefrog/go-a2s"
@@ -13,12 +13,12 @@ import (
 
 func profileUpdater() {
 	var update = func() {
-		o := store.NewQueryOpts()
+		o := NewQueryOpts()
 		o.Limit = 5 // Max per query of WebAPI
 		loop := 0
 		for {
 			o.Offset = loop * o.Limit
-			bans, err := store.GetBansOlderThan(o, time.Now().Add(-(time.Hour * 24)))
+			bans, err := GetBansOlderThan(o, config.Now().Add(-(time.Hour * 24)))
 			if err != nil {
 				log.Warnf("Failed to get old bans for update: %v", err)
 				break
@@ -38,13 +38,13 @@ func profileUpdater() {
 					log.Errorf("Failed to parse steamid from webapi: %v", err)
 					continue
 				}
-				p, err := store.GetOrCreatePersonBySteamID(sid)
+				p, err := GetOrCreatePersonBySteamID(sid)
 				if err != nil {
 					log.Errorf("Failed to get person: %v", err)
 					continue
 				}
 				p.PlayerSummary = s
-				if err := store.SavePerson(&p); err != nil {
+				if err := SavePerson(&p); err != nil {
 					log.Errorf("Failed to save person: %v", err)
 					continue
 				}
@@ -69,7 +69,7 @@ func profileUpdater() {
 
 func serverStateUpdater() {
 	var update = func() {
-		servers, err := store.GetServers()
+		servers, err := GetServers()
 		if err != nil {
 			log.Errorf("Failed to fetch servers to update")
 			return
@@ -133,47 +133,29 @@ func banSweeper() {
 	for {
 		select {
 		case <-ticker.C:
-			bans, err := store.GetExpiredBans()
+			bans, err := GetExpiredBans()
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range bans {
-					if err := store.DropBan(ban); err != nil {
+					if err := DropBan(ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
 						log.Infof("Ban expired: %v", ban)
 					}
 				}
 			}
-			netBans, err := store.GetExpiredNetBans()
+			netBans, err := GetExpiredNetBans()
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range netBans {
-					if err := store.DropNetBan(ban); err != nil {
+					if err := DropNetBan(ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)
 					}
 				}
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func updateSearchIndex() {
-	if err := store.UpdateIndex(); err != nil {
-		log.Errorf("Failed to update search index")
-	}
-	t := time.NewTicker(24 * time.Hour)
-	for {
-		select {
-		case <-t.C:
-			if err := store.UpdateIndex(); err != nil {
-				log.Errorf("Failed to update search index")
-				continue
 			}
 		case <-ctx.Done():
 			return
