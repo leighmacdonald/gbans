@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/steamid/v2/extra"
@@ -478,6 +479,16 @@ func findPlayerByCIDR(ipNet string) (*extra.Player, *model.Server, error) {
 	return nil, nil, errUnknownID
 }
 
+func defaultTable(title string) table.Writer {
+	t := table.NewWriter()
+	t.SuppressEmptyColumns()
+	if title != "" {
+		t.SetTitle(title)
+	}
+	t.SetStyle(table.StyleLight)
+	return t
+}
+
 func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
 	server, err := GetServerByName(args[0])
 	if err != nil {
@@ -491,14 +502,19 @@ func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 		log.Errorf("Failed to parse status output: %v", err)
 		return model.ErrRCON
 	}
-	var msg strings.Builder
-	msg.WriteString("```ini\n")
+	t := defaultTable("")
+	t.AppendHeader(table.Row{
+		"IP", "steam64", "Name",
+	})
+	t.AppendSeparator()
 	for _, p := range status.Players {
-		ipStr := p.IP.String()
-		ipStrPad := fmt.Sprintf("%s%s", ipStr, strings.Repeat(" ", 15-len(ipStr)))
-		msg.WriteString(fmt.Sprintf("%d %d %s [%s]\n", p.UserID, p.SID.Int64(), ipStrPad, p.Name))
+		t.AppendRow(table.Row{
+			p.IP, p.SID.String(), p.Name,
+		})
 	}
-	msg.WriteString("\n```")
+	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
+	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
 	return sendMsg(s, m.ChannelID, msg.String())
 }
 

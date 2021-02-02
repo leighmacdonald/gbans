@@ -17,6 +17,7 @@ require (
 	github.com/jackc/pgconn v1.7.2
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
 	github.com/jackc/pgx/v4 v4.9.2
+	github.com/jedib0t/go-pretty/v6 v6.1.0
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.3
 	github.com/leighmacdonald/steamid/v2 v2.0.1

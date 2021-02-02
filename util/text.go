@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	filteredWords []string
+	filteredWords   []string
 	filteredWordsMu *sync.RWMutex
 )
 
