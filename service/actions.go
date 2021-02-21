@@ -65,7 +65,7 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 	if err := SaveBan(&ban); err != nil {
 		return errors.Wrapf(err, "Failed to save unban")
 	}
-	log.Info("Player unbanned: %d", sid.Int64())
+	log.Infof("Player unbanned: %v", sid.Int64())
 	return nil
 }
 
