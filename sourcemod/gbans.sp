@@ -15,7 +15,7 @@
 #define PLUGIN_VERSION "0.00"
 #define PLUGIN_NAME "gbans"
 
-// Ban states retured from server
+// Ban states returned from server
 #define BSUnknown -1 // Fail-open unknown status
 #define BSOK 0       // OK
 #define BSNoComm 1   // Muted

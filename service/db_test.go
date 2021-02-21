@@ -49,7 +49,7 @@ func TestPerson(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
 
-	pBadID, err := GetPersonBySteamID(-1)
+	pBadID, err := GetPersonBySteamID(0)
 	require.Error(t, err)
 	require.Equal(t, pBadID.SteamID, 0)
 

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
@@ -58,10 +59,6 @@ func Init(dsn string) {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	db = dbConn
-	_, err = GetOrCreatePersonBySteamID(config.General.Owner)
-	if err != nil {
-		log.Fatalf("Error loading system user: %v", err)
-	}
 }
 
 func Close() {
@@ -612,4 +609,28 @@ func DBErr(err error) error {
 		return ErrNoResult
 	}
 	return err
+}
+
+//go:embed "schema.sql"
+var schema string
+
+func Migrate(recreate bool) error {
+	const q = `DROP TABLE IF EXISTS %s;`
+	if recreate {
+		for _, t := range []string{"ban_appeal", "filtered_word", "ban_net", "ban", "person_names", "person"} {
+			_, err := db.Exec(context.Background(), fmt.Sprintf(q, t))
+			if err != nil {
+				return errors.Wrap(err, "Could not remove all tables")
+			}
+		}
+	}
+	_, err := db.Exec(context.Background(), schema)
+	if err != nil {
+		return errors.Wrap(err, "Could not create new schema")
+	}
+	_, err = GetOrCreatePersonBySteamID(config.General.Owner)
+	if err != nil {
+		log.Fatalf("Error loading system user: %v", err)
+	}
+	return nil
 }

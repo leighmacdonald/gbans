@@ -7,42 +7,48 @@ import (
 	"github.com/leighmacdonald/golib"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"strconv"
 )
 
-// relayCmd represents the addserver command
-var addserverCmd = &cobra.Command{
+var addServer = model.Server{
+	ServerName: "",
+	Token:      "",
+	Address:    "",
+	Port:       27015,
+	RCON:       "",
+	Password:   golib.RandomString(20),
+}
+
+// addServerCmd represents the addserver command
+var addServerCmd = &cobra.Command{
 	Use:   "addserver",
 	Short: "Add a new server",
-	Long: `Add a new server.
-	
-gban addserver <server_name> <addr> <port> <rcon>
-`,
 	Run: func(cmd *cobra.Command, args []string) {
 		service.Init(config.DB.DSN)
-		if len(args) != 4 {
-			log.Fatalf("Invalid arg count")
+		if addServer.ServerName == "" {
+			log.Fatal("Server name cannot be empty")
 		}
-		portStr := args[2]
-		port, err := strconv.Atoi(portStr)
-		if err != nil {
-			log.Fatalf("Invalid port")
+		if addServer.Address == "" {
+			log.Fatal("Server address cannot be empty")
 		}
-		s := model.Server{
-			ServerName: args[0],
-			Token:      "",
-			Address:    args[1],
-			Port:       port,
-			RCON:       args[3],
-			Password:   golib.RandomString(20),
+		if addServer.Port <= 0 || addServer.Port > 65535 {
+			log.Fatal("Invalid server port")
 		}
-		if err := service.SaveServer(&s); err != nil {
+		if addServer.RCON == "" {
+			log.Fatal("RCON password cannot be empty")
+		}
+		if err := service.SaveServer(&addServer); err != nil {
 			log.Fatalf("Could not create server: %v", err)
 		}
-		log.Infof("Added server %s with token %s", s.ServerName, s.Password)
+		log.Infof("Added server %s with token %s - This token must be added to your servers gbans.cfg",
+			addServer.ServerName, addServer.Password)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(addserverCmd)
+	rootCmd.AddCommand(addServerCmd)
+
+	addServerCmd.Flags().StringVarP(&addServer.ServerName, "name", "n", "", "Short server ID eg: us-1")
+	addServerCmd.Flags().StringVarP(&addServer.Address, "host", "H", "", "Server hostname/ip eg: us-1.myserver.com")
+	addServerCmd.Flags().IntVarP(&addServer.Port, "port", "p", 27015, "Server port")
+	addServerCmd.Flags().StringVarP(&addServer.RCON, "rcon", "r", "", "Server RCON password")
 }

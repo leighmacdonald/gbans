@@ -89,12 +89,12 @@ func GenTestData() {
 		}
 	}
 
-	if err := BanPlayer(context.Background(), steamIds[0].String(), config.General.Owner.String(), time.Minute*30, net.ParseIP("23.23.23.23"),
-		model.Banned, model.Cheating, "Aimbot", model.System); err != nil {
+	if err := BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
+		model.Cheating, "Aimbot", model.System); err != nil {
 		log.Fatalf("Failed to create test ban #1: %v", err)
 	}
-	if err := BanPlayer(context.Background(), steamIds[1].String(), config.General.Owner.String(), 0, net.ParseIP("24.24.24.24"),
-		model.Banned, model.Cheating, "Aimbot", model.System); err != nil {
+	if err := BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
+		model.Cheating, "Aimbot", model.System); err != nil {
 		log.Fatalf("Failed to create test ban #2: %v", err)
 	}
 
