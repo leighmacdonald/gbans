@@ -1,6 +1,6 @@
 create table if not exists person
 (
-    steam_id                 bigint
+    steam_id                 int8
         constraint player_pk primary key,
     created_on               timestamp       not null,
     updated_on               timestamp       not null,
@@ -27,7 +27,7 @@ CREATE INDEX if not exists idx_personaname_lower ON person (LOWER(personaname));
 CREATE TABLE IF NOT EXISTS person_names
 (
     personaname_id SERIAL PRIMARY KEY,
-    steam_id       bigint,
+    steam_id       int8,
     personaname    text      not null,
     created_on     timestamp not null,
     CONSTRAINT fk_steam_id FOREIGN KEY (steam_id) REFERENCES person (steam_id)
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS person_names
 create table if not exists ban
 (
     ban_id      SERIAL PRIMARY KEY,
-    steam_id    bigint            not null,
-    author_id   bigint default 0  not null,
+    steam_id    int8            not null,
+    author_id   int8 default 0  not null,
     ban_type    int               not null,
     reason      int               not null,
     reason_text text   default '' not null,
@@ -93,13 +93,13 @@ create unique index if not exists filtered_word_word_uindex
 create table if not exists ban_appeal
 (
     appeal_id    SERIAL PRIMARY KEY,
-    ban_id       integer       not null
+    ban_id       int       not null
         references ban,
     appeal_text  text          not null,
     appeal_state int default 0 not null,
     email        text          not null,
-    created_on   integer       not null,
-    updated_on   integer       not null,
+    created_on   timestamp       not null,
+    updated_on   timestamp       not null,
     CONSTRAINT fk_ban_id FOREIGN KEY (ban_id) REFERENCES ban (ban_id)
 );
 

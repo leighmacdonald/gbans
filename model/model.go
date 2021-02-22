@@ -109,7 +109,7 @@ func (b BanNet) String() string {
 }
 
 type Ban struct {
-	BanID int64 `db:"ban_id" json:"ban_id"`
+	BanID uint64 `db:"ban_id" json:"ban_id"`
 	// SteamID is the steamID of the banned person
 	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
 	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
@@ -134,7 +134,7 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	BanID    int64         `db:"ban_id" json:"ban_id"`
+	BanID    uint64        `db:"ban_id" json:"ban_id"`
 	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
 	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
 	// Reason defines the overall ban classification
@@ -217,7 +217,7 @@ const (
 
 type Appeal struct {
 	AppealID    int         `db:"appeal_id" json:"appeal_id"`
-	BanID       int         `db:"ban_id" json:"ban_id"`
+	BanID       uint64      `db:"ban_id" json:"ban_id"`
 	AppealText  string      `db:"appeal_text" json:"appeal_text"`
 	AppealState AppealState `db:"appeal_state" json:"appeal_state"`
 	Email       string      `db:"email" json:"email"`

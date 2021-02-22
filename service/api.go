@@ -1,10 +1,11 @@
-// This file contains handlers for communication with the sourcemod client on the
-// game servers themselves
 package service
 
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
@@ -12,7 +13,10 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
-	"net/http"
+)
+
+var (
+	reSay = regexp.MustCompile(`"(.+?)<\d+><(\[.+?])>.+?(say|say_team) "(.+?)"$`)
 )
 
 func onPostPingMod() gin.HandlerFunc {
@@ -189,5 +193,56 @@ func onGetServerBan() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, gin.H{"status": model.OK})
+	}
+}
+
+// messageType defines the type of log message being sent
+type messageType int
+
+const (
+	//TypeLog is a console.log file
+	TypeLog messageType = iota
+	// TypeStartup is a server start event message
+	TypeStartup
+	// TypeShutdown is a server start event message
+	TypeShutdown
+)
+
+// RelayPayload is the container for log/message payloads
+type RelayPayload struct {
+	Type    messageType `json:"type"`
+	Server  string      `json:"server"`
+	Message string      `json:"message"`
+}
+
+func onPostLogAdd() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req RelayPayload
+		if err := c.BindJSON(&req); err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		c.Status(http.StatusCreated)
+
+		for _, c := range config.Relay.ChannelIDs {
+			Send(NewMessage(c, req.Message))
+		}
+		match := reSay.FindStringSubmatch(req.Message)
+		if len(match) != 5 {
+			return
+		}
+		sid64 := steamid.SID3ToSID64(steamid.SID3(match[2]))
+		if sid64.Int64() != 76561197960265728 && !sid64.Valid() {
+			return
+		}
+		// team := false
+		// if match[3] == "say_team" {
+		// 	team = true
+		// }
+		messageQueue <- DiscordMessage{
+			ChannelID: "",
+			Body:      match[4],
+		}
 	}
 }

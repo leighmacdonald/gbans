@@ -14,7 +14,7 @@ fmt:
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
 
-build: fmt
+build: fmt vet
 	@go build $(GO_FLAGS)
 
 run:
@@ -37,6 +37,9 @@ bench:
 
 clean:
 	@go clean $(GO_FLAGS) -i
+
+pg_test_service:
+	docker run --rm -e POSTGRES_PASSWORD=gbans --name gbans_pg_test -e POSTGRES_USER=gbans -p 6002:5432  postgres:13 
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .

@@ -3,19 +3,22 @@ package relay
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/hpcloud/tail"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/gbans/service"
 	log "github.com/sirupsen/logrus"
-	"io"
-	"net"
-	"regexp"
-	"strings"
 )
 
 var (
-	reSay = regexp.MustCompile(`"(.+?)<\d+><(\[.+?])>.+?(say|say_team) "(.+?)"$`)
+	BuildVersion = "master"
+
+	httpClient *http.Client
 )
 
 func fileReader(ctx context.Context, path string, messageChan chan string) {
@@ -92,21 +95,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 }
 
 func NewClient(ctx context.Context, name string, logPath string, address string) (err error) {
-	addr, err := net.ResolveUDPAddr("udp", address)
-	if err != nil {
-		log.Fatalf("Failed to resolve addr: %v", err)
-		return
-	}
-	conn, err := net.DialUDP("udp", nil, addr)
-	if err != nil {
-		log.Fatalf("Failed to dial addr: %v", err)
-		return
-	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Errorf("Failed to close conn: %v", err)
-		}
-	}()
+	url := address + "/sapi/v1/log"
 	messageChan := make(chan string, 5000)
 	messageChan <- `L 08/10/2020 - 12:11:04: "BOT<1><[U:0:0]><Red> say "Online"`
 	go newFileWatcher(ctx, logPath, messageChan)
@@ -114,34 +103,29 @@ func NewClient(ctx context.Context, name string, logPath string, address string)
 	for {
 		select {
 		case msg := <-messageChan:
-			match := reSay.FindStringSubmatch(msg)
-			if len(match) != 5 {
-				continue
+			p := service.RelayPayload{
+				Type:    service.TypeLog,
+				Server:  name,
+				Message: msg,
 			}
-			sid64 := steamid.SID3ToSID64(steamid.SID3(match[2]))
-			if sid64.Int64() != 76561197960265728 && !sid64.Valid() {
-				continue
-			}
-			team := false
-			if match[3] == "say_team" {
-				team = true
-			}
-			b, err2 := Encode(Payload{
-				Type:     TypeLog,
-				Server:   name,
-				SayTeam:  team,
-				Message:  match[4],
-				Username: match[1],
-				SteamID:  sid64,
-			})
-			if err2 != nil {
+			b, err := json.Marshal(p)
+			if err != nil {
 				log.Errorf("Error encoding payload")
 				break
 			}
-			_, err2 = io.Copy(conn, bytes.NewReader(b))
-			if err2 != nil {
-				log.Errorf("Error writing payload")
-				return
+
+			req, err := http.NewRequest("POST", url, bytes.NewReader(b))
+			if err != nil {
+				log.Errorf("Error encoding payload")
+				break
+			}
+			resp, err := httpClient.Do(req)
+			if err != nil {
+				log.Errorf("Error encoding payload")
+				break
+			}
+			if resp.StatusCode != http.StatusCreated {
+				log.Errorf("Invalid respose received: %s", resp.Status)
 			}
 		case <-ctx.Done():
 			fmt.Println("cancelled")
@@ -152,4 +136,8 @@ func NewClient(ctx context.Context, name string, logPath string, address string)
 			return
 		}
 	}
+}
+
+func init() {
+	httpClient = &http.Client{Timeout: time.Second * 5}
 }

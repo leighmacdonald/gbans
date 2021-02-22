@@ -4,15 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4"
-	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
-	"github.com/leighmacdonald/steamid/v2/steamid"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -20,6 +11,15 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/model"
+	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/extra"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
@@ -113,7 +113,7 @@ func GenTestData() {
 	}
 }
 
-func clearDB(db *pgx.Conn) {
+func clearDB() {
 	ctx := context.Background()
 	for _, table := range []string{"ban_appeal", "person_names", "ban_net", "ban", "person", "server", "filtered_word"} {
 		q := fmt.Sprintf(`drop table if exists %s cascade;`, table)
@@ -124,8 +124,13 @@ func clearDB(db *pgx.Conn) {
 }
 
 func TestMain(m *testing.M) {
-	config.Read(golib.FindFile("gbans_test.yaml", "gbans"))
+	config.Read()
 	initStore()
+	clearDB()
+	if err := Migrate(true); err != nil {
+		log.Fatal(err)
+	}
+	defer clearDB()
 	initRouter()
 	GenTestData()
 	os.Exit(m.Run())
