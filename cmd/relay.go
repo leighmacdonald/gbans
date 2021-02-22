@@ -16,7 +16,7 @@ var (
 	logPath    string
 )
 
-// relayCmd represents the addserver command
+// relayCmd starts the log relay service
 var relayCmd = &cobra.Command{
 	Use:   "relay",
 	Short: "relay client",
@@ -41,8 +41,8 @@ var relayCmd = &cobra.Command{
 }
 
 func init() {
-	relayCmd.PersistentFlags().StringVar(&serverName, "name", "", "StartServer ID used for identification")
-	relayCmd.PersistentFlags().StringVar(&relayAddr, "host", "", "StartServer host to send logs to")
+	relayCmd.PersistentFlags().StringVar(&serverName, "name", "", "Server ID used for identification")
+	relayCmd.PersistentFlags().StringVar(&relayAddr, "host", "", "Server host to send logs to")
 	relayCmd.PersistentFlags().StringVar(&logPath, "logdir", "", "Path to tf2 logs directory")
 	rootCmd.AddCommand(relayCmd)
 }

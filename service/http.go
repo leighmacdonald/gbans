@@ -55,7 +55,7 @@ func initHTTP() {
 			MaxHeaderBytes: 1 << 20,
 		}
 		if config.HTTP.TLS {
-			tls := &tls.Config{
+			tlsVar := &tls.Config{
 				// Causes servers to use Go's default ciphersuite preferences,
 				// which are tuned to avoid attacks. Does nothing on clients.
 				PreferServerCipherSuites: true,
@@ -74,7 +74,7 @@ func initHTTP() {
 					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 				},
 			}
-			httpServer.TLSConfig = tls
+			httpServer.TLSConfig = tlsVar
 		}
 		if err := httpServer.ListenAndServe(); err != nil {
 			log.Errorf("Error shutting down service: %v", err)

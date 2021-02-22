@@ -1,15 +1,16 @@
 package config
 
-import "C"
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"time"
 )
 
 type BanListType string
@@ -111,101 +112,55 @@ type NetBans struct {
 
 // Default config values. Anything defined in the config or env will overwrite them
 var (
-	General = GeneralConfig{
-		SiteName:       "gbans",
-		SteamKey:       "",
-		Mode:           "release",
-		Owner:          76561198084134025,
-		WarningTimeout: time.Hour * 6,
-		WarningLimit:   3,
-		UseUTC:         true,
-	}
-	HTTP = HTTPConfig{
-		Host:                  "127.0.0.1",
-		Port:                  6970,
-		Domain:                "http://localhost:6006",
-		TLS:                   false,
-		TLSAuto:               false,
-		StaticPath:            "frontend/dist",
-		CookieKey:             golib.RandomString(32),
-		ClientTimeout:         "30s",
-		ClientTimeoutDuration: time.Second * 30,
-	}
-	Filter = FilterConfig{
-		Enabled:         false,
-		IsWarning:       true,
-		PingDiscord:     false,
-		ExternalEnabled: false,
-		ExternalSource:  nil,
-	}
-	Relay = RelayConfig{
-		Enabled:    false,
-		ChannelIDs: []string{},
-	}
-	DB = DBConfig{
-		DSN: "db.sqlite",
-	}
-	Discord = DiscordConfig{
-		Enabled:   false,
-		Token:     "",
-		ModRoleID: 0,
-		// Kick / Ban / Send Msg / Manage msg / embed / attach file / read history
-		Perms:  125958,
-		Prefix: "!",
-	}
-	Log = LogConfig{
-		Level:          "info",
-		DisableColours: false,
-		ForceColours:   false,
-		ReportCaller:   false,
-		FullTimestamp:  false,
-	}
-	Net = NetBans{
-		Enabled:   false,
-		MaxAge:    "1w",
-		CachePath: ".cache",
-		Sources:   []BanList{},
-	}
+	General GeneralConfig
+	HTTP    HTTPConfig
+	Filter  FilterConfig
+	Relay   RelayConfig
+	DB      DBConfig
+	Discord DiscordConfig
+	Log     LogConfig
+	Net     NetBans
 )
 
 // Read reads in config file and ENV variables if set.
-func Read(cfgFile string) {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			log.Fatalf("Failed to get HOME dir: %v", err)
-		}
-		viper.AddConfigPath(home)
-		viper.AddConfigPath(".")
-		viper.SetConfigName("gbans")
+func Read(cfgFiles ...string) {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Fatalf("Failed to get HOME dir: %v", err)
 	}
-
+	viper.AddConfigPath(home)
+	viper.AddConfigPath(".")
+	viper.SetConfigName("gbans")
+	viper.SetEnvPrefix("gbans")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 	found := false
-	if err := viper.ReadInConfig(); err == nil {
-		var cfg rootConfig
-		if err := viper.Unmarshal(&cfg); err != nil {
-			log.Fatalf("Invalid config file format: %v", err)
+	for _, cfgFile := range cfgFiles {
+		viper.SetConfigFile(cfgFile)
+		if err := viper.ReadInConfig(); err != nil {
+			log.Fatalf("Failed to read config file: %s", cfgFile)
 		}
-		d, err := ParseDuration(cfg.HTTP.ClientTimeout)
-		if err != nil {
-			log.Fatalf("Could not parse http client timeout duration: %v", err)
-		}
-		cfg.HTTP.ClientTimeoutDuration = d
-		HTTP = cfg.HTTP
-		General = cfg.General
-		Filter = cfg.Filter
-		Discord = cfg.Discord
-		Relay = cfg.Relay
-		DB = cfg.DB
-		Log = cfg.Log
-		Net = cfg.NetBans
 		found = true
 	}
+	var cfg rootConfig
+	if err := viper.Unmarshal(&cfg); err != nil {
+		log.Fatalf("Invalid config file format: %v", err)
+	}
+	d, err := ParseDuration(cfg.HTTP.ClientTimeout)
+	if err != nil {
+		d = time.Second * 10
+	}
+	cfg.HTTP.ClientTimeoutDuration = d
+	HTTP = cfg.HTTP
+	General = cfg.General
+	Filter = cfg.Filter
+	Discord = cfg.Discord
+	Relay = cfg.Relay
+	DB = cfg.DB
+	Log = cfg.Log
+	Net = cfg.NetBans
+
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode)
 	steamid.SetKey(General.SteamKey)
@@ -216,10 +171,56 @@ func Read(cfgFile string) {
 	}
 }
 
+func init() {
+	viper.SetDefault("general.site_name", "gbans")
+	viper.SetDefault("general.steam_key", "")
+	viper.SetDefault("general.mode", "release")
+	viper.SetDefault("general.owner", 76561198084134025)
+	viper.SetDefault("general.warning_timeout", time.Hour*6)
+	viper.SetDefault("general.warning_limit", 3)
+	viper.SetDefault("general.use_utc", true)
+
+	viper.SetDefault("http.host", "127.0.0.1")
+	viper.SetDefault("http.port", 6006)
+	viper.SetDefault("http.domain", "http://localhost:6006")
+	viper.SetDefault("http.tls", false)
+	viper.SetDefault("http.tls_auto", false)
+	viper.SetDefault("http.static_path", "frontend/dist")
+	viper.SetDefault("http.cookie_key", golib.RandomString(32))
+	viper.SetDefault("http.client_timeout", "10s")
+
+	viper.SetDefault("filter.enabled", false)
+	viper.SetDefault("filter.is_warning", true)
+	viper.SetDefault("filter.ping_discord", false)
+	viper.SetDefault("filter.external_enabled", false)
+	viper.SetDefault("filter.external_source", []string{})
+
+	viper.SetDefault("discord.enabled", false)
+	viper.SetDefault("discord.token", "")
+	viper.SetDefault("discord.mod_role_id", 0)
+	viper.SetDefault("discord.perms", 125958)
+	viper.SetDefault("discord.prefix", "!")
+	viper.SetDefault("discord.mod_channel_ids", nil)
+
+	viper.SetDefault("network_bans.enabled", false)
+	viper.SetDefault("network_bans.max_age", "1d")
+	viper.SetDefault("network_bans.cache_path", ".cache")
+	viper.SetDefault("network_bans.sources", nil)
+
+	viper.SetDefault("log.level", "info")
+	viper.SetDefault("log.force_colours", true)
+	viper.SetDefault("log.disable_colours", false)
+	viper.SetDefault("log.report_caller", false)
+	viper.SetDefault("log.full_timestamp", false)
+
+	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
+}
+
 func configureLogger(l *log.Logger) {
 	level, err := log.ParseLevel(Log.Level)
 	if err != nil {
-		log.Fatalf("Invalid log level: %s", Log.Level)
+		log.Errorf("Invalid log level: %s", Log.Level)
+		level = log.DebugLevel
 	}
 	l.SetLevel(level)
 	l.SetFormatter(&log.TextFormatter{

@@ -37,6 +37,7 @@ const (
 	routeServerAPIBan     Route = "sapi_ban"
 	routeServerAPICheck   Route = "sapi_check"
 	routeServerAPIMessage Route = "sapi_message"
+	routeServerAPILogAdd  Route = "sapi_log_add"
 )
 
 func initRouter() {
@@ -78,6 +79,7 @@ func initRouter() {
 	authed.POST(string(routeServerAPICheck), onPostServerCheck())
 	authed.POST(routeRaw(string(routeServerAPIMessage)), onPostLogMessage())
 	authed.POST(routeRaw(string(routeServerAPIPingMod)), onPostPingMod())
+	authed.POST(routeRaw(string(routeServerAPILogAdd)), onPostLogAdd())
 }
 
 func init() {
@@ -107,5 +109,6 @@ func init() {
 		routeServerAPICheck:   "/sapi/v1/check",
 		routeServerAPIMessage: "/sapi/v1/message",
 		routeServerAPIPingMod: "/sapi/v1/ping_mod",
+		routeServerAPILogAdd:  "/sapi/v1/log",
 	}
 }

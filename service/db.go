@@ -4,6 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -12,8 +15,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"net"
-	"time"
 )
 
 var (
@@ -196,10 +197,10 @@ func DropBan(ban model.Ban) error {
 func GetBan(steamID steamid.SID64) (model.Ban, error) {
 	const q = `
 		SELECT 
-			b.ban_id, b.steam_id, b.ban_type, b.reason, b.note,  b.until,
-			b.created_on, b.updated_on, b.reason_text, b.ban_source
-		FROM ban b
-		WHERE ($1 > 0 AND b.steam_id = $1)`
+			ban_id, steam_id, ban_type, reason, note, until,
+			created_on, updated_on, reason_text, ban_source
+		FROM ban
+		WHERE ($1 > 0 AND steam_id = $1)`
 	var b model.Ban
 	if err := db.QueryRow(context.Background(), q, steamID.Int64()).
 		Scan(&b.BanID, &b.SteamID, &b.BanType, &b.Reason, &b.Note, &b.Until, &b.CreatedOn,
@@ -336,6 +337,8 @@ func insertPerson(p *model.Person) error {
 	return nil
 }
 
+// GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
+// is not known.
 func GetPersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	const q = `
 		SELECT 
@@ -359,6 +362,8 @@ func GetPersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	return p, nil
 }
 
+// GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
+// does not exist.
 func GetOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	p, err := GetPersonBySteamID(sid)
 	if err != nil && DBErr(err) == ErrNoResult {
@@ -372,6 +377,7 @@ func GetOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	return p, nil
 }
 
+// GetBanNet returns the BanNet matching intersecting the supplied ip
 // TODO keep nets in memory?
 func GetBanNet(ip string) (model.BanNet, error) {
 	addr := net.ParseIP(ip)
@@ -470,7 +476,6 @@ type SearchQueryOpts struct {
 }
 
 func GetBans(o SearchQueryOpts) ([]model.BannedPerson, error) {
-	//goland:noinspection SqlResolve
 	const q = `
 		SELECT 
 		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
