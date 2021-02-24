@@ -103,7 +103,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		reasonStr = strings.Join(args[2:], " ")
 	}
 	ban, err := GetBan(pi.sid)
-	if err != nil && DBErr(err) != ErrNoResult {
+	if err != nil && DBErr(err) != errNoResult {
 		log.Errorf("Error getting ban from db: %v", err)
 		return errors.New("Internal DB Error")
 	} else if err != nil {
@@ -119,7 +119,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	}
 	ban.BanType = model.NoComm
 	ban.ReasonText = reasonStr
-	ban.Until = config.Now().Add(duration)
+	ban.ValidUntil = config.Now().Add(duration)
 	if err := SaveBan(&ban); err != nil {
 		log.Errorf("Failed to save ban: %v", err)
 		return errors.New("Failed to save mute state")
@@ -154,8 +154,8 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil {
 		return errInvalidDuration
 	}
-	_, err = GetBanNet(args[0])
-	if err != nil && DBErr(err) != ErrNoResult {
+	_, err = getBanNet(net.ParseIP(args[0]))
+	if err != nil && DBErr(err) != errNoResult {
 		return errCommandFailed
 	}
 	if err == nil {
@@ -168,7 +168,11 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err := SaveBanNet(&ban); err != nil {
 		return errCommandFailed
 	}
-	pi, srv, err := findPlayerByCIDR(args[0])
+	_, n, err := net.ParseCIDR(args[0])
+	if err != nil {
+		return errCommandFailed
+	}
+	pi, srv, err := findPlayerByCIDR(n)
 	if err == nil {
 		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi.Name)); err != nil {
 			log.Debug(resp)
@@ -193,7 +197,7 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	}
 	err = BanPlayer(ctx, pi.sid, config.General.Owner, duration, model.Custom, reason, model.Bot)
 	if err != nil {
-		if err == ErrDuplicate {
+		if err == errDuplicate {
 			return sendMsg(s, m.ChannelID, "ID already banned")
 		} else {
 			return sendMsg(s, m.ChannelID, "Error banning: %s", err)
@@ -210,29 +214,30 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 		return errUnknownID
 	}
 	ban, err1 := GetBan(pi.sid)
-	if err1 != nil && err1 != ErrNoResult {
+	if err1 != nil && err1 != errNoResult {
 		return errCommandFailed
 	}
-	banIp, err2 := GetBanNet(args[0])
-	if err2 != nil && err2 != ErrNoResult {
+	bannedNets, err2 := getBanNet(net.ParseIP(args[0]))
+	if err2 != nil && err2 != errNoResult {
 		return errCommandFailed
 	}
-	if err1 == ErrNoResult && err2 == ErrNoResult {
+	if err1 == errNoResult && err2 == errNoResult {
 		return sendMsg(s, m.ChannelID, "No ban for user in db")
 	}
 	sid := ""
 	reason := ""
 	var remaining time.Duration
+	// TODO Show the longest remaining ban.
 	if ban.BanID > 0 {
 		sid = pi.sid.String()
 		reason = ban.ReasonText
-		remaining = ban.Until.Sub(config.Now())
+		remaining = ban.ValidUntil.Sub(config.Now())
 	}
 	ip := "N/A"
-	if banIp.NetID > 0 {
-		ip = banIp.CIDR
-		reason = banIp.Reason
-		remaining = ban.Until.Sub(config.Now())
+	if len(bannedNets) > 0 {
+		ip = bannedNets[0].CIDR.String()
+		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
+		remaining = bannedNets[0].ValidUntil.Sub(config.Now())
 	}
 	r := strings.Split(remaining.String(), ".")
 	return sendMsg(s, m.ChannelID, f, sid,
@@ -246,7 +251,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	}
 	ban, err := GetBan(sid)
 	if err != nil {
-		if err == ErrNoResult {
+		if err == errNoResult {
 			return errors.New("SteamID does not exist in database")
 		} else {
 			return errCommandFailed
@@ -460,18 +465,14 @@ func findPlayerByIP(ip net.IP) (*extra.Player, *model.Server, error) {
 	return nil, nil, errUnknownID
 }
 
-func findPlayerByCIDR(ipNet string) (*extra.Player, *model.Server, error) {
-	_, n, err := net.ParseCIDR(ipNet)
-	if err != nil {
-		return nil, nil, err
-	}
+func findPlayerByCIDR(ipNet *net.IPNet) (*extra.Player, *model.Server, error) {
 	statuses, err := getAllServerStatus()
 	if err != nil {
 		return nil, nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
-			if n.Contains(player.IP) {
+			if ipNet.Contains(player.IP) {
 				return &player, &server, nil
 			}
 		}

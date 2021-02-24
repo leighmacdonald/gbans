@@ -13,12 +13,12 @@ import (
 
 func profileUpdater() {
 	var update = func() {
-		o := NewQueryOpts()
+		o := newQueryOpts()
 		o.Limit = 5 // Max per query of WebAPI
 		loop := 0
 		for {
 			o.Offset = loop * o.Limit
-			bans, err := GetBansOlderThan(o, config.Now().Add(-(time.Hour * 24)))
+			bans, err := getBansOlderThan(o, config.Now().Add(-(time.Hour * 24)))
 			if err != nil {
 				log.Warnf("Failed to get old bans for update: %v", err)
 				break
@@ -38,13 +38,13 @@ func profileUpdater() {
 					log.Errorf("Failed to parse steamid from webapi: %v", err)
 					continue
 				}
-				p, err := GetOrCreatePersonBySteamID(sid)
+				p, err := getOrCreatePersonBySteamID(sid)
 				if err != nil {
 					log.Errorf("Failed to get person: %v", err)
 					continue
 				}
 				p.PlayerSummary = s
-				if err := SavePerson(&p); err != nil {
+				if err := savePerson(&p); err != nil {
 					log.Errorf("Failed to save person: %v", err)
 					continue
 				}
@@ -145,7 +145,7 @@ func banSweeper() {
 					}
 				}
 			}
-			netBans, err := GetExpiredNetBans()
+			netBans, err := getExpiredNetBans()
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {

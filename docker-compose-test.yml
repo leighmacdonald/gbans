@@ -1,19 +1,19 @@
 version: "3.8"
 
 services:
-  gbans:
+  gbans-test:
     build:
       context: .
       dockerfile: ./Dockerfile
     volumes:
-      - ./gbans_test.yaml:/app/gbans.yaml
       - dl_cache:/app/.cache
     depends_on:
       - postgres
     networks:
       - test_network
     environment:
-      database.dsn: postgres://gbans:gbans@postgres:5432/gbans
+      GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
+      GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
     command: make test
 
   postgres:
@@ -21,16 +21,13 @@ services:
     restart: always
     ports:
       - 5432:5432
-    expose:
-      - 5432
     environment:
       POSTGRES_USER: gbans
       POSTGRES_DB: gbans
       POSTGRES_PASSWORD: gbans
     networks:
       - test_network
-    volumes:
-    - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
 volumes:
   dl_cache:
 

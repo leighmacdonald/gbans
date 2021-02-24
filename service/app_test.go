@@ -76,7 +76,7 @@ func GenTestData() {
 		if err != nil {
 			log.Fatalf("Failed to get player summary: %v", err)
 		}
-		p, err := GetOrCreatePersonBySteamID(sid)
+		p, err := getOrCreatePersonBySteamID(sid)
 		if err != nil {
 			log.Fatalf("Failed to get person: %v", err)
 		}
@@ -84,7 +84,7 @@ func GenTestData() {
 		p.SteamID = sid
 		p.IPAddr = fmt.Sprintf("24.56.78.%d", i+1)
 		p.PlayerSummary = s
-		if err := SavePerson(&p); err != nil {
+		if err := savePerson(&p); err != nil {
 			log.Fatalf("Failed to save test person: %v", err)
 		}
 	}
@@ -101,12 +101,12 @@ func GenTestData() {
 	for i, cidr := range []string{"50.50.50.0/24", "60.60.60.60/32"} {
 		_, mask, _ := net.ParseCIDR(cidr)
 		if err := SaveBanNet(&model.BanNet{
-			CIDR:      mask.String(),
-			Source:    0,
-			Reason:    "",
-			CreatedOn: config.Now().AddDate(0, -(i + 1), 0),
-			UpdatedOn: config.Now().AddDate(0, -(i + 1), 0),
-			Until:     config.DefaultExpiration(),
+			CIDR:       mask,
+			Source:     0,
+			Reason:     "",
+			CreatedOn:  config.Now().AddDate(0, -(i + 1), 0),
+			UpdatedOn:  config.Now().AddDate(0, -(i + 1), 0),
+			ValidUntil: config.DefaultExpiration(),
 		}); err != nil {
 			log.Fatalf("Failed to generate test ban_net #%d: %v", i, err)
 		}

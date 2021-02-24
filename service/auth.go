@@ -38,7 +38,7 @@ func authMiddleWare() gin.HandlerFunc {
 		var err error
 		v := s.Get("steam_id")
 		if v != nil {
-			p, err = GetPersonBySteamID(steamid.SID64(v.(int64)))
+			p, err = getPersonBySteamID(steamid.SID64(v.(int64)))
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				p = guest
@@ -113,7 +113,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		p, err := GetOrCreatePersonBySteamID(sid)
+		p, err := getOrCreatePersonBySteamID(sid)
 		if err != nil {
 			log.Errorf("Failed to get person: %v", err)
 			c.Redirect(302, ref)
@@ -123,7 +123,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 		p.SteamID = sid
 		p.IPAddr = c.Request.RemoteAddr
 		p.PlayerSummary = s
-		if err := SavePerson(&p); err != nil {
+		if err := savePerson(&p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
 			c.Redirect(302, ref)
 			return

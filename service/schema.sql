@@ -26,7 +26,7 @@ CREATE INDEX if not exists idx_personaname_lower ON person (LOWER(personaname));
 -- GDPR violation?
 CREATE TABLE IF NOT EXISTS person_names
 (
-    personaname_id SERIAL PRIMARY KEY,
+    personaname_id BIGSERIAL PRIMARY KEY,
     steam_id       int8,
     personaname    text      not null,
     created_on     timestamp not null,
@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS person_names
 
 create table if not exists ban
 (
-    ban_id      SERIAL PRIMARY KEY,
+    ban_id      BIGSERIAL PRIMARY KEY,
     steam_id    int8            not null,
     author_id   int8 default 0  not null,
     ban_type    int               not null,
     reason      int               not null,
     reason_text text   default '' not null,
     note        text   default '' not null,
-    until       timestamp         not null,
+    valid_until       timestamp         not null,
     created_on  timestamp         not null,
     updated_on  timestamp         not null,
     ban_source  int    default 0  not null,
@@ -51,13 +51,13 @@ create table if not exists ban
 
 create table if not exists ban_net
 (
-    net_id     SERIAL PRIMARY KEY,
+    net_id     BIGSERIAL PRIMARY KEY,
     cidr       cidr            not null,
     source     int  default 0  not null,
     created_on timestamp       not null,
     updated_on timestamp       not null,
     reason     text default '' not null,
-    until      timestamp       not null
+    valid_until      timestamp       not null
 );
 
 create unique index if not exists ban_net_cidr_uindex
@@ -93,8 +93,7 @@ create unique index if not exists filtered_word_word_uindex
 create table if not exists ban_appeal
 (
     appeal_id    SERIAL PRIMARY KEY,
-    ban_id       int       not null
-        references ban,
+    ban_id       int8       not null references ban,
     appeal_text  text          not null,
     appeal_state int default 0 not null,
     email        text          not null,
