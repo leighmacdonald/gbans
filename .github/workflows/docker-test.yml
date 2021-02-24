@@ -9,7 +9,6 @@ jobs:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
       - uses: actions/checkout@v2
-      - name: hmmm
-        run: ls -la
+
       - name: Build the docker-compose stack
         run: docker-compose up --exit-code-from gbans-test
