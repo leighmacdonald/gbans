@@ -39,7 +39,10 @@ clean:
 	@go clean $(GO_FLAGS) -i
 
 pg_test_service:
-	docker run --rm -e POSTGRES_PASSWORD=gbans --name gbans_pg_test -e POSTGRES_USER=gbans -p 6002:5432  postgres:13 
+	docker-compose -f docker/docker-compose.yml up --abort-on-container-exit --exit-code-from postgres --remove-orphans --build postgres
+
+docker_test:
+	docker-compose -f docker/docker-compose-test.yml up --abort-on-container-exit --exit-code-from gbans-test --remove-orphans --build
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
@@ -47,5 +50,5 @@ image_latest:
 image_tag:
 	docker build -t leighmacdonald/gbans:$$(git describe --abbrev=0 --tags) .
 
-docker_run: image_latest
-	@docker run --rm -v `pwd`/gbans.yaml:/app/gbans.yaml leighmacdonald/gbans:latest
+docker_run:
+	docker-compose -f docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from gbans
