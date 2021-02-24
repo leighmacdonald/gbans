@@ -38,7 +38,7 @@ func onGetAppeal() gin.HandlerFunc {
 		usr := currentPerson(c)
 		ban, err := GetBan(usr.SteamID)
 		if err != nil {
-			if errors.Is(err, ErrNoResult) {
+			if errors.Is(err, errNoResult) {
 				flash(c, lError, "No Ban Found", "Please login with the account in question")
 				c.Redirect(http.StatusTemporaryRedirect, c.Request.Referer())
 				return

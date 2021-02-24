@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 
@@ -118,7 +119,7 @@ func onPostServerCheck() gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int    `json:"client_id"`
 		SteamID  string `json:"steam_id"`
-		IP       string `json:"ip"`
+		IP       net.IP `json:"ip"`
 	}
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
@@ -142,10 +143,18 @@ func onPostServerCheck() gin.HandlerFunc {
 			Msg:      "",
 		}
 		// Check IP first
-		banNet, err := GetBanNet(req.IP)
-		if err == nil {
+		banNet, err := getBanNet(req.IP)
+		if err != nil {
+			c.JSON(500, checkResponse{
+				BanType: model.Unknown,
+				Msg:     "Error determining state",
+			})
+			log.Errorf("Could not get ban net results: %v", err)
+			return
+		}
+		if len(banNet) > 0 {
 			resp.BanType = model.Banned
-			resp.Msg = banNet.Reason
+			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
 			c.JSON(200, resp)
 			return
 		}
@@ -157,7 +166,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		}
 		ban, err := GetBan(steamID)
 		if err != nil {
-			if DBErr(err) == ErrNoResult {
+			if DBErr(err) == errNoResult {
 				resp.BanType = model.OK
 				c.JSON(200, resp)
 				return

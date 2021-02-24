@@ -19,8 +19,8 @@ import (
 
 var (
 	db           *pgxpool.Pool
-	ErrNoResult  = errors.New("No results found")
-	ErrDuplicate = errors.New("Duplicate entity")
+	errNoResult  = errors.New("No results found")
+	errDuplicate = errors.New("Duplicate entity")
 )
 
 type QueryOpts struct {
@@ -30,14 +30,14 @@ type QueryOpts struct {
 	OrderBy   string
 }
 
-func (o QueryOpts) Order() string {
+func (o QueryOpts) order() string {
 	if o.OrderDesc {
 		return "DESC"
 	}
 	return "ASC"
 }
 
-func NewQueryOpts() QueryOpts {
+func newQueryOpts() QueryOpts {
 	return QueryOpts{
 		Limit:     100,
 		Offset:    0,
@@ -47,7 +47,7 @@ func NewQueryOpts() QueryOpts {
 }
 
 func NewSearchQueryOpts(query string) SearchQueryOpts {
-	o := NewQueryOpts()
+	o := newQueryOpts()
 	return SearchQueryOpts{
 		query,
 		o,
@@ -81,7 +81,7 @@ func TokenValid(token string) bool {
 	return s > 0
 }
 
-func GetServer(serverID int64) (model.Server, error) {
+func getServer(serverID int64) (model.Server, error) {
 	var s model.Server
 	const q = `
 		SELECT 
@@ -197,20 +197,20 @@ func DropBan(ban model.Ban) error {
 func GetBan(steamID steamid.SID64) (model.Ban, error) {
 	const q = `
 		SELECT 
-			ban_id, steam_id, ban_type, reason, note, until,
+			ban_id, steam_id::int8, ban_type, reason, note, valid_until,
 			created_on, updated_on, reason_text, ban_source
 		FROM ban
-		WHERE ($1 > 0 AND steam_id = $1)`
+		WHERE ($1::int8 > 0 AND steam_id::int8 = $1::int8)`
 	var b model.Ban
-	if err := db.QueryRow(context.Background(), q, steamID.Int64()).
-		Scan(&b.BanID, &b.SteamID, &b.BanType, &b.Reason, &b.Note, &b.Until, &b.CreatedOn,
+	if err := db.QueryRow(context.Background(), q, int64(steamID)).
+		Scan(&b.BanID, &b.SteamID, &b.BanType, &b.Reason, &b.Note, &b.ValidUntil, &b.CreatedOn,
 			&b.UpdatedOn, &b.ReasonText, &b.Source); err != nil {
 		return model.Ban{}, DBErr(err)
 	}
 	return b, nil
 }
 
-func GetAppeal(banID int) (model.Appeal, error) {
+func getAppeal(banID int) (model.Appeal, error) {
 	const q = `SELECT appeal_id, ban_id, appeal_text, appeal_state, 
        email, created_on, updated_on FROM ban_appeal a
        WHERE a.ban_id = $1`
@@ -246,7 +246,7 @@ func insertAppeal(a *model.Appeal) error {
 	return nil
 }
 
-func SaveAppeal(appeal *model.Appeal) error {
+func saveAppeal(appeal *model.Appeal) error {
 	appeal.UpdatedOn = config.Now()
 	if appeal.AppealID > 0 {
 		return updateAppeal(appeal)
@@ -268,11 +268,11 @@ func insertBan(ban *model.Ban) error {
 	const q = `
 		INSERT INTO ban (
 			steam_id, author_id, ban_type, reason, reason_text, 
-			note, until, created_on, updated_on, ban_source) 
+			note, valid_until, created_on, updated_on, ban_source) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING ban_id`
 	err := db.QueryRow(context.Background(), q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
-		ban.Note, ban.Until, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
+		ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
 	if err != nil {
 		return DBErr(err)
 	}
@@ -292,7 +292,7 @@ func updateBan(ban *model.Ban) error {
 	return nil
 }
 
-func SavePerson(person *model.Person) error {
+func savePerson(person *model.Person) error {
 	person.UpdatedOn = config.Now()
 	if person.CreatedOn.UTC().Unix() > 0 {
 		return updatePerson(person)
@@ -337,9 +337,9 @@ func insertPerson(p *model.Person) error {
 	return nil
 }
 
-// GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
+// getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
-func GetPersonBySteamID(sid steamid.SID64) (model.Person, error) {
+func getPersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	const q = `
 		SELECT 
 		    steam_id, created_on, updated_on, ip_addr, communityvisibilitystate, profilestate, 
@@ -351,68 +351,58 @@ func GetPersonBySteamID(sid steamid.SID64) (model.Person, error) {
 	err := db.QueryRow(context.Background(), q, sid).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID)
-	if err != nil && DBErr(err) == ErrNoResult {
-		p.SteamID = sid
-		if err := SavePerson(&p); err != nil {
-			return model.Person{}, err
-		}
-	} else if err != nil {
-		return model.Person{}, err
-	}
-	return p, nil
-}
-
-// GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
-// does not exist.
-func GetOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
-	p, err := GetPersonBySteamID(sid)
-	if err != nil && DBErr(err) == ErrNoResult {
-		p.SteamID = sid
-		if err := SavePerson(&p); err != nil {
-			return model.Person{}, err
-		}
-	} else if err != nil {
-		return model.Person{}, err
-	}
-	return p, nil
-}
-
-// GetBanNet returns the BanNet matching intersecting the supplied ip
-// TODO keep nets in memory?
-func GetBanNet(ip string) (model.BanNet, error) {
-	addr := net.ParseIP(ip)
-	const q = `SELECT net_id, cidr::inet, source, created_on, updated_on, reason, until FROM ban_net`
-	var nets []model.BanNet
-	rows, err := db.Query(context.Background(), q)
 	if err != nil {
-		return model.BanNet{}, DBErr(err)
+		return model.Person{}, DBErr(err)
+	}
+	return p, nil
+}
+
+// getOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
+// does not exist.
+func getOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
+	p, err := getPersonBySteamID(sid)
+	if err != nil && DBErr(err) == errNoResult {
+		p.SteamID = sid
+		if err := savePerson(&p); err != nil {
+			return model.Person{}, err
+		}
+	} else if err != nil {
+		return model.Person{}, err
+	}
+	return p, nil
+}
+
+// GetBanNet returns the BanNet matching intersecting the supplied ip.
+//
+// Note that this function does not currently limit results returned. This may change in the future, do not
+// rely on this functionality.
+func getBanNet(ip net.IP) ([]model.BanNet, error) {
+	const q = `
+		SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until 
+		FROM ban_net
+		WHERE $1 <<= cidr`
+	var nets []model.BanNet
+	rows, err := db.Query(context.Background(), q, ip.String())
+	if err != nil {
+		return nil, DBErr(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var n model.BanNet
-		if err := rows.Scan(&n.NetID, &n.CIDR, &n.Source, &n.CreatedOn, &n.UpdatedOn, &n.Reason, &n.Until); err != nil {
-			return model.BanNet{}, err
+		if err2 := rows.Scan(&n.NetID, &n.CIDR, &n.Source, &n.CreatedOn, &n.UpdatedOn, &n.Reason, &n.ValidUntil); err2 != nil {
+			return nil, err2
 		}
 		nets = append(nets, n)
 	}
-	for _, n := range nets {
-		_, ipNet, err := net.ParseCIDR(n.CIDR)
-		if err != nil {
-			continue
-		}
-		if ipNet.Contains(addr) {
-			return n, nil
-		}
-	}
-	return model.BanNet{}, ErrNoResult
+	return nets, nil
 }
 
 func updateBanNet(banNet *model.BanNet) error {
 	const q = `
-		UPDATE ban_net SET cidr = $2, source = $3, updated_on = $4, until = $5
+		UPDATE ban_net SET cidr = $2, source = $3, updated_on = $4, valid_until = $5
 		WHERE net_id = $1`
 	if _, err := db.Exec(context.Background(), q,
-		banNet.NetID, banNet.CIDR, banNet.Source, banNet.UpdatedOn, banNet.Until); err != nil {
+		banNet.NetID, banNet.CIDR, banNet.Source, banNet.UpdatedOn, banNet.ValidUntil); err != nil {
 		return err
 	}
 	return nil
@@ -420,11 +410,11 @@ func updateBanNet(banNet *model.BanNet) error {
 
 func insertBanNet(banNet *model.BanNet) error {
 	const q = `
-		INSERT INTO ban_net (cidr, source, created_on, updated_on, reason, until) 
+		INSERT INTO ban_net (cidr, source, created_on, updated_on, reason, valid_until) 
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING net_id`
 	err := db.QueryRow(context.Background(), q,
-		banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.Until).Scan(&banNet.NetID)
+		banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ValidUntil).Scan(&banNet.NetID)
 	if err != nil {
 		return err
 	}
@@ -450,7 +440,7 @@ func GetExpiredBans() ([]model.Ban, error) {
 	const q = `
 		SELECT 
 		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
-			b.until, b.created_on, b.updated_on
+			b.valid_until, b.created_on, b.updated_on
 		FROM ban b 
 		WHERE until < $1`
 	var bans []model.Ban
@@ -462,7 +452,7 @@ func GetExpiredBans() ([]model.Ban, error) {
 	for rows.Next() {
 		var b model.Ban
 		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.Source, &b.Until, &b.CreatedOn, &b.UpdatedOn); err != nil {
+			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)
@@ -484,7 +474,7 @@ func GetBans(o SearchQueryOpts) ([]model.BannedPerson, error) {
 		LEFT OUTER JOIN person p on b.steam_id = p.steam_id
 		ORDER BY $1 %s LIMIT $2 OFFSET $3
 	`
-	q2 := fmt.Sprintf(q, o.Order())
+	q2 := fmt.Sprintf(q, o.order())
 	var bans []model.BannedPerson
 	rows, err := db.Query(context.Background(), q2, o.OrderBy, o.Limit, o.Offset)
 	if err != nil {
@@ -511,8 +501,13 @@ func GetBansTotal() int {
 	return c
 }
 
-func GetBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
-	const q = `SELECT * FROM ban WHERE updated_on < $1 LIMIT $2 OFFSET $3`
+func getBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
+	const q = `
+		SELECT 
+		    ban_id, steam_id, author_id, ban_type, reason, reason_text, note, 
+       		valid_until, created_on, updated_on, ban_source 
+		FROM ban 
+		WHERE updated_on < $1 LIMIT $2 OFFSET $3`
 	var bans []model.Ban
 	rows, err := db.Query(context.Background(), q, t, o.Limit, o.Offset)
 	if err != nil {
@@ -522,7 +517,7 @@ func GetBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
 	for rows.Next() {
 		var b model.Ban
 		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.Source, &b.Until, &b.CreatedOn, &b.UpdatedOn); err != nil {
+			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)
@@ -530,8 +525,8 @@ func GetBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
 	return bans, nil
 }
 
-func GetExpiredNetBans() ([]model.BanNet, error) {
-	const q = `SELECT net_id, cidr, source, created_on, updated_on, reason, until FROM ban_net WHERE until < $1`
+func getExpiredNetBans() ([]model.BanNet, error) {
+	const q = `SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until FROM ban_net WHERE until < $1`
 	var bans []model.BanNet
 	rows, err := db.Query(context.Background(), q, config.Now())
 	if err != nil {
@@ -540,7 +535,7 @@ func GetExpiredNetBans() ([]model.BanNet, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var b model.BanNet
-		if err := rows.Scan(&b.NetID, &b.CIDR, &b.Source, &b.CreatedOn, &b.UpdatedOn, &b.Reason, &b.Until); err != nil {
+		if err := rows.Scan(&b.NetID, &b.CIDR, &b.Source, &b.CreatedOn, &b.UpdatedOn, &b.Reason, &b.ValidUntil); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)
@@ -604,14 +599,14 @@ func DBErr(err error) error {
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
-			return ErrDuplicate
+			return errDuplicate
 		default:
 			log.Errorf("Unhandled store error: (%s) %s", pgErr.Code, pgErr.Message)
 			return err
 		}
 	}
 	if err.Error() == "no rows in result set" {
-		return ErrNoResult
+		return errNoResult
 	}
 	return err
 }
@@ -633,7 +628,7 @@ func Migrate(recreate bool) error {
 	if err != nil {
 		return errors.Wrap(err, "Could not create new schema")
 	}
-	_, err = GetOrCreatePersonBySteamID(config.General.Owner)
+	_, err = getOrCreatePersonBySteamID(config.General.Owner)
 	if err != nil {
 		log.Fatalf("Error loading system user: %v", err)
 	}

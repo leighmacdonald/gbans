@@ -20,9 +20,9 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 	if !author.Valid() {
 		return errors.Errorf("Failed to get steam id from: %s", author)
 	}
-	untile := config.DefaultExpiration()
+	until := config.DefaultExpiration()
 	if duration > 0 {
-		untile = config.Now().Add(duration)
+		until = config.Now().Add(duration)
 	}
 	ban := model.Ban{
 		SteamID:    sid,
@@ -31,7 +31,7 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 		Reason:     reason,
 		ReasonText: reasonText,
 		Source:     0,
-		Until:      untile,
+		ValidUntil: until,
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
 	}
@@ -55,13 +55,13 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 	}
 	ban, err := GetBan(sid)
 	if err != nil {
-		if err == ErrNoResult {
+		if err == errNoResult {
 			return errors.Wrapf(err, "Player is not banned")
 		} else {
 			return err
 		}
 	}
-	ban.Until = time.Now().UTC()
+	ban.ValidUntil = time.Now().UTC()
 	if err := SaveBan(&ban); err != nil {
 		return errors.Wrapf(err, "Failed to save unban")
 	}
@@ -78,13 +78,15 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
 
-	_, err := GetBan(sid)
-	if err != nil && err == ErrNoResult {
-		return errors.Wrapf(err, "Failed to lookup existing ban")
+	existing, err := GetBan(sid)
+	if err != nil {
+		if err != errNoResult {
+			return errors.Wrapf(err, "Failed to get ban")
+		}
+	} else {
+		return errors.Wrapf(err, "Ban exists for steamid: %d :: %v", sid, existing)
 	}
-	if err != ErrNoResult {
-		return errors.Wrapf(ErrDuplicate, "Existing ban")
-	}
+
 	until := config.DefaultExpiration()
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
@@ -96,7 +98,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		Reason:     reason,
 		ReasonText: reasonText,
 		Note:       "",
-		Until:      until,
+		ValidUntil: until,
 		Source:     source,
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
@@ -112,7 +114,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	return nil
 }
 
-func BanIP(ctx context.Context, ip net.IPNet, author steamid.SID64, duration time.Duration,
+func BanIP(ctx context.Context, cidr *net.IPNet, author steamid.SID64, duration time.Duration,
 	banType model.BanType, reason model.Reason, reasonText string, source model.BanSource) error {
 	if !author.Valid() {
 		return errors.Errorf("Failed to get steam id from: %s", author)
@@ -122,17 +124,17 @@ func BanIP(ctx context.Context, ip net.IPNet, author steamid.SID64, duration tim
 		until = config.Now().Add(duration)
 	}
 	banNet := model.BanNet{
-		CIDR:      ip.String(),
-		Source:    source,
-		Reason:    reasonText,
-		CreatedOn: config.Now(),
-		UpdatedOn: config.Now(),
-		Until:     until,
+		CIDR:       cidr,
+		Source:     source,
+		Reason:     reasonText,
+		CreatedOn:  config.Now(),
+		UpdatedOn:  config.Now(),
+		ValidUntil: until,
 	}
 	if err := SaveBanNet(&banNet); err != nil {
 		return DBErr(err)
 	}
-	p, server, err := findPlayerByCIDR(ip.String())
+	p, server, err := findPlayerByCIDR(cidr)
 	if err != nil && err != errUnknownID {
 		return err
 	}

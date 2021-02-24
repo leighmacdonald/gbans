@@ -76,17 +76,17 @@ func ReasonString(reason Reason) string {
 }
 
 type BanNet struct {
-	NetID     int64     `db:"net_id"`
-	CIDR      string    `db:"cidr"`
-	Source    BanSource `source:"source"`
-	Reason    string    `db:"reason"`
-	CreatedOn time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn time.Time `db:"updated_on" json:"updated_on"`
-	Until     time.Time `db:"until"`
+	NetID      int64      `db:"net_id"`
+	CIDR       *net.IPNet `db:"cidr"`
+	Source     BanSource  `source:"source"`
+	Reason     string     `db:"reason"`
+	CreatedOn  time.Time  `db:"created_on" json:"created_on"`
+	UpdatedOn  time.Time  `db:"updated_on" json:"updated_on"`
+	ValidUntil time.Time  `db:"valid_until"`
 }
 
 func NewBanNet(cidr string, reason string, duration time.Duration, source BanSource) (BanNet, error) {
-	_, _, err := net.ParseCIDR(cidr)
+	_, n, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return BanNet{}, err
 	}
@@ -95,12 +95,12 @@ func NewBanNet(cidr string, reason string, duration time.Duration, source BanSou
 		duration = time.Hour * 8760 * 100
 	}
 	return BanNet{
-		CIDR:      cidr,
-		Source:    source,
-		Reason:    reason,
-		CreatedOn: config.Now(),
-		UpdatedOn: config.Now(),
-		Until:     config.Now().Add(duration),
+		CIDR:       n,
+		Source:     source,
+		Reason:     reason,
+		CreatedOn:  config.Now(),
+		UpdatedOn:  config.Now(),
+		ValidUntil: config.Now().Add(duration),
 	}, nil
 }
 
@@ -122,10 +122,10 @@ type Ban struct {
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note   string    `db:"note" json:"note"`
 	Source BanSource `json:"ban_source" db:"ban_source"`
-	// Until is when the ban will be no longer valid. 0 denotes forever
-	Until     time.Time `json:"until" db:"until"`
-	CreatedOn time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn time.Time `db:"updated_on" json:"updated_on"`
+	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
+	ValidUntil time.Time `json:"valid_until" db:"valid_until"`
+	CreatedOn  time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn  time.Time `db:"updated_on" json:"updated_on"`
 }
 
 func (b Ban) String() string {
