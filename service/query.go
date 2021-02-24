@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func A2SQuery(server model.Server) (*a2s.ServerInfo, error) {
+func a2sQuery(server model.Server) (*a2s.ServerInfo, error) {
 	client, err := a2s.NewClient(server.Addr())
 
 	if err != nil {
@@ -30,7 +30,7 @@ func A2SQuery(server model.Server) (*a2s.ServerInfo, error) {
 	return info, nil
 }
 
-func QueryRCON(ctx context.Context, servers []model.Server, commands ...string) map[string]string {
+func queryRCON(ctx context.Context, servers []model.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
 	mu := &sync.RWMutex{}
 	timeout := time.Second * 10
@@ -74,7 +74,7 @@ func execServerRCON(server model.Server, cmd string) (string, error) {
 	return resp, nil
 }
 
-func QueryA2SInfo(ctx context.Context, servers []model.Server) map[string]*a2s.ServerInfo {
+func queryA2SInfo(servers []model.Server) map[string]*a2s.ServerInfo {
 	responses := make(map[string]*a2s.ServerInfo)
 	mu := &sync.RWMutex{}
 	wg := &sync.WaitGroup{}
@@ -82,7 +82,7 @@ func QueryA2SInfo(ctx context.Context, servers []model.Server) map[string]*a2s.S
 		wg.Add(1)
 		go func(server model.Server) {
 			defer wg.Done()
-			resp, err := A2SQuery(server)
+			resp, err := a2sQuery(server)
 			if err != nil {
 				return
 			}

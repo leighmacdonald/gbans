@@ -69,7 +69,7 @@ func profileUpdater() {
 
 func serverStateUpdater() {
 	var update = func() {
-		servers, err := GetServers()
+		servers, err := getServers()
 		if err != nil {
 			log.Errorf("Failed to fetch servers to update")
 			return
@@ -80,11 +80,11 @@ func serverStateUpdater() {
 		respA2S := map[string]*a2s.ServerInfo{}
 		go func() {
 			defer wg.Done()
-			respRCON = QueryRCON(context.Background(), servers, "status")
+			respRCON = queryRCON(context.Background(), servers, "status")
 		}()
 		go func() {
 			defer wg.Done()
-			respA2S = QueryA2SInfo(context.Background(), servers)
+			respA2S = queryA2SInfo(servers)
 		}()
 		wg.Wait()
 		for name, resp := range respRCON {

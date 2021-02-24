@@ -56,7 +56,7 @@ func onGetAppeal() gin.HandlerFunc {
 
 func onAPIGetServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		servers, err := GetServers()
+		servers, err := getServers()
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			c.AbortWithStatus(http.StatusInternalServerError)

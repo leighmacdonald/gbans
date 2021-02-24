@@ -51,7 +51,7 @@ func onAPIGetBans() gin.HandlerFunc {
 		Bans  []model.BannedPerson `json:"bans"`
 	}
 	return func(c *gin.Context) {
-		o := NewSearchQueryOpts(c.GetString("q"))
+		o := newSearchQueryOpts(c.GetString("q"))
 		o.Limit = queryInt(c, "limit")
 		if o.Limit > 100 {
 			o.Limit = 100

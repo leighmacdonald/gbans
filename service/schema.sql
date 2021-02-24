@@ -38,26 +38,26 @@ create table if not exists ban
     ban_id      BIGSERIAL PRIMARY KEY,
     steam_id    int8            not null,
     author_id   int8 default 0  not null,
-    ban_type    int               not null,
-    reason      int               not null,
-    reason_text text   default '' not null,
-    note        text   default '' not null,
-    valid_until       timestamp         not null,
-    created_on  timestamp         not null,
-    updated_on  timestamp         not null,
-    ban_source  int    default 0  not null,
+    ban_type    int             not null,
+    reason      int             not null,
+    reason_text text default '' not null,
+    note        text default '' not null,
+    valid_until timestamp       not null,
+    created_on  timestamp       not null,
+    updated_on  timestamp       not null,
+    ban_source  int  default 0  not null,
     CONSTRAINT fk_person FOREIGN KEY (steam_id) REFERENCES person (steam_id)
 );
 
 create table if not exists ban_net
 (
-    net_id     BIGSERIAL PRIMARY KEY,
-    cidr       cidr            not null,
-    source     int  default 0  not null,
-    created_on timestamp       not null,
-    updated_on timestamp       not null,
-    reason     text default '' not null,
-    valid_until      timestamp       not null
+    net_id      BIGSERIAL PRIMARY KEY,
+    cidr        cidr            not null,
+    source      int  default 0  not null,
+    created_on  timestamp       not null,
+    updated_on  timestamp       not null,
+    reason      text default '' not null,
+    valid_until timestamp       not null
 );
 
 create unique index if not exists ban_net_cidr_uindex
@@ -93,14 +93,21 @@ create unique index if not exists filtered_word_word_uindex
 create table if not exists ban_appeal
 (
     appeal_id    SERIAL PRIMARY KEY,
-    ban_id       int8       not null references ban,
+    ban_id       int8          not null references ban,
     appeal_text  text          not null,
     appeal_state int default 0 not null,
     email        text          not null,
-    created_on   timestamp       not null,
-    updated_on   timestamp       not null,
+    created_on   timestamp     not null,
+    updated_on   timestamp     not null,
     CONSTRAINT fk_ban_id FOREIGN KEY (ban_id) REFERENCES ban (ban_id)
 );
 
 create unique index if not exists ban_appeal_ban_id_uindex
     on ban_appeal (ban_id);
+
+CREATE TABLE IF NOT EXISTS filtered_word
+(
+    word_id    BIGSERIAL PRIMARY KEY,
+    word       text,
+    created_on timestamp not null
+);

@@ -327,7 +327,7 @@ func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	servers, err := GetServers()
+	servers, err := getServers()
 	if err != nil {
 		return errors.New("Failed to fetch servers")
 	}
@@ -394,7 +394,7 @@ func getServerStatus(server model.Server) (extra.Status, error) {
 }
 
 func getAllServerStatus() (map[model.Server]extra.Status, error) {
-	servers, err := GetServers()
+	servers, err := getServers()
 	if err != nil {
 		return nil, err
 	}
