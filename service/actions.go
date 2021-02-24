@@ -38,11 +38,11 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 	if err := SaveBan(&ban); err != nil {
 		return DBErr(err)
 	}
-	servers, err := GetServers()
+	servers, err := getServers()
 	if err != nil {
 		log.Errorf("Failed to get server for ban propagation")
 	}
-	QueryRCON(ctx, servers,
+	queryRCON(ctx, servers,
 		fmt.Sprintf(`sm_gag "#%s""`, string(steamid.SID64ToSID(sid))),
 		fmt.Sprintf(`sm_kick "#%s""`, string(steamid.SID64ToSID(sid))))
 	return nil
@@ -106,11 +106,11 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	if err := SaveBan(&ban); err != nil {
 		return DBErr(err)
 	}
-	servers, err := GetServers()
+	servers, err := getServers()
 	if err != nil {
 		log.Errorf("Failed to get server for ban propagation")
 	}
-	QueryRCON(ctx, servers, `gb_kick "#%s" %s`, string(steamid.SID64ToSID(sid)), reasonText)
+	queryRCON(ctx, servers, `gb_kick "#%s" %s`, string(steamid.SID64ToSID(sid)), reasonText)
 	return nil
 }
 

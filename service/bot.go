@@ -20,19 +20,19 @@ type cmdDef struct {
 }
 
 var (
-	dg                  *discordgo.Session
-	messageQueue        chan DiscordMessage
-	modChannelIDs       []string
-	cmdMap              map[string]cmdDef
-	connected           bool
-	errUnknownCommand   = errors.New("Unknown command")
-	errInvalidSID       = errors.New("Invalid steamid")
-	errUnknownID        = errors.New("Could not find matching player/steamid")
-	errCommandFailed    = errors.New("Command failed")
-	errDuplicateBan     = errors.New("Duplicate ban")
-	errInvalidDuration  = errors.New("Invalid duration")
-	errInvalidArguments = errors.New("Invalid arguments")
-	errInvalidIP        = errors.New("Invalid ip")
+	dg                 *discordgo.Session
+	messageQueue       chan DiscordMessage
+	modChannelIDs      []string
+	cmdMap             map[string]cmdDef
+	connected          bool
+	errUnknownCommand  = errors.New("Unknown command")
+	errInvalidSID      = errors.New("Invalid steamid")
+	errUnknownID       = errors.New("Could not find matching player/steamid")
+	errCommandFailed   = errors.New("Command failed")
+	errDuplicateBan    = errors.New("Duplicate ban")
+	errInvalidDuration = errors.New("Invalid duration")
+	//errInvalidArguments = errors.New("Invalid arguments")
+	//errInvalidIP        = errors.New("Invalid ip")
 )
 
 func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs int) cmdDef {
@@ -92,6 +92,11 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 	go queueConsumer(ctx)
 	// Wait here until CTRL-C or other term signal is received.
 	log.Infof("Bot is now running.  Press CTRL-C to exit.")
+	go func() {
+		if err2 := botRegisterSlashCommands(758536119397646370, token); err2 != nil {
+			log.Errorf("Failed to register discord slash commands: %v", err2)
+		}
+	}()
 	<-ctx.Done()
 }
 

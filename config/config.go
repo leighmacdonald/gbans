@@ -88,6 +88,7 @@ type GeneralConfig struct {
 
 type DiscordConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
+	AppID       int64    `mapstructure:"app_id"`
 	Token       string   `mapstructure:"token"`
 	ModRoleID   int      `mapstructure:"mod_role_id"`
 	Perms       int      `mapstructure:"perms"`
@@ -196,6 +197,7 @@ func init() {
 	viper.SetDefault("filter.external_source", []string{})
 
 	viper.SetDefault("discord.enabled", false)
+	viper.SetDefault("discord.app_id", 0)
 	viper.SetDefault("discord.token", "")
 	viper.SetDefault("discord.mod_role_id", 0)
 	viper.SetDefault("discord.perms", 125958)

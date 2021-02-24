@@ -46,7 +46,7 @@ func newQueryOpts() QueryOpts {
 	}
 }
 
-func NewSearchQueryOpts(query string) SearchQueryOpts {
+func newSearchQueryOpts(query string) SearchQueryOpts {
 	o := newQueryOpts()
 	return SearchQueryOpts{
 		query,
@@ -54,6 +54,7 @@ func NewSearchQueryOpts(query string) SearchQueryOpts {
 	}
 }
 
+// Init sets up underlying required services.
 func Init(dsn string) {
 	dbConn, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
@@ -97,7 +98,7 @@ func getServer(serverID int64) (model.Server, error) {
 	return s, nil
 }
 
-func GetServers() ([]model.Server, error) {
+func getServers() ([]model.Server, error) {
 	var servers []model.Server
 	const q = `
 		SELECT 
@@ -526,7 +527,7 @@ func getBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
 }
 
 func getExpiredNetBans() ([]model.BanNet, error) {
-	const q = `SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until FROM ban_net WHERE until < $1`
+	const q = `SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until FROM ban_net WHERE valid_until < $1`
 	var bans []model.BanNet
 	rows, err := db.Query(context.Background(), q, config.Now())
 	if err != nil {
