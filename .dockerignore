@@ -1,5 +1,6 @@
 .cache
 frontend/node_modules
-frontend/.cache
 frontend/dist
 .idea
+tf2server
+uncletopia-prod
