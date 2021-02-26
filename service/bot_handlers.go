@@ -165,7 +165,7 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil {
 		return errCommandFailed
 	}
-	if err := SaveBanNet(&ban); err != nil {
+	if err := saveBanNet(&ban); err != nil {
 		return errCommandFailed
 	}
 	_, n, err := net.ParseCIDR(args[0])
