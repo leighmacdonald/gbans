@@ -9,10 +9,12 @@ import fromUnixTime from "date-fns/fromUnixTime";
  * @param s
  * @param args
  */
-export function fmt(s: string, args: object): string {
+export function fmt(s: string, args: any): string {
     if (args) {
         for (let k in args) {
-            s = s.replace(new RegExp("\\{" + k + "\\}", "gi"), args[k]);
+            if (args.hasOwnProperty(k)) {
+                s = s.replace(new RegExp("\\{" + k + "\\}", "gi"), args[k]);
+            }
         }
     }
     return s;

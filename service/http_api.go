@@ -35,7 +35,7 @@ func onPostPingMod() gin.HandlerFunc {
 			return
 		}
 		for _, c := range config.Discord.ModChannels {
-			Send(NewMessage(c, fmt.Sprintf("<@&%d> %s", config.Discord.ModRoleID, req.Reason)))
+			sendMessage(newMessage(c, fmt.Sprintf("<@&%d> %s", config.Discord.ModRoleID, req.Reason)))
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"client":  req.Client,
@@ -64,7 +64,7 @@ func onPostLogMessage() gin.HandlerFunc {
 		if filtered {
 			addWarning(req.SteamID, warnLanguage)
 			for _, c := range config.Relay.ChannelIDs {
-				Send(NewMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
+				sendMessage(newMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
 			}
 		}
 		// [us-2] 76561198017946808 name: message
@@ -74,7 +74,7 @@ func onPostLogMessage() gin.HandlerFunc {
 		}
 		msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
 		for _, channelID := range config.Relay.ChannelIDs {
-			Send(NewMessage(channelID, msg))
+			sendMessage(newMessage(channelID, msg))
 		}
 		c.Status(200)
 	}
@@ -235,7 +235,7 @@ func onPostLogAdd() gin.HandlerFunc {
 		c.Status(http.StatusCreated)
 
 		for _, c := range config.Relay.ChannelIDs {
-			Send(NewMessage(c, req.Message))
+			sendMessage(newMessage(c, req.Message))
 		}
 		match := reSay.FindStringSubmatch(req.Message)
 		if len(match) != 5 {
@@ -249,7 +249,7 @@ func onPostLogAdd() gin.HandlerFunc {
 		// if match[3] == "say_team" {
 		// 	team = true
 		// }
-		messageQueue <- DiscordMessage{
+		messageQueue <- discordMessage{
 			ChannelID: "",
 			Body:      match[4],
 		}

@@ -9,26 +9,42 @@
   "private": false,
   "scripts": {
     "compress": "./compress.sh",
-    "watch": "cross-env NODE_ENV=development parcel --public-url /dist/ src/index.tsx",
-    "build": "cross-env NODE_ENV=production parcel build --public-url /dist/ src/index.tsx"
+    "watch": "cross-env NODE_ENV=development webpack --watch --progress",
+    "build": "cross-env NODE_ENV=production webpack"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
     "@babel/preset-env": "^7.12.7",
+    "@types/es6-promise": "^3.3.0",
+    "@types/jquery": "^3.5.5",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
     "cross-env": "^7.0.2",
+    "css-loader": "^5.1.0",
     "date-fns": "^2.16.1",
     "foundation-sites": "^6.6.3",
+    "ip-cidr": "^2.1.2",
     "jquery": "^3.5.0",
+    "lodash-es": "^4.17.21",
     "moment": "^2.27.0",
     "motion-ui": "^2.0.3",
     "node-forge": "^0.10.0",
-    "parcel-bundler": "^1.12.4",
+    "node-sass": "^5.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "sass": "^1.26.10",
+    "sass-loader": "^11.0.1",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^8.0.17",
     "typescript": "^4.2.2",
+    "url-loader": "^4.1.1",
+    "webpack": "^5.24.2",
+    "webpack-cli": "^4.5.0",
     "what-input": "^5.2.10"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.168",
+    "@types/lodash-es": "^4.17.4",
+    "lodash": "^4.17.21"
   }
 }

@@ -73,7 +73,6 @@ func onAPIGetBans() gin.HandlerFunc {
 		default:
 			o.OrderBy = "created_on"
 		}
-		log.Println(o)
 		bans, err := GetBans(o)
 		if err != nil {
 			log.Errorf("Failed to fetch bans")

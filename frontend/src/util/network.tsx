@@ -7,7 +7,7 @@ export function http(url: string, method: string, body: any,
         mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
-    }
+    } as any;
     if (method === "POST") {
         opts["headers"] = {
             "Content-type": "application/json; charset=UTF-8"

@@ -19,9 +19,9 @@ export class AppealForm extends React.Component<props, state> {
             "GET",
             "",
             (resp) => {
-
+                console.log(resp);
             }, (error) => {
-
+                console.log(error);
             })
     }
 

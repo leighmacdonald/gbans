@@ -36,7 +36,7 @@ interface IBanState {
 }
 
 export default class BanBrowser extends React.Component<IProps, IState> {
-    constructor(props) {
+    constructor(props: IProps) {
         super(props);
         this.onLoad = this.onLoad.bind(this)
         this.onError = this.onError.bind(this)
@@ -79,7 +79,7 @@ export default class BanBrowser extends React.Component<IProps, IState> {
         return
     }
 
-    onLoad(json) {
+    onLoad(json: any) {
         console.log(json)
         const {bans, total} = json;
         this.setState({...this.state, bans: bans, total: total})

@@ -175,6 +175,8 @@ func Start() {
 	initRouter()
 	// Setup the storage backend
 	initStore()
+	defer Close()
+
 	// Start the discord service
 	if config.Discord.Enabled {
 		initDiscord()

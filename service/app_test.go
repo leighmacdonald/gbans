@@ -45,6 +45,21 @@ func TestAPIGetServers(t *testing.T) {
 	})
 }
 
+func TestSteamWebAPI(t *testing.T) {
+	if config.General.SteamKey == "" {
+		t.Skip("No steamkey set")
+		return
+	}
+	friends, err := fetchFriends(76561197961279983)
+	require.NoError(t, err)
+	require.True(t, len(friends) > 100)
+
+	summaries, err := fetchSummaries(friends)
+	require.NoError(t, err)
+	require.Equal(t, len(friends), len(summaries))
+
+}
+
 func GenTestData() {
 	servers := []model.Server{
 		{
@@ -100,7 +115,7 @@ func GenTestData() {
 
 	for i, cidr := range []string{"50.50.50.0/24", "60.60.60.60/32"} {
 		_, mask, _ := net.ParseCIDR(cidr)
-		if err := SaveBanNet(&model.BanNet{
+		if err := saveBanNet(&model.BanNet{
 			CIDR:       mask,
 			Source:     0,
 			Reason:     "",

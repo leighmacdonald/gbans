@@ -34,7 +34,7 @@ func checkServerAuth(c *gin.Context) {
 		return
 	}
 	log.Debugf("Authed as: %s", token)
-	if !TokenValid(token) {
+	if !tokenValid(token) {
 		log.Warnf("Received invalid server token from %s", c.ClientIP())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized",

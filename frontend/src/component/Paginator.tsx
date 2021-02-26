@@ -1,5 +1,5 @@
 import * as React from "react";
-import {take, takeRight, union} from "lodash";
+import {SyntheticEvent} from "react";
 
 interface IPageButton {
     current: boolean
@@ -14,11 +14,11 @@ interface IPaginatorState {
 interface IPaginatorProps {
     total: number
     current_page: number
-    onChange: (page: number) => {}
+    onChange: (page: number) => void
 }
 
 export default class Paginator extends React.Component<IPaginatorProps, IPaginatorState > {
-    constructor(props) {
+    constructor(props: IPaginatorProps) {
         super(props);
         this.onChangePage = this.onChangePage.bind(this)
         this.state = {
@@ -27,7 +27,7 @@ export default class Paginator extends React.Component<IPaginatorProps, IPaginat
         }
     }
 
-    onChangePage(evt, page: number) {
+    onChangePage(evt: SyntheticEvent , page: number) {
         evt.preventDefault()
         const {total} = this.props;
         if (page > total || page < 0) {
@@ -37,8 +37,8 @@ export default class Paginator extends React.Component<IPaginatorProps, IPaginat
         this.props.onChange(page)
     }
 
-    onChangeInput(evt) {
-        let v = parseInt(evt.target.value, 10)
+    onChangeInput(evt: SyntheticEvent) {
+        let v = parseInt((evt.target as HTMLInputElement).value, 10)
         if (!isNaN(v)) {
             this.onChangePage(evt, v - 1)
         }
