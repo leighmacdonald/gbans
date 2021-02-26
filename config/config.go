@@ -88,7 +88,7 @@ type GeneralConfig struct {
 
 type DiscordConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
-	AppID       int64    `mapstructure:"app_id"`
+	AppID       string   `mapstructure:"app_id"`
 	Token       string   `mapstructure:"token"`
 	ModRoleID   int      `mapstructure:"mod_role_id"`
 	Perms       int      `mapstructure:"perms"`
@@ -221,8 +221,8 @@ func init() {
 func configureLogger(l *log.Logger) {
 	level, err := log.ParseLevel(Log.Level)
 	if err != nil {
-		log.Errorf("Invalid log level: %s", Log.Level)
-		level = log.DebugLevel
+		log.Debugf("Invalid log level: %s", Log.Level)
+		level = log.InfoLevel
 	}
 	l.SetLevel(level)
 	l.SetFormatter(&log.TextFormatter{

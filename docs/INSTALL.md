@@ -15,18 +15,13 @@ instructions:
 Precompiled binaries will be provided once the project is in a more stable state.
 
 - [make](https://www.gnu.org/software/make/) For predefined build commands
-- [golang 1.13+](https://golang.org/) gbans server is written in go.
+- [golang 1.16+](https://golang.org/) gbans server is written in go.
 - [gcc](https://gcc.gnu.org/) Required to build the sqlite3 go extension
 
 Basic steps to build the binary:
 
     1. git clone git@github.com:leighmacdonald/gbans.git && cd gbans
     2. make
-    
-Note that the fts5 sqlite extension is used here. You can manually do the following as well if you
-do not want to use the makefile.
-
-    1. go build --tags "fts5"  
  
 You should now have a binary in the project root called `gbans` or `gbans.exe` if on windows.
 
@@ -100,7 +95,7 @@ must have a unique token.
 
 #### Starting the server
 
-To start the server just run `./gbans server`. It should show output similar to the following if 
+To start the server just run `./gbans serve`. It should show output similar to the following if 
 successful.
 
 ```

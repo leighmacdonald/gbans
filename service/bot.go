@@ -21,7 +21,7 @@ type cmdDef struct {
 
 var (
 	dg                 *discordgo.Session
-	messageQueue       chan DiscordMessage
+	messageQueue       chan discordMessage
 	modChannelIDs      []string
 	cmdMap             map[string]cmdDef
 	connected          bool
@@ -45,7 +45,7 @@ func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs i
 }
 
 func init() {
-	messageQueue = make(chan DiscordMessage)
+	messageQueue = make(chan discordMessage)
 	cmdMap = map[string]cmdDef{
 		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
 		"ban":     newCmd("Ban a player", "ban <name/id> <duration> [reason]", onBan, 1, -1),
@@ -56,9 +56,9 @@ func init() {
 		"unban":   newCmd("Unban a player", "unban <id>", onUnban, 1, 1),
 		"kick":    newCmd("Kick a player", "kick <id> [reason]", onKick, 1, -1),
 		"players": newCmd("Get the players in the server", "players <server>", onPlayers, 1, 1),
-		"psay":    newCmd("Send a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
-		"csay":    newCmd("Send a centered message to the server", "csay <server> <message>", onCSay, 2, -1),
-		"say":     newCmd("Send a message to the server", "say <server> <message>", onSay, 3, -1),
+		"psay":    newCmd("sendMessage a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
+		"csay":    newCmd("sendMessage a centered message to the server", "csay <server> <message>", onCSay, 2, -1),
+		"say":     newCmd("sendMessage a message to the server", "say <server> <message>", onSay, 3, -1),
 		"servers": newCmd("Get the server status for all servers", "servers", onServers, 0, 1),
 	}
 }
@@ -79,7 +79,7 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
 	dg.AddHandler(onMessageCreate)
-
+	dg.AddHandler(onHandleCommand)
 	// In this example, we only care about receiving message events.
 	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
@@ -93,7 +93,7 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 	// Wait here until CTRL-C or other term signal is received.
 	log.Infof("Bot is now running.  Press CTRL-C to exit.")
 	go func() {
-		if err2 := botRegisterSlashCommands(758536119397646370, token); err2 != nil {
+		if err2 := botRegisterSlashCommands(config.Discord.AppID, token); err2 != nil {
 			log.Errorf("Failed to register discord slash commands: %v", err2)
 		}
 	}()
@@ -129,6 +129,11 @@ func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	connected = false
 	log.Info("Disconnected from session ws API")
+}
+
+func onHandleCommand(s *discordgo.Session, m *discordgo.InteractionCreate) {
+	log.Debugf("Got message create event: %v", m)
+	return
 }
 
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -191,19 +196,19 @@ func sendErr(s *discordgo.Session, cid string, err error) {
 	}
 }
 
-type DiscordMessage struct {
+type discordMessage struct {
 	ChannelID string
 	Body      string
 }
 
-func NewMessage(channel string, body string) DiscordMessage {
-	return DiscordMessage{
+func newMessage(channel string, body string) discordMessage {
+	return discordMessage{
 		ChannelID: channel,
 		Body:      body,
 	}
 }
 
-func Send(message DiscordMessage) {
+func sendMessage(message discordMessage) {
 	if config.Discord.Enabled {
 		messageQueue <- message
 	}
