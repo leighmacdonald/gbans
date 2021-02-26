@@ -131,7 +131,7 @@ func BanIP(ctx context.Context, cidr *net.IPNet, author steamid.SID64, duration 
 		UpdatedOn:  config.Now(),
 		ValidUntil: until,
 	}
-	if err := SaveBanNet(&banNet); err != nil {
+	if err := saveBanNet(&banNet); err != nil {
 		return DBErr(err)
 	}
 	p, server, err := findPlayerByCIDR(cidr)

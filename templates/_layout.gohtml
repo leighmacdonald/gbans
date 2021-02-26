@@ -10,7 +10,7 @@
         {{/*        <link rel="icon" type="image/png" sizes="32x32" href="{{ route "dist" }}/img/favicon-32x32.png">*/}}
         {{/*        <link rel="icon" type="image/png" sizes="16x16" href="{{ route "dist" }}/img/favicon-16x16.png">*/}}
         {{/*        <link rel="manifest" href="{{ route "dist" }}/img/site.webmanifest">*/}}
-        <link rel="stylesheet" href="{{ route "dist" }}/index.css"/>
+{{/*        <link rel="stylesheet" href="{{ route "dist" }}/index.css"/>*/}}
     </head>
     <body>
     <header class="grid-container full">
@@ -35,6 +35,9 @@
                             </li>
                             <li>
                                 <a href="{{ route "report" }}">Report</a>
+                            </li>
+                            <li>
+                                <a href="{{ route "ban_player" }}">Ban Player</a>
                             </li>
                         </ul>
                     </div>
@@ -95,7 +98,7 @@
         </div>
     </footer>
 
-    <script src="/dist/index.js"></script>
+    <script src="/dist/bundle.js"></script>
     </body>
     </html>
 

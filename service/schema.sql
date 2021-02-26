@@ -49,6 +49,9 @@ create table if not exists ban
     CONSTRAINT fk_person FOREIGN KEY (steam_id) REFERENCES person (steam_id)
 );
 
+create unique index if not exists ban_steam_id_uindex
+    on ban (steam_id);
+
 create table if not exists ban_net
 (
     net_id      BIGSERIAL PRIMARY KEY,

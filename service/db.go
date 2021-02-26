@@ -46,9 +46,9 @@ func newQueryOpts() QueryOpts {
 	}
 }
 
-func newSearchQueryOpts(query string) SearchQueryOpts {
+func newSearchQueryOpts(query string) searchQueryOpts {
 	o := newQueryOpts()
-	return SearchQueryOpts{
+	return searchQueryOpts{
 		query,
 		o,
 	}
@@ -67,8 +67,7 @@ func Close() {
 	db.Close()
 }
 
-// Probably shouldn't be here
-func TokenValid(token string) bool {
+func tokenValid(token string) bool {
 	if len(token) != 40 {
 		return false
 	}
@@ -140,6 +139,7 @@ func GetServerByName(serverName string) (model.Server, error) {
 	return s, nil
 }
 
+// SaveServer updates or creates the server data in the database
 func SaveServer(server *model.Server) error {
 	server.UpdatedOn = config.Now()
 	if server.ServerID > 0 {
@@ -189,7 +189,7 @@ func DropServer(serverID int64) error {
 
 func DropBan(ban model.Ban) error {
 	const q = `DELETE FROM ban WHERE ban_id = $1`
-	if _, err := db.Exec(context.Background(), q, ban); err != nil {
+	if _, err := db.Exec(context.Background(), q, ban.BanID); err != nil {
 		return DBErr(err)
 	}
 	return nil
@@ -198,13 +198,13 @@ func DropBan(ban model.Ban) error {
 func GetBan(steamID steamid.SID64) (model.Ban, error) {
 	const q = `
 		SELECT 
-			ban_id, steam_id::int8, ban_type, reason, note, valid_until,
+			ban_id, steam_id, author_id, ban_type, reason, note, valid_until,
 			created_on, updated_on, reason_text, ban_source
 		FROM ban
 		WHERE ($1::int8 > 0 AND steam_id::int8 = $1::int8)`
 	var b model.Ban
 	if err := db.QueryRow(context.Background(), q, int64(steamID)).
-		Scan(&b.BanID, &b.SteamID, &b.BanType, &b.Reason, &b.Note, &b.ValidUntil, &b.CreatedOn,
+		Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.Note, &b.ValidUntil, &b.CreatedOn,
 			&b.UpdatedOn, &b.ReasonText, &b.Source); err != nil {
 		return model.Ban{}, DBErr(err)
 	}
@@ -283,11 +283,12 @@ func insertBan(ban *model.Ban) error {
 func updateBan(ban *model.Ban) error {
 	const q = `
 		UPDATE ban 
-		SET ban_type = $2, reason = $3, reason_text = $4, 
-			note = $5, updated_on = $6, ban_source = $7
+		SET author_id = $2, ban_type = $3, reason = $4, reason_text = $5, 
+			note = $6, valid_until = $7, updated_on = $8, ban_source = $9
 		WHERE ban_id = $1`
 	if _, err := db.Exec(context.Background(), q,
-		ban.BanID, ban.BanType, ban.Reason, ban.ReasonText, ban.Note, ban.UpdatedOn, ban.Source); err != nil {
+		ban.BanID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
+		ban.Note, ban.ValidUntil, ban.UpdatedOn, ban.Source); err != nil {
 		return DBErr(err)
 	}
 	return nil
@@ -422,14 +423,14 @@ func insertBanNet(banNet *model.BanNet) error {
 	return nil
 }
 
-func SaveBanNet(banNet *model.BanNet) error {
+func saveBanNet(banNet *model.BanNet) error {
 	if banNet.NetID > 0 {
 		return updateBanNet(banNet)
 	}
 	return insertBanNet(banNet)
 }
 
-func DropNetBan(ban model.BanNet) error {
+func dropNetBan(ban model.BanNet) error {
 	const q = `DELETE FROM ban_net WHERE net_id = $1`
 	if _, err := db.Exec(context.Background(), q, ban.NetID); err != nil {
 		return DBErr(err)
@@ -437,13 +438,13 @@ func DropNetBan(ban model.BanNet) error {
 	return nil
 }
 
-func GetExpiredBans() ([]model.Ban, error) {
+func getExpiredBans() ([]model.Ban, error) {
 	const q = `
 		SELECT 
-		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
-			b.valid_until, b.created_on, b.updated_on
+		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.ban_source,
+			b.created_on, b.updated_on
 		FROM ban b 
-		WHERE until < $1`
+		WHERE valid_until < $1`
 	var bans []model.Ban
 	rows, err := db.Query(context.Background(), q, config.Now())
 	if err != nil {
@@ -453,7 +454,7 @@ func GetExpiredBans() ([]model.Ban, error) {
 	for rows.Next() {
 		var b model.Ban
 		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn); err != nil {
+			&b.ValidUntil, &b.Source, &b.CreatedOn, &b.UpdatedOn); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)
@@ -461,16 +462,17 @@ func GetExpiredBans() ([]model.Ban, error) {
 	return bans, nil
 }
 
-type SearchQueryOpts struct {
+type searchQueryOpts struct {
 	SearchTerm string
 	QueryOpts
 }
 
-func GetBans(o SearchQueryOpts) ([]model.BannedPerson, error) {
+func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
+	//goland:noinspection SqlResolve
 	const q = `
 		SELECT 
 		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
-			b.until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
+			b.valid_until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
 		FROM ban b 
 		LEFT OUTER JOIN person p on b.steam_id = p.steam_id
 		ORDER BY $1 %s LIMIT $2 OFFSET $3

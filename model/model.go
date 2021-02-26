@@ -85,6 +85,25 @@ type BanNet struct {
 	ValidUntil time.Time  `db:"valid_until"`
 }
 
+func NewBan(steamID steamid.SID64, authorID steamid.SID64, reason string, duration time.Duration, source BanSource) (Ban, error) {
+	if duration.Seconds() == 0 {
+		// 100 Years
+		duration = time.Hour * 8760 * 100
+	}
+	return Ban{
+		SteamID:    steamID,
+		AuthorID:   authorID,
+		BanType:    Banned,
+		Reason:     0,
+		ReasonText: reason,
+		Note:       "",
+		Source:     source,
+		ValidUntil: config.Now().Add(duration),
+		CreatedOn:  config.Now(),
+		UpdatedOn:  config.Now(),
+	}, nil
+}
+
 func NewBanNet(cidr string, reason string, duration time.Duration, source BanSource) (BanNet, error) {
 	_, n, err := net.ParseCIDR(cidr)
 	if err != nil {
@@ -187,11 +206,11 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 type Person struct {
-	SteamID   steamid.SID64 `db:"steam_id"`
-	Name      string        `db:"name"`
-	IPAddr    string        `db:"ip_addr"`
-	CreatedOn time.Time     `db:"created_on"`
-	UpdatedOn time.Time     `db:"updated_on"`
+	SteamID   steamid.SID64 `db:"steam_id" json:"steam_id"`
+	Name      string        `db:"name" json:"name"`
+	IPAddr    string        `db:"ip_addr" json:"ip_addr"`
+	CreatedOn time.Time     `db:"created_on" json:"created_on"`
+	UpdatedOn time.Time     `db:"updated_on" json:"updated_on"`
 	extra.PlayerSummary
 }
 

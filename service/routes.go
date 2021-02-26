@@ -14,6 +14,7 @@ const (
 	routeDist            Route = "dist"
 	routeHome            Route = "home"
 	routeBans            Route = "bans"
+	routeBanPlayer       Route = "ban_player"
 	routeReport          Route = "report"
 	routeProfileSettings Route = "profile_settings"
 	routeAppeal          Route = "appeal"
@@ -31,6 +32,7 @@ const (
 	routeAPIBans          Route = "api_bans"
 	routeAPIFilteredWords Route = "api_filtered_words"
 	routeAPIStats         Route = "api_stats"
+	routeAPIProfile       Route = "api_profile"
 
 	routeServerAPIPingMod Route = "sapi_ping_mod"
 	routeServerAPIAuth    Route = "sapi_auth"
@@ -51,6 +53,7 @@ func initRouter() {
 
 	session.GET(routeRaw(string(routeHome)), onIndex())
 	session.GET(routeRaw(string(routeBans)), onGetBans())
+	session.GET(routeRaw(string(routeBanPlayer)), onGetBanPlayer())
 	session.GET(routeRaw(string(routeAppeal)), onGetAppeal())
 	session.GET(routeRaw(string(routeProfileSettings)), onGetProfileSettings())
 	session.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
@@ -71,6 +74,7 @@ func initRouter() {
 	session.GET(routeRaw(string(routeAPIBans)), onAPIGetBans())
 	session.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
 	session.POST(routeRaw(string(routeAPIBans)), onAPIPostBan())
+	session.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
 
 	// Game server API
 	router.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
@@ -88,6 +92,7 @@ func init() {
 		routeDist:            "/dist",
 		routeAPIServers:      "/servers",
 		routeBans:            "/bans",
+		routeBanPlayer:       "/ban",
 		routeReport:          "/report",
 		routeAppeal:          "/appeal",
 		routeLogin:           "/auth/login",
@@ -103,6 +108,7 @@ func init() {
 		routeAPIFilteredWords: "/api/v1/filtered_words",
 		routeAPIStats:         "/api/v1/stats",
 		routeAPIBans:          "/api/v1/bans",
+		routeAPIProfile:       "/api/v1/profile",
 
 		routeServerAPIAuth:    "/sapi/v1/auth",
 		routeServerAPIBan:     "/sapi/v1/ban",

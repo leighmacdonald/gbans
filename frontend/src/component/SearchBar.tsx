@@ -1,21 +1,21 @@
 import * as React from "react";
-import {EventHandler} from "react";
 
 interface ISearchProps {
-    onInputChange: (evt: any) => {}
+    onInputChange: (evt: any) => void
 }
+
 
 interface ISearchBarState {
     query: string
 }
 
 export default class SearchBar extends React.Component<ISearchProps, ISearchBarState> {
-    constructor(props) {
+    constructor(props: ISearchProps) {
         super(props);
         this.onInputChange = this.onInputChange.bind(this);
     }
 
-    onInputChange(evt) {
+    onInputChange(evt: any) {
         this.setState({...this.state, query: evt.target.value})
         this.props.onInputChange(evt.target.value)
     }

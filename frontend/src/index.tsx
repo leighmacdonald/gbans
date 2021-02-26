@@ -15,19 +15,26 @@ import {render} from "react-dom";
 import * as React from "react";
 import BanBrowser from "./component/BanBrowser";
 import {AppealForm} from "./component/AppealForm";
+import {PlayerBanForm} from "./component/PlayerBanForm";
 
+// @ts-ignore
 globalThis.jQuery = $
 
 function main() {
+
+    // @ts-ignore
     $(document).foundation();
 
-    // Dumb "router"
     const p = window.location.pathname.toLowerCase()
     switch (p.toLowerCase()) {
         case "/":
             render(<BanBrowser/>, document.getElementById("ban_list"));
+            break;
+        case "/ban":
+            render(<PlayerBanForm/>, document.getElementById("player_ban_form"));
+            break;
         case "/appeal":
-            render(<AppealForm />, document.getElementById("appeal_form"))
+            render(<AppealForm  ban_id={0}/>, document.getElementById("appeal_form"))
     }
 }
 

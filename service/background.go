@@ -133,7 +133,7 @@ func banSweeper() {
 	for {
 		select {
 		case <-ticker.C:
-			bans, err := GetExpiredBans()
+			bans, err := getExpiredBans()
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
@@ -150,7 +150,7 @@ func banSweeper() {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range netBans {
-					if err := DropNetBan(ban); err != nil {
+					if err := dropNetBan(ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)
