@@ -84,7 +84,7 @@ func initHTTP() {
 }
 
 func routeRaw(name string) string {
-	routePath, ok := routes[Route(name)]
+	routePath, ok := routes[routeKey(name)]
 	if !ok {
 		return "/xxx"
 	}
@@ -101,7 +101,7 @@ func route(name string, args ...interface{}) string {
 	}
 	cnt := strings.Count(routePath, sep)
 	if len(args) != cnt {
-		log.Errorf("Route args count mismatch. Have: %d Want: %d", len(args), cnt)
+		log.Errorf("routeKey args count mismatch. Have: %d Want: %d", len(args), cnt)
 		return routePath
 	}
 	varIdx := 0

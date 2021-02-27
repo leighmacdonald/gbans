@@ -76,13 +76,15 @@ func ReasonString(reason Reason) string {
 }
 
 type BanNet struct {
-	NetID      int64      `db:"net_id"`
-	CIDR       *net.IPNet `db:"cidr"`
-	Source     BanSource  `source:"source"`
-	Reason     string     `db:"reason"`
-	CreatedOn  time.Time  `db:"created_on" json:"created_on"`
-	UpdatedOn  time.Time  `db:"updated_on" json:"updated_on"`
-	ValidUntil time.Time  `db:"valid_until"`
+	NetID      int64         `db:"net_id"`
+	SteamID    steamid.SID64 `db:"steam_id"`
+	AuthorID   steamid.SID64 `db:"author_id"`
+	CIDR       *net.IPNet    `db:"cidr"`
+	Source     BanSource     `source:"source"`
+	Reason     string        `db:"reason"`
+	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
+	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
+	ValidUntil time.Time     `db:"valid_until"`
 }
 
 func NewBan(steamID steamid.SID64, authorID steamid.SID64, reason string, duration time.Duration, source BanSource) (Ban, error) {

@@ -8,38 +8,38 @@ import (
 	"net/http"
 )
 
-type Route string
+type routeKey string
 
 const (
-	routeDist            Route = "dist"
-	routeHome            Route = "home"
-	routeBans            Route = "bans"
-	routeBanPlayer       Route = "ban_player"
-	routeReport          Route = "report"
-	routeProfileSettings Route = "profile_settings"
-	routeAppeal          Route = "appeal"
-	routeLogin           Route = "login"
-	routeServers         Route = "servers"
-	routeLogout          Route = "logout"
-	routeLoginCallback   Route = "login_callback"
+	routeDist            routeKey = "dist"
+	routeHome            routeKey = "home"
+	routeBans            routeKey = "bans"
+	routeBanPlayer       routeKey = "ban_player"
+	routeReport          routeKey = "report"
+	routeProfileSettings routeKey = "profile_settings"
+	routeAppeal          routeKey = "appeal"
+	routeLogin           routeKey = "login"
+	routeServers         routeKey = "servers"
+	routeLogout          routeKey = "logout"
+	routeLoginCallback   routeKey = "login_callback"
 
-	routeAdminPeople        Route = "admin_people"
-	routeAdminServers       Route = "admin_servers"
-	routeAdminFilteredWords Route = "admin_filtered_words"
-	routeAdminImport        Route = "admin_import"
+	routeAdminPeople        routeKey = "admin_people"
+	routeAdminServers       routeKey = "admin_servers"
+	routeAdminFilteredWords routeKey = "admin_filtered_words"
+	routeAdminImport        routeKey = "admin_import"
 
-	routeAPIServers       Route = "api_servers"
-	routeAPIBans          Route = "api_bans"
-	routeAPIFilteredWords Route = "api_filtered_words"
-	routeAPIStats         Route = "api_stats"
-	routeAPIProfile       Route = "api_profile"
+	routeAPIServers       routeKey = "api_servers"
+	routeAPIBan           routeKey = "api_ban"
+	routeAPIFilteredWords routeKey = "api_filtered_words"
+	routeAPIStats         routeKey = "api_stats"
+	routeAPIProfile       routeKey = "api_profile"
 
-	routeServerAPIPingMod Route = "sapi_ping_mod"
-	routeServerAPIAuth    Route = "sapi_auth"
-	routeServerAPIBan     Route = "sapi_ban"
-	routeServerAPICheck   Route = "sapi_check"
-	routeServerAPIMessage Route = "sapi_message"
-	routeServerAPILogAdd  Route = "sapi_log_add"
+	routeServerAPIPingMod routeKey = "sapi_ping_mod"
+	routeServerAPIAuth    routeKey = "sapi_auth"
+	routeServerAPIBan     routeKey = "sapi_ban"
+	routeServerAPICheck   routeKey = "sapi_check"
+	routeServerAPIMessage routeKey = "sapi_message"
+	routeServerAPILogAdd  routeKey = "sapi_log_add"
 )
 
 func initRouter() {
@@ -71,10 +71,10 @@ func initRouter() {
 	session.GET(routeRaw(string(routeAPIServers)), onAPIGetServers())
 	session.POST(routeRaw(string(routeAppeal)), onAPIPostAppeal())
 	session.GET(routeRaw(string(routeAPIStats)), onAPIGetStats())
-	session.GET(routeRaw(string(routeAPIBans)), onAPIGetBans())
+	session.GET(routeRaw(string(routeAPIBan)), onAPIGetBans())
 	session.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
-	session.POST(routeRaw(string(routeAPIBans)), onAPIPostBan())
 	session.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
+	session.POST(routeRaw(string(routeAPIBan)), onAPIPostBan())
 
 	// Game server API
 	router.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
@@ -87,7 +87,7 @@ func initRouter() {
 }
 
 func init() {
-	routes = map[Route]string{
+	routes = map[routeKey]string{
 		routeHome:            "/",
 		routeDist:            "/dist",
 		routeAPIServers:      "/servers",
@@ -107,7 +107,7 @@ func init() {
 
 		routeAPIFilteredWords: "/api/v1/filtered_words",
 		routeAPIStats:         "/api/v1/stats",
-		routeAPIBans:          "/api/v1/bans",
+		routeAPIBan:           "/api/v1/ban",
 		routeAPIProfile:       "/api/v1/profile",
 
 		routeServerAPIAuth:    "/sapi/v1/auth",

@@ -1,8 +1,6 @@
 import IProps from "../util/IProps";
 import * as React from "react";
 import Paginator from "./Paginator";
-import {http} from "../util/network";
-import {Route, vars} from "../util/Route";
 import {fmtUnix} from "../util/text";
 import SearchBar from "./SearchBar";
 
@@ -59,13 +57,13 @@ export default class BanBrowser extends React.Component<IProps, IState> {
     }
 
     update() {
-        const args = {
-            limit: this.state.limit,
-            offset: this.state.offset,
-            order_by: this.state.order_by,
-            desc: this.state.desc
-        };
-        http(vars(Route.APIBans, args), "GET", "", this.onLoad, this.onError)
+        // const args = {
+        //     limit: this.state.limit,
+        //     offset: this.state.offset,
+        //     order_by: this.state.order_by,
+        //     desc: this.state.desc
+        // };
+        //http(vars(Route.APIBans, args), "GET", "", this.onLoad, this.onError)
     }
 
     changePage(page: number) {

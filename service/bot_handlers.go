@@ -195,7 +195,7 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	if !pi.valid {
 		return errUnknownID
 	}
-	err = BanPlayer(ctx, pi.sid, config.General.Owner, duration, model.Custom, reason, model.Bot)
+	_, err = BanPlayer(ctx, pi.sid, config.General.Owner, duration, model.Custom, reason, model.Bot)
 	if err != nil {
 		if err == errDuplicate {
 			return sendMsg(s, m.ChannelID, "ID already banned")

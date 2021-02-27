@@ -1,8 +1,9 @@
 import * as React from "react";
-import {SyntheticEvent} from "react";
+import {SyntheticEvent, useEffect} from "react";
 import IPCIDR from "ip-cidr";
 import {format, formatDistanceToNow, fromUnixTime} from "date-fns";
 import {chunk} from 'lodash-es';
+import {apiResponse, http} from "../util/network";
 
 interface PanFormProps {
 
@@ -14,13 +15,23 @@ function ip2int(ip: string): number {
     }, 0) >>> 0;
 }
 
+interface banPayload {
+    steam_id: string
+    duration: string
+    ban_type: number
+    reason: number
+    reason_text: string
+    network: string
+}
+
 interface PlayerProfile {
     player: PlayerSummary
     friends: PlayerSummary[]
 }
 
 interface PlayerSummary {
-    steamid?: string
+    steam_id: number
+    steamid: string
     communityvisibilitystate?: communityVisibilityState
     profilestate?: profileState
     personaname: string
@@ -50,6 +61,14 @@ enum communityVisibilityState {
     Public = 3
 }
 
+interface Ban {
+
+}
+
+interface BanNet {
+
+}
+
 export const PlayerBanForm: React.FC<PanFormProps> = () => {
     const [friendsPage, setFriendsPage] = React.useState<number>(0);
     const [showFriends, setShowFriends] = React.useState<boolean>(false);
@@ -61,6 +80,8 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
     const [banType, setBanType] = React.useState<BanType>("steam")
     const [profile, setProfile] = React.useState<PlayerProfile>({
         player: {
+            steam_id: 0,
+            steamid: "",
             personaname: "Player Name",
             avatarfull: "https://cdn.cloudflare.steamstatic.com/steamcommunity/public" +
                 "/images/avatars/30/3077b41fd6ae20862c69fddfef1ff514ecb375cb_full.jpg"
@@ -68,20 +89,34 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
     });
     const loadPlayerSummary = async () => {
         // TODO filter to known formats only
-        const resp = await fetch(`/api/v1/profile?query=${fSteam}`, {
-            mode: "cors",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        });
-        if (!resp.ok) {
+        const resp = await http<PlayerProfile>(`/api/v1/profile?query=${fSteam}`,"GET");
+        if (!resp.status) {
             console.log("Failed to lookup user profile");
             return;
         }
-        const summary = await resp.json();
-        setProfile(summary)
+        setProfile((await resp.json) as PlayerProfile);
     };
-    const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [fSteam]);
+    useEffect(() => {
+        // Validate results
+    }, [])
+    const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [profile, setProfile]);
+
+    const handleSubmit = React.useCallback(async (evt: any) => {
+        evt.preventDefault();
+        if (profile.player.steam_id === 0) {
+            return;
+        }
+        let opts: banPayload = {
+            steam_id: profile.player.steamid,
+            ban_type: 2,
+            duration: duration,
+            network: banType === "steam" ? "" : network,
+            reason_text: reasonText,
+            reason: 0
+        }
+        const r = await http<apiResponse<Ban | BanNet>>(`/api/v1/ban`, "POST", opts);
+        alert(r.status ? "Ban created successfully" : r.json);
+    }, [profile, reasonText, network]);
     const handleUpdateNetwork = (evt: SyntheticEvent) => {
         const value = (evt.target as HTMLInputElement).value;
         setNetwork(value);
@@ -92,19 +127,21 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
                     setNetworkSize((ip2int(cidr?.end()) - ip2int(cidr?.start())) + 1)
                 }
             } catch (e) {
-                // TypeError on invalid input we can ignore
+                if (e instanceof TypeError) {
+                    // TypeError on invalid input we can ignore
+                } else {
+                    throw e;
+                }
             }
         }
     }
 
     const handleUpdateReasonText = (evt: SyntheticEvent) => {
-        const value = (evt.target as HTMLInputElement).value;
-        setReasonText(value);
+        setReasonText((evt.target as HTMLInputElement).value);
     }
 
     const handleUpdateDuration = (evt: SyntheticEvent) => {
-        const value = (evt.target as HTMLInputElement).value;
-        setDuration(value);
+        setDuration((evt.target as HTMLInputElement).value);
     }
 
     const onChangeFStream = (evt: SyntheticEvent) => {
@@ -184,8 +221,8 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
                                 )}
                             </div>
                             <div className={"cell"}>
-                                <a className={"button"}>Submit Ban <i className={"fi-flag"}
-                                                                      style={{"color": "red"}}/></a>
+                                <a className={"button"} onClick={handleSubmit}>Submit Ban <i className={"fi-flag"}
+                                                                                             style={{"color": "red"}}/></a>
                             </div>
                         </div>
                     </div>
@@ -194,10 +231,10 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
                         <div className={"grid-y"}>
                             <div className={"cell"}>
                                 <div className="expanded button-group">
-                                    <a className={!friendsPage ? "button": "button secondary"} onClick={() => {
+                                    <a className={!friendsPage ? "button" : "button secondary"} onClick={() => {
                                         setShowFriends(false);
                                     }}>Profile</a>
-                                    <a className={friendsPage ? "button": "button secondary"} onClick={() => {
+                                    <a className={friendsPage ? "button" : "button secondary"} onClick={() => {
                                         setShowFriends(true);
                                     }}>Friends ({profile?.friends?.length ?? "n/a"})</a>
                                 </div>
