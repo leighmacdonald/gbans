@@ -104,11 +104,11 @@ func GenTestData() {
 		}
 	}
 
-	if err := BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
+	if _, err := BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
 		model.Cheating, "Aimbot", model.System); err != nil {
 		log.Fatalf("Failed to create test ban #1: %v", err)
 	}
-	if err := BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
+	if _, err := BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
 		model.Cheating, "Aimbot", model.System); err != nil {
 		log.Fatalf("Failed to create test ban #2: %v", err)
 	}
