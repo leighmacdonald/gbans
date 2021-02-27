@@ -28,3 +28,4 @@ sourcemod/.vscode/
 /frontend/.cache/
 *.yaml
 *.yml
+/frontend/lib/

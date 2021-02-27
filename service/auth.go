@@ -53,12 +53,12 @@ func authMiddleWare() gin.HandlerFunc {
 
 func onGetLogin() gin.HandlerFunc {
 	const f = "https://steamcommunity.com/openid/login" +
-		"?openid.ns=https://specs.openid.net/auth/2.0" +
+		"?openid.ns=http://specs.openid.net/auth/2.0" +
 		"&openid.mode=checkid_setup" +
 		"&openid.return_to=%s/auth/callback?return_url=%s" +
-		"&openid.realm=%s&openid.ns.sreg=https://openid.net/extensions/sreg/1.1" +
-		"&openid.claimed_id=https://specs.openid.net/auth/2.0/identifier_select" +
-		"&openid.identity=https://specs.openid.net/auth/2.0/identifier_select"
+		"&openid.realm=%s&openid.ns.sreg=http://openid.net/extensions/sreg/1.1" +
+		"&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select" +
+		"&openid.identity=http://specs.openid.net/auth/2.0/identifier_select"
 	return func(c *gin.Context) {
 		fullURL, err := url.Parse(c.Request.Referer())
 		if err != nil {

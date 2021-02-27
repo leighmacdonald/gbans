@@ -1,13 +1,19 @@
-type json_handler = (json: string) => void;
-export type error_handler = (error: string) => void;
+export interface apiResponse<T> {
+    status: boolean
+    resp: Response
+    json: T | apiError
+}
 
-export function http(url: string, method: string, body: any,
-                     on_success: json_handler, on_error: error_handler | undefined) {
-    let opts = {
+export interface apiError {
+    message: string
+}
+
+export async function http<T>(url: string, method: string, body?: any): Promise<apiResponse<T>> {
+    let opts: RequestInit = {
         mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
-    } as any;
+    };
     if (method === "POST") {
         opts["headers"] = {
             "Content-type": "application/json; charset=UTF-8"
@@ -16,11 +22,7 @@ export function http(url: string, method: string, body: any,
             opts["body"] = JSON.stringify(body)
         }
     }
-    fetch(url, opts as any)
-        .then(response => {
-            response.json().then(on_success)
-        })
-        .catch(on_error ? on_error : error => {
-            console.log("Unhandled error: " + error)
-        })
+    const resp = await fetch(url, opts);
+    const json = await resp.json() as T;
+    return {json: json, resp: resp, status: resp.ok}
 }

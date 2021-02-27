@@ -255,3 +255,9 @@ func onPostLogAdd() gin.HandlerFunc {
 		}
 	}
 }
+func onPostBan() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var b model.Ban
+		c.JSON(http.StatusCreated, b)
+	}
+}

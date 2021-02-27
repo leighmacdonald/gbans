@@ -25,7 +25,7 @@ var (
 	BuildVersion  = "master"
 	router        *gin.Engine
 	templates     map[string]*template.Template
-	routes        map[Route]string
+	routes        map[routeKey]string
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
 	serverState   map[string]ServerState
@@ -88,7 +88,7 @@ func addWarning(sid64 steamid.SID64, reason WarnReason) {
 		CreatedOn:  config.Now(),
 	})
 	if len(warnings[sid64]) >= config.General.WarningLimit {
-		if err := BanPlayer(ctx, sid64, config.General.Owner, 0, model.WarningsExceeded,
+		if _, err := BanPlayer(ctx, sid64, config.General.Owner, 0, model.WarningsExceeded,
 			"Warning limit exceeded", model.System); err != nil {
 			log.Errorf("Failed to ban player after too many warnings: %s", err)
 		}

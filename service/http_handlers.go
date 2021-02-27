@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -276,38 +277,86 @@ func fetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 	return results, nil
 }
 
+type apiResponse struct {
+	Status  bool        `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+func responseErr(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, apiResponse{
+		Status: false,
+		Data:   data,
+	})
+}
+
+func responseOK(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, apiResponse{
+		Status: true,
+		Data:   data,
+	})
+}
+
 func onAPIPostBan() gin.HandlerFunc {
 	type req struct {
 		SteamID    steamid.SID64 `json:"steam_id"`
-		AuthorID   steamid.SID64 `json:"author_id"`
 		Duration   string        `json:"duration"`
 		BanType    model.BanType `json:"ban_type"`
 		Reason     model.Reason  `json:"reason"`
 		ReasonText string        `json:"reason_text"`
+		Network    string        `json:"network"`
 	}
 
 	return func(c *gin.Context) {
 		var r req
 		if err := c.BindJSON(&r); err != nil {
-			c.JSON(http.StatusBadRequest, StatusResponse{
+			responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+			return
+		}
+		duration, err := time.ParseDuration(r.Duration)
+		if err != nil {
+			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
+Valid time units are "s", "m", "h".`)
+			return
+		}
+		var (
+			n      *net.IPNet
+			ban    *model.Ban
+			banNet *model.BanNet
+			e      error
+		)
+		if r.Network != "" {
+			_, n, err = net.ParseCIDR(r.Network)
+			if err != nil {
+				responseErr(c, http.StatusBadRequest, "Invalid network cidr definition")
+				return
+			}
+		}
+		if !r.SteamID.Valid() {
+			responseErr(c, http.StatusBadRequest, "Invalid steamid")
+			return
+		}
+
+		if r.Network != "" {
+			banNet, e = BanNetwork(c, n, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+		} else {
+			ban, e = BanPlayer(c, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+		}
+		if e != nil {
+			if errors.Is(e, errDuplicate) {
+				c.Status(http.StatusConflict)
+				return
+			}
+			c.JSON(http.StatusInternalServerError, StatusResponse{
 				Success: false,
 				Message: "Failed to perform ban",
 			})
 			return
 		}
-		duration, err := time.ParseDuration(r.Duration)
-		if err != nil {
-			c.JSON(http.StatusNotAcceptable, StatusResponse{
-				Success: false,
-				Message: `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
-Valid time units are "s", "m", "h".`,
-			})
-		}
-		if err := BanPlayer(c, r.SteamID, r.AuthorID, duration, r.Reason, r.ReasonText, model.Web); err != nil {
-			c.JSON(http.StatusNotAcceptable, StatusResponse{
-				Success: false,
-				Message: "Failed to perform ban",
-			})
+		if r.Network != "" {
+			responseOK(c, http.StatusCreated, banNet)
+		} else {
+			responseOK(c, http.StatusCreated, ban)
 		}
 	}
 }

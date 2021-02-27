@@ -1,6 +1,4 @@
 import * as React from "react";
-import {Route, vars} from "../util/Route";
-import {http} from "../util/network";
 
 interface props {
     ban_id: number
@@ -15,14 +13,14 @@ interface state {
 
 export class AppealForm extends React.Component<props, state> {
     componentDidMount() {
-        http(vars(Route.APIAppeal, {"ban_id": this.props.ban_id}),
-            "GET",
-            "",
-            (resp) => {
-                console.log(resp);
-            }, (error) => {
-                console.log(error);
-            })
+        // http(vars(Route.APIAppeal, {"ban_id": this.props.ban_id}),
+        //     "GET",
+        //     "",
+        //     (resp) => {
+        //         console.log(resp);
+        //     }, (error: any) => {
+        //         console.log(error);
+        //     })
     }
 
     render() {
