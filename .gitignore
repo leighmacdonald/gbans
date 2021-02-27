@@ -29,3 +29,5 @@ sourcemod/.vscode/
 *.yaml
 *.yml
 /frontend/lib/
+*.js
+*.jsx
