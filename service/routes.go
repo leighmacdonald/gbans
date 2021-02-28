@@ -1,8 +1,6 @@
 package service
 
 import (
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"net/http"
@@ -11,18 +9,17 @@ import (
 type routeKey string
 
 const (
-	routeDist            routeKey = "dist"
-	routeHome            routeKey = "home"
-	routeBans            routeKey = "bans"
-	routeBanPlayer       routeKey = "ban_player"
-	routeReport          routeKey = "report"
-	routeProfileSettings routeKey = "profile_settings"
-	routeAppeal          routeKey = "appeal"
-	routeLogin           routeKey = "login"
-	routeServers         routeKey = "servers"
-	routeLogout          routeKey = "logout"
-	routeLoginCallback   routeKey = "login_callback"
-
+	routeDist               routeKey = "dist"
+	routeHome               routeKey = "home"
+	routeBans               routeKey = "bans"
+	routeBanPlayer          routeKey = "ban_player"
+	routeReport             routeKey = "report"
+	routeProfileSettings    routeKey = "profile_settings"
+	routeAppeal             routeKey = "appeal"
+	routeLogin              routeKey = "login"
+	routeLogout             routeKey = "logout"
+	routeLoginCallback      routeKey = "login_callback"
+	routeLoginSuccess       routeKey = "login_success"
 	routeAdminPeople        routeKey = "admin_people"
 	routeAdminServers       routeKey = "admin_servers"
 	routeAdminFilteredWords routeKey = "admin_filtered_words"
@@ -43,38 +40,26 @@ const (
 )
 
 func initRouter() {
-	ses := sessions.Sessions("gbans", cookie.NewStore([]byte(config.HTTP.CookieKey)))
 	router.Use(gin.Logger())
 	// Dont use session for static assets
 	router.StaticFS("/dist", http.Dir(config.HTTP.StaticPath))
 
-	session := router.Group("")
-	session.Use(ses, authMiddleWare())
+	tokenAuthed := router.Use(authMiddleWare())
 
-	session.GET(routeRaw(string(routeHome)), onIndex())
-	session.GET(routeRaw(string(routeBans)), onGetBans())
-	session.GET(routeRaw(string(routeBanPlayer)), onGetBanPlayer())
-	session.GET(routeRaw(string(routeAppeal)), onGetAppeal())
-	session.GET(routeRaw(string(routeProfileSettings)), onGetProfileSettings())
-	session.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
-	session.GET(routeRaw(string(routeLogin)), onGetLogin())
-	session.GET(routeRaw(string(routeLogout)), onGetLogout())
-	session.GET(routeRaw(string(routeServers)), onGetServers())
-
-	// Admin
-	session.GET(routeRaw(string(routeAdminFilteredWords)), onAdminFilteredWords())
-	session.GET(routeRaw(string(routeAdminImport)), onGetAdminImport())
-	session.GET(routeRaw(string(routeAdminServers)), onGetAdminServers())
-	session.GET(routeRaw(string(routeAdminPeople)), onGetAdminPeople())
+	tokenAuthed.GET(routeRaw(string(routeHome)), onIndex())
+	tokenAuthed.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
+	tokenAuthed.GET(routeRaw(string(routeLogin)), onGetLogin())
+	tokenAuthed.GET(routeRaw(string(routeLogout)), onGetLogout())
+	tokenAuthed.GET(routeRaw(string(routeLoginSuccess)), onLoginSuccess())
 
 	// Client API
-	session.GET(routeRaw(string(routeAPIServers)), onAPIGetServers())
-	session.POST(routeRaw(string(routeAppeal)), onAPIPostAppeal())
-	session.GET(routeRaw(string(routeAPIStats)), onAPIGetStats())
-	session.GET(routeRaw(string(routeAPIBan)), onAPIGetBans())
-	session.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
-	session.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
-	session.POST(routeRaw(string(routeAPIBan)), onAPIPostBan())
+	tokenAuthed.GET(routeRaw(string(routeAPIServers)), onAPIGetServers())
+	tokenAuthed.POST(routeRaw(string(routeAppeal)), onAPIPostAppeal())
+	tokenAuthed.GET(routeRaw(string(routeAPIStats)), onAPIGetStats())
+	tokenAuthed.GET(routeRaw(string(routeAPIBan)), onAPIGetBans())
+	tokenAuthed.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
+	tokenAuthed.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
+	tokenAuthed.POST(routeRaw(string(routeAPIBan)), onAPIPostBan())
 
 	// Game server API
 	router.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
@@ -88,18 +73,18 @@ func initRouter() {
 
 func init() {
 	routes = map[routeKey]string{
-		routeHome:            "/",
-		routeDist:            "/dist",
-		routeAPIServers:      "/servers",
-		routeBans:            "/bans",
-		routeBanPlayer:       "/ban",
-		routeReport:          "/report",
-		routeAppeal:          "/appeal",
-		routeLogin:           "/auth/login",
-		routeLoginCallback:   "/auth/callback",
-		routeLogout:          "/auth/logout",
-		routeProfileSettings: "/profile/settings",
-
+		routeHome:               "/",
+		routeDist:               "/dist",
+		routeAPIServers:         "/servers",
+		routeBans:               "/bans",
+		routeBanPlayer:          "/ban",
+		routeReport:             "/report",
+		routeAppeal:             "/appeal",
+		routeLogin:              "/auth/login",
+		routeLoginCallback:      "/auth/callback",
+		routeLogout:             "/auth/logout",
+		routeProfileSettings:    "/profile/settings",
+		routeLoginSuccess:       "/login/success",
 		routeAdminFilteredWords: "/admin/filtered_words",
 		routeAdminImport:        "/admin/import",
 		routeAdminServers:       "/admin/servers",

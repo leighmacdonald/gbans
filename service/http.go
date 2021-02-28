@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-contrib/sessions"
@@ -9,10 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	log "github.com/sirupsen/logrus"
-	"html/template"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -132,13 +128,6 @@ func currentPerson(c *gin.Context) model.Person {
 	return person
 }
 
-type TmplArgs struct {
-	Person   model.Person
-	SiteName string
-	V        M
-	Flashes  []Flash
-}
-
 func getFlashes(c *gin.Context) []Flash {
 	var flashes []Flash
 	session := sessions.Default(c)
@@ -153,86 +142,4 @@ func getFlashes(c *gin.Context) []Flash {
 		log.Errorf("Failed to save session after flashes: %v", err)
 	}
 	return flashes
-}
-
-func defaultArgs(c *gin.Context) TmplArgs {
-	args := TmplArgs{}
-	args.SiteName = config.General.SiteName
-	args.Person = currentPerson(c)
-	args.Flashes = getFlashes(c)
-	args.V = M{}
-	return args
-}
-
-func newTmpl(files ...string) *template.Template {
-	var tFuncMap = template.FuncMap{
-		"icon": func(class string) template.HTML {
-			return template.HTML(fmt.Sprintf(`<i class="%s"></i>`, class))
-		},
-		"currentYear": func() template.HTML {
-			return template.HTML(fmt.Sprintf("%d", config.Now().Year()))
-		},
-		"datetime": func(t time.Time) template.HTML {
-			return template.HTML(t.Format(time.RFC822))
-		},
-		"fmtFloat": func(f float64, size int) template.HTML {
-			ft := fmt.Sprintf("%%.%df", size)
-			return template.HTML(fmt.Sprintf(ft, f))
-		},
-		"route": func(name string) template.HTML {
-			return template.HTML(route(name))
-		},
-	}
-	tmpl, err := template.New("layout").Funcs(tFuncMap).ParseFiles(files...)
-	if err != nil {
-		log.Panicf("Failed to load template: %v", err)
-	}
-	return tmpl
-}
-
-func initTemplates() {
-	var templateFiles []string
-	root := "templates"
-	if err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if strings.HasSuffix(info.Name(), ".gohtml") {
-			if !strings.HasPrefix(path, "_") && !strings.Contains(path, "/partials") {
-				templateFiles = append(templateFiles, info.Name())
-			}
-		}
-		return nil
-	}); err != nil {
-		log.Fatalf("Failed to read templates: %v", err)
-	}
-	var newPagesSet = func(path string) []string {
-		return []string{
-			fmt.Sprintf("templates/%s.gohtml", path),
-			//"templates/partials/page_header.gohtml",
-			"templates/_layout.gohtml",
-		}
-	}
-	for _, p := range templateFiles {
-		pageN := strings.ReplaceAll(p, ".gohtml", "")
-		templates[pageN] = newTmpl(newPagesSet(pageN)...)
-	}
-	var tpls []string
-	for k := range templates {
-		if !strings.Contains(k, "%s") && !strings.HasPrefix(k, "_") {
-			tpls = append(tpls, k)
-		}
-	}
-	log.Debugf("Loaded templates: %s", strings.Join(tpls, ", "))
-}
-
-func render(c *gin.Context, t string, args TmplArgs) {
-	var buf bytes.Buffer
-	tmpl := templates[t]
-	if err := tmpl.ExecuteTemplate(&buf, "layout", args); err != nil {
-		log.Errorf("Failed to execute template: %v", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-	c.Data(200, gin.MIMEHTML, buf.Bytes())
 }

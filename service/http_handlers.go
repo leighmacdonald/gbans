@@ -20,53 +20,25 @@ import (
 	"time"
 )
 
+const baseLayout = `<!doctype html>
+    <html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>gbans</title>
+    </head>
+    <body>
+    <div id="root"></div>
+    <script src="/dist/bundle.js"></script>
+    </body>
+    </html>`
+
 func onIndex() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "home", defaultArgs(c))
-	}
-}
+	//goland:noinspection HtmlUnknownTarget
 
-func onGetServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		serverStateMu.RLock()
-		state := serverState
-		serverStateMu.RUnlock()
-		a := defaultArgs(c)
-		a.V["servers"] = state
-		render(c, "servers", a)
-	}
-}
-
-func onGetBans() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "bans", defaultArgs(c))
-	}
-}
-
-func onGetBanPlayer() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "ban_player", defaultArgs(c))
-	}
-}
-
-func onGetAppeal() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		usr := currentPerson(c)
-		ban, err := GetBan(usr.SteamID)
-		if err != nil {
-			if errors.Is(err, errNoResult) {
-				flash(c, lError, "No Ban Found", "Please login with the account in question")
-				c.Redirect(http.StatusTemporaryRedirect, c.Request.Referer())
-				return
-			} else {
-				log.Errorf("Failed to lookup ban: %v", err)
-				c.String(http.StatusInternalServerError, "oops")
-				return
-			}
-		}
-		args := defaultArgs(c)
-		args.V["ban"] = ban
-		render(c, "appeal", args)
+		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 }
 
@@ -90,50 +62,11 @@ func onAPIPostAppeal() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var app req
 		if err := c.BindJSON(&app); err != nil {
-			log.Errorf("Received malformed appeal req: %v", err)
+			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-
 		c.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func onAdminFilteredWords() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		words, err := GetFilteredWords()
-		if err != nil {
-			log.Errorf("Failed to load filtered word sets from db: %v", err)
-			c.Redirect(http.StatusTemporaryRedirect, c.Request.Referer())
-			return
-		}
-		args := defaultArgs(c)
-		args.V["words"] = words
-		render(c, "admin_filtered_words", args)
-	}
-}
-
-func onGetProfileSettings() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "profile_settings", defaultArgs(c))
-	}
-}
-
-func onGetAdminImport() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "admin_import", defaultArgs(c))
-	}
-}
-
-func onGetAdminServers() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "admin_servers", defaultArgs(c))
-	}
-}
-
-func onGetAdminPeople() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		render(c, "admin_people", defaultArgs(c))
 	}
 }
 
@@ -297,23 +230,23 @@ func responseOK(c *gin.Context, status int, data interface{}) {
 	})
 }
 
-func onAPIPostBan() gin.HandlerFunc {
-	type req struct {
-		SteamID    steamid.SID64 `json:"steam_id"`
-		Duration   string        `json:"duration"`
-		BanType    model.BanType `json:"ban_type"`
-		Reason     model.Reason  `json:"reason"`
-		ReasonText string        `json:"reason_text"`
-		Network    string        `json:"network"`
-	}
+type apiBanRequest struct {
+	SteamID    steamid.SID64 `json:"steam_id"`
+	Duration   string        `json:"duration"`
+	BanType    model.BanType `json:"ban_type"`
+	Reason     model.Reason  `json:"reason"`
+	ReasonText string        `json:"reason_text"`
+	Network    string        `json:"network"`
+}
 
+func onAPIPostBan() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var r req
+		var r apiBanRequest
 		if err := c.BindJSON(&r); err != nil {
 			responseErr(c, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
-		duration, err := time.ParseDuration(r.Duration)
+		duration, err := config.ParseDuration(r.Duration)
 		if err != nil {
 			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
 Valid time units are "s", "m", "h".`)
@@ -344,13 +277,10 @@ Valid time units are "s", "m", "h".`)
 		}
 		if e != nil {
 			if errors.Is(e, errDuplicate) {
-				c.Status(http.StatusConflict)
+				responseErr(c, http.StatusConflict, "Duplicate ban")
 				return
 			}
-			c.JSON(http.StatusInternalServerError, StatusResponse{
-				Success: false,
-				Message: "Failed to perform ban",
-			})
+			responseErr(c, http.StatusInternalServerError, "Failed to perform ban")
 			return
 		}
 		if r.Network != "" {

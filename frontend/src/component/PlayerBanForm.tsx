@@ -29,9 +29,9 @@ interface PlayerProfile {
     friends: PlayerSummary[]
 }
 
-interface PlayerSummary {
+export interface PlayerSummary {
     steam_id: number
-    steamid: string
+    steamid?: string
     communityvisibilitystate?: communityVisibilityState
     profilestate?: profileState
     personaname: string
@@ -39,7 +39,7 @@ interface PlayerSummary {
     primaryclanid?: string
     timecreated?: number
     avatar?: string
-    avatarfull: string
+    avatarfull?: string
     avatarhash?: string
     profileurl?: string
     loccountrycode?: string
@@ -107,7 +107,7 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
             return;
         }
         let opts: banPayload = {
-            steam_id: profile.player.steamid,
+            steam_id: profile.player.steamid ?? "",
             ban_type: 2,
             duration: duration,
             network: banType === "steam" ? "" : network,

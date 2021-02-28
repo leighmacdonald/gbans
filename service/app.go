@@ -14,9 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
-	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -155,20 +153,6 @@ func Start() {
 		initNetBans()
 	} else {
 		log.Warnf("External Network ban lists not enabled")
-	}
-	// Load the HTML templated into memory
-	initTemplates()
-
-	// Watch for template changes and reload so we dont have to recompile on every edit
-	if config.General.Mode == "debug" {
-		rx := regexp.MustCompile(`.+?\.gohtml$`)
-		go util.WatchDir(ctx, "templates", func(path string) error {
-			if !strings.HasPrefix(path, "_") && rx.MatchString(path) {
-				log.Debugf("Template modified: %s", path)
-				initTemplates()
-			}
-			return nil
-		})
 	}
 
 	// Setup the HTTP router
