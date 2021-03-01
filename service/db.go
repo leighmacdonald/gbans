@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -21,11 +22,14 @@ var (
 	db           *pgxpool.Pool
 	errNoResult  = errors.New("No results found")
 	errDuplicate = errors.New("Duplicate entity")
+
+	// Use $ for pg based queries
+	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
 type QueryOpts struct {
-	Limit     int
-	Offset    int
+	Limit     uint64
+	Offset    uint64
 	OrderDesc bool
 	OrderBy   string
 }
@@ -72,9 +76,12 @@ func tokenValid(token string) bool {
 		return false
 	}
 	var s int
-	const q = `
-		SELECT server_id FROM server WHERE token = $1`
-	if err := db.QueryRow(context.Background(), q, token).
+	q, a, e := sb.Select("server_id").From("server").Where(sq.Eq{"token": token}).ToSql()
+	if e != nil {
+		log.Errorf("Failed to select token: %v", e)
+		return false
+	}
+	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&s); err != nil {
 		return false
 	}
@@ -83,13 +90,15 @@ func tokenValid(token string) bool {
 
 func getServer(serverID int64) (model.Server, error) {
 	var s model.Server
-	const q = `
-		SELECT 
-		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on, reserved_slots
-		FROM server
-		WHERE server_id = $1`
-	if err := db.QueryRow(context.Background(), q, serverID).
+	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
+		"token_created_on", "created_on", "updated_on", "reserved_slots").
+		From("server").
+		Where(sq.Eq{"server_id": serverID}).
+		ToSql()
+	if e != nil {
+		return model.Server{}, e
+	}
+	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
 			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
 		return model.Server{}, err
@@ -99,11 +108,13 @@ func getServer(serverID int64) (model.Server, error) {
 
 func getServers() ([]model.Server, error) {
 	var servers []model.Server
-	const q = `
-		SELECT 
-		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on, reserved_slots
-		FROM server`
+	q, _, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
+		"token_created_on", "created_on", "updated_on", "reserved_slots").
+		From("server").
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
 	rows, err := db.Query(context.Background(), q)
 	if err != nil {
 		return []model.Server{}, err
@@ -123,15 +134,17 @@ func getServers() ([]model.Server, error) {
 	return servers, nil
 }
 
-func GetServerByName(serverName string) (model.Server, error) {
+func getServerByName(serverName string) (model.Server, error) {
 	var s model.Server
-	const q = `
-		SELECT 
-		    server_id, short_name, token, address, port, rcon,
-			token_created_on, created_on, updated_on, reserved_slots
-		FROM server
-		WHERE short_name = $1`
-	if err := db.QueryRow(context.Background(), q, serverName).
+	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
+		"token_created_on", "created_on", "updated_on", "reserved_slots").
+		From("server").
+		Where(sq.Eq{"short_name": serverName}).
+		ToSql()
+	if e != nil {
+		return model.Server{}, e
+	}
+	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
 			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
 		return model.Server{}, err
@@ -150,14 +163,17 @@ func SaveServer(server *model.Server) error {
 }
 
 func insertServer(s *model.Server) error {
-	const q = `
-		INSERT INTO server (
-		    short_name, token, address, port, rcon, token_created_on, created_on, updated_on, password, reserved_slots) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		RETURNING server_id`
-
-	err := db.QueryRow(context.Background(), q, s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
-		s.CreatedOn, s.UpdatedOn, s.Password, s.ReservedSlots).Scan(&s.ServerID)
+	q, a, e := sb.Insert("server").
+		Columns("short_name", "token", "address", "port",
+			"rcon", "token_created_on", "created_on", "updated_on", "password", "reserved_slots").
+		Values(s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
+			s.CreatedOn, s.UpdatedOn, s.Password, s.ReservedSlots).
+		Suffix("RETURNING server_id").
+		ToSql()
+	if e != nil {
+		return e
+	}
+	err := db.QueryRow(context.Background(), q, a...).Scan(&s.ServerID)
 	if err != nil {
 		return DBErr(err)
 	}
@@ -165,45 +181,60 @@ func insertServer(s *model.Server) error {
 }
 
 func updateServer(s *model.Server) error {
-	const q = `
-		UPDATE server
-		SET short_name = $1, token = $2, address = $3, port = $4,
-		    rcon = $5, token_created_on = $6, updated_on = $7,
-		    reserved_slots = $8
-		WHERE server_id = $9`
 	s.UpdatedOn = config.Now()
-	if _, err := db.Exec(context.Background(), q, s.ServerName, s.Token, s.Address, s.Port, s.RCON,
-		s.TokenCreatedOn, s.UpdatedOn, s.ReservedSlots, s.ServerID); err != nil {
+	q, a, e := sb.Update("server").
+		Set("short_name", s.ServerName).
+		Set("token", s.Token).
+		Set("address", s.Address).
+		Set("port", s.Port).
+		Set("rcon", s.RCON).
+		Set("token_created_on", s.TokenCreatedOn).
+		Set("updated_on", s.UpdatedOn).
+		Set("reserved_slots", s.ReservedSlots).
+		Where(sq.Eq{"server_id": s.ServerID}).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update s")
 	}
 	return nil
 }
 
-func DropServer(serverID int64) error {
-	const q = `DELETE FROM server WHERE server_id = $1`
-	if _, err := db.Exec(context.Background(), q, serverID); err != nil {
+func dropServer(serverID int64) error {
+	q, a, e := sb.Delete("server").Where(sq.Eq{"server_id": serverID}).ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func DropBan(ban model.Ban) error {
-	const q = `DELETE FROM ban WHERE ban_id = $1`
-	if _, err := db.Exec(context.Background(), q, ban.BanID); err != nil {
+func dropBan(ban model.Ban) error {
+	q, a, e := sb.Delete("ban").Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return DBErr(err)
 	}
 	return nil
 }
 
-func GetBan(steamID steamid.SID64) (model.Ban, error) {
-	const q = `
-		SELECT 
-			ban_id, steam_id, author_id, ban_type, reason, note, valid_until,
-			created_on, updated_on, reason_text, ban_source
-		FROM ban
-		WHERE ($1::int8 > 0 AND steam_id::int8 = $1::int8)`
+func getBan(steamID steamid.SID64) (model.Ban, error) {
+	q, a, e := sb.Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "note", "valid_until",
+		"created_on", "updated_on", "reason_text", "ban_source").
+		From("ban").
+		Where(sq.Eq{"steam_id": steamID}).
+		ToSql()
+	if e != nil {
+		return model.Ban{}, e
+	}
 	var b model.Ban
-	if err := db.QueryRow(context.Background(), q, int64(steamID)).
+	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.Note, &b.ValidUntil, &b.CreatedOn,
 			&b.UpdatedOn, &b.ReasonText, &b.Source); err != nil {
 		return model.Ban{}, DBErr(err)
@@ -212,35 +243,51 @@ func GetBan(steamID steamid.SID64) (model.Ban, error) {
 }
 
 func getAppeal(banID int) (model.Appeal, error) {
-	const q = `SELECT appeal_id, ban_id, appeal_text, appeal_state, 
-       email, created_on, updated_on FROM ban_appeal a
-       WHERE a.ban_id = $1`
-	var a model.Appeal
-	if err := db.QueryRow(context.Background(), q, banID).
-		Scan(&a.AppealID, &a.BanID, &a.AppealText, &a.AppealState, &a.Email, &a.CreatedOn,
-			&a.UpdatedOn); err != nil {
+	q, a, e := sb.Select("appeal_id", "ban_id", "appeal_text", "appeal_state",
+		"email", "created_on", "updated_on").
+		From("ban_appeal").
+		Where(sq.Eq{"ban_id": banID}).
+		ToSql()
+	if e != nil {
+		return model.Appeal{}, e
+	}
+	var ap model.Appeal
+	if err := db.QueryRow(context.Background(), q, a...).
+		Scan(&ap.AppealID, &ap.BanID, &ap.AppealText, &ap.AppealState, &ap.Email, &ap.CreatedOn,
+			&ap.UpdatedOn); err != nil {
 		return model.Appeal{}, err
 	}
-	return a, nil
+	return ap, nil
 }
 
 func updateAppeal(appeal *model.Appeal) error {
-	const q = `UPDATE ban_appeal SET appeal_text = $1, appeal_state = $2, email = $3,
-		updated_on = $4 WHERE appeal_id = $5`
-	_, err := db.Exec(context.Background(), q, appeal.AppealText, appeal.AppealState, appeal.Email,
-		appeal.UpdatedOn, appeal.AppealID)
+	q, a, e := sb.Update("ban_appeal").
+		Set("appeal_text", appeal.AppealText).
+		Set("appeal_state", appeal.AppealState).
+		Set("email", appeal.Email).
+		Set("updated_on", appeal.UpdatedOn).
+		Where(sq.Eq{"appeal_id": appeal.AppealID}).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	_, err := db.Exec(context.Background(), q, a...)
 	if err != nil {
 		return DBErr(err)
 	}
 	return nil
 }
 
-func insertAppeal(a *model.Appeal) error {
-	const q = `INSERT INTO ban_appeal (ban_id, appeal_text, appeal_state, email, created_on, updated_on)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING appeal_id`
-	err := db.QueryRow(context.Background(), q, a.BanID, a.AppealText, a.AppealState, a.Email, a.CreatedOn,
-		a.UpdatedOn).Scan(&a.AppealID)
+func insertAppeal(ap *model.Appeal) error {
+	q, a, e := sb.Insert("ban_appeal").
+		Columns("ban_id", "appeal_text", "appeal_state", "email", "created_on", "updated_on").
+		Values(ap.BanID, ap.AppealText, ap.AppealState, ap.Email, ap.CreatedOn, ap.UpdatedOn).
+		Suffix("RETURNING appeal_id").
+		ToSql()
+	if e != nil {
+		return e
+	}
+	err := db.QueryRow(context.Background(), q, a...).Scan(&ap.AppealID)
 	if err != nil {
 		return DBErr(err)
 	}
@@ -266,14 +313,17 @@ func SaveBan(ban *model.Ban) error {
 }
 
 func insertBan(ban *model.Ban) error {
-	const q = `
-		INSERT INTO ban (
-			steam_id, author_id, ban_type, reason, reason_text, 
-			note, valid_until, created_on, updated_on, ban_source) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		RETURNING ban_id`
-	err := db.QueryRow(context.Background(), q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
-		ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
+	q, a, e := sb.Insert("ban").
+		Columns("steam_id", "author_id", "ban_type", "reason", "reason_text",
+			"note", "valid_until", "created_on", "updated_on", "ban_source").
+		Values(ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
+			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).
+		Suffix("RETURNING ban_id").
+		ToSql()
+	if e != nil {
+		return e
+	}
+	err := db.QueryRow(context.Background(), q, a...).Scan(&ban.BanID)
 	if err != nil {
 		return DBErr(err)
 	}
@@ -281,14 +331,21 @@ func insertBan(ban *model.Ban) error {
 }
 
 func updateBan(ban *model.Ban) error {
-	const q = `
-		UPDATE ban 
-		SET author_id = $2, ban_type = $3, reason = $4, reason_text = $5, 
-			note = $6, valid_until = $7, updated_on = $8, ban_source = $9
-		WHERE ban_id = $1`
-	if _, err := db.Exec(context.Background(), q,
-		ban.BanID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
-		ban.Note, ban.ValidUntil, ban.UpdatedOn, ban.Source); err != nil {
+	q, a, e := sb.Update("ban").
+		Set("author_id", ban.AuthorID).
+		Set("ban_type", ban.BanType).
+		Set("reason", ban.Reason).
+		Set("reason_text", ban.ReasonText).
+		Set("note", ban.Note).
+		Set("valid_until", ban.ValidUntil).
+		Set("updated_on", ban.UpdatedOn).
+		Set("ban_source", ban.Source).
+		Where(sq.Eq{"ban_id": ban.BanID}).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return DBErr(err)
 	}
 	return nil
@@ -304,35 +361,51 @@ func savePerson(person *model.Person) error {
 }
 
 func updatePerson(p *model.Person) error {
-	const q = `
-		UPDATE person
-		SET updated_on = $1, steam_id = $2, ip_addr = $3, communityvisibilitystate = $4, 
-			profilestate = $5, personaname = $6, profileurl = $7, avatar = $8, avatarmedium = $9, avatarfull = $10, 
-			avatarhash = $11, personastate = $12, realname = $13, timecreated = $14, loccountrycode = $15,
-			locstatecode = $16, loccityid = $17
-		WHERE steam_id = $18`
 	p.UpdatedOn = config.Now()
-	if _, err := db.Exec(context.Background(), q, p.UpdatedOn, p.SteamID, p.IPAddr,
-		p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
-		p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
-		p.LocCountryCode, p.LocStateCode, p.LocCityID, p.SteamID); err != nil {
+	q, a, e := sb.Update("person").
+		Set("updated_on", p.UpdatedOn).
+		Set("ip_addr", p.IPAddr).
+		Set("communityvisibilitystate", p.CommunityVisibilityState).
+		Set("profilestate", p.ProfileState).
+		Set("personaname", p.PersonaName).
+		Set("profileurl", p.ProfileURL).
+		Set("avatar", p.Avatar).
+		Set("avatarmedium", p.AvatarMedium).
+		Set("avatarfull", p.AvatarFull).
+		Set("avatarhash", p.AvatarHash).
+		Set("personastate", p.PersonaState).
+		Set("realname", p.RealName).
+		Set("timecreated", p.TimeCreated).
+		Set("loccountrycode", p.LocCountryCode).
+		Set("locstatecode", p.LocStateCode).
+		Set("loccityid", p.LocCityID).
+		Where(sq.Eq{"steam_id": p.SteamID}).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return DBErr(err)
 	}
 	return nil
 }
 
 func insertPerson(p *model.Person) error {
-	const q = `
-		INSERT INTO person (
-			created_on, updated_on, steam_id, ip_addr, communityvisibilitystate, profilestate, personaname,
-			profileurl, avatar, avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated, loccountrycode,
-			locstatecode, loccityid
-		) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`
-	_, err := db.Exec(context.Background(), q, p.CreatedOn, p.UpdatedOn, p.SteamID, p.IPAddr,
-		p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
-		p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
-		p.LocCountryCode, p.LocStateCode, p.LocCityID)
+	q, a, e := sb.
+		Insert("person").
+		Columns(
+			"created_on", "updated_on", "steam_id", "ip_addr", "communityvisibilitystate",
+			"profilestate", "personaname", "profileurl", "avatar", "avatarmedium", "avatarfull",
+			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode", "loccityid").
+		Values(p.CreatedOn, p.UpdatedOn, p.SteamID, p.IPAddr,
+			p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
+			p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
+			p.LocCountryCode, p.LocStateCode, p.LocCityID).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	_, err := db.Exec(context.Background(), q, a...)
 	if err != nil {
 		return DBErr(err)
 	}
@@ -342,15 +415,18 @@ func insertPerson(p *model.Person) error {
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
 func getPersonBySteamID(sid steamid.SID64) (model.Person, error) {
-	const q = `
-		SELECT 
-		    steam_id, created_on, updated_on, ip_addr, communityvisibilitystate, profilestate, 
-       		personaname, profileurl, avatar, avatarmedium, avatarfull, avatarhash, personastate, realname, 
-       		timecreated, loccountrycode, locstatecode, loccityid 
-		FROM person 
-		WHERE steam_id = $1`
+	q, a, e := sb.Select("steam_id", "created_on", "updated_on", "ip_addr",
+		"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
+		"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
+		"loccountrycode", "locstatecode", "loccityid").
+		From("person").
+		Where(sq.Eq{"steam_id": sid}).
+		ToSql()
+	if e != nil {
+		return model.Person{}, e
+	}
 	var p model.Person
-	err := db.QueryRow(context.Background(), q, sid).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
+	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID)
 	if err != nil {
@@ -379,10 +455,13 @@ func getOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
 func getBanNet(ip net.IP) ([]model.BanNet, error) {
-	const q = `
-		SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until 
-		FROM ban_net
-		WHERE $1 <<= cidr`
+	q, _, e := sb.Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
+		From("ban_net").
+		Suffix("WHERE $1 <<= cidr").
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var nets []model.BanNet
 	rows, err := db.Query(context.Background(), q, ip.String())
 	if err != nil {
@@ -400,23 +479,34 @@ func getBanNet(ip net.IP) ([]model.BanNet, error) {
 }
 
 func updateBanNet(banNet *model.BanNet) error {
-	const q = `
-		UPDATE ban_net SET cidr = $2, source = $3, updated_on = $4, valid_until = $5
-		WHERE net_id = $1`
-	if _, err := db.Exec(context.Background(), q,
-		banNet.NetID, banNet.CIDR, banNet.Source, banNet.UpdatedOn, banNet.ValidUntil); err != nil {
+	q, a, e := sb.Update("ban_net").
+		Set("cidr", banNet.CIDR).
+		Set("source", banNet.Source).
+		Set("created_on", banNet.CreatedOn).
+		Set("updated_on", banNet.UpdatedOn).
+		Set("reason", banNet.Reason).
+		Set("valid_until_id", banNet.ValidUntil).
+		Where(sq.Eq{"net_id": banNet.NetID}).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return err
 	}
 	return nil
 }
 
 func insertBanNet(banNet *model.BanNet) error {
-	const q = `
-		INSERT INTO ban_net (cidr, source, created_on, updated_on, reason, valid_until) 
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING net_id`
-	err := db.QueryRow(context.Background(), q,
-		banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ValidUntil).Scan(&banNet.NetID)
+	q, a, e := sb.Insert("ban_net").
+		Columns("cidr", "source", "created_on", "updated_on", "reason", "valid_until").
+		Values(banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ValidUntil).
+		Suffix("RETURNING net_id").
+		ToSql()
+	if e != nil {
+		return e
+	}
+	err := db.QueryRow(context.Background(), q, a...).Scan(&banNet.NetID)
 	if err != nil {
 		return err
 	}
@@ -431,22 +521,28 @@ func saveBanNet(banNet *model.BanNet) error {
 }
 
 func dropNetBan(ban model.BanNet) error {
-	const q = `DELETE FROM ban_net WHERE net_id = $1`
-	if _, err := db.Exec(context.Background(), q, ban.NetID); err != nil {
+	q, a, e := sb.Delete("ban_net").Where(sq.Eq{"net_id": ban.NetID}).ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return DBErr(err)
 	}
 	return nil
 }
 
 func getExpiredBans() ([]model.Ban, error) {
-	const q = `
-		SELECT 
-		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.ban_source,
-			b.created_on, b.updated_on
-		FROM ban b 
-		WHERE valid_until < $1`
+	q, a, e := sb.Select(
+		"ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
+		"valid_until", "ban_source", "created_on", "updated_on").
+		From("ban").
+		Where(sq.Lt{"valid_until": config.Now()}).
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var bans []model.Ban
-	rows, err := db.Query(context.Background(), q, config.Now())
+	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -467,19 +563,42 @@ type searchQueryOpts struct {
 	QueryOpts
 }
 
+func GetBansTotal(o searchQueryOpts) (int, error) {
+	q, _, e := sb.Select("count(*) as total_rows").From("ban").ToSql()
+	if e != nil {
+		return 0, e
+	}
+	var total int
+	if err := db.QueryRow(context.Background(), q).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
 func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
-	//goland:noinspection SqlResolve
-	const q = `
-		SELECT 
-		    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
-			b.valid_until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
-		FROM ban b 
-		LEFT OUTER JOIN person p on b.steam_id = p.steam_id
-		ORDER BY $1 %s LIMIT $2 OFFSET $3
-	`
-	q2 := fmt.Sprintf(q, o.order())
+	//const q = `
+	//	SELECT
+	//	    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
+	//		b.valid_until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
+	//	FROM ban b
+	//	LEFT OUTER JOIN person p on b.steam_id = p.steam_id
+	//	ORDER BY $1 %s LIMIT $2 OFFSET $3
+	//`
+	q, a, e := sb.
+		Select("b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
+			"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium").
+		From("ban b").
+		LeftJoin("person p on p.steam_id = b.steam_id").
+		OrderBy(o.order()).
+		Limit(o.Limit).
+		Offset(o.Offset).
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var bans []model.BannedPerson
-	rows, err := db.Query(context.Background(), q2, o.OrderBy, o.Limit, o.Offset)
+	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -496,23 +615,18 @@ func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
 	return bans, nil
 }
 
-func GetBansTotal() int {
-	var c int
-	if err := db.QueryRow(context.Background(), `SELECT count(ban_id) FROM ban`).Scan(&c); err != nil {
-		return 0
-	}
-	return c
-}
-
 func getBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
-	const q = `
-		SELECT 
-		    ban_id, steam_id, author_id, ban_type, reason, reason_text, note, 
-       		valid_until, created_on, updated_on, ban_source 
-		FROM ban 
-		WHERE updated_on < $1 LIMIT $2 OFFSET $3`
+	q, a, e := sb.
+		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
+			"valid_until", "created_on", "updated_on", "ban_source").
+		From("ban").
+		Where(sq.Lt{"updated_on": t}).
+		Limit(o.Limit).Offset(o.Offset).ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var bans []model.Ban
-	rows, err := db.Query(context.Background(), q, t, o.Limit, o.Offset)
+	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -529,9 +643,16 @@ func getBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
 }
 
 func getExpiredNetBans() ([]model.BanNet, error) {
-	const q = `SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until FROM ban_net WHERE valid_until < $1`
+	q, a, e := sb.
+		Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
+		From("ban_net").
+		Where(sq.Lt{"valid_until": config.Now()}).
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var bans []model.BanNet
-	rows, err := db.Query(context.Background(), q, config.Now())
+	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -547,9 +668,12 @@ func getExpiredNetBans() ([]model.BanNet, error) {
 }
 
 func GetFilteredWords() ([]string, error) {
-	const q = `SELECT word FROM filtered_word`
+	q, a, e := sb.Select("word").From("filtered_word").ToSql()
+	if e != nil {
+		return nil, e
+	}
 	var words []string
-	rows, err := db.Query(context.Background(), q)
+	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -565,8 +689,11 @@ func GetFilteredWords() ([]string, error) {
 }
 
 func SaveFilteredWord(word string) error {
-	const q = `INSERT INTO filtered_word (word) VALUES ($1)`
-	if _, err := db.Exec(context.Background(), q, word); err != nil {
+	q, a, e := sb.Insert("filtered_word").Columns("word").Values(word).ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return DBErr(err)
 	}
 	return nil

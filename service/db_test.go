@@ -29,7 +29,7 @@ func TestServer(t *testing.T) {
 	s1Get, err := getServer(s1.ServerID)
 	require.NoError(t, err)
 	require.Equal(t, s1.ServerID, s1Get.ServerID)
-	require.NoError(t, DropServer(s1.ServerID))
+	require.NoError(t, dropServer(s1.ServerID))
 }
 
 func TestBanNet(t *testing.T) {
@@ -63,7 +63,7 @@ func TestBan(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, SaveBan(&b1), "Failed to add ban")
 
-	b1Fetched, err := GetBan(76561198084134025)
+	b1Fetched, err := getBan(76561198084134025)
 	require.NoError(t, err)
 	banEqual(b1, b1Fetched)
 
@@ -78,12 +78,12 @@ func TestBan(t *testing.T) {
 	b1Fetched.Source = model.Web
 	require.NoError(t, SaveBan(&b1Fetched), "Failed to edit ban")
 
-	b1FetchedUpdated, err := GetBan(76561198084134025)
+	b1FetchedUpdated, err := getBan(76561198084134025)
 	require.NoError(t, err)
 	banEqual(b1Fetched, b1FetchedUpdated)
 
-	require.NoError(t, DropBan(b1), "Failed to drop ban")
-	_, errMissing := GetBan(b1.SteamID)
+	require.NoError(t, dropBan(b1), "Failed to drop ban")
+	_, errMissing := getBan(b1.SteamID)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, errNoResult))
 }
