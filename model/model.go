@@ -167,14 +167,15 @@ type BannedPerson struct {
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note   string    `db:"note" json:"note"`
 	Source BanSource `json:"ban_source" db:"ban_source"`
-	// Until is when the ban will be no longer valid. 0 denotes forever
-	Until        time.Time `json:"until" db:"until"`
+	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
+	ValidUntil   time.Time `json:"valid_until" db:"valid_until"`
 	CreatedOn    time.Time `db:"created_on" json:"created_on"`
 	UpdatedOn    time.Time `db:"updated_on" json:"updated_on"`
 	PersonaName  string    `json:"personaname" db:"personaname"`
 	ProfileURL   string    `json:"profileurl" db:"profileurl"`
 	Avatar       string    `json:"avatar" db:"avatar"`
 	AvatarMedium string    `json:"avatarmedium" db:"avatarmedium"`
+	AvatarFull   string    `json:"avatarfull" db:"avatarfull"`
 }
 
 type Server struct {
@@ -213,18 +214,22 @@ type Person struct {
 	IPAddr    string        `db:"ip_addr" json:"ip_addr"`
 	CreatedOn time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn time.Time     `db:"updated_on" json:"updated_on"`
-	extra.PlayerSummary
+	IsNew     bool          `db:"-" json:"-"`
+	*extra.PlayerSummary
 }
 
 // EqualID is used for html templates which assume int and not int64 types
-func (p Person) LoggedIn() bool {
+func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
-func NewPerson() Person {
-	return Person{
-		CreatedOn: config.Now(),
-		UpdatedOn: config.Now(),
+func NewPerson(sid64 steamid.SID64) *Person {
+	return &Person{
+		SteamID:       sid64,
+		IsNew:         true,
+		CreatedOn:     config.Now(),
+		UpdatedOn:     config.Now(),
+		PlayerSummary: &extra.PlayerSummary{},
 	}
 }
 

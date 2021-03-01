@@ -53,7 +53,7 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 	if !sid.Valid() {
 		return errors.Errorf("Invalid steam id from: %s", sid.String())
 	}
-	ban, err := GetBan(sid)
+	ban, err := getBan(sid)
 	if err != nil {
 		if err == errNoResult {
 			return errors.Wrapf(err, "Player is not banned")
@@ -78,7 +78,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
 
-	existing, err := GetBan(sid)
+	existing, err := getBan(sid)
 	if err != nil {
 		if err != errNoResult {
 			return nil, errors.Wrapf(err, "Failed to get ban")

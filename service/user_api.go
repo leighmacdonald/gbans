@@ -23,7 +23,6 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 			Words: words,
 		})
 	}
-
 }
 
 func onAPIGetStats() gin.HandlerFunc {
@@ -42,46 +41,58 @@ func onAPIGetStats() gin.HandlerFunc {
 		}
 		c.JSON(http.StatusOK, stats)
 	}
-
 }
 
 func onAPIGetBans() gin.HandlerFunc {
+	type req struct {
+		SortDesc bool   `json:"sort_desc"`
+		Offset   uint64 `json:"offset"`
+		Limit    uint64 `json:"limit"`
+		OrderBy  string `json:"order_by"`
+		Query    string `json:"query"`
+	}
 	type resp struct {
 		Total int                  `json:"total"`
 		Bans  []model.BannedPerson `json:"bans"`
 	}
 	return func(c *gin.Context) {
-		o := newSearchQueryOpts(c.GetString("q"))
-		o.Limit = queryInt(c, "limit")
+		var r req
+		if err := c.BindJSON(&r); err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		o := newSearchQueryOpts(r.Query)
+		o.Limit = r.Limit
 		if o.Limit > 100 {
 			o.Limit = 100
 		} else if o.Limit <= 0 {
 			o.Limit = 100
 		}
-		o.Offset = queryInt(c, "offset")
-		switch c.Query("desc") {
-		case "false":
-			o.OrderDesc = false
-		case "true":
-			fallthrough
-		default:
+		o.Offset = r.Offset
+		switch o.OrderDesc {
+		case true:
 			o.OrderDesc = true
-		}
-		switch c.DefaultQuery("order_by", "created_on") {
-		case "created_on":
+		case false:
 			fallthrough
 		default:
-			o.OrderBy = "created_on"
+			o.OrderDesc = false
 		}
+		o.OrderBy = r.OrderBy
+
 		bans, err := GetBans(o)
 		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans")
-			c.JSON(http.StatusInternalServerError, M{})
 			return
 		}
-		total := GetBansTotal()
-		c.JSON(200, resp{
-			Total: total,
+		t, err := GetBansTotal(o)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch ban total")
+			return
+		}
+		responseOK(c, http.StatusOK, resp{
+			Total: t,
 			Bans:  bans,
 		})
 	}

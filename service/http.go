@@ -115,15 +115,15 @@ func route(name string, args ...interface{}) string {
 	return "/" + strings.Join(p, "/")
 }
 
-func currentPerson(c *gin.Context) model.Person {
+func currentPerson(c *gin.Context) *model.Person {
 	p, found := c.Get("person")
 	if !found {
-		return model.NewPerson()
+		return model.NewPerson(0)
 	}
-	person, ok := p.(model.Person)
+	person, ok := p.(*model.Person)
 	if !ok {
 		log.Warnf("Total not cast store.Person from session")
-		return model.NewPerson()
+		return model.NewPerson(0)
 	}
 	return person
 }

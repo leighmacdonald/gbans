@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"net"
 	"time"
 
@@ -351,9 +352,9 @@ func updateBan(ban *model.Ban) error {
 	return nil
 }
 
-func savePerson(person *model.Person) error {
+func SavePerson(person *model.Person) error {
 	person.UpdatedOn = config.Now()
-	if person.CreatedOn.UTC().Unix() > 0 {
+	if !person.IsNew {
 		return updatePerson(person)
 	}
 	person.CreatedOn = person.UpdatedOn
@@ -371,14 +372,14 @@ func updatePerson(p *model.Person) error {
 		Set("profileurl", p.ProfileURL).
 		Set("avatar", p.Avatar).
 		Set("avatarmedium", p.AvatarMedium).
-		Set("avatarfull", p.AvatarFull).
-		Set("avatarhash", p.AvatarHash).
-		Set("personastate", p.PersonaState).
-		Set("realname", p.RealName).
-		Set("timecreated", p.TimeCreated).
-		Set("loccountrycode", p.LocCountryCode).
-		Set("locstatecode", p.LocStateCode).
-		Set("loccityid", p.LocCityID).
+		Set("avatarfull", p.PlayerSummary.AvatarFull).
+		Set("avatarhash", p.PlayerSummary.AvatarHash).
+		Set("personastate", p.PlayerSummary.PersonaState).
+		Set("realname", p.PlayerSummary.RealName).
+		Set("timecreated", p.PlayerSummary.TimeCreated).
+		Set("loccountrycode", p.PlayerSummary.LocCountryCode).
+		Set("locstatecode", p.PlayerSummary.LocStateCode).
+		Set("loccityid", p.PlayerSummary.LocCityID).
 		Where(sq.Eq{"steam_id": p.SteamID}).
 		ToSql()
 	if e != nil {
@@ -409,12 +410,13 @@ func insertPerson(p *model.Person) error {
 	if err != nil {
 		return DBErr(err)
 	}
+	p.IsNew = false
 	return nil
 }
 
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
-func getPersonBySteamID(sid steamid.SID64) (model.Person, error) {
+func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	q, a, e := sb.Select("steam_id", "created_on", "updated_on", "ip_addr",
 		"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 		"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
@@ -423,29 +425,30 @@ func getPersonBySteamID(sid steamid.SID64) (model.Person, error) {
 		Where(sq.Eq{"steam_id": sid}).
 		ToSql()
 	if e != nil {
-		return model.Person{}, e
+		return nil, e
 	}
 	var p model.Person
+	p.PlayerSummary = &extra.PlayerSummary{}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID)
 	if err != nil {
-		return model.Person{}, DBErr(err)
+		return nil, DBErr(err)
 	}
-	return p, nil
+	return &p, nil
 }
 
-// getOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
+// GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func getOrCreatePersonBySteamID(sid steamid.SID64) (model.Person, error) {
+func GetOrCreatePersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	p, err := getPersonBySteamID(sid)
 	if err != nil && DBErr(err) == errNoResult {
-		p.SteamID = sid
-		if err := savePerson(&p); err != nil {
-			return model.Person{}, err
+		p = model.NewPerson(sid)
+		if err := SavePerson(p); err != nil {
+			return nil, err
 		}
 	} else if err != nil {
-		return model.Person{}, err
+		return nil, err
 	}
 	return p, nil
 }
@@ -587,10 +590,10 @@ func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
 	q, a, e := sb.
 		Select("b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-			"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium").
+			"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull").
 		From("ban b").
 		LeftJoin("person p on p.steam_id = b.steam_id").
-		OrderBy(o.order()).
+		OrderBy(o.OrderBy).
 		Limit(o.Limit).
 		Offset(o.Offset).
 		ToSql()
@@ -606,7 +609,8 @@ func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
 	for rows.Next() {
 		var b model.BannedPerson
 		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.Source, &b.Until, &b.CreatedOn, &b.UpdatedOn, &b.PersonaName, &b.ProfileURL, &b.Avatar, &b.AvatarMedium,
+			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn, &b.PersonaName, &b.ProfileURL, &b.Avatar, &b.AvatarMedium,
+			&b.AvatarFull,
 		); err != nil {
 			return nil, err
 		}
@@ -758,7 +762,7 @@ func Migrate(recreate bool) error {
 	if err != nil {
 		return errors.Wrap(err, "Could not create new schema")
 	}
-	_, err = getOrCreatePersonBySteamID(config.General.Owner)
+	_, err = GetOrCreatePersonBySteamID(config.General.Owner)
 	if err != nil {
 		log.Fatalf("Error loading system user: %v", err)
 	}

@@ -3,13 +3,12 @@ import {Link} from "react-router-dom"
 import {PlayerSummary} from "./component/PlayerBanForm";
 
 interface HeaderProps {
-    loggedIn: boolean
     profile: PlayerSummary
     onLogin: () => void
     onLogout: () => void
 }
 
-export const Header = ({loggedIn, profile, onLogin, onLogout}: HeaderProps) => {
+export const Header = ({profile, onLogin, onLogout}: HeaderProps) => {
     return (
         <header className="grid-container full">
             <nav className="grid-x" id="header_nav">
@@ -41,12 +40,12 @@ export const Header = ({loggedIn, profile, onLogin, onLogout}: HeaderProps) => {
                         </div>
                         <div className="top-bar-right">
                             <ul className="dropdown menu" data-dropdown-menu={true}>
-                                {!loggedIn && <>
+                                {profile.steam_id === 0 && <>
                                     <li>
                                         <div className="btn_login" onClick={onLogin}/>
                                     </li>
                                 </>}
-                                {loggedIn && <>
+                                {profile.steam_id > 0 && <>
                                     <li>
                                         <Link to="/admin"><i className="fi-widget"/> Admin</Link>
                                         <ul className="menu vertical">

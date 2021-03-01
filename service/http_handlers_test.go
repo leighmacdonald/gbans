@@ -47,7 +47,7 @@ func TestOnAPIPostBan(t *testing.T) {
 	}
 	s1 := "76561198031215761"
 	units := []httpTestUnit{
-		{newTestReq("POST", routeAPIBan, req{
+		{newTestReq("POST", routeAPIBans, req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,
@@ -57,7 +57,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		}),
 			httpTestResult{Code: http.StatusCreated},
 			"Failed to successfully create steam ban"},
-		{newTestReq("POST", routeAPIBan, req{
+		{newTestReq("POST", routeAPIBans, req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,

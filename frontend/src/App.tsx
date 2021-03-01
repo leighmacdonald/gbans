@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useContext, useEffect} from "react";
 import {BrowserRouter as Router, Route} from "react-router-dom";
 import {Home} from "./page/Home";
 import {Settings} from "./page/Settings";
@@ -15,17 +15,12 @@ import {Header} from "./Header";
 import {PlayerSummary} from "./component/PlayerBanForm";
 import {Flash, Flashes} from "./component/Flashes";
 import {LoginSuccess} from "./page/LoginSuccess";
-
-// const onRedirectCallback = (appState) => {
-//     history.push(
-//         appState && appState.returnTo ? appState.returnTo : window.location.pathname
-//     );
-// };
+import {Profile} from "./page/Profile";
+import {apiCall} from "./util/network";
+import {Footer} from "./component/Footer";
+import {Auth, AuthContext} from "./contexts/Auth";
 
 export const App = () => {
-    // @ts-ignore
-    const [loggedIn, setLoggedIn] = React.useState<boolean>(false)
-    // @ts-ignore
     const [currentProfile, setCurrentProfile] = React.useState<PlayerSummary>({
         personaname: "Guest",
         steam_id: 0,
@@ -46,35 +41,51 @@ export const App = () => {
     }
 
     const handleOnLogout = () => {
-        localStorage.clear();
+        localStorage.removeItem("token");
     }
 
+    useEffect(() => {
+        if (currentProfile != null && currentProfile.steam_id > 0) {
+            const fetchProfile = async () => {
+                const resp = await apiCall<PlayerSummary>(`/api/profiles`, "GET");
+                if (!resp.status) {
+                    // TODO Add flash / redirect to login
+                    console.log("Bad fetch profile response")
+                    return
+                }
+                setCurrentProfile(resp.json as PlayerSummary)
+                console.log(resp.json)
+            }
+            // noinspection JSIgnoredPromiseFromCall
+            fetchProfile();
+        }
+    }, [])
+
+    const auth = useContext<AuthContext>(Auth);
     return (
-        <Router>
-            <Header loggedIn={currentProfile.steam_id > 0} profile={currentProfile} onLogin={handleOnLogin}
-                    onLogout={handleOnLogout}/>
+        <Auth.Provider value={auth}>
+            <Router>
+                <Header profile={currentProfile} onLogin={handleOnLogin}
+                        onLogout={handleOnLogout}/>
 
-            <Flashes flashes={flashes} />
+                <Flashes flashes={flashes}/>
 
-            <Route path="/" component={Home} exact={true}/>
-            <Route path="/servers" component={Servers}/>
-            <Route path="/bans" component={Bans}/>
-            <Route path="/appeal" component={Appeal}/>
-            <Route path="/report" component={Report}/>
-            <Route path="/settings" component={Settings}/>
-            <Route path="/admin/filters" component={AdminFilters}/>
-            <Route path="/admin/reports" component={AdminReports}/>
-            <Route path="/admin/import" component={AdminImport}/>
-            <Route path="/admin/people" component={AdminPeople}/>
-            <Route path="/admin/servers" component={AdminServers}/>
-            <Route path="/login/success" component={LoginSuccess}/>
-            <footer className="grid-container full">
-                <div className="grid-x grid-padding-x" id="footer">
-                    <div className="cell">
-                        <p>Powered By: <a href="https://github.com/leighmacdonald/gbans">gbans</a></p>
-                    </div>
-                </div>
-            </footer>
-        </Router>
+                <Route path="/" component={Home} exact={true}/>
+                <Route path="/servers" component={Servers}/>
+                <Route path="/bans" component={Bans}/>
+                <Route path="/appeal" component={Appeal}/>
+                <Route path="/report" component={Report}/>
+                <Route path="/settings" component={Settings}/>
+                <Route path="/profile" component={Profile}/>
+                <Route path="/admin/filters" component={AdminFilters}/>
+                <Route path="/admin/reports" component={AdminReports}/>
+                <Route path="/admin/import" component={AdminImport}/>
+                <Route path="/admin/people" component={AdminPeople}/>
+                <Route path="/admin/servers" component={AdminServers}/>
+                <Route path="/login/success" component={LoginSuccess}/>
+
+                <Footer/>
+            </Router>
+        </Auth.Provider>
     )
 }

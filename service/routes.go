@@ -9,24 +9,14 @@ import (
 type routeKey string
 
 const (
-	routeDist               routeKey = "dist"
-	routeHome               routeKey = "home"
-	routeBans               routeKey = "bans"
-	routeBanPlayer          routeKey = "ban_player"
-	routeReport             routeKey = "report"
-	routeProfileSettings    routeKey = "profile_settings"
-	routeAppeal             routeKey = "appeal"
-	routeLogin              routeKey = "login"
-	routeLogout             routeKey = "logout"
-	routeLoginCallback      routeKey = "login_callback"
-	routeLoginSuccess       routeKey = "login_success"
-	routeAdminPeople        routeKey = "admin_people"
-	routeAdminServers       routeKey = "admin_servers"
-	routeAdminFilteredWords routeKey = "admin_filtered_words"
-	routeAdminImport        routeKey = "admin_import"
+	routeDist          routeKey = "dist"
+	routeHome          routeKey = "home"
+	routeLoginCallback routeKey = "login_callback"
+	routeLoginSuccess  routeKey = "login_success"
 
 	routeAPIServers       routeKey = "api_servers"
-	routeAPIBan           routeKey = "api_ban"
+	routeAPIBans          routeKey = "api_bans"
+	routeAPIBansCreate    routeKey = "api_bans_create"
 	routeAPIFilteredWords routeKey = "api_filtered_words"
 	routeAPIStats         routeKey = "api_stats"
 	routeAPIProfile       routeKey = "api_profile"
@@ -48,18 +38,15 @@ func initRouter() {
 
 	tokenAuthed.GET(routeRaw(string(routeHome)), onIndex())
 	tokenAuthed.GET(routeRaw(string(routeLoginCallback)), onOpenIDCallback())
-	tokenAuthed.GET(routeRaw(string(routeLogin)), onGetLogin())
-	tokenAuthed.GET(routeRaw(string(routeLogout)), onGetLogout())
 	tokenAuthed.GET(routeRaw(string(routeLoginSuccess)), onLoginSuccess())
 
 	// Client API
 	tokenAuthed.GET(routeRaw(string(routeAPIServers)), onAPIGetServers())
-	tokenAuthed.POST(routeRaw(string(routeAppeal)), onAPIPostAppeal())
 	tokenAuthed.GET(routeRaw(string(routeAPIStats)), onAPIGetStats())
-	tokenAuthed.GET(routeRaw(string(routeAPIBan)), onAPIGetBans())
+	tokenAuthed.POST(routeRaw(string(routeAPIBans)), onAPIGetBans())
 	tokenAuthed.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
 	tokenAuthed.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
-	tokenAuthed.POST(routeRaw(string(routeAPIBan)), onAPIPostBan())
+	tokenAuthed.POST(routeRaw(string(routeAPIBansCreate)), onAPIPostBanCreate())
 
 	// Game server API
 	router.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
@@ -73,26 +60,16 @@ func initRouter() {
 
 func init() {
 	routes = map[routeKey]string{
-		routeHome:               "/",
-		routeDist:               "/dist",
-		routeAPIServers:         "/servers",
-		routeBans:               "/bans",
-		routeBanPlayer:          "/ban",
-		routeReport:             "/report",
-		routeAppeal:             "/appeal",
-		routeLogin:              "/auth/login",
-		routeLoginCallback:      "/auth/callback",
-		routeLogout:             "/auth/logout",
-		routeProfileSettings:    "/profile/settings",
-		routeLoginSuccess:       "/login/success",
-		routeAdminFilteredWords: "/admin/filtered_words",
-		routeAdminImport:        "/admin/import",
-		routeAdminServers:       "/admin/servers",
-		routeAdminPeople:        "/admin/people",
+		routeHome:          "/",
+		routeDist:          "/dist",
+		routeAPIServers:    "/servers",
+		routeLoginCallback: "/auth/callback",
+		routeLoginSuccess:  "/login/success",
 
 		routeAPIFilteredWords: "/api/v1/filtered_words",
 		routeAPIStats:         "/api/v1/stats",
-		routeAPIBan:           "/api/v1/ban",
+		routeAPIBans:          "/api/v1/bans",
+		routeAPIBansCreate:    "/api/v1/bans_create",
 		routeAPIProfile:       "/api/v1/profile",
 
 		routeServerAPIAuth:    "/sapi/v1/auth",

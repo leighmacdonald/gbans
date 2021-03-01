@@ -3,14 +3,14 @@ import {SyntheticEvent, useEffect} from "react";
 import IPCIDR from "ip-cidr";
 import {format, formatDistanceToNow, fromUnixTime} from "date-fns";
 import {chunk} from 'lodash-es';
-import {apiResponse, http} from "../util/network";
+import {apiResponse, apiCall} from "../util/network";
 
 interface PanFormProps {
 
 }
 
-function ip2int(ip: string): number {
-    return ip.split('.').reduce(function (ipInt, octet) {
+export const ip2int = (ip: string): number => {
+    return ip.split('.').reduce((ipInt, octet) => {
         return (ipInt << 8) + parseInt(octet, 10)
     }, 0) >>> 0;
 }
@@ -89,7 +89,7 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
     });
     const loadPlayerSummary = async () => {
         // TODO filter to known formats only
-        const resp = await http<PlayerProfile>(`/api/v1/profile?query=${fSteam}`,"GET");
+        const resp = await apiCall<PlayerProfile>(`/api/v1/profile?query=${fSteam}`, "GET");
         if (!resp.status) {
             console.log("Failed to lookup user profile");
             return;
@@ -114,7 +114,7 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
             reason_text: reasonText,
             reason: 0
         }
-        const r = await http<apiResponse<Ban | BanNet>>(`/api/v1/ban`, "POST", opts);
+        const r = await apiCall<apiResponse<Ban | BanNet>>(`/api/v1/ban`, "POST", opts);
         alert(r.status ? "Ban created successfully" : r.json);
     }, [profile, reasonText, network]);
     const handleUpdateNetwork = (evt: SyntheticEvent) => {

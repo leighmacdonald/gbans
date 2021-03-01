@@ -103,8 +103,8 @@ func TestPerson(t *testing.T) {
 	p2 := model.Person{
 		SteamID: 76561198084134025,
 	}
-	require.NoError(t, savePerson(&p1))
-	p2Fetched, err := getOrCreatePersonBySteamID(p2.SteamID)
+	require.NoError(t, SavePerson(&p1))
+	p2Fetched, err := GetOrCreatePersonBySteamID(p2.SteamID)
 	require.NoError(t, err)
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
 

@@ -96,7 +96,7 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 			c.JSON(500, authResp{Status: false})
 			return
 		}
-		srv, err := GetServerByName(req.ServerName)
+		srv, err := getServerByName(req.ServerName)
 		if err != nil {
 			c.JSON(http.StatusNotFound, authResp{Status: false})
 			return
@@ -164,7 +164,7 @@ func onPostServerCheck() gin.HandlerFunc {
 			resp.Msg = "Invalid steam id"
 			c.JSON(500, resp)
 		}
-		ban, err := GetBan(steamID)
+		ban, err := getBan(steamID)
 		if err != nil {
 			if DBErr(err) == errNoResult {
 				resp.BanType = model.OK

@@ -37,7 +37,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 func authMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		p := model.NewPerson()
+		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
 		tp := strings.SplitN(ah, " ", 2)
 		if ah != "" && len(tp) == 2 && tp[0] != "Bearer" {
@@ -63,27 +63,6 @@ func authMiddleWare() gin.HandlerFunc {
 		}
 		c.Set("person", p)
 		c.Next()
-	}
-}
-
-func onGetLogin() gin.HandlerFunc {
-	const f = "https://steamcommunity.com/openid/login" +
-		"?openid.ns=http://specs.openid.net/auth/2.0" +
-		"&openid.mode=checkid_setup" +
-		"&openid.return_to=%s/auth/callback?return_url=%s" +
-		"&openid.realm=%s" +
-		"&openid.ns.sreg=http://openid.net/extensions/sreg/1.1" +
-		"&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select" +
-		"&openid.identity=http://specs.openid.net/auth/2.0/identifier_select"
-	return func(c *gin.Context) {
-		fullURL, err := url.Parse(c.Request.Referer())
-		if err != nil {
-			c.Redirect(303, "/")
-			return
-		}
-		ref := fullURL.Path
-		u := fmt.Sprintf(f, config.HTTP.Domain, ref, config.HTTP.Domain)
-		c.Redirect(303, u)
 	}
 }
 
@@ -125,7 +104,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		p, err := getOrCreatePersonBySteamID(sid)
+		p, err := GetOrCreatePersonBySteamID(sid)
 		if err != nil {
 			log.Errorf("Failed to get person: %v", err)
 			c.Redirect(302, ref)
@@ -134,8 +113,8 @@ func onOpenIDCallback() gin.HandlerFunc {
 		s := sum[0]
 		p.SteamID = sid
 		p.IPAddr = c.Request.RemoteAddr
-		p.PlayerSummary = s
-		if err := savePerson(&p); err != nil {
+		p.PlayerSummary = &s
+		if err := SavePerson(p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
 			c.Redirect(302, ref)
 			return
@@ -157,6 +136,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 		c.Redirect(302, u.String())
 	}
 }
+
 func onLoginSuccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))

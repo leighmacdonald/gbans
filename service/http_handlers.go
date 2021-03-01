@@ -88,7 +88,7 @@ func onAPIProfile() gin.HandlerFunc {
 		Query string `form:"query"`
 	}
 	type resp struct {
-		Player  model.Person          `json:"player"`
+		Player  *model.Person         `json:"player"`
 		Friends []extra.PlayerSummary `json:"friends"`
 	}
 	return func(c *gin.Context) {
@@ -107,7 +107,7 @@ func onAPIProfile() gin.HandlerFunc {
 				return
 			}
 		}
-		person, err := getOrCreatePersonBySteamID(sid)
+		person, err := GetOrCreatePersonBySteamID(sid)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
@@ -118,7 +118,7 @@ func onAPIProfile() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusServiceUnavailable)
 			return
 		}
-		person.PlayerSummary = sum[0]
+		person.PlayerSummary = &sum[0]
 		friendIDs, err := fetchFriends(person.SteamID)
 		if err != nil {
 			log.Error("Could not fetch friends")
@@ -246,7 +246,7 @@ type apiBanRequest struct {
 	Network    string        `json:"network"`
 }
 
-func onAPIPostBan() gin.HandlerFunc {
+func onAPIPostBanCreate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r apiBanRequest
 		if err := c.BindJSON(&r); err != nil {

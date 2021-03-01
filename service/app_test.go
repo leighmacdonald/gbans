@@ -91,7 +91,7 @@ func GenTestData() {
 		if err != nil {
 			log.Fatalf("Failed to get player summary: %v", err)
 		}
-		p, err := getOrCreatePersonBySteamID(sid)
+		p, err := GetOrCreatePersonBySteamID(sid)
 		if err != nil {
 			log.Fatalf("Failed to get person: %v", err)
 		}
@@ -99,7 +99,7 @@ func GenTestData() {
 		p.SteamID = sid
 		p.IPAddr = fmt.Sprintf("24.56.78.%d", i+1)
 		p.PlayerSummary = s
-		if err := savePerson(&p); err != nil {
+		if err := SavePerson(&p); err != nil {
 			log.Fatalf("Failed to save test person: %v", err)
 		}
 	}

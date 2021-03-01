@@ -102,7 +102,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	if len(args) > 2 {
 		reasonStr = strings.Join(args[2:], " ")
 	}
-	ban, err := GetBan(pi.sid)
+	ban, err := getBan(pi.sid)
 	if err != nil && DBErr(err) != errNoResult {
 		log.Errorf("Error getting ban from db: %v", err)
 		return errors.New("Internal DB Error")
@@ -213,7 +213,7 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if !pi.valid {
 		return errUnknownID
 	}
-	ban, err1 := GetBan(pi.sid)
+	ban, err1 := getBan(pi.sid)
 	if err1 != nil && err1 != errNoResult {
 		return errCommandFailed
 	}
@@ -249,7 +249,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil || !sid.Valid() {
 		return errInvalidSID
 	}
-	ban, err := GetBan(sid)
+	ban, err := getBan(sid)
 	if err != nil {
 		if err == errNoResult {
 			return errors.New("SteamID does not exist in database")
@@ -257,7 +257,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 			return errCommandFailed
 		}
 	}
-	if err := DropBan(ban); err != nil {
+	if err := dropBan(ban); err != nil {
 		return errCommandFailed
 	}
 	return sendMsg(s, m.ChannelID, "User ban is now inactive")
@@ -279,7 +279,7 @@ func onKick(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := GetServerByName(args[0])
+	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -296,7 +296,7 @@ func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 }
 
 func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := GetServerByName(args[0])
+	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -313,7 +313,7 @@ func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 }
 
 func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := GetServerByName(args[0])
+	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
 	}
@@ -491,7 +491,7 @@ func defaultTable(title string) table.Writer {
 }
 
 func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	server, err := GetServerByName(args[0])
+	server, err := getServerByName(args[0])
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("Invalid server name")

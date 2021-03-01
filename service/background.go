@@ -15,7 +15,7 @@ func profileUpdater() {
 	var update = func() {
 		o := newQueryOpts()
 		o.Limit = 5 // Max per query of WebAPI
-		loop := 0
+		loop := uint64(0)
 		for {
 			o.Offset = loop * o.Limit
 			bans, err := getBansOlderThan(o, config.Now().Add(-(time.Hour * 24)))
@@ -38,13 +38,13 @@ func profileUpdater() {
 					log.Errorf("Failed to parse steamid from webapi: %v", err)
 					continue
 				}
-				p, err := getOrCreatePersonBySteamID(sid)
+				p, err := GetOrCreatePersonBySteamID(sid)
 				if err != nil {
 					log.Errorf("Failed to get person: %v", err)
 					continue
 				}
-				p.PlayerSummary = s
-				if err := savePerson(&p); err != nil {
+				p.PlayerSummary = &s
+				if err := SavePerson(p); err != nil {
 					log.Errorf("Failed to save person: %v", err)
 					continue
 				}
@@ -138,7 +138,7 @@ func banSweeper() {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range bans {
-					if err := DropBan(ban); err != nil {
+					if err := dropBan(ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
 						log.Infof("Ban expired: %v", ban)

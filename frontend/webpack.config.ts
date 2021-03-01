@@ -4,6 +4,7 @@ import * as copyWebpackPlugin from 'copy-webpack-plugin';
 
 const config: webpack.Configuration = {
     entry: './src/index.tsx',
+    devtool: "source-map",
     module: {
         rules: [
             {
@@ -37,6 +38,7 @@ const config: webpack.Configuration = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist'),
+        sourceMapFilename: "[name].ts.map",
         assetModuleFilename: 'images/[hash][ext][query]'
     },
 };

@@ -8,21 +8,24 @@ export interface apiError {
     message: string
 }
 
-export async function http<T>(url: string, method: string, body?: any): Promise<apiResponse<T>> {
+export async function apiCall<TResponse, TRequestBody = any>(url: string, method: string, body?: TRequestBody): Promise<apiResponse<TResponse>> {
+    const headers: Record<string, string> = {
+        "Content-type": "application/json; charset=UTF-8"
+    }
     let opts: RequestInit = {
         mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
     };
-    if (method === "POST") {
-        opts["headers"] = {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-        if (body) {
-            opts["body"] = JSON.stringify(body)
-        }
+    const token = localStorage.getItem("token");
+    if (token != "") {
+        headers["Authorization"] = `Bearer ${token}`
     }
+    if (method === "POST" && body) {
+        opts["body"] = JSON.stringify(body)
+    }
+    opts.headers = headers;
     const resp = await fetch(url, opts);
-    const json = await resp.json() as T;
+    const json = ((await resp.json() as TResponse) as any).data;
     return {json: json, resp: resp, status: resp.ok}
 }
