@@ -1,7 +1,8 @@
-const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+import * as path from 'path';
+import * as webpack from 'webpack';
+import * as copyWebpackPlugin from 'copy-webpack-plugin';
 
-module.exports = {
+const config: webpack.Configuration = {
     entry: './src/index.tsx',
     module: {
         rules: [
@@ -27,7 +28,7 @@ module.exports = {
         extensions: [ '.tsx', '.ts', '.js' ],
     },
     plugins: [
-        new CopyWebpackPlugin({
+        new copyWebpackPlugin({
             patterns: [
                 { from: 'src/icons' }
             ]
@@ -39,3 +40,6 @@ module.exports = {
         assetModuleFilename: 'images/[hash][ext][query]'
     },
 };
+
+// noinspection JSUnusedGlobalSymbols
+export default config;
