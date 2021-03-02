@@ -24,6 +24,8 @@ install:
 	@go install $(GO_FLAGS) ./...
 
 test:
+	@cd frontend && yarn run test
+	@cd ..
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 testcover:
