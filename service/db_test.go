@@ -63,7 +63,7 @@ func TestBan(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, SaveBan(&b1), "Failed to add ban")
 
-	b1Fetched, err := getBan(76561198084134025)
+	b1Fetched, err := getBanBySteamID(76561198084134025)
 	require.NoError(t, err)
 	banEqual(b1, b1Fetched)
 
@@ -78,12 +78,12 @@ func TestBan(t *testing.T) {
 	b1Fetched.Source = model.Web
 	require.NoError(t, SaveBan(&b1Fetched), "Failed to edit ban")
 
-	b1FetchedUpdated, err := getBan(76561198084134025)
+	b1FetchedUpdated, err := getBanBySteamID(76561198084134025)
 	require.NoError(t, err)
 	banEqual(b1Fetched, b1FetchedUpdated)
 
 	require.NoError(t, dropBan(b1), "Failed to drop ban")
-	_, errMissing := getBan(b1.SteamID)
+	_, errMissing := getBanBySteamID(b1.SteamID)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, errNoResult))
 }
@@ -97,18 +97,14 @@ func TestAppeal(t *testing.T) {
 }
 
 func TestPerson(t *testing.T) {
-	p1 := model.Person{
-		SteamID: 76561199093644873,
-	}
-	p2 := model.Person{
-		SteamID: 76561198084134025,
-	}
-	require.NoError(t, SavePerson(&p1))
+	p1 := model.NewPerson(76561199093644873)
+	p2 := model.NewPerson(76561198084134025)
+	require.NoError(t, SavePerson(p1))
 	p2Fetched, err := GetOrCreatePersonBySteamID(p2.SteamID)
 	require.NoError(t, err)
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
 
 	pBadID, err := getPersonBySteamID(0)
 	require.Error(t, err)
-	require.Equal(t, pBadID.SteamID.Int64(), int64(0))
+	require.Nil(t, pBadID)
 }

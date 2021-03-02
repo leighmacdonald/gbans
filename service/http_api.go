@@ -3,9 +3,12 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"net"
 	"net/http"
 	"regexp"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
@@ -164,7 +167,7 @@ func onPostServerCheck() gin.HandlerFunc {
 			resp.Msg = "Invalid steam id"
 			c.JSON(500, resp)
 		}
-		ban, err := getBan(steamID)
+		ban, err := getBanBySteamID(steamID, false)
 		if err != nil {
 			if DBErr(err) == errNoResult {
 				resp.BanType = model.OK
@@ -175,9 +178,214 @@ func onPostServerCheck() gin.HandlerFunc {
 			c.JSON(500, resp)
 			return
 		}
-		resp.BanType = ban.BanType
-		resp.Msg = ban.ReasonText
+		resp.BanType = ban.Ban.BanType
+		resp.Msg = ban.Ban.ReasonText
 		c.JSON(200, resp)
+	}
+}
+
+func onAPIPostAppeal() gin.HandlerFunc {
+	type req struct {
+		Email      string `json:"email"`
+		AppealText string `json:"appeal_text"`
+	}
+	return func(c *gin.Context) {
+		var app req
+		if err := c.BindJSON(&app); err != nil {
+			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func onAPIPostReport() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusInternalServerError, gin.H{})
+	}
+}
+
+func onAPIGetServers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		servers, err := getServers()
+		if err != nil {
+			log.Errorf("Failed to fetch servers: %s", err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		c.JSON(http.StatusOK, servers)
+	}
+}
+
+func onAPIProfile() gin.HandlerFunc {
+	type req struct {
+		Query string `form:"query"`
+	}
+	type resp struct {
+		Player  *model.Person         `json:"player"`
+		Friends []extra.PlayerSummary `json:"friends"`
+	}
+	return func(c *gin.Context) {
+		var r req
+		if err := c.Bind(&r); err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		sid, err := steamid.StringToSID64(r.Query)
+		if err != nil {
+			sid, err = steamid.ResolveSID64(cx, r.Query)
+			if err != nil {
+				responseErr(c, http.StatusNotFound, nil)
+				return
+			}
+		}
+		person, err := GetOrCreatePersonBySteamID(sid)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		sum, err := extra.PlayerSummaries(cx, []steamid.SID64{sid})
+		if err != nil || len(sum) != 1 {
+			log.Errorf("Failed to get player summary: %v", err)
+			responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
+			return
+		}
+		person.PlayerSummary = &sum[0]
+		friendIDs, err := fetchFriends(person.SteamID)
+		if err != nil {
+			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
+			return
+		}
+		friends, err := fetchSummaries(friendIDs)
+		if err != nil {
+			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
+			return
+		}
+		var response resp
+		response.Player = person
+		response.Friends = friends
+		responseOK(c, http.StatusOK, response)
+	}
+}
+func onAPIGetFilteredWords() gin.HandlerFunc {
+	type resp struct {
+		Count int      `json:"count"`
+		Words []string `json:"words"`
+	}
+	return func(c *gin.Context) {
+		words, err := GetFilteredWords()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{})
+			return
+		}
+		c.JSON(http.StatusOK, resp{
+			Count: len(words),
+			Words: words,
+		})
+	}
+}
+
+func onAPIGetStats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		stats, err := getStats()
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		serverStateMu.RLock()
+		defer serverStateMu.RUnlock()
+		for _, server := range serverState {
+			if server.Alive {
+				stats.ServersAlive++
+			}
+		}
+		responseOK(c, http.StatusOK, stats)
+	}
+}
+
+func loadBanMeta(b *model.BannedPerson) {
+
+}
+
+func onAPIGetBanByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		banIDStr := c.Param("ban_id")
+		if banIDStr == "" {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		sid, err := strconv.ParseUint(banIDStr, 10, 64)
+		if err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+
+		ban, err := getBanByBanID(sid, false)
+		if err != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			log.Errorf("Failed to fetch bans")
+			return
+		}
+		loadBanMeta(ban)
+		responseOK(c, http.StatusOK, ban)
+	}
+}
+
+func onAPIGetBans() gin.HandlerFunc {
+	type req struct {
+		SortDesc bool   `json:"sort_desc"`
+		Offset   uint64 `json:"offset"`
+		Limit    uint64 `json:"limit"`
+		OrderBy  string `json:"order_by"`
+		Query    string `json:"query"`
+	}
+	type resp struct {
+		Total int                   `json:"total"`
+		Bans  []*model.BannedPerson `json:"bans"`
+	}
+	return func(c *gin.Context) {
+		var r req
+		if err := c.BindJSON(&r); err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		o := newSearchQueryOpts(r.Query)
+		o.Limit = r.Limit
+		if o.Limit > 100 {
+			o.Limit = 100
+		} else if o.Limit <= 0 {
+			o.Limit = 100
+		}
+		o.Offset = r.Offset
+		switch o.OrderDesc {
+		case true:
+			o.OrderDesc = true
+		case false:
+			fallthrough
+		default:
+			o.OrderDesc = false
+		}
+		o.OrderBy = r.OrderBy
+
+		bans, err := GetBans(o)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch bans")
+			return
+		}
+		t, err := GetBansTotal(o)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch ban total")
+			return
+		}
+		responseOK(c, http.StatusOK, resp{
+			Total: t,
+			Bans:  bans,
+		})
 	}
 }
 
@@ -245,10 +453,6 @@ func onPostLogAdd() gin.HandlerFunc {
 		if sid64.Int64() != 76561197960265728 && !sid64.Valid() {
 			return
 		}
-		// team := false
-		// if match[3] == "say_team" {
-		// 	team = true
-		// }
 		messageQueue <- discordMessage{
 			ChannelID: "",
 			Body:      match[4],

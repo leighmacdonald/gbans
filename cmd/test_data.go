@@ -36,7 +36,7 @@ var testDataCmd = &cobra.Command{
 			76561198042277652,
 		}
 		c := context.Background()
-		for _, bid := range b {
+		for i, bid := range b {
 			v, err := service.GetOrCreatePersonBySteamID(bid)
 			if err != nil {
 				log.Errorf("error creating person: %v", err)
@@ -52,7 +52,13 @@ var testDataCmd = &cobra.Command{
 				log.Errorf("Failed to save person: %v", err)
 				return
 			}
-			if _, err := service.BanPlayer(c, v.SteamID, p.SteamID, time.Hour*24, model.Cheating, "Cheater", model.System); err != nil {
+			var t time.Duration
+			if i%2 == 0 {
+				t = 0
+			} else {
+				t = time.Hour * 24
+			}
+			if _, err := service.BanPlayer(c, v.SteamID, p.SteamID, t, model.Cheating, "Cheater", model.System); err != nil {
 				log.Errorf(err.Error())
 			}
 		}

@@ -1,10 +1,11 @@
 import React, {createContext, useReducer} from "react";
-import {PlayerSummary} from "../component/PlayerBanForm";
 import {concat} from "lodash-es";
+import {Person} from "../util/api";
+import {Nullable} from "../util/types";
 
 export interface AuthContext {
     token: string
-    profile: PlayerSummary
+    profile: Nullable<Person>
     errors: string[]
 }
 
@@ -51,10 +52,7 @@ export const Reducer = (state: AuthContext, action: Action): AuthContext => {
 
 const initialState: AuthContext = {
     token: "",
-    profile: {
-        steam_id: 0,
-        personaname: "Guest",
-    },
+    profile: null,
     errors: []
 }
 

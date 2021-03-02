@@ -53,7 +53,7 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 	if !sid.Valid() {
 		return errors.Errorf("Invalid steam id from: %s", sid.String())
 	}
-	ban, err := getBan(sid)
+	ban, err := getBanBySteamID(sid, false)
 	if err != nil {
 		if err == errNoResult {
 			return errors.Wrapf(err, "Player is not banned")
@@ -61,8 +61,8 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 			return err
 		}
 	}
-	ban.ValidUntil = time.Now().UTC()
-	if err := SaveBan(&ban); err != nil {
+	ban.Ban.ValidUntil = time.Now().UTC()
+	if err := SaveBan(ban.Ban); err != nil {
 		return errors.Wrapf(err, "Failed to save unban")
 	}
 	log.Infof("Player unbanned: %v", sid.Int64())
@@ -78,7 +78,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
 
-	existing, err := getBan(sid)
+	existing, err := getBanBySteamID(sid, false)
 	if err != nil {
 		if err != errNoResult {
 			return nil, errors.Wrapf(err, "Failed to get ban")

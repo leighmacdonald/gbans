@@ -5,12 +5,12 @@ export interface apiResponse<T> {
 }
 
 export interface apiError {
-    message: string
+    error?: string
 }
 
-export async function apiCall<TResponse, TRequestBody = any>(url: string, method: string, body?: TRequestBody): Promise<apiResponse<TResponse>> {
+export const apiCall = async <TResponse, TRequestBody = any>(url: string, method: string, body?: TRequestBody): Promise<apiResponse<TResponse>> => {
     const headers: Record<string, string> = {
-        "Content-type": "application/json; charset=UTF-8"
+        "Content-Type": "application/json; charset=UTF-8"
     }
     let opts: RequestInit = {
         mode: 'cors',
@@ -24,8 +24,26 @@ export async function apiCall<TResponse, TRequestBody = any>(url: string, method
     if (method === "POST" && body) {
         opts["body"] = JSON.stringify(body)
     }
-    opts.headers = headers;
-    const resp = await fetch(url, opts);
-    const json = ((await resp.json() as TResponse) as any).data;
+    opts.headers = headers
+    const resp = await fetch(url, opts)
+    if (!resp.status) {
+        throw apiErr("Invalid response code", resp)
+    }
+    const json = ((await resp.json() as TResponse) as any).data
+    if (json?.error && json.error !== "") {
+        throw apiErr(`Error received: ${json.error}`, resp)
+    }
     return {json: json, resp: resp, status: resp.ok}
+}
+
+class ApiException extends Error {
+    public resp: Response
+    constructor(msg: string, response: Response) {
+        super(msg);
+        this.resp = response
+    }
+}
+
+const apiErr = (msg: string, resp: Response): ApiException => {
+    return new ApiException(msg, resp);
 }

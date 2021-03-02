@@ -16,6 +16,7 @@ const (
 
 	routeAPIServers       routeKey = "api_servers"
 	routeAPIBans          routeKey = "api_bans"
+	routeAPIBansByID      routeKey = "api_bans_by_id"
 	routeAPIBansCreate    routeKey = "api_bans_create"
 	routeAPIFilteredWords routeKey = "api_filtered_words"
 	routeAPIStats         routeKey = "api_stats"
@@ -44,6 +45,7 @@ func initRouter() {
 	tokenAuthed.GET(routeRaw(string(routeAPIServers)), onAPIGetServers())
 	tokenAuthed.GET(routeRaw(string(routeAPIStats)), onAPIGetStats())
 	tokenAuthed.POST(routeRaw(string(routeAPIBans)), onAPIGetBans())
+	tokenAuthed.GET(routeRaw(string(routeAPIBansByID)), onAPIGetBanByID())
 	tokenAuthed.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
 	tokenAuthed.GET(routeRaw(string(routeAPIProfile)), onAPIProfile())
 	tokenAuthed.POST(routeRaw(string(routeAPIBansCreate)), onAPIPostBanCreate())
@@ -69,6 +71,7 @@ func init() {
 		routeAPIFilteredWords: "/api/v1/filtered_words",
 		routeAPIStats:         "/api/v1/stats",
 		routeAPIBans:          "/api/v1/bans",
+		routeAPIBansByID:      "/api/v1/ban/:ban_id",
 		routeAPIBansCreate:    "/api/v1/bans_create",
 		routeAPIProfile:       "/api/v1/profile",
 

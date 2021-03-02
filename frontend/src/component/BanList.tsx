@@ -2,8 +2,11 @@ import * as React from "react";
 import Paginator from "./Paginator";
 import SearchBar from "./SearchBar";
 import {SyntheticEvent, useEffect} from "react";
+import {Link} from "react-router-dom"
 import {apiCall} from "../util/network";
-import {IAPIRequestBans, IAPIResponseBans, IBanState} from "../util/api";
+import {BannedPerson, IAPIRequestBans, IAPIResponseBans} from "../util/api";
+import {parseDateTime, renderTimeDistance} from "../util/text";
+import {differenceInYears} from "date-fns";
 
 export const BanList = () => {
     const [page, setPage] = React.useState<number>(0)
@@ -13,7 +16,7 @@ export const BanList = () => {
     const [sortDesc, setSortDesc] = React.useState<boolean>(true)
     // @ts-ignore
     const [orderBy, setOrderBy] = React.useState<string>("created_on")
-    const [bans, setBans] = React.useState<IBanState[]>([])
+    const [bans, setBans] = React.useState<BannedPerson[]>([])
     const [queryStr, setQueryStr] = React.useState<string>("")
     const [total, setTotal] = React.useState<number>(0)
 
@@ -52,24 +55,32 @@ export const BanList = () => {
             <div className={"cell"}>
                 <div className={"grid-y grid-y-padding"} id={"ban_list"}>
                     <div className={"cell"}>
+                        <div className={"grid-x"}>
+                            <div className={"cell large-5"}><span>Profile</span></div>
+                            <div className={"cell large-3 text-center"}><span>Reason</span></div>
+                            <div className={"cell large-2 text-right"}><span>Created On</span></div>
+                            <div className={"cell large-2 text-right"}><span>Valid Until</span></div>
+                        </div>
                         {bans.map(ban => (
-                            <div className={"grid-x ban_row"} key={ban.ban_id.toString()}>
-                                <div className={"cell large-5"}>
-                                    <a href={"https://steamcommunity.com/profiles/" + ban.steam_id}>
-                                        <img src={ban.avatar} alt={"Player Avatar"}/>
-                                        <span>{ban.personaname}</span>
-                                    </a>
+                            <Link to={`/ban/${ban.ban.ban_id}`} key={ban.ban.ban_id?.toString()}>
+                                <div className={"grid-x ban_row"}>
+                                    <div className={"cell large-5"}>
+                                        <img src={ban.person.avatar} alt={"Player Avatar"}/>
+                                        <span>{ban.person.personaname}</span>
+                                    </div>
+                                    <div className={"cell large-3 text-center"}>
+                                        {ban.ban.reason_text}
+                                    </div>
+                                    <div className={"cell large-2 text-right"}>
+                                        {renderTimeDistance(ban.ban.created_on)}
+                                    </div>
+                                    <div className={"cell large-2 text-right"}>
+                                        {differenceInYears(parseDateTime(ban.ban.valid_until), new Date()) > 5
+                                            ? "Permanent"
+                                            : renderTimeDistance(parseDateTime(ban.ban.valid_until))}
+                                    </div>
                                 </div>
-                                <div className={"cell large-3 text-center"}>
-                                    {ban.reason_text}
-                                </div>
-                                <div className={"cell large-2 text-right"}>
-                                    {ban.created_on}
-                                </div>
-                                <div className={"cell large-2 text-right"}>
-                                    {ban.valid_until > 0 ? "Permanent" : ban.valid_until}
-                                </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>

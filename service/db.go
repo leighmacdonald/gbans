@@ -214,7 +214,7 @@ func dropServer(serverID int64) error {
 	return nil
 }
 
-func dropBan(ban model.Ban) error {
+func dropBan(ban *model.Ban) error {
 	q, a, e := sb.Delete("ban").Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
 	if e != nil {
 		return e
@@ -225,22 +225,59 @@ func dropBan(ban model.Ban) error {
 	return nil
 }
 
-func getBan(steamID steamid.SID64) (model.Ban, error) {
-	q, a, e := sb.Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "note", "valid_until",
-		"created_on", "updated_on", "reason_text", "ban_source").
-		From("ban").
-		Where(sq.Eq{"steam_id": steamID}).
+func getBanByColumn(column string, identifier interface{}, full bool) (*model.BannedPerson, error) {
+	q, a, e := sb.Select(
+		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
+		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
+
+		"p.steam_id as sid2", "p.created_on as created_on2", "p.updated_on as updated_on2", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
+		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
+		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid").
+		From("ban b").
+		LeftJoin("person p ON b.steam_id = p.steam_id").
+		GroupBy("b.ban_id, p.steam_id").
+		Where(sq.Eq{fmt.Sprintf("b.%s", column): identifier}).
+		OrderBy("b.created_on DESC").
+		Limit(1).
 		ToSql()
 	if e != nil {
-		return model.Ban{}, e
+		return nil, e
 	}
-	var b model.Ban
+	b := model.NewBannedPerson()
+
 	if err := db.QueryRow(context.Background(), q, a...).
-		Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.Note, &b.ValidUntil, &b.CreatedOn,
-			&b.UpdatedOn, &b.ReasonText, &b.Source); err != nil {
-		return model.Ban{}, DBErr(err)
+		Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
+			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
+			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn, &b.Person.IPAddr,
+			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName,
+			&b.Person.ProfileURL, &b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull,
+			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
+			&b.Person.LocStateCode, &b.Person.LocCityID); err != nil {
+		return nil, DBErr(err)
+	}
+	if full {
+		b.HistoryChat = getChatHistory(b.Person.SteamID)
+		b.HistoryConnections = []string{}
+		b.HistoryIP = getIPHistory(b.Person.SteamID)
+		b.HistoryPersonaName = []string{}
 	}
 	return b, nil
+}
+
+func getBanBySteamID(steamID steamid.SID64, full bool) (*model.BannedPerson, error) {
+	return getBanByColumn("steam_id", steamID, full)
+}
+
+func getBanByBanID(banID uint64, full bool) (*model.BannedPerson, error) {
+	return getBanByColumn("ban_id", banID, full)
+}
+
+func getChatHistory(sid64 steamid.SID64) []string {
+	return nil
+}
+
+func getIPHistory(sid64 steamid.SID64) []net.IP {
+	return []net.IP{net.ParseIP("127.0.0.1")}
 }
 
 func getAppeal(banID int) (model.Appeal, error) {
@@ -534,7 +571,7 @@ func dropNetBan(ban model.BanNet) error {
 	return nil
 }
 
-func getExpiredBans() ([]model.Ban, error) {
+func getExpiredBans() ([]*model.Ban, error) {
 	q, a, e := sb.Select(
 		"ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 		"valid_until", "ban_source", "created_on", "updated_on").
@@ -544,7 +581,7 @@ func getExpiredBans() ([]model.Ban, error) {
 	if e != nil {
 		return nil, e
 	}
-	var bans []model.Ban
+	var bans []*model.Ban
 	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
@@ -556,7 +593,7 @@ func getExpiredBans() ([]model.Ban, error) {
 			&b.ValidUntil, &b.Source, &b.CreatedOn, &b.UpdatedOn); err != nil {
 			return nil, err
 		}
-		bans = append(bans, b)
+		bans = append(bans, &b)
 	}
 	return bans, nil
 }
@@ -578,40 +615,37 @@ func GetBansTotal(o searchQueryOpts) (int, error) {
 	return total, nil
 }
 
-func GetBans(o searchQueryOpts) ([]model.BannedPerson, error) {
-	//const q = `
-	//	SELECT
-	//	    b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, b.ban_source,
-	//		b.valid_until, b.created_on, b.updated_on, p.personaname, p.profileurl, p.avatar, p.avatarmedium
-	//	FROM ban b
-	//	LEFT OUTER JOIN person p on b.steam_id = p.steam_id
-	//	ORDER BY $1 %s LIMIT $2 OFFSET $3
-	//`
-	q, a, e := sb.
-		Select("b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
-			"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-			"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull").
+func GetBans(o searchQueryOpts) ([]*model.BannedPerson, error) {
+	q, a, e := sb.Select(
+		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
+		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
+		"p.steam_id", "p.created_on", "p.updated_on", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
+		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
+		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid").
 		From("ban b").
 		LeftJoin("person p on p.steam_id = b.steam_id").
-		OrderBy(o.OrderBy).
+		OrderBy(fmt.Sprintf("b.%s", o.OrderBy)).
 		Limit(o.Limit).
 		Offset(o.Offset).
 		ToSql()
 	if e != nil {
 		return nil, e
 	}
-	var bans []model.BannedPerson
+	var bans []*model.BannedPerson
 	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var b model.BannedPerson
-		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn, &b.PersonaName, &b.ProfileURL, &b.Avatar, &b.AvatarMedium,
-			&b.AvatarFull,
-		); err != nil {
+		b := model.NewBannedPerson()
+		if err := rows.Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
+			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
+			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn, &b.Person.IPAddr,
+			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName, &b.Person.ProfileURL,
+			&b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull, &b.Person.AvatarHash,
+			&b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
+			&b.Person.LocStateCode, &b.Person.LocCityID); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)
@@ -703,24 +737,27 @@ func SaveFilteredWord(word string) error {
 	return nil
 }
 
-func GetStats() (model.Stats, error) {
+func getStats() (model.Stats, error) {
 	const q = `
-		SELECT
-    (SELECT COUNT(ban_id) FROM ban) as bans_total,
-    (SELECT COUNT(ban_id) FROM ban WHERE created_on
-         BETWEEN ((julianday('now') - 2440587.5)*86400.0 - 86400) AND (julianday('now') - 2440587.5)*86400.0) as bans_day,
-    (SELECT COUNT(ban_id) FROM ban WHERE created_on
-         BETWEEN ((julianday('now') - 2440587.5)*86400.0 - (86400 * 24)) AND (julianday('now') - 2440587.5)*86400.0) as bans_month,
-    (SELECT COUNT(net_id) FROM ban_net) as ban_cidr,
-    (SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 0 ) as appeals_open,
-    (SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 1 OR appeal_state = 2 ) as appeals_closed,
-    (SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
-    (SELECT COUNT(server_id) FROM server) as servers_total
-`
+	SELECT 
+		(SELECT COUNT(ban_id) FROM ban) as bans_total,
+		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_day,
+	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_week,
+		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 MONTH')) as bans_month, 
+	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '3 MONTH')) as bans_3month,
+	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
+	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
+		(SELECT COUNT(net_id) FROM ban_net) as bans_cidr, 
+		(SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 0) as appeals_open,
+		(SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 1 OR appeal_state = 2) as appeals_closed,
+		(SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
+		(SELECT COUNT(server_id) FROM server) as servers_total`
 	var stats model.Stats
-	if err := db.QueryRow(context.Background(), q).Scan(&stats.BansTotal, &stats.BansDay, &stats.BansMonth,
-		&stats.BansCIDRTotal, &stats.AppealsOpen, &stats.AppealsClosed, &stats.FilteredWords, &stats.ServersTotal,
-	); err != nil {
+	if err := db.QueryRow(context.Background(), q).
+		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth,
+			&stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal,
+			&stats.AppealsOpen, &stats.AppealsClosed, &stats.FilteredWords, &stats.ServersTotal,
+		); err != nil {
 		log.Errorf("Failed to fetch stats: %v", err)
 		return model.Stats{}, DBErr(err)
 	}

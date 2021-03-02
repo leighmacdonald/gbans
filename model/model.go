@@ -87,23 +87,23 @@ type BanNet struct {
 	ValidUntil time.Time     `db:"valid_until"`
 }
 
-func NewBan(steamID steamid.SID64, authorID steamid.SID64, reason string, duration time.Duration, source BanSource) (Ban, error) {
+func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duration) *Ban {
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
 	}
-	return Ban{
+	return &Ban{
 		SteamID:    steamID,
 		AuthorID:   authorID,
 		BanType:    Banned,
-		Reason:     0,
-		ReasonText: reason,
+		Reason:     Custom,
+		ReasonText: "Unspecified",
 		Note:       "",
-		Source:     source,
+		Source:     System,
 		ValidUntil: config.Now().Add(duration),
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
-	}, nil
+	}
 }
 
 func NewBanNet(cidr string, reason string, duration time.Duration, source BanSource) (BanNet, error) {
@@ -155,27 +155,30 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	BanID    uint64        `db:"ban_id" json:"ban_id"`
-	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
-	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
-	// Reason defines the overall ban classification
-	BanType BanType `db:"ban_type" json:"ban_type"`
-	// Reason defines the overall ban classification
-	Reason Reason `db:"reason" json:"reason"`
-	// ReasonText is returned to the client when kicked trying to join the server
-	ReasonText string `db:"reason_text" json:"reason_text"`
-	// Note is a supplementary note added by admins that is hidden from normal view
-	Note   string    `db:"note" json:"note"`
-	Source BanSource `json:"ban_source" db:"ban_source"`
-	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
-	ValidUntil   time.Time `json:"valid_until" db:"valid_until"`
-	CreatedOn    time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn    time.Time `db:"updated_on" json:"updated_on"`
-	PersonaName  string    `json:"personaname" db:"personaname"`
-	ProfileURL   string    `json:"profileurl" db:"profileurl"`
-	Avatar       string    `json:"avatar" db:"avatar"`
-	AvatarMedium string    `json:"avatarmedium" db:"avatarmedium"`
-	AvatarFull   string    `json:"avatarfull" db:"avatarfull"`
+	Ban                *Ban     `json:"ban"`
+	Person             *Person  `json:"person"`
+	HistoryChat        []string `json:"history_chat" db:"-"`
+	HistoryPersonaName []string `json:"history_personaname" db:"-"`
+	HistoryConnections []string `json:"history_connections" db:"-"`
+	HistoryIP          []net.IP `json:"history_ip" db:"-"`
+}
+
+func NewBannedPerson() *BannedPerson {
+	return &BannedPerson{
+		Ban: &Ban{
+			CreatedOn: config.Now(),
+			UpdatedOn: config.Now(),
+		},
+		Person: &Person{
+			CreatedOn:     config.Now(),
+			UpdatedOn:     config.Now(),
+			PlayerSummary: &extra.PlayerSummary{},
+		},
+		HistoryChat:        nil,
+		HistoryPersonaName: nil,
+		HistoryConnections: nil,
+		HistoryIP:          nil,
+	}
 }
 
 type Server struct {
@@ -252,11 +255,14 @@ type Appeal struct {
 }
 
 type Stats struct {
-	BansTotal     int `json:"bans_total"`
+	BansTotal     int `json:"bans"`
 	BansDay       int `json:"bans_day"`
 	BansWeek      int `json:"bans_week"`
 	BansMonth     int `json:"bans_month"`
-	BansCIDRTotal int `json:"bans_cidr_total"`
+	Bans3Month    int `json:"bans_3month"`
+	Bans6Month    int `json:"bans_6month"`
+	BansYear      int `json:"bans_year"`
+	BansCIDRTotal int `json:"bans_cidr"`
 	AppealsOpen   int `json:"appeals_open"`
 	AppealsClosed int `json:"appeals_closed"`
 	FilteredWords int `json:"filtered_words"`

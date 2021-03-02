@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -42,104 +41,9 @@ const baseLayout = `<!doctype html>
     </html>`
 
 func onIndex() gin.HandlerFunc {
-	//goland:noinspection HtmlUnknownTarget
-
 	return func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
-}
-
-func onAPIGetServers() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		servers, err := getServers()
-		if err != nil {
-			log.Errorf("Failed to fetch servers: %s", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-		c.JSON(http.StatusOK, servers)
-	}
-}
-
-func onAPIPostAppeal() gin.HandlerFunc {
-	type req struct {
-		Email      string `json:"email"`
-		AppealText string `json:"appeal_text"`
-	}
-	return func(c *gin.Context) {
-		var app req
-		if err := c.BindJSON(&app); err != nil {
-			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func onAPIPostReport() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(http.StatusInternalServerError, gin.H{})
-	}
-}
-
-func onAPIProfile() gin.HandlerFunc {
-	type req struct {
-		Query string `form:"query"`
-	}
-	type resp struct {
-		Player  *model.Person         `json:"player"`
-		Friends []extra.PlayerSummary `json:"friends"`
-	}
-	return func(c *gin.Context) {
-		var r req
-		if err := c.Bind(&r); err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-		sid, err := steamid.StringToSID64(r.Query)
-		if err != nil {
-			sid, err = steamid.ResolveSID64(cx, r.Query)
-			if err != nil {
-				c.AbortWithStatus(http.StatusNotFound)
-				return
-			}
-		}
-		person, err := GetOrCreatePersonBySteamID(sid)
-		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-		sum, err := extra.PlayerSummaries(cx, []steamid.SID64{sid})
-		if err != nil || len(sum) != 1 {
-			log.Errorf("Failed to get player summary: %v", err)
-			c.AbortWithStatus(http.StatusServiceUnavailable)
-			return
-		}
-		person.PlayerSummary = &sum[0]
-		friendIDs, err := fetchFriends(person.SteamID)
-		if err != nil {
-			log.Error("Could not fetch friends")
-			c.AbortWithStatus(http.StatusServiceUnavailable)
-			return
-		}
-		friends, err := fetchSummaries(friendIDs)
-		if err != nil {
-			log.Error("Could not fetch summaries")
-			c.AbortWithStatus(http.StatusServiceUnavailable)
-			return
-		}
-		var response resp
-		response.Player = person
-		response.Friends = friends
-		c.JSON(http.StatusOK, response)
-	}
-}
-
-type getFriendListRequest struct {
-	SteamIDs []steamid.SID64
 }
 
 type getFriendListResponse struct {

@@ -1,14 +1,16 @@
 import React from "react";
 import {Link} from "react-router-dom"
-import {PlayerSummary} from "./component/PlayerBanForm";
+import {Person} from "./util/api";
+import {Nullable} from "./util/types";
 
 interface HeaderProps {
-    profile: PlayerSummary
+    name: string
+    profile: Nullable<Person>
     onLogin: () => void
     onLogout: () => void
 }
 
-export const Header = ({profile, onLogin, onLogout}: HeaderProps) => {
+export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
     return (
         <header className="grid-container full">
             <nav className="grid-x" id="header_nav">
@@ -16,7 +18,7 @@ export const Header = ({profile, onLogin, onLogout}: HeaderProps) => {
                     <div className="top-bar">
                         <div className="top-bar-left">
                             <ul className="dropdown menu" data-dropdown-menu={true}>
-                                <li className="menu-text">{"{{.SiteName}}"}</li>
+                                <li className="menu-text">{name}</li>
                                 <li>
                                     <Link to={`/`}><i className="fi-home"/> Home</Link>
                                     <ul className="menu vertical">
@@ -34,18 +36,18 @@ export const Header = ({profile, onLogin, onLogout}: HeaderProps) => {
                                     <Link to="/report">Report</Link>
                                 </li>
                                 <li>
-                                    <Link to="/ban">Ban Player</Link>
+                                    <Link to="/admin/ban">Ban Player</Link>
                                 </li>
                             </ul>
                         </div>
                         <div className="top-bar-right">
                             <ul className="dropdown menu" data-dropdown-menu={true}>
-                                {profile.steam_id === 0 && <>
+                                {profile && profile.steam_id === 0 && <>
                                     <li>
                                         <div className="btn_login" onClick={onLogin}/>
                                     </li>
                                 </>}
-                                {profile.steam_id > 0 && <>
+                                {profile && profile.steam_id > 0 && <>
                                     <li>
                                         <Link to="/admin"><i className="fi-widget"/> Admin</Link>
                                         <ul className="menu vertical">

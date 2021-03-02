@@ -3,11 +3,8 @@ import {SyntheticEvent, useEffect} from "react";
 import IPCIDR from "ip-cidr";
 import {format, formatDistanceToNow, fromUnixTime} from "date-fns";
 import {chunk} from 'lodash-es';
-import {apiResponse, apiCall} from "../util/network";
-
-interface PanFormProps {
-
-}
+import {apiCreateBan, apiGetProfile, BanPayload, communityVisibilityState, PlayerProfile} from "../util/api";
+import {Nullable} from "../util/types";
 
 export const ip2int = (ip: string): number => {
     return ip.split('.').reduce((ipInt, octet) => {
@@ -15,61 +12,9 @@ export const ip2int = (ip: string): number => {
     }, 0) >>> 0;
 }
 
-interface banPayload {
-    steam_id: string
-    duration: string
-    ban_type: number
-    reason: number
-    reason_text: string
-    network: string
-}
+export type BanType = "network" | "steam"
 
-interface PlayerProfile {
-    player: PlayerSummary
-    friends: PlayerSummary[]
-}
-
-export interface PlayerSummary {
-    steam_id: number
-    steamid?: string
-    communityvisibilitystate?: communityVisibilityState
-    profilestate?: profileState
-    personaname: string
-    realname?: string
-    primaryclanid?: string
-    timecreated?: number
-    avatar?: string
-    avatarfull?: string
-    avatarhash?: string
-    profileurl?: string
-    loccountrycode?: string
-    locstatecode?: string
-    loccityid?: number
-    personastateflags?: number
-}
-
-type BanType = "network" | "steam"
-
-enum profileState {
-    Incomplete = 0,
-    Setup = 1
-}
-
-enum communityVisibilityState {
-    Private = 1,
-    FriendOnly = 2,
-    Public = 3
-}
-
-interface Ban {
-
-}
-
-interface BanNet {
-
-}
-
-export const PlayerBanForm: React.FC<PanFormProps> = () => {
+export const PlayerBanForm = () => {
     const [friendsPage, setFriendsPage] = React.useState<number>(0);
     const [showFriends, setShowFriends] = React.useState<boolean>(false);
     const [fSteam, setFSteam] = React.useState<string>("https://steamcommunity.com/id/SQUIRRELLY/");
@@ -78,35 +23,25 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
     const [network, setNetwork] = React.useState<string>("")
     const [networkSize, setNetworkSize] = React.useState<number>(0)
     const [banType, setBanType] = React.useState<BanType>("steam")
-    const [profile, setProfile] = React.useState<PlayerProfile>({
-        player: {
-            steam_id: 0,
-            steamid: "",
-            personaname: "Player Name",
-            avatarfull: "https://cdn.cloudflare.steamstatic.com/steamcommunity/public" +
-                "/images/avatars/30/3077b41fd6ae20862c69fddfef1ff514ecb375cb_full.jpg"
-        }, friends: [],
-    });
+    const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>();
     const loadPlayerSummary = async () => {
-        // TODO filter to known formats only
-        const resp = await apiCall<PlayerProfile>(`/api/v1/profile?query=${fSteam}`, "GET");
-        if (!resp.status) {
-            console.log("Failed to lookup user profile");
-            return;
+        try {
+            setProfile(await apiGetProfile(fSteam) as PlayerProfile);
+        } catch (e) {
+            console.log(e);
         }
-        setProfile((await resp.json) as PlayerProfile);
     };
     useEffect(() => {
         // Validate results
-    }, [])
+    }, [profile])
     const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [profile, setProfile]);
 
     const handleSubmit = React.useCallback(async (evt: any) => {
         evt.preventDefault();
-        if (profile.player.steam_id === 0) {
+        if (!profile || profile?.player?.steam_id > 0) {
             return;
         }
-        let opts: banPayload = {
+        let opts: BanPayload = {
             steam_id: profile.player.steamid ?? "",
             ban_type: 2,
             duration: duration,
@@ -114,8 +49,9 @@ export const PlayerBanForm: React.FC<PanFormProps> = () => {
             reason_text: reasonText,
             reason: 0
         }
-        const r = await apiCall<apiResponse<Ban | BanNet>>(`/api/v1/ban`, "POST", opts);
-        alert(r.status ? "Ban created successfully" : r.json);
+        const r = await apiCreateBan(opts);
+        console.log(r)
+
     }, [profile, reasonText, network]);
     const handleUpdateNetwork = (evt: SyntheticEvent) => {
         const value = (evt.target as HTMLInputElement).value;

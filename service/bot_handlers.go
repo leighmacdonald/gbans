@@ -102,25 +102,23 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	if len(args) > 2 {
 		reasonStr = strings.Join(args[2:], " ")
 	}
-	ban, err := getBan(pi.sid)
+	ban, err := getBanBySteamID(pi.sid, false)
 	if err != nil && DBErr(err) != errNoResult {
 		log.Errorf("Error getting ban from db: %v", err)
 		return errors.New("Internal DB Error")
 	} else if err != nil {
-		ban = model.Ban{
-			SteamID:  pi.sid,
-			AuthorID: 0,
-			Reason:   1,
-			Note:     "",
+		ban = &model.BannedPerson{
+			Ban:    model.NewBan(pi.sid, 0, duration),
+			Person: model.NewPerson(pi.sid),
 		}
 	}
-	if ban.BanType == model.Banned {
+	if ban.Ban.BanType == model.Banned {
 		return errors.New("Person is already banned")
 	}
-	ban.BanType = model.NoComm
-	ban.ReasonText = reasonStr
-	ban.ValidUntil = config.Now().Add(duration)
-	if err := SaveBan(&ban); err != nil {
+	ban.Ban.BanType = model.NoComm
+	ban.Ban.ReasonText = reasonStr
+	ban.Ban.ValidUntil = config.Now().Add(duration)
+	if err := SaveBan(ban.Ban); err != nil {
 		log.Errorf("Failed to save ban: %v", err)
 		return errors.New("Failed to save mute state")
 	}
@@ -213,7 +211,7 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if !pi.valid {
 		return errUnknownID
 	}
-	ban, err1 := getBan(pi.sid)
+	ban, err1 := getBanBySteamID(pi.sid, false)
 	if err1 != nil && err1 != errNoResult {
 		return errCommandFailed
 	}
@@ -228,10 +226,10 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	reason := ""
 	var remaining time.Duration
 	// TODO Show the longest remaining ban.
-	if ban.BanID > 0 {
+	if ban.Ban.BanID > 0 {
 		sid = pi.sid.String()
-		reason = ban.ReasonText
-		remaining = ban.ValidUntil.Sub(config.Now())
+		reason = ban.Ban.ReasonText
+		remaining = ban.Ban.ValidUntil.Sub(config.Now())
 	}
 	ip := "N/A"
 	if len(bannedNets) > 0 {
@@ -241,7 +239,7 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	}
 	r := strings.Split(remaining.String(), ".")
 	return sendMsg(s, m.ChannelID, f, sid,
-		ban.BanType == model.Banned, ban.BanType == model.NoComm, ip, r[0], reason)
+		ban.Ban.BanType == model.Banned, ban.Ban.BanType == model.NoComm, ip, r[0], reason)
 }
 
 func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
@@ -249,7 +247,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	if err != nil || !sid.Valid() {
 		return errInvalidSID
 	}
-	ban, err := getBan(sid)
+	ban, err := getBanBySteamID(sid, false)
 	if err != nil {
 		if err == errNoResult {
 			return errors.New("SteamID does not exist in database")
@@ -257,7 +255,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 			return errCommandFailed
 		}
 	}
-	if err := dropBan(ban); err != nil {
+	if err := dropBan(ban.Ban); err != nil {
 		return errCommandFailed
 	}
 	return sendMsg(s, m.ChannelID, "User ban is now inactive")

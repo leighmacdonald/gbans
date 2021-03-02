@@ -98,8 +98,8 @@ func GenTestData() {
 		s := sum[0]
 		p.SteamID = sid
 		p.IPAddr = fmt.Sprintf("24.56.78.%d", i+1)
-		p.PlayerSummary = s
-		if err := SavePerson(&p); err != nil {
+		p.PlayerSummary = &s
+		if err := SavePerson(p); err != nil {
 			log.Fatalf("Failed to save test person: %v", err)
 		}
 	}

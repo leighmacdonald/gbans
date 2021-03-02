@@ -1,5 +1,5 @@
 import format from "date-fns/format";
-import fromUnixTime from "date-fns/fromUnixTime";
+import {formatDistance, parseISO} from "date-fns";
 
 /**
  * Basic string formatting, similar to python format with dict
@@ -20,6 +20,24 @@ export function fmt(s: string, args: any): string {
     return s;
 }
 
-export function fmtUnix(t: number): string {
-    return format(fromUnixTime(t), "MMM d y H:m")
+
+export const parseDateTime = (t: string): Date => {
+    return parseISO(t);
+}
+
+export const renderTime = (t: Date): string => {
+    return format(t, "Y-M-d HH:mm");
+}
+
+export const renderTimeDistance = (t1: Date | string, t2?: Date | string): string => {
+    if (typeof t1 === "string") {
+        t1 = parseDateTime(t1);
+    }
+    if (!t2) {
+        t2 = new Date();
+    }
+    if (typeof t2 === "string") {
+        t2 = parseDateTime(t2);
+    }
+    return formatDistance(t1, t2)
 }
