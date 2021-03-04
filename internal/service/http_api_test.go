@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -73,8 +73,7 @@ func TestOnAPIPostBan(t *testing.T) {
 }
 
 func TestOnPostLogMessage(t *testing.T) {
-	const exampleLog = `L 02/21/2021 - 06:22:23: asdf
-L 02/21/2021 - 06:22:23: Log file started (file "logs/L0221034.log") (game "/home/tf2server/serverfiles/tf") (version "6300758")
+	const exampleLog = `L 02/21/2021 - 06:22:23: Log file started (file "logs/L0221034.log") (game "/home/tf2server/serverfiles/tf") (version "6300758")
 L 02/21/2021 - 06:22:23: server_cvar: "sm_nextmap" "pl_frontier_final"
 L 02/21/2021 - 06:22:24: rcon from "23.239.22.163:42004": command "status"
 L 02/21/2021 - 06:22:31: "Hacksaw<12><[U:1:68745073]><>" entered the game
@@ -106,12 +105,11 @@ L 02/21/2021 - 06:42:13: World triggered "Game_Over" reason "Reached Win Limit"
 L 02/21/2021 - 06:42:13: Team "Red" final score "2" with "3" players
 L 02/21/2021 - 06:42:13: Team "RED" triggered "Intermission_Win_Limit"
 L 02/21/2021 - 06:42:33: [META] Loaded 0 plugins (1 already loaded)
-L 02/21/2021 - 06:42:33: Log file closed.
-`
+L 02/21/2021 - 06:42:33: Log file closed.`
 	var units []httpTestUnit
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
-			newTestReq("POST", routeServerAPILogAdd, logPayload{
+			newTestReq("POST", routeServerAPILogAdd, LogPayload{
 				ServerName: "test-1",
 				Message:    tc,
 			}),
@@ -126,10 +124,10 @@ func testUnits(t *testing.T, testCases []httpTestUnit) {
 	for _, unit := range testCases {
 		testResponse(t, unit, func(w *httptest.ResponseRecorder) bool {
 			if unit.e.Code > 0 {
-				assert.Equal(t, unit.e.Code, w.Code, unit.m)
-				return false
+				require.Equal(t, unit.e.Code, w.Code, unit.m)
+				return true
 			}
-			return true
+			return false
 		})
 	}
 }

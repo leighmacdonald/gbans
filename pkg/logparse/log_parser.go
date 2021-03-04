@@ -2,6 +2,7 @@ package logparse
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/logparse/msgtype"
 	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
@@ -9,70 +10,9 @@ import (
 	"time"
 )
 
-type MsgType int
-
-const (
-	UnhandledMsg MsgType = 0
-
-	// Live player actions
-	Say                 MsgType = 10
-	SayTeam             MsgType = 11
-	Killed              MsgType = 12
-	KillAssist          MsgType = 13
-	suicide             MsgType = 14
-	shotFired           MsgType = 15
-	shotHit             MsgType = 16
-	damage              MsgType = 17
-	domination          MsgType = 18
-	revenge             MsgType = 19
-	pickup              MsgType = 20
-	emptyUber           MsgType = 21
-	medicDeath          MsgType = 22
-	medicDeathEx        MsgType = 23
-	lostUberAdv         MsgType = 24
-	chargeReady         MsgType = 25
-	chargeDeployed      MsgType = 26
-	chargeEnded         MsgType = 27
-	healed              MsgType = 28
-	extinguished        MsgType = 29
-	builtObject         MsgType = 30
-	carryObject         MsgType = 31
-	killedObject        MsgType = 32
-	detonatedObject     MsgType = 33
-	dropObject          MsgType = 34
-	firstHealAfterSpawn MsgType = 35
-	captureBlocked      MsgType = 36
-	killedCustom        MsgType = 37
-	pointCaptured       MsgType = 48
-	joinedTeam          MsgType = 49
-	changeClass         MsgType = 50
-	spawnedAs           MsgType = 51
-
-	// World events not attached to specific players
-	wRoundOvertime  MsgType = 100
-	wRoundStart     MsgType = 101
-	wRoundWin       MsgType = 102
-	wRoundLen       MsgType = 103
-	wTeamScore      MsgType = 104
-	wTeamFinalScore MsgType = 105
-	wGameOver       MsgType = 106
-	wPaused         MsgType = 107
-	wResumed        MsgType = 108
-
-	// Metadata
-	logStart     MsgType = 1000
-	logStop      MsgType = 1001
-	cvar         MsgType = 1002
-	rcon         MsgType = 1003
-	connected    MsgType = 1004
-	disconnected MsgType = 1005
-	validated    MsgType = 1006
-	entered      MsgType = 1007
-)
-
 type parserType struct {
 	Rx   *regexp.Regexp
-	Type MsgType
+	Type msgtype.MsgType
 }
 
 var (
@@ -87,28 +27,28 @@ var (
 	//rxSkipped      = regexp.MustCompile(`("undefined"$)`)
 	rxLogStart     = regexp.MustCompile(rxDate + `Log file started \(file "(?P<file>.+?)"\) \(game "(?P<game>.+?)"\) \(version "(?P<version>.+?)"\)$`)
 	rxLogStop      = regexp.MustCompile(rxDate + `Log file closed.$`)
-	rxCVAR         = regexp.MustCompile(rxDate + `server_cvar:\s+"(?P<cvar>.+?)"\s"(?P<value>.+?)"$`)
-	rxRCON         = regexp.MustCompile(rxDate + `rcon from "(?P<ip>.+?)": command "(?P<cmd>.+?)"$`)
-	rxConnected    = regexp.MustCompile(dp + `connected, address(\s"(?P<address>.+?)")?$`)
-	rxDisconnected = regexp.MustCompile(dp + `disconnected \(reason "(?P<reason>.+?)"\)$`)
+	rxCVAR         = regexp.MustCompile(rxDate + `server_cvar:\s+"(?P<CVAR>.+?)"\s"(?P<value>.+?)"$`)
+	rxRCON         = regexp.MustCompile(rxDate + `RCON from "(?P<ip>.+?)": command "(?P<cmd>.+?)"$`)
+	rxConnected    = regexp.MustCompile(dp + `Connected, address(\s"(?P<address>.+?)")?$`)
+	rxDisconnected = regexp.MustCompile(dp + `Disconnected \(reason "(?P<reason>.+?)"\)$`)
 	rxValidated    = regexp.MustCompile(dp + `STEAM USERID validated$`)
-	rxEntered      = regexp.MustCompile(dp + `entered the game$`)
+	rxEntered      = regexp.MustCompile(dp + `Entered the game$`)
 	rxJoinedTeam   = regexp.MustCompile(dp + `joined team "(?P<team>(Red|Blue|Spectator|Unassigned))"$`)
 	rxChangeClass  = regexp.MustCompile(dp + `changed role to "(?P<class>.+?)"`)
 	rxSpawned      = regexp.MustCompile(dp + `spawned as "(?P<class>\S+)"`)
-	rxSuicide      = regexp.MustCompile(dp + `committed suicide with "world" \(attacker_position "(?P<pos>.+?)"\)`)
+	rxSuicide      = regexp.MustCompile(dp + `committed Suicide with "world" \(attacker_position "(?P<pos>.+?)"\)`)
 	rxShotFired    = regexp.MustCompile(dp + `triggered "shot_fired" \(weapon "(?P<weapon>\S+)"\)`)
 	rxShotHit      = regexp.MustCompile(dp + `triggered "shot_hit" \(weapon "(?P<weapon>\S+)"\)`)
-	rxDamage       = regexp.MustCompile(dp + `triggered "damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s(?P<body>.+?)$`)
-	//rxDamageRealHeal := regexp.MustCompile(dp + `triggered "damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(damage "(?P<damage>\d+)"\) \(realdamage "(?P<realdamage>\d+)"\) \(weapon "(?P<weapon>.+?)"\) \(healing "(?P<healing>\d+)"\)`)
-	// rxDamage := regexp.MustCompile(dp + `triggered "damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>".+?damage "(?P<damage>\d+)"\) \(weapon "(?P<weapon>\S+)"\)`)
+	rxDamage       = regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s(?P<body>.+?)$`)
+	//rxDamageRealHeal := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(Damage "(?P<Damage>\d+)"\) \(realdamage "(?P<realdamage>\d+)"\) \(weapon "(?P<weapon>.+?)"\) \(healing "(?P<healing>\d+)"\)`)
+	// rxDamage := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>".+?Damage "(?P<Damage>\d+)"\) \(weapon "(?P<weapon>\S+)"\)`)
 	// Old format only?
-	rxDamageOld            = regexp.MustCompile(dp + `triggered "damage" \(damage "(?P<damage>\d+)"\)`)
+	rxDamageOld            = regexp.MustCompile(dp + `triggered "Damage" \(Damage "(?P<Damage>\d+)"\)`)
 	rxKilled               = regexp.MustCompile(dp + `Killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxKilledCustom         = regexp.MustCompile(dp + `Killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(customkill "(?P<customkill>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxAssist               = regexp.MustCompile(dp + `triggered "kill assist" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(assister_position "(?P<aspos>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
-	rxDomination           = regexp.MustCompile(dp + `triggered "domination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
-	rxRevenge              = regexp.MustCompile(dp + `triggered "revenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
+	rxDomination           = regexp.MustCompile(dp + `triggered "Domination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
+	rxRevenge              = regexp.MustCompile(dp + `triggered "Revenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
 	rxPickup               = regexp.MustCompile(dp + `picked up item "(?P<item>\S+)"`)
 	rxSay                  = regexp.MustCompile(dp + `Say\s+"(?P<msg>.+?)"$`)
 	rxSayTeam              = regexp.MustCompile(dp + `say_team\s+"(?P<msg>.+?)"$`)
@@ -119,7 +59,7 @@ var (
 	rxChargeReady          = regexp.MustCompile(dp + `triggered "chargeready"`)
 	rxChargeDeployed       = regexp.MustCompile(dp + `triggered "chargedeployed"( \(medigun "(?P<medigun>.+?)"\))?`)
 	rxChargeEnded          = regexp.MustCompile(dp + `triggered "chargeended" \(duration "(?P<duration>.+?)"\)`)
-	rxHealed               = regexp.MustCompile(dp + `triggered "healed" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(healing "(?P<healing>\d+)"\)`)
+	rxHealed               = regexp.MustCompile(dp + `triggered "Healed" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(healing "(?P<healing>\d+)"\)`)
 	rxExtinguished         = regexp.MustCompile(dp + `triggered "player_extinguished" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>" with "(?P<weapon>.+?)" \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxBuiltObject          = regexp.MustCompile(dp + `triggered "player_builtobject" \(object "(?P<object>.+?)"\) \(position "(?P<pos>.+?)"\)`)
 	rxCarryObject          = regexp.MustCompile(dp + `triggered "player_carryobject" \(object "(?P<object>.+?)"\) \(position "(?P<pos>.+?)"\)`)
@@ -141,58 +81,58 @@ var (
 	rxWResumed             = regexp.MustCompile(rxDate + `World triggered "Game_Unpaused"`)
 
 	rxParsers = []parserType{
-		{rxLogStart, logStart},
-		{rxLogStop, logStop},
-		{rxCVAR, cvar},
-		{rxRCON, rcon},
-		{rxShotFired, shotFired},
-		{rxShotHit, shotHit},
-		//{rxDamageRealHeal, damage},
-		{rxDamage, damage},
-		{rxDamageOld, damage},
-		{rxKilled, Killed},
-		{rxHealed, healed},
-		{rxKilledCustom, killedCustom},
-		{rxAssist, KillAssist},
-		{rxPickup, pickup},
-		{rxSpawned, spawnedAs},
-		{rxValidated, validated},
-		{rxConnected, connected},
-		{rxEntered, entered},
-		{rxJoinedTeam, joinedTeam},
-		{rxChangeClass, changeClass},
-		{rxSuicide, suicide},
-		{rxChargeReady, chargeReady},
-		{rxChargeDeployed, chargeDeployed},
-		{rxChargeEnded, chargeEnded},
-		{rxDomination, domination},
-		{rxRevenge, revenge},
-		{rxSay, Say},
-		{rxSayTeam, SayTeam},
-		{rxEmptyUber, emptyUber},
-		{rxLostUberAdv, lostUberAdv},
-		{rxMedicDeath, medicDeath},
-		{rxMedicDeathEx, medicDeathEx},
-		{rxExtinguished, extinguished},
-		{rxBuiltObject, builtObject},
-		{rxCarryObject, carryObject},
-		{rxDropObject, dropObject},
-		{rxKilledObject, killedObject},
-		{rxKilledObjectAssisted, killedObject},
-		{rxDetonatedObject, detonatedObject},
-		{rxFirstHealAfterSpawn, firstHealAfterSpawn},
-		{rxPointCaptured, pointCaptured},
-		{rxCaptureBlocked, captureBlocked},
-		{rxDisconnected, disconnected},
-		{rxWOvertime, wRoundOvertime},
-		{rxWRoundStart, wRoundStart},
-		{rxWRoundWin, wRoundWin},
-		{rxWRoundLen, wRoundLen},
-		{rxWGameOver, wGameOver},
-		{rxWTeamScore, wTeamScore},
-		{rxWTeamFinalScore, wTeamFinalScore},
-		{rxWPaused, wPaused},
-		{rxWResumed, wResumed},
+		{rxLogStart, msgtype.LogStart},
+		{rxLogStop, msgtype.LogStop},
+		{rxCVAR, msgtype.CVAR},
+		{rxRCON, msgtype.RCON},
+		{rxShotFired, msgtype.ShotFired},
+		{rxShotHit, msgtype.ShotHit},
+		//{rxDamageRealHeal, Damage},
+		{rxDamage, msgtype.Damage},
+		{rxDamageOld, msgtype.Damage},
+		{rxKilled, msgtype.Killed},
+		{rxHealed, msgtype.Healed},
+		{rxKilledCustom, msgtype.KilledCustom},
+		{rxAssist, msgtype.KillAssist},
+		{rxPickup, msgtype.Pickup},
+		{rxSpawned, msgtype.SpawnedAs},
+		{rxValidated, msgtype.Validated},
+		{rxConnected, msgtype.Connected},
+		{rxEntered, msgtype.Entered},
+		{rxJoinedTeam, msgtype.JoinedTeam},
+		{rxChangeClass, msgtype.ChangeClass},
+		{rxSuicide, msgtype.Suicide},
+		{rxChargeReady, msgtype.ChargeReady},
+		{rxChargeDeployed, msgtype.ChargeDeployed},
+		{rxChargeEnded, msgtype.ChargeEnded},
+		{rxDomination, msgtype.Domination},
+		{rxRevenge, msgtype.Revenge},
+		{rxSay, msgtype.Say},
+		{rxSayTeam, msgtype.SayTeam},
+		{rxEmptyUber, msgtype.EmptyUber},
+		{rxLostUberAdv, msgtype.LostUberAdv},
+		{rxMedicDeath, msgtype.MedicDeath},
+		{rxMedicDeathEx, msgtype.MedicDeathEx},
+		{rxExtinguished, msgtype.Extinguished},
+		{rxBuiltObject, msgtype.BuiltObject},
+		{rxCarryObject, msgtype.CarryObject},
+		{rxDropObject, msgtype.DropObject},
+		{rxKilledObject, msgtype.KilledObject},
+		{rxKilledObjectAssisted, msgtype.KilledObject},
+		{rxDetonatedObject, msgtype.DetonatedObject},
+		{rxFirstHealAfterSpawn, msgtype.FirstHealAfterSpawn},
+		{rxPointCaptured, msgtype.PointCaptured},
+		{rxCaptureBlocked, msgtype.CaptureBlocked},
+		{rxDisconnected, msgtype.Disconnected},
+		{rxWOvertime, msgtype.WRoundOvertime},
+		{rxWRoundStart, msgtype.WRoundStart},
+		{rxWRoundWin, msgtype.WRoundWin},
+		{rxWRoundLen, msgtype.WRoundLen},
+		{rxWGameOver, msgtype.WGameOver},
+		{rxWTeamScore, msgtype.WTeamScore},
+		{rxWTeamFinalScore, msgtype.WTeamFinalScore},
+		{rxWPaused, msgtype.WPaused},
+		{rxWResumed, msgtype.WResumed},
 	}
 )
 
@@ -393,7 +333,7 @@ func parseDateTime(dateStr, timeStr string) time.Time {
 type Values map[string]string
 
 // Parse will parse the log line into a known type and values
-func Parse(l string) (Values, MsgType) {
+func Parse(l string) (Values, msgtype.MsgType) {
 	for _, rx := range rxParsers {
 		m, found := reSubMatchMap(rx.Rx, l)
 		if found {
@@ -401,5 +341,5 @@ func Parse(l string) (Values, MsgType) {
 		}
 
 	}
-	return Values{}, UnhandledMsg
+	return Values{}, msgtype.UnhandledMsg
 }

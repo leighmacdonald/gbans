@@ -103,10 +103,9 @@ func NewClient(ctx context.Context, name string, logPath string, address string)
 	for {
 		select {
 		case msg := <-messageChan:
-			p := service.relayPayload{
-				Type:    service.TypeLog,
-				Server:  name,
-				Message: msg,
+			p := service.LogPayload{
+				ServerName: name,
+				Message:    msg,
 			}
 			b, err := json.Marshal(p)
 			if err != nil {

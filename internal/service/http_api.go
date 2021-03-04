@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/logparse/msgtype"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/pkg/errors"
 	"net"
@@ -504,35 +505,39 @@ const (
 	TypeShutdown
 )
 
-// logPayload is the container for log/message payloads
-type logPayload struct {
+// LogPayload is the container for log/message payloads
+type LogPayload struct {
 	ServerName string `json:"server_name"`
 	Message    string `json:"message"`
 }
 
 func onPostLogAdd() gin.HandlerFunc {
-	validTypes := []logparse.MsgType{
-		logparse.Say, logparse.SayTeam,
+	validTypes := []msgtype.MsgType{
+		msgtype.Say, msgtype.SayTeam,
 	}
 	return func(c *gin.Context) {
-		var req logPayload
+		var req LogPayload
 		if err := c.BindJSON(&req); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		// Return immediately, the clients will just ignore errors
-		c.Status(http.StatusCreated)
-
 		v, t := logparse.Parse(req.Message)
 		s, e := getServerByName(req.ServerName)
 		if e != nil {
 			log.Errorf("Failed to get server for log message: %v", e)
+			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		if err := InsertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
-			log.Errorf("Failed to insert log: %v", err)
-			return
+		if t != msgtype.UnhandledMsg {
+			if err := InsertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
+				log.Errorf("Failed to insert log: %v", err)
+				responseErr(c, http.StatusInternalServerError, nil)
+				return
+			}
 		}
+		// Return immediately, the clients will just ignore errors
+		responseOK(c, http.StatusCreated, nil)
+
 		valid := false
 		for _, vt := range validTypes {
 			if vt == t {
@@ -545,14 +550,15 @@ func onPostLogAdd() gin.HandlerFunc {
 			log.Debugf("Unhandled log message: %s", req.Message)
 			return
 		}
-		for _, c := range config.Relay.ChannelIDs {
-			sendMessage(newMessage(c, req.Message))
-		}
 
-		messageQueue <- discordMessage{
-			ChannelID: "",
-			Body:      req.Message,
-		}
+		//for _, c := range config.Relay.ChannelIDs {
+		//	sendMessage(newMessage(c, req.Message))
+		//}
+		//
+		//messageQueue <- discordMessage{
+		//	ChannelID: "",
+		//	Body:      req.Message,
+		//}
 	}
 }
 func onPostBan() gin.HandlerFunc {

@@ -63,7 +63,7 @@ var testDataCmd = &cobra.Command{
 			}
 		}
 		s := model.Server{
-			ServerName:     "cg-1",
+			ServerName:     "test-1",
 			Address:        "localhost",
 			Port:           27015,
 			RCON:           "test",
