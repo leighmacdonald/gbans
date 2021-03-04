@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/service"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"

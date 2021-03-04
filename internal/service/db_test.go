@@ -46,7 +46,7 @@ func TestBanNet(t *testing.T) {
 }
 
 func TestBan(t *testing.T) {
-	banEqual := func(b1, b2 model.Ban) {
+	banEqual := func(b1, b2 *model.Ban) {
 		require.Equal(t, b1.BanID, b2.BanID)
 		require.Equal(t, b1.AuthorID, b2.AuthorID)
 		require.Equal(t, b1.Reason, b2.Reason)
@@ -59,31 +59,29 @@ func TestBan(t *testing.T) {
 		require.Equal(t, b1.CreatedOn.Unix(), b2.CreatedOn.Unix())
 		require.Equal(t, b1.UpdatedOn.Unix(), b2.UpdatedOn.Unix())
 	}
-	b1, err := model.NewBan(76561198084134025, 76561198003911389, "test", time.Hour*24, model.System)
-	require.NoError(t, err)
-	require.NoError(t, SaveBan(&b1), "Failed to add ban")
+	b1 := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
+	require.NoError(t, SaveBan(b1), "Failed to add ban")
 
-	b1Fetched, err := getBanBySteamID(76561198084134025)
+	b1Fetched, err := getBanBySteamID(76561198084134025, false)
 	require.NoError(t, err)
-	banEqual(b1, b1Fetched)
+	banEqual(b1, b1Fetched.Ban)
 
-	b1duplicate, err := model.NewBan(76561198084134025, 76561198003911389, "test", time.Hour*24, model.System)
+	b1duplicate := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
+	require.True(t, errors.Is(SaveBan(b1duplicate), errDuplicate), "Was able to add duplicate ban")
+
+	b1Fetched.Ban.AuthorID = 76561198057999536
+	b1Fetched.Ban.ReasonText = "test reason"
+	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
+	b1Fetched.Ban.Note = "test note"
+	b1Fetched.Ban.Source = model.Web
+	require.NoError(t, SaveBan(b1Fetched.Ban), "Failed to edit ban")
+
+	b1FetchedUpdated, err := getBanBySteamID(76561198084134025, false)
 	require.NoError(t, err)
-	require.True(t, errors.Is(SaveBan(&b1duplicate), errDuplicate), "Was able to add duplicate ban")
-
-	b1Fetched.AuthorID = 76561198057999536
-	b1Fetched.ReasonText = "test reason"
-	b1Fetched.ValidUntil = config.Now().Add(time.Minute * 10)
-	b1Fetched.Note = "test note"
-	b1Fetched.Source = model.Web
-	require.NoError(t, SaveBan(&b1Fetched), "Failed to edit ban")
-
-	b1FetchedUpdated, err := getBanBySteamID(76561198084134025)
-	require.NoError(t, err)
-	banEqual(b1Fetched, b1FetchedUpdated)
+	banEqual(b1Fetched.Ban, b1FetchedUpdated.Ban)
 
 	require.NoError(t, dropBan(b1), "Failed to drop ban")
-	_, errMissing := getBanBySteamID(b1.SteamID)
+	_, errMissing := getBanBySteamID(b1.SteamID, false)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, errNoResult))
 }

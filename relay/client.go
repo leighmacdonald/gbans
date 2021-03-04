@@ -11,7 +11,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/hpcloud/tail"
-	"github.com/leighmacdonald/gbans/service"
+	"github.com/leighmacdonald/gbans/internal/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -103,7 +103,7 @@ func NewClient(ctx context.Context, name string, logPath string, address string)
 	for {
 		select {
 		case msg := <-messageChan:
-			p := service.RelayPayload{
+			p := service.relayPayload{
 				Type:    service.TypeLog,
 				Server:  name,
 				Message: msg,

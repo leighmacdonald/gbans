@@ -5,7 +5,7 @@ Copyright © 2020 Leigh MacDonald <leigh.macdonald@gmail.com>
 package cmd
 
 import (
-	"github.com/leighmacdonald/gbans/service"
+	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/spf13/cobra"
 )
 

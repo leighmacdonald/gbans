@@ -3,9 +3,14 @@ package service
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"github.com/leighmacdonald/steamid/v2/extra"
+	"io/fs"
+	"io/ioutil"
 	"net"
+	"path"
+	"path/filepath"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -737,6 +742,20 @@ func SaveFilteredWord(word string) error {
 	return nil
 }
 
+func InsertLog(l *model.ServerLog) error {
+	q, a, e := sb.Insert("server_log").
+		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
+		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+		return DBErr(err)
+	}
+	return nil
+}
+
 func getStats() (model.Stats, error) {
 	const q = `
 	SELECT 
@@ -804,4 +823,73 @@ func Migrate(recreate bool) error {
 		log.Fatalf("Error loading system user: %v", err)
 	}
 	return nil
+}
+
+func Import(root string) error {
+	type importedBan struct {
+		BanID      int    `json:"ban_id"`
+		SteamID    uint64 `json:"steam_id"`
+		AuthorID   uint64 `json:"author_id"`
+		BanType    int    `json:"ban_type"`
+		Reason     int    `json:"reason"`
+		ReasonText string `json:"reason_text"`
+		Note       string `json:"note"`
+		Until      int    `json:"until"`
+		CreatedOn  int    `json:"created_on"`
+		UpdatedOn  int    `json:"updated_on"`
+		BanSource  int    `json:"ban_source"`
+	}
+
+	return filepath.WalkDir(root, func(p string, d fs.DirEntry, e error) error {
+		switch d.Name() {
+		case "main_ban.json":
+			b, err := ioutil.ReadFile(path.Join(root, d.Name()))
+			if err != nil {
+				return err
+			}
+			var imported []importedBan
+			if err2 := json.Unmarshal(b, &imported); err2 != nil {
+				return err2
+			}
+			log.Infoln(imported)
+			for _, im := range imported {
+				b1, e1 := GetOrCreatePersonBySteamID(steamid.SID64(im.SteamID))
+				if e1 != nil {
+					return e1
+				}
+				b2, e2 := GetOrCreatePersonBySteamID(steamid.SID64(im.AuthorID))
+				if e2 != nil {
+					return e2
+				}
+				sum, err3 := extra.PlayerSummaries(context.Background(), []steamid.SID64{b1.SteamID, b2.SteamID})
+				if err3 != nil {
+					log.Errorf("Failed to get player summary: %v", err3)
+					return err3
+				}
+				if len(sum) > 0 {
+					b1.PlayerSummary = &sum[0]
+					if err4 := SavePerson(b1); err4 != nil {
+						return err4
+					}
+					if b2.SteamID.Valid() && len(sum) > 1 {
+						b2.PlayerSummary = &sum[1]
+						if err5 := SavePerson(b2); err5 != nil {
+							return err5
+						}
+					}
+				}
+				bn := model.NewBan(b1.SteamID, b2.SteamID, 0)
+				bn.ValidUntil = time.Unix(int64(im.Until), 0)
+				bn.ReasonText = im.ReasonText
+				bn.CreatedOn = time.Unix(int64(im.CreatedOn), 0)
+				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
+				bn.Source = model.System
+
+				if err3 := SaveBan(bn); err3 != nil {
+					return err3
+				}
+			}
+		}
+		return nil
+	})
 }

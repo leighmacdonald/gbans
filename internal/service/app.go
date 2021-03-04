@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/gob"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/external"
@@ -134,7 +133,6 @@ func (s ServerState) VacStatus() template.HTML {
 }
 
 func init() {
-	gob.Register(Flash{})
 	warningsMu = &sync.RWMutex{}
 	warnings = make(map[steamid.SID64][]UserWarning)
 	templates = make(map[string]*template.Template)

@@ -3,10 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
+	"github.com/pkg/errors"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -19,9 +20,25 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	reSay = regexp.MustCompile(`"(.+?)<\d+><(\[.+?])>.+?(say|say_team) "(.+?)"$`)
-)
+type apiResponse struct {
+	Status  bool        `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+func responseErr(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, apiResponse{
+		Status: false,
+		Data:   data,
+	})
+}
+
+func responseOK(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, apiResponse{
+		Status: true,
+		Data:   data,
+	})
+}
 
 func onPostPingMod() gin.HandlerFunc {
 	type pingReq struct {
@@ -47,17 +64,79 @@ func onPostPingMod() gin.HandlerFunc {
 	}
 }
 
-func onPostLogMessage() gin.HandlerFunc {
-	type logReq struct {
-		ServerID  string        `json:"server_id"`
-		SteamID   steamid.SID64 `json:"steam_id"`
-		Name      string        `json:"name"`
-		Message   string        `json:"message"`
-		TeamSay   bool          `json:"team_say"`
-		Timestamp int           `json:"timestamp"`
-	}
+type apiBanRequest struct {
+	SteamID    steamid.SID64 `json:"steam_id"`
+	Duration   string        `json:"duration"`
+	BanType    model.BanType `json:"ban_type"`
+	Reason     model.Reason  `json:"reason"`
+	ReasonText string        `json:"reason_text"`
+	Network    string        `json:"network"`
+}
+
+func onAPIPostBanCreate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req logReq
+		var r apiBanRequest
+		if err := c.BindJSON(&r); err != nil {
+			responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+			return
+		}
+		duration, err := config.ParseDuration(r.Duration)
+		if err != nil {
+			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
+Valid time units are "s", "m", "h".`)
+			return
+		}
+		var (
+			n      *net.IPNet
+			ban    *model.Ban
+			banNet *model.BanNet
+			e      error
+		)
+		if r.Network != "" {
+			_, n, err = net.ParseCIDR(r.Network)
+			if err != nil {
+				responseErr(c, http.StatusBadRequest, "Invalid network cidr definition")
+				return
+			}
+		}
+		if !r.SteamID.Valid() {
+			responseErr(c, http.StatusBadRequest, "Invalid steamid")
+			return
+		}
+
+		if r.Network != "" {
+			banNet, e = BanNetwork(c, n, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+		} else {
+			ban, e = BanPlayer(c, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+		}
+		if e != nil {
+			if errors.Is(e, errDuplicate) {
+				responseErr(c, http.StatusConflict, "Duplicate ban")
+				return
+			}
+			responseErr(c, http.StatusInternalServerError, "Failed to perform ban")
+			return
+		}
+		if r.Network != "" {
+			responseOK(c, http.StatusCreated, banNet)
+		} else {
+			responseOK(c, http.StatusCreated, ban)
+		}
+	}
+}
+
+type onPostLogMessageRequest struct {
+	ServerID  string        `json:"server_id"`
+	SteamID   steamid.SID64 `json:"steam_id"`
+	Name      string        `json:"name"`
+	Message   string        `json:"message"`
+	TeamSay   bool          `json:"team_say"`
+	Timestamp int           `json:"timestamp"`
+}
+
+func onPostLogMessage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req onPostLogMessageRequest
 		if err := c.BindJSON(&req); err != nil {
 			log.Errorf("Failed to decode log message: %v", err)
 			c.Status(http.StatusBadRequest)
@@ -425,37 +504,54 @@ const (
 	TypeShutdown
 )
 
-// RelayPayload is the container for log/message payloads
-type RelayPayload struct {
-	Type    messageType `json:"type"`
-	Server  string      `json:"server"`
-	Message string      `json:"message"`
+// logPayload is the container for log/message payloads
+type logPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
 }
 
 func onPostLogAdd() gin.HandlerFunc {
+	validTypes := []logparse.MsgType{
+		logparse.Say, logparse.SayTeam,
+	}
 	return func(c *gin.Context) {
-		var req RelayPayload
+		var req logPayload
 		if err := c.BindJSON(&req); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-
+		// Return immediately, the clients will just ignore errors
 		c.Status(http.StatusCreated)
 
+		v, t := logparse.Parse(req.Message)
+		s, e := getServerByName(req.ServerName)
+		if e != nil {
+			log.Errorf("Failed to get server for log message: %v", e)
+			return
+		}
+		if err := InsertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
+			log.Errorf("Failed to insert log: %v", err)
+			return
+		}
+		valid := false
+		for _, vt := range validTypes {
+			if vt == t {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			log.Debugf("Unhandled log message: %s", req.Message)
+			return
+		}
 		for _, c := range config.Relay.ChannelIDs {
 			sendMessage(newMessage(c, req.Message))
 		}
-		match := reSay.FindStringSubmatch(req.Message)
-		if len(match) != 5 {
-			return
-		}
-		sid64 := steamid.SID3ToSID64(steamid.SID3(match[2]))
-		if sid64.Int64() != 76561197960265728 && !sid64.Valid() {
-			return
-		}
+
 		messageQueue <- discordMessage{
 			ChannelID: "",
-			Body:      match[4],
+			Body:      req.Message,
 		}
 	}
 }

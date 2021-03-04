@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
@@ -13,8 +12,26 @@ import (
 	"time"
 )
 
-// Arg map for templates
-type M map[string]interface{}
+const baseLayout = `<!doctype html>
+    <html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<link rel="apple-touch-icon" sizes="180x180" href="/dist/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/dist/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/dist/favicon-16x16.png">
+		<link rel="manifest" href="/dist/site.webmanifest">
+		<link rel="mask-icon" href="/dist/safari-pinned-tab.svg" color="#5bbad5">
+		<meta name="msapplication-TileColor" content="#941739">
+		<meta name="theme-color" content="#ffffff">
+        <title>gbans</title>
+    </head>
+    <body>
+    <div id="root"></div>
+    <script src="/dist/bundle.js"></script>
+    </body>
+    </html>`
 
 type StatusResponse struct {
 	Success bool   `json:"success"`
@@ -82,7 +99,7 @@ func initHTTP() {
 func routeRaw(name string) string {
 	routePath, ok := routes[routeKey(name)]
 	if !ok {
-		return "/xxx"
+		return "/unimplemented"
 	}
 	return routePath
 }
@@ -126,20 +143,4 @@ func currentPerson(c *gin.Context) *model.Person {
 		return model.NewPerson(0)
 	}
 	return person
-}
-
-func getFlashes(c *gin.Context) []Flash {
-	var flashes []Flash
-	session := sessions.Default(c)
-	for _, flash := range session.Flashes() {
-		f, ok := flash.(Flash)
-		if !ok {
-			log.Errorf("failed to cast flash??")
-		}
-		flashes = append(flashes, f)
-	}
-	if err := session.Save(); err != nil {
-		log.Errorf("Failed to save session after flashes: %v", err)
-	}
-	return flashes
 }

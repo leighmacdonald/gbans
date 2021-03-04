@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -268,4 +269,25 @@ type Stats struct {
 	FilteredWords int `json:"filtered_words"`
 	ServersAlive  int `json:"servers_alive"`
 	ServersTotal  int `json:"servers_total"`
+}
+
+type ServerLog struct {
+	LogID     int64            `json:"log_id"`
+	ServerID  int64            `json:"server_id"`
+	EventType logparse.MsgType `json:"event_type"`
+	Payload   logparse.Values  `json:"payload"`
+	SourceID  steamid.SID64    `json:"source_id"`
+	TargetID  steamid.SID64    `json:"target_id"`
+	CreatedOn time.Time        `json:"created_on"`
+}
+
+func NewServerLog(serverID int64, mType logparse.MsgType, values logparse.Values) *ServerLog {
+	return &ServerLog{
+		ServerID:  serverID,
+		EventType: mType,
+		Payload:   values,
+		SourceID:  0,
+		TargetID:  0,
+		CreatedOn: config.Now(),
+	}
 }
