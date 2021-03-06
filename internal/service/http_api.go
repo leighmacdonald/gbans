@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/logparse/msgtype"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/pkg/errors"
 	"net"
@@ -512,8 +511,8 @@ type LogPayload struct {
 }
 
 func onPostLogAdd() gin.HandlerFunc {
-	validTypes := []msgtype.MsgType{
-		msgtype.Say, msgtype.SayTeam,
+	validTypes := []logparse.MsgType{
+		logparse.Say, logparse.SayTeam,
 	}
 	return func(c *gin.Context) {
 		var req LogPayload
@@ -528,7 +527,7 @@ func onPostLogAdd() gin.HandlerFunc {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		if t != msgtype.UnhandledMsg {
+		if t != logparse.UnhandledMsg {
 			if err := InsertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
 				log.Errorf("Failed to insert log: %v", err)
 				responseErr(c, http.StatusInternalServerError, nil)
