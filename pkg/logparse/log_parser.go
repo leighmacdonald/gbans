@@ -447,7 +447,7 @@ func decode(input interface{}, output interface{}) error {
 			decodeHealthPack(),
 		),
 		Result:           output,
-		WeaklyTypedInput: true,
+		WeaklyTypedInput: true, // Lets us do str -> int easily
 		Squash:           true,
 	})
 	if err != nil {

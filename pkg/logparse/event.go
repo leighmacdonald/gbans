@@ -30,6 +30,7 @@ type LogStartEvt struct {
 	Version string `json:"version"`
 	EmptyEvt
 }
+
 type LogStopEvt EmptyEvt
 
 type CVAREvt struct {
@@ -208,6 +209,7 @@ type ShotHitEvt struct {
 	Weapon Weapon `json:"weapon"`
 	EmptyEvt
 }
+
 type DamageEvt struct {
 	Damage     int    `json:"damage"`
 	RealDamage int    `json:"real_damage"`
@@ -216,6 +218,7 @@ type DamageEvt struct {
 	TargetPlayer
 	EmptyEvt
 }
+
 type WGameOverEvt struct {
 	Reason string `json:"reason"`
 	EmptyEvt

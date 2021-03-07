@@ -296,6 +296,33 @@ func onAPIGetServers() gin.HandlerFunc {
 		c.JSON(http.StatusOK, servers)
 	}
 }
+func onAPICurrentProfile() gin.HandlerFunc {
+	type resp struct {
+		Player  *model.Person         `json:"player"`
+		Friends []extra.PlayerSummary `json:"friends"`
+	}
+	return func(c *gin.Context) {
+		p := currentPerson(c)
+		if !p.SteamID.Valid() {
+			responseErr(c, http.StatusForbidden, nil)
+			return
+		}
+		friendIDs, err := fetchFriends(p.SteamID)
+		if err != nil {
+			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
+			return
+		}
+		friends, err := fetchSummaries(friendIDs)
+		if err != nil {
+			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
+			return
+		}
+		var response resp
+		response.Player = p
+		response.Friends = friends
+		responseOK(c, http.StatusOK, response)
+	}
+}
 
 func onAPIProfile() gin.HandlerFunc {
 	type req struct {

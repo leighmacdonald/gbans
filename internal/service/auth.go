@@ -2,21 +2,17 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/yohcop/openid-go"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -40,20 +36,28 @@ func authMiddleWare() gin.HandlerFunc {
 		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
 		tp := strings.SplitN(ah, " ", 2)
-		if ah != "" && len(tp) == 2 && tp[0] != "Bearer" {
+		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
-			steamID, err2 := tokenMetadata(token)
-			if err2 != nil {
+			claims := &authClaims{}
+			tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
+			if err != nil {
+				if err == jwt.ErrSignatureInvalid {
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
 				c.AbortWithStatus(http.StatusForbidden)
-				log.Warnf("Invalid JWT received: %s", err2.Error())
 				return
 			}
-			if !steamID.Valid() {
+			if !tkn.Valid {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if !steamid.SID64(claims.SteamID).Valid() {
 				c.AbortWithStatus(http.StatusForbidden)
 				log.Warnf("Invalid steamID")
 				return
 			}
-			loggedInPerson, err := getPersonBySteamID(steamID)
+			loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				c.AbortWithStatus(http.StatusForbidden)
@@ -68,7 +72,8 @@ func authMiddleWare() gin.HandlerFunc {
 
 func onGetLogout() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO Logout key
+		// TODO Logout key / mark as invalid manually
+		log.WithField("fn", "onGetLogout").Warnf("Unimplemented")
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 }
@@ -142,73 +147,71 @@ func onLoginSuccess() gin.HandlerFunc {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 }
+func getTokenKey(token *jwt.Token) (interface{}, error) {
+	return []byte(config.HTTP.CookieKey), nil
+}
+func onTokenRefresh() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// (BEGIN) The code uptil this point is the same as the first part of the `Welcome` route
+		ah := c.GetHeader("Authorization")
+		tp := strings.SplitN(ah, " ", 2)
+		var token string
+		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
+			token = tp[1]
+		}
+		if token == "" {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		claims := &authClaims{}
+		tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
+		if err != nil {
+			if err == jwt.ErrSignatureInvalid {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		if !tkn.Valid {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		// Now, create a new token for the current use, with a renewed expiration time
+		expirationTime := config.Now().Add(24 * time.Hour)
+		claims.ExpiresAt = expirationTime.Unix()
+		outToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, err2 := outToken.SignedString(config.HTTP.CookieKey)
+		if err2 != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	}
+}
+
+type authClaims struct {
+	SteamID int64 `json:"steam_id"`
+	Exp     int64 `json:"exp"`
+	jwt.StandardClaims
+}
 
 func newJWT(steamID steamid.SID64) (string, error) {
-	atClaims := jwt.MapClaims{}
-	atClaims["steam_id"] = steamID.Int64()
-	atClaims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	token, err := at.SignedString([]byte(os.Getenv(config.HTTP.CookieKey)))
+	claims := &authClaims{
+		SteamID:        steamID.Int64(),
+		Exp:            config.Now().Add(time.Hour * 24).Unix(),
+		StandardClaims: jwt.StandardClaims{},
+	}
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := at.SignedString([]byte(config.HTTP.CookieKey))
 	if err != nil {
 		return "", err
 	}
 	return token, nil
-}
-
-func verifyJWT(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		//Make sure that the token method conform to "SigningMethodHMAC"
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(config.HTTP.CookieKey), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
-		return nil, err
-	}
-	if token.Valid {
-		return token, nil
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			return nil, errors.Wrap(ve, "Not a valid token")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			return nil, errors.Wrap(ve, "Token expired")
-		} else {
-			return nil, errors.Wrap(ve, "Unknown error handling token")
-		}
-	} else {
-		return nil, errors.Wrap(ve, "Invalid token")
-	}
-}
-
-func tokenMetadata(tokenString string) (steamid.SID64, error) {
-	token, err := verifyJWT(tokenString)
-	if err != nil {
-		return 0, err
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		steamIdStr, ok := claims["steam_id"].(string)
-		if !ok {
-			return 0, err
-		}
-		steamId, err := steamid.SID64FromString(steamIdStr)
-		if err != nil {
-			return 0, err
-		}
-		expInt, err2 := strconv.ParseInt(fmt.Sprintf("%d", claims["exp"]), 10, 64)
-		if err2 != nil {
-			return 0, err2
-		}
-		expTIme := time.Unix(expInt, 0)
-		if config.Now().After(expTIme) {
-			return 0, errDuplicate
-		}
-		return steamId, nil
-	}
-	return 0, err
 }
