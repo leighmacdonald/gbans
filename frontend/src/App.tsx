@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
 import {Home} from "./page/Home";
 import {Settings} from "./page/Settings";
@@ -16,34 +16,39 @@ import {Flash, Flashes} from "./component/Flashes";
 import {LoginSuccess} from "./page/LoginSuccess";
 import {Profile} from "./page/Profile";
 import {Footer} from "./component/Footer";
-import {Auth, AuthContext} from "./contexts/Auth";
+import {CurrentUserCtx, GuestProfile} from "./contexts/CurrentUserCtx";
 import {BanView} from "./page/BanView";
-import {apiGetCurrentProfile, handleOnLogin, handleOnLogout, Person} from "./util/api";
-import {Nullable} from "./util/types";
+import {
+    apiGetCurrentProfile,
+    handleOnLogin,
+    handleOnLogout,
+    PlayerProfile
+} from "./util/api";
 import {AdminBan} from "./page/AdminBan";
+import {AdminServerLog} from "./page/AdminServerLog";
 
 export const App = () => {
-    const [currentProfile, setCurrentProfile] = React.useState<Nullable<Person>>()
+    const [currentUser, setCurrentUser] = useState<NonNullable<PlayerProfile>>(GuestProfile)
     // @ts-ignore
     const [flashes, setFlashes] = React.useState<Flash[]>([])
 
     useEffect(() => {
-        if (currentProfile != null && currentProfile.steam_id > 0) {
-            const fetchProfile = async () => {
-                const profile = await apiGetCurrentProfile() as Person;
-                setCurrentProfile(profile)
+        const fetchProfile = async () => {
+            const token = localStorage.getItem("token")
+            if (token != null && token != "") {
+                const profile = await apiGetCurrentProfile() as NonNullable<PlayerProfile>;
+                setCurrentUser(profile)
             }
-            // noinspection JSIgnoredPromiseFromCall
-            fetchProfile();
         }
-    }, [])
+        // noinspection JSIgnoredPromiseFromCall
+        fetchProfile();
+    }, [setCurrentUser])
 
-    const auth = useContext<AuthContext>(Auth);
     return (
-        <Auth.Provider value={auth}>
+        <CurrentUserCtx.Provider value={{currentUser, setCurrentUser}}>
             <Router>
                 <Header name={"gbans"}
-                        profile={currentProfile}
+                        profile={currentUser}
                         onLogin={handleOnLogin}
                         onLogout={handleOnLogout}/>
                 <Flashes flashes={flashes}/>
@@ -61,11 +66,12 @@ export const App = () => {
                     <Route path={"/admin/reports"} component={AdminReports}/>
                     <Route path={"/admin/import"} component={AdminImport}/>
                     <Route path={"/admin/people"} component={AdminPeople}/>
+                    <Route path={"/admin/server_logs"} component={AdminServerLog}/>
                     <Route path={"/admin/servers"} component={AdminServers}/>
                     <Route path={"/login/success"} component={LoginSuccess}/>
                 </Switch>
                 <Footer/>
             </Router>
-        </Auth.Provider>
+        </CurrentUserCtx.Provider>
     )
 }

@@ -1,16 +1,16 @@
 import React from "react";
 import {Link} from "react-router-dom"
-import {Person} from "./util/api";
-import {Nullable} from "./util/types";
+import {PlayerProfile} from "./util/api";
 
 interface HeaderProps {
     name: string
-    profile: Nullable<Person>
+    profile: NonNullable<PlayerProfile>
     onLogin: () => void
     onLogout: () => void
 }
 
 export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
+    console.log(`loading profile: ${profile}`)
     return (
         <header className="grid-container full">
             <nav className="grid-x" id="header_nav">
@@ -42,12 +42,12 @@ export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
                         </div>
                         <div className="top-bar-right">
                             <ul className="dropdown menu" data-dropdown-menu={true}>
-                                {profile && profile.steam_id === 0 && <>
+                                {profile.player.steam_id === 0 && <>
                                     <li>
                                         <div className="btn_login" onClick={onLogin}/>
                                     </li>
                                 </>}
-                                {profile && profile.steam_id > 0 && <>
+                                {profile.player.steam_id > 0 && <>
                                     <li>
                                         <Link to="/admin"><i className="fi-widget"/> Admin</Link>
                                         <ul className="menu vertical">
@@ -55,12 +55,13 @@ export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
                                             <li><Link to="/admin/import">Import</Link></li>
                                             <li><Link to="/admin/filters">Filtered Words</Link></li>
                                             <li><Link to="/admin/servers">Servers</Link></li>
+                                            <li><Link to="/admin/server_logs">Server Logs</Link></li>
                                         </ul>
                                     </li>
                                     <li>
                                         <Link to="/profile"><img className="avatar" alt="Avatar"
-                                                                 src={profile.avatarfull}/>
-                                            <span>{profile.personaname}</span></Link>
+                                                                 src={profile.player.avatarfull}/>
+                                            <span>{profile.player.personaname}</span></Link>
                                         <ul className="menu vertical">
                                             <li><Link to="/settings">Settings</Link></li>
                                             <li><a className={"button"} onClick={onLogout}>Logout</a></li>

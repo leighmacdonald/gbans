@@ -3,8 +3,7 @@ import Paginator from "./Paginator";
 import SearchBar from "./SearchBar";
 import {SyntheticEvent, useEffect} from "react";
 import {Link} from "react-router-dom"
-import {apiCall} from "../util/network";
-import {BannedPerson, IAPIRequestBans, IAPIResponseBans} from "../util/api";
+import {apiGetBans, BannedPerson, IAPIResponseBans} from "../util/api";
 import {parseDateTime, renderTimeDistance} from "../util/text";
 import {differenceInYears} from "date-fns";
 
@@ -26,20 +25,15 @@ export const BanList = () => {
 
     useEffect(() => {
         const getBans = async () => {
-            const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>("/api/v1/bans", "POST", {
+            const resp = await apiGetBans({
                 sort_desc: sortDesc,
                 limit: limit,
                 offset: page,
                 order_by: orderBy,
                 query: queryStr
-            })
-            console.log(resp)
-            if (!resp.status) {
-                // TODO show error
-                return
-            }
-            setBans((resp.json as IAPIResponseBans).bans ?? [])
-            setTotal((resp.json as IAPIResponseBans).total ?? 0)
+            }) as IAPIResponseBans
+            setBans(resp.bans ?? [])
+            setTotal(resp.total ?? 0)
         }
         getBans()
     }, [])

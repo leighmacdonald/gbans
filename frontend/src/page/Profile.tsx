@@ -1,21 +1,28 @@
 import React, {useEffect} from "react";
-import {apiGetProfile, Person} from "../util/api";
+import {apiGetProfile, PlayerProfile} from "../util/api";
 import {Nullable} from "../util/types";
+import {useCurrentUserCtx} from "../contexts/CurrentUserCtx";
 
 export interface ProfileProps {
     steam_id: number
 }
 
 export const Profile = ({steam_id}: ProfileProps) => {
-    const [profile, setProfile] = React.useState<Nullable<Person>>(null);
-    const [loading, setLoading] = React.useState<Nullable<boolean>>(true);
+    const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
+    const [loading, setLoading] = React.useState<boolean>(true);
+    const {currentUser} = useCurrentUserCtx();
     useEffect(() => {
         const fetchProfile = async () => {
-            try {
-                setProfile(await apiGetProfile(steam_id.toString()) as Person)
+            if (steam_id === currentUser.player.steam_id) {
+                setProfile(currentUser);
                 setLoading(false)
-            } catch (e) {
-                console.log(e)
+            } else {
+                try {
+                    setProfile(await apiGetProfile(steam_id.toString()) as PlayerProfile)
+                    setLoading(false)
+                } catch (e) {
+                    console.log(e)
+                }
             }
         }
         // noinspection JSIgnoredPromiseFromCall
@@ -27,10 +34,10 @@ export const Profile = ({steam_id}: ProfileProps) => {
                 {loading && <>
                     <h3>Loading Profile...</h3>
                 </>}
-                {!loading && profile && <>
+                {!loading && profile && profile.player.steam_id > 0 && <>
                     <figure>
-                        <img src={profile.avatarfull} alt={"Profile Avatar"}/>
-                        <figcaption>{profile.personaname}</figcaption>
+                        <img src={profile.player.avatarfull} alt={"Profile Avatar"}/>
+                        <figcaption>{profile.player.personaname}</figcaption>
                     </figure>
                 </>}
 

@@ -3,9 +3,9 @@ import {fmt} from "./text";
 export const Route = {
     Home: "/",
     Dist: "/dist",
-    APIAppeal: "/api/v1/appeal",
-    APIBans: "/api/v1/bans",
-    APIFilteredWords: "/api/v1/filtered_words"
+    APIAppeal: "/api/appeal",
+    APIBans: "/api/bans",
+    APIFilteredWords: "/api/filtered_words"
 }
 
 export function route(r: any, args: null|object): string {
