@@ -1,16 +1,39 @@
 import React from "react";
 import {Link} from "react-router-dom"
-import {PlayerProfile} from "./util/api";
+import {useCurrentUserCtx} from "./contexts/CurrentUserCtx";
 
 interface HeaderProps {
     name: string
-    profile: NonNullable<PlayerProfile>
     onLogin: () => void
     onLogout: () => void
 }
 
-export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
-    console.log(`loading profile: ${profile}`)
+export const Header = ({onLogin, onLogout, name}: HeaderProps) => {
+    const {currentUser} = useCurrentUserCtx();
+    let children = []
+    if (currentUser.player.steam_id === 0) {
+        children.push(<li><div className="btn_login" onClick={onLogin}/></li>);
+    } else {
+        children.push(<li>
+            <Link to="/admin"><i className="fi-widget"/> Admin</Link>
+            <ul className="menu vertical">
+                <li><Link to="/admin/people">People</Link></li>
+                <li><Link to="/admin/import">Import</Link></li>
+                <li><Link to="/admin/filters">Filtered Words</Link></li>
+                <li><Link to="/admin/servers">Servers</Link></li>
+                <li><Link to="/admin/server_logs">Server Logs</Link></li>
+            </ul>
+        </li>)
+        children.push(<li>
+            <Link to={`/profile/${currentUser.player.steam_id}`}>
+                {/*<img className="avatar" alt="Avatar" src={currentUser.player.avatarfull}/>*/}
+                <span>{currentUser.player.personaname}</span></Link>
+            <ul className="menu vertical">
+                <li><Link to="/settings">Settings</Link></li>
+                <li><Link to="/logout" onClick={onLogout}>Server Logs</Link></li>
+            </ul>
+        </li>)
+    }
     return (
         <header className="grid-container full">
             <nav className="grid-x" id="header_nav">
@@ -41,35 +64,7 @@ export const Header = ({profile, onLogin, onLogout, name}: HeaderProps) => {
                             </ul>
                         </div>
                         <div className="top-bar-right">
-                            <ul className="dropdown menu" data-dropdown-menu={true}>
-                                {profile.player.steam_id === 0 && <>
-                                    <li>
-                                        <div className="btn_login" onClick={onLogin}/>
-                                    </li>
-                                </>}
-                                {profile.player.steam_id > 0 && <>
-                                    <li>
-                                        <Link to="/admin"><i className="fi-widget"/> Admin</Link>
-                                        <ul className="menu vertical">
-                                            <li><Link to="/admin/people">People</Link></li>
-                                            <li><Link to="/admin/import">Import</Link></li>
-                                            <li><Link to="/admin/filters">Filtered Words</Link></li>
-                                            <li><Link to="/admin/servers">Servers</Link></li>
-                                            <li><Link to="/admin/server_logs">Server Logs</Link></li>
-                                        </ul>
-                                    </li>
-                                    <li>
-                                        <Link to="/profile"><img className="avatar" alt="Avatar"
-                                                                 src={profile.player.avatarfull}/>
-                                            <span>{profile.player.personaname}</span></Link>
-                                        <ul className="menu vertical">
-                                            <li><Link to="/settings">Settings</Link></li>
-                                            <li><a className={"button"} onClick={onLogout}>Logout</a></li>
-                                        </ul>
-                                    </li>
-                                </>
-                                }
-                            </ul>
+                            <ul className="dropdown menu" data-dropdown-menu={true} children={children} />
                         </div>
                     </div>
                 </div>

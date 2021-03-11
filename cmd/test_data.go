@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/leighmacdonald/gbans/model"
@@ -9,6 +10,8 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -29,11 +32,47 @@ var testDataCmd = &cobra.Command{
 			log.Errorf("Failed to save person: %v", err)
 			return
 		}
+		type BDIds struct {
+			FileInfo struct {
+				Authors     []string `json:"authors"`
+				Description string   `json:"description"`
+				Title       string   `json:"title"`
+				UpdateURL   string   `json:"update_url"`
+			} `json:"file_info"`
+			Schema  string `json:"$schema"`
+			Players []struct {
+				Steamid    int64    `json:"steamid"`
+				Attributes []string `json:"attributes"`
+				LastSeen   struct {
+					PlayerName string `json:"player_name"`
+					Time       int    `json:"time"`
+				} `json:"last_seen"`
+			} `json:"players"`
+			Version int `json:"version"`
+		}
+		resp, err := http.Get("https://tf2bdd.pazer.us/v1/steamids")
+		if err != nil {
+			log.Fatalf("Could not download ids: %v", err)
+		}
+		body, err2 := ioutil.ReadAll(resp.Body)
+		if err2 != nil {
+			log.Fatalf("Could not read body of ids: %v", err2)
+		}
+		var j BDIds
+		if err := json.Unmarshal(body, &j); err != nil {
+			log.Fatalf("Could not decode ids: %v", err)
+		}
 		b := []steamid.SID64{
 			76561198083950961,
 			76561198970645474,
 			76561198186070461,
 			76561198042277652,
+		}
+		for i, v := range j.Players {
+			b = append(b, steamid.SID64(v.Steamid))
+			if i == 125 {
+				break
+			}
 		}
 		c := context.Background()
 		for i, bid := range b {
@@ -46,6 +85,9 @@ var testDataCmd = &cobra.Command{
 			if err != nil {
 				log.Errorf("Failed to get player summary: %v", err)
 				return
+			}
+			if len(sum) == 0 {
+				continue
 			}
 			v.PlayerSummary = &sum[0]
 			if err := service.SavePerson(v); err != nil {

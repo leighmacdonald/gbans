@@ -12,20 +12,13 @@ export function route(r: any, args: null|object): string {
     return fmt(r, args);
 }
 
-export function vars(p: string, vars: any):string {
-    if (!vars) {
+export function vars(p: string, args: Record<string, any>):string {
+    if (!args) {
         return p
     }
-    let first = true
-    for (let k in vars) {
-        if (vars.hasOwnProperty(k)) {
-            p += fmt("{p}{key}={value}", {
-                p: first ? "?" : "&",
-                key: k,
-                value: vars[k]
-            })
-            first = false
-        }
-    }
-    return p;
+    const rv = args
+        .filter((k) => args.hasOwnProperty(k))
+        .map((k, v) => fmt("{k}={v}", {k, v}))
+        .join("&")
+    return rv ? "?" + rv : p;
 }
