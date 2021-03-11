@@ -67,19 +67,19 @@ export interface BannedPerson {
 }
 
 export interface Ban {
-    ban_id?: bigint
-    net_id?: bigint
-    steam_id?: bigint
-    cidr?: string
-    author_id?: number
-    ban_type?: number
+    ban_id: number
+    net_id: number
+    steam_id: number
+    cidr: string
+    author_id: number
+    ban_type: number
     reason: number
-    reason_text?: string
-    note?: string
+    reason_text: string
+    note: string
     source: number
-    valid_until: string
-    created_on: string | Date
-    updated_on: string | Date
+    valid_until: Date
+    created_on: Date
+    updated_on: Date
 }
 
 export interface Server {
@@ -91,9 +91,9 @@ export interface Server {
     rcon: string
     reserved_slots: number
     password: string
-    token_created_on: string
-    created_on: string | Date
-    updated_on: string | Date
+    token_created_on: Date
+    created_on: Date
+    updated_on: Date
 }
 
 export enum profileState {
@@ -130,8 +130,8 @@ export interface Person {
     // Custom attributes
     steam_id: number
     ip_addr: string
-    created_on: string | Date
-    updated_on: string | Date
+    created_on: Date
+    updated_on: Date
 }
 
 export interface IAPIRequestBans {
@@ -145,6 +145,39 @@ export interface IAPIRequestBans {
 export interface IAPIResponseBans {
     bans: BannedPerson[]
     total: number
+}
+
+export interface IAPIBanRecord {
+    ban_id: number
+    net_id: number
+    steam_id: number
+    cidr: string
+    author_id: number
+    ban_type: number
+    reason: number
+    reason_text: string
+    note: string
+    source: number
+    valid_until: Date
+    created_on: Date
+    updated_on: Date
+
+    steamid: string
+    communityvisibilitystate: communityVisibilityState
+    profilestate: profileState
+    personaname: string
+    profileurl: string
+    avatar: string
+    avatarmedium: string
+    avatarfull: string
+    personastate: number
+    realname: string
+    timecreated: number
+    personastateflags: number
+    loccountrycode: string
+
+    // Custom attributes
+    ip_addr: string
 }
 
 export interface DatabaseStats {
@@ -182,9 +215,39 @@ export interface PlayerProfile {
     friends: Person[]
 }
 
-export const apiGetBans = async (args: IAPIRequestBans): Promise<IAPIResponseBans | apiError> => {
+export const apiGetBans = async (args: IAPIRequestBans): Promise<IAPIBanRecord[] | apiError> => {
     const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(`/api/bans`, "POST", args)
-    return resp.json as IAPIResponseBans
+    return (resp.json as IAPIResponseBans).bans.map((b): IAPIBanRecord => {
+        return {
+            author_id: b.ban.author_id,
+            avatar: b.person.avatar,
+            avatarfull: b.person.avatarfull,
+            avatarmedium: b.person.avatarmedium,
+            ban_id: b.ban.ban_id,
+            ban_type: b.ban.ban_type,
+            cidr: b.ban.cidr,
+            communityvisibilitystate: b.person.communityvisibilitystate,
+            created_on: b.ban.created_on,
+            ip_addr: b.person.ip_addr,
+            loccountrycode: b.person.loccountrycode,
+            net_id: b.ban.net_id,
+            note: b.ban.note,
+            personaname: b.person.personaname,
+            personastate: b.person.personastate,
+            personastateflags: b.person.personastateflags,
+            profilestate: b.person.profilestate,
+            profileurl: b.person.profileurl,
+            realname: b.person.realname,
+            reason: b.ban.reason,
+            reason_text: b.ban.reason_text,
+            source: b.ban.source,
+            steam_id: b.person.steam_id,
+            steamid: b.person.steamid,
+            timecreated: b.person.timecreated,
+            updated_on: b.ban.updated_on,
+            valid_until: b.ban.valid_until
+        }
+    })
 }
 
 export const apiGetBan = async (ban_id: number): Promise<BannedPerson | apiError> => {

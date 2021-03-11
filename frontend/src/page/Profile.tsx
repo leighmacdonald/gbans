@@ -2,23 +2,22 @@ import React, {useEffect} from "react";
 import {apiGetProfile, PlayerProfile} from "../util/api";
 import {Nullable} from "../util/types";
 import {useCurrentUserCtx} from "../contexts/CurrentUserCtx";
+import {RouteComponentProps} from "react-router-dom";
 
-export interface ProfileProps {
-    steam_id: number
-}
+type TParams =  { id: string };
 
-export const Profile = ({steam_id}: ProfileProps) => {
-    const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
-    const [loading, setLoading] = React.useState<boolean>(true);
-    const {currentUser} = useCurrentUserCtx();
+export const Profile = ({ match }: RouteComponentProps<TParams>) => {
+    const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null)
+    const [loading, setLoading] = React.useState<boolean>(true)
+    const {currentUser} = useCurrentUserCtx()
     useEffect(() => {
         const fetchProfile = async () => {
-            if (steam_id === currentUser.player.steam_id) {
-                setProfile(currentUser);
+            if (match.params.id === currentUser.player.steam_id.toString()) {
+                setProfile(currentUser)
                 setLoading(false)
             } else {
                 try {
-                    setProfile(await apiGetProfile(steam_id.toString()) as PlayerProfile)
+                    setProfile(await apiGetProfile(match.params.id) as PlayerProfile)
                     setLoading(false)
                 } catch (e) {
                     console.log(e)
@@ -40,7 +39,6 @@ export const Profile = ({steam_id}: ProfileProps) => {
                         <figcaption>{profile.player.personaname}</figcaption>
                     </figure>
                 </>}
-
             </div>
         </div>
     )

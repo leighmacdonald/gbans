@@ -1,8 +1,17 @@
 import React, {useEffect} from "react";
 import {apiGetStats, DatabaseStats} from "../util/api";
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableContainer,
+    TableHead,
+    TableRow,
+} from "@material-ui/core";
+import {StyledTableCell, StyledTableRow} from "./Tables";
 
 export const StatsPanel = () => {
-    const [stats, setStats] = React.useState<DatabaseStats>( {
+    const [stats, setStats] = React.useState<DatabaseStats>({
         bans: 0,
         appeals_closed: 0,
         appeals_open: 0,
@@ -29,45 +38,58 @@ export const StatsPanel = () => {
         }
         loadStats()
     }, [])
-
     return (
-        <>
-            <div className={"grid-y"}>
-                <div className={"cell"}>
-                    <h2>Stats</h2>
-                    <div className={"grid-y grid-padding-y"} >
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Bans Total</span> {stats.bans}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Bans 1 Week</span> {stats.bans_week}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Bans 1 Month</span> {stats.bans_month}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Bans 3 Months</span> {stats.bans_3month}
-                        </div><div className={"cell"}>
-                        <span className={"font-bold"}>Bans 6 Months</span> {stats.bans_6month}
-                    </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Bans 1 Year</span> {stats.bans_year}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>CIDR Bans</span> {stats.bans_cidr}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Appeals (Open)</span> {stats.appeals_open}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Appeals (Closed)</span> {stats.appeals_closed}
-                        </div>
-                        <div className={"cell"}>
-                            <span className={"font-bold"}>Servers (Alive)</span> {stats.servers_total} ({stats.servers_alive})
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
+        <TableContainer component={Paper}>
+            <Table aria-label="customized table">
+                <TableHead>
+                    <TableRow>
+                        <StyledTableCell>Metric</StyledTableCell>
+                        <StyledTableCell align="right">Value</StyledTableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans Total</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans 1 Week</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_week}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans 1 Month</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_month}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans 3 Months</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_3month}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans 6 Months</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_6month}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Bans 1 Year</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_year}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">CIDR Bans</StyledTableCell>
+                        <StyledTableCell align="right">{stats.bans_cidr}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Appeals (Open)</StyledTableCell>
+                        <StyledTableCell align="right">{stats.appeals_open}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Appeals (Closed)</StyledTableCell>
+                        <StyledTableCell align="right">{stats.appeals_closed}</StyledTableCell>
+                    </StyledTableRow>
+                    <StyledTableRow>
+                        <StyledTableCell component="th" scope="row">Servers (Alive)</StyledTableCell>
+                        <StyledTableCell align="right">{stats.servers_total} ({stats.servers_alive})</StyledTableCell>
+                    </StyledTableRow>
+                </TableBody>
+            </Table>
+        </TableContainer>
     )
 }

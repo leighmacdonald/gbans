@@ -11,8 +11,7 @@ import {AdminPeople} from "./page/AdminPeople";
 import {Bans} from "./page/Bans";
 import {Servers} from "./page/Servers";
 import {AdminServers} from "./page/AdminServers";
-import {Header} from "./Header";
-import {Flash, Flashes} from "./component/Flashes";
+import {Flash} from "./component/Flashes";
 import {LoginSuccess} from "./page/LoginSuccess";
 import {Profile} from "./page/Profile";
 import {Footer} from "./component/Footer";
@@ -20,14 +19,32 @@ import {CurrentUserCtx, GuestProfile} from "./contexts/CurrentUserCtx";
 import {BanView} from "./page/BanView";
 import {
     apiGetCurrentProfile,
-    handleOnLogin,
-    handleOnLogout,
     PlayerProfile
 } from "./util/api";
 import {AdminBan} from "./page/AdminBan";
 import {AdminServerLog} from "./page/AdminServerLog";
+import {TopBar} from "./component/TopBar";
+import {makeStyles} from "@material-ui/core/styles";
+import {Container} from "@material-ui/core";
+
+
+const useStyles = makeStyles((theme) => ({
+    toolbar: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        padding: theme.spacing(0, 1),
+        // necessary for content to be below app bar
+        ...theme.mixins.toolbar,
+    },
+    content: {
+        flexGrow: 1,
+        padding: theme.spacing(3),
+    },
+}))
 
 export const App = () => {
+    const classes = useStyles();
     const [currentUser, setCurrentUser] = useState<NonNullable<PlayerProfile>>(GuestProfile)
     // @ts-ignore
     const [flashes, setFlashes] = React.useState<Flash[]>([])
@@ -43,34 +60,40 @@ export const App = () => {
         // noinspection JSIgnoredPromiseFromCall
         fetchProfile();
     }, [setCurrentUser])
-
     return (
         <CurrentUserCtx.Provider value={{currentUser, setCurrentUser}}>
             <Router>
-                <Header name={"gbans"}
-                        profile={currentUser}
-                        onLogin={handleOnLogin}
-                        onLogout={handleOnLogout}/>
-                <Flashes flashes={flashes}/>
-                <Switch>
-                    <Route path={"/"} component={Home} exact={true}/>
-                    <Route path={"/servers"} component={Servers}/>
-                    <Route path={"/bans"} component={Bans}/>
-                    <Route path={"/appeal"} component={Appeal}/>
-                    <Route path={"/report"} component={Report}/>
-                    <Route path={"/settings"} component={Settings}/>
-                    <Route path={"/profile"} component={Profile}/>
-                    <Route path={"/ban/:ban_id"} component={BanView}/>
-                    <Route path={"/admin/ban"} component={AdminBan}/>
-                    <Route path={"/admin/filters"} component={AdminFilters}/>
-                    <Route path={"/admin/reports"} component={AdminReports}/>
-                    <Route path={"/admin/import"} component={AdminImport}/>
-                    <Route path={"/admin/people"} component={AdminPeople}/>
-                    <Route path={"/admin/server_logs"} component={AdminServerLog}/>
-                    <Route path={"/admin/servers"} component={AdminServers}/>
-                    <Route path={"/login/success"} component={LoginSuccess}/>
-                </Switch>
-                <Footer/>
+                <Container maxWidth="lg">
+                <main className={classes.content}>
+                    <div className={classes.toolbar}/>
+                    <TopBar/>
+                    {/*<Header name={"gbans"}*/}
+                    {/*        onLogin={handleOnLogin}*/}
+                    {/*        onLogout={handleOnLogout}/>*/}
+                    {/*<Flashes flashes={flashes}/>*/}
+                    <Switch>
+                        <Route exact path={"/"} component={Home}/>
+                        <Route exact path={"/servers"} component={Servers}/>
+                        <Route exact path={"/bans"} component={Bans}/>
+                        <Route exact path={"/appeal"} component={Appeal}/>
+                        <Route exact path={"/report"} component={Report}/>
+                        <Route exact path={"/settings"} component={Settings}/>
+                        <Route path={"/profile/:steam_id"} component={Profile}/>
+                        <Route path={"/ban/:ban_id"} component={BanView}/>
+                        <Route exact path={"/admin/ban"} component={AdminBan}/>
+                        <Route exact path={"/admin/filters"} component={AdminFilters}/>
+                        <Route exact path={"/admin/reports"} component={AdminReports}/>
+                        <Route exact path={"/admin/import"} component={AdminImport}/>
+                        <Route exact path={"/admin/people"} component={AdminPeople}/>
+                        <Route exact path={"/admin/server_logs"} component={AdminServerLog}/>
+                        <Route exact path={"/admin/servers"} component={AdminServers}/>
+                        <Route exact path={"/login/success"} component={LoginSuccess}/>
+                        {/*<Route path="/404" component={NotFoundPage} />*/}
+                        {/*<Redirect to="/404" />*/}
+                    </Switch>
+                    <Footer/>
+                </main>
+                </Container>
             </Router>
         </CurrentUserCtx.Provider>
     )

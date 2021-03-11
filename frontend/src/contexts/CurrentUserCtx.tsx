@@ -39,7 +39,7 @@ export const GuestProfile: PlayerProfile = {
         avatarhash: "",
         avatarmedium: "",
         communityvisibilitystate: communityVisibilityState.Private,
-        created_on:"",
+        created_on: new Date(),
         ip_addr: "",
         loccityid: 0,
         loccountrycode:"",
