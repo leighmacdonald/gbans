@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export const AdminPeople = () => {
     return (
@@ -7,10 +7,8 @@ export const AdminPeople = () => {
                 <div className="cell">
                     <h1 className="text-center">Manage People</h1>
                 </div>
-                <div className="cell">
-
-                </div>
+                <div className="cell"></div>
             </div>
         </div>
-    )
-}
+    );
+};

@@ -1,7 +1,7 @@
-import React from "react";
-import {Grid} from "@material-ui/core";
-import {ServerAddForm} from "../component/ServerAddForm";
-import {ServerList} from "../component/ServerList";
+import React from 'react';
+import {Grid} from '@material-ui/core';
+import {ServerAddForm} from '../component/ServerAddForm';
+import {ServerList} from '../component/ServerList';
 
 export const AdminServers = () => {
     return (
@@ -13,5 +13,5 @@ export const AdminServers = () => {
                 <ServerAddForm />
             </Grid>
         </Grid>
-    )
-}
+    );
+};

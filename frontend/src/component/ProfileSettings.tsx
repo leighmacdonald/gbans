@@ -1,22 +1,15 @@
-import * as React from "react";
+import * as React from 'react';
 
-interface state {
-
-}
+interface state {}
 
 interface props {
-    steam_id: number
+    steam_id: number;
 }
 
 export class ProfileSettings extends React.Component<props, state> {
-
-    componentDidMount() {
-
-    }
+    componentDidMount() {}
 
     render() {
-        return (
-            <></>
-        )
+        return <></>;
     }
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export const Settings = () => {
     return (
@@ -7,10 +7,8 @@ export const Settings = () => {
                 <div className="cell">
                     <h1 className="text-center">Profile Settings</h1>
                 </div>
-                <div className="cell">
-
-                </div>
+                <div className="cell"></div>
             </div>
         </div>
-    )
-}
+    );
+};

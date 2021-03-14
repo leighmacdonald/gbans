@@ -11,7 +11,7 @@ import {formatDistance, parseISO} from "date-fns";
  */
 export function fmt(s: string, args: any): string {
     if (args) {
-        for (let k in args) {
+        for (const k in args) {
             if (args.hasOwnProperty(k)) {
                 s = s.replace(new RegExp("\\{" + k + "\\}", "gi"), args[k]);
             }

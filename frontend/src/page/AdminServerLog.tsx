@@ -1,5 +1,5 @@
-import React from "react";
-import {ServerLogView} from "../component/ServerLogView";
+import React from 'react';
+import {ServerLogView} from '../component/ServerLogView';
 
 export const AdminServerLog = () => {
     return (
@@ -11,5 +11,5 @@ export const AdminServerLog = () => {
                 <ServerLogView />
             </div>
         </div>
-    )
-}
+    );
+};
