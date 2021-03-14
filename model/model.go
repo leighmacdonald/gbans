@@ -184,24 +184,24 @@ func NewBannedPerson() *BannedPerson {
 
 type Server struct {
 	// Auto generated id
-	ServerID int64 `db:"server_id"`
+	ServerID int64 `db:"server_id" json:"server_id"`
 	// ServerName is a short reference name for the server eg: us-1
-	ServerName string `db:"short_name"`
+	ServerName string `db:"short_name" json:"server_name"`
 	// Token is the current valid authentication token that the server uses to make authenticated requests
-	Token string `db:"token"`
+	Token string `db:"token" json:"token"`
 	// Address is the ip of the server
-	Address string `db:"address"`
+	Address string `db:"address" json:"address"`
 	// Port is the port of the server
-	Port int `db:"port"`
+	Port int `db:"port" json:"port"`
 	// RCON is the RCON password for the server
-	RCON          string `db:"rcon"`
+	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password string `db:"password"`
+	Password string `db:"password" json:"password"`
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn time.Time `db:"token_created_on"`
-	CreatedOn      time.Time `db:"created_on"`
-	UpdatedOn      time.Time `db:"updated_on"`
+	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
+	CreatedOn      time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn      time.Time `db:"updated_on" json:"updated_on"`
 }
 
 func (s Server) Addr() string {

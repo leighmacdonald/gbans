@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+var testRconPass = "testing"
+
 // testDataCmd loads the db schema
 var testDataCmd = &cobra.Command{
 	Use:   "test_data",
@@ -104,22 +106,37 @@ var testDataCmd = &cobra.Command{
 				log.Errorf(err.Error())
 			}
 		}
-		s := model.Server{
-			ServerName:     "test-1",
-			Address:        "localhost",
-			Port:           27015,
-			RCON:           "test",
-			Password:       "",
-			TokenCreatedOn: config.Now(),
-			CreatedOn:      config.Now(),
-			UpdatedOn:      config.Now(),
+		for _, v := range [][]string{
+			{"us-1", "us1.uncledane.com"},
+			{"us-2", "us2.uncledane.com"},
+			{"us-3", "us3.uncledane.com"},
+			{"us-4", "us4.uncledane.com"},
+			{"us-5", "us5.uncledane.com"},
+			{"us-6", "us6.uncledane.com"},
+			{"eu-1", "eu1.uncledane.com"},
+			{"eu-2", "eu2.uncledane.com"},
+			{"au-1", "au1.uncledane.com"},
+		} {
+			s := model.Server{
+				ServerName:     v[0],
+				Address:        v[1],
+				Port:           27015,
+				RCON:           testRconPass,
+				Password:       "",
+				TokenCreatedOn: config.Now(),
+				CreatedOn:      config.Now(),
+				UpdatedOn:      config.Now(),
+			}
+			if err := service.SaveServer(&s); err != nil {
+				log.Errorf("Failed to add server: %v", err)
+			}
 		}
-		if err := service.SaveServer(&s); err != nil {
-			log.Errorf("Failed to add server: %v", err)
-		}
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(testDataCmd)
+
+	testDataCmd.Flags().StringVarP(&testRconPass, "rcon", "r", "testing", "Sets the rcon password for test data")
 }

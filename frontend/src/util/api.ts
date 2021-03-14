@@ -215,8 +215,8 @@ export interface PlayerProfile {
     friends: Person[]
 }
 
-export const apiGetBans = async (args: IAPIRequestBans): Promise<IAPIBanRecord[] | apiError> => {
-    const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(`/api/bans`, "POST", args)
+export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
+    const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(`/api/bans`, "POST", undefined)
     return (resp.json as IAPIResponseBans).bans.map((b): IAPIBanRecord => {
         return {
             author_id: b.ban.author_id,
@@ -267,6 +267,11 @@ export const apiGetProfile = async (query: string): Promise<PlayerProfile | apiE
 
 export const apiGetCurrentProfile = async (): Promise<PlayerProfile | apiError> => {
     const resp = await apiCall<PlayerProfile>(`/api/current_profile`, "GET");
+    return resp.json;
+}
+
+export const apiGetServers = async (): Promise<Server[] | apiError> => {
+    const resp = await apiCall<Server[]>(`/api/servers`, "GET");
     return resp.json;
 }
 

@@ -11,7 +11,7 @@ import {AdminPeople} from "./page/AdminPeople";
 import {Bans} from "./page/Bans";
 import {Servers} from "./page/Servers";
 import {AdminServers} from "./page/AdminServers";
-import {Flash} from "./component/Flashes";
+import {Flash, Flashes} from "./component/Flashes";
 import {LoginSuccess} from "./page/LoginSuccess";
 import {Profile} from "./page/Profile";
 import {Footer} from "./component/Footer";
@@ -26,6 +26,7 @@ import {AdminServerLog} from "./page/AdminServerLog";
 import {TopBar} from "./component/TopBar";
 import {makeStyles} from "@material-ui/core/styles";
 import {Container} from "@material-ui/core";
+import {UserFlashCtx} from "./contexts/UserFlashCtx";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -46,8 +47,7 @@ const useStyles = makeStyles((theme) => ({
 export const App = () => {
     const classes = useStyles();
     const [currentUser, setCurrentUser] = useState<NonNullable<PlayerProfile>>(GuestProfile)
-    // @ts-ignore
-    const [flashes, setFlashes] = React.useState<Flash[]>([])
+    const [flashes, setFlashes] = useState<Flash[]>([])
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -60,6 +60,7 @@ export const App = () => {
         // noinspection JSIgnoredPromiseFromCall
         fetchProfile();
     }, [setCurrentUser])
+
     return (
         <CurrentUserCtx.Provider value={{currentUser, setCurrentUser}}>
             <Router>
@@ -67,10 +68,9 @@ export const App = () => {
                 <main className={classes.content}>
                     <div className={classes.toolbar}/>
                     <TopBar/>
-                    {/*<Header name={"gbans"}*/}
-                    {/*        onLogin={handleOnLogin}*/}
-                    {/*        onLogout={handleOnLogout}/>*/}
-                    {/*<Flashes flashes={flashes}/>*/}
+                    <UserFlashCtx.Provider value={{flashes, setFlashes}}>
+                        <Flashes flashes={flashes} />
+                    </UserFlashCtx.Provider>
                     <Switch>
                         <Route exact path={"/"} component={Home}/>
                         <Route exact path={"/servers"} component={Servers}/>
