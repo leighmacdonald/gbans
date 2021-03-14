@@ -17,12 +17,12 @@ import {
     Toolbar,
     Tooltip,
     Typography
-} from "@material-ui/core";
-import React, {useEffect, useState} from "react";
-import {makeStyles, Theme} from "@material-ui/core/styles";
-import clsx from "clsx";
-import DeleteIcon from "@material-ui/icons/Delete";
-import FilterListIcon from "@material-ui/icons/FilterList";
+} from '@material-ui/core';
+import React, {useEffect, useState} from 'react';
+import {makeStyles, Theme} from '@material-ui/core/styles';
+import clsx from 'clsx';
+import DeleteIcon from '@material-ui/icons/Delete';
+import FilterListIcon from '@material-ui/icons/FilterList';
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     if (b[orderBy] < a[orderBy]) {
@@ -43,7 +43,7 @@ function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
         if (order !== 0) return order;
         return a[1] - b[1];
     });
-    return stabilizedThis.map((el) => el[0]);
+    return stabilizedThis.map(el => el[0]);
 }
 
 interface HeadCell<TRecord> {
@@ -61,49 +61,47 @@ interface EnhancedTableProps<TRecord> {
     order: Order;
     orderBy: keyof TRecord;
     rowCount: number;
-    headers: HeadCell<TRecord>[]
+    headers: HeadCell<TRecord>[];
 }
-
 
 const useToolbarStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
             paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(1),
+            paddingRight: theme.spacing(1)
         },
         highlight:
             theme.palette.type === 'light'
                 ? {
-                    color: theme.palette.secondary.main,
-                    backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-                }
+                      color: theme.palette.secondary.main,
+                      backgroundColor: lighten(theme.palette.secondary.light, 0.85)
+                  }
                 : {
-                    color: theme.palette.text.primary,
-                    backgroundColor: theme.palette.secondary.dark,
-                },
+                      color: theme.palette.text.primary,
+                      backgroundColor: theme.palette.secondary.dark
+                  },
         title: {
-            flex: '1 1 100%',
-        },
-    }),
+            flex: '1 1 100%'
+        }
+    })
 );
 
 export interface EnhancedTableToolbarProps {
     numSelected: number;
-    heading: string
+    heading: string;
 }
-
 
 export const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            width: '100%',
+            width: '100%'
         },
         paper: {
             width: '100%',
-            marginBottom: theme.spacing(2),
+            marginBottom: theme.spacing(2)
         },
         table: {
-            minWidth: 750,
+            minWidth: 750
         },
         visuallyHidden: {
             border: 0,
@@ -114,29 +112,27 @@ export const useStyles = makeStyles((theme: Theme) =>
             padding: 0,
             position: 'absolute',
             top: 20,
-            width: 1,
-        },
-
-    }),
+            width: 1
+        }
+    })
 );
 
 export interface TableProps<TRecord> {
-    headers: HeadCell<TRecord>[]
-    heading: string
-    id_field: keyof TRecord
-    connector: () => Promise<TRecord[]>
+    headers: HeadCell<TRecord>[];
+    heading: string;
+    id_field: keyof TRecord;
+    connector: () => Promise<TRecord[]>;
 }
 
-export function CreateDataTable<TRecord>() {
+export function createDataTable<TRecord>() {
     const classes = useToolbarStyles();
     const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-
         const {numSelected, heading} = props;
 
         return (
             <Toolbar
                 className={clsx(classes.root, {
-                    [classes.highlight]: numSelected > 0,
+                    [classes.highlight]: numSelected > 0
                 })}
             >
                 {numSelected > 0 ? (
@@ -151,13 +147,13 @@ export function CreateDataTable<TRecord>() {
                 {numSelected > 0 ? (
                     <Tooltip title="Delete">
                         <IconButton aria-label="delete">
-                            <DeleteIcon/>
+                            <DeleteIcon />
                         </IconButton>
                     </Tooltip>
                 ) : (
                     <Tooltip title="Filter list">
                         <IconButton aria-label="filter list">
-                            <FilterListIcon/>
+                            <FilterListIcon />
                         </IconButton>
                     </Tooltip>
                 )}
@@ -197,8 +193,8 @@ export function CreateDataTable<TRecord>() {
                                 {headCell.label}
                                 {orderBy === headCell.id ? (
                                     <span className={classes.visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </span>
+                                        {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                                    </span>
                                 ) : null}
                             </TableSortLabel>
                         </TableCell>
@@ -209,16 +205,16 @@ export function CreateDataTable<TRecord>() {
     }
 
     return ({connector, id_field, headers, heading}: TableProps<TRecord>) => {
-        const [rows, setRows] = useState<TRecord[]>([])
+        const [rows, setRows] = useState<TRecord[]>([]);
 
         useEffect(() => {
             const loadData = async () => {
-                const resp = await connector() as TRecord[]
-                setRows(resp)
-            }
+                const resp = (await connector()) as TRecord[];
+                setRows(resp);
+            };
             // noinspection JSIgnoredPromiseFromCall
-            loadData()
-        }, [])
+            loadData();
+        }, []);
 
         const classes = useStyles();
         const [order, setOrder] = React.useState<Order>('asc');
@@ -236,7 +232,7 @@ export function CreateDataTable<TRecord>() {
 
         const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
             if (event.target.checked) {
-                const newSelected = rows.map((n) => `${n[id_field]}`);
+                const newSelected = rows.map(n => `${n[id_field]}`);
                 setSelected(newSelected);
                 return;
             }
@@ -254,10 +250,7 @@ export function CreateDataTable<TRecord>() {
             } else if (selectedIndex === selected.length - 1) {
                 newSelected = newSelected.concat(selected.slice(0, -1));
             } else if (selectedIndex > 0) {
-                newSelected = newSelected.concat(
-                    selected.slice(0, selectedIndex),
-                    selected.slice(selectedIndex + 1),
-                );
+                newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
             }
 
             setSelected(newSelected);
@@ -279,15 +272,13 @@ export function CreateDataTable<TRecord>() {
         const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
         const emptyRows = rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
-        let c = function(order: Order, orderBy: keyof TRecord ): (a: any, b: any) => number {
-            return order === 'desc'
-                ? (a, b) => descendingComparator(a, b, orderBy)
-                : (a, b) => -descendingComparator(a, b, orderBy);
-        }
+        const c = function (order: Order, orderBy: keyof TRecord): (a: any, b: any) => number {
+            return order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
+        };
         return (
             <div className={classes.root}>
                 <Paper className={classes.paper}>
-                    <EnhancedTableToolbar numSelected={selected.length} heading={heading}/>
+                    <EnhancedTableToolbar numSelected={selected.length} heading={heading} />
                     <TableContainer>
                         <Table
                             className={classes.table}
@@ -315,7 +306,7 @@ export function CreateDataTable<TRecord>() {
                                         return (
                                             <TableRow
                                                 hover
-                                                onClick={(event) => handleClick(event, `${row[id_field]}`)}
+                                                onClick={event => handleClick(event, `${row[id_field]}-${index}`)}
                                                 role="checkbox"
                                                 aria-checked={isItemSelected}
                                                 tabIndex={-1}
@@ -323,26 +314,34 @@ export function CreateDataTable<TRecord>() {
                                                 selected={isItemSelected}
                                             >
                                                 <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        checked={isItemSelected}
-                                                        inputProps={{'aria-labelledby': labelId}}
-                                                    />
+                                                    <Checkbox checked={isItemSelected} inputProps={{'aria-labelledby': labelId}} />
                                                 </TableCell>
                                                 {headers.map((h, i) => {
                                                     if (i === 0) {
-                                                        return <TableCell key={`cell-${index}-${i}`} component="th" id={labelId} scope="row" padding="none">
+                                                        return (
+                                                            <TableCell
+                                                                key={`cell-${index}-${i}`}
+                                                                component="th"
+                                                                id={labelId}
+                                                                scope="row"
+                                                                padding="none"
+                                                            >
+                                                                {row[h.id]}
+                                                            </TableCell>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <TableCell key={`cell-${index}-${i}`} align="right">
                                                             {row[h.id]}
                                                         </TableCell>
-                                                    }
-                                                    return <TableCell key={`cell-${index}-${i}`} align="right">{row[h.id]}</TableCell>
+                                                    );
                                                 })}
-
                                             </TableRow>
                                         );
                                     })}
                                 {emptyRows > 0 && (
                                     <TableRow style={{height: (dense ? 33 : 53) * emptyRows}}>
-                                        <TableCell colSpan={6}/>
+                                        <TableCell colSpan={6} />
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -358,11 +357,8 @@ export function CreateDataTable<TRecord>() {
                         onChangeRowsPerPage={handleChangeRowsPerPage}
                     />
                 </Paper>
-                <FormControlLabel
-                    control={<Switch checked={dense} onChange={handleChangeDense}/>}
-                    label="Dense padding"
-                />
+                <FormControlLabel control={<Switch checked={dense} onChange={handleChangeDense} />} label="Dense padding" />
             </div>
         );
-    }
+    };
 }

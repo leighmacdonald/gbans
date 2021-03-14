@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export const AdminFilters = () => {
     return (
@@ -7,5 +7,5 @@ export const AdminFilters = () => {
                 <p>Put stuff here.</p>
             </div>
         </div>
-    )
-}
+    );
+};

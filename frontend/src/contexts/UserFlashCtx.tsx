@@ -1,12 +1,12 @@
-import {createContext, useContext} from "react";
-import {Flash} from "../component/Flashes";
+import {createContext, useContext} from 'react';
+import {Flash} from '../component/Flashes';
 
 export type CurrentFlashes = {
-    flashes: Flash[]
-    setFlashes?: (f: Flash[]) => void
-}
+    flashes: Flash[];
+    setFlashes?: (f: Flash[]) => void;
+};
 export const UserFlashCtx = createContext<CurrentFlashes>({
-    flashes: [],
+    flashes: []
 });
 
-export const useUserFlashCtx = () => useContext(UserFlashCtx)
+export const useUserFlashCtx = () => useContext(UserFlashCtx);

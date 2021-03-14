@@ -12,7 +12,7 @@ const apiCall = async <TResponse, TRequestBody = any>(url: string, method: strin
     const headers: Record<string, string> = {
         "Content-Type": "application/json; charset=UTF-8"
     }
-    let opts: RequestInit = {
+    const opts: RequestInit = {
         mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
@@ -142,10 +142,7 @@ export interface IAPIRequestBans {
     order_by: string
 }
 
-export interface IAPIResponseBans {
-    bans: BannedPerson[]
-    total: number
-}
+export type IAPIResponseBans = BannedPerson[]
 
 export interface IAPIBanRecord {
     ban_id: number
@@ -216,8 +213,8 @@ export interface PlayerProfile {
 }
 
 export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
-    const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(`/api/bans`, "POST", undefined)
-    return (resp.json as IAPIResponseBans).bans.map((b): IAPIBanRecord => {
+    const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(`/api/bans`, "POST")
+    return (resp.json as IAPIResponseBans).map((b): IAPIBanRecord => {
         return {
             author_id: b.ban.author_id,
             avatar: b.person.avatar,

@@ -445,9 +445,6 @@ func onAPIGetBanByID() gin.HandlerFunc {
 func onAPIGetBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		o := newSearchQueryOpts("")
-		o.Limit = 100000
-		o.OrderDesc = true
-
 		bans, err := GetBans(o)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)

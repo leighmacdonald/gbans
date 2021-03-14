@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export const Report = () => {
     return (
@@ -7,10 +7,8 @@ export const Report = () => {
                 <div className="cell">
                     <h1 className="text-center">Report A Player</h1>
                 </div>
-                <div className="cell">
-
-                </div>
+                <div className="cell"></div>
             </div>
         </div>
-    )
-}
+    );
+};

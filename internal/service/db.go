@@ -58,6 +58,9 @@ func newQueryOpts() QueryOpts {
 
 func newSearchQueryOpts(query string) searchQueryOpts {
 	o := newQueryOpts()
+	o.OrderBy = "created_on"
+	o.Limit = 10000
+	o.OrderDesc = true
 	return searchQueryOpts{
 		query,
 		o,
@@ -633,8 +636,9 @@ func GetBans(o searchQueryOpts) ([]*model.BannedPerson, error) {
 		Limit(o.Limit).
 		Offset(o.Offset).
 		ToSql()
+
 	if e != nil {
-		return nil, e
+		return nil, errors.Wrapf(e, "Failed to execute: %s", q)
 	}
 	var bans []*model.BannedPerson
 	rows, err := db.Query(context.Background(), q, a...)
