@@ -200,10 +200,10 @@ export const TopBar = () => {
             open={isProfileMenuOpen}
             onClose={handleProfileMenuClose}
         >
-            <MenuItem onClick={handleProfileMenuClose}>Profile</MenuItem>
-            <MenuItem onClick={handleProfileMenuClose}>Settings</MenuItem>
+            <MenuItem onClick={handleProfileMenuClose}><GLink to={"/profile"} primary={"Profile"} /></MenuItem>
+            <MenuItem onClick={handleProfileMenuClose}><GLink to={"/settings"} primary={"Settings"} /></MenuItem>
             <Divider light/>
-            <MenuItem onClick={handleProfileMenuClose}>Logout</MenuItem>
+            <MenuItem onClick={handleProfileMenuClose}><GLink to={"/logout"} primary={"Logout"} /></MenuItem>
         </Menu>
     );
 
@@ -217,11 +217,13 @@ export const TopBar = () => {
             open={isAdminMenuOpen}
             onClose={handleAdminMenuClose}
         >
-            <MenuItem onClick={handleAdminMenuClose}>People</MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>Import</MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>Filtered Words</MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>Servers</MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>Server Logs</MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/ban"} primary={"Ban"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/reports"} primary={"Reports"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/people"} primary={"People"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/import"} primary={"Import"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/filters"} primary={"Filtered Words"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/servers"} primary={"Servers"} /></MenuItem>
+            <MenuItem onClick={handleAdminMenuClose}><GLink to={"/admin/success"} primary={"Server Logs"} /></MenuItem>
         </Menu>
     );
 

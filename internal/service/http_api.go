@@ -51,13 +51,13 @@ func onPostPingMod() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req pingReq
 		if err := c.BindJSON(&req); err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
 		for _, c := range config.Discord.ModChannels {
 			sendMessage(newMessage(c, fmt.Sprintf("<@&%d> %s", config.Discord.ModRoleID, req.Reason)))
 		}
-		c.JSON(http.StatusOK, gin.H{
+		responseOK(c, http.StatusOK, gin.H{
 			"client":  req.Client,
 			"message": "Moderators have been notified",
 		})
@@ -175,22 +175,22 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 		var req authReq
 		if err := c.BindJSON(&req); err != nil {
 			log.Errorf("Failed to decode auth request: %v", err)
-			c.JSON(500, authResp{Status: false})
+			responseErr(c, http.StatusInternalServerError, authResp{Status: false})
 			return
 		}
 		srv, err := getServerByName(req.ServerName)
 		if err != nil {
-			c.JSON(http.StatusNotFound, authResp{Status: false})
+			responseErr(c, http.StatusNotFound, authResp{Status: false})
 			return
 		}
 		srv.Token = golib.RandomString(40)
 		srv.TokenCreatedOn = config.Now()
 		if err := SaveServer(&srv); err != nil {
 			log.Errorf("Failed to updated server token: %v", err)
-			c.JSON(500, authResp{Status: false})
+			responseErr(c, http.StatusInternalServerError, authResp{Status: false})
 			return
 		}
-		c.JSON(200, authResp{
+		responseOK(c, http.StatusOK, authResp{
 			Status: true,
 			Token:  srv.Token,
 		})
@@ -212,7 +212,7 @@ func onPostServerCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req checkRequest
 		if err := c.BindJSON(&req); err != nil {
-			c.JSON(500, checkResponse{
+			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error determining state",
 			})
@@ -227,7 +227,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		// Check IP first
 		banNet, err := getBanNet(req.IP)
 		if err != nil {
-			c.JSON(500, checkResponse{
+			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error determining state",
 			})
@@ -237,29 +237,30 @@ func onPostServerCheck() gin.HandlerFunc {
 		if len(banNet) > 0 {
 			resp.BanType = model.Banned
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
-			c.JSON(200, resp)
+			responseOK(c, http.StatusOK, resp)
 			return
 		}
 		// Check SteamID
 		steamID, err := steamid.ResolveSID64(context.Background(), req.SteamID)
 		if err != nil || !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
-			c.JSON(500, resp)
+			responseErr(c, http.StatusBadRequest, resp)
+			return
 		}
 		ban, err := getBanBySteamID(steamID, false)
 		if err != nil {
 			if DBErr(err) == errNoResult {
 				resp.BanType = model.OK
-				c.JSON(200, resp)
+				responseErr(c, http.StatusOK, resp)
 				return
 			}
 			resp.Msg = "Error determining state"
-			c.JSON(500, resp)
+			responseErr(c, http.StatusInternalServerError, resp)
 			return
 		}
 		resp.BanType = ban.Ban.BanType
 		resp.Msg = ban.Ban.ReasonText
-		c.JSON(200, resp)
+		responseOK(c, http.StatusOK, resp)
 	}
 }
 
@@ -272,16 +273,16 @@ func onAPIPostAppeal() gin.HandlerFunc {
 		var app req
 		if err := c.BindJSON(&app); err != nil {
 			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
-			c.AbortWithStatus(http.StatusBadRequest)
+			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{})
+		responseOK(c, http.StatusOK, gin.H{})
 	}
 }
 
 func onAPIPostReport() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusInternalServerError, gin.H{})
+		responseErr(c, http.StatusInternalServerError, gin.H{})
 	}
 }
 
@@ -290,12 +291,13 @@ func onAPIGetServers() gin.HandlerFunc {
 		servers, err := getServers()
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		c.JSON(http.StatusOK, servers)
+		responseOK(c, http.StatusOK, servers)
 	}
 }
+
 func onAPICurrentProfile() gin.HandlerFunc {
 	type resp struct {
 		Player  *model.Person         `json:"player"`
@@ -384,10 +386,10 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		words, err := GetFilteredWords()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{})
+			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		c.JSON(http.StatusOK, resp{
+		responseOK(c, http.StatusOK, resp{
 			Count: len(words),
 			Words: words,
 		})
@@ -441,40 +443,10 @@ func onAPIGetBanByID() gin.HandlerFunc {
 }
 
 func onAPIGetBans() gin.HandlerFunc {
-	type req struct {
-		SortDesc bool   `json:"sort_desc"`
-		Offset   uint64 `json:"offset"`
-		Limit    uint64 `json:"limit"`
-		OrderBy  string `json:"order_by"`
-		Query    string `json:"query"`
-	}
-	type resp struct {
-		Total int                   `json:"total"`
-		Bans  []*model.BannedPerson `json:"bans"`
-	}
 	return func(c *gin.Context) {
-		var r req
-		if err := c.BindJSON(&r); err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
-			return
-		}
-		o := newSearchQueryOpts(r.Query)
-		o.Limit = r.Limit
-		if o.Limit > 100 {
-			o.Limit = 100
-		} else if o.Limit <= 0 {
-			o.Limit = 100
-		}
-		o.Offset = r.Offset
-		switch o.OrderDesc {
-		case true:
-			o.OrderDesc = true
-		case false:
-			fallthrough
-		default:
-			o.OrderDesc = false
-		}
-		o.OrderBy = r.OrderBy
+		o := newSearchQueryOpts("")
+		o.Limit = 100000
+		o.OrderDesc = true
 
 		bans, err := GetBans(o)
 		if err != nil {
@@ -482,16 +454,7 @@ func onAPIGetBans() gin.HandlerFunc {
 			log.Errorf("Failed to fetch bans")
 			return
 		}
-		t, err := GetBansTotal(o)
-		if err != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
-			log.Errorf("Failed to fetch ban total")
-			return
-		}
-		responseOK(c, http.StatusOK, resp{
-			Total: t,
-			Bans:  bans,
-		})
+		responseOK(c, http.StatusOK, bans)
 	}
 }
 
@@ -508,14 +471,14 @@ func onGetServerBan() gin.HandlerFunc {
 		var req banStateRequest
 
 		if err := c.BindJSON(&req); err != nil {
-			c.JSON(500, banStateResponse{
+			responseErr(c, http.StatusInternalServerError, banStateResponse{
 				SteamID: "",
 				BanType: model.Unknown,
 				Msg:     "Error determining state",
 			})
 			return
 		}
-		c.JSON(200, gin.H{"status": model.OK})
+		responseOK(c, http.StatusOK, gin.H{"status": model.OK})
 	}
 }
 
@@ -590,6 +553,6 @@ func onPostLogAdd() gin.HandlerFunc {
 func onPostBan() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var b model.Ban
-		c.JSON(http.StatusCreated, b)
+		responseOK(c, http.StatusCreated, b)
 	}
 }

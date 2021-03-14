@@ -1,16 +1,17 @@
 import React from "react";
+import {Grid} from "@material-ui/core";
+import {ServerAddForm} from "../component/ServerAddForm";
+import {ServerList} from "../component/ServerList";
 
 export const AdminServers = () => {
     return (
-        <div className="grid-container">
-            <div className="grid-y grid-padding-y">
-                <div className="cell">
-                    <h1 className="text-center">Profile Settings</h1>
-                </div>
-                <div className="cell">
-
-                </div>
-            </div>
-        </div>
+        <Grid container>
+            <Grid item xs={8}>
+                <ServerList />
+            </Grid>
+            <Grid item xs={4}>
+                <ServerAddForm />
+            </Grid>
+        </Grid>
     )
 }
