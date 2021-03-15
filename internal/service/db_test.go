@@ -91,7 +91,27 @@ func TestFilteredWords(t *testing.T) {
 }
 
 func TestAppeal(t *testing.T) {
-	//
+	b1 := model.NewBan(76561199093644873, 76561198003911389, time.Hour*24)
+	require.NoError(t, SaveBan(b1), "Failed to add ban")
+	appeal := model.Appeal{
+		BanID:       b1.BanID,
+		AppealText:  "Im a nerd",
+		AppealState: model.ASNew,
+		Email:       "",
+	}
+	require.NoError(t, saveAppeal(&appeal), "failed to save appeal")
+	require.True(t, appeal.AppealID > 0, "No appeal id set")
+	appeal.AppealState = model.ASDenied
+	appeal.Email = "test@test.com"
+	require.NoError(t, saveAppeal(&appeal), "failed to update appeal")
+
+	fetched, err := getAppeal(b1.BanID)
+	require.NoError(t, err, "failed to get appeal")
+	require.Equal(t, appeal.BanID, fetched.BanID)
+	require.Equal(t, appeal.Email, fetched.Email)
+	require.Equal(t, appeal.AppealState, fetched.AppealState)
+	require.Equal(t, appeal.AppealID, fetched.AppealID)
+	require.Equal(t, appeal.AppealText, fetched.AppealText)
 }
 
 func TestPerson(t *testing.T) {

@@ -13,7 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -21,7 +20,6 @@ import (
 var (
 	BuildVersion  = "master"
 	router        *gin.Engine
-	templates     map[string]*template.Template
 	routes        map[routeKey]string
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
@@ -46,26 +44,24 @@ type UserWarning struct {
 func warnWorker() {
 	t := time.NewTicker(1 * time.Second)
 	for {
-		select {
-		case <-t.C:
-			now := config.Now()
-			warningsMu.Lock()
-			for k := range warnings {
-				for i, w := range warnings[k] {
-					if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
-						if len(warnings[k]) > 1 {
-							warnings[k] = append(warnings[k][:i], warnings[k][i+1])
-						} else {
-							warnings[k] = nil
-						}
-					}
-					if len(warnings[k]) == 0 {
-						delete(warnings, k)
+		<-t.C
+		now := config.Now()
+		warningsMu.Lock()
+		for k := range warnings {
+			for i, w := range warnings[k] {
+				if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
+					if len(warnings[k]) > 1 {
+						warnings[k] = append(warnings[k][:i], warnings[k][i+1])
+					} else {
+						warnings[k] = nil
 					}
 				}
+				if len(warnings[k]) == 0 {
+					delete(warnings, k)
+				}
 			}
-			warningsMu.Unlock()
 		}
+		warningsMu.Unlock()
 	}
 }
 
@@ -95,10 +91,10 @@ func addWarning(sid64 steamid.SID64, reason WarnReason) {
 type gameType string
 
 const (
-	unknown gameType = "Unknown"
-	tf2     gameType = "Team Fortress 2"
-	cs      gameType = "Counter-Strike"
-	csgo    gameType = "Counter-Strike: Global Offensive"
+	//unknown gameType = "Unknown"
+	tf2 gameType = "Team Fortress 2"
+	//cs      gameType = "Counter-Strike"
+	//csgo    gameType = "Counter-Strike: Global Offensive"
 )
 
 type ServerState struct {
@@ -135,7 +131,6 @@ func (s ServerState) VacStatus() template.HTML {
 func init() {
 	warningsMu = &sync.RWMutex{}
 	warnings = make(map[steamid.SID64][]UserWarning)
-	templates = make(map[string]*template.Template)
 	serverState = make(map[string]ServerState)
 	serverStateMu = &sync.RWMutex{}
 	ctx = context.Background()
@@ -221,13 +216,4 @@ func initNetBans() {
 			log.Errorf("Failed to import list: %v", err)
 		}
 	}
-}
-
-func queryInt(c *gin.Context, key string) int {
-	valStr := c.Query(key)
-	val, err := strconv.ParseInt(valStr, 10, 32)
-	if err != nil {
-		log.Panicf("Failed to parse query (Use a validator): \"%v\"", valStr)
-	}
-	return int(val)
 }

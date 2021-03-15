@@ -30,17 +30,21 @@ func profileUpdater() {
 			for _, b := range bans {
 				sids = append(sids, b.SteamID)
 			}
-			summaries, err := extra.PlayerSummaries(context.Background(), sids)
+			summaries, err2 := extra.PlayerSummaries(context.Background(), sids)
+			if err2 != nil {
+				log.Errorf("Failed to get player summaries: %v", err2)
+				continue
+			}
 			cnt := 0
 			for _, s := range summaries {
-				sid, err := steamid.SID64FromString(s.Steamid)
-				if err != nil {
-					log.Errorf("Failed to parse steamid from webapi: %v", err)
+				sid, err3 := steamid.SID64FromString(s.Steamid)
+				if err3 != nil {
+					log.Errorf("Failed to parse steamid from webapi: %v", err3)
 					continue
 				}
-				p, err := GetOrCreatePersonBySteamID(sid)
-				if err != nil {
-					log.Errorf("Failed to get person: %v", err)
+				p, err4 := GetOrCreatePersonBySteamID(sid)
+				if err4 != nil {
+					log.Errorf("Failed to get person: %v", err4)
 					continue
 				}
 				p.PlayerSummary = &s

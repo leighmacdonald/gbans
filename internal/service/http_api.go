@@ -264,27 +264,28 @@ func onPostServerCheck() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostAppeal() gin.HandlerFunc {
-	type req struct {
-		Email      string `json:"email"`
-		AppealText string `json:"appeal_text"`
-	}
-	return func(c *gin.Context) {
-		var app req
-		if err := c.BindJSON(&app); err != nil {
-			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
-			responseErr(c, http.StatusBadRequest, nil)
-			return
-		}
-		responseOK(c, http.StatusOK, gin.H{})
-	}
-}
-
-func onAPIPostReport() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		responseErr(c, http.StatusInternalServerError, gin.H{})
-	}
-}
+//
+//func onAPIPostAppeal() gin.HandlerFunc {
+//	type req struct {
+//		Email      string `json:"email"`
+//		AppealText string `json:"appeal_text"`
+//	}
+//	return func(c *gin.Context) {
+//		var app req
+//		if err := c.BindJSON(&app); err != nil {
+//			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
+//			responseErr(c, http.StatusBadRequest, nil)
+//			return
+//		}
+//		responseOK(c, http.StatusOK, gin.H{})
+//	}
+//}
+//
+//func onAPIPostReport() gin.HandlerFunc {
+//	return func(c *gin.Context) {
+//		responseErr(c, http.StatusInternalServerError, gin.H{})
+//	}
+//}
 
 func onAPIGetServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -545,11 +546,5 @@ func onPostLogAdd() gin.HandlerFunc {
 		//	ChannelID: "",
 		//	Body:      req.Message,
 		//}
-	}
-}
-func onPostBan() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var b model.Ban
-		responseOK(c, http.StatusCreated, b)
 	}
 }

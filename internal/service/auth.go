@@ -178,7 +178,7 @@ func onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > 30*time.Second {
+		if time.Until(time.Unix(claims.ExpiresAt, 0)) > 30*time.Second {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

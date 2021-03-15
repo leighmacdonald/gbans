@@ -11,24 +11,6 @@ export const BanList = (): JSX.Element =>
         heading: 'Bans',
         headers: [
             {
-                id: 'ban_id',
-                disablePadding: true,
-                label: 'Ban ID',
-                numeric: true
-            },
-            {
-                id: 'steam_id',
-                disablePadding: false,
-                label: 'Steam ID',
-                numeric: true
-            },
-            {
-                id: 'author_id',
-                disablePadding: false,
-                label: 'Author',
-                numeric: true
-            },
-            {
                 id: 'personaname',
                 disablePadding: false,
                 label: 'Name',

@@ -40,12 +40,12 @@ type QueryOpts struct {
 	OrderBy   string
 }
 
-func (o QueryOpts) order() string {
-	if o.OrderDesc {
-		return "DESC"
-	}
-	return "ASC"
-}
+//func (o QueryOpts) order() string {
+//	if o.OrderDesc {
+//		return "DESC"
+//	}
+//	return "ASC"
+//}
 
 func newQueryOpts() QueryOpts {
 	return QueryOpts{
@@ -288,7 +288,7 @@ func getIPHistory(sid64 steamid.SID64) []net.IP {
 	return []net.IP{net.ParseIP("127.0.0.1")}
 }
 
-func getAppeal(banID int) (model.Appeal, error) {
+func getAppeal(banID uint64) (model.Appeal, error) {
 	q, a, e := sb.Select("appeal_id", "ban_id", "appeal_text", "appeal_state",
 		"email", "created_on", "updated_on").
 		From("ban_appeal").
@@ -350,6 +350,15 @@ func saveAppeal(appeal *model.Appeal) error {
 }
 
 func SaveBan(ban *model.Ban) error {
+	// Ensure the FK's are satisfied
+	_, err := GetOrCreatePersonBySteamID(ban.SteamID)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get person for ban")
+	}
+	_, err2 := GetOrCreatePersonBySteamID(ban.AuthorID)
+	if err2 != nil {
+		return errors.Wrapf(err, "Failed to get author for ban")
+	}
 	ban.UpdatedOn = config.Now()
 	if ban.BanID > 0 {
 		return updateBan(ban)

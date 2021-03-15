@@ -51,6 +51,9 @@ func initRouter() {
 	router.GET(routeRaw(string(routeAPIFilteredWords)), onAPIGetFilteredWords())
 	router.GET(string(routeServerAPIBan), onGetServerBan())
 
+	// Server Auth Request
+	router.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
+
 	tokenAuthed := router.Use(authMiddleWare())
 
 	// Client API
@@ -60,11 +63,14 @@ func initRouter() {
 	tokenAuthed.GET(routeRaw(string(routeAPIAuthLogout)), onGetLogout())
 
 	// Game server API
-	tokenAuthed.POST(string(routeServerAPICheck), onPostServerCheck())
-	tokenAuthed.POST(routeRaw(string(routeServerAPIAuth)), onSAPIPostServerAuth())
 	tokenAuthed.POST(routeRaw(string(routeServerAPIMessage)), onPostLogMessage())
 	tokenAuthed.POST(routeRaw(string(routeServerAPIPingMod)), onPostPingMod())
-	tokenAuthed.POST(routeRaw(string(routeServerAPILogAdd)), onPostLogAdd())
+
+	// Server to Server API
+	serverAuthed := router.Use(checkServerAuth)
+	serverAuthed.POST(routeRaw(string(routeServerAPILogAdd)), onPostLogAdd())
+	serverAuthed.POST(string(routeServerAPICheck), onPostServerCheck())
+
 }
 
 func init() {

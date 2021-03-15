@@ -4,7 +4,13 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
+
+func TestParseTime(t *testing.T) {
+	require.Equal(t, time.Date(2021, 2, 21, 6, 22, 23, 0, time.UTC),
+		parseDateTime("02/21/2021", "06:22:23"))
+}
 
 func TestParse(t *testing.T) {
 	var pa = func(s string, msgType MsgType) map[string]string {

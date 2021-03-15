@@ -79,9 +79,7 @@ func fetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()
-			for _, s := range summaries {
-				results = append(results, s)
-			}
+			results = append(results, summaries...)
 			resultsMu.Unlock()
 		}()
 	}

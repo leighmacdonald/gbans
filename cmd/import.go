@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/internal/service"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +16,9 @@ var importCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO add user confirmation on recreate
 		service.Init(config.DB.DSN)
-		service.Import(importPath)
+		if err := service.Import(importPath); err != nil {
+			log.Fatalf("Failed to import: %v", err)
+		}
 	},
 }
 

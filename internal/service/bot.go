@@ -107,6 +107,8 @@ func queueConsumer(ctx context.Context) {
 			if err := sendMsg(dg, dm.ChannelID, dm.Body); err != nil {
 				log.Errorf("Failed to send queue message: %v", err)
 			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -133,7 +135,6 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 
 func onHandleCommand(s *discordgo.Session, m *discordgo.InteractionCreate) {
 	log.Debugf("Got message create event: %v", m)
-	return
 }
 
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {

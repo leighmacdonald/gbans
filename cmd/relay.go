@@ -29,7 +29,7 @@ var relayCmd = &cobra.Command{
 				log.Fatalf("Exited client: %v", err)
 			}
 		}()
-		exitChan := make(chan os.Signal)
+		exitChan := make(chan os.Signal, 10)
 		signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
 		select {
 		case <-exitChan:

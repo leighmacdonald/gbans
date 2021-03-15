@@ -191,30 +191,31 @@ func parseMedigun(gunStr string, gun *Medigun) bool {
 	return true
 }
 
-func playerClassStr(cls PlayerClass) string {
-	switch cls {
-	case Scout:
-		return "Scout"
-	case Soldier:
-		return "Soldier"
-	case Demo:
-		return "Demo"
-	case Pyro:
-		return "Pyro"
-	case Heavy:
-		return "Heavy"
-	case Engineer:
-		return "Engineer"
-	case Medic:
-		return "Medic"
-	case Sniper:
-		return "Sniper"
-	case Spy:
-		return "Spy"
-	default:
-		return "Spectator"
-	}
-}
+//
+//func playerClassStr(cls PlayerClass) string {
+//	switch cls {
+//	case Scout:
+//		return "Scout"
+//	case Soldier:
+//		return "Soldier"
+//	case Demo:
+//		return "Demo"
+//	case Pyro:
+//		return "Pyro"
+//	case Heavy:
+//		return "Heavy"
+//	case Engineer:
+//		return "Engineer"
+//	case Medic:
+//		return "Medic"
+//	case Sniper:
+//		return "Sniper"
+//	case Spy:
+//		return "Spy"
+//	default:
+//		return "Spectator"
+//	}
+//}
 
 func parsePlayerClass(classStr string, class *PlayerClass) bool {
 	switch strings.ToLower(classStr) {
@@ -303,7 +304,7 @@ func parsePos(posStr string, pos *Pos) bool {
 
 func parseDateTime(dateStr, timeStr string) time.Time {
 	fDateStr := fmt.Sprintf("%s %s", dateStr, timeStr)
-	t, err := time.Parse("02/01/2006 15:04:05", fDateStr)
+	t, err := time.Parse("01/02/2006 15:04:05", fDateStr)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to parse date: %s", fDateStr)
 		return time.Now()
