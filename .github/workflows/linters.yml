@@ -22,6 +22,6 @@ jobs:
         working-directory: ./frontend
         run: yarn run eslint:check
 
-      - name: Golang CI Lint
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2.5.1
 
