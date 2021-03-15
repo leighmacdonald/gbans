@@ -22,10 +22,6 @@ jobs:
         working-directory: ./frontend
         run: yarn run eslint:check
 
-      - name: Build JS (Prod)
-        working-directory: ./frontend
-        run: yarn run build
-
       - name: Golang CI Lint
         run: make lint
 
