@@ -1,15 +1,12 @@
-import * as React from 'react';
+import React from 'react';
+import { Grid, Typography } from '@material-ui/core';
 
-interface state {}
-
-interface props {
-    steam_id: number;
-}
-
-export class ProfileSettings extends React.Component<props, state> {
-    componentDidMount() {}
-
-    render() {
-        return <></>;
-    }
-}
+export const ProfileSettings = (): JSX.Element => {
+    return (
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h3'}>Settings</Typography>
+            </Grid>
+        </Grid>
+    );
+};

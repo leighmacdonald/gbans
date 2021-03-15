@@ -1,7 +1,7 @@
 import React from 'react';
-import {makeStyles, Theme} from '@material-ui/core/styles';
-import {Grid, Paper} from '@material-ui/core';
-import {BanList} from '../component/BanList';
+import { makeStyles, Theme } from '@material-ui/core/styles';
+import { Grid, Paper } from '@material-ui/core';
+import { BanList } from '../component/BanList';
 
 const useStyles = makeStyles((theme: Theme) => ({
     root: {
@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-export const Bans = () => {
+export const Bans = (): JSX.Element => {
     const classes = useStyles();
     return (
         <Grid container spacing={3}>

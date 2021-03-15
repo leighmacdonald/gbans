@@ -1,16 +1,21 @@
-import {apiGetBans, IAPIBanRecord} from '../util/api';
+import { apiGetBans, IAPIBanRecord } from '../util/api';
 
-import {createDataTable} from './DataTable';
+import { CreateDataTable } from './DataTable';
 
-export const BanList = () =>
-    createDataTable<IAPIBanRecord>()({
+export const BanList = (): JSX.Element =>
+    CreateDataTable<IAPIBanRecord>()({
         connector: async () => {
             return (await apiGetBans()) as Promise<IAPIBanRecord[]>;
         },
         id_field: 'ban_id',
         heading: 'Bans',
         headers: [
-            {id: 'ban_id', disablePadding: true, label: 'Ban ID', numeric: true},
+            {
+                id: 'ban_id',
+                disablePadding: true,
+                label: 'Ban ID',
+                numeric: true
+            },
             {
                 id: 'steam_id',
                 disablePadding: false,
@@ -35,7 +40,12 @@ export const BanList = () =>
                 label: 'Reason',
                 numeric: false
             },
-            {id: 'ip_addr', disablePadding: false, label: 'IP/Net', numeric: false},
+            {
+                id: 'ip_addr',
+                disablePadding: false,
+                label: 'IP/Net',
+                numeric: false
+            },
             {
                 id: 'valid_until',
                 disablePadding: false,
@@ -48,6 +58,11 @@ export const BanList = () =>
                 label: 'Real Name',
                 numeric: false
             },
-            {id: 'source', disablePadding: false, label: 'Source', numeric: false}
+            {
+                id: 'source',
+                disablePadding: false,
+                label: 'Source',
+                numeric: false
+            }
         ]
     });

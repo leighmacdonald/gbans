@@ -1,14 +1,14 @@
-import React, {SyntheticEvent, useEffect, useState} from 'react';
-import {includes, takeRight} from 'lodash-es';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
+import { includes, takeRight } from 'lodash-es';
 
 interface ServerLog {
     CreatedOn: Date;
     ServerID: number;
     ServerName: string;
-    Payload: object;
+    Payload: Record<string, string | number | boolean>;
 }
 
-export const ServerLogView = () => {
+export const ServerLogView = (): JSX.Element => {
     const [serverIDs, setServerIDs] = useState<number[]>([]);
     const [entries, setEntries] = useState<ServerLog[]>([]);
     const [renderLimit, setRenderLimit] = useState<number>(10000);
@@ -36,19 +36,30 @@ export const ServerLogView = () => {
                     <div className={'cell auto'}>
                         <select
                             onChange={(event: SyntheticEvent) => {
-                                setRenderLimit(parseInt((event.target as HTMLSelectElement).value));
+                                setRenderLimit(
+                                    parseInt(
+                                        (event.target as HTMLSelectElement)
+                                            .value
+                                    )
+                                );
                             }}
                         >
                             <option value={100}>100</option>
                             <option value={500}>500</option>
                             <option value={1000}>1000</option>
                             <option value={10000}>10000</option>
-                            <option value={Number.MAX_SAFE_INTEGER}>inf.</option>
+                            <option value={Number.MAX_SAFE_INTEGER}>
+                                inf.
+                            </option>
                         </select>
                     </div>
                 </div>
                 {takeRight(
-                    entries.filter(value => (filterServerIDs ? includes(serverIDs, value.ServerID) : false)),
+                    entries.filter((value) =>
+                        filterServerIDs
+                            ? includes(serverIDs, value.ServerID)
+                            : false
+                    ),
                     renderLimit
                 ).map((value, i) => (
                     <div key={`log-${i}`}>

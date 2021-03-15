@@ -1,11 +1,12 @@
 import React from 'react';
+import { Grid, Typography } from '@material-ui/core';
 
-export const Appeal = () => {
+export const Appeal = (): JSX.Element => {
     return (
-        <div className="grid-container">
-            <div className="grid-x grid-padding-x">
-                <div id="appeal_form"></div>
-            </div>
-        </div>
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h1'}>Appeal Your Ban</Typography>
+            </Grid>
+        </Grid>
     );
 };

@@ -1,8 +1,8 @@
 import React from 'react';
-import {PlayerBanForm} from '../component/PlayerBanForm';
-import {Card, CardContent, Grid} from '@material-ui/core';
-import {makeStyles} from '@material-ui/core/styles';
-import {ProfilePanel} from '../component/ProfilePanel';
+import { PlayerBanForm } from '../component/PlayerBanForm';
+import { Card, CardContent, Grid } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import { ProfilePanel } from '../component/ProfilePanel';
 
 const useStyles = makeStyles({
     root: {
@@ -21,7 +21,7 @@ const useStyles = makeStyles({
     }
 });
 
-export const AdminBan = () => {
+export const AdminBan = (): JSX.Element => {
     const classes = useStyles();
     return (
         <Grid container>

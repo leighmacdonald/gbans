@@ -1,11 +1,12 @@
 import React from 'react';
+import { Grid, Typography } from '@material-ui/core';
 
-export const AdminFilters = () => {
+export const AdminFilters = (): JSX.Element => {
     return (
-        <div className="grid-container">
-            <div className="grid-x grid-padding-x">
-                <p>Put stuff here.</p>
-            </div>
-        </div>
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h1'}>Filters</Typography>
+            </Grid>
+        </Grid>
     );
 };

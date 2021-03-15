@@ -1,8 +1,14 @@
 import * as React from 'react';
-import {SyntheticEvent, useEffect} from 'react';
+import { SyntheticEvent, useEffect } from 'react';
 import IPCIDR from 'ip-cidr';
-import {apiCreateBan, apiGetProfile, BanPayload, PlayerProfile} from '../util/api';
-import {Nullable} from '../util/types';
+import {
+    apiCreateBan,
+    apiGetProfile,
+    BanPayload,
+    PlayerProfile
+} from '../util/api';
+import { Nullable } from '../util/types';
+
 import {
     Button,
     createStyles,
@@ -19,7 +25,9 @@ import {
     TextField,
     Typography
 } from '@material-ui/core';
-import {makeStyles, Theme} from '@material-ui/core/styles';
+import { VoiceOverOffSharp } from '@material-ui/icons';
+import { makeStyles, Theme } from '@material-ui/core/styles';
+import { log } from '../util/errors';
 
 export const ip2int = (ip: string): number => {
     return (
@@ -75,10 +83,12 @@ const Durations = [
     Duration.durCustom
 ];
 
-export const PlayerBanForm = () => {
+export const PlayerBanForm = (): JSX.Element => {
     const classes = useStyles();
 
-    const [fSteam, setFSteam] = React.useState<string>('https://steamcommunity.com/id/SQUIRRELLY/');
+    const [fSteam, setFSteam] = React.useState<string>(
+        'https://steamcommunity.com/id/SQUIRRELLY/'
+    );
     const [duration, setDuration] = React.useState<Duration>(Duration.dur48h);
     const [reasonText, setReasonText] = React.useState<string>('');
     const [network, setNetwork] = React.useState<string>('');
@@ -89,33 +99,32 @@ export const PlayerBanForm = () => {
         try {
             setProfile((await apiGetProfile(fSteam)) as PlayerProfile);
         } catch (e) {
-            console.log(e);
+            log(e);
         }
     };
     useEffect(() => {
         // Validate results
     }, [profile]);
-    const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [profile, setProfile]);
+    const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [
+        setProfile,
+        fSteam
+    ]);
 
-    const handleSubmit = React.useCallback(
-        async (evt: any) => {
-            evt.preventDefault();
-            if (!profile || profile?.player?.steam_id > 0) {
-                return;
-            }
-            const opts: BanPayload = {
-                steam_id: profile.player.steamid ?? '',
-                ban_type: 2,
-                duration: duration,
-                network: banType === 'steam' ? '' : network,
-                reason_text: reasonText,
-                reason: 0
-            };
-            const r = await apiCreateBan(opts);
-            console.log(r);
-        },
-        [profile, reasonText, network]
-    );
+    const handleSubmit = React.useCallback(async () => {
+        if (!profile || profile?.player?.steam_id > 0) {
+            return;
+        }
+        const opts: BanPayload = {
+            steam_id: profile.player.steamid ?? '',
+            ban_type: 2,
+            duration: duration,
+            network: banType === 'steam' ? '' : network,
+            reason_text: reasonText,
+            reason: 0
+        };
+        const r = await apiCreateBan(opts);
+        log(`${r}`);
+    }, [profile, reasonText, network, banType, duration]);
 
     const handleUpdateNetwork = (evt: SyntheticEvent) => {
         const value = (evt.target as HTMLInputElement).value;
@@ -124,7 +133,9 @@ export const PlayerBanForm = () => {
             try {
                 const cidr = new IPCIDR(value);
                 if (cidr != undefined) {
-                    setNetworkSize(ip2int(cidr?.end()) - ip2int(cidr?.start()) + 1);
+                    setNetworkSize(
+                        ip2int(cidr?.end()) - ip2int(cidr?.start()) + 1
+                    );
                 }
             } catch (e) {
                 if (e instanceof TypeError) {
@@ -140,7 +151,9 @@ export const PlayerBanForm = () => {
         setReasonText((evt.target as HTMLInputElement).value);
     };
 
-    const handleUpdateDuration = (evt: React.ChangeEvent<{value: unknown}>) => {
+    const handleUpdateDuration = (
+        evt: React.ChangeEvent<{ value: unknown }>
+    ) => {
         setDuration((evt.target.value as Duration) ?? Duration.durInf);
     };
 
@@ -153,59 +166,111 @@ export const PlayerBanForm = () => {
     };
 
     return (
-        <Grid container>
-            <Grid item>
+        <Grid container spacing={3}>
+            <Grid item xs={12}>
                 <Typography variant={'h1'}>Ban A Player</Typography>
             </Grid>
             <form noValidate>
-                <Grid item>
-                    <TextField id={'query'} label={'Steam ID / Profile URL'} onChange={onChangeFStream} onBlur={handleUpdateFSteam} />
+                <Grid container>
+                    <Grid item xs>
+                        <TextField
+                            fullWidth
+                            id={'query'}
+                            label={'Steam ID / Profile URL'}
+                            onChange={onChangeFStream}
+                            onBlur={handleUpdateFSteam}
+                        />
+                    </Grid>
                 </Grid>
-                <Grid item>
+                <Grid item xs={12}>
                     <FormControl component="fieldset">
-                        <FormLabel component="legend">Gender</FormLabel>
-                        <RadioGroup aria-label="gender" name="gender1" value={fSteam} onChange={onChangeType} row>
-                            <FormControlLabel value="steam" control={<Radio />} label="Steam" />
-                            <FormControlLabel value="network" control={<Radio />} label="IP / Network" />
+                        <FormLabel component="legend">Ban Type</FormLabel>
+                        <RadioGroup
+                            aria-label="gender"
+                            name="gender1"
+                            value={fSteam}
+                            onChange={onChangeType}
+                            row
+                        >
+                            <FormControlLabel
+                                value="steam"
+                                control={<Radio />}
+                                label="Steam"
+                            />
+                            <FormControlLabel
+                                value="network"
+                                control={<Radio />}
+                                label="IP / Network"
+                            />
                         </RadioGroup>
                     </FormControl>
                 </Grid>
                 {banType === 'network' && (
                     <>
-                        <Grid item>
-                            <TextField id={'network'} label={'Network Range (CIDR Format)'} onChange={handleUpdateNetwork} />
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth={true}
+                                id={'network'}
+                                label={'Network Range (CIDR Format)'}
+                                onChange={handleUpdateNetwork}
+                            />
                         </Grid>
                         <Grid item>
-                            <Typography variant={'body1'}>Current number of hosts in range: {networkSize}</Typography>
+                            <Typography variant={'body1'}>
+                                Current number of hosts in range: {networkSize}
+                            </Typography>
                         </Grid>
                     </>
                 )}
                 <Grid item>
-                    <TextField id={'duration'} label={'Network Range (CIDR Format)'} onChange={handleUpdateNetwork} />
+                    <TextField
+                        fullWidth
+                        id={'duration'}
+                        label={'Network Range (CIDR Format)'}
+                        onChange={handleUpdateNetwork}
+                    />
                 </Grid>
                 <Grid item>
-                    <TextField id={'reason'} label={'Ban Reason'} onChange={handleUpdateReasonText} />
+                    <TextField
+                        fullWidth
+                        id={'reason'}
+                        label={'Ban Reason'}
+                        onChange={handleUpdateReasonText}
+                    />
                 </Grid>
                 <Grid item>
                     <FormControl className={classes.formControl}>
-                        <InputLabel id="demo-simple-select-helper-label">Age</InputLabel>
+                        <InputLabel id="demo-simple-select-helper-label">
+                            Age
+                        </InputLabel>
                         <Select
+                            fullWidth
                             labelId="demo-simple-select-helper-label"
                             id="demo-simple-select-helper"
                             value={duration}
                             onChange={handleUpdateDuration}
                         >
-                            {Durations.map(v => (
+                            {Durations.map((v) => (
                                 <MenuItem key={`time-${v}`} value={v}>
                                     {v}
                                 </MenuItem>
                             ))}
                         </Select>
-                        <FormHelperText>Some important helper text</FormHelperText>
+                        <FormHelperText>
+                            Some important helper text
+                        </FormHelperText>
                     </FormControl>
                 </Grid>
-                <Grid item>
-                    <Button key={'submit'} value={'Create Ban'} onClick={handleSubmit} />
+                <Grid item xs={12}>
+                    <Button
+                        fullWidth
+                        key={'submit'}
+                        value={'Create Ban'}
+                        onClick={handleSubmit}
+                        startIcon={<VoiceOverOffSharp />}
+                    >
+                        Ban Player
+                    </Button>
                 </Grid>
             </form>
         </Grid>

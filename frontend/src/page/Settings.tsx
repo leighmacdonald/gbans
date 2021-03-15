@@ -1,14 +1,16 @@
 import React from 'react';
+import { Grid, Typography } from '@material-ui/core';
+import { ProfileSettings } from '../component/ProfileSettings';
 
-export const Settings = () => {
+export const Settings = (): JSX.Element => {
     return (
-        <div className="grid-container">
-            <div className="grid-y grid-padding-y">
-                <div className="cell">
-                    <h1 className="text-center">Profile Settings</h1>
-                </div>
-                <div className="cell"></div>
-            </div>
-        </div>
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h1'}>User Settings</Typography>
+            </Grid>
+            <Grid item xs>
+                <ProfileSettings />
+            </Grid>
+        </Grid>
     );
 };

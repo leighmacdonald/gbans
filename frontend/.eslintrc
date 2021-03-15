@@ -1,20 +1,41 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "17"
+    }
+//    "linkComponents": [
+//      // Components used as alternatives to <a> for linking, eg. <Link to={ url } />
+//      "Hyperlink",
+//      {"name": "Link", "linkAttribute": "to"}
+//    ]
+  },
   "plugins": [
     "prettier",
     "@typescript-eslint",
-    "no-loops"
+    "no-loops",
+    "jest",
+    "react"
   ],
   "extends": [
-    "prettier",
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "plugin:jest/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:react/recommended"
   ],
   "rules": {
     "prettier/prettier": 2,
-    "no-console": 1,
-    "no-loops/no-loops": 1
+    "no-console": 2,
+    "no-loops/no-loops": 2,
+    "react/prop-types": [2, { "ignore": ["children"] }]
   }
 }

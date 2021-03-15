@@ -1,6 +1,6 @@
-import React, {useState} from 'react';
-import {Button, createStyles, Grid, TextField} from '@material-ui/core';
-import {makeStyles, Theme} from '@material-ui/core/styles';
+import React, { useState } from 'react';
+import { Button, createStyles, Grid, TextField } from '@material-ui/core';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-export const ServerAddForm = () => {
+export const ServerAddForm = (): JSX.Element => {
     const classes = useStyles();
     const [name, setName] = useState<string>('');
     const [address, setAddress] = useState<string>('');
@@ -28,7 +28,7 @@ export const ServerAddForm = () => {
                         label="Short Server Name (Example: eg-1)"
                         fullWidth
                         value={name}
-                        onChange={v => {
+                        onChange={(v) => {
                             setName(v.target.value);
                         }}
                     />
@@ -39,7 +39,7 @@ export const ServerAddForm = () => {
                         label="Hostname or IP"
                         fullWidth
                         value={address}
-                        onChange={v => {
+                        onChange={(v) => {
                             setAddress(v.target.value);
                         }}
                     />
@@ -51,7 +51,7 @@ export const ServerAddForm = () => {
                         label="Port (Default: 27015)"
                         fullWidth
                         value={port}
-                        onChange={v => {
+                        onChange={(v) => {
                             setPort(parseInt(v.target.value));
                         }}
                     />

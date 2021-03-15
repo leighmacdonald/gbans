@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {fade, makeStyles, Theme, useTheme} from '@material-ui/core/styles';
+import React, { useState } from 'react';
+import { fade, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -14,9 +14,9 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
-import {useCurrentUserCtx} from '../contexts/CurrentUserCtx';
-import {handleOnLogin} from '../util/api';
-import {Avatar, Divider} from '@material-ui/core';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { handleOnLogin } from '../util/api';
+import { Avatar, Button, Divider } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
 import clsx from 'clsx';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
@@ -27,7 +27,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import Drawer from '@material-ui/core/Drawer';
-import {GLink} from './GLink';
+import { GLink } from './GLink';
 
 const drawerWidth = 240;
 
@@ -147,19 +147,27 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-export const TopBar = () => {
+export const TopBar = (): JSX.Element => {
     const classes = useStyles();
-    const [anchorProfileMenuEl, setAnchorProfileMenuEl] = useState(null);
-    const [anchorAdminMenuEl, setAnchorAdminMenuEl] = useState(null);
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
+    const [
+        anchorProfileMenuEl,
+        setAnchorProfileMenuEl
+    ] = useState<Element | null>(null);
+    const [anchorAdminMenuEl, setAnchorAdminMenuEl] = useState<Element | null>(
+        null
+    );
+    const [
+        mobileMoreAnchorEl,
+        setMobileMoreAnchorEl
+    ] = useState<Element | null>(null);
 
     const isProfileMenuOpen = Boolean(anchorProfileMenuEl);
     const isAdminMenuOpen = Boolean(anchorAdminMenuEl);
     const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
     const [sideMenuOpen, setSideMenuOpen] = useState<boolean>(false);
-    const {currentUser} = useCurrentUserCtx();
+    const { currentUser } = useCurrentUserCtx();
 
-    const handleAdminMenuOpen = (event: any) => {
+    const handleAdminMenuOpen = (event: React.MouseEvent) => {
         setAnchorAdminMenuEl(event.currentTarget);
     };
     const handleAdminMenuClose = () => {
@@ -167,7 +175,7 @@ export const TopBar = () => {
         handleMobileMenuClose();
     };
 
-    const handleProfileMenuOpen = (event: any) => {
+    const handleProfileMenuOpen = (event: React.MouseEvent) => {
         setAnchorProfileMenuEl(event.currentTarget);
     };
 
@@ -180,7 +188,7 @@ export const TopBar = () => {
         handleMobileMenuClose();
     };
 
-    const handleMobileMenuOpen = (event: any) => {
+    const handleMobileMenuOpen = (event: React.MouseEvent) => {
         setMobileMoreAnchorEl(event.currentTarget);
     };
 
@@ -192,10 +200,10 @@ export const TopBar = () => {
     const renderProfileMenu = (
         <Menu
             anchorEl={anchorProfileMenuEl}
-            anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             id={menuId}
             keepMounted
-            transformOrigin={{vertical: 'top', horizontal: 'right'}}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             open={isProfileMenuOpen}
             onClose={handleProfileMenuClose}
         >
@@ -215,10 +223,10 @@ export const TopBar = () => {
     const renderAdminMenu = (
         <Menu
             anchorEl={anchorAdminMenuEl}
-            anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             id={adminMenuId}
             keepMounted
-            transformOrigin={{vertical: 'top', horizontal: 'right'}}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             open={isAdminMenuOpen}
             onClose={handleAdminMenuClose}
         >
@@ -250,10 +258,10 @@ export const TopBar = () => {
     const renderMobileMenu = (
         <Menu
             anchorEl={mobileMoreAnchorEl}
-            anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             id={mobileMenuId}
             keepMounted
-            transformOrigin={{vertical: 'top', horizontal: 'right'}}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             open={isMobileMenuOpen}
             onClose={handleMobileMenuClose}
         >
@@ -266,7 +274,10 @@ export const TopBar = () => {
                 <p>Messages</p>
             </MenuItem>
             <MenuItem>
-                <IconButton aria-label="show 11 new notifications" color="inherit">
+                <IconButton
+                    aria-label="show 11 new notifications"
+                    color="inherit"
+                >
                     <Badge badgeContent={11} color="secondary">
                         <NotificationsIcon />
                     </Badge>
@@ -303,23 +314,33 @@ export const TopBar = () => {
         >
             <div className={classes.toolbar}>
                 <IconButton onClick={handleSideMenuClose}>
-                    {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                    {theme.direction === 'rtl' ? (
+                        <ChevronRightIcon />
+                    ) : (
+                        <ChevronLeftIcon />
+                    )}
                 </IconButton>
             </div>
             <Divider />
             <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                    <ListItem button key={text}>
-                        <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                        <ListItemText primary={text} />
-                    </ListItem>
-                ))}
+                {['Inbox', 'Starred', 'Send email', 'Drafts'].map(
+                    (text, index) => (
+                        <ListItem button key={text}>
+                            <ListItemIcon>
+                                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                            </ListItemIcon>
+                            <ListItemText primary={text} />
+                        </ListItem>
+                    )
+                )}
             </List>
             <Divider />
             <List>
                 {['All mail', 'Trash', 'Spam'].map((text, index) => (
                     <ListItem button key={text}>
-                        <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+                        <ListItemIcon>
+                            {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                        </ListItemIcon>
                         <ListItemText primary={text} />
                     </ListItem>
                 ))}
@@ -352,11 +373,14 @@ export const TopBar = () => {
                         >
                             <MenuIcon />
                         </IconButton>
-                        <Typography className={classes.title} variant="h6" noWrap>
-                            gbans
+                        <Typography
+                            className={classes.title}
+                            variant="h6"
+                            noWrap
+                        >
+                            <GLink to={'/'} primary={'Home'} />
                         </Typography>
                         <GLink to={'/bans'} primary={'Bans'} />
-                        <GLink to={'/settings'} primary={'Settings'} />
                         <div className={classes.search}>
                             <div className={classes.searchIcon}>
                                 <SearchIcon />
@@ -367,31 +391,33 @@ export const TopBar = () => {
                                     root: classes.inputRoot,
                                     input: classes.inputInput
                                 }}
-                                inputProps={{'aria-label': 'search'}}
+                                inputProps={{ 'aria-label': 'search' }}
                             />
                         </div>
                         <div className={classes.grow} />
                         <div className={classes.sectionDesktop}>
                             {currentUser?.player.steam_id <= 0 && (
-                                <>
-                                    <IconButton
-                                        edge="end"
-                                        aria-label="account of current user"
-                                        aria-controls={menuId}
-                                        aria-haspopup="true"
-                                        onClick={handleOnLogin}
-                                        color="inherit"
-                                    ></IconButton>
-                                </>
+                                <Button onClick={handleOnLogin}>
+                                    <img
+                                        src={'/dist/steam_login_sm.png'}
+                                        alt={'Steam Login'}
+                                    />
+                                </Button>
                             )}
                             {currentUser?.player.steam_id > 0 && (
                                 <>
-                                    <IconButton aria-label="show 4 new alerts" color="inherit">
+                                    <IconButton
+                                        aria-label="show 4 new alerts"
+                                        color="inherit"
+                                    >
                                         <Badge badgeContent={4} color="error">
                                             <MailIcon />
                                         </Badge>
                                     </IconButton>
-                                    <IconButton aria-label="show 17 new notifications" color="inherit">
+                                    <IconButton
+                                        aria-label="show 17 new notifications"
+                                        color="inherit"
+                                    >
                                         <Badge badgeContent={17} color="error">
                                             <NotificationsIcon />
                                         </Badge>
@@ -414,7 +440,10 @@ export const TopBar = () => {
                                         onClick={handleProfileMenuOpen}
                                         color="inherit"
                                     >
-                                        <Avatar alt={currentUser.player.personaname} src={currentUser.player.avatar} />
+                                        <Avatar
+                                            alt={currentUser.player.personaname}
+                                            src={currentUser.player.avatar}
+                                        />
                                     </IconButton>
                                 </>
                             )}
