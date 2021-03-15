@@ -1,0 +1,22 @@
+name: TS / Go Linters
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install modules
+        working-directory: ./frontend
+        run: yarn
+
+      - name: ESLint
+        working-directory: ./frontend
+        run: yarn run lint
+
+      - name: Golang CI Lint
+        run: make lint

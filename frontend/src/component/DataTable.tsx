@@ -257,6 +257,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
             };
             // noinspection JSIgnoredPromiseFromCall
             loadData();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
         // eslint-disable-next-line
         const classes = useStyles();
