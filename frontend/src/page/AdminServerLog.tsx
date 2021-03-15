@@ -1,15 +1,16 @@
 import React from 'react';
-import {ServerLogView} from '../component/ServerLogView';
+import { ServerLogView } from '../component/ServerLogView';
+import { Grid, Typography } from '@material-ui/core';
 
-export const AdminServerLog = () => {
+export const AdminServerLog = (): JSX.Element => {
     return (
-        <div className="grid-container">
-            <div className="grid-y grid-padding-y">
-                <div className="cell">
-                    <h1 className="text-center">Game Server Logs</h1>
-                </div>
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h1'}>Game Server Logs</Typography>
+            </Grid>
+            <Grid item xs>
                 <ServerLogView />
-            </div>
-        </div>
+            </Grid>
+        </Grid>
     );
 };

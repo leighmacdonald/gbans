@@ -1,8 +1,8 @@
-import {apiGetServers, Server} from '../util/api';
-import {createDataTable} from './DataTable';
+import { apiGetServers, Server } from '../util/api';
+import { CreateDataTable } from './DataTable';
 
-export const ServerList = () =>
-    createDataTable<Server>()({
+export const ServerList = (): JSX.Element =>
+    CreateDataTable<Server>()({
         connector: async () => {
             return (await apiGetServers()) as Promise<Server[]>;
         },
@@ -16,9 +16,19 @@ export const ServerList = () =>
                 label: 'Name',
                 numeric: false
             },
-            {id: 'address', disablePadding: false, label: 'Host', numeric: false},
-            {id: 'port', disablePadding: false, label: 'Port', numeric: true},
-            {id: 'rcon', disablePadding: false, label: 'RCON', numeric: false},
+            {
+                id: 'address',
+                disablePadding: false,
+                label: 'Host',
+                numeric: false
+            },
+            { id: 'port', disablePadding: false, label: 'Port', numeric: true },
+            {
+                id: 'rcon',
+                disablePadding: false,
+                label: 'RCON',
+                numeric: false
+            },
             {
                 id: 'token_created_on',
                 disablePadding: false,

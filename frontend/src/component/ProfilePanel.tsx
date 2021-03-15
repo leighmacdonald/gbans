@@ -1,18 +1,24 @@
 import React from 'react';
-import {AppBar, Box, Grid, Tab, Tabs, Typography} from '@material-ui/core';
-import {PlayerProfile} from '../util/api';
+import { AppBar, Box, Grid, Tab, Tabs, Typography } from '@material-ui/core';
+import { PlayerProfile } from '../util/api';
 
 interface TabPanelProps {
     children?: React.ReactNode;
-    index: any;
-    value: any;
+    index: number | string;
+    value: number | string;
 }
 
 function TabPanel(props: TabPanelProps) {
-    const {children, value, index, ...other} = props;
+    const { children, value, index, ...other } = props;
 
     return (
-        <div role="tabpanel" hidden={value !== index} id={`wrapped-tabpanel-${index}`} aria-labelledby={`wrapped-tab-${index}`} {...other}>
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`wrapped-tabpanel-${index}`}
+            aria-labelledby={`wrapped-tab-${index}`}
+            {...other}
+        >
             {value === index && (
                 <Box p={3}>
                     <Typography>{children}</Typography>
@@ -26,20 +32,23 @@ export interface ProfilePanelProps {
     profile?: PlayerProfile;
 }
 
-export const a11yProps = (index: any) => {
+export const a11yProps = (index: number | string): Record<string, string> => {
     return {
         id: `wrapped-tab-${index}`,
         'aria-controls': `wrapped-tabpanel-${index}`
     };
 };
 
-export const ProfilePanel = (args: ProfilePanelProps) => {
+export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
     // const [friendsPage, setFriendsPage] = React.useState<number>(0);
     // const [showFriends, setShowFriends] = React.useState<boolean>(false);
 
     const [value, setValue] = React.useState('one');
 
-    const handleChange = (_: React.ChangeEvent<{}>, newValue: string) => {
+    const handleChange = (
+        _: React.ChangeEvent<Record<string, unknown>>,
+        newValue: string
+    ) => {
         setValue(newValue);
     };
 
@@ -47,18 +56,36 @@ export const ProfilePanel = (args: ProfilePanelProps) => {
         <Grid container>
             <Grid item>
                 <AppBar position="static">
-                    <Tabs value={value} onChange={handleChange} aria-label="wrapped label tabs example">
-                        <Tab value="one" label="Profile" wrapped {...a11yProps('Profile')} />
-                        <Tab value="two" label="Friends" {...a11yProps('Friends')} />
+                    <Tabs
+                        value={value}
+                        onChange={handleChange}
+                        aria-label="wrapped label tabs example"
+                    >
+                        <Tab
+                            value="one"
+                            label="Profile"
+                            wrapped
+                            {...a11yProps('Profile')}
+                        />
+                        <Tab
+                            value="two"
+                            label="Friends"
+                            {...a11yProps('Friends')}
+                        />
                     </Tabs>
                 </AppBar>
                 <TabPanel value={value} index="one">
                     <Grid container>
                         <Grid item>
-                            <img src={args.profile?.player.avatarfull} alt={'Avatar'} />
+                            <img
+                                src={args.profile?.player.avatarfull}
+                                alt={'Avatar'}
+                            />
                         </Grid>
                         <Grid item>
-                            <Typography variant={'h3'}>{args.profile?.player.personaname}</Typography>
+                            <Typography variant={'h3'}>
+                                {args.profile?.player.personaname}
+                            </Typography>
                         </Grid>
                     </Grid>
                 </TabPanel>

@@ -1,35 +1,6 @@
-import {createContext, useContext} from 'react';
-import {communityVisibilityState, PlayerProfile} from '../util/api';
-
-export interface StoreProps {
-    children: JSX.Element[];
-}
-
-// export const AuthStore = ({children}: StoreProps) => {
-//     const [state] = useReducer<React.Reducer<PlayerProfile, Action>>(
-//         Reducer, initialState)
-//     return (
-//         <CurrentUserCtx.Provider value={state} children={children} />
-//     )
-// }
-
-type ReducerActionType = 'SET_PROFILE' | 'SET_ERROR';
-
-export interface Action {
-    type: ReducerActionType;
-    payload: any;
-}
-
-export const Reducer = (state: PlayerProfile, action: Action): PlayerProfile => {
-    switch (action.type) {
-        case 'SET_PROFILE':
-            return action.payload;
-        case 'SET_ERROR':
-            return action.payload;
-        default:
-            return state;
-    }
-};
+import { createContext, useContext } from 'react';
+import { communityVisibilityState, PlayerProfile } from '../util/api';
+import { noop } from 'lodash-es';
 
 export const GuestProfile: PlayerProfile = {
     player: {
@@ -63,7 +34,8 @@ export type CurrentUser = {
 };
 export const CurrentUserCtx = createContext<CurrentUser>({
     currentUser: GuestProfile,
-    setCurrentUser: _ => {}
+    setCurrentUser: noop
 });
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const useCurrentUserCtx = () => useContext(CurrentUserCtx);

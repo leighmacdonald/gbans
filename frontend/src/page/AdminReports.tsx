@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const AdminReports = () => {
+export const AdminReports = (): JSX.Element => {
     return (
         <div className="grid-container">
             <div className="grid-x grid-padding-x">

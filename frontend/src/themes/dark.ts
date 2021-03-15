@@ -1,22 +1,22 @@
-import {createMuiTheme} from "@material-ui/core";
-import {red} from "@material-ui/core/colors";
+import { createMuiTheme } from '@material-ui/core';
+import { red } from '@material-ui/core/colors';
 
 const darkTheme = createMuiTheme({
     palette: {
-        type: "dark",
+        type: 'dark',
         primary: {
-            main: '#121b47',
+            main: '#121b47'
         },
         secondary: {
-            main: '#19857b',
+            main: '#19857b'
         },
         error: {
-            main: red.A400,
+            main: red.A400
         },
         background: {
-            default: '#fff',
-        },
-    },
-})
+            default: '#fff'
+        }
+    }
+});
 
 export default darkTheme;

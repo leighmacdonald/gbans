@@ -1,14 +1,12 @@
 import React from 'react';
+import { Grid, Typography } from '@material-ui/core';
 
-export const Report = () => {
+export const Report = (): JSX.Element => {
     return (
-        <div className="grid-container">
-            <div className="grid-y grid-padding-y">
-                <div className="cell">
-                    <h1 className="text-center">Report A Player</h1>
-                </div>
-                <div className="cell"></div>
-            </div>
-        </div>
+        <Grid container>
+            <Grid item xs>
+                <Typography variant={'h1'}>Report A Player</Typography>
+            </Grid>
+        </Grid>
     );
 };

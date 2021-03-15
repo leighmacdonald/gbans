@@ -1,9 +1,17 @@
-import React, {useEffect} from 'react';
-import {apiGetStats, DatabaseStats} from '../util/api';
-import {Paper, Table, TableBody, TableContainer, TableHead, TableRow} from '@material-ui/core';
-import {StyledTableCell, StyledTableRow} from './Tables';
+import React, { useEffect } from 'react';
+import { apiGetStats, DatabaseStats } from '../util/api';
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableContainer,
+    TableHead,
+    TableRow
+} from '@material-ui/core';
+import { StyledTableCell, StyledTableRow } from './Tables';
+import { log } from '../util/errors';
 
-export const StatsPanel = () => {
+export const StatsPanel = (): JSX.Element => {
     const [stats, setStats] = React.useState<DatabaseStats>({
         bans: 0,
         appeals_closed: 0,
@@ -26,7 +34,7 @@ export const StatsPanel = () => {
                 const resp = await apiGetStats();
                 setStats(resp);
             } catch (e) {
-                console.log(`"Failed to get stats: ${e}`);
+                log(`"Failed to get stats: ${e}`);
             }
         };
         loadStats();
@@ -45,55 +53,73 @@ export const StatsPanel = () => {
                         <StyledTableCell component="th" scope="row">
                             Bans Total
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Bans 1 Week
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_week}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_week}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Bans 1 Month
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_month}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_month}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Bans 3 Months
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_3month}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_3month}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Bans 6 Months
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_6month}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_6month}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Bans 1 Year
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_year}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_year}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             CIDR Bans
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.bans_cidr}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.bans_cidr}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Appeals (Open)
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.appeals_open}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.appeals_open}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">
                             Appeals (Closed)
                         </StyledTableCell>
-                        <StyledTableCell align="right">{stats.appeals_closed}</StyledTableCell>
+                        <StyledTableCell align="right">
+                            {stats.appeals_closed}
+                        </StyledTableCell>
                     </StyledTableRow>
                     <StyledTableRow>
                         <StyledTableCell component="th" scope="row">

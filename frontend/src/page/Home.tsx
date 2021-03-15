@@ -1,9 +1,9 @@
 import React from 'react';
-import {StatsPanel} from '../component/StatsPanel';
-import {BanList} from '../component/BanList';
-import {Grid, Paper} from '@material-ui/core';
+import { StatsPanel } from '../component/StatsPanel';
+import { BanList } from '../component/BanList';
+import { Grid, Paper } from '@material-ui/core';
 
-import {makeStyles, Theme} from '@material-ui/core/styles';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 const useStyles = makeStyles((theme: Theme) => ({
     root: {
         flexGrow: 1
@@ -15,7 +15,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-export const Home = () => {
+export const Home = (): JSX.Element => {
     const classes = useStyles();
     return (
         <Grid container spacing={3}>

@@ -1,22 +1,22 @@
-import {createMuiTheme} from "@material-ui/core";
-import {red} from "@material-ui/core/colors";
+import { createMuiTheme } from '@material-ui/core';
+import { red } from '@material-ui/core/colors';
 
 const lightTheme = createMuiTheme({
     palette: {
-        type: "light",
+        type: 'light',
         primary: {
-            main: '#556cd6',
+            main: '#556cd6'
         },
         secondary: {
-            main: '#19857b',
+            main: '#19857b'
         },
         error: {
-            main: red.A400,
+            main: red.A400
         },
         background: {
-            default: '#fff',
-        },
-    },
-})
+            default: '#fff'
+        }
+    }
+});
 
 export default lightTheme;
