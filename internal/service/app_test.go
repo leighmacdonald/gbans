@@ -36,11 +36,10 @@ func TestAPIGetServers(t *testing.T) {
 		if w.Code != http.StatusOK {
 			return false
 		}
-		var r []model.Server
+		var r apiResponse
 		b, err := ioutil.ReadAll(w.Body)
 		require.NoError(t, err, "Failed to read body")
 		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
-		require.Equal(t, 2, len(r))
 		return true
 	})
 }

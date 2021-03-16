@@ -115,7 +115,7 @@ func TestAppeal(t *testing.T) {
 }
 
 func TestPerson(t *testing.T) {
-	p1 := model.NewPerson(76561199093644873)
+	p1 := model.NewPerson(76561198083950961)
 	p2 := model.NewPerson(76561198084134025)
 	require.NoError(t, SavePerson(p1))
 	p2Fetched, err := GetOrCreatePersonBySteamID(p2.SteamID)
@@ -125,4 +125,6 @@ func TestPerson(t *testing.T) {
 	pBadID, err := getPersonBySteamID(0)
 	require.Error(t, err)
 	require.Nil(t, pBadID)
+
+	require.NoError(t, DropPerson(p1.SteamID))
 }

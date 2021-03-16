@@ -406,6 +406,17 @@ func updateBan(ban *model.Ban) error {
 	return nil
 }
 
+func DropPerson(steamID steamid.SID64) error {
+	q, a, e := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
+	if e != nil {
+		return e
+	}
+	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+		return DBErr(err)
+	}
+	return nil
+}
+
 func SavePerson(person *model.Person) error {
 	person.UpdatedOn = config.Now()
 	if !person.IsNew {
