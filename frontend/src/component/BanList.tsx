@@ -46,5 +46,6 @@ export const BanList = (): JSX.Element =>
                 label: 'Source',
                 numeric: false
             }
-        ]
+        ],
+        showToolbar: false
     });

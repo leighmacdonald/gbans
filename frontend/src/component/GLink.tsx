@@ -3,12 +3,12 @@ import React, { forwardRef, useMemo } from 'react';
 import { Button } from '@material-ui/core';
 
 interface GLinkProps {
-    icon?: string;
+    icon?: string | JSX.Element;
     primary: string;
     to: string;
 }
 
-export const GLink = ({ primary, to }: GLinkProps): JSX.Element => {
+export const GLink = ({ primary, to, icon }: GLinkProps): JSX.Element => {
     const CustomLink = useMemo(() => {
         const f = forwardRef<HTMLAnchorElement>((linkProps, ref) => (
             <Link ref={ref} to={to} {...linkProps} />
@@ -16,5 +16,9 @@ export const GLink = ({ primary, to }: GLinkProps): JSX.Element => {
         f.displayName = 'GLink';
         return f;
     }, [to]);
-    return <Button component={CustomLink}>{primary}</Button>;
+    return (
+        <Button component={CustomLink} startIcon={icon}>
+            {primary}
+        </Button>
+    );
 };

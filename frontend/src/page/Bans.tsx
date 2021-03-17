@@ -23,12 +23,6 @@ export const Bans = (): JSX.Element => {
                     <BanList />
                 </Paper>
             </Grid>
-            <Grid item xs>
-                <Paper className={classes.paper}>xs</Paper>
-            </Grid>
-            <Grid item xs>
-                <Paper className={classes.paper}>xs</Paper>
-            </Grid>
         </Grid>
     );
 };

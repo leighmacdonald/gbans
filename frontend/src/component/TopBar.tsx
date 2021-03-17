@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fade, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
+import { fade, makeStyles, Theme } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -8,7 +8,6 @@ import InputBase from '@material-ui/core/InputBase';
 import Badge from '@material-ui/core/Badge';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import MenuIcon from '@material-ui/icons/Menu';
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
@@ -18,18 +17,10 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { handleOnLogin } from '../util/api';
 import { Avatar, Button, Divider } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
-import clsx from 'clsx';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import ListItemText from '@material-ui/core/ListItemText';
-import Drawer from '@material-ui/core/Drawer';
+import HomeIcon from '@material-ui/icons/Home';
+import HistoryIcon from '@material-ui/icons/History';
+import StorageIcon from '@material-ui/icons/Storage';
 import { GLink } from './GLink';
-
-const drawerWidth = 240;
 
 const useStyles = makeStyles((theme: Theme) => ({
     grow: {
@@ -102,48 +93,6 @@ const useStyles = makeStyles((theme: Theme) => ({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen
         })
-    },
-    appBarShift: {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-        transition: theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen
-        })
-    },
-    hide: {
-        display: 'none'
-    },
-    drawer: {
-        width: drawerWidth,
-        flexShrink: 0,
-        whiteSpace: 'nowrap'
-    },
-    drawerOpen: {
-        width: drawerWidth,
-        transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen
-        })
-    },
-    drawerClose: {
-        transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen
-        }),
-        overflowX: 'hidden',
-        width: theme.spacing(7) + 1,
-        [theme.breakpoints.up('sm')]: {
-            width: theme.spacing(9) + 1
-        }
-    },
-    toolbar: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        padding: theme.spacing(0, 1),
-        // necessary for content to be below app bar
-        ...theme.mixins.toolbar
     }
 }));
 
@@ -164,7 +113,6 @@ export const TopBar = (): JSX.Element => {
     const isProfileMenuOpen = Boolean(anchorProfileMenuEl);
     const isAdminMenuOpen = Boolean(anchorAdminMenuEl);
     const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
-    const [sideMenuOpen, setSideMenuOpen] = useState<boolean>(false);
     const { currentUser } = useCurrentUserCtx();
 
     const handleAdminMenuOpen = (event: React.MouseEvent) => {
@@ -194,9 +142,6 @@ export const TopBar = (): JSX.Element => {
 
     const menuId = 'primary-search-account-menu';
     const adminMenuId = 'admin-menu';
-    const handleSideMenuClose = () => {
-        setSideMenuOpen(false);
-    };
     const renderProfileMenu = (
         <Menu
             anchorEl={anchorProfileMenuEl}
@@ -297,90 +242,38 @@ export const TopBar = (): JSX.Element => {
             </MenuItem>
         </Menu>
     );
-    const theme = useTheme();
-    const renderSideMenu = (
-        <Drawer
-            variant="permanent"
-            className={clsx(classes.drawer, {
-                [classes.drawerOpen]: sideMenuOpen,
-                [classes.drawerClose]: !sideMenuOpen
-            })}
-            classes={{
-                paper: clsx({
-                    [classes.drawerOpen]: sideMenuOpen,
-                    [classes.drawerClose]: !sideMenuOpen
-                })
-            }}
-        >
-            <div className={classes.toolbar}>
-                <IconButton onClick={handleSideMenuClose}>
-                    {theme.direction === 'rtl' ? (
-                        <ChevronRightIcon />
-                    ) : (
-                        <ChevronLeftIcon />
-                    )}
-                </IconButton>
-            </div>
-            <Divider />
-            <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map(
-                    (text, index) => (
-                        <ListItem button key={text}>
-                            <ListItemIcon>
-                                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                            </ListItemIcon>
-                            <ListItemText primary={text} />
-                        </ListItem>
-                    )
-                )}
-            </List>
-            <Divider />
-            <List>
-                {['All mail', 'Trash', 'Spam'].map((text, index) => (
-                    <ListItem button key={text}>
-                        <ListItemIcon>
-                            {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                        </ListItemIcon>
-                        <ListItemText primary={text} />
-                    </ListItem>
-                ))}
-            </List>
-        </Drawer>
-    );
 
     return (
         <>
-            {renderSideMenu}
-
             <div className={classes.grow}>
-                <AppBar
-                    position="fixed"
-                    className={clsx(classes.appBar, {
-                        [classes.appBarShift]: sideMenuOpen
-                    })}
-                >
+                <AppBar position="fixed">
                     <Toolbar>
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            onClick={() => {
-                                setSideMenuOpen(true);
-                            }}
-                            edge="start"
-                            className={clsx(classes.menuButton, {
-                                [classes.hide]: sideMenuOpen
-                            })}
-                        >
-                            <MenuIcon />
-                        </IconButton>
                         <Typography
                             className={classes.title}
                             variant="h6"
                             noWrap
                         >
-                            <GLink to={'/'} primary={'Home'} />
+                            <GLink
+                                to={'/'}
+                                primary={'Home'}
+                                icon={<HomeIcon />}
+                            />
                         </Typography>
-                        <GLink to={'/bans'} primary={'Bans'} />
+                        <GLink
+                            to={'/bans'}
+                            primary={'Bans'}
+                            icon={<SettingsIcon />}
+                        />
+                        <GLink
+                            to={'/servers'}
+                            primary={'Servers'}
+                            icon={<StorageIcon />}
+                        />
+                        <GLink
+                            to={'/appeal'}
+                            primary={'Appeal'}
+                            icon={<HistoryIcon />}
+                        />
                         <div className={classes.search}>
                             <div className={classes.searchIcon}>
                                 <SearchIcon />

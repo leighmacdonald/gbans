@@ -2,13 +2,11 @@ package service
 
 import (
 	"crypto/tls"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -38,25 +36,6 @@ const baseLayout = `<!doctype html>
 type StatusResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
-}
-
-func checkServerAuth(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" || len(token) != 40 {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "Unauthorized",
-		})
-		return
-	}
-	log.Debugf("Authed as: %s", token)
-	if !tokenValid(token) {
-		log.Warnf("Received invalid server token from %s", c.ClientIP())
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "Unauthorized",
-		})
-		return
-	}
-	c.Next()
 }
 
 func initHTTP() {
@@ -96,42 +75,6 @@ func initHTTP() {
 		}
 	}()
 	<-ctx.Done()
-}
-
-func routeRaw(name string) string {
-	routePath, ok := routes[routeKey(name)]
-	if !ok {
-		return "/unimplemented"
-	}
-	return routePath
-}
-
-// route will return a route for the simple name provided. If the route has parameters, the function
-// will ensure that they are supplied.
-func route(name string, args ...interface{}) string {
-	const sep = ":"
-	routePath := routeRaw(name)
-	if !strings.Contains(routePath, sep) {
-		return routePath
-	}
-	cnt := strings.Count(routePath, sep)
-	if len(args) != cnt {
-		log.Errorf("routeKey args count mismatch. Have: %d Want: %d", len(args), cnt)
-		return routePath
-	}
-	varIdx := 0
-	p := strings.Split(routePath, "/")
-	p = p[1:]
-	for i, part := range p {
-		if strings.HasPrefix(part, sep) {
-			p[i] = fmt.Sprintf("%s", args[varIdx])
-			varIdx++
-			if varIdx == len(args) {
-				break
-			}
-		}
-	}
-	return "/" + strings.Join(p, "/")
 }
 
 func currentPerson(c *gin.Context) *model.Person {

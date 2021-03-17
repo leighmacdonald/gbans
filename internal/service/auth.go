@@ -31,6 +31,8 @@ func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 var nonceStore = openid.NewSimpleNonceStore()
 var discoveryCache = &noOpDiscoveryCache{}
 
+const testToken = "test-token"
+
 func authMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := model.NewPerson(0)
@@ -38,6 +40,17 @@ func authMiddleWare() gin.HandlerFunc {
 		tp := strings.SplitN(ah, " ", 2)
 		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
+			if config.General.Mode == "test" && token == testToken {
+				loggedInPerson, err := GetOrCreatePersonBySteamID(steamid.SID64(76561198084134025))
+				if err != nil {
+					log.Errorf("Failed to load persons session user: %v", err)
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				p = loggedInPerson
+				c.Next()
+				return
+			}
 			claims := &authClaims{}
 			tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
 			if err != nil {
@@ -124,7 +137,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		u, err := url.Parse(routeRaw(string(routeLoginSuccess)))
+		u, err := url.Parse("/login/success")
 		if err != nil {
 			c.Redirect(302, ref)
 			return

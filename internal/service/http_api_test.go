@@ -3,6 +3,8 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -22,6 +24,7 @@ func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRe
 func newTestReq(method string, key routeKey, body interface{}) *http.Request {
 	b, _ := json.Marshal(body)
 	req, _ := http.NewRequest(method, routeRaw(string(key)), bytes.NewReader(b))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testToken))
 	return req
 }
 
@@ -48,7 +51,7 @@ func TestOnAPIPostBan(t *testing.T) {
 	}
 	s1 := "76561198031215761"
 	units := []httpTestUnit{
-		{newTestReq("POST", routeAPIBans, req{
+		{newTestReq("POST", routeAPIBansCreate, req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,
@@ -58,7 +61,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		}),
 			httpTestResult{Code: http.StatusCreated},
 			"Failed to successfully create steam ban"},
-		{newTestReq("POST", routeAPIBans, req{
+		{newTestReq("POST", routeAPIBansCreate, req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,
@@ -117,6 +120,7 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 			"Failed to add log message",
 		})
 	}
+	config.General.Mode = "test"
 	testUnits(t, units)
 }
 

@@ -52,11 +52,9 @@ func TestSteamWebAPI(t *testing.T) {
 	friends, err := fetchFriends(76561197961279983)
 	require.NoError(t, err)
 	require.True(t, len(friends) > 100)
-
 	summaries, err := fetchSummaries(friends)
 	require.NoError(t, err)
 	require.Equal(t, len(friends), len(summaries))
-
 }
 
 func GenTestData() {
@@ -139,6 +137,7 @@ func clearDB() {
 
 func TestMain(m *testing.M) {
 	config.Read()
+	config.General.Mode = "test"
 	initStore()
 	clearDB()
 	if err := Migrate(true); err != nil {

@@ -456,42 +456,6 @@ func onAPIGetBans() gin.HandlerFunc {
 	}
 }
 
-func onGetServerBan() gin.HandlerFunc {
-	type banStateRequest struct {
-		SteamID string `json:"steam_id"`
-	}
-	type banStateResponse struct {
-		SteamID string        `json:"steam_id"`
-		BanType model.BanType `json:"ban_type"`
-		Msg     string        `json:"msg"`
-	}
-	return func(c *gin.Context) {
-		var req banStateRequest
-
-		if err := c.BindJSON(&req); err != nil {
-			responseErr(c, http.StatusInternalServerError, banStateResponse{
-				SteamID: "",
-				BanType: model.Unknown,
-				Msg:     "Error determining state",
-			})
-			return
-		}
-		responseOK(c, http.StatusOK, gin.H{"status": model.OK})
-	}
-}
-
-// messageType defines the type of log message being sent
-type messageType int
-
-const (
-	//TypeLog is a console.log file
-	TypeLog messageType = iota
-	// TypeStartup is a server start event message
-	TypeStartup
-	// TypeShutdown is a server start event message
-	TypeShutdown
-)
-
 // LogPayload is the container for log/message payloads
 type LogPayload struct {
 	ServerName string `json:"server_name"`

@@ -132,6 +132,7 @@ export interface TableProps<TRecord> {
     heading: string;
     id_field: keyof TRecord;
     connector: () => Promise<TRecord[]>;
+    showToolbar: boolean;
 }
 
 export const CreateDataTable = <TRecord extends unknown>(): ((
@@ -246,7 +247,13 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
     }
 
     // eslint-disable-next-line react/display-name
-    return ({ connector, id_field, headers, heading }: TableProps<TRecord>) => {
+    return ({
+        connector,
+        id_field,
+        headers,
+        heading,
+        showToolbar
+    }: TableProps<TRecord>) => {
         // eslint-disable-next-line
         const [rows, setRows] = useState<TRecord[]>([]);
         // eslint-disable-next-line
@@ -272,7 +279,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
         // eslint-disable-next-line
         const [dense, setDense] = React.useState(false);
         // eslint-disable-next-line
-        const [rowsPerPage, setRowsPerPage] = React.useState(5);
+        const [rowsPerPage, setRowsPerPage] = React.useState(10);
         // eslint-disable-next-line
 
         const handleRequestSort = (
@@ -348,10 +355,12 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
         return (
             <div className={classes.root}>
                 <Paper className={classes.paper}>
-                    <EnhancedTableToolbar
-                        numSelected={selected.length}
-                        heading={heading}
-                    />
+                    {showToolbar && (
+                        <EnhancedTableToolbar
+                            numSelected={selected.length}
+                            heading={heading}
+                        />
+                    )}
                     <TableContainer>
                         <Table
                             className={classes.table}

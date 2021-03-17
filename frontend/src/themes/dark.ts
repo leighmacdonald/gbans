@@ -1,20 +1,40 @@
 import { createMuiTheme } from '@material-ui/core';
-import { red } from '@material-ui/core/colors';
 
 const darkTheme = createMuiTheme({
+    typography: {
+        fontSize: 12,
+        h1: {
+            fontSize: 32
+        },
+        h2: {
+            fontSize: 28
+        },
+        h3: {
+            fontSize: 24
+        },
+        h4: {
+            fontSize: 20
+        },
+        h5: {
+            fontSize: 16
+        },
+        h6: {
+            fontSize: 14
+        }
+    },
     palette: {
         type: 'dark',
         primary: {
-            main: '#121b47'
+            main: '#943b00'
         },
         secondary: {
-            main: '#19857b'
+            main: '#836312'
         },
         error: {
-            main: red.A400
+            main: '#8d0101'
         },
         background: {
-            default: '#fff'
+            default: '#1c1c1c'
         }
     }
 });

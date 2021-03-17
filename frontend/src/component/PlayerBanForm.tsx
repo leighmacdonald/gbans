@@ -11,7 +11,6 @@ import { Nullable } from '../util/types';
 
 import {
     Button,
-    createStyles,
     FormControl,
     FormControlLabel,
     FormHelperText,
@@ -26,30 +25,14 @@ import {
     Typography
 } from '@material-ui/core';
 import { VoiceOverOffSharp } from '@material-ui/icons';
-import { makeStyles, Theme } from '@material-ui/core/styles';
 import { log } from '../util/errors';
 
-export const ip2int = (ip: string): number => {
-    return (
-        ip.split('.').reduce((ipInt, octet) => {
-            return (ipInt << 8) + parseInt(octet, 10);
-        }, 0) >>> 0
-    );
-};
+export const ip2int = (ip: string): number =>
+    ip
+        .split('.')
+        .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
 
 export type BanType = 'network' | 'steam';
-
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        formControl: {
-            margin: theme.spacing(1),
-            minWidth: 120
-        },
-        selectEmpty: {
-            marginTop: theme.spacing(2)
-        }
-    })
-);
 
 export enum Duration {
     dur15m = '15m',
@@ -83,9 +66,13 @@ const Durations = [
     Duration.durCustom
 ];
 
-export const PlayerBanForm = (): JSX.Element => {
-    const classes = useStyles();
+export interface PlayerBanFormProps {
+    onProfileChanged?: (profile: PlayerProfile) => void;
+}
 
+export const PlayerBanForm = ({
+    onProfileChanged
+}: PlayerBanFormProps): JSX.Element => {
     const [fSteam, setFSteam] = React.useState<string>(
         'https://steamcommunity.com/id/SQUIRRELLY/'
     );
@@ -97,7 +84,11 @@ export const PlayerBanForm = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>();
     const loadPlayerSummary = async () => {
         try {
-            setProfile((await apiGetProfile(fSteam)) as PlayerProfile);
+            const p = (await apiGetProfile(fSteam)) as PlayerProfile;
+            setProfile(p);
+            if (onProfileChanged) {
+                onProfileChanged(p);
+            }
         } catch (e) {
             log(e);
         }
@@ -166,24 +157,24 @@ export const PlayerBanForm = (): JSX.Element => {
     };
 
     return (
-        <Grid container spacing={3}>
-            <Grid item xs={12}>
-                <Typography variant={'h1'}>Ban A Player</Typography>
-            </Grid>
-            <form noValidate>
-                <Grid container>
-                    <Grid item xs>
-                        <TextField
-                            fullWidth
-                            id={'query'}
-                            label={'Steam ID / Profile URL'}
-                            onChange={onChangeFStream}
-                            onBlur={handleUpdateFSteam}
-                        />
-                    </Grid>
-                </Grid>
+        <form noValidate>
+            <Grid container spacing={3}>
                 <Grid item xs={12}>
-                    <FormControl component="fieldset">
+                    <Typography variant={'h1'}>Ban A Player</Typography>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        id={'query'}
+                        label={'Steam ID / Profile URL'}
+                        onChange={onChangeFStream}
+                        onBlur={handleUpdateFSteam}
+                    />
+                </Grid>
+
+                <Grid item xs={12}>
+                    <FormControl component="fieldset" fullWidth>
                         <FormLabel component="legend">Ban Type</FormLabel>
                         <RadioGroup
                             aria-label="gender"
@@ -222,7 +213,7 @@ export const PlayerBanForm = (): JSX.Element => {
                         </Grid>
                     </>
                 )}
-                <Grid item>
+                <Grid item xs={12}>
                     <TextField
                         fullWidth
                         id={'duration'}
@@ -230,7 +221,7 @@ export const PlayerBanForm = (): JSX.Element => {
                         onChange={handleUpdateNetwork}
                     />
                 </Grid>
-                <Grid item>
+                <Grid item xs={12}>
                     <TextField
                         fullWidth
                         id={'reason'}
@@ -238,15 +229,15 @@ export const PlayerBanForm = (): JSX.Element => {
                         onChange={handleUpdateReasonText}
                     />
                 </Grid>
-                <Grid item>
-                    <FormControl className={classes.formControl}>
-                        <InputLabel id="demo-simple-select-helper-label">
-                            Age
+                <Grid item xs={12}>
+                    <FormControl fullWidth>
+                        <InputLabel id="duration-label">
+                            Ban Duration
                         </InputLabel>
                         <Select
                             fullWidth
-                            labelId="demo-simple-select-helper-label"
-                            id="demo-simple-select-helper"
+                            labelId="duration-label"
+                            id="duration-helper"
                             value={duration}
                             onChange={handleUpdateDuration}
                         >
@@ -257,7 +248,8 @@ export const PlayerBanForm = (): JSX.Element => {
                             ))}
                         </Select>
                         <FormHelperText>
-                            Some important helper text
+                            Choosing custom will allow you to input a custom
+                            duration
                         </FormHelperText>
                     </FormControl>
                 </Grid>
@@ -267,13 +259,15 @@ export const PlayerBanForm = (): JSX.Element => {
                         key={'submit'}
                         value={'Create Ban'}
                         onClick={handleSubmit}
+                        variant="contained"
+                        color="primary"
                         startIcon={<VoiceOverOffSharp />}
                     >
                         Ban Player
                     </Button>
                 </Grid>
-            </form>
-        </Grid>
+            </Grid>
+        </form>
     );
 };
 

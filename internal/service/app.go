@@ -20,7 +20,6 @@ import (
 var (
 	BuildVersion  = "master"
 	router        *gin.Engine
-	routes        map[routeKey]string
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
 	serverState   map[string]ServerState

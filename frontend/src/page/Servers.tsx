@@ -5,7 +5,7 @@ import { ServerList } from '../component/ServerList';
 export const Servers = (): JSX.Element => {
     return (
         <Grid container>
-            <Grid item>
+            <Grid item xs={12}>
                 <ServerList />
             </Grid>
         </Grid>

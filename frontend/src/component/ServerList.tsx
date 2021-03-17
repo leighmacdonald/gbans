@@ -35,5 +35,6 @@ export const ServerList = (): JSX.Element =>
                 label: 'Token Last Updated',
                 numeric: false
             }
-        ]
+        ],
+        showToolbar: false
     });

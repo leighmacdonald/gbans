@@ -1,39 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PlayerBanForm } from '../component/PlayerBanForm';
-import { Card, CardContent, Grid } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Grid, Paper } from '@material-ui/core';
+import { makeStyles, Theme } from '@material-ui/core/styles';
 import { ProfilePanel } from '../component/ProfilePanel';
+import { PlayerProfile } from '../util/api';
 
-const useStyles = makeStyles({
-    root: {
-        minWidth: 275
-    },
-    bullet: {
-        display: 'inline-block',
-        margin: '0 2px',
-        transform: 'scale(0.8)'
-    },
-    title: {
-        fontSize: 14
-    },
-    pos: {
-        marginBottom: 12
+const useStyles = makeStyles((theme: Theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+        textAlign: 'center',
+        color: theme.palette.text.secondary
     }
-});
+}));
 
 export const AdminBan = (): JSX.Element => {
     const classes = useStyles();
+    const [profile, setProfile] = useState<PlayerProfile | undefined>();
     return (
-        <Grid container>
+        <Grid container spacing={3}>
             <Grid item xs={6}>
-                <PlayerBanForm />
+                <Paper className={classes.paper}>
+                    <PlayerBanForm
+                        onProfileChanged={(p) => {
+                            setProfile(p);
+                        }}
+                    />
+                </Paper>
             </Grid>
             <Grid item xs={6}>
-                <Card className={classes.root}>
-                    <CardContent>
-                        <ProfilePanel />
-                    </CardContent>
-                </Card>
+                <Paper className={classes.paper}>
+                    <ProfilePanel profile={profile} />
+                </Paper>
             </Grid>
         </Grid>
     );

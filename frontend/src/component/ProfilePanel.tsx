@@ -1,6 +1,17 @@
 import React from 'react';
-import { AppBar, Box, Grid, Tab, Tabs, Typography } from '@material-ui/core';
+import {
+    AppBar,
+    Chip,
+    Grid,
+    Paper,
+    Tab,
+    Tabs,
+    Typography
+} from '@material-ui/core';
 import { PlayerProfile } from '../util/api';
+import { makeStyles, Theme } from '@material-ui/core/styles';
+import CheckIcon from '@material-ui/icons/Check';
+import ClearIcon from '@material-ui/icons/Clear';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -8,23 +19,36 @@ interface TabPanelProps {
     value: number | string;
 }
 
+const useStyles = makeStyles((theme: Theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+        textAlign: 'center',
+        color: theme.palette.text.secondary
+    },
+    ok: {
+        backgroundColor: theme.palette.success.main
+    },
+    error: {
+        backgroundColor: theme.palette.error.main
+    }
+}));
+
 function TabPanel(props: TabPanelProps) {
+    const classes = useStyles();
     const { children, value, index, ...other } = props;
 
     return (
-        <div
+        <Paper
+            className={classes.paper}
+            variant={'outlined'}
             role="tabpanel"
             hidden={value !== index}
             id={`wrapped-tabpanel-${index}`}
             aria-labelledby={`wrapped-tab-${index}`}
             {...other}
         >
-            {value === index && (
-                <Box p={3}>
-                    <Typography>{children}</Typography>
-                </Box>
-            )}
-        </div>
+            {value === index && <>{children}</>}
+        </Paper>
     );
 }
 
@@ -40,9 +64,7 @@ export const a11yProps = (index: number | string): Record<string, string> => {
 };
 
 export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
-    // const [friendsPage, setFriendsPage] = React.useState<number>(0);
-    // const [showFriends, setShowFriends] = React.useState<boolean>(false);
-
+    const classes = useStyles();
     const [value, setValue] = React.useState('one');
 
     const handleChange = (
@@ -54,43 +76,84 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
 
     return (
         <Grid container>
-            <Grid item>
+            <Grid item xs={12}>
                 <AppBar position="static">
                     <Tabs
                         value={value}
                         onChange={handleChange}
-                        aria-label="wrapped label tabs example"
+                        aria-label="Player Profile Panel"
+                        variant={'fullWidth'}
                     >
                         <Tab
                             value="one"
                             label="Profile"
-                            wrapped
                             {...a11yProps('Profile')}
                         />
                         <Tab
                             value="two"
-                            label="Friends"
+                            label={
+                                'Friends' +
+                                (args.profile?.friends
+                                    ? ` (${args.profile?.friends.length})`
+                                    : '')
+                            }
                             {...a11yProps('Friends')}
                         />
                     </Tabs>
                 </AppBar>
                 <TabPanel value={value} index="one">
                     <Grid container>
-                        <Grid item>
+                        <Grid item xs>
                             <img
                                 src={args.profile?.player.avatarfull}
                                 alt={'Avatar'}
                             />
                         </Grid>
-                        <Grid item>
-                            <Typography variant={'h3'}>
+                        <Grid item xs>
+                            <Typography variant={'h3'} align={'center'}>
                                 {args.profile?.player.personaname}
                             </Typography>
+                        </Grid>
+                        <Grid container>
+                            <Grid item xs={3}>
+                                <Chip
+                                    className={classes.ok}
+                                    label={'VAC'}
+                                    icon={<CheckIcon />}
+                                />
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Chip
+                                    className={classes.ok}
+                                    label={'Trade'}
+                                    icon={<CheckIcon />}
+                                />
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Chip
+                                    className={classes.ok}
+                                    label="Community"
+                                    icon={<CheckIcon />}
+                                />
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Chip
+                                    className={classes.error}
+                                    label={'Game'}
+                                    icon={<ClearIcon />}
+                                />
+                            </Grid>
                         </Grid>
                     </Grid>
                 </TabPanel>
                 <TabPanel value={value} index="two">
-                    Friends List...
+                    <Grid container>
+                        {args.profile?.friends?.map((p) => (
+                            <Grid container key={p.steam_id}>
+                                <Grid item>{p.personaname}</Grid>
+                            </Grid>
+                        ))}
+                    </Grid>
                 </TabPanel>
             </Grid>
         </Grid>
