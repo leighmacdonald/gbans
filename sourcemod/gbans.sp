@@ -89,7 +89,7 @@ Action sendMessage(int client, const char[] msg, bool team_say) {
     char encoded[2048];
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
-    System2HTTPRequest req = newReq(ignoreResponse, "/sapi/v1/message");
+    System2HTTPRequest req = newReq(ignoreResponse, "/api/message");
     req.SetData(encoded);
     req.POST();
     delete obj;
@@ -240,7 +240,7 @@ void AuthenticateServer() {
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
     delete obj;
-    System2HTTPRequest req = newReq(OnAuthReqReceived, "/sapi/v1/auth");
+    System2HTTPRequest req = newReq(OnAuthReqReceived, "/api/server_auth");
     req.SetData(encoded);
     req.POST();
     delete req;
@@ -259,7 +259,7 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
                       totalTime);
 #endif
         if (statusCode != HTTP_STATUS_OK) {
-            PrintToServer("[GB] Bad status on authentication request: %s", error);
+            PrintToServer("[GB] Bad status on authentication request: %d", statusCode);
             return;
         }
         char[] content = new char[response.ContentLength + 1];
@@ -270,14 +270,17 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
             PrintToServer("[GB] Invalid response status, cannot authenticate");
             return;
         }
+        JSON_Object data = resp.GetObject("data");
         char token[41];
-        resp.GetString("token", token, sizeof(token));
+        data.GetString("token", token, sizeof(token));
         if (strlen(token) != 40) {
             PrintToServer("[GB] Invalid response status, invalid token");
             return;
         }
         g_token = token;
         PrintToServer("[GB] Successfully authenticated with gbans server");
+        delete data;
+        delete resp;
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
