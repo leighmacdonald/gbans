@@ -25,12 +25,13 @@ func initRouter() {
 	router.GET("/api/filtered_words", onAPIGetFilteredWords())
 
 	// Server Auth Request
-	router.POST("/api/auth", onSAPIPostServerAuth())
+	router.POST("/api/server_auth", onSAPIPostServerAuth())
 
 	tokenAuthed := router.Use(authMiddleWare())
 
 	// Client API
 	tokenAuthed.GET("/api/current_profile", onAPICurrentProfile())
+	tokenAuthed.GET("/api/players", onAPIGetPlayers())
 	tokenAuthed.POST("/api/ban", onAPIPostBanCreate())
 	tokenAuthed.GET("/api/auth/refresh", onTokenRefresh())
 	tokenAuthed.GET("/api/auth/logout", onGetLogout())

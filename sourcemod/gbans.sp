@@ -211,6 +211,10 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
                 OnClientPutInServer(client_id);
             }
         }
+        data.Cleanup();
+        resp.Cleanup();
+        delete data;
+        delete resp;
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
@@ -280,6 +284,8 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
         }
         g_token = token;
         PrintToServer("[GB] Successfully authenticated with gbans server");
+        data.Cleanup();
+        resp.Cleanup();
         delete data;
         delete resp;
     } else {

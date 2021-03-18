@@ -15,12 +15,28 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { handleOnLogin } from '../util/api';
-import { Avatar, Button, Divider } from '@material-ui/core';
+import {
+    Avatar,
+    Button,
+    Divider,
+    ListItemIcon,
+    ListItemText
+} from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
-import HomeIcon from '@material-ui/icons/Home';
+import DashboardIcon from '@material-ui/icons/Dashboard';
 import HistoryIcon from '@material-ui/icons/History';
 import StorageIcon from '@material-ui/icons/Storage';
+import BlockIcon from '@material-ui/icons/Block';
+import ReportIcon from '@material-ui/icons/Report';
+import PregnantWomanIcon from '@material-ui/icons/PregnantWoman';
+import ImportExportIcon from '@material-ui/icons/ImportExport';
+import SpellcheckIcon from '@material-ui/icons/Spellcheck';
+import DnsIcon from '@material-ui/icons/Dns';
+import SubjectIcon from '@material-ui/icons/Subject';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { GLink } from './GLink';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 const useStyles = makeStyles((theme: Theme) => ({
     grow: {
@@ -96,7 +112,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-export const TopBar = (): JSX.Element => {
+const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
     const classes = useStyles();
     const [
         anchorProfileMenuEl,
@@ -142,6 +158,25 @@ export const TopBar = (): JSX.Element => {
 
     const menuId = 'primary-search-account-menu';
     const adminMenuId = 'admin-menu';
+
+    const loadRoute = (route: string) => {
+        history.push(route);
+        handleProfileMenuClose();
+        handleAdminMenuClose();
+        handleMobileMenuClose();
+    };
+
+    const renderLinkedMenuItem = (
+        text: string,
+        route: string,
+        icon: JSX.Element
+    ) => (
+        <MenuItem onClick={() => loadRoute(route)}>
+            <ListItemIcon>{icon}</ListItemIcon>
+            <ListItemText primary={text} />
+        </MenuItem>
+    );
+
     const renderProfileMenu = (
         <Menu
             anchorEl={anchorProfileMenuEl}
@@ -152,16 +187,10 @@ export const TopBar = (): JSX.Element => {
             open={isProfileMenuOpen}
             onClose={handleProfileMenuClose}
         >
-            <MenuItem onClick={handleProfileMenuClose}>
-                <GLink to={'/profile'} primary={'Profile'} />
-            </MenuItem>
-            <MenuItem onClick={handleProfileMenuClose}>
-                <GLink to={'/settings'} primary={'Settings'} />
-            </MenuItem>
+            {renderLinkedMenuItem('Profile', '/profile', <AccountCircleIcon />)}
+            {renderLinkedMenuItem('Settings', '/settings', <SettingsIcon />)}
             <Divider light />
-            <MenuItem onClick={handleProfileMenuClose}>
-                <GLink to={'/logout'} primary={'Logout'} />
-            </MenuItem>
+            {renderLinkedMenuItem('Logout', '/logout', <ExitToAppIcon />)}
         </Menu>
     );
 
@@ -175,27 +204,33 @@ export const TopBar = (): JSX.Element => {
             open={isAdminMenuOpen}
             onClose={handleAdminMenuClose}
         >
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/ban'} primary={'Ban'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/reports'} primary={'Reports'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/people'} primary={'People'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/import'} primary={'Import'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/filters'} primary={'Filtered Words'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/servers'} primary={'Servers'} />
-            </MenuItem>
-            <MenuItem onClick={handleAdminMenuClose}>
-                <GLink to={'/admin/success'} primary={'Server Logs'} />
-            </MenuItem>
+            {renderLinkedMenuItem(
+                'Ban Player/Net',
+                '/admin/ban',
+                <BlockIcon />
+            )}
+            {renderLinkedMenuItem('Reports', '/admin/reports', <ReportIcon />)}
+            {renderLinkedMenuItem(
+                'People',
+                '/admin/people',
+                <PregnantWomanIcon />
+            )}
+            {renderLinkedMenuItem(
+                'Import',
+                '/admin/import',
+                <ImportExportIcon />
+            )}
+            {renderLinkedMenuItem(
+                'Filtered Words',
+                '/admin/filters',
+                <SpellcheckIcon />
+            )}
+            {renderLinkedMenuItem('Servers', '/admin/servers', <DnsIcon />)}
+            {renderLinkedMenuItem(
+                'Server Logs',
+                '/admin/server_logs',
+                <SubjectIcon />
+            )}
         </Menu>
     );
 
@@ -255,14 +290,14 @@ export const TopBar = (): JSX.Element => {
                         >
                             <GLink
                                 to={'/'}
-                                primary={'Home'}
-                                icon={<HomeIcon />}
+                                primary={'Dashboard'}
+                                icon={<DashboardIcon />}
                             />
                         </Typography>
                         <GLink
                             to={'/bans'}
                             primary={'Bans'}
-                            icon={<SettingsIcon />}
+                            icon={<BlockIcon />}
                         />
                         <GLink
                             to={'/servers'}
@@ -362,3 +397,5 @@ export const TopBar = (): JSX.Element => {
         </>
     );
 };
+
+export const TopBarWithRouter = withRouter(TopBar);

@@ -20,7 +20,7 @@ import { BanView } from './page/BanView';
 import { apiGetCurrentProfile, PlayerProfile } from './util/api';
 import { AdminBan } from './page/AdminBan';
 import { AdminServerLog } from './page/AdminServerLog';
-import { TopBar } from './component/TopBar';
+import { TopBarWithRouter } from './component/TopBar';
 import { makeStyles } from '@material-ui/core/styles';
 import { Container } from '@material-ui/core';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
@@ -68,7 +68,7 @@ export const App = (): JSX.Element => {
                 <Container maxWidth={'lg'}>
                     <main className={classes.content}>
                         <div className={classes.toolbar} />
-                        <TopBar />
+                        <TopBarWithRouter />
                         <UserFlashCtx.Provider value={{ flashes, setFlashes }}>
                             <Flashes flashes={flashes} />
                         </UserFlashCtx.Provider>

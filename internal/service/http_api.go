@@ -175,19 +175,19 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 		var req authReq
 		if err := c.BindJSON(&req); err != nil {
 			log.Errorf("Failed to decode auth request: %v", err)
-			responseErr(c, http.StatusInternalServerError, authResp{Status: false})
+			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
 		srv, err := getServerByName(req.ServerName)
 		if err != nil {
-			responseErr(c, http.StatusNotFound, authResp{Status: false})
+			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
 		srv.Token = golib.RandomString(40)
 		srv.TokenCreatedOn = config.Now()
 		if err := SaveServer(&srv); err != nil {
 			log.Errorf("Failed to updated server token: %v", err)
-			responseErr(c, http.StatusInternalServerError, authResp{Status: false})
+			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
 		responseOK(c, http.StatusOK, authResp{
@@ -296,6 +296,30 @@ func onAPIGetServers() gin.HandlerFunc {
 			return
 		}
 		responseOK(c, http.StatusOK, servers)
+	}
+}
+
+func queryFilterFromContext(c *gin.Context) (*QueryFilter, error) {
+	var qf QueryFilter
+	if err := c.BindUri(&qf); err != nil {
+		return nil, err
+	}
+	return &qf, nil
+}
+
+func onAPIGetPlayers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		qf, err := queryFilterFromContext(c)
+		if err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		people, err2 := getPeople(qf)
+		if err2 != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, people)
 	}
 }
 
@@ -445,7 +469,7 @@ func onAPIGetBanByID() gin.HandlerFunc {
 
 func onAPIGetBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		o := newSearchQueryOpts("")
+		o := newQueryFilter("")
 		bans, err := GetBans(o)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)

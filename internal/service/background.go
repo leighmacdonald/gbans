@@ -13,7 +13,7 @@ import (
 
 func profileUpdater() {
 	var update = func() {
-		o := newQueryOpts()
+		o := newQueryFilter("")
 		o.Limit = 5 // Max per query of WebAPI
 		loop := uint64(0)
 		for {

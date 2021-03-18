@@ -27,12 +27,12 @@ import {
 import { VoiceOverOffSharp } from '@material-ui/icons';
 import { log } from '../util/errors';
 
-export const ip2int = (ip: string): number =>
+const ip2int = (ip: string): number =>
     ip
         .split('.')
         .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
 
-export type BanType = 'network' | 'steam';
+type BanType = 'network' | 'steam';
 
 export enum Duration {
     dur15m = '15m',
@@ -160,10 +160,6 @@ export const PlayerBanForm = ({
         <form noValidate>
             <Grid container spacing={3}>
                 <Grid item xs={12}>
-                    <Typography variant={'h1'}>Ban A Player</Typography>
-                </Grid>
-
-                <Grid item xs={12}>
                     <TextField
                         fullWidth
                         id={'query'}
@@ -213,14 +209,6 @@ export const PlayerBanForm = ({
                         </Grid>
                     </>
                 )}
-                <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        id={'duration'}
-                        label={'Network Range (CIDR Format)'}
-                        onChange={handleUpdateNetwork}
-                    />
-                </Grid>
                 <Grid item xs={12}>
                     <TextField
                         fullWidth

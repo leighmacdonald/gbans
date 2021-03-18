@@ -141,7 +141,7 @@ export interface Person {
     updated_on: Date;
 }
 
-export interface IAPIRequestBans {
+export interface QueryFilterProps {
     offset: number;
     limit: number;
     sort_desc: boolean;
@@ -220,7 +220,7 @@ export interface PlayerProfile {
 }
 
 export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
-    const resp = await apiCall<IAPIResponseBans, IAPIRequestBans>(
+    const resp = await apiCall<IAPIResponseBans, QueryFilterProps>(
         `/api/bans`,
         'POST'
     );
@@ -293,6 +293,11 @@ export const apiGetServers = async (): Promise<Server[] | apiError> => {
     return resp.json;
 };
 
+export const apiGetPeople = async (): Promise<Person[] | apiError> => {
+    const resp = await apiCall<Person[]>(`/api/players`, 'GET');
+    return resp.json;
+};
+
 export const handleOnLogin = (): void => {
     const r = `${window.location.protocol}//${window.location.hostname}/auth/callback?return_url=${window.location.pathname}`;
     const oid =
@@ -321,4 +326,5 @@ export const handleOnLogin = (): void => {
 
 export const handleOnLogout = (): void => {
     localStorage.removeItem('token');
+    location.reload();
 };

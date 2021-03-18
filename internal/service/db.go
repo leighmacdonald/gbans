@@ -11,6 +11,7 @@ import (
 	"net"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -33,37 +34,29 @@ var (
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
-type QueryOpts struct {
-	Limit     uint64
-	Offset    uint64
-	OrderDesc bool
-	OrderBy   string
+type QueryFilter struct {
+	Offset   uint64 `json:"offset" uri:"offset" binding:"gte=0"`
+	Limit    uint64 `json:"limit" uri:"limit" binding:"gte=0,lte=1000"`
+	SortDesc bool   `json:"desc" uri:"desc"`
+	Query    string `json:"query" uri:"query"`
+	OrderBy  string `json:"order_by" uri:"order_by"`
 }
 
-//func (o QueryOpts) order() string {
-//	if o.OrderDesc {
-//		return "DESC"
-//	}
-//	return "ASC"
-//}
-
-func newQueryOpts() QueryOpts {
-	return QueryOpts{
-		Limit:     100,
-		Offset:    0,
-		OrderDesc: false,
-		OrderBy:   "",
+func (qf *QueryFilter) OrderString() string {
+	dir := "DESC"
+	if !qf.SortDesc {
+		dir = "ASC"
 	}
+	return fmt.Sprintf("%s %s", qf.OrderBy, dir)
 }
 
-func newSearchQueryOpts(query string) searchQueryOpts {
-	o := newQueryOpts()
-	o.OrderBy = "created_on"
-	o.Limit = 10000
-	o.OrderDesc = true
-	return searchQueryOpts{
-		query,
-		o,
+func newQueryFilter(query string) *QueryFilter {
+	return &QueryFilter{
+		Limit:    1000,
+		Offset:   0,
+		SortDesc: true,
+		OrderBy:  "created_on",
+		Query:    query,
 	}
 }
 
@@ -479,20 +472,22 @@ func insertPerson(p *model.Person) error {
 	return nil
 }
 
+var profileColumns = []string{"steam_id", "created_on", "updated_on", "ip_addr",
+	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
+	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
+	"loccountrycode", "locstatecode", "loccityid"}
+
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
 func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
-	q, a, e := sb.Select("steam_id", "created_on", "updated_on", "ip_addr",
-		"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
-		"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-		"loccountrycode", "locstatecode", "loccityid").
+	q, a, e := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"steam_id": sid}).
 		ToSql()
 	if e != nil {
 		return nil, e
 	}
-	var p model.Person
+	p := model.NewPerson(0)
 	p.PlayerSummary = &extra.PlayerSummary{}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
@@ -500,7 +495,46 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	if err != nil {
 		return nil, DBErr(err)
 	}
-	return &p, nil
+	return p, nil
+}
+
+func getPeople(qf *QueryFilter) ([]*model.Person, error) {
+	qb := sb.Select(profileColumns...).From("person")
+	if qf.Query != "" {
+		// TODO add lowercased functional index to avoid table scan
+		qb = qb.Where(sq.ILike{"personaname": strings.ToLower(qf.Query)})
+	}
+	if qf.Offset > 0 {
+		qb = qb.Offset(qf.Offset)
+	}
+	if qf.OrderBy != "" {
+		qb = qb.OrderBy(qf.OrderString())
+	}
+	if qf.Limit == 0 {
+		qb = qb.Limit(100)
+	} else {
+		qb = qb.Limit(qf.Limit)
+	}
+	q, a, e := qb.ToSql()
+	if e != nil {
+		return nil, e
+	}
+	var people []*model.Person
+	rows, err := db.Query(context.Background(), q, a...)
+	if err != nil {
+		return nil, DBErr(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		p := model.NewPerson(0)
+		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
+			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
+			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID); err2 != nil {
+			return nil, err2
+		}
+		people = append(people, p)
+	}
+	return people, nil
 }
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
@@ -626,12 +660,7 @@ func getExpiredBans() ([]*model.Ban, error) {
 	return bans, nil
 }
 
-type searchQueryOpts struct {
-	SearchTerm string
-	QueryOpts
-}
-
-func GetBansTotal(o searchQueryOpts) (int, error) {
+func GetBansTotal(o *QueryFilter) (int, error) {
 	q, _, e := sb.Select("count(*) as total_rows").From("ban").ToSql()
 	if e != nil {
 		return 0, e
@@ -643,7 +672,7 @@ func GetBansTotal(o searchQueryOpts) (int, error) {
 	return total, nil
 }
 
-func GetBans(o searchQueryOpts) ([]*model.BannedPerson, error) {
+func GetBans(o *QueryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
@@ -682,7 +711,7 @@ func GetBans(o searchQueryOpts) ([]*model.BannedPerson, error) {
 	return bans, nil
 }
 
-func getBansOlderThan(o QueryOpts, t time.Time) ([]model.Ban, error) {
+func getBansOlderThan(o *QueryFilter, t time.Time) ([]model.Ban, error) {
 	q, a, e := sb.
 		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "created_on", "updated_on", "ban_source").
