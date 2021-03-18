@@ -158,7 +158,7 @@ void CheckPlayer(int client, const char[] auth, const char[] ip) {
     obj.SetString("ip", ip);
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
-    System2HTTPRequest req = newReq(OnCheckResp, "/sapi/v1/check");
+    System2HTTPRequest req = newReq(OnCheckResp, "/api/check");
     req.SetData(encoded);
     req.POST();
     delete obj;
@@ -183,10 +183,11 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             return;
         }
         JSON_Object resp = json_decode(content);
-        int client_id = resp.GetInt("client_id");
-        int ban_type = resp.GetInt("ban_type");
+        JSON_Object data = resp.GetObject("data");
+        int client_id = data.GetInt("client_id");
+        int ban_type = data.GetInt("ban_type");
         char msg[256];
-        resp.GetString("msg", msg, sizeof(msg));
+        data.GetString("msg", msg, sizeof(msg));
         PrintToServer("[GB] Ban state: %d", ban_type);
         switch (ban_type) {
             case BSBanned: {
