@@ -30,6 +30,12 @@ func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *
 	}
 }
 
+func TestAddWarning(t *testing.T) {
+	addWarning(76561197961279983, warnLanguage)
+	addWarning(76561197961279983, warnLanguage)
+	require.True(t, len(warnings[76561197961279983]) == 2)
+}
+
 func TestAPIGetServers(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/servers", nil)
 	testHTTPResponse(t, router, req, func(w *httptest.ResponseRecorder) bool {
