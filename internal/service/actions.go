@@ -36,7 +36,7 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 		UpdatedOn:  config.Now(),
 	}
 	if err := SaveBan(&ban); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	servers, err := getServers()
 	if err != nil {
@@ -104,7 +104,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		UpdatedOn:  config.Now(),
 	}
 	if err := SaveBan(&ban); err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	servers, err2 := getServers()
 	if err2 != nil {
@@ -132,7 +132,7 @@ func BanNetwork(ctx context.Context, cidr *net.IPNet, sid steamid.SID64, author 
 		ValidUntil: until,
 	}
 	if err := saveBanNet(&banNet); err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	p, server, err := findPlayerByCIDR(cidr)
 	if err != nil && err != errUnknownID {

@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/gbans/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
@@ -125,43 +124,6 @@ Valid time units are "s", "m", "h".`)
 	}
 }
 
-type onPostLogMessageRequest struct {
-	ServerID  string        `json:"server_id"`
-	SteamID   steamid.SID64 `json:"steam_id"`
-	Name      string        `json:"name"`
-	Message   string        `json:"message"`
-	TeamSay   bool          `json:"team_say"`
-	Timestamp int           `json:"timestamp"`
-}
-
-func onPostLogMessage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req onPostLogMessageRequest
-		if err := c.BindJSON(&req); err != nil {
-			log.Errorf("Failed to decode log message: %v", err)
-			c.Status(http.StatusBadRequest)
-			return
-		}
-		filtered, word := util.IsFilteredWord(req.Message)
-		if filtered {
-			addWarning(req.SteamID, warnLanguage)
-			for _, c := range config.Relay.ChannelIDs {
-				sendMessage(newMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
-			}
-		}
-		// [us-2] 76561198017946808 name: message
-		msgBody := req.Message
-		if req.TeamSay {
-			msgBody = "(Team) " + msgBody
-		}
-		msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
-		for _, channelID := range config.Relay.ChannelIDs {
-			sendMessage(newMessage(channelID, msg))
-		}
-		c.Status(200)
-	}
-}
-
 func onSAPIPostServerAuth() gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
@@ -249,7 +211,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		}
 		ban, err := getBanBySteamID(steamID, false)
 		if err != nil {
-			if DBErr(err) == errNoResult {
+			if dbErr(err) == errNoResult {
 				resp.BanType = model.OK
 				responseErr(c, http.StatusOK, resp)
 				return
@@ -261,6 +223,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		resp.BanType = ban.Ban.BanType
 		resp.Msg = ban.Ban.ReasonText
 		responseOK(c, http.StatusOK, resp)
+
 	}
 }
 
@@ -299,8 +262,8 @@ func onAPIGetServers() gin.HandlerFunc {
 	}
 }
 
-func queryFilterFromContext(c *gin.Context) (*QueryFilter, error) {
-	var qf QueryFilter
+func queryFilterFromContext(c *gin.Context) (*queryFilter, error) {
+	var qf queryFilter
 	if err := c.BindUri(&qf); err != nil {
 		return nil, err
 	}
@@ -409,7 +372,7 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 		Words []string `json:"words"`
 	}
 	return func(c *gin.Context) {
-		words, err := GetFilteredWords()
+		words, err := getFilteredWords()
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -493,7 +456,7 @@ func onPostLogAdd() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LogPayload
 		if err := c.BindJSON(&req); err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
 		v, t := logparse.Parse(req.Message)
@@ -504,7 +467,7 @@ func onPostLogAdd() gin.HandlerFunc {
 			return
 		}
 		if t != logparse.UnhandledMsg {
-			if err := InsertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
+			if err := insertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
 				log.Errorf("Failed to insert log: %v", err)
 				responseErr(c, http.StatusInternalServerError, nil)
 				return
@@ -526,13 +489,30 @@ func onPostLogAdd() gin.HandlerFunc {
 			return
 		}
 
-		//for _, c := range config.Relay.ChannelIDs {
-		//	sendMessage(newMessage(c, req.Message))
+		for _, c := range config.Relay.ChannelIDs {
+			sendMessage(newMessage(c, req.Message))
+		}
+
+		messageQueue <- discordMessage{
+			ChannelID: "",
+			Body:      req.Message,
+		}
+
+		//filtered, word := util.IsFilteredWord(req.Message)
+		//if filtered {
+		//	addWarning(req.SteamID, warnLanguage)
+		//	for _, c := range config.Relay.ChannelIDs {
+		//		sendMessage(newMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
+		//	}
 		//}
-		//
-		//messageQueue <- discordMessage{
-		//	ChannelID: "",
-		//	Body:      req.Message,
+		//// [us-2] 76561198017946808 name: message
+		//msgBody := req.Message
+		//if req.TeamSay {
+		//	msgBody = "(Team) " + msgBody
+		//}
+		//msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
+		//for _, channelID := range config.Relay.ChannelIDs {
+		//	sendMessage(newMessage(channelID, msg))
 		//}
 	}
 }

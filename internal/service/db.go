@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"io/fs"
 	"io/ioutil"
@@ -34,7 +35,22 @@ var (
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
-type QueryFilter struct {
+type tableName string
+
+const (
+	tableBan          tableName = "ban"
+	tableBanAppeal    tableName = "ban_appeal"
+	tableBanNet       tableName = "ban_net"
+	tableFilteredWord tableName = "filtered_word"
+	tablePerson       tableName = "person"
+	tablePersonIP     tableName = "person_ip"
+	tablePersonNames  tableName = "person_names"
+	tableServer       tableName = "server"
+	tableServerLog    tableName = "server_log"
+)
+
+// queryFilter provides a structure for common query parameters
+type queryFilter struct {
 	Offset   uint64 `json:"offset" uri:"offset" binding:"gte=0"`
 	Limit    uint64 `json:"limit" uri:"limit" binding:"gte=0,lte=1000"`
 	SortDesc bool   `json:"desc" uri:"desc"`
@@ -42,7 +58,7 @@ type QueryFilter struct {
 	OrderBy  string `json:"order_by" uri:"order_by"`
 }
 
-func (qf *QueryFilter) OrderString() string {
+func (qf *queryFilter) orderString() string {
 	dir := "DESC"
 	if !qf.SortDesc {
 		dir = "ASC"
@@ -50,8 +66,8 @@ func (qf *QueryFilter) OrderString() string {
 	return fmt.Sprintf("%s %s", qf.OrderBy, dir)
 }
 
-func newQueryFilter(query string) *QueryFilter {
-	return &QueryFilter{
+func newQueryFilter(query string) *queryFilter {
+	return &queryFilter{
 		Limit:    1000,
 		Offset:   0,
 		SortDesc: true,
@@ -73,28 +89,11 @@ func Close() {
 	db.Close()
 }
 
-func tokenValid(token string) bool {
-	if len(token) != 40 {
-		return false
-	}
-	var s int
-	q, a, e := sb.Select("server_id").From("server").Where(sq.Eq{"token": token}).ToSql()
-	if e != nil {
-		log.Errorf("Failed to select token: %v", e)
-		return false
-	}
-	if err := db.QueryRow(context.Background(), q, a...).
-		Scan(&s); err != nil {
-		return false
-	}
-	return s > 0
-}
-
 func getServer(serverID int64) (model.Server, error) {
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
-		From("server").
+		From(string(tableServer)).
 		Where(sq.Eq{"server_id": serverID}).
 		ToSql()
 	if e != nil {
@@ -112,7 +111,7 @@ func getServers() ([]model.Server, error) {
 	var servers []model.Server
 	q, _, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
-		From("server").
+		From(string(tableServer)).
 		ToSql()
 	if e != nil {
 		return nil, e
@@ -140,7 +139,7 @@ func getServerByName(serverName string) (model.Server, error) {
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
-		From("server").
+		From(string(tableServer)).
 		Where(sq.Eq{"short_name": serverName}).
 		ToSql()
 	if e != nil {
@@ -165,7 +164,7 @@ func SaveServer(server *model.Server) error {
 }
 
 func insertServer(s *model.Server) error {
-	q, a, e := sb.Insert("server").
+	q, a, e := sb.Insert(string(tableServer)).
 		Columns("short_name", "token", "address", "port",
 			"rcon", "token_created_on", "created_on", "updated_on", "password", "reserved_slots").
 		Values(s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
@@ -177,14 +176,14 @@ func insertServer(s *model.Server) error {
 	}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&s.ServerID)
 	if err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
 
 func updateServer(s *model.Server) error {
 	s.UpdatedOn = config.Now()
-	q, a, e := sb.Update("server").
+	q, a, e := sb.Update(string(tableServer)).
 		Set("short_name", s.ServerName).
 		Set("token", s.Token).
 		Set("address", s.Address).
@@ -205,7 +204,7 @@ func updateServer(s *model.Server) error {
 }
 
 func dropServer(serverID int64) error {
-	q, a, e := sb.Delete("server").Where(sq.Eq{"server_id": serverID}).ToSql()
+	q, a, e := sb.Delete(string(tableServer)).Where(sq.Eq{"server_id": serverID}).ToSql()
 	if e != nil {
 		return e
 	}
@@ -216,12 +215,12 @@ func dropServer(serverID int64) error {
 }
 
 func dropBan(ban *model.Ban) error {
-	q, a, e := sb.Delete("ban").Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
+	q, a, e := sb.Delete(string(tableBan)).Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
 	if e != nil {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -230,11 +229,10 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-
 		"p.steam_id as sid2", "p.created_on as created_on2", "p.updated_on as updated_on2", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid").
-		From("ban b").
+		From(fmt.Sprintf("%s b", tableBan)).
 		LeftJoin("person p ON b.steam_id = p.steam_id").
 		GroupBy("b.ban_id, p.steam_id").
 		Where(sq.Eq{fmt.Sprintf("b.%s", column): identifier}).
@@ -254,10 +252,13 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 			&b.Person.ProfileURL, &b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull,
 			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
 			&b.Person.LocStateCode, &b.Person.LocCityID); err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	if full {
-		b.HistoryChat = getChatHistory(b.Person.SteamID)
+		h, err := getChatHistory(b.Person.SteamID)
+		if err == nil {
+			b.HistoryChat = h
+		}
 		b.HistoryConnections = []string{}
 		b.HistoryIP = getIPHistory(b.Person.SteamID)
 		b.HistoryPersonaName = []string{}
@@ -273,12 +274,68 @@ func getBanByBanID(banID uint64, full bool) (*model.BannedPerson, error) {
 	return getBanByColumn("ban_id", banID, full)
 }
 
-func getChatHistory(sid64 steamid.SID64) []string {
-	return nil
+func getChatHistory(sid64 steamid.SID64) ([]model.ChatLog, error) {
+	q, a, e := sb.Select("payload -> message", "created_on").
+		From(string(tableServerLog)).
+		Where(sq.And{
+			sq.Eq{"source_id": sid64},
+			sq.Eq{"event_type": []logparse.MsgType{logparse.Say, logparse.SayTeam}},
+		}).
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
+	rows, err := db.Query(context.Background(), q, a...)
+	if err != nil {
+		return nil, dbErr(err)
+	}
+	defer rows.Close()
+	var hist []model.ChatLog
+	for rows.Next() {
+		var h model.ChatLog
+		if err2 := rows.Scan(&h.Message, h.CreatedOn); err2 != nil {
+			return nil, err2
+		}
+		hist = append(hist, h)
+	}
+	return hist, nil
 }
 
-func getIPHistory(sid64 steamid.SID64) []net.IP {
-	return []net.IP{net.ParseIP("127.0.0.1")}
+func addPersonIP(p *model.Person) error {
+	q, a, e := sb.Insert(string(tablePersonIP)).
+		Columns("steam_id", "address", "created_on").
+		Values(p.SteamID, p.IPAddr, config.Now()).
+		ToSql()
+	if e != nil {
+		return e
+	}
+	_, err := db.Exec(context.Background(), q, a...)
+	return dbErr(err)
+}
+
+func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
+	q, a, e := sb.Select("address", "created_on").
+		From(string(tablePersonIP)).
+		Where(sq.Eq{"steam_id": sid64}).
+		OrderBy("created_on DESC").
+		ToSql()
+	if e != nil {
+		return nil
+	}
+	rows, err := db.Query(context.Background(), q, a...)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var records []model.IPRecord
+	for rows.Next() {
+		var r model.IPRecord
+		if err2 := rows.Scan(&r.Address, &r.CreatedOn); err2 != nil {
+			return nil
+		}
+		records = append(records, r)
+	}
+	return records
 }
 
 func getAppeal(banID uint64) (model.Appeal, error) {
@@ -312,7 +369,7 @@ func updateAppeal(appeal *model.Appeal) error {
 	}
 	_, err := db.Exec(context.Background(), q, a...)
 	if err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -328,7 +385,7 @@ func insertAppeal(ap *model.Appeal) error {
 	}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&ap.AppealID)
 	if err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -373,7 +430,7 @@ func insertBan(ban *model.Ban) error {
 	}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&ban.BanID)
 	if err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -394,18 +451,18 @@ func updateBan(ban *model.Ban) error {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
 
-func DropPerson(steamID steamid.SID64) error {
+func dropPerson(steamID steamid.SID64) error {
 	q, a, e := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
 	if e != nil {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -444,7 +501,7 @@ func updatePerson(p *model.Person) error {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -466,7 +523,7 @@ func insertPerson(p *model.Person) error {
 	}
 	_, err := db.Exec(context.Background(), q, a...)
 	if err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	p.IsNew = false
 	return nil
@@ -493,22 +550,22 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID)
 	if err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	return p, nil
 }
 
-func getPeople(qf *QueryFilter) ([]*model.Person, error) {
+func getPeople(qf *queryFilter) ([]*model.Person, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
-		// TODO add lowercased functional index to avoid table scan
+		// TODO add lowercased functional index to avoid tableName scan
 		qb = qb.Where(sq.ILike{"personaname": strings.ToLower(qf.Query)})
 	}
 	if qf.Offset > 0 {
 		qb = qb.Offset(qf.Offset)
 	}
 	if qf.OrderBy != "" {
-		qb = qb.OrderBy(qf.OrderString())
+		qb = qb.OrderBy(qf.orderString())
 	}
 	if qf.Limit == 0 {
 		qb = qb.Limit(100)
@@ -522,7 +579,7 @@ func getPeople(qf *QueryFilter) ([]*model.Person, error) {
 	var people []*model.Person
 	rows, err := db.Query(context.Background(), q, a...)
 	if err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -541,7 +598,7 @@ func getPeople(qf *QueryFilter) ([]*model.Person, error) {
 // does not exist.
 func GetOrCreatePersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	p, err := getPersonBySteamID(sid)
-	if err != nil && DBErr(err) == errNoResult {
+	if err != nil && dbErr(err) == errNoResult {
 		p = model.NewPerson(sid)
 		if err := SavePerson(p); err != nil {
 			return nil, err
@@ -567,7 +624,7 @@ func getBanNet(ip net.IP) ([]model.BanNet, error) {
 	var nets []model.BanNet
 	rows, err := db.Query(context.Background(), q, ip.String())
 	if err != nil {
-		return nil, DBErr(err)
+		return nil, dbErr(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -628,7 +685,7 @@ func dropNetBan(ban model.BanNet) error {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -637,7 +694,7 @@ func getExpiredBans() ([]*model.Ban, error) {
 	q, a, e := sb.Select(
 		"ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 		"valid_until", "ban_source", "created_on", "updated_on").
-		From("ban").
+		From(string(tableBan)).
 		Where(sq.Lt{"valid_until": config.Now()}).
 		ToSql()
 	if e != nil {
@@ -660,26 +717,26 @@ func getExpiredBans() ([]*model.Ban, error) {
 	return bans, nil
 }
 
-func GetBansTotal(o *QueryFilter) (int, error) {
-	q, _, e := sb.Select("count(*) as total_rows").From("ban").ToSql()
-	if e != nil {
-		return 0, e
-	}
-	var total int
-	if err := db.QueryRow(context.Background(), q).Scan(&total); err != nil {
-		return 0, err
-	}
-	return total, nil
-}
+//func GetBansTotal(o *queryFilter) (int, error) {
+//	q, _, e := sb.Select("count(*) as total_rows").From(string(tableBan)).ToSql()
+//	if e != nil {
+//		return 0, e
+//	}
+//	var total int
+//	if err := db.QueryRow(context.Background(), q).Scan(&total); err != nil {
+//		return 0, err
+//	}
+//	return total, nil
+//}
 
-func GetBans(o *QueryFilter) ([]*model.BannedPerson, error) {
+func GetBans(o *queryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
 		"p.steam_id", "p.created_on", "p.updated_on", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid").
-		From("ban b").
+		From(fmt.Sprintf("%s b", string(tableBan))).
 		LeftJoin("person p on p.steam_id = b.steam_id").
 		OrderBy(fmt.Sprintf("b.%s", o.OrderBy)).
 		Limit(o.Limit).
@@ -711,11 +768,11 @@ func GetBans(o *QueryFilter) ([]*model.BannedPerson, error) {
 	return bans, nil
 }
 
-func getBansOlderThan(o *QueryFilter, t time.Time) ([]model.Ban, error) {
+func getBansOlderThan(o *queryFilter, t time.Time) ([]model.Ban, error) {
 	q, a, e := sb.
 		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "created_on", "updated_on", "ban_source").
-		From("ban").
+		From(string(tableBan)).
 		Where(sq.Lt{"updated_on": t}).
 		Limit(o.Limit).Offset(o.Offset).ToSql()
 	if e != nil {
@@ -741,7 +798,7 @@ func getBansOlderThan(o *QueryFilter, t time.Time) ([]model.Ban, error) {
 func getExpiredNetBans() ([]model.BanNet, error) {
 	q, a, e := sb.
 		Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
-		From("ban_net").
+		From(string(tableBanNet)).
 		Where(sq.Lt{"valid_until": config.Now()}).
 		ToSql()
 	if e != nil {
@@ -763,8 +820,8 @@ func getExpiredNetBans() ([]model.BanNet, error) {
 	return bans, nil
 }
 
-func GetFilteredWords() ([]string, error) {
-	q, a, e := sb.Select("word").From("filtered_word").ToSql()
+func getFilteredWords() ([]string, error) {
+	q, a, e := sb.Select("word").From(string(tableFilteredWord)).ToSql()
 	if e != nil {
 		return nil, e
 	}
@@ -784,19 +841,19 @@ func GetFilteredWords() ([]string, error) {
 	return words, nil
 }
 
-func SaveFilteredWord(word string) error {
-	q, a, e := sb.Insert("filtered_word").Columns("word").Values(word).ToSql()
+func saveFilteredWord(word string) error {
+	q, a, e := sb.Insert(string(tableFilteredWord)).Columns("word").Values(word).ToSql()
 	if e != nil {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
 
-func InsertLog(l *model.ServerLog) error {
-	q, a, e := sb.Insert("server_log").
+func insertLog(l *model.ServerLog) error {
+	q, a, e := sb.Insert(string(tableServerLog)).
 		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
 		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).
 		ToSql()
@@ -804,7 +861,7 @@ func InsertLog(l *model.ServerLog) error {
 		return e
 	}
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
-		return DBErr(err)
+		return dbErr(err)
 	}
 	return nil
 }
@@ -831,13 +888,16 @@ func getStats() (model.Stats, error) {
 			&stats.AppealsOpen, &stats.AppealsClosed, &stats.FilteredWords, &stats.ServersTotal,
 		); err != nil {
 		log.Errorf("Failed to fetch stats: %v", err)
-		return model.Stats{}, DBErr(err)
+		return model.Stats{}, dbErr(err)
 	}
 	return stats, nil
 
 }
 
-func DBErr(err error) error {
+func dbErr(err error) error {
+	if err == nil {
+		return err
+	}
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
@@ -860,7 +920,17 @@ var schema string
 func Migrate(recreate bool) error {
 	const q = `DROP TABLE IF EXISTS %s;`
 	if recreate {
-		for _, t := range []string{"ban_appeal", "filtered_word", "ban_net", "ban", "person_names", "person"} {
+		for _, t := range []tableName{
+			tableServerLog,
+			tableBanAppeal,
+			tableFilteredWord,
+			tableBanNet,
+			tableBan,
+			tablePersonNames,
+			tablePersonIP,
+			tablePerson,
+			tableServer,
+		} {
 			_, err := db.Exec(context.Background(), fmt.Sprintf(q, t))
 			if err != nil {
 				return errors.Wrap(err, "Could not remove all tables")

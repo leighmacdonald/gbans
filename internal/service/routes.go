@@ -40,7 +40,7 @@ func initRouter() {
 	tokenAuthed.POST("/api/ping_mod", onPostPingMod())
 
 	// Server to Server API
-	tokenAuthed.POST("/api/log", onPostLogAdd())
+	router.POST("/api/log", onPostLogAdd())
 	tokenAuthed.POST("/api/check", onPostServerCheck())
 
 }

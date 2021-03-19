@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -67,7 +66,6 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 				if !ok {
 					return
 				}
-				//log.Println("event:", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("created file:", event.Name)
 					if !first {
@@ -95,9 +93,8 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 }
 
 func NewClient(ctx context.Context, name string, logPath string, address string) (err error) {
-	url := address + "/sapi/v1/log"
+	url := address + "/api/log"
 	messageChan := make(chan string, 5000)
-	messageChan <- `L 08/10/2020 - 12:11:04: "BOT<1><[U:0:0]><Red> say "Online"`
 	go newFileWatcher(ctx, logPath, messageChan)
 	errChan := make(chan error)
 	for {
@@ -112,22 +109,21 @@ func NewClient(ctx context.Context, name string, logPath string, address string)
 				log.Errorf("Error encoding payload")
 				break
 			}
-
 			req, err := http.NewRequest("POST", url, bytes.NewReader(b))
 			if err != nil {
-				log.Errorf("Error encoding payload")
+				log.Errorf("Error creating request payload: %v", err)
 				break
 			}
 			resp, err := httpClient.Do(req)
 			if err != nil {
-				log.Errorf("Error encoding payload")
+				log.Errorf("Error performing request: %v", err)
 				break
 			}
 			if resp.StatusCode != http.StatusCreated {
 				log.Errorf("Invalid respose received: %s", resp.Status)
+				break
 			}
 		case <-ctx.Done():
-			fmt.Println("cancelled")
 			err = ctx.Err()
 			return
 		case err = <-errChan:

@@ -156,12 +156,12 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	Ban                *Ban     `json:"ban"`
-	Person             *Person  `json:"person"`
-	HistoryChat        []string `json:"history_chat" db:"-"`
-	HistoryPersonaName []string `json:"history_personaname" db:"-"`
-	HistoryConnections []string `json:"history_connections" db:"-"`
-	HistoryIP          []net.IP `json:"history_ip" db:"-"`
+	Ban                *Ban       `json:"ban"`
+	Person             *Person    `json:"person"`
+	HistoryChat        []ChatLog  `json:"history_chat" db:"-"`
+	HistoryPersonaName []string   `json:"history_personaname" db:"-"`
+	HistoryConnections []string   `json:"history_connections" db:"-"`
+	HistoryIP          []IPRecord `json:"history_ip" db:"-"`
 }
 
 func NewBannedPerson() *BannedPerson {
@@ -180,6 +180,16 @@ func NewBannedPerson() *BannedPerson {
 		HistoryConnections: nil,
 		HistoryIP:          nil,
 	}
+}
+
+type ChatLog struct {
+	Message   string
+	CreatedOn time.Time
+}
+
+type IPRecord struct {
+	Address   net.IP    `json:"address"`
+	CreatedOn time.Time `json:"created_on"`
 }
 
 type Server struct {

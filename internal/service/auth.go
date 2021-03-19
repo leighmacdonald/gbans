@@ -41,42 +41,41 @@ func authMiddleWare() gin.HandlerFunc {
 		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
 			if config.General.Mode == "test" && token == testToken {
-				loggedInPerson, err := GetOrCreatePersonBySteamID(steamid.SID64(76561198084134025))
+				loggedInPerson, err2 := GetOrCreatePersonBySteamID(steamid.SID64(76561198084134025))
+				if err2 != nil {
+					log.Errorf("Failed to load persons session user: %v", err2)
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				p = loggedInPerson
+			} else {
+				claims := &authClaims{}
+				tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
+				if err != nil {
+					if err == jwt.ErrSignatureInvalid {
+						c.AbortWithStatus(http.StatusForbidden)
+						return
+					}
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				if !tkn.Valid {
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				if !steamid.SID64(claims.SteamID).Valid() {
+					c.AbortWithStatus(http.StatusForbidden)
+					log.Warnf("Invalid steamID")
+					return
+				}
+				loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
 				if err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
 					return
 				}
 				p = loggedInPerson
-				c.Next()
-				return
 			}
-			claims := &authClaims{}
-			tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
-			if err != nil {
-				if err == jwt.ErrSignatureInvalid {
-					c.AbortWithStatus(http.StatusForbidden)
-					return
-				}
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			if !tkn.Valid {
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			if !steamid.SID64(claims.SteamID).Valid() {
-				c.AbortWithStatus(http.StatusForbidden)
-				log.Warnf("Invalid steamID")
-				return
-			}
-			loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
-			if err != nil {
-				log.Errorf("Failed to load persons session user: %v", err)
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			p = loggedInPerson
 		}
 		c.Set("person", p)
 		c.Next()

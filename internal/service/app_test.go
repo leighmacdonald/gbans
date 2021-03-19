@@ -31,7 +31,7 @@ func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *
 }
 
 func TestAPIGetServers(t *testing.T) {
-	req, _ := http.NewRequest("GET", route(string(routeAPIServers)), nil)
+	req, _ := http.NewRequest("GET", "/api/servers", nil)
 	testHTTPResponse(t, router, req, func(w *httptest.ResponseRecorder) bool {
 		if w.Code != http.StatusOK {
 			return false
@@ -78,7 +78,7 @@ func GenTestData() {
 
 	filteredWords := []string{"frick", "heck"}
 	for _, fw := range filteredWords {
-		if err := SaveFilteredWord(fw); err != nil {
+		if err := saveFilteredWord(fw); err != nil {
 			log.Fatalf("Failed to setup test filtered words: %v", err)
 		}
 	}

@@ -103,7 +103,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 		reasonStr = strings.Join(args[2:], " ")
 	}
 	ban, err := getBanBySteamID(pi.sid, false)
-	if err != nil && DBErr(err) != errNoResult {
+	if err != nil && dbErr(err) != errNoResult {
 		log.Errorf("Error getting ban from db: %v", err)
 		return errors.New("Internal DB Error")
 	} else if err != nil {
@@ -153,7 +153,7 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 		return errInvalidDuration
 	}
 	_, err = getBanNet(net.ParseIP(args[0]))
-	if err != nil && DBErr(err) != errNoResult {
+	if err != nil && dbErr(err) != errNoResult {
 		return errCommandFailed
 	}
 	if err == nil {
@@ -494,7 +494,7 @@ func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 		if err == sql.ErrNoRows {
 			return errors.New("Invalid server name")
 		}
-		return DBErr(err)
+		return dbErr(err)
 	}
 	status, err := getServerStatus(server)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/leighmacdonald/gbans/model"
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
@@ -93,8 +94,8 @@ var testDataCmd = &cobra.Command{
 			}
 			v.PlayerSummary = &sum[0]
 			if err := service.SavePerson(v); err != nil {
-				log.Errorf("Failed to save person: %v", err)
-				return
+				log.Warnf("Failed to save person: %v", err)
+				continue
 			}
 			var t time.Duration
 			if i%2 == 0 {
@@ -107,6 +108,7 @@ var testDataCmd = &cobra.Command{
 			}
 		}
 		for _, v := range [][]string{
+			{"lo-1", "192.168.0.101"},
 			{"us-1", "us1.uncledane.com"},
 			{"us-2", "us2.uncledane.com"},
 			{"us-3", "us3.uncledane.com"},
@@ -122,7 +124,8 @@ var testDataCmd = &cobra.Command{
 				Address:        v[1],
 				Port:           27015,
 				RCON:           testRconPass,
-				Password:       "",
+				Token:          "0123456789012345678901234567890123456789",
+				Password:       golib.RandomString(20),
 				TokenCreatedOn: config.Now(),
 				CreatedOn:      config.Now(),
 				UpdatedOn:      config.Now(),

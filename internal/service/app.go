@@ -182,7 +182,7 @@ func initRelay() {
 
 func initFilters() {
 	// TODO load external lists via http
-	words, err := GetFilteredWords()
+	words, err := getFilteredWords()
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}

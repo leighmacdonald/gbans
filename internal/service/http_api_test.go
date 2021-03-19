@@ -21,9 +21,9 @@ func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRe
 	}
 }
 
-func newTestReq(method string, key routeKey, body interface{}) *http.Request {
+func newTestReq(method string, route string, body interface{}) *http.Request {
 	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(method, routeRaw(string(key)), bytes.NewReader(b))
+	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testToken))
 	return req
 }
@@ -51,7 +51,7 @@ func TestOnAPIPostBan(t *testing.T) {
 	}
 	s1 := "76561198031215761"
 	units := []httpTestUnit{
-		{newTestReq("POST", routeAPIBansCreate, req{
+		{newTestReq("POST", "/api/ban", req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,
@@ -61,7 +61,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		}),
 			httpTestResult{Code: http.StatusCreated},
 			"Failed to successfully create steam ban"},
-		{newTestReq("POST", routeAPIBansCreate, req{
+		{newTestReq("POST", "/api/ban", req{
 			SteamID:    s1,
 			Duration:   "1d",
 			BanType:    model.Banned,
@@ -112,7 +112,7 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 	var units []httpTestUnit
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
-			newTestReq("POST", routeServerAPILogAdd, LogPayload{
+			newTestReq("POST", "/api/log", LogPayload{
 				ServerName: "test-1",
 				Message:    tc,
 			}),
