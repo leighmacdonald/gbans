@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/model"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -73,6 +74,33 @@ func TestOnAPIPostBan(t *testing.T) {
 			"Failed to successfully handle duplicate ban creation"},
 	}
 	testUnits(t, units)
+}
+
+func TestAPIGetServers(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/api/servers", nil)
+	testHTTPResponse(t, router, req, func(w *httptest.ResponseRecorder) bool {
+		if w.Code != http.StatusOK {
+			return false
+		}
+		var r apiResponse
+		b, err := ioutil.ReadAll(w.Body)
+		require.NoError(t, err, "Failed to read body")
+		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
+		return true
+	})
+}
+
+func TestSteamWebAPI(t *testing.T) {
+	if config.General.SteamKey == "" {
+		t.Skip("No steamkey set")
+		return
+	}
+	friends, err := fetchFriends(76561197961279983)
+	require.NoError(t, err)
+	require.True(t, len(friends) > 100)
+	summaries, err := fetchSummaries(friends)
+	require.NoError(t, err)
+	require.Equal(t, len(friends), len(summaries))
 }
 
 func TestOnPostLogMessage(t *testing.T) {

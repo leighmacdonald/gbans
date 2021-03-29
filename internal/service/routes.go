@@ -2,17 +2,16 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/config"
 	"net/http"
 )
 
-func initRouter() {
+ func initRouter() {
 	defaultRoute := func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 	router.Use(gin.Logger())
 	// Dont use session for static assets
-	router.StaticFS("/dist", http.Dir(config.HTTP.StaticPath))
+	router.StaticFS("/dist", http.FS(content))
 	//router.GET(routeRaw(string(routeHome)), )
 	router.NoRoute(defaultRoute)
 	router.GET("/login/success", onLoginSuccess())

@@ -35,7 +35,12 @@ const config: webpack.Configuration = {
     ],
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'dist'),
+        // This is stored under the go tree because you cannot traverse up directories
+        // when specifying the path for go:embed
+        path:
+            __dirname === 'frontend'
+                ? path.resolve('../', 'internal', 'service', 'dist')
+                : path.resolve('internal', 'service', 'dist'),
         sourceMapFilename: '[name].ts.map',
         assetModuleFilename: 'images/[hash][ext][query]'
     }

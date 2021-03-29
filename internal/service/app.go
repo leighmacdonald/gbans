@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"embed"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/external"
@@ -18,24 +19,28 @@ import (
 )
 
 var (
+	// BuildVersion holds the current git revision, as of build time
 	BuildVersion  = "master"
 	router        *gin.Engine
 	ctx           context.Context
 	serverStateMu *sync.RWMutex
-	serverState   map[string]ServerState
-	warnings      map[steamid.SID64][]UserWarning
+	serverStates  map[string]serverState
+	warnings      map[steamid.SID64][]userWarning
 	warningsMu    *sync.RWMutex
 	httpServer    *http.Server
+
+	//go:embed dist
+	content embed.FS
 )
 
-type WarnReason int
+type warnReason int
 
 const (
-	warnLanguage WarnReason = iota
+	warnLanguage warnReason = iota
 )
 
-type UserWarning struct {
-	WarnReason WarnReason
+type userWarning struct {
+	WarnReason warnReason
 	CreatedOn  time.Time
 }
 
@@ -68,14 +73,14 @@ func warnWorker() {
 // restarts will wipe the users history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(sid64 steamid.SID64, reason WarnReason) {
+func addWarning(sid64 steamid.SID64, reason warnReason) {
 	warningsMu.Lock()
 	defer warningsMu.Unlock()
 	_, found := warnings[sid64]
 	if !found {
-		warnings[sid64] = []UserWarning{}
+		warnings[sid64] = []userWarning{}
 	}
-	warnings[sid64] = append(warnings[sid64], UserWarning{
+	warnings[sid64] = append(warnings[sid64], userWarning{
 		WarnReason: reason,
 		CreatedOn:  config.Now(),
 	})
@@ -96,7 +101,7 @@ const (
 	//csgo    gameType = "Counter-Strike: Global Offensive"
 )
 
-type ServerState struct {
+type serverState struct {
 	Addr     string
 	Port     int
 	Slots    int
@@ -107,7 +112,7 @@ type ServerState struct {
 	Alive bool
 }
 
-func (s ServerState) OS() template.HTML {
+func (s serverState) os() template.HTML {
 	switch s.A2SInfo.ServerOS {
 	case a2s.ServerOS_Linux:
 		return "linux"
@@ -120,7 +125,7 @@ func (s ServerState) OS() template.HTML {
 	}
 }
 
-func (s ServerState) VacStatus() template.HTML {
+func (s serverState) VacStatus() template.HTML {
 	if s.A2SInfo.VAC {
 		return "on"
 	}
@@ -129,12 +134,17 @@ func (s ServerState) VacStatus() template.HTML {
 
 func init() {
 	warningsMu = &sync.RWMutex{}
-	warnings = make(map[steamid.SID64][]UserWarning)
-	serverState = make(map[string]ServerState)
+	warnings = make(map[steamid.SID64][]userWarning)
+	serverStates = make(map[string]serverState)
 	serverStateMu = &sync.RWMutex{}
 	ctx = context.Background()
 	router = gin.New()
 
+}
+
+// shutdown cleans up the application and closes connections
+func shutdown() {
+	db.Close()
 }
 
 // Start is the main application entry point
@@ -151,7 +161,7 @@ func Start() {
 	initRouter()
 	// Setup the storage backend
 	initStore()
-	defer Close()
+	defer shutdown()
 
 	// Start the discord service
 	if config.Discord.Enabled {
