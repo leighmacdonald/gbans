@@ -31,3 +31,4 @@ sourcemod/.vscode/
 /frontend/lib/
 *.js
 *.jsx
+/internal/service/dist/

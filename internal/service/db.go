@@ -49,6 +49,18 @@ const (
 	tableServerLog    tableName = "server_log"
 )
 
+var tableList = []tableName{
+	tableServerLog,
+	tableBanAppeal,
+	tableFilteredWord,
+	tableBanNet,
+	tableBan,
+	tablePersonNames,
+	tablePersonIP,
+	tablePerson,
+	tableServer,
+}
+
 // queryFilter provides a structure for common query parameters
 type queryFilter struct {
 	Offset   uint64 `json:"offset" uri:"offset" binding:"gte=0"`
@@ -85,14 +97,12 @@ func Init(dsn string) {
 	db = dbConn
 }
 
-func Close() {
-	db.Close()
-}
+var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon",
+	"token_created_on", "created_on", "updated_on", "reserved_slots"}
 
 func getServer(serverID int64) (model.Server, error) {
 	var s model.Server
-	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
-		"token_created_on", "created_on", "updated_on", "reserved_slots").
+	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.Eq{"server_id": serverID}).
 		ToSql()
@@ -109,8 +119,7 @@ func getServer(serverID int64) (model.Server, error) {
 
 func getServers() ([]model.Server, error) {
 	var servers []model.Server
-	q, _, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
-		"token_created_on", "created_on", "updated_on", "reserved_slots").
+	q, _, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		ToSql()
 	if e != nil {
@@ -920,17 +929,7 @@ var schema string
 func Migrate(recreate bool) error {
 	const q = `DROP TABLE IF EXISTS %s;`
 	if recreate {
-		for _, t := range []tableName{
-			tableServerLog,
-			tableBanAppeal,
-			tableFilteredWord,
-			tableBanNet,
-			tableBan,
-			tablePersonNames,
-			tablePersonIP,
-			tablePerson,
-			tableServer,
-		} {
+		for _, t := range tableList {
 			_, err := db.Exec(context.Background(), fmt.Sprintf(q, t))
 			if err != nil {
 				return errors.Wrap(err, "Could not remove all tables")

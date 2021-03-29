@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -34,33 +32,6 @@ func TestAddWarning(t *testing.T) {
 	addWarning(76561197961279983, warnLanguage)
 	addWarning(76561197961279983, warnLanguage)
 	require.True(t, len(warnings[76561197961279983]) == 2)
-}
-
-func TestAPIGetServers(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/api/servers", nil)
-	testHTTPResponse(t, router, req, func(w *httptest.ResponseRecorder) bool {
-		if w.Code != http.StatusOK {
-			return false
-		}
-		var r apiResponse
-		b, err := ioutil.ReadAll(w.Body)
-		require.NoError(t, err, "Failed to read body")
-		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
-		return true
-	})
-}
-
-func TestSteamWebAPI(t *testing.T) {
-	if config.General.SteamKey == "" {
-		t.Skip("No steamkey set")
-		return
-	}
-	friends, err := fetchFriends(76561197961279983)
-	require.NoError(t, err)
-	require.True(t, len(friends) > 100)
-	summaries, err := fetchSummaries(friends)
-	require.NoError(t, err)
-	require.Equal(t, len(friends), len(summaries))
 }
 
 func GenTestData() {
@@ -133,7 +104,7 @@ func GenTestData() {
 
 func clearDB() {
 	ctx := context.Background()
-	for _, table := range []string{"ban_appeal", "person_names", "ban_net", "ban", "person", "server", "filtered_word"} {
+	for _, table := range tableList {
 		q := fmt.Sprintf(`drop table if exists %s cascade;`, table)
 		if _, err := db.Exec(ctx, q); err != nil {
 			log.Panicf("Failed to prep database: %s", err.Error())

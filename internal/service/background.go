@@ -115,7 +115,7 @@ func serverStateUpdater() {
 				log.Warnf("Failed to get a2s server info for: %s", name)
 			}
 			serverStateMu.Lock()
-			serverState[name] = ServerState{addr, port, slots, tf2, a2sinfo, s, found}
+			serverStates[name] = serverState{addr, port, slots, tf2, a2sinfo, s, found}
 			serverStateMu.Unlock()
 		}
 	}

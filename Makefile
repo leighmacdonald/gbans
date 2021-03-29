@@ -53,4 +53,4 @@ image_tag:
 	docker build -t leighmacdonald/gbans:$$(git describe --abbrev=0 --tags) .
 
 docker_run:
-	docker-compose -f docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from gbans
+	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans

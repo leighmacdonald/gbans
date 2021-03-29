@@ -393,7 +393,7 @@ func onAPIGetStats() gin.HandlerFunc {
 		}
 		serverStateMu.RLock()
 		defer serverStateMu.RUnlock()
-		for _, server := range serverState {
+		for _, server := range serverStates {
 			if server.Alive {
 				stats.ServersAlive++
 			}
