@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/config"
 	"github.com/leighmacdonald/gbans/relay"
 	"github.com/spf13/cobra"
 	"log"
@@ -14,6 +15,7 @@ var (
 	serverName string
 	relayAddr  string
 	logPath    string
+	timeoutStr string
 )
 
 // relayCmd starts the log relay service
@@ -24,8 +26,12 @@ var relayCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
+		duration, err := config.ParseDuration(timeoutStr)
+		if err != nil {
+			log.Fatalf("Invalid timeout value: %v", err)
+		}
 		go func() {
-			if err := relay.NewClient(ctx, serverName, logPath, relayAddr); err != nil {
+			if err := relay.NewClient(ctx, serverName, logPath, relayAddr, duration); err != nil {
 				log.Fatalf("Exited client: %v", err)
 			}
 		}()
@@ -44,5 +50,6 @@ func init() {
 	relayCmd.PersistentFlags().StringVarP(&serverName, "name", "n", "", "Server ID used for identification")
 	relayCmd.PersistentFlags().StringVarP(&relayAddr, "host", "H", "localhost", "Server host to send logs to")
 	relayCmd.PersistentFlags().StringVarP(&logPath, "logdir", "l", "", "Path to tf2 logs directory")
+	relayCmd.PersistentFlags().StringVarP(&timeoutStr, "timeout", "t", "5s", "API Timeout (eg: 1s, 1m, 1h)")
 	rootCmd.AddCommand(relayCmd)
 }

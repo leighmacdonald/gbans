@@ -93,15 +93,15 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 	<-ctx.Done()
 }
 
-func NewClient(ctx context.Context, name string, logPath string, address string) error {
+func NewClient(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
 	url := address + "/api/log"
 	sendPayload := func(payload service.LogPayload) error {
+		c, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
 		b, err1 := json.Marshal(payload)
 		if err1 != nil {
 			return errors.Wrapf(err1, "Error encoding payload")
 		}
-		c, cancel := context.WithTimeout(ctx, time.Second*5)
-		defer cancel()
 		req, err2 := http.NewRequestWithContext(c, "POST", url, bytes.NewReader(b))
 		if err2 != nil {
 			return errors.Wrapf(err2, "Error creating request payload")
