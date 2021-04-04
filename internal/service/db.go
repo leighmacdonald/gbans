@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	Lo "github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"io/fs"
@@ -90,9 +91,19 @@ func newQueryFilter(query string) *queryFilter {
 
 // Init sets up underlying required services.
 func Init(dsn string) {
-	dbConn, err := pgxpool.Connect(context.Background(), dsn)
+	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Unable to parse config: %v", err)
+	}
+	lvl, err2 := log.ParseLevel(config.Log.Level)
+	if err2 != nil {
+		log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+	}
+	lgr.SetLevel(lvl)
+	cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
+	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
+	if err3 != nil {
+		log.Fatalf("Failed to connect to database: %v", err3)
 	}
 	db = dbConn
 }
