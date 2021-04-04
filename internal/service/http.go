@@ -74,7 +74,7 @@ func initHTTP() {
 			log.Errorf("Error shutting down service: %v", err)
 		}
 	}()
-	<-ctx.Done()
+	<-gCtx.Done()
 }
 
 func currentPerson(c *gin.Context) *model.Person {

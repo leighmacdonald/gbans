@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func profileUpdater() {
+func profileUpdater(ctx context.Context) {
 	var update = func() {
 		o := newQueryFilter("")
 		o.Limit = 5 // Max per query of WebAPI
@@ -65,13 +65,14 @@ func profileUpdater() {
 		case <-ticker.C:
 			update()
 		case <-ctx.Done():
+			log.Debugf("profileUpdater shutting down")
 			return
 		}
 	}
 
 }
 
-func serverStateUpdater() {
+func serverStateUpdater(ctx context.Context) {
 	var update = func() {
 		servers, err := getServers()
 		if err != nil {
@@ -125,13 +126,13 @@ func serverStateUpdater() {
 		select {
 		case <-ticker.C:
 			update()
-		case <-ctx.Done():
+		case <-gCtx.Done():
 			return
 		}
 	}
 }
 
-func banSweeper() {
+func banSweeper(ctx context.Context) {
 	log.Debug("Ban sweeper routine started")
 	ticker := time.NewTicker(time.Second * 5)
 	for {
@@ -162,6 +163,7 @@ func banSweeper() {
 				}
 			}
 		case <-ctx.Done():
+			log.Debugf("banSweeper shutting down")
 			return
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func fileReader(ctx context.Context, path string, messageChan chan string) {
 			}
 			messageChan <- m
 		case <-ctx.Done():
-			log.Infof("Stopped fileReader: %v", path)
+			log.Debugf("fileReader shutting down: %v", path)
 			return
 		}
 	}
@@ -75,12 +76,12 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 					c, cancel = context.WithCancel(ctx)
 					go fileReader(c, event.Name, newFileChan)
 				}
-			case err, ok := <-watcher.Errors:
+			case errW, ok := <-watcher.Errors:
 				if !ok {
 					cancel()
 					return
 				}
-				log.Println("error:", err)
+				log.Errorf("File watcher error: %v", errW)
 			}
 		}
 	}()
@@ -92,43 +93,40 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 	<-ctx.Done()
 }
 
-func NewClient(ctx context.Context, name string, logPath string, address string) (err error) {
+func NewClient(ctx context.Context, name string, logPath string, address string) error {
 	url := address + "/api/log"
+	sendPayload := func(payload service.LogPayload) error {
+		b, err1 := json.Marshal(payload)
+		if err1 != nil {
+			return errors.Wrapf(err1, "Error encoding payload")
+		}
+		c, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		req, err2 := http.NewRequestWithContext(c, "POST", url, bytes.NewReader(b))
+		if err2 != nil {
+			return errors.Wrapf(err2, "Error creating request payload")
+		}
+		resp, err3 := httpClient.Do(req)
+		if err3 != nil {
+			return errors.Wrapf(err3, "Error performing request")
+		}
+		if resp.StatusCode != http.StatusCreated {
+			return errors.Errorf("Invalid respose received: %s", resp.Status)
+		}
+		return nil
+	}
+
 	messageChan := make(chan string, 5000)
 	go newFileWatcher(ctx, logPath, messageChan)
-	errChan := make(chan error)
 	for {
 		select {
 		case msg := <-messageChan:
-			p := service.LogPayload{
-				ServerName: name,
-				Message:    msg,
-			}
-			b, err := json.Marshal(p)
-			if err != nil {
-				log.Errorf("Error encoding payload")
-				break
-			}
-			req, err := http.NewRequest("POST", url, bytes.NewReader(b))
-			if err != nil {
-				log.Errorf("Error creating request payload: %v", err)
-				break
-			}
-			resp, err := httpClient.Do(req)
-			if err != nil {
-				log.Errorf("Error performing request: %v", err)
-				break
-			}
-			if resp.StatusCode != http.StatusCreated {
-				log.Errorf("Invalid respose received: %s", resp.Status)
-				break
+			if err := sendPayload(service.LogPayload{ServerName: name, Message: msg}); err != nil {
+				log.Errorf(err.Error())
 			}
 		case <-ctx.Done():
-			err = ctx.Err()
-			return
-		case err = <-errChan:
-			log.Fatalf("Fatal error occurred: %v", err)
-			return
+			log.Debugf("relay client shutting down")
+			return nil
 		}
 	}
 }

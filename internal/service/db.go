@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	Lo "github.com/jackc/pgx/v4/log/logrusadapter"
+	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"io/fs"

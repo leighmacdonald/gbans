@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -21,7 +22,7 @@ type cmdDef struct {
 
 var (
 	dg                 *discordgo.Session
-	messageQueue       chan discordMessage
+	messageQueue       chan logMessage
 	modChannelIDs      []string
 	cmdMap             map[string]cmdDef
 	connected          bool
@@ -45,7 +46,7 @@ func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs i
 }
 
 func init() {
-	messageQueue = make(chan discordMessage)
+	messageQueue = make(chan logMessage)
 	cmdMap = map[string]cmdDef{
 		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
 		"ban":     newCmd("Ban a player", "ban <name/id> <duration> [reason]", onBan, 1, -1),
@@ -89,7 +90,7 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-	go queueConsumer(ctx)
+	go discordMessageQueueReader(ctx)
 	// Wait here until CTRL-C or other term signal is received.
 	log.Infof("Bot is now running.  Press CTRL-C to exit.")
 	go func() {
@@ -100,12 +101,26 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 	<-ctx.Done()
 }
 
-func queueConsumer(ctx context.Context) {
+func discordMessageQueueReader(ctx context.Context) {
+	events := make(chan logEvent)
+	if err := RegisterLogEventReader(events); err != nil {
+		log.Warnf("logWriter Tried to register duplicate reader channel")
+	}
 	for {
 		select {
-		case dm := <-messageQueue:
-			if err := sendMsg(dg, dm.ChannelID, dm.Body); err != nil {
-				log.Errorf("Failed to send queue message: %v", err)
+		case dm := <-events:
+			switch dm.Type {
+			case logparse.SayTeam:
+				fallthrough
+			case logparse.Say:
+				prefix := ""
+				if dm.Type == logparse.SayTeam {
+					prefix = "(team) "
+				}
+				for _, c := range config.Relay.ChannelIDs {
+					sendMessage(newMessage(c, fmt.Sprintf("[%s] %d **%s** %s%s",
+						dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"])))
+				}
 			}
 		case <-ctx.Done():
 			return
@@ -197,19 +212,19 @@ func sendErr(s *discordgo.Session, cid string, err error) {
 	}
 }
 
-type discordMessage struct {
-	ChannelID string
-	Body      string
+type logMessage struct {
+	ServerID string
+	Body     string
 }
 
-func newMessage(channel string, body string) discordMessage {
-	return discordMessage{
-		ChannelID: channel,
-		Body:      body,
+func newMessage(channel string, body string) logMessage {
+	return logMessage{
+		ServerID: channel,
+		Body:     body,
 	}
 }
 
-func sendMessage(message discordMessage) {
+func sendMessage(message logMessage) {
 	if config.Discord.Enabled {
 		messageQueue <- message
 	}

@@ -323,8 +323,14 @@ func parseKVs(s string, out map[string]string) bool {
 	return true
 }
 
+// Results hold the  results of parsing a log line
+type Results struct {
+	MsgType MsgType
+	Values  map[string]string
+}
+
 // Parse will parse the log line into a known type and values
-func Parse(l string) (map[string]string, MsgType) {
+func Parse(l string) Results {
 	for _, rx := range rxParsers {
 		m, found := reSubMatchMap(rx.Rx, l)
 		if found {
@@ -332,14 +338,14 @@ func Parse(l string) (map[string]string, MsgType) {
 			if keyExists && parseKVs(m["keypairs"], m) {
 				delete(m, "keypairs")
 			}
-			return m, rx.Type
+			return Results{rx.Type, m}
 		}
 	}
 	m, found := reSubMatchMap(rxUnhandled, l)
 	if found {
-		return m, UnhandledMsg
+		return Results{UnhandledMsg, m}
 	}
-	return nil, UnknownMsg
+	return Results{UnknownMsg, map[string]string{"raw": l}}
 }
 
 func decodeTeam() mapstructure.DecodeHookFunc {
@@ -436,7 +442,7 @@ func decodeHealthPack() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decode(input interface{}, output interface{}) error {
+func Decode(input interface{}, output interface{}) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			decodeTeam(),

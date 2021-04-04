@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/pkg/errors"
 	"net"
@@ -366,6 +365,7 @@ func onAPIProfile() gin.HandlerFunc {
 		responseOK(c, http.StatusOK, response)
 	}
 }
+
 func onAPIGetFilteredWords() gin.HandlerFunc {
 	type resp struct {
 		Count int      `json:"count"`
@@ -450,69 +450,13 @@ type LogPayload struct {
 }
 
 func onPostLogAdd() gin.HandlerFunc {
-	validTypes := []logparse.MsgType{
-		logparse.Say, logparse.SayTeam,
-	}
 	return func(c *gin.Context) {
 		var req LogPayload
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		v, t := logparse.Parse(req.Message)
-		s, e := getServerByName(req.ServerName)
-		if e != nil {
-			log.Errorf("Failed to get server for log message: %v", e)
-			responseErr(c, http.StatusNotFound, nil)
-			return
-		}
-		if t != logparse.UnhandledMsg {
-			if err := insertLog(model.NewServerLog(s.ServerID, t, v)); err != nil {
-				log.Errorf("Failed to insert log: %v", err)
-				responseErr(c, http.StatusInternalServerError, nil)
-				return
-			}
-		}
-		// Return immediately, the clients will just ignore errors
+		logRawQueue <- req
 		responseOK(c, http.StatusCreated, nil)
-
-		valid := false
-		for _, vt := range validTypes {
-			if vt == t {
-				valid = true
-				break
-			}
-		}
-
-		if !valid {
-			log.Debugf("Unhandled log message: %s", req.Message)
-			return
-		}
-
-		for _, c := range config.Relay.ChannelIDs {
-			sendMessage(newMessage(c, req.Message))
-		}
-
-		messageQueue <- discordMessage{
-			ChannelID: "",
-			Body:      req.Message,
-		}
-
-		//filtered, word := util.IsFilteredWord(req.Message)
-		//if filtered {
-		//	addWarning(req.SteamID, warnLanguage)
-		//	for _, c := range config.Relay.ChannelIDs {
-		//		sendMessage(newMessage(c, fmt.Sprintf("<@&%d> Word filter triggered: %s", config.Discord.ModRoleID, word)))
-		//	}
-		//}
-		//// [us-2] 76561198017946808 name: message
-		//msgBody := req.Message
-		//if req.TeamSay {
-		//	msgBody = "(Team) " + msgBody
-		//}
-		//msg := fmt.Sprintf(`[%s] %d **%s** %s`, req.ServerID, req.SteamID, req.Name, msgBody)
-		//for _, channelID := range config.Relay.ChannelIDs {
-		//	sendMessage(newMessage(channelID, msg))
-		//}
 	}
 }

@@ -30,7 +30,7 @@ func fetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
 	const baseURL = "https://api.steampowered.com/ISteamUser" +
 		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
-	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+	req, err := http.NewRequestWithContext(gCtx, "GET", u, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create new request")
 	}
@@ -60,7 +60,7 @@ func fetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
 func fetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 	const chunkSize = 100
 	wg := &sync.WaitGroup{}
-	c, cancel := context.WithTimeout(ctx, time.Second*10)
+	c, cancel := context.WithTimeout(gCtx, time.Second*10)
 	defer cancel()
 	var (
 		results   []extra.PlayerSummary
