@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
- func initRouter() {
+func initRouter() {
 	defaultRoute := func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
