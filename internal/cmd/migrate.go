@@ -6,14 +6,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var recreateSchema = false
+var downAll = false
 
 // migrateCmd loads the db schema
 var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Create or update the database schema",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := service.Migrate(); err != nil {
+		act := service.MigrateUp
+		if downAll {
+			act = service.MigrateDn
+		}
+		if err := service.Migrate(service.MigrationAction(act)); err != nil {
 			if err.Error() == "no change" {
 				log.Infof("Migration at latest version")
 			} else {
@@ -28,5 +32,5 @@ var migrateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(migrateCmd)
 
-	migrateCmd.Flags().BoolVarP(&recreateSchema, "recreate", "r", false, "Recreate the database, WARN: this wipes *ALL* data")
+	migrateCmd.Flags().BoolVarP(&downAll, "down", "d", false, "Fully reverts all migrations")
 }

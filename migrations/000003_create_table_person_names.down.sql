@@ -1,0 +1,1 @@
+drop table if exists person_names cascade;

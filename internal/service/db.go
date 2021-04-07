@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
@@ -943,10 +942,16 @@ func dbErr(err error) error {
 	return err
 }
 
-//go:embed "schema.sql"
-var schema string
+type MigrationAction int
 
-func Migrate() error {
+const (
+	MigrateUp = iota
+	MigrateDn
+	MigrateUpOne
+	MigrateDownOne
+)
+
+func Migrate(action MigrationAction) error {
 	instance, err := sql.Open("pgx", config.DB.DSN)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to open database for migration")
@@ -968,7 +973,18 @@ func Migrate() error {
 	if err3 != nil {
 		return errors.Wrapf(err3, "Failed to migrate up")
 	}
-	return m.Up()
+	switch action {
+	case MigrateUpOne:
+		return m.Steps(1)
+	case MigrateDn:
+		return m.Down()
+	case MigrateDownOne:
+		return m.Steps(-1)
+	case MigrateUp:
+		fallthrough
+	default:
+		return m.Up()
+	}
 }
 
 func Import(root string) error {
