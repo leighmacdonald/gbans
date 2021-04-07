@@ -2,12 +2,25 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	sq "github.com/Masterminds/squirrel"
+	"github.com/golang-migrate/migrate/v4"
+	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4/log/logrusadapter"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"io/ioutil"
 	"net"
@@ -15,16 +28,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/model"
-	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -938,24 +941,29 @@ func dbErr(err error) error {
 var schema string
 
 func Migrate(recreate bool) error {
-	const q = `DROP TABLE IF EXISTS %s;`
-	if recreate {
-		for _, t := range tableList {
-			_, err := db.Exec(context.Background(), fmt.Sprintf(q, t))
-			if err != nil {
-				return errors.Wrap(err, "Could not remove all tables")
-			}
+	instance, err := sql.Open("pgx", config.DB.DSN)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := instance.Close(); err != nil {
+			log.Println("close error:", err)
 		}
+	}()
+	driver, err2 := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
+		MigrationsTable:  "_migration",
+		SchemaName:       "public",
+		StatementTimeout: 10,
+	})
+	if err2 != nil {
+		return err2
 	}
-	_, err := db.Exec(context.Background(), schema)
-	if err != nil {
-		return errors.Wrap(err, "Could not create new schema")
+	// TODO migrate to using embed//io/fs
+	m, err3 := migrate.NewWithDatabaseInstance("file:///migrations", "pgx", driver)
+	if err3 != nil {
+		return err3
 	}
-	_, err = GetOrCreatePersonBySteamID(config.General.Owner)
-	if err != nil {
-		log.Fatalf("Error loading system user: %v", err)
-	}
-	return nil
+	return m.Steps(2)
 }
 
 func Import(root string) error {

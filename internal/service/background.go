@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/rumblefrog/go-a2s"

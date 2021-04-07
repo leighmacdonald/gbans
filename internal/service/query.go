@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/model"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"

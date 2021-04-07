@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/service"
-	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/golib"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/spf13/cobra"
 	"os"
