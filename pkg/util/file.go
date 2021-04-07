@@ -6,9 +6,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type WatchFunc func(path string) error
+// watchFunc is called when a watched file operation is triggered
+type watchFunc func(path string) error
 
-func WatchDir(ctx context.Context, dir string, fn WatchFunc) {
+// WatchDir will execute the supplied watchFunc every time a file is written to.
+func WatchDir(ctx context.Context, dir string, fn watchFunc) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)

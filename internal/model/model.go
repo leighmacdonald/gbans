@@ -15,6 +15,7 @@ var (
 	ErrRCON = errors.New("RCON error")
 )
 
+// BanType defines the state of the ban for a user, 0 being no ban
 type BanType int
 
 const (
@@ -24,12 +25,17 @@ const (
 	Banned  BanType = 2
 )
 
+// BanSource defines the origin of the ban or action
 type BanSource int
 
 const (
+	// System is an automatic ban triggered by the service
 	System BanSource = 0
-	Bot    BanSource = 1
-	Web    BanSource = 2
+	// Bot is a ban using the discord bot interface
+	Bot BanSource = 1
+	// Web is a ban using the web-ui
+	Web BanSource = 2
+	// InGame is a ban using the sourcemod plugin
 	InGame BanSource = 3
 )
 
@@ -48,6 +54,8 @@ func (s BanSource) String() string {
 	}
 }
 
+// Reason defined a set of predefined ban reasons
+// TODO make this fully dynamic?
 type Reason int
 
 const (
@@ -72,8 +80,8 @@ var reasonStr = map[Reason]string{
 	Spam:             "Spam",
 }
 
-func ReasonString(reason Reason) string {
-	return reasonStr[reason]
+func (r Reason) String() string {
+	return reasonStr[r]
 }
 
 type BanNet struct {
@@ -81,7 +89,7 @@ type BanNet struct {
 	SteamID    steamid.SID64 `db:"steam_id"`
 	AuthorID   steamid.SID64 `db:"author_id"`
 	CIDR       *net.IPNet    `db:"cidr"`
-	Source     BanSource     `source:"source"`
+	Source     BanSource     `db:"source"`
 	Reason     string        `db:"reason"`
 	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
@@ -247,12 +255,16 @@ func NewPerson(sid64 steamid.SID64) *Person {
 	}
 }
 
+// AppealState is the current state of a users ban appeal, if any.
 type AppealState int
 
 const (
-	ASNew     AppealState = 0
-	ASDenied  AppealState = 1
-	ASGranted AppealState = 2
+	// ASNew is a user has initiated an appeal
+	ASNew AppealState = 0
+	// ASDenied the appeal was denied
+	ASDenied AppealState = 1
+	// The appeal was granted
+	//ASGranted AppealState = 2
 )
 
 type Appeal struct {

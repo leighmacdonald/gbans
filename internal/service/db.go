@@ -103,6 +103,12 @@ func Init(dsn string) {
 		log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
 	}
 	lgr.SetLevel(lvl)
+	lgr.SetFormatter(&log.TextFormatter{
+		ForceColors:   config.Log.ForceColours,
+		DisableColors: config.Log.DisableColours,
+		FullTimestamp: config.Log.FullTimestamp,
+	})
+	lgr.SetReportCaller(config.Log.ReportCaller)
 	cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
 	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err3 != nil {
@@ -940,30 +946,29 @@ func dbErr(err error) error {
 //go:embed "schema.sql"
 var schema string
 
-func Migrate(recreate bool) error {
+func Migrate() error {
 	instance, err := sql.Open("pgx", config.DB.DSN)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to open database for migration")
 	}
-	defer func() {
-		if err := instance.Close(); err != nil {
-			log.Println("close error:", err)
-		}
-	}()
+	if errPing := instance.Ping(); errPing != nil {
+		return errors.Wrapf(errPing, "Cannot migrate, failed to connect to target server")
+	}
 	driver, err2 := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
-		MigrationsTable:  "_migration",
-		SchemaName:       "public",
-		StatementTimeout: 10,
+		MigrationsTable:       "_migration",
+		SchemaName:            "public",
+		StatementTimeout:      60 * time.Second,
+		MultiStatementEnabled: true,
 	})
 	if err2 != nil {
-		return err2
+		return errors.Wrapf(err2, "failed to create migration driver")
 	}
 	// TODO migrate to using embed//io/fs
-	m, err3 := migrate.NewWithDatabaseInstance("file:///migrations", "pgx", driver)
+	m, err3 := migrate.NewWithDatabaseInstance("file://migrations", "pgx", driver)
 	if err3 != nil {
-		return err3
+		return errors.Wrapf(err3, "Failed to migrate up")
 	}
-	return m.Steps(2)
+	return m.Up()
 }
 
 func Import(root string) error {

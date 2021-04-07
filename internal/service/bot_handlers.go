@@ -98,7 +98,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 			return err
 		}
 	}
-	reasonStr := model.ReasonString(model.Custom)
+	reasonStr := model.Custom.String()
 	if len(args) > 2 {
 		reasonStr = strings.Join(args[2:], " ")
 	}
