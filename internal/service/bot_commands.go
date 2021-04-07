@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 

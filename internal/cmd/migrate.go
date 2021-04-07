@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/service"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

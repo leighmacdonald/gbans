@@ -6,7 +6,7 @@ package main
 
 import (
 	_ "embed"
-	"github.com/leighmacdonald/gbans/cmd"
+	"github.com/leighmacdonald/gbans/internal/cmd"
 )
 
 func main() {

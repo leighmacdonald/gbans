@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/service"
-	"github.com/leighmacdonald/gbans/model"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"

@@ -145,11 +145,14 @@ func Read(cfgFiles ...string) {
 		found = true
 	}
 	var cfg rootConfig
-	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf("Invalid config file format: %v", err)
+	if err2 := viper.Unmarshal(&cfg); err2 != nil {
+		log.Fatalf("Invalid config file format: %v", err2)
 	}
-	d, err := ParseDuration(cfg.HTTP.ClientTimeout)
-	if err != nil {
+	if strings.HasPrefix(cfg.DB.DSN, "pgx://") {
+		cfg.DB.DSN = strings.Replace(cfg.DB.DSN, "pgx://", "postgres://", 1)
+	}
+	d, err3 := ParseDuration(cfg.HTTP.ClientTimeout)
+	if err3 != nil {
 		d = time.Second * 10
 	}
 	cfg.HTTP.ClientTimeoutDuration = d

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/config"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

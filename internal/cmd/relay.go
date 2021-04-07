@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/relay"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/relay"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -31,7 +31,7 @@ var relayCmd = &cobra.Command{
 			log.Fatalf("Invalid timeout value: %v", err)
 		}
 		go func() {
-			if err := relay.NewClient(ctx, serverName, logPath, relayAddr, duration); err != nil {
+			if err := relay.New(ctx, serverName, logPath, relayAddr, duration); err != nil {
 				log.Fatalf("Exited client: %v", err)
 			}
 		}()

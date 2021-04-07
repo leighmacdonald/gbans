@@ -2,8 +2,8 @@ package service
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/model"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"

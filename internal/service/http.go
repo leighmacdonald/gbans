@@ -3,8 +3,8 @@ package service
 import (
 	"crypto/tls"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/config"
-	"github.com/leighmacdonald/gbans/model"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"

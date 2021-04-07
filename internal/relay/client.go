@@ -93,7 +93,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 	<-ctx.Done()
 }
 
-func NewClient(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
+func New(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
 	url := address + "/api/log"
 	sendPayload := func(payload service.LogPayload) error {
 		c, cancel := context.WithTimeout(ctx, timeout)
