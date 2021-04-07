@@ -573,6 +573,7 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 		return nil, e
 	}
 	p := model.NewPerson(0)
+	p.IsNew = false
 	p.PlayerSummary = &extra.PlayerSummary{}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
