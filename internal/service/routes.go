@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"net/http"
 )
 
@@ -11,7 +12,14 @@ func initRouter() {
 	}
 	router.Use(gin.Logger())
 	// Dont use session for static assets
-	router.StaticFS("/dist", http.FS(content))
+	// Note that we only use embedded assets for !release modes
+	// This is to allow us the ability to develop the frontend without needing to
+	// compile+re-embed the assets on each change.
+	if config.General.Mode == config.Release {
+		router.StaticFS("/static", http.FS(content))
+	} else {
+		router.StaticFS("/static/dist", http.Dir(config.HTTP.StaticPath))
+	}
 	//router.GET(routeRaw(string(routeHome)), )
 	router.NoRoute(defaultRoute)
 	router.GET("/login/success", onLoginSuccess())

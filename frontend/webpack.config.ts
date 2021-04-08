@@ -2,6 +2,8 @@ import * as path from 'path';
 import * as webpack from 'webpack';
 import * as copyWebpackPlugin from 'copy-webpack-plugin';
 
+const outPath = path.resolve('../internal/service/dist');
+
 const config: webpack.Configuration = {
     entry: './src/index.tsx',
     devtool: 'source-map',
@@ -37,10 +39,7 @@ const config: webpack.Configuration = {
         filename: 'bundle.js',
         // This is stored under the go tree because you cannot traverse up directories
         // when specifying the path for go:embed
-        path:
-            __dirname === 'frontend'
-                ? path.resolve('../', 'internal', 'service', 'dist')
-                : path.resolve('internal', 'service', 'dist'),
+        path: (__dirname = outPath),
         sourceMapFilename: '[name].ts.map',
         assetModuleFilename: 'images/[hash][ext][query]'
     }
