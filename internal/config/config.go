@@ -57,7 +57,9 @@ type rootConfig struct {
 }
 
 type DBConfig struct {
-	DSN string `mapstructure:"dsn"`
+	DSN         string `mapstructure:"dsn"`
+	AutoMigrate bool   `mapstructure:"auto_migrate"`
+	LogQueries  bool   `mapstructure:"log_queries"`
 }
 
 type HTTPConfig struct {
@@ -76,11 +78,23 @@ func (h HTTPConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", h.Host, h.Port)
 }
 
+type RunMode string
+
+const (
+	Release RunMode = "release"
+	Debug   RunMode = "debug"
+	Test    RunMode = "test"
+)
+
+func (rm RunMode) String() string {
+	return string(rm)
+}
+
 type GeneralConfig struct {
 	SiteName       string        `mapstructure:"site_name"`
 	SteamKey       string        `mapstructure:"steam_key"`
 	Owner          steamid.SID64 `mapstructure:"owner"`
-	Mode           string        `mapstructure:"mode"`
+	Mode           RunMode       `mapstructure:"mode"`
 	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
 	WarningLimit   int           `mapstructure:"warning_limit"`
 	UseUTC         bool          `mapstructure:"use_utc"`
@@ -166,7 +180,7 @@ func Read(cfgFiles ...string) {
 	Net = cfg.NetBans
 
 	configureLogger(log.StandardLogger())
-	gin.SetMode(General.Mode)
+	gin.SetMode(General.Mode.String())
 	steamid.SetKey(General.SteamKey)
 	if found {
 		log.Infof("Using config file: %s", viper.ConfigFileUsed())
@@ -219,6 +233,8 @@ func init() {
 	viper.SetDefault("log.full_timestamp", false)
 
 	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
+	viper.SetDefault("database.auto_migrate", true)
+	viper.SetDefault("database.log_queries", false)
 }
 
 func configureLogger(l *log.Logger) {

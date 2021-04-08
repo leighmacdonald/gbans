@@ -97,23 +97,38 @@ func Init(dsn string) {
 	if err != nil {
 		log.Fatalf("Unable to parse config: %v", err)
 	}
-	lvl, err2 := log.ParseLevel(config.Log.Level)
-	if err2 != nil {
-		log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+	if config.DB.LogQueries {
+		lvl, err2 := log.ParseLevel(config.Log.Level)
+		if err2 != nil {
+			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+		}
+		lgr.SetLevel(lvl)
+		lgr.SetFormatter(&log.TextFormatter{
+			ForceColors:   config.Log.ForceColours,
+			DisableColors: config.Log.DisableColours,
+			FullTimestamp: config.Log.FullTimestamp,
+		})
+		lgr.SetReportCaller(config.Log.ReportCaller)
+		cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
 	}
-	lgr.SetLevel(lvl)
-	lgr.SetFormatter(&log.TextFormatter{
-		ForceColors:   config.Log.ForceColours,
-		DisableColors: config.Log.DisableColours,
-		FullTimestamp: config.Log.FullTimestamp,
-	})
-	lgr.SetReportCaller(config.Log.ReportCaller)
-	cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
 	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err3 != nil {
 		log.Fatalf("Failed to connect to database: %v", err3)
 	}
+
 	db = dbConn
+
+	if config.DB.AutoMigrate {
+		if errM := Migrate(MigrateUp); errM != nil {
+			if errM.Error() == "no change" {
+				log.Infof("Migration at latest version")
+			} else {
+				log.Fatalf("Could not migrate schema: %v", errM)
+			}
+		} else {
+			log.Infof("Migration completed successfully")
+		}
+	}
 }
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon",

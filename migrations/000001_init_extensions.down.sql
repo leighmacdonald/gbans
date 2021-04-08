@@ -1,1 +1,1 @@
-drop extension if exists postgis cascade ;
+drop extension if exists postgis cascade;

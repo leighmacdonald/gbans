@@ -50,9 +50,9 @@ func authMiddleWare() gin.HandlerFunc {
 				p = loggedInPerson
 			} else {
 				claims := &authClaims{}
-				tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
-				if err != nil {
-					if err == jwt.ErrSignatureInvalid {
+				tkn, errC := jwt.ParseWithClaims(token, claims, getTokenKey)
+				if errC != nil {
+					if errC == jwt.ErrSignatureInvalid {
 						c.AbortWithStatus(http.StatusForbidden)
 						return
 					}

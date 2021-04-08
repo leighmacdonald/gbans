@@ -258,6 +258,7 @@ func Start() {
 
 	// Setup the HTTP router
 	initRouter()
+
 	// Setup the storage backend
 	initStore()
 	defer shutdown()

@@ -23,9 +23,9 @@ var migrateCmd = &cobra.Command{
 			} else {
 				log.Fatalf("Could not migrate schema: %v", err)
 			}
+		} else {
+			log.Infof("Migration completed successfully")
 		}
-		log.Infof("Added server %s with key %s - This key must be added to your servers gbans.cfg under server_key",
-			addServer.ServerName, addServer.Password)
 	},
 }
 

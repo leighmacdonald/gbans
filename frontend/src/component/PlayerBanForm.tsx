@@ -102,7 +102,7 @@ export const PlayerBanForm = ({
     ]);
 
     const handleSubmit = React.useCallback(async () => {
-        if (!profile || profile?.player?.steam_id > 0) {
+        if (!profile || profile?.player?.steam_id <= 0) {
             return;
         }
         const opts: BanPayload = {
