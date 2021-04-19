@@ -97,6 +97,17 @@ func Init(dsn string) {
 	if err != nil {
 		log.Fatalf("Unable to parse config: %v", err)
 	}
+	if config.DB.AutoMigrate {
+		if errM := Migrate(MigrateUp); errM != nil {
+			if errM.Error() == "no change" {
+				log.Infof("Migration at latest version")
+			} else {
+				log.Fatalf("Could not migrate schema: %v", errM)
+			}
+		} else {
+			log.Infof("Migration completed successfully")
+		}
+	}
 	if config.DB.LogQueries {
 		lvl, err2 := log.ParseLevel(config.Log.Level)
 		if err2 != nil {
@@ -117,18 +128,6 @@ func Init(dsn string) {
 	}
 
 	db = dbConn
-
-	if config.DB.AutoMigrate {
-		if errM := Migrate(MigrateUp); errM != nil {
-			if errM.Error() == "no change" {
-				log.Infof("Migration at latest version")
-			} else {
-				log.Fatalf("Could not migrate schema: %v", errM)
-			}
-		} else {
-			log.Infof("Migration completed successfully")
-		}
-	}
 }
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon",
@@ -938,6 +937,7 @@ func getStats() (model.Stats, error) {
 
 }
 
+// dbErr is used to wrap common database errors in own own error types
 func dbErr(err error) error {
 	if err == nil {
 		return err
@@ -958,12 +958,17 @@ func dbErr(err error) error {
 	return err
 }
 
+// MigrationAction is the type of migration to perform
 type MigrationAction int
 
 const (
+	// MigrateUp Fully upgrades the schema
 	MigrateUp = iota
+	// MigrateDn Fully downgrades the schema
 	MigrateDn
+	// MigrateUpOne Upgrade the schema by one revision
 	MigrateUpOne
+	// MigrateDownOne Downgrade the schema by one revision
 	MigrateDownOne
 )
 

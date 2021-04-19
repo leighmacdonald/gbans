@@ -117,7 +117,7 @@ func TestMain(m *testing.M) {
 	config.General.Mode = "test"
 	initStore()
 	clearDB()
-	if err := Migrate(true); err != nil {
+	if err := Migrate(MigrateUp); err != nil {
 		log.Fatal(err)
 	}
 	defer clearDB()
