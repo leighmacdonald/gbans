@@ -5,6 +5,7 @@ COPY frontend/yarn.lock yarn.lock
 COPY . .
 WORKDIR /build/frontend
 RUN yarn
+RUN yarn run copy
 RUN yarn build
 
 FROM golang:1.16-alpine as build
@@ -17,11 +18,10 @@ COPY --from=frontend /build/internal/service/dist internal/service/dist
 COPY . .
 RUN make
 
-FROM alpine:3.13.2
+FROM alpine:3.13.5
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 EXPOSE 6006
-RUN sed -i 's/http\:\/\/dl-cdn.alpinelinux.org/https\:\/\/alpine.global.ssl.fastly.net/g' /etc/apk/repositories
-RUN apk add bash dumb-init
+RUN apk add dumb-init
 WORKDIR /app
 VOLUME ["/app/database"]
 COPY --from=build /build/gbans .
