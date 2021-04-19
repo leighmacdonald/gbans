@@ -208,19 +208,6 @@ type serverState struct {
 	Alive bool
 }
 
-func (s serverState) os() template.HTML {
-	switch s.A2SInfo.ServerOS {
-	case a2s.ServerOS_Linux:
-		return "linux"
-	case a2s.ServerOS_Windows:
-		return "windows"
-	case a2s.ServerOS_Mac:
-		return "mac"
-	default:
-		return "unknown"
-	}
-}
-
 func (s serverState) VacStatus() template.HTML {
 	if s.A2SInfo.VAC {
 		return "on"

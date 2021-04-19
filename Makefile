@@ -3,6 +3,8 @@ GIT_TAG =
 GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
+current_dir :=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 all: build
 
 vet:
@@ -53,4 +55,7 @@ image_tag:
 	docker build -t leighmacdonald/gbans:$$(git describe --abbrev=0 --tags) .
 
 docker_run:
+	docker run -it --rm -v "$(current_dir)"/gbans.yml:/app/gbans.yml:ro docker.io/leighmacdonald/gbans:latest
+
+up:
 	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans
