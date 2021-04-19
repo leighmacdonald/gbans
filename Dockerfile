@@ -5,8 +5,8 @@ COPY frontend/yarn.lock yarn.lock
 COPY . .
 WORKDIR /build/frontend
 RUN yarn
-RUN yarn run copy
 RUN yarn build
+RUN yarn run copy
 
 FROM golang:1.16-alpine as build
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
