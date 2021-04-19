@@ -1,9 +1,9 @@
-import * as path from 'path';
-import * as webpack from 'webpack';
+import path from 'path';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const outPath = path.resolve('../internal/service/dist');
 
-const config: webpack.Configuration = {
+const config = {
     entry: './src/index.tsx',
     devtool: 'source-map',
     module: {
@@ -29,12 +29,16 @@ const config: webpack.Configuration = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js']
     },
-    plugins: [],
+    plugins: [
+        new CopyWebpackPlugin({
+            patterns: [{ from: 'src/icons' }]
+        })
+    ],
     output: {
         filename: 'bundle.js',
         // This is stored under the go tree because you cannot traverse up directories
         // when specifying the path for go:embed
-        path: (__dirname = outPath),
+        path: outPath,
         sourceMapFilename: '[name].ts.map',
         assetModuleFilename: 'images/[hash][ext][query]'
     }
