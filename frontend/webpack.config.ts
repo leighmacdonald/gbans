@@ -1,6 +1,6 @@
+import copyWebpackPlugin = require('copy-webpack-plugin');
 import * as path from 'path';
 import * as webpack from 'webpack';
-import * as copyWebpackPlugin from 'copy-webpack-plugin';
 
 const outPath = path.resolve('../internal/service/dist');
 

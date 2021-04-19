@@ -27,7 +27,7 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@types/chai": "^4.2.15",
-    "@types/copy-webpack-plugin": "^6.4.0",
+    "@types/copy-webpack-plugin": "^6.4.1",
     "@types/es6-promise": "^3.3.0",
     "@types/jest": "^26.0.20",
     "@types/jquery": "^3.5.5",
