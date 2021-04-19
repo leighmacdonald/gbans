@@ -6,6 +6,10 @@ const outPath = path.resolve('../internal/service/dist');
 const config = {
     entry: './src/index.tsx',
     devtool: 'source-map',
+    performance: {
+        maxAssetSize: 1000000,
+        maxEntrypointSize: 1000000
+    },
     module: {
         rules: [
             {
