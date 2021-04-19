@@ -9,6 +9,8 @@
   "private": false,
   "scripts": {
     "compress": "./compress.sh",
+    "copy": "cp -rv src/icons/* ../internal/service/dist/",
+    "copy_win": "xcopy src\\icons\\* ..\\internal\\service\\dist\\ /Y",
     "watch": "cross-env NODE_ENV=development webpack --watch --progress",
     "build": "cross-env NODE_ENV=production webpack",
     "prettier:base": "prettier --parser typescript --single-quote",

@@ -1,4 +1,3 @@
-import copyWebpackPlugin = require('copy-webpack-plugin');
 import * as path from 'path';
 import * as webpack from 'webpack';
 
@@ -30,11 +29,7 @@ const config: webpack.Configuration = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js']
     },
-    plugins: [
-        new copyWebpackPlugin({
-            patterns: [{ from: 'src/icons' }]
-        })
-    ],
+    plugins: [],
     output: {
         filename: 'bundle.js',
         // This is stored under the go tree because you cannot traverse up directories
