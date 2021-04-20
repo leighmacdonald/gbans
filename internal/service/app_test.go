@@ -116,11 +116,6 @@ func TestMain(m *testing.M) {
 	config.Read()
 	config.General.Mode = "test"
 	initStore()
-	clearDB()
-	if err := Migrate(MigrateUp); err != nil {
-		log.Fatal(err)
-	}
-	defer clearDB()
 	initRouter()
 	GenTestData()
 	os.Exit(m.Run())

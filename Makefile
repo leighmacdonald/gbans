@@ -25,9 +25,10 @@ run:
 install:
 	@go install $(GO_FLAGS) ./...
 
-test:
+test-ts:
 	@cd frontend && yarn run test
-	@cd ..
+
+test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 testcover:
@@ -46,7 +47,7 @@ pg_test_service:
 	docker-compose -f docker/docker-compose.yml up --abort-on-container-exit --exit-code-from postgres --remove-orphans --build postgres
 
 docker_test:
-	docker-compose -f docker/docker-compose-test.yml up --abort-on-container-exit --exit-code-from gbans-test --remove-orphans --build
+	docker-compose -f docker/docker-compose-test.yml up --renew-anon-volumes --abort-on-container-exit --exit-code-from gbans-test --remove-orphans --build
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
@@ -55,7 +56,7 @@ image_tag:
 	docker build -t leighmacdonald/gbans:$$(git describe --abbrev=0 --tags) .
 
 docker_run:
-	docker run -it --rm -v "$(current_dir)"/gbans.yml:/app/gbans.yml:ro docker.io/leighmacdonald/gbans:latest
+	docker run -it --rm -v "$(current_dir)"/gbans.yml:/app/gbans.yml:ro leighmacdonald/gbans:latest
 
 up:
 	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans

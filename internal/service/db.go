@@ -16,6 +16,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -33,7 +34,7 @@ var (
 	db           *pgxpool.Pool
 	errNoResult  = errors.New("No results found")
 	errDuplicate = errors.New("Duplicate entity")
-
+	errNoChange  = errors.New("no change")
 	// Use $ for pg based queries
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
@@ -990,7 +991,8 @@ func Migrate(action MigrationAction) error {
 		return errors.Wrapf(err2, "failed to create migration driver")
 	}
 	// TODO migrate to using embed//io/fs
-	m, err3 := migrate.NewWithDatabaseInstance("file://migrations", "pgx", driver)
+	fp := fmt.Sprintf("file://%s", golib.FindFile("migrations", "migrations"))
+	m, err3 := migrate.NewWithDatabaseInstance(fp, "pgx", driver)
 	if err3 != nil {
 		return errors.Wrapf(err3, "Failed to migrate up")
 	}

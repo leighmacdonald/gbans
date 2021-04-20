@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
-	"html/template"
 	"net/http"
 	"sync"
 	"time"
@@ -192,7 +191,7 @@ type gameType string
 
 const (
 	//unknown gameType = "Unknown"
-	tf2 gameType = "Team Fortress 2"
+	tf2 gameType = "team Fortress 2"
 	//cs      gameType = "Counter-Strike"
 	//csgo    gameType = "Counter-Strike: Global Offensive"
 )
@@ -206,13 +205,6 @@ type serverState struct {
 	extra.Status
 	// TODO Find better way to track this
 	Alive bool
-}
-
-func (s serverState) VacStatus() template.HTML {
-	if s.A2SInfo.VAC {
-		return "on"
-	}
-	return "off"
 }
 
 func init() {

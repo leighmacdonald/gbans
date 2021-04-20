@@ -14,7 +14,7 @@ services:
       - prod_network
     environment:
       GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
-      GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
+        GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
     command: ./gbans serve
   postgres:
     image: postgis/postgis:13-3.1-alpine
