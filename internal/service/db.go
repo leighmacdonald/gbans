@@ -34,7 +34,6 @@ var (
 	db           *pgxpool.Pool
 	errNoResult  = errors.New("No results found")
 	errDuplicate = errors.New("Duplicate entity")
-	errNoChange  = errors.New("no change")
 	// Use $ for pg based queries
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
@@ -52,18 +51,6 @@ const (
 	tableServer       tableName = "server"
 	tableServerLog    tableName = "server_log"
 )
-
-var tableList = []tableName{
-	tableServerLog,
-	tableBanAppeal,
-	tableFilteredWord,
-	tableBanNet,
-	tableBan,
-	tablePersonNames,
-	tablePersonIP,
-	tablePerson,
-	tableServer,
-}
 
 // queryFilter provides a structure for common query parameters
 type queryFilter struct {
@@ -442,8 +429,10 @@ func saveAppeal(appeal *model.Appeal) error {
 	return insertAppeal(appeal)
 }
 
-func SaveBan(ban *model.Ban) error {
-	// Ensure the FK's are satisfied
+// saveBan will insert or update the ban record
+// New records will have the Ban.BanID set automatically
+func saveBan(ban *model.Ban) error {
+	// Ensure the foreign keys are satisfied
 	_, err := GetOrCreatePersonBySteamID(ban.SteamID)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get person for ban")
@@ -510,6 +499,7 @@ func dropPerson(steamID steamid.SID64) error {
 	return nil
 }
 
+// SavePerson will insert or update the person record
 func SavePerson(person *model.Person) error {
 	person.UpdatedOn = config.Now()
 	if !person.IsNew {
@@ -602,7 +592,7 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 func getPeople(qf *queryFilter) ([]*model.Person, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
-		// TODO add lowercased functional index to avoid tableName scan
+		// TODO add lower-cased functional index to avoid tableName scan
 		qb = qb.Where(sq.ILike{"personaname": strings.ToLower(qf.Query)})
 	}
 	if qf.Offset > 0 {
@@ -773,7 +763,8 @@ func getExpiredBans() ([]*model.Ban, error) {
 //	return total, nil
 //}
 
-func GetBans(o *queryFilter) ([]*model.BannedPerson, error) {
+// getBans returns all bans that fit the filter criteria passed in
+func getBans(o *queryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
@@ -973,6 +964,7 @@ const (
 	MigrateDownOne
 )
 
+// Migrate e
 func Migrate(action MigrationAction) error {
 	instance, err := sql.Open("pgx", config.DB.DSN)
 	if err != nil {
@@ -991,7 +983,11 @@ func Migrate(action MigrationAction) error {
 		return errors.Wrapf(err2, "failed to create migration driver")
 	}
 	// TODO migrate to using embed//io/fs
-	fp := fmt.Sprintf("file://%s", golib.FindFile("migrations", "migrations"))
+	rp := golib.FindFile("migrations", "migrations")
+	if strings.Contains(rp, "\\") {
+		rp = "migrations"
+	}
+	fp := fmt.Sprintf("file://%s", rp)
 	m, err3 := migrate.NewWithDatabaseInstance(fp, "pgx", driver)
 	if err3 != nil {
 		return errors.Wrapf(err3, "Failed to migrate up")
@@ -1070,7 +1066,7 @@ func Import(root string) error {
 				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
 				bn.Source = model.System
 
-				if err3 := SaveBan(bn); err3 != nil {
+				if err3 := saveBan(bn); err3 != nil {
 					return err3
 				}
 			}

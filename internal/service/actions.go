@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+// MutePlayer will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
+// If duration set to 0, the value of config.DefaultExpiration() will be used.
 func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
 	reason model.Reason, reasonText string) error {
 	if !sid.Valid() {
@@ -35,7 +37,7 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
 	}
-	if err := SaveBan(&ban); err != nil {
+	if err := saveBan(&ban); err != nil {
 		return dbErr(err)
 	}
 	servers, err := getServers()
@@ -62,13 +64,15 @@ func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
 		}
 	}
 	ban.Ban.ValidUntil = time.Now().UTC()
-	if err := SaveBan(ban.Ban); err != nil {
+	if err := saveBan(ban.Ban); err != nil {
 		return errors.Wrapf(err, "Failed to save unban")
 	}
 	log.Infof("Player unbanned: %v", sid.Int64())
 	return nil
 }
 
+// BanPlayer will ban the steam id from all servers. Players are immediately kicked from servers
+// once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
 func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
 	reason model.Reason, reasonText string, source model.BanSource) (*model.Ban, error) {
 	if !sid.Valid() {
@@ -77,7 +81,6 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	if !author.Valid() {
 		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
-
 	existing, err := getBanBySteamID(sid, false)
 	if err != nil {
 		if err != errNoResult {
@@ -103,7 +106,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
 	}
-	if err := SaveBan(&ban); err != nil {
+	if err := saveBan(&ban); err != nil {
 		return nil, dbErr(err)
 	}
 	servers, err2 := getServers()
@@ -114,6 +117,10 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	return &ban, nil
 }
 
+// BanNetwork adds a new network to the banned network list. It will accept any valid CIDR format.
+// It accepts an optional steamid to associate a particular user with the network ban. Any active players
+// that fall within the range will be kicked immediately.
+// If duration is 0, the value of config.DefaultExpiration() will be used.
 func BanNetwork(ctx context.Context, cidr *net.IPNet, sid steamid.SID64, author steamid.SID64, duration time.Duration,
 	reason model.Reason, reasonText string, source model.BanSource) (*model.BanNet, error) {
 	if !author.Valid() {

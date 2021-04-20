@@ -10,6 +10,7 @@ var (
 	filteredWordsMu *sync.RWMutex
 )
 
+// ImportFilteredWords loads the supplied word list into memory
 func ImportFilteredWords(words []string) {
 	var contains = func(lWord string) bool {
 		for _, w := range filteredWords {
@@ -28,6 +29,7 @@ func ImportFilteredWords(words []string) {
 	}
 }
 
+// IsFilteredWord checks to see if the body of text contains a known filtered word
 func IsFilteredWord(body string) (bool, string) {
 	if body == "" {
 		return false, ""

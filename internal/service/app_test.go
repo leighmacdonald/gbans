@@ -102,16 +102,6 @@ func GenTestData() {
 	}
 }
 
-func clearDB() {
-	ctx := context.Background()
-	for _, table := range tableList {
-		q := fmt.Sprintf(`drop table if exists %s cascade;`, table)
-		if _, err := db.Exec(ctx, q); err != nil {
-			log.Panicf("Failed to prep database: %s", err.Error())
-		}
-	}
-}
-
 func TestMain(m *testing.M) {
 	config.Read()
 	config.General.Mode = "test"

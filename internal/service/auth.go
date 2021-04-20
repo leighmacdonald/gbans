@@ -159,12 +159,13 @@ func onLoginSuccess() gin.HandlerFunc {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 }
+
 func getTokenKey(token *jwt.Token) (interface{}, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
+
 func onTokenRefresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// (BEGIN) The code uptil this point is the same as the first part of the `Welcome` route
 		ah := c.GetHeader("Authorization")
 		tp := strings.SplitN(ah, " ", 2)
 		var token string

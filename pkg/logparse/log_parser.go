@@ -26,7 +26,7 @@ var (
 
 	// Date stuff
 	d = `^L\s(?P<date>.+?)\s+-\s+(?P<time>.+?):\s+`
-	// Common player id format eg: "funk. Bubi<382><STEAM_0:1:22649331><>"
+	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>"
 	rxPlayerStr = `"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator))?>"`
 	//rxPlayer    = regexp.MustCompile(`(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator)?)>`)
 	// Most player events have the same common prefix
@@ -324,6 +324,7 @@ func parseKVs(s string, out map[string]string) bool {
 }
 
 // Results hold the  results of parsing a log line
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Results struct {
 	MsgType MsgType
 	Values  map[string]string
@@ -442,6 +443,9 @@ func decodeHealthPack() mapstructure.DecodeHookFunc {
 	}
 }
 
+// Decode will transform a map of values into the struct passed in
+// eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 func Decode(input interface{}, output interface{}) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(

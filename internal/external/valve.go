@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// banid 0 STEAM_0:1:16683555
+// parseValveSID parses the format: banid 0 STEAM_0:1:16683555
 func parseValveSID(src []byte) ([]steamid.SID64, error) {
 	var ids []steamid.SID64
 	for _, line := range strings.Split(string(src), "\r\n") {
@@ -23,7 +23,7 @@ func parseValveSID(src []byte) ([]steamid.SID64, error) {
 	return ids, nil
 }
 
-// addip 0 89.229.79.121
+// parseValveNet parses the format: addip 0 89.229.79.121
 func parseValveNet(src []byte) ([]*net.IPNet, error) {
 	var nets []*net.IPNet
 	for _, line := range strings.Split(string(src), "\r\n") {

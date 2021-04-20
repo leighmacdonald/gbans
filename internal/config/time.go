@@ -56,6 +56,9 @@ func ParseDuration(s string) (time.Duration, error) {
 	return 0, errInvalidDuration
 }
 
+// Now returns the current time in the configured format of the application runtime
+//
+// All calls to time.Now() should use this instead to ensure consistency
 func Now() time.Time {
 	if General.UseUTC {
 		return time.Now().UTC()
@@ -63,6 +66,7 @@ func Now() time.Time {
 	return time.Now()
 }
 
+// DefaultExpiration returns the default expiration time delta from Now()
 func DefaultExpiration() time.Time {
 	return Now().AddDate(expirationYears, 0, 0)
 }

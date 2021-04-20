@@ -33,11 +33,6 @@ const baseLayout = `<!doctype html>
     </body>
     </html>`
 
-type StatusResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-}
-
 func initHTTP() {
 	log.Infof("Starting HTTP service")
 	go func() {
@@ -50,7 +45,7 @@ func initHTTP() {
 		}
 		if config.HTTP.TLS {
 			tlsVar := &tls.Config{
-				// Causes servers to use Go's default ciphersuite preferences,
+				// Causes servers to use Go's default cipher suite preferences,
 				// which are tuned to avoid attacks. Does nothing on clients.
 				PreferServerCipherSuites: true,
 				// Only use curves which have assembly implementations

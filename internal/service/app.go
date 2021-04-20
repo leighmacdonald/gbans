@@ -48,7 +48,8 @@ type userWarning struct {
 	CreatedOn  time.Time
 }
 
-func RegisterLogEventReader(r chan logEvent) error {
+// registerLogEventReader will register a channel to receive new log events as they come in
+func registerLogEventReader(r chan logEvent) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
 	for _, c := range logEventReaders {
@@ -102,7 +103,7 @@ type logEvent struct {
 
 func logWriter(ctx context.Context) {
 	events := make(chan logEvent)
-	if err := RegisterLogEventReader(events); err != nil {
+	if err := registerLogEventReader(events); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	for {
@@ -121,7 +122,7 @@ func logWriter(ctx context.Context) {
 
 func logReader(ctx context.Context, logRows chan LogPayload, readers ...chan logEvent) {
 	for _, reader := range readers {
-		if err := RegisterLogEventReader(reader); err != nil {
+		if err := registerLogEventReader(reader); err != nil {
 			log.Warnf("Tried to register duplicate log event reader")
 		}
 	}
@@ -294,7 +295,7 @@ func initWorkers() {
 
 func initDiscord() {
 	if config.Discord.Token != "" {
-		go StartDiscord(gCtx, config.Discord.Token, config.Discord.ModChannels)
+		go startDiscord(gCtx, config.Discord.Token, config.Discord.ModChannels)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}

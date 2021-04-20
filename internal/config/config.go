@@ -13,31 +13,33 @@ import (
 	"github.com/spf13/viper"
 )
 
+// BanListType is the type or source of a ban list
 type BanListType string
 
 const (
-	CIDR     BanListType = "cidr"
-	Socks5   BanListType = "socks5"
-	Socks4   BanListType = "socks4"
-	Web      BanListType = "http"
-	Snort    BanListType = "snort"
+	// CIDR formatted list
+	CIDR BanListType = "cidr"
+	// ValveNet is the srcds network ban list format
 	ValveNet BanListType = "valve_net"
+	// ValveSID is the srcds steamid ban list format
 	ValveSID BanListType = "valve_steamid"
-	TF2BD    BanListType = "tf2bd"
+	// TF2BD sources ban list
+	TF2BD BanListType = "tf2bd"
 )
 
+// BanList holds details to load a ban lost
 type BanList struct {
 	URL  string      `mapstructure:"url"`
 	Name string      `mapstructure:"name"`
 	Type BanListType `mapstructure:"type"`
 }
 
-type RelayConfig struct {
+type relayConfig struct {
 	Enabled    bool     `mapstructure:"enabled"`
 	ChannelIDs []string `mapstructure:"channel_ids"`
 }
 
-type FilterConfig struct {
+type filterConfig struct {
 	Enabled         bool     `mapstructure:"enabled"`
 	IsWarning       bool     `mapstructure:"is_warning"`
 	PingDiscord     bool     `mapstructure:"ping_discord"`
@@ -46,23 +48,23 @@ type FilterConfig struct {
 }
 
 type rootConfig struct {
-	General GeneralConfig `mapstructure:"general"`
-	HTTP    HTTPConfig    `mapstructure:"http"`
-	Relay   RelayConfig   `mapstructure:"relay"`
-	Filter  FilterConfig  `mapstructure:"word_filter"`
-	DB      DBConfig      `mapstructure:"database"`
-	Discord DiscordConfig `mapstructure:"discord"`
-	Log     LogConfig     `mapstructure:"logging"`
-	NetBans NetBans       `mapstructure:"network_bans"`
+	General generalConfig `mapstructure:"general"`
+	HTTP    httpConfig    `mapstructure:"http"`
+	Relay   relayConfig   `mapstructure:"relay"`
+	Filter  filterConfig  `mapstructure:"word_filter"`
+	DB      dbConfig      `mapstructure:"database"`
+	Discord discordConfig `mapstructure:"discord"`
+	Log     logConfig     `mapstructure:"logging"`
+	NetBans netBans       `mapstructure:"network_bans"`
 }
 
-type DBConfig struct {
+type dbConfig struct {
 	DSN         string `mapstructure:"dsn"`
 	AutoMigrate bool   `mapstructure:"auto_migrate"`
 	LogQueries  bool   `mapstructure:"log_queries"`
 }
 
-type HTTPConfig struct {
+type httpConfig struct {
 	Host                  string `mapstructure:"host"`
 	Port                  int    `mapstructure:"port"`
 	Domain                string `mapstructure:"domain"`
@@ -74,33 +76,38 @@ type HTTPConfig struct {
 	ClientTimeoutDuration time.Duration
 }
 
-func (h HTTPConfig) Addr() string {
+// Addr returns the address in host:port format
+func (h httpConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", h.Host, h.Port)
 }
 
-type RunMode string
+type runMode string
 
 const (
-	Release RunMode = "release"
-	Debug   RunMode = "debug"
-	Test    RunMode = "test"
+	// Release is production mode, minimal logging
+	Release runMode = "release"
+	// Debug has much more logging and uses non-embedded assets
+	Debug runMode = "debug"
+	// Test is for unit tests
+	Test runMode = "test"
 )
 
-func (rm RunMode) String() string {
+// String returns the string value of the runMode
+func (rm runMode) String() string {
 	return string(rm)
 }
 
-type GeneralConfig struct {
+type generalConfig struct {
 	SiteName       string        `mapstructure:"site_name"`
 	SteamKey       string        `mapstructure:"steam_key"`
 	Owner          steamid.SID64 `mapstructure:"owner"`
-	Mode           RunMode       `mapstructure:"mode"`
+	Mode           runMode       `mapstructure:"mode"`
 	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
 	WarningLimit   int           `mapstructure:"warning_limit"`
 	UseUTC         bool          `mapstructure:"use_utc"`
 }
 
-type DiscordConfig struct {
+type discordConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
 	AppID       string   `mapstructure:"app_id"`
 	Token       string   `mapstructure:"token"`
@@ -110,7 +117,7 @@ type DiscordConfig struct {
 	ModChannels []string `mapstructure:"mod_channel_ids"`
 }
 
-type LogConfig struct {
+type logConfig struct {
 	Level          string `mapstructure:"level"`
 	ForceColours   bool   `mapstructure:"force_colours"`
 	DisableColours bool   `mapstructure:"disable_colours"`
@@ -118,23 +125,23 @@ type LogConfig struct {
 	FullTimestamp  bool   `mapstructure:"full_timestamp"`
 }
 
-type NetBans struct {
+type netBans struct {
 	Enabled   bool      `mapstructure:"enabled"`
 	MaxAge    string    `mapstructure:"max_age"`
 	CachePath string    `mapstructure:"cache_path"`
 	Sources   []BanList `mapstructure:"sources"`
 }
 
-// Default config values. Anything defined in the config or env will overwrite them
+// Default config values. Anything defined in the config or env will override them
 var (
-	General GeneralConfig
-	HTTP    HTTPConfig
-	Filter  FilterConfig
-	Relay   RelayConfig
-	DB      DBConfig
-	Discord DiscordConfig
-	Log     LogConfig
-	Net     NetBans
+	General generalConfig
+	HTTP    httpConfig
+	Filter  filterConfig
+	Relay   relayConfig
+	DB      dbConfig
+	Discord discordConfig
+	Log     logConfig
+	Net     netBans
 )
 
 // Read reads in config file and ENV variables if set.

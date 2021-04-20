@@ -1,12 +1,17 @@
 package logparse
 
+// MsgType defines a known, parsable message type
 type MsgType int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
+	// UnhandledMsg is used for messages we are ignoring
 	UnhandledMsg MsgType = 0
-	UnknownMsg   MsgType = 1
+	// UnknownMsg is for any unexpected message formats
+	UnknownMsg MsgType = 1
 
 	// Live player actions
+
 	Say                 MsgType = 10
 	SayTeam             MsgType = 11
 	Killed              MsgType = 12
@@ -41,6 +46,7 @@ const (
 	SpawnedAs           MsgType = 51
 
 	// World events not attached to specific players
+
 	WRoundOvertime  MsgType = 100
 	WRoundStart     MsgType = 101
 	WRoundWin       MsgType = 102
@@ -52,6 +58,7 @@ const (
 	WResumed        MsgType = 108
 
 	// Metadata
+
 	LogStart     MsgType = 1000
 	LogStop      MsgType = 1001
 	CVAR         MsgType = 1002
@@ -62,30 +69,40 @@ const (
 	Entered      MsgType = 1007
 )
 
+// Team represents a players team, or spectator state
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Team int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	SPEC Team = 0
 	RED  Team = 1
 	BLU  Team = 2
 )
 
+// Pos is a position in 3D space
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Pos struct {
 	X int64
 	Y int64
 	Z int64
 }
 
+// AmmoPack is used for
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type AmmoPack int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	AmmoSmall AmmoPack = iota
 	AmmoMedium
 	AmmoLarge
 )
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type PlayerClass int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	Spectator PlayerClass = 0
 	Scout     PlayerClass = 1
@@ -100,8 +117,11 @@ const (
 	Multi     PlayerClass = 10
 )
 
+// Medigun holds which medigun a player was using
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Medigun int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	Uber Medigun = iota
 	Kritzkrieg
@@ -109,17 +129,22 @@ const (
 	QuickFix
 )
 
+// HealthPack contains the 3 types of health packs
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type HealthPack int
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	HPSmall HealthPack = iota
 	HPMedium
 	HPLarge
 )
 
-// All known weapon string values
+// Weapon defines all known weapons
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Weapon string
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	AiFlamethrower        Weapon = "ai_flamethrower"
 	Airstrike             Weapon = "airstrike"
@@ -241,6 +266,7 @@ const (
 	Wrench                Weapon = "wrench"
 )
 
+//goland:noinspection GoUnnecessarilyExportedIdentifiers,GoUnusedGlobalVariable
 var Weapons = map[PlayerClass][]Weapon{
 	Multi: {
 		ConscientiousObjector,

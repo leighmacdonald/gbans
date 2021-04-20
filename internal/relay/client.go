@@ -16,8 +16,6 @@ import (
 )
 
 var (
-	BuildVersion = "master"
-
 	httpClient *http.Client
 )
 
@@ -93,6 +91,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 	<-ctx.Done()
 }
 
+// New creates and starts a new log reader client instance
 func New(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
 	url := address + "/api/log"
 	sendPayload := func(payload service.LogPayload) error {

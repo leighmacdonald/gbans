@@ -5,9 +5,10 @@ import (
 	"time"
 )
 
-func NewHTTPClient(timeout time.Duration) *http.Client {
+// NewHTTPClient allocates a preconfigured *http.Client
+func NewHTTPClient() *http.Client {
 	c := &http.Client{
-		Timeout: timeout,
+		Timeout: time.Second * 10,
 	}
 	return c
 }

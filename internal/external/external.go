@@ -2,6 +2,7 @@ package external
 
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -9,7 +10,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -20,7 +20,7 @@ var (
 	steamids []steamid.SID64
 )
 
-func ContainsSID(sid steamid.SID64) bool {
+func containsSID(sid steamid.SID64) bool {
 	for _, s := range steamids {
 		if s.Int64() == sid.Int64() {
 			return true
@@ -29,7 +29,7 @@ func ContainsSID(sid steamid.SID64) bool {
 	return false
 }
 
-func ContainsIP(ip net.IP) bool {
+func containsIP(ip net.IP) bool {
 	for _, b := range networks {
 		if b.Contains(ip) {
 			return true
@@ -38,6 +38,7 @@ func ContainsIP(ip net.IP) bool {
 	return false
 }
 
+// Import is used to download and load block lists into memory
 func Import(list config.BanList) error {
 	if !golib.Exists(config.Net.CachePath) {
 		if err := os.MkdirAll(config.Net.CachePath, 0755); err != nil {
@@ -79,7 +80,7 @@ func Import(list config.BanList) error {
 }
 
 func download(url string, savePath string) error {
-	resp, err := http.Get(url)
+	resp, err := util.NewHTTPClient().Get(url)
 	if err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func load(src []byte, listType config.BanListType) (count int, err error) {
 func addNets(nets []*net.IPNet) int {
 	cnt := 0
 	for _, n := range nets {
-		if !ContainsIP(n.IP) {
+		if !containsIP(n.IP) {
 			networks = append(networks, n)
 			cnt++
 		}
@@ -144,7 +145,7 @@ func addNets(nets []*net.IPNet) int {
 func addSIDs(sids []steamid.SID64) int {
 	cnt := 0
 	for _, s := range sids {
-		if !ContainsSID(s) {
+		if !containsSID(s) {
 			steamids = append(steamids, s)
 			cnt++
 		}

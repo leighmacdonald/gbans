@@ -240,11 +240,12 @@ type Person struct {
 	*extra.PlayerSummary
 }
 
-// EqualID is used for html templates which assume int and not int64 types
+// LoggedIn checks for a valid steamID
 func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
+// NewPerson allocates a new default person instance
 func NewPerson(sid64 steamid.SID64) *Person {
 	return &Person{
 		SteamID:       sid64,

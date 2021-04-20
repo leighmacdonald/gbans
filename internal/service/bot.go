@@ -64,7 +64,7 @@ func init() {
 	}
 }
 
-func StartDiscord(ctx context.Context, token string, channelIDs []string) {
+func startDiscord(ctx context.Context, token string, channelIDs []string) {
 	modChannelIDs = channelIDs
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -103,7 +103,7 @@ func StartDiscord(ctx context.Context, token string, channelIDs []string) {
 
 func discordMessageQueueReader(ctx context.Context) {
 	events := make(chan logEvent)
-	if err := RegisterLogEventReader(events); err != nil {
+	if err := registerLogEventReader(events); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	for {
@@ -148,7 +148,7 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-func onHandleCommand(s *discordgo.Session, m *discordgo.InteractionCreate) {
+func onHandleCommand(_ *discordgo.Session, m *discordgo.InteractionCreate) {
 	log.Debugf("Got message create event: %v", m)
 }
 

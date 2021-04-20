@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-type PlayerInfo struct {
+type playerInfo struct {
 	player *extra.Player
 	server *model.Server
 	sid    steamid.SID64
@@ -34,7 +34,7 @@ type PlayerInfo struct {
 //
 // valid will be set to true if the value is a valid steamid, even if the player is not
 // actively connected
-func findPlayer(playerStr string, ip string) PlayerInfo {
+func findPlayer(playerStr string, ip string) playerInfo {
 	var (
 		player   *extra.Player
 		server   *model.Server
@@ -71,7 +71,7 @@ func findPlayer(playerStr string, ip string) PlayerInfo {
 		valid = true
 	}
 
-	return PlayerInfo{player, server, foundSid, inGame, valid}
+	return playerInfo{player, server, foundSid, inGame, valid}
 }
 
 func onFind(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
@@ -118,7 +118,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	ban.Ban.BanType = model.NoComm
 	ban.Ban.ReasonText = reasonStr
 	ban.Ban.ValidUntil = config.Now().Add(duration)
-	if err := SaveBan(ban.Ban); err != nil {
+	if err := saveBan(ban.Ban); err != nil {
 		log.Errorf("Failed to save ban: %v", err)
 		return errors.New("Failed to save mute state")
 	}

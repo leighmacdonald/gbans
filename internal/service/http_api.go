@@ -433,7 +433,7 @@ func onAPIGetBanByID() gin.HandlerFunc {
 func onAPIGetBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		o := newQueryFilter("")
-		bans, err := GetBans(o)
+		bans, err := getBans(o)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans")
