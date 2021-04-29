@@ -32,3 +32,4 @@ sourcemod/.vscode/
 *.js
 *.jsx
 /internal/service/dist/
+/out/production/gbans/

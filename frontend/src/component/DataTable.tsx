@@ -245,7 +245,6 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
             </TableHead>
         );
     }
-
     // eslint-disable-next-line react/display-name
     return ({
         connector,
@@ -260,7 +259,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
         useEffect(() => {
             const loadData = async () => {
                 const resp = (await connector()) as TRecord[];
-                setRows(resp);
+                setRows(resp ?? []);
             };
             // noinspection JSIgnoredPromiseFromCall
             loadData();
