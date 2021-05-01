@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
@@ -300,20 +301,25 @@ func onSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 
 func onCSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	sId := m.Data.Options[0].Value.(string)
-	server, err := getServerByName(sId)
-	if err != nil {
-		return errors.Errorf("Failed to fetch server: %s", sId)
+	var (
+		servers []model.Server
+		err     error
+	)
+	if sId == "*" {
+		servers, err = getServers()
+		if err != nil {
+			return errors.Wrapf(err, "Failed to fetch servers")
+		}
+	} else {
+		server, errS := getServerByName(sId)
+		if errS != nil {
+			return errors.Wrapf(errS, "Failed to fetch server: %s", sId)
+		}
+		servers = append(servers, server)
 	}
 	msg := fmt.Sprintf(`sm_csay %s`, m.Data.Options[1].Value.(string))
-	resp, err := execServerRCON(server, msg)
-	if err != nil {
-		return err
-	}
-	rp := strings.Split(resp, "triggered ")
-	if len(rp) < 2 {
-		return errors.Errorf("Invalid response")
-	}
-	return sendMsg(s, m.Interaction, fmt.Sprintf("`%s`", rp[1]))
+	_ = queryRCON(context.Background(), servers, msg)
+	return sendMsg(s, m.Interaction, fmt.Sprintf("Message sent to %d server(s)", len(servers)))
 }
 
 func onPSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {

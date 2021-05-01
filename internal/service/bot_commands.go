@@ -135,7 +135,12 @@ func botRegisterSlashCommands(appID string) error {
 			Name:        string(cmdCSay),
 			Description: "Send a centered message to the whole server",
 			Options: []*discordgo.ApplicationCommandOption{
-				optServerID,
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "server_identifier",
+					Description: "Short server name or `*` for all",
+					Required:    true,
+				},
 				optMessage,
 			},
 		},
