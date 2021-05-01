@@ -8,23 +8,11 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"strings"
 )
-
-type cmdHandler func(s *discordgo.Session, _ *discordgo.MessageCreate, args ...string) error
-
-type cmdDef struct {
-	help    string
-	handler cmdHandler
-	minArgs int
-	maxArgs int
-}
 
 var (
 	dg                 *discordgo.Session
 	messageQueue       chan logMessage
-	modChannelIDs      []string
-	cmdMap             map[string]cmdDef
 	connected          bool
 	errUnknownBan      = errors.New("Unknown ban")
 	errInvalidSID      = errors.New("Invalid steamid")
@@ -38,8 +26,7 @@ func init() {
 	messageQueue = make(chan logMessage)
 }
 
-func startDiscord(ctx context.Context, token string, channelIDs []string) {
-	modChannelIDs = channelIDs
+func startDiscord(ctx context.Context, token string) {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Errorf("Failed to connect to dg. Bot unavailable")
@@ -54,7 +41,6 @@ func startDiscord(ctx context.Context, token string, channelIDs []string) {
 	dg.AddHandler(onReady)
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
-	dg.AddHandler(onMessageCreate)
 	dg.AddHandler(onInteractionCreate)
 
 	// In this example, we only care about receiving message events.
@@ -126,47 +112,6 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Ignore all messages created by the bot itself
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-	chanOK := false
-	for _, cid := range modChannelIDs {
-		if m.ChannelID == cid {
-			chanOK = true
-			break
-		}
-	}
-	if !chanOK {
-		return
-	}
-	if !strings.HasPrefix(m.Content, config.Discord.Prefix) {
-		return
-	}
-	parts := strings.SplitN(m.Content, " ", 2)
-	cmdStr := strings.ToLower(strings.TrimPrefix(parts[0], config.Discord.Prefix))
-
-	cmd, ok := cmdMap[cmdStr]
-	if !ok {
-		sendErr(s, m.ChannelID,
-			errors.Errorf("Invalid command: %s (%shelp)", cmdStr, config.Discord.Prefix))
-	}
-	var args []string
-	if len(parts) == 2 {
-		args = strings.Split(parts[1], " ")
-	}
-	if (cmd.minArgs != -1 && len(args) < cmd.minArgs) || (cmd.maxArgs != -1 && len(args) > cmd.maxArgs) {
-		e := errors.Errorf("Invalid number of arguments, see %shelp %s for syntax", config.Discord.Prefix, cmdStr)
-		sendErr(s, m.ChannelID, e)
-		return
-	}
-	if err := cmd.handler(s, m, args...); err != nil {
-		sendErr(s, m.ChannelID, err)
-		return
-	}
-}
-
 func sendMsg(s *discordgo.Session, i *discordgo.Interaction, msg string, args ...interface{}) error {
 	if !connected {
 		log.Warnf("Tried to send message to disconnected client")
@@ -178,16 +123,6 @@ func sendMsg(s *discordgo.Session, i *discordgo.Interaction, msg string, args ..
 			Content: fmt.Sprintf(msg, args...),
 		},
 	})
-}
-
-func sendErr(s *discordgo.Session, cid string, err error) {
-	if !connected {
-		log.Warnf("Tried to send error to disconnected client")
-		return
-	}
-	if _, err := s.ChannelMessageSend(cid, err.Error()); err != nil {
-		log.Errorf("Failed to send error message: %v", err)
-	}
 }
 
 type logMessage struct {

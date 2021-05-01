@@ -41,15 +41,15 @@ var (
 type tableName string
 
 const (
-	tableBan          tableName = "ban"
-	tableBanAppeal    tableName = "ban_appeal"
+	tableBan tableName = "ban"
+	//tableBanAppeal    tableName = "ban_appeal"
 	tableBanNet       tableName = "ban_net"
 	tableFilteredWord tableName = "filtered_word"
-	tablePerson       tableName = "person"
-	tablePersonIP     tableName = "person_ip"
-	tablePersonNames  tableName = "person_names"
-	tableServer       tableName = "server"
-	tableServerLog    tableName = "server_log"
+	//tablePerson       tableName = "person"
+	tablePersonIP tableName = "person_ip"
+	//tablePersonNames  tableName = "person_names"
+	tableServer    tableName = "server"
+	tableServerLog tableName = "server_log"
 )
 
 // queryFilter provides a structure for common query parameters

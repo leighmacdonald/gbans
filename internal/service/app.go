@@ -295,7 +295,7 @@ func initWorkers() {
 
 func initDiscord() {
 	if config.Discord.Token != "" {
-		go startDiscord(gCtx, config.Discord.Token, config.Discord.ModChannels)
+		go startDiscord(gCtx, config.Discord.Token)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}
