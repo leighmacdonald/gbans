@@ -32,36 +32,10 @@ var (
 	errCommandFailed   = errors.New("Command failed")
 	errDuplicateBan    = errors.New("Duplicate ban")
 	errInvalidDuration = errors.New("Invalid duration")
-	//errInvalidArguments = errors.New("Invalid arguments")
-	//errInvalidIP        = errors.New("Invalid ip")
 )
-
-func newCmd(help string, args string, handler cmdHandler, minArgs int, maxArgs int) cmdDef {
-	return cmdDef{
-		help:    fmt.Sprintf("%s -- `%s%s`", help, config.Discord.Prefix, args),
-		handler: handler,
-		minArgs: minArgs,
-		maxArgs: maxArgs,
-	}
-}
 
 func init() {
 	messageQueue = make(chan logMessage)
-	cmdMap = map[string]cmdDef{
-		"help":    newCmd("Returns the command list", "help [command]", onHelp, 0, 1),
-		"ban":     newCmd("Ban a player", "ban <name/id> <duration> [reason]", onBan, 1, -1),
-		"banip":   newCmd("Ban an IP", "banip <CIDR> <duration> [reason]", onBanIP, 1, -1),
-		"find":    newCmd("Find a user on the servers", "find <id>", onFind, 1, 1),
-		"mute":    newCmd("Mute a player", "mute <name/id> <duration> [reason]", onMute, 1, -1),
-		"check":   newCmd("Check if a user is banned", "check <id>", onCheck, 1, 1),
-		"unban":   newCmd("Unban a player", "unban <id>", onUnban, 1, 1),
-		"kick":    newCmd("Kick a player", "kick <id> [reason]", onKick, 1, -1),
-		"players": newCmd("Get the players in the server", "players <server>", onPlayers, 1, 1),
-		"psay":    newCmd("sendMessage a private message to the user", "psay <server> <id> <message>", onPSay, 3, -1),
-		"csay":    newCmd("sendMessage a centered message to the server", "csay <server> <message>", onCSay, 2, -1),
-		"say":     newCmd("sendMessage a message to the server", "say <server> <message>", onSay, 3, -1),
-		"servers": newCmd("Get the server status for all servers", "servers", onServers, 0, 1),
-	}
 }
 
 func startDiscord(ctx context.Context, token string, channelIDs []string) {
@@ -77,10 +51,13 @@ func startDiscord(ctx context.Context, token string, channelIDs []string) {
 		}
 	}()
 	dg = d
+	dg.AddHandler(onReady)
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
 	dg.AddHandler(onMessageCreate)
 	dg.AddHandler(onHandleCommand)
+	dg.AddHandler(onInteractionCreate)
+
 	// In this example, we only care about receiving message events.
 	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
@@ -94,7 +71,7 @@ func startDiscord(ctx context.Context, token string, channelIDs []string) {
 	// Wait here until CTRL-C or other term signal is received.
 	log.Infof("Bot is now running.  Press CTRL-C to exit.")
 	go func() {
-		if err2 := botRegisterSlashCommands(config.Discord.AppID, token); err2 != nil {
+		if err2 := botRegisterSlashCommands(config.Discord.AppID); err2 != nil {
 			log.Errorf("Failed to register discord slash commands: %v", err2)
 		}
 	}()
@@ -126,6 +103,10 @@ func discordMessageQueueReader(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+	log.Infof("Bot is connected & ready")
 }
 
 func onConnect(s *discordgo.Session, _ *discordgo.Connect) {

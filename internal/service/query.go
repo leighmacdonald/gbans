@@ -14,13 +14,12 @@ import (
 
 func a2sQuery(server model.Server) (*a2s.ServerInfo, error) {
 	client, err := a2s.NewClient(server.Addr())
-
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to create a2s client")
 	}
 	defer func() {
 		if err := client.Close(); err != nil {
-			log.Errorf("Failed to close a2s client: %v", err)
+			log.WithFields(log.Fields{"server": server.ServerName}).Errorf("Failed to close a2s client: %v", err)
 		}
 	}()
 	info, err := client.QueryInfo() // QueryInfo, QueryPlayer, QueryRules
@@ -48,6 +47,7 @@ func queryRCON(ctx context.Context, servers []model.Server, commands ...string) 
 				return
 			}
 			for _, command := range commands {
+				log.WithFields(log.Fields{"server": server.ServerName}).Debugf("RCON: %s", command)
 				resp, err := conn.Exec(command)
 				if err != nil {
 					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, err)
@@ -84,6 +84,7 @@ func queryA2SInfo(servers []model.Server) map[string]*a2s.ServerInfo {
 			defer wg.Done()
 			resp, err := a2sQuery(server)
 			if err != nil {
+				log.Errorf("A2S: %v", err)
 				return
 			}
 			mu.Lock()

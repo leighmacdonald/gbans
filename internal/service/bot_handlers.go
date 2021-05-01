@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +24,8 @@ type playerInfo struct {
 	inGame bool
 	valid  bool
 }
+
+var args = []string{"a", "b"}
 
 // findPlayer will attempt to match a input string to a steam id and if connected, a
 // matching active player.
@@ -74,20 +75,22 @@ func findPlayer(playerStr string, ip string) playerInfo {
 	return playerInfo{player, server, foundSid, inGame, valid}
 }
 
-func onFind(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onFind(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	const f = "Found player `%s` (%d) @ %s"
-	pi := findPlayer(args[0], "")
+	userIdentifier := m.Data.Options[0].Value.(string)
+	pi := findPlayer(userIdentifier, "")
 	if !pi.valid || !pi.inGame {
 		return errUnknownID
 	}
 	return sendMsg(s, m.ChannelID, fmt.Sprintf(f, pi.player.Name, pi.sid.Int64(), pi.server.ServerName))
 }
 
-func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onMute(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	var (
 		err      error
 		duration = time.Duration(0)
 	)
+
 	pi := findPlayer(args[0], "")
 	if !pi.valid {
 		return errUnknownID
@@ -143,7 +146,7 @@ func onMute(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	return nil
 }
 
-func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onBanIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	var reason string
 	if len(args) > 2 {
 		reason = strings.Join(args[2:], " ")
@@ -180,7 +183,7 @@ func onBanIP(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 }
 
 // onBan !ban <id> <duration> [reason]
-func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	var reason string
 	if len(args) > 2 {
 		reason = strings.Join(args[2:], " ")
@@ -205,7 +208,7 @@ func onBan(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 }
 
 //goland:noinspection ALL
-func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	const f = "[%s] Banned: `%v` -- Muted: `%v` -- IP: `%s` -- Expires In: `%s` Reason: `%s`"
 	pi := findPlayer(args[0], "")
 	if !pi.valid {
@@ -242,7 +245,7 @@ func onCheck(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 		ban.Ban.BanType == model.Banned, ban.Ban.BanType == model.NoComm, ip, r[0], reason)
 }
 
-func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onUnban(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	sid, err := steamid.SID64FromString(args[0])
 	if err != nil || !sid.Valid() {
 		return errInvalidSID
@@ -261,7 +264,7 @@ func onUnban(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) e
 	return sendMsg(s, m.ChannelID, "User ban is now inactive")
 }
 
-func onKick(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onKick(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	pi := findPlayer(args[0], "")
 	if !pi.valid || !pi.inGame {
 		return errUnknownID
@@ -276,7 +279,7 @@ func onKick(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	return sendMsg(s, m.ChannelID, "[%s] User kicked: %s", pi.server.ServerName, pi.player.Name)
 }
 
-func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
@@ -293,7 +296,7 @@ func onSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) err
 	return sendMsg(s, m.ChannelID, fmt.Sprintf("`%s`", rp[0]))
 }
 
-func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onCSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
@@ -310,7 +313,7 @@ func onCSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	return sendMsg(s, m.ChannelID, fmt.Sprintf("`%s`", rp[1]))
 }
 
-func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onPSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	server, err := getServerByName(args[0])
 	if err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args[0])
@@ -324,7 +327,7 @@ func onPSay(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) er
 	return sendMsg(s, m.ChannelID, fmt.Sprintf("`%s`", rp[0]))
 }
 
-func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	servers, err := getServers()
 	if err != nil {
 		return errors.New("Failed to fetch servers")
@@ -374,7 +377,12 @@ func onServers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 		msg.WriteString(fmt.Sprintf("Servers Down: %s\n", strings.Join(failed, ", ")))
 	}
 	msg.WriteString("```")
-	return sendMsg(s, m.ChannelID, msg.String())
+	return s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionApplicationCommandResponseData{
+			Content: msg.String(),
+		},
+	})
 }
 
 func getServerStatus(server model.Server) (extra.Status, error) {
@@ -488,7 +496,7 @@ func defaultTable(title string) table.Writer {
 	return t
 }
 
-func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
+func onPlayers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	server, err := getServerByName(args[0])
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -515,23 +523,4 @@ func onPlayers(s *discordgo.Session, m *discordgo.MessageCreate, args ...string)
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
 	return sendMsg(s, m.ChannelID, msg.String())
-}
-
-func onHelp(s *discordgo.Session, m *discordgo.MessageCreate, args ...string) error {
-	var msg string
-	if len(args) == 0 {
-		var m []string
-		for k := range cmdMap {
-			m = append(m, fmt.Sprintf("`%s%s`", config.Discord.Prefix, k))
-		}
-		sort.Strings(m)
-		msg = fmt.Sprintf("Available commands (`!help <command>`): %s", strings.Join(m, ", "))
-	} else {
-		cmd, found := cmdMap[args[0]]
-		if !found {
-			return errUnknownCommand
-		}
-		msg = cmd.help
-	}
-	return sendMsg(s, m.ChannelID, msg)
 }

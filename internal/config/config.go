@@ -112,6 +112,7 @@ type discordConfig struct {
 	AppID       string   `mapstructure:"app_id"`
 	Token       string   `mapstructure:"token"`
 	ModRoleID   int      `mapstructure:"mod_role_id"`
+	GuildID     string   `mapstructure:"guild_id"`
 	Perms       int      `mapstructure:"perms"`
 	Prefix      string   `mapstructure:"prefix"`
 	ModChannels []string `mapstructure:"mod_channel_ids"`
@@ -227,6 +228,7 @@ func init() {
 	viper.SetDefault("discord.perms", 125958)
 	viper.SetDefault("discord.prefix", "!")
 	viper.SetDefault("discord.mod_channel_ids", nil)
+	viper.SetDefault("discord.guild_id", "")
 
 	viper.SetDefault("network_bans.enabled", false)
 	viper.SetDefault("network_bans.max_age", "1d")
