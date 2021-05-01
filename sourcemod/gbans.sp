@@ -58,6 +58,7 @@ void OnPluginStart() {
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_KICK);
+    RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
     AddCommandListener(onUserSay, "say");
     AddCommandListener(onUserTeamSay, "say_team");
@@ -329,7 +330,6 @@ Action AdminCmdBan(int client, int argc) {
     if (time > 0) {
         PrintToServer("Non permanent");
     }
-
     return Plugin_Handled;
 }
 
@@ -342,6 +342,12 @@ Action AdminCmdBanIP(int client, int argc) {
 public
 Action AdminCmdMute(int client, int argc) {
     PrintToServer("kick");
+    return Plugin_Handled;
+}
+
+public
+Action AdminCmdKick(int client, int argc) {
+    //KickClient(client, "bye.");
     return Plugin_Handled;
 }
 
@@ -414,6 +420,8 @@ void OnPingModRespRecieved(bool success, const char[] error, System2HTTPRequest 
     resp.GetString("message", message, sizeof(message));
     resp.GetInt("client");
     ReplyToCommand(client, message);
+    resp.Cleanup();
+    delete resp;
 }
 
 public
