@@ -269,11 +269,10 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 		OrderBy("b.created_on DESC").
 		Limit(1).
 		ToSql()
-	if e != nil {
-		return nil, e
-	}
 	b := model.NewBannedPerson()
-
+	if e != nil {
+		return b, e
+	}
 	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
@@ -282,7 +281,7 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 			&b.Person.ProfileURL, &b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull,
 			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
 			&b.Person.LocStateCode, &b.Person.LocCityID); err != nil {
-		return nil, dbErr(err)
+		return b, dbErr(err)
 	}
 	if full {
 		h, err := getChatHistory(b.Person.SteamID)

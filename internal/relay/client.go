@@ -66,7 +66,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 					return
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Println("created file:", event.Name)
+					log.Debugf("Created file: %s", event.Name)
 					if !first {
 						cancel()
 					}
@@ -114,7 +114,6 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 		}
 		return nil
 	}
-
 	messageChan := make(chan string, 5000)
 	go newFileWatcher(ctx, logPath, messageChan)
 	for {

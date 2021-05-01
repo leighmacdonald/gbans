@@ -26,7 +26,7 @@ var (
 	modChannelIDs      []string
 	cmdMap             map[string]cmdDef
 	connected          bool
-	errUnknownCommand  = errors.New("Unknown command")
+	errUnknownBan      = errors.New("Unknown ban")
 	errInvalidSID      = errors.New("Invalid steamid")
 	errUnknownID       = errors.New("Could not find matching player/steamid")
 	errCommandFailed   = errors.New("Command failed")
@@ -55,7 +55,6 @@ func startDiscord(ctx context.Context, token string, channelIDs []string) {
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
 	dg.AddHandler(onMessageCreate)
-	dg.AddHandler(onHandleCommand)
 	dg.AddHandler(onInteractionCreate)
 
 	// In this example, we only care about receiving message events.
@@ -64,12 +63,10 @@ func startDiscord(ctx context.Context, token string, channelIDs []string) {
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		log.Fatalf("Error opening discord connection: %v,", err)
 		return
 	}
 	go discordMessageQueueReader(ctx)
-	// Wait here until CTRL-C or other term signal is received.
-	log.Infof("Bot is now running.  Press CTRL-C to exit.")
 	go func() {
 		if err2 := botRegisterSlashCommands(config.Discord.AppID); err2 != nil {
 			log.Errorf("Failed to register discord slash commands: %v", err2)
@@ -129,10 +126,6 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-func onHandleCommand(_ *discordgo.Session, m *discordgo.InteractionCreate) {
-	log.Debugf("Got message create event: %v", m)
-}
-
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
@@ -174,13 +167,17 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func sendMsg(s *discordgo.Session, cid string, msg string, args ...interface{}) error {
+func sendMsg(s *discordgo.Session, i *discordgo.Interaction, msg string, args ...interface{}) error {
 	if !connected {
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	_, err := s.ChannelMessageSend(cid, fmt.Sprintf(msg, args...))
-	return err
+	return s.InteractionRespond(i, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionApplicationCommandResponseData{
+			Content: fmt.Sprintf(msg, args...),
+		},
+	})
 }
 
 func sendErr(s *discordgo.Session, cid string, err error) {

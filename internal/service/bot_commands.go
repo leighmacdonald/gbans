@@ -123,7 +123,6 @@ func botRegisterSlashCommands(appID string) error {
 				optServerID,
 			},
 		},
-
 		{
 			Name:        string(cmdPSay),
 			Description: "Privately message a player",
@@ -180,6 +179,8 @@ var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.Interac
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if h, ok := commandHandlers[botCmd(i.Data.Name)]; ok {
 		if err := h(s, i); err != nil {
+			// TODO User facing errors only
+			_ = sendMsg(s, i.Interaction, "Error: %s", err.Error())
 			log.Errorf("User command error: %v", err)
 		}
 	}
