@@ -16,9 +16,9 @@ func initRouter() {
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
 	if config.General.Mode == config.Release {
-		router.StaticFS("/static", http.FS(content))
+		router.StaticFS("/assets", http.FS(content))
 	} else {
-		router.StaticFS("/static/dist", http.Dir(config.HTTP.StaticPath))
+		router.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
 	}
 	//router.GET(routeRaw(string(routeHome)), )
 	router.NoRoute(defaultRoute)
