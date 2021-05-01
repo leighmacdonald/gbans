@@ -111,7 +111,7 @@ type discordConfig struct {
 	Enabled     bool     `mapstructure:"enabled"`
 	AppID       string   `mapstructure:"app_id"`
 	Token       string   `mapstructure:"token"`
-	ModRoleID   int      `mapstructure:"mod_role_id"`
+	ModRoleID   string   `mapstructure:"mod_role_id"`
 	GuildID     string   `mapstructure:"guild_id"`
 	Perms       int      `mapstructure:"perms"`
 	Prefix      string   `mapstructure:"prefix"`

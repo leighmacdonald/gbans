@@ -177,6 +177,17 @@ var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.Interac
 }
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	found := false
+	for _, roleID := range i.Member.Roles {
+		if roleID == config.Discord.ModRoleID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		_ = sendMsg(s, i.Interaction, "Permission denied")
+		return
+	}
 	if h, ok := commandHandlers[botCmd(i.Data.Name)]; ok {
 		if err := h(s, i); err != nil {
 			// TODO User facing errors only

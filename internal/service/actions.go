@@ -111,9 +111,6 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	go func() {
 		// Kick the user if they currently are playing on a server
 		pi := findPlayer(sid.String(), "")
-		if !pi.valid {
-			return
-		}
 		if pi.valid && pi.inGame {
 			if _, err := execServerRCON(*pi.server, fmt.Sprintf("sm_kick #%d %s", pi.player.UserID, reasonText)); err != nil {
 				log.Errorf("Faied to kick user afeter ban: %v", err)
