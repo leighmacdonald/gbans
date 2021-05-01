@@ -108,10 +108,6 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 	if err := saveBan(&ban); err != nil {
 		return nil, dbErr(err)
 	}
-	servers, err2 := getServers()
-	if err2 != nil {
-		log.Errorf("Failed to get server for ban propagation")
-	}
 	go func() {
 		// Kick the user if they currently are playing on a server
 		pi := findPlayer(sid.String(), "")
@@ -124,7 +120,6 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 			}
 		}
 	}()
-	go queryRCON(ctx, servers, `gb_kick "#%s" %s`, string(steamid.SID64ToSID(sid)), reasonText)
 	return &ban, nil
 }
 
