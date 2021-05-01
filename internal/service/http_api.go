@@ -53,7 +53,7 @@ func onPostPingMod() gin.HandlerFunc {
 			return
 		}
 		for _, c := range config.Discord.ModChannels {
-			sendMessage(newMessage(c, fmt.Sprintf("<@&%d> %s", config.Discord.ModRoleID, req.Reason)))
+			sendMessage(newMessage(c, fmt.Sprintf("<@&%s> %s", config.Discord.ModRoleID, req.Reason)))
 		}
 		responseOK(c, http.StatusOK, gin.H{
 			"client":  req.Client,
