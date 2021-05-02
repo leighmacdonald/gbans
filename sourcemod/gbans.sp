@@ -61,65 +61,6 @@ void OnPluginStart() {
     RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
-    AddCommandListener(onUserSay, "say");
-    AddCommandListener(onUserTeamSay, "say_team");
-}
-
-public
-Action sendMessage(int client, const char[] msg, bool team_say) {
-    char auth_id[50];
-    if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id), true)) {
-        ReplyToCommand(client, "Failed to get auth_id of user: %d", client);
-        return Plugin_Continue;
-    }
-
-    char name[64];
-    if (!GetClientName(client, name, sizeof(name))) {
-        PrintToServer("Failed to get user name?");
-        return Plugin_Continue;
-    }
-
-    PrintToServer(name);
-    JSON_Object obj = new JSON_Object();
-    obj.SetString("steam_id", auth_id);
-    obj.SetString("message", msg);
-    obj.SetString("name", name);
-    obj.SetBool("team_say", team_say);
-    obj.SetString("server_id", g_server_name);
-    obj.SetInt("timestamp", GetTime());
-
-    char encoded[2048];
-    obj.Encode(encoded, sizeof(encoded));
-    obj.Cleanup();
-    System2HTTPRequest req = newReq(ignoreResponse, "/api/message");
-    req.SetData(encoded);
-    req.POST();
-    delete obj;
-    delete req;
-    return Plugin_Continue;
-}
-
-public
-Action onUserSay(int client, const char[] command, int args) {
-    char msg[128];
-    GetCmdArgString(msg, sizeof(msg));
-    StripQuotes(msg);
-    return sendMessage(client, msg, false);
-}
-
-public
-Action onUserTeamSay(int client, const char[] command, int args) {
-    char msg[128];
-    GetCmdArgString(msg, sizeof(msg));
-    StripQuotes(msg);
-    return sendMessage(client, msg, true);
-}
-
-void ignoreResponse(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
-                    HTTPRequestMethod method) {
-    if (!success) {
-        PrintToServer("Invalid response to message payload");
-    }
 }
 
 void ReadConfig() {
