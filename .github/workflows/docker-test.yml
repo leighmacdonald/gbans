@@ -3,7 +3,7 @@ name: Docker Image CI
 on: [push]
 
 jobs:
-  test:
+  docker-test:
     runs-on: ubuntu-latest
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}

@@ -3,7 +3,7 @@ name: TS / Go Linters
 on: [push]
 
 jobs:
-  test:
+  linters:
     runs-on: ubuntu-20.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
