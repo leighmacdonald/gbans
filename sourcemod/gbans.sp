@@ -231,9 +231,9 @@ void OnClientPutInServer(int client_id) {
 /**
 Authenicates the server with the backend API system.
 
-Send unauthenticated request for token to -> API /v1/auth
+Send unauthenticated request for token to -> API /api/server_auth
 Recv Token <- API
-Send authenticated commands with header "Authorization $token" set for subsequent calls -> API /v1/<path>
+Send authenticated commands with header "Authorization $token" set for subsequent calls -> API /api/<path>
 
 */
 void AuthenticateServer() {
@@ -395,7 +395,7 @@ Action CmdMod(int client, int argc) {
     obj.Encode(encoded, sizeof(encoded));
     obj.Cleanup();
     delete obj;
-    System2HTTPRequest req = newReq(OnPingModRespRecieved, "/sapi/v1/ping_mod");
+    System2HTTPRequest req = newReq(OnPingModRespRecieved, "/api/ping_mod");
     req.SetData(encoded);
     req.POST();
     delete req;
