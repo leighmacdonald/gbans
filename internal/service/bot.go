@@ -38,6 +38,7 @@ func startDiscord(ctx context.Context, token string) {
 		}
 	}()
 	dg = d
+	dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans, " + BuildVersion + ")"
 	dg.AddHandler(onReady)
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
@@ -53,11 +54,11 @@ func startDiscord(ctx context.Context, token string) {
 		return
 	}
 	go discordMessageQueueReader(ctx)
-	go func() {
-		if err2 := botRegisterSlashCommands(config.Discord.AppID); err2 != nil {
-			log.Errorf("Failed to register discord slash commands: %v", err2)
-		}
-	}()
+
+	if err2 := botRegisterSlashCommands(config.Discord.AppID); err2 != nil {
+		log.Errorf("Failed to register discord slash commands: %v", err2)
+	}
+
 	<-ctx.Done()
 }
 
@@ -95,11 +96,11 @@ func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	log.Info("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
-		Game: &discordgo.Game{
-			Name:    `Uncletopia`,
-			URL:     "git@github.com/leighmacdonald/gbans",
-			Details: "Mr. Authority",
-		},
+		//Game: &discordgo.Game{
+		//	Name:    `Uncletopia`,
+		//	URL:     "git@github.com/leighmacdonald/gbans",
+		//	Details: "Mr. Authority",
+		//},
 	}
 	if err := s.UpdateStatusComplex(d); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")

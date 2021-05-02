@@ -338,6 +338,10 @@ func onPSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 }
 
 func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+	full := false
+	if len(m.Data.Options) > 0 {
+		full = m.Data.Options[0].Value.(bool)
+	}
 	servers, err := getServers()
 	if err != nil {
 		return errors.New("Failed to fetch servers")
@@ -361,38 +365,38 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		}(s)
 	}
 	wg.Wait()
+	t := defaultTable("")
+	if full {
+		t.AppendHeader(table.Row{
+			"ID", "Name", "Current Map", "Players", "Version", "Tags",
+		})
+	} else {
+		t.AppendHeader(table.Row{
+			"ID", "Name", "Current Map", "Players",
+		})
+	}
+	t.AppendSeparator()
+	for name, r := range results {
+		if full {
+			t.AppendRow(table.Row{
+				name, r.ServerName, r.Map, fmt.Sprintf("%d/%d", r.PlayersCount, r.PlayersMax),
+				r.Version, strings.Join(r.Tags, ", "),
+			})
+		} else {
+			t.AppendRow(table.Row{name, r.ServerName, r.Map, fmt.Sprintf("%d/%d", r.PlayersCount, r.PlayersMax)})
+		}
+	}
+	for _, name := range failed {
+		if full {
+			t.AppendRow(table.Row{name, "OFFLINE", "", "", "", ""})
+		} else {
+			t.AppendRow(table.Row{name, "OFFLINE", "", ""})
+		}
+	}
+	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
 	var msg strings.Builder
-	msg.WriteString("```ini\n")
-	maxLenSn := 0
-	maxLenMap := 0
-	maxLenName := 0
-	for name, r := range results {
-		if len(r.ServerName) > maxLenSn {
-			maxLenSn = len(r.ServerName)
-		}
-		if len(r.Map) > maxLenMap {
-			maxLenMap = len(r.Map)
-		}
-		if len(name) > maxLenName {
-			maxLenName = len(name)
-		}
-	}
-	for name, r := range results {
-		snPad := fmt.Sprintf("%s%s", r.ServerName, strings.Repeat(" ", maxLenSn-len(r.ServerName)))
-		snMap := fmt.Sprintf("%s%s", r.Map, strings.Repeat(" ", maxLenMap-len(r.Map)))
-		snName := fmt.Sprintf("%s%s", name, strings.Repeat(" ", maxLenName-len(name)))
-		msg.WriteString(fmt.Sprintf("%s -- %s -- %s -- %d/%d\n", snName, snPad, snMap, r.PlayersCount, r.PlayersMax))
-	}
-	if len(failed) > 0 {
-		msg.WriteString(fmt.Sprintf("Servers Down: %s\n", strings.Join(failed, ", ")))
-	}
-	msg.WriteString("```")
-	return s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionApplicationCommandResponseData{
-			Content: msg.String(),
-		},
-	})
+	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
+	return sendMsg(s, m.Interaction, msg.String())
 }
 
 func getServerStatus(server model.Server) (extra.Status, error) {
