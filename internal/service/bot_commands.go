@@ -35,7 +35,7 @@ func botRegisterSlashCommands(appID string) error {
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "user_identifier",
-		Description: "SteamID in any format OR profile permUrl",
+		Description: "SteamID in any format OR profile url",
 		Required:    true,
 	}
 	optServerID := &discordgo.ApplicationCommandOption{
@@ -190,10 +190,12 @@ func botRegisterSlashCommands(appID string) error {
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
-		perms = append(perms, permissionRequest{
-			ID:          c.ID,
-			Permissions: modPerm,
-		})
+		if !c.DefaultPermission {
+			perms = append(perms, permissionRequest{
+				ID:          c.ID,
+				Permissions: modPerm,
+			})
+		}
 	}
 
 	return registerCommandPermissions(perms)
