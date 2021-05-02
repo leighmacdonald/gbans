@@ -59,6 +59,7 @@ void OnPluginStart() {
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_KICK);
     RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
+    RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
     AddCommandListener(onUserSay, "say");
     AddCommandListener(onUserTeamSay, "say_team");
@@ -342,6 +343,12 @@ Action AdminCmdBanIP(int client, int argc) {
 public
 Action AdminCmdMute(int client, int argc) {
     PrintToServer("kick");
+    return Plugin_Handled;
+}
+
+public
+Action AdminCmdReauth(int client, int argc) {
+    AuthenticateServer();
     return Plugin_Handled;
 }
 
