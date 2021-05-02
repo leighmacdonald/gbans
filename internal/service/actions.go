@@ -82,12 +82,11 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
 	existing, err := getBanBySteamID(sid, false)
-	if err != nil {
-		if err != errNoResult {
-			return nil, errors.Wrapf(err, "Failed to get ban")
-		}
-	} else {
-		return nil, errors.Wrapf(err, "Ban exists for steamid: %d :: %v", sid, existing)
+	if existing != nil && existing.Ban.BanID > 0 {
+		return nil, errDuplicate
+	}
+	if err != nil && err != errNoResult {
+		return nil, errors.Wrapf(err, "Failed to get ban")
 	}
 	until := config.DefaultExpiration()
 	if duration.Seconds() != 0 {

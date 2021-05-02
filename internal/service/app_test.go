@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -37,12 +39,12 @@ func TestAddWarning(t *testing.T) {
 func GenTestData() {
 	servers := []model.Server{
 		{
-			ServerName: "test-1", Token: golib.RandomString(40), Address: "127.0.0.1", Port: 27015,
+			ServerName: golib.RandomString(8), Token: golib.RandomString(40), Address: "127.0.0.1", Port: 27015,
 			RCON: "test", ReservedSlots: 0, Password: golib.RandomString(20),
 			TokenCreatedOn: config.Now(), CreatedOn: config.Now(), UpdatedOn: config.Now(),
 		},
 		{
-			ServerName: "test-2", Token: golib.RandomString(40), Address: "127.0.0.1", Port: 27025,
+			ServerName: golib.RandomString(8), Token: golib.RandomString(40), Address: "127.0.0.1", Port: 27025,
 			RCON: "test", ReservedSlots: 4, Password: golib.RandomString(20),
 			TokenCreatedOn: config.Now(), CreatedOn: config.Now(), UpdatedOn: config.Now(),
 		},
@@ -55,7 +57,7 @@ func GenTestData() {
 
 	filteredWords := []string{"frick", "heck"}
 	for _, fw := range filteredWords {
-		if err := saveFilteredWord(fw); err != nil {
+		if err := saveFilteredWord(fw); err != nil && !errors.Is(err, errDuplicate) {
 			log.Fatalf("Failed to setup test filtered words: %v", err)
 		}
 	}
@@ -79,16 +81,27 @@ func GenTestData() {
 	}
 
 	if _, err := BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
-		model.Cheating, "Aimbot", model.System); err != nil {
+		model.Cheating, "Aimbot", model.System); err != nil && err != errDuplicate {
 		log.Fatalf("Failed to create test ban #1: %v", err)
 	}
 	if _, err := BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
-		model.Cheating, "Aimbot", model.System); err != nil {
+		model.Cheating, "Aimbot", model.System); err != nil && err != errDuplicate {
 		log.Fatalf("Failed to create test ban #2: %v", err)
 	}
-
-	for i, cidr := range []string{"50.50.50.0/24", "60.60.60.60/32"} {
-		_, mask, _ := net.ParseCIDR(cidr)
+	randSN := func() int {
+		i := rand.Intn(255)
+		if i <= 0 {
+			return 1
+		}
+		return i
+	}
+	randIP := func() string {
+		return fmt.Sprintf("%d.%d.%d.%d", randSN(), randSN(), randSN(), randSN())
+	}
+	randCidr := fmt.Sprintf("%d.%d.%d.0/24", randSN(), randSN(), randSN())
+	for i, cidr := range []string{randIP() + "/32", randIP() + "/32", randCidr} {
+		ip, mask, _ := net.ParseCIDR(cidr)
+		log.Println(ip)
 		if err := saveBanNet(&model.BanNet{
 			CIDR:       mask,
 			Source:     0,

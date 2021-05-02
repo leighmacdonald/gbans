@@ -2,12 +2,14 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -50,7 +52,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		ReasonText string        `json:"reason_text"`
 		Network    string        `json:"network"`
 	}
-	s1 := "76561198031215761"
+	s1 := fmt.Sprintf("%d", 76561197960265728+rand.Int63n(100000000))
 	units := []httpTestUnit{
 		{newTestReq("POST", "/api/ban", req{
 			SteamID:    s1,
@@ -138,6 +140,11 @@ L 02/21/2021 - 06:42:13: Team "RED" triggered "Intermission_Win_Limit"
 L 02/21/2021 - 06:42:33: [META] Loaded 0 plugins (1 already loaded)
 L 02/21/2021 - 06:42:33: Log file closed.`
 	var units []httpTestUnit
+
+	ctx, cancel := context.WithCancel(gCtx)
+	defer cancel()
+	go logReader(ctx, logRawQueue)
+
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
 			newTestReq("POST", "/api/log", LogPayload{

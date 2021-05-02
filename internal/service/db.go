@@ -855,7 +855,7 @@ func getExpiredNetBans() ([]model.BanNet, error) {
 }
 
 func getFilteredWords() ([]string, error) {
-	q, a, e := sb.Select("word").From(string(tableFilteredWord)).ToSql()
+	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
 	if e != nil {
 		return nil, e
 	}
@@ -876,7 +876,7 @@ func getFilteredWords() ([]string, error) {
 }
 
 func saveFilteredWord(word string) error {
-	q, a, e := sb.Insert(string(tableFilteredWord)).Columns("word").Values(word).ToSql()
+	q, a, e := sb.Insert(string(tableFilteredWord)).Columns("word", "created_on").Values(word, config.Now()).ToSql()
 	if e != nil {
 		return e
 	}
