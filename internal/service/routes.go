@@ -4,10 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"net/http"
+	"strings"
 )
 
 func initRouter() {
 	defaultRoute := func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.Status(http.StatusNotFound)
+			return
+		}
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 	router.Use(gin.Logger())
