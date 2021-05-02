@@ -30,7 +30,19 @@ const (
 	cmdServers botCmd = "servers"
 )
 
-func botRegisterSlashCommands(appID string) error {
+func botRegisterSlashCommands() error {
+	// TODO register the commands again upon adding new servers to update autocomplete opts
+	servers, err := getServers()
+	if err != nil {
+		return err
+	}
+	var serverOpts []*discordgo.ApplicationCommandOptionChoice
+	for _, s := range servers {
+		serverOpts = append(serverOpts, &discordgo.ApplicationCommandOptionChoice{
+			Name:  s.ServerName,
+			Value: s.ServerName,
+		})
+	}
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "user_identifier",
@@ -42,6 +54,7 @@ func botRegisterSlashCommands(appID string) error {
 		Name:        "server_identifier",
 		Description: "Short server name",
 		Required:    true,
+		Choices:     serverOpts,
 	}
 	optReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,

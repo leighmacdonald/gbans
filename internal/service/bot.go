@@ -55,7 +55,7 @@ func startDiscord(ctx context.Context, token string) {
 	}
 	go discordMessageQueueReader(ctx)
 
-	if err2 := botRegisterSlashCommands(config.Discord.AppID); err2 != nil {
+	if err2 := botRegisterSlashCommands(); err2 != nil {
 		log.Errorf("Failed to register discord slash commands: %v", err2)
 	}
 
