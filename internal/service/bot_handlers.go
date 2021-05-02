@@ -348,6 +348,7 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	}
 	mu := &sync.RWMutex{}
 	results := make(map[string]extra.Status)
+	serverMap := make(map[string]model.Server)
 	var failed []string
 	wg := &sync.WaitGroup{}
 	for _, s := range servers {
@@ -362,6 +363,7 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 				return
 			}
 			results[server.ServerName] = status
+			serverMap[server.ServerName] = server
 		}(s)
 	}
 	wg.Wait()
@@ -376,14 +378,16 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		})
 	}
 	t.AppendSeparator()
+
 	for name, r := range results {
 		if full {
 			t.AppendRow(table.Row{
-				name, r.ServerName, r.Map, fmt.Sprintf("%d/%d", r.PlayersCount, r.PlayersMax),
-				r.Version, strings.Join(r.Tags, ", "),
+				name, r.ServerName, r.Map, fmt.Sprintf("%d/%d", r.PlayersCount,
+					r.PlayersMax-serverMap[name].ReservedSlots), r.Version, strings.Join(r.Tags, ", "),
 			})
 		} else {
-			t.AppendRow(table.Row{name, r.ServerName, r.Map, fmt.Sprintf("%d/%d", r.PlayersCount, r.PlayersMax)})
+			t.AppendRow(table.Row{name, r.ServerName, r.Map, fmt.Sprintf("%d/%d",
+				r.PlayersCount, r.PlayersMax-serverMap[name].ReservedSlots)})
 		}
 	}
 	for _, name := range failed {
