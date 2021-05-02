@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -204,43 +203,6 @@ func botRegisterSlashCommands(appID string) error {
 type permissionRequest struct {
 	ID          string                                    `json:"id"`
 	Permissions []*discordgo.ApplicationCommandPermission `json:"permissions"`
-}
-
-func registerCommands(cmds []*discordgo.ApplicationCommand) ([]*discordgo.ApplicationCommand, error) {
-	hc := util.NewHTTPClient()
-	cmdUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands",
-		config.Discord.AppID, config.Discord.GuildID)
-	b, err := json.Marshal(cmds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to marshal commands for request")
-	}
-	req, err := http.NewRequestWithContext(context.Background(), "PUT", cmdUrl, bytes.NewReader(b))
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to create http request for discord commands")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
-	resp, err := hc.Do(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to perform http request for discord permissions")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(err, "Failed to register slash commands, bad response: %d", resp.StatusCode)
-	}
-	b, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to read body")
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Errorf("Failed to close resp body")
-		}
-	}()
-	var r []*discordgo.ApplicationCommand
-	if errDec := json.Unmarshal(b, &r); errDec != nil {
-		return nil, errors.Wrapf(errDec, "Failed to decode json response")
-	}
-	return r, nil
 }
 
 func registerCommandPermissions(perms []permissionRequest) error {
