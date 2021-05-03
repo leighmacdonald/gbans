@@ -1,11 +1,13 @@
-.PHONY: all test clean build install
+.PHONY: all test clean build install frontend
+GO_CMD=go
+GO_BUILD=$(GO_CMD) build
 GIT_TAG =
 GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
 current_dir :=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-all: build
+all: frontend build
 
 vet:
 	@go vet . ./...
@@ -16,8 +18,28 @@ fmt:
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
 
-build: fmt vet
-	@go build $(GO_FLAGS)
+build: fmt vet linux64 windows64
+
+frontend:
+	cd frontend && yarn && yarn run build && yarn run copy
+
+linux64:
+	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
+
+windows64:
+	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/win64/gbans.exe main.go
+
+dist: frontend build
+	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md
+	zip -r gbans-`git describe --abbrev=0`-win64.zip migrations/ docs/
+	zip -j gbans-`git describe --abbrev=0`-lin64.zip build/linux64/gbans LICENSE README.md
+	zip -r gbans-`git describe --abbrev=0`-lin64.zip migrations/ docs/
+
+dist-master: frontend build
+	zip -j gbans-master-win64.zip build/win64/gbans.exe LICENSE README.md
+	zip -r gbans-master-win64.zip migrations/ docs/
+	zip -j gbans-master-lin64.zip build/linux64/gbans LICENSE README.md
+	zip -r gbans-master-lin64.zip migrations/ docs/
 
 run:
 	@go run $(GO_FLAGS) -race main.go

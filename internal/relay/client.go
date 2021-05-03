@@ -20,7 +20,7 @@ var (
 )
 
 func fileReader(ctx context.Context, path string, messageChan chan string) {
-	t, err := tail.TailFile(path, tail.Config{Follow: true, MaxLineSize: 2000, Poll: true})
+	t, err := tail.TailFile(path, tail.Config{Follow: true, MaxLineSize: 2000})
 	if err != nil {
 		log.Fatalf("Invalid log path: %s", path)
 		return
@@ -94,7 +94,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 // New creates and starts a new log reader client instance
 func New(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
 	url := address + "/api/log"
-	sendPayload := func(payload service.LogPayload) error {
+	sendPayload := func(payload []service.LogPayload) error {
 		c, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 		b, err1 := json.Marshal(payload)
@@ -116,11 +116,16 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 	}
 	messageChan := make(chan string, 5000)
 	go newFileWatcher(ctx, logPath, messageChan)
+	var messageQueue []service.LogPayload
 	for {
 		select {
 		case msg := <-messageChan:
-			if err := sendPayload(service.LogPayload{ServerName: name, Message: msg}); err != nil {
-				log.Errorf(err.Error())
+			messageQueue = append(messageQueue, service.LogPayload{ServerName: name, Message: msg})
+			if len(messageQueue) >= 10 {
+				if err := sendPayload(messageQueue); err != nil {
+					log.Errorf(err.Error())
+				}
+				messageQueue = nil
 			}
 		case <-ctx.Done():
 			log.Debugf("relay client shutting down")

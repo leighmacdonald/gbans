@@ -451,12 +451,14 @@ type LogPayload struct {
 
 func onPostLogAdd() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req LogPayload
+		var req []LogPayload
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		logRawQueue <- req
+		for _, r := range req {
+			logRawQueue <- r
+		}
 		responseOK(c, http.StatusCreated, nil)
 	}
 }
