@@ -462,3 +462,9 @@ func onPostLogAdd() gin.HandlerFunc {
 		responseOK(c, http.StatusCreated, nil)
 	}
 }
+
+func onAPIPostServer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		responseOK(c, http.StatusOK, gin.H{})
+	}
+}

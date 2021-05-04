@@ -1,8 +1,12 @@
 package service
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
@@ -26,6 +30,54 @@ func initRouter() {
 		router.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
 	}
 	//router.GET(routeRaw(string(routeHome)), )
+	authRequired := func(level model.Privilege) gin.HandlerFunc {
+		type header struct {
+			Authorization string `header:"Authorization"`
+		}
+		return func(c *gin.Context) {
+			hdr := header{}
+			if err := c.ShouldBindHeader(&hdr); err != nil {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			pcs := strings.Split(hdr.Authorization, " ")
+			if len(pcs) != 2 {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			claims := &authClaims{}
+			tkn, errC := jwt.ParseWithClaims(pcs[1], claims, getTokenKey)
+			if errC != nil {
+				if errC == jwt.ErrSignatureInvalid {
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if !tkn.Valid {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if !steamid.SID64(claims.SteamID).Valid() {
+				c.AbortWithStatus(http.StatusForbidden)
+				log.Warnf("Invalid steamID")
+				return
+			}
+			loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
+			if err != nil {
+				log.Errorf("Failed to load persons session user: %v", err)
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if level > loggedInPerson.PermissionLevel {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			c.Set("person", loggedInPerson)
+			c.Next()
+		}
+	}
 	router.NoRoute(defaultRoute)
 	router.GET("/login/success", onLoginSuccess())
 	router.GET("/auth/callback", onOpenIDCallback())
@@ -35,24 +87,29 @@ func initRouter() {
 	router.GET("/api/servers", onAPIGetServers())
 	router.GET("/api/stats", onAPIGetStats())
 	router.GET("/api/filtered_words", onAPIGetFilteredWords())
+	router.GET("/api/players", onAPIGetPlayers())
 
-	// Server Auth Request
+	// Game server plugin routes
 	router.POST("/api/server_auth", onSAPIPostServerAuth())
+	// Server Auth Request
+	serverAuth := router.Use(authMiddleWare())
+	serverAuth.POST("/api/ping_mod", onPostPingMod())
+	serverAuth.POST("/api/check", onPostServerCheck())
 
-	tokenAuthed := router.Use(authMiddleWare())
-
-	// Client API
-	tokenAuthed.GET("/api/current_profile", onAPICurrentProfile())
-	tokenAuthed.GET("/api/players", onAPIGetPlayers())
-	tokenAuthed.POST("/api/ban", onAPIPostBanCreate())
-	tokenAuthed.GET("/api/auth/refresh", onTokenRefresh())
-	tokenAuthed.GET("/api/auth/logout", onGetLogout())
-
-	// Game server API
-	tokenAuthed.POST("/api/ping_mod", onPostPingMod())
-
-	// Server to Server API
+	// Relay
 	router.POST("/api/log", onPostLogAdd())
-	tokenAuthed.POST("/api/check", onPostServerCheck())
 
+	// Basic logged in user
+	authed := router.Use(authRequired(model.PAuthenticated))
+	authed.GET("/api/current_profile", onAPICurrentProfile())
+	authed.GET("/api/auth/refresh", onTokenRefresh())
+	authed.GET("/api/auth/logout", onGetLogout())
+
+	// Moderator access
+	modRoute := router.Use(authRequired(model.PModerator))
+	modRoute.POST("/api/ban", onAPIPostBanCreate())
+
+	// Admin access
+	modAdmin := router.Use(authRequired(model.PAdmin))
+	modAdmin.POST("/api/server", onAPIPostServer())
 }

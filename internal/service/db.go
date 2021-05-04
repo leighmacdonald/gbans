@@ -527,6 +527,7 @@ func updatePerson(p *model.Person) error {
 		Set("loccountrycode", p.PlayerSummary.LocCountryCode).
 		Set("locstatecode", p.PlayerSummary.LocStateCode).
 		Set("loccityid", p.PlayerSummary.LocCityID).
+		Set("permission_level", p.PermissionLevel).
 		Where(sq.Eq{"steam_id": p.SteamID}).
 		ToSql()
 	if e != nil {
@@ -544,11 +545,12 @@ func insertPerson(p *model.Person) error {
 		Columns(
 			"created_on", "updated_on", "steam_id", "ip_addr", "communityvisibilitystate",
 			"profilestate", "personaname", "profileurl", "avatar", "avatarmedium", "avatarfull",
-			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode", "loccityid").
+			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode",
+			"loccityid", "permission_level").
 		Values(p.CreatedOn, p.UpdatedOn, p.SteamID, p.IPAddr,
 			p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
 			p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
-			p.LocCountryCode, p.LocStateCode, p.LocCityID).
+			p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel).
 		ToSql()
 	if e != nil {
 		return e
@@ -564,7 +566,7 @@ func insertPerson(p *model.Person) error {
 var profileColumns = []string{"steam_id", "created_on", "updated_on", "ip_addr",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-	"loccountrycode", "locstatecode", "loccityid"}
+	"loccountrycode", "locstatecode", "loccityid", "permission_level"}
 
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
@@ -581,7 +583,7 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	p.PlayerSummary = &extra.PlayerSummary{}
 	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 		&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
-		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID)
+		&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID, &p.PermissionLevel)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -619,7 +621,8 @@ func getPeople(qf *queryFilter) ([]*model.Person, error) {
 		p := model.NewPerson(0)
 		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
-			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID); err2 != nil {
+			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
+			&p.PermissionLevel); err2 != nil {
 			return nil, err2
 		}
 		people = append(people, p)
@@ -982,10 +985,8 @@ func Migrate(action MigrationAction) error {
 		return errors.Wrapf(err2, "failed to create migration driver")
 	}
 	// TODO migrate to using embed//io/fs
-	rp := golib.FindFile("migrations", "migrations")
-	if strings.Contains(rp, "\\") {
-		rp = "migrations"
-	}
+	rp := golib.FindFile("migrations", "gbans")
+	rp = strings.ReplaceAll(rp, "\\", "/")
 	fp := fmt.Sprintf("file://%s", rp)
 	m, err3 := migrate.NewWithDatabaseInstance(fp, "pgx", driver)
 	if err3 != nil {

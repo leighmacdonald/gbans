@@ -1,5 +1,13 @@
 import { log } from './errors';
 
+export enum PermissionLevel {
+    Guest = 1,
+    Banned = 2,
+    Authenticated = 10,
+    Moderator = 50,
+    Admin = 100
+}
+
 export interface apiResponse<T> {
     status: boolean;
     resp: Response;
@@ -49,6 +57,7 @@ const apiCall = async <TResponse, TRequestBody = Record<string, unknown>>(
 
 class ApiException extends Error {
     public resp: Response;
+
     constructor(msg: string, response: Response) {
         super(msg);
         this.resp = response;
