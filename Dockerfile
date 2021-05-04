@@ -17,7 +17,7 @@ RUN go mod download
 COPY --from=frontend /build/internal/service/dist internal/service/dist
 COPY pkg pkg
 COPY internal internal
-RUN make
+RUN make build
 
 FROM alpine:3.13.5
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
@@ -27,6 +27,6 @@ WORKDIR /app
 VOLUME ["/app/.cache"]
 # Needs schema files until: https://github.com/golang-migrate/migrate/pull/472
 COPY migrations migrations
-COPY --from=build /build/gbans .
+COPY --from=build /build/build/linux64/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]
