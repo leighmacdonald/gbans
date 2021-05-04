@@ -192,7 +192,7 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		reason = m.Data.Options[2].Value.(string)
 	}
 
-	reporter, errR := GetPersonByDiscordID(m.Interaction.Member.User.ID)
+	reporter, errR := getPersonByDiscordID(m.Interaction.Member.User.ID)
 	if errR != nil {
 		return errUnlinkedAccount
 	}

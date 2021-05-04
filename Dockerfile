@@ -25,8 +25,6 @@ EXPOSE 6006
 RUN apk add dumb-init
 WORKDIR /app
 VOLUME ["/app/.cache"]
-# Needs schema files until: https://github.com/golang-migrate/migrate/pull/472
-COPY migrations migrations
 COPY --from=build /build/build/linux64/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]

@@ -33,8 +33,9 @@ var (
 	logEventReadersMu *sync.RWMutex
 	//go:embed dist
 	content embed.FS
-
-	lgr = log.New()
+	//go:embed migrations
+	migrations embed.FS
+	lgr        = log.New()
 )
 
 type warnReason int

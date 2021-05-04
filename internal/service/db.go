@@ -9,6 +9,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4/log/logrusadapter"
@@ -16,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
@@ -648,8 +649,8 @@ func GetOrCreatePersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	return p, nil
 }
 
-// GetPersonByDiscordID returns a person by their discord_id
-func GetPersonByDiscordID(did string) (*model.Person, error) {
+// getPersonByDiscordID returns a person by their discord_id
+func getPersonByDiscordID(did string) (*model.Person, error) {
 	q, a, e := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": did}).
@@ -988,9 +989,9 @@ const (
 	// MigrateDn Fully downgrades the schema
 	MigrateDn
 	// MigrateUpOne Upgrade the schema by one revision
-	MigrateUpOne
+	// MigrateUpOne
 	// MigrateDownOne Downgrade the schema by one revision
-	MigrateDownOne
+	// MigrateDownOne
 )
 
 // Migrate e
@@ -1011,21 +1012,26 @@ func Migrate(action MigrationAction) error {
 	if err2 != nil {
 		return errors.Wrapf(err2, "failed to create migration driver")
 	}
-	// TODO migrate to using embed//io/fs
-	rp := golib.FindFile("migrations", "gbans")
-	rp = strings.ReplaceAll(rp, "\\", "/")
-	fp := fmt.Sprintf("file://%s", rp)
-	m, err3 := migrate.NewWithDatabaseInstance(fp, "pgx", driver)
+	defer func() {
+		if e := driver.Close(); e != nil {
+			log.Errorf("Failed to close migrate driver: %v", e)
+		}
+	}()
+	source, err := httpfs.New(http.FS(migrations), "migrations")
+	if err != nil {
+		return err
+	}
+	m, err3 := migrate.NewWithInstance("iofs", source, "pgx", driver)
 	if err3 != nil {
 		return errors.Wrapf(err3, "Failed to migrate up")
 	}
 	switch action {
-	case MigrateUpOne:
-		return m.Steps(1)
+	//case MigrateUpOne:
+	//	return m.Steps(1)
 	case MigrateDn:
 		return m.Down()
-	case MigrateDownOne:
-		return m.Steps(-1)
+	//case MigrateDownOne:
+	//	return m.Steps(-1)
 	case MigrateUp:
 		fallthrough
 	default:
@@ -1033,6 +1039,9 @@ func Migrate(action MigrationAction) error {
 	}
 }
 
+// Import will import bans from a root folder.
+// The formatting is JSON with the importedBan schema defined inline
+// Valid filenames are: main_ban.json
 func Import(root string) error {
 	type importedBan struct {
 		BanID      int    `json:"ban_id"`
@@ -1059,7 +1068,6 @@ func Import(root string) error {
 			if err2 := json.Unmarshal(b, &imported); err2 != nil {
 				return err2
 			}
-			log.Infoln(imported)
 			for _, im := range imported {
 				b1, e1 := GetOrCreatePersonBySteamID(steamid.SID64(im.SteamID))
 				if e1 != nil {
@@ -1093,8 +1101,8 @@ func Import(root string) error {
 				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
 				bn.Source = model.System
 
-				if err3 := saveBan(bn); err3 != nil {
-					return err3
+				if err4 := saveBan(bn); err4 != nil {
+					return err4
 				}
 			}
 		}

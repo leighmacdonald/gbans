@@ -30,16 +30,16 @@ windows64:
 	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/win64/gbans.exe main.go
 
 dist: frontend build
-	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md
-	zip -r gbans-`git describe --abbrev=0`-win64.zip migrations/ docs/
-	zip -j gbans-`git describe --abbrev=0`-lin64.zip build/linux64/gbans LICENSE README.md
-	zip -r gbans-`git describe --abbrev=0`-lin64.zip migrations/ docs/
+	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
+	zip -r gbans-`git describe --abbrev=0`-win64.zip docs/
+	zip -j gbans-`git describe --abbrev=0`-lin64.zip build/linux64/gbans LICENSE README.md gbans_example.yml
+	zip -r gbans-`git describe --abbrev=0`-lin64.zip docs/
 
 dist-master: frontend build
-	zip -j gbans-master-win64.zip build/win64/gbans.exe LICENSE README.md
-	zip -r gbans-master-win64.zip migrations/ docs/
-	zip -j gbans-master-lin64.zip build/linux64/gbans LICENSE README.md
-	zip -r gbans-master-lin64.zip migrations/ docs/
+	zip -j gbans-master-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
+	zip -r gbans-master-win64.zip docs/
+	zip -j gbans-master-lin64.zip build/linux64/gbans LICENSE README.md gbans_example.yml
+	zip -r gbans-master-lin64.zip docs/
 
 run:
 	@go run $(GO_FLAGS) -race main.go
@@ -47,8 +47,10 @@ run:
 install:
 	@go install $(GO_FLAGS) ./...
 
+test: test-go test-ts
+
 test-ts:
-	@cd frontend && yarn run test
+	@cd frontend && yarn && yarn run test
 
 test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
