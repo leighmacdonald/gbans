@@ -17,7 +17,11 @@ import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanView } from './page/BanView';
-import { apiGetCurrentProfile, PlayerProfile } from './util/api';
+import {
+    apiGetCurrentProfile,
+    PermissionLevel,
+    PlayerProfile
+} from './util/api';
 import { AdminBan } from './page/AdminBan';
 import { AdminServerLog } from './page/AdminServerLog';
 import { TopBarWithRouter } from './component/TopBar';
@@ -27,6 +31,7 @@ import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { Logout } from './page/Logout';
 import { Redirect } from 'react-router';
 import { PageNotFound } from './page/PageNotFound';
+import { PrivateRoute } from './component/PrivateRoute';
 
 const useStyles = makeStyles((theme) => ({
     toolbar: {
@@ -107,11 +112,13 @@ export const App = (): JSX.Element => {
                                 path={'/admin/reports'}
                                 component={AdminReports}
                             />
-                            <Route
+                            <PrivateRoute
+                                permission={PermissionLevel.Admin}
                                 exact
                                 path={'/admin/import'}
                                 component={AdminImport}
                             />
+
                             <Route
                                 exact
                                 path={'/admin/people'}

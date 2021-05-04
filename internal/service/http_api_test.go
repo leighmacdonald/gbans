@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"math/rand"
@@ -24,10 +26,10 @@ func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRe
 	}
 }
 
-func newTestReq(method string, route string, body interface{}) *http.Request {
+func newTestReq(method string, route string, body interface{}, token string) *http.Request {
 	b, _ := json.Marshal(body)
 	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	return req
 }
 
@@ -42,6 +44,14 @@ type httpTestUnit struct {
 	m string
 }
 
+func createToken(sid steamid.SID64, pr model.Privilege) string {
+	p, _ := GetOrCreatePersonBySteamID(sid)
+	p.PermissionLevel = pr
+	_ = SavePerson(p)
+	token, _ := newJWT(p.SteamID)
+	return token
+}
+
 func TestOnAPIPostBan(t *testing.T) {
 	type req struct {
 		// TODO replace string with SID64 when steam package gets fixed
@@ -52,6 +62,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		ReasonText string        `json:"reason_text"`
 		Network    string        `json:"network"`
 	}
+	token := createToken(76561198084134025, model.PAdmin)
 	s1 := fmt.Sprintf("%d", 76561197960265728+rand.Int63n(100000000))
 	units := []httpTestUnit{
 		{newTestReq("POST", "/api/ban", req{
@@ -61,7 +72,7 @@ func TestOnAPIPostBan(t *testing.T) {
 			Reason:     0,
 			ReasonText: "test",
 			Network:    "",
-		}),
+		}, token),
 			httpTestResult{Code: http.StatusCreated},
 			"Failed to successfully create steam ban"},
 		{newTestReq("POST", "/api/ban", req{
@@ -71,7 +82,7 @@ func TestOnAPIPostBan(t *testing.T) {
 			Reason:     0,
 			ReasonText: "test",
 			Network:    "",
-		}),
+		}, token),
 			httpTestResult{Code: http.StatusConflict},
 			"Failed to successfully handle duplicate ban creation"},
 	}
@@ -144,13 +155,13 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 	ctx, cancel := context.WithCancel(gCtx)
 	defer cancel()
 	go logReader(ctx, logRawQueue)
-
+	token := createToken(76561198084134025, model.PAdmin)
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
-			newTestReq("POST", "/api/log", LogPayload{
+			newTestReq("POST", "/api/log", []LogPayload{{
 				ServerName: "test-1",
 				Message:    tc,
-			}),
+			}}, token),
 			httpTestResult{Code: http.StatusCreated},
 			"Failed to add log message",
 		})
@@ -169,4 +180,31 @@ func testUnits(t *testing.T, testCases []httpTestUnit) {
 			return false
 		})
 	}
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	s := model.Server{
+		ServerName:     golib.RandomString(10),
+		Token:          "",
+		Address:        "localhost",
+		Port:           27015,
+		RCON:           "password",
+		ReservedSlots:  8,
+		Password:       "",
+		TokenCreatedOn: config.Now(),
+		CreatedOn:      config.Now(),
+		UpdatedOn:      config.Now(),
+	}
+
+	req := newTestReq("POST", "/api/server", s,
+		createToken(76561198084134025, model.PAuthenticated))
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusForbidden, w.Code)
+
+	reqOK := newTestReq("POST", "/api/server", s,
+		createToken(76561198084134025, model.PAdmin))
+	wOK := httptest.NewRecorder()
+	router.ServeHTTP(wOK, reqOK)
+	require.Equal(t, http.StatusOK, wOK.Code)
 }

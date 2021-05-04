@@ -14,7 +14,7 @@ import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { handleOnLogin } from '../util/api';
+import { handleOnLogin, PermissionLevel } from '../util/api';
 import {
     Avatar,
     Button,
@@ -193,7 +193,7 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
             {renderLinkedMenuItem('Logout', '/logout', <ExitToAppIcon />)}
         </Menu>
     );
-
+    const perms = parseInt(localStorage.getItem('permission_level') || '1');
     const renderAdminMenu = (
         <Menu
             anchorEl={anchorAdminMenuEl}
@@ -204,33 +204,44 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
             open={isAdminMenuOpen}
             onClose={handleAdminMenuClose}
         >
-            {renderLinkedMenuItem(
-                'Ban Player/Net',
-                '/admin/ban',
-                <BlockIcon />
-            )}
-            {renderLinkedMenuItem('Reports', '/admin/reports', <ReportIcon />)}
-            {renderLinkedMenuItem(
-                'People',
-                '/admin/people',
-                <PregnantWomanIcon />
-            )}
-            {renderLinkedMenuItem(
-                'Import',
-                '/admin/import',
-                <ImportExportIcon />
-            )}
-            {renderLinkedMenuItem(
-                'Filtered Words',
-                '/admin/filters',
-                <SpellcheckIcon />
-            )}
-            {renderLinkedMenuItem('Servers', '/admin/servers', <DnsIcon />)}
-            {renderLinkedMenuItem(
-                'Server Logs',
-                '/admin/server_logs',
-                <SubjectIcon />
-            )}
+            {perms >= PermissionLevel.Moderator &&
+                renderLinkedMenuItem(
+                    'Ban Player/Net',
+                    '/admin/ban',
+                    <BlockIcon />
+                )}
+            {perms >= PermissionLevel.Moderator &&
+                renderLinkedMenuItem(
+                    'Reports',
+                    '/admin/reports',
+                    <ReportIcon />
+                )}
+            {perms >= PermissionLevel.Admin &&
+                renderLinkedMenuItem(
+                    'People',
+                    '/admin/people',
+                    <PregnantWomanIcon />
+                )}
+            {perms >= PermissionLevel.Admin &&
+                renderLinkedMenuItem(
+                    'Import',
+                    '/admin/import',
+                    <ImportExportIcon />
+                )}
+            {perms >= PermissionLevel.Moderator &&
+                renderLinkedMenuItem(
+                    'Filtered Words',
+                    '/admin/filters',
+                    <SpellcheckIcon />
+                )}
+            {perms >= PermissionLevel.Admin &&
+                renderLinkedMenuItem('Servers', '/admin/servers', <DnsIcon />)}
+            {perms >= PermissionLevel.Admin &&
+                renderLinkedMenuItem(
+                    'Server Logs',
+                    '/admin/server_logs',
+                    <SubjectIcon />
+                )}
         </Menu>
     );
 
@@ -350,16 +361,18 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
                                             <NotificationsIcon />
                                         </Badge>
                                     </IconButton>
-                                    <IconButton
-                                        edge="end"
-                                        aria-label="admin menu"
-                                        aria-controls={menuId}
-                                        aria-haspopup="true"
-                                        onClick={handleAdminMenuOpen}
-                                        color="inherit"
-                                    >
-                                        <SettingsIcon />
-                                    </IconButton>
+                                    {perms >= PermissionLevel.Moderator && (
+                                        <IconButton
+                                            edge="end"
+                                            aria-label="admin menu"
+                                            aria-controls={menuId}
+                                            aria-haspopup="true"
+                                            onClick={handleAdminMenuOpen}
+                                            color="inherit"
+                                        >
+                                            <SettingsIcon />
+                                        </IconButton>
+                                    )}
                                     <IconButton
                                         edge="end"
                                         aria-label="account of current user"
@@ -390,7 +403,7 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
                     </Toolbar>
                 </AppBar>
 
-                {renderAdminMenu}
+                {perms >= PermissionLevel.Moderator && renderAdminMenu}
                 {renderMobileMenu}
                 {renderProfileMenu}
             </div>

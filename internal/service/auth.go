@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -148,6 +149,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 		}
 		v := u.Query()
 		v.Set("token", t)
+		v.Set("permission_level", fmt.Sprintf("%d", p.PermissionLevel))
 		v.Set("next_url", ref)
 		u.RawQuery = v.Encode()
 		c.Redirect(302, u.String())
