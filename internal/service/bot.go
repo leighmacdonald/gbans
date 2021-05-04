@@ -20,6 +20,7 @@ var (
 	errCommandFailed   = errors.New("Command failed")
 	errDuplicateBan    = errors.New("Duplicate ban")
 	errInvalidDuration = errors.New("Invalid duration")
+	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
 )
 
 func init() {

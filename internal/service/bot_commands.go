@@ -16,18 +16,19 @@ import (
 type botCmd string
 
 const (
-	cmdBan     botCmd = "ban"
-	cmdBanIP   botCmd = "banip"
-	cmdFind    botCmd = "find"
-	cmdMute    botCmd = "mute"
-	cmdCheck   botCmd = "check"
-	cmdUnban   botCmd = "unban"
-	cmdKick    botCmd = "kick"
-	cmdPlayers botCmd = "players"
-	cmdPSay    botCmd = "psay"
-	cmdCSay    botCmd = "csay"
-	cmdSay     botCmd = "say"
-	cmdServers botCmd = "servers"
+	cmdBan      botCmd = "ban"
+	cmdBanIP    botCmd = "banip"
+	cmdFind     botCmd = "find"
+	cmdMute     botCmd = "mute"
+	cmdCheck    botCmd = "check"
+	cmdUnban    botCmd = "unban"
+	cmdKick     botCmd = "kick"
+	cmdPlayers  botCmd = "players"
+	cmdPSay     botCmd = "psay"
+	cmdCSay     botCmd = "csay"
+	cmdSay      botCmd = "say"
+	cmdServers  botCmd = "servers"
+	cmdSetSteam botCmd = "set_steam"
 )
 
 func botRegisterSlashCommands() error {
@@ -185,6 +186,14 @@ func botRegisterSlashCommands() error {
 				},
 			},
 		},
+		{
+			ApplicationID: config.Discord.AppID,
+			Name:          string(cmdSetSteam),
+			Description:   "Set your steam ID so gbans can link your account to discord",
+			Options: []*discordgo.ApplicationCommandOption{
+				optUserID,
+			},
+		},
 	}
 	modPerm := []*discordgo.ApplicationCommandPermission{
 		{
@@ -243,18 +252,19 @@ func registerCommandPermissions(perms []permissionRequest) error {
 }
 
 var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.InteractionCreate) error{
-	cmdBan:     onBan,
-	cmdBanIP:   onBanIP,
-	cmdCheck:   onCheck,
-	cmdCSay:    onCSay,
-	cmdFind:    onFind,
-	cmdKick:    onKick,
-	cmdMute:    onMute,
-	cmdPlayers: onPlayers,
-	cmdPSay:    onPSay,
-	cmdSay:     onSay,
-	cmdServers: onServers,
-	cmdUnban:   onUnban,
+	cmdBan:      onBan,
+	cmdBanIP:    onBanIP,
+	cmdCheck:    onCheck,
+	cmdCSay:     onCSay,
+	cmdFind:     onFind,
+	cmdKick:     onKick,
+	cmdMute:     onMute,
+	cmdPlayers:  onPlayers,
+	cmdPSay:     onPSay,
+	cmdSay:      onSay,
+	cmdServers:  onServers,
+	cmdUnban:    onUnban,
+	cmdSetSteam: onSetSteam,
 }
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {

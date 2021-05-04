@@ -238,6 +238,7 @@ type Person struct {
 	UpdatedOn       time.Time     `db:"updated_on" json:"updated_on"`
 	PermissionLevel Privilege     `db:"permission_level" json:"permission_level"`
 	IsNew           bool          `db:"-" json:"-"`
+	DiscordID       string        `db:"discord_id" json:"discord_id"`
 	*extra.PlayerSummary
 }
 
