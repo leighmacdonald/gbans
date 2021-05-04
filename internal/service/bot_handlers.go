@@ -191,11 +191,17 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
 	}
+
+	reporter, errR := GetPersonByDiscordID(m.Interaction.Member.User.ID)
+	if errR != nil {
+		return errUnlinkedAccount
+	}
+
 	pi := findPlayer(uid, "")
 	if !pi.valid {
 		return errUnknownID
 	}
-	ban, err2 := BanPlayer(gCtx, pi.sid, config.General.Owner, duration, model.Custom, reason, model.Bot)
+	ban, err2 := BanPlayer(gCtx, pi.sid, reporter.SteamID, duration, model.Custom, reason, model.Bot)
 	if err2 != nil {
 		if err2 == errDuplicate {
 			return sendMsg(s, m.Interaction, "ID already banned")
@@ -206,9 +212,8 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	return sendMsg(s, m.Interaction, "Ban created successfully (#%d)", ban.BanID)
 }
 
-//goland:noinspection ALL
 func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
-	const f = "[%s] Banned: `%v` -- Muted: `%v` -- IP: `%s` -- Expires In: `%s` Reason: `%s`"
+	var f = "[%s] Banned: `%v` -- Muted: `%v` -- IP: `%s` -- Expires In: `%s` Reason: `%s`"
 	pId := m.Data.Options[0].Value.(string)
 	pi := findPlayer(pId, "")
 	if !pi.valid {
@@ -228,6 +233,9 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	sid := ""
 	reason := ""
 	var remaining time.Duration
+	if ban == nil {
+		return errCommandFailed
+	}
 	// TODO Show the longest remaining ban.
 	if ban.Ban.BanID > 0 {
 		sid = pi.sid.String()
@@ -241,8 +249,32 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		remaining = bannedNets[0].ValidUntil.Sub(config.Now())
 	}
 	r := strings.Split(remaining.String(), ".")
+	author, e := getPersonBySteamID(ban.Ban.AuthorID)
+	if e == nil && author != nil && author.DiscordID != "" {
+		f += fmt.Sprintf(" Author: <@%s>", author.DiscordID)
+	}
 	return sendMsg(s, m.Interaction, f, sid,
 		ban.Ban.BanType == model.Banned, ban.Ban.BanType == model.NoComm, ip, r[0], reason)
+}
+
+func onSetSteam(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+	pId := m.Data.Options[0].Value.(string)
+	sid, err := steamid.ResolveSID64(context.Background(), pId)
+	if err != nil || !sid.Valid() {
+		return errInvalidSID
+	}
+	p, err := GetOrCreatePersonBySteamID(sid)
+	if err != nil || !sid.Valid() {
+		return errCommandFailed
+	}
+	if (p.DiscordID) != "" {
+		return sendMsg(s, m.Interaction, "Discord account already linked to steam account: %d", p.SteamID.Int64())
+	}
+	p.DiscordID = m.Interaction.Member.User.ID
+	if err := SavePerson(p); err != nil {
+		return errCommandFailed
+	}
+	return sendMsg(s, m.Interaction, "Successfully linked your account")
 }
 
 func onUnban(s *discordgo.Session, m *discordgo.InteractionCreate) error {
