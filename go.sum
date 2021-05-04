@@ -190,8 +190,6 @@ github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7a
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
-github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be h1:uKkTQkwCSvCZBgx1Jas7PYiidJGA2l3k1Nt/4BUFxm0=
-github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be/go.mod h1:SF94dyhm2XVYxiDNhCieXFiOxfYLf/dsL/GlceOdfww=
 github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20160516000752-02826c3e7903/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -417,6 +415,8 @@ github.com/leighmacdonald/discordgo v0.23.3-0.20210501231400-4a24b4e9205c h1:UpM
 github.com/leighmacdonald/discordgo v0.23.3-0.20210501231400-4a24b4e9205c/go.mod h1:OMKxbTmkKofBjBi4/yidO3ItxbJ6PUfEUkjchM4En8c=
 github.com/leighmacdonald/golib v1.1.0 h1:VONSqNme6IG2Uzb7IJKqzM9dqtUtMikbZuKMXGFnCL8=
 github.com/leighmacdonald/golib v1.1.0/go.mod h1:cAKDtUY1YGAwtUtlwGUAb4Z+o62Lw5d8JkeI/6+MCQQ=
+github.com/leighmacdonald/migrate/v4 v4.14.2-0.20210504172520-d53881cff5a4 h1:uLIm5M9aU8jRE/DtIx87DnFmfi5tzo78A2q4H0Q0hn8=
+github.com/leighmacdonald/migrate/v4 v4.14.2-0.20210504172520-d53881cff5a4/go.mod h1:SF94dyhm2XVYxiDNhCieXFiOxfYLf/dsL/GlceOdfww=
 github.com/leighmacdonald/rcon v1.0.4 h1:hdnrZCVwSYB7pA+iRJBUXC55VfvHfoXVE3RizbM0hDA=
 github.com/leighmacdonald/rcon v1.0.4/go.mod h1:wdnU8FZc1+0wwavvlGzWFOL6fDRGnrb5ExR2+aAO34c=
 github.com/leighmacdonald/steamid/v2 v2.0.2 h1:NJYrI3+OlrR4knPPy6bGTLokoEjpPS6lWJs0Xh3Jwqo=
