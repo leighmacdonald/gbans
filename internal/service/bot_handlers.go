@@ -51,7 +51,7 @@ func findPlayer(playerStr string, ip string) playerInfo {
 			inGame = true
 		}
 	} else {
-		sidFS, errFS := steamid.SID64FromString(playerStr)
+		sidFS, errFS := steamid.ResolveSID64(context.Background(), playerStr)
 		if errFS == nil && sidFS.Valid() {
 			foundSid = sidFS
 			player, server, err = findPlayerBySID(sidFS)
@@ -279,7 +279,7 @@ func onSetSteam(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 
 func onUnban(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	pId := m.Data.Options[0].Value.(string)
-	sid, err := steamid.SID64FromString(pId)
+	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil || !sid.Valid() {
 		return errInvalidSID
 	}
@@ -410,7 +410,6 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		})
 	}
 	t.AppendSeparator()
-
 	for name, r := range results {
 		if full {
 			t.AppendRow(table.Row{
