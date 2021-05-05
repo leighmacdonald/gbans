@@ -7,7 +7,7 @@ how to enable it.
 
 ## Overview
 
-The bot currently have a few caveats for proper usage. Please make sure you are aware of these. They can and will
+The bot currently has a few caveats for proper usage. Please make sure you are aware of these. They can and will
 be changed to be more flexible in the future.
 
 - You have an admin/mod channel that the bot will operate under. The bot currently does *NOT* check for any
