@@ -270,7 +270,7 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	t.AppendSeparator()
 	t.SuppressEmptyColumns()
 	t.AppendRow(table.Row{
-		"Real Name", fmt.Sprintf("%s", bannedPlayer.RealName),
+		"Real Name", bannedPlayer.RealName,
 		"Profile", bannedPlayer.ProfileURL})
 	t.AppendRow(table.Row{
 		"SID64", bannedPlayer.SteamID.String(),
