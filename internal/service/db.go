@@ -260,7 +260,8 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-		"p.steam_id as sid2", "p.created_on as created_on2", "p.updated_on as updated_on2", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
+		"p.steam_id as sid2", "p.created_on as created_on2", "p.updated_on as updated_on2", "p.communityvisibilitystate",
+		"p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
 		"p.permission_level", "p.discord_id").
@@ -278,7 +279,7 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 	if err := db.QueryRow(context.Background(), q, a...).
 		Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
-			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn, &b.Person.IPAddr,
+			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn,
 			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName,
 			&b.Person.ProfileURL, &b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull,
 			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
@@ -332,10 +333,10 @@ func getChatHistory(sid64 steamid.SID64) ([]model.ChatLog, error) {
 	return hist, nil
 }
 
-func addPersonIP(p *model.Person) error {
+func addPersonIP(p *model.Person, ip string) error {
 	q, a, e := sb.Insert(string(tablePersonIP)).
-		Columns("steam_id", "address", "created_on").
-		Values(p.SteamID, p.IPAddr, config.Now()).
+		Columns("steam_id", "ip_addr", "created_on").
+		Values(p.SteamID, ip, config.Now()).
 		ToSql()
 	if e != nil {
 		return e
@@ -345,7 +346,7 @@ func addPersonIP(p *model.Person) error {
 }
 
 func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
-	q, a, e := sb.Select("address", "created_on").
+	q, a, e := sb.Select("ip_addr", "created_on").
 		From(string(tablePersonIP)).
 		Where(sq.Eq{"steam_id": sid64}).
 		OrderBy("created_on DESC").
@@ -361,7 +362,7 @@ func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
 	var records []model.IPRecord
 	for rows.Next() {
 		var r model.IPRecord
-		if err2 := rows.Scan(&r.Address, &r.CreatedOn); err2 != nil {
+		if err2 := rows.Scan(&r.IPAddr, &r.CreatedOn); err2 != nil {
 			return nil
 		}
 		records = append(records, r)
@@ -514,7 +515,6 @@ func updatePerson(p *model.Person) error {
 	p.UpdatedOn = config.Now()
 	q, a, e := sb.Update("person").
 		Set("updated_on", p.UpdatedOn).
-		Set("ip_addr", p.IPAddr).
 		Set("communityvisibilitystate", p.CommunityVisibilityState).
 		Set("profilestate", p.ProfileState).
 		Set("personaname", p.PersonaName).
@@ -546,11 +546,11 @@ func insertPerson(p *model.Person) error {
 	q, a, e := sb.
 		Insert("person").
 		Columns(
-			"created_on", "updated_on", "steam_id", "ip_addr", "communityvisibilitystate",
+			"created_on", "updated_on", "steam_id", "communityvisibilitystate",
 			"profilestate", "personaname", "profileurl", "avatar", "avatarmedium", "avatarfull",
 			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode",
 			"loccityid", "permission_level", "discord_id").
-		Values(p.CreatedOn, p.UpdatedOn, p.SteamID, p.IPAddr,
+		Values(p.CreatedOn, p.UpdatedOn, p.SteamID,
 			p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
 			p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
 			p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel, p.DiscordID).
@@ -566,7 +566,7 @@ func insertPerson(p *model.Person) error {
 	return nil
 }
 
-var profileColumns = []string{"steam_id", "created_on", "updated_on", "ip_addr",
+var profileColumns = []string{"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id"}
@@ -574,20 +574,26 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on", "ip_addr",
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
 func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
-	q, a, e := sb.Select(profileColumns...).
-		From("person").
-		Where(sq.Eq{"steam_id": sid}).
-		ToSql()
-	if e != nil {
-		return nil, e
-	}
+	const q = `
+    WITH addresses as (
+		SELECT steam_id, ip_addr FROM person_ip
+		WHERE steam_id = $1
+		ORDER BY created_on DESC limit 1
+	)
+	SELECT 
+	    p.steam_id, created_on, updated_on, communityvisibilitystate, profilestate, personaname, profileurl, avatar,
+		avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated, loccountrycode, locstatecode, loccityid,
+		permission_level, discord_id, a.ip_addr  from person p
+	left join addresses a on p.steam_id = a.steam_id
+	WHERE p.steam_id = $1;`
+
 	p := model.NewPerson(0)
 	p.IsNew = false
 	p.PlayerSummary = &extra.PlayerSummary{}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr,
+	err := db.QueryRow(context.Background(), q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
-		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID)
+		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -796,7 +802,7 @@ func getBans(o *queryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-		"p.steam_id", "p.created_on", "p.updated_on", "p.ip_addr", "p.communityvisibilitystate", "p.profilestate",
+		"p.steam_id", "p.created_on", "p.updated_on", "p.communityvisibilitystate", "p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
 		"p.permission_level", "p.discord_id").

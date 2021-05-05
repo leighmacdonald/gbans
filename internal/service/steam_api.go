@@ -10,7 +10,9 @@ import (
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -103,12 +105,16 @@ func getOrCreateProfileBySteamID(sid steamid.SID64, ipAddr string) (*model.Perso
 	}
 	s := sum[0]
 	p.SteamID = sid
-	if ipAddr != "" {
-		p.IPAddr = ipAddr
-	}
 	p.PlayerSummary = &s
 	if errSave := SavePerson(p); errSave != nil {
 		return nil, errors.Wrapf(errSave, "Failed to save person")
 	}
+	if ipAddr != "" && !p.IPAddr.Equal(net.ParseIP(ipAddr)) {
+		if errIP := addPersonIP(p, ipAddr); errIP != nil {
+			return nil, errors.Wrapf(errIP, "Could not add ip record")
+		}
+		p.IPAddr = net.ParseIP(ipAddr)
+	}
+	log.Debugf("Profile updated successfully: %s [%d]", p.PersonaName, p.SteamID.Int64())
 	return p, nil
 }
