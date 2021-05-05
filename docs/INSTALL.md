@@ -14,14 +14,13 @@ instructions:
 
 Precompiled binaries will be provided once the project is in a more stable state.
 
-- [make](https://www.gnu.org/software/make/) For predefined build commands
-- [golang 1.16+](https://golang.org/) gbans server is written in go.
-- [gcc](https://gcc.gnu.org/) Required to build the sqlite3 go extension
+- [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
+- [golang 1.16+](https://golang.org/) gbans is written in go. 1.16 is *REQUIRED* due to using iofs embed features.
 
-Basic steps to build the binary:
+Basic steps to build the binary packages:
 
     1. git clone git@github.com:leighmacdonald/gbans.git && cd gbans
-    2. make
+    2. make dist
  
 You should now have a binary in the project root called `gbans` or `gbans.exe` if on windows.
 
@@ -33,56 +32,12 @@ Copy the example configuration `gbans_example.yml` and name it `gbans.yml`. It s
 the same directory as the binary. Configure it as desired. Discord is currently highly recommended, at 
 least until the webui is created.
 
-```yaml
-http:
-  # Listen on this ip address
-  # 0.0.0.0 = Any
-  host: 0.0.0.0
-  # Listen on this port
-  port: 6006
-  # Run mode for the HTTP service
-  # Should normally be "release"
-  mode: "release" # release, debug, test
-
-database:
-  # Path to your database
-  # NOTE: if you are using docker its *VERY* important to change this to /app/database/db.sqlite
-  # otherwise your database will be wiped when you pull a new image
-  path: "db.sqlite"
-
-discord:
-  # Enable optional discord integration
-  enabled: false
-  # Your discord bot token
-  # See: https://discord.com/developers/applications
-  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  # People in these channels automatically have moderator privilege
-  # To find these, Right click the channel -> copy id
-  mod_channel_ids:
-    - "123456789012345678"
-    - "234567890123456789"
-  # Commands all start with this character
-  prefix: "!"
-
-logging:
-  # Set the debug log level
-  level: debug
-  # Force console colours when it cant guess. This is mostly useful on windows
-  force_colours: true
-  # Force disable any colouring
-  disable_colours: false
-  # Show the function + line number where the log message was created
-  report_caller: false
-  # Show full timestamps in the logs
-  full_timestamp: false
-```
-
 #### Adding servers
 
 Servers must be registered in the database for them to work. Currently, the only way to automatically
 do this is with the `gbans addserver` command. 
 
-`gban addserver <server_name> <addr> <port> <rcon>`
+`gbans addserver <server_name> <addr> <port> <rcon>`
 
 ```
 ./gbans addserver example-1 10.0.0.1 27015 my_rcon_pass

@@ -15,7 +15,7 @@ authentication token.
 - Built using [Go](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in 
 webserver that is safe to directly expose to the internet. This means its not necessary to setup MySQL, 
 Nginx/Apache and PHP on your server.
-- Non-legacy codebase that is (hopefully) not a nightmare to hack on. Sourcebans++, while updated, is still very clearly a legacy PHP codebase. It uses no framework or real conventions, Still uses globals, Mixes PHP/JS code, Uses tables for layout. I am in no way trying to put them down, they have done a good job volunteering their time over the years, But i think its time to move on from this legacy stuff.
+- Non-legacy codebase that is (hopefully) not a nightmare to hack on.
 
 ## Features
 
