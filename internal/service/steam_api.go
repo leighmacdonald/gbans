@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -87,4 +88,27 @@ func fetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 		return nil, errors.New("Failed to fetch all friends")
 	}
 	return results, nil
+}
+
+// getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
+// that it will also query the steam webapi to fetch and load the extra player summary info
+func getOrCreateProfileBySteamID(sid steamid.SID64, ipAddr string) (*model.Person, error) {
+	sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to get player summary: %v", err)
+	}
+	p, err := GetOrCreatePersonBySteamID(sid)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to get person: %v", err)
+	}
+	s := sum[0]
+	p.SteamID = sid
+	if ipAddr != "" {
+		p.IPAddr = ipAddr
+	}
+	p.PlayerSummary = &s
+	if errSave := SavePerson(p); errSave != nil {
+		return nil, errors.Wrapf(errSave, "Failed to save person")
+	}
+	return p, nil
 }

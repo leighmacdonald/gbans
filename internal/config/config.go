@@ -145,6 +145,78 @@ var (
 	Net     netBans
 )
 
+func FmtTimeShort(t time.Time) string {
+	return t.Format("Mon Jan 2 15:04:05 MST 2006")
+}
+
+func FmtDuration(t time.Time) string {
+	year, month, day, hour, min, _ := diff(t, Now())
+	var pcs []string
+	if year > 0 {
+		pcs = append(pcs, fmt.Sprintf("%dy", year))
+	}
+	if month > 0 {
+		pcs = append(pcs, fmt.Sprintf("%dM", month))
+	}
+	if day > 0 {
+		pcs = append(pcs, fmt.Sprintf("%dd", day))
+	}
+	if hour > 0 {
+		pcs = append(pcs, fmt.Sprintf("%dh", hour))
+	}
+	if min > 0 {
+		pcs = append(pcs, fmt.Sprintf("%dm", min))
+	}
+	return strings.Join(pcs, " ")
+}
+
+func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
+	if a.Location() != b.Location() {
+		b = b.In(a.Location())
+	}
+	if a.After(b) {
+		a, b = b, a
+	}
+	y1, M1, d1 := a.Date()
+	y2, M2, d2 := b.Date()
+
+	h1, m1, s1 := a.Clock()
+	h2, m2, s2 := b.Clock()
+
+	year = int(y2 - y1)
+	month = int(M2 - M1)
+	day = int(d2 - d1)
+	hour = int(h2 - h1)
+	min = int(m2 - m1)
+	sec = int(s2 - s1)
+
+	// Normalize negative values
+	if sec < 0 {
+		sec += 60
+		min--
+	}
+	if min < 0 {
+		min += 60
+		hour--
+	}
+	if hour < 0 {
+		hour += 24
+		day--
+	}
+	if day < 0 {
+		// days in month:
+		t := time.Date(y1, M1, 32, 0, 0, 0, 0, time.UTC)
+		day += 32 - t.Day()
+		month--
+	}
+	if month < 0 {
+		month += 12
+		year--
+	}
+
+	return
+}
+
 // Read reads in config file and ENV variables if set.
 func Read(cfgFiles ...string) {
 	// Find home directory.

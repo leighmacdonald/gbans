@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -191,12 +192,10 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
 	}
-
 	reporter, errR := getPersonByDiscordID(m.Interaction.Member.User.ID)
 	if errR != nil {
 		return errUnlinkedAccount
 	}
-
 	pi := findPlayer(uid, "")
 	if !pi.valid {
 		return errUnknownID
@@ -213,13 +212,27 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 }
 
 func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
-	var f = "[%s] Banned: `%v` -- Muted: `%v` -- IP: `%s` -- Expires In: `%s` Reason: `%s`"
 	pId := m.Data.Options[0].Value.(string)
-	pi := findPlayer(pId, "")
-	if !pi.valid {
+	if err := s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionApplicationCommandResponseData{
+			Content: "Please wait... Reticulating splines...",
+		},
+	}); err != nil {
+		return err
+	}
+	sid, err := steamid.ResolveSID64(context.Background(), pId)
+	if err != nil {
 		return errUnknownID
 	}
-	ban, err1 := getBanBySteamID(pi.sid, false)
+	if !sid.Valid() {
+		return errUnknownID
+	}
+	bannedPlayer, err := getOrCreateProfileBySteamID(sid, "")
+	if err != nil {
+		return errCommandFailed
+	}
+	ban, err1 := getBanBySteamID(sid, false)
 	if err1 != nil && err1 != errNoResult {
 		return errCommandFailed
 	}
@@ -230,31 +243,67 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	if err1 == errNoResult && err2 == errNoResult {
 		return sendMsg(s, m.Interaction, "No ban for user in db")
 	}
-	sid := ""
+	banned := false
+	muted := false
 	reason := ""
-	var remaining time.Duration
-	if ban == nil {
-		return errCommandFailed
-	}
+	var expiry time.Time
+
 	// TODO Show the longest remaining ban.
-	if ban.Ban.BanID > 0 {
-		sid = pi.sid.String()
+	if ban != nil && ban.Ban.BanID > 0 {
+		banned = ban.Ban.BanType == model.Banned
+		muted = ban.Ban.BanType == model.NoComm
 		reason = ban.Ban.ReasonText
-		remaining = ban.Ban.ValidUntil.Sub(config.Now())
+		expiry = ban.Ban.ValidUntil
 	}
-	ip := "N/A"
+
+	logData, errLogs := external.LogsTFOverview(sid)
+	if errLogs != nil {
+		log.Warnf("Failed to fetch logTF data: %v", errLogs)
+	}
+	//ip := "N/A"
 	if len(bannedNets) > 0 {
-		ip = bannedNets[0].CIDR.String()
+		//ip = bannedNets[0].CIDR.String()
 		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
-		remaining = bannedNets[0].ValidUntil.Sub(config.Now())
+		expiry = bannedNets[0].ValidUntil
 	}
-	r := strings.Split(remaining.String(), ".")
-	author, e := getPersonBySteamID(ban.Ban.AuthorID)
-	if e == nil && author != nil && author.DiscordID != "" {
-		f += fmt.Sprintf(" Author: <@%s>", author.DiscordID)
+	t := defaultTable(fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName))
+	t.AppendSeparator()
+	t.SuppressEmptyColumns()
+	t.AppendRow(table.Row{
+		"Real Name", fmt.Sprintf("%s", bannedPlayer.RealName),
+		"Profile", bannedPlayer.ProfileURL})
+	t.AppendRow(table.Row{
+		"SID64", bannedPlayer.SteamID.String(),
+		"SID", steamid.SID64ToSID(bannedPlayer.SteamID),
+	})
+	t.AppendRow(table.Row{
+		"STEAM3", steamid.SID64ToSID3(bannedPlayer.SteamID),
+		"STEAM32", steamid.SID64ToSID32(bannedPlayer.SteamID),
+	})
+	t.AppendRow(table.Row{"Banned", banned, "Muted", muted})
+	if ban != nil {
+		t.AppendRow(table.Row{"Reason", reason})
+		t.AppendRow(table.Row{
+			"Created", config.FmtTimeShort(ban.Ban.CreatedOn),
+			"Expires", config.FmtDuration(expiry)})
+		author, e := getPersonBySteamID(ban.Ban.AuthorID)
+		if e == nil && author != nil && author.DiscordID != "" {
+			t.AppendRow(table.Row{"Author", fmt.Sprintf("<@%s>", author.DiscordID)})
+		}
 	}
-	return sendMsg(s, m.Interaction, f, sid,
-		ban.Ban.BanType == model.Banned, ban.Ban.BanType == model.NoComm, ip, r[0], reason)
+	t.AppendRow(table.Row{
+		"Last IP", bannedPlayer.IPAddr,
+	})
+	if errLogs != nil && logData.Success {
+		t.AppendRow(table.Row{
+			"Logs.tf Count", logData.Total,
+		})
+	}
+	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
+	return s.InteractionResponseEdit(config.Discord.AppID, m.Interaction, &discordgo.WebhookEdit{
+		Content: msg.String(),
+	})
 }
 
 func onSetSteam(s *discordgo.Session, m *discordgo.InteractionCreate) error {

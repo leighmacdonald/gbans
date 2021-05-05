@@ -1,13 +1,11 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"github.com/yohcop/openid-go"
@@ -116,34 +114,21 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
-		if err != nil {
-			log.Errorf("Failed to get player summary: %v", err)
+
+		p, errProfile := getOrCreateProfileBySteamID(sid, c.Request.RemoteAddr)
+		if errProfile != nil {
+			log.Errorf("Failed to fetch user profile: %v", errProfile)
 			c.Redirect(302, ref)
 			return
 		}
-		p, err := GetOrCreatePersonBySteamID(sid)
-		if err != nil {
-			log.Errorf("Failed to get person: %v", err)
+		u, errParse := url.Parse("/login/success")
+		if errParse != nil {
 			c.Redirect(302, ref)
 			return
 		}
-		s := sum[0]
-		p.SteamID = sid
-		p.IPAddr = c.Request.RemoteAddr
-		p.PlayerSummary = &s
-		if err := SavePerson(p); err != nil {
-			log.Errorf("Failed to save person: %v", err)
-			c.Redirect(302, ref)
-			return
-		}
-		u, err := url.Parse("/login/success")
-		if err != nil {
-			c.Redirect(302, ref)
-			return
-		}
-		t, err := newJWT(sid)
-		if err != nil {
+		t, errJWT := newJWT(sid)
+		if errJWT != nil {
+			log.Errorf("Failed to create new JWT: %v", errJWT)
 			c.Redirect(302, ref)
 			return
 		}

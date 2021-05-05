@@ -108,12 +108,18 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return nil, dbErr(err)
 	}
 	go func() {
+		ipAddr := ""
 		// Kick the user if they currently are playing on a server
 		pi := findPlayer(sid.String(), "")
 		if pi.valid && pi.inGame {
+			ipAddr = pi.player.IP.String()
 			if _, err := execServerRCON(*pi.server, fmt.Sprintf("sm_kick #%d %s", pi.player.UserID, reasonText)); err != nil {
 				log.Errorf("Faied to kick user afeter ban: %v", err)
 			}
+		}
+		// Update the profile, setting their IP
+		if _, e := getOrCreateProfileBySteamID(sid, ipAddr); e != nil {
+			log.Errorf("Failed to update banned user profile: %v", e)
 		}
 	}()
 	return &ban, nil
