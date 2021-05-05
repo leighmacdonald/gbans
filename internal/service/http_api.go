@@ -158,12 +158,14 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 	}
 }
 
+type checkRequest struct {
+	ClientID int    `json:"client_id"`
+	SteamID  string `json:"steam_id"`
+	IP       net.IP `json:"ip"`
+}
+
 func onPostServerCheck() gin.HandlerFunc {
-	type checkRequest struct {
-		ClientID int    `json:"client_id"`
-		SteamID  string `json:"steam_id"`
-		IP       net.IP `json:"ip"`
-	}
+
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
 		SteamID  string        `json:"steam_id"`
@@ -208,6 +210,12 @@ func onPostServerCheck() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
+		go func() {
+			_, e := getOrCreateProfileBySteamID(steamID, req.IP.String())
+			if e != nil {
+				log.Errorf("Failed to update connecting player profile: %v", e)
+			}
+		}()
 		ban, err := getBanBySteamID(steamID, false)
 		if err != nil {
 			if dbErr(err) == errNoResult {
@@ -222,7 +230,6 @@ func onPostServerCheck() gin.HandlerFunc {
 		resp.BanType = ban.Ban.BanType
 		resp.Msg = ban.Ban.ReasonText
 		responseOK(c, http.StatusOK, resp)
-
 	}
 }
 

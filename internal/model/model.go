@@ -196,7 +196,7 @@ type ChatLog struct {
 }
 
 type IPRecord struct {
-	Address   net.IP    `json:"address"`
+	IPAddr    net.IP    `json:"ip_addr"`
 	CreatedOn time.Time `json:"created_on"`
 }
 
@@ -233,12 +233,12 @@ func (s Server) Slots(statusSlots int) int {
 type Person struct {
 	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id"`
 	Name            string        `db:"name" json:"name"`
-	IPAddr          string        `db:"ip_addr" json:"ip_addr"`
 	CreatedOn       time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn       time.Time     `db:"updated_on" json:"updated_on"`
 	PermissionLevel Privilege     `db:"permission_level" json:"permission_level"`
 	IsNew           bool          `db:"-" json:"-"`
 	DiscordID       string        `db:"discord_id" json:"discord_id"`
+	IPAddr          net.IP        `db:"ip_addr" json:"ip_addr"`
 	*extra.PlayerSummary
 }
 

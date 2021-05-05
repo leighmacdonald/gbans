@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -50,6 +51,18 @@ func createToken(sid steamid.SID64, pr model.Privilege) string {
 	_ = SavePerson(p)
 	token, _ := newJWT(p.SteamID)
 	return token
+}
+
+func TestAPICheck(t *testing.T) {
+	req := newTestReq("POST", "/api/check", checkRequest{
+		ClientID: 10,
+		SteamID:  string(steamid.SID64ToSID(76561197961279983)),
+		IP:       net.ParseIP("10.10.10.10"),
+	}, "")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestOnAPIPostBan(t *testing.T) {
@@ -151,7 +164,15 @@ L 02/21/2021 - 06:42:13: Team "RED" triggered "Intermission_Win_Limit"
 L 02/21/2021 - 06:42:33: [META] Loaded 0 plugins (1 already loaded)
 L 02/21/2021 - 06:42:33: Log file closed.`
 	var units []httpTestUnit
-
+	s := model.Server{
+		ServerName: golib.RandomString(8),
+		Token:      golib.RandomString(40),
+		Address:    "127.0.0.1", Port: 27015,
+		RCON: "test", ReservedSlots: 0, Password: golib.RandomString(20),
+		TokenCreatedOn: config.Now(), CreatedOn: config.Now(),
+		UpdatedOn: config.Now(),
+	}
+	_ = SaveServer(&s)
 	ctx, cancel := context.WithCancel(gCtx)
 	defer cancel()
 	go logReader(ctx, logRawQueue)
@@ -159,7 +180,7 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
 			newTestReq("POST", "/api/log", []LogPayload{{
-				ServerName: "test-1",
+				ServerName: s.ServerName,
 				Message:    tc,
 			}}, token),
 			httpTestResult{Code: http.StatusCreated},

@@ -127,10 +127,8 @@ func TestPerson(t *testing.T) {
 	require.Nil(t, pBadID)
 
 	ips := getIPHistory(p1.SteamID)
-	p1.IPAddr = "10.0.0.2"
-	require.NoError(t, addPersonIP(p1), "failed to add ip record")
-	p1.IPAddr = "10.0.0.3"
-	require.NoError(t, addPersonIP(p1), "failed to add 2nd ip record")
+	require.NoError(t, addPersonIP(p1, "10.0.0.2"), "failed to add ip record")
+	require.NoError(t, addPersonIP(p1, "10.0.0.3"), "failed to add 2nd ip record")
 	ipsUpdated := getIPHistory(p1.SteamID)
 	require.True(t, len(ipsUpdated)-len(ips) == 2)
 
