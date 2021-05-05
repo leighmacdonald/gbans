@@ -18,13 +18,11 @@ jobs:
           go-version: '^1.16.0'
       - name: Build gbans
         run: make dist
-        if: startsWith(github.ref, 'refs/tags/')
       - uses: heinrichreimer/github-changelog-generator-action@v2.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: CHANGELOG.md
           prerelease: true
