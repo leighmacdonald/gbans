@@ -294,7 +294,7 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	t.AppendRow(table.Row{
 		"Last IP", bannedPlayer.IPAddr,
 	})
-	if errLogs != nil && logData.Success {
+	if errLogs == nil && logData.Success {
 		t.AppendRow(table.Row{
 			"Logs.tf Count", logData.Total,
 		})

@@ -183,12 +183,12 @@ func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
 	h1, m1, s1 := a.Clock()
 	h2, m2, s2 := b.Clock()
 
-	year = int(y2 - y1)
+	year = y2 - y1
 	month = int(M2 - M1)
-	day = int(d2 - d1)
-	hour = int(h2 - h1)
-	min = int(m2 - m1)
-	sec = int(s2 - s1)
+	day = d2 - d1
+	hour = h2 - h1
+	min = m2 - m1
+	sec = s2 - s1
 
 	// Normalize negative values
 	if sec < 0 {
