@@ -127,10 +127,19 @@ type logConfig struct {
 }
 
 type netBans struct {
-	Enabled   bool      `mapstructure:"enabled"`
-	MaxAge    string    `mapstructure:"max_age"`
-	CachePath string    `mapstructure:"cache_path"`
-	Sources   []BanList `mapstructure:"sources"`
+	Enabled     bool        `mapstructure:"enabled"`
+	MaxAge      string      `mapstructure:"max_age"`
+	CachePath   string      `mapstructure:"cache_path"`
+	Sources     []BanList   `mapstructure:"sources"`
+	IP2Location ip2location `mapstructure:"ip2location"`
+}
+
+type ip2location struct {
+	Enabled      bool   `mapstructure:"enabled"`
+	Token        string `mapstructure:"token"`
+	ASNEnabled   bool   `mapstructure:"asn_enabled"`
+	IPEnabled    bool   `mapstructure:"ip_enabled"`
+	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
 }
 
 // Default config values. Anything defined in the config or env will override them
@@ -306,6 +315,12 @@ func init() {
 	viper.SetDefault("network_bans.max_age", "1d")
 	viper.SetDefault("network_bans.cache_path", ".cache")
 	viper.SetDefault("network_bans.sources", nil)
+
+	viper.SetDefault("network_bans.ip2location.enabled", false)
+	viper.SetDefault("network_bans.ip2location.token", "")
+	viper.SetDefault("network_bans.ip2location.asn_enabled", false)
+	viper.SetDefault("network_bans.ip2location.ip_enabled", false)
+	viper.SetDefault("network_bans.ip2location.proxy_enabled", false)
 
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.force_colours", true)

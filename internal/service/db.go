@@ -12,10 +12,12 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -46,6 +48,9 @@ const (
 	//tableBanAppeal    tableName = "ban_appeal"
 	tableBanNet       tableName = "ban_net"
 	tableFilteredWord tableName = "filtered_word"
+	tableNetLocation  tableName = "net_location"
+	tableNetProxy     tableName = "net_proxy"
+	tableNetASN       tableName = "net_asn"
 	//tablePerson       tableName = "person"
 	tablePersonIP tableName = "person_ip"
 	//tablePersonNames  tableName = "person_names"
@@ -934,6 +939,168 @@ func insertLog(l *model.ServerLog) error {
 	if _, err := db.Exec(context.Background(), q, a...); err != nil {
 		return dbErr(err)
 	}
+	return nil
+}
+
+// InsertBlockListData will load the provided datasets into the database
+//
+// Note that this can take a while on slower machines. For reference it takes
+// about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
+func InsertBlockListData(d *ip2location.BlockListData) error {
+	if len(d.Proxies) > 0 {
+		if err := loadProxies(d.Proxies, false); err != nil {
+			return err
+		}
+	}
+	if len(d.Locations4) > 0 {
+		if err := loadLocation(d.Locations4, false); err != nil {
+			return err
+		}
+	}
+	if len(d.ASN4) > 0 {
+		if err := loadASN(d.ASN4); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getASNRecord(ip net.IP) (*ip2location.ASNRecord, error) {
+	q, _, e := sb.Select("ip_from", "ip_to", "cidr", "as_num", "as_name").
+		From("net_asn").
+		Where("$1 << cidr").
+		Limit(1).
+		ToSql()
+	if e != nil {
+		return nil, e
+	}
+	var r ip2location.ASNRecord
+	if err := db.QueryRow(context.Background(), q, ip).
+		Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func getLocationRecord(ip net.IP) (*ip2location.LocationRecord, error) {
+	const q = `
+		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
+		FROM net_location 
+		WHERE $1 BETWEEN ip_from AND ip_to`
+	var r ip2location.LocationRecord
+	if err := db.QueryRow(context.Background(), q, ip).
+		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func getProxyRecord(ip net.IP) (*ip2location.ProxyRecord, error) {
+	const q = `
+		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
+       		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
+		FROM net_proxy 
+		WHERE $1 BETWEEN ip_from AND ip_to`
+	var r ip2location.ProxyRecord
+	if err := db.QueryRow(context.Background(), q, ip).
+		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
+			&r.Domain, &r.UsageType, &r.ASN, &r.AS, &r.LastSeen, &r.Threat); err != nil {
+		return nil, dbErr(err)
+	}
+	return &r, nil
+}
+
+func truncateTable(table tableName) error {
+	if _, err := db.Exec(context.Background(), fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
+		return dbErr(err)
+	}
+	return nil
+}
+
+func loadASN(records []ip2location.ASNRecord) error {
+	t0 := time.Now()
+	if err := truncateTable(tableNetASN); err != nil {
+		return err
+	}
+	const q = "INSERT INTO net_asn (ip_from, ip_to, cidr, as_num, as_name) VALUES($1, $2, $3, $4, $5)"
+	b := pgx.Batch{}
+	for i, a := range records {
+		b.Queue(q, a.IPFrom, a.IPTo, a.CIDR, a.ASNum, a.ASName)
+		if i > 0 && i%100000 == 0 || len(records) == i+1 {
+			if b.Len() > 0 {
+				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
+				r := db.SendBatch(ctx, &b)
+				if err := r.Close(); err != nil {
+					cancel()
+					return err
+				}
+				cancel()
+				b = pgx.Batch{}
+				log.Debugf("ASN Progress: %d/%d (%.0f%%)", i, len(records)-1, float64(i)/float64(len(records)-1)*100)
+			}
+		}
+	}
+	log.Debugf("Loaded %d ASN4 records in %s", len(records), time.Now().Sub(t0).String())
+	return nil
+}
+
+func loadLocation(records []ip2location.LocationRecord, ipv6 bool) error {
+	t0 := time.Now()
+	if err := truncateTable(tableNetLocation); err != nil {
+		return err
+	}
+	const q = `
+		INSERT INTO net_location (ip_from, ip_to, country_code, country_name, region_name, city_name, location)
+		VALUES($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($8, $7), 4326))`
+	b := pgx.Batch{}
+	for i, a := range records {
+		b.Queue(q, a.IPFrom, a.IPTo, a.CountryCode, a.CountryName, a.RegionName, a.CityName, a.LatLong.Latitude, a.LatLong.Longitude)
+		if i > 0 && i%100000 == 0 || len(records) == i+1 {
+			if b.Len() > 0 {
+				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
+				r := db.SendBatch(ctx, &b)
+				if err := r.Close(); err != nil {
+					cancel()
+					return err
+				}
+				cancel()
+				b = pgx.Batch{}
+				log.Debugf("Location4 Progress: %d/%d (%.0f%%)", i, len(records)-1, float64(i)/float64(len(records)-1)*100)
+			}
+		}
+	}
+	log.Debugf("Loaded %d Location4 records in %s", len(records), time.Now().Sub(t0).String())
+	return nil
+}
+
+func loadProxies(records []ip2location.ProxyRecord, ipv6 bool) error {
+	t0 := time.Now()
+	if err := truncateTable(tableNetProxy); err != nil {
+		return err
+	}
+	const q = `
+		INSERT INTO net_proxy (ip_from, ip_to, proxy_type, country_code, country_name, region_name, city_name, isp,
+		                       domain_used, usage_type, as_num, as_name, last_seen, threat)
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+	b := pgx.Batch{}
+	for i, a := range records {
+		b.Queue(q, a.IPFrom, a.IPTo, a.ProxyType, a.CountryCode, a.CountryName, a.RegionName, a.CityName,
+			a.ISP, a.Domain, a.UsageType, a.ASN, a.AS, a.LastSeen, a.Threat)
+		if i > 0 && i%100000 == 0 || len(records) == i+1 {
+			if b.Len() > 0 {
+				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
+				r := db.SendBatch(ctx, &b)
+				if err := r.Close(); err != nil {
+					cancel()
+					return err
+				}
+				cancel()
+				b = pgx.Batch{}
+				log.Debugf("Proxy Progress: %d/%d (%.0f%%)", i, len(records)-1, float64(i)/float64(len(records)-1)*100)
+			}
+		}
+	}
+	log.Debugf("Loaded %d Proxy records in %s", len(records), time.Now().Sub(t0).String())
 	return nil
 }
 

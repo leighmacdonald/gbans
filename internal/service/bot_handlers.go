@@ -213,13 +213,8 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 
 func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	pId := m.Data.Options[0].Value.(string)
-	if err := s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionApplicationCommandResponseData{
-			Content: "Please wait... Reticulating splines...",
-		},
-	}); err != nil {
-		return err
+	if err := sendPreResponse(s, m.Interaction); err != nil {
+		return errors.Wrapf(err, "Failed to send servers pre response")
 	}
 	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil {
@@ -266,12 +261,17 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
 		expiry = bannedNets[0].ValidUntil
 	}
+
+	asn, _ := getASNRecord(bannedPlayer.IPAddr)
+	location, _ := getLocationRecord(bannedPlayer.IPAddr)
+	proxy, _ := getProxyRecord(bannedPlayer.IPAddr)
+
 	t := defaultTable(fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName))
 	t.AppendSeparator()
 	t.SuppressEmptyColumns()
 	t.AppendRow(table.Row{
 		"Real Name", bannedPlayer.RealName,
-		"Profile", bannedPlayer.ProfileURL})
+		"Profile", strings.Replace(bannedPlayer.ProfileURL, "https://", "", 1)})
 	t.AppendRow(table.Row{
 		"SID64", bannedPlayer.SteamID.String(),
 		"SID", steamid.SID64ToSID(bannedPlayer.SteamID),
@@ -291,9 +291,28 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 			t.AppendRow(table.Row{"Author", fmt.Sprintf("<@%s>", author.DiscordID)})
 		}
 	}
-	t.AppendRow(table.Row{
-		"Last IP", bannedPlayer.IPAddr,
-	})
+	if bannedPlayer.IPAddr != nil {
+		t.AppendRow(table.Row{
+			"Last IP", bannedPlayer.IPAddr,
+		})
+	}
+	if asn != nil {
+		t.AppendRow(table.Row{
+			"ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName),
+		})
+	}
+	if location != nil {
+		t.AppendRow(table.Row{
+			"City", location.CityName,
+			"Country", location.CountryName,
+		})
+	}
+	if proxy != nil {
+		t.AppendRow(table.Row{
+			"Proxy Type", proxy.ProxyType,
+			"Proxy", proxy.Threat,
+		})
+	}
 	if errLogs == nil && logData.Success {
 		t.AppendRow(table.Row{
 			"Logs.tf Count", logData.Total,
@@ -422,6 +441,9 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	full := false
 	if len(m.Data.Options) > 0 {
 		full = m.Data.Options[0].Value.(bool)
+	}
+	if err := sendPreResponse(s, m.Interaction); err != nil {
+		return errors.Wrapf(err, "Failed to send servers pre response")
 	}
 	servers, err := getServers()
 	if err != nil {
