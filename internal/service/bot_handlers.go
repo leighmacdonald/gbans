@@ -272,24 +272,30 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	t.AppendRow(table.Row{
 		"Real Name", bannedPlayer.RealName,
 		"Profile", strings.Replace(bannedPlayer.ProfileURL, "https://", "", 1)})
+	cd := time.Unix(int64(bannedPlayer.TimeCreated), 0)
 	t.AppendRow(table.Row{
-		"SID64", bannedPlayer.SteamID.String(),
-		"SID", steamid.SID64ToSID(bannedPlayer.SteamID),
+		"Account Age", time.Since(cd).String(),
+		"Private", bannedPlayer.CommunityVisibilityState == 1,
+	})
+	t.AppendRow(table.Row{
+		"STEAM64", bannedPlayer.SteamID.String(),
+		"STEAM", steamid.SID64ToSID(bannedPlayer.SteamID),
 	})
 	t.AppendRow(table.Row{
 		"STEAM3", steamid.SID64ToSID3(bannedPlayer.SteamID),
 		"STEAM32", steamid.SID64ToSID32(bannedPlayer.SteamID),
 	})
 	t.AppendRow(table.Row{"Banned", banned, "Muted", muted})
-	if ban != nil {
-		t.AppendRow(table.Row{"Reason", reason})
-		t.AppendRow(table.Row{
-			"Created", config.FmtTimeShort(ban.Ban.CreatedOn),
-			"Expires", config.FmtDuration(expiry)})
+	if ban != nil && ban.Ban.BanID > 0 {
 		author, e := getPersonBySteamID(ban.Ban.AuthorID)
+		r := table.Row{"Reason", reason}
 		if e == nil && author != nil && author.DiscordID != "" {
-			t.AppendRow(table.Row{"Author", fmt.Sprintf("<@%s>", author.DiscordID)})
+			r = append(r, "Author", fmt.Sprintf("<@%s>", author.DiscordID))
 		}
+		t.AppendRow(r)
+		t.AppendRow(table.Row{
+			"Ban Created", config.FmtTimeShort(ban.Ban.CreatedOn),
+			"Ban Expires", config.FmtDuration(expiry)})
 	}
 	if bannedPlayer.IPAddr != nil {
 		t.AppendRow(table.Row{
@@ -323,6 +329,59 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	return s.InteractionResponseEdit(config.Discord.AppID, m.Interaction, &discordgo.WebhookEdit{
 		Content: msg.String(),
 	})
+}
+
+func onHistory(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+	switch m.Data.Options[0].Name {
+	case string(cmdHistoryIP):
+		return onHistoryIP(s, m)
+	default:
+		return onHistoryChat(s, m)
+	}
+}
+
+func onHistoryIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+	if err := sendPreResponse(s, m.Interaction); err != nil {
+		return errors.Wrapf(err, "Failed to send HistoryIP pre response")
+	}
+	pId := m.Data.Options[0].Options[0].Value.(string)
+	sid, err := steamid.ResolveSID64(context.Background(), pId)
+	if err != nil || !sid.Valid() {
+		return errInvalidSID
+	}
+	p, err2 := GetOrCreatePersonBySteamID(sid)
+	if err2 != nil || !sid.Valid() {
+		return errCommandFailed
+	}
+	records, err := getPersonIPHistory(sid)
+	if err != nil {
+		return errCommandFailed
+	}
+	t := defaultTable(fmt.Sprintf("IP History of: %s", p.PersonaName))
+	t.AppendSeparator()
+	t.SuppressEmptyColumns()
+	lastIp := net.IP{}
+	for _, rec := range records {
+		if rec.IP.Equal(lastIp) {
+			continue
+		}
+		t.AppendRow(table.Row{
+			rec.IP.String(),
+			fmt.Sprintf("%s", rec.CreatedOn.Format("Mon Jan 2 15:04:05")),
+			fmt.Sprintf("%s, %s", rec.CityName, rec.CountryCode),
+			fmt.Sprintf("(%d) %s", rec.ASNum, rec.ASName),
+			fmt.Sprintf("%s, %s, %s, %s", rec.ISP, rec.UsageType, rec.Threat, rec.DomainUsed),
+		})
+		lastIp = rec.IP
+	}
+
+	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
+	return sendMsg(s, m.Interaction, msg.String())
+}
+
+func onHistoryChat(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+	return sendMsg(s, m.Interaction, "")
 }
 
 func onSetSteam(s *discordgo.Session, m *discordgo.InteractionCreate) error {

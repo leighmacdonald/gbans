@@ -1010,6 +1010,50 @@ func getProxyRecord(ip net.IP) (*ip2location.ProxyRecord, error) {
 	return &r, nil
 }
 
+type IPRecord struct {
+	IP          net.IP
+	CreatedOn   time.Time
+	CityName    string
+	CountryName string
+	CountryCode string
+	ASName      string
+	ASNum       int
+	ISP         string
+	UsageType   string
+	Threat      string
+	DomainUsed  string
+}
+
+func getPersonIPHistory(sid steamid.SID64) ([]IPRecord, error) {
+	const q = `
+		SELECT
+			   ip.ip_addr, ip.created_on,
+			   l.city_name, l.country_name, l.country_code,
+			   a.as_name, a.as_num,
+			   coalesce(p.isp, ''), coalesce(p.usage_type, ''), 
+		       coalesce(p.threat, ''), coalesce(p.domain_used, '')
+		FROM person_ip ip
+		LEFT JOIN net_location l ON ip.ip_addr BETWEEN l.ip_from AND l.ip_to
+		LEFT JOIN net_asn a ON ip.ip_addr BETWEEN a.ip_from AND a.ip_to
+		LEFT OUTER JOIN net_proxy p ON ip.ip_addr BETWEEN p.ip_from AND p.ip_to
+		WHERE ip.steam_id = $1`
+	rows, err := db.Query(context.Background(), q, sid.Int64())
+	if err != nil {
+		return nil, err
+	}
+	var records []IPRecord
+	defer rows.Close()
+	for rows.Next() {
+		var r IPRecord
+		if errR := rows.Scan(&r.IP, &r.CreatedOn, &r.CityName, &r.CountryName, &r.CountryCode, &r.ASName,
+			&r.ASNum, &r.ISP, &r.UsageType, &r.Threat, &r.DomainUsed); errR != nil {
+			return nil, errR
+		}
+		records = append(records, r)
+	}
+	return records, nil
+}
+
 func truncateTable(table tableName) error {
 	if _, err := db.Exec(context.Background(), fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
 		return dbErr(err)

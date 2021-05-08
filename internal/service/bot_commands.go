@@ -16,19 +16,22 @@ import (
 type botCmd string
 
 const (
-	cmdBan      botCmd = "ban"
-	cmdBanIP    botCmd = "banip"
-	cmdFind     botCmd = "find"
-	cmdMute     botCmd = "mute"
-	cmdCheck    botCmd = "check"
-	cmdUnban    botCmd = "unban"
-	cmdKick     botCmd = "kick"
-	cmdPlayers  botCmd = "players"
-	cmdPSay     botCmd = "psay"
-	cmdCSay     botCmd = "csay"
-	cmdSay      botCmd = "say"
-	cmdServers  botCmd = "servers"
-	cmdSetSteam botCmd = "set_steam"
+	cmdBan         botCmd = "ban"
+	cmdBanIP       botCmd = "banip"
+	cmdFind        botCmd = "find"
+	cmdMute        botCmd = "mute"
+	cmdCheck       botCmd = "check"
+	cmdUnban       botCmd = "unban"
+	cmdKick        botCmd = "kick"
+	cmdPlayers     botCmd = "players"
+	cmdPSay        botCmd = "psay"
+	cmdCSay        botCmd = "csay"
+	cmdSay         botCmd = "say"
+	cmdServers     botCmd = "servers"
+	cmdSetSteam    botCmd = "set_steam"
+	cmdHistory     botCmd = "history"
+	cmdHistoryIP   botCmd = "ip"
+	cmdHistoryChat botCmd = "chat"
 )
 
 func botRegisterSlashCommands() error {
@@ -194,6 +197,30 @@ func botRegisterSlashCommands() error {
 				optUserID,
 			},
 		},
+
+		{
+			ApplicationID: config.Discord.AppID,
+			Name:          string(cmdHistory),
+			Description:   "Query user history",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        string(cmdHistoryIP),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Get the ip history",
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+					},
+				},
+				{
+					Name:        string(cmdHistoryChat),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Get the chat history of the user",
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+					},
+				},
+			},
+		},
 	}
 	modPerm := []*discordgo.ApplicationCommandPermission{
 		{
@@ -265,6 +292,7 @@ var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.Interac
 	cmdServers:  onServers,
 	cmdUnban:    onUnban,
 	cmdSetSteam: onSetSteam,
+	cmdHistory:  onHistory,
 }
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
