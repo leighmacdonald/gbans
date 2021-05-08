@@ -367,7 +367,7 @@ func onHistoryIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		}
 		t.AppendRow(table.Row{
 			rec.IP.String(),
-			fmt.Sprintf("%s", rec.CreatedOn.Format("Mon Jan 2 15:04:05")),
+			rec.CreatedOn.Format("Mon Jan 2 15:04:05"),
 			fmt.Sprintf("%s, %s", rec.CityName, rec.CountryCode),
 			fmt.Sprintf("(%d) %s", rec.ASNum, rec.ASName),
 			fmt.Sprintf("%s, %s, %s, %s", rec.ISP, rec.UsageType, rec.Threat, rec.DomainUsed),
