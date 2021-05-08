@@ -217,7 +217,7 @@ func Update(outputPath string, apiKey string) error {
 			defer wg.Done()
 			fi, err := os.Stat(path.Join(outputPath, params.fileName))
 			if err == nil {
-				age := time.Now().Sub(fi.ModTime())
+				age := time.Since(fi.ModTime())
 				if age < time.Hour*24 {
 					log.Debugf("Skipping download of: %s", params.dbName)
 					return
@@ -369,12 +369,6 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 	return records, nil
 }
 
-func ipv6ToInt(IPv6Addr net.IP) *big.Int {
-	IPv6Int := big.NewInt(0)
-	IPv6Int.SetBytes(IPv6Addr)
-	return IPv6Int
-}
-
 func parseIpv6Int(s string) (net.IP, error) {
 	intipv6 := big.NewInt(0)
 	intipv6.SetString(s, 10)
@@ -392,13 +386,6 @@ func parseIpv4Int(s string) (net.IP, error) {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, nn)
 	return ip, nil
-}
-
-func ip2int(ip net.IP) uint32 {
-	if len(ip) == 16 {
-		return binary.BigEndian.Uint32(ip[12:16])
-	}
-	return binary.BigEndian.Uint32(ip)
 }
 
 func stringInt2ip(s string, ipv6 bool) (net.IP, error) {
