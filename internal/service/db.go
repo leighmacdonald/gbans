@@ -1040,7 +1040,7 @@ func loadASN(records []ip2location.ASNRecord) error {
 			}
 		}
 	}
-	log.Debugf("Loaded %d ASN4 records in %s", len(records), time.Now().Sub(t0).String())
+	log.Debugf("Loaded %d ASN4 records in %s", len(records), time.Since(t0).String())
 	return nil
 }
 
@@ -1069,7 +1069,7 @@ func loadLocation(records []ip2location.LocationRecord, ipv6 bool) error {
 			}
 		}
 	}
-	log.Debugf("Loaded %d Location4 records in %s", len(records), time.Now().Sub(t0).String())
+	log.Debugf("Loaded %d Location4 records in %s", len(records), time.Since(t0).String())
 	return nil
 }
 
@@ -1100,7 +1100,7 @@ func loadProxies(records []ip2location.ProxyRecord, ipv6 bool) error {
 			}
 		}
 	}
-	log.Debugf("Loaded %d Proxy records in %s", len(records), time.Now().Sub(t0).String())
+	log.Debugf("Loaded %d Proxy records in %s", len(records), time.Since(t0).String())
 	return nil
 }
 
