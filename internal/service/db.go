@@ -672,7 +672,7 @@ func getPersonByDiscordID(did string) (*model.Person, error) {
 	p := model.NewPerson(0)
 	p.IsNew = false
 	p.PlayerSummary = &extra.PlayerSummary{}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr,
+	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID)
