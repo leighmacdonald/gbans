@@ -74,17 +74,17 @@ func findPlayer(playerStr string, ip string) playerInfo {
 	return playerInfo{player, server, foundSid, inGame, valid}
 }
 
-func onFind(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onFind(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	const f = "Found player `%s` (%d) @ %s"
 	userIdentifier := m.Data.Options[0].Value.(string)
 	pi := findPlayer(userIdentifier, "")
 	if !pi.valid || !pi.inGame {
-		return errUnknownID
+		return "", errUnknownID
 	}
-	return sendMsg(s, m.Interaction, fmt.Sprintf(f, pi.player.Name, pi.sid.Int64(), pi.server.ServerName))
+	return fmt.Sprintf(f, pi.player.Name, pi.sid.Int64(), pi.server.ServerName), nil
 }
 
-func onMute(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onMute(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	var (
 		err      error
 		duration = time.Duration(0)
@@ -92,41 +92,40 @@ func onMute(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	playerID := m.Data.Options[0].Value.(string)
 	pi := findPlayer(playerID, "")
 	if !pi.valid {
-		return errUnknownID
+		return "", errUnknownID
 	}
-
 	duration, err = config.ParseDuration(m.Data.Options[1].Value.(string))
 	if err != nil {
-		return err
+		return "", err
 	}
 	reasonStr := model.Custom.String()
 	if len(m.Data.Options) > 2 {
 		reasonStr = m.Data.Options[2].Value.(string)
 	}
-	ban, err := getBanBySteamID(pi.sid, false)
-	if err != nil && dbErr(err) != errNoResult {
-		log.Errorf("Error getting ban from db: %v", err)
-		return errors.New("Internal DB Error")
-	} else if err != nil {
+	ban, err2 := getBanBySteamID(pi.sid, false)
+	if err2 != nil && dbErr(err2) != errNoResult {
+		log.Errorf("Error getting ban from db: %v", err2)
+		return "", errors.New("Internal DB Error")
+	} else if err2 != nil {
 		ban = &model.BannedPerson{
 			Ban:    model.NewBan(pi.sid, 0, duration),
 			Person: model.NewPerson(pi.sid),
 		}
 	}
 	if ban.Ban.BanType == model.Banned {
-		return errors.New("Person is already banned")
+		return "", errors.New("Person is already banned")
 	}
 	ban.Ban.BanType = model.NoComm
 	ban.Ban.ReasonText = reasonStr
 	ban.Ban.ValidUntil = config.Now().Add(duration)
-	if errB := saveBan(ban.Ban); errB != nil {
-		log.Errorf("Failed to save ban: %v", errB)
-		return errors.New("Failed to save mute state")
+	if err3 := saveBan(ban.Ban); err3 != nil {
+		log.Errorf("Failed to save ban: %v", err3)
+		return "", errors.New("Failed to save mute state")
 	}
 	if pi.inGame {
-		resp, err := execServerRCON(*pi.server, fmt.Sprintf(`sm_gag "#%s"`, steamid.SID64ToSID3(pi.sid)))
-		if err != nil {
-			log.Errorf("Failed to gag active user: %v", err)
+		resp, err4 := execServerRCON(*pi.server, fmt.Sprintf(`sm_gag "#%s"`, steamid.SID64ToSID3(pi.sid)))
+		if err4 != nil {
+			log.Errorf("Failed to gag active user: %v", err4)
 		} else {
 			if strings.Contains(resp, "[SM] Gagged") {
 				var dStr string
@@ -135,58 +134,58 @@ func onMute(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 				} else {
 					dStr = duration.String()
 				}
-				return sendMsg(s, m.Interaction, fmt.Sprintf("Person gagged successfully for: %s", dStr))
+				return "", errors.Errorf("Person gagged successfully for: %s", dStr)
 			} else {
-				return sendMsg(s, m.Interaction, "Failed to gag player in-game")
+				return "", errors.New("Failed to gag player in-game")
 			}
 		}
 	}
-	return nil
+	return "Player muted successfully", nil
 }
 
-func onBanIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onBanIP(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	cidrStr := m.Data.Options[0].Value.(string)
 	duration, err := config.ParseDuration(m.Data.Options[1].Value.(string))
 	if err != nil {
-		return err
+		return "", err
 	}
 	reason := model.Custom.String()
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
 	}
-	_, err = getBanNet(net.ParseIP(cidrStr))
-	if err != nil && dbErr(err) != errNoResult {
-		return errCommandFailed
+	_, err2 := getBanNet(net.ParseIP(cidrStr))
+	if err2 != nil && dbErr(err2) != errNoResult {
+		return "", errCommandFailed
 	}
-	if err == nil {
-		return errDuplicateBan
+	if err2 == nil {
+		return "", errDuplicateBan
 	}
-	ban, err := model.NewBanNet(cidrStr, reason, duration, model.Bot)
-	if err != nil {
-		return errCommandFailed
+	ban, err3 := model.NewBanNet(cidrStr, reason, duration, model.Bot)
+	if err3 != nil {
+		return "", errCommandFailed
 	}
-	if err := saveBanNet(&ban); err != nil {
-		return errCommandFailed
+	if err4 := saveBanNet(&ban); err4 != nil {
+		return "", errCommandFailed
 	}
-	_, n, err := net.ParseCIDR(cidrStr)
-	if err != nil {
-		return errCommandFailed
+	_, n, err5 := net.ParseCIDR(cidrStr)
+	if err5 != nil {
+		return "", errCommandFailed
 	}
-	pi, srv, err := findPlayerByCIDR(n)
-	if err == nil {
-		if resp, err := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi.Name)); err != nil {
+	pi, srv, err6 := findPlayerByCIDR(n)
+	if err6 == nil {
+		if resp, err7 := execServerRCON(*srv, fmt.Sprintf("sm_kick %s", pi.Name)); err7 != nil {
 			log.Debug(resp)
 		}
 	}
-	return sendMsg(s, m.Interaction, "IP ban created successfully")
+	return "IP ban created successfully", nil
 }
 
 // onBan !ban <id> <duration> [reason]
-func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onBan(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	uid := m.Data.Options[0].Value.(string)
 	duration, err := config.ParseDuration(m.Data.Options[1].Value.(string))
 	if err != nil {
-		return errInvalidDuration
+		return "", errInvalidDuration
 	}
 	reason := ""
 	if len(m.Data.Options) > 2 {
@@ -194,55 +193,47 @@ func onBan(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	}
 	reporter, errR := getPersonByDiscordID(m.Interaction.Member.User.ID)
 	if errR != nil {
-		return errUnlinkedAccount
+		return "", errUnlinkedAccount
 	}
 	pi := findPlayer(uid, "")
 	if !pi.valid {
-		return errUnknownID
+		return "", errUnknownID
 	}
 	ban, err2 := BanPlayer(gCtx, pi.sid, reporter.SteamID, duration, model.Custom, reason, model.Bot)
 	if err2 != nil {
-		if err2 == errDuplicate {
-			return sendMsg(s, m.Interaction, "ID already banned")
-		} else {
-			return sendMsg(s, m.Interaction, "Error banning: %s", err2)
-		}
+		return "", err2
 	}
-	return sendMsg(s, m.Interaction, "Ban created successfully (#%d)", ban.BanID)
+	return fmt.Sprintf("Ban created successfully (#%d)", ban.BanID), nil
 }
 
-func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
-	if err := sendPreResponse(s, m.Interaction); err != nil {
-		return errors.Wrapf(err, "Failed to send servers pre response")
-	}
 	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil {
-		return errUnknownID
+		return "", errUnknownID
 	}
 	if !sid.Valid() {
-		return errUnknownID
+		return "", errUnknownID
 	}
-	bannedPlayer, err := getOrCreateProfileBySteamID(sid, "")
-	if err != nil {
-		return errCommandFailed
+	bannedPlayer, err2 := getOrCreateProfileBySteamID(sid, "")
+	if err2 != nil {
+		return "", errCommandFailed
 	}
-	ban, err1 := getBanBySteamID(sid, false)
-	if err1 != nil && err1 != errNoResult {
-		return errCommandFailed
+	ban, err3 := getBanBySteamID(sid, false)
+	if err3 != nil && err3 != errNoResult {
+		return "", errCommandFailed
 	}
-	bannedNets, err2 := getBanNet(net.ParseIP(pId))
-	if err2 != nil && err2 != errNoResult {
-		return errCommandFailed
+	bannedNets, err4 := getBanNet(net.ParseIP(pId))
+	if err4 != nil && err4 != errNoResult {
+		return "", errCommandFailed
 	}
-	if err1 == errNoResult && err2 == errNoResult {
-		return sendMsg(s, m.Interaction, "No ban for user in db")
+	if err3 == errNoResult && err4 == errNoResult {
+		return "", sendMsg(s, m.Interaction, "No ban for user in db")
 	}
 	banned := false
 	muted := false
 	reason := ""
 	var expiry time.Time
-
 	// TODO Show the longest remaining ban.
 	if ban != nil && ban.Ban.BanID > 0 {
 		banned = ban.Ban.BanType == model.Banned
@@ -250,7 +241,6 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		reason = ban.Ban.ReasonText
 		expiry = ban.Ban.ValidUntil
 	}
-
 	logData, errLogs := external.LogsTFOverview(sid)
 	if errLogs != nil {
 		log.Warnf("Failed to fetch logTF data: %v", errLogs)
@@ -261,11 +251,9 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
 		expiry = bannedNets[0].ValidUntil
 	}
-
 	asn, _ := getASNRecord(bannedPlayer.IPAddr)
 	location, _ := getLocationRecord(bannedPlayer.IPAddr)
 	proxy, _ := getProxyRecord(bannedPlayer.IPAddr)
-
 	t := defaultTable(fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName))
 	t.AppendSeparator()
 	t.SuppressEmptyColumns()
@@ -326,12 +314,10 @@ func onCheck(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	}
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return s.InteractionResponseEdit(config.Discord.AppID, m.Interaction, &discordgo.WebhookEdit{
-		Content: msg.String(),
-	})
+	return msg.String(), nil
 }
 
-func onHistory(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onHistory(s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	switch m.Data.Options[0].Name {
 	case string(cmdHistoryIP):
 		return onHistoryIP(s, m)
@@ -340,22 +326,19 @@ func onHistory(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	}
 }
 
-func onHistoryIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
-	if err := sendPreResponse(s, m.Interaction); err != nil {
-		return errors.Wrapf(err, "Failed to send HistoryIP pre response")
-	}
+func onHistoryIP(s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Options[0].Value.(string)
 	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil || !sid.Valid() {
-		return errInvalidSID
+		return "", errInvalidSID
 	}
 	p, err2 := GetOrCreatePersonBySteamID(sid)
 	if err2 != nil || !sid.Valid() {
-		return errCommandFailed
+		return "", errCommandFailed
 	}
 	records, err := getPersonIPHistory(sid)
 	if err != nil {
-		return errCommandFailed
+		return "", errCommandFailed
 	}
 	t := defaultTable(fmt.Sprintf("IP History of: %s", p.PersonaName))
 	t.AppendSeparator()
@@ -374,91 +357,90 @@ func onHistoryIP(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 		})
 		lastIp = rec.IP
 	}
-
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return sendMsg(s, m.Interaction, msg.String())
+	return msg.String(), nil
 }
 
-func onHistoryChat(s *discordgo.Session, m *discordgo.InteractionCreate) error {
-	return sendMsg(s, m.Interaction, "")
+func onHistoryChat(_ *discordgo.Session, _ *discordgo.InteractionCreate) (string, error) {
+	return "", errors.New("hi")
 }
 
-func onSetSteam(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onSetSteam(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil || !sid.Valid() {
-		return errInvalidSID
+		return "", errInvalidSID
 	}
-	p, err := GetOrCreatePersonBySteamID(sid)
-	if err != nil || !sid.Valid() {
-		return errCommandFailed
+	p, errP := GetOrCreatePersonBySteamID(sid)
+	if errP != nil || !sid.Valid() {
+		return "", errCommandFailed
 	}
 	if (p.DiscordID) != "" {
-		return sendMsg(s, m.Interaction, "Discord account already linked to steam account: %d", p.SteamID.Int64())
+		return "", errors.Errorf("Discord account already linked to steam account: %d", p.SteamID.Int64())
 	}
 	p.DiscordID = m.Interaction.Member.User.ID
 	if err := SavePerson(p); err != nil {
-		return errCommandFailed
+		return "", errCommandFailed
 	}
-	return sendMsg(s, m.Interaction, "Successfully linked your account")
+	return "Successfully linked your account", nil
 }
 
-func onUnban(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onUnban(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	sid, err := steamid.ResolveSID64(context.Background(), pId)
 	if err != nil || !sid.Valid() {
-		return errInvalidSID
+		return "", errInvalidSID
 	}
-	ban, err := getBanBySteamID(sid, false)
-	if err != nil {
-		if err == errNoResult {
-			return errUnknownBan
+	ban, err2 := getBanBySteamID(sid, false)
+	if err2 != nil {
+		if err2 == errNoResult {
+			return "", errUnknownBan
 		} else {
-			return errCommandFailed
+			return "", errCommandFailed
 		}
 	}
-	if err := dropBan(ban.Ban); err != nil {
-		return errCommandFailed
+	if err3 := dropBan(ban.Ban); err3 != nil {
+		return "", errCommandFailed
 	}
-	return sendMsg(s, m.Interaction, "User ban is now inactive")
+	return "User ban is now inactive", nil
 }
 
-func onKick(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onKick(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	pi := findPlayer(pId, "")
 	if !pi.valid || !pi.inGame {
-		return errUnknownID
+		return "", errUnknownID
 	}
 	reason := ""
 	if len(m.Data.Options) > 1 {
 		reason = m.Data.Options[1].Value.(string)
 	}
 	if _, err := execServerRCON(*pi.server, fmt.Sprintf("sm_kick #%d %s", pi.player.UserID, reason)); err != nil {
-		return err
+		return "", err
 	}
-	return sendMsg(s, m.Interaction, "[%s] User kicked: %s", pi.server.ServerName, pi.player.Name)
+	return fmt.Sprintf("[%s] User kicked: %s", pi.server.ServerName, pi.player.Name), nil
 }
 
-func onSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onSay(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sId := m.Data.Options[0].Value.(string)
 	server, err := getServerByName(sId)
 	if err != nil {
-		return errors.Errorf("Failed to fetch server: %s", sId)
+		return "", errors.Errorf("Failed to fetch server: %s", sId)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, m.Data.Options[1].Value.(string))
 	resp, err2 := execServerRCON(server, msg)
 	if err2 != nil {
-		return err2
+		return "", err2
 	}
 	rp := strings.Split(resp, "\n")
 	if len(rp) < 2 {
-		return errors.Errorf("Invalid response")
+		return "", errors.Errorf("Invalid response")
 	}
-	return sendMsg(s, m.Interaction, fmt.Sprintf("`%s`", rp[0]))
+	return fmt.Sprintf("`%s`", rp[0]), nil
 }
 
-func onCSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onCSay(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sId := m.Data.Options[0].Value.(string)
 	var (
 		servers []model.Server
@@ -467,46 +449,43 @@ func onCSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	if sId == "*" {
 		servers, err = getServers()
 		if err != nil {
-			return errors.Wrapf(err, "Failed to fetch servers")
+			return "", errors.Wrapf(err, "Failed to fetch servers")
 		}
 	} else {
 		server, errS := getServerByName(sId)
 		if errS != nil {
-			return errors.Wrapf(errS, "Failed to fetch server: %s", sId)
+			return "", errors.Wrapf(errS, "Failed to fetch server: %s", sId)
 		}
 		servers = append(servers, server)
 	}
 	msg := fmt.Sprintf(`sm_csay %s`, m.Data.Options[1].Value.(string))
 	_ = queryRCON(context.Background(), servers, msg)
-	return sendMsg(s, m.Interaction, fmt.Sprintf("Message sent to %d server(s)", len(servers)))
+	return fmt.Sprintf("Message sent to %d server(s)", len(servers)), nil
 }
 
-func onPSay(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onPSay(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	pi := findPlayer(pId, "")
 	if !pi.valid || !pi.inGame {
-		return errUnknownID
+		return "", errUnknownID
 	}
 	msg := fmt.Sprintf(`sm_psay %d "%s"`, pi.player.UserID, m.Data.Options[1].Value.(string))
 	resp, err := execServerRCON(*pi.server, msg)
 	if err != nil {
-		return errors.Errorf("Failed to exec psay command: %v", err)
+		return "", errors.Errorf("Failed to exec psay command: %v", err)
 	}
 	rp := strings.Split(resp, "\n")
-	return sendMsg(s, m.Interaction, fmt.Sprintf("`%s`", rp[0]))
+	return fmt.Sprintf("`%s`", rp[0]), nil
 }
 
-func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onServers(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	full := false
 	if len(m.Data.Options) > 0 {
 		full = m.Data.Options[0].Value.(bool)
 	}
-	if err := sendPreResponse(s, m.Interaction); err != nil {
-		return errors.Wrapf(err, "Failed to send servers pre response")
-	}
 	servers, err := getServers()
 	if err != nil {
-		return errors.New("Failed to fetch servers")
+		return "", errors.New("Failed to fetch servers")
 	}
 	mu := &sync.RWMutex{}
 	results := make(map[string]extra.Status)
@@ -561,7 +540,7 @@ func onServers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
 	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return sendMsg(s, m.Interaction, msg.String())
+	return msg.String(), nil
 }
 
 func getServerStatus(server model.Server) (extra.Status, error) {
@@ -570,10 +549,10 @@ func getServerStatus(server model.Server) (extra.Status, error) {
 		log.Errorf("Failed to exec rcon command: %v", err)
 		return extra.Status{}, err
 	}
-	status, err := extra.ParseStatus(resp, true)
-	if err != nil {
-		log.Errorf("Failed to parse status output: %v", err)
-		return extra.Status{}, err
+	status, err2 := extra.ParseStatus(resp, true)
+	if err2 != nil {
+		log.Errorf("Failed to parse status output: %v", err2)
+		return extra.Status{}, err2
 	}
 	return status, nil
 }
@@ -590,9 +569,9 @@ func getAllServerStatus() (map[model.Server]extra.Status, error) {
 		wg.Add(1)
 		go func(server model.Server) {
 			defer wg.Done()
-			status, err := getServerStatus(server)
-			if err != nil {
-				log.Errorf("Failed to parse status output: %v", err)
+			status, err2 := getServerStatus(server)
+			if err2 != nil {
+				log.Errorf("Failed to parse status output: %v", err2)
 				return
 			}
 			mu.Lock()
@@ -667,40 +646,37 @@ func findPlayerByCIDR(ipNet *net.IPNet) (*extra.Player, *model.Server, error) {
 
 func defaultTable(title string) table.Writer {
 	t := table.NewWriter()
+	t.SetAllowedRowLength(150)
 	t.SuppressEmptyColumns()
 	if title != "" {
 		t.SetTitle(title)
 	}
-	t.SetStyle(table.StyleLight)
+	t.SetStyle(table.StyleRounded)
 	return t
 }
 
-func onPlayers(s *discordgo.Session, m *discordgo.InteractionCreate) error {
+func onPlayers(s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sId := m.Data.Options[0].Value.(string)
 	server, err := getServerByName(sId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return errors.New("Invalid server name")
+			return "", errors.New("Invalid server name")
 		}
-		return dbErr(err)
+		return "", dbErr(err)
 	}
-	status, err := getServerStatus(server)
-	if err != nil {
-		log.Errorf("Failed to parse status output: %v", err)
-		return model.ErrRCON
+	status, err2 := getServerStatus(server)
+	if err2 != nil {
+		log.Errorf("Failed to parse status output: %v", err2)
+		return "", model.ErrRCON
 	}
 	t := defaultTable("")
-	t.AppendHeader(table.Row{
-		"IP", "steam64", "Name",
-	})
+	t.AppendHeader(table.Row{"IP", "steam64", "Name"})
 	t.AppendSeparator()
 	for _, p := range status.Players {
-		t.AppendRow(table.Row{
-			p.IP, p.SID.String(), p.Name,
-		})
+		t.AppendRow(table.Row{p.IP, p.SID.String(), p.Name})
 	}
 	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return sendMsg(s, m.Interaction, msg.String())
+	return "", sendMsg(s, m.Interaction, msg.String())
 }

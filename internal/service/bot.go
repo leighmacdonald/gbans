@@ -97,11 +97,20 @@ func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	log.Info("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
-		//Game: &discordgo.Game{
-		//	Name:    `Uncletopia`,
-		//	URL:     "git@github.com/leighmacdonald/gbans",
-		//	Details: "Mr. Authority",
-		//},
+		IdleSince: nil,
+		Activities: []*discordgo.Activity{
+			{
+				Name:     "Cheeseburgers",
+				Type:     discordgo.ActivityTypeGame,
+				URL:      "https://" + config.HTTP.Addr(),
+				State:    "state field",
+				Details:  "Blah",
+				Instance: false,
+				Flags:    1 << 0,
+			},
+		},
+		AFK:    false,
+		Status: "https://github.com/leighmacdonald/gbans",
 	}
 	if err := s.UpdateStatusComplex(d); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")
@@ -120,9 +129,6 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 func sendPreResponse(s *discordgo.Session, i *discordgo.Interaction) error {
 	return s.InteractionRespond(i, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionApplicationCommandResponseData{
-			Content: "Please wait... Calculating numberwang...",
-		},
 	})
 }
 
