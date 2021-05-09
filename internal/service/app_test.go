@@ -56,7 +56,6 @@ func GenTestData() {
 			log.Fatalf("Failed to setup test server: %v", err)
 		}
 	}
-
 	filteredWords := []string{"frick", "heck"}
 	for _, fw := range filteredWords {
 		if err := saveFilteredWord(ctx, fw); err != nil && !errors.Is(err, errDuplicate) {

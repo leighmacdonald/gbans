@@ -84,10 +84,6 @@ func onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 }
 
 func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	var (
-		err      error
-		duration = time.Duration(0)
-	)
 	au, er := getPersonByDiscordID(ctx, m.Member.User.ID)
 	if er != nil {
 		return "", errUnlinkedAccount
@@ -97,9 +93,9 @@ func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	if !pi.valid {
 		return "", errUnknownID
 	}
-	duration, err = config.ParseDuration(m.Data.Options[1].Value.(string))
-	if err != nil {
-		return "", err
+	duration, err2 := config.ParseDuration(m.Data.Options[1].Value.(string))
+	if err2 != nil {
+		return "", err2
 	}
 	reasonStr := model.Custom.String()
 	if len(m.Data.Options) > 2 {
