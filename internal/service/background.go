@@ -18,7 +18,7 @@ func profileUpdater(ctx context.Context) {
 		loop := uint64(0)
 		for {
 			o.Offset = loop * o.Limit
-			bans, err := getBansOlderThan(o, config.Now().Add(-(time.Hour * 24)))
+			bans, err := getBansOlderThan(ctx, o, config.Now().Add(-(time.Hour * 24)))
 			if err != nil {
 				log.Warnf("Failed to get old bans for update: %v", err)
 				break
@@ -42,13 +42,13 @@ func profileUpdater(ctx context.Context) {
 					log.Errorf("Failed to parse steamid from webapi: %v", err3)
 					continue
 				}
-				p, err4 := GetOrCreatePersonBySteamID(sid)
+				p, err4 := GetOrCreatePersonBySteamID(ctx, sid)
 				if err4 != nil {
 					log.Errorf("Failed to get person: %v", err4)
 					continue
 				}
 				p.PlayerSummary = &s
-				if err := SavePerson(p); err != nil {
+				if err := SavePerson(ctx, p); err != nil {
 					log.Errorf("Failed to save person: %v", err)
 					continue
 				}
@@ -74,7 +74,7 @@ func profileUpdater(ctx context.Context) {
 
 func serverStateUpdater(ctx context.Context) {
 	var update = func() {
-		servers, err := getServers()
+		servers, err := getServers(ctx)
 		if err != nil {
 			log.Errorf("Failed to fetch servers to update")
 			return
@@ -85,7 +85,7 @@ func serverStateUpdater(ctx context.Context) {
 		respA2S := map[string]*a2s.ServerInfo{}
 		go func() {
 			defer wg.Done()
-			respRCON = queryRCON(context.Background(), servers, "status")
+			respRCON = queryRCON(ctx, servers, "status")
 		}()
 		go func() {
 			defer wg.Done()
@@ -138,24 +138,24 @@ func banSweeper(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			bans, err := getExpiredBans()
+			bans, err := getExpiredBans(ctx)
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range bans {
-					if err := dropBan(ban); err != nil {
+					if err := dropBan(ctx, ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
 						log.Infof("Ban expired: %v", ban)
 					}
 				}
 			}
-			netBans, err := getExpiredNetBans()
-			if err != nil {
+			netBans, err2 := getExpiredNetBans(ctx)
+			if err2 != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range netBans {
-					if err := dropNetBan(ban); err != nil {
+					if err := dropNetBan(ctx, ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)

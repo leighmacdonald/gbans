@@ -49,15 +49,17 @@ func GenTestData() {
 			TokenCreatedOn: config.Now(), CreatedOn: config.Now(), UpdatedOn: config.Now(),
 		},
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 	for _, server := range servers {
-		if err := SaveServer(&server); err != nil {
+		if err := SaveServer(ctx, &server); err != nil {
 			log.Fatalf("Failed to setup test server: %v", err)
 		}
 	}
 
 	filteredWords := []string{"frick", "heck"}
 	for _, fw := range filteredWords {
-		if err := saveFilteredWord(fw); err != nil && !errors.Is(err, errDuplicate) {
+		if err := saveFilteredWord(ctx, fw); err != nil && !errors.Is(err, errDuplicate) {
 			log.Fatalf("Failed to setup test filtered words: %v", err)
 		}
 	}
@@ -67,7 +69,7 @@ func GenTestData() {
 		if err != nil {
 			log.Fatalf("Failed to get player summary: %v", err)
 		}
-		p, err := GetOrCreatePersonBySteamID(sid)
+		p, err := GetOrCreatePersonBySteamID(ctx, sid)
 		if err != nil {
 			log.Fatalf("Failed to get person: %v", err)
 		}
@@ -75,7 +77,7 @@ func GenTestData() {
 		p.SteamID = sid
 		p.IPAddr = net.ParseIP(fmt.Sprintf("24.56.78.%d", i+1))
 		p.PlayerSummary = &s
-		if err := SavePerson(p); err != nil {
+		if err := SavePerson(ctx, p); err != nil {
 			log.Fatalf("Failed to save test person: %v", err)
 		}
 	}
@@ -102,7 +104,7 @@ func GenTestData() {
 	for i, cidr := range []string{randIP() + "/32", randIP() + "/32", randCidr} {
 		ip, mask, _ := net.ParseCIDR(cidr)
 		log.Println(ip)
-		if err := saveBanNet(&model.BanNet{
+		if err := saveBanNet(ctx, &model.BanNet{
 			CIDR:       mask,
 			Source:     0,
 			Reason:     "",

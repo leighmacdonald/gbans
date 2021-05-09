@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 type botCmd string
@@ -36,7 +37,9 @@ const (
 
 func botRegisterSlashCommands() error {
 	// TODO register the commands again upon adding new servers to update autocomplete opts
-	servers, err := getServers()
+	c, cancel := context.WithTimeout(gCtx, time.Second*60)
+	defer cancel()
+	servers, err := getServers(c)
 	if err != nil {
 		return err
 	}
@@ -262,23 +265,23 @@ func registerCommandPermissions(perms []permissionRequest) error {
 	}
 	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions",
 		config.Discord.AppID, config.Discord.GuildID)
-	req, err := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(b))
-	if err != nil {
-		return errors.Wrapf(err, "Failed to create http request for discord permissions")
+	req, err2 := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(b))
+	if err2 != nil {
+		return errors.Wrapf(err2, "Failed to create http request for discord permissions")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
-	resp, err := hc.Do(req)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to perform http request for discord permissions")
+	resp, err3 := hc.Do(req)
+	if err3 != nil {
+		return errors.Wrapf(err3, "Failed to perform http request for discord permissions")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrapf(err, "Error response code trying to perform http request for discord permissions: %d", resp.StatusCode)
+		return errors.Wrapf(err3, "Error response code trying to perform http request for discord permissions: %d", resp.StatusCode)
 	}
 	return nil
 }
 
-var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.InteractionCreate) (string, error){
+var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error){
 	cmdBan:      onBan,
 	cmdBanIP:    onBanIP,
 	cmdCheck:    onCheck,
@@ -312,7 +315,9 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 			return
 		}
-		resp, err := h(s, i)
+		c, cancel := context.WithTimeout(gCtx, time.Second*10)
+		defer cancel()
+		resp, err := h(c, s, i)
 		if err != nil {
 			// TODO User facing errors only
 			if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {

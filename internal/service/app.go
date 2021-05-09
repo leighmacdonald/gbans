@@ -110,10 +110,13 @@ func logWriter(ctx context.Context) {
 	for {
 		select {
 		case evt := <-events:
-			if err := insertLog(model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event)); err != nil {
+			c, cancel := context.WithTimeout(ctx, time.Second*10)
+			if err := insertLog(c, model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event)); err != nil {
 				log.Errorf("Failed to insert log: %v", err)
+				cancel()
 				continue
 			}
+			cancel()
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return
@@ -130,7 +133,7 @@ func logReader(ctx context.Context, logRows chan LogPayload, readers ...chan log
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
-			p, err := GetOrCreatePersonBySteamID(steamid.SID3ToSID64(steamid.SID3(sid1Str)))
+			p, err := GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1Str)))
 			if err != nil {
 				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
 				return nil
@@ -143,7 +146,7 @@ func logReader(ctx context.Context, logRows chan LogPayload, readers ...chan log
 		select {
 		case raw := <-logRows:
 			v := logparse.Parse(raw.Message)
-			s, e := getServerByName(raw.ServerName)
+			s, e := getServerByName(ctx, raw.ServerName)
 			if e != nil {
 				log.Errorf("Failed to get server for log message: %v", e)
 				continue
@@ -273,7 +276,9 @@ func initRelay() {
 
 func initFilters() {
 	// TODO load external lists via http
-	words, err := getFilteredWords()
+	c, cancel := context.WithTimeout(gCtx, time.Second*15)
+	defer cancel()
+	words, err := getFilteredWords(c)
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}

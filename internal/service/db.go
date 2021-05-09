@@ -124,10 +124,10 @@ func Init(dsn string) {
 	db = dbConn
 }
 
-var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon",
+var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots"}
 
-func getServer(serverID int64) (model.Server, error) {
+func getServer(ctx context.Context, serverID int64) (model.Server, error) {
 	var s model.Server
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
@@ -136,15 +136,16 @@ func getServer(serverID int64) (model.Server, error) {
 	if e != nil {
 		return model.Server{}, e
 	}
-	if err := db.QueryRow(context.Background(), q, a...).
-		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
-			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
-		return model.Server{}, err
+	if err := db.QueryRow(ctx, q, a...).
+		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
+			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
+			&s.ReservedSlots); err != nil {
+		return model.Server{}, dbErr(err)
 	}
 	return s, nil
 }
 
-func getServers() ([]model.Server, error) {
+func getServers(ctx context.Context) ([]model.Server, error) {
 	var servers []model.Server
 	q, _, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
@@ -152,16 +153,16 @@ func getServers() ([]model.Server, error) {
 	if e != nil {
 		return nil, e
 	}
-	rows, err := db.Query(context.Background(), q)
+	rows, err := db.Query(ctx, q)
 	if err != nil {
 		return []model.Server{}, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var s model.Server
-		if err := rows.Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
-			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
-			return nil, err
+		if err2 := rows.Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
+			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err2 != nil {
+			return nil, err2
 		}
 		servers = append(servers, s)
 	}
@@ -171,7 +172,7 @@ func getServers() ([]model.Server, error) {
 	return servers, nil
 }
 
-func getServerByName(serverName string) (model.Server, error) {
+func getServerByName(ctx context.Context, serverName string) (model.Server, error) {
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
@@ -181,7 +182,7 @@ func getServerByName(serverName string) (model.Server, error) {
 	if e != nil {
 		return model.Server{}, e
 	}
-	if err := db.QueryRow(context.Background(), q, a...).
+	if err := db.QueryRow(ctx, q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
 			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
 		return model.Server{}, err
@@ -190,16 +191,16 @@ func getServerByName(serverName string) (model.Server, error) {
 }
 
 // SaveServer updates or creates the server data in the database
-func SaveServer(server *model.Server) error {
+func SaveServer(ctx context.Context, server *model.Server) error {
 	server.UpdatedOn = config.Now()
 	if server.ServerID > 0 {
-		return updateServer(server)
+		return updateServer(ctx, server)
 	}
 	server.CreatedOn = config.Now()
-	return insertServer(server)
+	return insertServer(ctx, server)
 }
 
-func insertServer(s *model.Server) error {
+func insertServer(ctx context.Context, s *model.Server) error {
 	q, a, e := sb.Insert(string(tableServer)).
 		Columns("short_name", "token", "address", "port",
 			"rcon", "token_created_on", "created_on", "updated_on", "password", "reserved_slots").
@@ -210,14 +211,14 @@ func insertServer(s *model.Server) error {
 	if e != nil {
 		return e
 	}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&s.ServerID)
+	err := db.QueryRow(ctx, q, a...).Scan(&s.ServerID)
 	if err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func updateServer(s *model.Server) error {
+func updateServer(ctx context.Context, s *model.Server) error {
 	s.UpdatedOn = config.Now()
 	q, a, e := sb.Update(string(tableServer)).
 		Set("short_name", s.ServerName).
@@ -233,35 +234,35 @@ func updateServer(s *model.Server) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update s")
 	}
 	return nil
 }
 
-func dropServer(serverID int64) error {
+func dropServer(ctx context.Context, serverID int64) error {
 	q, a, e := sb.Delete(string(tableServer)).Where(sq.Eq{"server_id": serverID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func dropBan(ban *model.Ban) error {
+func dropBan(ctx context.Context, ban *model.Ban) error {
 	q, a, e := sb.Delete(string(tableBan)).Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func getBanByColumn(column string, identifier interface{}, full bool) (*model.BannedPerson, error) {
+func getBanByColumn(ctx context.Context, column string, identifier interface{}, full bool) (*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
@@ -281,7 +282,7 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 	if e != nil {
 		return b, e
 	}
-	if err := db.QueryRow(context.Background(), q, a...).
+	if err := db.QueryRow(ctx, q, a...).
 		Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
 			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn,
@@ -292,26 +293,26 @@ func getBanByColumn(column string, identifier interface{}, full bool) (*model.Ba
 		return b, dbErr(err)
 	}
 	if full {
-		h, err := getChatHistory(b.Person.SteamID)
+		h, err := getChatHistory(ctx, b.Person.SteamID)
 		if err == nil {
 			b.HistoryChat = h
 		}
 		b.HistoryConnections = []string{}
-		b.HistoryIP = getIPHistory(b.Person.SteamID)
+		b.HistoryIP = getIPHistory(ctx, b.Person.SteamID)
 		b.HistoryPersonaName = []string{}
 	}
 	return b, nil
 }
 
-func getBanBySteamID(steamID steamid.SID64, full bool) (*model.BannedPerson, error) {
-	return getBanByColumn("steam_id", steamID, full)
+func getBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool) (*model.BannedPerson, error) {
+	return getBanByColumn(ctx, "steam_id", steamID, full)
 }
 
-func getBanByBanID(banID uint64, full bool) (*model.BannedPerson, error) {
-	return getBanByColumn("ban_id", banID, full)
+func getBanByBanID(ctx context.Context, banID uint64, full bool) (*model.BannedPerson, error) {
+	return getBanByColumn(ctx, "ban_id", banID, full)
 }
 
-func getChatHistory(sid64 steamid.SID64) ([]model.ChatLog, error) {
+func getChatHistory(ctx context.Context, sid64 steamid.SID64) ([]model.ChatLog, error) {
 	q, a, e := sb.Select("payload -> message", "created_on").
 		From(string(tableServerLog)).
 		Where(sq.And{
@@ -322,7 +323,7 @@ func getChatHistory(sid64 steamid.SID64) ([]model.ChatLog, error) {
 	if e != nil {
 		return nil, e
 	}
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -338,7 +339,7 @@ func getChatHistory(sid64 steamid.SID64) ([]model.ChatLog, error) {
 	return hist, nil
 }
 
-func addPersonIP(p *model.Person, ip string) error {
+func addPersonIP(ctx context.Context, p *model.Person, ip string) error {
 	q, a, e := sb.Insert(string(tablePersonIP)).
 		Columns("steam_id", "ip_addr", "created_on").
 		Values(p.SteamID, ip, config.Now()).
@@ -346,11 +347,11 @@ func addPersonIP(p *model.Person, ip string) error {
 	if e != nil {
 		return e
 	}
-	_, err := db.Exec(context.Background(), q, a...)
+	_, err := db.Exec(ctx, q, a...)
 	return dbErr(err)
 }
 
-func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
+func getIPHistory(ctx context.Context, sid64 steamid.SID64) []model.IPRecord {
 	q, a, e := sb.Select("ip_addr", "created_on").
 		From(string(tablePersonIP)).
 		Where(sq.Eq{"steam_id": sid64}).
@@ -359,7 +360,7 @@ func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
 	if e != nil {
 		return nil
 	}
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil
 	}
@@ -375,7 +376,7 @@ func getIPHistory(sid64 steamid.SID64) []model.IPRecord {
 	return records
 }
 
-func getAppeal(banID uint64) (model.Appeal, error) {
+func getAppeal(ctx context.Context, banID uint64) (model.Appeal, error) {
 	q, a, e := sb.Select("appeal_id", "ban_id", "appeal_text", "appeal_state",
 		"email", "created_on", "updated_on").
 		From("ban_appeal").
@@ -385,7 +386,7 @@ func getAppeal(banID uint64) (model.Appeal, error) {
 		return model.Appeal{}, e
 	}
 	var ap model.Appeal
-	if err := db.QueryRow(context.Background(), q, a...).
+	if err := db.QueryRow(ctx, q, a...).
 		Scan(&ap.AppealID, &ap.BanID, &ap.AppealText, &ap.AppealState, &ap.Email, &ap.CreatedOn,
 			&ap.UpdatedOn); err != nil {
 		return model.Appeal{}, err
@@ -393,7 +394,7 @@ func getAppeal(banID uint64) (model.Appeal, error) {
 	return ap, nil
 }
 
-func updateAppeal(appeal *model.Appeal) error {
+func updateAppeal(ctx context.Context, appeal *model.Appeal) error {
 	q, a, e := sb.Update("ban_appeal").
 		Set("appeal_text", appeal.AppealText).
 		Set("appeal_state", appeal.AppealState).
@@ -404,14 +405,14 @@ func updateAppeal(appeal *model.Appeal) error {
 	if e != nil {
 		return e
 	}
-	_, err := db.Exec(context.Background(), q, a...)
+	_, err := db.Exec(ctx, q, a...)
 	if err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func insertAppeal(ap *model.Appeal) error {
+func insertAppeal(ctx context.Context, ap *model.Appeal) error {
 	q, a, e := sb.Insert("ban_appeal").
 		Columns("ban_id", "appeal_text", "appeal_state", "email", "created_on", "updated_on").
 		Values(ap.BanID, ap.AppealText, ap.AppealState, ap.Email, ap.CreatedOn, ap.UpdatedOn).
@@ -420,43 +421,43 @@ func insertAppeal(ap *model.Appeal) error {
 	if e != nil {
 		return e
 	}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&ap.AppealID)
+	err := db.QueryRow(ctx, q, a...).Scan(&ap.AppealID)
 	if err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func saveAppeal(appeal *model.Appeal) error {
+func saveAppeal(ctx context.Context, appeal *model.Appeal) error {
 	appeal.UpdatedOn = config.Now()
 	if appeal.AppealID > 0 {
-		return updateAppeal(appeal)
+		return updateAppeal(ctx, appeal)
 	}
 	appeal.CreatedOn = config.Now()
-	return insertAppeal(appeal)
+	return insertAppeal(ctx, appeal)
 }
 
 // saveBan will insert or update the ban record
 // New records will have the Ban.BanID set automatically
-func saveBan(ban *model.Ban) error {
+func saveBan(ctx context.Context, ban *model.Ban) error {
 	// Ensure the foreign keys are satisfied
-	_, err := GetOrCreatePersonBySteamID(ban.SteamID)
+	_, err := GetOrCreatePersonBySteamID(ctx, ban.SteamID)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get person for ban")
 	}
-	_, err2 := GetOrCreatePersonBySteamID(ban.AuthorID)
+	_, err2 := GetOrCreatePersonBySteamID(ctx, ban.AuthorID)
 	if err2 != nil {
 		return errors.Wrapf(err, "Failed to get author for ban")
 	}
 	ban.UpdatedOn = config.Now()
 	if ban.BanID > 0 {
-		return updateBan(ban)
+		return updateBan(ctx, ban)
 	}
 	ban.CreatedOn = config.Now()
-	return insertBan(ban)
+	return insertBan(ctx, ban)
 }
 
-func insertBan(ban *model.Ban) error {
+func insertBan(ctx context.Context, ban *model.Ban) error {
 	q, a, e := sb.Insert("ban").
 		Columns("steam_id", "author_id", "ban_type", "reason", "reason_text",
 			"note", "valid_until", "created_on", "updated_on", "ban_source").
@@ -467,14 +468,14 @@ func insertBan(ban *model.Ban) error {
 	if e != nil {
 		return e
 	}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&ban.BanID)
+	err := db.QueryRow(ctx, q, a...).Scan(&ban.BanID)
 	if err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func updateBan(ban *model.Ban) error {
+func updateBan(ctx context.Context, ban *model.Ban) error {
 	q, a, e := sb.Update("ban").
 		Set("author_id", ban.AuthorID).
 		Set("ban_type", ban.BanType).
@@ -489,34 +490,34 @@ func updateBan(ban *model.Ban) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func dropPerson(steamID steamid.SID64) error {
+func dropPerson(ctx context.Context, steamID steamid.SID64) error {
 	q, a, e := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
 // SavePerson will insert or update the person record
-func SavePerson(person *model.Person) error {
+func SavePerson(ctx context.Context, person *model.Person) error {
 	person.UpdatedOn = config.Now()
 	if !person.IsNew {
-		return updatePerson(person)
+		return updatePerson(ctx, person)
 	}
 	person.CreatedOn = person.UpdatedOn
-	return insertPerson(person)
+	return insertPerson(ctx, person)
 }
 
-func updatePerson(p *model.Person) error {
+func updatePerson(ctx context.Context, p *model.Person) error {
 	p.UpdatedOn = config.Now()
 	q, a, e := sb.Update("person").
 		Set("updated_on", p.UpdatedOn).
@@ -541,13 +542,13 @@ func updatePerson(p *model.Person) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func insertPerson(p *model.Person) error {
+func insertPerson(ctx context.Context, p *model.Person) error {
 	q, a, e := sb.
 		Insert("person").
 		Columns(
@@ -563,7 +564,7 @@ func insertPerson(p *model.Person) error {
 	if e != nil {
 		return e
 	}
-	_, err := db.Exec(context.Background(), q, a...)
+	_, err := db.Exec(ctx, q, a...)
 	if err != nil {
 		return dbErr(err)
 	}
@@ -578,7 +579,7 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on",
 
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
-func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
+func getPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, error) {
 	const q = `
     WITH addresses as (
 		SELECT steam_id, ip_addr FROM person_ip
@@ -595,7 +596,7 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	p := model.NewPerson(0)
 	p.IsNew = false
 	p.PlayerSummary = &extra.PlayerSummary{}
-	err := db.QueryRow(context.Background(), q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
+	err := db.QueryRow(ctx, q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr)
@@ -605,7 +606,7 @@ func getPersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 	return p, nil
 }
 
-func getPeople(qf *queryFilter) ([]*model.Person, error) {
+func getPeople(ctx context.Context, qf *queryFilter) ([]*model.Person, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan
@@ -627,7 +628,7 @@ func getPeople(qf *queryFilter) ([]*model.Person, error) {
 		return nil, e
 	}
 	var people []*model.Person
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -647,11 +648,11 @@ func getPeople(qf *queryFilter) ([]*model.Person, error) {
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func GetOrCreatePersonBySteamID(sid steamid.SID64) (*model.Person, error) {
-	p, err := getPersonBySteamID(sid)
+func GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, error) {
+	p, err := getPersonBySteamID(ctx, sid)
 	if err != nil && dbErr(err) == errNoResult {
 		p = model.NewPerson(sid)
-		if err := SavePerson(p); err != nil {
+		if err := SavePerson(ctx, p); err != nil {
 			return nil, err
 		}
 	} else if err != nil {
@@ -661,7 +662,7 @@ func GetOrCreatePersonBySteamID(sid steamid.SID64) (*model.Person, error) {
 }
 
 // getPersonByDiscordID returns a person by their discord_id
-func getPersonByDiscordID(did string) (*model.Person, error) {
+func getPersonByDiscordID(ctx context.Context, did string) (*model.Person, error) {
 	q, a, e := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": did}).
@@ -672,7 +673,7 @@ func getPersonByDiscordID(did string) (*model.Person, error) {
 	p := model.NewPerson(0)
 	p.IsNew = false
 	p.PlayerSummary = &extra.PlayerSummary{}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
+	err := db.QueryRow(ctx, q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID)
@@ -686,7 +687,7 @@ func getPersonByDiscordID(did string) (*model.Person, error) {
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func getBanNet(ip net.IP) ([]model.BanNet, error) {
+func getBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
 	q, _, e := sb.Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		From("ban_net").
 		Suffix("WHERE $1 <<= cidr").
@@ -695,7 +696,7 @@ func getBanNet(ip net.IP) ([]model.BanNet, error) {
 		return nil, e
 	}
 	var nets []model.BanNet
-	rows, err := db.Query(context.Background(), q, ip.String())
+	rows, err := db.Query(ctx, q, ip.String())
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -710,7 +711,7 @@ func getBanNet(ip net.IP) ([]model.BanNet, error) {
 	return nets, nil
 }
 
-func updateBanNet(banNet *model.BanNet) error {
+func updateBanNet(ctx context.Context, banNet *model.BanNet) error {
 	q, a, e := sb.Update("ban_net").
 		Set("cidr", banNet.CIDR).
 		Set("source", banNet.Source).
@@ -723,13 +724,13 @@ func updateBanNet(banNet *model.BanNet) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func insertBanNet(banNet *model.BanNet) error {
+func insertBanNet(ctx context.Context, banNet *model.BanNet) error {
 	q, a, e := sb.Insert("ban_net").
 		Columns("cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		Values(banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ValidUntil).
@@ -738,32 +739,32 @@ func insertBanNet(banNet *model.BanNet) error {
 	if e != nil {
 		return e
 	}
-	err := db.QueryRow(context.Background(), q, a...).Scan(&banNet.NetID)
+	err := db.QueryRow(ctx, q, a...).Scan(&banNet.NetID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func saveBanNet(banNet *model.BanNet) error {
+func saveBanNet(ctx context.Context, banNet *model.BanNet) error {
 	if banNet.NetID > 0 {
-		return updateBanNet(banNet)
+		return updateBanNet(ctx, banNet)
 	}
-	return insertBanNet(banNet)
+	return insertBanNet(ctx, banNet)
 }
 
-func dropNetBan(ban model.BanNet) error {
+func dropNetBan(ctx context.Context, ban model.BanNet) error {
 	q, a, e := sb.Delete("ban_net").Where(sq.Eq{"net_id": ban.NetID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func getExpiredBans() ([]*model.Ban, error) {
+func getExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 	q, a, e := sb.Select(
 		"ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 		"valid_until", "ban_source", "created_on", "updated_on").
@@ -774,7 +775,7 @@ func getExpiredBans() ([]*model.Ban, error) {
 		return nil, e
 	}
 	var bans []*model.Ban
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +804,7 @@ func getExpiredBans() ([]*model.Ban, error) {
 //}
 
 // getBans returns all bans that fit the filter criteria passed in
-func getBans(o *queryFilter) ([]*model.BannedPerson, error) {
+func getBans(ctx context.Context, o *queryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
@@ -822,7 +823,7 @@ func getBans(o *queryFilter) ([]*model.BannedPerson, error) {
 		return nil, errors.Wrapf(e, "Failed to execute: %s", q)
 	}
 	var bans []*model.BannedPerson
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -844,7 +845,7 @@ func getBans(o *queryFilter) ([]*model.BannedPerson, error) {
 	return bans, nil
 }
 
-func getBansOlderThan(o *queryFilter, t time.Time) ([]model.Ban, error) {
+func getBansOlderThan(ctx context.Context, o *queryFilter, t time.Time) ([]model.Ban, error) {
 	q, a, e := sb.
 		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "created_on", "updated_on", "ban_source").
@@ -855,7 +856,7 @@ func getBansOlderThan(o *queryFilter, t time.Time) ([]model.Ban, error) {
 		return nil, e
 	}
 	var bans []model.Ban
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -871,7 +872,7 @@ func getBansOlderThan(o *queryFilter, t time.Time) ([]model.Ban, error) {
 	return bans, nil
 }
 
-func getExpiredNetBans() ([]model.BanNet, error) {
+func getExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
 	q, a, e := sb.
 		Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		From(string(tableBanNet)).
@@ -881,54 +882,54 @@ func getExpiredNetBans() ([]model.BanNet, error) {
 		return nil, e
 	}
 	var bans []model.BanNet
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var b model.BanNet
-		if err := rows.Scan(&b.NetID, &b.CIDR, &b.Source, &b.CreatedOn, &b.UpdatedOn, &b.Reason, &b.ValidUntil); err != nil {
-			return nil, err
+		if err2 := rows.Scan(&b.NetID, &b.CIDR, &b.Source, &b.CreatedOn, &b.UpdatedOn, &b.Reason, &b.ValidUntil); err2 != nil {
+			return nil, err2
 		}
 		bans = append(bans, b)
 	}
 	return bans, nil
 }
 
-func getFilteredWords() ([]string, error) {
+func getFilteredWords(ctx context.Context) ([]string, error) {
 	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
 	if e != nil {
 		return nil, e
 	}
 	var words []string
-	rows, err := db.Query(context.Background(), q, a...)
+	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var w string
-		if err := rows.Scan(&w); err != nil {
-			return nil, err
+		if err2 := rows.Scan(&w); err2 != nil {
+			return nil, err2
 		}
 		words = append(words, w)
 	}
 	return words, nil
 }
 
-func saveFilteredWord(word string) error {
+func saveFilteredWord(ctx context.Context, word string) error {
 	q, a, e := sb.Insert(string(tableFilteredWord)).Columns("word", "created_on").Values(word, config.Now()).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func insertLog(l *model.ServerLog) error {
+func insertLog(ctx context.Context, l *model.ServerLog) error {
 	q, a, e := sb.Insert(string(tableServerLog)).
 		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
 		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).
@@ -936,7 +937,7 @@ func insertLog(l *model.ServerLog) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.Exec(context.Background(), q, a...); err != nil {
+	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
 	return nil
@@ -946,26 +947,26 @@ func insertLog(l *model.ServerLog) error {
 //
 // Note that this can take a while on slower machines. For reference it takes
 // about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func InsertBlockListData(d *ip2location.BlockListData) error {
+func InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) error {
 	if len(d.Proxies) > 0 {
-		if err := loadProxies(d.Proxies, false); err != nil {
+		if err := loadProxies(ctx, d.Proxies, false); err != nil {
 			return err
 		}
 	}
 	if len(d.Locations4) > 0 {
-		if err := loadLocation(d.Locations4, false); err != nil {
+		if err := loadLocation(ctx, d.Locations4, false); err != nil {
 			return err
 		}
 	}
 	if len(d.ASN4) > 0 {
-		if err := loadASN(d.ASN4); err != nil {
+		if err := loadASN(ctx, d.ASN4); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func getASNRecord(ip net.IP) (*ip2location.ASNRecord, error) {
+func getASNRecord(ctx context.Context, ip net.IP) (*ip2location.ASNRecord, error) {
 	q, _, e := sb.Select("ip_from", "ip_to", "cidr", "as_num", "as_name").
 		From("net_asn").
 		Where("$1 << cidr").
@@ -975,34 +976,34 @@ func getASNRecord(ip net.IP) (*ip2location.ASNRecord, error) {
 		return nil, e
 	}
 	var r ip2location.ASNRecord
-	if err := db.QueryRow(context.Background(), q, ip).
+	if err := db.QueryRow(ctx, q, ip).
 		Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); err != nil {
 		return nil, err
 	}
 	return &r, nil
 }
 
-func getLocationRecord(ip net.IP) (*ip2location.LocationRecord, error) {
+func getLocationRecord(ctx context.Context, ip net.IP) (*ip2location.LocationRecord, error) {
 	const q = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
 		WHERE $1 BETWEEN ip_from AND ip_to`
 	var r ip2location.LocationRecord
-	if err := db.QueryRow(context.Background(), q, ip).
+	if err := db.QueryRow(ctx, q, ip).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
 		return nil, err
 	}
 	return &r, nil
 }
 
-func getProxyRecord(ip net.IP) (*ip2location.ProxyRecord, error) {
+func getProxyRecord(ctx context.Context, ip net.IP) (*ip2location.ProxyRecord, error) {
 	const q = `
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
 		WHERE $1 BETWEEN ip_from AND ip_to`
 	var r ip2location.ProxyRecord
-	if err := db.QueryRow(context.Background(), q, ip).
+	if err := db.QueryRow(ctx, q, ip).
 		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
 			&r.Domain, &r.UsageType, &r.ASN, &r.AS, &r.LastSeen, &r.Threat); err != nil {
 		return nil, dbErr(err)
@@ -1010,7 +1011,8 @@ func getProxyRecord(ip net.IP) (*ip2location.ProxyRecord, error) {
 	return &r, nil
 }
 
-type IPRecord struct {
+// ipRecord holds a composite result of ip2location results
+type ipRecord struct {
 	IP          net.IP
 	CreatedOn   time.Time
 	CityName    string
@@ -1024,7 +1026,7 @@ type IPRecord struct {
 	DomainUsed  string
 }
 
-func getPersonIPHistory(sid steamid.SID64) ([]IPRecord, error) {
+func getPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, error) {
 	const q = `
 		SELECT
 			   ip.ip_addr, ip.created_on,
@@ -1037,14 +1039,14 @@ func getPersonIPHistory(sid steamid.SID64) ([]IPRecord, error) {
 		LEFT JOIN net_asn a ON ip.ip_addr BETWEEN a.ip_from AND a.ip_to
 		LEFT OUTER JOIN net_proxy p ON ip.ip_addr BETWEEN p.ip_from AND p.ip_to
 		WHERE ip.steam_id = $1`
-	rows, err := db.Query(context.Background(), q, sid.Int64())
+	rows, err := db.Query(ctx, q, sid.Int64())
 	if err != nil {
 		return nil, err
 	}
-	var records []IPRecord
+	var records []ipRecord
 	defer rows.Close()
 	for rows.Next() {
-		var r IPRecord
+		var r ipRecord
 		if errR := rows.Scan(&r.IP, &r.CreatedOn, &r.CityName, &r.CountryName, &r.CountryCode, &r.ASName,
 			&r.ASNum, &r.ISP, &r.UsageType, &r.Threat, &r.DomainUsed); errR != nil {
 			return nil, errR
@@ -1054,16 +1056,16 @@ func getPersonIPHistory(sid steamid.SID64) ([]IPRecord, error) {
 	return records, nil
 }
 
-func truncateTable(table tableName) error {
-	if _, err := db.Exec(context.Background(), fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
+func truncateTable(ctx context.Context, table tableName) error {
+	if _, err := db.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
-func loadASN(records []ip2location.ASNRecord) error {
+func loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	t0 := time.Now()
-	if err := truncateTable(tableNetASN); err != nil {
+	if err := truncateTable(ctx, tableNetASN); err != nil {
 		return err
 	}
 	const q = "INSERT INTO net_asn (ip_from, ip_to, cidr, as_num, as_name) VALUES($1, $2, $3, $4, $5)"
@@ -1072,8 +1074,8 @@ func loadASN(records []ip2location.ASNRecord) error {
 		b.Queue(q, a.IPFrom, a.IPTo, a.CIDR, a.ASNum, a.ASName)
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
-				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
-				r := db.SendBatch(ctx, &b)
+				c, cancel := context.WithTimeout(ctx, time.Second*10)
+				r := db.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -1088,9 +1090,9 @@ func loadASN(records []ip2location.ASNRecord) error {
 	return nil
 }
 
-func loadLocation(records []ip2location.LocationRecord, ipv6 bool) error {
+func loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
 	t0 := time.Now()
-	if err := truncateTable(tableNetLocation); err != nil {
+	if err := truncateTable(ctx, tableNetLocation); err != nil {
 		return err
 	}
 	const q = `
@@ -1101,8 +1103,8 @@ func loadLocation(records []ip2location.LocationRecord, ipv6 bool) error {
 		b.Queue(q, a.IPFrom, a.IPTo, a.CountryCode, a.CountryName, a.RegionName, a.CityName, a.LatLong.Latitude, a.LatLong.Longitude)
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
-				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
-				r := db.SendBatch(ctx, &b)
+				c, cancel := context.WithTimeout(ctx, time.Second*10)
+				r := db.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -1117,9 +1119,9 @@ func loadLocation(records []ip2location.LocationRecord, ipv6 bool) error {
 	return nil
 }
 
-func loadProxies(records []ip2location.ProxyRecord, ipv6 bool) error {
+func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
 	t0 := time.Now()
-	if err := truncateTable(tableNetProxy); err != nil {
+	if err := truncateTable(ctx, tableNetProxy); err != nil {
 		return err
 	}
 	const q = `
@@ -1132,8 +1134,8 @@ func loadProxies(records []ip2location.ProxyRecord, ipv6 bool) error {
 			a.ISP, a.Domain, a.UsageType, a.ASN, a.AS, a.LastSeen, a.Threat)
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
-				ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
-				r := db.SendBatch(ctx, &b)
+				c, cancel := context.WithTimeout(ctx, time.Second*10)
+				r := db.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -1148,23 +1150,23 @@ func loadProxies(records []ip2location.ProxyRecord, ipv6 bool) error {
 	return nil
 }
 
-func getStats() (model.Stats, error) {
+func getStats(ctx context.Context) (model.Stats, error) {
 	const q = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
 		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_day,
-	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_week,
+	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_week,
 		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 MONTH')) as bans_month, 
-	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '3 MONTH')) as bans_3month,
-	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
-	       (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
+	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '3 MONTH')) as bans_3month,
+	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
+	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
 		(SELECT COUNT(net_id) FROM ban_net) as bans_cidr, 
 		(SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 0) as appeals_open,
 		(SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 1 OR appeal_state = 2) as appeals_closed,
 		(SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 	var stats model.Stats
-	if err := db.QueryRow(context.Background(), q).
+	if err := db.QueryRow(ctx, q).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth,
 			&stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal,
 			&stats.AppealsOpen, &stats.AppealsClosed, &stats.FilteredWords, &stats.ServersTotal,
@@ -1234,13 +1236,13 @@ func Migrate(action MigrationAction) error {
 			log.Errorf("Failed to close migrate driver: %v", e)
 		}
 	}()
-	source, err := httpfs.New(http.FS(migrations), "migrations")
-	if err != nil {
-		return err
-	}
-	m, err3 := migrate.NewWithInstance("iofs", source, "pgx", driver)
+	source, err3 := httpfs.New(http.FS(migrations), "migrations")
 	if err3 != nil {
-		return errors.Wrapf(err3, "Failed to migrate up")
+		return err3
+	}
+	m, err4 := migrate.NewWithInstance("iofs", source, "pgx", driver)
+	if err4 != nil {
+		return errors.Wrapf(err4, "Failed to migrate up")
 	}
 	switch action {
 	//case MigrateUpOne:
@@ -1259,7 +1261,7 @@ func Migrate(action MigrationAction) error {
 // Import will import bans from a root folder.
 // The formatting is JSON with the importedBan schema defined inline
 // Valid filenames are: main_ban.json
-func Import(root string) error {
+func Import(ctx context.Context, root string) error {
 	type importedBan struct {
 		BanID      int    `json:"ban_id"`
 		SteamID    uint64 `json:"steam_id"`
@@ -1286,11 +1288,11 @@ func Import(root string) error {
 				return err2
 			}
 			for _, im := range imported {
-				b1, e1 := GetOrCreatePersonBySteamID(steamid.SID64(im.SteamID))
+				b1, e1 := GetOrCreatePersonBySteamID(ctx, steamid.SID64(im.SteamID))
 				if e1 != nil {
 					return e1
 				}
-				b2, e2 := GetOrCreatePersonBySteamID(steamid.SID64(im.AuthorID))
+				b2, e2 := GetOrCreatePersonBySteamID(ctx, steamid.SID64(im.AuthorID))
 				if e2 != nil {
 					return e2
 				}
@@ -1301,12 +1303,12 @@ func Import(root string) error {
 				}
 				if len(sum) > 0 {
 					b1.PlayerSummary = &sum[0]
-					if err4 := SavePerson(b1); err4 != nil {
+					if err4 := SavePerson(ctx, b1); err4 != nil {
 						return err4
 					}
 					if b2.SteamID.Valid() && len(sum) > 1 {
 						b2.PlayerSummary = &sum[1]
-						if err5 := SavePerson(b2); err5 != nil {
+						if err5 := SavePerson(ctx, b2); err5 != nil {
 							return err5
 						}
 					}
@@ -1318,7 +1320,7 @@ func Import(root string) error {
 				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
 				bn.Source = model.System
 
-				if err4 := saveBan(bn); err4 != nil {
+				if err4 := saveBan(ctx, bn); err4 != nil {
 					return err4
 				}
 			}

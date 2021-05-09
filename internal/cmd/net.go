@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/spf13/cobra"
 	"log"
+	"time"
 )
 
 var netCmd = &cobra.Command{
@@ -27,7 +29,9 @@ var netUpdateCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Failed to read")
 		}
-		if err := service.InsertBlockListData(d); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*600)
+		defer cancel()
+		if err := service.InsertBlockListData(ctx, d); err != nil {
 			log.Fatalf("Failed to import")
 		}
 	},

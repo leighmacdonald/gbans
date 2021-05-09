@@ -94,23 +94,23 @@ func fetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 
 // getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra player summary info
-func getOrCreateProfileBySteamID(sid steamid.SID64, ipAddr string) (*model.Person, error) {
+func getOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*model.Person, error) {
 	sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to get player summary: %v", err)
 	}
-	p, err := GetOrCreatePersonBySteamID(sid)
+	p, err := GetOrCreatePersonBySteamID(ctx, sid)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to get person: %v", err)
 	}
 	s := sum[0]
 	p.SteamID = sid
 	p.PlayerSummary = &s
-	if errSave := SavePerson(p); errSave != nil {
+	if errSave := SavePerson(ctx, p); errSave != nil {
 		return nil, errors.Wrapf(errSave, "Failed to save person")
 	}
 	if ipAddr != "" && !p.IPAddr.Equal(net.ParseIP(ipAddr)) {
-		if errIP := addPersonIP(p, ipAddr); errIP != nil {
+		if errIP := addPersonIP(ctx, p, ipAddr); errIP != nil {
 			return nil, errors.Wrapf(errIP, "Could not add ip record")
 		}
 		p.IPAddr = net.ParseIP(ipAddr)

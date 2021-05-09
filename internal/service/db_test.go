@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -24,22 +25,42 @@ func TestServer(t *testing.T) {
 		CreatedOn:      config.Now(),
 		UpdatedOn:      config.Now(),
 	}
-	require.NoError(t, SaveServer(&s1))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	require.NoError(t, SaveServer(ctx, &s1))
 	require.True(t, s1.ServerID > 0)
-	s1Get, err := getServer(s1.ServerID)
+	s1Get, err := getServer(ctx, s1.ServerID)
 	require.NoError(t, err)
 	require.Equal(t, s1.ServerID, s1Get.ServerID)
-	require.NoError(t, dropServer(s1.ServerID))
+	require.Equal(t, s1.ServerName, s1Get.ServerName)
+	require.Equal(t, s1.Token, s1Get.Token)
+	require.Equal(t, s1.Address, s1Get.Address)
+	require.Equal(t, s1.Port, s1Get.Port)
+	require.Equal(t, s1.RCON, s1Get.RCON)
+	require.Equal(t, s1.Password, s1Get.Password)
+	require.Equal(t, s1.TokenCreatedOn.Second(), s1Get.TokenCreatedOn.Second())
+	require.Equal(t, s1.CreatedOn.Second(), s1Get.CreatedOn.Second())
+	require.Equal(t, s1.UpdatedOn.Second(), s1Get.UpdatedOn.Second())
+	sLenA, eS := getServers(ctx)
+	require.NoError(t, eS, "Failed to fetch servers")
+	require.True(t, len(sLenA) > 0, "Empty server results")
+	require.NoError(t, dropServer(ctx, s1.ServerID))
+	_, errDel := getServer(ctx, s1.ServerID)
+	require.True(t, errors.Is(errDel, errNoResult))
+	sLenB, _ := getServers(ctx)
+	require.True(t, len(sLenA)-1 == len(sLenB))
 }
 
 func TestBanNet(t *testing.T) {
 	banNetEqual := func(b1, b2 model.BanNet) {
 		require.Equal(t, b1.Reason, b2.Reason)
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
 	n1, _ := model.NewBanNet("172.16.1.0/24", "testing", time.Hour*100, model.System)
-	require.NoError(t, saveBanNet(&n1))
+	require.NoError(t, saveBanNet(ctx, &n1))
 	require.Less(t, int64(0), n1.NetID)
-	b1, err := getBanNet(net.ParseIP("172.16.1.100"))
+	b1, err := getBanNet(ctx, net.ParseIP("172.16.1.100"))
 	require.NoError(t, err)
 	banNetEqual(b1[0], n1)
 	require.Equal(t, b1[0].Reason, n1.Reason)
@@ -59,29 +80,31 @@ func TestBan(t *testing.T) {
 		require.Equal(t, b1.CreatedOn.Unix(), b2.CreatedOn.Unix())
 		require.Equal(t, b1.UpdatedOn.Unix(), b2.UpdatedOn.Unix())
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	defer cancel()
 	b1 := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
-	require.NoError(t, saveBan(b1), "Failed to add ban")
+	require.NoError(t, saveBan(ctx, b1), "Failed to add ban")
 
-	b1Fetched, err := getBanBySteamID(76561198084134025, false)
+	b1Fetched, err := getBanBySteamID(ctx, 76561198084134025, false)
 	require.NoError(t, err)
 	banEqual(b1, b1Fetched.Ban)
 
 	b1duplicate := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
-	require.True(t, errors.Is(saveBan(b1duplicate), errDuplicate), "Was able to add duplicate ban")
+	require.True(t, errors.Is(saveBan(ctx, b1duplicate), errDuplicate), "Was able to add duplicate ban")
 
 	b1Fetched.Ban.AuthorID = 76561198057999536
 	b1Fetched.Ban.ReasonText = "test reason"
 	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
 	b1Fetched.Ban.Note = "test note"
 	b1Fetched.Ban.Source = model.Web
-	require.NoError(t, saveBan(b1Fetched.Ban), "Failed to edit ban")
+	require.NoError(t, saveBan(ctx, b1Fetched.Ban), "Failed to edit ban")
 
-	b1FetchedUpdated, err := getBanBySteamID(76561198084134025, false)
+	b1FetchedUpdated, err := getBanBySteamID(ctx, 76561198084134025, false)
 	require.NoError(t, err)
 	banEqual(b1Fetched.Ban, b1FetchedUpdated.Ban)
 
-	require.NoError(t, dropBan(b1), "Failed to drop ban")
-	_, errMissing := getBanBySteamID(b1.SteamID, false)
+	require.NoError(t, dropBan(ctx, b1), "Failed to drop ban")
+	_, errMissing := getBanBySteamID(ctx, b1.SteamID, false)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, errNoResult))
 }
@@ -92,20 +115,21 @@ func TestFilteredWords(t *testing.T) {
 
 func TestAppeal(t *testing.T) {
 	b1 := model.NewBan(76561199093644873, 76561198003911389, time.Hour*24)
-	require.NoError(t, saveBan(b1), "Failed to add ban")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	require.NoError(t, saveBan(ctx, b1), "Failed to add ban")
 	appeal := model.Appeal{
 		BanID:       b1.BanID,
 		AppealText:  "Im a nerd",
 		AppealState: model.ASNew,
 		Email:       "",
 	}
-	require.NoError(t, saveAppeal(&appeal), "failed to save appeal")
+	require.NoError(t, saveAppeal(ctx, &appeal), "failed to save appeal")
 	require.True(t, appeal.AppealID > 0, "No appeal id set")
 	appeal.AppealState = model.ASDenied
 	appeal.Email = "test@test.com"
-	require.NoError(t, saveAppeal(&appeal), "failed to update appeal")
-
-	fetched, err := getAppeal(b1.BanID)
+	require.NoError(t, saveAppeal(ctx, &appeal), "failed to update appeal")
+	fetched, err := getAppeal(ctx, b1.BanID)
 	require.NoError(t, err, "failed to get appeal")
 	require.Equal(t, appeal.BanID, fetched.BanID)
 	require.Equal(t, appeal.Email, fetched.Email)
@@ -117,20 +141,19 @@ func TestAppeal(t *testing.T) {
 func TestPerson(t *testing.T) {
 	p1 := model.NewPerson(76561198083950961)
 	p2 := model.NewPerson(76561198084134025)
-	require.NoError(t, SavePerson(p1))
-	p2Fetched, err := GetOrCreatePersonBySteamID(p2.SteamID)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	defer cancel()
+	require.NoError(t, SavePerson(ctx, p1))
+	p2Fetched, err := GetOrCreatePersonBySteamID(ctx, p2.SteamID)
 	require.NoError(t, err)
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
-
-	pBadID, err := getPersonBySteamID(0)
+	pBadID, err := getPersonBySteamID(ctx, 0)
 	require.Error(t, err)
 	require.Nil(t, pBadID)
-
-	ips := getIPHistory(p1.SteamID)
-	require.NoError(t, addPersonIP(p1, "10.0.0.2"), "failed to add ip record")
-	require.NoError(t, addPersonIP(p1, "10.0.0.3"), "failed to add 2nd ip record")
-	ipsUpdated := getIPHistory(p1.SteamID)
+	ips := getIPHistory(ctx, p1.SteamID)
+	require.NoError(t, addPersonIP(ctx, p1, "10.0.0.2"), "failed to add ip record")
+	require.NoError(t, addPersonIP(ctx, p1, "10.0.0.3"), "failed to add 2nd ip record")
+	ipsUpdated := getIPHistory(ctx, p1.SteamID)
 	require.True(t, len(ipsUpdated)-len(ips) == 2)
-
-	require.NoError(t, dropPerson(p1.SteamID))
+	require.NoError(t, dropPerson(ctx, p1.SteamID))
 }

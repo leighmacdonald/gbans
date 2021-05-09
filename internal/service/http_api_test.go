@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRecorder) bool) {
@@ -46,9 +47,11 @@ type httpTestUnit struct {
 }
 
 func createToken(sid steamid.SID64, pr model.Privilege) string {
-	p, _ := GetOrCreatePersonBySteamID(sid)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	p, _ := GetOrCreatePersonBySteamID(ctx, sid)
 	p.PermissionLevel = pr
-	_ = SavePerson(p)
+	_ = SavePerson(ctx, p)
 	token, _ := newJWT(p.SteamID)
 	return token
 }
@@ -172,9 +175,9 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 		TokenCreatedOn: config.Now(), CreatedOn: config.Now(),
 		UpdatedOn: config.Now(),
 	}
-	_ = SaveServer(&s)
-	ctx, cancel := context.WithCancel(gCtx)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
+	_ = SaveServer(ctx, &s)
 	go logReader(ctx, logRawQueue)
 	token := createToken(76561198084134025, model.PAdmin)
 	for _, tc := range strings.Split(exampleLog, "\n") {

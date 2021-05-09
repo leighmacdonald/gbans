@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -9,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func initRouter() {
@@ -64,7 +66,9 @@ func initRouter() {
 				log.Warnf("Invalid steamID")
 				return
 			}
-			loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
+			cx, cancel := context.WithTimeout(gCtx, time.Second*6)
+			defer cancel()
+			loggedInPerson, err := getPersonBySteamID(cx, steamid.SID64(claims.SteamID))
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				c.AbortWithStatus(http.StatusForbidden)

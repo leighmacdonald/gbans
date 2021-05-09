@@ -139,15 +139,17 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		srv, err := getServerByName(req.ServerName)
+		ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		defer cancel()
+		srv, err := getServerByName(ctx, req.ServerName)
 		if err != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
 		srv.Token = golib.RandomString(40)
 		srv.TokenCreatedOn = config.Now()
-		if err := SaveServer(&srv); err != nil {
-			log.Errorf("Failed to updated server token: %v", err)
+		if err2 := SaveServer(ctx, &srv); err2 != nil {
+			log.Errorf("Failed to updated server token: %v", err2)
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
@@ -187,8 +189,10 @@ func onPostServerCheck() gin.HandlerFunc {
 			BanType:  model.Unknown,
 			Msg:      "",
 		}
+		ctx, cancel := context.WithTimeout(gCtx, time.Second*15)
+		defer cancel()
 		// Check IP first
-		banNet, err := getBanNet(req.IP)
+		banNet, err := getBanNet(ctx, req.IP)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
@@ -211,12 +215,12 @@ func onPostServerCheck() gin.HandlerFunc {
 			return
 		}
 		go func() {
-			_, e := getOrCreateProfileBySteamID(steamID, req.IP.String())
+			_, e := getOrCreateProfileBySteamID(ctx, steamID, req.IP.String())
 			if e != nil {
 				log.Errorf("Failed to update connecting player profile: %v", e)
 			}
 		}()
-		ban, err := getBanBySteamID(steamID, false)
+		ban, err := getBanBySteamID(ctx, steamID, false)
 		if err != nil {
 			if dbErr(err) == errNoResult {
 				resp.BanType = model.OK
@@ -258,7 +262,9 @@ func onPostServerCheck() gin.HandlerFunc {
 
 func onAPIGetServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		servers, err := getServers()
+		ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		defer cancel()
+		servers, err := getServers(ctx)
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -283,7 +289,9 @@ func onAPIGetPlayers() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		people, err2 := getPeople(qf)
+		ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		defer cancel()
+		people, err2 := getPeople(ctx, qf)
 		if err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -334,7 +342,7 @@ func onAPIProfile() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		cx, cancel := context.WithTimeout(gCtx, time.Second*10)
 		defer cancel()
 		sid, err := steamid.StringToSID64(r.Query)
 		if err != nil {
@@ -344,25 +352,25 @@ func onAPIProfile() gin.HandlerFunc {
 				return
 			}
 		}
-		person, err := GetOrCreatePersonBySteamID(sid)
-		if err != nil {
+		person, err2 := GetOrCreatePersonBySteamID(cx, sid)
+		if err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		sum, err := extra.PlayerSummaries(cx, []steamid.SID64{sid})
-		if err != nil || len(sum) != 1 {
-			log.Errorf("Failed to get player summary: %v", err)
+		sum, err3 := extra.PlayerSummaries(cx, []steamid.SID64{sid})
+		if err3 != nil || len(sum) != 1 {
+			log.Errorf("Failed to get player summary: %v", err3)
 			responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
 			return
 		}
 		person.PlayerSummary = &sum[0]
-		friendIDs, err := fetchFriends(person.SteamID)
-		if err != nil {
+		friendIDs, err4 := fetchFriends(person.SteamID)
+		if err4 != nil {
 			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
 		}
-		friends, err := fetchSummaries(friendIDs)
-		if err != nil {
+		friends, err5 := fetchSummaries(friendIDs)
+		if err5 != nil {
 			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
 		}
@@ -379,21 +387,22 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 		Words []string `json:"words"`
 	}
 	return func(c *gin.Context) {
-		words, err := getFilteredWords()
+		cx, cancel := context.WithTimeout(gCtx, time.Second*10)
+		defer cancel()
+		words, err := getFilteredWords(cx)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, resp{
-			Count: len(words),
-			Words: words,
-		})
+		responseOK(c, http.StatusOK, resp{Count: len(words), Words: words})
 	}
 }
 
 func onAPIGetStats() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		stats, err := getStats()
+		cx, cancel := context.WithTimeout(gCtx, time.Second*10)
+		defer cancel()
+		stats, err := getStats(cx)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -425,8 +434,9 @@ func onAPIGetBanByID() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-
-		ban, err := getBanByBanID(sid, false)
+		cx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		defer cancel()
+		ban, err := getBanByBanID(cx, sid, false)
 		if err != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			log.Errorf("Failed to fetch bans")
@@ -440,7 +450,9 @@ func onAPIGetBanByID() gin.HandlerFunc {
 func onAPIGetBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		o := newQueryFilter("")
-		bans, err := getBans(o)
+		cx, cancel := context.WithTimeout(gCtx, time.Second*10)
+		defer cancel()
+		bans, err := getBans(cx, o)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans")

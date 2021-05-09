@@ -24,14 +24,16 @@ var testDataCmd = &cobra.Command{
 	Short: "Add testing data",
 	Run: func(cmd *cobra.Command, args []string) {
 		service.Init(config.DB.DSN)
-		p, _ := service.GetOrCreatePersonBySteamID(steamid.SID64(76561198084134025))
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+		defer cancel()
+		p, _ := service.GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
 		sum1, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{p.SteamID})
 		if err != nil {
 			log.Errorf("Failed to get player summary: %v", err)
 			return
 		}
 		p.PlayerSummary = &sum1[0]
-		if err := service.SavePerson(p); err != nil {
+		if err := service.SavePerson(ctx, p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
 			return
 		}
@@ -79,7 +81,7 @@ var testDataCmd = &cobra.Command{
 		}
 		c := context.Background()
 		for i, bid := range b {
-			v, err := service.GetOrCreatePersonBySteamID(bid)
+			v, err := service.GetOrCreatePersonBySteamID(ctx, bid)
 			if err != nil {
 				log.Errorf("error creating person: %v", err)
 				return
@@ -93,7 +95,7 @@ var testDataCmd = &cobra.Command{
 				continue
 			}
 			v.PlayerSummary = &sum[0]
-			if err := service.SavePerson(v); err != nil {
+			if err := service.SavePerson(ctx, v); err != nil {
 				log.Warnf("Failed to save person: %v", err)
 				continue
 			}
@@ -130,7 +132,7 @@ var testDataCmd = &cobra.Command{
 				CreatedOn:      config.Now(),
 				UpdatedOn:      config.Now(),
 			}
-			if err := service.SaveServer(&s); err != nil {
+			if err := service.SaveServer(ctx, &s); err != nil {
 				log.Errorf("Failed to add server: %v", err)
 			}
 		}

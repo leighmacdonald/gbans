@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -40,7 +41,9 @@ func authMiddleWare() gin.HandlerFunc {
 		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
 			if config.General.Mode == "test" && token == testToken {
-				loggedInPerson, err2 := GetOrCreatePersonBySteamID(steamid.SID64(76561198084134025))
+				ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+				defer cancel()
+				loggedInPerson, err2 := GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
 				if err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -67,7 +70,9 @@ func authMiddleWare() gin.HandlerFunc {
 					log.Warnf("Invalid steamID")
 					return
 				}
-				loggedInPerson, err := getPersonBySteamID(steamid.SID64(claims.SteamID))
+				ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+				defer cancel()
+				loggedInPerson, err := getPersonBySteamID(ctx, steamid.SID64(claims.SteamID))
 				if err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -114,8 +119,9 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-
-		p, errProfile := getOrCreateProfileBySteamID(sid, c.Request.RemoteAddr)
+		ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		defer cancel()
+		p, errProfile := getOrCreateProfileBySteamID(ctx, sid, c.Request.RemoteAddr)
 		if errProfile != nil {
 			log.Errorf("Failed to fetch user profile: %v", errProfile)
 			c.Redirect(302, ref)
@@ -147,7 +153,7 @@ func onLoginSuccess() gin.HandlerFunc {
 	}
 }
 
-func getTokenKey(token *jwt.Token) (interface{}, error) {
+func getTokenKey(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 
