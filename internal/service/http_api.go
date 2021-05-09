@@ -167,7 +167,6 @@ type checkRequest struct {
 }
 
 func onPostServerCheck() gin.HandlerFunc {
-
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
 		SteamID  string        `json:"steam_id"`
@@ -215,7 +214,9 @@ func onPostServerCheck() gin.HandlerFunc {
 			return
 		}
 		go func() {
-			_, e := getOrCreateProfileBySteamID(ctx, steamID, req.IP.String())
+			ctxF, cancelF := context.WithTimeout(gCtx, time.Second*5)
+			defer cancelF()
+			_, e := getOrCreateProfileBySteamID(ctxF, steamID, req.IP.String())
 			if e != nil {
 				log.Errorf("Failed to update connecting player profile: %v", e)
 			}

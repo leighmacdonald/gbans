@@ -863,7 +863,7 @@ func getBansOlderThan(ctx context.Context, o *queryFilter, t time.Time) ([]model
 	defer rows.Close()
 	for rows.Next() {
 		var b model.Ban
-		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
+		if err = rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
 			&b.Source, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn); err != nil {
 			return nil, err
 		}
