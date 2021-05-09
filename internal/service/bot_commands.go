@@ -297,13 +297,21 @@ var commandHandlers = map[botCmd]func(s *discordgo.Session, m *discordgo.Interac
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if h, ok := commandHandlers[botCmd(i.Data.Name)]; ok {
-		//if err := sendPreResponse(s, i.Interaction); err != nil {
-		//	log.Errorf("Failed to send servers pre response: %v", err)
-		//	if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {
-		//		log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
-		//	}
-		//	return
-		//}
+		// sendPreResponse should be called for any commands that call external services or otherwise
+		// could not return a response instantly. Discord will timeout commands that dont respond within a
+		// very short timeout windows, ~2-3 seconds.
+		if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+			Data: &discordgo.InteractionApplicationCommandResponseData{
+				Content: "Calculating numberwang...",
+			},
+		}); err != nil {
+			log.Errorf("Failed to send servers pre response: %v", err)
+			if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {
+				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
+			}
+			return
+		}
 		resp, err := h(s, i)
 		if err != nil {
 			// TODO User facing errors only
@@ -311,10 +319,10 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
 			log.Errorf("User command error: %v", err)
-		} else {
-			if sendE := sendMsg(s, i.Interaction, resp); sendE != nil {
-				log.Errorf("Failed sending success response for interaction: %v", sendE)
-			}
+			return
+		}
+		if sendE := sendMsg(s, i.Interaction, resp); sendE != nil {
+			log.Errorf("Failed sending success response for interaction: %v", sendE)
 		}
 	}
 }

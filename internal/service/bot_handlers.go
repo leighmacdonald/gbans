@@ -537,7 +537,7 @@ func onServers(_ *discordgo.Session, m *discordgo.InteractionCreate) (string, er
 			t.AppendRow(table.Row{name, "OFFLINE", "", ""})
 		}
 	}
-	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
+	t.SortBy([]table.SortBy{{Name: "ID", Number: 2, Mode: table.Asc}})
 	var msg strings.Builder
 	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
 	return msg.String(), nil

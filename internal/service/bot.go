@@ -123,25 +123,13 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-// sendPreResponse should be called for any commands that call external services or otherwise
-// could not return a response instantly. Discord will timeout commands that dont respond within a
-// very short timeout windows, ~2-3 seconds.
-func sendPreResponse(s *discordgo.Session, i *discordgo.Interaction) error {
-	return s.InteractionRespond(i, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-	})
-}
-
 func sendMsg(s *discordgo.Session, i *discordgo.Interaction, msg string, args ...interface{}) error {
 	if !connected {
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	return s.InteractionRespond(i, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionApplicationCommandResponseData{
-			Content: fmt.Sprintf(msg, args...),
-		},
+	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{
+		Content: fmt.Sprintf(msg, args...),
 	})
 }
 
