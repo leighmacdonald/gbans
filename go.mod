@@ -41,7 +41,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/yohcop/openid-go v1.0.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
