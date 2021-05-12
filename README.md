@@ -53,7 +53,7 @@ Nginx/Apache and PHP on your server.
 ## Docker
 
 Docker is recommended to run gbans. You can find the official docker images at 
-(dockerhub)[https://hub.docker.com/repository/docker/leighmacdonald/gbans].
+[dockerhub](https://hub.docker.com/repository/docker/leighmacdonald/gbans).
 
 Assuming you have created your config file and have a database setup you can run it using something
 like:
