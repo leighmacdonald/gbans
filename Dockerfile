@@ -1,4 +1,4 @@
-FROM node:15.14 as frontend
+FROM node:16.1.0 as frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
