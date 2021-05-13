@@ -419,7 +419,7 @@ func onAPIGetStats() gin.HandlerFunc {
 	}
 }
 
-func loadBanMeta(b *model.BannedPerson) {
+func loadBanMeta(_ *model.BannedPerson) {
 
 }
 

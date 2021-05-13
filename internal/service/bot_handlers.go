@@ -218,7 +218,11 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 	asn, _ := getASNRecord(ctx, bannedPlayer.IPAddr)
 	location, _ := getLocationRecord(ctx, bannedPlayer.IPAddr)
 	proxy, _ := getProxyRecord(ctx, bannedPlayer.IPAddr)
-	t := defaultTable(fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName))
+	title := fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName)
+	if ban != nil && ban.Ban.BanID > 0 {
+		title += " (BANNED)"
+	}
+	t := defaultTable(title)
 	t.AppendSeparator()
 	t.SuppressEmptyColumns()
 	t.AppendRow(table.Row{
@@ -236,6 +240,26 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 	t.AppendRow(table.Row{
 		"STEAM3", steamid.SID64ToSID3(bannedPlayer.SteamID),
 		"STEAM32", steamid.SID64ToSID32(bannedPlayer.SteamID),
+	})
+	vacState := "false"
+	if bannedPlayer.VACBans > 0 {
+		vacState = fmt.Sprintf("true (count: %d)", bannedPlayer.VACBans)
+	}
+	gameState := "false"
+	if bannedPlayer.VACBans > 0 {
+		gameState = fmt.Sprintf("true (count: %d)", bannedPlayer.GameBans)
+	}
+	t.AppendRow(table.Row{
+		"VAC Banned", vacState,
+		"Game Banned", gameState,
+	})
+	ecoBan := "false"
+	if bannedPlayer.EconomyBan != "none" {
+		ecoBan = bannedPlayer.EconomyBan
+	}
+	t.AppendRow(table.Row{
+		"Community Ban", bannedPlayer.CommunityBanned,
+		"Economy Ban", ecoBan,
 	})
 	t.AppendRow(table.Row{"Banned", banned, "Muted", muted})
 	if ban != nil && ban.Ban.BanID > 0 {

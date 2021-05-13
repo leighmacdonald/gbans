@@ -231,14 +231,19 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 type Person struct {
-	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id"`
-	Name            string        `db:"name" json:"name"`
-	CreatedOn       time.Time     `db:"created_on" json:"created_on"`
-	UpdatedOn       time.Time     `db:"updated_on" json:"updated_on"`
-	PermissionLevel Privilege     `db:"permission_level" json:"permission_level"`
-	IsNew           bool          `db:"-" json:"-"`
-	DiscordID       string        `db:"discord_id" json:"discord_id"`
-	IPAddr          net.IP        `db:"ip_addr" json:"ip_addr"`
+	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id"`
+	Name             string        `db:"name" json:"name"`
+	CreatedOn        time.Time     `db:"created_on" json:"created_on"`
+	UpdatedOn        time.Time     `db:"updated_on" json:"updated_on"`
+	PermissionLevel  Privilege     `db:"permission_level" json:"permission_level"`
+	IsNew            bool          `db:"-" json:"-"`
+	DiscordID        string        `db:"discord_id" json:"discord_id"`
+	IPAddr           net.IP        `db:"ip_addr" json:"ip_addr"`
+	CommunityBanned  bool
+	VACBans          int
+	GameBans         int
+	EconomyBan       string
+	DaysSinceLastBan int
 	*extra.PlayerSummary
 }
 

@@ -270,7 +270,8 @@ func getBanByColumn(ctx context.Context, column string, identifier interface{}, 
 		"p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
-		"p.permission_level", "p.discord_id").
+		"p.permission_level", "p.discord_id", "p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban",
+		"p.days_since_last_ban").
 		From(fmt.Sprintf("%s b", tableBan)).
 		LeftJoin("person p ON b.steam_id = p.steam_id").
 		GroupBy("b.ban_id, p.steam_id").
@@ -289,7 +290,8 @@ func getBanByColumn(ctx context.Context, column string, identifier interface{}, 
 			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName,
 			&b.Person.ProfileURL, &b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull,
 			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
-			&b.Person.LocStateCode, &b.Person.LocCityID, &b.Person.PermissionLevel, &b.Person.DiscordID); err != nil {
+			&b.Person.LocStateCode, &b.Person.LocCityID, &b.Person.PermissionLevel, &b.Person.DiscordID, &b.Person.CommunityBanned,
+			&b.Person.VACBans, &b.Person.GameBans, &b.Person.EconomyBan, &b.Person.DaysSinceLastBan); err != nil {
 		return b, dbErr(err)
 	}
 	if full {
@@ -537,6 +539,11 @@ func updatePerson(ctx context.Context, p *model.Person) error {
 		Set("loccityid", p.PlayerSummary.LocCityID).
 		Set("permission_level", p.PermissionLevel).
 		Set("discord_id", p.DiscordID).
+		Set("community_banned", p.CommunityBanned).
+		Set("vac_bans", p.VACBans).
+		Set("game_bans", p.GameBans).
+		Set("economy_ban", p.EconomyBan).
+		Set("days_since_last_ban", p.DaysSinceLastBan).
 		Where(sq.Eq{"steam_id": p.SteamID}).
 		ToSql()
 	if e != nil {
@@ -555,11 +562,13 @@ func insertPerson(ctx context.Context, p *model.Person) error {
 			"created_on", "updated_on", "steam_id", "communityvisibilitystate",
 			"profilestate", "personaname", "profileurl", "avatar", "avatarmedium", "avatarfull",
 			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode",
-			"loccityid", "permission_level", "discord_id").
+			"loccityid", "permission_level", "discord_id", "community_banned", "vac_bans", "game_bans",
+			"economy_ban", "days_since_last_ban").
 		Values(p.CreatedOn, p.UpdatedOn, p.SteamID,
 			p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
 			p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
-			p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel, p.DiscordID).
+			p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel, p.DiscordID, p.CommunityBanned, p.VACBans,
+			p.GameBans, p.EconomyBan, p.DaysSinceLastBan).
 		ToSql()
 	if e != nil {
 		return e
@@ -572,10 +581,12 @@ func insertPerson(ctx context.Context, p *model.Person) error {
 	return nil
 }
 
+//"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"
 var profileColumns = []string{"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id"}
+	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
+	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"}
 
 // getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
 // is not known.
@@ -589,7 +600,8 @@ func getPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, 
 	SELECT 
 	    p.steam_id, created_on, updated_on, communityvisibilitystate, profilestate, personaname, profileurl, avatar,
 		avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated, loccountrycode, locstatecode, loccityid,
-		permission_level, discord_id, a.ip_addr  from person p
+		permission_level, discord_id, a.ip_addr, community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban 
+	FROM person p
 	left join addresses a on p.steam_id = a.steam_id
 	WHERE p.steam_id = $1;`
 
@@ -599,7 +611,8 @@ func getPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, 
 	err := db.QueryRow(ctx, q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
-		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr)
+		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr, &p.CommunityBanned,
+		&p.VACBans, &p.GameBans, &p.EconomyBan, &p.DaysSinceLastBan)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -638,7 +651,8 @@ func getPeople(ctx context.Context, qf *queryFilter) ([]*model.Person, error) {
 		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.IPAddr, &p.CommunityVisibilityState,
 			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
-			&p.PermissionLevel, &p.DiscordID); err2 != nil {
+			&p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans, &p.EconomyBan,
+			&p.DaysSinceLastBan); err2 != nil {
 			return nil, err2
 		}
 		people = append(people, p)
@@ -676,7 +690,8 @@ func getPersonByDiscordID(ctx context.Context, did string) (*model.Person, error
 	err := db.QueryRow(ctx, q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
-		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID)
+		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans,
+		&p.EconomyBan, &p.DaysSinceLastBan)
 	if err != nil {
 		return nil, dbErr(err)
 	}
@@ -811,7 +826,8 @@ func getBans(ctx context.Context, o *queryFilter) ([]*model.BannedPerson, error)
 		"p.steam_id", "p.created_on", "p.updated_on", "p.communityvisibilitystate", "p.profilestate",
 		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
 		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
-		"p.permission_level", "p.discord_id").
+		"p.permission_level", "p.discord_id", "p.community_banned", "p.vac_bans", "p.game_bans",
+		"p.economy_ban", "p.days_since_last_ban").
 		From(fmt.Sprintf("%s b", string(tableBan))).
 		LeftJoin("person p on p.steam_id = b.steam_id").
 		OrderBy(fmt.Sprintf("b.%s", o.OrderBy)).
@@ -837,7 +853,8 @@ func getBans(ctx context.Context, o *queryFilter) ([]*model.BannedPerson, error)
 			&b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull, &b.Person.AvatarHash,
 			&b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
 			&b.Person.LocStateCode, &b.Person.LocCityID, &b.Person.PermissionLevel,
-			&b.Person.DiscordID); err != nil {
+			&b.Person.DiscordID, &b.Person.CommunityBanned, &b.Person.VACBans, &b.Person.GameBans, &b.Person.EconomyBan,
+			&b.Person.DaysSinceLastBan); err != nil {
 			return nil, err
 		}
 		bans = append(bans, b)

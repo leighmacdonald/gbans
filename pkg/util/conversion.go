@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+// StringToFloat64 converts a string to a float64, returning a default values on
+// conversion error
 func StringToFloat64(s string, def float64) float64 {
 	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {

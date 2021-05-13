@@ -154,10 +154,13 @@ var (
 	Net     netBans
 )
 
+// FmtTimeShort returns a common format for time display
 func FmtTimeShort(t time.Time) string {
 	return t.Format("Mon Jan 2 15:04:05 MST 2006")
 }
 
+// FmtDuration calculates and returns a string for duration differences. This handles
+// values larger than a day unlike the stdlib in functionalities
 func FmtDuration(t time.Time) string {
 	year, month, day, hour, min, _ := diff(t, Now())
 	var pcs []string
