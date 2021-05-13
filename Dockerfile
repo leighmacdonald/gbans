@@ -1,4 +1,5 @@
-FROM node:16.1.0 as frontend
+# node-sass does not compile with node:16 yet
+FROM node:15 as frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
