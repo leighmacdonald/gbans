@@ -1004,7 +1004,7 @@ func getLocationRecord(ctx context.Context, ip net.IP) (*ip2location.LocationRec
 	const q = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
-		WHERE $1 BETWEEN ip_from AND ip_to`
+		WHERE $1 <@ ip_range`
 	var r ip2location.LocationRecord
 	if err := db.QueryRow(ctx, q, ip).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
@@ -1018,7 +1018,7 @@ func getProxyRecord(ctx context.Context, ip net.IP) (*ip2location.ProxyRecord, e
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
-		WHERE $1 BETWEEN ip_from AND ip_to`
+		WHERE $1 <@ ip_range`
 	var r ip2location.ProxyRecord
 	if err := db.QueryRow(ctx, q, ip).
 		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
@@ -1052,9 +1052,9 @@ func getPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, err
 			   coalesce(p.isp, ''), coalesce(p.usage_type, ''), 
 		       coalesce(p.threat, ''), coalesce(p.domain_used, '')
 		FROM person_ip ip
-		LEFT JOIN net_location l ON ip.ip_addr BETWEEN l.ip_from AND l.ip_to
-		LEFT JOIN net_asn a ON ip.ip_addr BETWEEN a.ip_from AND a.ip_to
-		LEFT OUTER JOIN net_proxy p ON ip.ip_addr BETWEEN p.ip_from AND p.ip_to
+		LEFT JOIN net_location l ON ip.ip_addr <@ l.ip_range
+		LEFT JOIN net_asn a ON ip.ip_addr <@ a.ip_range
+		LEFT OUTER JOIN net_proxy p ON ip.ip_addr <@ p.ip_range
 		WHERE ip.steam_id = $1`
 	rows, err := db.Query(ctx, q, sid.Int64())
 	if err != nil {
@@ -1085,7 +1085,9 @@ func loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	if err := truncateTable(ctx, tableNetASN); err != nil {
 		return err
 	}
-	const q = "INSERT INTO net_asn (ip_from, ip_to, cidr, as_num, as_name) VALUES($1, $2, $3, $4, $5)"
+	const q = `
+		INSERT INTO net_asn (ip_from, ip_to, cidr, as_num, as_name, ip_range) 
+		VALUES($1, $2, $3, $4, $5, iprange($1, $2))`
 	b := pgx.Batch{}
 	for i, a := range records {
 		b.Queue(q, a.IPFrom, a.IPTo, a.CIDR, a.ASNum, a.ASName)
@@ -1113,8 +1115,8 @@ func loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ b
 		return err
 	}
 	const q = `
-		INSERT INTO net_location (ip_from, ip_to, country_code, country_name, region_name, city_name, location)
-		VALUES($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($8, $7), 4326))`
+		INSERT INTO net_location (ip_from, ip_to, country_code, country_name, region_name, city_name, location, ip_range)
+		VALUES($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($8, $7), 4326), iprange($1, $2))`
 	b := pgx.Batch{}
 	for i, a := range records {
 		b.Queue(q, a.IPFrom, a.IPTo, a.CountryCode, a.CountryName, a.RegionName, a.CityName, a.LatLong.Latitude, a.LatLong.Longitude)
@@ -1143,8 +1145,8 @@ func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool)
 	}
 	const q = `
 		INSERT INTO net_proxy (ip_from, ip_to, proxy_type, country_code, country_name, region_name, city_name, isp,
-		                       domain_used, usage_type, as_num, as_name, last_seen, threat)
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+		                       domain_used, usage_type, as_num, as_name, last_seen, threat, ip_range)
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, iprange($1, $2))`
 	b := pgx.Batch{}
 	for i, a := range records {
 		b.Queue(q, a.IPFrom, a.IPTo, a.ProxyType, a.CountryCode, a.CountryName, a.RegionName, a.CityName,
