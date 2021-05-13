@@ -230,7 +230,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 		"Profile", strings.Replace(bannedPlayer.ProfileURL, "https://", "", 1)})
 	cd := time.Unix(int64(bannedPlayer.TimeCreated), 0)
 	t.AppendRow(table.Row{
-		"Account Age", time.Since(cd).String(),
+		"Account Age", config.FmtDuration(cd),
 		"Private", bannedPlayer.CommunityVisibilityState == 1,
 	})
 	t.AppendRow(table.Row{
