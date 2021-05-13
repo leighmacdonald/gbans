@@ -243,7 +243,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 	})
 	vacState := "false"
 	if bannedPlayer.VACBans > 0 {
-		vacState = fmt.Sprintf("true (count: %d)", bannedPlayer.VACBans)
+		vacState = fmt.Sprintf("true (count: %d) (days: %d)", bannedPlayer.VACBans, bannedPlayer.DaysSinceLastBan)
 	}
 	gameState := "false"
 	if bannedPlayer.VACBans > 0 {
