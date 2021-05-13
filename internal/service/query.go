@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
+	"strings"
 	"sync"
 	"time"
 )
@@ -48,7 +49,7 @@ func queryRCON(ctx context.Context, servers []model.Server, commands ...string) 
 			}
 			for _, command := range commands {
 				log.WithFields(log.Fields{"server": server.ServerName}).Debugf("RCON: %s", command)
-				resp, err := conn.Exec(command)
+				resp, err := conn.Exec(sanitizeRCONCommand(command))
 				if err != nil {
 					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, err)
 				}
@@ -62,12 +63,19 @@ func queryRCON(ctx context.Context, servers []model.Server, commands ...string) 
 	return responses
 }
 
+// sanitizeRCONCommand is a very basic check for injection of additional commands
+// using `;` as a command separator. This will just return the first part of the command
+func sanitizeRCONCommand(s string) string {
+	p := strings.SplitN(s, ";", 1)
+	return p[0]
+}
+
 func execServerRCON(server model.Server, cmd string) (string, error) {
 	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
 	if err != nil {
 		return "", errors.Errorf("Failed to dial server: %s", server.ServerName)
 	}
-	resp, err2 := r.Exec(cmd)
+	resp, err2 := r.Exec(sanitizeRCONCommand(cmd))
 	if err2 != nil {
 		return "", errors.Errorf("Failed to exec command: %v", err)
 	}
