@@ -3,6 +3,7 @@ import { Route } from 'react-router-dom';
 import { RouteProps } from 'react-router';
 
 export interface PrivateRouteProps extends RouteProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     component: any;
     permission: number;
 }

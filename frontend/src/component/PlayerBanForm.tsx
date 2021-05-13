@@ -97,6 +97,7 @@ export const PlayerBanForm = ({
         // Validate results
     }, [profile]);
     const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [
+        onProfileChanged,
         setProfile,
         fSteam
     ]);

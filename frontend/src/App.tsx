@@ -50,16 +50,16 @@ const useStyles = makeStyles((theme) => ({
 
 export const App = (): JSX.Element => {
     const classes = useStyles();
-    const [currentUser, setCurrentUser] = useState<NonNullable<PlayerProfile>>(
-        GuestProfile
-    );
+    const [currentUser, setCurrentUser] =
+        useState<NonNullable<PlayerProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
             if (token != null && token != '') {
-                const profile = (await apiGetCurrentProfile()) as NonNullable<PlayerProfile>;
+                const profile =
+                    (await apiGetCurrentProfile()) as NonNullable<PlayerProfile>;
                 setCurrentUser(profile);
             }
         };

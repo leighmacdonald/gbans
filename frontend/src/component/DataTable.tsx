@@ -193,11 +193,10 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
             rowCount,
             onRequestSort
         } = props;
-        const createSortHandler = (property: keyof TRecord) => (
-            event: React.MouseEvent<unknown>
-        ) => {
-            onRequestSort(event, property);
-        };
+        const createSortHandler =
+            (property: keyof TRecord) => (event: React.MouseEvent<unknown>) => {
+                onRequestSort(event, property);
+            };
 
         return (
             <TableHead>
@@ -408,7 +407,8 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                                                     <Checkbox
                                                         checked={isItemSelected}
                                                         inputProps={{
-                                                            'aria-labelledby': labelId
+                                                            'aria-labelledby':
+                                                                labelId
                                                         }}
                                                     />
                                                 </TableCell>
