@@ -12,3 +12,13 @@ func TestIsFilteredWord(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, "badword", word)
 }
+
+func TestStringChunkDelimited(t *testing.T) {
+	s := `aaaaaaaaaa
+bbbbbbbbbb
+cccccccccc
+dddddddddd
+`
+	v := StringChunkDelimited(s, 30, "\n")
+	require.Equal(t, 2, len(v))
+}

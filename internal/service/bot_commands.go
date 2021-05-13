@@ -323,11 +323,20 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
+
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		if sendE := sendMsg(s, i.Interaction, resp); sendE != nil {
-			log.Errorf("Failed sending success response for interaction: %v", sendE)
+		for idx, m := range util.StringChunkDelimited(resp, 2000) {
+			if idx == 0 {
+				if sendE := sendMsg(s, i.Interaction, m); sendE != nil {
+					log.Errorf("Failed sending success response for interaction: %v", sendE)
+				}
+			} else {
+				if _, sendE := s.ChannelMessageSend(i.ChannelID, m); sendE != nil {
+					log.Errorf("Failed sending success (paged) response for interaction: %v", sendE)
+				}
+			}
 		}
 	}
 }
