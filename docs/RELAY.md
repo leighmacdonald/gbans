@@ -34,7 +34,6 @@ You can create a systemd service with something like this.
 `/etc/systemd/system/gbans-relay.service`
 
 ```yaml
- cat 
 [Unit]
 Description=gbans log relay
 After=network.target
