@@ -28,10 +28,12 @@ export const GuestProfile: PlayerProfile = {
     },
     friends: []
 };
+
 export type CurrentUser = {
     currentUser: PlayerProfile;
     setCurrentUser: (profile: PlayerProfile) => void;
 };
+
 export const CurrentUserCtx = createContext<CurrentUser>({
     currentUser: GuestProfile,
     setCurrentUser: noop

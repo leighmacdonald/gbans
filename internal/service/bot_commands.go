@@ -298,6 +298,11 @@ var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session,
 	cmdHistory:  onHistory,
 }
 
+const (
+	discordMaxMsgLen  = 2000
+	discordMsgWrapper = "```"
+)
+
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if h, ok := commandHandlers[botCmd(i.Data.Name)]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
@@ -327,13 +332,13 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		for idx, m := range util.StringChunkDelimited(resp, 2000) {
+		for idx, m := range util.StringChunkDelimited(resp, discordMaxMsgLen-(len(discordMsgWrapper)*2)) {
 			if idx == 0 {
-				if sendE := sendMsg(s, i.Interaction, m); sendE != nil {
+				if sendE := sendMsg(s, i.Interaction, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
 					log.Errorf("Failed sending success response for interaction: %v", sendE)
 				}
 			} else {
-				if _, sendE := s.ChannelMessageSend(i.ChannelID, m); sendE != nil {
+				if _, sendE := s.ChannelMessageSend(i.ChannelID, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
 					log.Errorf("Failed sending success (paged) response for interaction: %v", sendE)
 				}
 			}

@@ -300,9 +300,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 			"Logs.tf Count", logData.Total,
 		})
 	}
-	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return msg.String(), nil
+	return t.Render(), nil
 }
 
 func onHistory(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
@@ -345,9 +343,7 @@ func onHistoryIP(ctx context.Context, _ *discordgo.Session, m *discordgo.Interac
 		})
 		lastIp = rec.IP
 	}
-	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return msg.String(), nil
+	return t.Render(), nil
 }
 
 func onHistoryChat(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (string, error) {
@@ -526,9 +522,7 @@ func onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.Interacti
 		}
 	}
 	t.SortBy([]table.SortBy{{Name: "ID", Number: 2, Mode: table.Asc}})
-	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return msg.String(), nil
+	return t.Render(), nil
 }
 
 func getServerStatus(server model.Server) (extra.Status, error) {
@@ -664,7 +658,5 @@ func onPlayers(ctx context.Context, s *discordgo.Session, m *discordgo.Interacti
 		t.AppendRow(table.Row{p.IP, p.SID.String(), p.Name})
 	}
 	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
-	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("```\n%s\n```", t.Render()))
-	return "", sendMsg(s, m.Interaction, msg.String())
+	return t.Render(), nil
 }
