@@ -159,12 +159,14 @@ func logReader(ctx context.Context, logRows chan LogPayload) {
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
 			}
-			readers, ok := logEventReaders[le.Type]
-			if !ok {
-				continue
-			}
-			for _, reader := range readers {
-				reader <- le
+			for _, typ := range []logparse.MsgType{le.Type, logparse.Any} {
+				readers, ok := logEventReaders[typ]
+				if !ok {
+					continue
+				}
+				for _, reader := range readers {
+					reader <- le
+				}
 			}
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
