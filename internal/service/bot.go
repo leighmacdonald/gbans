@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -95,9 +96,12 @@ func discordMessageQueueReader(ctx context.Context) {
 				sendQueueMu.Unlock()
 				continue
 			}
-			for _, channelID := range config.Relay.ChannelIDs {
-				if err := sendChannelMessage(dg, channelID, strings.Join(sendQueue, "\n")); err != nil {
-					log.Errorf("Failed to send bulk message log")
+			msg := strings.Join(sendQueue, "\n")
+			for _, m := range util.StringChunkDelimited(msg, discordMaxMsgLen-(len(discordMsgWrapper)*2)) {
+				for _, channelID := range config.Relay.ChannelIDs {
+					if err := sendChannelMessage(dg, channelID, m); err != nil {
+						log.Errorf("Failed to send bulk message log: %v", err)
+					}
 				}
 			}
 			sendQueue = nil
