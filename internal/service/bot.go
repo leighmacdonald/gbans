@@ -77,19 +77,14 @@ func discordMessageQueueReader(ctx context.Context) {
 	for {
 		select {
 		case dm := <-events:
-			switch dm.Type {
-			case logparse.SayTeam:
-				fallthrough
-			case logparse.Say:
-				prefix := ""
-				if dm.Type == logparse.SayTeam {
-					prefix = "(team) "
-				}
-				sendQueueMu.Lock()
-				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-					dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"]))
-				sendQueueMu.Unlock()
+			prefix := ""
+			if dm.Type == logparse.SayTeam {
+				prefix = "(team) "
 			}
+			sendQueueMu.Lock()
+			sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
+				dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"]))
+			sendQueueMu.Unlock()
 		case <-messageTicker.C:
 			sendQueueMu.Lock()
 			if len(sendQueue) == 0 {
