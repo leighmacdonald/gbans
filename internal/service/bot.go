@@ -24,13 +24,7 @@ var (
 	errInvalidDuration = errors.New("Invalid duration")
 	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
 	errTooLarge        = errors.Errorf("Max message length is %d", discordMaxMsgLen)
-
-	botEventQueue chan interface{}
 )
-
-func init() {
-	botEventQueue = make(chan interface{})
-}
 
 func startDiscord(ctx context.Context, token string) {
 	d, err := discordgo.New("Bot " + token)
@@ -68,6 +62,9 @@ func startDiscord(ctx context.Context, token string) {
 	<-ctx.Done()
 }
 
+// discordMessageQueueReader functions by registering event handlers for the two user message events
+// Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
+// we queue messages and periodically send them out as multiline string blocks instead.
 func discordMessageQueueReader(ctx context.Context) {
 	events := make(chan logEvent)
 	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
@@ -95,6 +92,7 @@ func discordMessageQueueReader(ctx context.Context) {
 		case <-messageTicker.C:
 			sendQueueMu.Lock()
 			if len(sendQueue) == 0 {
+				sendQueueMu.Unlock()
 				continue
 			}
 			for _, channelID := range config.Relay.ChannelIDs {
