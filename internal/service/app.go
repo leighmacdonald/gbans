@@ -20,11 +20,12 @@ import (
 
 var (
 	// BuildVersion holds the current git revision, as of build time
-	BuildVersion      = "master"
-	router            *gin.Engine
-	gCtx              context.Context
-	serverStateMu     *sync.RWMutex
-	serverStates      map[string]serverState
+	BuildVersion  = "master"
+	router        *gin.Engine
+	gCtx          context.Context
+	serverStateMu *sync.RWMutex
+	serverStates  map[string]serverState
+	// Holds ephemeral user warning state for things such as word filters
 	warnings          map[steamid.SID64][]userWarning
 	warningsMu        *sync.RWMutex
 	httpServer        *http.Server
@@ -64,6 +65,7 @@ func registerLogEventReader(r chan logEvent, msgTypes []logparse.MsgType) error 
 		}
 		logEventReaders[msgType] = append(logEventReaders[msgType], r)
 	}
+	log.Debugf("Registered %d event readers", len(msgTypes))
 	return nil
 }
 
@@ -129,6 +131,8 @@ func logWriter(ctx context.Context) {
 	}
 }
 
+// logReader is the fan-out orchestrator for game log events
+// Registering receivers can be accomplished with registerLogEventReader
 func logReader(ctx context.Context, logRows chan LogPayload) {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
@@ -159,6 +163,7 @@ func logReader(ctx context.Context, logRows chan LogPayload) {
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
 			}
+			// Ensure we also send to Any handlers for all events.
 			for _, typ := range []logparse.MsgType{le.Type, logparse.Any} {
 				readers, ok := logEventReaders[typ]
 				if !ok {
