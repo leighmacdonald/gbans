@@ -157,3 +157,30 @@ func TestPerson(t *testing.T) {
 	require.True(t, len(ipsUpdated)-len(ips) == 2)
 	require.NoError(t, dropPerson(ctx, p1.SteamID))
 }
+
+func TestFilters(t *testing.T) {
+	existingFilters, err := getFilters(context.Background())
+	require.NoError(t, err)
+	words := []string{golib.RandomString(10), golib.RandomString(10)}
+	var savedFilters []*model.Filter
+	for _, word := range words {
+		f, e := insertFilter(context.Background(), word)
+		require.NoError(t, e, "Failed to insert filter: %s", word)
+		require.True(t, f.WordID > 0)
+		savedFilters = append(savedFilters, f)
+	}
+	currentFilters, err := getFilters(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
+	if savedFilters != nil {
+		require.NoError(t, dropFilter(context.Background(), savedFilters[0]))
+		byId, errId := getFilterByID(context.Background(), savedFilters[1].WordID)
+		require.NoError(t, errId)
+		require.Equal(t, savedFilters[1].WordID, byId.WordID)
+		require.Equal(t, savedFilters[1].Word.String(), byId.Word.String())
+	}
+	droppedFilters, err := getFilters(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, len(existingFilters)+len(words)-1, len(droppedFilters))
+
+}

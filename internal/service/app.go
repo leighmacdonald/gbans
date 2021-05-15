@@ -278,7 +278,7 @@ func initFilters() {
 	// TODO load external lists via http
 	c, cancel := context.WithTimeout(gCtx, time.Second*15)
 	defer cancel()
-	words, err := getFilteredWords(c)
+	words, err := getFilters(c)
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
