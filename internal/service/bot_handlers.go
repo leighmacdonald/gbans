@@ -193,7 +193,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 		return "", errCommandFailed
 	}
 	if err3 == errNoResult && err4 == errNoResult {
-		return "", sendMsg(s, m.Interaction, "No ban for user in db")
+		return "", sendInteractionMessageEdit(s, m.Interaction, "No ban for user in db")
 	}
 	banned := false
 	muted := false

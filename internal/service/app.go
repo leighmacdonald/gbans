@@ -29,7 +29,7 @@ var (
 	warningsMu        *sync.RWMutex
 	httpServer        *http.Server
 	logRawQueue       chan LogPayload
-	logEventReaders   []chan logEvent
+	logEventReaders   map[logparse.MsgType][]chan logEvent
 	logEventReadersMu *sync.RWMutex
 	//go:embed dist
 	content embed.FS
@@ -49,16 +49,21 @@ type userWarning struct {
 	CreatedOn  time.Time
 }
 
+func init() {
+	logEventReaders = map[logparse.MsgType][]chan logEvent{}
+}
+
 // registerLogEventReader will register a channel to receive new log events as they come in
-func registerLogEventReader(r chan logEvent) error {
+func registerLogEventReader(r chan logEvent, msgTypes []logparse.MsgType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
-	for _, c := range logEventReaders {
-		if c == r {
-			return errDuplicate
+	for _, msgType := range msgTypes {
+		_, found := logEventReaders[msgType]
+		if !found {
+			logEventReaders[msgType] = []chan logEvent{}
 		}
+		logEventReaders[msgType] = append(logEventReaders[msgType], r)
 	}
-	logEventReaders = append(logEventReaders, r)
 	return nil
 }
 
@@ -104,7 +109,7 @@ type logEvent struct {
 
 func logWriter(ctx context.Context) {
 	events := make(chan logEvent)
-	if err := registerLogEventReader(events); err != nil {
+	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	for {
@@ -124,12 +129,7 @@ func logWriter(ctx context.Context) {
 	}
 }
 
-func logReader(ctx context.Context, logRows chan LogPayload, readers ...chan logEvent) {
-	for _, reader := range readers {
-		if err := registerLogEventReader(reader); err != nil {
-			log.Warnf("Tried to register duplicate log event reader")
-		}
-	}
+func logReader(ctx context.Context, logRows chan LogPayload) {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
@@ -159,7 +159,11 @@ func logReader(ctx context.Context, logRows chan LogPayload, readers ...chan log
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
 			}
-			for _, reader := range logEventReaders {
+			readers, ok := logEventReaders[le.Type]
+			if !ok {
+				continue
+			}
+			for _, reader := range readers {
 				reader <- le
 			}
 		case <-ctx.Done():

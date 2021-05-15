@@ -52,9 +52,9 @@ func onPostPingMod() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		for _, c := range config.Discord.ModChannels {
-			sendMessage(newMessage(c, fmt.Sprintf("<@&%s> %s", config.Discord.ModRoleID, req.Reason)))
-		}
+		//for _, c := range config.Discord.ModChannels {
+		//	sendMessage(newMessage(c, fmt.Sprintf("<@&%s> %s", config.Discord.ModRoleID, req.Reason)))
+		//}
 		responseOK(c, http.StatusOK, gin.H{
 			"client":  req.Client,
 			"message": "Moderators have been notified",

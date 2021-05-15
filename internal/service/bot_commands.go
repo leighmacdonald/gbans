@@ -367,7 +367,7 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		}); err != nil {
 			log.Errorf("Failed to send servers pre response: %v", err)
-			if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {
+			if sendE := sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
 			return
@@ -377,21 +377,20 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		resp, err := h(c, s, i)
 		if err != nil {
 			// TODO User facing errors only
-			if sendE := sendMsg(s, i.Interaction, "Error: %s", err.Error()); sendE != nil {
+			if sendE := sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
-
 			log.Errorf("User command error: %v", err)
 			return
 		}
 		for idx, m := range util.StringChunkDelimited(resp, discordMaxMsgLen-(len(discordMsgWrapper)*2)) {
 			if idx == 0 {
-				if sendE := sendMsg(s, i.Interaction, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
+				if sendE := sendInteractionMessageEdit(s, i.Interaction, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
 					log.Errorf("Failed sending success response for interaction: %v", sendE)
 				}
 			} else {
-				if _, sendE := s.ChannelMessageSend(i.ChannelID, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
-					log.Errorf("Failed sending success (paged) response for interaction: %v", sendE)
+				if e := sendChannelMessage(s, i.ChannelID, m); e != nil {
+					log.Errorf(e.Error())
 				}
 			}
 		}

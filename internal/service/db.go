@@ -31,6 +31,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -39,8 +40,15 @@ var (
 	errNoResult  = errors.New("No results found")
 	errDuplicate = errors.New("Duplicate entity")
 	// Use $ for pg based queries
-	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	sb            = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	cacheServerMu *sync.RWMutex
+	cacheServer   map[int64]model.Server
 )
+
+func init() {
+	cacheServerMu = &sync.RWMutex{}
+	cacheServer = map[int64]model.Server{}
+}
 
 type tableName string
 
@@ -130,6 +138,13 @@ var columnsServer = []string{"server_id", "short_name", "token", "address", "por
 
 func getServer(ctx context.Context, serverID int64) (model.Server, error) {
 	var s model.Server
+	var found bool
+	cacheServerMu.RLock()
+	s, found = cacheServer[serverID]
+	cacheServerMu.RUnlock()
+	if found {
+		return s, nil
+	}
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.Eq{"server_id": serverID}).
@@ -143,6 +158,9 @@ func getServer(ctx context.Context, serverID int64) (model.Server, error) {
 			&s.ReservedSlots); err != nil {
 		return model.Server{}, dbErr(err)
 	}
+	cacheServerMu.Lock()
+	cacheServer[serverID] = s
+	cacheServerMu.Unlock()
 	return s, nil
 }
 
@@ -174,6 +192,14 @@ func getServers(ctx context.Context) ([]model.Server, error) {
 }
 
 func getServerByName(ctx context.Context, serverName string) (model.Server, error) {
+	serverStateMu.RLock()
+	for _, srv := range cacheServer {
+		if srv.ServerName == serverName {
+			serverStateMu.RUnlock()
+			return srv, nil
+		}
+	}
+	serverStateMu.RUnlock()
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
@@ -188,6 +214,9 @@ func getServerByName(ctx context.Context, serverName string) (model.Server, erro
 			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
 		return model.Server{}, err
 	}
+	serverStateMu.Lock()
+	cacheServer[s.ServerID] = s
+	serverStateMu.Unlock()
 	return s, nil
 }
 
@@ -238,6 +267,9 @@ func updateServer(ctx context.Context, s *model.Server) error {
 	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update s")
 	}
+	serverStateMu.Lock()
+	delete(cacheServer, s.ServerID)
+	serverStateMu.Unlock()
 	return nil
 }
 
@@ -249,6 +281,9 @@ func dropServer(ctx context.Context, serverID int64) error {
 	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return err
 	}
+	cacheServerMu.Lock()
+	delete(cacheServer, serverID)
+	cacheServerMu.Unlock()
 	return nil
 }
 

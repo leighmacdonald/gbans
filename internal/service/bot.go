@@ -8,12 +8,14 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"strings"
+	"sync"
+	"time"
 )
 
 var (
 	dg                 *discordgo.Session
-	messageQueue       chan logMessage
-	connected          bool
+	connected          = false
 	errUnknownBan      = errors.New("Unknown ban")
 	errInvalidSID      = errors.New("Invalid steamid")
 	errUnknownID       = errors.New("Could not find matching player/steamid")
@@ -21,10 +23,13 @@ var (
 	errDuplicateBan    = errors.New("Duplicate ban")
 	errInvalidDuration = errors.New("Invalid duration")
 	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
+	errTooLarge        = errors.Errorf("Max message length is %d", discordMaxMsgLen)
+
+	botEventQueue chan interface{}
 )
 
 func init() {
-	messageQueue = make(chan logMessage)
+	botEventQueue = make(chan interface{})
 }
 
 func startDiscord(ctx context.Context, token string) {
@@ -34,8 +39,8 @@ func startDiscord(ctx context.Context, token string) {
 		return
 	}
 	defer func() {
-		if err := dg.Close(); err != nil {
-			log.Errorf("Failed to cleanly shutdown discord: %v", err)
+		if errDisc := dg.Close(); errDisc != nil {
+			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
 		}
 	}()
 	dg = d
@@ -65,9 +70,12 @@ func startDiscord(ctx context.Context, token string) {
 
 func discordMessageQueueReader(ctx context.Context) {
 	events := make(chan logEvent)
-	if err := registerLogEventReader(events); err != nil {
+	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
+	messageTicker := time.NewTicker(time.Second * 10)
+	var sendQueue []string
+	sendQueueMu := &sync.RWMutex{}
 	for {
 		select {
 		case dm := <-events:
@@ -79,11 +87,23 @@ func discordMessageQueueReader(ctx context.Context) {
 				if dm.Type == logparse.SayTeam {
 					prefix = "(team) "
 				}
-				for _, c := range config.Relay.ChannelIDs {
-					sendMessage(newMessage(c, fmt.Sprintf("[%s] %d **%s** %s%s",
-						dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"])))
+				sendQueueMu.Lock()
+				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
+					dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"]))
+				sendQueueMu.Unlock()
+			}
+		case <-messageTicker.C:
+			sendQueueMu.Lock()
+			if len(sendQueue) == 0 {
+				continue
+			}
+			for _, channelID := range config.Relay.ChannelIDs {
+				if err := sendChannelMessage(dg, channelID, strings.Join(sendQueue, "\n")); err != nil {
+					log.Errorf("Failed to send bulk message log")
 				}
 			}
+			sendQueue = nil
+			sendQueueMu.Unlock()
 		case <-ctx.Done():
 			return
 		}
@@ -123,30 +143,30 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-func sendMsg(s *discordgo.Session, i *discordgo.Interaction, msg string, args ...interface{}) error {
+func sendChannelMessage(s *discordgo.Session, c string, msg string) error {
 	if !connected {
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{
-		Content: fmt.Sprintf(msg, args...),
-	})
-}
-
-type logMessage struct {
-	ServerID string
-	Body     string
-}
-
-func newMessage(channel string, body string) logMessage {
-	return logMessage{
-		ServerID: channel,
-		Body:     body,
+	msg = discordMsgWrapper + msg + discordMsgWrapper
+	if len(msg) > discordMaxMsgLen {
+		return errTooLarge
 	}
+	_, err := s.ChannelMessageSend(c, msg)
+	if err != nil {
+		return errors.Wrapf(err, "Failed sending success (paged) response for interaction")
+	}
+	return nil
 }
 
-func sendMessage(message logMessage) {
-	if config.Discord.Enabled {
-		messageQueue <- message
+func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, msg string) error {
+	if !connected {
+		log.Warnf("Tried to send message to disconnected client")
+		return nil
 	}
+	msg = discordMsgWrapper + msg + discordMsgWrapper
+	if len(msg) > discordMaxMsgLen {
+		return errTooLarge
+	}
+	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{Content: msg})
 }

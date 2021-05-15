@@ -67,6 +67,8 @@ const (
 	Disconnected MsgType = 1005
 	Validated    MsgType = 1006
 	Entered      MsgType = 1007
+
+	Any MsgType = 10000
 )
 
 // Team represents a players team, or spectator state
