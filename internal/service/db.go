@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -914,36 +915,89 @@ func getExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
 	return bans, nil
 }
 
-func getFilteredWords(ctx context.Context) ([]string, error) {
-	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
+func insertFilter(ctx context.Context, rx string) (*model.Filter, error) {
+	r, e := regexp.Compile(rx)
 	if e != nil {
 		return nil, e
 	}
-	var words []string
-	rows, err := db.Query(ctx, q, a...)
-	if err != nil {
-		return nil, err
+	filter := &model.Filter{
+		Word:      r,
+		CreatedOn: config.Now(),
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var w string
-		if err2 := rows.Scan(&w); err2 != nil {
-			return nil, err2
-		}
-		words = append(words, w)
+	q, a, e := sb.Insert(string(tableFilteredWord)).
+		Columns("word", "created_on").
+		Values(rx, filter.CreatedOn).
+		Suffix("RETURNING word_id").
+		ToSql()
+	if e != nil {
+		return nil, e
 	}
-	return words, nil
+	if err := db.QueryRow(ctx, q, a...).Scan(&filter.WordID); err != nil {
+		return nil, dbErr(err)
+	}
+	log.Debugf("Created filter: %d", filter.WordID)
+	return filter, nil
 }
 
-func saveFilteredWord(ctx context.Context, word string) error {
-	q, a, e := sb.Insert(string(tableFilteredWord)).Columns("word", "created_on").Values(word, config.Now()).ToSql()
+func dropFilter(ctx context.Context, filter *model.Filter) error {
+	q, a, e := sb.Delete(string(tableFilteredWord)).
+		Where(sq.Eq{"word_id": filter.WordID}).
+		ToSql()
 	if e != nil {
-		return e
+		return dbErr(e)
 	}
 	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return dbErr(err)
 	}
+	log.Debugf("Deleted filter: %d", filter.WordID)
 	return nil
+}
+
+func getFilterByID(ctx context.Context, wordId int) (*model.Filter, error) {
+	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).
+		Where(sq.Eq{"word_id": wordId}).
+		ToSql()
+	if e != nil {
+		return nil, dbErr(e)
+	}
+	var f model.Filter
+	var w string
+	if err := db.QueryRow(ctx, q, a...).Scan(&f.WordID, &w, &f.CreatedOn); err != nil {
+		return nil, errors.Wrapf(err, "Failed to load filter")
+	}
+	rx, er := regexp.Compile(w)
+	if er != nil {
+		return nil, er
+	}
+	f.Word = rx
+	return &f, nil
+}
+
+func getFilters(ctx context.Context) ([]*model.Filter, error) {
+	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
+	if e != nil {
+		return nil, dbErr(e)
+	}
+	rows, err := db.Query(ctx, q, a...)
+	if err != nil {
+		return nil, dbErr(err)
+	}
+	var filters []*model.Filter
+	defer rows.Close()
+	for rows.Next() {
+		var f model.Filter
+		var w string
+		if err = rows.Scan(&f.WordID, &w, &f.CreatedOn); err != nil {
+			return nil, errors.Wrapf(err, "Failed to load filter")
+		}
+		rx, er := regexp.Compile(w)
+		if er != nil {
+			return nil, er
+		}
+		f.Word = rx
+		filters = append(filters, &f)
+	}
+	return filters, nil
 }
 
 func insertLog(ctx context.Context, l *model.ServerLog) error {

@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -659,4 +660,51 @@ func onPlayers(ctx context.Context, s *discordgo.Session, m *discordgo.Interacti
 	}
 	t.SortBy([]table.SortBy{{Name: "name", Number: 2, Mode: table.Asc}})
 	return t.Render(), nil
+}
+
+func onFilter(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	switch m.Data.Options[0].Name {
+	case string(cmdFilterAdd):
+		return onFilterAdd(ctx, s, m)
+	case string(cmdFilterDel):
+		return onFilterDel(ctx, s, m)
+	case string(cmdFilterCheck):
+		return onFilterCheck(ctx, s, m)
+	default:
+		return "", errCommandFailed
+	}
+}
+
+func onFilterAdd(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	value := m.Data.Options[0].Options[0].Value.(string)
+	f, err := insertFilter(ctx, value)
+	if err != nil {
+		if err == errDuplicate {
+			return "", errDuplicate
+		}
+		log.Errorf("Error saving filter word: %v", err)
+		return "", errCommandFailed
+	}
+	return fmt.Sprintf("Filter added: %s (id: %d)", value, f.WordID), nil
+}
+
+func onFilterDel(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	wordId := m.Data.Options[0].Options[0].Value.(float64)
+	filter, err := getFilterByID(ctx, int(wordId))
+	if err != nil {
+		return "", err
+	}
+	if err2 := dropFilter(ctx, filter); err2 != nil {
+		return "", err2
+	}
+	return fmt.Sprintf("Deleted filter successfully: %d", filter.WordID), nil
+}
+
+func onFilterCheck(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	value := m.Data.Options[0].Options[0].Value.(string)
+	isFiltered, filter := util.IsFilteredWord(value)
+	if !isFiltered {
+		return fmt.Sprintf("No matching filters found for: %s", value), nil
+	}
+	return fmt.Sprintf("Matched [#%d] %s", filter.WordID, filter.Word.String()), nil
 }

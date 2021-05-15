@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"net"
+	"regexp"
 	"time"
 )
 
@@ -320,4 +321,14 @@ func NewServerLog(serverID int64, mType logparse.MsgType, values interface{}) *S
 		TargetID:  0,
 		CreatedOn: config.Now(),
 	}
+}
+
+type Filter struct {
+	WordID    int
+	Word      *regexp.Regexp
+	CreatedOn time.Time
+}
+
+func (f *Filter) Match(value string) bool {
+	return f.Word.MatchString(value)
 }

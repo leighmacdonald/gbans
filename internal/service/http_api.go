@@ -390,12 +390,16 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cx, cancel := context.WithTimeout(gCtx, time.Second*10)
 		defer cancel()
-		words, err := getFilteredWords(cx)
+		words, err := getFilters(cx)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, resp{Count: len(words), Words: words})
+		var w []string
+		for _, f := range words {
+			w = append(w, f.Word.String())
+		}
+		responseOK(c, http.StatusOK, resp{Count: len(words), Words: w})
 	}
 }
 

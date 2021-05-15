@@ -33,6 +33,10 @@ const (
 	cmdHistory     botCmd = "history"
 	cmdHistoryIP   botCmd = "ip"
 	cmdHistoryChat botCmd = "chat"
+	cmdFilter      botCmd = "filter"
+	cmdFilterAdd   botCmd = "add"
+	cmdFilterDel   botCmd = "del"
+	cmdFilterCheck botCmd = "check"
 )
 
 func botRegisterSlashCommands() error {
@@ -81,6 +85,7 @@ func botRegisterSlashCommands() error {
 		Description: "Duration [s,m,h,w,M,y]N|0",
 		Required:    true,
 	}
+
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
 			Name:        string(cmdBan),
@@ -224,6 +229,52 @@ func botRegisterSlashCommands() error {
 				},
 			},
 		},
+		{
+			ApplicationID: config.Discord.AppID,
+			Name:          string(cmdFilter),
+			Description:   "Manage and test global word filters",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        string(cmdFilterAdd),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Add a new filtered word",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "filter",
+							Description: "Regular expression for matching word(s)",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Name:        string(cmdFilterDel),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Remove a filtered word",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionInteger,
+							Name:        "filter",
+							Description: "Filter ID",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Name:        string(cmdFilterCheck),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Check if a string has a matching filter",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "string",
+							Description: "String to check filters against",
+							Required:    true,
+						},
+					},
+				},
+			},
+		},
 	}
 	modPerm := []*discordgo.ApplicationCommandPermission{
 		{
@@ -296,6 +347,7 @@ var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session,
 	cmdUnban:    onUnban,
 	cmdSetSteam: onSetSteam,
 	cmdHistory:  onHistory,
+	cmdFilter:   onFilter,
 }
 
 const (
