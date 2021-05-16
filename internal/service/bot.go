@@ -17,7 +17,6 @@ import (
 var (
 	dg                 *discordgo.Session
 	connected          = false
-	errUnknownBan      = errors.New("Unknown ban")
 	errInvalidSID      = errors.New("Invalid steamid")
 	errUnknownID       = errors.New("Could not find matching player/steamid")
 	errCommandFailed   = errors.New("Command failed")
