@@ -55,6 +55,7 @@ void OnPluginStart() {
     AuthenticateServer();
     RegConsoleCmd("gb_version", CmdVersion, "Get gbans version");
     RegConsoleCmd("gb_mod", CmdMod, "Ping a moderator");
+    RegConsoleCmd("mod", CmdMod, "Ping a moderator");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_KICK);
@@ -282,8 +283,15 @@ Action AdminCmdBanIP(int client, int argc) {
 }
 
 public
-Action AdminCmdMute(int client, int argc) {
-    PrintToServer("kick");
+Action AdminCmdMute(int client_id, int argc) {
+    if (IsClientInGame(client_id)) {
+        if (!BaseComm_IsClientMuted(client_id)) {
+            BaseComm_SetClientMute(client_id, true);
+        }
+        if (!BaseComm_IsClientGagged(client_id)) {
+            BaseComm_SetClientGag(client_id, true);
+        }
+    }
     return Plugin_Handled;
 }
 
@@ -295,7 +303,6 @@ Action AdminCmdReauth(int client, int argc) {
 
 public
 Action AdminCmdKick(int client, int argc) {
-    //KickClient(client, "bye.");
     return Plugin_Handled;
 }
 
@@ -347,6 +354,8 @@ Action CmdMod(int client, int argc) {
     req.SetData(encoded);
     req.POST();
     delete req;
+
+    ReplyToCommand(client, "Mods have been altered, thanks!");
 
     return Plugin_Handled;
 }
