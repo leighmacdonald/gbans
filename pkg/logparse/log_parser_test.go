@@ -1,8 +1,12 @@
 package logparse
 
 import (
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"path"
+	"strings"
 	"testing"
 	"time"
 )
@@ -10,6 +14,32 @@ import (
 func TestParseTime(t *testing.T) {
 	require.Equal(t, time.Date(2021, 2, 21, 6, 22, 23, 0, time.UTC),
 		parseDateTime("02/21/2021", "06:22:23"))
+}
+
+func TestParseAlt(t *testing.T) {
+	p := golib.FindFile(path.Join("test_data", "log_1.log"), "gbans")
+	f, e := ioutil.ReadFile(p)
+	if e != nil {
+		t.Fatalf("Failed to open test file: %s", p)
+	}
+	results := make(map[int]Results)
+	for i, line := range strings.Split(string(f), "\n") {
+		v := Parse(line)
+		results[i] = v
+	}
+	expected := map[MsgType]int{
+		SayTeam: 6,
+		Say:     18,
+	}
+	for mt, expectedCount := range expected {
+		found := 0
+		for _, result := range results {
+			if result.MsgType == mt {
+				found++
+			}
+		}
+		require.Equal(t, expectedCount, found, "Invalid count for type: %v %d/%d", mt, found, expectedCount)
+	}
 }
 
 func TestParse(t *testing.T) {
@@ -137,7 +167,7 @@ func TestParse(t *testing.T) {
 	require.EqualValues(t, WTeamScoreEvt{Team: RED, Score: 1, Players: 2}, value22)
 
 	var value23 SayEvt
-	require.NoError(t, Decode(pa(`L 02/21/2021 - 06:29:57: "Hacksaw<12><[U:1:68745073]><Red>" Say "gg"`, Say), &value23))
+	require.NoError(t, Decode(pa(`L 02/21/2021 - 06:29:57: "Hacksaw<12><[U:1:68745073]><Red>" say "gg"`, Say), &value23))
 	require.EqualValues(t, SayEvt{Msg: "gg"}, value23)
 
 	var value24 SayTeamEvt

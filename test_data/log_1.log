@@ -1,0 +1,572 @@
+L 05/16/2021 - 05:47:18: Log file started (file "logs/L0516026.log") (game "/home/tf2server/serverfiles/tf") (version "6394067")
+L 05/16/2021 - 05:47:18: server_cvar: "sm_nextmap" "pl_frontier_final"
+L 05/16/2021 - 05:47:18: server_cvar: "mp_timelimit" "30"
+L 05/16/2021 - 05:47:18: server_cvar: "mp_maxrounds" "0"
+L 05/16/2021 - 05:47:18: server_cvar: "mp_timelimit" "0"
+L 05/16/2021 - 05:47:18: server_cvar: "mp_maxrounds" "2"
+L 05/16/2021 - 05:47:18: rcon from "68.144.74.48:53654": command "status"
+L 05/16/2021 - 05:47:24: "Cloudy<22><[U:1:122027674]><>" entered the game
+L 05/16/2021 - 05:47:24: rcon from "168.119.150.113:53084": command "status"
+L 05/16/2021 - 05:47:27: "Pikts<14><[U:1:151855922]><>" entered the game
+L 05/16/2021 - 05:47:27: "Gwaggyo<30><[U:1:276368682]><>" entered the game
+L 05/16/2021 - 05:47:28: "alm0e<28><[U:1:67311360]><>" entered the game
+L 05/16/2021 - 05:47:29: "Kirbo<27><[U:1:992203731]><>" entered the game
+L 05/16/2021 - 05:47:29: "LaserBlaster865<32><[U:1:1041811271]><>" entered the game
+L 05/16/2021 - 05:47:31: "Gwaggyo<30><[U:1:276368682]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 05:47:32: "raKatio<29><[U:1:389877698]><>" entered the game
+L 05/16/2021 - 05:47:33: rcon from "168.119.150.113:33990": command "status"
+L 05/16/2021 - 05:47:33: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "engineer"
+L 05/16/2021 - 05:47:34: "LaserBlaster865<32><[U:1:1041811271]><Unassigned>" joined team "Red"
+L 05/16/2021 - 05:47:35: "Pikts<14><[U:1:151855922]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 05:47:36: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "soldier"
+L 05/16/2021 - 05:47:37: "Kirbo<27><[U:1:992203731]><Unassigned>" joined team "Red"
+L 05/16/2021 - 05:47:37: "raKatio<29><[U:1:389877698]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 05:47:38: "Cloudy<22><[U:1:122027674]><Unassigned>" joined team "Red"
+L 05/16/2021 - 05:47:39: "Pikts<14><[U:1:151855922]><Blue>" changed role to "scout"
+L 05/16/2021 - 05:47:40: "Cloudy<22><[U:1:122027674]><Red>" changed role to "scout"
+L 05/16/2021 - 05:47:43: "Kirbo<27><[U:1:992203731]><Red>" changed role to "engineer"
+L 05/16/2021 - 05:47:45: rcon from "23.239.22.163:38610": command "status"
+L 05/16/2021 - 05:47:45: "raKatio<29><[U:1:389877698]><Blue>" changed role to "soldier"
+L 05/16/2021 - 05:47:49: "LaserBlaster865<32><[U:1:1041811271]><Red>" changed role to "medic"
+L 05/16/2021 - 05:47:53: "Monkala<31><[U:1:186726835]><>" entered the game
+L 05/16/2021 - 05:47:59: "Cloudy<22><[U:1:122027674]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "pep_pistol" (attacker_position "-999 -4410 -287") (victim_position "-1557 -4532 -254")
+L 05/16/2021 - 05:48:06: "Monkala<31><[U:1:186726835]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 05:48:09: World triggered "Round_Start"
+L 05/16/2021 - 05:48:09: World triggered "Round_Setup_Begin"
+L 05/16/2021 - 05:48:09: World triggered "Mini_Round_Selected" (round "Round_A")
+L 05/16/2021 - 05:48:09: World triggered "Mini_Round_Start"
+L 05/16/2021 - 05:48:11: "Monkala<31><[U:1:186726835]><Blue>" changed role to "scout"
+L 05/16/2021 - 05:48:16: rcon from "68.144.74.48:53673": command "status"
+L 05/16/2021 - 05:48:21: "LaserBlaster865<32><[U:1:1041811271]><Red>" changed role to "scout"
+L 05/16/2021 - 05:48:22: "Kirbo<27><[U:1:992203731]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "529 -1134 -31")
+L 05/16/2021 - 05:48:23: rcon from "168.119.150.113:53264": command "status"
+L 05/16/2021 - 05:48:29: "LaserBlaster865<32><[U:1:1041811271]><Red>" changed role to "engineer"
+L 05/16/2021 - 05:48:33: rcon from "168.119.150.113:34204": command "status"
+L 05/16/2021 - 05:48:41: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "671 -1173 -31")
+L 05/16/2021 - 05:48:45: "Kirbo<27><[U:1:992203731]><Red>" triggered "player_builtobject" (object "OBJ_DISPENSER") (position "-321 -4393 -359")
+L 05/16/2021 - 05:48:45: rcon from "23.239.22.163:38732": command "status"
+L 05/16/2021 - 05:48:51: "Kirbo<27><[U:1:992203731]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "-1078 -4566 -287")
+L 05/16/2021 - 05:48:54: rcon from "168.119.150.113:53402": command "status"
+L 05/16/2021 - 05:49:10: "Kirbo<27><[U:1:992203731]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "-24 -4425 -191")
+L 05/16/2021 - 05:49:11: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_DISPENSER") (position "240 -4426 -191")
+L 05/16/2021 - 05:49:16: rcon from "68.144.74.48:53707": command "status"
+L 05/16/2021 - 05:49:19: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "-395 -4725 -277")
+L 05/16/2021 - 05:49:24: World triggered "Round_Setup_End"
+L 05/16/2021 - 05:49:25: rcon from "168.119.150.113:53554": command "status"
+L 05/16/2021 - 05:49:26: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "-569 -6187 -543")
+L 05/16/2021 - 05:49:28: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "-347 -4696 -278")
+L 05/16/2021 - 05:49:31: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "-868 -5655 -379")
+L 05/16/2021 - 05:49:32: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "-1120 -4761 -223") (victim_position "-1407 -4878 -223")
+L 05/16/2021 - 05:49:32: "Pikts<14><[U:1:151855922]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "scattergun" (attacker_position "-1521 -4875 -223") (victim_position "-1120 -4771 -223")
+L 05/16/2021 - 05:49:32: "Monkala<31><[U:1:186726835]><Blue>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Red>" (assister_position "-1377 -4916 -209") (attacker_position "-1521 -4875 -223") (victim_position "-1120 -4771 -223")
+L 05/16/2021 - 05:49:33: rcon from "168.119.150.113:34420": command "status"
+L 05/16/2021 - 05:49:35: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "-376 -4208 -376")
+L 05/16/2021 - 05:49:36: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "-1094 -5871 -402")
+L 05/16/2021 - 05:49:37: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "LaserBlaster865<32><[U:1:1041811271]><Red>" with "tf_projectile_rocket" (attacker_position "-1159 -5680 -377") (victim_position "-383 -4006 -336")
+L 05/16/2021 - 05:49:37: "Pikts<14><[U:1:151855922]><Blue>" triggered "kill assist" against "LaserBlaster865<32><[U:1:1041811271]><Red>" (assister_position "-1077 -3897 -119") (attacker_position "-1159 -5680 -377") (victim_position "-383 -4006 -336")
+L 05/16/2021 - 05:49:37: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_DISPENSER") (weapon "tf_projectile_rocket") (objectowner "Kirbo<27><[U:1:992203731]><Red>") (attacker_position "-346 -4817 -278")
+L 05/16/2021 - 05:49:44: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_TELEPORTER") (weapon "tf_projectile_rocket") (objectowner "Kirbo<27><[U:1:992203731]><Red>") (attacker_position "-552 -4776 -287")
+L 05/16/2021 - 05:49:45: rcon from "23.239.22.163:38844": command "status"
+L 05/16/2021 - 05:49:51: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "Kirbo<27><[U:1:992203731]><Red>") (attacker_position "-407 -4557 -305")
+L 05/16/2021 - 05:49:53: rcon from "168.119.150.113:53606": command "status"
+L 05/16/2021 - 05:49:57: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "720 -1280 -31")
+L 05/16/2021 - 05:49:59: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "pistol_scout" (attacker_position "-66 -3830 -264") (victim_position "-12 -3944 -254")
+L 05/16/2021 - 05:49:59: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Red>" (assister_position "-799 -5482 -452") (attacker_position "-66 -3830 -264") (victim_position "-12 -3944 -254")
+L 05/16/2021 - 05:50:00: "Miles The BunBun<33><[U:1:134009198]><>" connected, address "24.162.171.44:27005"
+L 05/16/2021 - 05:50:01: "Miles The BunBun<33><[U:1:134009198]><>" STEAM USERID validated
+L 05/16/2021 - 05:50:03: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_carryobject" (object "OBJ_SENTRYGUN") (position "800 -1290 -31")
+L 05/16/2021 - 05:50:06: "Kirbo<27><[U:1:992203731]><Red>" changed role to "pyro"
+L 05/16/2021 - 05:50:06: "Pikts<14><[U:1:151855922]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "scattergun" (attacker_position "115 -3658 -255") (victim_position "440 -3695 -245")
+L 05/16/2021 - 05:50:09: "Pikts<14><[U:1:151855922]><Blue>" triggered "killedobject" (object "OBJ_DISPENSER") (weapon "scattergun") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "484 -4461 -191")
+L 05/16/2021 - 05:50:16: rcon from "68.144.74.48:53745": command "status"
+L 05/16/2021 - 05:50:16: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_dropobject" (object "OBJ_SENTRYGUN") (position "848 -3716 -254")
+L 05/16/2021 - 05:50:16: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "848 -3716 -254")
+L 05/16/2021 - 05:50:20: "LaserBlaster865<32><[U:1:1041811271]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "world" (attacker_position "814 -3797 -252") (victim_position "-305 -3760 -286")
+L 05/16/2021 - 05:50:20: "Miles The BunBun<33><[U:1:134009198]><>" entered the game
+L 05/16/2021 - 05:50:21: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "-329 -3898 -306")
+L 05/16/2021 - 05:50:23: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "991 -4050 -183")
+L 05/16/2021 - 05:50:24: rcon from "168.119.150.113:54628": command "status"
+L 05/16/2021 - 05:50:25: "Miles The BunBun<33><[U:1:134009198]><Unassigned>" joined team "Red"
+L 05/16/2021 - 05:50:27: "Miles The BunBun<33><[U:1:134009198]><Red>" changed role to "demoman"
+L 05/16/2021 - 05:50:31: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1600 -2269 -121") (victim_position "1812 -2479 -120")
+L 05/16/2021 - 05:50:31: "Kirbo<27><[U:1:992203731]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "1666 -2685 -137") (attacker_position "1600 -2269 -121") (victim_position "1812 -2479 -120")
+L 05/16/2021 - 05:50:32: "raKatio<29><[U:1:389877698]><Blue>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "tf_projectile_rocket") (objectowner "LaserBlaster865<32><[U:1:1041811271]><Red>") (attacker_position "166 -3687 -255")
+L 05/16/2021 - 05:50:33: rcon from "168.119.150.113:35560": command "status"
+L 05/16/2021 - 05:50:35: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "captureblocked" (cp "0") (cpname "#pl_borneo_cp1") (position "336 -3829 -255")
+L 05/16/2021 - 05:50:36: "raKatio<29><[U:1:389877698]><Blue>" killed "LaserBlaster865<32><[U:1:1041811271]><Red>" with "tf_projectile_rocket" (attacker_position "513 -3593 -255") (victim_position "350 -3617 -255")
+L 05/16/2021 - 05:50:37: "Cloudy<22><[U:1:122027674]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "pep_pistol" (attacker_position "880 -3653 -254") (victim_position "489 -3637 -255")
+L 05/16/2021 - 05:50:37: "LaserBlaster865<32><[U:1:1041811271]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "350 -3617 -241") (attacker_position "880 -3653 -254") (victim_position "489 -3637 -255")
+L 05/16/2021 - 05:50:40: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "311 -3656 -255") (victim_position "466 -3833 -196")
+L 05/16/2021 - 05:50:45: rcon from "23.239.22.163:38968": command "status"
+L 05/16/2021 - 05:50:49: "LaserBlaster865<32><[U:1:1041811271]><Red>" changed role to "spy"
+L 05/16/2021 - 05:50:51: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "-351 -4599 -306") (victim_position "-371 -4681 -280")
+L 05/16/2021 - 05:50:53: "Cloudy<22><[U:1:122027674]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "-78 -5074 -212") (victim_position "59 -5451 -520")
+L 05/16/2021 - 05:50:53: rcon from "168.119.150.113:54742": command "status"
+L 05/16/2021 - 05:50:57: "faris ⊹<34><[U:1:1036999282]><>" connected, address "37.202.64.221:27005"
+L 05/16/2021 - 05:50:58: "faris ⊹<34><[U:1:1036999282]><>" STEAM USERID validated
+L 05/16/2021 - 05:51:01: "Pikts<14><[U:1:151855922]><Blue>" say "coward soldier"
+L 05/16/2021 - 05:51:05: "raKatio<29><[U:1:389877698]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "tf_projectile_rocket" (attacker_position "-365 -5011 -336") (victim_position "-275 -4637 -294")
+L 05/16/2021 - 05:51:05: "Monkala<31><[U:1:186726835]><Blue>" triggered "kill assist" against "Miles The BunBun<33><[U:1:134009198]><Red>" (assister_position "-278 -4742 -279") (attacker_position "-365 -5011 -336") (victim_position "-275 -4637 -294")
+L 05/16/2021 - 05:51:09: "alm0e<28><[U:1:67311360]><Unassigned>" disconnected (reason "#TF_Idle_kicked")
+L 05/16/2021 - 05:51:13: "Cloudy<22><[U:1:122027674]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "401 -3681 -255")
+L 05/16/2021 - 05:51:16: "raKatio<29><[U:1:389877698]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "tf_projectile_rocket" (attacker_position "-465 -4057 -360") (victim_position "-203 -4012 -270")
+L 05/16/2021 - 05:51:16: "Pikts<14><[U:1:151855922]><Blue>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Red>" (assister_position "-437 -3551 -255") (attacker_position "-465 -4057 -360") (victim_position "-203 -4012 -270")
+L 05/16/2021 - 05:51:16: rcon from "68.144.74.48:53788": command "status"
+L 05/16/2021 - 05:51:21: "Miles The BunBun<33><[U:1:134009198]><Red>" changed role to "soldier"
+L 05/16/2021 - 05:51:33: rcon from "168.119.150.113:35768": command "status"
+L 05/16/2021 - 05:51:35: "alm0e<35><[U:1:67311360]><>" connected, address "178.157.253.76:31566"
+L 05/16/2021 - 05:51:35: "alm0e<35><[U:1:67311360]><>" STEAM USERID validated
+L 05/16/2021 - 05:51:36: rcon from "168.119.150.113:54934": command "status"
+L 05/16/2021 - 05:51:36: "Pikts<14><[U:1:151855922]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "scattergun" (attacker_position "1676 -3192 -186") (victim_position "1914 -3369 -157")
+L 05/16/2021 - 05:51:40: "raKatio<29><[U:1:389877698]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "tf_projectile_rocket" (attacker_position "1268 -4299 -159") (victim_position "1528 -4129 -159")
+L 05/16/2021 - 05:51:40: "Pikts<14><[U:1:151855922]><Blue>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Red>" (assister_position "1678 -4026 -159") (attacker_position "1268 -4299 -159") (victim_position "1528 -4129 -159")
+L 05/16/2021 - 05:51:42: "alm0e<35><[U:1:67311360]><>" entered the game
+L 05/16/2021 - 05:51:45: rcon from "23.239.22.163:39088": command "status"
+L 05/16/2021 - 05:51:46: "Kirbo<27><[U:1:992203731]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1546 -3104 -215")
+L 05/16/2021 - 05:51:48: "Kirbo<27><[U:1:992203731]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "world" (attacker_position "1579 -3200 -255") (victim_position "1677 -3435 -230")
+L 05/16/2021 - 05:51:51: "faris ⊹<34><[U:1:1036999282]><>" entered the game
+L 05/16/2021 - 05:51:52: "Kirbo<27><[U:1:992203731]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "phlogistinator" (attacker_position "1560 -3263 -255") (victim_position "1724 -3409 -179")
+L 05/16/2021 - 05:51:54: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "scattergun" (attacker_position "1677 -3029 -223") (victim_position "1931 -3430 -123")
+L 05/16/2021 - 05:51:54: rcon from "168.119.150.113:54978": command "status"
+L 05/16/2021 - 05:51:57: "faris ⊹<34><[U:1:1036999282]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 05:51:57: "alm0e<35><[U:1:67311360]><Unassigned>" joined team "Red"
+L 05/16/2021 - 05:51:57: "alm0e<35><[U:1:67311360]><Red>" changed role to "scout"
+L 05/16/2021 - 05:51:59: "faris ⊹<34><[U:1:1036999282]><Blue>" changed role to "soldier"
+L 05/16/2021 - 05:52:05: "Pikts<14><[U:1:151855922]><Blue>" killed "LaserBlaster865<32><[U:1:1041811271]><Red>" with "scattergun" (attacker_position "1358 -2964 -173") (victim_position "1667 -2685 -137")
+L 05/16/2021 - 05:52:06: "alm0e<35><[U:1:67311360]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1618 -2921 -196") (victim_position "1383 -2936 -264")
+L 05/16/2021 - 05:52:16: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "liberty_launcher" (attacker_position "2544 -2208 -21") (victim_position "2703 -2627 -327")
+L 05/16/2021 - 05:52:16: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1011 -3580 -183") (victim_position "1256 -4011 -169")
+L 05/16/2021 - 05:52:16: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1534 -4014 -159") (attacker_position "1011 -3580 -183") (victim_position "1256 -4011 -169")
+L 05/16/2021 - 05:52:16: "faris ⊹<34><[U:1:1036999282]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "quake_rl" (attacker_position "796 -3644 -255") (victim_position "1016 -3578 -182")
+L 05/16/2021 - 05:52:16: rcon from "68.144.74.48:53832": command "status"
+L 05/16/2021 - 05:52:19: "Cloudy<22><[U:1:122027674]><Red>" killed "faris ⊹<34><[U:1:1036999282]><Blue>" with "scattergun" (attacker_position "1089 -4016 -173") (victim_position "937 -3774 -164")
+L 05/16/2021 - 05:52:25: rcon from "168.119.150.113:55140": command "status"
+L 05/16/2021 - 05:52:27: "raKatio<29><[U:1:389877698]><Blue>" changed role to "demoman"
+L 05/16/2021 - 05:52:30: "raKatio<29><[U:1:389877698]><Blue>" changed role to "soldier"
+L 05/16/2021 - 05:52:32: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "scattergun" (attacker_position "1069 -3695 -235") (victim_position "1216 -3434 -255")
+L 05/16/2021 - 05:52:33: rcon from "168.119.150.113:36030": command "status"
+L 05/16/2021 - 05:52:36: "Pikts<14><[U:1:151855922]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "scattergun" (attacker_position "1177 -3936 -175") (victim_position "1733 -4091 -146")
+L 05/16/2021 - 05:52:40: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1281 -4043 -168") (victim_position "1211 -3916 -176")
+L 05/16/2021 - 05:52:41: "LaserBlaster865<32><[U:1:1041811271]><Red>" disconnected (reason "Disconnect by user.")
+L 05/16/2021 - 05:52:45: rcon from "23.239.22.163:39210": command "status"
+L 05/16/2021 - 05:52:48: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "388 -3425 -171") (victim_position "-147 -3399 -248")
+L 05/16/2021 - 05:52:51: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "296 -3442 -231") (victim_position "598 -3723 -246")
+L 05/16/2021 - 05:52:53: "faris ⊹<34><[U:1:1036999282]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "quake_rl" (attacker_position "32 -3762 -255") (victim_position "3 -3696 -223")
+L 05/16/2021 - 05:52:53: "raKatio<29><[U:1:389877698]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "387 -4101 -191") (attacker_position "32 -3762 -255") (victim_position "3 -3696 -223")
+L 05/16/2021 - 05:52:54: "Cloudy<22><[U:1:122027674]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "scattergun" (attacker_position "448 -3901 -254") (victim_position "425 -4166 -191")
+L 05/16/2021 - 05:52:54: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "3 -3696 -209") (attacker_position "448 -3901 -254") (victim_position "425 -4166 -191")
+L 05/16/2021 - 05:52:55: rcon from "168.119.150.113:55280": command "status"
+L 05/16/2021 - 05:53:05: "raKatio<29><[U:1:389877698]><Blue>" changed role to "medic"
+L 05/16/2021 - 05:53:06: "Pikts<14><[U:1:151855922]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "pistol_scout" (attacker_position "1236 -4284 -159") (victim_position "1248 -4199 -159")
+L 05/16/2021 - 05:53:06: "Kirbo<27><[U:1:992203731]><Red>" killed "faris ⊹<34><[U:1:1036999282]><Blue>" with "world" (attacker_position "116 -4335 -191") (victim_position "76 -4276 -191")
+L 05/16/2021 - 05:53:08: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "panic_attack" (attacker_position "1889 -3708 -127") (victim_position "1773 -3890 -159")
+L 05/16/2021 - 05:53:16: rcon from "68.144.74.48:53852": command "status"
+L 05/16/2021 - 05:53:23: "Monkala<31><[U:1:186726835]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "scattergun" (attacker_position "1848 -3077 -258") (victim_position "1671 -3089 -238")
+L 05/16/2021 - 05:53:24: rcon from "168.119.150.113:55362": command "status"
+L 05/16/2021 - 05:53:26: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "tf_projectile_rocket" (attacker_position "-527 -3467 -203") (victim_position "-104 -3435 -248")
+L 05/16/2021 - 05:53:27: "alm0e<35><[U:1:67311360]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "197") (ubercharge "0")
+L 05/16/2021 - 05:53:27: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "pistol_scout" (attacker_position "105 -4016 -229") (victim_position "207 -4448 -191")
+L 05/16/2021 - 05:53:29: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "pep_pistol" (attacker_position "1588 -2450 -126") (victim_position "1585 -3030 -223")
+L 05/16/2021 - 05:53:29: "Kirbo<27><[U:1:992203731]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "-1696 -436 284") (attacker_position "1588 -2450 -126") (victim_position "1585 -3030 -223")
+L 05/16/2021 - 05:53:30: "faris ⊹<34><[U:1:1036999282]><Blue>" joined team "Red"
+L 05/16/2021 - 05:53:30: "faris ⊹<34><[U:1:1036999282]><Red>" committed suicide with "world" (attacker_position "-210 -4197 -191")
+L 05/16/2021 - 05:53:33: rcon from "168.119.150.113:36272": command "status"
+L 05/16/2021 - 05:53:34: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "tf_projectile_rocket" (attacker_position "-731 -4055 -287") (victim_position "-292 -3802 -255")
+L 05/16/2021 - 05:53:34: "Pikts<14><[U:1:151855922]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "-331 -3945 -315") (attacker_position "-731 -4055 -287") (victim_position "-292 -3802 -255")
+L 05/16/2021 - 05:53:45: rcon from "23.239.22.163:39330": command "status"
+L 05/16/2021 - 05:53:51: "Pikts<14><[U:1:151855922]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "pistol_scout" (attacker_position "2131 -3925 -127") (victim_position "2283 -3655 -239")
+L 05/16/2021 - 05:53:56: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "tf_projectile_rocket" (attacker_position "101 -3684 -254") (victim_position "565 -3753 -245")
+L 05/16/2021 - 05:53:56: "Monkala<31><[U:1:186726835]><Blue>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Red>" (assister_position "911 -3587 -255") (attacker_position "101 -3684 -254") (victim_position "565 -3753 -245")
+L 05/16/2021 - 05:54:00: "alm0e<35><[U:1:67311360]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1691 -2890 -76")
+L 05/16/2021 - 05:54:01: "Pikts<14><[U:1:151855922]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "scattergun" (attacker_position "2142 -2303 -107") (victim_position "1858 -2237 -103")
+L 05/16/2021 - 05:54:03: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1548 -2900 -191") (victim_position "1688 -2986 -212")
+L 05/16/2021 - 05:54:03: "Kirbo<27><[U:1:992203731]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1554 -2890 -188") (attacker_position "1548 -2900 -191") (victim_position "1688 -2986 -212")
+L 05/16/2021 - 05:54:06: "Kirbo<27><[U:1:992203731]><Red>" changed role to "demoman"
+L 05/16/2021 - 05:54:12: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1671 -2973 -209")
+L 05/16/2021 - 05:54:13: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "tf_projectile_rocket" (attacker_position "1853 -3898 -113") (victim_position "1602 -2904 -191")
+L 05/16/2021 - 05:54:13: "Pikts<14><[U:1:151855922]><Blue>" triggered "kill assist" against "faris ⊹<34><[U:1:1036999282]><Red>" (assister_position "1630 -2725 -105") (attacker_position "1853 -3898 -113") (victim_position "1602 -2904 -191")
+L 05/16/2021 - 05:54:15: "alm0e<35><[U:1:67311360]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "327") (ubercharge "0")
+L 05/16/2021 - 05:54:15: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "pistol_scout" (attacker_position "-625 -4242 -406") (victim_position "-531 -4708 -419")
+L 05/16/2021 - 05:54:16: rcon from "68.144.74.48:53885": command "status"
+L 05/16/2021 - 05:54:18: "Cloudy<22><[U:1:122027674]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1721 -2383 -127")
+L 05/16/2021 - 05:54:23: rcon from "168.119.150.113:55558": command "status"
+L 05/16/2021 - 05:54:26: "Pikts<14><[U:1:151855922]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "scattergun" (attacker_position "2148 -2254 -102") (victim_position "1890 -2259 -103")
+L 05/16/2021 - 05:54:26: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Red>" (assister_position "1675 -2771 -158") (attacker_position "2148 -2254 -102") (victim_position "1890 -2259 -103")
+L 05/16/2021 - 05:54:33: rcon from "168.119.150.113:36502": command "status"
+L 05/16/2021 - 05:54:34: Team "Blue" triggered "pointcaptured" (cp "1") (cpname "#pl_borneo_cp2") (numcappers "1") (player1 "Monkala<31><[U:1:186726835]><Blue>") (position1 "1652 -2296 -127") 
+L 05/16/2021 - 05:54:35: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "captureblocked" (cp "2") (cpname "#pl_borneo_cp3") (position "1540 -1958 -127")
+L 05/16/2021 - 05:54:35: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "liberty_launcher" (attacker_position "1633 -1852 -127") (victim_position "1826 -2221 -105")
+L 05/16/2021 - 05:54:35: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1624 -1611 -79") (attacker_position "1633 -1852 -127") (victim_position "1826 -2221 -105")
+L 05/16/2021 - 05:54:36: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "quake_rl" (attacker_position "1658 -1692 -127") (victim_position "1664 -1873 -105")
+L 05/16/2021 - 05:54:36: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "1647 -1773 -127") (attacker_position "1658 -1692 -127") (victim_position "1664 -1873 -105")
+L 05/16/2021 - 05:54:39: "alm0e<35><[U:1:67311360]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "0") (ubercharge "0")
+L 05/16/2021 - 05:54:39: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "scattergun" (attacker_position "178 -4345 -191") (victim_position "306 -4384 -191")
+L 05/16/2021 - 05:54:39: "alm0e<35><[U:1:67311360]><Red>" triggered "domination" against "raKatio<29><[U:1:389877698]><Blue>"
+L 05/16/2021 - 05:54:42: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "quake_rl" (attacker_position "2110 -2423 -130") (victim_position "2368 -2307 -131")
+L 05/16/2021 - 05:54:45: rcon from "23.239.22.163:39444": command "status"
+L 05/16/2021 - 05:54:51: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "quake_rl" (attacker_position "2101 -3858 -127") (victim_position "1979 -3850 -128")
+L 05/16/2021 - 05:54:54: "alm0e<35><[U:1:67311360]><Red>" triggered "captureblocked" (cp "2") (cpname "#pl_borneo_cp3") (position "1552 -2183 -15")
+L 05/16/2021 - 05:54:55: rcon from "168.119.150.113:55772": command "status"
+L 05/16/2021 - 05:54:57: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1712 -2304 -46") (victim_position "1747 -2449 -124")
+L 05/16/2021 - 05:54:57: "alm0e<35><[U:1:67311360]><Red>" triggered "domination" against "Monkala<31><[U:1:186726835]><Blue>"
+L 05/16/2021 - 05:55:08: "Pikts<14><[U:1:151855922]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "scattergun" (attacker_position "1776 -3889 -159") (victim_position "2161 -3556 -110")
+L 05/16/2021 - 05:55:08: "raKatio<29><[U:1:389877698]><Blue>" triggered "kill assist" against "Miles The BunBun<33><[U:1:134009198]><Red>" (assister_position "1659 -4371 -159") (attacker_position "1776 -3889 -159") (victim_position "2161 -3556 -110")
+L 05/16/2021 - 05:55:09: "Cloudy<22><[U:1:122027674]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "2142 -4162 -252") (victim_position "1925 -4237 -251")
+L 05/16/2021 - 05:55:13: "alm0e<35><[U:1:67311360]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "320") (ubercharge "0")
+L 05/16/2021 - 05:55:13: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "pistol_scout" (attacker_position "1665 -4218 -52") (victim_position "1591 -4052 -159")
+L 05/16/2021 - 05:55:15: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "quake_rl" (attacker_position "1937 -3712 -125") (victim_position "1728 -4089 -110")
+L 05/16/2021 - 05:55:15: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "2725 -3121 -334") (attacker_position "1937 -3712 -125") (victim_position "1728 -4089 -110")
+L 05/16/2021 - 05:55:16: rcon from "68.144.74.48:53921": command "status"
+L 05/16/2021 - 05:55:17: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "demoman"
+L 05/16/2021 - 05:55:17: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "quake_rl" (attacker_position "1680 -3896 -159") (victim_position "1589 -4480 -159")
+L 05/16/2021 - 05:55:20: "Miles The BunBun<33><[U:1:134009198]><Red>" changed role to "pyro"
+L 05/16/2021 - 05:55:25: rcon from "168.119.150.113:55882": command "status"
+L 05/16/2021 - 05:55:27: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "1706 -4170 -113") (victim_position "1934 -4226 -123")
+L 05/16/2021 - 05:55:33: rcon from "168.119.150.113:36748": command "status"
+L 05/16/2021 - 05:55:39: "raKatio<29><[U:1:389877698]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "crusaders_crossbow" (attacker_position "1539 -4036 -159") (victim_position "2004 -3743 -127")
+L 05/16/2021 - 05:55:45: "Kirbo<27><[U:1:992203731]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "1127 -2146 -68") (victim_position "1508 -2509 -126")
+L 05/16/2021 - 05:55:45: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1503 -2460 -126") (attacker_position "1127 -2146 -68") (victim_position "1508 -2509 -126")
+L 05/16/2021 - 05:55:45: rcon from "23.239.22.163:39578": command "status"
+L 05/16/2021 - 05:55:49: "Pikts<14><[U:1:151855922]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "scattergun" (attacker_position "2673 -3045 -386") (victim_position "2706 -2851 -407")
+L 05/16/2021 - 05:55:49: "raKatio<29><[U:1:389877698]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "2567 -3344 -293") (attacker_position "2673 -3045 -386") (victim_position "2706 -2851 -407")
+L 05/16/2021 - 05:55:49: "raKatio<29><[U:1:389877698]><Blue>" triggered "revenge" against "alm0e<35><[U:1:67311360]><Red>" (assist "1")
+L 05/16/2021 - 05:55:51: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "tf_projectile_pipe_remote" (attacker_position "1334 -3679 -196") (victim_position "1416 -3253 -230")
+L 05/16/2021 - 05:55:55: rcon from "168.119.150.113:55964": command "status"
+L 05/16/2021 - 05:56:03: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "tf_projectile_pipe_remote" (attacker_position "1617 -2918 -195") (victim_position "1829 -2234 -104")
+L 05/16/2021 - 05:56:07: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "scattergun" (attacker_position "2606 -1805 -60") (victim_position "2497 -2018 -60")
+L 05/16/2021 - 05:56:07: "Pikts<14><[U:1:151855922]><Blue>" triggered "domination" against "Kirbo<27><[U:1:992203731]><Red>"
+L 05/16/2021 - 05:56:16: rcon from "68.144.74.48:53947": command "status"
+L 05/16/2021 - 05:56:23: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "849 -1685 -31") (victim_position "777 -2054 -63")
+L 05/16/2021 - 05:56:24: rcon from "168.119.150.113:56060": command "status"
+L 05/16/2021 - 05:56:33: "Cloudy<22><[U:1:122027674]><Red>" triggered "captureblocked" (cp "2") (cpname "#pl_borneo_cp3") (position "779 -701 -114")
+L 05/16/2021 - 05:56:33: rcon from "168.119.150.113:36990": command "status"
+L 05/16/2021 - 05:56:33: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "547 -622 -93") (victim_position "398 -712 -125")
+L 05/16/2021 - 05:56:33: "Cloudy<22><[U:1:122027674]><Red>" triggered "domination" against "Monkala<31><[U:1:186726835]><Blue>"
+L 05/16/2021 - 05:56:36: "alm0e<35><[U:1:67311360]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "806") (ubercharge "0")
+L 05/16/2021 - 05:56:36: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "scattergun" (attacker_position "814 -717 -15") (victim_position "811 -464 -33")
+L 05/16/2021 - 05:56:36: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "436 -615 -98") (attacker_position "814 -717 -15") (victim_position "811 -464 -33")
+L 05/16/2021 - 05:56:44: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "509 -84 122") (victim_position "816 -68 -2")
+L 05/16/2021 - 05:56:44: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Gwaggyo<30><[U:1:276368682]><Blue>" (assister_position "989 31 72") (attacker_position "509 -84 122") (victim_position "816 -68 -2")
+L 05/16/2021 - 05:56:45: rcon from "23.239.22.163:39688": command "status"
+L 05/16/2021 - 05:56:54: rcon from "168.119.150.113:56180": command "status"
+L 05/16/2021 - 05:56:57: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "world" (attacker_position "-633 -84 -127") (victim_position "-626 -132 -127")
+L 05/16/2021 - 05:57:02: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "1653 -3525 -66") (victim_position "1210 -3602 -224")
+L 05/16/2021 - 05:57:07: "Cloudy<22><[U:1:122027674]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "62") (ubercharge "0")
+L 05/16/2021 - 05:57:07: "Cloudy<22><[U:1:122027674]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "scattergun" (attacker_position "790 -13 -2") (victim_position "949 -66 6")
+L 05/16/2021 - 05:57:09: rcon from "68.144.74.48:54000": command "status"
+L 05/16/2021 - 05:57:13: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "762 -1135 -31") (victim_position "368 -1140 -31")
+L 05/16/2021 - 05:57:13: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "306 -1091 -31") (attacker_position "762 -1135 -31") (victim_position "368 -1140 -31")
+L 05/16/2021 - 05:57:14: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "scout"
+L 05/16/2021 - 05:57:19: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "1469 -3969 -159") (victim_position "1743 -3865 -159")
+L 05/16/2021 - 05:57:19: "alm0e<35><[U:1:67311360]><Red>" triggered "domination" against "Gwaggyo<30><[U:1:276368682]><Blue>"
+L 05/16/2021 - 05:57:21: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "quake_rl" (attacker_position "395 -971 174") (victim_position "476 -754 132")
+L 05/16/2021 - 05:57:21: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "357 -102 28") (attacker_position "395 -971 174") (victim_position "476 -754 132")
+L 05/16/2021 - 05:57:21: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "domination" against "Pikts<14><[U:1:151855922]><Blue>"
+L 05/16/2021 - 05:57:22: "Pikts<14><[U:1:151855922]><Blue>" changed role to "soldier"
+L 05/16/2021 - 05:57:25: rcon from "168.119.150.113:56318": command "status"
+L 05/16/2021 - 05:57:33: rcon from "168.119.150.113:37220": command "status"
+L 05/16/2021 - 05:57:45: rcon from "23.239.22.163:39816": command "status"
+L 05/16/2021 - 05:57:47: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1518 -1639 -127") (victim_position "1577 -2088 -119")
+L 05/16/2021 - 05:57:47: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1322 -1224 -127") (attacker_position "1518 -1639 -127") (victim_position "1577 -2088 -119")
+L 05/16/2021 - 05:57:49: "Pikts<14><[U:1:151855922]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "shotgun_soldier" (attacker_position "1534 -1836 -127") (victim_position "1353 -1840 -127")
+L 05/16/2021 - 05:57:49: "raKatio<29><[U:1:389877698]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "1630 -2211 -117") (attacker_position "1534 -1836 -127") (victim_position "1353 -1840 -127")
+L 05/16/2021 - 05:57:58: "Pikts<14><[U:1:151855922]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "quake_rl" (attacker_position "440 -1260 128") (victim_position "535 -1489 128")
+L 05/16/2021 - 05:57:58: "Pikts<14><[U:1:151855922]><Blue>" triggered "revenge" against "faris ⊹<34><[U:1:1036999282]><Red>"
+L 05/16/2021 - 05:58:02: "Kirbo<27><[U:1:992203731]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "tf_projectile_pipe" (attacker_position "687 -552 -50") (victim_position "749 -913 22")
+L 05/16/2021 - 05:58:02: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Gwaggyo<30><[U:1:276368682]><Blue>" (assister_position "750 -1307 -31") (attacker_position "687 -552 -50") (victim_position "749 -913 22")
+L 05/16/2021 - 05:58:02: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "quake_rl" (attacker_position "785 -918 102") (victim_position "612 -557 -54")
+L 05/16/2021 - 05:58:04: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "860 -843 -104") (victim_position "803 -609 102")
+L 05/16/2021 - 05:58:04: "Kirbo<27><[U:1:992203731]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "612 -557 -40") (attacker_position "860 -843 -104") (victim_position "803 -609 102")
+L 05/16/2021 - 05:58:04: "Cloudy<22><[U:1:122027674]><Red>" triggered "domination" against "Pikts<14><[U:1:151855922]><Blue>"
+L 05/16/2021 - 05:58:04: "Kirbo<27><[U:1:992203731]><Red>" triggered "revenge" against "Pikts<14><[U:1:151855922]><Blue>" (assist "1")
+L 05/16/2021 - 05:58:18: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "367") (ubercharge "0")
+L 05/16/2021 - 05:58:18: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "degreaser" (attacker_position "1478 -2850 -391") (victim_position "1470 -2941 -377")
+L 05/16/2021 - 05:58:18: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "1507 -2787 -403") (attacker_position "1478 -2850 -391") (victim_position "1470 -2941 -377")
+L 05/16/2021 - 05:58:19: rcon from "68.144.74.48:54047": command "status"
+L 05/16/2021 - 05:58:20: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "scattergun" (attacker_position "1296 -2933 -127") (victim_position "1650 -2797 -414")
+L 05/16/2021 - 05:58:24: rcon from "168.119.150.113:56494": command "status"
+L 05/16/2021 - 05:58:25: "alm0e<35><[U:1:67311360]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1575 -2360 -61") (victim_position "1606 -2655 -129")
+L 05/16/2021 - 05:58:25: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "1945 -2525 -132") (attacker_position "1575 -2360 -61") (victim_position "1606 -2655 -129")
+L 05/16/2021 - 05:58:25: "Pikts<14><[U:1:151855922]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "quake_rl" (attacker_position "1608 -2673 -120") (victim_position "1565 -2350 -127")
+L 05/16/2021 - 05:58:30: "Cloudy<22><[U:1:122027674]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "1363 -2323 -127") (victim_position "1569 -2377 -127")
+L 05/16/2021 - 05:58:30: "Cloudy<22><[U:1:122027674]><Red>" triggered "domination" against "Gwaggyo<30><[U:1:276368682]><Blue>"
+L 05/16/2021 - 05:58:33: rcon from "168.119.150.113:37424": command "status"
+L 05/16/2021 - 05:58:44: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1592 -2396 -127") (victim_position "1621 -2600 -127")
+L 05/16/2021 - 05:58:45: rcon from "23.239.22.163:39920": command "status"
+L 05/16/2021 - 05:59:01: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "quake_rl" (attacker_position "683 -139 -17") (victim_position "123 3 55")
+L 05/16/2021 - 05:59:01: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "Gwaggyo<30><[U:1:276368682]><Blue>" (assister_position "711 11 66") (attacker_position "683 -139 -17") (victim_position "123 3 55")
+L 05/16/2021 - 05:59:06: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "quake_rl" (attacker_position "940 -390 38") (victim_position "1026 -560 -19")
+L 05/16/2021 - 05:59:06: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "965 -337 -12") (attacker_position "940 -390 38") (victim_position "1026 -560 -19")
+L 05/16/2021 - 05:59:08: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "medic_death" against "raKatio<29><[U:1:389877698]><Blue>" (healing "406") (ubercharge "0")
+L 05/16/2021 - 05:59:08: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "captureblocked" (cp "2") (cpname "#pl_borneo_cp3") (position "893 -746 -82")
+L 05/16/2021 - 05:59:08: "faris ⊹<34><[U:1:1036999282]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "quake_rl" (attacker_position "893 -746 -82") (victim_position "1119 -1000 -109")
+L 05/16/2021 - 05:59:08: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "1474 -1154 -127") (attacker_position "893 -746 -82") (victim_position "1119 -1000 -109")
+L 05/16/2021 - 05:59:08: "Cloudy<22><[U:1:122027674]><Red>" triggered "domination" against "raKatio<29><[U:1:389877698]><Blue>" (assist "1")
+L 05/16/2021 - 05:59:19: rcon from "68.144.74.48:54065": command "status"
+L 05/16/2021 - 05:59:24: "Pikts<14><[U:1:151855922]><Blue>" say_team "we can't do this"
+L 05/16/2021 - 05:59:25: rcon from "168.119.150.113:56768": command "status"
+L 05/16/2021 - 05:59:27: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "quake_rl" (attacker_position "1120 -726 -97") (victim_position "1257 -958 -127")
+L 05/16/2021 - 05:59:27: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "domination" against "Monkala<31><[U:1:186726835]><Blue>"
+L 05/16/2021 - 05:59:28: "raKatio<29><[U:1:389877698]><Blue>" changed role to "scout"
+L 05/16/2021 - 05:59:32: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "heavyweapons"
+L 05/16/2021 - 05:59:33: rcon from "168.119.150.113:37644": command "status"
+L 05/16/2021 - 05:59:36: "alm0e<35><[U:1:67311360]><Red>" killed "raKatio<29><[U:1:389877698]><Blue>" with "scattergun" (attacker_position "1683 -2832 -174") (victim_position "1669 -3400 -255")
+L 05/16/2021 - 05:59:36: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "raKatio<29><[U:1:389877698]><Blue>" (assister_position "1570 -2430 -127") (attacker_position "1683 -2832 -174") (victim_position "1669 -3400 -255")
+L 05/16/2021 - 05:59:42: "raKatio<29><[U:1:389877698]><Blue>" disconnected (reason "Disconnect by user.")
+L 05/16/2021 - 05:59:45: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "2079 -3844 -55") (victim_position "1949 -3905 -126")
+L 05/16/2021 - 05:59:45: rcon from "23.239.22.163:40052": command "status"
+L 05/16/2021 - 05:59:46: "Monkala<31><[U:1:186726835]><Blue>" killed "Cloudy<22><[U:1:122027674]><Red>" with "scattergun" (attacker_position "1571 -2241 -127") (victim_position "1549 -2229 -127")
+L 05/16/2021 - 05:59:46: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Red>" (assister_position "1952 -3914 -112") (attacker_position "1571 -2241 -127") (victim_position "1549 -2229 -127")
+L 05/16/2021 - 05:59:46: "Monkala<31><[U:1:186726835]><Blue>" triggered "revenge" against "Cloudy<22><[U:1:122027674]><Red>"
+L 05/16/2021 - 05:59:46: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "revenge" against "Cloudy<22><[U:1:122027674]><Red>" (assist "1")
+L 05/16/2021 - 05:59:49: "Pikts<14><[U:1:151855922]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "quake_rl" (attacker_position "1623 -3564 -254") (victim_position "1217 -3428 -255")
+L 05/16/2021 - 05:59:51: "Kirbo<27><[U:1:992203731]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "1152 -413 -16") (victim_position "1240 -1054 -125")
+L 05/16/2021 - 05:59:56: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "degreaser" (attacker_position "1964 -3753 -128") (victim_position "1927 -3636 -122")
+L 05/16/2021 - 06:00:14: "codezerospace<36><[U:1:1059967568]><>" connected, address "184.176.79.206:27005"
+L 05/16/2021 - 06:00:15: "codezerospace<36><[U:1:1059967568]><>" STEAM USERID validated
+L 05/16/2021 - 06:00:19: rcon from "68.144.74.48:54087": command "status"
+L 05/16/2021 - 06:00:20: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "warrior_spirit" (attacker_position "3099 -2771 -379") (victim_position "3037 -2835 -367")
+L 05/16/2021 - 06:00:20: "Monkala<31><[U:1:186726835]><Blue>" triggered "kill assist" against "Miles The BunBun<33><[U:1:134009198]><Red>" (assister_position "3082 -2904 -381") (attacker_position "3099 -2771 -379") (victim_position "3037 -2835 -367")
+L 05/16/2021 - 06:00:20: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "domination" against "Miles The BunBun<33><[U:1:134009198]><Red>"
+L 05/16/2021 - 06:00:22: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1608 -2234 -117") (victim_position "891 -2434 -63")
+L 05/16/2021 - 06:00:22: "Kirbo<27><[U:1:992203731]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "1282 -2384 -126") (attacker_position "1608 -2234 -117") (victim_position "891 -2434 -63")
+L 05/16/2021 - 06:00:26: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1640 -2353 -127") (victim_position "1846 -2255 -103")
+L 05/16/2021 - 06:00:26: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1642 -2365 -127") (attacker_position "1640 -2353 -127") (victim_position "1846 -2255 -103")
+L 05/16/2021 - 06:00:30: "codezerospace<36><[U:1:1059967568]><>" entered the game
+L 05/16/2021 - 06:00:33: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "quake_rl" (attacker_position "2113 -2479 -142") (victim_position "2737 -2285 -256")
+L 05/16/2021 - 06:00:33: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Gwaggyo<30><[U:1:276368682]><Blue>" (assister_position "2344 -2660 -187") (attacker_position "2113 -2479 -142") (victim_position "2737 -2285 -256")
+L 05/16/2021 - 06:00:33: rcon from "168.119.150.113:37842": command "status"
+L 05/16/2021 - 06:00:37: "codezerospace<36><[U:1:1059967568]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 06:00:39: "codezerospace<36><[U:1:1059967568]><Blue>" changed role to "spy"
+L 05/16/2021 - 06:00:44: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "sniper"
+L 05/16/2021 - 06:00:45: rcon from "23.239.22.163:40178": command "status"
+L 05/16/2021 - 06:00:45: "faris ⊹<34><[U:1:1036999282]><Red>" killed "codezerospace<36><[U:1:1059967568]><Blue>" with "quake_rl" (attacker_position "1736 -3865 -159") (victim_position "1587 -4326 -159")
+L 05/16/2021 - 06:00:48: "codezerospace<36><[U:1:1059967568]><Blue>" changed role to "engineer"
+L 05/16/2021 - 06:00:48: "Monkala<31><[U:1:186726835]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "scattergun" (attacker_position "1885 -3883 -133") (victim_position "1976 -3903 -126")
+L 05/16/2021 - 06:00:48: "Monkala<31><[U:1:186726835]><Blue>" triggered "revenge" against "faris ⊹<34><[U:1:1036999282]><Red>"
+L 05/16/2021 - 06:00:49: "alm0e<35><[U:1:67311360]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "1944 -3714 -125") (victim_position "2087 -3998 -127")
+L 05/16/2021 - 06:00:49: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "1951 -3825 -61") (attacker_position "1944 -3714 -125") (victim_position "2087 -3998 -127")
+L 05/16/2021 - 06:00:55: "alm0e<35><[U:1:67311360]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "pistol_scout" (attacker_position "2217 -3765 -109") (victim_position "1994 -3886 -126")
+L 05/16/2021 - 06:01:03: "codezerospace<36><[U:1:1059967568]><Blue>" changed role to "spy"
+L 05/16/2021 - 06:01:07: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "machina" (customkill "headshot") (attacker_position "792 -3999 -252") (victim_position "1843 -3164 -31")
+L 05/16/2021 - 06:01:07: "Gwaggyo<30><[U:1:276368682]><Blue>" triggered "revenge" against "alm0e<35><[U:1:67311360]><Red>"
+L 05/16/2021 - 06:01:12: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "degreaser" (attacker_position "1344 -3914 -175") (victim_position "1474 -4043 -159")
+L 05/16/2021 - 06:01:12: "Miles The BunBun<33><[U:1:134009198]><Red>" triggered "revenge" against "Gwaggyo<30><[U:1:276368682]><Blue>"
+L 05/16/2021 - 06:01:12: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "569 -3828 -255") (victim_position "362 -4061 -191")
+L 05/16/2021 - 06:01:12: "Pikts<14><[U:1:151855922]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "quake_rl" (attacker_position "1272 -3935 -175") (victim_position "1325 -3919 -175")
+L 05/16/2021 - 06:01:19: rcon from "68.144.74.48:54113": command "status"
+L 05/16/2021 - 06:01:32: "Cloudy<22><[U:1:122027674]><Red>" killed "codezerospace<36><[U:1:1059967568]><Blue>" with "scattergun" (attacker_position "1768 -2172 -117") (victim_position "1640 -2469 -127")
+L 05/16/2021 - 06:01:33: rcon from "168.119.150.113:38090": command "status"
+L 05/16/2021 - 06:01:35: rcon from "168.119.150.113:57256": command "status"
+L 05/16/2021 - 06:01:38: "Kirbo<27><[U:1:992203731]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "tf_projectile_pipe" (attacker_position "1644 -2091 -118") (victim_position "1408 -2586 -127")
+L 05/16/2021 - 06:01:38: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Pikts<14><[U:1:151855922]><Blue>" (assister_position "1491 -2287 -127") (attacker_position "1644 -2091 -118") (victim_position "1408 -2586 -127")
+L 05/16/2021 - 06:01:43: "Cloudy<22><[U:1:122027674]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "scattergun" (attacker_position "950 -2359 -63") (victim_position "1063 -2446 -63")
+L 05/16/2021 - 06:01:45: rcon from "23.239.22.163:40348": command "status"
+L 05/16/2021 - 06:01:50: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "world" (attacker_position "1607 -4165 -159") (victim_position "1805 -2654 -417")
+L 05/16/2021 - 06:01:53: rcon from "168.119.150.113:57294": command "status"
+L 05/16/2021 - 06:02:00: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "scout"
+L 05/16/2021 - 06:02:02: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "codezerospace<36><[U:1:1059967568]><Blue>" with "degreaser" (attacker_position "2551 -3228 -341") (victim_position "2809 -3097 -375")
+L 05/16/2021 - 06:02:02: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "codezerospace<36><[U:1:1059967568]><Blue>" (assister_position "2913 -2508 -313") (attacker_position "2551 -3228 -341") (victim_position "2809 -3097 -375")
+L 05/16/2021 - 06:02:02: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1011 -2167 -63") (victim_position "1125 -2320 -72")
+L 05/16/2021 - 06:02:08: "Pikts<14><[U:1:151855922]><Blue>" say "gg"
+L 05/16/2021 - 06:02:09: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "degreaser" (attacker_position "1857 -2756 -425") (victim_position "1849 -2869 -431")
+L 05/16/2021 - 06:02:13: "Pikts<14><[U:1:151855922]><Blue>" say "there's nothing I can do"
+L 05/16/2021 - 06:02:15: "Gwaggyo<30><[U:1:276368682]><Blue>" killed "Miles The BunBun<33><[U:1:134009198]><Red>" with "machina" (attacker_position "1397 -2999 -343") (victim_position "2198 -2788 -433")
+L 05/16/2021 - 06:02:18: "faris ⊹<34><[U:1:1036999282]><Red>" say "good try"
+L 05/16/2021 - 06:02:19: rcon from "68.144.74.48:54165": command "status"
+L 05/16/2021 - 06:02:21: "Pikts<14><[U:1:151855922]><Blue>" killed "Kirbo<27><[U:1:992203731]><Red>" with "quake_rl" (attacker_position "1128 -3837 -186") (victim_position "1038 -3772 -210")
+L 05/16/2021 - 06:02:27: "Pikts<14><[U:1:151855922]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "quake_rl" (attacker_position "1217 -2800 -13") (victim_position "1658 -3187 -255")
+L 05/16/2021 - 06:02:30: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "soldier"
+L 05/16/2021 - 06:02:30: "FilipeLuk<37><[U:1:190409710]><>" connected, address "85.245.168.97:27005"
+L 05/16/2021 - 06:02:31: "FilipeLuk<37><[U:1:190409710]><>" STEAM USERID validated
+L 05/16/2021 - 06:02:33: rcon from "168.119.150.113:38378": command "status"
+L 05/16/2021 - 06:02:35: "alm0e<35><[U:1:67311360]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1169 -2162 -53") (victim_position "981 -2115 -63")
+L 05/16/2021 - 06:02:37: "FilipeLuk<37><[U:1:190409710]><>" entered the game
+L 05/16/2021 - 06:02:37: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "demoman"
+L 05/16/2021 - 06:02:40: "alm0e<35><[U:1:67311360]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "bat" (attacker_position "1731 -1589 -127") (victim_position "1745 -1639 -127")
+L 05/16/2021 - 06:02:45: rcon from "23.239.22.163:40484": command "status"
+L 05/16/2021 - 06:02:47: "Miles The BunBun<33><[U:1:134009198]><Red>" killed "Monkala<31><[U:1:186726835]><Blue>" with "panic_attack" (attacker_position "-602 -139 -127") (victim_position "-689 -496 -127")
+L 05/16/2021 - 06:02:47: "Cloudy<22><[U:1:122027674]><Red>" triggered "kill assist" against "Monkala<31><[U:1:186726835]><Blue>" (assister_position "-104 -778 -69") (attacker_position "-602 -139 -127") (victim_position "-689 -496 -127")
+L 05/16/2021 - 06:02:47: "Cloudy<22><[U:1:122027674]><Red>" triggered "domination" against "Monkala<31><[U:1:186726835]><Blue>" (assist "1")
+L 05/16/2021 - 06:02:49: "codezerospace<36><[U:1:1059967568]><Blue>" say "these uncle dane server are now getting unfair and unbalenced"
+L 05/16/2021 - 06:02:51: "Gwaggyo<30><[U:1:276368682]><Blue>" changed role to "scout"
+L 05/16/2021 - 06:02:54: rcon from "168.119.150.113:57574": command "status"
+L 05/16/2021 - 06:02:54: World triggered "Round_Overtime"
+L 05/16/2021 - 06:02:56: "Monkala<31><[U:1:186726835]><Blue>" disconnected (reason "Disconnect by user.")
+L 05/16/2021 - 06:02:56: "Pikts<14><[U:1:151855922]><Blue>" say "yes"
+L 05/16/2021 - 06:02:57: "codezerospace<36><[U:1:1059967568]><Blue>" disconnected (reason "Disconnect by user.")
+L 05/16/2021 - 06:02:58: "FilipeLuk<37><[U:1:190409710]><Unassigned>" joined team "Blue"
+L 05/16/2021 - 06:02:58: "Cloudy<22><[U:1:122027674]><Red>" killed "Gwaggyo<30><[U:1:276368682]><Blue>" with "scattergun" (attacker_position "1539 -2112 -127") (victim_position "1353 -2349 -127")
+L 05/16/2021 - 06:02:59: World triggered "Mini_Round_Win" (winner "Red") (round "Round_A")
+L 05/16/2021 - 06:02:59: World triggered "Mini_Round_Length" (seconds "890.10")
+L 05/16/2021 - 06:02:59: World triggered "Round_Win" (winner "Red")
+L 05/16/2021 - 06:02:59: Team "Red" current score "0" with "5" players
+L 05/16/2021 - 06:02:59: Team "Blue" current score "2" with "3" players
+L 05/16/2021 - 06:03:01: "Cloudy<22><[U:1:122027674]><Red>" killed "Pikts<14><[U:1:151855922]><Blue>" with "scattergun" (attacker_position "1635 -3081 -236") (victim_position "1632 -3176 -255")
+L 05/16/2021 - 06:03:04: "Gwaggyo<30><[U:1:276368682]><Blue>" disconnected (reason "Disconnect by user.")
+L 05/16/2021 - 06:03:08: "Miles The BunBun<33><[U:1:134009198]><Red>" say "lol"
+L 05/16/2021 - 06:03:12: "faris ⊹<34><[U:1:1036999282]><Red>" say "codezerospace :  these uncle dane server are now getting unfair and unbalanced (agreed)"
+L 05/16/2021 - 06:03:13: "Kirbo<27><[U:1:992203731]><Red>" committed suicide with "tf_projectile_pipe_remote" (attacker_position "1616 -2532 -126")
+L 05/16/2021 - 06:03:14: World triggered "Round_Start"
+L 05/16/2021 - 06:03:14: World triggered "Round_Setup_Begin"
+L 05/16/2021 - 06:03:14: World triggered "Mini_Round_Selected" (round "Round_A")
+L 05/16/2021 - 06:03:14: World triggered "Mini_Round_Start"
+L 05/16/2021 - 06:03:14: "Kirbo<27><[U:1:992203731]><Red>" joined team "Blue"
+L 05/16/2021 - 06:03:14: "alm0e<35><[U:1:67311360]><Red>" joined team "Blue"
+L 05/16/2021 - 06:03:14: "Cloudy<22><[U:1:122027674]><Red>" joined team "Blue"
+L 05/16/2021 - 06:03:14: "FilipeLuk<37><[U:1:190409710]><Blue>" joined team "Red"
+L 05/16/2021 - 06:03:14: "Miles The BunBun<33><[U:1:134009198]><Red>" joined team "Blue"
+L 05/16/2021 - 06:03:14: "Pikts<14><[U:1:151855922]><Blue>" joined team "Red"
+L 05/16/2021 - 06:03:14: "faris ⊹<34><[U:1:1036999282]><Red>" joined team "Blue"
+L 05/16/2021 - 06:03:18: "faris ⊹<34><[U:1:1036999282]><Blue>" joined team "Red"
+L 05/16/2021 - 06:03:18: "faris ⊹<34><[U:1:1036999282]><Red>" committed suicide with "world" (attacker_position "-512 -6781 -415")
+L 05/16/2021 - 06:03:19: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "soldier"
+L 05/16/2021 - 06:03:19: rcon from "68.144.74.48:54194": command "status"
+L 05/16/2021 - 06:03:20: "Miles The BunBun<33><[U:1:134009198]><Blue>" changed role to "demoman"
+L 05/16/2021 - 06:03:21: "FilipeLuk<37><[U:1:190409710]><Red>" changed role to "pyro"
+L 05/16/2021 - 06:03:23: "FilipeLuk<37><[U:1:190409710]><Red>" changed role to "soldier"
+L 05/16/2021 - 06:03:23: "alm0e<35><[U:1:67311360]><Blue>" joined team "Red"
+L 05/16/2021 - 06:03:23: "alm0e<35><[U:1:67311360]><Red>" committed suicide with "world" (attacker_position "-639 -6676 -415")
+L 05/16/2021 - 06:03:25: rcon from "168.119.150.113:57738": command "status"
+L 05/16/2021 - 06:03:31: "Kirbo<27><[U:1:992203731]><Blue>" committed suicide with "tf_projectile_pipe_remote" (attacker_position "-567 -6613 -383")
+L 05/16/2021 - 06:03:33: rcon from "168.119.150.113:38616": command "status"
+L 05/16/2021 - 06:03:33: "Pikts<14><[U:1:151855922]><Red>" changed role to "demoman"
+L 05/16/2021 - 06:03:39: "Cloudy<22><[U:1:122027674]><Blue>" committed suicide with "world" (attacker_position "-462 -6786 -415")
+L 05/16/2021 - 06:03:45: rcon from "23.239.22.163:40594": command "status"
+L 05/16/2021 - 06:03:53: "Miles The BunBun<33><[U:1:134009198]><Blue>" say "i am a goblin"
+L 05/16/2021 - 06:04:00: "Kirbo<27><[U:1:992203731]><Blue>" committed suicide with "tf_projectile_pipe_remote" (attacker_position "-1001 -6206 -415")
+L 05/16/2021 - 06:04:07: "Pikts<14><[U:1:151855922]><Red>" say "did someone say gaaaawblin?"
+L 05/16/2021 - 06:04:19: rcon from "68.144.74.48:54215": command "status"
+L 05/16/2021 - 06:04:25: rcon from "168.119.150.113:57974": command "status"
+L 05/16/2021 - 06:04:29: World triggered "Round_Setup_End"
+L 05/16/2021 - 06:04:30: "Miles The BunBun<33><[U:1:134009198]><Blue>" say "ooga booga"
+L 05/16/2021 - 06:04:33: rcon from "168.119.150.113:38870": command "status"
+L 05/16/2021 - 06:04:39: "alm0e<35><[U:1:67311360]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "scattergun" (attacker_position "-1448 -5544 -353") (victim_position "-1725 -5706 -352")
+L 05/16/2021 - 06:04:41: "alm0e<35><[U:1:67311360]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "pistol_scout" (attacker_position "-1691 -5781 -359") (victim_position "-1492 -5931 -373")
+L 05/16/2021 - 06:04:45: rcon from "23.239.22.163:40720": command "status"
+L 05/16/2021 - 06:04:54: rcon from "168.119.150.113:58086": command "status"
+L 05/16/2021 - 06:04:58: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "captureblocked" (cp "0") (cpname "#pl_borneo_cp1") (position "-624 -5792 -539")
+L 05/16/2021 - 06:05:01: "FilipeLuk<37><[U:1:190409710]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "quake_rl" (attacker_position "-51 -5650 -529") (victim_position "-260 -5427 -511")
+L 05/16/2021 - 06:05:01: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Blue>" (assister_position "-895 -5838 -446") (attacker_position "-51 -5650 -529") (victim_position "-260 -5427 -511")
+L 05/16/2021 - 06:05:07: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "quake_rl" (attacker_position "-1128 -5702 -381") (victim_position "-499 -6132 -543")
+L 05/16/2021 - 06:05:07: "Pikts<14><[U:1:151855922]><Red>" triggered "kill assist" against "Miles The BunBun<33><[U:1:134009198]><Blue>" (assister_position "-1239 -5574 -318") (attacker_position "-1128 -5702 -381") (victim_position "-499 -6132 -543")
+L 05/16/2021 - 06:05:09: "Kirbo<27><[U:1:992203731]><Blue>" changed role to "pyro"
+L 05/16/2021 - 06:05:17: "alm0e<35><[U:1:67311360]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "scattergun" (attacker_position "-1717 -6046 -255") (victim_position "-1471 -6096 -392")
+L 05/16/2021 - 06:05:19: rcon from "68.144.74.48:54245": command "status"
+L 05/16/2021 - 06:05:20: "Cloudy<22><[U:1:122027674]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "scattergun" (attacker_position "-1557 -6088 -382") (victim_position "-1630 -5719 -355")
+L 05/16/2021 - 06:05:20: "Kirbo<27><[U:1:992203731]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "-1440 -6079 -379") (attacker_position "-1557 -6088 -382") (victim_position "-1630 -5719 -355")
+L 05/16/2021 - 06:05:22: "Cloudy<22><[U:1:122027674]><Blue>" killed "Pikts<14><[U:1:151855922]><Red>" with "scattergun" (attacker_position "-1411 -5637 -352") (victim_position "-1264 -5623 -368")
+L 05/16/2021 - 06:05:24: rcon from "168.119.150.113:58168": command "status"
+L 05/16/2021 - 06:05:31: "Cloudy<22><[U:1:122027674]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "pep_pistol" (attacker_position "-775 -5388 -475") (victim_position "-939 -5816 -431")
+L 05/16/2021 - 06:05:33: rcon from "168.119.150.113:39094": command "status"
+L 05/16/2021 - 06:05:45: rcon from "23.239.22.163:40846": command "status"
+L 05/16/2021 - 06:05:46: "faris ⊹<34><[U:1:1036999282]><Red>" say_team "they're pushing"
+L 05/16/2021 - 06:05:47: "FilipeLuk<37><[U:1:190409710]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "quake_rl" (attacker_position "-368 -4487 -292") (victim_position "-257 -4803 -281")
+L 05/16/2021 - 06:05:54: "alm0e<35><[U:1:67311360]><Red>" triggered "captureblocked" (cp "0") (cpname "#pl_borneo_cp1") (position "-462 -4888 -343")
+L 05/16/2021 - 06:05:54: rcon from "168.119.150.113:58310": command "status"
+L 05/16/2021 - 06:05:54: "Miles The BunBun<33><[U:1:134009198]><Blue>" changed role to "medic"
+L 05/16/2021 - 06:05:56: "FilipeLuk<37><[U:1:190409710]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "quake_rl" (attacker_position "-359 -4368 -339") (victim_position "-579 -4567 -415")
+L 05/16/2021 - 06:05:56: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Blue>" (assister_position "-563 -4923 -472") (attacker_position "-359 -4368 -339") (victim_position "-579 -4567 -415")
+L 05/16/2021 - 06:05:59: "faris ⊹<34><[U:1:1036999282]><Red>" say_team "cloudy"
+L 05/16/2021 - 06:06:12: "Pikts<14><[U:1:151855922]><Red>" say_team "cloudy's on blu"
+L 05/16/2021 - 06:06:16: "faris ⊹<34><[U:1:1036999282]><Red>" say_team "ik"
+L 05/16/2021 - 06:06:19: rcon from "68.144.74.48:54280": command "status"
+L 05/16/2021 - 06:06:23: "alm0e<35><[U:1:67311360]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "scattergun" (attacker_position "-532 -5897 -543") (victim_position "-255 -5819 -543")
+L 05/16/2021 - 06:06:23: "Pikts<14><[U:1:151855922]><Red>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Blue>" (assister_position "148 -5269 -368") (attacker_position "-532 -5897 -543") (victim_position "-255 -5819 -543")
+L 05/16/2021 - 06:06:23: "Pikts<14><[U:1:151855922]><Red>" triggered "revenge" against "Cloudy<22><[U:1:122027674]><Blue>" (assist "1")
+L 05/16/2021 - 06:06:25: "Pikts<14><[U:1:151855922]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "-334 -5116 -297") (victim_position "184 -5307 -514")
+L 05/16/2021 - 06:06:25: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Blue>" (assister_position "-29 -5696 -530") (attacker_position "-334 -5116 -297") (victim_position "184 -5307 -514")
+L 05/16/2021 - 06:06:25: "Miles The BunBun<33><[U:1:134009198]><Blue>" changed role to "demoman"
+L 05/16/2021 - 06:06:26: "faris ⊹<34><[U:1:1036999282]><Red>" say_team "I meant that he was the one that pushing"
+L 05/16/2021 - 06:06:33: rcon from "168.119.150.113:39358": command "status"
+L 05/16/2021 - 06:06:39: "Cloudy<22><[U:1:122027674]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "scattergun" (attacker_position "-629 -5759 -537") (victim_position "-260 -5876 -509")
+L 05/16/2021 - 06:06:45: rcon from "23.239.22.163:40960": command "status"
+L 05/16/2021 - 06:06:48: "Kirbo<27><[U:1:992203731]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "panic_attack" (attacker_position "-794 -5876 -486") (victim_position "-362 -5594 -535")
+L 05/16/2021 - 06:06:48: "Cloudy<22><[U:1:122027674]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "-124 -5751 -539") (attacker_position "-794 -5876 -486") (victim_position "-362 -5594 -535")
+L 05/16/2021 - 06:06:54: rcon from "168.119.150.113:58532": command "status"
+L 05/16/2021 - 06:07:04: "Cloudy<22><[U:1:122027674]><Blue>" killed "Pikts<14><[U:1:151855922]><Red>" with "scattergun" (attacker_position "-281 -4412 -356") (victim_position "-303 -4627 -296")
+L 05/16/2021 - 06:07:05: "Cloudy<22><[U:1:122027674]><Blue>" killed "FilipeLuk<37><[U:1:190409710]><Red>" with "scattergun" (attacker_position "-246 -4670 -287") (victim_position "-437 -4753 -283")
+L 05/16/2021 - 06:07:19: rcon from "68.144.74.48:54325": command "status"
+L 05/16/2021 - 06:07:21: "Kirbo<27><[U:1:992203731]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "flamethrower" (attacker_position "513 -3452 -243") (victim_position "764 -3692 -255")
+L 05/16/2021 - 06:07:21: "Cloudy<22><[U:1:122027674]><Blue>" triggered "kill assist" against "faris ⊹<34><[U:1:1036999282]><Red>" (assister_position "152 -3593 -255") (attacker_position "513 -3452 -243") (victim_position "764 -3692 -255")
+L 05/16/2021 - 06:07:21: "Cloudy<22><[U:1:122027674]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "scattergun" (attacker_position "390 -3726 -255") (victim_position "976 -3631 -208")
+L 05/16/2021 - 06:07:21: "Kirbo<27><[U:1:992203731]><Blue>" triggered "kill assist" against "alm0e<35><[U:1:67311360]><Red>" (assister_position "694 -3450 -163") (attacker_position "390 -3726 -255") (victim_position "976 -3631 -208")
+L 05/16/2021 - 06:07:24: rcon from "168.119.150.113:58666": command "status"
+L 05/16/2021 - 06:07:24: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "scout"
+L 05/16/2021 - 06:07:33: rcon from "168.119.150.113:39578": command "status"
+L 05/16/2021 - 06:07:44: Team "Blue" triggered "pointcaptured" (cp "0") (cpname "#pl_borneo_cp1") (numcappers "1") (player1 "Cloudy<22><[U:1:122027674]><Blue>") (position1 "531 -3760 -245") 
+L 05/16/2021 - 06:07:45: rcon from "23.239.22.163:41086": command "status"
+L 05/16/2021 - 06:07:45: "Kirbo<27><[U:1:992203731]><Blue>" killed "FilipeLuk<37><[U:1:190409710]><Red>" with "world" (attacker_position "1673 -3080 -236") (victim_position "1790 -3196 -254")
+L 05/16/2021 - 06:07:48: "alm0e<35><[U:1:67311360]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "pistol_scout" (attacker_position "1624 -2640 -127") (victim_position "1384 -3279 -253")
+L 05/16/2021 - 06:07:48: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Blue>" (assister_position "1519 -2703 -141") (attacker_position "1624 -2640 -127") (victim_position "1384 -3279 -253")
+L 05/16/2021 - 06:07:53: "Cloudy<22><[U:1:122027674]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "scattergun" (attacker_position "1542 -3537 -255") (victim_position "1715 -3255 -178")
+L 05/16/2021 - 06:07:53: "Cloudy<22><[U:1:122027674]><Blue>" triggered "domination" against "faris ⊹<34><[U:1:1036999282]><Red>"
+L 05/16/2021 - 06:07:54: rcon from "168.119.150.113:58760": command "status"
+L 05/16/2021 - 06:07:56: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "soldier"
+L 05/16/2021 - 06:07:57: "alm0e<35><[U:1:67311360]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1139 -3633 -172")
+L 05/16/2021 - 06:08:01: "FilipeLuk<37><[U:1:190409710]><Red>" changed role to "engineer"
+L 05/16/2021 - 06:08:03: "Pikts<14><[U:1:151855922]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "915 -4373 -159") (victim_position "441 -3995 -169")
+L 05/16/2021 - 06:08:08: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "530 -1137 -31")
+L 05/16/2021 - 06:08:11: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_DISPENSER") (position "625 -1183 -31")
+L 05/16/2021 - 06:08:17: "Pikts<14><[U:1:151855922]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "1533 -3410 -255") (victim_position "1117 -3710 -227")
+L 05/16/2021 - 06:08:19: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "890 -2428 -63")
+L 05/16/2021 - 06:08:19: "Miles The BunBun<33><[U:1:134009198]><Blue>" killed "Pikts<14><[U:1:151855922]><Red>" with "iron_bomber" (attacker_position "1024 -3803 -201") (victim_position "1604 -3373 -255")
+L 05/16/2021 - 06:08:20: rcon from "68.144.74.48:54348": command "status"
+L 05/16/2021 - 06:08:23: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "781 -2750 18")
+L 05/16/2021 - 06:08:24: "alm0e<35><[U:1:67311360]><Red>" triggered "captureblocked" (cp "1") (cpname "#pl_borneo_cp2") (position "1262 -3806 -196")
+L 05/16/2021 - 06:08:24: "alm0e<35><[U:1:67311360]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "scattergun" (attacker_position "1262 -3806 -196") (victim_position "1145 -3653 -243")
+L 05/16/2021 - 06:08:31: "Cloudy<22><[U:1:122027674]><Blue>" killed "alm0e<35><[U:1:67311360]><Red>" with "scattergun" (attacker_position "196 -4488 -191") (victim_position "113 -4263 -191")
+L 05/16/2021 - 06:08:32: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_DISPENSER") (position "610 -1197 -31")
+L 05/16/2021 - 06:08:33: rcon from "168.119.150.113:39788": command "status"
+L 05/16/2021 - 06:08:37: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_dropobject" (object "OBJ_DISPENSER") (position "753 -2237 -63")
+L 05/16/2021 - 06:08:37: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_DISPENSER") (position "753 -2237 -63")
+L 05/16/2021 - 06:08:38: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_SENTRYGUN") (position "874 -2393 -63")
+L 05/16/2021 - 06:08:43: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_dropobject" (object "OBJ_SENTRYGUN") (position "1538 -3187 -255")
+L 05/16/2021 - 06:08:43: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "1538 -3187 -255")
+L 05/16/2021 - 06:08:45: rcon from "23.239.22.163:41200": command "status"
+L 05/16/2021 - 06:08:45: "faris ⊹<34><[U:1:1036999282]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "quake_rl" (attacker_position "-1571 -4960 -223") (victim_position "-1590 -4778 -223")
+L 05/16/2021 - 06:08:45: "faris ⊹<34><[U:1:1036999282]><Red>" triggered "revenge" against "Cloudy<22><[U:1:122027674]><Blue>"
+L 05/16/2021 - 06:08:52: "Miles The BunBun<33><[U:1:134009198]><Blue>" killed "faris ⊹<34><[U:1:1036999282]><Red>" with "iron_bomber" (attacker_position "-1740 -4555 -291") (victim_position "-1786 -5415 -355")
+L 05/16/2021 - 06:08:53: rcon from "168.119.150.113:58982": command "status"
+L 05/16/2021 - 06:09:04: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_DISPENSER") (position "795 -2307 -63")
+L 05/16/2021 - 06:09:07: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_dropobject" (object "OBJ_DISPENSER") (position "1411 -2507 -126")
+L 05/16/2021 - 06:09:07: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_DISPENSER") (position "1411 -2507 -126")
+L 05/16/2021 - 06:09:07: "alm0e<35><[U:1:67311360]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "scattergun" (attacker_position "80 -3872 -255") (victim_position "40 -4072 -191")
+L 05/16/2021 - 06:09:08: "Pikts<14><[U:1:151855922]><Red>" killed "Kirbo<27><[U:1:992203731]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "529 -4425 -191") (victim_position "348 -4400 -191")
+L 05/16/2021 - 06:09:08: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "Kirbo<27><[U:1:992203731]><Blue>" (assister_position "218 -4369 -191") (attacker_position "529 -4425 -191") (victim_position "348 -4400 -191")
+L 05/16/2021 - 06:09:08: "Pikts<14><[U:1:151855922]><Red>" triggered "domination" against "Kirbo<27><[U:1:992203731]><Blue>"
+L 05/16/2021 - 06:09:10: "Pikts<14><[U:1:151855922]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "600 -4450 -151") (victim_position "372 -4458 -191")
+L 05/16/2021 - 06:09:10: "alm0e<35><[U:1:67311360]><Red>" triggered "kill assist" against "Cloudy<22><[U:1:122027674]><Blue>" (assister_position "409 -4302 -135") (attacker_position "600 -4450 -151") (victim_position "372 -4458 -191")
+L 05/16/2021 - 06:09:11: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "sniper"
+L 05/16/2021 - 06:09:13: "faris ⊹<34><[U:1:1036999282]><Red>" changed role to "medic"
+L 05/16/2021 - 06:09:15: "Pikts<14><[U:1:151855922]><Red>" say "hello"
+L 05/16/2021 - 06:09:19: rcon from "68.144.74.48:54387": command "status"
+L 05/16/2021 - 06:09:20: "Kirbo<27><[U:1:992203731]><Blue>" changed role to "heavyweapons"
+L 05/16/2021 - 06:09:24: rcon from "168.119.150.113:59120": command "status"
+L 05/16/2021 - 06:09:25: "alm0e<35><[U:1:67311360]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "scattergun" (attacker_position "-747 -5967 -510") (victim_position "-551 -6001 -543")
+L 05/16/2021 - 06:09:25: "alm0e<35><[U:1:67311360]><Red>" triggered "domination" against "Miles The BunBun<33><[U:1:134009198]><Blue>"
+L 05/16/2021 - 06:09:30: "Miles The BunBun<33><[U:1:134009198]><Blue>" changed role to "scout"
+L 05/16/2021 - 06:09:30: "alm0e<35><[U:1:67311360]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "scattergun" (attacker_position "-323 -5536 -511") (victim_position "-454 -5674 -543")
+L 05/16/2021 - 06:09:33: rcon from "168.119.150.113:40038": command "status"
+L 05/16/2021 - 06:09:40: "Pikts<14><[U:1:151855922]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "-39 -6220 -543") (victim_position "-512 -6656 -415")
+L 05/16/2021 - 06:09:40: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_TELEPORTER") (position "776 -2742 18")
+L 05/16/2021 - 06:09:44: "Pikts<14><[U:1:151855922]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "-40 -6226 -543") (victim_position "-513 -6601 -415")
+L 05/16/2021 - 06:09:45: rcon from "23.239.22.163:41326": command "status"
+L 05/16/2021 - 06:09:51: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_dropobject" (object "OBJ_TELEPORTER") (position "1985 -3999 -128")
+L 05/16/2021 - 06:09:51: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_TELEPORTER") (position "1985 -3999 -128")
+L 05/16/2021 - 06:09:52: "Pikts<14><[U:1:151855922]><Red>" killed "Miles The BunBun<33><[U:1:134009198]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "-40 -6226 -543") (victim_position "-576 -6720 -415")
+L 05/16/2021 - 06:09:54: "Cloudy<22><[U:1:122027674]><Blue>" say "damm ur that kinda boring huh?"
+L 05/16/2021 - 06:09:54: rcon from "168.119.150.113:59230": command "status"
+L 05/16/2021 - 06:09:54: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_SENTRYGUN") (position "1562 -3275 -255")
+L 05/16/2021 - 06:09:56: "Pikts<14><[U:1:151855922]><Red>" killed "Cloudy<22><[U:1:122027674]><Blue>" with "tf_projectile_pipe_remote" (attacker_position "-20 -6014 -540") (victim_position "-527 -6676 -415")
+L 05/16/2021 - 06:09:56: "Pikts<14><[U:1:151855922]><Red>" triggered "domination" against "Cloudy<22><[U:1:122027674]><Blue>"
+L 05/16/2021 - 06:09:56: "Chipneer64<38><[U:1:241694284]><>" connected, address "5.173.12.169:14641"
+L 05/16/2021 - 06:09:56: "Chipneer64<38><[U:1:241694284]><>" STEAM USERID validated
+L 05/16/2021 - 06:09:57: "Pikts<14><[U:1:151855922]><Red>" say "ok"
+L 05/16/2021 - 06:09:58: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_dropobject" (object "OBJ_SENTRYGUN") (position "795 -3973 -254")
+L 05/16/2021 - 06:09:58: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "795 -3973 -254")
+L 05/16/2021 - 06:10:03: "Miles The BunBun<33><[U:1:134009198]><Blue>" say "lol sticky spamming so much fun"
+L 05/16/2021 - 06:10:08: "alm0e<35><[U:1:67311360]><Red>" say "wtf"
+L 05/16/2021 - 06:10:08: "Pikts<14><[U:1:151855922]><Red>" say "that spot is fucking broken"
+L 05/16/2021 - 06:10:13: "alm0e<35><[U:1:67311360]><Red>" say "im inside u"
+L 05/16/2021 - 06:10:14: "FilipeLuk<37><[U:1:190409710]><Red>" triggered "player_carryobject" (object "OBJ_DISPENSER") 

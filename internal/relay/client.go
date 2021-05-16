@@ -16,15 +16,17 @@ import (
 )
 
 var (
-	httpClient *http.Client
+	httpClient  *http.Client
+	messageChan chan string
 )
 
-func fileReader(ctx context.Context, path string, messageChan chan string) {
-	t, err := tail.TailFile(path, tail.Config{Follow: true, MaxLineSize: 2000})
+func fileReader(ctx context.Context, path string) {
+	t, err := tail.TailFile(path, tail.Config{Follow: true, MaxLineSize: 2000, Poll: true})
 	if err != nil {
 		log.Fatalf("Invalid log path: %s", path)
 		return
 	}
+	log.Debugf("fileReader starting: %v", path)
 	for {
 		select {
 		case line := <-t.Lines:
@@ -32,6 +34,7 @@ func fileReader(ctx context.Context, path string, messageChan chan string) {
 				continue
 			}
 			m := strings.TrimRight(line.Text, "\r\n")
+			log.Debugf("Line: %s", m)
 			if m == "" {
 				continue
 			}
@@ -43,14 +46,14 @@ func fileReader(ctx context.Context, path string, messageChan chan string) {
 	}
 }
 
-func newFileWatcher(ctx context.Context, directory string, newFileChan chan string) {
+func newFileWatcher(ctx context.Context, directory string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		if err := watcher.Close(); err != nil {
-			log.Errorf("failed to close watcher cleanly: %v", err)
+		if errW := watcher.Close(); errW != nil {
+			log.Errorf("failed to close watcher cleanly: %v", errW)
 		}
 	}()
 	var (
@@ -72,7 +75,7 @@ func newFileWatcher(ctx context.Context, directory string, newFileChan chan stri
 					}
 					first = false
 					c, cancel = context.WithCancel(ctx)
-					go fileReader(c, event.Name, newFileChan)
+					go fileReader(c, event.Name)
 				}
 			case errW, ok := <-watcher.Errors:
 				if !ok {
@@ -114,18 +117,34 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 		}
 		return nil
 	}
-	messageChan := make(chan string, 5000)
-	go newFileWatcher(ctx, logPath, messageChan)
+	go newFileWatcher(ctx, logPath)
 	var messageQueue []service.LogPayload
+	duration := time.Second * 5
+	ticker := time.NewTicker(duration)
 	for {
 		select {
+		case <-ticker.C:
+			if len(messageQueue) > 0 {
+				log.Debugf("Flushing message queue (timer): len %d", len(messageQueue))
+				go func(messages []service.LogPayload) {
+					if err := sendPayload(messages); err != nil {
+						log.Errorf("Failed to send queued log payload: %v", err)
+					}
+				}(messageQueue)
+				messageQueue = nil
+			}
 		case msg := <-messageChan:
 			messageQueue = append(messageQueue, service.LogPayload{ServerName: name, Message: msg})
-			if len(messageQueue) >= 10 {
-				if err := sendPayload(messageQueue); err != nil {
-					log.Errorf(err.Error())
-				}
+			log.Debugf("Added message to log queue: len %d", len(messageQueue))
+			if len(messageQueue) >= 25 {
+				log.Debugf("Flushing message queue (size): len %d", len(messageQueue))
+				go func(messages []service.LogPayload) {
+					if err := sendPayload(messages); err != nil {
+						log.Errorf("Failed to send queued log payload: %v", err)
+					}
+				}(messageQueue)
 				messageQueue = nil
+				ticker.Reset(duration)
 			}
 		case <-ctx.Done():
 			log.Debugf("relay client shutting down")
@@ -135,5 +154,6 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 }
 
 func init() {
-	httpClient = &http.Client{Timeout: time.Second * 5}
+	messageChan = make(chan string)
+	httpClient = &http.Client{Timeout: time.Second * 15}
 }

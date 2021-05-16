@@ -275,14 +275,6 @@ func Start() {
 
 	// Start the HTTP server
 	initHTTP()
-
-	if config.Relay.Enabled {
-		initRelay()
-	}
-}
-
-func initRelay() {
-
 }
 
 func initFilters() {

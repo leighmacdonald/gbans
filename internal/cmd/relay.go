@@ -31,8 +31,8 @@ var relayCmd = &cobra.Command{
 			log.Fatalf("Invalid timeout value: %v", err)
 		}
 		go func() {
-			if err := relay.New(ctx, serverName, logPath, relayAddr, duration); err != nil {
-				log.Fatalf("Exited client: %v", err)
+			if err2 := relay.New(ctx, serverName, logPath, relayAddr, duration); err2 != nil {
+				log.Fatalf("Exited client: %v", err2)
 			}
 		}()
 		exitChan := make(chan os.Signal, 10)
@@ -50,6 +50,6 @@ func init() {
 	relayCmd.PersistentFlags().StringVarP(&serverName, "name", "n", "", "Server ID used for identification")
 	relayCmd.PersistentFlags().StringVarP(&relayAddr, "host", "H", "localhost", "Server host to send logs to")
 	relayCmd.PersistentFlags().StringVarP(&logPath, "logdir", "l", "", "Path to tf2 logs directory")
-	relayCmd.PersistentFlags().StringVarP(&timeoutStr, "timeout", "t", "5s", "API Timeout (eg: 1s, 1m, 1h)")
+	relayCmd.PersistentFlags().StringVarP(&timeoutStr, "timeout", "t", "15s", "API Timeout (eg: 1s, 1m, 1h)")
 	rootCmd.AddCommand(relayCmd)
 }

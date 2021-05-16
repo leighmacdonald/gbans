@@ -353,7 +353,7 @@ var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session,
 const (
 	discordMaxMsgLen  = 2000
 	discordMsgWrapper = "```"
-	// Accounts for the char lens: ```\n``` = 7
+	// Accounts for the char lens: ``````
 	discordWrapperTotalLen = discordMaxMsgLen - (len(discordMsgWrapper) * 2)
 )
 
