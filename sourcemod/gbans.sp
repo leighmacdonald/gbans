@@ -303,6 +303,9 @@ Action AdminCmdReauth(int client, int argc) {
 
 public
 Action AdminCmdKick(int client, int argc) {
+    if (IsClientInGame(client)) {
+        KickClient(client);
+    }
     return Plugin_Handled;
 }
 
@@ -355,7 +358,7 @@ Action CmdMod(int client, int argc) {
     req.POST();
     delete req;
 
-    ReplyToCommand(client, "Mods have been altered, thanks!");
+    ReplyToCommand(client, "Mods have been alterted, thanks!");
 
     return Plugin_Handled;
 }
