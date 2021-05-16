@@ -59,7 +59,7 @@ var (
 	rxDomination           = regexp.MustCompile(dp + `triggered "Domination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
 	rxRevenge              = regexp.MustCompile(dp + `triggered "Revenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
 	rxPickup               = regexp.MustCompile(dp + `picked up item "(?P<item>\S+)"`)
-	rxSay                  = regexp.MustCompile(dp + `Say\s+"(?P<msg>.+?)"$`)
+	rxSay                  = regexp.MustCompile(dp + `say\s+"(?P<msg>.+?)"$`)
 	rxSayTeam              = regexp.MustCompile(dp + `say_team\s+"(?P<msg>.+?)"$`)
 	rxEmptyUber            = regexp.MustCompile(dp + `triggered "empty_uber"`)
 	rxMedicDeath           = regexp.MustCompile(dp + `triggered "medic_death" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>" \(healing "(?P<healing>\d+)"\) \(ubercharge "(?P<uber>\d+)"\)`)
