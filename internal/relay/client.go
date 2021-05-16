@@ -33,7 +33,7 @@ func fileReader(ctx context.Context, path string) {
 			if line == nil {
 				continue
 			}
-			m := strings.TrimRight(line.Text, "\r\n")
+			m := strings.TrimRight(line.Text, "\n")
 			log.Debugf("Line: %s", m)
 			if m == "" {
 				continue

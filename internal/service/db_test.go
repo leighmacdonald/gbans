@@ -82,14 +82,14 @@ func TestBan(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
-	b1 := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
+	b1 := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
 	require.NoError(t, saveBan(ctx, b1), "Failed to add ban")
 
-	b1Fetched, err := getBanBySteamID(ctx, 76561198084134025, false)
+	b1Fetched, err := getBanBySteamID(ctx, 76561198044052046, false)
 	require.NoError(t, err)
 	banEqual(b1, b1Fetched.Ban)
 
-	b1duplicate := model.NewBan(76561198084134025, 76561198003911389, time.Hour*24)
+	b1duplicate := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
 	require.True(t, errors.Is(saveBan(ctx, b1duplicate), errDuplicate), "Was able to add duplicate ban")
 
 	b1Fetched.Ban.AuthorID = 76561198057999536
@@ -99,7 +99,7 @@ func TestBan(t *testing.T) {
 	b1Fetched.Ban.Source = model.Web
 	require.NoError(t, saveBan(ctx, b1Fetched.Ban), "Failed to edit ban")
 
-	b1FetchedUpdated, err := getBanBySteamID(ctx, 76561198084134025, false)
+	b1FetchedUpdated, err := getBanBySteamID(ctx, 76561198044052046, false)
 	require.NoError(t, err)
 	banEqual(b1Fetched.Ban, b1FetchedUpdated.Ban)
 
@@ -140,7 +140,7 @@ func TestAppeal(t *testing.T) {
 
 func TestPerson(t *testing.T) {
 	p1 := model.NewPerson(76561198083950961)
-	p2 := model.NewPerson(76561198084134025)
+	p2 := model.NewPerson(76561198044052046)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 	require.NoError(t, SavePerson(ctx, p1))

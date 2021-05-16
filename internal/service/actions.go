@@ -15,12 +15,12 @@ import (
 // MutePlayer will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
 // If duration set to 0, the value of config.DefaultExpiration() will be used.
 func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-	reason model.Reason, reasonText string) error {
+	reason model.Reason, reasonText string) (*playerInfo, error) {
 	if !sid.Valid() {
-		return errors.Errorf("Failed to get steam id from: %s", sid.String())
+		return nil, errors.Errorf("Failed to get steam id from: %s", sid.String())
 	}
 	if !author.Valid() {
-		return errors.Errorf("Failed to get steam id from: %s", author)
+		return nil, errors.Errorf("Failed to get steam id from: %s", author)
 	}
 	until := config.DefaultExpiration()
 	if duration > 0 {
@@ -29,15 +29,16 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 	ban, err2 := getBanBySteamID(ctx, sid, false)
 	if err2 != nil && dbErr(err2) != errNoResult {
 		log.Errorf("Error getting ban from db: %v", err2)
-		return errors.New("Internal DB Error")
+		return nil, errors.New("Internal DB Error")
 	} else if err2 != nil {
 		ban = &model.BannedPerson{
 			Ban:    model.NewBan(sid, 0, duration),
 			Person: model.NewPerson(sid),
 		}
+		ban.Ban.BanType = model.NoComm
 	}
 	if ban.Ban.BanType == model.Banned {
-		return errors.New("Person is already banned")
+		return nil, errors.New("Person is already banned")
 	}
 	ban.Ban.BanType = model.NoComm
 	ban.Ban.Reason = reason
@@ -45,41 +46,21 @@ func MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, du
 	ban.Ban.ValidUntil = until
 	if err3 := saveBan(ctx, ban.Ban); err3 != nil {
 		log.Errorf("Failed to save ban: %v", err3)
-		return dbErr(err3)
+		return nil, dbErr(err3)
 	}
-	servers, err := getServers(ctx)
-	if err != nil {
-		log.Errorf("Failed to get server for ban propagation")
-	} else {
-		queryRCON(ctx, servers,
+	pi := findPlayer(ctx, sid.String(), "")
+	if pi.inGame {
+		log.Infof("Gagging in-game player")
+		queryRCON(ctx, []model.Server{*pi.server},
 			fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(sid))),
 			fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(sid))))
-
-		//if pi.inGame {
-		//	resp, err4 := execServerRCON(*pi.server, fmt.Sprintf(`sm_gag "#%s"`, steamid.SID64ToSID3(pi.sid)))
-		//	if err4 != nil {
-		//		log.Errorf("Failed to gag active user: %v", err4)
-		//	} else {
-		//		if strings.Contains(resp, "[SM] Gagged") {
-		//			var dStr string
-		//			if duration.Seconds() == 0 {
-		//				dStr = "Forever"
-		//			} else {
-		//				dStr = duration.String()
-		//			}
-		//			return "", errors.Errorf("Person gagged successfully for: %s", dStr)
-		//		} else {
-		//			return "", errors.New("Failed to gag player in-game")
-		//		}
-		//	}
-		//}
-
 	}
-	return nil
+	log.Infof("Gagged player successfully")
+	return nil, nil
 }
 
 // UnbanPlayer will set the current ban to now, making it expired.
-func UnbanPlayer(ctx context.Context, sid steamid.SID64) error {
+func UnbanPlayer(ctx context.Context, sid steamid.SID64, _ steamid.SID64, _ string) error {
 	if !sid.Valid() {
 		return errors.Errorf("Invalid steam id from: %s", sid.String())
 	}
@@ -110,7 +91,7 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
 	}
 	existing, err := getBanBySteamID(ctx, sid, false)
-	if existing != nil && existing.Ban.BanID > 0 {
+	if existing != nil && existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return nil, errDuplicate
 	}
 	if err != nil && err != errNoResult {
@@ -157,8 +138,8 @@ func BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, dur
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of config.DefaultExpiration() will be used.
-func BanNetwork(ctx context.Context, cidr *net.IPNet, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-	reason model.Reason, reasonText string, source model.BanSource) (*model.BanNet, error) {
+func BanNetwork(ctx context.Context, cidr *net.IPNet, _ steamid.SID64, author steamid.SID64, duration time.Duration,
+	_ model.Reason, reasonText string, source model.BanSource) (*model.BanNet, error) {
 	if !author.Valid() {
 		return nil, errors.Errorf("Failed to get steam id from: %s", author)
 	}
@@ -189,4 +170,29 @@ func BanNetwork(ctx context.Context, cidr *net.IPNet, sid steamid.SID64, author 
 		log.Debugf("RCON: %s", resp)
 	}
 	return &banNet, nil
+}
+
+// KickPlayer will kick the steam id from all servers.
+func KickPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64,
+	_ model.Reason, reasonText string, _ model.BanSource) (*playerInfo, error) {
+	if !sid.Valid() {
+		return nil, errors.Errorf("Invalid steam id from: %s", sid.String())
+	}
+	if !author.Valid() {
+		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
+	}
+	ipAddr := ""
+	// Kick the user if they currently are playing on a server
+	pi := findPlayer(ctx, sid.String(), "")
+	if pi.valid && pi.inGame {
+		ipAddr = pi.player.IP.String()
+		if _, errR := execServerRCON(*pi.server, fmt.Sprintf("sm_kick #%d %s", pi.player.UserID, reasonText)); errR != nil {
+			log.Errorf("Faied to kick user afeter ban: %v", errR)
+		}
+	}
+	// Update the profile, setting their IP
+	if _, e := getOrCreateProfileBySteamID(ctx, sid, ipAddr); e != nil {
+		log.Errorf("Failed to update banned user profile: %v", e)
+	}
+	return &pi, nil
 }

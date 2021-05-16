@@ -9,7 +9,7 @@ import (
 
 func TestFetchPlayerBans(t *testing.T) {
 	reqIds := []steamid.SID64{
-		76561198084134025,
+		76561198044052046,
 		76561198059958958,
 		76561197999702457,
 		76561198189957966,

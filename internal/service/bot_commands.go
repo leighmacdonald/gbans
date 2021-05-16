@@ -139,6 +139,7 @@ func botRegisterSlashCommands() error {
 			Description: "Unban a previously banned player",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
+				optReason,
 			},
 		},
 		{
@@ -205,7 +206,6 @@ func botRegisterSlashCommands() error {
 				optUserID,
 			},
 		},
-
 		{
 			ApplicationID: config.Discord.AppID,
 			Name:          string(cmdHistory),

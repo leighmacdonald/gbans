@@ -43,7 +43,7 @@ func authMiddleWare() gin.HandlerFunc {
 			if config.General.Mode == "test" && token == testToken {
 				ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
 				defer cancel()
-				loggedInPerson, err2 := GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
+				loggedInPerson, err2 := GetOrCreatePersonBySteamID(ctx, config.General.Owner)
 				if err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)

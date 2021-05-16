@@ -137,10 +137,6 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
                 KickClient(client_id, msg);
                 return;
             }
-            case BSNoComm: {
-                BaseComm_SetClientGag(client_id, true);
-                BaseComm_SetClientMute(client_id, true);
-            }
         }
         char ip[16];
         GetClientIP(client_id, ip, sizeof(ip));
@@ -149,9 +145,8 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
         g_players[client_id].ban_type = ban_type;
         PrintToServer("[GB] Successfully authenticated with gbans server");
         if (g_players[client_id].ban_type == BSNoComm) {
-            // I believe to alleviate a race condition?
             if (IsClientInGame(client_id)) {
-                OnClientPutInServer(client_id);
+                OnClientPostAdminCheck(client_id);
             }
         }
         resp.Cleanup();
@@ -162,10 +157,15 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
 }
 
 public
-void OnClientPutInServer(int client_id) {
+void OnClientPostAdminCheck(int client_id) {
+    PrintToServer("[GB] OnClientPostAdminCheck");
     if (g_players[client_id].ban_type == BSNoComm) {
-        BaseComm_SetClientMute(client_id, true);
-        BaseComm_SetClientGag(client_id, true);
+        if (!BaseComm_IsClientMuted(client_id)) {
+            BaseComm_SetClientMute(client_id, true);
+        }
+        if (!BaseComm_IsClientGagged(client_id)) {
+            BaseComm_SetClientGag(client_id, true);
+        }
         LogAction(0, client_id, "Muted \"%L\" for an unfinished mute punishment.", client_id);
     }
 }

@@ -78,7 +78,7 @@ func TestOnAPIPostBan(t *testing.T) {
 		ReasonText string        `json:"reason_text"`
 		Network    string        `json:"network"`
 	}
-	token := createToken(76561198084134025, model.PAdmin)
+	token := createToken(76561198044052046, model.PAdmin)
 	s1 := fmt.Sprintf("%d", 76561197960265728+rand.Int63n(100000000))
 	units := []httpTestUnit{
 		{newTestReq("POST", "/api/ban", req{

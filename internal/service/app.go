@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"embed"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/rumblefrog/go-a2s"
@@ -26,10 +26,13 @@ var (
 	serverStateMu *sync.RWMutex
 	serverStates  map[string]serverState
 	// Holds ephemeral user warning state for things such as word filters
-	warnings          map[steamid.SID64][]userWarning
-	warningsMu        *sync.RWMutex
-	httpServer        *http.Server
-	logRawQueue       chan LogPayload
+	warnings   map[steamid.SID64][]userWarning
+	warningsMu *sync.RWMutex
+	httpServer *http.Server
+	// When a server posts log entries they are sent through here
+	logRawQueue chan LogPayload
+	// Each log event can have any number of channels associated with them
+	// Events are sent to all channels in a fan-out style
 	logEventReaders   map[logparse.MsgType][]chan logEvent
 	logEventReadersMu *sync.RWMutex
 	//go:embed dist
@@ -107,6 +110,22 @@ type logEvent struct {
 	Player2  *model.Person
 	Assister *model.Person
 	RawEvent string
+}
+
+// Decode is just a helper to
+func (e *logEvent) Decode(output interface{}) error {
+	return logparse.Decode(e.Event, output)
+}
+
+func ExamplelogEvent_Decode() {
+	evt := logEvent{
+		Event: map[string]string{"msg": "test"},
+	}
+	var m logparse.SayTeamEvt
+	if err := evt.Decode(&m); err != nil {
+		log.Errorf("Failed to decode event")
+	}
+	fmt.Println(m.Msg)
 }
 
 func logWriter(ctx context.Context) {
@@ -196,9 +215,23 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		CreatedOn:  config.Now(),
 	})
 	if len(warnings[sid64]) >= config.General.WarningLimit {
-		if _, err := BanPlayer(gCtx, sid64, config.General.Owner, 0, model.WarningsExceeded,
-			"Warning limit exceeded", model.System); err != nil {
-			log.Errorf("Failed to ban player after too many warnings: %s", err)
+		switch config.General.WarningExceededAction {
+		case config.Gag:
+			_, err := MutePlayer(gCtx, sid64, config.General.Owner, config.General.WarningExceededDuration,
+				model.Language, "Language warnings exceeded")
+			if err != nil {
+				log.Errorf("Failed to ban player after too many warnings: %s", err)
+			}
+		case config.Ban:
+			if _, err := BanPlayer(gCtx, sid64, config.General.Owner, 0, model.WarningsExceeded,
+				"Warning limit exceeded", model.System); err != nil {
+				log.Errorf("Failed to ban player after too many warnings: %s", err)
+			}
+		case config.Kick:
+			if _, err := KickPlayer(gCtx, sid64, config.General.Owner, model.WarningsExceeded,
+				"Warning limit exceeded", model.System); err != nil {
+				log.Errorf("Failed to ban player after too many warnings: %s", err)
+			}
 		}
 	}
 }
@@ -285,7 +318,7 @@ func initFilters() {
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
-	util.ImportFilteredWords(words)
+	importFilteredWords(words)
 	log.Debugf("Loaded %d filtered words", len(words))
 }
 
@@ -300,6 +333,7 @@ func initWorkers() {
 	go warnWorker(gCtx)
 	go logReader(gCtx, logRawQueue)
 	go logWriter(gCtx)
+	go filterWorker(gCtx)
 }
 
 func initDiscord() {

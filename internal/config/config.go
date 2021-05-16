@@ -97,14 +97,25 @@ func (rm runMode) String() string {
 	return string(rm)
 }
 
+type Action string
+
+const (
+	Gag  Action = "gag"
+	Kick Action = "kick"
+	Ban  Action = "ban"
+)
+
 type generalConfig struct {
-	SiteName       string        `mapstructure:"site_name"`
-	SteamKey       string        `mapstructure:"steam_key"`
-	Owner          steamid.SID64 `mapstructure:"owner"`
-	Mode           runMode       `mapstructure:"mode"`
-	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
-	WarningLimit   int           `mapstructure:"warning_limit"`
-	UseUTC         bool          `mapstructure:"use_utc"`
+	SiteName                     string        `mapstructure:"site_name"`
+	SteamKey                     string        `mapstructure:"steam_key"`
+	Owner                        steamid.SID64 `mapstructure:"owner"`
+	Mode                         runMode       `mapstructure:"mode"`
+	WarningTimeout               time.Duration `mapstructure:"warning_timeout"`
+	WarningLimit                 int           `mapstructure:"warning_limit"`
+	WarningExceededAction        Action        `mapstructure:"warning_exceeded_action"`
+	WarningExceededDurationValue string        `mapstructure:"warning_exceeded_duration"`
+	WarningExceededDuration      time.Duration `mapstructure:"-"`
+	UseUTC                       bool          `mapstructure:"use_utc"`
 }
 
 type discordConfig struct {
@@ -187,6 +198,11 @@ func Read(cfgFiles ...string) {
 		d = time.Second * 10
 	}
 	cfg.HTTP.ClientTimeoutDuration = d
+	d2, err4 := ParseDuration(cfg.General.WarningExceededDurationValue)
+	if err4 != nil {
+		d2 = time.Hour * 24 * 7
+	}
+	cfg.General.WarningExceededDuration = d2
 	HTTP = cfg.HTTP
 	General = cfg.General
 	Filter = cfg.Filter
@@ -210,9 +226,11 @@ func init() {
 	viper.SetDefault("general.site_name", "gbans")
 	viper.SetDefault("general.steam_key", "")
 	viper.SetDefault("general.mode", "release")
-	viper.SetDefault("general.owner", 76561198084134025)
+	viper.SetDefault("general.owner", 76561198044052046)
 	viper.SetDefault("general.warning_timeout", time.Hour*6)
 	viper.SetDefault("general.warning_limit", 3)
+	viper.SetDefault("general.warning_exceeded_action", Kick)
+	viper.SetDefault("general.warning_exceeded_duration", "1w")
 	viper.SetDefault("general.use_utc", true)
 
 	viper.SetDefault("http.host", "127.0.0.1")

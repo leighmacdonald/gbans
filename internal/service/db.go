@@ -311,7 +311,7 @@ func getBanByColumn(ctx context.Context, column string, identifier interface{}, 
 		From(fmt.Sprintf("%s b", tableBan)).
 		LeftJoin("person p ON b.steam_id = p.steam_id").
 		GroupBy("b.ban_id, p.steam_id").
-		Where(sq.Eq{fmt.Sprintf("b.%s", column): identifier}).
+		Where(sq.And{sq.Eq{fmt.Sprintf("b.%s", column): identifier}, sq.Gt{"b.valid_until": config.Now()}}).
 		OrderBy("b.created_on DESC").
 		Limit(1).
 		ToSql()
@@ -492,6 +492,14 @@ func saveBan(ctx context.Context, ban *model.Ban) error {
 		return updateBan(ctx, ban)
 	}
 	ban.CreatedOn = config.Now()
+
+	existing, e := getBanBySteamID(ctx, ban.SteamID, false)
+	if e != nil && !errors.Is(e, errNoResult) {
+		return errors.Wrapf(err, "Failed to check existing ban state")
+	}
+	if ban.BanType <= existing.Ban.BanType {
+		return errDuplicate
+	}
 	return insertBan(ctx, ban)
 }
 

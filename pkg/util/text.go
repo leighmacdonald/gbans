@@ -1,38 +1,8 @@
 package util
 
 import (
-	"github.com/leighmacdonald/gbans/internal/model"
 	"strings"
-	"sync"
 )
-
-var (
-	wordFilters   []*model.Filter
-	wordFiltersMu *sync.RWMutex
-)
-
-// ImportFilteredWords loads the supplied word list into memory
-func ImportFilteredWords(filters []*model.Filter) {
-	wordFiltersMu.Lock()
-	defer wordFiltersMu.Unlock()
-	wordFilters = filters
-}
-
-// IsFilteredWord checks to see if the body of text contains a known filtered word
-func IsFilteredWord(body string) (bool, *model.Filter) {
-	if body == "" {
-		return false, nil
-	}
-	wordFiltersMu.RLock()
-	defer wordFiltersMu.RUnlock()
-	ls := strings.ToLower(body)
-	for _, filter := range wordFilters {
-		if filter.Match(ls) {
-			return true, filter
-		}
-	}
-	return false, nil
-}
 
 // StringChunkDelimited is used to split a multiline string into strings with a max size defined as chunkSize.
 // A string of len > chunkSize will not be split.
@@ -62,8 +32,4 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 		}
 	}
 	return results
-}
-
-func init() {
-	wordFiltersMu = &sync.RWMutex{}
 }

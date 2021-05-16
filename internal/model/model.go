@@ -20,10 +20,15 @@ var (
 type BanType int
 
 const (
+	// Unknown means the ban state could not be determined, failing-open to allowing players
+	// to connect.
 	Unknown BanType = -1
-	OK      BanType = 0
-	NoComm  BanType = 1
-	Banned  BanType = 2
+	// OK Ban state is clean
+	OK BanType = 0
+	// NoComm means the player cannot communicate while playing voice + chat
+	NoComm BanType = 1
+	// Banned means the player cannot join the server at all
+	Banned BanType = 2
 )
 
 // BanSource defines the origin of the ban or action
@@ -68,6 +73,7 @@ const (
 	Exploiting       Reason = 6
 	WarningsExceeded Reason = 7
 	Spam             Reason = 8
+	Language         Reason = 9
 )
 
 var reasonStr = map[Reason]string{

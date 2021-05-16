@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -90,8 +89,8 @@ func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 		return "", errUnlinkedAccount
 	}
 	playerID := m.Data.Options[0].Value.(string)
-	pi := findPlayer(ctx, playerID, "")
-	if !pi.valid {
+	sid, err := steamid.ResolveSID64(ctx, playerID)
+	if err != nil {
 		return "", errUnknownID
 	}
 	duration, err2 := config.ParseDuration(m.Data.Options[1].Value.(string))
@@ -102,7 +101,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	if len(m.Data.Options) > 2 {
 		reasonStr = m.Data.Options[2].Value.(string)
 	}
-	if e := MutePlayer(gCtx, pi.sid, au.SteamID, duration, model.Custom, reasonStr); e != nil {
+	if _, e := MutePlayer(gCtx, sid, au.SteamID, duration, model.Custom, reasonStr); e != nil {
 		return "", e
 	}
 	return "Player muted successfully", nil
@@ -173,7 +172,7 @@ func onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 
 func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
-	sid, err := steamid.ResolveSID64(context.Background(), pId)
+	sid, err := steamid.ResolveSID64(ctx, pId)
 	if err != nil {
 		return "", errUnknownID
 	}
@@ -221,7 +220,11 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 	proxy, _ := getProxyRecord(ctx, bannedPlayer.IPAddr)
 	title := fmt.Sprintf("Profile of: %s", bannedPlayer.PersonaName)
 	if ban != nil && ban.Ban.BanID > 0 {
-		title += " (BANNED)"
+		if ban.Ban.BanType == model.Banned {
+			title += " (BANNED)"
+		} else if ban.Ban.BanType == model.NoComm {
+			title += " (MUTED)"
+		}
 	}
 	t := defaultTable(title)
 	t.AppendSeparator()
@@ -315,7 +318,7 @@ func onHistory(ctx context.Context, s *discordgo.Session, m *discordgo.Interacti
 
 func onHistoryIP(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Options[0].Value.(string)
-	sid, err := steamid.ResolveSID64(context.Background(), pId)
+	sid, err := steamid.ResolveSID64(ctx, pId)
 	if err != nil || !sid.Valid() {
 		return "", errInvalidSID
 	}
@@ -372,21 +375,18 @@ func onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.Interact
 }
 
 func onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	author, er := getPersonByDiscordID(ctx, m.Member.User.ID)
+	if er != nil {
+		return "", errUnlinkedAccount
+	}
 	pId := m.Data.Options[0].Value.(string)
+	reason := m.Data.Options[1].Value.(string)
 	sid, err := steamid.ResolveSID64(ctx, pId)
 	if err != nil || !sid.Valid() {
 		return "", errInvalidSID
 	}
-	ban, err2 := getBanBySteamID(ctx, sid, false)
-	if err2 != nil {
-		if err2 == errNoResult {
-			return "", errUnknownBan
-		} else {
-			return "", errCommandFailed
-		}
-	}
-	if err3 := dropBan(ctx, ban.Ban); err3 != nil {
-		return "", errCommandFailed
+	if errUB := UnbanPlayer(ctx, sid, author.SteamID, reason); errUB != nil {
+		return "", errors.Wrapf(err, "Error trying to execute unban")
 	}
 	return "User ban is now inactive", nil
 }
@@ -638,7 +638,7 @@ func defaultTable(title string) table.Writer {
 	return t
 }
 
-func onPlayers(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onPlayers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sId := m.Data.Options[0].Value.(string)
 	server, err := getServerByName(ctx, sId)
 	if err != nil {
@@ -702,7 +702,7 @@ func onFilterDel(ctx context.Context, _ *discordgo.Session, m *discordgo.Interac
 
 func onFilterCheck(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	value := m.Data.Options[0].Options[0].Value.(string)
-	isFiltered, filter := util.IsFilteredWord(value)
+	isFiltered, filter := isFilteredWord(value)
 	if !isFiltered {
 		return fmt.Sprintf("No matching filters found for: %s", value), nil
 	}
