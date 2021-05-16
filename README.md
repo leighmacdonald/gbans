@@ -21,6 +21,7 @@ Nginx/Apache and PHP on your server.
 
 - [ ] Import of existing sourcebans database
 - [ ] Import/Export of gbans databases
+- [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
 - [x] Game support
    - [x] Team Fortress 2
 - [ ] 3rd party ban lists 
@@ -33,7 +34,7 @@ Nginx/Apache and PHP on your server.
 - [x] Subnet & IP bans (CIDR)
 - [x] Database support
   - [x] Postgresql w/PostGIS
-- [x] (Docker support)[https://hub.docker.com/repository/docker/leighmacdonald/gbans]
+- [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
 - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
 - [ ] SourceMod Plugin
     - [x] Game server authentication
@@ -45,7 +46,7 @@ Nginx/Apache and PHP on your server.
     - [x] Discord
     - [ ] Web
 - [ ] Game server logs
-   - [x] Remote relay client `gbans relay -h`
+   - [x] Remote relay agent `gbans relay -h`
    - [x] Parsing  
    - [x] Indexing 
    - [ ] Querying
