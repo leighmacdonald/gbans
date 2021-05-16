@@ -92,7 +92,7 @@ func discordMessageQueueReader(ctx context.Context) {
 				continue
 			}
 			msg := strings.Join(sendQueue, "\n")
-			for _, m := range util.StringChunkDelimited(msg, discordMaxMsgLen-(len(discordMsgWrapper)*2)) {
+			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
 					if err := sendChannelMessage(dg, channelID, m); err != nil {
 						log.Errorf("Failed to send bulk message log: %v", err)

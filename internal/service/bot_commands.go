@@ -353,6 +353,8 @@ var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session,
 const (
 	discordMaxMsgLen  = 2000
 	discordMsgWrapper = "```"
+	// Accounts for the char lens: ```\n``` = 7
+	discordWrapperTotalLen = discordMaxMsgLen - (len(discordMsgWrapper) * 2)
 )
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -383,9 +385,9 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		for idx, m := range util.StringChunkDelimited(resp, discordMaxMsgLen-(len(discordMsgWrapper)*2)) {
+		for idx, m := range util.StringChunkDelimited(resp, discordWrapperTotalLen) {
 			if idx == 0 {
-				if sendE := sendInteractionMessageEdit(s, i.Interaction, discordMsgWrapper+m+discordMsgWrapper); sendE != nil {
+				if sendE := sendInteractionMessageEdit(s, i.Interaction, m); sendE != nil {
 					log.Errorf("Failed sending success response for interaction: %v", sendE)
 				}
 			} else {
