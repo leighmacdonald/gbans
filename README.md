@@ -38,10 +38,10 @@ Nginx/Apache and PHP on your server.
 - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
 - [ ] SourceMod Plugin
     - [x] Game server authentication
-    - [ ] `gb_ban <player_id|steam_id> duration Reason` Ban a user
-    - [ ] `gb_unban` Unban a previously banned user
-    - [ ] `gb_kick` Kick a user
-    - [ ] `mod` Call for a mod 
+    - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
+    - [ ] `/gb_unban` Unban a previously banned user
+    - [ ] `/gb_kick` Kick a user
+    - [ ] `/gb_mod or /mod <message>` Call for a mod on discord
 - [ ] User Interfaces
     - [x] Discord
     - [ ] Web
