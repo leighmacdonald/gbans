@@ -1,4 +1,4 @@
-package service
+package web
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"github.com/yohcop/openid-go"
@@ -41,9 +42,9 @@ func authMiddleWare() gin.HandlerFunc {
 		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
 			if config.General.Mode == "test" && token == testToken {
-				ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				loggedInPerson, err2 := GetOrCreatePersonBySteamID(ctx, config.General.Owner)
+				loggedInPerson, err2 := store.GetOrCreatePersonBySteamID(ctx, config.General.Owner)
 				if err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -70,9 +71,9 @@ func authMiddleWare() gin.HandlerFunc {
 					log.Warnf("Invalid steamID")
 					return
 				}
-				ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				loggedInPerson, err := getPersonBySteamID(ctx, steamid.SID64(claims.SteamID))
+				loggedInPerson, err := store.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID))
 				if err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -119,9 +120,9 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		ctx, cancel := context.WithTimeout(gCtx, time.Second*5)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		p, errProfile := getOrCreateProfileBySteamID(ctx, sid, c.Request.RemoteAddr)
+		p, errProfile := actions.GetOrCreateProfileBySteamID(ctx, sid, c.Request.RemoteAddr)
 		if errProfile != nil {
 			log.Errorf("Failed to fetch user profile: %v", errProfile)
 			c.Redirect(302, ref)

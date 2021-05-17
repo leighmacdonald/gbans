@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/service"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -23,17 +23,17 @@ var testDataCmd = &cobra.Command{
 	Use:   "test_data",
 	Short: "Add testing data",
 	Run: func(cmd *cobra.Command, args []string) {
-		service.Init(config.DB.DSN)
+		store.Init(config.DB.DSN)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 		defer cancel()
-		p, _ := service.GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
+		p, _ := store.GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
 		sum1, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{p.SteamID})
 		if err != nil {
 			log.Errorf("Failed to get player summary: %v", err)
 			return
 		}
 		p.PlayerSummary = &sum1[0]
-		if err := service.SavePerson(ctx, p); err != nil {
+		if err := store.SavePerson(ctx, p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
 			return
 		}
@@ -79,9 +79,8 @@ var testDataCmd = &cobra.Command{
 				break
 			}
 		}
-		c := context.Background()
-		for i, bid := range b {
-			v, err := service.GetOrCreatePersonBySteamID(ctx, bid)
+		for _, bid := range b {
+			v, err := store.GetOrCreatePersonBySteamID(ctx, bid)
 			if err != nil {
 				log.Errorf("error creating person: %v", err)
 				return
@@ -95,18 +94,9 @@ var testDataCmd = &cobra.Command{
 				continue
 			}
 			v.PlayerSummary = &sum[0]
-			if err := service.SavePerson(ctx, v); err != nil {
+			if err := store.SavePerson(ctx, v); err != nil {
 				log.Warnf("Failed to save person: %v", err)
 				continue
-			}
-			var t time.Duration
-			if i%2 == 0 {
-				t = 0
-			} else {
-				t = time.Hour * 24
-			}
-			if _, err := service.BanPlayer(c, v.SteamID, p.SteamID, t, model.Cheating, "Cheater", model.System); err != nil {
-				log.Errorf(err.Error())
 			}
 		}
 		for _, v := range [][]string{
@@ -132,7 +122,7 @@ var testDataCmd = &cobra.Command{
 				CreatedOn:      config.Now(),
 				UpdatedOn:      config.Now(),
 			}
-			if err := service.SaveServer(ctx, &s); err != nil {
+			if err := store.SaveServer(ctx, &s); err != nil {
 				log.Errorf("Failed to add server: %v", err)
 			}
 		}

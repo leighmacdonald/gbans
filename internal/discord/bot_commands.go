@@ -1,4 +1,4 @@
-package service
+package discord
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -41,9 +42,9 @@ const (
 
 func botRegisterSlashCommands() error {
 	// TODO register the commands again upon adding new servers to update autocomplete opts
-	c, cancel := context.WithTimeout(gCtx, time.Second*60)
+	c, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
-	servers, err := getServers(c)
+	servers, err := store.GetServers(c)
 	if err != nil {
 		return err
 	}
@@ -374,7 +375,7 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 			return
 		}
-		c, cancel := context.WithTimeout(gCtx, time.Second*10)
+		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		resp, err := h(c, s, i)
 		if err != nil {

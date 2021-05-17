@@ -1,45 +1,34 @@
-package service
+package app
 
 import (
 	"context"
-	"embed"
-	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 	"sync"
 	"time"
 )
 
 var (
 	// BuildVersion holds the current git revision, as of build time
-	BuildVersion  = "master"
-	router        *gin.Engine
-	gCtx          context.Context
-	serverStateMu *sync.RWMutex
-	serverStates  map[string]serverState
+	BuildVersion = "master"
+	gCtx         context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
-	httpServer *http.Server
-	// When a server posts log entries they are sent through here
-	logRawQueue chan LogPayload
+	// When a Server posts log entries they are sent through here
+	logRawQueue chan web.LogPayload
 	// Each log event can have any number of channels associated with them
 	// Events are sent to all channels in a fan-out style
-	logEventReaders   map[logparse.MsgType][]chan logEvent
+	logEventReaders   map[logparse.MsgType][]chan model.LogEvent
 	logEventReadersMu *sync.RWMutex
-	//go:embed dist
-	content embed.FS
-	//go:embed migrations
-	migrations embed.FS
-	lgr        = log.New()
+	actions           = ActionHandlers{}
 )
 
 type warnReason int
@@ -53,18 +42,51 @@ type userWarning struct {
 	CreatedOn  time.Time
 }
 
-func init() {
-	logEventReaders = map[logparse.MsgType][]chan logEvent{}
+// shutdown cleans up the application and closes connections
+func shutdown() {
+	store.Close()
+}
+
+// Start is the main application entry point
+func Start() {
+	// Load in the external network block / ip ban lists to memory if enabled
+	if config.Net.Enabled {
+		initNetBans()
+	} else {
+		log.Warnf("External Network ban lists not enabled")
+	}
+
+	// Setup the storage backend
+	initStore()
+	defer shutdown()
+
+	// Start the discord service
+	if config.Discord.Enabled {
+		initDiscord()
+	} else {
+		log.Warnf("Discord bot not enabled")
+	}
+
+	// Start the background goroutine workers
+	initWorkers()
+
+	// Load the filtered word set into memory
+	if config.Filter.Enabled {
+		initFilters()
+	}
+
+	// Start the HTTP Server
+	web.Start(gCtx, logRawQueue, actions)
 }
 
 // registerLogEventReader will register a channel to receive new log events as they come in
-func registerLogEventReader(r chan logEvent, msgTypes []logparse.MsgType) error {
+func registerLogEventReader(r chan model.LogEvent, msgTypes []logparse.MsgType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
 	for _, msgType := range msgTypes {
 		_, found := logEventReaders[msgType]
 		if !found {
-			logEventReaders[msgType] = []chan logEvent{}
+			logEventReaders[msgType] = []chan model.LogEvent{}
 		}
 		logEventReaders[msgType] = append(logEventReaders[msgType], r)
 	}
@@ -102,34 +124,8 @@ func warnWorker(ctx context.Context) {
 	}
 }
 
-type logEvent struct {
-	Type     logparse.MsgType
-	Event    map[string]string
-	Server   model.Server
-	Player1  *model.Person
-	Player2  *model.Person
-	Assister *model.Person
-	RawEvent string
-}
-
-// Decode is just a helper to
-func (e *logEvent) Decode(output interface{}) error {
-	return logparse.Decode(e.Event, output)
-}
-
-func ExamplelogEvent_Decode() {
-	evt := logEvent{
-		Event: map[string]string{"msg": "test"},
-	}
-	var m logparse.SayTeamEvt
-	if err := evt.Decode(&m); err != nil {
-		log.Errorf("Failed to decode event")
-	}
-	fmt.Println(m.Msg)
-}
-
 func logWriter(ctx context.Context) {
-	events := make(chan logEvent)
+	events := make(chan model.LogEvent)
 	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
@@ -137,7 +133,7 @@ func logWriter(ctx context.Context) {
 		select {
 		case evt := <-events:
 			c, cancel := context.WithTimeout(ctx, time.Second*10)
-			if err := insertLog(c, model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event)); err != nil {
+			if err := store.InsertLog(c, model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event)); err != nil {
 				log.Errorf("Failed to insert log: %v", err)
 				cancel()
 				continue
@@ -152,11 +148,11 @@ func logWriter(ctx context.Context) {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with registerLogEventReader
-func logReader(ctx context.Context, logRows chan LogPayload) {
+func logReader(ctx context.Context, logRows chan web.LogPayload) {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
-			p, err := GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1Str)))
+			p, err := store.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1Str)))
 			if err != nil {
 				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
 				return nil
@@ -169,16 +165,16 @@ func logReader(ctx context.Context, logRows chan LogPayload) {
 		select {
 		case raw := <-logRows:
 			v := logparse.Parse(raw.Message)
-			s, e := getServerByName(ctx, raw.ServerName)
+			s, e := store.GetServerByName(ctx, raw.ServerName)
 			if e != nil {
-				log.Errorf("Failed to get server for log message: %v", e)
+				log.Errorf("Failed to get Server for log message: %v", e)
 				continue
 			}
-			le := logEvent{
+			le := model.LogEvent{
 				Type:     v.MsgType,
 				Event:    v.Values,
 				Server:   s,
-				Player1:  getPlayer("sid", v.Values),
+				Player1:  getPlayer("SteamID", v.Values),
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
 			}
@@ -217,104 +213,42 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 	if len(warnings[sid64]) >= config.General.WarningLimit {
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			_, err := MutePlayer(gCtx, sid64, config.General.Owner, config.General.WarningExceededDuration,
+			_, err := actions.MutePlayer(gCtx, sid64, config.General.Owner, config.General.WarningExceededDuration,
 				model.Language, "Language warnings exceeded")
 			if err != nil {
-				log.Errorf("Failed to ban player after too many warnings: %s", err)
+				log.Errorf("Failed to ban Player after too many warnings: %s", err)
 			}
 		case config.Ban:
-			if _, err := BanPlayer(gCtx, sid64, config.General.Owner, 0, model.WarningsExceeded,
+			if _, err := actions.BanPlayer(gCtx, sid64, config.General.Owner, 0, model.WarningsExceeded,
 				"Warning limit exceeded", model.System); err != nil {
-				log.Errorf("Failed to ban player after too many warnings: %s", err)
+				log.Errorf("Failed to ban Player after too many warnings: %s", err)
 			}
 		case config.Kick:
-			if _, err := KickPlayer(gCtx, sid64, config.General.Owner, model.WarningsExceeded,
+			if _, err := actions.KickPlayer(gCtx, sid64, config.General.Owner, model.WarningsExceeded,
 				"Warning limit exceeded", model.System); err != nil {
-				log.Errorf("Failed to ban player after too many warnings: %s", err)
+				log.Errorf("Failed to ban Player after too many warnings: %s", err)
 			}
 		}
 	}
 }
 
-type gameType string
-
-const (
-	//unknown gameType = "Unknown"
-	tf2 gameType = "team Fortress 2"
-	//cs      gameType = "Counter-Strike"
-	//csgo    gameType = "Counter-Strike: Global Offensive"
-)
-
-type serverState struct {
-	Addr     string
-	Port     int
-	Slots    int
-	GameType gameType
-	A2SInfo  *a2s.ServerInfo
-	extra.Status
-	// TODO Find better way to track this
-	Alive bool
-}
-
 func init() {
+	logEventReaders = map[logparse.MsgType][]chan model.LogEvent{}
 	warningsMu = &sync.RWMutex{}
 	warnings = make(map[steamid.SID64][]userWarning)
-	serverStates = make(map[string]serverState)
-	serverStateMu = &sync.RWMutex{}
 	// Global background context. This is passed into the functions that use it as a parameter.
 	// This should not be implicitly referenced anywhere to help testing
 	gCtx = context.Background()
-	router = gin.New()
-	logRawQueue = make(chan LogPayload)
+
+	logRawQueue = make(chan web.LogPayload)
 	logEventReadersMu = &sync.RWMutex{}
-}
-
-// shutdown cleans up the application and closes connections
-func shutdown() {
-	db.Close()
-}
-
-// Start is the main application entry point
-//
-func Start() {
-	// Load in the external network block / ip ban lists to memory if enabled
-	if config.Net.Enabled {
-		initNetBans()
-	} else {
-		log.Warnf("External Network ban lists not enabled")
-	}
-
-	// Setup the HTTP router
-	initRouter()
-
-	// Setup the storage backend
-	initStore()
-	defer shutdown()
-
-	// Start the discord service
-	if config.Discord.Enabled {
-		initDiscord()
-	} else {
-		log.Warnf("Discord bot not enabled")
-	}
-
-	// Start the background goroutine workers
-	initWorkers()
-
-	// Load the filtered word set into memory
-	if config.Filter.Enabled {
-		initFilters()
-	}
-
-	// Start the HTTP server
-	initHTTP()
 }
 
 func initFilters() {
 	// TODO load external lists via http
 	c, cancel := context.WithTimeout(gCtx, time.Second*15)
 	defer cancel()
-	words, err := getFilters(c)
+	words, err := store.GetFilters(c)
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
@@ -323,7 +257,7 @@ func initFilters() {
 }
 
 func initStore() {
-	Init(config.DB.DSN)
+	store.Init(config.DB.DSN)
 }
 
 func initWorkers() {
@@ -338,7 +272,11 @@ func initWorkers() {
 
 func initDiscord() {
 	if config.Discord.Token != "" {
-		go startDiscord(gCtx, config.Discord.Token)
+		events := make(chan model.LogEvent)
+		if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+			log.Warnf("Error registering discord log event reader")
+		}
+		go discord.Start(gCtx, config.Discord.Token, events, actions)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}

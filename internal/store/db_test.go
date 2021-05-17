@@ -1,4 +1,4 @@
-package service
+package store
 
 import (
 	"context"
@@ -29,7 +29,7 @@ func TestServer(t *testing.T) {
 	defer cancel()
 	require.NoError(t, SaveServer(ctx, &s1))
 	require.True(t, s1.ServerID > 0)
-	s1Get, err := getServer(ctx, s1.ServerID)
+	s1Get, err := GetServer(ctx, s1.ServerID)
 	require.NoError(t, err)
 	require.Equal(t, s1.ServerID, s1Get.ServerID)
 	require.Equal(t, s1.ServerName, s1Get.ServerName)
@@ -41,13 +41,13 @@ func TestServer(t *testing.T) {
 	require.Equal(t, s1.TokenCreatedOn.Second(), s1Get.TokenCreatedOn.Second())
 	require.Equal(t, s1.CreatedOn.Second(), s1Get.CreatedOn.Second())
 	require.Equal(t, s1.UpdatedOn.Second(), s1Get.UpdatedOn.Second())
-	sLenA, eS := getServers(ctx)
+	sLenA, eS := GetServers(ctx)
 	require.NoError(t, eS, "Failed to fetch servers")
 	require.True(t, len(sLenA) > 0, "Empty server results")
-	require.NoError(t, dropServer(ctx, s1.ServerID))
-	_, errDel := getServer(ctx, s1.ServerID)
-	require.True(t, errors.Is(errDel, errNoResult))
-	sLenB, _ := getServers(ctx)
+	require.NoError(t, DropServer(ctx, s1.ServerID))
+	_, errDel := GetServer(ctx, s1.ServerID)
+	require.True(t, errors.Is(errDel, ErrNoResult))
+	sLenB, _ := GetServers(ctx)
 	require.True(t, len(sLenA)-1 == len(sLenB))
 }
 
@@ -58,9 +58,9 @@ func TestBanNet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	n1, _ := model.NewBanNet("172.16.1.0/24", "testing", time.Hour*100, model.System)
-	require.NoError(t, saveBanNet(ctx, &n1))
+	require.NoError(t, SaveBanNet(ctx, &n1))
 	require.Less(t, int64(0), n1.NetID)
-	b1, err := getBanNet(ctx, net.ParseIP("172.16.1.100"))
+	b1, err := GetBanNet(ctx, net.ParseIP("172.16.1.100"))
 	require.NoError(t, err)
 	banNetEqual(b1[0], n1)
 	require.Equal(t, b1[0].Reason, n1.Reason)
@@ -83,30 +83,30 @@ func TestBan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 	b1 := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
-	require.NoError(t, saveBan(ctx, b1), "Failed to add ban")
+	require.NoError(t, SaveBan(ctx, b1), "Failed to add ban")
 
-	b1Fetched, err := getBanBySteamID(ctx, 76561198044052046, false)
+	b1Fetched, err := GetBanBySteamID(ctx, 76561198044052046, false)
 	require.NoError(t, err)
 	banEqual(b1, b1Fetched.Ban)
 
 	b1duplicate := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
-	require.True(t, errors.Is(saveBan(ctx, b1duplicate), errDuplicate), "Was able to add duplicate ban")
+	require.True(t, errors.Is(SaveBan(ctx, b1duplicate), ErrDuplicate), "Was able to add duplicate ban")
 
 	b1Fetched.Ban.AuthorID = 76561198057999536
 	b1Fetched.Ban.ReasonText = "test reason"
 	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
 	b1Fetched.Ban.Note = "test note"
 	b1Fetched.Ban.Source = model.Web
-	require.NoError(t, saveBan(ctx, b1Fetched.Ban), "Failed to edit ban")
+	require.NoError(t, SaveBan(ctx, b1Fetched.Ban), "Failed to edit ban")
 
-	b1FetchedUpdated, err := getBanBySteamID(ctx, 76561198044052046, false)
+	b1FetchedUpdated, err := GetBanBySteamID(ctx, 76561198044052046, false)
 	require.NoError(t, err)
 	banEqual(b1Fetched.Ban, b1FetchedUpdated.Ban)
 
-	require.NoError(t, dropBan(ctx, b1), "Failed to drop ban")
-	_, errMissing := getBanBySteamID(ctx, b1.SteamID, false)
+	require.NoError(t, DropBan(ctx, b1), "Failed to drop ban")
+	_, errMissing := GetBanBySteamID(ctx, b1.SteamID, false)
 	require.Error(t, errMissing)
-	require.True(t, errors.Is(errMissing, errNoResult))
+	require.True(t, errors.Is(errMissing, ErrNoResult))
 }
 
 func TestFilteredWords(t *testing.T) {
@@ -117,19 +117,19 @@ func TestAppeal(t *testing.T) {
 	b1 := model.NewBan(76561199093644873, 76561198003911389, time.Hour*24)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	require.NoError(t, saveBan(ctx, b1), "Failed to add ban")
+	require.NoError(t, SaveBan(ctx, b1), "Failed to add ban")
 	appeal := model.Appeal{
 		BanID:       b1.BanID,
 		AppealText:  "Im a nerd",
 		AppealState: model.ASNew,
 		Email:       "",
 	}
-	require.NoError(t, saveAppeal(ctx, &appeal), "failed to save appeal")
+	require.NoError(t, SaveAppeal(ctx, &appeal), "failed to save appeal")
 	require.True(t, appeal.AppealID > 0, "No appeal id set")
 	appeal.AppealState = model.ASDenied
 	appeal.Email = "test@test.com"
-	require.NoError(t, saveAppeal(ctx, &appeal), "failed to update appeal")
-	fetched, err := getAppeal(ctx, b1.BanID)
+	require.NoError(t, SaveAppeal(ctx, &appeal), "failed to update appeal")
+	fetched, err := GetAppeal(ctx, b1.BanID)
 	require.NoError(t, err, "failed to get appeal")
 	require.Equal(t, appeal.BanID, fetched.BanID)
 	require.Equal(t, appeal.Email, fetched.Email)
@@ -147,40 +147,40 @@ func TestPerson(t *testing.T) {
 	p2Fetched, err := GetOrCreatePersonBySteamID(ctx, p2.SteamID)
 	require.NoError(t, err)
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
-	pBadID, err := getPersonBySteamID(ctx, 0)
+	pBadID, err := GetPersonBySteamID(ctx, 0)
 	require.Error(t, err)
 	require.Nil(t, pBadID)
-	ips := getIPHistory(ctx, p1.SteamID)
-	require.NoError(t, addPersonIP(ctx, p1, "10.0.0.2"), "failed to add ip record")
-	require.NoError(t, addPersonIP(ctx, p1, "10.0.0.3"), "failed to add 2nd ip record")
-	ipsUpdated := getIPHistory(ctx, p1.SteamID)
+	ips := GetIPHistory(ctx, p1.SteamID)
+	require.NoError(t, AddPersonIP(ctx, p1, "10.0.0.2"), "failed to add ip record")
+	require.NoError(t, AddPersonIP(ctx, p1, "10.0.0.3"), "failed to add 2nd ip record")
+	ipsUpdated := GetIPHistory(ctx, p1.SteamID)
 	require.True(t, len(ipsUpdated)-len(ips) == 2)
-	require.NoError(t, dropPerson(ctx, p1.SteamID))
+	require.NoError(t, DropPerson(ctx, p1.SteamID))
 }
 
 func TestFilters(t *testing.T) {
-	existingFilters, err := getFilters(context.Background())
+	existingFilters, err := GetFilters(context.Background())
 	require.NoError(t, err)
 	words := []string{golib.RandomString(10), golib.RandomString(10)}
 	var savedFilters []*model.Filter
 	for _, word := range words {
-		f, e := insertFilter(context.Background(), word)
+		f, e := InsertFilter(context.Background(), word)
 		require.NoError(t, e, "Failed to insert filter: %s", word)
 		require.True(t, f.WordID > 0)
 		savedFilters = append(savedFilters, f)
 	}
-	currentFilters, err := getFilters(context.Background())
-	require.NoError(t, err)
+	currentFilters, err2 := GetFilters(context.Background())
+	require.NoError(t, err2)
 	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 	if savedFilters != nil {
-		require.NoError(t, dropFilter(context.Background(), savedFilters[0]))
-		byId, errId := getFilterByID(context.Background(), savedFilters[1].WordID)
+		require.NoError(t, DropFilter(context.Background(), savedFilters[0]))
+		byId, errId := GetFilterByID(context.Background(), savedFilters[1].WordID)
 		require.NoError(t, errId)
 		require.Equal(t, savedFilters[1].WordID, byId.WordID)
 		require.Equal(t, savedFilters[1].Word.String(), byId.Word.String())
 	}
-	droppedFilters, err := getFilters(context.Background())
-	require.NoError(t, err)
+	droppedFilters, err3 := GetFilters(context.Background())
+	require.NoError(t, err3)
 	require.Equal(t, len(existingFilters)+len(words)-1, len(droppedFilters))
 
 }

@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/service"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/spf13/cobra"
 	"log"
@@ -21,7 +21,7 @@ var netUpdateCmd = &cobra.Command{
 	Short: "Update any enabled block lists",
 	Long:  `Update any enabled block lists`,
 	Run: func(cmd *cobra.Command, args []string) {
-		service.Init(config.DB.DSN)
+		store.Init(config.DB.DSN)
 		if err := ip2location.Update(config.Net.CachePath, config.Net.IP2Location.Token); err != nil {
 			log.Fatalf("Failed to update")
 		}
@@ -31,7 +31,7 @@ var netUpdateCmd = &cobra.Command{
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*600)
 		defer cancel()
-		if err := service.InsertBlockListData(ctx, d); err != nil {
+		if err := store.InsertBlockListData(ctx, d); err != nil {
 			log.Fatalf("Failed to import")
 		}
 	},

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/service"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -27,10 +27,10 @@ func Execute() {
 }
 
 func init() {
-	if service.BuildVersion == "" {
-		service.BuildVersion = "master"
+	if app.BuildVersion == "" {
+		app.BuildVersion = "master"
 	}
-	rootCmd.Version = service.BuildVersion
+	rootCmd.Version = app.BuildVersion
 	cobra.OnInitialize(func() {
 		config.Read(cfgFile)
 	})

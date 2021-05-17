@@ -1,12 +1,14 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
 	"time"
@@ -337,4 +339,56 @@ type Filter struct {
 
 func (f *Filter) Match(value string) bool {
 	return f.Word.MatchString(value)
+}
+
+type LogEvent struct {
+	Type     logparse.MsgType
+	Event    map[string]string
+	Server   Server
+	Player1  *Person
+	Player2  *Person
+	Assister *Person
+	RawEvent string
+}
+
+// Decode is just a helper to
+func (e *LogEvent) Decode(output interface{}) error {
+	return logparse.Decode(e.Event, output)
+}
+
+func ExamplelogEvent_Decode() {
+	evt := LogEvent{
+		Event: map[string]string{"msg": "test"},
+	}
+	var m logparse.SayTeamEvt
+	if err := evt.Decode(&m); err != nil {
+		log.Errorf("Failed to decode event")
+	}
+	fmt.Println(m.Msg)
+}
+
+type PlayerInfo struct {
+	Player  *extra.Player
+	Server  *Server
+	SteamID steamid.SID64
+	InGame  bool
+	Valid   bool
+}
+
+// ActionHandlersI
+type ActionHandlersI interface {
+	KickPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64,
+		_ Reason, reasonText string, _ BanSource) (*PlayerInfo, error)
+	MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
+		reason Reason, reasonText string) (*PlayerInfo, error)
+	BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
+		reason Reason, reasonText string, source BanSource) (*Ban, error)
+	BanNetwork(ctx context.Context, cidr *net.IPNet, _ steamid.SID64, author steamid.SID64, duration time.Duration,
+		_ Reason, reasonText string, source BanSource) (*BanNet, error)
+	UnbanPlayer(ctx context.Context, sid steamid.SID64, _ steamid.SID64, _ string) error
+
+	FindPlayer(ctx context.Context, playerStr string, ip string) PlayerInfo
+	FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*extra.Player, *Server, error)
+
+	GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*Person, error)
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/service"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -25,7 +25,7 @@ var addServerCmd = &cobra.Command{
 	Use:   "addserver",
 	Short: "Add a new server",
 	Run: func(cmd *cobra.Command, args []string) {
-		service.Init(config.DB.DSN)
+		store.Init(config.DB.DSN)
 
 		if addServer.ServerName == "" {
 			log.Fatal("Server name cannot be empty")
@@ -41,7 +41,7 @@ var addServerCmd = &cobra.Command{
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := service.SaveServer(ctx, &addServer); err != nil {
+		if err := store.SaveServer(ctx, &addServer); err != nil {
 			log.Fatalf("Could not create server: %v", err)
 		}
 		log.Infof("Added server %s with token %s - This token must be added to your servers gbans.cfg",

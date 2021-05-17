@@ -1,7 +1,9 @@
-package service
+package web
 
 import (
+	"context"
 	"crypto/tls"
+	"embed"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -33,7 +35,21 @@ const baseLayout = `<!doctype html>
     </body>
     </html>`
 
-func initHTTP() {
+var (
+	router     *gin.Engine
+	httpServer *http.Server
+	//go:embed dist
+	content embed.FS
+	actions model.ActionHandlersI
+)
+
+func init() {
+	router = gin.New()
+}
+
+func Start(ctx context.Context, logMsgChan chan LogPayload, a model.ActionHandlersI) {
+	actions = a
+	initRouter(router, logMsgChan)
 	log.Infof("Starting HTTP service")
 	go func() {
 		httpServer = &http.Server{
@@ -69,7 +85,7 @@ func initHTTP() {
 			log.Errorf("Error shutting down service: %v", err)
 		}
 	}()
-	<-gCtx.Done()
+	<-ctx.Done()
 }
 
 func currentPerson(c *gin.Context) *model.Person {

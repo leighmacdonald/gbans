@@ -1,4 +1,4 @@
-package service
+package app
 
 import (
 	"context"
@@ -25,8 +25,8 @@ func importFilteredWords(filters []*model.Filter) {
 	wordFilters = filters
 }
 
-// isFilteredWord checks to see if the body of text contains a known filtered word
-func isFilteredWord(body string) (bool, *model.Filter) {
+// IsFilteredWord checks to see if the body of text contains a known filtered word
+func IsFilteredWord(body string) (bool, *model.Filter) {
 	if body == "" {
 		return false, nil
 	}
@@ -42,7 +42,7 @@ func isFilteredWord(body string) (bool, *model.Filter) {
 }
 
 func filterWorker(ctx context.Context) {
-	c := make(chan logEvent)
+	c := make(chan model.LogEvent)
 	if err := registerLogEventReader(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
 	}

@@ -1,18 +1,16 @@
-package service
+package app
 
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"math/rand"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/golib"
@@ -21,14 +19,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
-
-func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-	if !f(w) {
-		t.Fail()
-	}
-}
 
 func TestAddWarning(t *testing.T) {
 	addWarning(76561197961279983, warnLanguage)
@@ -52,13 +42,13 @@ func GenTestData() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	for _, server := range servers {
-		if err := SaveServer(ctx, &server); err != nil {
-			log.Fatalf("Failed to setup test server: %v", err)
+		if err := store.SaveServer(ctx, &server); err != nil {
+			log.Fatalf("Failed to setup test Server: %v", err)
 		}
 	}
 	filteredWords := []string{"frick", "heck"}
 	for _, fw := range filteredWords {
-		if _, err := insertFilter(ctx, fw); err != nil && !errors.Is(err, errDuplicate) {
+		if _, err := store.InsertFilter(ctx, fw); err != nil && !errors.Is(err, store.ErrDuplicate) {
 			log.Fatalf("Failed to setup test filtered words: %v", err)
 		}
 	}
@@ -66,9 +56,9 @@ func GenTestData() {
 	for i, sid := range steamIds {
 		sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
 		if err != nil {
-			log.Fatalf("Failed to get player summary: %v", err)
+			log.Fatalf("Failed to get Player summary: %v", err)
 		}
-		p, err := GetOrCreatePersonBySteamID(ctx, sid)
+		p, err := store.GetOrCreatePersonBySteamID(ctx, sid)
 		if err != nil {
 			log.Fatalf("Failed to get person: %v", err)
 		}
@@ -76,17 +66,17 @@ func GenTestData() {
 		p.SteamID = sid
 		p.IPAddr = net.ParseIP(fmt.Sprintf("24.56.78.%d", i+1))
 		p.PlayerSummary = &s
-		if err := SavePerson(ctx, p); err != nil {
+		if err := store.SavePerson(ctx, p); err != nil {
 			log.Fatalf("Failed to save test person: %v", err)
 		}
 	}
 
-	if _, err := BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
-		model.Cheating, "Aimbot", model.System); err != nil && err != errDuplicate {
+	if _, err := actions.BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
+		model.Cheating, "Aimbot", model.System); err != nil && err != store.ErrDuplicate {
 		log.Fatalf("Failed to create test ban #1: %v", err)
 	}
-	if _, err := BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
-		model.Cheating, "Aimbot", model.System); err != nil && err != errDuplicate {
+	if _, err := actions.BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
+		model.Cheating, "Aimbot", model.System); err != nil && err != store.ErrDuplicate {
 		log.Fatalf("Failed to create test ban #2: %v", err)
 	}
 	randSN := func() int {
@@ -103,7 +93,7 @@ func GenTestData() {
 	for i, cidr := range []string{randIP() + "/32", randIP() + "/32", randCidr} {
 		ip, mask, _ := net.ParseCIDR(cidr)
 		log.Println(ip)
-		if err := saveBanNet(ctx, &model.BanNet{
+		if err := store.SaveBanNet(ctx, &model.BanNet{
 			CIDR:       mask,
 			Source:     0,
 			Reason:     "",
@@ -120,7 +110,6 @@ func TestMain(m *testing.M) {
 	config.Read()
 	config.General.Mode = "test"
 	initStore()
-	initRouter()
 	GenTestData()
 	os.Exit(m.Run())
 }

@@ -1,8 +1,9 @@
-package service
+package store
 
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
@@ -13,7 +14,6 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -37,12 +37,14 @@ import (
 
 var (
 	db           *pgxpool.Pool
-	errNoResult  = errors.New("No results found")
-	errDuplicate = errors.New("Duplicate entity")
+	ErrNoResult  = errors.New("No results found")
+	ErrDuplicate = errors.New("Duplicate entity")
 	// Use $ for pg based queries
 	sb            = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	cacheServerMu *sync.RWMutex
 	cacheServer   map[int64]model.Server
+	//go:embed migrations
+	migrations embed.FS
 )
 
 func init() {
@@ -67,8 +69,8 @@ const (
 	tableServerLog tableName = "server_log"
 )
 
-// queryFilter provides a structure for common query parameters
-type queryFilter struct {
+// QueryFilter provides a structure for common query parameters
+type QueryFilter struct {
 	Offset   uint64 `json:"offset" uri:"offset" binding:"gte=0"`
 	Limit    uint64 `json:"limit" uri:"limit" binding:"gte=0,lte=1000"`
 	SortDesc bool   `json:"desc" uri:"desc"`
@@ -76,7 +78,7 @@ type queryFilter struct {
 	OrderBy  string `json:"order_by" uri:"order_by"`
 }
 
-func (qf *queryFilter) orderString() string {
+func (qf *QueryFilter) orderString() string {
 	dir := "DESC"
 	if !qf.SortDesc {
 		dir = "ASC"
@@ -84,8 +86,8 @@ func (qf *queryFilter) orderString() string {
 	return fmt.Sprintf("%s %s", qf.OrderBy, dir)
 }
 
-func newQueryFilter(query string) *queryFilter {
-	return &queryFilter{
+func NewQueryFilter(query string) *QueryFilter {
+	return &QueryFilter{
 		Limit:    1000,
 		Offset:   0,
 		SortDesc: true,
@@ -112,18 +114,18 @@ func Init(dsn string) {
 		}
 	}
 	if config.DB.LogQueries {
-		lvl, err2 := log.ParseLevel(config.Log.Level)
-		if err2 != nil {
-			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
-		}
-		lgr.SetLevel(lvl)
-		lgr.SetFormatter(&log.TextFormatter{
-			ForceColors:   config.Log.ForceColours,
-			DisableColors: config.Log.DisableColours,
-			FullTimestamp: config.Log.FullTimestamp,
-		})
-		lgr.SetReportCaller(config.Log.ReportCaller)
-		cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
+		//lvl, err2 := log.ParseLevel(config.Log.Level)
+		//if err2 != nil {
+		//	log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+		//}
+		//service.lgr.SetLevel(lvl)
+		//service.lgr.SetFormatter(&log.TextFormatter{
+		//	ForceColors:   config.Log.ForceColours,
+		//	DisableColors: config.Log.DisableColours,
+		//	FullTimestamp: config.Log.FullTimestamp,
+		//})
+		//service.lgr.SetReportCaller(config.Log.ReportCaller)
+		//cfg.ConnConfig.Logger = logrusadapter.NewLogger(service.lgr)
 	}
 	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err3 != nil {
@@ -133,10 +135,16 @@ func Init(dsn string) {
 	db = dbConn
 }
 
+func Close() {
+	if db != nil {
+		db.Close()
+	}
+}
+
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots"}
 
-func getServer(ctx context.Context, serverID int64) (model.Server, error) {
+func GetServer(ctx context.Context, serverID int64) (model.Server, error) {
 	var s model.Server
 	var found bool
 	cacheServerMu.RLock()
@@ -164,7 +172,7 @@ func getServer(ctx context.Context, serverID int64) (model.Server, error) {
 	return s, nil
 }
 
-func getServers(ctx context.Context) ([]model.Server, error) {
+func GetServers(ctx context.Context) ([]model.Server, error) {
 	var servers []model.Server
 	q, _, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
@@ -191,15 +199,15 @@ func getServers(ctx context.Context) ([]model.Server, error) {
 	return servers, nil
 }
 
-func getServerByName(ctx context.Context, serverName string) (model.Server, error) {
-	serverStateMu.RLock()
+func GetServerByName(ctx context.Context, serverName string) (model.Server, error) {
+	cacheServerMu.RLock()
 	for _, srv := range cacheServer {
 		if srv.ServerName == serverName {
-			serverStateMu.RUnlock()
+			cacheServerMu.RUnlock()
 			return srv, nil
 		}
 	}
-	serverStateMu.RUnlock()
+	cacheServerMu.RUnlock()
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
 		"token_created_on", "created_on", "updated_on", "reserved_slots").
@@ -214,9 +222,9 @@ func getServerByName(ctx context.Context, serverName string) (model.Server, erro
 			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
 		return model.Server{}, err
 	}
-	serverStateMu.Lock()
+	cacheServerMu.Lock()
 	cacheServer[s.ServerID] = s
-	serverStateMu.Unlock()
+	cacheServerMu.Unlock()
 	return s, nil
 }
 
@@ -267,13 +275,13 @@ func updateServer(ctx context.Context, s *model.Server) error {
 	if _, err := db.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update s")
 	}
-	serverStateMu.Lock()
+	cacheServerMu.Lock()
 	delete(cacheServer, s.ServerID)
-	serverStateMu.Unlock()
+	cacheServerMu.Unlock()
 	return nil
 }
 
-func dropServer(ctx context.Context, serverID int64) error {
+func DropServer(ctx context.Context, serverID int64) error {
 	q, a, e := sb.Delete(string(tableServer)).Where(sq.Eq{"server_id": serverID}).ToSql()
 	if e != nil {
 		return e
@@ -287,7 +295,7 @@ func dropServer(ctx context.Context, serverID int64) error {
 	return nil
 }
 
-func dropBan(ctx context.Context, ban *model.Ban) error {
+func DropBan(ctx context.Context, ban *model.Ban) error {
 	q, a, e := sb.Delete(string(tableBan)).Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
 	if e != nil {
 		return e
@@ -331,26 +339,26 @@ func getBanByColumn(ctx context.Context, column string, identifier interface{}, 
 		return b, dbErr(err)
 	}
 	if full {
-		h, err := getChatHistory(ctx, b.Person.SteamID)
+		h, err := GetChatHistory(ctx, b.Person.SteamID)
 		if err == nil {
 			b.HistoryChat = h
 		}
 		b.HistoryConnections = []string{}
-		b.HistoryIP = getIPHistory(ctx, b.Person.SteamID)
+		b.HistoryIP = GetIPHistory(ctx, b.Person.SteamID)
 		b.HistoryPersonaName = []string{}
 	}
 	return b, nil
 }
 
-func getBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool) (*model.BannedPerson, error) {
+func GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool) (*model.BannedPerson, error) {
 	return getBanByColumn(ctx, "steam_id", steamID, full)
 }
 
-func getBanByBanID(ctx context.Context, banID uint64, full bool) (*model.BannedPerson, error) {
+func GetBanByBanID(ctx context.Context, banID uint64, full bool) (*model.BannedPerson, error) {
 	return getBanByColumn(ctx, "ban_id", banID, full)
 }
 
-func getChatHistory(ctx context.Context, sid64 steamid.SID64) ([]model.ChatLog, error) {
+func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]model.ChatLog, error) {
 	q, a, e := sb.Select("payload -> message", "created_on").
 		From(string(tableServerLog)).
 		Where(sq.And{
@@ -377,7 +385,7 @@ func getChatHistory(ctx context.Context, sid64 steamid.SID64) ([]model.ChatLog, 
 	return hist, nil
 }
 
-func addPersonIP(ctx context.Context, p *model.Person, ip string) error {
+func AddPersonIP(ctx context.Context, p *model.Person, ip string) error {
 	q, a, e := sb.Insert(string(tablePersonIP)).
 		Columns("steam_id", "ip_addr", "created_on").
 		Values(p.SteamID, ip, config.Now()).
@@ -389,7 +397,7 @@ func addPersonIP(ctx context.Context, p *model.Person, ip string) error {
 	return dbErr(err)
 }
 
-func getIPHistory(ctx context.Context, sid64 steamid.SID64) []model.IPRecord {
+func GetIPHistory(ctx context.Context, sid64 steamid.SID64) []model.IPRecord {
 	q, a, e := sb.Select("ip_addr", "created_on").
 		From(string(tablePersonIP)).
 		Where(sq.Eq{"steam_id": sid64}).
@@ -414,7 +422,7 @@ func getIPHistory(ctx context.Context, sid64 steamid.SID64) []model.IPRecord {
 	return records
 }
 
-func getAppeal(ctx context.Context, banID uint64) (model.Appeal, error) {
+func GetAppeal(ctx context.Context, banID uint64) (model.Appeal, error) {
 	q, a, e := sb.Select("appeal_id", "ban_id", "appeal_text", "appeal_state",
 		"email", "created_on", "updated_on").
 		From("ban_appeal").
@@ -466,7 +474,7 @@ func insertAppeal(ctx context.Context, ap *model.Appeal) error {
 	return nil
 }
 
-func saveAppeal(ctx context.Context, appeal *model.Appeal) error {
+func SaveAppeal(ctx context.Context, appeal *model.Appeal) error {
 	appeal.UpdatedOn = config.Now()
 	if appeal.AppealID > 0 {
 		return updateAppeal(ctx, appeal)
@@ -475,9 +483,9 @@ func saveAppeal(ctx context.Context, appeal *model.Appeal) error {
 	return insertAppeal(ctx, appeal)
 }
 
-// saveBan will insert or update the ban record
+// SaveBan will insert or update the ban record
 // New records will have the Ban.BanID set automatically
-func saveBan(ctx context.Context, ban *model.Ban) error {
+func SaveBan(ctx context.Context, ban *model.Ban) error {
 	// Ensure the foreign keys are satisfied
 	_, err := GetOrCreatePersonBySteamID(ctx, ban.SteamID)
 	if err != nil {
@@ -493,12 +501,12 @@ func saveBan(ctx context.Context, ban *model.Ban) error {
 	}
 	ban.CreatedOn = config.Now()
 
-	existing, e := getBanBySteamID(ctx, ban.SteamID, false)
-	if e != nil && !errors.Is(e, errNoResult) {
+	existing, e := GetBanBySteamID(ctx, ban.SteamID, false)
+	if e != nil && !errors.Is(e, ErrNoResult) {
 		return errors.Wrapf(err, "Failed to check existing ban state")
 	}
 	if ban.BanType <= existing.Ban.BanType {
-		return errDuplicate
+		return ErrDuplicate
 	}
 	return insertBan(ctx, ban)
 }
@@ -542,7 +550,7 @@ func updateBan(ctx context.Context, ban *model.Ban) error {
 	return nil
 }
 
-func dropPerson(ctx context.Context, steamID steamid.SID64) error {
+func DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	q, a, e := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
 	if e != nil {
 		return e
@@ -632,9 +640,9 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on",
 	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
 	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"}
 
-// getPersonBySteamID returns a person by their steam_id. errNoResult is returned if the steam_id
+// GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func getPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, error) {
+func GetPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, error) {
 	const q = `
     WITH addresses as (
 		SELECT steam_id, ip_addr FROM person_ip
@@ -663,7 +671,7 @@ func getPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, 
 	return p, nil
 }
 
-func getPeople(ctx context.Context, qf *queryFilter) ([]*model.Person, error) {
+func GetPeople(ctx context.Context, qf *QueryFilter) ([]*model.Person, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan
@@ -707,8 +715,8 @@ func getPeople(ctx context.Context, qf *queryFilter) ([]*model.Person, error) {
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
 func GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, error) {
-	p, err := getPersonBySteamID(ctx, sid)
-	if err != nil && dbErr(err) == errNoResult {
+	p, err := GetPersonBySteamID(ctx, sid)
+	if err != nil && dbErr(err) == ErrNoResult {
 		p = model.NewPerson(sid)
 		if err := SavePerson(ctx, p); err != nil {
 			return nil, err
@@ -719,8 +727,8 @@ func GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.
 	return p, nil
 }
 
-// getPersonByDiscordID returns a person by their discord_id
-func getPersonByDiscordID(ctx context.Context, did string) (*model.Person, error) {
+// GetPersonByDiscordID returns a person by their discord_id
+func GetPersonByDiscordID(ctx context.Context, did string) (*model.Person, error) {
 	q, a, e := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": did}).
@@ -746,7 +754,7 @@ func getPersonByDiscordID(ctx context.Context, did string) (*model.Person, error
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func getBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
+func GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
 	q, _, e := sb.Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		From("ban_net").
 		Suffix("WHERE $1 <<= cidr").
@@ -805,14 +813,14 @@ func insertBanNet(ctx context.Context, banNet *model.BanNet) error {
 	return nil
 }
 
-func saveBanNet(ctx context.Context, banNet *model.BanNet) error {
+func SaveBanNet(ctx context.Context, banNet *model.BanNet) error {
 	if banNet.NetID > 0 {
 		return updateBanNet(ctx, banNet)
 	}
 	return insertBanNet(ctx, banNet)
 }
 
-func dropNetBan(ctx context.Context, ban model.BanNet) error {
+func DropNetBan(ctx context.Context, ban model.BanNet) error {
 	q, a, e := sb.Delete("ban_net").Where(sq.Eq{"net_id": ban.NetID}).ToSql()
 	if e != nil {
 		return e
@@ -823,7 +831,7 @@ func dropNetBan(ctx context.Context, ban model.BanNet) error {
 	return nil
 }
 
-func getExpiredBans(ctx context.Context) ([]*model.Ban, error) {
+func GetExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 	q, a, e := sb.Select(
 		"ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 		"valid_until", "ban_source", "created_on", "updated_on").
@@ -850,7 +858,7 @@ func getExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 	return bans, nil
 }
 
-//func GetBansTotal(o *queryFilter) (int, error) {
+//func GetBansTotal(o *QueryFilter) (int, error) {
 //	q, _, e := sb.Select("count(*) as total_rows").From(string(tableBan)).ToSql()
 //	if e != nil {
 //		return 0, e
@@ -863,7 +871,7 @@ func getExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 //}
 
 // getBans returns all bans that fit the filter criteria passed in
-func getBans(ctx context.Context, o *queryFilter) ([]*model.BannedPerson, error) {
+func GetBans(ctx context.Context, o *QueryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
@@ -906,7 +914,7 @@ func getBans(ctx context.Context, o *queryFilter) ([]*model.BannedPerson, error)
 	return bans, nil
 }
 
-func getBansOlderThan(ctx context.Context, o *queryFilter, t time.Time) ([]model.Ban, error) {
+func GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.Time) ([]model.Ban, error) {
 	q, a, e := sb.
 		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "created_on", "updated_on", "ban_source").
@@ -933,7 +941,7 @@ func getBansOlderThan(ctx context.Context, o *queryFilter, t time.Time) ([]model
 	return bans, nil
 }
 
-func getExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
+func GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
 	q, a, e := sb.
 		Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		From(string(tableBanNet)).
@@ -958,7 +966,7 @@ func getExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
 	return bans, nil
 }
 
-func insertFilter(ctx context.Context, rx string) (*model.Filter, error) {
+func InsertFilter(ctx context.Context, rx string) (*model.Filter, error) {
 	r, e := regexp.Compile(rx)
 	if e != nil {
 		return nil, e
@@ -982,7 +990,7 @@ func insertFilter(ctx context.Context, rx string) (*model.Filter, error) {
 	return filter, nil
 }
 
-func dropFilter(ctx context.Context, filter *model.Filter) error {
+func DropFilter(ctx context.Context, filter *model.Filter) error {
 	q, a, e := sb.Delete(string(tableFilteredWord)).
 		Where(sq.Eq{"word_id": filter.WordID}).
 		ToSql()
@@ -996,7 +1004,7 @@ func dropFilter(ctx context.Context, filter *model.Filter) error {
 	return nil
 }
 
-func getFilterByID(ctx context.Context, wordId int) (*model.Filter, error) {
+func GetFilterByID(ctx context.Context, wordId int) (*model.Filter, error) {
 	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).
 		Where(sq.Eq{"word_id": wordId}).
 		ToSql()
@@ -1016,7 +1024,7 @@ func getFilterByID(ctx context.Context, wordId int) (*model.Filter, error) {
 	return &f, nil
 }
 
-func getFilters(ctx context.Context) ([]*model.Filter, error) {
+func GetFilters(ctx context.Context) ([]*model.Filter, error) {
 	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
 	if e != nil {
 		return nil, dbErr(e)
@@ -1043,7 +1051,7 @@ func getFilters(ctx context.Context) ([]*model.Filter, error) {
 	return filters, nil
 }
 
-func insertLog(ctx context.Context, l *model.ServerLog) error {
+func InsertLog(ctx context.Context, l *model.ServerLog) error {
 	q, a, e := sb.Insert(string(tableServerLog)).
 		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
 		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).
@@ -1080,7 +1088,7 @@ func InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) erro
 	return nil
 }
 
-func getASNRecord(ctx context.Context, ip net.IP) (*ip2location.ASNRecord, error) {
+func GetASNRecord(ctx context.Context, ip net.IP) (*ip2location.ASNRecord, error) {
 	q, _, e := sb.Select("ip_from", "ip_to", "cidr", "as_num", "as_name").
 		From("net_asn").
 		Where("$1 << cidr").
@@ -1097,7 +1105,7 @@ func getASNRecord(ctx context.Context, ip net.IP) (*ip2location.ASNRecord, error
 	return &r, nil
 }
 
-func getLocationRecord(ctx context.Context, ip net.IP) (*ip2location.LocationRecord, error) {
+func GetLocationRecord(ctx context.Context, ip net.IP) (*ip2location.LocationRecord, error) {
 	const q = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
@@ -1110,7 +1118,7 @@ func getLocationRecord(ctx context.Context, ip net.IP) (*ip2location.LocationRec
 	return &r, nil
 }
 
-func getProxyRecord(ctx context.Context, ip net.IP) (*ip2location.ProxyRecord, error) {
+func GetProxyRecord(ctx context.Context, ip net.IP) (*ip2location.ProxyRecord, error) {
 	const q = `
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
@@ -1140,7 +1148,7 @@ type ipRecord struct {
 	DomainUsed  string
 }
 
-func getPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, error) {
+func GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, error) {
 	const q = `
 		SELECT
 			   ip.ip_addr, ip.created_on,
@@ -1266,7 +1274,7 @@ func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool)
 	return nil
 }
 
-func getStats(ctx context.Context) (model.Stats, error) {
+func GetStats(ctx context.Context) (model.Stats, error) {
 	const q = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -1303,14 +1311,14 @@ func dbErr(err error) error {
 	if errors.As(err, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
-			return errDuplicate
+			return ErrDuplicate
 		default:
 			log.Errorf("Unhandled store error: (%s) %s", pgErr.Code, pgErr.Message)
 			return err
 		}
 	}
 	if err.Error() == "no rows in result set" {
-		return errNoResult
+		return ErrNoResult
 	}
 	return err
 }
@@ -1436,7 +1444,7 @@ func Import(ctx context.Context, root string) error {
 				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
 				bn.Source = model.System
 
-				if err4 := saveBan(ctx, bn); err4 != nil {
+				if err4 := SaveBan(ctx, bn); err4 != nil {
 					return err4
 				}
 			}

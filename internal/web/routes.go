@@ -1,4 +1,4 @@
-package service
+package web
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"time"
 )
 
-func initRouter() {
+func initRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	defaultRoute := func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
 			c.Status(http.StatusNotFound)
@@ -21,15 +22,15 @@ func initRouter() {
 		}
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
-	router.Use(gin.Logger())
+	r.Use(gin.Logger())
 	// Dont use session for static assets
 	// Note that we only use embedded assets for !release modes
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
 	if config.General.Mode == config.Release {
-		router.StaticFS("/assets", http.FS(content))
+		r.StaticFS("/assets", http.FS(content))
 	} else {
-		router.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
+		r.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
 	}
 	//router.GET(routeRaw(string(routeHome)), )
 	authRequired := func(level model.Privilege) gin.HandlerFunc {
@@ -66,9 +67,9 @@ func initRouter() {
 				log.Warnf("Invalid steamID")
 				return
 			}
-			cx, cancel := context.WithTimeout(gCtx, time.Second*6)
+			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 			defer cancel()
-			loggedInPerson, err := getPersonBySteamID(cx, steamid.SID64(claims.SteamID))
+			loggedInPerson, err := store.GetPersonBySteamID(cx, steamid.SID64(claims.SteamID))
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				c.AbortWithStatus(http.StatusForbidden)
@@ -82,38 +83,38 @@ func initRouter() {
 			c.Next()
 		}
 	}
-	router.NoRoute(defaultRoute)
-	router.GET("/login/success", onLoginSuccess())
-	router.GET("/auth/callback", onOpenIDCallback())
-	router.GET("/api/ban/:ban_id", onAPIGetBanByID())
-	router.POST("/api/bans", onAPIGetBans())
-	router.GET("/api/profile", onAPIProfile())
-	router.GET("/api/servers", onAPIGetServers())
-	router.GET("/api/stats", onAPIGetStats())
-	router.GET("/api/filtered_words", onAPIGetFilteredWords())
-	router.GET("/api/players", onAPIGetPlayers())
+	r.NoRoute(defaultRoute)
+	r.GET("/login/success", onLoginSuccess())
+	r.GET("/auth/callback", onOpenIDCallback())
+	r.GET("/api/ban/:ban_id", onAPIGetBanByID())
+	r.POST("/api/bans", onAPIGetBans())
+	r.GET("/api/profile", onAPIProfile())
+	r.GET("/api/servers", onAPIGetServers())
+	r.GET("/api/stats", onAPIGetStats())
+	r.GET("/api/filtered_words", onAPIGetFilteredWords())
+	r.GET("/api/players", onAPIGetPlayers())
 
 	// Game server plugin routes
-	router.POST("/api/server_auth", onSAPIPostServerAuth())
+	r.POST("/api/server_auth", onSAPIPostServerAuth())
 	// Server Auth Request
-	serverAuth := router.Use(authMiddleWare())
+	serverAuth := r.Use(authMiddleWare())
 	serverAuth.POST("/api/ping_mod", onPostPingMod())
 	serverAuth.POST("/api/check", onPostServerCheck())
 
 	// Relay
-	router.POST("/api/log", onPostLogAdd())
+	r.POST("/api/log", onPostLogAdd(logMsgChan))
 
 	// Basic logged in user
-	authed := router.Use(authRequired(model.PAuthenticated))
+	authed := r.Use(authRequired(model.PAuthenticated))
 	authed.GET("/api/current_profile", onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", onTokenRefresh())
 	authed.GET("/api/auth/logout", onGetLogout())
 
 	// Moderator access
-	modRoute := router.Use(authRequired(model.PModerator))
+	modRoute := r.Use(authRequired(model.PModerator))
 	modRoute.POST("/api/ban", onAPIPostBanCreate())
 
 	// Admin access
-	modAdmin := router.Use(authRequired(model.PAdmin))
+	modAdmin := r.Use(authRequired(model.PAdmin))
 	modAdmin.POST("/api/server", onAPIPostServer())
 }

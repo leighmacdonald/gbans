@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	http2 "github.com/leighmacdonald/gbans/internal/web"
 	"github.com/pkg/errors"
 	"net/http"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/hpcloud/tail"
-	"github.com/leighmacdonald/gbans/internal/service"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -97,7 +97,7 @@ func newFileWatcher(ctx context.Context, directory string) {
 // New creates and starts a new log reader client instance
 func New(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
 	url := address + "/api/log"
-	sendPayload := func(payload []service.LogPayload) error {
+	sendPayload := func(payload []http2.LogPayload) error {
 		c, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 		b, err1 := json.Marshal(payload)
@@ -118,7 +118,7 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 		return nil
 	}
 	go newFileWatcher(ctx, logPath)
-	var messageQueue []service.LogPayload
+	var messageQueue []http2.LogPayload
 	duration := time.Second * 5
 	ticker := time.NewTicker(duration)
 	for {
@@ -126,7 +126,7 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 		case <-ticker.C:
 			if len(messageQueue) > 0 {
 				log.Debugf("Flushing message queue (timer): len %d", len(messageQueue))
-				go func(messages []service.LogPayload) {
+				go func(messages []http2.LogPayload) {
 					if err := sendPayload(messages); err != nil {
 						log.Errorf("Failed to send queued log payload: %v", err)
 					}
@@ -134,11 +134,11 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 				messageQueue = nil
 			}
 		case msg := <-messageChan:
-			messageQueue = append(messageQueue, service.LogPayload{ServerName: name, Message: msg})
+			messageQueue = append(messageQueue, http2.LogPayload{ServerName: name, Message: msg})
 			log.Debugf("Added message to log queue: len %d", len(messageQueue))
 			if len(messageQueue) >= 25 {
 				log.Debugf("Flushing message queue (size): len %d", len(messageQueue))
-				go func(messages []service.LogPayload) {
+				go func(messages []http2.LogPayload) {
 					if err := sendPayload(messages); err != nil {
 						log.Errorf("Failed to send queued log payload: %v", err)
 					}

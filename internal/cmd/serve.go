@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/leighmacdonald/gbans/internal/service"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/spf13/cobra"
 )
 
@@ -11,7 +11,7 @@ var serveCmd = &cobra.Command{
 	Short: "",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		service.Start()
+		app.Start()
 	},
 }
 

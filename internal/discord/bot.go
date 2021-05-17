@@ -1,10 +1,11 @@
-package service
+package discord
 
 import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
@@ -17,16 +18,14 @@ import (
 var (
 	dg                 *discordgo.Session
 	connected          = false
-	errInvalidSID      = errors.New("Invalid steamid")
-	errUnknownID       = errors.New("Could not find matching player/steamid")
 	errCommandFailed   = errors.New("Command failed")
-	errDuplicateBan    = errors.New("Duplicate ban")
-	errInvalidDuration = errors.New("Invalid duration")
 	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
 	errTooLarge        = errors.Errorf("Max message length is %d", discordMaxMsgLen)
+	actions            model.ActionHandlersI
 )
 
-func startDiscord(ctx context.Context, token string) {
+func Start(ctx context.Context, token string, eventChan chan model.LogEvent, a model.ActionHandlersI) {
+	actions = a
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Errorf("Failed to connect to dg. Bot unavailable")
@@ -38,7 +37,7 @@ func startDiscord(ctx context.Context, token string) {
 		}
 	}()
 	dg = d
-	dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans, " + BuildVersion + ")"
+	dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
 	dg.AddHandler(onReady)
 	dg.AddHandler(onConnect)
 	dg.AddHandler(onDisconnect)
@@ -53,7 +52,7 @@ func startDiscord(ctx context.Context, token string) {
 		log.Fatalf("Error opening discord connection: %v,", err)
 		return
 	}
-	go discordMessageQueueReader(ctx)
+	go discordMessageQueueReader(ctx, eventChan)
 
 	if err2 := botRegisterSlashCommands(); err2 != nil {
 		log.Errorf("Failed to register discord slash commands: %v", err2)
@@ -65,17 +64,13 @@ func startDiscord(ctx context.Context, token string) {
 // discordMessageQueueReader functions by registering event handlers for the two user message events
 // Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func discordMessageQueueReader(ctx context.Context) {
-	events := make(chan logEvent)
-	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
-		log.Warnf("logWriter Tried to register duplicate reader channel")
-	}
+func discordMessageQueueReader(ctx context.Context, eventChan chan model.LogEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
 	sendQueueMu := &sync.RWMutex{}
 	for {
 		select {
-		case dm := <-events:
+		case dm := <-eventChan:
 			prefix := ""
 			if dm.Type == logparse.SayTeam {
 				prefix = "(team) "
@@ -165,4 +160,8 @@ func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, 
 		return errTooLarge
 	}
 	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{Content: msg})
+}
+
+func Send(channelId string, message string) error {
+	return sendChannelMessage(dg, channelId, message)
 }

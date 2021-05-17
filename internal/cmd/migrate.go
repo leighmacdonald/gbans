@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/leighmacdonald/gbans/internal/service"
+	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -13,11 +13,11 @@ var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Create or update the database schema",
 	Run: func(cmd *cobra.Command, args []string) {
-		act := service.MigrateUp
+		act := store.MigrateUp
 		if downAll {
-			act = service.MigrateDn
+			act = store.MigrateDn
 		}
-		if err := service.Migrate(service.MigrationAction(act)); err != nil {
+		if err := store.Migrate(store.MigrationAction(act)); err != nil {
 			if err.Error() == "no change" {
 				log.Infof("Migration at latest version")
 			} else {
