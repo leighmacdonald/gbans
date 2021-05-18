@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
 	"time"
@@ -373,17 +372,6 @@ type LogEvent struct {
 // Unmarshal is just a helper to
 func (e *LogEvent) Unmarshal(output interface{}) error {
 	return logparse.Unmarshal(e.Event, output)
-}
-
-func ExampleLogEvent_Unmarshal() {
-	evt := LogEvent{
-		Event: map[string]string{"msg": "test"},
-	}
-	var m logparse.SayTeamEvt
-	if err := evt.Unmarshal(&m); err != nil {
-		log.Errorf("Failed to decode event")
-	}
-	fmt.Println(m.Msg)
 }
 
 type PlayerInfo struct {

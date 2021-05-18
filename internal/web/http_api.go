@@ -233,7 +233,7 @@ func onPostServerCheck() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
-		p := action.NewProfile(steamID.String(), req.IP.String())
+		p := action.NewGetOrCreatePersonByID(steamID.String(), req.IP.String())
 		p.EnqueueIgnore()
 		ban, errB := store.GetBanBySteamID(ctx, steamID, false)
 		if errB != nil {

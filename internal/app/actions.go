@@ -18,7 +18,7 @@ import (
 
 // mute will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
 // If duration set to 0, the value of config.DefaultExpiration() will be used.
-func mute(ctx context.Context, args *action.MuteRequest) (*model.PlayerInfo, error) {
+func mute(ctx context.Context, args action.MuteRequest) (*model.PlayerInfo, error) {
 	target, err := args.Target.SID64()
 	if err != nil {
 		return nil, errors.Errorf("Failed to get steam id from: %s", args.Target)
@@ -71,7 +71,7 @@ func mute(ctx context.Context, args *action.MuteRequest) (*model.PlayerInfo, err
 // unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func unban(ctx context.Context, args *action.UnbanRequest) (bool, error) {
+func unban(ctx context.Context, args action.UnbanRequest) (bool, error) {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return false, errTar
@@ -98,7 +98,7 @@ func unban(ctx context.Context, args *action.UnbanRequest) (bool, error) {
 
 // ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func ban(ctx context.Context, args *action.BanRequest) (*model.Ban, error) {
+func ban(ctx context.Context, args action.BanRequest) (*model.Ban, error) {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return nil, errTar
@@ -148,7 +148,7 @@ func ban(ctx context.Context, args *action.BanRequest) (*model.Ban, error) {
 				log.Errorf("Faied to kick user afeter b: %v", errR)
 			}
 		}
-		updateRequest := action.NewProfile(target.String(), ipAddr)
+		updateRequest := action.NewGetOrCreatePersonByID(target.String(), ipAddr)
 		updateRequest.Enqueue().Done()
 	}()
 	return &b, nil
@@ -250,12 +250,12 @@ func kick(ctx context.Context, args *action.KickRequest) (*model.PlayerInfo, err
 			log.Errorf("Faied to kick user afeter ban: %v", errR)
 		}
 	}
-	pr := action.NewProfile(target.String(), ipAddr)
+	pr := action.NewGetOrCreatePersonByID(target.String(), ipAddr)
 	pr.EnqueueIgnore()
 	return &pi, nil
 }
 
-func setSteam(ctx context.Context, args *action.SetSteamIDRequest) (bool, error) {
+func setSteam(ctx context.Context, args action.SetSteamIDRequest) (bool, error) {
 	sid, err := steamid.ResolveSID64(ctx, string(args.Target))
 	if err != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
@@ -274,7 +274,7 @@ func setSteam(ctx context.Context, args *action.SetSteamIDRequest) (bool, error)
 	return true, nil
 }
 
-func say(ctx context.Context, args *action.SayRequest) (bool, error) {
+func say(ctx context.Context, args action.SayRequest) (bool, error) {
 	server, err := store.GetServerByName(ctx, args.Server)
 	if err != nil {
 		return false, errors.Errorf("Failed to fetch server: %s", args.Server)
@@ -291,7 +291,7 @@ func say(ctx context.Context, args *action.SayRequest) (bool, error) {
 	return true, nil
 }
 
-func csay(ctx context.Context, args *action.CSayRequest) (bool, error) {
+func csay(ctx context.Context, args action.CSayRequest) (bool, error) {
 	var (
 		servers []model.Server
 		err     error
@@ -313,7 +313,7 @@ func csay(ctx context.Context, args *action.CSayRequest) (bool, error) {
 	return true, nil
 }
 
-func psay(ctx context.Context, args *action.PSayRequest) (bool, error) {
+func psay(ctx context.Context, args action.PSayRequest) (bool, error) {
 	pi := FindPlayer(ctx, string(args.Target), "")
 	if !pi.Valid || !pi.InGame {
 		return false, consts.ErrUnknownID
@@ -326,7 +326,7 @@ func psay(ctx context.Context, args *action.PSayRequest) (bool, error) {
 	return true, nil
 }
 
-func filterAdd(ctx context.Context, args *action.FilterAddRequest) (*model.Filter, error) {
+func filterAdd(ctx context.Context, args action.FilterAddRequest) (*model.Filter, error) {
 	f, err := store.InsertFilter(ctx, args.Filter)
 	if err != nil {
 		if err == store.ErrDuplicate {
@@ -338,7 +338,7 @@ func filterAdd(ctx context.Context, args *action.FilterAddRequest) (*model.Filte
 	return f, nil
 }
 
-func filterDel(ctx context.Context, args *action.FilterDelRequest) (bool, error) {
+func filterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
 	filter, err := store.GetFilterByID(ctx, args.FilterID)
 	if err != nil {
 		return false, err
@@ -349,6 +349,6 @@ func filterDel(ctx context.Context, args *action.FilterDelRequest) (bool, error)
 	return true, nil
 }
 
-func filterCheck(ctx context.Context, args *action.FilterCheckRequest) ([]*model.Filter, error) {
+func filterCheck(ctx context.Context, args action.FilterCheckRequest) ([]*model.Filter, error) {
 	return nil, errors.New("unimplemented")
 }

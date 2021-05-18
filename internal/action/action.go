@@ -54,19 +54,19 @@ const (
 	Unban
 	Find
 	FindByCIDR
-	Profile
 	GetBan
 	GetBanNet
 	GetHistoryIP
 	GetHistoryChat
 	GetPersonByID
 	GetOrCreatePersonByID
+	GetOrCreateProfileBySteamID
 	SetSteamID
 	GetASNRecord
 	GetLocationRecord
 	GetProxyRecord
 	Servers
-	ServerByID
+	ServerByName
 	Say
 	CSay
 	PSay
@@ -135,6 +135,8 @@ type GetOrCreatePersonByIDRequest struct {
 	IPAddr string
 }
 
+type GetOrCreateProfileBySteamIDRequest GetOrCreatePersonByIDRequest
+
 type FilterAddRequest struct {
 	Filter string
 }
@@ -147,8 +149,8 @@ type FilterCheckRequest struct {
 	Message string
 }
 
-type ServerByIDRequest struct {
-	ServerID string
+type ServerByNameRequest struct {
+	ServerName string
 }
 
 type SayRequest struct {
@@ -206,10 +208,6 @@ type SetSteamIDRequest struct {
 type GetASNRecordRequest struct{ IPAddr string }
 type GetLocationRecordRequest GetASNRecordRequest
 type GetProxyRecordRequest GetASNRecordRequest
-
-func NewProfile(target string, ipAddr string) Action {
-	return New(Profile, ProfileRequest{Target: Target(target), IPAddr: ipAddr})
-}
 
 func NewFindByCIDR(cidr *net.IPNet) Action {
 	return New(FindByCIDR, FindCIDRRequest{CIDR: cidr})
@@ -321,8 +319,8 @@ func NewServers() Action {
 	return New(Servers, nil)
 }
 
-func NewServerByID(serverID string) Action {
-	return New(ServerByID, ServerByIDRequest{ServerID: serverID})
+func NewServerByName(serverID string) Action {
+	return New(ServerByName, ServerByNameRequest{ServerName: serverID})
 }
 
 func NewFilterAdd(filter string) Action {
@@ -333,12 +331,19 @@ func NewFilterDel(filterID int) Action {
 	return New(DelFilter, FilterDelRequest{FilterID: filterID})
 }
 
-func NewFilteCheck(message string) Action {
+func NewFilterCheck(message string) Action {
 	return New(CheckFilter, FilterCheckRequest{Message: message})
 }
 
 func NewGetOrCreatePersonByID(target string, ipAddr string) Action {
 	return New(GetOrCreatePersonByID, GetOrCreatePersonByIDRequest{
+		Target: Target(target),
+		IPAddr: ipAddr,
+	})
+}
+
+func NewGetOrCreateProfileBySteamID(target string, ipAddr string) Action {
+	return New(GetOrCreateProfileBySteamID, GetOrCreateProfileBySteamIDRequest{
 		Target: Target(target),
 		IPAddr: ipAddr,
 	})

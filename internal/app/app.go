@@ -85,84 +85,65 @@ func Start() {
 // actionWorker is the action message request handler for any actions that are requested
 //
 // Each request is executed under its own goroutine concurrently. There should be no expectations
-// of results being completed in sequential order
+// of results being completed in sequential order unless
 func actionWorker(ctx context.Context, actChan chan *action.Action) {
-	invalidArgs := action.Result{
-		Err:     action.ErrInvalidArgs,
-		Message: "Invalid args",
-		Value:   nil,
-	}
-	errResult := func(e error) action.Result {
-		return action.Result{Err: e, Message: "", Value: nil}
-	}
-	okResult := func(v interface{}) action.Result {
-		return action.Result{Err: nil, Message: "", Value: nil}
-	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case a := <-actChan:
-			go func(act *action.Action) {
-				switch act.Type {
-				case action.Mute:
-					args, ok := act.Args.(action.MuteRequest)
-					if !ok {
-						act.SetResult(invalidArgs)
-						return
-					}
-					res, err := mute(ctx, &args)
-					if err != nil {
-						act.SetResult(errResult(err))
-						return
-					}
-					act.SetResult(okResult(res))
-				case action.Kick:
-					args, ok := act.Args.(action.KickRequest)
-					if !ok {
-						act.SetResult(invalidArgs)
-						return
-					}
-					res, err := kick(ctx, &args)
-					if err != nil {
-						act.SetResult(errResult(err))
-						return
-					}
-					act.SetResult(okResult(res))
-				case action.Ban:
-					args, ok := act.Args.(action.BanRequest)
-					if !ok {
-						act.SetResult(invalidArgs)
-						return
-					}
-					res, err := ban(ctx, &args)
-					if err != nil {
-						act.SetResult(errResult(err))
-						return
-					}
-					act.SetResult(okResult(res))
-				case action.BanNet:
-					args, ok := act.Args.(action.BanNetRequest)
-					if !ok {
-						act.SetResult(invalidArgs)
-						return
-					}
-					res, err := banNetwork(ctx, &args)
-					if err != nil {
-						act.SetResult(errResult(err))
-						return
-					}
-					act.SetResult(okResult(res))
-				case action.Find:
-					args, ok := act.Args.(action.FindRequest)
-					if !ok {
-						act.SetResult(invalidArgs)
-						return
-					}
-					res := FindPlayer(ctx, args.Query, "")
-					act.SetResult(okResult(res))
-				}
-			}(a)
+		case act := <-actChan:
+			switch act.Type {
+			case action.Mute:
+				go onActionMute(ctx, act)
+			case action.Kick:
+				go onActionKick(ctx, act)
+			case action.Ban:
+				go onActionBan(ctx, act)
+			case action.Unban:
+				go onActionUnban(ctx, act)
+			case action.BanNet:
+				go onActionBanNet(ctx, act)
+			case action.Find:
+				go onActionFind(ctx, act)
+			case action.CheckFilter:
+				go onActionCheckFilter(ctx, act)
+			case action.AddFilter:
+				go onActionAddFilter(ctx, act)
+			case action.DelFilter:
+				go onActionDelFilter(ctx, act)
+			case action.GetPersonByID:
+				go onActionGetPersonByID(ctx, act)
+			case action.GetOrCreatePersonByID:
+				go onActionGetOrCreatePersonByID(ctx, act)
+			case action.SetSteamID:
+				go onActionSetSteamID(ctx, act)
+			case action.Say:
+				go onActionSay(ctx, act)
+			case action.CSay:
+				go onActionCSay(ctx, act)
+			case action.PSay:
+				go onActionPSay(ctx, act)
+			case action.FindByCIDR:
+				go onActionFindByCIDR(ctx, act)
+			case action.GetBan:
+				go onActionGetBan(ctx, act)
+			case action.GetBanNet:
+				go onActionGetBanNet(ctx, act)
+			case action.GetHistoryIP:
+				go onActionGetHistoryIP(ctx, act)
+			case action.GetHistoryChat:
+				go onActionGetHistoryChat(ctx, act)
+			case action.GetASNRecord:
+				go onActionGetASNRecord(ctx, act)
+			case action.GetLocationRecord:
+				go onActionGetLocationRecord(ctx, act)
+			case action.GetProxyRecord:
+				go onActionGetProxyRecord(ctx, act)
+			case action.Servers:
+				go onActionServers(ctx, act)
+			case action.ServerByName:
+				go onActionServerByName(ctx, act)
+			}
 		}
 	}
 }

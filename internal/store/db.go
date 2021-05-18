@@ -344,7 +344,8 @@ func getBanByColumn(ctx context.Context, column string, identifier interface{}, 
 			b.HistoryChat = h
 		}
 		b.HistoryConnections = []string{}
-		b.HistoryIP = GetIPHistory(ctx, b.Person.SteamID)
+		ips, _ := GetIPHistory(ctx, b.Person.SteamID)
+		b.HistoryIP = ips
 		b.HistoryPersonaName = []string{}
 	}
 	return b, nil
@@ -397,29 +398,29 @@ func AddPersonIP(ctx context.Context, p *model.Person, ip string) error {
 	return dbErr(err)
 }
 
-func GetIPHistory(ctx context.Context, sid64 steamid.SID64) []model.IPRecord {
+func GetIPHistory(ctx context.Context, sid64 steamid.SID64) ([]model.IPRecord, error) {
 	q, a, e := sb.Select("ip_addr", "created_on").
 		From(string(tablePersonIP)).
 		Where(sq.Eq{"steam_id": sid64}).
 		OrderBy("created_on DESC").
 		ToSql()
 	if e != nil {
-		return nil
+		return nil, e
 	}
 	rows, err := db.Query(ctx, q, a...)
 	if err != nil {
-		return nil
+		return nil, dbErr(err)
 	}
 	defer rows.Close()
 	var records []model.IPRecord
 	for rows.Next() {
 		var r model.IPRecord
 		if err2 := rows.Scan(&r.IPAddr, &r.CreatedOn); err2 != nil {
-			return nil
+			return nil, dbErr(err)
 		}
 		records = append(records, r)
 	}
-	return records
+	return records, nil
 }
 
 func GetAppeal(ctx context.Context, banID uint64) (model.Appeal, error) {

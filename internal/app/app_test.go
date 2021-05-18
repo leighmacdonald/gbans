@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"math/rand"
@@ -71,14 +72,24 @@ func GenTestData() {
 		}
 	}
 
-	if _, err := actions.BanPlayer(context.Background(), steamIds[0], config.General.Owner, time.Minute*30,
-		model.Cheating, "Aimbot", model.System); err != nil && err != store.ErrDuplicate {
+	if _, err := ban(context.Background(), action.BanRequest{
+		Target:   action.Target(steamIds[0].String()),
+		Source:   action.Source(config.General.Owner.String()),
+		Duration: "30m",
+		Reason:   "Aimbot",
+	}); err != nil && err != store.ErrDuplicate {
 		log.Fatalf("Failed to create test ban #1: %v", err)
 	}
-	if _, err := actions.BanPlayer(context.Background(), steamIds[1], config.General.Owner, 0,
-		model.Cheating, "Aimbot", model.System); err != nil && err != store.ErrDuplicate {
+
+	if _, err := ban(context.Background(), action.BanRequest{
+		Target:   action.Target(steamIds[1].String()),
+		Source:   action.Source(config.General.Owner.String()),
+		Duration: "0",
+		Reason:   "Aimbot",
+	}); err != nil && err != store.ErrDuplicate {
 		log.Fatalf("Failed to create test ban #2: %v", err)
 	}
+
 	randSN := func() int {
 		i := rand.Intn(255)
 		if i <= 0 {

@@ -105,7 +105,7 @@ func onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 
 func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sid := m.Data.Options[0].Value.(string)
-	act := action.NewProfile(sid, "")
+	act := action.NewGetOrCreatePersonByID(sid, "")
 	res := <-act.Enqueue().Done()
 	bannedPlayer, bannedPlayerOk := res.Value.(*model.Person)
 	if !bannedPlayerOk {
@@ -454,7 +454,7 @@ func defaultTable(title string) table.Writer {
 }
 
 func onPlayers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	act := action.NewServerByID(m.Data.Options[0].Value.(string))
+	act := action.NewServerByName(m.Data.Options[0].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		if res.Err == sql.ErrNoRows {
