@@ -31,7 +31,7 @@ sourcemod/.vscode/
 /frontend/lib/
 *.js
 *.jsx
-/internal/service/dist/
+/internal/web/dist/
 /out/production/gbans/
 /build/
 /*.zip
