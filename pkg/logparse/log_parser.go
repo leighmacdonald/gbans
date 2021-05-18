@@ -443,10 +443,10 @@ func decodeHealthPack() mapstructure.DecodeHookFunc {
 	}
 }
 
-// Decode will transform a map of values into the struct passed in
+// Unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-func Decode(input interface{}, output interface{}) error {
+func Unmarshal(input interface{}, output interface{}) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			decodeTeam(),

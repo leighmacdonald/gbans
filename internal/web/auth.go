@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -120,11 +121,16 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		p, errProfile := actions.GetOrCreateProfileBySteamID(ctx, sid, c.Request.RemoteAddr)
-		if errProfile != nil {
-			log.Errorf("Failed to fetch user profile: %v", errProfile)
+		act := action.NewGetOrCreatePersonByID(sid.String(), c.Request.RemoteAddr)
+		res := <-act.Enqueue().Done()
+		if res.Err != nil {
+			log.Errorf("Failed to fetch user profile: %v", res.Err)
+			c.Redirect(302, ref)
+			return
+		}
+		p, ok := res.Value.(*model.Person)
+		if !ok {
+			log.Errorf("Failed to cast user profile")
 			c.Redirect(302, ref)
 			return
 		}

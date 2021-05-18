@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -64,6 +65,15 @@ func createToken(sid steamid.SID64, pr model.Privilege) string {
 	_ = store.SavePerson(ctx, p)
 	token, _ := newJWT(p.SteamID)
 	return token
+}
+
+func TestMain(m *testing.M) {
+	c := make(chan LogPayload)
+	config.Read()
+	config.General.Mode = "test"
+	initRouter(router, c)
+	store.Init(config.DB.DSN)
+	os.Exit(m.Run())
 }
 
 func TestAPICheck(t *testing.T) {

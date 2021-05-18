@@ -1,7 +1,6 @@
 package model
 
 import (
-	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -16,6 +15,11 @@ import (
 
 var (
 	ErrRCON = errors.New("RCON error")
+)
+
+const (
+	LenDiscordID = 18
+	LenSteamID   = 17
 )
 
 // BanType defines the state of the ban for a user, 0 being no ban
@@ -209,6 +213,21 @@ type IPRecord struct {
 	CreatedOn time.Time `json:"created_on"`
 }
 
+// PersonIPRecord holds a composite result of the more relevant ip2location results
+type PersonIPRecord struct {
+	IP          net.IP
+	CreatedOn   time.Time
+	CityName    string
+	CountryName string
+	CountryCode string
+	ASName      string
+	ASNum       int
+	ISP         string
+	UsageType   string
+	Threat      string
+	DomainUsed  string
+}
+
 type Server struct {
 	// Auto generated id
 	ServerID int64 `db:"server_id" json:"server_id"`
@@ -351,17 +370,17 @@ type LogEvent struct {
 	RawEvent string
 }
 
-// Decode is just a helper to
-func (e *LogEvent) Decode(output interface{}) error {
-	return logparse.Decode(e.Event, output)
+// Unmarshal is just a helper to
+func (e *LogEvent) Unmarshal(output interface{}) error {
+	return logparse.Unmarshal(e.Event, output)
 }
 
-func ExamplelogEvent_Decode() {
+func ExampleLogEvent_Unmarshal() {
 	evt := LogEvent{
 		Event: map[string]string{"msg": "test"},
 	}
 	var m logparse.SayTeamEvt
-	if err := evt.Decode(&m); err != nil {
+	if err := evt.Unmarshal(&m); err != nil {
 		log.Errorf("Failed to decode event")
 	}
 	fmt.Println(m.Msg)
@@ -375,20 +394,7 @@ type PlayerInfo struct {
 	Valid   bool
 }
 
-// ActionHandlersI
-type ActionHandlersI interface {
-	KickPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64,
-		_ Reason, reasonText string, _ BanSource) (*PlayerInfo, error)
-	MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-		reason Reason, reasonText string) (*PlayerInfo, error)
-	BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-		reason Reason, reasonText string, source BanSource) (*Ban, error)
-	BanNetwork(ctx context.Context, cidr *net.IPNet, _ steamid.SID64, author steamid.SID64, duration time.Duration,
-		_ Reason, reasonText string, source BanSource) (*BanNet, error)
-	UnbanPlayer(ctx context.Context, sid steamid.SID64, _ steamid.SID64, _ string) error
-
-	FindPlayer(ctx context.Context, playerStr string, ip string) PlayerInfo
-	FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*extra.Player, *Server, error)
-
-	GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*Person, error)
+type FindResult struct {
+	Player *extra.Player
+	Server *Server
 }

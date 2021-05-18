@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -55,7 +56,13 @@ func onPostPingMod() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		pi := actions.FindPlayer(context.Background(), req.SteamID.String(), "")
+		act := action.NewFind(req.SteamID.String())
+		res := <-act.Enqueue().Done()
+		pi, ok := res.Value.(model.PlayerInfo)
+		if !ok {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
 		name := req.SteamID.String()
 		if pi.InGame {
 			name += fmt.Sprintf(" (%s)", pi.Player.Name)
@@ -91,21 +98,20 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
-		duration, err := config.ParseDuration(r.Duration)
-		if err != nil {
-			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m". 
-Valid time units are "s", "m", "h".`)
-			return
-		}
+		//		duration, err := config.ParseDuration(r.Duration)
+		//		if err != nil {
+		//			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m".
+		//Valid time units are "s", "m", "h".`)
+		//			return
+		//		}
 		var (
-			n      *net.IPNet
 			ban    *model.Ban
 			banNet *model.BanNet
 			e      error
 		)
 		if r.Network != "" {
-			_, n, err = net.ParseCIDR(r.Network)
-			if err != nil {
+			_, _, e = net.ParseCIDR(r.Network)
+			if e != nil {
 				responseErr(c, http.StatusBadRequest, "Invalid network cidr definition")
 				return
 			}
@@ -114,13 +120,14 @@ Valid time units are "s", "m", "h".`)
 			responseErr(c, http.StatusBadRequest, "Invalid steamid")
 			return
 		}
-
+		var act action.Action
 		if r.Network != "" {
-			banNet, e = actions.BanNetwork(c, n, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+			act = action.NewBanNet(r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network)
 		} else {
-			ban, e = actions.BanPlayer(c, r.SteamID, currentPerson(c).SteamID, duration, r.Reason, r.ReasonText, model.Web)
+			act = action.NewBan(r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration)
 		}
-		if e != nil {
+		res := <-act.Enqueue().Done()
+		if res.Err != nil {
 			if errors.Is(e, store.ErrDuplicate) {
 				responseErr(c, http.StatusConflict, "Duplicate ban")
 				return
@@ -226,17 +233,11 @@ func onPostServerCheck() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
-		go func() {
-			ctxF, cancelF := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancelF()
-			_, e := actions.GetOrCreateProfileBySteamID(ctxF, steamID, req.IP.String())
-			if e != nil {
-				log.Errorf("Failed to update connecting player profile: %v", e)
-			}
-		}()
-		ban, err := store.GetBanBySteamID(ctx, steamID, false)
-		if err != nil {
-			if err == store.ErrNoResult {
+		p := action.NewProfile(steamID.String(), req.IP.String())
+		p.EnqueueIgnore()
+		ban, errB := store.GetBanBySteamID(ctx, steamID, false)
+		if errB != nil {
+			if errB == store.ErrNoResult {
 				resp.BanType = model.OK
 				responseErr(c, http.StatusOK, resp)
 				return

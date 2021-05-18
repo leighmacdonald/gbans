@@ -96,9 +96,9 @@ func serverStateUpdater(ctx context.Context) {
 		}()
 		wg.Wait()
 		for name, resp := range respRCON {
-			s, err := extra.ParseStatus(resp, true)
-			if err != nil {
-				log.Warnf("Failed to parse Server state (%s): %v", name, err)
+			s, errPs := extra.ParseStatus(resp, true)
+			if errPs != nil {
+				log.Warnf("Failed to parse Server state (%s): %v", name, errPs)
 				return
 			}
 			var (
@@ -135,7 +135,7 @@ func serverStateUpdater(ctx context.Context) {
 }
 
 func banSweeper(ctx context.Context) {
-	log.Debug("Ban sweeper routine started")
+	log.Debug("ban sweeper routine started")
 	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {
@@ -148,7 +148,7 @@ func banSweeper(ctx context.Context) {
 					if err := store.DropBan(ctx, ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
-						log.Infof("Ban expired: %v", ban)
+						log.Infof("ban expired: %v", ban)
 					}
 				}
 			}

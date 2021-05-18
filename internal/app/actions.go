@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -12,150 +13,187 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
-	"time"
+	"strings"
 )
 
-type ActionHandlers struct{}
-
-// MutePlayer will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
+// mute will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
 // If duration set to 0, the value of config.DefaultExpiration() will be used.
-func (a ActionHandlers) MutePlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-	reason model.Reason, reasonText string) (*model.PlayerInfo, error) {
-	if !sid.Valid() {
-		return nil, errors.Errorf("Failed to get steam id from: %s", sid.String())
+func mute(ctx context.Context, args *action.MuteRequest) (*model.PlayerInfo, error) {
+	target, err := args.Target.SID64()
+	if err != nil {
+		return nil, errors.Errorf("Failed to get steam id from: %s", args.Target)
 	}
-	if !author.Valid() {
-		return nil, errors.Errorf("Failed to get steam id from: %s", author)
+	source, errSrc := args.Source.SID64()
+	if errSrc != nil {
+		return nil, errors.Errorf("Failed to get steam id from: %s", args.Source)
+	}
+	duration, errDur := args.Duration.Value()
+	if errDur != nil {
+		return nil, errDur
 	}
 	until := config.DefaultExpiration()
 	if duration > 0 {
 		until = config.Now().Add(duration)
 	}
-	ban, err2 := store.GetBanBySteamID(ctx, sid, false)
+	b, err2 := store.GetBanBySteamID(ctx, target, false)
 	if err2 != nil && err2 != store.ErrNoResult {
-		log.Errorf("Error getting ban from db: %v", err2)
+		log.Errorf("Error getting b from db: %v", err2)
 		return nil, errors.New("Internal DB Error")
 	} else if err2 != nil {
-		ban = &model.BannedPerson{
-			Ban:    model.NewBan(sid, 0, duration),
-			Person: model.NewPerson(sid),
+		b = &model.BannedPerson{
+			Ban:    model.NewBan(target, source, duration),
+			Person: model.NewPerson(target),
 		}
-		ban.Ban.BanType = model.NoComm
+		b.Ban.BanType = model.NoComm
 	}
-	if ban.Ban.BanType == model.Banned {
+	if b.Ban.BanType == model.Banned {
 		return nil, errors.New("Person is already banned")
 	}
-	ban.Ban.BanType = model.NoComm
-	ban.Ban.Reason = reason
-	ban.Ban.ReasonText = reasonText
-	ban.Ban.ValidUntil = until
-	if err3 := store.SaveBan(ctx, ban.Ban); err3 != nil {
-		log.Errorf("Failed to save ban: %v", err3)
+	b.Ban.BanType = model.NoComm
+	b.Ban.Reason = model.Custom
+	b.Ban.ReasonText = args.Reason
+	b.Ban.ValidUntil = until
+	if err3 := store.SaveBan(ctx, b.Ban); err3 != nil {
+		log.Errorf("Failed to save b: %v", err3)
 		return nil, err3
 	}
-	pi := a.FindPlayer(ctx, sid.String(), "")
+	pi := FindPlayer(ctx, target.String(), "")
 	if pi.InGame {
 		log.Infof("Gagging in-game Player")
 		query.RCON(ctx, []model.Server{*pi.Server},
-			fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(sid))),
-			fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(sid))))
+			fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(target))),
+			fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(target))))
 	}
 	log.Infof("Gagged Player successfully")
 	return nil, nil
 }
 
-// UnbanPlayer will set the current ban to now, making it expired.
-func (a ActionHandlers) UnbanPlayer(ctx context.Context, sid steamid.SID64, _ steamid.SID64, _ string) error {
-	if !sid.Valid() {
-		return errors.Errorf("Invalid steam id from: %s", sid.String())
+// unban will set the current ban to now, making it expired.
+// Returns true, nil if the ban exists, and was successfully banned.
+// Returns false, nil if the ban does not exist.
+func unban(ctx context.Context, args *action.UnbanRequest) (bool, error) {
+	target, errTar := args.Target.SID64()
+	if errTar != nil {
+		return false, errTar
 	}
-	ban, err := store.GetBanBySteamID(ctx, sid, false)
+	//source, errSrc := args.Source.SID64()
+	//if errSrc != nil {
+	//	return false, errSrc
+	//}
+	b, err := store.GetBanBySteamID(ctx, target, false)
 	if err != nil {
 		if err == store.ErrNoResult {
-			return errors.Wrapf(err, "Player is not banned")
+			return false, nil
 		} else {
-			return err
+			return false, err
 		}
 	}
-	ban.Ban.ValidUntil = config.Now()
-	if err2 := store.SaveBan(ctx, ban.Ban); err2 != nil {
-		return errors.Wrapf(err2, "Failed to save unban")
+	b.Ban.ValidUntil = config.Now()
+	if err2 := store.SaveBan(ctx, b.Ban); err2 != nil {
+		return false, errors.Wrapf(err2, "Failed to save unban")
 	}
-	log.Infof("Player unbanned: %v", sid.Int64())
-	return nil
+	log.Infof("Player unbanned: %v", target)
+	return true, nil
 }
 
-// BanPlayer will ban the steam id from all servers. Players are immediately kicked from servers
+// ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func (a ActionHandlers) BanPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64, duration time.Duration,
-	reason model.Reason, reasonText string, source model.BanSource) (*model.Ban, error) {
-	if !sid.Valid() {
-		return nil, errors.Errorf("Invalid steam id from: %s", sid.String())
+func ban(ctx context.Context, args *action.BanRequest) (*model.Ban, error) {
+	target, errTar := args.Target.SID64()
+	if errTar != nil {
+		return nil, errTar
 	}
-	if !author.Valid() {
-		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
+	source, errSrc := args.Source.SID64()
+	if errSrc != nil {
+		return nil, errSrc
 	}
-	existing, err := store.GetBanBySteamID(ctx, sid, false)
+	duration, errDur := args.Duration.Value()
+	if errDur != nil {
+		return nil, errDur
+	}
+	existing, err := store.GetBanBySteamID(ctx, target, false)
 	if existing != nil && existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return nil, store.ErrDuplicate
 	}
 	if err != nil && err != store.ErrNoResult {
-		return nil, errors.Wrapf(err, "Failed to get ban")
+		return nil, errors.Wrapf(err, "Failed to get b")
 	}
 	until := config.DefaultExpiration()
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
 	}
-	ban := model.Ban{
-		SteamID:    sid,
-		AuthorID:   author,
+	b := model.Ban{
+		SteamID:    target,
+		AuthorID:   source,
 		BanType:    model.Banned,
-		Reason:     reason,
-		ReasonText: reasonText,
+		Reason:     model.Custom,
+		ReasonText: args.Reason,
 		Note:       "",
 		ValidUntil: until,
-		Source:     source,
+		Source:     model.System,
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
 	}
-	if err2 := store.SaveBan(ctx, &ban); err2 != nil {
+	if err2 := store.SaveBan(ctx, &b); err2 != nil {
 		return nil, err2
 	}
 	go func() {
 		ipAddr := ""
-		// Kick the user if they currently are playing on a Server
-		pi := a.FindPlayer(ctx, sid.String(), "")
+		// kick the user if they currently are playing on a Server
+		pi := FindPlayer(ctx, target.String(), "")
 		if pi.Valid && pi.InGame {
 			ipAddr = pi.Player.IP.String()
-			if _, errR := query.ExecRCON(*pi.Server, fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, reasonText)); errR != nil {
-				log.Errorf("Faied to kick user afeter ban: %v", errR)
+			if _, errR := query.ExecRCON(*pi.Server,
+				fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
+				log.Errorf("Faied to kick user afeter b: %v", errR)
 			}
 		}
-		// Update the profile, setting their IP
-		if _, e := a.GetOrCreateProfileBySteamID(ctx, sid, ipAddr); e != nil {
-			log.Errorf("Failed to update banned user profile: %v", e)
-		}
+		updateRequest := action.NewProfile(target.String(), ipAddr)
+		updateRequest.Enqueue().Done()
 	}()
-	return &ban, nil
+	return &b, nil
 }
 
-// BanNetwork adds a new network to the banned network list. It will accept any Valid CIDR format.
+// banNetwork adds a new network to the banned network list. It will accept any Valid CIDR format.
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of config.DefaultExpiration() will be used.
-func (a ActionHandlers) BanNetwork(ctx context.Context, cidr *net.IPNet, _ steamid.SID64, author steamid.SID64, duration time.Duration,
-	_ model.Reason, reasonText string, source model.BanSource) (*model.BanNet, error) {
-	if !author.Valid() {
-		return nil, errors.Errorf("Failed to get steam id from: %s", author)
+func banNetwork(ctx context.Context, args *action.BanNetRequest) (*model.BanNet, error) {
+	target, errTar := args.Target.SID64()
+	if errTar != nil {
+		return nil, errTar
+	}
+	source, errSrc := args.Source.SID64()
+	if errSrc != nil {
+		return nil, errSrc
+	}
+	duration, errDur := args.Duration.Value()
+	if errDur != nil {
+		return nil, errDur
 	}
 	until := config.DefaultExpiration()
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
 	}
+	_, cidr, errCidr := net.ParseCIDR(args.CIDR)
+	if errCidr != nil {
+		return nil, errors.Wrapf(errCidr, "Failed to parse CIDR address")
+	}
+	// TODO
+	//_, err2 := store.GetBanNet(ctx, net.ParseIP(cidrStr))
+	//if err2 != nil && err2 != store.ErrNoResult {
+	//	return "", errCommandFailed
+	//}
+	//if err2 == nil {
+	//	return "", consts.ErrDuplicateBan
+	//}
+
 	banNet := model.BanNet{
+		SteamID:    target,
+		AuthorID:   source,
 		CIDR:       cidr,
-		Source:     source,
-		Reason:     reasonText,
+		Source:     model.System,
+		Reason:     args.Reason,
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
 		ValidUntil: until,
@@ -163,41 +201,154 @@ func (a ActionHandlers) BanNetwork(ctx context.Context, cidr *net.IPNet, _ steam
 	if err := store.SaveBanNet(ctx, &banNet); err != nil {
 		return nil, err
 	}
-	p, server, err := a.FindPlayerByCIDR(ctx, cidr)
-	if err != nil && err != consts.ErrUnknownID {
-		return nil, err
-	}
-	if err != consts.ErrUnknownID && p != nil && server != nil {
-		resp, err2 := query.ExecRCON(*server, fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(p.SID)), reasonText))
-		if err2 != nil {
-			return nil, err2
+	go func() {
+		fc := action.NewFindByCIDR(cidr)
+		res := <-fc.Enqueue().Done()
+		if res.Err != nil {
+			if res.Err != consts.ErrUnknownID {
+				log.Debugf("No active players found matching: %s", cidr)
+				return
+			}
+			log.Errorf("Error finding player: %v", res.Err)
+			return
 		}
-		log.Debugf("RCON: %s", resp)
-	}
+		pi, ok := res.Value.(model.PlayerInfo)
+		if !ok {
+			log.Errorf("Failed casing player info")
+			return
+		}
+		if res.Err != consts.ErrUnknownID && pi.Player != nil && pi.Server != nil {
+			_, err2 := query.ExecRCON(*pi.Server,
+				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(pi.Player.SID)), banNet.Reason))
+			if err2 != nil {
+				log.Errorf("Failed to query for ban request: %v", err2)
+				return
+			}
+		}
+	}()
+
 	return &banNet, nil
 }
 
-// KickPlayer will kick the steam id from all servers.
-func (a ActionHandlers) KickPlayer(ctx context.Context, sid steamid.SID64, author steamid.SID64,
-	_ model.Reason, reasonText string, _ model.BanSource) (*model.PlayerInfo, error) {
-	if !sid.Valid() {
-		return nil, errors.Errorf("Invalid steam id from: %s", sid.String())
+// kick will kick the steam id from all servers.
+func kick(ctx context.Context, args *action.KickRequest) (*model.PlayerInfo, error) {
+	target, errTar := args.Target.SID64()
+	if errTar != nil {
+		return nil, errTar
 	}
-	if !author.Valid() {
-		return nil, errors.Errorf("Invalid steam id (author) from: %s", author)
-	}
+	//source, errSrc := args.Source.SID64()
+	//if errSrc != nil {
+	//	return nil, errSrc
+	//}
 	ipAddr := ""
-	// Kick the user if they currently are playing on a Server
-	pi := a.FindPlayer(ctx, sid.String(), "")
+	// kick the user if they currently are playing on a Server
+	pi := FindPlayer(ctx, target.String(), "")
 	if pi.Valid && pi.InGame {
 		ipAddr = pi.Player.IP.String()
-		if _, errR := query.ExecRCON(*pi.Server, fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, reasonText)); errR != nil {
+
+		if _, errR := query.ExecRCON(*pi.Server, fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
 			log.Errorf("Faied to kick user afeter ban: %v", errR)
 		}
 	}
-	// Update the profile, setting their IP
-	if _, e := a.GetOrCreateProfileBySteamID(ctx, sid, ipAddr); e != nil {
-		log.Errorf("Failed to update banned user profile: %v", e)
-	}
+	pr := action.NewProfile(target.String(), ipAddr)
+	pr.EnqueueIgnore()
 	return &pi, nil
+}
+
+func setSteam(ctx context.Context, args *action.SetSteamIDRequest) (bool, error) {
+	sid, err := steamid.ResolveSID64(ctx, string(args.Target))
+	if err != nil || !sid.Valid() {
+		return false, consts.ErrInvalidSID
+	}
+	p, errP := store.GetOrCreatePersonBySteamID(ctx, sid)
+	if errP != nil || !sid.Valid() {
+		return false, consts.ErrInvalidSID
+	}
+	if (p.DiscordID) != "" {
+		return false, errors.Errorf("Discord account already linked to steam account: %d", p.SteamID.Int64())
+	}
+	p.DiscordID = args.DiscordID
+	if errS := store.SavePerson(ctx, p); errS != nil {
+		return false, consts.ErrInternal
+	}
+	return true, nil
+}
+
+func say(ctx context.Context, args *action.SayRequest) (bool, error) {
+	server, err := store.GetServerByName(ctx, args.Server)
+	if err != nil {
+		return false, errors.Errorf("Failed to fetch server: %s", args.Server)
+	}
+	msg := fmt.Sprintf(`sm_say %s`, args.Message)
+	resp, err2 := query.ExecRCON(server, msg)
+	if err2 != nil {
+		return false, err2
+	}
+	rp := strings.Split(resp, "\n")
+	if len(rp) < 2 {
+		return false, errors.Errorf("Invalid response")
+	}
+	return true, nil
+}
+
+func csay(ctx context.Context, args *action.CSayRequest) (bool, error) {
+	var (
+		servers []model.Server
+		err     error
+	)
+	if args.Server == "*" {
+		servers, err = store.GetServers(ctx)
+		if err != nil {
+			return false, errors.Wrapf(err, "Failed to fetch servers")
+		}
+	} else {
+		server, errS := store.GetServerByName(ctx, args.Server)
+		if errS != nil {
+			return false, errors.Wrapf(errS, "Failed to fetch server: %s", args.Server)
+		}
+		servers = append(servers, server)
+	}
+	msg := fmt.Sprintf(`sm_csay %s`, args.Message)
+	_ = query.RCON(ctx, servers, msg)
+	return true, nil
+}
+
+func psay(ctx context.Context, args *action.PSayRequest) (bool, error) {
+	pi := FindPlayer(ctx, string(args.Target), "")
+	if !pi.Valid || !pi.InGame {
+		return false, consts.ErrUnknownID
+	}
+	msg := fmt.Sprintf(`sm_psay %d "%s"`, pi.Player.UserID, args.Message)
+	_, err := query.ExecRCON(*pi.Server, msg)
+	if err != nil {
+		return false, errors.Errorf("Failed to exec psay command: %v", err)
+	}
+	return true, nil
+}
+
+func filterAdd(ctx context.Context, args *action.FilterAddRequest) (*model.Filter, error) {
+	f, err := store.InsertFilter(ctx, args.Filter)
+	if err != nil {
+		if err == store.ErrDuplicate {
+			return nil, store.ErrDuplicate
+		}
+		log.Errorf("Error saving filter word: %v", err)
+		return nil, consts.ErrInternal
+	}
+	return f, nil
+}
+
+func filterDel(ctx context.Context, args *action.FilterDelRequest) (bool, error) {
+	filter, err := store.GetFilterByID(ctx, args.FilterID)
+	if err != nil {
+		return false, err
+	}
+	if err2 := store.DropFilter(ctx, filter); err2 != nil {
+		return false, err2
+	}
+	return true, nil
+}
+
+func filterCheck(ctx context.Context, args *action.FilterCheckRequest) ([]*model.Filter, error) {
+	return nil, errors.New("unimplemented")
 }

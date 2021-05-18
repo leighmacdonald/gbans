@@ -21,11 +21,9 @@ var (
 	errCommandFailed   = errors.New("Command failed")
 	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
 	errTooLarge        = errors.Errorf("Max message length is %d", discordMaxMsgLen)
-	actions            model.ActionHandlersI
 )
 
-func Start(ctx context.Context, token string, eventChan chan model.LogEvent, a model.ActionHandlersI) {
-	actions = a
+func Start(ctx context.Context, token string, eventChan chan model.LogEvent) {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Errorf("Failed to connect to dg. Bot unavailable")

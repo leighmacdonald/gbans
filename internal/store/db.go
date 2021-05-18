@@ -1133,22 +1133,7 @@ func GetProxyRecord(ctx context.Context, ip net.IP) (*ip2location.ProxyRecord, e
 	return &r, nil
 }
 
-// ipRecord holds a composite result of ip2location results
-type ipRecord struct {
-	IP          net.IP
-	CreatedOn   time.Time
-	CityName    string
-	CountryName string
-	CountryCode string
-	ASName      string
-	ASNum       int
-	ISP         string
-	UsageType   string
-	Threat      string
-	DomainUsed  string
-}
-
-func GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, error) {
+func GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]model.PersonIPRecord, error) {
 	const q = `
 		SELECT
 			   ip.ip_addr, ip.created_on,
@@ -1165,10 +1150,10 @@ func GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]ipRecord, err
 	if err != nil {
 		return nil, err
 	}
-	var records []ipRecord
+	var records []model.PersonIPRecord
 	defer rows.Close()
 	for rows.Next() {
-		var r ipRecord
+		var r model.PersonIPRecord
 		if errR := rows.Scan(&r.IP, &r.CreatedOn, &r.CityName, &r.CountryName, &r.CountryCode, &r.ASName,
 			&r.ASNum, &r.ISP, &r.UsageType, &r.Threat, &r.DomainUsed); errR != nil {
 			return nil, errR

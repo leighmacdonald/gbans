@@ -50,7 +50,7 @@ func filterWorker(ctx context.Context) {
 		select {
 		case evt := <-c:
 			var m logparse.SayTeamEvt
-			if err := evt.Decode(&m); err != nil {
+			if err := evt.Unmarshal(&m); err != nil {
 				log.Errorf("Failed to decode event")
 			}
 			wordFiltersMu.RLock()

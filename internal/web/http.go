@@ -40,15 +40,13 @@ var (
 	httpServer *http.Server
 	//go:embed dist
 	content embed.FS
-	actions model.ActionHandlersI
 )
 
 func init() {
 	router = gin.New()
 }
 
-func Start(ctx context.Context, logMsgChan chan LogPayload, a model.ActionHandlersI) {
-	actions = a
+func Start(ctx context.Context, logMsgChan chan LogPayload) {
 	initRouter(router, logMsgChan)
 	log.Infof("Starting HTTP service")
 	go func() {

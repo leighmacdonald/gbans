@@ -1,7 +1,7 @@
 import path from 'path';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
-const outPath = path.resolve('../internal/service/dist');
+const outPath = path.resolve('../internal/web/dist');
 
 const config = {
     entry: './src/index.tsx',

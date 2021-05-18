@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/external"
@@ -28,7 +29,6 @@ var (
 	// Events are sent to all channels in a fan-out style
 	logEventReaders   map[logparse.MsgType][]chan model.LogEvent
 	logEventReadersMu *sync.RWMutex
-	actions           = ActionHandlers{}
 )
 
 type warnReason int
@@ -49,6 +49,9 @@ func shutdown() {
 
 // Start is the main application entry point
 func Start() {
+	actChan := make(chan *action.Action)
+	action.Register(actChan)
+	go actionWorker(gCtx, actChan)
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
 		initNetBans()
@@ -76,7 +79,92 @@ func Start() {
 	}
 
 	// Start the HTTP Server
-	web.Start(gCtx, logRawQueue, actions)
+	web.Start(gCtx, logRawQueue)
+}
+
+// actionWorker is the action message request handler for any actions that are requested
+//
+// Each request is executed under its own goroutine concurrently. There should be no expectations
+// of results being completed in sequential order
+func actionWorker(ctx context.Context, actChan chan *action.Action) {
+	invalidArgs := action.Result{
+		Err:     action.ErrInvalidArgs,
+		Message: "Invalid args",
+		Value:   nil,
+	}
+	errResult := func(e error) action.Result {
+		return action.Result{Err: e, Message: "", Value: nil}
+	}
+	okResult := func(v interface{}) action.Result {
+		return action.Result{Err: nil, Message: "", Value: nil}
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case a := <-actChan:
+			go func(act *action.Action) {
+				switch act.Type {
+				case action.Mute:
+					args, ok := act.Args.(action.MuteRequest)
+					if !ok {
+						act.SetResult(invalidArgs)
+						return
+					}
+					res, err := mute(ctx, &args)
+					if err != nil {
+						act.SetResult(errResult(err))
+						return
+					}
+					act.SetResult(okResult(res))
+				case action.Kick:
+					args, ok := act.Args.(action.KickRequest)
+					if !ok {
+						act.SetResult(invalidArgs)
+						return
+					}
+					res, err := kick(ctx, &args)
+					if err != nil {
+						act.SetResult(errResult(err))
+						return
+					}
+					act.SetResult(okResult(res))
+				case action.Ban:
+					args, ok := act.Args.(action.BanRequest)
+					if !ok {
+						act.SetResult(invalidArgs)
+						return
+					}
+					res, err := ban(ctx, &args)
+					if err != nil {
+						act.SetResult(errResult(err))
+						return
+					}
+					act.SetResult(okResult(res))
+				case action.BanNet:
+					args, ok := act.Args.(action.BanNetRequest)
+					if !ok {
+						act.SetResult(invalidArgs)
+						return
+					}
+					res, err := banNetwork(ctx, &args)
+					if err != nil {
+						act.SetResult(errResult(err))
+						return
+					}
+					act.SetResult(okResult(res))
+				case action.Find:
+					args, ok := act.Args.(action.FindRequest)
+					if !ok {
+						act.SetResult(invalidArgs)
+						return
+					}
+					res := FindPlayer(ctx, args.Query, "")
+					act.SetResult(okResult(res))
+				}
+			}(a)
+		}
+	}
 }
 
 // registerLogEventReader will register a channel to receive new log events as they come in
@@ -202,6 +290,7 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 func addWarning(sid64 steamid.SID64, reason warnReason) {
 	warningsMu.Lock()
 	defer warningsMu.Unlock()
+	const msg = "Warning limit exceeded"
 	_, found := warnings[sid64]
 	if !found {
 		warnings[sid64] = []userWarning{}
@@ -211,23 +300,20 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		CreatedOn:  config.Now(),
 	})
 	if len(warnings[sid64]) >= config.General.WarningLimit {
+		var act action.Action
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			_, err := actions.MutePlayer(gCtx, sid64, config.General.Owner, config.General.WarningExceededDuration,
-				model.Language, "Language warnings exceeded")
-			if err != nil {
-				log.Errorf("Failed to ban Player after too many warnings: %s", err)
-			}
+			act = action.NewMute(sid64.String(), config.General.Owner.String(), msg,
+				config.General.WarningExceededDuration.String())
 		case config.Ban:
-			if _, err := actions.BanPlayer(gCtx, sid64, config.General.Owner, 0, model.WarningsExceeded,
-				"Warning limit exceeded", model.System); err != nil {
-				log.Errorf("Failed to ban Player after too many warnings: %s", err)
-			}
+			act = action.NewBan(sid64.String(), config.General.Owner.String(), msg,
+				config.General.WarningExceededDuration.String())
 		case config.Kick:
-			if _, err := actions.KickPlayer(gCtx, sid64, config.General.Owner, model.WarningsExceeded,
-				"Warning limit exceeded", model.System); err != nil {
-				log.Errorf("Failed to ban Player after too many warnings: %s", err)
-			}
+			act = action.NewKick(sid64.String(), config.General.Owner.String(), msg)
+		}
+		res := <-act.Enqueue().Done()
+		if res.Err != nil {
+			log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
 		}
 	}
 }
@@ -276,7 +362,7 @@ func initDiscord() {
 		if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 			log.Warnf("Error registering discord log event reader")
 		}
-		go discord.Start(gCtx, config.Discord.Token, events, actions)
+		go discord.Start(gCtx, config.Discord.Token, events)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}

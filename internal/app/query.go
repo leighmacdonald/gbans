@@ -24,10 +24,12 @@ import (
 //
 // Valid will be set to true if the value is a Valid steamid, even if the Player is not
 // actively connected
-func (a ActionHandlers) FindPlayer(ctx context.Context, playerStr string, ip string) model.PlayerInfo {
+func FindPlayer(ctx context.Context, playerStr string, ip string) model.PlayerInfo {
 	var (
-		player   *extra.Player
-		server   *model.Server
+		result = &model.FindResult{
+			Player: &extra.Player{},
+			Server: &model.Server{},
+		}
 		err      error
 		sid      steamid.SID64
 		inGame   = false
@@ -35,23 +37,23 @@ func (a ActionHandlers) FindPlayer(ctx context.Context, playerStr string, ip str
 		valid    = false
 	)
 	if ip != "" {
-		player, server, err = findPlayerByIP(ctx, net.ParseIP(ip))
+		result, err = findPlayerByIP(ctx, net.ParseIP(ip))
 		if err == nil {
-			foundSid = player.SID
+			foundSid = result.Player.SID
 			inGame = true
 		}
 	} else {
 		sidFS, errFS := steamid.ResolveSID64(ctx, playerStr)
 		if errFS == nil && sidFS.Valid() {
 			foundSid = sidFS
-			player, server, err = findPlayerBySID(ctx, sidFS)
+			result, err = findPlayerBySID(ctx, sidFS)
 			if err == nil {
 				inGame = true
 			}
 		} else {
-			player, server, err = findPlayerByName(ctx, playerStr)
+			result, err = findPlayerByName(ctx, playerStr)
 			if err == nil {
-				foundSid = player.SID
+				foundSid = result.Player.SID
 				inGame = true
 			}
 		}
@@ -59,53 +61,65 @@ func (a ActionHandlers) FindPlayer(ctx context.Context, playerStr string, ip str
 	if sid.Valid() || foundSid.Valid() {
 		valid = true
 	}
-	return model.PlayerInfo{Player: player, Server: server, SteamID: foundSid, InGame: inGame, Valid: valid}
+	if result == nil {
+		return model.PlayerInfo{Player: nil, Server: nil, SteamID: foundSid, InGame: inGame, Valid: false}
+	}
+	return model.PlayerInfo{Player: result.Player, Server: result.Server, SteamID: foundSid, InGame: inGame, Valid: valid}
 }
 
-func findPlayerByName(ctx context.Context, name string) (*extra.Player, *model.Server, error) {
+func findPlayerByName(ctx context.Context, name string) (*model.FindResult, error) {
 	name = strings.ToLower(name)
 	statuses, err := getAllServerStatus(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if strings.Contains(strings.ToLower(player.Name), name) {
-				return &player, &server, nil
+				return &model.FindResult{
+					Player: &player,
+					Server: &server,
+				}, nil
 			}
 		}
 	}
-	return nil, nil, consts.ErrUnknownID
+	return nil, consts.ErrUnknownID
 }
 
-func findPlayerBySID(ctx context.Context, sid steamid.SID64) (*extra.Player, *model.Server, error) {
+func findPlayerBySID(ctx context.Context, sid steamid.SID64) (*model.FindResult, error) {
 	statuses, err := getAllServerStatus(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if player.SID == sid {
-				return &player, &server, nil
+				return &model.FindResult{
+					Player: &player,
+					Server: &server,
+				}, nil
 			}
 		}
 	}
-	return nil, nil, consts.ErrUnknownID
+	return nil, consts.ErrUnknownID
 }
 
-func findPlayerByIP(ctx context.Context, ip net.IP) (*extra.Player, *model.Server, error) {
+func findPlayerByIP(ctx context.Context, ip net.IP) (*model.FindResult, error) {
 	statuses, err := getAllServerStatus(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if ip.Equal(player.IP) {
-				return &player, &server, nil
+				return &model.FindResult{
+					Player: &player,
+					Server: &server,
+				}, nil
 			}
 		}
 	}
-	return nil, nil, consts.ErrUnknownID
+	return nil, consts.ErrUnknownID
 }
 
 func getAllServerStatus(ctx context.Context) (map[model.Server]extra.Status, error) {
@@ -134,24 +148,29 @@ func getAllServerStatus(ctx context.Context) (map[model.Server]extra.Status, err
 	return statuses, nil
 }
 
-func (a ActionHandlers) FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*extra.Player, *model.Server, error) {
+// FindPlayerByCIDR
+// TODO Support matching multiple people and not just the first found
+func FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*model.FindResult, error) {
 	statuses, err := getAllServerStatus(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	for server, status := range statuses {
 		for _, player := range status.Players {
 			if ipNet.Contains(player.IP) {
-				return &player, &server, nil
+				return &model.FindResult{
+					Player: &player,
+					Server: &server,
+				}, nil
 			}
 		}
 	}
-	return nil, nil, consts.ErrUnknownID
+	return nil, consts.ErrUnknownID
 }
 
 // GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func (a ActionHandlers) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*model.Person, error) {
+func GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*model.Person, error) {
 	// TODO make these non-fatal errors?
 	sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
 	if err != nil {
