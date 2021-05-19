@@ -15,7 +15,7 @@ WORKDIR /build
 RUN apk add make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./
 RUN go mod download
-COPY --from=frontend /build/internal/service/dist internal/service/dist
+COPY --from=frontend /build/internal/web/dist internal/web/dist
 COPY pkg pkg
 COPY internal internal
 RUN make build
