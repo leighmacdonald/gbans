@@ -29,13 +29,20 @@ type WPausedEvt EmptyEvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WResumedEvt EmptyEvt
 
+type SourcePlayer struct {
+	Name string        `json:"name"`
+	PID  int           `json:"pid"`
+	SID  steamid.SID64 `json:"sid"`
+	Team Team          `json:"team"`
+}
+
 // TargetPlayer maps the common secondary player values name_2
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type TargetPlayer struct {
-	Name2 string        `json:"name_2"`
-	PID2  int           `json:"pid_2"`
-	SID2  steamid.SID64 `json:"sid_2"`
-	Team2 Team          `json:"team_2"`
+	Name2 string        `json:"name2"`
+	PID2  int           `json:"pid2"`
+	SID2  steamid.SID64 `json:"sid2"`
+	Team2 Team          `json:"team2"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -64,28 +71,31 @@ type RCONEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type JoinedTeamEvt struct {
-	Team Team `json:"team"`
 	EmptyEvt
+	SourcePlayer
+	Team Team `json:"team"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChangeClassEvt struct {
-	Class PlayerClass `json:"team"`
 	EmptyEvt
+	Class PlayerClass `json:"team"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SuicideEvt struct {
-	Pos Pos `json:"pos"`
 	EmptyEvt
+	SourcePlayer
+	Pos Pos `json:"pos"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type MedicDeathEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	Healing int `json:"healing"`
 	Uber    int `json:"uber"`
-	TargetPlayer
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -96,20 +106,22 @@ type MedicDeathExEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KilledCustomEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	APos       Pos    `json:"a_pos"`
 	VPos       Pos    `json:"v_pos"`
 	CustomKill string `json:"custom_kill"`
-	TargetPlayer
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KillAssistEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	ASPos Pos `json:"as_pos"`
 	APos  Pos `json:"a_pos"`
 	VPos  Pos `json:"v_pos"`
-	TargetPlayer
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -125,30 +137,34 @@ type PointCapturedEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ConnectedEvt struct {
-	Address string `json:"address"`
 	EmptyEvt
+	SourcePlayer
+	Address string `json:"address"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DisconnectedEvt struct {
-	Reason string `json:"reason"`
 	EmptyEvt
+	SourcePlayer
+	Reason string `json:"reason"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KilledObjectEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	Object string `json:"object"`
 	Weapon Weapon `json:"weapon"`
 	APos   Pos    `json:"a_pos"`
-	TargetPlayer
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CarryObjectEvt struct {
+	EmptyEvt
+	SourcePlayer
 	Object string `json:"object"`
 	Pos    Pos    `json:"a_pos"`
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -179,8 +195,9 @@ type WTeamScoreEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SayEvt struct {
-	Msg string `json:"msg"`
 	EmptyEvt
+	SourcePlayer
+	Msg string `json:"msg"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -188,8 +205,9 @@ type SayTeamEvt SayEvt
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DominationEvt struct {
-	TargetPlayer
 	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -197,78 +215,90 @@ type RevengeEvt DominationEvt
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CaptureBlockedEvt struct {
+	EmptyEvt
+	SourcePlayer
 	CP     int    `json:"cp"`
 	CPName string `json:"cp_name"`
 	Pos    Pos    `json:"pos"`
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type FirstHealAfterSpawnEvt struct {
-	HealTime float32 `json:"time"`
 	EmptyEvt
+	SourcePlayer
+	HealTime float32 `json:"time"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeReadyEvt struct {
 	EmptyEvt
+	SourcePlayer
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeDeployedEvt struct {
-	Medigun Medigun `json:"medigun"`
 	EmptyEvt
+	SourcePlayer
+	Medigun Medigun `json:"medigun"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeEndedEvt struct {
-	Duration float32 `json:"duration"`
 	EmptyEvt
+	SourcePlayer
+	Duration float32 `json:"duration"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type MedicDeathEEvt struct {
-	UberPct int `json:"uber_pct"`
 	EmptyEvt
+	SourcePlayer
+	UberPct int `json:"uber_pct"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type LostUberAdvantageEvt struct {
-	AdvTime int `json:"advtime"`
 	EmptyEvt
+	SourcePlayer
+	AdvTime int `json:"advtime"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type EmptyUberEvt struct {
 	EmptyEvt
+	SourcePlayer
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type PickupEvt struct {
-	Item AmmoPack
 	EmptyEvt
+	SourcePlayer
+	Item AmmoPack
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ShotFiredEvt struct {
-	Weapon Weapon `json:"weapon"`
 	EmptyEvt
+	SourcePlayer
+	Weapon Weapon `json:"weapon"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ShotHitEvt struct {
-	Weapon Weapon `json:"weapon"`
 	EmptyEvt
+	SourcePlayer
+	Weapon Weapon `json:"weapon"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DamageEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	Damage     int    `json:"damage"`
 	RealDamage int    `json:"real_damage"`
 	Weapon     Weapon `json:"weapon"`
 	Healing    int    `json:"healing,omitempty"` // On ubersaw
-	TargetPlayer
-	EmptyEvt
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

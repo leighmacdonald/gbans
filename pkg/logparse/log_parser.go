@@ -255,6 +255,8 @@ func parseTeam(teamStr string, team *Team) bool {
 		fallthrough
 	case "blu":
 		*team = BLU
+	case "unassigned":
+		fallthrough
 	case "spectator":
 		fallthrough
 	case "spec":
