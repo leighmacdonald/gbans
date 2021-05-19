@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -114,18 +115,19 @@ func Init(dsn string) {
 		}
 	}
 	if config.DB.LogQueries {
-		//lvl, err2 := log.ParseLevel(config.Log.Level)
-		//if err2 != nil {
-		//	log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
-		//}
-		//service.lgr.SetLevel(lvl)
-		//service.lgr.SetFormatter(&log.TextFormatter{
-		//	ForceColors:   config.Log.ForceColours,
-		//	DisableColors: config.Log.DisableColours,
-		//	FullTimestamp: config.Log.FullTimestamp,
-		//})
-		//service.lgr.SetReportCaller(config.Log.ReportCaller)
-		//cfg.ConnConfig.Logger = logrusadapter.NewLogger(service.lgr)
+		lgr := log.New()
+		lvl, err2 := log.ParseLevel(config.Log.Level)
+		if err2 != nil {
+			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+		}
+		lgr.SetLevel(lvl)
+		lgr.SetFormatter(&log.TextFormatter{
+			ForceColors:   config.Log.ForceColours,
+			DisableColors: config.Log.DisableColours,
+			FullTimestamp: config.Log.FullTimestamp,
+		})
+		lgr.SetReportCaller(config.Log.ReportCaller)
+		cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
 	}
 	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err3 != nil {

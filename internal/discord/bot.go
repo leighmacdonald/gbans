@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	dg                 *discordgo.Session
-	connected          = false
-	errCommandFailed   = errors.New("Command failed")
-	errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
-	errTooLarge        = errors.Errorf("Max message length is %d", discordMaxMsgLen)
+	dg               *discordgo.Session
+	connected        = false
+	errCommandFailed = errors.New("Command failed")
+	//errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
+	errTooLarge = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
 func Start(ctx context.Context, token string, eventChan chan model.LogEvent) {
@@ -110,11 +110,11 @@ func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 		Activities: []*discordgo.Activity{
 			{
 				Name:     "Cheeseburgers",
-				Type:     discordgo.ActivityTypeGame,
+				Type:     discordgo.ActivityTypeStreaming,
 				URL:      "https://" + config.HTTP.Addr(),
 				State:    "state field",
 				Details:  "Blah",
-				Instance: false,
+				Instance: true,
 				Flags:    1 << 0,
 			},
 		},
