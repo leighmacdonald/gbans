@@ -139,7 +139,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		t, errJWT := newJWT(sid)
+		t, errJWT := NewJWT(sid)
 		if errJWT != nil {
 			log.Errorf("Failed to create new JWT: %v", errJWT)
 			c.Redirect(302, ref)
@@ -215,7 +215,7 @@ type authClaims struct {
 	jwt.StandardClaims
 }
 
-func newJWT(steamID steamid.SID64) (string, error) {
+func NewJWT(steamID steamid.SID64) (string, error) {
 	claims := &authClaims{
 		SteamID:        steamID.Int64(),
 		Exp:            config.Now().Add(time.Hour * 24).Unix(),

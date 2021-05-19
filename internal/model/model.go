@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -176,12 +177,12 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	Ban                *Ban       `json:"ban"`
-	Person             *Person    `json:"person"`
-	HistoryChat        []ChatLog  `json:"history_chat" db:"-"`
-	HistoryPersonaName []string   `json:"history_personaname" db:"-"`
-	HistoryConnections []string   `json:"history_connections" db:"-"`
-	HistoryIP          []IPRecord `json:"history_ip" db:"-"`
+	Ban                *Ban              `json:"ban"`
+	Person             *Person           `json:"person"`
+	HistoryChat        []logparse.SayEvt `json:"history_chat" db:"-"`
+	HistoryPersonaName []string          `json:"history_personaname" db:"-"`
+	HistoryConnections []string          `json:"history_connections" db:"-"`
+	HistoryIP          []IPRecord        `json:"history_ip" db:"-"`
 }
 
 func NewBannedPerson() *BannedPerson {
@@ -255,6 +256,20 @@ func (s Server) Addr() string {
 
 func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
+}
+
+func NewServer(name string, address string, port int) Server {
+	return Server{
+		ServerName:     name,
+		Address:        address,
+		Port:           port,
+		RCON:           golib.RandomString(10),
+		ReservedSlots:  0,
+		Password:       golib.RandomString(10),
+		TokenCreatedOn: time.Unix(0, 0),
+		CreatedOn:      config.Now(),
+		UpdatedOn:      config.Now(),
+	}
 }
 
 type Person struct {
@@ -338,13 +353,31 @@ type ServerLog struct {
 	CreatedOn time.Time        `json:"created_on"`
 }
 
-func NewServerLog(serverID int64, mType logparse.MsgType, values interface{}) *ServerLog {
+func NewServerLog(serverID int64, mType logparse.MsgType, values map[string]string) *ServerLog {
+	//m, ok := values.(map[string]string)
+	sourceID := steamid.SID64(0)
+	targetID := steamid.SID64(0)
+	sidStr, ok := values["sid"]
+	if ok {
+		sVal := steamid.SID3ToSID64(steamid.SID3(sidStr))
+		if sVal.Valid() {
+			sourceID = sVal
+		}
+	}
+	sid2Str, found2 := values["sid2"]
+	if found2 {
+		sVal2 := steamid.SID3ToSID64(steamid.SID3(sid2Str))
+		if sVal2.Valid() {
+			targetID = sVal2
+		}
+	}
+
 	return &ServerLog{
 		ServerID:  serverID,
 		EventType: mType,
 		Payload:   values,
-		SourceID:  0,
-		TargetID:  0,
+		SourceID:  sourceID,
+		TargetID:  targetID,
 		CreatedOn: config.Now(),
 	}
 }

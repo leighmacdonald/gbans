@@ -247,7 +247,7 @@ func parsePlayerClass(classStr string, class *PlayerClass) bool {
 	return true
 }
 
-func parseTeam(teamStr string, team *Team) bool {
+func ParseTeam(teamStr string, team *Team) bool {
 	switch strings.ToLower(teamStr) {
 	case "red":
 		*team = RED
@@ -357,7 +357,7 @@ func decodeTeam() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var team Team
-		if !parseTeam(d.(string), &team) {
+		if !ParseTeam(d.(string), &team) {
 			return d, nil
 		}
 		return team, nil

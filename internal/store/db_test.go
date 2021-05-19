@@ -5,13 +5,24 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"math/rand"
 	"net"
+	"os"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	config.Read()
+	config.General.Mode = config.Test
+	Init(config.DB.DSN)
+	os.Exit(m.Run())
+}
 
 func TestServer(t *testing.T) {
 	s1 := model.Server{
@@ -158,6 +169,42 @@ func TestPerson(t *testing.T) {
 	require.NoError(t, eH2)
 	require.True(t, len(ipsUpdated)-len(ips) == 2)
 	require.NoError(t, DropPerson(ctx, p1.SteamID))
+}
+
+func TestGetChatHistory(t *testing.T) {
+	sid := steamid.SID64(76561198083950960)
+	ctx := context.Background()
+	s := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
+	require.NoError(t, SaveServer(ctx, &s))
+	player := logparse.SourcePlayer{
+		Name: "test-name-1",
+		PID:  1,
+		SID:  sid,
+		Team: logparse.RED,
+	}
+	logs := []*model.ServerLog{
+		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
+			"sid":  string(steamid.SID64ToSID3(player.SID)),
+			"team": "Red",
+			"pid":  "10",
+			"name": "test-name",
+			"msg":  "test-1",
+		}),
+		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
+			"sid":  string(steamid.SID64ToSID3(player.SID)),
+			"team": "Red",
+			"pid":  "10",
+			"name": "test-name",
+			"msg":  "test-2",
+		}),
+	}
+	for _, l := range logs {
+		require.NoError(t, InsertLog(ctx, l))
+	}
+	hist, errHist := GetChatHistory(ctx, sid)
+	require.NoError(t, errHist, "Failed to fetch chat history")
+	require.True(t, len(hist) >= 2, "History size too small: %d", len(hist))
+	require.Equal(t, "test-2", hist[0].Msg)
 }
 
 func TestFilters(t *testing.T) {

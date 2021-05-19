@@ -5,8 +5,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	config.Read()
+	config.General.Mode = config.Test
+	os.Exit(m.Run())
+}
 
 func TestFetchPlayerBans(t *testing.T) {
 	reqIds := []steamid.SID64{

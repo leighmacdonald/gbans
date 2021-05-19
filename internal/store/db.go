@@ -359,28 +359,28 @@ func GetBanByBanID(ctx context.Context, banID uint64, full bool) (*model.BannedP
 	return getBanByColumn(ctx, "ban_id", banID, full)
 }
 
-func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]model.ChatLog, error) {
-	q, a, e := sb.Select("payload -> message", "created_on").
-		From(string(tableServerLog)).
-		Where(sq.And{
-			sq.Eq{"source_id": sid64},
-			sq.Eq{"event_type": []logparse.MsgType{logparse.Say, logparse.SayTeam}},
-		}).
-		ToSql()
-	if e != nil {
-		return nil, e
-	}
-	rows, err := db.Query(ctx, q, a...)
+func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt, error) {
+	const q = `
+		SELECT source_id, payload->>'name', payload->>'team', payload->>'msg'
+		FROM server_log 
+		WHERE source_id = $1
+		  AND (event_type = 10 OR event_type = 11) 
+		ORDER BY created_on DESC`
+	rows, err := db.Query(ctx, q, sid64.String())
 	if err != nil {
 		return nil, dbErr(err)
 	}
 	defer rows.Close()
-	var hist []model.ChatLog
+	var hist []logparse.SayEvt
 	for rows.Next() {
-		var h model.ChatLog
-		if err2 := rows.Scan(&h.Message, h.CreatedOn); err2 != nil {
+		var h logparse.SayEvt
+		var tStr string
+		if err2 := rows.Scan(&h.SourcePlayer.SID, &h.SourcePlayer.Name, &tStr, &h.Msg); err2 != nil {
 			return nil, err2
 		}
+		var t logparse.Team
+		logparse.ParseTeam(tStr, &t)
+		h.Team = t
 		hist = append(hist, h)
 	}
 	return hist, nil
