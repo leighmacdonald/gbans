@@ -76,7 +76,7 @@ func unban(ctx context.Context, args action.UnbanRequest) (bool, error) {
 	if errTar != nil {
 		return false, errTar
 	}
-	//source, errSrc := args.Source.SID64()
+	//source, errSrc := args.Origin.SID64()
 	//if errSrc != nil {
 	//	return false, errSrc
 	//}
@@ -236,7 +236,7 @@ func kick(ctx context.Context, args *action.KickRequest) (*model.PlayerInfo, err
 	if errTar != nil {
 		return nil, errTar
 	}
-	//source, errSrc := args.Source.SID64()
+	//source, errSrc := args.Origin.SID64()
 	//if errSrc != nil {
 	//	return nil, errSrc
 	//}

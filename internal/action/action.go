@@ -40,8 +40,9 @@ var (
 type Origin int
 
 const (
-	SrcDiscord Origin = iota
-	SrcWeb
+	Core Origin = iota
+	Discord
+	Web
 )
 
 type Type int
@@ -85,7 +86,7 @@ type Result struct {
 type Action struct {
 	Type         Type
 	Args         interface{}
-	Source       Origin
+	Origin       Origin
 	Result       chan Result
 	Created      time.Time
 	IgnoreResult bool
@@ -120,11 +121,11 @@ func (a *Action) SetResult(r Result) {
 
 // New should generally not be called directly. Prefer to use New* helper methods
 // whenever possible
-func New(t Type, args interface{}) Action {
+func New(t Type, o Origin, args interface{}) Action {
 	return Action{
 		Type:         t,
 		Args:         args,
-		Source:       0,
+		Origin:       o,
 		Result:       make(chan Result),
 		Created:      config.Now(),
 		IgnoreResult: false,
@@ -144,14 +145,17 @@ type GetOrCreatePersonByIDRequest struct {
 type GetOrCreateProfileBySteamIDRequest GetOrCreatePersonByIDRequest
 
 type FilterAddRequest struct {
+	Source
 	Filter string
 }
 
 type FilterDelRequest struct {
+	Source
 	FilterID int
 }
 
 type FilterCheckRequest struct {
+	Source
 	Message string
 }
 
@@ -160,6 +164,7 @@ type ServerByNameRequest struct {
 }
 
 type SayRequest struct {
+	Source
 	Server  string
 	Message string
 }
@@ -167,6 +172,7 @@ type SayRequest struct {
 type CSayRequest SayRequest
 
 type PSayRequest struct {
+	Source
 	Target
 	Message string
 }
@@ -204,8 +210,11 @@ type FindCIDRRequest struct{ CIDR *net.IPNet }
 type FindRequest struct{ Query string }
 type GetBanRequest struct{ Target }
 type GetBanNetRequest GetBanRequest
-type GetHistoryIPRequest GetBanRequest
-type GetHistoryChatRequest GetBanRequest
+type GetHistoryIPRequest struct {
+	Source
+	Target
+}
+type GetHistoryChatRequest GetHistoryIPRequest
 type GetPersonByIDRequest GetBanRequest
 type SetSteamIDRequest struct {
 	Target
@@ -216,15 +225,15 @@ type GetLocationRecordRequest GetASNRecordRequest
 type GetProxyRecordRequest GetASNRecordRequest
 
 func NewFindByCIDR(cidr *net.IPNet) Action {
-	return New(FindByCIDR, FindCIDRRequest{CIDR: cidr})
+	return New(FindByCIDR, Core, FindCIDRRequest{CIDR: cidr})
 }
 
-func NewFind(q string) Action {
-	return New(Find, FindRequest{Query: q})
+func NewFind(o Origin, q string) Action {
+	return New(Find, o, FindRequest{Query: q})
 }
 
-func NewMute(target string, author string, reason string, duration string) Action {
-	return New(Mute, MuteRequest{
+func NewMute(o Origin, target string, author string, reason string, duration string) Action {
+	return New(Mute, o, MuteRequest{
 		Target:   Target(target),
 		Source:   Source(author),
 		Reason:   reason,
@@ -232,16 +241,16 @@ func NewMute(target string, author string, reason string, duration string) Actio
 	})
 }
 
-func NewKick(target string, author string, reason string) Action {
-	return New(Kick, KickRequest{
+func NewKick(o Origin, target string, author string, reason string) Action {
+	return New(Kick, o, KickRequest{
 		Target: Target(target),
 		Source: Source(author),
 		Reason: reason,
 	})
 }
 
-func NewBan(target string, author string, reason string, duration string) Action {
-	return New(Ban, BanRequest{
+func NewBan(o Origin, target string, author string, reason string, duration string) Action {
+	return New(Ban, o, BanRequest{
 		Target:   Target(target),
 		Source:   Source(author),
 		Reason:   reason,
@@ -249,8 +258,8 @@ func NewBan(target string, author string, reason string, duration string) Action
 	})
 }
 
-func NewBanNet(target string, author string, reason string, duration string, cidr string) Action {
-	return New(BanNet, BanNetRequest{
+func NewBanNet(o Origin, target string, author string, reason string, duration string, cidr string) Action {
+	return New(BanNet, o, BanNetRequest{
 		Target:   Target(target),
 		Source:   Source(author),
 		Reason:   reason,
@@ -259,104 +268,104 @@ func NewBanNet(target string, author string, reason string, duration string, cid
 	})
 }
 
-func NewUnban(target string, author string, reason string) Action {
-	return New(Unban, UnbanRequest{
+func NewUnban(o Origin, target string, author string, reason string) Action {
+	return New(Unban, o, UnbanRequest{
 		Target: Target(target),
 		Source: Source(author),
 		Reason: reason,
 	})
 }
 
-func NewGetBan(target string) Action {
-	return New(GetBan, GetBanRequest{Target: Target(target)})
+func NewGetBan(o Origin, target string) Action {
+	return New(GetBan, Core, GetBanRequest{Target: Target(target)})
 }
 
 func NewGetBanNet(target string) Action {
-	return New(GetBanNet, GetBanNetRequest{Target: Target(target)})
+	return New(GetBanNet, Core, GetBanNetRequest{Target: Target(target)})
 }
 
 func NewGetHistoryIP(target string) Action {
-	return New(GetHistoryIP, GetHistoryIPRequest{Target: Target(target)})
+	return New(GetHistoryIP, Core, GetHistoryIPRequest{Target: Target(target)})
 }
 
 func NewGetHistoryChat(target string) Action {
-	return New(GetHistoryChat, GetHistoryChatRequest{Target: Target(target)})
+	return New(GetHistoryChat, Core, GetHistoryChatRequest{Target: Target(target)})
 }
 
 func NewGetPersonByID(target string) Action {
-	return New(GetPersonByID, GetPersonByIDRequest{Target: Target(target)})
+	return New(GetPersonByID, Core, GetPersonByIDRequest{Target: Target(target)})
 }
 
-func NewSetSteamID(target string, discordID string) Action {
-	return New(SetSteamID, SetSteamIDRequest{
+func NewSetSteamID(o Origin, target string, discordID string) Action {
+	return New(SetSteamID, o, SetSteamIDRequest{
 		Target:    Target(target),
 		DiscordID: discordID,
 	})
 }
 
 func NewGetASNRecord(ipAddr string) Action {
-	return New(GetASNRecord, GetASNRecordRequest{IPAddr: ipAddr})
+	return New(GetASNRecord, Core, GetASNRecordRequest{IPAddr: ipAddr})
 }
 
 func NewGetLocationRecord(ipAddr string) Action {
-	return New(GetLocationRecord, GetLocationRecordRequest{IPAddr: ipAddr})
+	return New(GetLocationRecord, Core, GetLocationRecordRequest{IPAddr: ipAddr})
 }
 
 func NewGetProxyRecord(ipAddr string) Action {
-	return New(GetProxyRecord, GetProxyRecordRequest{IPAddr: ipAddr})
+	return New(GetProxyRecord, Core, GetProxyRecordRequest{IPAddr: ipAddr})
 }
 
-func NewSay(server string, message string) Action {
-	return New(Say, SayRequest{Server: server, Message: message})
+func NewSay(o Origin, server string, message string) Action {
+	return New(Say, o, SayRequest{Server: server, Message: message})
 }
 
-func NewCSay(server string, message string) Action {
-	return New(CSay, CSayRequest{Server: server, Message: message})
+func NewCSay(o Origin, server string, message string) Action {
+	return New(CSay, o, CSayRequest{Server: server, Message: message})
 }
 
-func NewPSay(target string, message string) Action {
-	return New(PSay, PSayRequest{
+func NewPSay(o Origin, target string, message string) Action {
+	return New(PSay, o, PSayRequest{
 		Message: message,
 		Target:  Target(target),
 	})
 }
 
 func NewServers() Action {
-	return New(Servers, nil)
+	return New(Servers, Core, nil)
 }
 
 func NewServerByName(serverID string) Action {
-	return New(ServerByName, ServerByNameRequest{ServerName: serverID})
+	return New(ServerByName, Core, ServerByNameRequest{ServerName: serverID})
 }
 
-func NewFilterAdd(filter string) Action {
-	return New(AddFilter, FilterAddRequest{Filter: filter})
+func NewFilterAdd(o Origin, filter string) Action {
+	return New(AddFilter, o, FilterAddRequest{Filter: filter})
 }
 
-func NewFilterDel(filterID int) Action {
-	return New(DelFilter, FilterDelRequest{FilterID: filterID})
+func NewFilterDel(o Origin, filterID int) Action {
+	return New(DelFilter, o, FilterDelRequest{FilterID: filterID})
 }
 
-func NewFilterCheck(message string) Action {
-	return New(CheckFilter, FilterCheckRequest{Message: message})
+func NewFilterCheck(o Origin, message string) Action {
+	return New(CheckFilter, o, FilterCheckRequest{Message: message})
 }
 
 func NewGetOrCreatePersonByID(target string, ipAddr string) Action {
-	return New(GetOrCreatePersonByID, GetOrCreatePersonByIDRequest{
+	return New(GetOrCreatePersonByID, Core, GetOrCreatePersonByIDRequest{
 		Target: Target(target),
 		IPAddr: ipAddr,
 	})
 }
 
 func NewGetOrCreateProfileBySteamID(target string, ipAddr string) Action {
-	return New(GetOrCreateProfileBySteamID, GetOrCreateProfileBySteamIDRequest{
+	return New(GetOrCreateProfileBySteamID, Core, GetOrCreateProfileBySteamIDRequest{
 		Target: Target(target),
 		IPAddr: ipAddr,
 	})
 }
 
-func NewGetChatHistory(target string, page int) Action {
-	return New(GetChatHistory, GetChatHistoryRequest{
+func NewGetChatHistory(o Origin, target string, page int) Action {
+	return New(GetChatHistory, o, GetChatHistoryRequest{
 		Target: Target(target),
 		Page:   page,
 	})

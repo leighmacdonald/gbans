@@ -19,8 +19,7 @@ var (
 	dg               *discordgo.Session
 	connected        = false
 	errCommandFailed = errors.New("Command failed")
-	//errUnlinkedAccount = errors.New("You must link your steam and discord accounts, see: `/set_steam`")
-	errTooLarge = errors.Errorf("Max message length is %d", discordMaxMsgLen)
+	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
 func Start(ctx context.Context, token string, eventChan chan model.LogEvent) {

@@ -148,7 +148,7 @@ func NewBanNet(cidr string, reason string, duration time.Duration, source BanSou
 }
 
 func (b BanNet) String() string {
-	return fmt.Sprintf("Net: %s Source: %s Reason: %s", b.CIDR, b.Source, b.Reason)
+	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", b.CIDR, b.Source, b.Reason)
 }
 
 type Ban struct {
@@ -172,7 +172,7 @@ type Ban struct {
 }
 
 func (b Ban) String() string {
-	return fmt.Sprintf("SID: %d Source: %s Reason: %s Type: %v",
+	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v",
 		b.SteamID.Int64(), b.Source, b.ReasonText, b.BanType)
 }
 

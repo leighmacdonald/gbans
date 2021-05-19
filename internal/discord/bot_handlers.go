@@ -27,10 +27,10 @@ import (
 func onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	const f = "Found player `%s` (%d) @ %s"
 	userIdentifier := m.Data.Options[0].Value.(string)
-	act := action.NewFind(userIdentifier)
+	act := action.NewFind(action.Discord, userIdentifier)
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
-		return "", consts.ErrInternal
+		return "", res.Err
 	}
 	pi := res.Value.(model.PlayerInfo)
 	if !pi.Valid || !pi.InGame {
@@ -45,7 +45,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	if len(m.Data.Options) > 2 {
 		reasonStr = m.Data.Options[2].Value.(string)
 	}
-	act := action.NewMute(playerID, m.Member.User.ID, reasonStr, m.Data.Options[1].Value.(string))
+	act := action.NewMute(action.Discord, playerID, m.Member.User.ID, reasonStr, m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -58,12 +58,12 @@ func onBanIP(ctx context.Context, _ *discordgo.Session, m *discordgo.Interaction
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
 	}
-	act := action.NewBanNet("", m.Member.User.ID, reason,
+	act := action.NewBanNet(action.Discord, "", m.Member.User.ID, reason,
 		m.Data.Options[1].Value.(string),
 		m.Data.Options[0].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
-		return "", errCommandFailed
+		return "", res.Err
 	}
 	go func(cidr string) {
 		_, n, e := net.ParseCIDR(cidr)
@@ -88,14 +88,14 @@ func onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
 	}
-	act := action.NewBan(
+	act := action.NewBan(action.Discord,
 		m.Data.Options[0].Value.(string),
 		m.Interaction.Member.User.ID,
 		reason,
 		m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
-		return "", errCommandFailed
+		return "", res.Err
 	}
 	ban, ok := res.Value.(*model.Ban)
 	if !ok {
@@ -112,7 +112,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 	if !bannedPlayerOk {
 		return "", errCommandFailed
 	}
-	br := action.NewGetBan(sid)
+	br := action.NewGetBan(action.Discord, sid)
 	brRes := <-br.Enqueue().Done()
 	ban, banOk := brRes.Value.(*model.BannedPerson)
 
@@ -146,17 +146,13 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 		expiry = bannedNets[0].ValidUntil
 	}
 
-	actASN := action.NewGetASNRecord(bannedPlayer.IPAddr.String())
-	actASN.Enqueue()
-	actLocation := action.NewGetLocationRecord(bannedPlayer.IPAddr.String())
-	actLocation.Enqueue()
-	actProxy := action.NewGetProxyRecord(bannedPlayer.IPAddr.String())
-	actProxy.Enqueue()
-
 	// TODO waitgroup
-	actASNRes := <-actASN.Done()
-	actLocationRes := <-actLocation.Done()
-	actProxyRes := <-actProxy.Done()
+	actASN := action.NewGetASNRecord(bannedPlayer.IPAddr.String())
+	actASNRes := <-actASN.Enqueue().Done()
+	actLocation := action.NewGetLocationRecord(bannedPlayer.IPAddr.String())
+	actLocationRes := <-actLocation.Enqueue().Done()
+	actProxy := action.NewGetProxyRecord(bannedPlayer.IPAddr.String())
+	actProxyRes := <-actProxy.Enqueue().Done()
 
 	asn, asnOk := actASNRes.Value.(*ip2location.ASNRecord)
 	location, locOk := actLocationRes.Value.(*ip2location.LocationRecord)
@@ -217,7 +213,7 @@ func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.Interaction
 			author, authorOK := actRes.Value.(*model.Person)
 			r := table.Row{"Reason", reason}
 			if authorOK && author != nil && author.DiscordID != "" {
-				r = append(r, "Source", fmt.Sprintf("<@%s>", author.DiscordID))
+				r = append(r, "Origin", fmt.Sprintf("<@%s>", author.DiscordID))
 			}
 			t.AppendRow(r)
 		}
@@ -322,7 +318,7 @@ func onHistoryChat(_ context.Context, _ *discordgo.Session, m *discordgo.Interac
 	if len(m.Data.Options) > 0 {
 		page = int(m.Data.Options[1].Value.(float64))
 	}
-	act := action.NewGetChatHistory(pId, page)
+	act := action.NewGetChatHistory(action.Discord, pId, page)
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -347,7 +343,7 @@ func onHistoryChat(_ context.Context, _ *discordgo.Session, m *discordgo.Interac
 
 func onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
-	act := action.NewSetSteamID(pId, m.Member.User.ID)
+	act := action.NewSetSteamID(action.Discord, pId, m.Member.User.ID)
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -361,7 +357,7 @@ func onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.Interaction
 	if len(m.Data.Options) > 1 {
 		reason = m.Data.Options[1].Value.(string)
 	}
-	act := action.NewUnban(pId, m.Member.User.ID, reason)
+	act := action.NewUnban(action.Discord, pId, m.Member.User.ID, reason)
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -375,7 +371,7 @@ func onKick(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	if len(m.Data.Options) > 1 {
 		reason = m.Data.Options[1].Value.(string)
 	}
-	act := action.NewKick(pId, m.Member.User.ID, reason)
+	act := action.NewKick(action.Discord, pId, m.Member.User.ID, reason)
 	res := <-act.Enqueue().Done()
 	pi, ok := res.Value.(*model.PlayerInfo)
 	if ok {
@@ -386,7 +382,7 @@ func onKick(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 }
 
 func onSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	act := action.NewSay(m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
+	act := action.NewSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -395,7 +391,7 @@ func onSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 }
 
 func onCSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	act := action.NewCSay(m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
+	act := action.NewCSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -404,7 +400,7 @@ func onCSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 }
 
 func onPSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	act := action.NewPSay(m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
+	act := action.NewPSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -530,7 +526,7 @@ func onFilter(ctx context.Context, s *discordgo.Session, m *discordgo.Interactio
 }
 
 func onFilterAdd(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
-	act := action.NewFilterAdd(m.Data.Options[0].Options[0].Value.(string))
+	act := action.NewFilterAdd(action.Discord, m.Data.Options[0].Options[0].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err
@@ -547,7 +543,7 @@ func onFilterDel(ctx context.Context, _ *discordgo.Session, m *discordgo.Interac
 	if !ok {
 		return "", errors.New("Invalid filter id")
 	}
-	act := action.NewFilterDel(int(wordId))
+	act := action.NewFilterDel(action.Discord, int(wordId))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
 		return "", res.Err

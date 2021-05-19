@@ -43,6 +43,7 @@ func responseOK(c *gin.Context, status int, data interface{}) {
 }
 
 func onPostPingMod() gin.HandlerFunc {
+
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -50,13 +51,14 @@ func onPostPingMod() gin.HandlerFunc {
 		Reason     string        `json:"reason"`
 		Client     int           `json:"client"`
 	}
+
 	return func(c *gin.Context) {
 		var req pingReq
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		act := action.NewFind(req.SteamID.String())
+		act := action.NewFind(action.Web, req.SteamID.String())
 		res := <-act.Enqueue().Done()
 		pi, ok := res.Value.(model.PlayerInfo)
 		if !ok {
@@ -122,9 +124,9 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 		}
 		var act action.Action
 		if r.Network != "" {
-			act = action.NewBanNet(r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network)
+			act = action.NewBanNet(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network)
 		} else {
-			act = action.NewBan(r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration)
+			act = action.NewBan(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration)
 		}
 		res := <-act.Enqueue().Done()
 		if res.Err != nil {

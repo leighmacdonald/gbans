@@ -284,13 +284,13 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		var act action.Action
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			act = action.NewMute(sid64.String(), config.General.Owner.String(), msg,
+			act = action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), msg,
 				config.General.WarningExceededDuration.String())
 		case config.Ban:
-			act = action.NewBan(sid64.String(), config.General.Owner.String(), msg,
+			act = action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), msg,
 				config.General.WarningExceededDuration.String())
 		case config.Kick:
-			act = action.NewKick(sid64.String(), config.General.Owner.String(), msg)
+			act = action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), msg)
 		}
 		res := <-act.Enqueue().Done()
 		if res.Err != nil {

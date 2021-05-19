@@ -18,11 +18,35 @@ func okResult(v interface{}) action.Result {
 var invalidArgs = errResult(action.ErrInvalidArgs)
 var invalidSteamID = errResult(consts.ErrInvalidSID)
 
+// validateLink is used in the case of discord origin actions that require mapping the
+// discord member ID to a SteamID so we can track its use and apply permissions, etc.
+//
+// This function will replace the discord member id value in the target field with
+// the found SteamID, if any.
+func validateLink(ctx context.Context, sourceID action.Source, target *action.Source) error {
+	p, err := store.GetPersonByDiscordID(ctx, string(sourceID))
+	if err != nil {
+		if err == store.ErrNoResult {
+			return consts.ErrUnlinkedAccount
+		} else {
+			return consts.ErrInternal
+		}
+	}
+	*target = action.Source(p.SteamID.String())
+	return nil
+}
+
 func onActionMute(ctx context.Context, act *action.Action) {
 	args, ok := act.Args.(action.MuteRequest)
 	if !ok {
 		act.SetResult(invalidArgs)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err := mute(ctx, args)
 	if err != nil {
@@ -36,6 +60,12 @@ func onActionKick(ctx context.Context, act *action.Action) {
 	if !ok {
 		act.SetResult(invalidArgs)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err := kick(ctx, &args)
 	if err != nil {
@@ -51,6 +81,12 @@ func onActionBan(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err := ban(ctx, args)
 	if err != nil {
 		act.SetResult(errResult(err))
@@ -64,6 +100,12 @@ func onActionBanNet(ctx context.Context, act *action.Action) {
 	if !ok {
 		act.SetResult(invalidArgs)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err := banNetwork(ctx, &args)
 	if err != nil {
@@ -103,6 +145,12 @@ func onActionCheckFilter(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err := filterCheck(ctx, args)
 	if err != nil {
 		act.SetResult(errResult(err))
@@ -117,6 +165,12 @@ func onActionAddFilter(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err := filterAdd(ctx, args)
 	if err != nil {
 		act.SetResult(errResult(err))
@@ -130,6 +184,12 @@ func onActionDelFilter(ctx context.Context, act *action.Action) {
 	if !ok {
 		act.SetResult(invalidArgs)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err := filterDel(ctx, args)
 	if err != nil {
@@ -183,6 +243,12 @@ func onActionUnban(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	sid, err := args.Target.SID64()
 	if err != nil || !sid.Valid() {
 		act.SetResult(errResult(consts.ErrInvalidSID))
@@ -221,6 +287,12 @@ func onActionSay(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err2 := say(ctx, args)
 	if err2 != nil {
 		act.SetResult(errResult(err2))
@@ -235,6 +307,12 @@ func onActionCSay(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidArgs)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err2 := csay(ctx, args)
 	if err2 != nil {
 		act.SetResult(errResult(err2))
@@ -248,6 +326,12 @@ func onActionPSay(ctx context.Context, act *action.Action) {
 	if !ok {
 		act.SetResult(invalidArgs)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err2 := psay(ctx, args)
 	if err2 != nil {
@@ -302,6 +386,12 @@ func onActionGetHistoryIP(ctx context.Context, act *action.Action) {
 		act.SetResult(invalidSteamID)
 		return
 	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
+	}
 	res, err2 := store.GetIPHistory(ctx, sid)
 	if err2 != nil {
 		act.SetResult(errResult(err2))
@@ -320,6 +410,12 @@ func onActionGetHistoryChat(ctx context.Context, act *action.Action) {
 	if err != nil || !sid.Valid() {
 		act.SetResult(invalidSteamID)
 		return
+	}
+	if act.Origin == action.Discord {
+		if vErr := validateLink(ctx, args.Source, &args.Source); vErr != nil {
+			act.SetResult(errResult(vErr))
+			return
+		}
 	}
 	res, err2 := store.GetChatHistory(ctx, sid)
 	if err2 != nil {
