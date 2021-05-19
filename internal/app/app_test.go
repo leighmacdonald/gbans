@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"math/rand"
 	"net"
-	"os"
 	"testing"
 	"time"
 
@@ -115,12 +114,4 @@ func GenTestData() {
 			log.Fatalf("Failed to generate test ban_net #%d: %v", i, err)
 		}
 	}
-}
-
-func TestMain(m *testing.M) {
-	config.Read()
-	config.General.Mode = "test"
-	initStore()
-	GenTestData()
-	os.Exit(m.Run())
 }

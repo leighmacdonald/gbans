@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func initRouter(r *gin.Engine, logMsgChan chan LogPayload) {
+func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	defaultRoute := func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
 			c.Status(http.StatusNotFound)

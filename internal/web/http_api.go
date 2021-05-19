@@ -22,21 +22,21 @@ import (
 	"time"
 )
 
-type apiResponse struct {
+type APIResponse struct {
 	Status  bool        `json:"status"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
 
 func responseErr(c *gin.Context, status int, data interface{}) {
-	c.JSON(status, apiResponse{
+	c.JSON(status, APIResponse{
 		Status: false,
 		Data:   data,
 	})
 }
 
 func responseOK(c *gin.Context, status int, data interface{}) {
-	c.JSON(status, apiResponse{
+	c.JSON(status, APIResponse{
 		Status: true,
 		Data:   data,
 	})
@@ -128,7 +128,7 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 		}
 		res := <-act.Enqueue().Done()
 		if res.Err != nil {
-			if errors.Is(e, store.ErrDuplicate) {
+			if errors.Is(res.Err, store.ErrDuplicate) {
 				responseErr(c, http.StatusConflict, "Duplicate ban")
 				return
 			}
@@ -180,7 +180,7 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 	}
 }
 
-type checkRequest struct {
+type CheckRequest struct {
 	ClientID int    `json:"client_id"`
 	SteamID  string `json:"steam_id"`
 	IP       net.IP `json:"ip"`
@@ -194,7 +194,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		Msg      string        `json:"msg"`
 	}
 	return func(c *gin.Context) {
-		var req checkRequest
+		var req CheckRequest
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,

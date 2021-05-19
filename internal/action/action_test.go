@@ -30,9 +30,8 @@ func TestActions(t *testing.T) {
 	Register(c)
 	req := NewKick("76561199040918801", "76561197992870439", "test")
 	req2 := NewKick("76561199040918802", "76561197992870440", "test2")
-	req.Enqueue()
+	result := <-req.Enqueue().Done()
 	result2 := <-req2.Enqueue().Done()
-	result := <-req.Done()
 
 	require.NoError(t, result.Err)
 	require.Equal(t, "test", result.Message)

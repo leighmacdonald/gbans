@@ -65,6 +65,7 @@ const (
 	GetASNRecord
 	GetLocationRecord
 	GetProxyRecord
+	GetChatHistory
 	Servers
 	ServerByName
 	Say
@@ -128,6 +129,11 @@ func New(t Type, args interface{}) Action {
 		Created:      config.Now(),
 		IgnoreResult: false,
 	}
+}
+
+type GetChatHistoryRequest struct {
+	Target
+	Page int
 }
 
 type GetOrCreatePersonByIDRequest struct {
@@ -346,6 +352,13 @@ func NewGetOrCreateProfileBySteamID(target string, ipAddr string) Action {
 	return New(GetOrCreateProfileBySteamID, GetOrCreateProfileBySteamIDRequest{
 		Target: Target(target),
 		IPAddr: ipAddr,
+	})
+}
+
+func NewGetChatHistory(target string, page int) Action {
+	return New(GetChatHistory, GetChatHistoryRequest{
+		Target: Target(target),
+		Page:   page,
 	})
 }
 

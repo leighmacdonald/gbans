@@ -1,4 +1,4 @@
-package web
+package app
 
 import (
 	"bytes"
@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
@@ -32,8 +34,10 @@ func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *
 }
 
 func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRecorder) bool) {
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, unit.r)
+	e.ServeHTTP(w, unit.r)
 	if !f(w) {
 		t.Fail()
 	}
@@ -63,28 +67,34 @@ func createToken(sid steamid.SID64, pr model.Privilege) string {
 	p, _ := store.GetOrCreatePersonBySteamID(ctx, sid)
 	p.PermissionLevel = pr
 	_ = store.SavePerson(ctx, p)
-	token, _ := newJWT(p.SteamID)
+	token, _ := web.NewJWT(p.SteamID)
 	return token
 }
 
 func TestMain(m *testing.M) {
-	c := make(chan LogPayload)
 	config.Read()
-	config.General.Mode = "test"
-	initRouter(router, c)
+	config.General.Mode = config.Test
+	actChan := make(chan *action.Action)
+	action.Register(actChan)
+	ctx := context.Background()
+	go actionWorker(ctx, actChan)
 	store.Init(config.DB.DSN)
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
 	os.Exit(m.Run())
 }
 
 func TestAPICheck(t *testing.T) {
-	req := newTestReq("POST", "/api/check", checkRequest{
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
+	req := newTestReq("POST", "/api/check", web.CheckRequest{
 		ClientID: 10,
 		SteamID:  string(steamid.SID64ToSID(76561197961279983)),
 		IP:       net.ParseIP("10.10.10.10"),
 	}, "")
 
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	require.Equal(t, http.StatusForbidden, w.Code)
 }
 
@@ -126,12 +136,14 @@ func TestOnAPIPostBan(t *testing.T) {
 }
 
 func TestAPIGetServers(t *testing.T) {
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
 	req, _ := http.NewRequest("GET", "/api/servers", nil)
-	testHTTPResponse(t, router, req, func(w *httptest.ResponseRecorder) bool {
+	testHTTPResponse(t, e, req, func(w *httptest.ResponseRecorder) bool {
 		if w.Code != http.StatusOK {
 			return false
 		}
-		var r apiResponse
+		var r web.APIResponse
 		b, err := ioutil.ReadAll(w.Body)
 		require.NoError(t, err, "Failed to read body")
 		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
@@ -140,8 +152,6 @@ func TestAPIGetServers(t *testing.T) {
 }
 
 func TestOnPostLogMessage(t *testing.T) {
-	t.Skipf("refactor fixes needed")
-	return
 	const exampleLog = `L 02/21/2021 - 06:22:23: Log file started (file "logs/L0221034.log") (game "/home/tf2server/serverfiles/tf") (version "6300758")
 L 02/21/2021 - 06:22:23: server_cvar: "sm_nextmap" "pl_frontier_final"
 L 02/21/2021 - 06:22:24: rcon from "23.239.22.163:42004": command "status"
@@ -187,11 +197,11 @@ L 02/21/2021 - 06:42:33: Log file closed.`
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	_ = store.SaveServer(ctx, &s)
-	//go service.logReader(ctx, service.logRawQueue)
+	go logReader(ctx, logRawQueue)
 	token := createToken(76561198084134025, model.PAdmin)
 	for _, tc := range strings.Split(exampleLog, "\n") {
 		units = append(units, httpTestUnit{
-			newTestReq("POST", "/api/log", []LogPayload{{
+			newTestReq("POST", "/api/log", []web.LogPayload{{
 				ServerName: s.ServerName,
 				Message:    tc,
 			}}, token),
@@ -228,16 +238,17 @@ func TestAuthMiddleware(t *testing.T) {
 		CreatedOn:      config.Now(),
 		UpdatedOn:      config.Now(),
 	}
-
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
 	req := newTestReq("POST", "/api/server", s,
 		createToken(76561198084134025, model.PAuthenticated))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	require.Equal(t, http.StatusForbidden, w.Code)
 
 	reqOK := newTestReq("POST", "/api/server", s,
 		createToken(76561198084134025, model.PAdmin))
 	wOK := httptest.NewRecorder()
-	router.ServeHTTP(wOK, reqOK)
+	e.ServeHTTP(wOK, reqOK)
 	require.Equal(t, http.StatusOK, wOK.Code)
 }

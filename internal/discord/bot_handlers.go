@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -306,8 +307,42 @@ func onHistoryIP(ctx context.Context, _ *discordgo.Session, m *discordgo.Interac
 	return t.Render(), nil
 }
 
-func onHistoryChat(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (string, error) {
-	return "", errors.New("hi")
+func onHistoryChat(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+	pId := m.Data.Options[0].Value.(string)
+	actP := action.NewGetPersonByID(pId)
+	resP := <-actP.Enqueue().Done()
+	if resP.Err != nil {
+		return "", errCommandFailed
+	}
+	p, ok := resP.Value.(*model.Person)
+	if !ok {
+		return "No results", nil
+	}
+	page := 0
+	if len(m.Data.Options) > 0 {
+		page = int(m.Data.Options[1].Value.(float64))
+	}
+	act := action.NewGetChatHistory(pId, page)
+	res := <-act.Enqueue().Done()
+	if res.Err != nil {
+		return "", res.Err
+	}
+	t := defaultTable(fmt.Sprintf("Chat History of: %s", p.PersonaName))
+	t.AppendHeader(table.Row{"Time", "Message"})
+	t.AppendSeparator()
+	t.SuppressEmptyColumns()
+	logs, okL := res.Value.([]logparse.SayEvt)
+	if !okL {
+		return "", consts.ErrInternal
+	}
+
+	for _, l := range logs {
+		t.AppendRow(table.Row{
+			config.FmtTimeShort(l.CreatedOn),
+			l.Msg,
+		})
+	}
+	return t.Render(), nil
 }
 
 func onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {

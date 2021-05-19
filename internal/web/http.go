@@ -47,7 +47,7 @@ func init() {
 }
 
 func Start(ctx context.Context, logMsgChan chan LogPayload) {
-	initRouter(router, logMsgChan)
+	SetupRouter(router, logMsgChan)
 	log.Infof("Starting HTTP service")
 	go func() {
 		httpServer = &http.Server{
