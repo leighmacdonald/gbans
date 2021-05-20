@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -72,9 +73,13 @@ func discordMessageQueueReader(ctx context.Context, eventChan chan model.LogEven
 			if dm.Type == logparse.SayTeam {
 				prefix = "(team) "
 			}
+			sid := steamid.SID64(0)
+			if dm.Player1 != nil {
+				sid = dm.Player1.SteamID
+			}
 			sendQueueMu.Lock()
 			sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-				dm.Server.ServerName, dm.Player1.SteamID, dm.Event["name"], prefix, dm.Event["msg"]))
+				dm.Server.ServerName, sid, dm.Event["name"], prefix, dm.Event["msg"]))
 			sendQueueMu.Unlock()
 		case <-messageTicker.C:
 			sendQueueMu.Lock()
