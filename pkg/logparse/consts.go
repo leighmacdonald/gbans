@@ -106,17 +106,17 @@ type PlayerClass int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	Spectator PlayerClass = 0
-	Scout     PlayerClass = 1
-	Soldier   PlayerClass = 2
-	Pyro      PlayerClass = 3
-	Demo      PlayerClass = 4
-	Heavy     PlayerClass = 5
-	Engineer  PlayerClass = 6
-	Medic     PlayerClass = 7
-	Sniper    PlayerClass = 8
-	Spy       PlayerClass = 9
-	Multi     PlayerClass = 10
+	Spectator PlayerClass = iota
+	Scout
+	Soldier
+	Pyro
+	Demo
+	Heavy
+	Engineer
+	Medic
+	Sniper
+	Spy
+	Multi
 )
 
 // Medigun holds which medigun a player was using

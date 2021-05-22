@@ -234,8 +234,6 @@ func Update(outputPath string, apiKey string) error {
 	return exitErr
 }
 
-// New opens the .mmdb file for querying and sets up the ellipsoid configuration for more accurate
-// geo queries
 func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 	var (
 		records []ASNRecord
@@ -345,9 +343,9 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 			}
 		}
 
-		t, err := strconv.ParseUint(row[12], 10, 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to convert last_seen: %s (%s)", row[10], err)
+		t, err3 := strconv.ParseUint(row[12], 10, 64)
+		if err3 != nil {
+			return nil, errors.Wrapf(err3, "Failed to convert last_seen: %s (%s)", row[10], err3)
 		}
 		records = append(records, ProxyRecord{
 			IPFrom:      &ipFrom,
@@ -378,7 +376,7 @@ func parseIpv6Int(s string) (net.IP, error) {
 }
 
 func parseIpv4Int(s string) (net.IP, error) {
-	n, err := strconv.ParseUint(s, 10, 64)
+	n, err := strconv.ParseUint(s, 10, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -402,37 +400,35 @@ func extractZip(data []byte, dest string, filename string) error {
 	}
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
-		rc, err := f.Open()
-		if err != nil {
-			return err
+		rc, errO := f.Open()
+		if errO != nil {
+			return errO
 		}
 		defer func() {
-			if err := rc.Close(); err != nil {
-				panic(err)
+			if errC := rc.Close(); errC != nil {
+				log.Errorf("Failed to close zip file: %v", errC)
 			}
 		}()
-
 		p := filepath.Join(dest, f.Name)
-
 		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(p, f.Mode()); err != nil {
-				return err
+			if errM := os.MkdirAll(p, f.Mode()); errM != nil {
+				return errM
 			}
 		} else {
-			if err := os.MkdirAll(filepath.Dir(p), f.Mode()); err != nil {
-				return err
+			if errM := os.MkdirAll(filepath.Dir(p), f.Mode()); errM != nil {
+				return errM
 			}
-			f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return err
+			of, errO2 := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if errO2 != nil {
+				return errO2
 			}
 			defer func() {
-				if err := f.Close(); err != nil {
-					panic(err)
+				if errC := of.Close(); errC != nil {
+					log.Errorf("Failed to close zip file: %v", errC)
 				}
 			}()
 
-			_, err = io.Copy(f, rc)
+			_, err = io.Copy(of, rc)
 			if err != nil {
 				return err
 			}
@@ -441,9 +437,9 @@ func extractZip(data []byte, dest string, filename string) error {
 	}
 	for _, f := range r.File {
 		if f.Name == filename {
-			err := extractAndWriteFile(f)
-			if err != nil {
-				return err
+			err2 := extractAndWriteFile(f)
+			if err2 != nil {
+				return err2
 			}
 			break
 		}
@@ -479,41 +475,41 @@ func Read(root string) (*BlockListData, error) {
 			log.Debugf("Loading: %s", f[0])
 			switch f[1] {
 			case geoDatabaseASNFile4:
-				records, err := readASNRecords(f[0], false)
-				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to load %s", f[0]))
+				records, errA := readASNRecords(f[0], false)
+				if errA != nil {
+					errs = append(errs, errors.Wrapf(errA, "Failed to load %s", f[0]))
 					return
 				}
 				data.ASN4 = records
 				cnt = len(records)
 			case geoDatabaseASNFile6:
-				records, err := readASNRecords(f[0], true)
-				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to load %s", f[0]))
+				records, errA6 := readASNRecords(f[0], true)
+				if errA6 != nil {
+					errs = append(errs, errors.Wrapf(errA6, "Failed to load %s", f[0]))
 					return
 				}
 				data.ASN6 = records
 				cnt = len(records)
 			case geoDatabaseLocationFile4:
-				records, err := readLocationRecords(f[0], false)
-				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to load %s", f[0]))
+				records, errL := readLocationRecords(f[0], false)
+				if errL != nil {
+					errs = append(errs, errors.Wrapf(errL, "Failed to load %s", f[0]))
 					return
 				}
 				data.Locations4 = records
 				cnt = len(records)
 			case geoDatabaseLocationFile6:
-				records, err := readLocationRecords(f[0], true)
-				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to load %s", f[0]))
+				records, errL6 := readLocationRecords(f[0], true)
+				if errL6 != nil {
+					errs = append(errs, errors.Wrapf(errL6, "Failed to load %s", f[0]))
 					return
 				}
 				data.Locations6 = records
 				cnt = len(records)
 			case geoDatabaseProxyFile:
-				records, err := readProxyRecords(f[0])
-				if err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to load %s", f[0]))
+				records, errP := readProxyRecords(f[0])
+				if errP != nil {
+					errs = append(errs, errors.Wrapf(errP, "Failed to load %s", f[0]))
 					return
 				}
 				data.Proxies = records
