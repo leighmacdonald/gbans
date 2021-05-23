@@ -39,11 +39,12 @@ const (
 	DropObject          MsgType = 34
 	FirstHealAfterSpawn MsgType = 35
 	CaptureBlocked      MsgType = 36
-	KilledCustom        MsgType = 37
-	PointCaptured       MsgType = 48
-	JoinedTeam          MsgType = 49
-	ChangeClass         MsgType = 50
-	SpawnedAs           MsgType = 51
+
+	PointCaptured MsgType = 48
+	JoinedTeam    MsgType = 49
+	ChangeClass   MsgType = 50
+	SpawnedAs     MsgType = 51
+	MilkAttack    MsgType = 52
 
 	// World events not attached to specific players
 
@@ -117,6 +118,7 @@ const (
 	Sniper
 	Spy
 	Multi
+	Undefined
 )
 
 // Medigun holds which medigun a player was using

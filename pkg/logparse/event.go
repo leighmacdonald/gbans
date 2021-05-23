@@ -86,7 +86,7 @@ type ChangeClassEvt struct {
 type SuicideEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Pos Pos `json:"pos"`
+	AttackerPosition Pos `mapstructure:"attacker_position" json:"attacker_position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -105,12 +105,12 @@ type MedicDeathExEvt struct {
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type KilledCustomEvt struct {
+type KilledEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	APos       Pos    `json:"a_pos"`
-	VPos       Pos    `json:"v_pos"`
+	APos       Pos    `mapstructure:"attacker_position" json:"attacker_position"`
+	VPos       Pos    `mapstructure:"victim_position" json:"victim_position"`
 	CustomKill string `json:"custom_kill"`
 }
 
@@ -119,9 +119,9 @@ type KillAssistEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	ASPos Pos `json:"as_pos"`
-	APos  Pos `json:"a_pos"`
-	VPos  Pos `json:"v_pos"`
+	AssisterPosition Pos `mapstructure:"assister_position" json:"assister_position"`
+	AttackerPosition Pos `mapstructure:"attacker_position" json:"attacker_position"`
+	VictimPosition   Pos `mapstructure:"victim_position" json:"victim_position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -156,15 +156,15 @@ type KilledObjectEvt struct {
 	TargetPlayer
 	Object string `json:"object"`
 	Weapon Weapon `json:"weapon"`
-	APos   Pos    `json:"a_pos"`
+	APos   Pos    `mapstructure:"attacker_position" json:"attacker_position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CarryObjectEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Object string `json:"object"`
-	Pos    Pos    `json:"a_pos"`
+	Object           string `json:"object"`
+	AttackerPosition Pos    `mapstructure:"position" json:"position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -219,14 +219,14 @@ type CaptureBlockedEvt struct {
 	SourcePlayer
 	CP     int    `json:"cp"`
 	CPName string `json:"cp_name"`
-	Pos    Pos    `json:"pos"`
+	Pos    Pos    `json:"position" mapstructure:"position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type FirstHealAfterSpawnEvt struct {
 	EmptyEvt
 	SourcePlayer
-	HealTime float32 `json:"time"`
+	HealTime float32 `json:"time" mapstructure:"time"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -299,6 +299,16 @@ type DamageEvt struct {
 	RealDamage int    `json:"real_damage"`
 	Weapon     Weapon `json:"weapon"`
 	Healing    int    `json:"healing,omitempty"` // On ubersaw
+}
+
+// MilkAttackEvt
+// L 05/21/2021 - 20:39:34: "Five<636><[U:1:66374745]><Blue>" triggered "milk_attack" against "Silexos<635><[U:1:307374149]><Red>" with "tf_weapon_jar" (attacker_position "-353 -445 52") (victim_position "99 -126 7")
+type MilkAttackEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
+	APos Pos `mapstructure:"attacker_position" json:"attacker_position"`
+	VPos Pos `mapstructure:"victim_position" json:"victim_position"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

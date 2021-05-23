@@ -1,7 +1,6 @@
 L 05/21/2021 - 20:35:18: Log file started (file "logs/L0521080.log") (game "/home/tf2server/serverfiles/tf") (version "6394067")
 L 05/21/2021 - 20:35:18: STEAMAUTH: Client Doc 7empest received failure code 6
-L 05/21/2021 - 20:35:18: "Doc 7empest<610><[U:1:168267104]><>" disconnected (reason "Client left game (Steam auth ticket has been canceled)
-")
+L 05/21/2021 - 20:35:18: "Doc 7empest<610><[U:1:168267104]><>" disconnected (reason "Client left game (Steam auth ticket has been canceled)")
 L 05/21/2021 - 20:35:18: server_cvar: "sm_nextmap" "pl_thundermountain"
 L 05/21/2021 - 20:35:18: server_cvar: "mp_timelimit" "30"
 L 05/21/2021 - 20:35:18: server_cvar: "mp_maxrounds" "0"
