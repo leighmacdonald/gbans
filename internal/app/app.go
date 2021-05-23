@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -78,8 +79,18 @@ func Start() {
 		initFilters()
 	}
 
+	initState()
+
 	// Start the HTTP Server
 	web.Start(gCtx, logRawQueue)
+}
+
+func initState() {
+	events := make(chan model.LogEvent)
+	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Any}); err != nil {
+		log.Warnf("Error registering discord log event reader")
+	}
+	state.Start(gCtx, events)
 }
 
 // actionWorker is the action message request handler for any actions that are requested
@@ -295,6 +306,8 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		res := <-act.Enqueue().Done()
 		if res.Err != nil {
 			log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
+		} else {
+			log.Infof("Banned player for exceed warning limit threshold: %d", sid64.Int64())
 		}
 	}
 }

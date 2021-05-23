@@ -1,15 +1,29 @@
 package state
 
 import (
+	"context"
+	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/rumblefrog/go-a2s"
+	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
 var (
 	serverStateMu *sync.RWMutex
 	serverStates  map[string]*ServerState
+	gameState     map[string]*Game
+	gameHistory   []*Game
+	handler       = map[logparse.MsgType]eventHandler{
+		logparse.LogStart:     onLogStart,
+		logparse.Connected:    onConnected,
+		logparse.Disconnected: onDisconnected,
+		logparse.LogStop:      onLogStop,
+	}
 )
+
+type eventHandler func(event model.LogEvent)
 
 type gameType string
 
@@ -49,7 +63,56 @@ func ServersAlive() int {
 	return i
 }
 
+func Start(ctx context.Context, eventChan chan model.LogEvent) {
+	for {
+		select {
+		case e := <-eventChan:
+			fn, found := handler[e.Type]
+			if !found {
+				log.Warnf("Unhandled event")
+				continue
+			}
+			fn(e)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func onConnected(evt model.LogEvent) {
+	p := newPlayer()
+	s, ok := gameState[evt.Server.ServerName]
+	if !ok {
+		return
+	}
+	s.Players = append(s.Players, p)
+}
+
+func onDisconnected(evt model.LogEvent) {
+
+}
+
+func onLogStop(evt model.LogEvent) {
+	game, exists := gameState[evt.Server.ServerName]
+	if !exists {
+		log.Warnf("Got logStop event for unknown game")
+		return
+	}
+	gameHistory = append(gameHistory, game)
+	delete(gameState, evt.Server.ServerName)
+}
+
+func onLogStart(evt model.LogEvent) {
+	game, exists := gameState[evt.Server.ServerName]
+	if exists {
+		log.Debugf("Clearing existing game state")
+		gameHistory = append(gameHistory, game)
+	}
+	gameState[evt.Server.ServerName] = newGame()
+}
+
 func init() {
 	serverStates = make(map[string]*ServerState)
 	serverStateMu = &sync.RWMutex{}
+	gameState = make(map[string]*Game)
 }

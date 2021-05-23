@@ -39,11 +39,12 @@ const (
 	DropObject          MsgType = 34
 	FirstHealAfterSpawn MsgType = 35
 	CaptureBlocked      MsgType = 36
-	KilledCustom        MsgType = 37
-	PointCaptured       MsgType = 48
-	JoinedTeam          MsgType = 49
-	ChangeClass         MsgType = 50
-	SpawnedAs           MsgType = 51
+
+	PointCaptured MsgType = 48
+	JoinedTeam    MsgType = 49
+	ChangeClass   MsgType = 50
+	SpawnedAs     MsgType = 51
+	MilkAttack    MsgType = 52
 
 	// World events not attached to specific players
 
@@ -106,17 +107,18 @@ type PlayerClass int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	Spectator PlayerClass = 0
-	Scout     PlayerClass = 1
-	Soldier   PlayerClass = 2
-	Pyro      PlayerClass = 3
-	Demo      PlayerClass = 4
-	Heavy     PlayerClass = 5
-	Engineer  PlayerClass = 6
-	Medic     PlayerClass = 7
-	Sniper    PlayerClass = 8
-	Spy       PlayerClass = 9
-	Multi     PlayerClass = 10
+	Spectator PlayerClass = iota
+	Scout
+	Soldier
+	Pyro
+	Demo
+	Heavy
+	Engineer
+	Medic
+	Sniper
+	Spy
+	Multi
+	Undefined
 )
 
 // Medigun holds which medigun a player was using
