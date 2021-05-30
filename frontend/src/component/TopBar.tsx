@@ -333,7 +333,7 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
                             {currentUser?.player.steam_id <= 0 && (
                                 <Button onClick={handleOnLogin}>
                                     <img
-                                        src={'/dist/steam_login_sm.png'}
+                                        src={'/assets/dist/steam_login_sm.png'}
                                         alt={'Steam Login'}
                                     />
                                 </Button>

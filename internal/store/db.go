@@ -852,9 +852,9 @@ func GetExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var b model.Ban
-		if err := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
-			&b.ValidUntil, &b.Source, &b.CreatedOn, &b.UpdatedOn); err != nil {
-			return nil, err
+		if err2 := rows.Scan(&b.BanID, &b.SteamID, &b.AuthorID, &b.BanType, &b.Reason, &b.ReasonText, &b.Note,
+			&b.ValidUntil, &b.Source, &b.CreatedOn, &b.UpdatedOn); err2 != nil {
+			return nil, err2
 		}
 		bans = append(bans, &b)
 	}

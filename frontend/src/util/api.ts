@@ -233,7 +233,7 @@ export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
         `/api/bans`,
         'POST'
     );
-    return (resp.json as IAPIResponseBans).map((b): IAPIBanRecord => {
+    return ((resp.json as IAPIResponseBans) ?? []).map((b): IAPIBanRecord => {
         return {
             author_id: b.ban.author_id,
             avatar: b.person.avatar,

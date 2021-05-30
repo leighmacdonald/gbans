@@ -228,3 +228,56 @@ func NewJWT(steamID steamid.SID64) (string, error) {
 	}
 	return token, nil
 }
+
+func authMiddleware(level model.Privilege) gin.HandlerFunc {
+	type header struct {
+		Authorization string `header:"Authorization"`
+	}
+	return func(c *gin.Context) {
+		hdr := header{}
+		if err := c.ShouldBindHeader(&hdr); err != nil {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+		pcs := strings.Split(hdr.Authorization, " ")
+		if len(pcs) != 2 && level > model.PGuest {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+		if level > model.PGuest {
+			claims := &authClaims{}
+			tkn, errC := jwt.ParseWithClaims(pcs[1], claims, getTokenKey)
+			if errC != nil {
+				if errC == jwt.ErrSignatureInvalid {
+					c.AbortWithStatus(http.StatusForbidden)
+					return
+				}
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if !tkn.Valid {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if !steamid.SID64(claims.SteamID).Valid() {
+				c.AbortWithStatus(http.StatusForbidden)
+				log.Warnf("Invalid steamID")
+				return
+			}
+			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
+			defer cancel()
+			loggedInPerson, err := store.GetPersonBySteamID(cx, steamid.SID64(claims.SteamID))
+			if err != nil {
+				log.Errorf("Failed to load persons session user: %v", err)
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			if level > loggedInPerson.PermissionLevel {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			c.Set("person", loggedInPerson)
+		}
+		c.Next()
+	}
+}

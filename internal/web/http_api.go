@@ -103,7 +103,7 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 		//		duration, err := config.ParseDuration(r.Duration)
 		//		if err != nil {
 		//			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m".
-		//Valid time units are "s", "m", "h".`)
+		//Valid time units are "s", "ws", "h".`)
 		//			return
 		//		}
 		var (
