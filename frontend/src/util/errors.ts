@@ -10,7 +10,7 @@ export enum Level {
     err = 2
 }
 
-export const log = (msg: string, level: Level = Level.err): void => {
+export const log = (msg: unknown, level: Level = Level.err): void => {
     if (runMode === 'development') {
         // eslint-disable-next-line no-console
         console.log(`[${level}] ${msg}`);

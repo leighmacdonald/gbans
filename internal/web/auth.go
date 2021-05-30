@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -245,28 +246,15 @@ func authMiddleware(level model.Privilege) gin.HandlerFunc {
 			return
 		}
 		if level > model.PGuest {
-			claims := &authClaims{}
-			tkn, errC := jwt.ParseWithClaims(pcs[1], claims, getTokenKey)
-			if errC != nil {
-				if errC == jwt.ErrSignatureInvalid {
-					c.AbortWithStatus(http.StatusForbidden)
-					return
-				}
+			sid, err := sid64FromJWTToken(pcs[1])
+			if err != nil {
+				log.Errorf("Failed to load persons session user: %v", err)
 				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			if !tkn.Valid {
-				c.AbortWithStatus(http.StatusForbidden)
-				return
-			}
-			if !steamid.SID64(claims.SteamID).Valid() {
-				c.AbortWithStatus(http.StatusForbidden)
-				log.Warnf("Invalid steamID")
 				return
 			}
 			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 			defer cancel()
-			loggedInPerson, err := store.GetPersonBySteamID(cx, steamid.SID64(claims.SteamID))
+			loggedInPerson, err := store.GetPersonBySteamID(cx, sid)
 			if err != nil {
 				log.Errorf("Failed to load persons session user: %v", err)
 				c.AbortWithStatus(http.StatusForbidden)
@@ -280,4 +268,24 @@ func authMiddleware(level model.Privilege) gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func sid64FromJWTToken(token string) (steamid.SID64, error) {
+	claims := &authClaims{}
+	tkn, errC := jwt.ParseWithClaims(token, claims, getTokenKey)
+	if errC != nil {
+		if errC == jwt.ErrSignatureInvalid {
+			return 0, consts.ErrAuthhentication
+		}
+		return 0, consts.ErrAuthhentication
+	}
+	if !tkn.Valid {
+		return 0, consts.ErrAuthhentication
+	}
+	sid := steamid.SID64(claims.SteamID)
+	if !sid.Valid() {
+		log.Warnf("Invalid steamID")
+		return 0, consts.ErrAuthhentication
+	}
+	return sid, nil
 }

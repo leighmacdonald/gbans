@@ -25,7 +25,10 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	} else {
 		r.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
 	}
-	for _, rt := range []string{"/", "/servers", "/profile", "/bans", "/appeal"} {
+	for _, rt := range []string{
+		"/", "/servers", "/profile", "/bans", "/appeal",
+		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
+		"/admin/import", "/admin/filters"} {
 		r.GET(rt, jsRoutes)
 	}
 	r.GET("/login/success", onLoginSuccess())
@@ -37,6 +40,8 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	r.GET("/api/stats", onAPIGetStats())
 	r.GET("/api/filtered_words", onAPIGetFilteredWords())
 	r.GET("/api/players", onAPIGetPlayers())
+	r.GET("/api/auth/logout", onGetLogout())
+	r.GET("/ws", ws.onWSStart)
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", onSAPIPostServerAuth())
@@ -52,12 +57,11 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	authed := r.Use(authMiddleware(model.PAuthenticated))
 	authed.GET("/api/current_profile", onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", onTokenRefresh())
-	authed.GET("/api/auth/logout", onGetLogout())
 
 	// Moderator access
 	modRoute := r.Use(authMiddleware(model.PModerator))
 	modRoute.POST("/api/ban", onAPIPostBanCreate())
-	modRoute.GET("/ws", ws.onWSStart)
+
 	// Admin access
 	modAdmin := r.Use(authMiddleware(model.PAdmin))
 	modAdmin.POST("/api/server", onAPIPostServer())

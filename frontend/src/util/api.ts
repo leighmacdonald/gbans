@@ -41,8 +41,7 @@ const apiCall = async <TResponse, TRequestBody = Record<string, unknown>>(
     opts.headers = headers;
     const resp = await fetch(url, opts);
     if (resp.status === 403 && token != '') {
-        localStorage.removeItem('token');
-        log('Removed invalid token');
+        log('invalid token');
     }
     if (!resp.status) {
         throw apiErr('Invalid response code', resp);

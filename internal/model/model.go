@@ -297,11 +297,12 @@ func (p *Person) LoggedIn() bool {
 // NewPerson allocates a new default person instance
 func NewPerson(sid64 steamid.SID64) *Person {
 	return &Person{
-		SteamID:       sid64,
-		IsNew:         true,
-		CreatedOn:     config.Now(),
-		UpdatedOn:     config.Now(),
-		PlayerSummary: &extra.PlayerSummary{},
+		SteamID:         sid64,
+		IsNew:           true,
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
+		PlayerSummary:   &extra.PlayerSummary{},
+		PermissionLevel: PAuthenticated,
 	}
 }
 

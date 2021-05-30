@@ -5,10 +5,10 @@ import { Grid, Typography } from '@material-ui/core';
 export const AdminServerLog = (): JSX.Element => {
     return (
         <Grid container>
-            <Grid item xs>
+            <Grid item xs={12}>
                 <Typography variant={'h1'}>Game Server Logs</Typography>
             </Grid>
-            <Grid item xs>
+            <Grid item xs={12}>
                 <ServerLogView />
             </Grid>
         </Grid>

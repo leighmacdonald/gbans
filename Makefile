@@ -85,3 +85,9 @@ docker_run:
 
 up:
 	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans
+
+docker_dump:
+    docker exec gbans-postgres pg_dump -U gbans > gbans.sql
+
+docker_restore:
+    docker exec gbans-postgres pg_dump -U gbans -f gbans.sql

@@ -32,6 +32,7 @@ var testDataCmd = &cobra.Command{
 			log.Errorf("Failed to get player summary: %v", err)
 			return
 		}
+		p.PermissionLevel = model.PAdmin
 		p.PlayerSummary = &sum1[0]
 		if err := store.SavePerson(ctx, p); err != nil {
 			log.Errorf("Failed to save person: %v", err)
