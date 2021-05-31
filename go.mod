@@ -8,11 +8,10 @@ require (
 	github.com/bwmarrin/discordgo v0.23.3-0.20210410202908-577e7dd4f6cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hpcloud/tail v1.0.0
