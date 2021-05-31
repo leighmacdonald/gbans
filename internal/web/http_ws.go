@@ -9,11 +9,36 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
 	"sync"
 	"time"
 )
+
+type payloadType int
+
+const (
+	okType payloadType = iota
+	errType
+	authType
+	logType
+)
+
+// webSocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
+// process as we must first know the payload_type before we can decode the Data value into the appropriate
+// struct.
+type webSocketPayload struct {
+	PayloadType payloadType     `json:"payload_type"`
+	Data        json.RawMessage `json:"data"`
+}
+
+// webSocketState holds the global websocket session state and handlers
+type webSocketState struct {
+	*sync.RWMutex
+	ws       *melody.Melody
+	sessions map[*melody.Session]*webSocketClient
+}
 
 // webSocketClient represents the state of a client connected via websockets
 type webSocketClient struct {
@@ -27,11 +52,32 @@ type webSocketClient struct {
 	session       *melody.Session
 }
 
+// encode will return an encoded payload suitable for transmission over the wire
+func encode(t payloadType, p interface{}) ([]byte, error) {
+	b, e1 := json.Marshal(p)
+	if e1 != nil {
+		return nil, errors.Wrapf(e1, "failed to encode base payload")
+	}
+	f, e2 := json.Marshal(webSocketPayload{
+		PayloadType: t,
+		Data:        b,
+	})
+	if e2 != nil {
+		return nil, errors.Wrapf(e1, "failed to encode sub payload")
+	}
+	return f, nil
+}
+
+// reader sends out incoming log payloads to the client
 func (c *webSocketClient) reader() {
 	for {
 		select {
 		case e := <-c.eventChan:
-			b, _ := json.Marshal(e)
+			b, err := encode(logType, e)
+			if err != nil {
+				log.Errorf("Failed to encode payload")
+				continue
+			}
 			if err := c.session.Write(b); err != nil {
 				log.Errorf("Failed to write to ws")
 			}
@@ -40,13 +86,6 @@ func (c *webSocketClient) reader() {
 			return
 		}
 	}
-}
-
-// webSocketState holds the global websocket session state and handlers
-type webSocketState struct {
-	*sync.RWMutex
-	ws       *melody.Melody
-	sessions map[*melody.Session]*webSocketClient
 }
 
 // newWebSocketState allocates and connects all websocket routes and session states
@@ -82,11 +121,15 @@ type wsErrRes struct {
 }
 
 func newWSErr(err error) []byte {
-	e := wsErrRes{Error: err.Error()}
-	b, _ := json.Marshal(e)
+	d, _ := json.Marshal(wsErrRes{Error: err.Error()})
+	b, _ := json.Marshal(webSocketPayload{
+		PayloadType: errType,
+		Data:        d,
+	})
 	return b
 }
 
+// onMessage handles incoming websocket payloads
 func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 	ws.Lock()
 	defer ws.Unlock()
@@ -96,11 +139,17 @@ func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 		return
 	}
 	if !c.Authenticated {
-		var w wsAuthReq
-		if err := json.Unmarshal(msg, &w); err != nil {
+		var w webSocketPayload
+		if err := json.Unmarshal(msg, &w); err != nil || w.PayloadType != authType {
+			log.Errorf("Failed to unmarshal ws payload")
 			_ = session.Write(newWSErr(consts.ErrAuthhentication))
 		}
-		sid, err := sid64FromJWTToken(w.Token)
+		var tok wsAuthReq
+		if err := json.Unmarshal(w.Data, &tok); err != nil {
+			log.Errorf("Failed to unmarshal auth data")
+			_ = session.Write(newWSErr(consts.ErrAuthhentication))
+		}
+		sid, err := sid64FromJWTToken(tok.Token)
 		if err != nil {
 			newWSErr(consts.ErrAuthhentication)
 			return
@@ -119,6 +168,8 @@ func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 	}
 }
 
+// onWSConnect sets up the websocket client in the session list and registers it to receive all log events
+// by default.
 func (ws *webSocketState) onWSConnect(session *melody.Session) {
 	client := &webSocketClient{
 		ctx:       context.Background(),
@@ -136,6 +187,8 @@ func (ws *webSocketState) onWSConnect(session *melody.Session) {
 	ws.Unlock()
 }
 
+// onWSDisconnect will remove the client from the active session list and unregister itself
+// from the event broadcasts
 func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
 	ws.Lock()
 	defer ws.Unlock()

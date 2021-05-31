@@ -11,7 +11,14 @@ import {
     TextField
 } from '@material-ui/core';
 import { log } from '../util/errors';
-import { apiGetServers, Person, Server } from '../util/api';
+import {
+    apiGetServers,
+    encode,
+    PayloadType,
+    Person,
+    Server,
+    WebSocketPayload
+} from '../util/api';
 import {
     eventNames,
     LogEvent,
@@ -56,7 +63,11 @@ export const ServerLogView = (): JSX.Element => {
         `${proto}://${location.host}${port}/ws`,
         {
             onOpen: () => {
-                sendJsonMessage({ token: localStorage.getItem('token') });
+                sendJsonMessage(
+                    encode(PayloadType.authType, {
+                        token: localStorage.getItem('token')
+                    })
+                );
             },
             //Will attempt to reconnect on all close events, such as server shutting down
             shouldReconnect: () => true
@@ -64,7 +75,17 @@ export const ServerLogView = (): JSX.Element => {
     );
 
     messageHistory.current = useMemo(() => {
-        messageHistory.current.push(lastJsonMessage);
+        if (!lastJsonMessage) {
+            return messageHistory.current;
+        }
+        const p = lastJsonMessage as WebSocketPayload;
+        switch (p.payload_type) {
+            case PayloadType.logType:
+                messageHistory.current.push(
+                    (p as WebSocketPayload<LogEvent>).data
+                );
+                break;
+        }
         return messageHistory.current;
     }, [lastJsonMessage]);
 
@@ -80,7 +101,13 @@ export const ServerLogView = (): JSX.Element => {
     const [renderLimit, setRenderLimit] = useState<number>(25);
     const [filterServerIDs, setFilterServerIDs] = useState<number[]>([]);
     const [filterMsgTypes, setFilterMsgTypes] = useState<MsgType[]>([
-        MsgType.Any
+        MsgType.Say,
+        MsgType.SayTeam,
+        MsgType.WRoundWin,
+        MsgType.ShotFired,
+        MsgType.Killed,
+        MsgType.Connected,
+        MsgType.Disconnected
     ]);
     useEffect(() => {
         async function fn() {
@@ -202,6 +229,7 @@ export const ServerLogView = (): JSX.Element => {
                         multiple
                         value={filterMsgTypes}
                         onChange={handleChangeFilterMsg}
+                        defaultValue={filterMsgTypes}
                         input={<Input />}
                     >
                         {Object.values(MsgType)
@@ -640,10 +668,18 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             v = <div>{JSON.stringify(l.event)}</div>;
         }
     }
+    let bg = 'inherit';
+    if (l.event['team']) {
+        if (l.event['team'] === 'Red') {
+            bg = 'rgba(139,12,12,0.25)';
+        } else if (l.event['team'] === 'Blue') {
+            bg = 'rgba(12,48,139,0.25)';
+        }
+    }
 
     return (
         <Grid key={`sl-${i}`} item xs={12}>
-            <Grid container>
+            <Grid container style={{ backgroundColor: bg }}>
                 <Grid item xs={1}>
                     {renderEventTimeColumn(l.created_on)}
                 </Grid>

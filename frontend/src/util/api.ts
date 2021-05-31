@@ -67,6 +67,25 @@ const apiErr = (msg: string, resp: Response): ApiException => {
     return new ApiException(msg, resp);
 };
 
+export enum PayloadType {
+    okTypem,
+    errType,
+    authType,
+    logType
+}
+
+export const encode = (t: PayloadType, o: unknown): WebSocketPayload => {
+    return {
+        payload_type: t,
+        data: o
+    };
+};
+
+export interface WebSocketPayload<TRecord = unknown> {
+    payload_type: PayloadType;
+    data: TRecord;
+}
+
 export interface ChatMessage {
     message: string;
     created_on: Date;
