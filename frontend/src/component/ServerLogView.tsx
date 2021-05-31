@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SteamID from 'steamid';
-import { formatRelative } from 'date-fns';
 import {
     FormControl,
     Grid,
@@ -21,7 +20,6 @@ import {
 } from '../util/game_events';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { takeRight } from 'lodash-es';
-import { parseDateTime } from '../util/text';
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
@@ -233,34 +231,32 @@ export const renderServerLog = (l: ServerLog, i: number): JSX.Element => {
     if (!l) {
         return <></>;
     }
-    let v: JSX.Element;
+    let v: any;
     switch (l.event_type) {
         case MsgType.Say: {
-            const e = l.payload as SayEvt;
-            v = (
-                <Grid container>
-                    <Grid item xs={2}>
-                        {formatRelative(
-                            new Date(),
-                            parseDateTime(e.created_on)
-                        )}
-                    </Grid>
-                    <Grid item xs={2}>
-                        {e.source ? e.source.sid : '???'}
-                    </Grid>
-                    <Grid item xs={8}>
-                        {e.msg}
-                    </Grid>
-                </Grid>
-            );
+            v = (l.payload as SayEvt).msg;
             break;
         }
-        default:
-            v = <div>{JSON.stringify(l.payload)}</div>;
+        default: {
+            v = JSON.stringify(l);
+        }
     }
     return (
         <Grid key={`sl-${i}`} item xs={12}>
-            {v}
+            <Grid container>
+                <Grid item xs={1}>
+                    {l.event_type}
+                </Grid>
+                <Grid item xs={1}>
+                    N/A
+                </Grid>
+                <Grid item xs={2}>
+                    {l.source_id ?? 'N/A'}
+                </Grid>
+                <Grid item xs={8}>
+                    {v}
+                </Grid>
+            </Grid>
         </Grid>
     );
 };

@@ -11,8 +11,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 )
@@ -73,6 +76,35 @@ func Start() {
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
 		initFilters()
+	}
+
+	if config.General.Mode == config.Debug {
+		go func() {
+			f := golib.FindFile("test_data/log_sup_med_1.log", "gbans")
+			b, _ := ioutil.ReadFile(f)
+			rows := strings.Split(string(b), "\r\n")
+			t := time.NewTicker(time.Millisecond * 200)
+			servers, _ := store.GetServers(context.Background())
+			serverId := "lo-1"
+			if len(servers) > 0 {
+				serverId = servers[0].ServerName
+			}
+			i := 0
+			for {
+				select {
+				case <-t.C:
+					log.Errorf("LOG: %s", rows[i])
+					logRawQueue <- web.LogPayload{
+						ServerName: serverId,
+						Message:    rows[i],
+					}
+				}
+				i++
+				if i == len(rows) {
+					i = 0
+				}
+			}
+		}()
 	}
 
 	// Start the HTTP Server
@@ -225,7 +257,7 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 				Type:     v.MsgType,
 				Event:    v.Values,
 				Server:   s,
-				Player1:  getPlayer("SteamID", v.Values),
+				Player1:  getPlayer("sid", v.Values),
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
 			})

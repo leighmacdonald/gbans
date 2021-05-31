@@ -334,6 +334,7 @@ type Results struct {
 
 // Parse will parse the log line into a known type and values
 func Parse(l string) Results {
+	l = strings.TrimSuffix(strings.TrimSuffix(l, "\n"), "\r")
 	for _, rx := range rxParsers {
 		m, found := reSubMatchMap(rx.Rx, l)
 		if found {

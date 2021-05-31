@@ -132,7 +132,7 @@ export interface ServerLog {
     payload: unknown;
     source_id: string;
     target_id: string;
-    created_on: Date;
+    created_on: string;
 }
 
 export enum Team {

@@ -3,15 +3,12 @@ package web
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
 	"sync"
@@ -23,9 +20,27 @@ type webSocketClient struct {
 	Authenticated bool
 	Person        *model.Person
 	BroadcastLog  bool
+	open          bool
 	LogFilters    []logparse.MsgType
 	ctx           context.Context
 	eventChan     chan model.LogEvent
+	session       *melody.Session
+}
+
+func (c *webSocketClient) reader() {
+	for {
+		select {
+		case e := <-c.eventChan:
+			log.Debugf("ws event proc: %v", e.Type)
+			b, _ := json.Marshal(e)
+			if err := c.session.Write(b); err != nil {
+				log.Errorf("Failed to write to ws")
+			}
+		case <-c.ctx.Done():
+			log.Debugf("ws reader() shutdown")
+			return
+		}
+	}
 }
 
 // webSocketState holds the global websocket session state and handlers
@@ -100,68 +115,26 @@ func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 		}
 		c.Person = p
 		log.Debugf("WS User authhenticated successfully")
-		go func(client *webSocketClient, s *melody.Session) {
-			servers, _ := store.GetServers(client.ctx)
-			t := time.NewTicker(time.Millisecond * 500)
-			logid := int64(0)
-			for {
-				select {
-				case <-t.C:
-					var sid steamid.SID64
-					if logid%2 == 0 {
-						sid = 76561197961279983
-					} else {
-						sid = 76561198044052046
-					}
-					sl := model.ServerLog{
-						LogID:     logid,
-						ServerID:  servers[0].ServerID,
-						EventType: logparse.Say,
-						Payload: logparse.SayEvt{
-							EmptyEvt: logparse.EmptyEvt{
-								CreatedOn: config.Now(),
-							},
-							SourcePlayer: logparse.SourcePlayer{
-								Name: "Test Player",
-								PID:  4,
-								SID:  sid,
-								Team: logparse.BLU,
-							},
-							Msg: fmt.Sprintf("This is a test #%d", logid),
-						},
-						SourceID:  sid,
-						TargetID:  0,
-						CreatedOn: config.Now(),
-					}
-					b, _ := json.Marshal(sl)
-					if e := s.Write(b); e != nil {
-						log.Errorf("Failed to write ws message: %v", e)
-						return
-					}
-
-				case <-c.ctx.Done():
-					return
-				}
-				logid++
-			}
-		}(c, session)
 	} else {
 		log.Warnf("WS Unhandled: %v", msg)
 	}
 }
 
 func (ws *webSocketState) onWSConnect(session *melody.Session) {
-	ws.Lock()
-	defer ws.Unlock()
-	ws.sessions[session] = &webSocketClient{
+	client := &webSocketClient{
 		ctx:       context.Background(),
 		eventChan: make(chan model.LogEvent),
+		open:      true,
+		session:   session,
 	}
-	events := make(chan model.LogEvent)
-	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
+	if err := event.RegisterConsumer(client.eventChan, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("Error registering discord log event reader")
 	}
+	go client.reader()
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client connect")
+	ws.Lock()
+	ws.sessions[session] = client
+	ws.Unlock()
 }
 
 func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
@@ -172,10 +145,10 @@ func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
 		log.Errorf("Unregistered ws client")
 		return
 	}
+	c.open = false
 	delete(ws.sessions, session)
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client disconnect")
 	if err := event.UnregisterConsumer(c.eventChan); err != nil {
 		log.Errorf("Failed to unregister event consumer")
 	}
-	close(c.eventChan)
 }
