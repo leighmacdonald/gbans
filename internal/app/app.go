@@ -5,6 +5,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -25,10 +26,6 @@ var (
 	warningsMu *sync.RWMutex
 	// When a Server posts log entries they are sent through here
 	logRawQueue chan web.LogPayload
-	// Each log event can have any number of channels associated with them
-	// Events are sent to all channels in a fan-out style
-	logEventReaders   map[logparse.MsgType][]chan model.LogEvent
-	logEventReadersMu *sync.RWMutex
 )
 
 type warnReason int
@@ -148,21 +145,6 @@ func actionWorker(ctx context.Context, actChan chan *action.Action) {
 	}
 }
 
-// registerLogEventReader will register a channel to receive new log events as they come in
-func registerLogEventReader(r chan model.LogEvent, msgTypes []logparse.MsgType) error {
-	logEventReadersMu.Lock()
-	defer logEventReadersMu.Unlock()
-	for _, msgType := range msgTypes {
-		_, found := logEventReaders[msgType]
-		if !found {
-			logEventReaders[msgType] = []chan model.LogEvent{}
-		}
-		logEventReaders[msgType] = append(logEventReaders[msgType], r)
-	}
-	log.Debugf("Registered %d event readers", len(msgTypes))
-	return nil
-}
-
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
 func warnWorker(ctx context.Context) {
 	t := time.NewTicker(1 * time.Second)
@@ -195,7 +177,7 @@ func warnWorker(ctx context.Context) {
 
 func logWriter(ctx context.Context) {
 	events := make(chan model.LogEvent)
-	if err := registerLogEventReader(events, []logparse.MsgType{logparse.Any}); err != nil {
+	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	for {
@@ -216,7 +198,7 @@ func logWriter(ctx context.Context) {
 }
 
 // logReader is the fan-out orchestrator for game log events
-// Registering receivers can be accomplished with registerLogEventReader
+// Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(ctx context.Context, logRows chan web.LogPayload) {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
@@ -239,24 +221,14 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 				log.Errorf("Failed to get Server for log message: %v", e)
 				continue
 			}
-			le := model.LogEvent{
+			event.Emit(model.LogEvent{
 				Type:     v.MsgType,
 				Event:    v.Values,
 				Server:   s,
 				Player1:  getPlayer("SteamID", v.Values),
 				Player2:  getPlayer("sid2", v.Values),
 				RawEvent: raw.Message,
-			}
-			// Ensure we also send to Any handlers for all events.
-			for _, typ := range []logparse.MsgType{le.Type, logparse.Any} {
-				readers, ok := logEventReaders[typ]
-				if !ok {
-					continue
-				}
-				for _, reader := range readers {
-					reader <- le
-				}
-			}
+			})
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
@@ -300,7 +272,7 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 }
 
 func init() {
-	logEventReaders = map[logparse.MsgType][]chan model.LogEvent{}
+
 	warningsMu = &sync.RWMutex{}
 	warnings = make(map[steamid.SID64][]userWarning)
 	// Global background context. This is passed into the functions that use it as a parameter.
@@ -308,7 +280,7 @@ func init() {
 	gCtx = context.Background()
 
 	logRawQueue = make(chan web.LogPayload)
-	logEventReadersMu = &sync.RWMutex{}
+
 }
 
 func initFilters() {
@@ -340,7 +312,7 @@ func initWorkers() {
 func initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.LogEvent)
-		if err := registerLogEventReader(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 			log.Warnf("Error registering discord log event reader")
 		}
 		go discord.Start(gCtx, config.Discord.Token, events)

@@ -196,8 +196,8 @@ type WTeamScoreEvt struct {
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SayEvt struct {
 	EmptyEvt
-	SourcePlayer
-	Msg string `json:"msg"`
+	SourcePlayer `json:"source"`
+	Msg          string `json:"msg"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -206,8 +206,8 @@ type SayTeamEvt SayEvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DominationEvt struct {
 	EmptyEvt
-	SourcePlayer
-	TargetPlayer
+	SourcePlayer `json:"source"`
+	TargetPlayer `json:"target"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

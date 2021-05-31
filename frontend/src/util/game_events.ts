@@ -63,13 +63,75 @@ export enum MsgType {
     Any = 10000
 }
 
+// Helper
+export const StringIsNumber = (value: unknown) => !isNaN(Number(value));
+
+export const MsgTypeValues = Object.keys(MsgType)
+    .filter(StringIsNumber)
+    .map((key) => MsgType[key as any]);
+
+export const eventNames: Record<MsgType, string> = {
+    [MsgType.UnhandledMsg]: 'unknown',
+    [MsgType.UnknownMsg]: 'unknown',
+    [MsgType.Say]: 'say',
+    [MsgType.SayTeam]: 'say_team',
+    [MsgType.Killed]: 'killed',
+    [MsgType.KillAssist]: 'kill_assist',
+    [MsgType.Suicide]: 'suicide',
+    [MsgType.ShotFired]: 'shot_fired',
+    [MsgType.ShotHit]: 'shot_hit',
+    [MsgType.Damage]: 'damage',
+    [MsgType.Domination]: 'domination',
+    [MsgType.Revenge]: 'revenge',
+    [MsgType.Pickup]: 'pickup',
+    [MsgType.EmptyUber]: 'empty_uber',
+    [MsgType.MedicDeath]: 'medic_death',
+    [MsgType.MedicDeathEx]: 'medic_death_ex',
+    [MsgType.LostUberAdv]: 'lost_uber_adv',
+    [MsgType.ChargeReady]: 'charge_ready',
+    [MsgType.ChargeDeployed]: 'charge_deployed',
+    [MsgType.ChargeEnded]: 'charge_ended',
+    [MsgType.Healed]: 'healed',
+    [MsgType.Extinguished]: 'extinguished',
+    [MsgType.BuiltObject]: 'build_object',
+    [MsgType.CarryObject]: 'carry_object',
+    [MsgType.KilledObject]: 'killed_object',
+    [MsgType.DetonatedObject]: 'detonated_object',
+    [MsgType.DropObject]: 'drop_object',
+    [MsgType.FirstHealAfterSpawn]: 'first_heal',
+    [MsgType.CaptureBlocked]: 'capture_blocked',
+    [MsgType.KilledCustom]: 'killed_custom',
+    [MsgType.PointCaptured]: 'point_captured',
+    [MsgType.JoinedTeam]: 'joined_team',
+    [MsgType.ChangeClass]: 'change_class',
+    [MsgType.SpawnedAs]: 'spawned_as',
+    [MsgType.WRoundOvertime]: 'w_round_overtime',
+    [MsgType.WRoundStart]: 'w_round_start',
+    [MsgType.WRoundWin]: 'w_round_win',
+    [MsgType.WRoundLen]: 'w_round_len',
+    [MsgType.WTeamScore]: 'w_team_score',
+    [MsgType.WTeamFinalScore]: 'w_team_final_score',
+    [MsgType.WGameOver]: 'w_game_over',
+    [MsgType.WPaused]: 'w_paused',
+    [MsgType.WResumed]: 'w_resumed',
+    [MsgType.LogStart]: 'log_start',
+    [MsgType.LogStop]: 'log_stop',
+    [MsgType.CVAR]: 'cvar',
+    [MsgType.RCON]: 'rcon',
+    [MsgType.Connected]: 'connected',
+    [MsgType.Disconnected]: 'disconnected',
+    [MsgType.Validated]: 'validated',
+    [MsgType.Entered]: 'entered',
+    [MsgType.Any]: 'Any'
+};
+
 export interface ServerLog {
     log_id: number;
     server_id: number;
     event_type: MsgType;
     payload: unknown;
-    source_id: number;
-    target_it: number;
+    source_id: string;
+    target_id: string;
     created_on: Date;
 }
 
@@ -102,7 +164,7 @@ export interface TargetEvt extends SourceEvt {
 }
 
 export interface EmptyEvt {
-    created_on: number;
+    created_on: string;
 }
 
 // type UnhandledMsgEvt = EmptyEvt;

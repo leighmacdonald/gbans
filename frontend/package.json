@@ -81,6 +81,8 @@
     "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "react-use-websocket": "^2.7.1"
+    "@types/steamid": "^1.1.0",
+    "react-use-websocket": "^2.7.1",
+    "steamid": "^1.1.3"
   }
 }

@@ -7,9 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
 	"sync"
@@ -23,6 +25,7 @@ type webSocketClient struct {
 	BroadcastLog  bool
 	LogFilters    []logparse.MsgType
 	ctx           context.Context
+	eventChan     chan model.LogEvent
 }
 
 // webSocketState holds the global websocket session state and handlers
@@ -104,21 +107,29 @@ func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 			for {
 				select {
 				case <-t.C:
+					var sid steamid.SID64
+					if logid%2 == 0 {
+						sid = 76561197961279983
+					} else {
+						sid = 76561198044052046
+					}
 					sl := model.ServerLog{
 						LogID:     logid,
 						ServerID:  servers[0].ServerID,
 						EventType: logparse.Say,
 						Payload: logparse.SayEvt{
-							EmptyEvt: logparse.EmptyEvt{},
+							EmptyEvt: logparse.EmptyEvt{
+								CreatedOn: config.Now(),
+							},
 							SourcePlayer: logparse.SourcePlayer{
 								Name: "Test Player",
 								PID:  4,
-								SID:  76561197961279983,
+								SID:  sid,
 								Team: logparse.BLU,
 							},
 							Msg: fmt.Sprintf("This is a test #%d", logid),
 						},
-						SourceID:  76561197961279983,
+						SourceID:  sid,
 						TargetID:  0,
 						CreatedOn: config.Now(),
 					}
@@ -143,7 +154,12 @@ func (ws *webSocketState) onWSConnect(session *melody.Session) {
 	ws.Lock()
 	defer ws.Unlock()
 	ws.sessions[session] = &webSocketClient{
-		ctx: context.Background(),
+		ctx:       context.Background(),
+		eventChan: make(chan model.LogEvent),
+	}
+	events := make(chan model.LogEvent)
+	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
+		log.Warnf("Error registering discord log event reader")
 	}
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client connect")
 }
@@ -151,6 +167,15 @@ func (ws *webSocketState) onWSConnect(session *melody.Session) {
 func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
 	ws.Lock()
 	defer ws.Unlock()
+	c, found := ws.sessions[session]
+	if !found {
+		log.Errorf("Unregistered ws client")
+		return
+	}
 	delete(ws.sessions, session)
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client disconnect")
+	if err := event.UnregisterConsumer(c.eventChan); err != nil {
+		log.Errorf("Failed to unregister event consumer")
+	}
+	close(c.eventChan)
 }

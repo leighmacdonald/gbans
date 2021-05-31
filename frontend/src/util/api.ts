@@ -98,7 +98,7 @@ export interface Ban {
 }
 
 export interface Server {
-    server_id: string;
+    server_id: number;
     server_name: string;
     token: string;
     address: string;

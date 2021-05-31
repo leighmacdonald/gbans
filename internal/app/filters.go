@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	log "github.com/sirupsen/logrus"
@@ -43,7 +44,7 @@ func IsFilteredWord(body string) (bool, *model.Filter) {
 
 func filterWorker(ctx context.Context) {
 	c := make(chan model.LogEvent)
-	if err := registerLogEventReader(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
 	}
 	for {
