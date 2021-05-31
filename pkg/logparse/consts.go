@@ -85,9 +85,9 @@ const (
 // Pos is a position in 3D space
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Pos struct {
-	X int64
-	Y int64
-	Z int64
+	X int64 `json:"x"`
+	Y int64 `json:"y"`
+	Z int64 `json:"z"`
 }
 
 // AmmoPack is used for

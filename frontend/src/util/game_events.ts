@@ -1,3 +1,5 @@
+import { Person, Server } from './api';
+
 export enum MsgType {
     UnhandledMsg = 0,
     UnknownMsg = 1,
@@ -125,6 +127,23 @@ export const eventNames: Record<MsgType, string> = {
     [MsgType.Any]: 'Any'
 };
 
+export interface Pos {
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface LogEvent {
+    event_type: MsgType;
+    event: Record<string, string | number | Pos>;
+    server: Server;
+    player1?: Person;
+    player2?: Person;
+    assister?: Person;
+    raw_event: string;
+    created_on: string;
+}
+
 export interface ServerLog {
     log_id: number;
     server_id: number;
@@ -180,4 +199,11 @@ export interface EmptyEvt {
 
 export interface SayEvt extends TargetEvt {
     msg: string;
+}
+
+export interface DamageEvt extends TargetEvt {
+    damage: number;
+    real_damage?: number;
+    weapon: string;
+    healing?: number;
 }

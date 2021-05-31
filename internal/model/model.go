@@ -394,13 +394,14 @@ func (f *Filter) Match(value string) bool {
 }
 
 type LogEvent struct {
-	Type     logparse.MsgType  `json:"type"`
-	Event    map[string]string `json:"event"`
-	Server   Server            `json:"server"`
-	Player1  *Person           `json:"player1"`
-	Player2  *Person           `json:"player2"`
-	Assister *Person           `json:"assister"`
-	RawEvent string            `json:"raw_event"`
+	Type      logparse.MsgType  `json:"event_type"`
+	Event     map[string]string `json:"event"`
+	Server    Server            `json:"server"`
+	Player1   *Person           `json:"player1"`
+	Player2   *Person           `json:"player2"`
+	Assister  *Person           `json:"assister"`
+	RawEvent  string            `json:"raw_event"`
+	CreatedOn time.Time         `json:"created_on"`
 }
 
 // Unmarshal is just a helper to

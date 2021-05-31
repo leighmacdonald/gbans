@@ -31,7 +31,6 @@ func (c *webSocketClient) reader() {
 	for {
 		select {
 		case e := <-c.eventChan:
-			log.Debugf("ws event proc: %v", e.Type)
 			b, _ := json.Marshal(e)
 			if err := c.session.Write(b); err != nil {
 				log.Errorf("Failed to write to ws")

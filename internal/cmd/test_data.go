@@ -102,15 +102,16 @@ var testDataCmd = &cobra.Command{
 		}
 		for _, v := range [][]string{
 			{"lo-1", "192.168.0.101"},
-			{"us-1", "us1.uncledane.com"},
-			{"us-2", "us2.uncledane.com"},
-			{"us-3", "us3.uncledane.com"},
-			{"us-4", "us4.uncledane.com"},
-			{"us-5", "us5.uncledane.com"},
-			{"us-6", "us6.uncledane.com"},
-			{"eu-1", "eu1.uncledane.com"},
-			{"eu-2", "eu2.uncledane.com"},
-			{"au-1", "au1.uncledane.com"},
+			{"sea-1", "sea-1.us.uncletopia.com"},
+			{"lax-1", "lax-1.us.uncletopia.com"},
+			{"sfo-1", "sfo-1.us.uncletopia.com"},
+			{"dal-1", "dal-1.us.uncletopia.com"},
+			{"chi-1", "chi-1.us.uncletopia.com"},
+			{"nyc-1", "nyc-1.us.uncletopia.com"},
+			{"atl-1", "atl-1.us.uncletopia.com"},
+			{"frk-1", "frk-1.de.uncletopia.com"},
+			{"ber-1", "ber-1.de.uncletopia.com"},
+			{"ham-1", "ham-1.de.uncletopia.com"},
 		} {
 			s := model.Server{
 				ServerName:     v[0],

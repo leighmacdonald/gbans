@@ -93,7 +93,6 @@ func Start() {
 			for {
 				select {
 				case <-t.C:
-					log.Errorf("LOG: %s", rows[i])
 					logRawQueue <- web.LogPayload{
 						ServerName: serverId,
 						Message:    rows[i],
@@ -254,12 +253,13 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 				continue
 			}
 			event.Emit(model.LogEvent{
-				Type:     v.MsgType,
-				Event:    v.Values,
-				Server:   s,
-				Player1:  getPlayer("sid", v.Values),
-				Player2:  getPlayer("sid2", v.Values),
-				RawEvent: raw.Message,
+				Type:      v.MsgType,
+				Event:     v.Values,
+				Server:    s,
+				Player1:   getPlayer("sid", v.Values),
+				Player2:   getPlayer("sid2", v.Values),
+				RawEvent:  raw.Message,
+				CreatedOn: config.Now(),
 			})
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")

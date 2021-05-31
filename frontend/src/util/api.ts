@@ -143,7 +143,7 @@ export interface Person {
     loccityid: number;
 
     // Custom attributes
-    steam_id: number;
+    steam_id: string;
     ip_addr: string;
     created_on: Date;
     updated_on: Date;
@@ -162,7 +162,7 @@ export type IAPIResponseBans = BannedPerson[];
 export interface IAPIBanRecord {
     ban_id: number;
     net_id: number;
-    steam_id: number;
+    steam_id: string;
     cidr: string;
     author_id: number;
     ban_type: number;

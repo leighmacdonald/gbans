@@ -35,7 +35,7 @@ export const Profile = ({
                     <h3>Loading Profile...</h3>
                 </Grid>
             )}
-            {!loading && profile && profile.player.steam_id > 0 && (
+            {!loading && profile && profile.player.steam_id != '' && (
                 <Grid item xs>
                     <figure>
                         <img

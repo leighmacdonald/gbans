@@ -11,15 +11,18 @@ import {
     TextField
 } from '@material-ui/core';
 import { log } from '../util/errors';
-import { apiGetServers, Server } from '../util/api';
+import { apiGetServers, Person, Server } from '../util/api';
 import {
+    eventNames,
+    LogEvent,
     MsgType,
-    SayEvt,
-    ServerLog,
+    Pos,
     StringIsNumber
 } from '../util/game_events';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { takeRight } from 'lodash-es';
+import { parseDateTime } from '../util/text';
+import format from 'date-fns/format';
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
@@ -43,11 +46,12 @@ export const ServerLogView = (): JSX.Element => {
     const classes = useStyles();
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     const port = location.port ? ':' + location.port : '';
-    const messageHistory = useRef<ServerLog[]>([]);
+    // TODO Upper limit for how many messages well store
+    const messageHistory = useRef<LogEvent[]>([]);
     const [filterSteamID, setFilterSteamID] = useState<SteamID>(
         new SteamID('')
     );
-    const [filteredMessages, setFilteredMessages] = useState<ServerLog[]>([]);
+    const [filteredMessages, setFilteredMessages] = useState<LogEvent[]>([]);
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
         `${proto}://${location.host}${port}/ws`,
         {
@@ -73,7 +77,7 @@ export const ServerLogView = (): JSX.Element => {
     }[readyState];
 
     const [servers, setServers] = useState<Server[]>([]);
-    const [renderLimit, setRenderLimit] = useState<number>(10000);
+    const [renderLimit, setRenderLimit] = useState<number>(25);
     const [filterServerIDs, setFilterServerIDs] = useState<number[]>([]);
     const [filterMsgTypes, setFilterMsgTypes] = useState<MsgType[]>([
         MsgType.Any
@@ -96,30 +100,42 @@ export const ServerLogView = (): JSX.Element => {
         fn();
     }, []);
 
-    const handleChangeFilterMsg = (event: any) => {
+    const handleChangeFilterMsg = (
+        event: React.ChangeEvent<HTMLSelectElement> | any
+    ) => {
         const v = event.target.value.filter(StringIsNumber);
         setFilterMsgTypes(v);
     };
 
-    const handleChangeServers = (event: any) => {
+    const handleChangeServers = (
+        event: React.ChangeEvent<HTMLSelectElement> | any
+    ) => {
         setFilterServerIDs(event.target.value);
     };
-    const handleChangeRenderLimit = (event: any) => {
-        setRenderLimit(event.target.value);
+    const handleChangeRenderLimit = (
+        event: React.ChangeEvent<HTMLSelectElement> | any
+    ) => {
+        setRenderLimit(parseInt(event.target.value));
     };
 
-    const onFilterSteamIDChange = (event: any) => {
+    const onFilterSteamIDChange = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
         setFilterSteamID(new SteamID(event.target.value));
     };
 
     useEffect(() => {
         let logs = messageHistory.current.filter((v) => v);
         if (filterServerIDs.length > 0) {
-            logs = logs.filter((s) => filterServerIDs.includes(s.server_id));
+            logs = logs.filter((s) =>
+                filterServerIDs.includes(s.server.server_id)
+            );
         }
         if (filterSteamID.isValid()) {
             logs = logs.filter(
-                (s) => s.source_id == filterSteamID.getSteamID64()
+                (s) =>
+                    s.player1?.steam_id == filterSteamID.getSteamID64() ||
+                    s.player2?.steam_id == filterSteamID.getSteamID64()
             );
         }
         if (
@@ -128,13 +144,17 @@ export const ServerLogView = (): JSX.Element => {
         ) {
             logs = logs.filter((s) => filterMsgTypes.includes(s.event_type));
         }
-        logs = takeRight<ServerLog>(logs, renderLimit);
+        logs = takeRight<LogEvent>(logs, renderLimit);
         setFilteredMessages(logs);
     }, [
         setFilterServerIDs,
         setFilterMsgTypes,
         setRenderLimit,
-        lastJsonMessage
+        lastJsonMessage,
+        filterServerIDs,
+        filterSteamID,
+        filterMsgTypes,
+        renderLimit
     ]);
 
     return (
@@ -178,7 +198,7 @@ export const ServerLogView = (): JSX.Element => {
                     </InputLabel>
                     <Select
                         labelId="msg-filters-label"
-                        id="demo-mutiple-name"
+                        id="msg-filters"
                         multiple
                         value={filterMsgTypes}
                         onChange={handleChangeFilterMsg}
@@ -188,7 +208,7 @@ export const ServerLogView = (): JSX.Element => {
                             .filter(StringIsNumber)
                             .map((mt) => (
                                 <MenuItem key={mt} value={mt}>
-                                    {MsgType[mt as number]}
+                                    {MsgType[mt as MsgType]}
                                 </MenuItem>
                             ))}
                     </Select>
@@ -227,33 +247,419 @@ export const ServerLogView = (): JSX.Element => {
     );
 };
 
-export const renderServerLog = (l: ServerLog, i: number): JSX.Element => {
+const renderPersonColumn = (p: Person | undefined): JSX.Element => {
+    let name = '';
+    if (p?.personaname) {
+        name = p.personaname;
+    } else if (p?.steam_id) {
+        name = p.steam_id;
+    }
+    return <a style={{ fontWeight: 700 }}>{name}</a>;
+};
+
+const renderServerColumn = (s: Server): JSX.Element => {
+    return <a style={{ fontWeight: 700 }}>{s.server_name}</a>;
+};
+
+const renderEventTypeColumn = (t: MsgType): JSX.Element => {
+    return <a style={{ fontWeight: 700 }}>{eventNames[t]}</a>;
+};
+
+const renderEventTimeColumn = (t: string): JSX.Element => {
+    return (
+        <a style={{ fontWeight: 700 }}>{format(parseDateTime(t), 'HH:mm')}</a>
+    );
+};
+
+const renderPosColumn = (p: Pos): JSX.Element => {
+    return (
+        <span>
+            {p.x}, {p.y}, {p.z}
+        </span>
+    );
+};
+
+export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
     if (!l) {
         return <></>;
     }
-    let v: any;
+    let v = <></>;
     switch (l.event_type) {
+        case MsgType.UnhandledMsg: {
+            break;
+        }
+        case MsgType.UnknownMsg: {
+            v = <div>{JSON.stringify(l.event)}</div>;
+            break;
+        }
+        case MsgType.Killed: {
+            v = (
+                <div>
+                    Weapon: <b>{l.event['weapon']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.KillAssist: {
+            v = <div>Kill assist</div>;
+            break;
+        }
+        case MsgType.Suicide: {
+            v = (
+                <div>
+                    Suicided (pos:{' '}
+                    <b>{renderPosColumn(l.event['pos'] as Pos)}</b>)
+                </div>
+            );
+            break;
+        }
+        case MsgType.ShotFired: {
+            v = (
+                <div>
+                    <b>{l.event['weapon']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.ShotHit: {
+            v = (
+                <div>
+                    <b>{l.event['weapon']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.Domination: {
+            v = <div>Dominated</div>;
+            break;
+        }
+        case MsgType.Revenge: {
+            v = <div>Got revenge</div>;
+            break;
+        }
+        case MsgType.Pickup: {
+            v = <div>{l.event['pickup']}</div>;
+            break;
+        }
+        case MsgType.EmptyUber: {
+            v = <div>Uber empty</div>;
+            break;
+        }
+        case MsgType.MedicDeath: {
+            v = (
+                <div>
+                    Medic death (uber: {l.event['uber']}) (healing:{' '}
+                    {l.event['healing']})
+                </div>
+            );
+            break;
+        }
+        case MsgType.MedicDeathEx: {
+            v = <div>Medic death (pct: {l.event['uber_pct']})</div>;
+            break;
+        }
+        case MsgType.LostUberAdv: {
+            v = <div>Uber advantage lost ({l.event['advtime']}s)</div>;
+            break;
+        }
+        case MsgType.ChargeReady: {
+            v = (
+                <div>
+                    Uber <b>ready</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.ChargeDeployed: {
+            v = (
+                <div>
+                    Charge deployed (<b>{l.event['medigun']}</b>)
+                </div>
+            );
+            break;
+        }
+        case MsgType.ChargeEnded: {
+            v = (
+                <div>
+                    Charge ended (duration: <b>{l.event['duration']}s</b>)
+                </div>
+            );
+            break;
+        }
+        case MsgType.Healed: {
+            v = (
+                <div>
+                    <b>{l.event['healing']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.Extinguished: {
+            v = (
+                <div>
+                    With <b>{l.event['weapon']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.BuiltObject: {
+            v = (
+                <div>
+                    Built <b>{l.event['object']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.CarryObject: {
+            v = (
+                <div>
+                    Carried <b>{l.event['object']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.KilledObject: {
+            v = (
+                <div>
+                    Destroyed <b>{l.event['object']}</b> with{' '}
+                    <b>{l.event['weapon']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.DetonatedObject: {
+            v = (
+                <div>
+                    Detonated <b>{l.event['object']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.DropObject: {
+            v = (
+                <div>
+                    Dropped <b>{l.event['object']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.FirstHealAfterSpawn: {
+            v = (
+                <div>
+                    First heal took <b>{l.event['time']}s</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.CaptureBlocked: {
+            v = (
+                <div>
+                    Capture <b>Blocked</b> <b>{l.event['cp_name']}</b> (
+                    <b>{l.event['cp']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.KilledCustom: {
+            v = <div>custom_kill {l.event['custom_kill']}</div>;
+            break;
+        }
+        case MsgType.PointCaptured: {
+            v = (
+                <div>
+                    Team <b>{l.event['team']}</b>
+                    CP <b>{l.event['cp_name']}</b> (<b>{l.event['cp']}</b>) Num{' '}
+                    Num <b>{l.event['num_cappers']}</b>
+                    <b>{l.event['body']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.JoinedTeam: {
+            v = (
+                <div>
+                    <b>{l.event['team']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.ChangeClass: {
+            v = (
+                <div>
+                    <b>{l.event['class']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.SpawnedAs: {
+            v = (
+                <div>
+                    <b>{l.event['class']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.WRoundOvertime: {
+            v = (
+                <div>
+                    Round <b>Overtime</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.WRoundStart: {
+            v = (
+                <div>
+                    Round <b>Start</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.WRoundWin: {
+            v = <div>Round win {l.event['winner']}</div>;
+            break;
+        }
+        case MsgType.WRoundLen: {
+            v = (
+                <div>
+                    Round length <b>{l.event['length']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.WTeamScore: {
+            v = (
+                <div>
+                    {l.event['team']} Score {l.event['score']} Players{' '}
+                    {l.event['players']}
+                </div>
+            );
+            break;
+        }
+        case MsgType.WTeamFinalScore: {
+            v = (
+                <div>
+                    Score {l.event['score']} Players {l.event['players']}
+                </div>
+            );
+            break;
+        }
+        case MsgType.WGameOver: {
+            v = <div>Game Over (reason: {l.event['reason']})</div>;
+            break;
+        }
+        case MsgType.WPaused: {
+            v = (
+                <div>
+                    Game <b>Paused</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.WResumed: {
+            v = (
+                <div>
+                    Game <b>Resumed</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.CVAR: {
+            v = (
+                <div>
+                    CVAR <b>{l.event['cvar']}</b> &gt; <b>{l.event['value']}</b>
+                </div>
+            );
+            break;
+        }
+        case MsgType.Connected: {
+            v = <div>Connected</div>;
+            break;
+        }
+        case MsgType.Disconnected: {
+            v = <div>Disconnected</div>;
+            break;
+        }
+        case MsgType.Entered: {
+            v = <div>Entered</div>;
+            break;
+        }
+        case MsgType.Validated: {
+            v = <div>Validated</div>;
+            break;
+        }
+        case MsgType.RCON: {
+            v = <div>RCON {JSON.stringify(l.event)}</div>;
+            break;
+        }
+        case MsgType.LogStart: {
+            v = <div>Map loaded</div>;
+            break;
+        }
+        case MsgType.LogStop: {
+            v = <div>Map unloaded</div>;
+            break;
+        }
+        case MsgType.Damage: {
+            let rd = <></>;
+            if (l.event['realdamage']) {
+                rd = (
+                    <span>
+                        {' (real: '} <b>{l.event['realdamage']}</b>
+                        {')'}
+                    </span>
+                );
+            }
+            v = (
+                <div>
+                    {'(damage: '} <b>{l.event['damage']}</b>){rd}
+                </div>
+            );
+            break;
+        }
+        case MsgType.SayTeam: {
+            v = (
+                <div>
+                    <b>
+                        {'(team) '}
+                        {l.event['msg']}
+                    </b>
+                </div>
+            );
+            break;
+        }
         case MsgType.Say: {
-            v = (l.payload as SayEvt).msg;
+            v = (
+                <div>
+                    <b>{l.event['msg']}</b>
+                </div>
+            );
             break;
         }
         default: {
-            v = JSON.stringify(l);
+            v = <div>{JSON.stringify(l.event)}</div>;
         }
     }
+
     return (
         <Grid key={`sl-${i}`} item xs={12}>
             <Grid container>
                 <Grid item xs={1}>
-                    {l.event_type}
+                    {renderEventTimeColumn(l.created_on)}
                 </Grid>
                 <Grid item xs={1}>
-                    N/A
+                    {renderServerColumn(l.server)}
                 </Grid>
                 <Grid item xs={2}>
-                    {l.source_id ?? 'N/A'}
+                    {renderPersonColumn(l.player1)}
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={2}>
+                    {renderPersonColumn(l.player2)}
+                </Grid>
+                <Grid item xs={1}>
+                    {renderEventTypeColumn(l.event_type)}
+                </Grid>
+                <Grid item xs={5}>
                     {v}
                 </Grid>
             </Grid>

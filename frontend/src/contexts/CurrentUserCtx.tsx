@@ -21,7 +21,7 @@ export const GuestProfile: PlayerProfile = {
         profilestate: 0,
         profileurl: '',
         realname: '',
-        steam_id: 0,
+        steam_id: '',
         steamid: '',
         timecreated: 0,
         updated_on: new Date()

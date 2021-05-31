@@ -79,7 +79,7 @@ type JoinedTeamEvt struct {
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChangeClassEvt struct {
 	EmptyEvt
-	Class PlayerClass `json:"team"`
+	Class PlayerClass `json:"class"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -250,13 +250,6 @@ type ChargeEndedEvt struct {
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type MedicDeathEEvt struct {
-	EmptyEvt
-	SourcePlayer
-	UberPct int `json:"uber_pct"`
-}
-
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type LostUberAdvantageEvt struct {
 	EmptyEvt
 	SourcePlayer
@@ -299,6 +292,14 @@ type DamageEvt struct {
 	RealDamage int    `json:"real_damage"`
 	Weapon     Weapon `json:"weapon"`
 	Healing    int    `json:"healing,omitempty"` // On ubersaw
+}
+
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type HealedEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
+	Healing int `json:"healing,omitempty"` // On ubersaw
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

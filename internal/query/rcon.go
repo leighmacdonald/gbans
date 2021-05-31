@@ -43,7 +43,6 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 				return
 			}
 			for _, command := range commands {
-				log.WithFields(log.Fields{"Server": server.ServerName}).Debugf("RCON: %s", command)
 				resp, err := conn.Exec(sanitizeRCONCommand(command))
 				if err != nil {
 					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, err)

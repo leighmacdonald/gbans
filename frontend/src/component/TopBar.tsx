@@ -330,15 +330,18 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
                         </div>
                         <div className={classes.grow} />
                         <div className={classes.sectionDesktop}>
-                            {currentUser?.player.steam_id <= 0 && (
-                                <Button onClick={handleOnLogin}>
-                                    <img
-                                        src={'/assets/dist/steam_login_sm.png'}
-                                        alt={'Steam Login'}
-                                    />
-                                </Button>
-                            )}
-                            {currentUser?.player.steam_id > 0 && (
+                            {!currentUser.player ||
+                                (currentUser?.player.steam_id === '' && (
+                                    <Button onClick={handleOnLogin}>
+                                        <img
+                                            src={
+                                                '/assets/dist/steam_login_sm.png'
+                                            }
+                                            alt={'Steam Login'}
+                                        />
+                                    </Button>
+                                ))}
+                            {currentUser?.player.steam_id != '' && (
                                 <>
                                     <IconButton
                                         aria-label="show 4 new alerts"
