@@ -91,12 +91,10 @@ func Start() {
 			}
 			i := 0
 			for {
-				select {
-				case <-t.C:
-					logRawQueue <- web.LogPayload{
-						ServerName: serverId,
-						Message:    rows[i],
-					}
+				<-t.C
+				logRawQueue <- web.LogPayload{
+					ServerName: serverId,
+					Message:    rows[i],
 				}
 				i++
 				if i == len(rows) {

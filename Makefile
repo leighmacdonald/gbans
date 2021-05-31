@@ -74,7 +74,7 @@ docker_test:
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
 
-publish_latest:
+publish_latest: image_latest
 	@docker push leighmacdonald/gbans:latest
 
 image_tag:
