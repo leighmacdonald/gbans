@@ -12,14 +12,13 @@ require (
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hpcloud/tail v1.0.0
 	github.com/jackc/pgconn v1.8.1
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
 	github.com/jackc/pgx/v4 v4.11.0
-	github.com/jedib0t/go-pretty/v6 v6.2.1
+	github.com/jedib0t/go-pretty/v6 v6.2.2
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.4
