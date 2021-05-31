@@ -84,9 +84,8 @@ func unban(ctx context.Context, args action.UnbanRequest) (bool, error) {
 	if err != nil {
 		if err == store.ErrNoResult {
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 	b.Ban.ValidUntil = config.Now()
 	if err2 := store.SaveBan(ctx, b.Ban); err2 != nil {

@@ -28,9 +28,8 @@ func validateLink(ctx context.Context, sourceID action.Source, target *action.So
 	if err != nil {
 		if err == store.ErrNoResult {
 			return consts.ErrUnlinkedAccount
-		} else {
-			return consts.ErrInternal
 		}
+		return consts.ErrInternal
 	}
 	*target = action.Source(p.SteamID.String())
 	return nil

@@ -18,13 +18,19 @@ jobs:
           go-version: '^1.16.0'
       - name: Build gbans
         run: make dist
-      - uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+
+      - name: "Build Changelog"
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@{latest-release}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          outputFile: ${{ github.workflow }}-CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: CHANGELOG.md
+          body_path: ${{ github.workflow }}-CHANGELOG.md
           prerelease: true
           files: |
             gbans-*.zip

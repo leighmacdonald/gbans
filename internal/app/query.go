@@ -148,7 +148,7 @@ func getAllServerStatus(ctx context.Context) (map[model.Server]extra.Status, err
 	return statuses, nil
 }
 
-// FindPlayerByCIDR
+// FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
 func FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*model.FindResult, error) {
 	statuses, err := getAllServerStatus(ctx)
