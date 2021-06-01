@@ -102,15 +102,16 @@ func TestParse(t *testing.T) {
 		Healing: 135,
 		Uber:    0}, value10)
 
-	var value11 KilledCustomEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:44: "Desmos Calculator<10><[U:1:1132396177]><Red>" Killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "spy_cicle" (customkill "backstab") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, KilledCustom), &value11))
-	require.EqualValues(t, KilledCustomEvt{
+	var value11 KilledEvt
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:44: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "spy_cicle" (customkill "backstab") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, Killed), &value11))
+	require.EqualValues(t, KilledEvt{
 		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
 		TargetPlayer: TargetPlayer{Name2: "Dzefersons14", PID2: 8,
 			SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: BLU,
 		},
 		APos:       Pos{X: 217, Y: -54, Z: -302},
 		VPos:       Pos{X: 203, Y: -2, Z: -319},
+		Weapon:     Spycicle,
 		CustomKill: "backstab"}, value11)
 
 	var value12 KillAssistEvt
@@ -305,6 +306,16 @@ func TestParse(t *testing.T) {
 		SourcePlayer: SourcePlayer{Name: "rad", PID: 6, SID: 0x110000103724f8f, Team: 1},
 		TargetPlayer: TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.SID3ToSID64("[U:1:66656848]"), Team2: BLU},
 		Damage:       88, RealDamage: 32, Weapon: Ubersaw, Healing: 110}, value48)
+
+	var value49 KilledEvt
+	require.NoError(t, Unmarshal(pa(`L 05/21/2021 - 20:46:13: "Five<636><[U:1:66374745]><Blue>" killed "2-D<658><[U:1:126712178]><Red>" with "scattergun" (attacker_position "803 -693 -235") (victim_position "663 -899 -165")`, Killed), &value49))
+	require.EqualValues(t, KilledEvt{
+		SourcePlayer: SourcePlayer{Name: "Five", PID: 636, SID: steamid.SID3ToSID64("[U:1:66374745]"), Team: BLU},
+		TargetPlayer: TargetPlayer{Name2: "2-D", PID2: 658, SID2: steamid.SID3ToSID64("[U:1:126712178]"), Team2: RED},
+		APos:         Pos{X: 803, Y: -693, Z: -235}, VPos: Pos{X: 663, Y: -899, Z: -165},
+		Weapon: Scattergun,
+	}, value49)
+
 }
 
 func TestParseKVs(t *testing.T) {

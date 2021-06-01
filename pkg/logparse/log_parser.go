@@ -52,9 +52,9 @@ var (
 	//rxDamageRealHeal := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(Damage "(?P<Damage>\d+)"\) \(realdamage "(?P<realdamage>\d+)"\) \(weapon "(?P<weapon>.+?)"\) \(healing "(?P<healing>\d+)"\)`)
 	// rxDamage := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>".+?Damage "(?P<Damage>\d+)"\) \(weapon "(?P<weapon>\S+)"\)`)
 	// Old format only?
-	rxDamageOld            = regexp.MustCompile(dp + `triggered "Damage" \(Damage "(?P<Damage>\d+)"\)`)
-	rxKilled               = regexp.MustCompile(dp + `Killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
-	rxKilledCustom         = regexp.MustCompile(dp + `Killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(customkill "(?P<customkill>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
+	rxDamageOld = regexp.MustCompile(dp + `triggered "Damage" \(Damage "(?P<Damage>\d+)"\)`)
+	rxKilled    = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)"\s(?P<keypairs>.+?)$`)
+	//rxKilledCustom         = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(customkill "(?P<customkill>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxAssist               = regexp.MustCompile(dp + `triggered "kill assist" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(assister_position "(?P<aspos>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxDomination           = regexp.MustCompile(dp + `triggered "Domination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
 	rxRevenge              = regexp.MustCompile(dp + `triggered "Revenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
@@ -101,7 +101,6 @@ var (
 		{rxDamageOld, Damage},
 		{rxKilled, Killed},
 		{rxHealed, Healed},
-		{rxKilledCustom, KilledCustom},
 		{rxAssist, KillAssist},
 		{rxPickup, Pickup},
 		{rxSpawned, SpawnedAs},

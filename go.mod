@@ -12,7 +12,6 @@ require (
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hpcloud/tail v1.0.0
@@ -33,8 +32,8 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.25.0 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rumblefrog/go-a2s v1.0.0
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1

@@ -105,13 +105,14 @@ type MedicDeathExEvt struct {
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type KilledCustomEvt struct {
+type KilledEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	APos       Pos    `json:"a_pos"`
-	VPos       Pos    `json:"v_pos"`
-	CustomKill string `json:"custom_kill"`
+	APos       Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	VPos       Pos    `json:"victim_position" mapstructure:"victim_position"`
+	Weapon     Weapon `json:"weapon" mapstructure:"weapon"`
+	CustomKill string `json:"custom_kill"  mapstructure:"custom_kill"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

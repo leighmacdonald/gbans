@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -335,6 +336,7 @@ func initWorkers(ctx context.Context) {
 	go logReader(ctx, logRawQueue)
 	go logWriter(ctx)
 	go filterWorker(ctx)
+	go state.LogMeter(ctx)
 }
 
 func initDiscord() {

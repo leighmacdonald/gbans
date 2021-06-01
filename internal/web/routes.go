@@ -4,9 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 )
 
+func prometheusHandler() gin.HandlerFunc {
+	h := promhttp.Handler()
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	}
+}
 func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	ws := newWebSocketState()
 	jsRoutes := func(c *gin.Context) {
@@ -31,6 +38,9 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 		"/admin/import", "/admin/filters", "/404", "/logout"} {
 		r.GET(rt, jsRoutes)
 	}
+
+	r.GET("/metrics", prometheusHandler())
+
 	r.GET("/login/success", onLoginSuccess())
 	r.GET("/auth/callback", onOpenIDCallback())
 	r.GET("/api/ban/:ban_id", onAPIGetBanByID())
