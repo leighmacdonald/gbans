@@ -490,10 +490,10 @@ func onPostLogAdd(logMsgChan chan LogPayload) gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
+		responseOK(c, http.StatusCreated, nil)
 		for _, r := range req {
 			logMsgChan <- r
 		}
-		responseOK(c, http.StatusCreated, nil)
 	}
 }
 

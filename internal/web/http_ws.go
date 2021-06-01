@@ -19,10 +19,10 @@ import (
 type payloadType int
 
 const (
-	okType payloadType = iota
-	errType
-	authType
-	logType
+	//okType payloadType = iota
+	errType  = 1
+	authType = 2
+	logType  = 3
 )
 
 // webSocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage

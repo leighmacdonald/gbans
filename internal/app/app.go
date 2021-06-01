@@ -71,7 +71,7 @@ func Start() {
 	}
 
 	// Start the background goroutine workers
-	initWorkers()
+	initWorkers(gCtx)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
@@ -80,6 +80,7 @@ func Start() {
 
 	if config.General.Mode == config.Debug {
 		go func() {
+			// TODO remove
 			f := golib.FindFile("test_data/log_sup_med_1.log", "gbans")
 			b, _ := ioutil.ReadFile(f)
 			rows := strings.Split(string(b), "\r\n")
@@ -302,15 +303,12 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 }
 
 func init() {
-
 	warningsMu = &sync.RWMutex{}
 	warnings = make(map[steamid.SID64][]userWarning)
 	// Global background context. This is passed into the functions that use it as a parameter.
 	// This should not be implicitly referenced anywhere to help testing
 	gCtx = context.Background()
-
-	logRawQueue = make(chan web.LogPayload)
-
+	logRawQueue = make(chan web.LogPayload, 50)
 }
 
 func initFilters() {
@@ -329,14 +327,14 @@ func initStore() {
 	store.Init(config.DB.DSN)
 }
 
-func initWorkers() {
-	go banSweeper(gCtx)
-	go serverStateUpdater(gCtx)
-	go profileUpdater(gCtx)
-	go warnWorker(gCtx)
-	go logReader(gCtx, logRawQueue)
-	go logWriter(gCtx)
-	go filterWorker(gCtx)
+func initWorkers(ctx context.Context) {
+	go banSweeper(ctx)
+	go serverStateUpdater(ctx)
+	go profileUpdater(ctx)
+	go warnWorker(ctx)
+	go logReader(ctx, logRawQueue)
+	go logWriter(ctx)
+	go filterWorker(ctx)
 }
 
 func initDiscord() {

@@ -873,7 +873,7 @@ func GetExpiredBans(ctx context.Context) ([]*model.Ban, error) {
 //	return total, nil
 //}
 
-// getBans returns all bans that fit the filter criteria passed in
+// GetBans returns all bans that fit the filter criteria passed in
 func GetBans(ctx context.Context, o *QueryFilter) ([]*model.BannedPerson, error) {
 	q, a, e := sb.Select(
 		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
@@ -903,7 +903,7 @@ func GetBans(ctx context.Context, o *QueryFilter) ([]*model.BannedPerson, error)
 		b := model.NewBannedPerson()
 		if err := rows.Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
-			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn, &b.Person.IPAddr,
+			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn,
 			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName, &b.Person.ProfileURL,
 			&b.Person.Avatar, &b.Person.AvatarMedium, &b.Person.AvatarFull, &b.Person.AvatarHash,
 			&b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,

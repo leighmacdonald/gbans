@@ -176,8 +176,9 @@ export const PlayerBanForm = ({
                         <RadioGroup
                             aria-label="gender"
                             name="gender1"
-                            value={fSteam}
+                            value={banType}
                             onChange={onChangeType}
+                            defaultValue={'steam'}
                             row
                         >
                             <FormControlLabel
@@ -217,6 +218,30 @@ export const PlayerBanForm = ({
                         label={'Ban Reason'}
                         onChange={handleUpdateReasonText}
                     />
+                </Grid>
+                <Grid item xs={12}>
+                    <FormControl fullWidth>
+                        <InputLabel id="duration-label">
+                            Ban Duration
+                        </InputLabel>
+                        <Select
+                            fullWidth
+                            labelId="duration-label"
+                            id="duration-helper"
+                            value={duration}
+                            onChange={handleUpdateDuration}
+                        >
+                            {Durations.map((v) => (
+                                <MenuItem key={`time-${v}`} value={v}>
+                                    {v}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        <FormHelperText>
+                            Choosing custom will allow you to input a custom
+                            duration
+                        </FormHelperText>
+                    </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                     <FormControl fullWidth>

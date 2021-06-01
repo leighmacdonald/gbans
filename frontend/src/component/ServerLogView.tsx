@@ -50,6 +50,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export const ServerLogView = (): JSX.Element => {
+    const maxCacheSize = 10000;
     const classes = useStyles();
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     const port = location.port ? ':' + location.port : '';
@@ -60,6 +61,7 @@ export const ServerLogView = (): JSX.Element => {
     );
     const [filteredMessages, setFilteredMessages] = useState<LogEvent[]>([]);
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+        // `${proto}://gbans.uncledane.com/ws`
         `${proto}://${location.host}${port}/ws`,
         {
             onOpen: () => {
@@ -84,6 +86,9 @@ export const ServerLogView = (): JSX.Element => {
                 messageHistory.current.push(
                     (p as WebSocketPayload<LogEvent>).data
                 );
+                if (messageHistory.current.length >= maxCacheSize) {
+                    messageHistory.current.shift();
+                }
                 break;
         }
         return messageHistory.current;
@@ -187,7 +192,7 @@ export const ServerLogView = (): JSX.Element => {
     return (
         <Grid container>
             <Grid item xs={3}>
-                <FormControl className={classes.formControl}>
+                <FormControl className={classes.formControl} fullWidth>
                     <TextField
                         onChange={onFilterSteamIDChange}
                         id="standard-basic"
@@ -195,8 +200,8 @@ export const ServerLogView = (): JSX.Element => {
                     />
                 </FormControl>
             </Grid>
-            <Grid item xs={3}>
-                <FormControl className={classes.formControl}>
+            <Grid item xs={2}>
+                <FormControl className={classes.formControl} fullWidth>
                     <InputLabel id="limit-filters-label">
                         Limit results
                     </InputLabel>
@@ -218,8 +223,29 @@ export const ServerLogView = (): JSX.Element => {
                     </Select>
                 </FormControl>
             </Grid>
-            <Grid item xs={3}>
-                <FormControl className={classes.formControl}>
+            <Grid item xs={7}>
+                <FormControl className={classes.formControl} fullWidth>
+                    <InputLabel id="server-filters-label">
+                        Server Filters
+                    </InputLabel>
+                    <Select
+                        labelId="server-filters-label"
+                        id="server-filters"
+                        multiple
+                        value={filterServerIDs}
+                        onChange={handleChangeServers}
+                        input={<Input />}
+                    >
+                        {servers.map((s) => (
+                            <MenuItem key={s.server_id} value={s.server_id}>
+                                {s.server_name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+                <FormControl className={classes.formControl} fullWidth>
                     <InputLabel id="msg-filters-label">
                         Message Filters
                     </InputLabel>
@@ -242,27 +268,7 @@ export const ServerLogView = (): JSX.Element => {
                     </Select>
                 </FormControl>
             </Grid>
-            <Grid item xs={3}>
-                <FormControl className={classes.formControl}>
-                    <InputLabel id="server-filters-label">
-                        Server Filters
-                    </InputLabel>
-                    <Select
-                        labelId="server-filters-label"
-                        id="server-filters"
-                        multiple
-                        value={filterServerIDs}
-                        onChange={handleChangeServers}
-                        input={<Input />}
-                    >
-                        {servers.map((s) => (
-                            <MenuItem key={s.server_id} value={s.server_id}>
-                                {s.server_name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-            </Grid>
+
             <Grid item xs={12}>
                 <h5>Connection Status: {connectionStatus}</h5>
             </Grid>

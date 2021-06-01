@@ -10,7 +10,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
@@ -252,19 +251,11 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
             onClose={handleMobileMenuClose}
         >
             <MenuItem>
-                <IconButton aria-label="show 4 new mails" color="inherit">
-                    <Badge badgeContent={4} color="secondary">
-                        <MailIcon />
-                    </Badge>
-                </IconButton>
-                <p>Messages</p>
-            </MenuItem>
-            <MenuItem>
                 <IconButton
-                    aria-label="show 11 new notifications"
+                    aria-label="show 0 new notifications"
                     color="inherit"
                 >
-                    <Badge badgeContent={11} color="secondary">
+                    <Badge badgeContent={0} color="secondary">
                         <NotificationsIcon />
                     </Badge>
                 </IconButton>
@@ -344,18 +335,10 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
                             {currentUser?.player.steam_id != '' && (
                                 <>
                                     <IconButton
-                                        aria-label="show 4 new alerts"
+                                        aria-label="no notifications"
                                         color="inherit"
                                     >
-                                        <Badge badgeContent={4} color="error">
-                                            <MailIcon />
-                                        </Badge>
-                                    </IconButton>
-                                    <IconButton
-                                        aria-label="show 17 new notifications"
-                                        color="inherit"
-                                    >
-                                        <Badge badgeContent={17} color="error">
+                                        <Badge badgeContent={0}>
                                             <NotificationsIcon />
                                         </Badge>
                                     </IconButton>

@@ -26,9 +26,9 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 		r.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
 	}
 	for _, rt := range []string{
-		"/", "/servers", "/profile", "/bans", "/appeal",
+		"/", "/servers", "/profile", "/bans", "/appeal", "/settings",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
-		"/admin/import", "/admin/filters"} {
+		"/admin/import", "/admin/filters", "/404", "/logout"} {
 		r.GET(rt, jsRoutes)
 	}
 	r.GET("/login/success", onLoginSuccess())
