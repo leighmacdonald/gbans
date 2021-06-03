@@ -138,7 +138,7 @@ func ban(ctx context.Context, args action.BanRequest) (*model.Ban, error) {
 	}
 	go func() {
 		ipAddr := ""
-		// kick the user if they currently are playing on a Server
+		// kick the user if they currently are playing on a IsServer
 		pi := FindPlayer(ctx, target.String(), "")
 		if pi.Valid && pi.InGame {
 			ipAddr = pi.Player.IP.String()
@@ -240,7 +240,7 @@ func kick(ctx context.Context, args *action.KickRequest) (*model.PlayerInfo, err
 	//	return nil, errSrc
 	//}
 	ipAddr := ""
-	// kick the user if they currently are playing on a Server
+	// kick the user if they currently are playing on a IsServer
 	pi := FindPlayer(ctx, target.String(), "")
 	if pi.Valid && pi.InGame {
 		ipAddr = pi.Player.IP.String()

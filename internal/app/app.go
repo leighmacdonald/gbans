@@ -28,7 +28,7 @@ var (
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
-	// When a Server posts log entries they are sent through here
+	// When a IsServer posts log entries they are sent through here
 	logRawQueue chan web.LogPayload
 )
 
@@ -106,7 +106,7 @@ func Start() {
 		}()
 	}
 
-	// Start the HTTP Server
+	// Start the HTTP IsServer
 	web.Start(gCtx, logRawQueue)
 }
 
@@ -249,7 +249,7 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 			v := logparse.Parse(raw.Message)
 			s, e := store.GetServerByName(ctx, raw.ServerName)
 			if e != nil {
-				log.Errorf("Failed to get Server for log message: %v", e)
+				log.Errorf("Failed to get IsServer for log message: %v", e)
 				continue
 			}
 			event.Emit(model.LogEvent{

@@ -212,7 +212,7 @@ func GetServerByName(ctx context.Context, serverName string) (model.Server, erro
 	cacheServerMu.RUnlock()
 	var s model.Server
 	q, a, e := sb.Select("server_id", "short_name", "token", "address", "port", "rcon",
-		"token_created_on", "created_on", "updated_on", "reserved_slots").
+		"token_created_on", "created_on", "updated_on", "reserved_slots", "password").
 		From(string(tableServer)).
 		Where(sq.Eq{"short_name": serverName}).
 		ToSql()
@@ -221,7 +221,8 @@ func GetServerByName(ctx context.Context, serverName string) (model.Server, erro
 	}
 	if err := db.QueryRow(ctx, q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port,
-			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots); err != nil {
+			&s.RCON, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
+			&s.ReservedSlots, &s.Password); err != nil {
 		return model.Server{}, err
 	}
 	cacheServerMu.Lock()
@@ -269,6 +270,7 @@ func updateServer(ctx context.Context, s *model.Server) error {
 		Set("token_created_on", s.TokenCreatedOn).
 		Set("updated_on", s.UpdatedOn).
 		Set("reserved_slots", s.ReservedSlots).
+		Set("password", s.Password).
 		Where(sq.Eq{"server_id": s.ServerID}).
 		ToSql()
 	if e != nil {

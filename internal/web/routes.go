@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/Depado/ginprom"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -20,8 +21,13 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
 	//router.GET(routeRaw(string(routeHome)), )
-
 	r.Use(gin.Logger())
+
+	prom := ginprom.New(func(p *ginprom.Prometheus) {
+		p.Namespace = "gbans"
+		p.Subsystem = "http"
+	})
+	r.Use(prom.Instrument())
 
 	// Dont use session for static assets
 	// Note that we only use embedded assets for !release modes
@@ -55,7 +61,7 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", onSAPIPostServerAuth())
-	// Server Auth Request
+	// IsServer Auth Request
 	serverAuth := r.Use(authMiddleWare())
 	serverAuth.POST("/api/ping_mod", onPostPingMod())
 	serverAuth.POST("/api/check", onPostServerCheck())

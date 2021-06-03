@@ -168,6 +168,11 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
+		if srv.Password != req.Key {
+			responseErr(c, http.StatusForbidden, nil)
+			log.Warnf("Invalid server key used: %s", req.ServerName)
+			return
+		}
 		srv.Token = golib.RandomString(40)
 		srv.TokenCreatedOn = config.Now()
 		if err2 := store.SaveServer(ctx, &srv); err2 != nil {

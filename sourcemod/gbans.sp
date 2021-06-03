@@ -109,6 +109,7 @@ void CheckPlayer(int client, const char[] auth, const char[] ip) {
     delete req;
 }
 
+
 void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                  HTTPRequestMethod method) {
     if (success) {

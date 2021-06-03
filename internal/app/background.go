@@ -98,7 +98,7 @@ func serverStateUpdater(ctx context.Context) {
 		for name, resp := range respRCON {
 			s, errPs := extra.ParseStatus(resp, true)
 			if errPs != nil {
-				log.Warnf("Failed to parse Server state (%s): %v", name, errPs)
+				log.Warnf("Failed to parse IsServer state (%s): %v", name, errPs)
 				return
 			}
 			var (
@@ -116,7 +116,7 @@ func serverStateUpdater(ctx context.Context) {
 			}
 			a2sinfo, found := respA2S[name]
 			if !found {
-				log.Warnf("Failed to get a2s Server info for: %s", name)
+				log.Warnf("Failed to get a2s IsServer info for: %s", name)
 			}
 			state.SetServer(name, state.ServerState{
 				Addr: addr, Port: port, Slots: slots, GameType: state.TF2, A2SInfo: a2sinfo, Status: s, Alive: found})

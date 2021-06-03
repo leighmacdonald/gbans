@@ -36,6 +36,9 @@ type BanList struct {
 
 type relayConfig struct {
 	Enabled    bool     `mapstructure:"enabled"`
+	Host       string   `mapstructure:"host"`
+	Password   string   `mapstructure:"password"`
+	ServerName string   `mapstructure:"server_name"`
 	ChannelIDs []string `mapstructure:"channel_ids"`
 }
 
@@ -267,6 +270,12 @@ func init() {
 	viper.SetDefault("network_bans.ip2location.asn_enabled", false)
 	viper.SetDefault("network_bans.ip2location.ip_enabled", false)
 	viper.SetDefault("network_bans.ip2location.proxy_enabled", false)
+
+	viper.SetDefault("relay.enabled", false)
+	viper.SetDefault("relay.host", "wss://localhost:6006")
+	viper.SetDefault("relay.password", "")
+	viper.SetDefault("relay.server_name", "")
+	viper.SetDefault("relay.channel_ids", []string{})
 
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.force_colours", true)

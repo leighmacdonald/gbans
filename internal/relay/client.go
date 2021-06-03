@@ -1,12 +1,8 @@
 package relay
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	http2 "github.com/leighmacdonald/gbans/internal/web"
-	"github.com/pkg/errors"
-	"net/http"
+	"github.com/leighmacdonald/gbans/internal/web"
 	"strings"
 	"time"
 
@@ -16,7 +12,6 @@ import (
 )
 
 var (
-	httpClient  *http.Client
 	messageChan chan string
 )
 
@@ -95,56 +90,40 @@ func newFileWatcher(ctx context.Context, directory string) {
 }
 
 // New creates and starts a new log reader client instance
-func New(ctx context.Context, name string, logPath string, address string, timeout time.Duration) error {
-	url := address + "/api/log"
-	sendPayload := func(payload []http2.LogPayload) error {
-		c, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
-		b, err1 := json.Marshal(payload)
-		if err1 != nil {
-			return errors.Wrapf(err1, "Error encoding payload")
+func New(ctx context.Context, name string, logPath string, address string, password string) error {
+	client, errC := newClient(ctx, name, address, password)
+	if errC != nil {
+		return errC
+	}
+	doConnect := func() {
+		if !client.isOpen() {
+			if err := client.connect(); err != nil {
+				log.Errorf("Failed to connect: %v", err)
+			}
 		}
-		req, err2 := http.NewRequestWithContext(c, "POST", url, bytes.NewReader(b))
-		if err2 != nil {
-			return errors.Wrapf(err2, "Error creating request payload")
-		}
-		resp, err3 := httpClient.Do(req)
-		if err3 != nil {
-			return errors.Wrapf(err3, "Error performing request")
-		}
-		if resp.StatusCode != http.StatusCreated {
-			return errors.Errorf("Invalid respose received: %s", resp.Status)
-		}
-		return nil
 	}
 	go newFileWatcher(ctx, logPath)
-	var messageQueue []http2.LogPayload
-	duration := time.Second * 5
-	ticker := time.NewTicker(duration)
+
+	connWatch := time.NewTicker(time.Second * 5)
+	doConnect()
 	for {
 		select {
-		case <-ticker.C:
-			if len(messageQueue) > 0 {
-				log.Debugf("Flushing message queue (timer): len %d", len(messageQueue))
-				go func(messages []http2.LogPayload) {
-					if err := sendPayload(messages); err != nil {
-						log.Errorf("Failed to send queued log payload: %v", err)
-					}
-				}(messageQueue)
-				messageQueue = nil
-			}
+		case <-connWatch.C:
+			doConnect()
 		case msg := <-messageChan:
-			messageQueue = append(messageQueue, http2.LogPayload{ServerName: name, Message: msg})
-			log.Debugf("Added message to log queue: len %d", len(messageQueue))
-			if len(messageQueue) >= 25 {
-				log.Debugf("Flushing message queue (size): len %d", len(messageQueue))
-				go func(messages []http2.LogPayload) {
-					if err := sendPayload(messages); err != nil {
-						log.Errorf("Failed to send queued log payload: %v", err)
-					}
-				}(messageQueue)
-				messageQueue = nil
-				ticker.Reset(duration)
+			if !client.isOpen() || !client.authenticated {
+				continue
+			}
+			p, e := web.EncodeWSPayload(web.LogType, web.WebSocketLogPayload{
+				ServerName: name,
+				Message:    msg,
+			})
+			if e != nil {
+				log.Errorf("Failed to encode ws payload: %v", e)
+				continue
+			}
+			if err := client.enqueue(p); err != nil {
+				log.Errorf("Failed to enqueue paylad: %v", err)
 			}
 		case <-ctx.Done():
 			log.Debugf("relay client shutting down")
@@ -155,5 +134,4 @@ func New(ctx context.Context, name string, logPath string, address string, timeo
 
 func init() {
 	messageChan = make(chan string)
-	httpClient = &http.Client{Timeout: time.Second * 15}
 }

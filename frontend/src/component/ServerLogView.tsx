@@ -14,6 +14,7 @@ import { log } from '../util/errors';
 import {
     apiGetServers,
     encode,
+    LogQueryOpts,
     PayloadType,
     Person,
     Server,
@@ -34,8 +35,7 @@ import format from 'date-fns/format';
 const useStyles = makeStyles((theme) => ({
     formControl: {
         margin: theme.spacing(1),
-        minWidth: 120,
-        maxWidth: 300
+        minWidth: 120
     },
     chips: {
         display: 'flex',
@@ -53,35 +53,77 @@ export const ServerLogView = (): JSX.Element => {
     const maxCacheSize = 10000;
     const classes = useStyles();
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const port = location.port ? ':' + location.port : '';
     // TODO Upper limit for how many messages well store
     const messageHistory = useRef<LogEvent[]>([]);
+    const [servers, setServers] = useState<Server[]>([]);
+    const [renderLimit, setRenderLimit] = useState<number>(25);
+    const [filterServerIDs, setFilterServerIDs] = useState<number[]>([]);
+    const [filterMsgTypes, setFilterMsgTypes] = useState<MsgType[]>([
+        MsgType.Say,
+        MsgType.SayTeam,
+        MsgType.WRoundWin,
+        MsgType.ShotFired,
+        MsgType.Killed,
+        MsgType.Connected,
+        MsgType.Disconnected
+    ]);
+    const [authenticated, setAuthenticated] = useState<boolean>(false);
     const [filterSteamID, setFilterSteamID] = useState<SteamID>(
         new SteamID('')
     );
     const [filteredMessages, setFilteredMessages] = useState<LogEvent[]>([]);
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-        // `${proto}://gbans.uncledane.com/ws`
-        `${proto}://${location.host}${port}/ws`,
+        //`${proto}://gbans.uncletopia.com/ws`,
+        `${proto}://${location.host}${
+            location.port ? ':' + location.port : ''
+        }/ws`,
         {
             onOpen: () => {
                 sendJsonMessage(
                     encode(PayloadType.authType, {
-                        token: localStorage.getItem('token')
+                        token: localStorage.getItem('token'),
+                        is_server: false,
+                        server_name: ''
                     })
                 );
             },
-            //Will attempt to reconnect on all close events, such as server shutting down
+            // Will attempt to reconnect on all close events, such as server shutting down
             shouldReconnect: () => true
         }
     );
-
+    useEffect(() => {
+        if (!authenticated) {
+            return;
+        }
+        const q: LogQueryOpts = {
+            limit: renderLimit,
+            log_types: filterMsgTypes,
+            servers: filterServerIDs,
+            source_id: filterSteamID.toString(),
+            target_id: ''
+        };
+        sendJsonMessage(q);
+    }, [
+        filterSteamID,
+        filterServerIDs,
+        filterMsgTypes,
+        renderLimit,
+        authenticated
+    ]);
     messageHistory.current = useMemo(() => {
         if (!lastJsonMessage) {
             return messageHistory.current;
         }
+        // TODO move auth stuff elsewhere
         const p = lastJsonMessage as WebSocketPayload;
+        if (!authenticated && p.payload_type != PayloadType.authOKType) {
+            log('Client is not authenticated');
+            return messageHistory.current;
+        }
         switch (p.payload_type) {
+            case PayloadType.authOKType:
+                setAuthenticated(true);
+                break;
             case PayloadType.logType:
                 messageHistory.current.push(
                     (p as WebSocketPayload<LogEvent>).data
@@ -102,18 +144,6 @@ export const ServerLogView = (): JSX.Element => {
         [ReadyState.UNINSTANTIATED]: 'Uninstantiated'
     }[readyState];
 
-    const [servers, setServers] = useState<Server[]>([]);
-    const [renderLimit, setRenderLimit] = useState<number>(25);
-    const [filterServerIDs, setFilterServerIDs] = useState<number[]>([]);
-    const [filterMsgTypes, setFilterMsgTypes] = useState<MsgType[]>([
-        MsgType.Say,
-        MsgType.SayTeam,
-        MsgType.WRoundWin,
-        MsgType.ShotFired,
-        MsgType.Killed,
-        MsgType.Connected,
-        MsgType.Disconnected
-    ]);
     useEffect(() => {
         async function fn() {
             const servers = await apiGetServers();

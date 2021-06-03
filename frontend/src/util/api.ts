@@ -1,4 +1,5 @@
 import { log } from './errors';
+import { MsgType } from './game_events';
 
 export enum PermissionLevel {
     Guest = 1,
@@ -68,10 +69,21 @@ const apiErr = (msg: string, resp: Response): ApiException => {
 };
 
 export enum PayloadType {
-    okTypem,
+    okType,
     errType,
     authType,
-    logType
+    authOKType,
+    logType,
+    logQueryOpts
+}
+
+// Used for setting filtering / query options for realtime log event streams
+export interface LogQueryOpts {
+    log_types: MsgType[];
+    limit: number;
+    source_id: string;
+    target_id: string;
+    servers: number[];
 }
 
 export const encode = (t: PayloadType, o: unknown): WebSocketPayload => {

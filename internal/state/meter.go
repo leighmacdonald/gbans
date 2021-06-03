@@ -12,31 +12,31 @@ import (
 var (
 	damageCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "game_damage",
+			Name: "gbans_game_damage",
 			Help: "Total (real)damage dealt",
 		},
 		[]string{"server_name", "steam_id", "target_id", "weapon"})
 	healingCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "game_healing",
+			Name: "gbans_game_healing",
 			Help: "Total (real)healing",
 		},
 		[]string{"server_name", "steam_id", "target_id", "healing"})
 	killCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "game_kills",
+			Name: "gbans_game_kills",
 			Help: "Total kills",
 		},
 		[]string{"server_name", "steam_id", "target_id", "weapon"})
 	shotFiredCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "game_shot_fired",
+			Name: "gbans_game_shot_fired",
 			Help: "Total shots fired",
 		},
 		[]string{"server_name", "steam_id", "weapon"})
 	shotHitCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "game_shot_hit",
+			Name: "gbans_game_shot_hit",
 			Help: "Total shots hit",
 		},
 		[]string{"server_name", "steam_id", "weapon"})

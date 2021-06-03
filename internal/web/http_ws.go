@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
@@ -19,67 +20,99 @@ import (
 type payloadType int
 
 const (
-	//okType payloadType = iota
-	errType  = 1
-	authType = 2
-	logType  = 3
+	OKType       payloadType = iota
+	ErrType                  = 1
+	AuthType                 = 2
+	AuthOKType               = 3
+	LogType                  = 4
+	LogQueryOpts             = 5
 )
 
-// webSocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
+// WebSocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
 // process as we must first know the payload_type before we can decode the Data value into the appropriate
 // struct.
-type webSocketPayload struct {
+type WebSocketPayload struct {
 	PayloadType payloadType     `json:"payload_type"`
 	Data        json.RawMessage `json:"data"`
+}
+
+type WebSocketLogPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
 }
 
 // webSocketState holds the global websocket session state and handlers
 type webSocketState struct {
 	*sync.RWMutex
 	ws       *melody.Melody
-	sessions map[*melody.Session]*webSocketClient
+	sessions map[*melody.Session]*webSocketSession
 }
 
-// webSocketClient represents the state of a client connected via websockets
-type webSocketClient struct {
-	Authenticated bool
-	Person        *model.Person
-	BroadcastLog  bool
-	open          bool
-	LogFilters    []logparse.MsgType
-	ctx           context.Context
-	eventChan     chan model.LogEvent
-	session       *melody.Session
+// webSocketSession represents the state of a client connected via websockets
+type webSocketSession struct {
+	authenticated       bool
+	Person              *model.Person
+	BroadcastLog        bool
+	open                bool
+	LogQueryOpts        webSocketLogQueryOpts
+	LogQueryOptsUpdated bool
+	ctx                 context.Context
+	eventChan           chan model.LogEvent
+	session             *melody.Session
 }
 
-// encode will return an encoded payload suitable for transmission over the wire
-func encode(t payloadType, p interface{}) ([]byte, error) {
+type webSocketLogQueryOpts struct {
+	LogTypes []logparse.MsgType `json:"log_types"`
+	Limit    int                `json:"limit"`
+	SourceID steamid.SID64      `json:"source_id"`
+	TargetID steamid.SID64      `json:"target_id"`
+	Servers  []int              `json:"servers"`
+}
+
+func (lqo *webSocketLogQueryOpts) okRecordType(t logparse.MsgType) bool {
+	if len(lqo.LogTypes) == 0 {
+		// No filters == Any
+		return true
+	}
+	for _, mt := range lqo.LogTypes {
+		if mt == t {
+			return true
+		}
+	}
+	return false
+}
+
+// EncodeWSPayload will return an encoded payload suitable for transmission over the wire
+func EncodeWSPayload(t payloadType, p interface{}) ([]byte, error) {
 	b, e1 := json.Marshal(p)
 	if e1 != nil {
-		return nil, errors.Wrapf(e1, "failed to encode base payload")
+		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload base payload")
 	}
-	f, e2 := json.Marshal(webSocketPayload{
+	f, e2 := json.Marshal(WebSocketPayload{
 		PayloadType: t,
 		Data:        b,
 	})
 	if e2 != nil {
-		return nil, errors.Wrapf(e1, "failed to encode sub payload")
+		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload sub payload")
 	}
 	return f, nil
 }
 
 // reader sends out incoming log payloads to the client
-func (c *webSocketClient) reader() {
+func (c *webSocketSession) reader() {
 	for {
 		select {
 		case e := <-c.eventChan:
-			b, err := encode(logType, e)
-			if err != nil {
-				log.Errorf("Failed to encode payload")
+			if !c.LogQueryOpts.okRecordType(e.Type) {
 				continue
 			}
-			if err := c.session.Write(b); err != nil {
-				log.Errorf("Failed to write to ws")
+			b, err := EncodeWSPayload(LogType, e)
+			if err != nil {
+				log.Errorf("Failed to EncodeWSPayload payload: %v", err)
+				continue
+			}
+			if errE := c.session.Write(b); errE != nil {
+				log.Errorf("Failed to write to ws: %v", errE)
 			}
 		case <-c.ctx.Done():
 			log.Debugf("ws reader() shutdown")
@@ -88,13 +121,18 @@ func (c *webSocketClient) reader() {
 	}
 }
 
+func (c *webSocketSession) setQueryOpts(opts webSocketLogQueryOpts) {
+	c.LogQueryOpts = opts
+	c.LogQueryOptsUpdated = true
+}
+
 // newWebSocketState allocates and connects all websocket routes and session states
 func newWebSocketState() *webSocketState {
 	ws := melody.New()
 	wss := &webSocketState{
 		RWMutex:  &sync.RWMutex{},
 		ws:       ws,
-		sessions: map[*melody.Session]*webSocketClient{},
+		sessions: map[*melody.Session]*webSocketSession{},
 	}
 	ws.HandleMessage(wss.onMessage)
 	ws.HandleConnect(wss.onWSConnect)
@@ -112,8 +150,15 @@ func (ws *webSocketState) onWSStart(c *gin.Context) {
 	}
 }
 
-type wsAuthReq struct {
-	Token string `json:"token"`
+type WebSocketAuthReq struct {
+	Token      string `json:"token"`
+	IsServer   bool   `json:"is_server"`
+	ServerName string `json:"server_name"`
+}
+
+type WebSocketAuthResp struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
 }
 
 type wsErrRes struct {
@@ -122,63 +167,134 @@ type wsErrRes struct {
 
 func newWSErr(err error) []byte {
 	d, _ := json.Marshal(wsErrRes{Error: err.Error()})
-	b, _ := json.Marshal(webSocketPayload{
-		PayloadType: errType,
+	b, _ := json.Marshal(WebSocketPayload{
+		PayloadType: ErrType,
 		Data:        d,
 	})
 	return b
 }
 
+func authenticateServer(ctx context.Context, req WebSocketAuthReq, session *webSocketSession) error {
+	if req.Token == "" || req.ServerName == "" {
+		return consts.ErrAuthhentication
+	}
+	s, e := store.GetServerByName(ctx, req.ServerName)
+	if e != nil {
+		return consts.ErrAuthhentication
+	}
+	if s.Password == "" {
+		log.Errorf("Server has empty password!!!")
+		return consts.ErrAuthhentication
+	}
+	if req.Token != s.Password {
+		log.Errorf("Invalid password used for server auth")
+		return consts.ErrAuthhentication
+	}
+	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
+		Status:  true,
+		Message: "Successfully authenticated",
+	})
+	if errEnc != nil {
+		log.Errorf("Failed to encode auth response payload: %v", errEnc)
+		return consts.ErrAuthhentication
+	}
+	if err := session.session.Write(b); err != nil {
+		log.Errorf("Failed to write client success response: %v", err)
+	}
+	log.WithFields(log.Fields{"server_name": s.ServerName}).Debugf("WS server authhenticated successfully")
+	return nil
+}
+
+func authenticateClient(ctx context.Context, req WebSocketAuthReq, session *webSocketSession) error {
+	sid, err := sid64FromJWTToken(req.Token)
+	if err != nil {
+		return consts.ErrAuthhentication
+	}
+	p, errP := store.GetPersonBySteamID(ctx, sid)
+	if errP != nil || p.PermissionLevel < model.PModerator {
+		return consts.ErrAuthhentication
+	}
+	session.Person = p
+
+	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
+		Status:  true,
+		Message: "Successfully authenticated",
+	})
+	if errEnc != nil {
+		log.Errorf("Failed to encode auth response payload: %v", errEnc)
+		return consts.ErrAuthhentication
+	}
+	if err := session.session.Write(b); err != nil {
+		log.Errorf("Failed to write client success response: %v", err)
+	}
+	log.WithFields(log.Fields{"steam_id": p.SteamID}).
+		Debugf("WS user authhenticated successfully")
+	return nil
+}
+
 // onMessage handles incoming websocket payloads
+// We always return authentication errors until the client is fully authed. This is to prevent
+// any leaking of information to an attacker that can be further leveraged to aide in further
+// attacks by this or other vectors.
 func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
 	ws.Lock()
 	defer ws.Unlock()
-	c, found := ws.sessions[session]
+	wsClientSession, found := ws.sessions[session]
 	if !found {
 		log.Errorf("Unknown ws client sent message")
 		return
 	}
-	if !c.Authenticated {
-		var w webSocketPayload
-		if err := json.Unmarshal(msg, &w); err != nil || w.PayloadType != authType {
-			log.Errorf("Failed to unmarshal ws payload")
-			_ = session.Write(newWSErr(consts.ErrAuthhentication))
-		}
-		var tok wsAuthReq
-		if err := json.Unmarshal(w.Data, &tok); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	var w WebSocketPayload
+	if err := json.Unmarshal(msg, &w); err != nil || !wsClientSession.authenticated && w.PayloadType != AuthType {
+		log.Errorf("Failed to unmarshal ws payload")
+		_ = session.Write(newWSErr(consts.ErrAuthhentication))
+		return
+	}
+	if !wsClientSession.authenticated {
+		var req WebSocketAuthReq
+		if err := json.Unmarshal(w.Data, &req); err != nil {
 			log.Errorf("Failed to unmarshal auth data")
 			_ = session.Write(newWSErr(consts.ErrAuthhentication))
-		}
-		sid, err := sid64FromJWTToken(tok.Token)
-		if err != nil {
-			newWSErr(consts.ErrAuthhentication)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		p, errP := store.GetPersonBySteamID(ctx, sid)
-		if errP != nil || p.PermissionLevel < model.PModerator {
-			newWSErr(consts.ErrAuthhentication)
+		var e error
+		if req.IsServer {
+			e = authenticateServer(ctx, req, wsClientSession)
+		} else {
+			e = authenticateClient(ctx, req, wsClientSession)
+		}
+		if e != nil {
+			if err := session.Write(newWSErr(consts.ErrAuthhentication)); err != nil {
+				log.Errorf("Failed to write client error: %v", err)
+			}
 			return
 		}
-		c.Person = p
-		log.Debugf("WS User authhenticated successfully")
+		wsClientSession.authenticated = true
 	} else {
-		log.Warnf("WS Unhandled: %v", msg)
+		switch w.PayloadType {
+		case LogQueryOpts:
+			var tok webSocketLogQueryOpts
+			if err := json.Unmarshal(w.Data, &tok); err != nil {
+				log.Errorf("Failed to unmarshal query data")
+				_ = session.Write(newWSErr(consts.ErrAuthhentication))
+				return
+			}
+			wsClientSession.setQueryOpts(tok)
+		}
 	}
 }
 
 // onWSConnect sets up the websocket client in the session list and registers it to receive all log events
 // by default.
 func (ws *webSocketState) onWSConnect(session *melody.Session) {
-	client := &webSocketClient{
-		ctx:       context.Background(),
-		eventChan: make(chan model.LogEvent),
-		open:      true,
-		session:   session,
-	}
-	if err := event.RegisterConsumer(client.eventChan, []logparse.MsgType{logparse.Any}); err != nil {
-		log.Warnf("Error registering discord log event reader")
+	client := &webSocketSession{
+		ctx:           context.Background(),
+		eventChan:     make(chan model.LogEvent),
+		open:          true,
+		session:       session,
+		authenticated: false,
 	}
 	go client.reader()
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client connect")
