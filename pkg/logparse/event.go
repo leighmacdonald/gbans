@@ -112,7 +112,7 @@ type KilledEvt struct {
 	APos       Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	VPos       Pos    `json:"victim_position" mapstructure:"victim_position"`
 	Weapon     Weapon `json:"weapon" mapstructure:"weapon"`
-	CustomKill string `json:"custom_kill"  mapstructure:"custom_kill"`
+	CustomKill string `json:"custom_kill"  mapstructure:"customkill"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
