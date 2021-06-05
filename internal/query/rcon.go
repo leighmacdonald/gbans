@@ -16,7 +16,7 @@ import (
 func ExecRCON(server model.Server, cmd string) (string, error) {
 	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
 	if err != nil {
-		return "", errors.Errorf("Failed to dial IsServer: %s", server.ServerName)
+		return "", errors.Errorf("Failed to dial server: %s", server.ServerName)
 	}
 	resp, err2 := r.Exec(sanitizeRCONCommand(cmd))
 	if err2 != nil {
@@ -39,7 +39,7 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
 			conn, err := rcon.Dial(lCtx, addr, server.RCON, timeout)
 			if err != nil {
-				log.Errorf("Failed to connect to IsServer %s: %v", server.ServerName, err)
+				log.Errorf("Failed to connect to server %s: %v", server.ServerName, err)
 				return
 			}
 			for _, command := range commands {

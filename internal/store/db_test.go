@@ -207,6 +207,66 @@ func TestGetChatHistory(t *testing.T) {
 	require.Equal(t, "test-2", hist[0].Msg)
 }
 
+func TestFindLogEvents(t *testing.T) {
+	sid := steamid.SID64(76561198083950960)
+	sid2 := steamid.SID64(76561198083950961)
+	ctx := context.Background()
+	s := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
+	require.NoError(t, SaveServer(ctx, &s))
+	s1 := logparse.SourcePlayer{
+		Name: "test-name-1",
+		PID:  1,
+		SID:  sid,
+		Team: logparse.RED,
+	}
+	t1 := logparse.TargetPlayer{
+		Name2: "test-name-2",
+		PID2:  2,
+		SID2:  sid2,
+		Team2: logparse.BLU,
+	}
+	logs := []*model.ServerLog{
+		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
+			"sid":  string(steamid.SID64ToSID3(s1.SID)),
+			"team": "Red",
+			"pid":  "10",
+			"name": "test-name",
+			"msg":  "test-1",
+		}),
+		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
+			"sid":  string(steamid.SID64ToSID3(s1.SID)),
+			"team": "Red",
+			"pid":  "10",
+			"name": "test-name",
+			"msg":  "test-2",
+		}),
+		model.NewServerLog(s.ServerID, logparse.Killed, map[string]string{
+			"sid":               string(steamid.SID64ToSID3(s1.SID)),
+			"team":              "Red",
+			"pid":               fmt.Sprintf("%d", s1.PID),
+			"name":              "test-name",
+			"sid2":              string(steamid.SID64ToSID3(t1.SID2)),
+			"team2":             "Blu",
+			"pid2":              fmt.Sprintf("%d", t1.PID2),
+			"name2":             "test-name2",
+			"weapon":            "scattergun",
+			"attacker_position": "5 -5 5",
+			"victim_position":   "10 -10 10",
+		}),
+	}
+	for _, l := range logs {
+		require.NoError(t, InsertLog(ctx, l))
+	}
+	logEvents, errLogs := FindLogEvents(ctx, model.LogQueryOpts{
+		LogTypes: []logparse.MsgType{logparse.Killed},
+	})
+	require.NoError(t, errLogs, "Failed to fetch logs")
+	require.True(t, len(logEvents) >= 1, "Log size too small: %d", len(logEvents))
+	for _, evt := range logEvents {
+		require.Equal(t, logparse.Killed, evt.Type)
+	}
+}
+
 func TestFilters(t *testing.T) {
 	existingFilters, err := GetFilters(context.Background())
 	require.NoError(t, err)

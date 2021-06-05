@@ -42,8 +42,8 @@ var relayCmd = &cobra.Command{
 }
 
 func init() {
-	relayCmd.PersistentFlags().StringVarP(&serverName, "name", "n", "", "IsServer ID used for identification")
-	relayCmd.PersistentFlags().StringVarP(&relayAddr, "host", "H", "localhost", "IsServer host to send logs to")
+	relayCmd.PersistentFlags().StringVarP(&serverName, "name", "n", "", "Server ID used for identification")
+	relayCmd.PersistentFlags().StringVarP(&relayAddr, "host", "H", "wss://localhost/", "Server host to send logs to")
 	relayCmd.PersistentFlags().StringVarP(&logPath, "logdir", "l", "", "Path to tf2 logs directory")
 	relayCmd.PersistentFlags().StringVarP(&pass, "password", "p", "", "Password")
 	rootCmd.AddCommand(relayCmd)

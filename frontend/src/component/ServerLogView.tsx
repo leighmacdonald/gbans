@@ -4,17 +4,16 @@ import {
     FormControl,
     Grid,
     Input,
-    InputLabel,
     makeStyles,
     MenuItem,
     Select,
+    Switch,
     TextField
 } from '@material-ui/core';
 import { log } from '../util/errors';
 import {
     apiGetServers,
     encode,
-    LogQueryOpts,
     PayloadType,
     Person,
     Server,
@@ -53,9 +52,10 @@ export const ServerLogView = (): JSX.Element => {
     const maxCacheSize = 10000;
     const classes = useStyles();
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    // TODO Upper limit for how many messages well store
     const messageHistory = useRef<LogEvent[]>([]);
     const [servers, setServers] = useState<Server[]>([]);
+    const [orderDesc, setOrderDesc] = useState<boolean>(false);
+    const [query, setQuery] = useState<string>('');
     const [renderLimit, setRenderLimit] = useState<number>(25);
     const [filterServerIDs, setFilterServerIDs] = useState<number[]>([]);
     const [filterMsgTypes, setFilterMsgTypes] = useState<MsgType[]>([
@@ -95,12 +95,17 @@ export const ServerLogView = (): JSX.Element => {
         if (!authenticated) {
             return;
         }
-        const q: LogQueryOpts = {
-            limit: renderLimit,
-            log_types: filterMsgTypes,
-            servers: filterServerIDs,
-            source_id: filterSteamID.toString(),
-            target_id: ''
+        const q: WebSocketPayload = {
+            payload_type: PayloadType.logQueryOpts,
+            data: {
+                limit: renderLimit,
+                log_types: filterMsgTypes,
+                servers: filterServerIDs,
+                source_id: filterSteamID.getSteamID64(),
+                target_id: '',
+                order_desc: orderDesc,
+                query: query
+            }
         };
         sendJsonMessage(q);
     }, [
@@ -108,7 +113,10 @@ export const ServerLogView = (): JSX.Element => {
         filterServerIDs,
         filterMsgTypes,
         renderLimit,
-        authenticated
+        authenticated,
+        query,
+        orderDesc,
+        sendJsonMessage
     ]);
     messageHistory.current = useMemo(() => {
         if (!lastJsonMessage) {
@@ -124,7 +132,7 @@ export const ServerLogView = (): JSX.Element => {
             case PayloadType.authOKType:
                 setAuthenticated(true);
                 break;
-            case PayloadType.logType:
+            case PayloadType.logQueryResults:
                 messageHistory.current.push(
                     (p as WebSocketPayload<LogEvent>).data
                 );
@@ -185,6 +193,12 @@ export const ServerLogView = (): JSX.Element => {
     ) => {
         setFilterSteamID(new SteamID(event.target.value));
     };
+    const onChangeQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(event.target.value);
+    };
+    const onChangeOrderDesc = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setOrderDesc(event.target.checked);
+    };
 
     useEffect(() => {
         let logs = messageHistory.current.filter((v) => v);
@@ -221,86 +235,108 @@ export const ServerLogView = (): JSX.Element => {
 
     return (
         <Grid container>
-            <Grid item xs={3}>
-                <FormControl className={classes.formControl} fullWidth>
-                    <TextField
-                        onChange={onFilterSteamIDChange}
-                        id="standard-basic"
-                        label="SteamID"
-                    />
-                </FormControl>
-            </Grid>
-            <Grid item xs={2}>
-                <FormControl className={classes.formControl} fullWidth>
-                    <InputLabel id="limit-filters-label">
-                        Limit results
-                    </InputLabel>
-                    <Select
-                        labelId="limit-filters-label"
-                        id="limit-filters"
-                        value={renderLimit}
-                        defaultValue={25}
-                        onChange={handleChangeRenderLimit}
-                    >
-                        <MenuItem value={25}>25</MenuItem>
-                        <MenuItem value={100}>100</MenuItem>
-                        <MenuItem value={1000}>1000</MenuItem>
-                        <MenuItem value={5000}>5000</MenuItem>
-                        <MenuItem value={10000}>10000</MenuItem>
-                        <MenuItem value={Number.MAX_SAFE_INTEGER}>
-                            inf.
-                        </MenuItem>
-                    </Select>
-                </FormControl>
-            </Grid>
-            <Grid item xs={7}>
-                <FormControl className={classes.formControl} fullWidth>
-                    <InputLabel id="server-filters-label">
-                        Server Filters
-                    </InputLabel>
-                    <Select
-                        labelId="server-filters-label"
-                        id="server-filters"
-                        multiple
-                        value={filterServerIDs}
-                        onChange={handleChangeServers}
-                        input={<Input />}
-                    >
-                        {servers.map((s) => (
-                            <MenuItem key={s.server_id} value={s.server_id}>
-                                {s.server_name}
+            <Grid container>
+                <Grid item xs={3}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <TextField
+                            onChange={onFilterSteamIDChange}
+                            id="standard-basic"
+                            label="SteamID"
+                            value={filterSteamID}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid item xs={3}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <TextField
+                            label="Text Query"
+                            id="msg-filters"
+                            value={query}
+                            onChange={onChangeQuery}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid item xs={3}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <Switch
+                            title={'test'}
+                            checked={orderDesc}
+                            onChange={onChangeOrderDesc}
+                            name="order_desc"
+                            inputProps={{ 'aria-label': 'order descending' }}
+                        />
+                    </FormControl>
+                </Grid>
+                <Grid item xs={3}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <Select
+                            label="Limit results"
+                            id="limit-filters"
+                            value={renderLimit}
+                            defaultValue={25}
+                            onChange={handleChangeRenderLimit}
+                        >
+                            <MenuItem value={25}>25</MenuItem>
+                            <MenuItem value={100}>100</MenuItem>
+                            <MenuItem value={1000}>1000</MenuItem>
+                            <MenuItem value={5000}>5000</MenuItem>
+                            <MenuItem value={10000}>10000</MenuItem>
+                            <MenuItem value={Number.MAX_SAFE_INTEGER}>
+                                inf.
                             </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                        </Select>
+                    </FormControl>
+                </Grid>
             </Grid>
-            <Grid item xs={12}>
-                <FormControl className={classes.formControl} fullWidth>
-                    <InputLabel id="msg-filters-label">
-                        Message Filters
-                    </InputLabel>
-                    <Select
-                        labelId="msg-filters-label"
-                        id="msg-filters"
-                        multiple
-                        value={filterMsgTypes}
-                        onChange={handleChangeFilterMsg}
-                        defaultValue={filterMsgTypes}
-                        input={<Input />}
-                    >
-                        {Object.values(MsgType)
-                            .filter(StringIsNumber)
-                            .map((mt) => (
-                                <MenuItem key={mt} value={mt}>
-                                    {MsgType[mt as MsgType]}
+            <Grid container>
+                <Grid item xs={12}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <Select
+                            label=" Server Filters"
+                            id="server-filters"
+                            multiple
+                            value={filterServerIDs}
+                            onChange={handleChangeServers}
+                            input={<Input />}
+                        >
+                            {servers.map((s) => (
+                                <MenuItem key={s.server_id} value={s.server_id}>
+                                    {s.server_name}
                                 </MenuItem>
                             ))}
-                    </Select>
-                </FormControl>
+                        </Select>
+                    </FormControl>
+                </Grid>
+            </Grid>
+            <Grid container>
+                <Grid item xs={12}>
+                    <FormControl className={classes.formControl} fullWidth>
+                        <Select
+                            label="Message Filters"
+                            id="msg-filters"
+                            multiple
+                            value={filterMsgTypes}
+                            onChange={handleChangeFilterMsg}
+                            defaultValue={filterMsgTypes}
+                            input={<Input />}
+                        >
+                            {Object.values(MsgType)
+                                .filter(StringIsNumber)
+                                .map((mt) => (
+                                    <MenuItem key={mt} value={mt}>
+                                        {MsgType[mt as MsgType]}
+                                    </MenuItem>
+                                ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
             </Grid>
 
             <Grid item xs={12}>
-                <h5>Connection Status: {connectionStatus}</h5>
+                <h5>
+                    Connection Status: {connectionStatus} Authed:{' '}
+                    {authenticated}
+                </h5>
             </Grid>
             <Grid item xs={12}>
                 <Grid container>

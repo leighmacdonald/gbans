@@ -394,6 +394,7 @@ func (f *Filter) Match(value string) bool {
 }
 
 type LogEvent struct {
+	LogID     int64             `json:"log_id"`
 	Type      logparse.MsgType  `json:"event_type"`
 	Event     map[string]string `json:"event"`
 	Server    Server            `json:"server"`
@@ -420,4 +421,27 @@ type PlayerInfo struct {
 type FindResult struct {
 	Player *extra.Player
 	Server *Server
+}
+
+type LogQueryOpts struct {
+	LogTypes  []logparse.MsgType `json:"log_types"`
+	Limit     uint64             `json:"limit"`
+	OrderDesc bool               `json:"order_desc"`
+	Query     string             `json:"query"`
+	SourceID  string             `json:"source_id"`
+	TargetID  string             `json:"target_id"`
+	Servers   []int              `json:"servers"`
+}
+
+func (lqo *LogQueryOpts) ValidRecordType(t logparse.MsgType) bool {
+	if len(lqo.LogTypes) == 0 {
+		// No filters == Any
+		return true
+	}
+	for _, mt := range lqo.LogTypes {
+		if mt == t {
+			return true
+		}
+	}
+	return false
 }

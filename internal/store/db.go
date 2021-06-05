@@ -390,6 +390,77 @@ func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt
 	return hist, nil
 }
 
+func FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.LogEvent, error) {
+	b := sb.Select(
+		`l.log_id`,
+		`l.event_type`,
+		`l.payload`,
+		`l.created_on`,
+		`s.server_id`,
+		`s.short_name as server_name`,
+		`COALESCE(p1.steam_id, 0)`,
+		`COALESCE(p1.personaname, '')`,
+		`COALESCE(p1.avatarfull, '')`,
+		`COALESCE(p1.avatar, '')`,
+		`COALESCE(p2.steam_id, 0)`,
+		`COALESCE(p2.personaname, '')`,
+		`COALESCE(p2.avatarfull, '')`,
+		`COALESCE(p2.avatar, '')`,
+	).
+		From("server_log l").
+		LeftJoin(`server  s on s.server_id = l.server_id`).
+		LeftJoin(`person p1 on p1.steam_id = l.source_id`).
+		LeftJoin(`person p2 on p2.steam_id = l.target_id`)
+
+	s1, e1 := steamid.StringToSID64(opts.SourceID)
+	if opts.SourceID != "" && e1 == nil && s1.Valid() {
+		b = b.Where(sq.Eq{"l.source_id": s1.Int64()})
+	}
+	t1, e2 := steamid.StringToSID64(opts.TargetID)
+	if opts.TargetID != "" && e2 == nil && t1.Valid() {
+		b = b.Where(sq.Eq{"l.target_id": t1.Int64()})
+	}
+	if len(opts.Servers) > 0 {
+		b = b.Where(sq.Eq{"l.server_id": opts.Servers})
+	}
+	if len(opts.LogTypes) > 0 {
+		b = b.Where(sq.Eq{"l.event_type": opts.LogTypes})
+	}
+	if opts.OrderDesc {
+		b = b.OrderBy("l.created_on DESC")
+	} else {
+		b = b.OrderBy("l.created_on ASC")
+	}
+	if opts.Limit > 0 {
+		b = b.Limit(opts.Limit)
+	}
+	q, a, err := b.ToSql()
+	log.Debugf(q)
+	if err != nil {
+		return nil, err
+	}
+	rows, errQ := db.Query(ctx, q, a...)
+	if errQ != nil {
+		return nil, dbErr(errQ)
+	}
+	defer rows.Close()
+	var events []model.LogEvent
+	for rows.Next() {
+		e := model.LogEvent{
+			Player1:  &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+			Player2:  &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+			Assister: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+		}
+		if err2 := rows.Scan(&e.LogID, &e.Type, &e.Event, &e.CreatedOn, &e.Server.ServerID, &e.Server.ServerName,
+			&e.Player1.SteamID, &e.Player1.PersonaName, &e.Player1.AvatarFull, &e.Player1.Avatar,
+			&e.Player2.SteamID, &e.Player2.PersonaName, &e.Player2.AvatarFull, &e.Player2.Avatar); err2 != nil {
+			return nil, err2
+		}
+		events = append(events, e)
+	}
+	return events, nil
+}
+
 func AddPersonIP(ctx context.Context, p *model.Person, ip string) error {
 	q, a, e := sb.Insert(string(tablePersonIP)).
 		Columns("steam_id", "ip_addr", "created_on").

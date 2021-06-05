@@ -16,7 +16,7 @@ func prometheusHandler() gin.HandlerFunc {
 	}
 }
 func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
-	ws := newWebSocketState()
+	ws := newWebSocketState(logMsgChan)
 	jsRoutes := func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}

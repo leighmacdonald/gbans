@@ -101,6 +101,7 @@ var testDataCmd = &cobra.Command{
 			}
 		}
 		for _, v := range [][]string{
+			{"test-1", "test-1.de.uncletopia.com"},
 			{"lo-1", "192.168.0.101"},
 			{"sea-1", "sea-1.us.uncletopia.com"},
 			{"lax-1", "lax-1.us.uncletopia.com"},

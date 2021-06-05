@@ -8,8 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
@@ -19,67 +17,77 @@ import (
 
 type payloadType int
 
+const sendQueueSize = 100
+
+type State int
+
 const (
-	OKType       payloadType = iota
-	ErrType                  = 1
-	AuthType                 = 2
-	AuthOKType               = 3
-	LogType                  = 4
-	LogQueryOpts             = 5
+	Closed State = iota
+	Opened
+	AwaitingAuthentication
+	Authenticated
+	Closing
 )
 
-// WebSocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
+const (
+	OKType          payloadType = iota
+	ErrType                     = 1
+	AuthType                    = 2
+	AuthOKType                  = 3
+	LogType                     = 4
+	LogQueryOpts                = 5
+	LogQueryResults             = 6
+)
+
+// SocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
 // process as we must first know the payload_type before we can decode the Data value into the appropriate
 // struct.
-type WebSocketPayload struct {
+type SocketPayload struct {
 	PayloadType payloadType     `json:"payload_type"`
 	Data        json.RawMessage `json:"data"`
 }
 
-type WebSocketLogPayload struct {
+// SocketLogPayload contains individual log lines that are relayed
+type SocketLogPayload struct {
 	ServerName string `json:"server_name"`
 	Message    string `json:"message"`
 }
 
-// webSocketState holds the global websocket session state and handlers
-type webSocketState struct {
+// socketState holds the global websocket session state and handlers
+type socketState struct {
 	*sync.RWMutex
-	ws       *melody.Melody
-	sessions map[*melody.Session]*webSocketSession
+	ws         *melody.Melody
+	logMsgChan chan LogPayload
+	sessions   map[*melody.Session]*socketSession
 }
 
-// webSocketSession represents the state of a client connected via websockets
-type webSocketSession struct {
-	authenticated       bool
-	Person              *model.Person
+// socketSession represents the state of a client connected via websockets
+type socketSession struct {
+	IsClient bool
+	State    State
+	Person   *model.Person
+	// Is log broadcasting enabled
 	BroadcastLog        bool
-	open                bool
-	LogQueryOpts        webSocketLogQueryOpts
+	LogQueryOpts        model.LogQueryOpts
 	LogQueryOptsUpdated bool
 	ctx                 context.Context
 	eventChan           chan model.LogEvent
 	session             *melody.Session
+	sendQ               chan []byte
+	recvQ               chan []byte
 }
 
-type webSocketLogQueryOpts struct {
-	LogTypes []logparse.MsgType `json:"log_types"`
-	Limit    int                `json:"limit"`
-	SourceID steamid.SID64      `json:"source_id"`
-	TargetID steamid.SID64      `json:"target_id"`
-	Servers  []int              `json:"servers"`
+func (s *socketSession) Log() *log.Entry {
+	return log.WithFields(log.Fields{"addr": s.session.Request.RemoteAddr, "is_client": s.IsClient})
 }
 
-func (lqo *webSocketLogQueryOpts) okRecordType(t logparse.MsgType) bool {
-	if len(lqo.LogTypes) == 0 {
-		// No filters == Any
-		return true
+func (s *socketSession) send(b []byte) {
+	select {
+	case s.sendQ <- b:
+		break
+	default:
+		s.Log().Errorf("send queue full")
 	}
-	for _, mt := range lqo.LogTypes {
-		if mt == t {
-			return true
-		}
-	}
-	return false
 }
 
 // EncodeWSPayload will return an encoded payload suitable for transmission over the wire
@@ -88,7 +96,7 @@ func EncodeWSPayload(t payloadType, p interface{}) ([]byte, error) {
 	if e1 != nil {
 		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload base payload")
 	}
-	f, e2 := json.Marshal(WebSocketPayload{
+	f, e2 := json.Marshal(SocketPayload{
 		PayloadType: t,
 		Data:        b,
 	})
@@ -98,41 +106,68 @@ func EncodeWSPayload(t payloadType, p interface{}) ([]byte, error) {
 	return f, nil
 }
 
-// reader sends out incoming log payloads to the client
-func (c *webSocketSession) reader() {
+func (s *socketSession) writer() {
 	for {
 		select {
-		case e := <-c.eventChan:
-			if !c.LogQueryOpts.okRecordType(e.Type) {
+		case p := <-s.sendQ:
+			if err := s.session.Write(p); err != nil {
+				s.Log().Errorf("Failed to write payload over write: %v", err)
 				continue
 			}
-			b, err := EncodeWSPayload(LogType, e)
-			if err != nil {
-				log.Errorf("Failed to EncodeWSPayload payload: %v", err)
-				continue
-			}
-			if errE := c.session.Write(b); errE != nil {
-				log.Errorf("Failed to write to ws: %v", errE)
-			}
-		case <-c.ctx.Done():
-			log.Debugf("ws reader() shutdown")
+		case <-s.ctx.Done():
 			return
 		}
 	}
 }
 
-func (c *webSocketSession) setQueryOpts(opts webSocketLogQueryOpts) {
-	c.LogQueryOpts = opts
-	c.LogQueryOptsUpdated = true
+// reader sends out incoming log payloads to the client
+func (s *socketSession) reader() {
+	for {
+		select {
+		case r := <-s.recvQ:
+			s.Log().Debugln(r)
+		case e := <-s.eventChan:
+			if !s.LogQueryOpts.ValidRecordType(e.Type) {
+				continue
+			}
+			// TODO
+			b, err := EncodeWSPayload(LogType, e)
+			if err != nil {
+				s.Log().Errorf("Failed to EncodeWSPayload payload: %v", err)
+				continue
+			}
+			if errE := s.session.Write(b); errE != nil {
+				s.Log().Errorf("Failed to write to ws: %v", errE)
+			}
+		case <-s.ctx.Done():
+			s.Log().Debugf("ws reader() shutdown")
+			return
+		}
+	}
+}
+
+func (s *socketSession) setQueryOpts(opts model.LogQueryOpts) {
+	s.LogQueryOpts = opts
+	s.LogQueryOptsUpdated = true
+}
+
+func (s *socketSession) err(err error, args ...interface{}) {
+	if len(args) == 1 {
+		s.Log().Errorf(args[0].(string))
+	} else if len(args) > 1 {
+		s.Log().Errorf(args[0].(string), args[1:]...)
+	}
+	s.send(newWSErr(err))
 }
 
 // newWebSocketState allocates and connects all websocket routes and session states
-func newWebSocketState() *webSocketState {
+func newWebSocketState(logMsgChan chan LogPayload) *socketState {
 	ws := melody.New()
-	wss := &webSocketState{
-		RWMutex:  &sync.RWMutex{},
-		ws:       ws,
-		sessions: map[*melody.Session]*webSocketSession{},
+	wss := &socketState{
+		RWMutex:    &sync.RWMutex{},
+		ws:         ws,
+		sessions:   map[*melody.Session]*socketSession{},
+		logMsgChan: logMsgChan,
 	}
 	ws.HandleMessage(wss.onMessage)
 	ws.HandleConnect(wss.onWSConnect)
@@ -144,13 +179,13 @@ func newWebSocketState() *webSocketState {
 	return wss
 }
 
-func (ws *webSocketState) onWSStart(c *gin.Context) {
+func (ws *socketState) onWSStart(c *gin.Context) {
 	if err := ws.ws.HandleRequest(c.Writer, c.Request); err != nil {
 		log.Errorf("Error handling ws request: %v", err)
 	}
 }
 
-type WebSocketAuthReq struct {
+type SocketAuthReq struct {
 	Token      string `json:"token"`
 	IsServer   bool   `json:"is_server"`
 	ServerName string `json:"server_name"`
@@ -162,32 +197,33 @@ type WebSocketAuthResp struct {
 }
 
 type wsErrRes struct {
-	Error string `json:"error"`
+	Error string `json:"err"`
 }
 
 func newWSErr(err error) []byte {
 	d, _ := json.Marshal(wsErrRes{Error: err.Error()})
-	b, _ := json.Marshal(WebSocketPayload{
+	b, _ := json.Marshal(SocketPayload{
 		PayloadType: ErrType,
 		Data:        d,
 	})
 	return b
 }
 
-func authenticateServer(ctx context.Context, req WebSocketAuthReq, session *webSocketSession) error {
+func authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession) error {
+	s.IsClient = false
 	if req.Token == "" || req.ServerName == "" {
 		return consts.ErrAuthhentication
 	}
-	s, e := store.GetServerByName(ctx, req.ServerName)
+	server, e := store.GetServerByName(ctx, req.ServerName)
 	if e != nil {
 		return consts.ErrAuthhentication
 	}
-	if s.Password == "" {
-		log.Errorf("Server has empty password!!!")
+	if server.Password == "" {
+		s.Log().Errorf("Server has empty password!!!")
 		return consts.ErrAuthhentication
 	}
-	if req.Token != s.Password {
-		log.Errorf("Invalid password used for server auth")
+	if req.Token != server.Password {
+		s.Log().Errorf("Invalid password used for server auth")
 		return consts.ErrAuthhentication
 	}
 	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
@@ -195,17 +231,19 @@ func authenticateServer(ctx context.Context, req WebSocketAuthReq, session *webS
 		Message: "Successfully authenticated",
 	})
 	if errEnc != nil {
-		log.Errorf("Failed to encode auth response payload: %v", errEnc)
+		s.Log().Errorf("Failed to encode auth response payload: %v", errEnc)
 		return consts.ErrAuthhentication
 	}
-	if err := session.session.Write(b); err != nil {
-		log.Errorf("Failed to write client success response: %v", err)
+	if err := s.session.Write(b); err != nil {
+		s.Log().Errorf("Failed to write client success response: %v", err)
 	}
-	log.WithFields(log.Fields{"server_name": s.ServerName}).Debugf("WS server authhenticated successfully")
+
+	s.Log().Debugf("WS server authhenticated successfully")
 	return nil
 }
 
-func authenticateClient(ctx context.Context, req WebSocketAuthReq, session *webSocketSession) error {
+func authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession) error {
+	s.IsClient = true
 	sid, err := sid64FromJWTToken(req.Token)
 	if err != nil {
 		return consts.ErrAuthhentication
@@ -214,21 +252,21 @@ func authenticateClient(ctx context.Context, req WebSocketAuthReq, session *webS
 	if errP != nil || p.PermissionLevel < model.PModerator {
 		return consts.ErrAuthhentication
 	}
-	session.Person = p
+	s.Person = p
 
 	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
 		Status:  true,
 		Message: "Successfully authenticated",
 	})
 	if errEnc != nil {
-		log.Errorf("Failed to encode auth response payload: %v", errEnc)
+		s.Log().Errorf("Failed to encode auth response payload: %v", errEnc)
 		return consts.ErrAuthhentication
 	}
-	if err := session.session.Write(b); err != nil {
-		log.Errorf("Failed to write client success response: %v", err)
+	if errW := s.session.Write(b); errW != nil {
+		s.Log().Errorf("Failed to write client success response: %v", errW)
 	}
-	log.WithFields(log.Fields{"steam_id": p.SteamID}).
-		Debugf("WS user authhenticated successfully")
+	s.Log().Debugf("WS user authhenticated successfully")
+
 	return nil
 }
 
@@ -236,76 +274,111 @@ func authenticateClient(ctx context.Context, req WebSocketAuthReq, session *webS
 // We always return authentication errors until the client is fully authed. This is to prevent
 // any leaking of information to an attacker that can be further leveraged to aide in further
 // attacks by this or other vectors.
-func (ws *webSocketState) onMessage(session *melody.Session, msg []byte) {
+func (ws *socketState) onMessage(session *melody.Session, msg []byte) {
 	ws.Lock()
 	defer ws.Unlock()
-	wsClientSession, found := ws.sessions[session]
+	sockSession, found := ws.sessions[session]
 	if !found {
 		log.Errorf("Unknown ws client sent message")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	var w WebSocketPayload
-	if err := json.Unmarshal(msg, &w); err != nil || !wsClientSession.authenticated && w.PayloadType != AuthType {
-		log.Errorf("Failed to unmarshal ws payload")
-		_ = session.Write(newWSErr(consts.ErrAuthhentication))
+
+	var w SocketPayload
+	if err := json.Unmarshal(msg, &w); err != nil {
+		sockSession.err(consts.ErrMalformedRequest, "Failed to unmarshal ws payload")
 		return
 	}
-	if !wsClientSession.authenticated {
-		var req WebSocketAuthReq
-		if err := json.Unmarshal(w.Data, &req); err != nil {
-			log.Errorf("Failed to unmarshal auth data")
-			_ = session.Write(newWSErr(consts.ErrAuthhentication))
-			return
-		}
-		var e error
-		if req.IsServer {
-			e = authenticateServer(ctx, req, wsClientSession)
-		} else {
-			e = authenticateClient(ctx, req, wsClientSession)
-		}
-		if e != nil {
-			if err := session.Write(newWSErr(consts.ErrAuthhentication)); err != nil {
-				log.Errorf("Failed to write client error: %v", err)
-			}
-			return
-		}
-		wsClientSession.authenticated = true
+
+	switch sockSession.State {
+	case AwaitingAuthentication:
+		ws.onAwaitingAuthentication(ctx, &w, sockSession)
+	case Authenticated:
+		ws.onAuthenticatedPayload(ctx, &w, sockSession)
+	default:
+
+	}
+}
+
+func (ws *socketState) onAwaitingAuthentication(ctx context.Context, w *SocketPayload, c *socketSession) {
+	var req SocketAuthReq
+	if err := json.Unmarshal(w.Data, &req); err != nil {
+		c.err(consts.ErrAuthhentication, "Failed to unmarshal auth data")
+		return
+	}
+	var e error
+	if req.IsServer {
+		e = authenticateServer(ctx, req, c)
 	} else {
-		switch w.PayloadType {
-		case LogQueryOpts:
-			var tok webSocketLogQueryOpts
-			if err := json.Unmarshal(w.Data, &tok); err != nil {
-				log.Errorf("Failed to unmarshal query data")
-				_ = session.Write(newWSErr(consts.ErrAuthhentication))
+		e = authenticateClient(ctx, req, c)
+	}
+	if e != nil {
+		c.err(e)
+		return
+	}
+	c.State = Authenticated
+}
+
+func (ws *socketState) onAuthenticatedPayload(_ context.Context, w *SocketPayload, c *socketSession) {
+	switch w.PayloadType {
+	case LogType:
+		var l LogPayload
+		if err := json.Unmarshal(w.Data, &l); err != nil {
+			c.err(consts.ErrMalformedRequest, "Failed to unmarshal logpayload data")
+			return
+		}
+		ws.logMsgChan <- l
+		break
+	case LogQueryOpts:
+		var opts model.LogQueryOpts
+		if err := json.Unmarshal(w.Data, &opts); err != nil {
+			c.err(consts.ErrMalformedRequest, "Failed to unmarshal query data")
+			return
+		}
+		c.setQueryOpts(opts)
+		c.Log().Debugf("Updated query opts: %v", opts)
+		go func() {
+			results, err := store.FindLogEvents(c.ctx, opts)
+			if err != nil {
+				c.Log().Errorf("Error sending pre-cache to client")
 				return
 			}
-			wsClientSession.setQueryOpts(tok)
-		}
+			for _, r := range results {
+				b, e := EncodeWSPayload(LogQueryResults, r)
+				if e != nil {
+					c.Log().Errorf("Failed to encode payload: %v", e)
+					return
+				}
+				c.send(b)
+			}
+		}()
 	}
 }
 
 // onWSConnect sets up the websocket client in the session list and registers it to receive all log events
 // by default.
-func (ws *webSocketState) onWSConnect(session *melody.Session) {
-	client := &webSocketSession{
-		ctx:           context.Background(),
-		eventChan:     make(chan model.LogEvent),
-		open:          true,
-		session:       session,
-		authenticated: false,
+func (ws *socketState) onWSConnect(session *melody.Session) {
+	client := &socketSession{
+		State:     Closed,
+		ctx:       context.Background(),
+		eventChan: make(chan model.LogEvent),
+		session:   session,
+		sendQ:     make(chan []byte, sendQueueSize),
+		recvQ:     make(chan []byte),
 	}
 	go client.reader()
-	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client connect")
+	go client.writer()
+	client.Log().Infof("WS client connect")
 	ws.Lock()
 	ws.sessions[session] = client
 	ws.Unlock()
+	client.State = AwaitingAuthentication
 }
 
 // onWSDisconnect will remove the client from the active session list and unregister itself
 // from the event broadcasts
-func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
+func (ws *socketState) onWSDisconnect(session *melody.Session) {
 	ws.Lock()
 	defer ws.Unlock()
 	c, found := ws.sessions[session]
@@ -313,10 +386,13 @@ func (ws *webSocketState) onWSDisconnect(session *melody.Session) {
 		log.Errorf("Unregistered ws client")
 		return
 	}
-	c.open = false
+	c.State = Closing
 	delete(ws.sessions, session)
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client disconnect")
 	if err := event.UnregisterConsumer(c.eventChan); err != nil {
 		log.Errorf("Failed to unregister event consumer")
 	}
+	// TODO cleanup remaining queues
+	c.State = Closed
+
 }

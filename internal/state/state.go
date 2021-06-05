@@ -14,7 +14,7 @@ var (
 type gameType string
 
 const (
-	//unknown gameType = "Unknown"
+	// unknown gameType = "Unknown"
 	TF2 gameType = "team Fortress 2"
 	//cs      gameType = "Counter-Strike"
 	//csgo    gameType = "Counter-Strike: Global Offensive"

@@ -28,10 +28,10 @@ var addServerCmd = &cobra.Command{
 		store.Init(config.DB.DSN)
 
 		if addServer.ServerName == "" {
-			log.Fatal("IsServer name cannot be empty")
+			log.Fatal("Server name cannot be empty")
 		}
 		if addServer.Address == "" {
-			log.Fatal("IsServer address cannot be empty")
+			log.Fatal("Server address cannot be empty")
 		}
 		if addServer.Port <= 0 || addServer.Port > 65535 {
 			log.Fatal("Invalid server port")
@@ -53,7 +53,7 @@ func init() {
 	rootCmd.AddCommand(addServerCmd)
 
 	addServerCmd.Flags().StringVarP(&addServer.ServerName, "name", "n", "", "Short server ID eg: us-1")
-	addServerCmd.Flags().StringVarP(&addServer.Address, "host", "H", "", "IsServer hostname/ip eg: us-1.myserver.com")
-	addServerCmd.Flags().IntVarP(&addServer.Port, "port", "p", 27015, "IsServer port")
-	addServerCmd.Flags().StringVarP(&addServer.RCON, "rcon", "r", "", "IsServer RCON password")
+	addServerCmd.Flags().StringVarP(&addServer.Address, "host", "H", "", "Server hostname/ip eg: us-1.myserver.com")
+	addServerCmd.Flags().IntVarP(&addServer.Port, "port", "p", 27015, "Server port")
+	addServerCmd.Flags().StringVarP(&addServer.RCON, "rcon", "r", "", "Server RCON password")
 }

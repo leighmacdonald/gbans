@@ -37,12 +37,12 @@ func a2sQuery(server model.Server) (*a2s.ServerInfo, error) {
 	}
 	defer func() {
 		if err := client.Close(); err != nil {
-			log.WithFields(log.Fields{"Server": server.ServerName}).Errorf("Failed to close a2s client: %v", err)
+			log.WithFields(log.Fields{"server": server.ServerName}).Errorf("Failed to close a2s client: %v", err)
 		}
 	}()
 	info, err := client.QueryInfo() // QueryInfo, QueryPlayer, QueryRules
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to query Server info")
+		return nil, errors.Wrapf(err, "Failed to query server info")
 	}
 	return info, nil
 }
