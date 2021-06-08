@@ -15,20 +15,23 @@ func prometheusHandler() gin.HandlerFunc {
 		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
+
+var registered = false
+
 func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	ws := newWebSocketState(logMsgChan)
 	jsRoutes := func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
-	//router.GET(routeRaw(string(routeHome)), )
 	r.Use(gin.Logger())
-
-	prom := ginprom.New(func(p *ginprom.Prometheus) {
-		p.Namespace = "gbans"
-		p.Subsystem = "http"
-	})
-	r.Use(prom.Instrument())
-
+	if !registered {
+		prom := ginprom.New(func(p *ginprom.Prometheus) {
+			p.Namespace = "gbans"
+			p.Subsystem = "http"
+		})
+		r.Use(prom.Instrument())
+		registered = true
+	}
 	// Dont use session for static assets
 	// Note that we only use embedded assets for !release modes
 	// This is to allow us the ability to develop the frontend without needing to

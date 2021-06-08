@@ -62,9 +62,10 @@ type rootConfig struct {
 }
 
 type dbConfig struct {
-	DSN         string `mapstructure:"dsn"`
-	AutoMigrate bool   `mapstructure:"auto_migrate"`
-	LogQueries  bool   `mapstructure:"log_queries"`
+	DSN          string        `mapstructure:"dsn"`
+	AutoMigrate  bool          `mapstructure:"auto_migrate"`
+	LogQueries   bool          `mapstructure:"log_queries"`
+	LogWriteFreq time.Duration `mapstructure:"log_write_freq"`
 }
 
 type httpConfig struct {
@@ -286,6 +287,7 @@ func init() {
 	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
 	viper.SetDefault("database.auto_migrate", true)
 	viper.SetDefault("database.log_queries", false)
+	viper.SetDefault("database.log_write_freq", time.Second*10)
 }
 
 func configureLogger(l *log.Logger) {

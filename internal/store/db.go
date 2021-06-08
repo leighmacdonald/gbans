@@ -1127,7 +1127,45 @@ func GetFilters(ctx context.Context) ([]*model.Filter, error) {
 	return filters, nil
 }
 
+func BatchInsertServerLogs(ctx context.Context, logs []model.ServerLog) error {
+	const (
+		stmtName = "insert-log"
+		query    = `
+		INSERT INTO server_log (server_id, event_type, payload, source_id, target_id, created_on) 
+		VALUES ($1, $2, $3, $4, $5, $6)`
+	)
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to prepare logWriter query: %v", err)
+	}
+	_, errP := tx.Prepare(ctx, stmtName, query)
+	if errP != nil {
+		return errors.Wrapf(errP, "Failed to prepare logWriter query: %v", errP)
+	}
+	lCtx, cancel := context.WithTimeout(ctx, config.DB.LogWriteFreq/2)
+	defer cancel()
+	var re error
+	for _, lg := range logs {
+		if _, re = tx.Exec(lCtx, stmtName, lg.ServerID, lg.EventType,
+			lg.Payload, lg.SourceID, lg.TargetID, lg.CreatedOn); re != nil {
+			re = errors.Wrapf(re, "Failed to write log entries")
+			break
+		}
+	}
+	if re != nil {
+		if errR := tx.Rollback(lCtx); errR != nil {
+			return errors.Wrapf(errR, "BatchInsertServerLogs rollback failed")
+		}
+		return re
+	}
+	if errC := tx.Commit(lCtx); errC != nil {
+		log.Errorf("Failed to commit log entries: %v", errC)
+	}
+	return nil
+}
+
 func InsertLog(ctx context.Context, l *model.ServerLog) error {
+
 	q, a, e := sb.Insert(string(tableServerLog)).
 		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
 		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).

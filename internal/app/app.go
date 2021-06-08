@@ -207,20 +207,32 @@ func warnWorker(ctx context.Context) {
 }
 
 func logWriter(ctx context.Context) {
+	const (
+		freq = time.Second * 10
+	)
+	var logCache []model.ServerLog
 	events := make(chan model.LogEvent)
 	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
+	t := time.NewTicker(freq)
 	for {
 		select {
 		case evt := <-events:
-			c, cancel := context.WithTimeout(ctx, time.Second*10)
-			if err := store.InsertLog(c, model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event)); err != nil {
-				log.Errorf("Failed to insert log: %v", err)
-				cancel()
+			logCache = append(logCache, *model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event))
+		case <-t.C:
+			if len(logCache) == 0 {
 				continue
 			}
-			cancel()
+			toInsert := logCache
+			logCache = nil
+			go func(i []model.ServerLog) {
+				lCtx, cancel := context.WithTimeout(ctx, config.DB.LogWriteFreq)
+				defer cancel()
+				if errI := store.BatchInsertServerLogs(lCtx, i); errI != nil {
+					log.Errorf("Failed to batch insert logs: %v", errI)
+				}
+			}(toInsert)
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return

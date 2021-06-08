@@ -50,7 +50,7 @@ func init() {
 		shotFiredCounter,
 		shotHitCounter,
 	} {
-		prometheus.MustRegister(m)
+		_ = prometheus.Register(m)
 	}
 }
 

@@ -102,6 +102,11 @@ export interface WebSocketPayload<TRecord = unknown> {
     data: TRecord;
 }
 
+export interface WebSocketAuthResp {
+    status: boolean;
+    message: string;
+}
+
 export interface ChatMessage {
     message: string;
     created_on: Date;

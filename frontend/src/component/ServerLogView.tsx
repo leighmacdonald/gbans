@@ -17,6 +17,7 @@ import {
     PayloadType,
     Person,
     Server,
+    WebSocketAuthResp,
     WebSocketPayload
 } from '../util/api';
 import {
@@ -48,6 +49,30 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+enum State {
+    Closed,
+    Opened,
+    AwaitingAuthentication,
+    Authenticated,
+    Closing
+}
+
+const readyStateString = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Open',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated'
+};
+
+const sessionStateString = {
+    [State.Closed]: 'Closed',
+    [State.Closing]: 'Closing',
+    [State.Authenticated]: 'Authenticated',
+    [State.AwaitingAuthentication]: 'Awaiting Auth',
+    [State.Opened]: 'Opened'
+};
+
 export const ServerLogView = (): JSX.Element => {
     const maxCacheSize = 10000;
     const classes = useStyles();
@@ -62,37 +87,43 @@ export const ServerLogView = (): JSX.Element => {
         MsgType.Say,
         MsgType.SayTeam,
         MsgType.WRoundWin,
-        MsgType.ShotFired,
         MsgType.Killed,
         MsgType.Connected,
         MsgType.Disconnected
     ]);
-    const [authenticated, setAuthenticated] = useState<boolean>(false);
     const [filterSteamID, setFilterSteamID] = useState<SteamID>(
         new SteamID('')
     );
     const [filteredMessages, setFilteredMessages] = useState<LogEvent[]>([]);
+    const [sessionState, setSessionState] = useState<State>(State.Closed);
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-        //`${proto}://gbans.uncletopia.com/ws`,
         `${proto}://${location.host}${
             location.port ? ':' + location.port : ''
         }/ws`,
         {
             onOpen: () => {
+                setSessionState(State.Opened);
                 sendJsonMessage(
                     encode(PayloadType.authType, {
                         token: localStorage.getItem('token'),
-                        is_server: false,
-                        server_name: ''
+                        is_server: false
                     })
                 );
+                setSessionState(State.AwaitingAuthentication);
             },
             // Will attempt to reconnect on all close events, such as server shutting down
-            shouldReconnect: () => true
+            shouldReconnect: () => true,
+            onClose: () => {
+                setSessionState(State.Closed);
+                log('session closed');
+            },
+            onError: (event: WebSocketEventMap['error']) => {
+                log(`session error: ${event.target}`);
+            }
         }
     );
     useEffect(() => {
-        if (!authenticated) {
+        if (sessionState !== State.Authenticated) {
             return;
         }
         const q: WebSocketPayload = {
@@ -113,44 +144,44 @@ export const ServerLogView = (): JSX.Element => {
         filterServerIDs,
         filterMsgTypes,
         renderLimit,
-        authenticated,
         query,
         orderDesc,
-        sendJsonMessage
+        sendJsonMessage,
+        sessionState
     ]);
     messageHistory.current = useMemo(() => {
         if (!lastJsonMessage) {
             return messageHistory.current;
         }
-        // TODO move auth stuff elsewhere
         const p = lastJsonMessage as WebSocketPayload;
-        if (!authenticated && p.payload_type != PayloadType.authOKType) {
-            log('Client is not authenticated');
-            return messageHistory.current;
-        }
-        switch (p.payload_type) {
-            case PayloadType.authOKType:
-                setAuthenticated(true);
-                break;
-            case PayloadType.logQueryResults:
-                messageHistory.current.push(
-                    (p as WebSocketPayload<LogEvent>).data
-                );
-                if (messageHistory.current.length >= maxCacheSize) {
-                    messageHistory.current.shift();
+        switch (sessionState) {
+            case State.AwaitingAuthentication: {
+                const r = p.data as WebSocketAuthResp;
+                if (!r.status) {
+                    log(`invalid auth response: ${r.message}`);
+                    break;
                 }
+                setSessionState(State.Authenticated);
                 break;
+            }
+            case State.Authenticated: {
+                switch (p.payload_type) {
+                    case PayloadType.logQueryResults: {
+                        const r = p.data as LogEvent;
+                        messageHistory.current.push(r);
+                        if (messageHistory.current.length >= maxCacheSize) {
+                            messageHistory.current.shift();
+                        }
+                        break;
+                    }
+                    default: {
+                        log(`unhandled message: ${p}`);
+                    }
+                }
+            }
         }
         return messageHistory.current;
-    }, [lastJsonMessage]);
-
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'Connecting',
-        [ReadyState.OPEN]: 'Open',
-        [ReadyState.CLOSING]: 'Closing',
-        [ReadyState.CLOSED]: 'Closed',
-        [ReadyState.UNINSTANTIATED]: 'Uninstantiated'
-    }[readyState];
+    }, [lastJsonMessage, sessionState]);
 
     useEffect(() => {
         async function fn() {
@@ -334,8 +365,8 @@ export const ServerLogView = (): JSX.Element => {
 
             <Grid item xs={12}>
                 <h5>
-                    Connection Status: {connectionStatus} Authed:{' '}
-                    {authenticated}
+                    Connection Status: {readyStateString[readyState]} Authed:{' '}
+                    {sessionStateString[sessionState]}
                 </h5>
             </Grid>
             <Grid item xs={12}>
