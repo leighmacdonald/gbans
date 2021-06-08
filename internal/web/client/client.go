@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/pkg/errors"
@@ -52,7 +51,7 @@ func (c *Client) Log() *log.Entry {
 	if c.state != web.Closed && c.conn != nil {
 		addr = c.conn.RemoteAddr().String()
 	}
-	return log.WithFields(log.Fields{"state": fmt.Sprintf("%s", StateName[c.state]), "addr": addr})
+	return log.WithFields(log.Fields{"state": StateName[c.state], "addr": addr})
 }
 
 func (c *Client) State() web.State {

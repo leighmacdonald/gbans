@@ -329,7 +329,6 @@ func (ws *socketState) onAuthenticatedPayload(_ context.Context, w *SocketPayloa
 			return
 		}
 		ws.logMsgChan <- l
-		break
 	case LogQueryOpts:
 		var opts model.LogQueryOpts
 		if err := json.Unmarshal(w.Data, &opts); err != nil {
