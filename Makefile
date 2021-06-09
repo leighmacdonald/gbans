@@ -16,6 +16,10 @@ fmt:
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
 
+bump_deps:
+	go get -u ./...
+	cd frontend && yarn upgrade-interactive --latest
+
 build: fmt vet linux64 windows64
 
 frontend:
