@@ -52,7 +52,7 @@ func shutdown() {
 func Start() {
 	actChan := make(chan *action.Action)
 	action.Register(actChan)
-	go actionWorker(gCtx, actChan)
+	go actionExecutor(gCtx, actChan)
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
 		initNetBans()
@@ -110,67 +110,48 @@ func Start() {
 	web.Start(gCtx, logRawQueue)
 }
 
-// actionWorker is the action message request handler for any actions that are requested
+type actionFn = func(context.Context, *action.Action)
+
+// actionExecutor is the action message request handler for any actions that are requested
 //
 // Each request is executed under its own goroutine concurrently. There should be no expectations
 // of results being completed in sequential order unless
-func actionWorker(ctx context.Context, actChan chan *action.Action) {
+func actionExecutor(ctx context.Context, actChan chan *action.Action) {
+	var actionMap = map[action.Type]actionFn{
+		action.Mute:                  onActionMute,
+		action.Kick:                  onActionKick,
+		action.Ban:                   onActionBan,
+		action.Unban:                 onActionUnban,
+		action.BanNet:                onActionBanNet,
+		action.Find:                  onActionFind,
+		action.CheckFilter:           onActionCheckFilter,
+		action.AddFilter:             onActionAddFilter,
+		action.DelFilter:             onActionDelFilter,
+		action.GetPersonByID:         onActionGetPersonByID,
+		action.GetOrCreatePersonByID: onActionGetOrCreatePersonByID,
+		action.SetSteamID:            onActionSetSteamID,
+		action.Say:                   onActionSay,
+		action.CSay:                  onActionCSay,
+		action.PSay:                  onActionPSay,
+		action.FindByCIDR:            onActionFindByCIDR,
+		action.GetBan:                onActionGetBan,
+		action.GetBanNet:             onActionGetBanNet,
+		action.GetHistoryIP:          onActionGetHistoryIP,
+		action.GetHistoryChat:        onActionGetHistoryChat,
+		action.GetASNRecord:          onActionGetASNRecord,
+		action.GetLocationRecord:     onActionGetLocationRecord,
+		action.GetProxyRecord:        onActionGetProxyRecord,
+		action.Servers:               onActionServers,
+		action.ServerByName:          onActionServerByName,
+	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case act := <-actChan:
-			switch act.Type {
-			case action.Mute:
-				go onActionMute(ctx, act)
-			case action.Kick:
-				go onActionKick(ctx, act)
-			case action.Ban:
-				go onActionBan(ctx, act)
-			case action.Unban:
-				go onActionUnban(ctx, act)
-			case action.BanNet:
-				go onActionBanNet(ctx, act)
-			case action.Find:
-				go onActionFind(ctx, act)
-			case action.CheckFilter:
-				go onActionCheckFilter(ctx, act)
-			case action.AddFilter:
-				go onActionAddFilter(ctx, act)
-			case action.DelFilter:
-				go onActionDelFilter(ctx, act)
-			case action.GetPersonByID:
-				go onActionGetPersonByID(ctx, act)
-			case action.GetOrCreatePersonByID:
-				go onActionGetOrCreatePersonByID(ctx, act)
-			case action.SetSteamID:
-				go onActionSetSteamID(ctx, act)
-			case action.Say:
-				go onActionSay(ctx, act)
-			case action.CSay:
-				go onActionCSay(ctx, act)
-			case action.PSay:
-				go onActionPSay(ctx, act)
-			case action.FindByCIDR:
-				go onActionFindByCIDR(ctx, act)
-			case action.GetBan:
-				go onActionGetBan(ctx, act)
-			case action.GetBanNet:
-				go onActionGetBanNet(ctx, act)
-			case action.GetHistoryIP:
-				go onActionGetHistoryIP(ctx, act)
-			case action.GetHistoryChat:
-				go onActionGetHistoryChat(ctx, act)
-			case action.GetASNRecord:
-				go onActionGetASNRecord(ctx, act)
-			case action.GetLocationRecord:
-				go onActionGetLocationRecord(ctx, act)
-			case action.GetProxyRecord:
-				go onActionGetProxyRecord(ctx, act)
-			case action.Servers:
-				go onActionServers(ctx, act)
-			case action.ServerByName:
-				go onActionServerByName(ctx, act)
+			fn, found := actionMap[act.Type]
+			if found {
+				go fn(ctx, act)
 			}
 		}
 	}
@@ -206,6 +187,7 @@ func warnWorker(ctx context.Context) {
 	}
 }
 
+// logWriter handles tak
 func logWriter(ctx context.Context) {
 	const (
 		freq = time.Second * 10

@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-func onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onFind(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	const f = "Found player `%s` (%d) @ %s"
 	userIdentifier := m.Data.Options[0].Value.(string)
 	act := action.NewFind(action.Discord, userIdentifier)
@@ -39,7 +39,7 @@ func onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	return fmt.Sprintf(f, pi.Player.Name, pi.SteamID.Int64(), pi.Server.ServerName), nil
 }
 
-func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onMute(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	playerID := m.Data.Options[0].Value.(string)
 	reasonStr := model.Custom.String()
 	if len(m.Data.Options) > 2 {
@@ -53,7 +53,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	return "Player muted successfully", nil
 }
 
-func onBanIP(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onBanIP(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	reason := model.Custom.String()
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
@@ -83,7 +83,7 @@ func onBanIP(ctx context.Context, _ *discordgo.Session, m *discordgo.Interaction
 }
 
 // onBan !ban <id> <duration> [reason]
-func onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onBan(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	reason := ""
 	if len(m.Data.Options) > 2 {
 		reason = m.Data.Options[2].Value.(string)
@@ -104,7 +104,7 @@ func onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 	return fmt.Sprintf("Ban created successfully (#%d)", ban.BanID), nil
 }
 
-func onCheck(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	sid := m.Data.Options[0].Value.(string)
 	act := action.NewGetOrCreatePersonByID(sid, "")
 	res := <-act.Enqueue().Done()
@@ -341,7 +341,7 @@ func onHistoryChat(_ context.Context, _ *discordgo.Session, m *discordgo.Interac
 	return t.Render(), nil
 }
 
-func onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onSetSteam(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	act := action.NewSetSteamID(action.Discord, pId, m.Member.User.ID)
 	res := <-act.Enqueue().Done()
@@ -351,7 +351,7 @@ func onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.Interact
 	return "Successfully linked your account", nil
 }
 
-func onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onUnban(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	reason := ""
 	if len(m.Data.Options) > 1 {
@@ -365,7 +365,7 @@ func onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.Interaction
 	return "User ban is now inactive", nil
 }
 
-func onKick(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onKick(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	pId := m.Data.Options[0].Value.(string)
 	reason := ""
 	if len(m.Data.Options) > 1 {
@@ -381,7 +381,7 @@ func onKick(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	}
 }
 
-func onSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
@@ -390,7 +390,7 @@ func onSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCr
 	return "Sent message successfully", nil
 }
 
-func onCSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onCSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewCSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
@@ -399,7 +399,7 @@ func onCSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	return "Sent message successfully", nil
 }
 
-func onPSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewPSay(action.Discord, m.Data.Options[0].Value.(string), m.Data.Options[1].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
@@ -408,7 +408,7 @@ func onPSay(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionC
 	return "Sent message successfully", nil
 }
 
-func onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onServers(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewServers()
 	res := <-act.Enqueue().Done()
 	servers, ok := res.Value.([]model.Server)
@@ -419,6 +419,8 @@ func onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.Interacti
 	if len(m.Data.Options) > 0 {
 		full = m.Data.Options[0].Value.(bool)
 	}
+	used, total := 0, 0
+	cl := &sync.RWMutex{}
 	mu := &sync.RWMutex{}
 	results := make(map[string]extra.Status)
 	serverMap := make(map[string]model.Server)
@@ -437,6 +439,10 @@ func onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.Interacti
 			}
 			results[server.ServerName] = status
 			serverMap[server.ServerName] = server
+			cl.Lock()
+			used += status.PlayersCount
+			total += 32 - server.ReservedSlots
+			cl.Unlock()
 		}(s)
 	}
 	wg.Wait()
@@ -470,7 +476,8 @@ func onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.Interacti
 		}
 	}
 	t.SortBy([]table.SortBy{{Name: "ID", Number: 2, Mode: table.Asc}})
-	return t.Render(), nil
+	txt := t.Render() + fmt.Sprintf("\nSum: %d/%d (%.2f%% full)", used, total, float64(used)/float64(total)*100)
+	return txt, nil
 }
 
 func defaultTable(title string) table.Writer {
@@ -484,7 +491,7 @@ func defaultTable(title string) table.Writer {
 	return t
 }
 
-func onPlayers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onPlayers(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewServerByName(m.Data.Options[0].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
@@ -525,7 +532,7 @@ func onFilter(ctx context.Context, s *discordgo.Session, m *discordgo.Interactio
 	}
 }
 
-func onFilterAdd(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onFilterAdd(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	act := action.NewFilterAdd(action.Discord, m.Data.Options[0].Options[0].Value.(string))
 	res := <-act.Enqueue().Done()
 	if res.Err != nil {
@@ -538,7 +545,7 @@ func onFilterAdd(ctx context.Context, _ *discordgo.Session, m *discordgo.Interac
 	return fmt.Sprintf("Filter added: %s (id: %d)", f.Word.String(), f.WordID), nil
 }
 
-func onFilterDel(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
+func onFilterDel(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate) (string, error) {
 	wordId, ok := m.Data.Options[0].Options[0].Value.(float64)
 	if !ok {
 		return "", errors.New("Invalid filter id")

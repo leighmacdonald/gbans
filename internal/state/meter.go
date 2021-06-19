@@ -85,7 +85,7 @@ func LogMeter(ctx context.Context) {
 					"server_name": e.Server.ServerName,
 					"steam_id":    e.Player1.SteamID.String(),
 					"target_id":   e.Player2.SteamID.String(),
-					"weapon":      string(l.Weapon)}).
+					"weapon":      l.Weapon.String()}).
 					Add(float64(d))
 			case logparse.Healed:
 				var l logparse.HealedEvt
@@ -105,7 +105,7 @@ func LogMeter(ctx context.Context) {
 				shotFiredCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
 					"steam_id":    e.Player1.SteamID.String(),
-					"weapon":      string(l.Weapon)}).
+					"weapon":      l.Weapon.String()}).
 					Inc()
 			case logparse.ShotHit:
 				var l logparse.ShotHitEvt
@@ -115,7 +115,7 @@ func LogMeter(ctx context.Context) {
 				shotHitCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
 					"steam_id":    e.Player1.SteamID.String(),
-					"weapon":      string(l.Weapon)}).
+					"weapon":      l.Weapon.String()}).
 					Inc()
 			case logparse.Killed:
 				var l logparse.KilledEvt
@@ -126,7 +126,7 @@ func LogMeter(ctx context.Context) {
 					"server_name": e.Server.ServerName,
 					"steam_id":    e.Player1.SteamID.String(),
 					"target_id":   e.Player2.SteamID.String(),
-					"weapon":      string(l.Weapon)}).
+					"weapon":      l.Weapon.String()}).
 					Inc()
 			}
 

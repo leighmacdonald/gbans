@@ -283,7 +283,7 @@ func TestParse(t *testing.T) {
 
 	var value44 PickupEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:47:34: "g о а т z<13><[U:1:41435165]><Red>" picked up item "ammopack_small"`, Pickup), &value44))
-	require.EqualValues(t, PickupEvt{SourcePlayer: SourcePlayer{Name: "g о а т z", PID: 13, SID: 0x11000010278401d, Team: 1}, Item: AmmoSmall}, value44)
+	require.EqualValues(t, PickupEvt{SourcePlayer: SourcePlayer{Name: "g о а т z", PID: 13, SID: 0x11000010278401d, Team: 1}, Item: ItemAmmoSmall}, value44)
 
 	var value45 ShotFiredEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:28:02: "rad<6><[U:1:57823119]><Red>" triggered "shot_fired" (weapon "syringegun_medic")`, ShotFired), &value45))

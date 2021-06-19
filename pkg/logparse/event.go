@@ -267,7 +267,7 @@ type EmptyUberEvt struct {
 type PickupEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Item AmmoPack
+	Item PickupItem
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

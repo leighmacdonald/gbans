@@ -77,7 +77,7 @@ func TestMain(m *testing.M) {
 	actChan := make(chan *action.Action)
 	action.Register(actChan)
 	ctx := context.Background()
-	go actionWorker(ctx, actChan)
+	go actionExecutor(ctx, actChan)
 	store.Init(config.DB.DSN)
 	e := gin.New()
 	web.SetupRouter(e, logRawQueue)

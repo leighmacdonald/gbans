@@ -1,3 +1,14 @@
+// Package config contains the functionality for reading in and loosely validating config files.
+// The configuration is exposed via package level public variables. These must never be changed
+// on the fly and instead configured via the config file or env vars
+//
+// Env variables will override the config values. They can all be set using the same format as shown to
+// map to the correct config keys:
+//
+// 		export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
+// 		export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
+// 		./gbans serve
+//
 package config
 
 import (
@@ -218,7 +229,9 @@ func Read(cfgFiles ...string) {
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
-	steamid.SetKey(General.SteamKey)
+	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
+		log.Errorf("Failed to set steam api key: %v", err)
+	}
 	if found {
 		log.Infof("Using config file: %s", viper.ConfigFileUsed())
 	} else {

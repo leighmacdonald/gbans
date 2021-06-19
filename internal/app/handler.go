@@ -54,6 +54,7 @@ func onActionMute(ctx context.Context, act *action.Action) {
 	}
 	act.SetResult(okResult(res))
 }
+
 func onActionKick(ctx context.Context, act *action.Action) {
 	args, ok := act.Args.(action.KickRequest)
 	if !ok {

@@ -1,5 +1,11 @@
 package logparse
 
+import (
+	"github.com/pkg/errors"
+	"strconv"
+	"strings"
+)
+
 // MsgType defines a known, parsable message type
 type MsgType int
 
@@ -39,7 +45,6 @@ const (
 	DropObject          MsgType = 34
 	FirstHealAfterSpawn MsgType = 35
 	CaptureBlocked      MsgType = 36
-	KilledCustom        MsgType = 37
 	PointCaptured       MsgType = 48
 	JoinedTeam          MsgType = 49
 	ChangeClass         MsgType = 50
@@ -90,15 +95,41 @@ type Pos struct {
 	Z int64 `json:"z"`
 }
 
-// AmmoPack is used for
+func NewPosFromString(s string, p *Pos) error {
+	pcs := strings.Split(s, " ")
+	if len(pcs) != 3 {
+		return errors.New("Invalid position")
+	}
+	xv, ex := strconv.ParseInt(pcs[0], 10, 64)
+	if ex != nil {
+		return ex
+	}
+	yv, ey := strconv.ParseInt(pcs[1], 10, 64)
+	if ey != nil {
+		return ey
+	}
+	zv, ez := strconv.ParseInt(pcs[2], 10, 64)
+	if ez != nil {
+		return ez
+	}
+	p.X = xv
+	p.Y = yv
+	p.Z = zv
+	return nil
+}
+
+// PickupItem is used for
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type AmmoPack int
+type PickupItem int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	AmmoSmall AmmoPack = iota
-	AmmoMedium
-	AmmoLarge
+	ItemHPSmall PickupItem = iota
+	ItemHPMedium
+	ItemHPLarge
+	ItemAmmoSmall
+	ItemAmmoMedium
+	ItemAmmoLarge
 )
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -131,142 +162,271 @@ const (
 	QuickFix
 )
 
-// HealthPack contains the 3 types of health packs
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type HealthPack int
+type Weapon int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	HPSmall HealthPack = iota
-	HPMedium
-	HPLarge
+	UnknownWeapon Weapon = iota
+	AiFlamethrower
+	Airstrike
+	Ambassador
+	Amputator
+	Atomizer
+	AwperHand
+	Backburner
+	BackScratcher
+	Bat
+	BazaarBargain
+	BigEarner
+	Blackbox
+	BlackRose
+	Blutsauger
+	Bonesaw
+	Bottle
+	BrassBeast
+	Bushwacka
+	Caber
+	Club
+	ConscientiousObjector
+	CowMangler
+	Crossbow
+	DeflectPromode
+	DeflectRocket
+	Degreaser
+	DemoKatana
+	Detonator
+	DiamondBack
+	DirectHit
+	DisciplinaryAction
+	DragonsFury
+	DragonsFuryBonus
+	Enforcer
+	EscapePlan
+	EternalReward
+	FamilyBusiness
+	Fists
+	FistsOfSteel
+	FlameThrower
+	FlareGun
+	ForceANature
+	FrontierJustice
+	FryingPan
+	Gunslinger
+	GunslingerCombo
+	GunslingerTaunt
+	HamShank
+	HotHand
+	Huntsman
+	IronBomber
+	IronCurtain
+	Jag
+	Knife
+	Kukri
+	Kunai
+	Letranger
+	LibertyLauncher
+	LockNLoad
+	LongHeatmaker
+	LooseCannon
+	LooseCannonImpact
+	Machina
+	MachinaPen
+	MarketGardener
+	Maul
+	MiniGun
+	MiniSentry
+	Natascha
+	NecroSmasher
+	Original
+	PepPistol
+	Phlog
+	Pistol
+	PistolScout
+	Powerjack
+	ProjectilePipe
+	ProjectilePipeRemote
+	ProjectileRocket
+	ProRifle
+	ProSMG
+	ProtoSyringe
+	Quickiebomb
+	Rainblower
+	RescueRanger
+	ReserveShooter
+	Revolver
+	Sandman
+	Scattergun
+	ScorchShot
+	ScottishResistance
+	Sentry1
+	Sentry2
+	Sentry3
+	SharpDresser
+	ShootingStar
+	ShortStop
+	ShotgunPrimary
+	ShotgunPyro
+	ShotgunSoldier
+	Sledgehammer
+	SMG
+	SniperRifle
+	SodaPopper
+	Spycicle
+	SydneySleeper
+	SyringeGun
+	TauntMedic
+	Telefrag
+	TheClassic
+	Tomislav
+	Ubersaw
+	WarriorsSpirit
+	WidowMaker
+	World
+	Wrangler
+	WrapAssassin
+	Wrench
 )
 
-// Weapon defines all known weapons
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
-type Weapon string
+func (w Weapon) String() string {
+	name, found := weaponNames[w]
+	if !found {
+		return weaponNames[UnknownWeapon]
+	}
+	return name
+}
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
-const (
-	AiFlamethrower        Weapon = "ai_flamethrower"
-	Airstrike             Weapon = "airstrike"
-	Ambassador            Weapon = "ambassador"
-	Amputator             Weapon = "amputator"
-	Atomizer              Weapon = "atomizer"
-	AwperHand             Weapon = "awper_hand"
-	Backburner            Weapon = "backburner"
-	BackScratcher         Weapon = "back_scratcher"
-	Bat                   Weapon = "bat"
-	BazaarBargain         Weapon = "bazaar_bargain"
-	BigEarner             Weapon = "big_earner"
-	Blackbox              Weapon = "blackbox"
-	BlackRose             Weapon = "black_rose"
-	Blutsauger            Weapon = "blutsauger"
-	Bonesaw               Weapon = "bonesaw"
-	Bottle                Weapon = "bottle"
-	BrassBeast            Weapon = "brass_beast"
-	Bushwacka             Weapon = "bushwacka"
-	Caber                 Weapon = "ullapool_caber"
-	Club                  Weapon = "club"
-	ConscientiousObjector Weapon = "nonnonviolent_protest"
-	CowMangler            Weapon = "cow_mangler"
-	Crossbow              Weapon = "crusaders_crossbow"
-	DeflectPromode        Weapon = "deflect_promode"
-	DeflectRocket         Weapon = "deflect_rocket"
-	Degreaser             Weapon = "degreaser"
-	DemoKatana            Weapon = "demokatana"
-	Detonator             Weapon = "detonator"
-	DiamondBack           Weapon = "diamondback"
-	DirectHit             Weapon = "rocketlauncher_directhit"
-	DisciplinaryAction    Weapon = "disciplinary_action"
-	DragonsFury           Weapon = "dragons_fury"
-	DragonsFuryBonus      Weapon = "dragons_fury_bonus"
-	Enforcer              Weapon = "enforcer"
-	EscapePlan            Weapon = "unique_pickaxe_escape"
-	EternalReward         Weapon = "eternal_reward"
-	FamilyBusiness        Weapon = "family_business"
-	Fists                 Weapon = "fists"
-	FistsOfSteel          Weapon = "steel_fists"
-	FlameThrower          Weapon = "flamethrower"
-	FlareGun              Weapon = "flaregun"
-	ForceANature          Weapon = "force_a_nature"
-	FrontierJustice       Weapon = "frontier_justice"
-	FryingPan             Weapon = "fryingpan"
-	Gunslinger            Weapon = "robot_arm"
-	GunslingerCombo       Weapon = "robot_arm_combo_kill" // what is this?
-	GunslingerTaunt       Weapon = "robot_arm_blender_kill"
-	HamShank              Weapon = "ham_shank"
-	HotHand               Weapon = "hot_hand"
-	Huntsman              Weapon = "tf_projectile_arrow"
-	IronBomber            Weapon = "iron_bomber"
-	IronCurtain           Weapon = "iron_curtain"
-	Jag                   Weapon = "wrench_jag"
-	Knife                 Weapon = "knife"
-	Kukri                 Weapon = "tribalkukri"
-	Kunai                 Weapon = "kunai"
-	Letranger             Weapon = "letranger"
-	LibertyLauncher       Weapon = "liberty_launcher"
-	LockNLoad             Weapon = "loch_n_load"
-	LongHeatmaker         Weapon = "long_heatmaker"
-	LooseCannon           Weapon = "loose_cannon"
-	LooseCannonImpact     Weapon = "loose_cannon_impact"
-	Machina               Weapon = "machina"
-	MachinaPen            Weapon = "player_penetration"
-	MarketGardener        Weapon = "market_gardener"
-	Maul                  Weapon = "the_maul"
-	MiniGun               Weapon = "minigun"
-	MiniSentry            Weapon = "obj_minisentry"
-	Natascha              Weapon = "natascha"
-	NecroSmasher          Weapon = "necro_smasher"
-	Original              Weapon = "quake_rl"
-	PepPistol             Weapon = "pep_pistol"
-	Phlog                 Weapon = "phlogistinator"
-	Pistol                Weapon = "pistol"
-	PistolScout           Weapon = "pistol_scout"
-	Powerjack             Weapon = "powerjack"
-	ProjectilePipe        Weapon = "tf_projectile_pipe"
-	ProjectilePipeRemote  Weapon = "tf_projectile_pipe_remote"
-	ProjectileRocket      Weapon = "tf_projectile_rocket"
-	ProRifle              Weapon = "pro_rifle" // heatmaker?
-	ProSMG                Weapon = "pro_smg"   // carbine?
-	ProtoSyringe          Weapon = "proto_syringe"
-	Quickiebomb           Weapon = "quickiebomb_launcher"
-	Rainblower            Weapon = "rainblower"
-	RescueRanger          Weapon = "rescue_ranger"
-	ReserveShooter        Weapon = "reserve_shooter"
-	Revolver              Weapon = "revolver"
-	Sandman               Weapon = "sandman"
-	Scattergun            Weapon = "scattergun"
-	ScorchShot            Weapon = "scorch_shot"
-	ScottishResistance    Weapon = "sticky_resistance"
-	Sentry1               Weapon = "obj_sentrygun"
-	Sentry2               Weapon = "obj_sentrygun2"
-	Sentry3               Weapon = "obj_sentrygun3"
-	SharpDresser          Weapon = "sharp_dresser"
-	ShootingStar          Weapon = "shooting_star"
-	ShortStop             Weapon = "shortstop"
-	ShotgunPrimary        Weapon = "shotgun_primary"
-	ShotgunPyro           Weapon = "shotgun_pyro"
-	ShotgunSoldier        Weapon = "shotgun_soldier"
-	Sledgehammer          Weapon = "sledgehammer"
-	SMG                   Weapon = "smg"
-	SniperRifle           Weapon = "sniperrifle"
-	SodaPopper            Weapon = "soda_popper"
-	Spycicle              Weapon = "spy_cicle"
-	SydneySleeper         Weapon = "sydney_sleeper"
-	SyringeGun            Weapon = "syringegun_medic"
-	TauntMedic            Weapon = "taunt_medic"
-	Telefrag              Weapon = "telefrag"
-	TheClassic            Weapon = "the_classic"
-	Tomislav              Weapon = "tomislav"
-	Ubersaw               Weapon = "ubersaw"
-	WarriorsSpirit        Weapon = "warrior_spirit"
-	WidowMaker            Weapon = "widowmaker"
-	World                 Weapon = "world"
-	Wrangler              Weapon = "wrangler_kill"
-	WrapAssassin          Weapon = "wrap_assassin"
-	Wrench                Weapon = "wrench"
-)
+func WeaponFromString(s string) Weapon {
+	for w, v := range weaponNames {
+		if v == s {
+			return w
+		}
+	}
+	return UnknownWeapon
+}
+
+// weaponNames defines string versions for all all known weapons
+var weaponNames = map[Weapon]string{
+	UnknownWeapon:         "unknown",
+	AiFlamethrower:        "ai_flamethrower",
+	Airstrike:             "airstrike",
+	Ambassador:            "ambassador",
+	Amputator:             "amputator",
+	Atomizer:              "atomizer",
+	AwperHand:             "awper_hand",
+	Backburner:            "backburner",
+	BackScratcher:         "back_scratcher",
+	Bat:                   "bat",
+	BazaarBargain:         "bazaar_bargain",
+	BigEarner:             "big_earner",
+	Blackbox:              "blackbox",
+	BlackRose:             "black_rose",
+	Blutsauger:            "blutsauger",
+	Bonesaw:               "bonesaw",
+	Bottle:                "bottle",
+	BrassBeast:            "brass_beast",
+	Bushwacka:             "bushwacka",
+	Caber:                 "ullapool_caber",
+	Club:                  "club",
+	ConscientiousObjector: "nonnonviolent_protest",
+	CowMangler:            "cow_mangler",
+	Crossbow:              "crusaders_crossbow",
+	DeflectPromode:        "deflect_promode",
+	DeflectRocket:         "deflect_rocket",
+	Degreaser:             "degreaser",
+	DemoKatana:            "demokatana",
+	Detonator:             "detonator",
+	DiamondBack:           "diamondback",
+	DirectHit:             "rocketlauncher_directhit",
+	DisciplinaryAction:    "disciplinary_action",
+	DragonsFury:           "dragons_fury",
+	DragonsFuryBonus:      "dragons_fury_bonus",
+	Enforcer:              "enforcer",
+	EscapePlan:            "unique_pickaxe_escape",
+	EternalReward:         "eternal_reward",
+	FamilyBusiness:        "family_business",
+	Fists:                 "fists",
+	FistsOfSteel:          "steel_fists",
+	FlameThrower:          "flamethrower",
+	FlareGun:              "flaregun",
+	ForceANature:          "force_a_nature",
+	FrontierJustice:       "frontier_justice",
+	FryingPan:             "fryingpan",
+	Gunslinger:            "robot_arm",
+	GunslingerCombo:       "robot_arm_combo_kill", // what is this?
+	GunslingerTaunt:       "robot_arm_blender_kill",
+	HamShank:              "ham_shank",
+	HotHand:               "hot_hand",
+	Huntsman:              "tf_projectile_arrow",
+	IronBomber:            "iron_bomber",
+	IronCurtain:           "iron_curtain",
+	Jag:                   "wrench_jag",
+	Knife:                 "knife",
+	Kukri:                 "tribalkukri",
+	Kunai:                 "kunai",
+	Letranger:             "letranger",
+	LibertyLauncher:       "liberty_launcher",
+	LockNLoad:             "loch_n_load",
+	LongHeatmaker:         "long_heatmaker",
+	LooseCannon:           "loose_cannon",
+	LooseCannonImpact:     "loose_cannon_impact",
+	Machina:               "machina",
+	MachinaPen:            "player_penetration",
+	MarketGardener:        "market_gardener",
+	Maul:                  "the_maul",
+	MiniGun:               "minigun",
+	MiniSentry:            "obj_minisentry",
+	Natascha:              "natascha",
+	NecroSmasher:          "necro_smasher",
+	Original:              "quake_rl",
+	PepPistol:             "pep_pistol",
+	Phlog:                 "phlogistinator",
+	Pistol:                "pistol",
+	PistolScout:           "pistol_scout",
+	Powerjack:             "powerjack",
+	ProjectilePipe:        "tf_projectile_pipe",
+	ProjectilePipeRemote:  "tf_projectile_pipe_remote",
+	ProjectileRocket:      "tf_projectile_rocket",
+	ProRifle:              "pro_rifle", // heatmaker?
+	ProSMG:                "pro_smg",   // carbine?
+	ProtoSyringe:          "proto_syringe",
+	Quickiebomb:           "quickiebomb_launcher",
+	Rainblower:            "rainblower",
+	RescueRanger:          "rescue_ranger",
+	ReserveShooter:        "reserve_shooter",
+	Revolver:              "revolver",
+	Sandman:               "sandman",
+	Scattergun:            "scattergun",
+	ScorchShot:            "scorch_shot",
+	ScottishResistance:    "sticky_resistance",
+	Sentry1:               "obj_sentrygun",
+	Sentry2:               "obj_sentrygun2",
+	Sentry3:               "obj_sentrygun3",
+	SharpDresser:          "sharp_dresser",
+	ShootingStar:          "shooting_star",
+	ShortStop:             "shortstop",
+	ShotgunPrimary:        "shotgun_primary",
+	ShotgunPyro:           "shotgun_pyro",
+	ShotgunSoldier:        "shotgun_soldier",
+	Sledgehammer:          "sledgehammer",
+	SMG:                   "smg",
+	SniperRifle:           "sniperrifle",
+	SodaPopper:            "soda_popper",
+	Spycicle:              "spy_cicle",
+	SydneySleeper:         "sydney_sleeper",
+	SyringeGun:            "syringegun_medic",
+	TauntMedic:            "taunt_medic",
+	Telefrag:              "telefrag",
+	TheClassic:            "the_classic",
+	Tomislav:              "tomislav",
+	Ubersaw:               "ubersaw",
+	WarriorsSpirit:        "warrior_spirit",
+	WidowMaker:            "widowmaker",
+	World:                 "world",
+	Wrangler:              "wrangler_kill",
+	WrapAssassin:          "wrap_assassin",
+	Wrench:                "wrench",
+}
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers,GoUnusedGlobalVariable
 var Weapons = map[PlayerClass][]Weapon{

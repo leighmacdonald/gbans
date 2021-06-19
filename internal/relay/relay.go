@@ -1,3 +1,9 @@
+// Package relay implements client or agent like functionality to communicate with the central
+// gbans instance. Currently it is very simple and only implements a log relaying service.
+//
+//
+// ./gbans relay -H wss://host.com:443 -l ./path/to/tf/logs -n srv-1 -p server_auth_pass
+//
 package relay
 
 import (

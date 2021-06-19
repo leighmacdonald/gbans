@@ -144,30 +144,22 @@ var (
 	}
 )
 
-func parseHealthPack(hp string, v *HealthPack) bool {
-	switch hp {
-	case "medkit_small":
-		*v = HPSmall
-	case "medkit_medium":
-		*v = HPMedium
-	case "medkit_large":
-		*v = HPLarge
-	default:
-		return false
-	}
-	return true
-}
-
-func parseAmmoPack(hp string, pack *AmmoPack) bool {
+func parsePickupItem(hp string, item *PickupItem) bool {
 	switch hp {
 	case "ammopack_small":
 		fallthrough
 	case "tf_ammo_pack":
-		*pack = AmmoSmall
+		*item = ItemAmmoSmall
 	case "ammopack_medium":
-		*pack = AmmoMedium
+		*item = ItemAmmoMedium
 	case "ammopack_large":
-		*pack = AmmoLarge
+		*item = ItemAmmoLarge
+	case "medkit_small":
+		*item = ItemHPSmall
+	case "medkit_medium":
+		*item = ItemHPMedium
+	case "medkit_large":
+		*item = ItemHPLarge
 	default:
 		return false
 	}
@@ -419,31 +411,32 @@ func decodeMedigun() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decodeAmmoPack() mapstructure.DecodeHookFunc {
+func decodePickupItem() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		var m AmmoPack
-		if !parseAmmoPack(d.(string), &m) {
+		var m PickupItem
+		if !parsePickupItem(d.(string), &m) {
 			return d, nil
 		}
 		return m, nil
 	}
 }
 
-func decodeHealthPack() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
-		if f.Kind() != reflect.String {
-			return d, nil
-		}
-		var m HealthPack
-		if !parseHealthPack(d.(string), &m) {
-			return d, nil
-		}
-		return m, nil
-	}
-}
+//
+//func decodeHealthPack() mapstructure.DecodeHookFunc {
+//	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+//		if f.Kind() != reflect.String {
+//			return d, nil
+//		}
+//		var m PickupItem
+//		if !parsePickupItem(d.(string), &m) {
+//			return d, nil
+//		}
+//		return m, nil
+//	}
+//}
 
 // Unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
@@ -456,8 +449,7 @@ func Unmarshal(input interface{}, output interface{}) error {
 			decodePos(),
 			decodeSID3(),
 			decodeMedigun(),
-			decodeAmmoPack(),
-			decodeHealthPack(),
+			decodePickupItem(),
 		),
 		Result:           output,
 		WeaklyTypedInput: true, // Lets us do str -> int easily

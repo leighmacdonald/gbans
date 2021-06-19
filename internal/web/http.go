@@ -46,6 +46,8 @@ func init() {
 	router = gin.New()
 }
 
+// Start sets up the router and starts the API HTTP handlers
+// This function blocks on the context
 func Start(ctx context.Context, logMsgChan chan LogPayload) {
 	SetupRouter(router, logMsgChan)
 	log.Infof("Starting HTTP service")

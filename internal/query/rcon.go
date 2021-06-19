@@ -43,9 +43,9 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 				return
 			}
 			for _, command := range commands {
-				resp, err := conn.Exec(sanitizeRCONCommand(command))
-				if err != nil {
-					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, err)
+				resp, errR := conn.Exec(sanitizeRCONCommand(command))
+				if errR != nil {
+					log.Errorf("Failed to exec rcon command %s: %v", server.ServerName, errR)
 				}
 				mu.Lock()
 				responses[server.ServerName] = resp

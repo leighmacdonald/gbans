@@ -101,8 +101,6 @@ var testDataCmd = &cobra.Command{
 			}
 		}
 		for _, v := range [][]string{
-			{"test-1", "test-1.de.uncletopia.com"},
-			{"lo-1", "192.168.0.101"},
 			{"sea-1", "sea-1.us.uncletopia.com"},
 			{"lax-1", "lax-1.us.uncletopia.com"},
 			{"sfo-1", "sfo-1.us.uncletopia.com"},
@@ -113,12 +111,14 @@ var testDataCmd = &cobra.Command{
 			{"frk-1", "frk-1.de.uncletopia.com"},
 			{"ber-1", "ber-1.de.uncletopia.com"},
 			{"ham-1", "ham-1.de.uncletopia.com"},
+			{"lon-1", "lon-1.uk.uncletopia.com"},
 		} {
 			s := model.Server{
 				ServerName:     v[0],
 				Address:        v[1],
 				Port:           27015,
 				RCON:           testRconPass,
+				ReservedSlots:  8,
 				Token:          "0123456789012345678901234567890123456789",
 				Password:       golib.RandomString(20),
 				TokenCreatedOn: config.Now(),

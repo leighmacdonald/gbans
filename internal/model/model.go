@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
 	"time"
@@ -345,17 +346,21 @@ type Stats struct {
 }
 
 type ServerLog struct {
-	LogID     int64            `json:"log_id"`
-	ServerID  int64            `json:"server_id"`
-	EventType logparse.MsgType `json:"event_type"`
-	Payload   interface{}      `json:"payload"`
-	SourceID  steamid.SID64    `json:"source_id"`
-	TargetID  steamid.SID64    `json:"target_id"`
-	CreatedOn time.Time        `json:"created_on"`
+	LogID       int64            `json:"log_id"`
+	ServerID    int64            `json:"server_id"`
+	EventType   logparse.MsgType `json:"event_type"`
+	Payload     interface{}      `json:"payload"`
+	SourceID    steamid.SID64    `json:"source_id"`
+	TargetID    steamid.SID64    `json:"target_id"`
+	Weapon      logparse.Weapon  `json:"weapon"`
+	Damage      int              `json:"damage"`
+	AttackerPOS *logparse.Pos    `json:"attacker_pos"`
+	VictimPOS   *logparse.Pos    `json:"victim_pos"`
+	AssisterPOS *logparse.Pos    `json:"assister_pos"`
+	CreatedOn   time.Time        `json:"created_on"`
 }
 
 func NewServerLog(serverID int64, mType logparse.MsgType, values map[string]string) *ServerLog {
-	//m, ok := values.(map[string]string)
 	sourceID := steamid.SID64(0)
 	targetID := steamid.SID64(0)
 	sidStr, ok := values["sid"]
@@ -372,14 +377,51 @@ func NewServerLog(serverID int64, mType logparse.MsgType, values map[string]stri
 			targetID = sVal2
 		}
 	}
+	var (
+		apos, vpos, aspos *logparse.Pos
+	)
+	aposValue, aposFound := values["attacker_position"]
+	if aposFound {
+		if err := logparse.NewPosFromString(aposValue, apos); err != nil {
+			log.Warnf("Failed to parse attacker position: %v", err)
+		}
+	}
+	vposValue, vposFound := values["victim_position"]
+	if vposFound {
+		if err := logparse.NewPosFromString(vposValue, vpos); err != nil {
+			log.Warnf("Failed to parse victim position: %v", err)
+		}
+	}
+	asValue, asFound := values["assister_position"]
+	if asFound {
+		if err := logparse.NewPosFromString(asValue, aspos); err != nil {
+			log.Warnf("Failed to parse assister position: %v", err)
+		}
+	}
+	var weapon logparse.Weapon
+	weaponValue, weaponFound := values["weapon"]
+	if weaponFound {
+		weapon = logparse.WeaponFromString(weaponValue)
+	}
 
+	for _, k := range []string{
+		"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
+		"date", "time", "weapon", "damage",
+		"attacker_position", "victim_position", "assister_position",
+	} {
+		delete(values, k)
+	}
 	return &ServerLog{
-		ServerID:  serverID,
-		EventType: mType,
-		Payload:   values,
-		SourceID:  sourceID,
-		TargetID:  targetID,
-		CreatedOn: config.Now(),
+		ServerID:    serverID,
+		EventType:   mType,
+		Payload:     values,
+		SourceID:    sourceID,
+		TargetID:    targetID,
+		AttackerPOS: apos,
+		VictimPOS:   vpos,
+		AssisterPOS: aspos,
+		Weapon:      weapon,
+		CreatedOn:   config.Now(),
 	}
 }
 
@@ -393,6 +435,7 @@ func (f *Filter) Match(value string) bool {
 	return f.Word.MatchString(value)
 }
 
+// LogEvent represents a full representation of a server log entry including all meta data attached to the log.
 type LogEvent struct {
 	LogID     int64             `json:"log_id"`
 	Type      logparse.MsgType  `json:"event_type"`
