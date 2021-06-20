@@ -95,3 +95,7 @@ docker_dump:
 
 docker_restore:
 	docker exec gbans-postgres pg_dump -U gbans -f gbans.sql
+
+update_deps:
+	go get -u .\...
+	cd frontend && yarn upgrade
