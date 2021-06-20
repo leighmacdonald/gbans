@@ -208,7 +208,7 @@ func parseMedigun(gunStr string, gun *Medigun) bool {
 //	}
 //}
 
-func parsePlayerClass(classStr string, class *PlayerClass) bool {
+func ParsePlayerClass(classStr string, class *PlayerClass) bool {
 	switch strings.ToLower(classStr) {
 	case "scout":
 		*class = Scout
@@ -277,15 +277,15 @@ func parsePos(posStr string, pos *Pos) bool {
 	if len(p) != 3 {
 		return false
 	}
-	x, err1 := strconv.ParseInt(p[0], 10, 64)
+	x, err1 := strconv.ParseFloat(p[0], 64)
 	if err1 != nil {
 		return false
 	}
-	y, err2 := strconv.ParseInt(p[1], 10, 64)
+	y, err2 := strconv.ParseFloat(p[1], 64)
 	if err2 != nil {
 		return false
 	}
-	z, err3 := strconv.ParseInt(p[2], 10, 64)
+	z, err3 := strconv.ParseFloat(p[2], 64)
 	if err3 != nil {
 		return false
 	}
@@ -362,7 +362,7 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var cls PlayerClass
-		if !parsePlayerClass(d.(string), &cls) {
+		if !ParsePlayerClass(d.(string), &cls) {
 			return d, nil
 		}
 		return cls, nil
@@ -424,19 +424,18 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 	}
 }
 
-//
-//func decodeHealthPack() mapstructure.DecodeHookFunc {
-//	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
-//		if f.Kind() != reflect.String {
-//			return d, nil
-//		}
-//		var m PickupItem
-//		if !parsePickupItem(d.(string), &m) {
-//			return d, nil
-//		}
-//		return m, nil
-//	}
-//}
+func decodeWeapon() mapstructure.DecodeHookFunc {
+	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return d, nil
+		}
+		w := WeaponFromString(d.(string))
+		if w != UnknownWeapon {
+			return w, nil
+		}
+		return d, nil
+	}
+}
 
 // Unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
@@ -450,6 +449,7 @@ func Unmarshal(input interface{}, output interface{}) error {
 			decodeSID3(),
 			decodeMedigun(),
 			decodePickupItem(),
+			decodeWeapon(),
 		),
 		Result:           output,
 		WeaklyTypedInput: true, // Lets us do str -> int easily

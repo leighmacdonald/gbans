@@ -43,28 +43,24 @@ func IsFilteredWord(body string) (bool, *model.Filter) {
 }
 
 func filterWorker(ctx context.Context) {
-	c := make(chan model.LogEvent)
+	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
 	}
 	for {
 		select {
 		case evt := <-c:
-			var m logparse.SayTeamEvt
-			if err := evt.Unmarshal(&m); err != nil {
-				log.Errorf("Failed to decode event")
-			}
 			wordFiltersMu.RLock()
 			var matched *model.Filter
 			for _, f := range wordFilters {
-				if f.Match(m.Msg) {
+				if f.Match(evt.Extra) {
 					matched = f
 					break
 				}
 			}
 			wordFiltersMu.RUnlock()
 			if matched != nil {
-				addWarning(evt.Player1.SteamID, warnLanguage)
+				addWarning(evt.Source.SteamID, warnLanguage)
 			}
 		case <-ctx.Done():
 			return

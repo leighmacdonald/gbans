@@ -359,7 +359,8 @@ const (
 )
 
 func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if h, ok := commandHandlers[botCmd(i.Data.Name)]; ok {
+	cmd := botCmd(i.Data.Name)
+	if h, ok := commandHandlers[cmd]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. Discord will timeout commands that dont respond within a
 		// very short timeout windows, ~2-3 seconds.
@@ -392,7 +393,7 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					log.Errorf("Failed sending success response for interaction: %v", sendE)
 				}
 			} else {
-				if e := sendChannelMessage(s, i.ChannelID, m); e != nil {
+				if e := sendChannelMessage(s, i.ChannelID, m, false); e != nil {
 					log.Errorf(e.Error())
 				}
 			}

@@ -71,7 +71,7 @@ type socketSession struct {
 	LogQueryOpts        model.LogQueryOpts
 	LogQueryOptsUpdated bool
 	ctx                 context.Context
-	eventChan           chan model.LogEvent
+	eventChan           chan model.ServerEvent
 	session             *melody.Session
 	sendQ               chan []byte
 	recvQ               chan []byte
@@ -127,7 +127,7 @@ func (s *socketSession) reader() {
 		case r := <-s.recvQ:
 			s.Log().Debugln(r)
 		case e := <-s.eventChan:
-			if !s.LogQueryOpts.ValidRecordType(e.Type) {
+			if !s.LogQueryOpts.ValidRecordType(e.EventType) {
 				continue
 			}
 			// TODO
@@ -361,18 +361,19 @@ func (ws *socketState) onWSConnect(session *melody.Session) {
 	client := &socketSession{
 		State:     Closed,
 		ctx:       context.Background(),
-		eventChan: make(chan model.LogEvent),
+		eventChan: make(chan model.ServerEvent),
 		session:   session,
 		sendQ:     make(chan []byte, sendQueueSize),
 		recvQ:     make(chan []byte),
 	}
 	go client.reader()
 	go client.writer()
-	client.Log().Infof("WS client connect")
+	client.State = AwaitingAuthentication
 	ws.Lock()
 	ws.sessions[session] = client
 	ws.Unlock()
-	client.State = AwaitingAuthentication
+	client.Log().Infof("WS client connect")
+
 }
 
 // onWSDisconnect will remove the client from the active session list and unregister itself

@@ -1,6 +1,7 @@
 package logparse
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -90,9 +91,15 @@ const (
 // Pos is a position in 3D space
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Pos struct {
-	X int64 `json:"x"`
-	Y int64 `json:"y"`
-	Z int64 `json:"z"`
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+// String returns a ST_MakePointM
+// Uses ESPG 4326 (WSG-84)
+func (p *Pos) Encode() string {
+	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }
 
 func NewPosFromString(s string, p *Pos) error {
@@ -100,15 +107,15 @@ func NewPosFromString(s string, p *Pos) error {
 	if len(pcs) != 3 {
 		return errors.New("Invalid position")
 	}
-	xv, ex := strconv.ParseInt(pcs[0], 10, 64)
+	xv, ex := strconv.ParseFloat(pcs[0], 64)
 	if ex != nil {
 		return ex
 	}
-	yv, ey := strconv.ParseInt(pcs[1], 10, 64)
+	yv, ey := strconv.ParseFloat(pcs[1], 64)
 	if ey != nil {
 		return ey
 	}
-	zv, ez := strconv.ParseInt(pcs[2], 10, 64)
+	zv, ez := strconv.ParseFloat(pcs[2], 64)
 	if ez != nil {
 		return ez
 	}
@@ -286,6 +293,7 @@ const (
 	Wrangler
 	WrapAssassin
 	Wrench
+	Sapper
 )
 
 func (w Weapon) String() string {
@@ -396,6 +404,7 @@ var weaponNames = map[Weapon]string{
 	ReserveShooter:        "reserve_shooter",
 	Revolver:              "revolver",
 	Sandman:               "sandman",
+	Sapper:                "obj_attachment_sapper",
 	Scattergun:            "scattergun",
 	ScorchShot:            "scorch_shot",
 	ScottishResistance:    "sticky_resistance",
@@ -565,6 +574,7 @@ var Weapons = map[PlayerClass][]Weapon{
 		Kunai,
 		Letranger,
 		Revolver,
+		Sapper,
 		SharpDresser,
 		Spycicle,
 	},

@@ -152,7 +152,7 @@ func TestParse(t *testing.T) {
 			Team2: BLU,
 		},
 		Object: "OBJ_SENTRYGUN",
-		Weapon: "obj_attachment_sapper",
+		Weapon: Sapper,
 		APos:   Pos{X: 2, Y: -579, Z: -255}}, value16)
 
 	var value17 CarryObjectEvt

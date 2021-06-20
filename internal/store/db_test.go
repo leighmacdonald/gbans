@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -62,16 +63,21 @@ func TestServer(t *testing.T) {
 	require.True(t, len(sLenA)-1 == len(sLenB))
 }
 
+func randIP() string {
+	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))
+}
+
 func TestBanNet(t *testing.T) {
 	banNetEqual := func(b1, b2 model.BanNet) {
 		require.Equal(t, b1.Reason, b2.Reason)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	n1, _ := model.NewBanNet("172.16.1.0/24", "testing", time.Hour*100, model.System)
+	rip := randIP()
+	n1, _ := model.NewBanNet(fmt.Sprintf("%s/32", rip), "testing", time.Hour*100, model.System)
 	require.NoError(t, SaveBanNet(ctx, &n1))
 	require.Less(t, int64(0), n1.NetID)
-	b1, err := GetBanNet(ctx, net.ParseIP("172.16.1.100"))
+	b1, err := GetBanNet(ctx, net.ParseIP(rip))
 	require.NoError(t, err)
 	banNetEqual(b1[0], n1)
 	require.Equal(t, b1[0].Reason, n1.Reason)
@@ -125,7 +131,7 @@ func TestFilteredWords(t *testing.T) {
 }
 
 func TestAppeal(t *testing.T) {
-	b1 := model.NewBan(76561199093644873, 76561198003911389, time.Hour*24)
+	b1 := model.NewBan(steamid.RandSID64(), 76561198003911389, time.Hour*24)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	require.NoError(t, SaveBan(ctx, b1), "Failed to add ban")
@@ -176,31 +182,29 @@ func TestGetChatHistory(t *testing.T) {
 	ctx := context.Background()
 	s := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
 	require.NoError(t, SaveServer(ctx, &s))
-	player := logparse.SourcePlayer{
-		Name: "test-name-1",
-		PID:  1,
-		SID:  sid,
-		Team: logparse.RED,
+	player := model.Person{
+		SteamID: sid,
+		PlayerSummary: &extra.PlayerSummary{
+			PersonaName: "test-name",
+		},
 	}
-	logs := []*model.ServerLog{
-		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
-			"sid":  string(steamid.SID64ToSID3(player.SID)),
-			"team": "Red",
-			"pid":  "10",
-			"name": "test-name",
-			"msg":  "test-1",
-		}),
-		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
-			"sid":  string(steamid.SID64ToSID3(player.SID)),
-			"team": "Red",
-			"pid":  "10",
-			"name": "test-name",
-			"msg":  "test-2",
-		}),
+	logs := []model.ServerEvent{
+		{
+			Server:    &s,
+			Source:    &player,
+			EventType: logparse.Say,
+			Extra:     "test-1",
+			CreatedOn: config.Now().Add(-1 * time.Second),
+		},
+		{
+			Server:    &s,
+			Source:    &player,
+			EventType: logparse.Say,
+			Extra:     "test-2",
+			CreatedOn: config.Now(),
+		},
 	}
-	for _, l := range logs {
-		require.NoError(t, InsertLog(ctx, l))
-	}
+	require.NoError(t, BatchInsertServerLogs(ctx, logs))
 	hist, errHist := GetChatHistory(ctx, sid)
 	require.NoError(t, errHist, "Failed to fetch chat history")
 	require.True(t, len(hist) >= 2, "History size too small: %d", len(hist))
@@ -213,57 +217,57 @@ func TestFindLogEvents(t *testing.T) {
 	ctx := context.Background()
 	s := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
 	require.NoError(t, SaveServer(ctx, &s))
-	s1 := logparse.SourcePlayer{
-		Name: "test-name-1",
-		PID:  1,
-		SID:  sid,
-		Team: logparse.RED,
+	s1 := model.Person{
+		SteamID: sid,
+		PlayerSummary: &extra.PlayerSummary{
+			PersonaName: "test-name-1",
+		},
 	}
-	t1 := logparse.TargetPlayer{
-		Name2: "test-name-2",
-		PID2:  2,
-		SID2:  sid2,
-		Team2: logparse.BLU,
+	t1 := model.Person{
+		SteamID: sid2,
+		PlayerSummary: &extra.PlayerSummary{
+			PersonaName: "test-name-2",
+		},
 	}
-	logs := []*model.ServerLog{
-		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
-			"sid":  string(steamid.SID64ToSID3(s1.SID)),
-			"team": "Red",
-			"pid":  "10",
-			"name": "test-name",
-			"msg":  "test-1",
-		}),
-		model.NewServerLog(s.ServerID, logparse.Say, map[string]string{
-			"sid":  string(steamid.SID64ToSID3(s1.SID)),
-			"team": "Red",
-			"pid":  "10",
-			"name": "test-name",
-			"msg":  "test-2",
-		}),
-		model.NewServerLog(s.ServerID, logparse.Killed, map[string]string{
-			"sid":               string(steamid.SID64ToSID3(s1.SID)),
-			"team":              "Red",
-			"pid":               fmt.Sprintf("%d", s1.PID),
-			"name":              "test-name",
-			"sid2":              string(steamid.SID64ToSID3(t1.SID2)),
-			"team2":             "Blu",
-			"pid2":              fmt.Sprintf("%d", t1.PID2),
-			"name2":             "test-name2",
-			"weapon":            "scattergun",
-			"attacker_position": "5 -5 5",
-			"victim_position":   "10 -10 10",
-		}),
+	logs := []model.ServerEvent{
+		{
+			Server:    &s,
+			Source:    &s1,
+			EventType: logparse.Say,
+			Extra:     "test-1",
+		},
+		{
+			Server:    &s,
+			Source:    &s1,
+			EventType: logparse.Say,
+			Extra:     "test-2",
+		},
+		{
+			Server: &s,
+			Source: &s1,
+			Target: &t1,
+			Weapon: logparse.Scattergun,
+			AttackerPOS: logparse.Pos{
+				X: 5,
+				Y: -5,
+				Z: 15,
+			},
+			VictimPOS: logparse.Pos{
+				X: 10,
+				Y: -10,
+				Z: 100,
+			},
+			EventType: logparse.Killed,
+		},
 	}
-	for _, l := range logs {
-		require.NoError(t, InsertLog(ctx, l))
-	}
+	require.NoError(t, BatchInsertServerLogs(ctx, logs))
 	logEvents, errLogs := FindLogEvents(ctx, model.LogQueryOpts{
 		LogTypes: []logparse.MsgType{logparse.Killed},
 	})
 	require.NoError(t, errLogs, "Failed to fetch logs")
 	require.True(t, len(logEvents) >= 1, "Log size too small: %d", len(logEvents))
 	for _, evt := range logEvents {
-		require.Equal(t, logparse.Killed, evt.Type)
+		require.Equal(t, logparse.Killed, evt.EventType)
 	}
 }
 

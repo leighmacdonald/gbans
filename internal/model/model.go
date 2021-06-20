@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
 	"time"
@@ -345,84 +344,24 @@ type Stats struct {
 	ServersTotal  int `json:"servers_total"`
 }
 
-type ServerLog struct {
-	LogID       int64            `json:"log_id"`
-	ServerID    int64            `json:"server_id"`
-	EventType   logparse.MsgType `json:"event_type"`
-	Payload     interface{}      `json:"payload"`
-	SourceID    steamid.SID64    `json:"source_id"`
-	TargetID    steamid.SID64    `json:"target_id"`
-	Weapon      logparse.Weapon  `json:"weapon"`
-	Damage      int              `json:"damage"`
-	AttackerPOS *logparse.Pos    `json:"attacker_pos"`
-	VictimPOS   *logparse.Pos    `json:"victim_pos"`
-	AssisterPOS *logparse.Pos    `json:"assister_pos"`
-	CreatedOn   time.Time        `json:"created_on"`
-}
-
-func NewServerLog(serverID int64, mType logparse.MsgType, values map[string]string) *ServerLog {
-	sourceID := steamid.SID64(0)
-	targetID := steamid.SID64(0)
-	sidStr, ok := values["sid"]
-	if ok {
-		sVal := steamid.SID3ToSID64(steamid.SID3(sidStr))
-		if sVal.Valid() {
-			sourceID = sVal
-		}
-	}
-	sid2Str, found2 := values["sid2"]
-	if found2 {
-		sVal2 := steamid.SID3ToSID64(steamid.SID3(sid2Str))
-		if sVal2.Valid() {
-			targetID = sVal2
-		}
-	}
-	var (
-		apos, vpos, aspos *logparse.Pos
-	)
-	aposValue, aposFound := values["attacker_position"]
-	if aposFound {
-		if err := logparse.NewPosFromString(aposValue, apos); err != nil {
-			log.Warnf("Failed to parse attacker position: %v", err)
-		}
-	}
-	vposValue, vposFound := values["victim_position"]
-	if vposFound {
-		if err := logparse.NewPosFromString(vposValue, vpos); err != nil {
-			log.Warnf("Failed to parse victim position: %v", err)
-		}
-	}
-	asValue, asFound := values["assister_position"]
-	if asFound {
-		if err := logparse.NewPosFromString(asValue, aspos); err != nil {
-			log.Warnf("Failed to parse assister position: %v", err)
-		}
-	}
-	var weapon logparse.Weapon
-	weaponValue, weaponFound := values["weapon"]
-	if weaponFound {
-		weapon = logparse.WeaponFromString(weaponValue)
-	}
-
-	for _, k := range []string{
-		"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
-		"date", "time", "weapon", "damage",
-		"attacker_position", "victim_position", "assister_position",
-	} {
-		delete(values, k)
-	}
-	return &ServerLog{
-		ServerID:    serverID,
-		EventType:   mType,
-		Payload:     values,
-		SourceID:    sourceID,
-		TargetID:    targetID,
-		AttackerPOS: apos,
-		VictimPOS:   vpos,
-		AssisterPOS: aspos,
-		Weapon:      weapon,
-		CreatedOn:   config.Now(),
-	}
+// ServerEvent is a flat struct encapsulating a parsed log event
+// Fields being present is event dependent, so do not assume everything will be
+// available
+type ServerEvent struct {
+	LogID       int64                `json:"log_id"`
+	Server      *Server              `json:"server"`
+	EventType   logparse.MsgType     `json:"event_type"`
+	Source      *Person              `json:"source"`
+	Target      *Person              `json:"target"`
+	PlayerClass logparse.PlayerClass `json:"class"`
+	Weapon      logparse.Weapon      `json:"weapon"`
+	Damage      int                  `json:"damage"`
+	Item        logparse.PickupItem  `json:"item"`
+	AttackerPOS logparse.Pos         `json:"attacker_pos"`
+	VictimPOS   logparse.Pos         `json:"victim_pos"`
+	AssisterPOS logparse.Pos         `json:"assister_pos"`
+	Extra       string               `json:"extra"`
+	CreatedOn   time.Time            `json:"created_on"`
 }
 
 type Filter struct {
@@ -435,8 +374,8 @@ func (f *Filter) Match(value string) bool {
 	return f.Word.MatchString(value)
 }
 
-// LogEvent represents a full representation of a server log entry including all meta data attached to the log.
-type LogEvent struct {
+// RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.
+type RawLogEvent struct {
 	LogID     int64             `json:"log_id"`
 	Type      logparse.MsgType  `json:"event_type"`
 	Event     map[string]string `json:"event"`
@@ -449,7 +388,7 @@ type LogEvent struct {
 }
 
 // Unmarshal is just a helper to
-func (e *LogEvent) Unmarshal(output interface{}) error {
+func (e *RawLogEvent) Unmarshal(output interface{}) error {
 	return logparse.Unmarshal(e.Event, output)
 }
 

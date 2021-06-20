@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -16,6 +15,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -192,8 +192,8 @@ func logWriter(ctx context.Context) {
 	const (
 		freq = time.Second * 10
 	)
-	var logCache []model.ServerLog
-	events := make(chan model.LogEvent)
+	var logCache []model.ServerEvent
+	events := make(chan model.ServerEvent, 100)
 	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
@@ -201,20 +201,15 @@ func logWriter(ctx context.Context) {
 	for {
 		select {
 		case evt := <-events:
-			logCache = append(logCache, *model.NewServerLog(evt.Server.ServerID, evt.Type, evt.Event))
+			logCache = append(logCache, evt)
 		case <-t.C:
 			if len(logCache) == 0 {
 				continue
 			}
-			toInsert := logCache
+			if errI := store.BatchInsertServerLogs(ctx, logCache); errI != nil {
+				log.Errorf("Failed to batch insert logs: %v", errI)
+			}
 			logCache = nil
-			go func(i []model.ServerLog) {
-				lCtx, cancel := context.WithTimeout(ctx, config.DB.LogWriteFreq)
-				defer cancel()
-				if errI := store.BatchInsertServerLogs(lCtx, i); errI != nil {
-					log.Errorf("Failed to batch insert logs: %v", errI)
-				}
-			}(toInsert)
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return
@@ -246,15 +241,76 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 				log.Errorf("Failed to get server for log message: %v", e)
 				continue
 			}
-			event.Emit(model.LogEvent{
-				Type:      v.MsgType,
-				Event:     v.Values,
-				Server:    s,
-				Player1:   getPlayer("sid", v.Values),
-				Player2:   getPlayer("sid2", v.Values),
-				RawEvent:  raw.Message,
-				CreatedOn: config.Now(),
-			})
+			var (
+				apos, vpos, aspos logparse.Pos
+			)
+			aposValue, aposFound := v.Values["attacker_position"]
+			if aposFound {
+				var apv logparse.Pos
+				if err := logparse.NewPosFromString(aposValue, &apv); err != nil {
+					log.Warnf("Failed to parse attacker position: %v", err)
+				}
+				apos = apv
+			}
+			vposValue, vposFound := v.Values["victim_position"]
+			if vposFound {
+				var vpv logparse.Pos
+				if err := logparse.NewPosFromString(vposValue, &vpv); err != nil {
+					log.Warnf("Failed to parse victim position: %v", err)
+				}
+				vpos = vpv
+			}
+			asValue, asFound := v.Values["assister_position"]
+			if asFound {
+				var aspv logparse.Pos
+				if err := logparse.NewPosFromString(asValue, &aspv); err != nil {
+					log.Warnf("Failed to parse assister position: %v", err)
+				}
+				aspos = aspv
+			}
+			var weapon logparse.Weapon
+			weaponValue, weaponFound := v.Values["weapon"]
+			if weaponFound {
+				weapon = logparse.WeaponFromString(weaponValue)
+			}
+			var class logparse.PlayerClass
+			classValue, classFound := v.Values["class"]
+			if classFound {
+				if !logparse.ParsePlayerClass(classValue, &class) {
+					class = logparse.Spectator
+				}
+			}
+			var damage int
+			dmgValue, dmgFound := v.Values["damage"]
+			if dmgFound {
+				damageP, err := strconv.ParseInt(dmgValue, 10, 64)
+				if err != nil {
+					log.Warnf("failed to parse damage value: %v", err)
+				}
+				damage = int(damageP)
+			}
+			for _, k := range []string{
+				"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
+				"date", "time", "weapon", "damage", "class",
+				"attacker_position", "victim_position", "assister_position",
+			} {
+				delete(v.Values, k)
+			}
+			se := model.ServerEvent{
+				Server:      &s,
+				EventType:   v.MsgType,
+				Source:      getPlayer("sid", v.Values),
+				Target:      getPlayer("sid2", v.Values),
+				PlayerClass: class,
+				Weapon:      weapon,
+				Damage:      damage,
+				AttackerPOS: apos,
+				VictimPOS:   vpos,
+				AssisterPOS: aspos,
+				CreatedOn:   config.Now(),
+			}
+
+			event.Emit(se)
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
@@ -330,12 +386,12 @@ func initWorkers(ctx context.Context) {
 	go logReader(ctx, logRawQueue)
 	go logWriter(ctx)
 	go filterWorker(ctx)
-	go state.LogMeter(ctx)
+	//go state.LogMeter(ctx)
 }
 
 func initDiscord() {
 	if config.Discord.Token != "" {
-		events := make(chan model.LogEvent)
+		events := make(chan model.ServerEvent)
 		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 			log.Warnf("Error registering discord log event reader")
 		}

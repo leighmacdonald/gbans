@@ -133,7 +133,6 @@ func Init(dsn string) {
 	if err3 != nil {
 		log.Fatalf("Failed to connect to database: %v", err3)
 	}
-
 	db = dbConn
 }
 
@@ -365,11 +364,12 @@ func GetBanByBanID(ctx context.Context, banID uint64, full bool) (*model.BannedP
 
 func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt, error) {
 	const q = `
-		SELECT source_id, payload->>'name', payload->>'team', payload->>'msg'
-		FROM server_log 
+		SELECT l.source_id, coalesce(p.personaname, ''), l.extra
+		FROM server_log l
+		LEFT JOIN person p on l.source_id = p.steam_id
 		WHERE source_id = $1
 		  AND (event_type = 10 OR event_type = 11) 
-		ORDER BY created_on DESC`
+		ORDER BY l.created_on DESC`
 	rows, err := db.Query(ctx, q, sid64.String())
 	if err != nil {
 		return nil, dbErr(err)
@@ -378,39 +378,34 @@ func GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt
 	var hist []logparse.SayEvt
 	for rows.Next() {
 		var h logparse.SayEvt
-		var tStr string
-		if err2 := rows.Scan(&h.SourcePlayer.SID, &h.SourcePlayer.Name, &tStr, &h.Msg); err2 != nil {
+		if err2 := rows.Scan(&h.SourcePlayer.SID, &h.SourcePlayer.Name, &h.Msg); err2 != nil {
 			return nil, err2
 		}
-		var t logparse.Team
-		logparse.ParseTeam(tStr, &t)
-		h.Team = t
 		hist = append(hist, h)
 	}
 	return hist, nil
 }
 
-func FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.LogEvent, error) {
+func FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
 	b := sb.Select(
 		`l.log_id`,
 		`l.event_type`,
-		`l.payload`,
 		`l.created_on`,
 		`s.server_id`,
-		`s.short_name as server_name`,
-		`COALESCE(p1.steam_id, 0)`,
-		`COALESCE(p1.personaname, '')`,
-		`COALESCE(p1.avatarfull, '')`,
-		`COALESCE(p1.avatar, '')`,
-		`COALESCE(p2.steam_id, 0)`,
-		`COALESCE(p2.personaname, '')`,
-		`COALESCE(p2.avatarfull, '')`,
-		`COALESCE(p2.avatar, '')`,
+		`s.short_name`,
+		`COALESCE(source.steam_id, 0)`,
+		`COALESCE(source.personaname, '')`,
+		`COALESCE(source.avatarfull, '')`,
+		`COALESCE(source.avatar, '')`,
+		`COALESCE(target.steam_id, 0)`,
+		`COALESCE(target.personaname, '')`,
+		`COALESCE(target.avatarfull, '')`,
+		`COALESCE(target.avatar, '')`,
 	).
 		From("server_log l").
 		LeftJoin(`server  s on s.server_id = l.server_id`).
-		LeftJoin(`person p1 on p1.steam_id = l.source_id`).
-		LeftJoin(`person p2 on p2.steam_id = l.target_id`)
+		LeftJoin(`person source on source.steam_id = l.source_id`).
+		LeftJoin(`person target on target.steam_id = l.target_id`)
 
 	s1, e1 := steamid.StringToSID64(opts.SourceID)
 	if opts.SourceID != "" && e1 == nil && s1.Valid() {
@@ -444,16 +439,18 @@ func FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.LogEve
 		return nil, dbErr(errQ)
 	}
 	defer rows.Close()
-	var events []model.LogEvent
+	var events []model.ServerEvent
 	for rows.Next() {
-		e := model.LogEvent{
-			Player1:  &model.Person{PlayerSummary: &extra.PlayerSummary{}},
-			Player2:  &model.Person{PlayerSummary: &extra.PlayerSummary{}},
-			Assister: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+		e := model.ServerEvent{
+			Server: &model.Server{},
+			Source: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+			Target: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
 		}
-		if err2 := rows.Scan(&e.LogID, &e.Type, &e.Event, &e.CreatedOn, &e.Server.ServerID, &e.Server.ServerName,
-			&e.Player1.SteamID, &e.Player1.PersonaName, &e.Player1.AvatarFull, &e.Player1.Avatar,
-			&e.Player2.SteamID, &e.Player2.PersonaName, &e.Player2.AvatarFull, &e.Player2.Avatar); err2 != nil {
+		if err2 := rows.Scan(
+			&e.LogID, &e.EventType, &e.CreatedOn,
+			&e.Server.ServerID, &e.Server.ServerName,
+			&e.Source.SteamID, &e.Source.PersonaName, &e.Source.AvatarFull, &e.Source.Avatar,
+			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar); err2 != nil {
 			return nil, err2
 		}
 		events = append(events, e)
@@ -1127,12 +1124,25 @@ func GetFilters(ctx context.Context) ([]*model.Filter, error) {
 	return filters, nil
 }
 
-func BatchInsertServerLogs(ctx context.Context, logs []model.ServerLog) error {
+// TODO dont treat all origin positions as invalid
+func BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
 	const (
 		stmtName = "insert-log"
 		query    = `
-		INSERT INTO server_log (server_id, event_type, payload, source_id, target_id, created_on) 
-		VALUES ($1, $2, $3, $4, $5, $6)`
+		INSERT INTO server_log (
+		    server_id, event_type, source_id, target_id, created_on, weapon, damage, 
+		    item, extra, player_class, attacker_position, victim_position, assister_position
+		) VALUES (
+		    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
+		    CASE WHEN $11 != 0 AND $12 != 0 AND $13 != 0 THEN
+		    	ST_SetSRID(ST_MakePoint($11, $12, $13), 4326)
+		    END,
+		    CASE WHEN $14 != 0 AND $15 != 0 AND $16 != 0 THEN
+		    	ST_SetSRID(ST_MakePoint($14, $15, $16), 4326)
+			END,
+		    CASE WHEN $17 != 0 AND $18 != 0 AND $19 != 0 THEN
+		          ST_SetSRID(ST_MakePoint($17, $18, $19), 4326)
+			END)`
 	)
 	tx, err := db.Begin(ctx)
 	if err != nil {
@@ -1144,10 +1154,27 @@ func BatchInsertServerLogs(ctx context.Context, logs []model.ServerLog) error {
 	}
 	lCtx, cancel := context.WithTimeout(ctx, config.DB.LogWriteFreq/2)
 	defer cancel()
+
 	var re error
 	for _, lg := range logs {
-		if _, re = tx.Exec(lCtx, stmtName, lg.ServerID, lg.EventType,
-			lg.Payload, lg.SourceID, lg.TargetID, lg.CreatedOn); re != nil {
+		if lg.Server == nil || lg.Server.ServerID <= 0 {
+			continue
+		}
+		source := steamid.SID64(0)
+		target := steamid.SID64(0)
+		if lg.Source != nil && lg.Source.SteamID.Valid() {
+			source = lg.Source.SteamID
+		}
+		if lg.Target != nil && lg.Target.SteamID.Valid() {
+			target = lg.Target.SteamID
+		}
+
+		if _, re = tx.Exec(lCtx, stmtName, lg.Server.ServerID, lg.EventType,
+			source.Int64(), target.Int64(), lg.CreatedOn, lg.Weapon, lg.Damage,
+			lg.Item, lg.Extra, lg.PlayerClass,
+			lg.AttackerPOS.Y, lg.AttackerPOS.X, lg.AttackerPOS.Z,
+			lg.VictimPOS.Y, lg.VictimPOS.X, lg.VictimPOS.Z,
+			lg.AssisterPOS.Y, lg.AssisterPOS.X, lg.AssisterPOS.Z); re != nil {
 			re = errors.Wrapf(re, "Failed to write log entries")
 			break
 		}
@@ -1160,21 +1187,6 @@ func BatchInsertServerLogs(ctx context.Context, logs []model.ServerLog) error {
 	}
 	if errC := tx.Commit(lCtx); errC != nil {
 		log.Errorf("Failed to commit log entries: %v", errC)
-	}
-	return nil
-}
-
-func InsertLog(ctx context.Context, l *model.ServerLog) error {
-
-	q, a, e := sb.Insert(string(tableServerLog)).
-		Columns("server_id", "event_type", "payload", "source_id", "target_id", "Created_on").
-		Values(l.ServerID, l.EventType, l.Payload, l.SourceID, l.TargetID, l.CreatedOn).
-		ToSql()
-	if e != nil {
-		return e
-	}
-	if _, err := db.Exec(ctx, q, a...); err != nil {
-		return dbErr(err)
 	}
 	return nil
 }

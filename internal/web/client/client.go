@@ -110,7 +110,11 @@ func (c *Client) Enqueue(payload []byte) error {
 		c.Log().Warnf("message dropped (Enqueue queue full)")
 		return nil
 	}
-	c.SendQ <- payload
+	select {
+	case c.SendQ <- payload:
+	default:
+		c.Log().Error("WS send queue full")
+	}
 	return nil
 }
 func (c *Client) stats() {

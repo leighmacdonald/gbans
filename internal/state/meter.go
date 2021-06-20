@@ -54,8 +54,9 @@ func init() {
 	}
 }
 
+// TODO fix race condition reading values
 func LogMeter(ctx context.Context) {
-	c := make(chan model.LogEvent)
+	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{
 		logparse.ShotHit,
 		logparse.ShotFired,
@@ -71,62 +72,38 @@ func LogMeter(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case e := <-c:
-			switch e.Type {
+			switch e.EventType {
 			case logparse.Damage:
-				var l logparse.DamageEvt
-				if err := logparse.Unmarshal(e.Event, &l); err != nil {
-					continue
-				}
-				d := l.Damage
-				if l.RealDamage > 0 {
-					d = l.RealDamage
-				}
 				damageCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
-					"steam_id":    e.Player1.SteamID.String(),
-					"target_id":   e.Player2.SteamID.String(),
-					"weapon":      l.Weapon.String()}).
-					Add(float64(d))
+					"steam_id":    e.Source.SteamID.String(),
+					"target_id":   e.Target.SteamID.String(),
+					"weapon":      e.Weapon.String()}).
+					Add(float64(e.Damage))
 			case logparse.Healed:
-				var l logparse.HealedEvt
-				if err := logparse.Unmarshal(e.Event, &l); err != nil {
-					continue
-				}
 				healingCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
-					"steam_id":    e.Player1.SteamID.String(),
-					"target_id":   e.Player2.SteamID.String()}).
-					Add(float64(l.Healing))
+					"steam_id":    e.Source.SteamID.String(),
+					"target_id":   e.Target.SteamID.String()}).
+					Add(float64(e.Damage))
 			case logparse.ShotFired:
-				var l logparse.ShotFiredEvt
-				if err := logparse.Unmarshal(e.Event, &l); err != nil {
-					continue
-				}
 				shotFiredCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
-					"steam_id":    e.Player1.SteamID.String(),
-					"weapon":      l.Weapon.String()}).
+					"steam_id":    e.Source.SteamID.String(),
+					"weapon":      e.Weapon.String()}).
 					Inc()
 			case logparse.ShotHit:
-				var l logparse.ShotHitEvt
-				if err := logparse.Unmarshal(e.Event, &l); err != nil {
-					continue
-				}
 				shotHitCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
-					"steam_id":    e.Player1.SteamID.String(),
-					"weapon":      l.Weapon.String()}).
+					"steam_id":    e.Source.SteamID.String(),
+					"weapon":      e.Weapon.String()}).
 					Inc()
 			case logparse.Killed:
-				var l logparse.KilledEvt
-				if err := logparse.Unmarshal(e.Event, &l); err != nil {
-					continue
-				}
 				killCounter.With(prometheus.Labels{
 					"server_name": e.Server.ServerName,
-					"steam_id":    e.Player1.SteamID.String(),
-					"target_id":   e.Player2.SteamID.String(),
-					"weapon":      l.Weapon.String()}).
+					"steam_id":    e.Source.SteamID.String(),
+					"target_id":   e.Target.SteamID.String(),
+					"weapon":      e.Weapon.String()}).
 					Inc()
 			}
 

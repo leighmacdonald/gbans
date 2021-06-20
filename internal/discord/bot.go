@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -23,7 +22,7 @@ var (
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-func Start(ctx context.Context, token string, eventChan chan model.LogEvent) {
+func Start(ctx context.Context, token string, eventChan chan model.ServerEvent) {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Errorf("Failed to connect to dg. Bot unavailable")
@@ -62,41 +61,37 @@ func Start(ctx context.Context, token string, eventChan chan model.LogEvent) {
 // discordMessageQueueReader functions by registering event handlers for the two user message events
 // Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func discordMessageQueueReader(ctx context.Context, eventChan chan model.LogEvent) {
+func discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
-	sendQueueMu := &sync.RWMutex{}
 	for {
 		select {
 		case dm := <-eventChan:
 			prefix := ""
-			if dm.Type == logparse.SayTeam {
+			if dm.EventType == logparse.SayTeam {
 				prefix = "(team) "
 			}
+			name := ""
 			sid := steamid.SID64(0)
-			if dm.Player1 != nil {
-				sid = dm.Player1.SteamID
+			if dm.Source != nil && dm.Source.SteamID.Valid() {
+				sid = dm.Source.SteamID
+				name = dm.Source.PersonaName
 			}
-			sendQueueMu.Lock()
 			sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-				dm.Server.ServerName, sid, dm.Event["name"], prefix, dm.Event["msg"]))
-			sendQueueMu.Unlock()
+				dm.Server.ServerName, sid, name, prefix, dm.Extra))
 		case <-messageTicker.C:
-			sendQueueMu.Lock()
 			if len(sendQueue) == 0 {
-				sendQueueMu.Unlock()
 				continue
 			}
 			msg := strings.Join(sendQueue, "\n")
 			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
-					if err := sendChannelMessage(dg, channelID, m); err != nil {
+					if err := sendChannelMessage(dg, channelID, m, true); err != nil {
 						log.Errorf("Failed to send bulk message log: %v", err)
 					}
 				}
 			}
 			sendQueue = nil
-			sendQueueMu.Unlock()
 		case <-ctx.Done():
 			return
 		}
@@ -136,12 +131,14 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	log.Info("Disconnected from session ws API")
 }
 
-func sendChannelMessage(s *discordgo.Session, c string, msg string) error {
+func sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
 	if !connected {
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	msg = discordMsgWrapper + msg + discordMsgWrapper
+	if wrap {
+		msg = discordMsgWrapper + msg + discordMsgWrapper
+	}
 	if len(msg) > discordMaxMsgLen {
 		return errTooLarge
 	}
@@ -164,6 +161,6 @@ func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, 
 	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{Content: msg})
 }
 
-func Send(channelId string, message string) error {
-	return sendChannelMessage(dg, channelId, message)
+func Send(channelId string, message string, wrap bool) error {
+	return sendChannelMessage(dg, channelId, message, wrap)
 }
