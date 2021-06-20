@@ -71,7 +71,7 @@ func onPostPingMod() gin.HandlerFunc {
 		}
 		for _, chanId := range config.Discord.ModChannels {
 			m := fmt.Sprintf("<@&%s> [%s] (%s): %s", config.Discord.ModRoleID, req.ServerName, name, req.Reason)
-			err := discord.Send(chanId, m)
+			err := discord.Send(chanId, m, false)
 			if err != nil {
 				responseErr(c, http.StatusInternalServerError, nil)
 				return
