@@ -17,10 +17,6 @@ const (
 	sendQueueSize = 100
 )
 
-var (
-	errConnClosed = errors.New("connection is closed")
-)
-
 var StateName = map[web.State]string{
 	web.Closed:                 "closed",
 	web.AwaitingAuthentication: "await_auth",
@@ -163,22 +159,23 @@ func (c *Client) reader() {
 			atomic.AddInt64(&c.recvErrCount, 1)
 			continue
 		}
-		c.Log().Debugln("read: %v", p)
 		switch p.PayloadType {
 		case web.ErrType:
 			var wsErr web.WSErrRes
 			if ej := json.Unmarshal(p.Data, &wsErr); ej != nil {
-
+				c.Log().Errorf("Failed to unmarshal err response: %v", ej)
+				continue
 			}
 			c.Log().Errorf("wserr: %s", wsErr.Error)
 		case web.AuthFailType:
 			var wsErr web.WSErrRes
 			if ej := json.Unmarshal(p.Data, &wsErr); ej != nil {
-
+				c.Log().Errorf("Failed to unmarshal auth fail response: %v", ej)
+				continue
 			}
 			atomic.SwapInt32(&c.state, int32(web.AwaitingAuthentication))
 			if !authFailShown {
-				c.Log().Error("Auth failed: %s", wsErr.Error)
+				c.Log().Errorf("Auth failed: %s", wsErr.Error)
 				authFailShown = true
 			}
 		case web.AuthOKType:
@@ -226,7 +223,7 @@ func New(ctx context.Context, host string, serverName string, token string) (*Cl
 		state:   int32(web.Closed),
 		conn:    nil,
 		SendQ:   make(chan []byte, sendQueueSize),
-		RecvQ:   make(chan web.SocketPayload, sendQueueSize),
+		RecvQ:   make(chan web.SocketPayload),
 		ctx:     ctx,
 		address: host + "/ws",
 		auth:    web.SocketAuthReq{Token: token, IsServer: true, ServerName: serverName},
@@ -243,7 +240,9 @@ func New(ctx context.Context, host string, serverName string, token string) (*Cl
 			c.Log().Infof("Connected successfully")
 		}
 		if c.State() == web.Opened {
-			c.authenticate()
+			if errA := c.authenticate(); errA != nil {
+				c.Log().Errorf("Error sending auth: %v", errA)
+			}
 		}
 	}
 	go c.writer()
