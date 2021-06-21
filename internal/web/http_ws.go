@@ -19,7 +19,7 @@ type payloadType int
 
 const sendQueueSize = 100
 
-type State int
+type State int32
 
 const (
 	Closed State = iota
@@ -30,13 +30,14 @@ const (
 )
 
 const (
-	OKType          payloadType = iota
-	ErrType                     = 1
-	AuthType                    = 2
-	AuthOKType                  = 3
-	LogType                     = 4
-	LogQueryOpts                = 5
-	LogQueryResults             = 6
+	OKType payloadType = iota
+	ErrType
+	AuthType
+	AuthFailType
+	AuthOKType
+	LogType
+	LogQueryOpts
+	LogQueryResults
 )
 
 // SocketPayload represents the basic structure of all websocket requests. Decoding is a 2 stage
@@ -151,13 +152,13 @@ func (s *socketSession) setQueryOpts(opts model.LogQueryOpts) {
 	s.LogQueryOptsUpdated = true
 }
 
-func (s *socketSession) err(err error, args ...interface{}) {
+func (s *socketSession) err(errType payloadType, err error, args ...interface{}) {
 	if len(args) == 1 {
 		s.Log().Errorf(args[0].(string))
 	} else if len(args) > 1 {
 		s.Log().Errorf(args[0].(string), args[1:]...)
 	}
-	s.send(newWSErr(err))
+	s.send(newWSErr(errType, err))
 }
 
 // newWebSocketState allocates and connects all websocket routes and session states
@@ -196,14 +197,14 @@ type WebSocketAuthResp struct {
 	Message string `json:"message"`
 }
 
-type wsErrRes struct {
-	Error string `json:"err"`
+type WSErrRes struct {
+	Error error `json:"err"`
 }
 
-func newWSErr(err error) []byte {
-	d, _ := json.Marshal(wsErrRes{Error: err.Error()})
+func newWSErr(errType payloadType, err error) []byte {
+	d, _ := json.Marshal(WSErrRes{Error: err})
 	b, _ := json.Marshal(SocketPayload{
-		PayloadType: ErrType,
+		PayloadType: errType,
 		Data:        d,
 	})
 	return b
@@ -212,19 +213,19 @@ func newWSErr(err error) []byte {
 func authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession) error {
 	s.IsClient = false
 	if req.Token == "" || req.ServerName == "" {
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	server, e := store.GetServerByName(ctx, req.ServerName)
 	if e != nil {
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	if server.Password == "" {
 		s.Log().Errorf("Server has empty password!!!")
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	if req.Token != server.Password {
 		s.Log().Errorf("Invalid password used for server auth")
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
 		Status:  true,
@@ -232,7 +233,7 @@ func authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession
 	})
 	if errEnc != nil {
 		s.Log().Errorf("Failed to encode auth response payload: %v", errEnc)
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	if err := s.session.Write(b); err != nil {
 		s.Log().Errorf("Failed to write client success response: %v", err)
@@ -246,11 +247,11 @@ func authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession
 	s.IsClient = true
 	sid, err := sid64FromJWTToken(req.Token)
 	if err != nil {
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	p, errP := store.GetPersonBySteamID(ctx, sid)
 	if errP != nil || p.PermissionLevel < model.PModerator {
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	s.Person = p
 
@@ -260,7 +261,7 @@ func authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession
 	})
 	if errEnc != nil {
 		s.Log().Errorf("Failed to encode auth response payload: %v", errEnc)
-		return consts.ErrAuthhentication
+		return consts.ErrAuthentication
 	}
 	if errW := s.session.Write(b); errW != nil {
 		s.Log().Errorf("Failed to write client success response: %v", errW)
@@ -282,12 +283,12 @@ func (ws *socketState) onMessage(session *melody.Session, msg []byte) {
 		log.Errorf("Unknown ws client sent message")
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 	defer cancel()
 
 	var w SocketPayload
 	if err := json.Unmarshal(msg, &w); err != nil {
-		sockSession.err(consts.ErrMalformedRequest, "Failed to unmarshal ws payload")
+		sockSession.err(ErrType, consts.ErrMalformedRequest, "Failed to unmarshal ws payload")
 		return
 	}
 
@@ -304,7 +305,7 @@ func (ws *socketState) onMessage(session *melody.Session, msg []byte) {
 func (ws *socketState) onAwaitingAuthentication(ctx context.Context, w *SocketPayload, c *socketSession) {
 	var req SocketAuthReq
 	if err := json.Unmarshal(w.Data, &req); err != nil {
-		c.err(consts.ErrAuthhentication, "Failed to unmarshal auth data")
+		c.err(AuthFailType, consts.ErrAuthentication, "Failed to unmarshal auth data")
 		return
 	}
 	var e error
@@ -314,7 +315,7 @@ func (ws *socketState) onAwaitingAuthentication(ctx context.Context, w *SocketPa
 		e = authenticateClient(ctx, req, c)
 	}
 	if e != nil {
-		c.err(e)
+		c.err(AuthFailType, e)
 		return
 	}
 	c.State = Authenticated
@@ -325,14 +326,14 @@ func (ws *socketState) onAuthenticatedPayload(_ context.Context, w *SocketPayloa
 	case LogType:
 		var l LogPayload
 		if err := json.Unmarshal(w.Data, &l); err != nil {
-			c.err(consts.ErrMalformedRequest, "Failed to unmarshal logpayload data")
+			c.err(ErrType, consts.ErrMalformedRequest, "Failed to unmarshal logpayload data")
 			return
 		}
 		ws.logMsgChan <- l
 	case LogQueryOpts:
 		var opts model.LogQueryOpts
 		if err := json.Unmarshal(w.Data, &opts); err != nil {
-			c.err(consts.ErrMalformedRequest, "Failed to unmarshal query data")
+			c.err(ErrType, consts.ErrMalformedRequest, "Failed to unmarshal query data")
 			return
 		}
 		c.setQueryOpts(opts)

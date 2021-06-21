@@ -488,20 +488,6 @@ type LogPayload struct {
 	Message    string `json:"message"`
 }
 
-func onPostLogAdd(logMsgChan chan LogPayload) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req []LogPayload
-		if err := c.BindJSON(&req); err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
-			return
-		}
-		responseOK(c, http.StatusCreated, nil)
-		for _, r := range req {
-			logMsgChan <- r
-		}
-	}
-}
-
 func onAPIPostServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		responseOK(c, http.StatusOK, gin.H{})

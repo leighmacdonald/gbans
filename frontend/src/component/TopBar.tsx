@@ -115,8 +115,9 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
     const classes = useStyles();
     const [anchorProfileMenuEl, setAnchorProfileMenuEl] =
         useState<Element | null>(null);
-    const [anchorAdminMenuEl, setAnchorAdminMenuEl] =
-        useState<Element | null>(null);
+    const [anchorAdminMenuEl, setAnchorAdminMenuEl] = useState<Element | null>(
+        null
+    );
     const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
         useState<Element | null>(null);
 

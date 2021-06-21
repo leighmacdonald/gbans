@@ -108,7 +108,7 @@ func New(ctx context.Context, name string, logPath string, address string, token
 	}
 	defer func() {
 		if err := cli.Close(); err != nil {
-			log.Errorf("Error trying to close websocket connection gracefully: %v", err)
+			cli.Log().Errorf("Error trying to close websocket connection gracefully: %v", err)
 		}
 	}()
 	if config.General.Mode == config.Debug {
@@ -142,14 +142,17 @@ func New(ctx context.Context, name string, logPath string, address string, token
 			switch cli.State() {
 			case web.AwaitingAuthentication:
 				e = onAuthResp(cli)
+				if e == nil {
+					cli.Log().Infof("Connection authenticated successfully")
+				}
 			case web.Authenticated:
 				e = onAuthenticatedMessage(cli, name, msg)
 			}
 			if e != nil {
-				log.Errorf("Error handling message: %v", e)
+				cli.Log().Errorf("Error handling message: %v", e)
 			}
 		case <-ctx.Done():
-			log.Debugf("relay cli shutting down")
+			cli.Log().Debugf("relay cli shutting down")
 			return nil
 		}
 	}
@@ -167,7 +170,7 @@ func onAuthResp(cli *client.Client) error {
 	if !authResp.Status {
 		return errors.New("Authentication status failed")
 	}
-	log.Infof("Connection authenticated successfully")
+	cli.SetState(web.Authenticated)
 	return nil
 }
 
@@ -179,9 +182,7 @@ func onAuthenticatedMessage(cli *client.Client, name string, msg string) error {
 	if e != nil {
 		return errors.Wrapf(e, "Failed to encode ws payload")
 	}
-	if err := cli.Enqueue(p); err != nil {
-		return errors.Wrapf(err, "Failed to enqueue paylad")
-	}
+	cli.Enqueue(p)
 	return nil
 }
 

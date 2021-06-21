@@ -12,11 +12,13 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strings"
+	"sync"
 	"time"
 )
 
 var (
 	dg               *discordgo.Session
+	connectedMu      *sync.RWMutex
 	connected        = false
 	errCommandFailed = errors.New("Command failed")
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
@@ -123,19 +125,26 @@ func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	if err := s.UpdateStatusComplex(d); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")
 	}
+	connectedMu.Lock()
 	connected = true
+	connectedMu.Unlock()
 }
 
 func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+	connectedMu.Lock()
 	connected = false
+	connectedMu.Unlock()
 	log.Info("Disconnected from session ws API")
 }
 
 func sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
+	connectedMu.RLock()
 	if !connected {
+		connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
+	connectedMu.RUnlock()
 	if wrap {
 		msg = discordMsgWrapper + msg + discordMsgWrapper
 	}
@@ -150,10 +159,13 @@ func sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) e
 }
 
 func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, msg string) error {
+	connectedMu.RLock()
 	if !connected {
+		connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
+	connectedMu.RUnlock()
 	msg = discordMsgWrapper + msg + discordMsgWrapper
 	if len(msg) > discordMaxMsgLen {
 		return errTooLarge
@@ -163,4 +175,8 @@ func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, 
 
 func Send(channelId string, message string, wrap bool) error {
 	return sendChannelMessage(dg, channelId, message, wrap)
+}
+
+func init() {
+	connectedMu = &sync.RWMutex{}
 }

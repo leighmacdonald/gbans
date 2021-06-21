@@ -4,7 +4,7 @@ import "github.com/pkg/errors"
 
 var (
 	ErrDuplicateBan     = errors.New("Duplicate ban")
-	ErrAuthhentication  = errors.New("Auth invalid")
+	ErrAuthentication   = errors.New("Auth invalid")
 	ErrInvalidDuration  = errors.New("Invalid duration")
 	ErrInvalidSID       = errors.New("Invalid steamid")
 	ErrMalformedRequest = errors.New("Malformed request")

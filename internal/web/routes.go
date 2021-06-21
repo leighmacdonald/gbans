@@ -69,9 +69,6 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 	serverAuth.POST("/api/ping_mod", onPostPingMod())
 	serverAuth.POST("/api/check", onPostServerCheck())
 
-	// Relay
-	r.POST("/api/log", onPostLogAdd(logMsgChan))
-
 	// Basic logged in user
 	authed := r.Use(authMiddleware(model.PAuthenticated))
 	authed.GET("/api/current_profile", onAPICurrentProfile())

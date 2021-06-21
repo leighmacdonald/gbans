@@ -275,17 +275,17 @@ func sid64FromJWTToken(token string) (steamid.SID64, error) {
 	tkn, errC := jwt.ParseWithClaims(token, claims, getTokenKey)
 	if errC != nil {
 		if errC == jwt.ErrSignatureInvalid {
-			return 0, consts.ErrAuthhentication
+			return 0, consts.ErrAuthentication
 		}
-		return 0, consts.ErrAuthhentication
+		return 0, consts.ErrAuthentication
 	}
 	if !tkn.Valid {
-		return 0, consts.ErrAuthhentication
+		return 0, consts.ErrAuthentication
 	}
 	sid := steamid.SID64(claims.SteamID)
 	if !sid.Valid() {
 		log.Warnf("Invalid steamID")
-		return 0, consts.ErrAuthhentication
+		return 0, consts.ErrAuthentication
 	}
 	return sid, nil
 }

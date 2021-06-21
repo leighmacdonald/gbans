@@ -50,6 +50,7 @@ type relayConfig struct {
 	Host       string   `mapstructure:"host"`
 	Password   string   `mapstructure:"password"`
 	ServerName string   `mapstructure:"server_name"`
+	LogPath    string   `mapstructure:"log_path"`
 	ChannelIDs []string `mapstructure:"channel_ids"`
 }
 
@@ -289,6 +290,7 @@ func init() {
 	viper.SetDefault("relay.host", "wss://localhost:6006")
 	viper.SetDefault("relay.password", "")
 	viper.SetDefault("relay.server_name", "")
+	viper.SetDefault("relay.log_path", "serverfiles/tf/logs")
 	viper.SetDefault("relay.channel_ids", []string{})
 
 	viper.SetDefault("log.level", "info")

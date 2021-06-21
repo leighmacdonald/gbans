@@ -289,6 +289,8 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 				}
 				damage = int(damageP)
 			}
+			source := getPlayer("sid", v.Values)
+			target := getPlayer("sid2", v.Values)
 			for _, k := range []string{
 				"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
 				"date", "time", "weapon", "damage", "class",
@@ -299,8 +301,8 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 			se := model.ServerEvent{
 				Server:      &s,
 				EventType:   v.MsgType,
-				Source:      getPlayer("sid", v.Values),
-				Target:      getPlayer("sid2", v.Values),
+				Source:      source,
+				Target:      target,
 				PlayerClass: class,
 				Weapon:      weapon,
 				Damage:      damage,

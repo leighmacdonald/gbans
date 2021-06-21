@@ -66,8 +66,8 @@ const (
 	//tablePerson       tableName = "person"
 	tablePersonIP tableName = "person_ip"
 	//tablePersonNames  tableName = "person_names"
-	tableServer    tableName = "server"
-	tableServerLog tableName = "server_log"
+	tableServer tableName = "server"
+	//tableServerLog tableName = "server_log"
 )
 
 // QueryFilter provides a structure for common query parameters

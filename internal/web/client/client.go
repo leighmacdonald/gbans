@@ -2,11 +2,13 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -29,18 +31,20 @@ var StateName = map[web.State]string{
 
 // Client represents a generic websocket based api client
 type Client struct {
-	conn          *websocket.Conn
-	authenticated bool
-	state         web.State
-	SendQ         chan []byte
-	RecvQ         chan web.SocketPayload
-	address       string
-	auth          web.SocketAuthReq
-	ctx           context.Context
-	sendCount     int64
-	recvCount     int64
-	sendErrCount  int64
-	recvErrCount  int64
+	*sync.RWMutex
+	conn           *websocket.Conn
+	state          int32
+	SendQ          chan []byte
+	RecvQ          chan web.SocketPayload
+	address        string
+	auth           web.SocketAuthReq
+	ctx            context.Context
+	sendBytesCount int64
+	recvBytesCount int64
+	sendCount      int64
+	recvCount      int64
+	sendErrCount   int64
+	recvErrCount   int64
 	// Connect takes care of opening a connection and sending the authentication
 	// This function must be idempotent
 	Connect func()
@@ -48,18 +52,18 @@ type Client struct {
 
 func (c *Client) Log() *log.Entry {
 	addr := ""
-	if c.state != web.Closed && c.conn != nil {
+	if c.State() != web.Closed && c.isOpen() {
 		addr = c.conn.RemoteAddr().String()
 	}
-	return log.WithFields(log.Fields{"state": StateName[c.state], "addr": addr})
+	return log.WithFields(log.Fields{"state": StateName[c.State()], "addr": addr})
 }
 
 func (c *Client) State() web.State {
-	return c.state
+	return web.State(atomic.LoadInt32(&c.state))
 }
 
 func (c *Client) Close() error {
-	if c.conn != nil && c.state != web.Closed {
+	if c.isOpen() && web.State(c.state) != web.Closed {
 		return c.conn.Close()
 	}
 	return nil
@@ -74,57 +78,54 @@ func (c *Client) isOpen() bool {
 // This 2 way communication is done in lock-step unlike the rest of the communication that occurs asynchronously
 // as its a requirement for all subsequent requests and we cannot pass auth headers with websockets.
 func (c *Client) connect() error {
-	if c.conn != nil {
+	if c.isOpen() {
 		if e := c.conn.Close(); e != nil {
 			c.Log().Errorf("error closing ws conn: %v", e)
 		}
 		c.conn = nil
 	}
-
 	c.Log().Debugf("Dialing host: %s", c.address)
 	conn, _, err := websocket.DefaultDialer.DialContext(c.ctx, c.address, http.Header{})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to dial server")
 	}
-	c.state = web.Opened
-	c.Log().Debugf("Sending client auth")
-	p, errEnc := web.EncodeWSPayload(web.AuthType, c.auth)
-	if errEnc != nil {
-		return errors.Wrapf(errEnc, "Failed to encode ws payload: %v", err)
-	}
-	if errW := conn.WriteMessage(websocket.TextMessage, p); errW != nil {
-		c.recvErrCount++
-		return errors.Wrapf(errW, "Failed to write payload")
-	}
-	c.state = web.AwaitingAuthentication
+	atomic.SwapInt32(&c.state, int32(web.Opened))
+	c.Lock()
 	c.conn = conn
+	c.Unlock()
 	return nil
 }
 
-func (c *Client) Enqueue(payload []byte) error {
-	if !c.isOpen() {
-		c.Log().Errorf("Enqueue on closed session")
-		return errConnClosed
+func (c *Client) authenticate() error {
+	atomic.SwapInt32(&c.state, int32(web.AwaitingAuthentication))
+	c.Log().Debugf("Sending client auth")
+	p, errEnc := web.EncodeWSPayload(web.AuthType, c.auth)
+	if errEnc != nil {
+		return errors.Wrapf(errEnc, "Failed to encode ws payload: %v", errEnc)
 	}
-	if len(c.SendQ) >= sendQueueSize {
-		c.Log().Warnf("message dropped (Enqueue queue full)")
-		return nil
-	}
+	c.Enqueue(p)
+	return nil
+}
+
+func (c *Client) Enqueue(payload []byte) {
 	select {
 	case c.SendQ <- payload:
 	default:
-		c.Log().Error("WS send queue full")
+		c.Log().Error("ws message dropped (queue full)")
 	}
-	return nil
 }
+
 func (c *Client) stats() {
 	statTicker := time.NewTicker(time.Second * 5)
+	defer c.Log().Debugf("Stats closed")
 	for {
 		select {
 		case <-statTicker.C:
-			c.Log().Infof("[ConnStats] Sent: %d Recv: %d ErrSend: %d ErrRecv: %d",
+			c.Log().Infof("[ConnStats] Sent: %d Recv: %d SentB: %d RecvB: %d ErrSend: %d ErrRecv: %d",
 				atomic.SwapInt64(&c.sendCount, 0),
 				atomic.SwapInt64(&c.recvCount, 0),
+				atomic.LoadInt64(&c.sendBytesCount),
+				atomic.LoadInt64(&c.recvBytesCount),
 				atomic.SwapInt64(&c.recvErrCount, 0),
 				atomic.SwapInt64(&c.sendErrCount, 0))
 		case <-c.ctx.Done():
@@ -137,43 +138,80 @@ func (c *Client) ReadJSON(v interface{}) error {
 	return c.conn.ReadJSON(v)
 }
 
+func (c *Client) WriteJSON(v []byte) error {
+	c.Lock()
+	defer c.Unlock()
+	return c.conn.WriteMessage(websocket.TextMessage, v)
+}
+
 func (c *Client) reader() {
 	running := true
 	go func() {
 		<-c.ctx.Done()
 		running = false
 	}()
+	authFailShown := false
 	for running {
-		if c.state == web.Closed {
+		if c.State() == web.Closed {
 			time.Sleep(time.Millisecond * 100)
 			continue
 		}
 		var p web.SocketPayload
-		if err := c.conn.ReadJSON(&p); err != nil {
+		if err := c.ReadJSON(&p); err != nil {
 			c.Log().Errorf("failed to read json payload")
-			c.state = web.Closed
-			c.recvErrCount++
+			atomic.SwapInt32(&c.state, int32(web.Closed))
+			atomic.AddInt64(&c.recvErrCount, 1)
 			continue
 		}
-		c.recvCount++
+		c.Log().Debugln("read: %v", p)
+		switch p.PayloadType {
+		case web.ErrType:
+			var wsErr web.WSErrRes
+			if ej := json.Unmarshal(p.Data, &wsErr); ej != nil {
+
+			}
+			c.Log().Errorf("wserr: %s", wsErr.Error)
+		case web.AuthFailType:
+			var wsErr web.WSErrRes
+			if ej := json.Unmarshal(p.Data, &wsErr); ej != nil {
+
+			}
+			atomic.SwapInt32(&c.state, int32(web.AwaitingAuthentication))
+			if !authFailShown {
+				c.Log().Error("Auth failed: %s", wsErr.Error)
+				authFailShown = true
+			}
+		case web.AuthOKType:
+			atomic.SwapInt32(&c.state, int32(web.Authenticated))
+			authFailShown = false
+		}
+		atomic.AddInt64(&c.sendBytesCount, int64(len(p.Data)+1)) // approx
+		atomic.AddInt64(&c.recvCount, 1)
 	}
+	c.Log().Debugf("Reader closed")
 }
 
 func (c *Client) writer() {
+	defer c.Log().Debugf("Writer closed")
 	for {
 		select {
 		case p := <-c.SendQ:
-			if err := c.conn.WriteMessage(websocket.TextMessage, p); err != nil {
+			if err := c.WriteJSON(p); err != nil {
 				c.Log().Errorf("failed to write json payload")
-				c.recvErrCount++
+				atomic.AddInt64(&c.recvErrCount, 1)
 				continue
 			}
-			c.sendCount++
+			atomic.AddInt64(&c.sendBytesCount, int64(len(p)))
+			atomic.AddInt64(&c.sendCount, 1)
 		case <-c.ctx.Done():
-			c.Log().Debugf("ws writer stopped")
 			return
 		}
 	}
+
+}
+
+func (c *Client) SetState(s web.State) {
+	atomic.SwapInt32(&c.state, int32(s))
 }
 
 func New(ctx context.Context, host string, serverName string, token string) (*Client, error) {
@@ -184,10 +222,11 @@ func New(ctx context.Context, host string, serverName string, token string) (*Cl
 		return nil, errors.New("Empty password invalid")
 	}
 	c := &Client{
-		state:   web.Closed,
+		RWMutex: &sync.RWMutex{},
+		state:   int32(web.Closed),
 		conn:    nil,
 		SendQ:   make(chan []byte, sendQueueSize),
-		RecvQ:   make(chan web.SocketPayload),
+		RecvQ:   make(chan web.SocketPayload, sendQueueSize),
 		ctx:     ctx,
 		address: host + "/ws",
 		auth:    web.SocketAuthReq{Token: token, IsServer: true, ServerName: serverName},
@@ -196,13 +235,15 @@ func New(ctx context.Context, host string, serverName string, token string) (*Cl
 		if c.State() == web.Closed {
 			c.Log().Infof("Connecting to %s", host)
 			if err := c.connect(); err != nil {
-				c.state = web.Closed
+				atomic.SwapInt32(&c.state, int32(web.Closed))
 				c.Log().Errorf("Failed to connect: %v", err)
 				return
 			}
-			c.state = web.Authenticated
-			c.authenticated = true
+
 			c.Log().Infof("Connected successfully")
+		}
+		if c.State() == web.Opened {
+			c.authenticate()
 		}
 	}
 	go c.writer()
