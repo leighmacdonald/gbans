@@ -58,7 +58,7 @@
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "history": "^5.0.0",
-    "ip-cidr": "^3.0.0",
+    "ip-cidr": "^3.0.3",
     "jest": "^27.0.4",
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.21",

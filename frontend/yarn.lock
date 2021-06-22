@@ -3478,10 +3478,10 @@ ip-address@^7.1.0:
     jsbn "1.1.0"
     sprintf-js "1.1.2"
 
-ip-cidr@^3.0.0:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/ip-cidr/-/ip-cidr-3.0.2.tgz#043a2f447037ba593a71db53a7fbcb8fa4527dfc"
-  integrity sha512-a2iKNPaMKp0V0zvfPSNWFngc3sdcoQoQ9Hv4a4Le+uKyDw97u5i4q3vDEMPu35L/gylDDLFkiHlE0xoA8gNxFQ==
+ip-cidr@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/ip-cidr/-/ip-cidr-3.0.3.tgz#8b485797346f5d6fab1b18911f81b01dd967ee2e"
+  integrity sha512-fMKYefFwb57R6A2M6AoSONAZ/oSW3dGAtwG05LFMUeZk7mxE2WJg3D7O46TPI/qaKZst/tg14dh77rLpPDnxIA==
   dependencies:
     ip-address "^7.1.0"
     jsbn "^1.1.0"
