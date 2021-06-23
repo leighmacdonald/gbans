@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -20,6 +21,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -188,4 +191,53 @@ func TestAuthMiddleware(t *testing.T) {
 	wOK := httptest.NewRecorder()
 	e.ServeHTTP(wOK, reqOK)
 	require.Equal(t, http.StatusOK, wOK.Code)
+}
+
+func TestWebSocketClient(t *testing.T) {
+	e := gin.New()
+	web.SetupRouter(e, logRawQueue)
+	s := httptest.NewServer(e)
+	defer s.Close()
+	u := "ws" + strings.TrimPrefix(s.URL, "http") + "/ws"
+
+	// Connect to the server
+	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	defer ws.Close()
+
+	checkResp := func(t *testing.T, pt web.PayloadType, req interface{}, rt web.PayloadType, res interface{}) {
+		p, errEnc := web.EncodeWSPayload(pt, req)
+		if errEnc != nil {
+			t.FailNow()
+		}
+		if errW := ws.WriteMessage(websocket.TextMessage, p); errW != nil {
+			t.Fatalf("%v", errW)
+		}
+		_, respBytes, errR := ws.ReadMessage()
+		if errR != nil {
+			t.Fatalf("%v", errR)
+		}
+		var resp web.SocketPayload
+		state := int32(web.Closed)
+		require.NoError(t, json.Unmarshal(respBytes, &resp), "Failed to decode response")
+		require.Equal(t, rt, resp.PayloadType, "Got invalid payload type")
+		switch resp.PayloadType {
+		case web.ErrType:
+			var wsErr web.WSErrRes
+			require.NoError(t, json.Unmarshal(resp.Data, &wsErr))
+			require.EqualValues(t, res.(web.WSErrRes), wsErr)
+		case web.AuthFailType:
+			var wsErr web.WSErrRes
+			require.NoError(t, json.Unmarshal(resp.Data, &wsErr))
+			require.EqualValues(t, res.(web.WSErrRes), wsErr)
+		case web.AuthOKType:
+			atomic.SwapInt32(&state, int32(web.Authenticated))
+
+		}
+	}
+
+	checkResp(t, web.AuthType, web.SocketAuthReq{}, web.AuthFailType, web.WSErrRes{Error: "Auth invalid"})
+
 }

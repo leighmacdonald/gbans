@@ -30,10 +30,10 @@ var (
 func fileReader(ctx context.Context, path string) {
 	t, err := tail.TailFile(path, tail.Config{Follow: true, MaxLineSize: 2000, Poll: true})
 	if err != nil {
-		log.Fatalf("Invalid log path: %s", path)
+		log.WithFields(log.Fields{"filename": path}).Fatal("Invalid log path")
 		return
 	}
-	log.Debugf("fileReader starting: %v", path)
+	log.WithFields(log.Fields{"filename": path}).Debug("fileReader starting")
 	for {
 		select {
 		case line := <-t.Lines:
@@ -46,7 +46,7 @@ func fileReader(ctx context.Context, path string) {
 			}
 			messageChan <- m
 		case <-ctx.Done():
-			log.Debugf("fileReader shutting down: %v", path)
+			log.WithFields(log.Fields{"filename": path}).Debug("fileReader shutting down")
 			return
 		}
 	}
@@ -55,11 +55,11 @@ func fileReader(ctx context.Context, path string) {
 func newFileWatcher(ctx context.Context, directory string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"directory": directory}).Fatalf("Failed to create watcher instance: %v", err)
 	}
 	defer func() {
 		if errW := watcher.Close(); errW != nil {
-			log.Errorf("failed to close watcher cleanly: %v", errW)
+			log.WithFields(log.Fields{"directory": directory}).Errorf("failed to close watcher cleanly: %v", errW)
 		}
 	}()
 	var (
@@ -75,8 +75,9 @@ func newFileWatcher(ctx context.Context, directory string) {
 					return
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Debugf("Created file: %s", event.Name)
+					log.WithFields(log.Fields{"filename": event.Name}).Debugf("New file created")
 					if !first {
+						// If this is not the first file, cancel the existing reader context
 						cancel()
 					}
 					first = false
@@ -88,14 +89,14 @@ func newFileWatcher(ctx context.Context, directory string) {
 					cancel()
 					return
 				}
-				log.Errorf("File watcher error: %v", errW)
+				log.WithFields(log.Fields{"directory": directory}).Errorf("File watcher error: %v", errW)
 			}
 		}
 	}()
 
 	err = watcher.Add(directory)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"directory": directory}).Fatalf("Failed to add directory to watcher: %v", err)
 	}
 	<-ctx.Done()
 }
@@ -183,6 +184,7 @@ func onAuthenticatedMessage(cli *client.Client, name string, msg string) error {
 		return errors.Wrapf(e, "Failed to encode ws payload")
 	}
 	cli.Enqueue(p)
+	cli.Log().Debugf("Relayed: %s", msg)
 	return nil
 }
 

@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type payloadType int
+type PayloadType int
 
 const sendQueueSize = 100
 
@@ -30,7 +30,7 @@ const (
 )
 
 const (
-	OKType payloadType = iota
+	OKType PayloadType = iota
 	ErrType
 	AuthType
 	AuthFailType
@@ -44,7 +44,7 @@ const (
 // process as we must first know the payload_type before we can decode the Data value into the appropriate
 // struct.
 type SocketPayload struct {
-	PayloadType payloadType     `json:"payload_type"`
+	PayloadType PayloadType     `json:"payload_type"`
 	Data        json.RawMessage `json:"data"`
 }
 
@@ -92,7 +92,7 @@ func (s *socketSession) send(b []byte) {
 }
 
 // EncodeWSPayload will return an encoded payload suitable for transmission over the wire
-func EncodeWSPayload(t payloadType, p interface{}) ([]byte, error) {
+func EncodeWSPayload(t PayloadType, p interface{}) ([]byte, error) {
 	b, e1 := json.Marshal(p)
 	if e1 != nil {
 		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload base payload")
@@ -152,7 +152,7 @@ func (s *socketSession) setQueryOpts(opts model.LogQueryOpts) {
 	s.LogQueryOptsUpdated = true
 }
 
-func (s *socketSession) err(errType payloadType, err error, args ...interface{}) {
+func (s *socketSession) err(errType PayloadType, err error, args ...interface{}) {
 	if len(args) == 1 {
 		s.Log().Errorf(args[0].(string))
 	} else if len(args) > 1 {
@@ -198,11 +198,15 @@ type WebSocketAuthResp struct {
 }
 
 type WSErrRes struct {
-	Error error `json:"err"`
+	Error string `json:"err"`
 }
 
-func newWSErr(errType payloadType, err error) []byte {
-	d, _ := json.Marshal(WSErrRes{Error: err})
+func newWSErr(errType PayloadType, err error) []byte {
+	ev := ""
+	if err != nil {
+		ev = err.Error()
+	}
+	d, _ := json.Marshal(WSErrRes{Error: ev})
 	b, _ := json.Marshal(SocketPayload{
 		PayloadType: errType,
 		Data:        d,
@@ -298,7 +302,7 @@ func (ws *socketState) onMessage(session *melody.Session, msg []byte) {
 	case Authenticated:
 		ws.onAuthenticatedPayload(ctx, &w, sockSession)
 	default:
-
+		log.Errorf("Unhandled session state: %v", sockSession.State)
 	}
 }
 
@@ -353,6 +357,8 @@ func (ws *socketState) onAuthenticatedPayload(_ context.Context, w *SocketPayloa
 				c.send(b)
 			}
 		}()
+	default:
+		c.Log().Debugf("Unhandled payload: %v", w)
 	}
 }
 

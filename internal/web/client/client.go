@@ -131,6 +131,8 @@ func (c *Client) stats() {
 }
 
 func (c *Client) ReadJSON(v interface{}) error {
+	c.Lock()
+	defer c.Unlock()
 	return c.conn.ReadJSON(v)
 }
 
@@ -159,6 +161,7 @@ func (c *Client) reader() {
 			atomic.AddInt64(&c.recvErrCount, 1)
 			continue
 		}
+		log.Debugln(p)
 		switch p.PayloadType {
 		case web.ErrType:
 			var wsErr web.WSErrRes
@@ -182,7 +185,7 @@ func (c *Client) reader() {
 			atomic.SwapInt32(&c.state, int32(web.Authenticated))
 			authFailShown = false
 		}
-		atomic.AddInt64(&c.sendBytesCount, int64(len(p.Data)+1)) // approx
+		atomic.AddInt64(&c.recvBytesCount, int64(len(p.Data)+1)) // approx
 		atomic.AddInt64(&c.recvCount, 1)
 	}
 	c.Log().Debugf("Reader closed")
@@ -232,7 +235,7 @@ func New(ctx context.Context, host string, serverName string, token string) (*Cl
 		if c.State() == web.Closed {
 			c.Log().Infof("Connecting to %s", host)
 			if err := c.connect(); err != nil {
-				atomic.SwapInt32(&c.state, int32(web.Closed))
+				c.SetState(web.Closed)
 				c.Log().Errorf("Failed to connect: %v", err)
 				return
 			}
