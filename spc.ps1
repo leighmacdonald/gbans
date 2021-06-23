@@ -22,7 +22,12 @@ if (0 -ne $LastExitCode) {
     exit 1
 }
 Move-Item -Path "gbans.smx" -Destination "plugins\" 
-Copy-Item -Path "plugins\gbans.smx" -Destination "..\tf2server\steamapps\common\Team Fortress 2 Dedicated Server\tf\addons\sourcemod\plugins\"
+
+if((Test-Path -Path ".\tf2server" )){
+    Copy-Item -Path "plugins\gbans.smx" -Destination "..\tf2server\steamapps\common\Team Fortress 2 Dedicated Server\tf\addons\sourcemod\plugins\"
+}
+
+scp .\plugins\gbans.smx tf2server@test-1:~/serverfiles/tf/addons/sourcemod/plugins
 rcon -H $env:TF2_HOST -p $env:RCON_PASS sm plugins unload gbans
 rcon -H $env:TF2_HOST -p $env:RCON_PASS sm plugins load gbans
 
