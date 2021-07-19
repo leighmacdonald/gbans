@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
+	"github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -64,13 +64,11 @@ func FetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
 	return fl, nil
 }
 
-func FetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
+func FetchSummaries(steamIDs steamid.Collection) ([]steam_webapi.PlayerSummary, error) {
 	const chunkSize = 100
 	wg := &sync.WaitGroup{}
-	c, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
 	var (
-		results   []extra.PlayerSummary
+		results   []steam_webapi.PlayerSummary
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
@@ -81,7 +79,7 @@ func FetchSummaries(steamIDs []steamid.SID64) ([]extra.PlayerSummary, error) {
 			t := uint64(len(steamIDs) - i)
 			m := golib.UMin64(SteamQueryMaxResults, t)
 			ids := steamIDs[i : i+int(m)]
-			summaries, err := extra.PlayerSummaries(c, ids)
+			summaries, err := steam_webapi.PlayerSummaries(ids)
 			if err != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}

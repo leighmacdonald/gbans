@@ -34,7 +34,7 @@
   ],
   "rules": {
     "prettier/prettier": 2,
-    "no-console": 2,
+    //"no-console": 2,
     "no-loops/no-loops": 2,
     "react/prop-types": [2, { "ignore": ["children"] }]
   }

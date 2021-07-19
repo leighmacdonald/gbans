@@ -318,7 +318,7 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		case config.Kick:
 			act = action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), msg)
 		}
-		res := <-act.Enqueue().Done()
+		res := <-act.Enqueue().Wait()
 		if res.Err != nil {
 			log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
 		}

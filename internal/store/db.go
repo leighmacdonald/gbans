@@ -20,7 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/extra"
+	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -443,8 +443,8 @@ func FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.Server
 	for rows.Next() {
 		e := model.ServerEvent{
 			Server: &model.Server{},
-			Source: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
-			Target: &model.Person{PlayerSummary: &extra.PlayerSummary{}},
+			Source: &model.Person{PlayerSummary: &steam_webapi.PlayerSummary{}},
+			Target: &model.Person{PlayerSummary: &steam_webapi.PlayerSummary{}},
 		}
 		if err2 := rows.Scan(
 			&e.LogID, &e.EventType, &e.CreatedOn,
@@ -732,7 +732,7 @@ func GetPersonBySteamID(ctx context.Context, sid steamid.SID64) (*model.Person, 
 
 	p := model.NewPerson(0)
 	p.IsNew = false
-	p.PlayerSummary = &extra.PlayerSummary{}
+	p.PlayerSummary = &steam_webapi.PlayerSummary{}
 	err := db.QueryRow(ctx, q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
@@ -811,7 +811,7 @@ func GetPersonByDiscordID(ctx context.Context, did string) (*model.Person, error
 	}
 	p := model.NewPerson(0)
 	p.IsNew = false
-	p.PlayerSummary = &extra.PlayerSummary{}
+	p.PlayerSummary = &steam_webapi.PlayerSummary{}
 	err := db.QueryRow(ctx, q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
@@ -1531,7 +1531,7 @@ func Import(ctx context.Context, root string) error {
 				if e2 != nil {
 					return e2
 				}
-				sum, err3 := extra.PlayerSummaries(context.Background(), []steamid.SID64{b1.SteamID, b2.SteamID})
+				sum, err3 := steam_webapi.PlayerSummaries(steamid.Collection{b1.SteamID, b2.SteamID})
 				if err3 != nil {
 					log.Errorf("Failed to get player summary: %v", err3)
 					return err3

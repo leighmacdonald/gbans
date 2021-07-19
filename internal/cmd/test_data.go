@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
+	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ var testDataCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 		defer cancel()
 		p, _ := store.GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198084134025))
-		sum1, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{p.SteamID})
+		sum1, err := steam_webapi.PlayerSummaries(steamid.Collection{p.SteamID})
 		if err != nil {
 			log.Errorf("Failed to get player summary: %v", err)
 			return
@@ -86,7 +86,7 @@ var testDataCmd = &cobra.Command{
 				log.Errorf("error creating person: %v", err)
 				return
 			}
-			sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{bid})
+			sum, err := steam_webapi.PlayerSummaries(steamid.Collection{bid})
 			if err != nil {
 				log.Errorf("Failed to get player summary: %v", err)
 				return

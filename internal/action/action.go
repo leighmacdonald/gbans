@@ -12,7 +12,7 @@
 //
 // 		req := NewKick("76561199040918801", "76561197992870439", "test")
 //		req.Enqueue()
-//		result := <-req.Done()
+//		result := <-req.Wait()
 //
 // If you do not care about the results, fire and forget. Then use the EnqueueIgnore() function
 // instead which will omit sending results to the channel and will just close it.
@@ -92,7 +92,7 @@ type Action struct {
 	IgnoreResult bool
 }
 
-func (a *Action) Done() <-chan Result {
+func (a *Action) Wait() <-chan Result {
 	return a.Result
 }
 

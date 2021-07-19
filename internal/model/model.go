@@ -5,6 +5,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -194,7 +195,7 @@ func NewBannedPerson() *BannedPerson {
 		Person: &Person{
 			CreatedOn:     config.Now(),
 			UpdatedOn:     config.Now(),
-			PlayerSummary: &extra.PlayerSummary{},
+			PlayerSummary: &steam_webapi.PlayerSummary{},
 		},
 		HistoryChat:        nil,
 		HistoryPersonaName: nil,
@@ -286,7 +287,7 @@ type Person struct {
 	GameBans         int
 	EconomyBan       string
 	DaysSinceLastBan int
-	*extra.PlayerSummary
+	*steam_webapi.PlayerSummary
 }
 
 // LoggedIn checks for a valid steamID
@@ -301,7 +302,7 @@ func NewPerson(sid64 steamid.SID64) *Person {
 		IsNew:           true,
 		CreatedOn:       config.Now(),
 		UpdatedOn:       config.Now(),
-		PlayerSummary:   &extra.PlayerSummary{},
+		PlayerSummary:   &steam_webapi.PlayerSummary{},
 		PermissionLevel: PAuthenticated,
 	}
 }

@@ -123,7 +123,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			return
 		}
 		act := action.NewGetOrCreatePersonByID(sid.String(), c.Request.RemoteAddr)
-		res := <-act.Enqueue().Done()
+		res := <-act.Enqueue().Wait()
 		if res.Err != nil {
 			log.Errorf("Failed to fetch user profile: %v", res.Err)
 			c.Redirect(302, ref)

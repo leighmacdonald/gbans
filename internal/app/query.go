@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -172,7 +173,7 @@ func FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet) (*model.FindResult,
 // that it will also query the steam webapi to fetch and load the extra Player summary info
 func GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string) (*model.Person, error) {
 	// TODO make these non-fatal errors?
-	sum, err := extra.PlayerSummaries(context.Background(), []steamid.SID64{sid})
+	sum, err := steam_webapi.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to get Player summary: %v", err)
 	}

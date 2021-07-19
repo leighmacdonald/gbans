@@ -6,6 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
+	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/rumblefrog/go-a2s"
@@ -29,11 +30,11 @@ func profileUpdater(ctx context.Context) {
 			if bans == nil {
 				break
 			}
-			var sids []steamid.SID64
+			var sids steamid.Collection
 			for _, b := range bans {
 				sids = append(sids, b.SteamID)
 			}
-			summaries, err2 := extra.PlayerSummaries(context.Background(), sids)
+			summaries, err2 := steam_webapi.PlayerSummaries(sids)
 			if err2 != nil {
 				log.Errorf("Failed to get Player summaries: %v", err2)
 				continue

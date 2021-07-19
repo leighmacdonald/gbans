@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
+	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -59,7 +59,7 @@ func onPostPingMod() gin.HandlerFunc {
 			return
 		}
 		act := action.NewFind(action.Web, req.SteamID.String())
-		res := <-act.Enqueue().Done()
+		res := <-act.Enqueue().Wait()
 		pi, ok := res.Value.(model.PlayerInfo)
 		if !ok {
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -128,7 +128,7 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 		} else {
 			act = action.NewBan(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration)
 		}
-		res := <-act.Enqueue().Done()
+		res := <-act.Enqueue().Wait()
 		if res.Err != nil {
 			if errors.Is(res.Err, store.ErrDuplicate) {
 				responseErr(c, http.StatusConflict, "Duplicate ban")
@@ -324,8 +324,8 @@ func onAPIGetPlayers() gin.HandlerFunc {
 
 func onAPICurrentProfile() gin.HandlerFunc {
 	type resp struct {
-		Player  *model.Person         `json:"player"`
-		Friends []extra.PlayerSummary `json:"friends"`
+		Player  *model.Person                `json:"player"`
+		Friends []steam_webapi.PlayerSummary `json:"friends"`
 	}
 	return func(c *gin.Context) {
 		p := currentPerson(c)
@@ -355,8 +355,8 @@ func onAPIProfile() gin.HandlerFunc {
 		Query string `form:"query"`
 	}
 	type resp struct {
-		Player  *model.Person         `json:"player"`
-		Friends []extra.PlayerSummary `json:"friends"`
+		Player  *model.Person                `json:"player"`
+		Friends []steam_webapi.PlayerSummary `json:"friends"`
 	}
 	return func(c *gin.Context) {
 		var r req
@@ -379,7 +379,7 @@ func onAPIProfile() gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		sum, err3 := extra.PlayerSummaries(cx, []steamid.SID64{sid})
+		sum, err3 := steam_webapi.PlayerSummaries(steamid.Collection{sid})
 		if err3 != nil || len(sum) != 1 {
 			log.Errorf("Failed to get player summary: %v", err3)
 			responseErr(c, http.StatusInternalServerError, "Could not fetch summary")

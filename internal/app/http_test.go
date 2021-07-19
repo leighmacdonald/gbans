@@ -234,7 +234,6 @@ func TestWebSocketClient(t *testing.T) {
 			require.EqualValues(t, res.(web.WSErrRes), wsErr)
 		case web.AuthOKType:
 			atomic.SwapInt32(&state, int32(web.Authenticated))
-
 		}
 	}
 

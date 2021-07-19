@@ -148,7 +148,7 @@ func ban(ctx context.Context, args action.BanRequest) (*model.Ban, error) {
 			}
 		}
 		updateRequest := action.NewGetOrCreatePersonByID(target.String(), ipAddr)
-		updateRequest.Enqueue().Done()
+		updateRequest.Enqueue().Wait()
 	}()
 	return &b, nil
 }
@@ -202,7 +202,7 @@ func banNetwork(ctx context.Context, args *action.BanNetRequest) (*model.BanNet,
 	}
 	go func() {
 		fc := action.NewFindByCIDR(cidr)
-		res := <-fc.Enqueue().Done()
+		res := <-fc.Enqueue().Wait()
 		if res.Err != nil {
 			if res.Err != consts.ErrUnknownID {
 				log.Debugf("No active players found matching: %s", cidr)

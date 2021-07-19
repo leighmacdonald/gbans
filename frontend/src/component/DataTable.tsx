@@ -459,6 +459,9 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                         page={page}
                         onChangePage={handleChangePage}
                         onChangeRowsPerPage={handleChangeRowsPerPage}
+                        onPageChange={(_, page) => {
+                            console.log(`page changed -> ${page}`);
+                        }}
                     />
                 </Paper>
                 <FormControlLabel
