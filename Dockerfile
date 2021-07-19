@@ -9,7 +9,7 @@ RUN yarn
 RUN yarn build
 RUN yarn run copy
 
-FROM golang:1.16-alpine as build
+FROM golang:1.16.6-alpine as build
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 WORKDIR /build
 RUN apk add make git gcc libc-dev
