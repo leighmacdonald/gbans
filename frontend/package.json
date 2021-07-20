@@ -48,7 +48,7 @@
     "chai": "^4.3.0",
     "copy-webpack-plugin": "^9.0.1",
     "cross-env": "^7.0.2",
-    "css-loader": "^6.1.0",
+    "css-loader": "^6.2.0",
     "date-fns": "^2.16.1",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
