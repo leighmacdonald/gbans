@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/bwmarrin/discordgo v0.23.3-0.20210410202908-577e7dd4f6cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210319040357-511ae9f5b6be
@@ -33,7 +33,6 @@ require (
 	github.com/prometheus/common v0.29.0 // indirect
 	github.com/prometheus/procfs v0.7.0 // indirect
 	github.com/rumblefrog/go-a2s v1.0.0
-	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
@@ -42,7 +41,6 @@ require (
 	github.com/yohcop/openid-go v1.0.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
 )
