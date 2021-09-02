@@ -1,7 +1,6 @@
 package steam
 
 import (
-	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
@@ -16,13 +15,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestFetchPlayerBans(t *testing.T) {
-	reqIds := []steamid.SID64{
+	reqIds := steamid.Collection{
 		76561198044052046,
 		76561198059958958,
 		76561197999702457,
 		76561198189957966,
 	}
-	bans, err := FetchPlayerBans(context.Background(), reqIds)
+	bans, err := FetchPlayerBans(reqIds)
 	require.NoError(t, err, "HTTP error fetching Player bans")
 	require.Equal(t, len(bans), len(reqIds))
 }
@@ -35,7 +34,7 @@ func TestSteamWebAPI(t *testing.T) {
 	friends, err := FetchFriends(76561197961279983)
 	require.NoError(t, err)
 	require.True(t, len(friends) > 100)
-	summaries, err := FetchSummaries(friends)
-	require.NoError(t, err)
+	summaries, err2 := FetchSummaries(friends)
+	require.NoError(t, err2)
 	require.Equal(t, len(friends), len(summaries))
 }

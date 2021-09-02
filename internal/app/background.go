@@ -1,28 +1,28 @@
 package app
 
 import (
-	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
-	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
 
-func profileUpdater(ctx context.Context) {
+func (g *Gbans) profileUpdater() {
 	var update = func() {
 		o := store.NewQueryFilter("")
 		o.Limit = 5 // Max per query of WebAPI
 		loop := uint64(0)
 		for {
 			o.Offset = loop * o.Limit
-			bans, err := store.GetBansOlderThan(ctx, o, config.Now().Add(-(time.Hour * 24)))
+			bans, err := g.db.GetBansOlderThan(g.ctx, o, config.Now().Add(-(time.Hour * 24)))
 			if err != nil {
 				log.Warnf("Failed to get old bans for update: %v", err)
 				break
@@ -34,7 +34,7 @@ func profileUpdater(ctx context.Context) {
 			for _, b := range bans {
 				sids = append(sids, b.SteamID)
 			}
-			summaries, err2 := steam_webapi.PlayerSummaries(sids)
+			summaries, err2 := steamweb.PlayerSummaries(sids)
 			if err2 != nil {
 				log.Errorf("Failed to get Player summaries: %v", err2)
 				continue
@@ -46,14 +46,14 @@ func profileUpdater(ctx context.Context) {
 					log.Errorf("Failed to parse steamid from webapi: %v", err3)
 					continue
 				}
-				p, err4 := store.GetOrCreatePersonBySteamID(ctx, sid)
-				if err4 != nil {
+				var p model.Person
+				if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
 					log.Errorf("Failed to get person: %v", err4)
 					continue
 				}
 				p.PlayerSummary = &s
-				if err := store.SavePerson(ctx, p); err != nil {
-					log.Errorf("Failed to save person: %v", err)
+				if err5 := g.db.SavePerson(g.ctx, &p); err5 != nil {
+					log.Errorf("Failed to save person: %v", err5)
 					continue
 				}
 				cnt++
@@ -68,7 +68,7 @@ func profileUpdater(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			update()
-		case <-ctx.Done():
+		case <-g.ctx.Done():
 			log.Debugf("profileUpdater shutting down")
 			return
 		}
@@ -76,9 +76,9 @@ func profileUpdater(ctx context.Context) {
 
 }
 
-func serverStateUpdater(ctx context.Context) {
+func (g *Gbans) serverStateUpdater() {
 	var update = func() {
-		servers, err := store.GetServers(ctx)
+		servers, err := g.db.GetServers(g.ctx)
 		if err != nil {
 			log.Errorf("Failed to fetch servers to update")
 			return
@@ -89,7 +89,7 @@ func serverStateUpdater(ctx context.Context) {
 		respA2S := map[string]*a2s.ServerInfo{}
 		go func() {
 			defer wg.Done()
-			respRCON = query.RCON(ctx, servers, "status")
+			respRCON = query.RCON(g.ctx, servers, "status")
 		}()
 		go func() {
 			defer wg.Done()
@@ -129,43 +129,43 @@ func serverStateUpdater(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			update()
-		case <-gCtx.Done():
+		case <-g.ctx.Done():
 			return
 		}
 	}
 }
 
-func banSweeper(ctx context.Context) {
+func (g *Gbans) banSweeper() {
 	log.Debug("ban sweeper routine started")
 	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {
 		case <-ticker.C:
-			bans, err := store.GetExpiredBans(ctx)
+			bans, err := g.db.GetExpiredBans(g.ctx)
 			if err != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range bans {
-					if err := store.DropBan(ctx, ban); err != nil {
+					if err := g.db.DropBan(g.ctx, ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
 						log.Infof("ban expired: %v", ban)
 					}
 				}
 			}
-			netBans, err2 := store.GetExpiredNetBans(ctx)
+			netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
 			if err2 != nil {
 				log.Warnf("Failed to get expired bans")
 			} else {
 				for _, ban := range netBans {
-					if err := store.DropNetBan(ctx, ban); err != nil {
+					if err := g.db.DropNetBan(g.ctx, ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)
 					}
 				}
 			}
-		case <-ctx.Done():
+		case <-g.ctx.Done():
 			log.Debugf("banSweeper shutting down")
 			return
 		}

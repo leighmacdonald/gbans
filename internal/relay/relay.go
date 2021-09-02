@@ -183,9 +183,8 @@ func onAuthenticatedMessage(cli *client.Client, name string, msg string) error {
 	if e != nil {
 		return errors.Wrapf(e, "Failed to encode ws payload")
 	}
-	cli.Enqueue(p)
-	cli.Log().Debugf("Relayed: %s", msg)
-	return nil
+	cli.Log().Debugf("Relaying: %s", msg)
+	return cli.WriteJSON(p)
 }
 
 func init() {

@@ -378,7 +378,7 @@ func parseIpv6Int(s string) (net.IP, error) {
 }
 
 func parseIpv4Int(s string) (net.IP, error) {
-	n, err := strconv.ParseUint(s, 10, 64)
+	n, err := strconv.ParseUint(s, 10, 32)
 	if err != nil {
 		return nil, err
 	}

@@ -58,6 +58,7 @@ type SocketLogPayload struct {
 type socketState struct {
 	*sync.RWMutex
 	ws         *melody.Melody
+	db         store.Store
 	logMsgChan chan LogPayload
 	sessions   map[*melody.Session]*socketSession
 }
@@ -66,7 +67,7 @@ type socketState struct {
 type socketSession struct {
 	IsClient bool
 	State    State
-	Person   *model.Person
+	Person   model.Person
 	// Is log broadcasting enabled
 	BroadcastLog        bool
 	LogQueryOpts        model.LogQueryOpts
@@ -162,11 +163,12 @@ func (s *socketSession) err(errType PayloadType, err error, args ...interface{})
 }
 
 // newWebSocketState allocates and connects all websocket routes and session states
-func newWebSocketState(logMsgChan chan LogPayload) *socketState {
+func newWebSocketState(logMsgChan chan LogPayload, db store.Store) *socketState {
 	ws := melody.New()
 	wss := &socketState{
 		RWMutex:    &sync.RWMutex{},
 		ws:         ws,
+		db:         db,
 		sessions:   map[*melody.Session]*socketSession{},
 		logMsgChan: logMsgChan,
 	}
@@ -214,13 +216,13 @@ func newWSErr(errType PayloadType, err error) []byte {
 	return b
 }
 
-func authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession) error {
+func (ws *socketState) authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession) error {
 	s.IsClient = false
 	if req.Token == "" || req.ServerName == "" {
 		return consts.ErrAuthentication
 	}
-	server, e := store.GetServerByName(ctx, req.ServerName)
-	if e != nil {
+	var server model.Server
+	if e := ws.db.GetServerByName(ctx, req.ServerName, &server); e != nil {
 		return consts.ErrAuthentication
 	}
 	if server.Password == "" {
@@ -247,14 +249,14 @@ func authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession
 	return nil
 }
 
-func authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession) error {
+func (ws *socketState) authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession) error {
 	s.IsClient = true
 	sid, err := sid64FromJWTToken(req.Token)
 	if err != nil {
 		return consts.ErrAuthentication
 	}
-	p, errP := store.GetPersonBySteamID(ctx, sid)
-	if errP != nil || p.PermissionLevel < model.PModerator {
+	var p model.Person
+	if errP := ws.db.GetPersonBySteamID(ctx, sid, &p); errP != nil || p.PermissionLevel < model.PModerator {
 		return consts.ErrAuthentication
 	}
 	s.Person = p
@@ -314,9 +316,9 @@ func (ws *socketState) onAwaitingAuthentication(ctx context.Context, w *SocketPa
 	}
 	var e error
 	if req.IsServer {
-		e = authenticateServer(ctx, req, c)
+		e = ws.authenticateServer(ctx, req, c)
 	} else {
-		e = authenticateClient(ctx, req, c)
+		e = ws.authenticateClient(ctx, req, c)
 	}
 	if e != nil {
 		c.err(AuthFailType, e)
@@ -343,7 +345,7 @@ func (ws *socketState) onAuthenticatedPayload(_ context.Context, w *SocketPayloa
 		c.setQueryOpts(opts)
 		c.Log().Debugf("Updated query opts: %v", opts)
 		go func() {
-			results, err := store.FindLogEvents(c.ctx, opts)
+			results, err := ws.db.FindLogEvents(c.ctx, opts)
 			if err != nil {
 				c.Log().Errorf("Error sending pre-cache to client")
 				return

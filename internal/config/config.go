@@ -13,6 +13,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/steamweb"
 	"strings"
 	"time"
 
@@ -135,14 +136,15 @@ type generalConfig struct {
 }
 
 type discordConfig struct {
-	Enabled     bool     `mapstructure:"enabled"`
-	AppID       string   `mapstructure:"app_id"`
-	Token       string   `mapstructure:"token"`
-	ModRoleID   string   `mapstructure:"mod_role_id"`
-	GuildID     string   `mapstructure:"guild_id"`
-	Perms       int      `mapstructure:"perms"`
-	Prefix      string   `mapstructure:"prefix"`
-	ModChannels []string `mapstructure:"mod_channel_ids"`
+	Enabled      bool     `mapstructure:"enabled"`
+	AppID        string   `mapstructure:"app_id"`
+	Token        string   `mapstructure:"token"`
+	ModRoleID    string   `mapstructure:"mod_role_id"`
+	GuildID      string   `mapstructure:"guild_id"`
+	Perms        int      `mapstructure:"perms"`
+	Prefix       string   `mapstructure:"prefix"`
+	ModChannels  []string `mapstructure:"mod_channel_ids"`
+	LogChannelID string   `mapstructure:"log_channel_id"`
 }
 
 type logConfig struct {
@@ -231,6 +233,9 @@ func Read(cfgFiles ...string) {
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
+		log.Errorf("Failed to set steam api key: %v", err)
+	}
+	if errSteamWeb := steamweb.SetKey(General.SteamKey); errSteamWeb != nil {
 		log.Errorf("Failed to set steam api key: %v", err)
 	}
 	if found {

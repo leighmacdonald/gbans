@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -17,7 +18,11 @@ var migrateCmd = &cobra.Command{
 		if downAll {
 			act = store.MigrateDn
 		}
-		if err := store.Migrate(store.MigrationAction(act)); err != nil {
+		db, err := store.New(config.DB.DSN)
+		if err != nil {
+			log.Fatalf("Failed to initialize db connection: %v", err)
+		}
+		if err := db.Migrate(store.MigrationAction(act)); err != nil {
 			if err.Error() == "no change" {
 				log.Infof("Migration at latest version")
 			} else {

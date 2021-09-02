@@ -4,7 +4,9 @@ import (
 	"github.com/Depado/ginprom"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 )
@@ -18,8 +20,8 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
-	ws := newWebSocketState(logMsgChan)
+func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
+	ws := newWebSocketState(logMsgChan, db)
 	jsRoutes := func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
@@ -50,35 +52,35 @@ func SetupRouter(r *gin.Engine, logMsgChan chan LogPayload) {
 
 	r.GET("/metrics", prometheusHandler())
 
-	r.GET("/login/success", onLoginSuccess())
-	r.GET("/auth/callback", onOpenIDCallback())
-	r.GET("/api/ban/:ban_id", onAPIGetBanByID())
-	r.POST("/api/bans", onAPIGetBans())
-	r.GET("/api/profile", onAPIProfile())
-	r.GET("/api/servers", onAPIGetServers())
-	r.GET("/api/stats", onAPIGetStats())
-	r.GET("/api/filtered_words", onAPIGetFilteredWords())
-	r.GET("/api/players", onAPIGetPlayers())
-	r.GET("/api/auth/logout", onGetLogout())
+	r.GET("/login/success", w.onLoginSuccess())
+	r.GET("/auth/callback", w.onOpenIDCallback())
+	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
+	r.POST("/api/bans", w.onAPIGetBans(db))
+	r.GET("/api/profile", w.onAPIProfile(db))
+	r.GET("/api/servers", w.onAPIGetServers(db))
+	r.GET("/api/stats", w.onAPIGetStats(db))
+	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
+	r.GET("/api/players", w.onAPIGetPlayers(db))
+	r.GET("/api/auth/logout", w.onGetLogout())
 	r.GET("/ws", ws.onWSStart)
 
 	// Game server plugin routes
-	r.POST("/api/server_auth", onSAPIPostServerAuth())
+	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
 	// IsServer Auth Request
-	serverAuth := r.Use(authMiddleWare())
-	serverAuth.POST("/api/ping_mod", onPostPingMod())
-	serverAuth.POST("/api/check", onPostServerCheck())
+	serverAuth := r.Use(w.authMiddleWare(db))
+	serverAuth.POST("/api/ping_mod", w.onPostPingMod(bot))
+	serverAuth.POST("/api/check", w.onPostServerCheck(db))
 
 	// Basic logged in user
-	authed := r.Use(authMiddleware(model.PAuthenticated))
-	authed.GET("/api/current_profile", onAPICurrentProfile())
-	authed.GET("/api/auth/refresh", onTokenRefresh())
+	authed := r.Use(w.authMiddleware(db, model.PAuthenticated))
+	authed.GET("/api/current_profile", w.onAPICurrentProfile())
+	authed.GET("/api/auth/refresh", w.onTokenRefresh())
 
 	// Moderator access
-	modRoute := r.Use(authMiddleware(model.PModerator))
-	modRoute.POST("/api/ban", onAPIPostBanCreate())
+	modRoute := r.Use(w.authMiddleware(db, model.PModerator))
+	modRoute.POST("/api/ban", w.onAPIPostBanCreate())
 
 	// Admin access
-	modAdmin := r.Use(authMiddleware(model.PAdmin))
-	modAdmin.POST("/api/server", onAPIPostServer())
+	modAdmin := r.Use(w.authMiddleware(db, model.PAdmin))
+	modAdmin.POST("/api/server", w.onAPIPostServer())
 }
