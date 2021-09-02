@@ -359,7 +359,7 @@ Action CmdMod(int client, int argc) {
     req.POST();
     delete req;
 
-    ReplyToCommand(client, "Mods have been alterted, thanks!");
+    ReplyToCommand(client, "Mods have been alerted, thanks!");
 
     return Plugin_Handled;
 }

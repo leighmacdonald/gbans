@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -17,53 +19,89 @@ import (
 )
 
 var (
-	dg               *discordgo.Session
-	connectedMu      *sync.RWMutex
-	connected        = false
 	errCommandFailed = errors.New("Command failed")
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-func Start(ctx context.Context, token string, eventChan chan model.ServerEvent) {
+type Bot struct {
+	dg              *discordgo.Session
+	connectedMu     *sync.RWMutex
+	connected       bool
+	commandHandlers map[botCmd]botCommandHandler
+	executor        action.Executor
+	db              store.Store
+}
+
+// New instantiates a new, unconnected, Bot instance
+func New(executor action.Executor, s store.Store) (*Bot, error) {
+	b := Bot{
+		dg:          nil,
+		connectedMu: &sync.RWMutex{},
+		connected:   false,
+		executor:    executor,
+		db:          s,
+	}
+	var commandHandlers = map[botCmd]botCommandHandler{
+		cmdBan:      b.onBan,
+		cmdBanIP:    b.onBanIP,
+		cmdCheck:    b.onCheck,
+		cmdCSay:     b.onCSay,
+		cmdFind:     b.onFind,
+		cmdKick:     b.onKick,
+		cmdMute:     b.onMute,
+		cmdPlayers:  b.onPlayers,
+		cmdPSay:     b.onPSay,
+		cmdSay:      b.onSay,
+		cmdServers:  b.onServers,
+		cmdUnban:    b.onUnban,
+		cmdSetSteam: b.onSetSteam,
+		cmdHistory:  b.onHistory,
+		cmdFilter:   b.onFilter,
+	}
+	b.commandHandlers = commandHandlers
+	return &b, nil
+}
+
+func (b *Bot) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
-		log.Errorf("Failed to connect to dg. Bot unavailable")
-		return
+		return errors.Wrapf(err, "Failed to connect to discord. Bot unavailable")
+
 	}
 	defer func() {
-		if errDisc := dg.Close(); errDisc != nil {
+		if errDisc := b.dg.Close(); errDisc != nil {
 			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
 		}
 	}()
-	dg = d
-	dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	dg.AddHandler(onReady)
-	dg.AddHandler(onConnect)
-	dg.AddHandler(onDisconnect)
-	dg.AddHandler(onInteractionCreate)
+	b.dg = d
+	b.dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	b.dg.AddHandler(b.onReady)
+	b.dg.AddHandler(b.onConnect)
+	b.dg.AddHandler(b.onDisconnect)
+	b.dg.AddHandler(b.onInteractionCreate)
 
 	// In this example, we only care about receiving message events.
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	b.dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to Discord and begin listening.
-	err = dg.Open()
+	err = b.dg.Open()
 	if err != nil {
-		log.Fatalf("Error opening discord connection: %v,", err)
-		return
+		return errors.Wrap(err, "Error opening discord connection")
 	}
-	go discordMessageQueueReader(ctx, eventChan)
+	go b.discordMessageQueueReader(ctx, eventChan)
 
-	if err2 := botRegisterSlashCommands(); err2 != nil {
+	if err2 := b.botRegisterSlashCommands(); err2 != nil {
 		log.Errorf("Failed to register discord slash commands: %v", err2)
 	}
 
 	<-ctx.Done()
+	return nil
 }
 
 // discordMessageQueueReader functions by registering event handlers for the two user message events
 // Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
+func (b *Bot) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
 	for {
@@ -88,7 +126,7 @@ func discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerE
 			msg := strings.Join(sendQueue, "\n")
 			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
-					if err := sendChannelMessage(dg, channelID, m, true); err != nil {
+					if err := b.sendChannelMessage(b.dg, channelID, m, true); err != nil {
 						log.Errorf("Failed to send bulk message log: %v", err)
 					}
 				}
@@ -100,11 +138,11 @@ func discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerE
 	}
 }
 
-func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+func (b *Bot) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	log.Infof("Bot is connected & ready")
 }
 
-func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
+func (b *Bot) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	log.Info("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
 		IdleSince: nil,
@@ -125,26 +163,26 @@ func onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	if err := s.UpdateStatusComplex(d); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")
 	}
-	connectedMu.Lock()
-	connected = true
-	connectedMu.Unlock()
+	b.connectedMu.Lock()
+	b.connected = true
+	b.connectedMu.Unlock()
 }
 
-func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	connectedMu.Lock()
-	connected = false
-	connectedMu.Unlock()
+func (b *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+	b.connectedMu.Lock()
+	b.connected = false
+	b.connectedMu.Unlock()
 	log.Info("Disconnected from session ws API")
 }
 
-func sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
-	connectedMu.RLock()
-	if !connected {
-		connectedMu.RUnlock()
+func (b *Bot) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
+	b.connectedMu.RLock()
+	if !b.connected {
+		b.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	connectedMu.RUnlock()
+	b.connectedMu.RUnlock()
 	if wrap {
 		msg = discordMsgWrapper + msg + discordMsgWrapper
 	}
@@ -158,14 +196,14 @@ func sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) e
 	return nil
 }
 
-func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, msg string) error {
-	connectedMu.RLock()
-	if !connected {
-		connectedMu.RUnlock()
+func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, msg string) error {
+	b.connectedMu.RLock()
+	if !b.connected {
+		b.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	connectedMu.RUnlock()
+	b.connectedMu.RUnlock()
 	msg = discordMsgWrapper + msg + discordMsgWrapper
 	if len(msg) > discordMaxMsgLen {
 		return errTooLarge
@@ -173,10 +211,11 @@ func sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, 
 	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{Content: msg})
 }
 
-func Send(channelId string, message string, wrap bool) error {
-	return sendChannelMessage(dg, channelId, message, wrap)
+func (b *Bot) Send(channelId string, message string, wrap bool) error {
+	return b.sendChannelMessage(b.dg, channelId, message, wrap)
 }
 
-func init() {
-	connectedMu = &sync.RWMutex{}
+type ChatBot interface {
+	Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error
+	Send(channelId string, message string, wrap bool) error
 }

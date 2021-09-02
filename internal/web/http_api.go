@@ -12,8 +12,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
-	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
@@ -42,8 +42,7 @@ func responseOK(c *gin.Context, status int, data interface{}) {
 	})
 }
 
-func onPostPingMod() gin.HandlerFunc {
-
+func (w *Web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -51,19 +50,16 @@ func onPostPingMod() gin.HandlerFunc {
 		Reason     string        `json:"reason"`
 		Client     int           `json:"client"`
 	}
-
 	return func(c *gin.Context) {
 		var req pingReq
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		act := action.NewFind(action.Web, req.SteamID.String())
-		res := <-act.Enqueue().Wait()
-		pi, ok := res.Value.(model.PlayerInfo)
-		if !ok {
-			responseErr(c, http.StatusInternalServerError, nil)
-			return
+		var pi model.PlayerInfo
+		err := w.executor.Find(req.SteamID.String(), "", &pi)
+		if err != nil {
+			log.Error("Failed to find player on /mod call")
 		}
 		name := req.SteamID.String()
 		if pi.InGame {
@@ -71,7 +67,7 @@ func onPostPingMod() gin.HandlerFunc {
 		}
 		for _, chanId := range config.Discord.ModChannels {
 			m := fmt.Sprintf("<@&%s> [%s] (%s): %s", config.Discord.ModRoleID, req.ServerName, name, req.Reason)
-			err := discord.Send(chanId, m, false)
+			err := bot.Send(chanId, m, false)
 			if err != nil {
 				responseErr(c, http.StatusInternalServerError, nil)
 				return
@@ -93,7 +89,7 @@ type apiBanRequest struct {
 	Network    string        `json:"network"`
 }
 
-func onAPIPostBanCreate() gin.HandlerFunc {
+func (w *Web) onAPIPostBanCreate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r apiBanRequest
 		if err := c.BindJSON(&r); err != nil {
@@ -122,30 +118,35 @@ func onAPIPostBanCreate() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, "Invalid steamid")
 			return
 		}
-		var act action.Action
 		if r.Network != "" {
-			act = action.NewBanNet(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network)
-		} else {
-			act = action.NewBan(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(), r.ReasonText, r.Duration)
-		}
-		res := <-act.Enqueue().Wait()
-		if res.Err != nil {
-			if errors.Is(res.Err, store.ErrDuplicate) {
-				responseErr(c, http.StatusConflict, "Duplicate ban")
+			var b model.BanNet
+			if bErr := w.executor.BanNetwork(action.NewBanNet(action.Web, r.SteamID.String(),
+				currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network), &b); bErr != nil {
+				if errors.Is(bErr, store.ErrDuplicate) {
+					responseErr(c, http.StatusConflict, "Duplicate ban")
+					return
+				}
+				responseErr(c, http.StatusBadRequest, "Failed to perform ban")
 				return
 			}
-			responseErr(c, http.StatusInternalServerError, "Failed to perform ban")
-			return
-		}
-		if r.Network != "" {
 			responseOK(c, http.StatusCreated, banNet)
 		} else {
+			var b model.Ban
+			if bErr := w.executor.Ban(action.NewBan(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
+				r.ReasonText, r.Duration), &b); bErr != nil {
+				if errors.Is(bErr, store.ErrDuplicate) {
+					responseErr(c, http.StatusConflict, "Duplicate ban")
+					return
+				}
+				responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+				return
+			}
 			responseOK(c, http.StatusCreated, ban)
 		}
 	}
 }
 
-func onSAPIPostServerAuth() gin.HandlerFunc {
+func (w *Web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`
@@ -163,7 +164,8 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		srv, err := store.GetServerByName(ctx, req.ServerName)
+		var srv model.Server
+		err := db.GetServerByName(ctx, req.ServerName, &srv)
 		if err != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
@@ -175,7 +177,7 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 		}
 		srv.Token = golib.RandomString(40)
 		srv.TokenCreatedOn = config.Now()
-		if err2 := store.SaveServer(ctx, &srv); err2 != nil {
+		if err2 := db.SaveServer(ctx, &srv); err2 != nil {
 			log.Errorf("Failed to updated server token: %v", err2)
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -193,7 +195,7 @@ type CheckRequest struct {
 	IP       net.IP `json:"ip"`
 }
 
-func onPostServerCheck() gin.HandlerFunc {
+func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
 		SteamID  string        `json:"steam_id"`
@@ -218,7 +220,7 @@ func onPostServerCheck() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
 		// Check IP first
-		banNet, err := store.GetBanNet(ctx, req.IP)
+		banNet, err := db.GetBanNet(ctx, req.IP)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
@@ -240,10 +242,8 @@ func onPostServerCheck() gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
-		p := action.NewGetOrCreatePersonByID(steamID.String(), req.IP.String())
-		p.EnqueueIgnore()
-		ban, errB := store.GetBanBySteamID(ctx, steamID, false)
-		if errB != nil {
+		var ban model.BannedPerson
+		if errB := db.GetBanBySteamID(ctx, steamID, false, &ban); errB != nil {
 			if errB == store.ErrNoResult {
 				resp.BanType = model.OK
 				responseErr(c, http.StatusOK, resp)
@@ -282,11 +282,11 @@ func onPostServerCheck() gin.HandlerFunc {
 //	}
 //}
 
-func onAPIGetServers() gin.HandlerFunc {
+func (w *Web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		servers, err := store.GetServers(ctx)
+		servers, err := db.GetServers(ctx)
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -296,7 +296,7 @@ func onAPIGetServers() gin.HandlerFunc {
 	}
 }
 
-func queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
+func (w *Web) queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
 	var qf store.QueryFilter
 	if err := c.BindUri(&qf); err != nil {
 		return nil, err
@@ -304,16 +304,16 @@ func queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
 	return &qf, nil
 }
 
-func onAPIGetPlayers() gin.HandlerFunc {
+func (w *Web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		qf, err := queryFilterFromContext(c)
+		qf, err := w.queryFilterFromContext(c)
 		if err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		people, err2 := store.GetPeople(ctx, qf)
+		people, err2 := db.GetPeople(ctx, qf)
 		if err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -322,10 +322,10 @@ func onAPIGetPlayers() gin.HandlerFunc {
 	}
 }
 
-func onAPICurrentProfile() gin.HandlerFunc {
+func (w *Web) onAPICurrentProfile() gin.HandlerFunc {
 	type resp struct {
-		Player  *model.Person                `json:"player"`
-		Friends []steam_webapi.PlayerSummary `json:"friends"`
+		Player  *model.Person            `json:"player"`
+		Friends []steamweb.PlayerSummary `json:"friends"`
 	}
 	return func(c *gin.Context) {
 		p := currentPerson(c)
@@ -344,19 +344,19 @@ func onAPICurrentProfile() gin.HandlerFunc {
 			return
 		}
 		var response resp
-		response.Player = p
+		response.Player = &p
 		response.Friends = friends
 		responseOK(c, http.StatusOK, response)
 	}
 }
 
-func onAPIProfile() gin.HandlerFunc {
+func (w *Web) onAPIProfile(db store.Store) gin.HandlerFunc {
 	type req struct {
 		Query string `form:"query"`
 	}
 	type resp struct {
-		Player  *model.Person                `json:"player"`
-		Friends []steam_webapi.PlayerSummary `json:"friends"`
+		Player  *model.Person            `json:"player"`
+		Friends []steamweb.PlayerSummary `json:"friends"`
 	}
 	return func(c *gin.Context) {
 		var r req
@@ -374,12 +374,12 @@ func onAPIProfile() gin.HandlerFunc {
 				return
 			}
 		}
-		person, err2 := store.GetOrCreatePersonBySteamID(cx, sid)
-		if err2 != nil {
+		var person model.Person
+		if err2 := db.GetOrCreatePersonBySteamID(cx, sid, &person); err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		sum, err3 := steam_webapi.PlayerSummaries(steamid.Collection{sid})
+		sum, err3 := steamweb.PlayerSummaries(steamid.Collection{sid})
 		if err3 != nil || len(sum) != 1 {
 			log.Errorf("Failed to get player summary: %v", err3)
 			responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
@@ -397,13 +397,13 @@ func onAPIProfile() gin.HandlerFunc {
 			return
 		}
 		var response resp
-		response.Player = person
+		response.Player = &person
 		response.Friends = friends
 		responseOK(c, http.StatusOK, response)
 	}
 }
 
-func onAPIGetFilteredWords() gin.HandlerFunc {
+func (w *Web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 	type resp struct {
 		Count int      `json:"count"`
 		Words []string `json:"words"`
@@ -411,7 +411,7 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		words, err := store.GetFilters(cx)
+		words, err := db.GetFilters(cx)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -424,12 +424,12 @@ func onAPIGetFilteredWords() gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStats() gin.HandlerFunc {
+func (w *Web) onAPIGetStats(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		stats, err := store.GetStats(cx)
-		if err != nil {
+		var stats model.Stats
+		if err := db.GetStats(cx, &stats); err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
@@ -442,7 +442,7 @@ func loadBanMeta(_ *model.BannedPerson) {
 
 }
 
-func onAPIGetBanByID() gin.HandlerFunc {
+func (w *Web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		banIDStr := c.Param("ban_id")
 		if banIDStr == "" {
@@ -456,23 +456,23 @@ func onAPIGetBanByID() gin.HandlerFunc {
 		}
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		ban, err := store.GetBanByBanID(cx, sid, false)
-		if err != nil {
+		var ban model.BannedPerson
+		if errB := db.GetBanByBanID(cx, sid, false, &ban); errB != nil {
 			responseErr(c, http.StatusNotFound, nil)
-			log.Errorf("Failed to fetch bans")
+			log.Errorf("Failed to fetch bans: %v", errB)
 			return
 		}
-		loadBanMeta(ban)
+		loadBanMeta(&ban)
 		responseOK(c, http.StatusOK, ban)
 	}
 }
 
-func onAPIGetBans() gin.HandlerFunc {
+func (w *Web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		o := store.NewQueryFilter("")
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		bans, err := store.GetBans(cx, o)
+		bans, err := db.GetBans(cx, o)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans")
@@ -488,7 +488,7 @@ type LogPayload struct {
 	Message    string `json:"message"`
 }
 
-func onAPIPostServer() gin.HandlerFunc {
+func (w *Web) onAPIPostServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		responseOK(c, http.StatusOK, gin.H{})
 	}

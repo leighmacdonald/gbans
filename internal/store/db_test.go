@@ -7,8 +7,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
-	steam_webapi "github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"math/rand"
@@ -21,7 +21,7 @@ import (
 func TestMain(m *testing.M) {
 	config.Read()
 	config.General.Mode = config.Test
-	Init(config.DB.DSN)
+	New(config.DB.DSN)
 	os.Exit(m.Run())
 }
 
@@ -184,7 +184,7 @@ func TestGetChatHistory(t *testing.T) {
 	require.NoError(t, SaveServer(ctx, &s))
 	player := model.Person{
 		SteamID: sid,
-		PlayerSummary: &steam_webapi.PlayerSummary{
+		PlayerSummary: &steamweb.PlayerSummary{
 			PersonaName: "test-name",
 		},
 	}
@@ -219,13 +219,13 @@ func TestFindLogEvents(t *testing.T) {
 	require.NoError(t, SaveServer(ctx, &s))
 	s1 := model.Person{
 		SteamID: sid,
-		PlayerSummary: &steam_webapi.PlayerSummary{
+		PlayerSummary: &steamweb.PlayerSummary{
 			PersonaName: "test-name-1",
 		},
 	}
 	t1 := model.Person{
 		SteamID: sid2,
-		PlayerSummary: &steam_webapi.PlayerSummary{
+		PlayerSummary: &steamweb.PlayerSummary{
 			PersonaName: "test-name-2",
 		},
 	}

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -40,21 +39,8 @@ const (
 	cmdFilterCheck botCmd = "check"
 )
 
-func botRegisterSlashCommands() error {
+func (b *Bot) botRegisterSlashCommands() error {
 	// TODO register the commands again upon adding new servers to update autocomplete opts
-	c, cancel := context.WithTimeout(context.Background(), time.Second*60)
-	defer cancel()
-	servers, err := store.GetServers(c)
-	if err != nil {
-		return err
-	}
-	var serverOpts []*discordgo.ApplicationCommandOptionChoice
-	for _, s := range servers {
-		serverOpts = append(serverOpts, &discordgo.ApplicationCommandOptionChoice{
-			Name:  s.ServerName,
-			Value: s.ServerName,
-		})
-	}
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "user_identifier",
@@ -66,13 +52,12 @@ func botRegisterSlashCommands() error {
 		Name:        "server_identifier",
 		Description: "Short server name",
 		Required:    true,
-		Choices:     serverOpts,
 	}
 	optReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "reason",
-		Description: "Reason for the action",
-		Required:    false,
+		Description: "Reason for the ban (shown to users on kick)",
+		Required:    true,
 	}
 	optMessage := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
@@ -83,7 +68,7 @@ func botRegisterSlashCommands() error {
 	optDuration := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "duration",
-		Description: "Duration [s,m,h,w,M,y]N|0",
+		Description: "Duration [s,m,h,d,w,M,y]N|0",
 		Required:    true,
 	}
 
@@ -96,6 +81,12 @@ func botRegisterSlashCommands() error {
 				optUserID,
 				optDuration,
 				optReason,
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "note",
+					Description: "Mod only notes for the ban reason",
+					Required:    false,
+				},
 			},
 		},
 		{
@@ -289,13 +280,13 @@ func botRegisterSlashCommands() error {
 	// This should be removed whenever support gets merged
 	var perms []permissionRequest
 	for _, cmd := range slashCommands {
-		c, errC := dg.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
+		command, errC := b.dg.ApplicationCommandCreate(config.Discord.AppID, "", cmd)
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
-		if !c.DefaultPermission {
+		if !command.DefaultPermission {
 			perms = append(perms, permissionRequest{
-				ID:          c.ID,
+				ID:          command.ID,
 				Permissions: modPerm,
 			})
 		}
@@ -333,23 +324,20 @@ func registerCommandPermissions(perms []permissionRequest) error {
 	return nil
 }
 
-var commandHandlers = map[botCmd]func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (string, error){
-	cmdBan:      onBan,
-	cmdBanIP:    onBanIP,
-	cmdCheck:    onCheck,
-	cmdCSay:     onCSay,
-	cmdFind:     onFind,
-	cmdKick:     onKick,
-	cmdMute:     onMute,
-	cmdPlayers:  onPlayers,
-	cmdPSay:     onPSay,
-	cmdSay:      onSay,
-	cmdServers:  onServers,
-	cmdUnban:    onUnban,
-	cmdSetSteam: onSetSteam,
-	cmdHistory:  onHistory,
-	cmdFilter:   onFilter,
+type responseMsgType int
+
+const (
+	mtString responseMsgType = iota
+	mtInteractive
+	mtImage
+)
+
+type botResponse struct {
+	MsgType responseMsgType
+	Value   interface{}
 }
+
+type botCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error
 
 const (
 	discordMaxMsgLen  = 2000
@@ -358,11 +346,11 @@ const (
 	discordWrapperTotalLen = discordMaxMsgLen - (len(discordMsgWrapper) * 2)
 )
 
-func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	cmd := botCmd(i.Data.Name)
-	if h, ok := commandHandlers[cmd]; ok {
+	if h, ok := b.commandHandlers[cmd]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
-		// could not return a response instantly. Discord will timeout commands that dont respond within a
+		// could not return a response instantly. Discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
 		if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -371,32 +359,33 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		}); err != nil {
 			log.Errorf("Failed to send servers pre response: %v", err)
-			if sendE := sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
 			return
 		}
 		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		resp, err := h(c, s, i)
-		if err != nil {
+		r := botResponse{MsgType: mtString}
+		if err := h(c, s, i, &r); err != nil {
 			// TODO User facing errors only
-			if sendE := sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		for idx, m := range util.StringChunkDelimited(resp, discordWrapperTotalLen) {
-			if idx == 0 {
-				if sendE := sendInteractionMessageEdit(s, i.Interaction, m); sendE != nil {
-					log.Errorf("Failed sending success response for interaction: %v", sendE)
-				}
-			} else {
-				if e := sendChannelMessage(s, i.ChannelID, m, false); e != nil {
-					log.Errorf(e.Error())
-				}
+		switch r.MsgType {
+		case mtString:
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r.Value.(string)); sendE != nil {
+				log.Errorf("Failed sending success response for interaction: %v", sendE)
 			}
+		case mtInteractive:
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r.Value.(string)); sendE != nil {
+				log.Errorf("Failed sending success response for interaction: %v", sendE)
+			}
+		case mtImage:
+			// TODO
 		}
 	}
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -42,7 +41,7 @@ func IsFilteredWord(body string) (bool, *model.Filter) {
 	return false, nil
 }
 
-func filterWorker(ctx context.Context) {
+func (g *Gbans) filterWorker() {
 	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
@@ -60,9 +59,9 @@ func filterWorker(ctx context.Context) {
 			}
 			wordFiltersMu.RUnlock()
 			if matched != nil {
-				addWarning(evt.Source.SteamID, warnLanguage)
+				g.addWarning(evt.Source.SteamID, warnLanguage)
 			}
-		case <-ctx.Done():
+		case <-g.ctx.Done():
 			return
 		}
 	}

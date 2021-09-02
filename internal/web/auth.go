@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -36,7 +35,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func authMiddleWare() gin.HandlerFunc {
+func (w *Web) authMiddleWare(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
@@ -46,8 +45,8 @@ func authMiddleWare() gin.HandlerFunc {
 			if config.General.Mode == "test" && token == testToken {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				loggedInPerson, err2 := store.GetOrCreatePersonBySteamID(ctx, config.General.Owner)
-				if err2 != nil {
+				var loggedInPerson model.Person
+				if err2 := db.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)
 					return
@@ -75,8 +74,8 @@ func authMiddleWare() gin.HandlerFunc {
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				loggedInPerson, err := store.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID))
-				if err != nil {
+				var loggedInPerson model.Person
+				if err := db.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
 					return
@@ -89,7 +88,7 @@ func authMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func onGetLogout() gin.HandlerFunc {
+func (w *Web) onGetLogout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO Logout key / mark as invalid manually
 		log.WithField("fn", "onGetLogout").Warnf("Unimplemented")
@@ -97,7 +96,7 @@ func onGetLogout() gin.HandlerFunc {
 	}
 }
 
-func onOpenIDCallback() gin.HandlerFunc {
+func (w *Web) onOpenIDCallback() gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(c *gin.Context) {
 		ref, found := c.GetQuery("return_url")
@@ -122,16 +121,9 @@ func onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		act := action.NewGetOrCreatePersonByID(sid.String(), c.Request.RemoteAddr)
-		res := <-act.Enqueue().Wait()
-		if res.Err != nil {
-			log.Errorf("Failed to fetch user profile: %v", res.Err)
-			c.Redirect(302, ref)
-			return
-		}
-		p, ok := res.Value.(*model.Person)
-		if !ok {
-			log.Errorf("Failed to cast user profile")
+		var p model.Person
+		if errP := w.executor.PersonBySID(sid, "", &p); errP != nil {
+			log.Errorf("Failed to fetch user profile: %v", errP)
 			c.Redirect(302, ref)
 			return
 		}
@@ -155,7 +147,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func onLoginSuccess() gin.HandlerFunc {
+func (w *Web) onLoginSuccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
 	}
@@ -165,7 +157,7 @@ func getTokenKey(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 
-func onTokenRefresh() gin.HandlerFunc {
+func (w *Web) onTokenRefresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ah := c.GetHeader("Authorization")
 		tp := strings.SplitN(ah, " ", 2)
@@ -230,7 +222,7 @@ func NewJWT(steamID steamid.SID64) (string, error) {
 	return token, nil
 }
 
-func authMiddleware(level model.Privilege) gin.HandlerFunc {
+func (w *Web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -254,9 +246,10 @@ func authMiddleware(level model.Privilege) gin.HandlerFunc {
 			}
 			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 			defer cancel()
-			loggedInPerson, err := store.GetPersonBySteamID(cx, sid)
-			if err != nil {
-				log.Errorf("Failed to load persons session user: %v", err)
+			var loggedInPerson model.Person
+
+			if err3 := db.GetPersonBySteamID(cx, sid, &loggedInPerson); err3 != nil {
+				log.Errorf("Failed to load persons session user: %v", err3)
 				c.AbortWithStatus(http.StatusForbidden)
 				return
 			}

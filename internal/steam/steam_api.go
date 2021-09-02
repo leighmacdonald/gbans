@@ -5,23 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-const SteamQueryMaxResults = 100
-
-var errTooManySteamIds = errors.Errorf("Max %d ids per steam api request", SteamQueryMaxResults)
+const steamQueryMaxResults = 100
 
 type getFriendListResponse struct {
 	FriendsList struct {
@@ -33,7 +28,7 @@ type getFriendListResponse struct {
 	} `json:"friendslist"`
 }
 
-func FetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
+func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
 	const baseURL = "https://api.steampowered.com/ISteamUser" +
 		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
@@ -54,7 +49,7 @@ func FetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
 	if err := json.Unmarshal(b, &flr); err != nil {
 		return nil, errors.Wrap(err, "Failed to decode response body")
 	}
-	var fl []steamid.SID64
+	var fl steamid.Collection
 	for _, friend := range flr.FriendsList.Friends {
 		sid, err2 := steamid.SID64FromString(friend.Steamid)
 		if err2 == nil {
@@ -64,11 +59,12 @@ func FetchFriends(sid64 steamid.SID64) ([]steamid.SID64, error) {
 	return fl, nil
 }
 
-func FetchSummaries(steamIDs steamid.Collection) ([]steam_webapi.PlayerSummary, error) {
-	const chunkSize = 100
+const chunkSize = 100
+
+func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, error) {
 	wg := &sync.WaitGroup{}
 	var (
-		results   []steam_webapi.PlayerSummary
+		results   []steamweb.PlayerSummary
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
@@ -77,9 +73,9 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steam_webapi.PlayerSummary, 
 		func() {
 			defer wg.Done()
 			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(SteamQueryMaxResults, t)
+			m := golib.UMin64(steamQueryMaxResults, t)
 			ids := steamIDs[i : i+int(m)]
-			summaries, err := steam_webapi.PlayerSummaries(ids)
+			summaries, err := steamweb.PlayerSummaries(ids)
 			if err != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
@@ -94,11 +90,10 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steam_webapi.PlayerSummary, 
 	return results, nil
 }
 
-func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]*VACState, error) {
-	const chunkSize = 100
+func FetchPlayerBans(steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
 	wg := &sync.WaitGroup{}
 	var (
-		results   []*VACState
+		results   []steamweb.PlayerBanState
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
@@ -107,14 +102,15 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]*VACState
 		func() {
 			defer wg.Done()
 			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(SteamQueryMaxResults, t)
+			m := golib.UMin64(steamQueryMaxResults, t)
 			ids := steamIDs[i : i+int(m)]
-			summaries, err := QueryVacStatus(ctx, ids)
+
+			bans, err := steamweb.GetPlayerBans(ids)
 			if err != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()
-			results = append(results, summaries...)
+			results = append(results, bans...)
 			resultsMu.Unlock()
 		}()
 	}
@@ -122,55 +118,4 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]*VACState
 		return nil, errors.New("Failed to fetch all friends")
 	}
 	return results, nil
-}
-
-type VACState struct {
-	SteamID          steamid.SID64 `json:"SteamId"`
-	CommunityBanned  bool          `json:"CommunityBanned"`
-	VACBanned        bool          `json:"VACBanned"`
-	VACBans          int           `json:"NumberOfVACBans"`
-	GameBans         int           `json:"NumberOfGameBans"`
-	EconomyBan       string        `json:"EconomyBan"`
-	DaysSinceLastBan int           `json:"DaysSinceLastBan"`
-}
-
-func QueryVacStatus(ctx context.Context, steamIds []steamid.SID64) ([]*VACState, error) {
-	type container struct {
-		Players []*VACState `json:"players"`
-	}
-	const q = "https://api.steampowered.com/ISteamUser/GetPlayerBans/v1"
-	if len(steamIds) > SteamQueryMaxResults {
-		return nil, errTooManySteamIds
-	}
-	c := util.NewHTTPClient()
-	req, errReq := http.NewRequestWithContext(ctx, "GET", q, nil)
-	if errReq != nil {
-		return nil, errReq
-	}
-	var strIds []string
-	for _, sid := range steamIds {
-		strIds = append(strIds, sid.String())
-	}
-	qu := req.URL.Query()
-	qu.Set("steamids", strings.Join(strIds, ","))
-	qu.Set("key", steamid.GetKey())
-	req.URL.RawQuery = qu.Encode()
-	r, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	b, errB := ioutil.ReadAll(r.Body)
-	if errB != nil {
-		return nil, errB
-	}
-	defer func() {
-		if errResp := r.Body.Close(); errResp != nil {
-			log.Warnf("Failed to close response body: %v", errResp)
-		}
-	}()
-	var p container
-	if err2 := json.Unmarshal(b, &p); err2 != nil {
-		return nil, err2
-	}
-	return p.Players, nil
 }

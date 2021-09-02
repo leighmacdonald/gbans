@@ -1,39 +1,34 @@
-// Package action defines a set of common structures and simple message passing
-// channels to move them around.
-//
-// This package was created to decouple the interfaces, currently discord and http, further
-// from the core application. Communication of results occurs using the Action.Result channel
-// Since we are getting values from external sources, such as discord bots, sticking to simple string
-// values makes it easier to do parsing/validation in one location. In other words, its better to let
-// the core application to the parsing / validation of arguments so that it is centralized.
-//
-// As an example of making a async request and waiting for the results to be sent back on the
-// results channel.
-//
-// 		req := NewKick("76561199040918801", "76561197992870439", "test")
-//		req.Enqueue()
-//		result := <-req.Wait()
-//
-// If you do not care about the results, fire and forget. Then use the EnqueueIgnore() function
-// instead which will omit sending results to the channel and will just close it.
-//
-//		req2 := NewBan("76561199040918801", "76561197992870439", "test", "1m")
-//  	req2.EnqueueIgnore()
-//
+// Package action defines a set of common argument structures
 package action
 
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"net"
 	"time"
 )
 
+type Executor interface {
+	Find(playerStr string, ip string, pi *model.PlayerInfo) error
+	FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error
+	PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error
+	Mute(args MuteRequest, pi *model.PlayerInfo) error
+	Ban(args BanRequest, b *model.Ban) error
+	Unban(args UnbanRequest) (bool, error)
+	BanNetwork(args BanNetRequest, net *model.BanNet) error
+	Kick(args KickRequest, pi *model.PlayerInfo) error
+	Say(args SayRequest) error
+	CSay(args CSayRequest) error
+	PSay(args PSayRequest) error
+	ResolveSID(sidStr string) (steamid.SID64, error)
+	SetSteam(args SetSteamIDRequest) (bool, error)
+}
+
 var (
-	queue          chan *Action
 	ErrInvalidArgs = errors.New("Invalid args")
 )
 
@@ -45,99 +40,18 @@ const (
 	Web
 )
 
-type Type int
-
-const (
-	Kick Type = iota
-	Mute
-	Ban
-	BanNet
-	Unban
-	Find
-	FindByCIDR
-	GetBan
-	GetBanNet
-	GetHistoryIP
-	GetHistoryChat
-	GetPersonByID
-	GetOrCreatePersonByID
-	GetOrCreateProfileBySteamID
-	SetSteamID
-	GetASNRecord
-	GetLocationRecord
-	GetProxyRecord
-	GetChatHistory
-	Servers
-	ServerByName
-	Say
-	CSay
-	PSay
-	AddFilter
-	DelFilter
-	CheckFilter
-)
-
-type Result struct {
-	Err     error
-	Message string
-	Value   interface{}
-}
-
-type Action struct {
-	Type         Type
-	Args         interface{}
-	Origin       Origin
-	Result       chan Result
-	Created      time.Time
-	IgnoreResult bool
-}
-
-func (a *Action) Wait() <-chan Result {
-	return a.Result
-}
-
-func Register(receiver chan *Action) {
-	queue = receiver
-}
-
-func (a *Action) Enqueue() *Action {
-	queue <- a
-	return a
-}
-
-func (a *Action) EnqueueIgnore() *Action {
-	a.IgnoreResult = true
-	close(a.Result)
-	queue <- a
-	return a
-}
-
-func (a *Action) SetResult(r Result) {
-	if a.IgnoreResult {
-		return
-	}
-	a.Result <- r
-}
-
-// New should generally not be called directly. Prefer to use New* helper methods
-// whenever possible
-func New(t Type, o Origin, args interface{}) Action {
-	return Action{
-		Type:         t,
-		Args:         args,
-		Origin:       o,
-		Result:       make(chan Result),
-		Created:      config.Now(),
-		IgnoreResult: false,
-	}
+type BaseOrigin struct {
+	Origin Origin
 }
 
 type GetChatHistoryRequest struct {
+	BaseOrigin
 	Target
 	Page int
 }
 
 type GetOrCreatePersonByIDRequest struct {
+	BaseOrigin
 	Target
 	IPAddr string
 }
@@ -145,25 +59,30 @@ type GetOrCreatePersonByIDRequest struct {
 type GetOrCreateProfileBySteamIDRequest GetOrCreatePersonByIDRequest
 
 type FilterAddRequest struct {
+	BaseOrigin
 	Source
 	Filter string
 }
 
 type FilterDelRequest struct {
+	BaseOrigin
 	Source
 	FilterID int
 }
 
 type FilterCheckRequest struct {
+	BaseOrigin
 	Source
 	Message string
 }
 
 type ServerByNameRequest struct {
+	BaseOrigin
 	ServerName string
 }
 
 type SayRequest struct {
+	BaseOrigin
 	Source
 	Server  string
 	Message string
@@ -172,18 +91,21 @@ type SayRequest struct {
 type CSayRequest SayRequest
 
 type PSayRequest struct {
+	BaseOrigin
 	Source
 	Target
 	Message string
 }
 
 type KickRequest struct {
+	BaseOrigin
 	Target
 	Source
 	Reason string
 }
 
 type BanRequest struct {
+	BaseOrigin
 	Target
 	Source
 	Duration
@@ -194,6 +116,7 @@ type MuteRequest BanRequest
 type UnbanRequest KickRequest
 
 type BanNetRequest struct {
+	BaseOrigin
 	Target
 	Source
 	Duration
@@ -202,173 +125,198 @@ type BanNetRequest struct {
 }
 
 type ProfileRequest struct {
+	BaseOrigin
 	Target
 	IPAddr string
 }
 
-type FindCIDRRequest struct{ CIDR *net.IPNet }
-type FindRequest struct{ Query string }
-type GetBanRequest struct{ Target }
+type FindCIDRRequest struct {
+	BaseOrigin
+	CIDR *net.IPNet
+}
+type FindRequest struct {
+	BaseOrigin
+	Query string
+}
+type GetBanRequest struct {
+	BaseOrigin
+	Target
+}
 type GetBanNetRequest GetBanRequest
 type GetHistoryIPRequest struct {
+	BaseOrigin
 	Source
 	Target
 }
 type GetHistoryChatRequest GetHistoryIPRequest
 type GetPersonByIDRequest GetBanRequest
 type SetSteamIDRequest struct {
+	BaseOrigin
 	Target
 	DiscordID string
 }
-type GetASNRecordRequest struct{ IPAddr string }
+type GetASNRecordRequest struct {
+	BaseOrigin
+	IPAddr string
+}
 type GetLocationRecordRequest GetASNRecordRequest
 type GetProxyRecordRequest GetASNRecordRequest
 
-func NewFindByCIDR(cidr *net.IPNet) Action {
-	return New(FindByCIDR, Core, FindCIDRRequest{CIDR: cidr})
+func NewFindByCIDR(o Origin, cidr *net.IPNet) FindCIDRRequest {
+	return FindCIDRRequest{
+		BaseOrigin: BaseOrigin{Origin: o},
+		CIDR:       cidr,
+	}
 }
 
-func NewFind(o Origin, q string) Action {
-	return New(Find, o, FindRequest{Query: q})
+func NewFind(o Origin, q string) FindRequest {
+	return FindRequest{BaseOrigin: BaseOrigin{o}, Query: q}
 }
 
-func NewMute(o Origin, target string, author string, reason string, duration string) Action {
-	return New(Mute, o, MuteRequest{
-		Target:   Target(target),
-		Source:   Source(author),
-		Reason:   reason,
-		Duration: Duration(duration),
-	})
+func NewMute(o Origin, target string, author string, reason string, duration string) MuteRequest {
+	return MuteRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Source:     Source(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+	}
 }
 
-func NewKick(o Origin, target string, author string, reason string) Action {
-	return New(Kick, o, KickRequest{
-		Target: Target(target),
-		Source: Source(author),
-		Reason: reason,
-	})
+func NewKick(o Origin, target string, author string, reason string) KickRequest {
+	return KickRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Source:     Source(author),
+		Reason:     reason,
+	}
 }
 
-func NewBan(o Origin, target string, author string, reason string, duration string) Action {
-	return New(Ban, o, BanRequest{
-		Target:   Target(target),
-		Source:   Source(author),
-		Reason:   reason,
-		Duration: Duration(duration),
-	})
+func NewBan(o Origin, target string, author string, reason string, duration string) BanRequest {
+	return BanRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Source:     Source(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+	}
 }
 
-func NewBanNet(o Origin, target string, author string, reason string, duration string, cidr string) Action {
-	return New(BanNet, o, BanNetRequest{
-		Target:   Target(target),
-		Source:   Source(author),
-		Reason:   reason,
-		Duration: Duration(duration),
-		CIDR:     cidr,
-	})
+func NewBanNet(o Origin, target string, author string, reason string, duration string, cidr string) BanNetRequest {
+	return BanNetRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Source:     Source(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+		CIDR:       cidr,
+	}
 }
 
-func NewUnban(o Origin, target string, author string, reason string) Action {
-	return New(Unban, o, UnbanRequest{
-		Target: Target(target),
-		Source: Source(author),
-		Reason: reason,
-	})
+func NewUnban(o Origin, target string, author string, reason string) UnbanRequest {
+	return UnbanRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Source:     Source(author),
+		Reason:     reason,
+	}
 }
 
-func NewGetBan(o Origin, target string) Action {
-	return New(GetBan, Core, GetBanRequest{Target: Target(target)})
+func NewGetBan(o Origin, target string) GetBanRequest {
+	return GetBanRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetBanNet(target string) Action {
-	return New(GetBanNet, Core, GetBanNetRequest{Target: Target(target)})
+func NewGetBanNet(o Origin, target string) GetBanNetRequest {
+	return GetBanNetRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetHistoryIP(target string) Action {
-	return New(GetHistoryIP, Core, GetHistoryIPRequest{Target: Target(target)})
+func NewGetHistoryIP(o Origin, target string) GetHistoryIPRequest {
+	return GetHistoryIPRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetHistoryChat(target string) Action {
-	return New(GetHistoryChat, Core, GetHistoryChatRequest{Target: Target(target)})
+func NewGetHistoryChat(o Origin, target string) GetHistoryChatRequest {
+	return GetHistoryChatRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetPersonByID(target string) Action {
-	return New(GetPersonByID, Core, GetPersonByIDRequest{Target: Target(target)})
+func NewGetPersonByID(o Origin, target string) GetPersonByIDRequest {
+	return GetPersonByIDRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewSetSteamID(o Origin, target string, discordID string) Action {
-	return New(SetSteamID, o, SetSteamIDRequest{
-		Target:    Target(target),
-		DiscordID: discordID,
-	})
+func NewSetSteamID(o Origin, target string, discordID string) SetSteamIDRequest {
+	return SetSteamIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		DiscordID:  discordID,
+	}
 }
 
-func NewGetASNRecord(ipAddr string) Action {
-	return New(GetASNRecord, Core, GetASNRecordRequest{IPAddr: ipAddr})
+func NewGetASNRecord(o Origin, ipAddr string) GetASNRecordRequest {
+	return GetASNRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewGetLocationRecord(ipAddr string) Action {
-	return New(GetLocationRecord, Core, GetLocationRecordRequest{IPAddr: ipAddr})
+func NewGetLocationRecord(o Origin, ipAddr string) GetLocationRecordRequest {
+	return GetLocationRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewGetProxyRecord(ipAddr string) Action {
-	return New(GetProxyRecord, Core, GetProxyRecordRequest{IPAddr: ipAddr})
+func NewGetProxyRecord(o Origin, ipAddr string) GetProxyRecordRequest {
+	return GetProxyRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewSay(o Origin, server string, message string) Action {
-	return New(Say, o, SayRequest{Server: server, Message: message})
+func NewSay(o Origin, server string, message string) SayRequest {
+	return SayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
 }
 
-func NewCSay(o Origin, server string, message string) Action {
-	return New(CSay, o, CSayRequest{Server: server, Message: message})
+func NewCSay(o Origin, server string, message string) CSayRequest {
+	return CSayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
 }
 
-func NewPSay(o Origin, target string, message string) Action {
-	return New(PSay, o, PSayRequest{
-		Message: message,
-		Target:  Target(target),
-	})
+func NewPSay(o Origin, target string, message string) PSayRequest {
+	return PSayRequest{
+		BaseOrigin: BaseOrigin{o},
+		Message:    message,
+		Target:     Target(target),
+	}
 }
 
-func NewServers() Action {
-	return New(Servers, Core, nil)
+func NewServerByName(o Origin, serverID string) ServerByNameRequest {
+	return ServerByNameRequest{BaseOrigin: BaseOrigin{o}, ServerName: serverID}
 }
 
-func NewServerByName(serverID string) Action {
-	return New(ServerByName, Core, ServerByNameRequest{ServerName: serverID})
+func NewFilterAdd(o Origin, filter string) FilterAddRequest {
+	return FilterAddRequest{BaseOrigin: BaseOrigin{o}, Filter: filter}
 }
 
-func NewFilterAdd(o Origin, filter string) Action {
-	return New(AddFilter, o, FilterAddRequest{Filter: filter})
+func NewFilterDel(o Origin, filterID int) FilterDelRequest {
+	return FilterDelRequest{BaseOrigin: BaseOrigin{o}, FilterID: filterID}
 }
 
-func NewFilterDel(o Origin, filterID int) Action {
-	return New(DelFilter, o, FilterDelRequest{FilterID: filterID})
+func NewFilterCheck(o Origin, message string) FilterCheckRequest {
+	return FilterCheckRequest{
+		BaseOrigin: BaseOrigin{o},
+		Message:    message}
 }
 
-func NewFilterCheck(o Origin, message string) Action {
-	return New(CheckFilter, o, FilterCheckRequest{Message: message})
+func NewGetOrCreatePersonByID(o Origin, target string, ipAddr string) GetOrCreatePersonByIDRequest {
+	return GetOrCreatePersonByIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		IPAddr:     ipAddr,
+	}
 }
 
-func NewGetOrCreatePersonByID(target string, ipAddr string) Action {
-	return New(GetOrCreatePersonByID, Core, GetOrCreatePersonByIDRequest{
-		Target: Target(target),
-		IPAddr: ipAddr,
-	})
+func NewGetOrCreateProfileBySteamID(o Origin, target string, ipAddr string) GetOrCreateProfileBySteamIDRequest {
+	return GetOrCreateProfileBySteamIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		IPAddr:     ipAddr,
+	}
 }
 
-func NewGetOrCreateProfileBySteamID(target string, ipAddr string) Action {
-	return New(GetOrCreateProfileBySteamID, Core, GetOrCreateProfileBySteamIDRequest{
-		Target: Target(target),
-		IPAddr: ipAddr,
-	})
-}
-
-func NewGetChatHistory(o Origin, target string, page int) Action {
-	return New(GetChatHistory, o, GetChatHistoryRequest{
+func NewGetChatHistory(o Origin, target string, page int) GetChatHistoryRequest {
+	return GetChatHistoryRequest{
 		Target: Target(target),
 		Page:   page,
-	})
+	}
 }
 
 type Target string

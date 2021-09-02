@@ -37,8 +37,7 @@ func SetServer(name string, state ServerState) {
 	serverStateMu.Unlock()
 }
 
-func ServersAlive() int {
-	var i int
+func ServersAlive() (i int) {
 	serverStateMu.RLock()
 	defer serverStateMu.RUnlock()
 	for _, server := range serverStates {
@@ -46,7 +45,7 @@ func ServersAlive() int {
 			i++
 		}
 	}
-	return i
+	return
 }
 
 func init() {

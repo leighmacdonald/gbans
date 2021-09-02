@@ -5,9 +5,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steam-webapi"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"net"
 	"regexp"
@@ -110,12 +110,12 @@ type BanNet struct {
 	ValidUntil time.Time     `db:"valid_until"`
 }
 
-func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duration) *Ban {
+func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duration) Ban {
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
 	}
-	return &Ban{
+	return Ban{
 		SteamID:    steamID,
 		AuthorID:   authorID,
 		BanType:    Banned,
@@ -178,24 +178,24 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	Ban                *Ban              `json:"ban"`
-	Person             *Person           `json:"person"`
+	Ban                Ban               `json:"ban"`
+	Person             Person            `json:"person"`
 	HistoryChat        []logparse.SayEvt `json:"history_chat" db:"-"`
 	HistoryPersonaName []string          `json:"history_personaname" db:"-"`
 	HistoryConnections []string          `json:"history_connections" db:"-"`
-	HistoryIP          []IPRecord        `json:"history_ip" db:"-"`
+	HistoryIP          []PersonIPRecord  `json:"history_ip" db:"-"`
 }
 
 func NewBannedPerson() *BannedPerson {
 	return &BannedPerson{
-		Ban: &Ban{
+		Ban: Ban{
 			CreatedOn: config.Now(),
 			UpdatedOn: config.Now(),
 		},
-		Person: &Person{
+		Person: Person{
 			CreatedOn:     config.Now(),
 			UpdatedOn:     config.Now(),
-			PlayerSummary: &steam_webapi.PlayerSummary{},
+			PlayerSummary: &steamweb.PlayerSummary{},
 		},
 		HistoryChat:        nil,
 		HistoryPersonaName: nil,
@@ -287,7 +287,7 @@ type Person struct {
 	GameBans         int
 	EconomyBan       string
 	DaysSinceLastBan int
-	*steam_webapi.PlayerSummary
+	*steamweb.PlayerSummary
 }
 
 // LoggedIn checks for a valid steamID
@@ -296,13 +296,14 @@ func (p *Person) LoggedIn() bool {
 }
 
 // NewPerson allocates a new default person instance
-func NewPerson(sid64 steamid.SID64) *Person {
-	return &Person{
+func NewPerson(sid64 steamid.SID64) Person {
+	t0 := config.Now()
+	return Person{
 		SteamID:         sid64,
 		IsNew:           true,
-		CreatedOn:       config.Now(),
-		UpdatedOn:       config.Now(),
-		PlayerSummary:   &steam_webapi.PlayerSummary{},
+		CreatedOn:       t0,
+		UpdatedOn:       t0,
+		PlayerSummary:   &steamweb.PlayerSummary{},
 		PermissionLevel: PAuthenticated,
 	}
 }
@@ -401,11 +402,6 @@ type PlayerInfo struct {
 	Valid   bool
 }
 
-type FindResult struct {
-	Player *extra.Player
-	Server *Server
-}
-
 type LogQueryOpts struct {
 	LogTypes  []logparse.MsgType `json:"log_types"`
 	Limit     uint64             `json:"limit"`
@@ -427,4 +423,23 @@ func (lqo *LogQueryOpts) ValidRecordType(t logparse.MsgType) bool {
 		}
 	}
 	return false
+}
+
+type BDIds struct {
+	FileInfo struct {
+		Authors     []string `json:"authors"`
+		Description string   `json:"description"`
+		Title       string   `json:"title"`
+		UpdateURL   string   `json:"update_url"`
+	} `json:"file_info"`
+	Schema  string `json:"$schema"`
+	Players []struct {
+		Steamid    int64    `json:"steamid"`
+		Attributes []string `json:"attributes"`
+		LastSeen   struct {
+			PlayerName string `json:"player_name"`
+			Time       int    `json:"time"`
+		} `json:"last_seen"`
+	} `json:"players"`
+	Version int `json:"version"`
 }

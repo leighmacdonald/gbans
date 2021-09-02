@@ -244,6 +244,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
             </TableHead>
         );
     }
+
     // eslint-disable-next-line react/display-name
     return ({
         connector,

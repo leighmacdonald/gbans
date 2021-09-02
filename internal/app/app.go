@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
@@ -12,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
@@ -21,13 +23,45 @@ import (
 var (
 	// BuildVersion holds the current git revision, as of build time
 	BuildVersion = "master"
-	gCtx         context.Context
+)
+
+type Gbans struct {
+	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
 	logRawQueue chan web.LogPayload
-)
+	bot         discord.ChatBot
+	db          store.Store
+	web         web.WebHandler
+}
+
+// New instantiates a new application
+func New() (*Gbans, error) {
+	g := Gbans{
+		ctx:         context.Background(),
+		warnings:    map[steamid.SID64][]userWarning{},
+		warningsMu:  &sync.RWMutex{},
+		logRawQueue: make(chan web.LogPayload, 50),
+	}
+	s, se := store.New(config.DB.DSN)
+	if se != nil {
+		return nil, errors.Wrapf(se, "Failed to setup store")
+	}
+	b, be := discord.New(g, s)
+	if be != nil {
+		return nil, errors.Wrapf(be, "Failed to setup bot")
+	}
+	w, we := web.New(g.logRawQueue, s, b, g)
+	if we != nil {
+		return nil, errors.Wrapf(we, "Failed to setup web")
+	}
+	g.db = s
+	g.bot = b
+	g.web = w
+	return &g, nil
+}
 
 type warnReason int
 
@@ -40,16 +74,8 @@ type userWarning struct {
 	CreatedOn  time.Time
 }
 
-// shutdown cleans up the application and closes connections
-func shutdown() {
-	store.Close()
-}
-
 // Start is the main application entry point
-func Start() {
-	actChan := make(chan *action.Action)
-	action.Register(actChan)
-	go actionExecutor(gCtx, actChan)
+func (g *Gbans) Start() {
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
 		initNetBans()
@@ -57,100 +83,58 @@ func Start() {
 		log.Warnf("External Network ban lists not enabled")
 	}
 
-	// Setup the storage backend
-	initStore()
-	defer shutdown()
+	defer g.Stop()
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		initDiscord()
+		g.initDiscord()
 	} else {
 		log.Warnf("Discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	initWorkers(gCtx)
+	g.initWorkers()
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		initFilters()
+		g.initFilters()
 	}
 
 	// Start the HTTP server
-	web.Start(gCtx, logRawQueue)
+	if err := g.web.ListenAndServe(); err != nil {
+		log.Errorf("Error shutting down service: %v", err)
+	}
 }
 
-type actionFn = func(context.Context, *action.Action)
-
-// actionExecutor is the action message request handler for any actions that are requested
-//
-// Each request is executed under its own goroutine concurrently. There should be no expectations
-// of results being completed in sequential order unless
-func actionExecutor(ctx context.Context, actChan chan *action.Action) {
-	var actionMap = map[action.Type]actionFn{
-		action.Mute:                  onActionMute,
-		action.Kick:                  onActionKick,
-		action.Ban:                   onActionBan,
-		action.Unban:                 onActionUnban,
-		action.BanNet:                onActionBanNet,
-		action.Find:                  onActionFind,
-		action.CheckFilter:           onActionCheckFilter,
-		action.AddFilter:             onActionAddFilter,
-		action.DelFilter:             onActionDelFilter,
-		action.GetPersonByID:         onActionGetPersonByID,
-		action.GetOrCreatePersonByID: onActionGetOrCreatePersonByID,
-		action.SetSteamID:            onActionSetSteamID,
-		action.Say:                   onActionSay,
-		action.CSay:                  onActionCSay,
-		action.PSay:                  onActionPSay,
-		action.FindByCIDR:            onActionFindByCIDR,
-		action.GetBan:                onActionGetBan,
-		action.GetBanNet:             onActionGetBanNet,
-		action.GetHistoryIP:          onActionGetHistoryIP,
-		action.GetHistoryChat:        onActionGetHistoryChat,
-		action.GetASNRecord:          onActionGetASNRecord,
-		action.GetLocationRecord:     onActionGetLocationRecord,
-		action.GetProxyRecord:        onActionGetProxyRecord,
-		action.Servers:               onActionServers,
-		action.ServerByName:          onActionServerByName,
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case act := <-actChan:
-			fn, found := actionMap[act.Type]
-			if found {
-				go fn(ctx, act)
-			}
-		}
-	}
+// Stop cleans up the application and closes connections
+func (g *Gbans) Stop() error {
+	return g.db.Close()
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
-func warnWorker(ctx context.Context) {
+func (g *Gbans) warnWorker() {
 	t := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case <-t.C:
 			now := config.Now()
-			warningsMu.Lock()
-			for k := range warnings {
-				for i, w := range warnings[k] {
+			g.warningsMu.Lock()
+			for k := range g.warnings {
+				for i, w := range g.warnings[k] {
 					if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
-						if len(warnings[k]) > 1 {
-							warnings[k] = append(warnings[k][:i], warnings[k][i+1])
+						if len(g.warnings[k]) > 1 {
+							g.warnings[k] = append(g.warnings[k][:i], g.warnings[k][i+1])
 						} else {
-							warnings[k] = nil
+							g.warnings[k] = nil
 						}
 					}
-					if len(warnings[k]) == 0 {
-						delete(warnings, k)
+					if len(g.warnings[k]) == 0 {
+						delete(g.warnings, k)
 					}
 				}
 			}
-			warningsMu.Unlock()
-		case <-ctx.Done():
+			g.warningsMu.Unlock()
+		case <-g.ctx.Done():
 			log.Debugf("warnWorker shutting down")
 			return
 		}
@@ -158,7 +142,7 @@ func warnWorker(ctx context.Context) {
 }
 
 // logWriter handles tak
-func logWriter(ctx context.Context) {
+func (g *Gbans) logWriter() {
 	const (
 		freq = time.Second * 10
 	)
@@ -176,11 +160,11 @@ func logWriter(ctx context.Context) {
 			if len(logCache) == 0 {
 				continue
 			}
-			if errI := store.BatchInsertServerLogs(ctx, logCache); errI != nil {
+			if errI := g.db.BatchInsertServerLogs(g.ctx, logCache); errI != nil {
 				log.Errorf("Failed to batch insert logs: %v", errI)
 			}
 			logCache = nil
-		case <-ctx.Done():
+		case <-g.ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return
 		}
@@ -189,25 +173,26 @@ func logWriter(ctx context.Context) {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func logReader(ctx context.Context, logRows chan web.LogPayload) {
+func (g *Gbans) logReader() {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
-			p, err := store.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1Str)))
-			if err != nil {
+			s := steamid.SID3ToSID64(steamid.SID3(sid1Str))
+			p := model.NewPerson(s)
+			if err := g.db.GetOrCreatePersonBySteamID(g.ctx, s, &p); err != nil {
 				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
 				return nil
 			}
-			return p
+			return &p
 		}
 		return nil
 	}
 	for {
 		select {
-		case raw := <-logRows:
+		case raw := <-g.logRawQueue:
 			v := logparse.Parse(raw.Message)
-			s, e := store.GetServerByName(ctx, raw.ServerName)
-			if e != nil {
+			var s model.Server
+			if e := g.db.GetServerByName(g.ctx, raw.ServerName, &s); e != nil {
 				log.Errorf("Failed to get server for log message: %v", e)
 				continue
 			}
@@ -253,7 +238,7 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 			var damage int
 			dmgValue, dmgFound := v.Values["damage"]
 			if dmgFound {
-				damageP, err := strconv.ParseInt(dmgValue, 10, 64)
+				damageP, err := strconv.ParseInt(dmgValue, 10, 32)
 				if err != nil {
 					log.Warnf("failed to parse damage value: %v", err)
 				}
@@ -283,7 +268,7 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 			}
 
 			event.Emit(se)
-		case <-ctx.Done():
+		case <-g.ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
 		}
@@ -294,51 +279,42 @@ func logReader(ctx context.Context, logRows chan web.LogPayload) {
 // restarts will wipe the users history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(sid64 steamid.SID64, reason warnReason) {
-	warningsMu.Lock()
-	defer warningsMu.Unlock()
+func (g *Gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
+	g.warningsMu.Lock()
+	defer g.warningsMu.Unlock()
 	const msg = "Warning limit exceeded"
-	_, found := warnings[sid64]
+	_, found := g.warnings[sid64]
 	if !found {
-		warnings[sid64] = []userWarning{}
+		g.warnings[sid64] = []userWarning{}
 	}
-	warnings[sid64] = append(warnings[sid64], userWarning{
+	g.warnings[sid64] = append(g.warnings[sid64], userWarning{
 		WarnReason: reason,
 		CreatedOn:  config.Now(),
 	})
-	if len(warnings[sid64]) >= config.General.WarningLimit {
-		var act action.Action
-		switch config.General.WarningExceededAction {
-		case config.Gag:
-			act = action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), msg,
-				config.General.WarningExceededDuration.String())
-		case config.Ban:
-			act = action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), msg,
-				config.General.WarningExceededDuration.String())
-		case config.Kick:
-			act = action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), msg)
-		}
-		res := <-act.Enqueue().Wait()
-		if res.Err != nil {
-			log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
-		}
+	if len(g.warnings[sid64]) >= config.General.WarningLimit {
+		//var act action.Action
+		//switch config.General.WarningExceededAction {
+		//case config.Gag:
+		//	act = action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), msg,
+		//		config.General.WarningExceededDuration.String())
+		//case config.Ban:
+		//	act = action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), msg,
+		//		config.General.WarningExceededDuration.String())
+		//case config.Kick:
+		//	act = action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), msg)
+		//}
+		//res := <-act.Enqueue().Wait()
+		//if res.Err != nil {
+		//	log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
+		//}
 	}
 }
 
-func init() {
-	warningsMu = &sync.RWMutex{}
-	warnings = make(map[steamid.SID64][]userWarning)
-	// Global background context. This is passed into the functions that use it as a parameter.
-	// This should not be implicitly referenced anywhere to help testing
-	gCtx = context.Background()
-	logRawQueue = make(chan web.LogPayload, 50)
-}
-
-func initFilters() {
+func (g *Gbans) initFilters() {
 	// TODO load external lists via http
-	c, cancel := context.WithTimeout(gCtx, time.Second*15)
+	c, cancel := context.WithTimeout(g.ctx, time.Second*15)
 	defer cancel()
-	words, err := store.GetFilters(c)
+	words, err := g.db.GetFilters(c)
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
@@ -346,28 +322,24 @@ func initFilters() {
 	log.Debugf("Loaded %d filtered words", len(words))
 }
 
-func initStore() {
-	store.Init(config.DB.DSN)
-}
-
-func initWorkers(ctx context.Context) {
-	go banSweeper(ctx)
-	go serverStateUpdater(ctx)
-	go profileUpdater(ctx)
-	go warnWorker(ctx)
-	go logReader(ctx, logRawQueue)
-	go logWriter(ctx)
-	go filterWorker(ctx)
+func (g *Gbans) initWorkers() {
+	go g.banSweeper()
+	go g.serverStateUpdater()
+	go g.profileUpdater()
+	go g.warnWorker()
+	go g.logReader()
+	go g.logWriter()
+	go g.filterWorker()
 	//go state.LogMeter(ctx)
 }
 
-func initDiscord() {
+func (g *Gbans) initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.ServerEvent)
 		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 			log.Warnf("Error registering discord log event reader")
 		}
-		go discord.Start(gCtx, config.Discord.Token, events)
+		go g.bot.Start(g.ctx, config.Discord.Token, events)
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}
@@ -379,4 +351,21 @@ func initNetBans() {
 			log.Errorf("Failed to import list: %v", err)
 		}
 	}
+}
+
+// validateLink is used in the case of discord origin actions that require mapping the
+// discord member ID to a SteamID so that we can track its use and apply permissions, etc.
+//
+// This function will replace the discord member id value in the target field with
+// the found SteamID, if any.
+func validateLink(ctx context.Context, db store.Store, sourceID action.Source, target *action.Source) error {
+	var p model.Person
+	if err := db.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
+		if err == store.ErrNoResult {
+			return consts.ErrUnlinkedAccount
+		}
+		return consts.ErrInternal
+	}
+	*target = action.Source(p.SteamID.String())
+	return nil
 }

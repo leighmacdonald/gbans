@@ -25,8 +25,10 @@ var addServerCmd = &cobra.Command{
 	Use:   "addserver",
 	Short: "Add a new server",
 	Run: func(cmd *cobra.Command, args []string) {
-		store.Init(config.DB.DSN)
-
+		db, err := store.New(config.DB.DSN)
+		if err != nil {
+			log.Fatalf("Failed to setup db connection: %v", err)
+		}
 		if addServer.ServerName == "" {
 			log.Fatal("Server name cannot be empty")
 		}
@@ -41,7 +43,7 @@ var addServerCmd = &cobra.Command{
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := store.SaveServer(ctx, &addServer); err != nil {
+		if err := db.SaveServer(ctx, &addServer); err != nil {
 			log.Fatalf("Could not create server: %v", err)
 		}
 		log.Infof("Added server %s with token %s - This token must be added to your servers gbans.cfg",
