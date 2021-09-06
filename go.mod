@@ -3,7 +3,7 @@ module github.com/leighmacdonald/gbans
 go 1.16
 
 require (
-	github.com/Depado/ginprom v1.7.1
+	github.com/Depado/ginprom v1.7.2
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/bwmarrin/discordgo v0.23.3-0.20210410202908-577e7dd4f6cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -33,7 +33,6 @@ require (
 	github.com/prometheus/common v0.29.0 // indirect
 	github.com/prometheus/procfs v0.7.0 // indirect
 	github.com/rumblefrog/go-a2s v1.0.0
-	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
