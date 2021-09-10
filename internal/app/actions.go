@@ -146,17 +146,22 @@ func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
 		ipAddr := ""
 		// kick the user if they currently are playing on a server
 		var pi model.PlayerInfo
-		_ = g.Find(target.String(), ipAddr, &pi)
+		_ = g.Find(target.String(), "", &pi)
 		if pi.Valid && pi.InGame {
 			ipAddr = pi.Player.IP.String()
 			if _, errR := query.ExecRCON(*pi.Server,
 				fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
 				log.Errorf("Faied to kick user afeter b: %v", errR)
 			}
+			var p model.Person
+			if errG := g.db.GetOrCreatePersonBySteamID(g.ctx, pi.Player.SID, &p); errG != nil {
+				log.Errorf("Failed to fetch banned player: %v", errG)
+			}
+			p.IPAddr = net.ParseIP(ipAddr)
+			if errS := g.db.SavePerson(g.ctx, &p); errS != nil {
+				log.Errorf("Failed to update banned player up: %v", errS)
+			}
 		}
-		// FIXME -- add update profile?
-		//updateRequest := action.NewGetOrCreatePersonByID(target.String(), ipAddr)
-		//updateRequest.Enqueue().Wait()
 	}()
 	return nil
 }
@@ -235,12 +240,10 @@ func (g Gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	//if errSrc != nil {
 	//	return nil, errSrc
 	//}
-	ipAddr := ""
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	_ = g.Find(target.String(), ipAddr, &foundPI)
+	_ = g.Find(target.String(), "", &foundPI)
 	if pi.Valid && pi.InGame {
-		ipAddr = pi.Player.IP.String()
 		if _, errR := query.ExecRCON(*pi.Server, fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
 			log.Errorf("Faied to kick user afeter ban: %v", errR)
 		}
@@ -291,7 +294,7 @@ func (g Gbans) CSay(args action.CSayRequest) error {
 		err     error
 	)
 	if args.Server == "*" {
-		servers, err = g.db.GetServers(g.ctx)
+		servers, err = g.db.GetServers(g.ctx, false)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to fetch servers")
 		}
@@ -321,32 +324,32 @@ func (g Gbans) PSay(args action.PSayRequest) error {
 	return nil
 }
 
-func (g Gbans) filterAdd(args action.FilterAddRequest) (*model.Filter, error) {
-	f, err := g.db.InsertFilter(g.ctx, args.Filter)
-	if err != nil {
-		if err == store.ErrDuplicate {
-			return nil, store.ErrDuplicate
-		}
-		log.Errorf("Error saving filter word: %v", err)
-		return nil, consts.ErrInternal
-	}
-	return f, nil
-}
-
-func (g Gbans) filterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
-	var filter model.Filter
-	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
-		return false, err
-	}
-	if err2 := g.db.DropFilter(ctx, &filter); err2 != nil {
-		return false, err2
-	}
-	return true, nil
-}
-
-func (g Gbans) filterCheck(ctx context.Context, args action.FilterCheckRequest) ([]*model.Filter, error) {
-	return nil, errors.New("unimplemented")
-}
+//func (g Gbans) filterAdd(args action.FilterAddRequest) (*model.Filter, error) {
+//	f, err := g.db.InsertFilter(g.ctx, args.Filter)
+//	if err != nil {
+//		if err == store.ErrDuplicate {
+//			return nil, store.ErrDuplicate
+//		}
+//		log.Errorf("Error saving filter word: %v", err)
+//		return nil, consts.ErrInternal
+//	}
+//	return f, nil
+//}
+//
+//func (g Gbans) filterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
+//	var filter model.Filter
+//	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
+//		return false, err
+//	}
+//	if err2 := g.db.DropFilter(ctx, &filter); err2 != nil {
+//		return false, err2
+//	}
+//	return true, nil
+//}
+//
+//func (g Gbans) filterCheck(ctx context.Context, args action.FilterCheckRequest) ([]*model.Filter, error) {
+//	return nil, errors.New("unimplemented")
+//}
 
 func (g Gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
 	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil {

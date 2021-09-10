@@ -18,6 +18,10 @@
         "dom.iterable",
         "esnext"
     ],
+//    "typeRoots": [
+//      "src/types",
+//      "./node_modules/react-leaflet/types"
+//    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -27,12 +31,5 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
-  },
-  "include": [
-    "src/*.tsx"
-  ],
-  "exclude": [
-    ".git",
-    "node_modules"
-  ]
+  }
 }

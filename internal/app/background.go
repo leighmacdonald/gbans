@@ -1,69 +1,63 @@
 package app
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
+	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
 
+// profileUpdater takes care of periodically querying the steam api for updates player summaries.
+// The 100 oldest profiles are updated on each execution
 func (g *Gbans) profileUpdater() {
 	var update = func() {
-		o := store.NewQueryFilter("")
-		o.Limit = 5 // Max per query of WebAPI
-		loop := uint64(0)
-		for {
-			o.Offset = loop * o.Limit
-			bans, err := g.db.GetBansOlderThan(g.ctx, o, config.Now().Add(-(time.Hour * 24)))
-			if err != nil {
-				log.Warnf("Failed to get old bans for update: %v", err)
-				break
-			}
-			if bans == nil {
-				break
-			}
-			var sids steamid.Collection
-			for _, b := range bans {
-				sids = append(sids, b.SteamID)
-			}
-			summaries, err2 := steamweb.PlayerSummaries(sids)
-			if err2 != nil {
-				log.Errorf("Failed to get Player summaries: %v", err2)
+		ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+		defer cancel()
+		people, pErr := g.db.GetExpiredProfiles(ctx, 100)
+		if pErr != nil {
+			log.Errorf("Failed to get expired profiles: %v", pErr)
+			return
+		}
+		var sids steamid.Collection
+		for _, p := range people {
+			sids = append(sids, p.SteamID)
+		}
+		summaries, err2 := steamweb.PlayerSummaries(sids)
+		if err2 != nil {
+			log.Errorf("Failed to get Player summaries: %v", err2)
+			return
+		}
+		for _, s := range summaries {
+			// TODO batch update upserts
+			sid, err3 := steamid.SID64FromString(s.Steamid)
+			if err3 != nil {
+				log.Errorf("Failed to parse steamid from webapi: %v", err3)
 				continue
 			}
-			cnt := 0
-			for _, s := range summaries {
-				sid, err3 := steamid.SID64FromString(s.Steamid)
-				if err3 != nil {
-					log.Errorf("Failed to parse steamid from webapi: %v", err3)
-					continue
-				}
-				var p model.Person
-				if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
-					log.Errorf("Failed to get person: %v", err4)
-					continue
-				}
-				p.PlayerSummary = &s
-				if err5 := g.db.SavePerson(g.ctx, &p); err5 != nil {
-					log.Errorf("Failed to save person: %v", err5)
-					continue
-				}
-				cnt++
+			var p model.Person
+			if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
+				log.Errorf("Failed to get person: %v", err4)
+				continue
 			}
-			log.Debugf("Updated %d profiles", cnt)
-			loop++
+			p.PlayerSummary = &s
+			if err5 := g.db.SavePerson(g.ctx, &p); err5 != nil {
+				log.Errorf("Failed to save person: %v", err5)
+				continue
+			}
 		}
+		log.Debugf("Updated %d profiles", len(summaries))
 	}
 	update()
-	ticker := time.NewTicker(time.Hour)
+	ticker := time.NewTicker(time.Second * 60)
 	for {
 		select {
 		case <-ticker.C:
@@ -76,59 +70,83 @@ func (g *Gbans) profileUpdater() {
 
 }
 
+type serverState struct {
+	NameLong string
+	Name     string
+	Host     string
+	Enabled  bool
+	A2S      *a2s.ServerInfo
+	Status   extra.Status
+	Players  []extra.Player
+}
+
+// serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
+// information. This data is accessed often so it is cached
 func (g *Gbans) serverStateUpdater() {
-	var update = func() {
-		servers, err := g.db.GetServers(g.ctx)
+	freq, errD := time.ParseDuration(config.General.ServerStatusUpdateFreq)
+	if errD != nil {
+		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
+	}
+	var update = func(ctx context.Context) {
+		servers, err := g.db.GetServers(ctx, false)
 		if err != nil {
 			log.Errorf("Failed to fetch servers to update")
 			return
 		}
+		newServers := map[string]serverState{}
+		newServersMu := &sync.RWMutex{}
 		wg := &sync.WaitGroup{}
-		wg.Add(2)
-		respRCON := map[string]string{}
-		respA2S := map[string]*a2s.ServerInfo{}
-		go func() {
-			defer wg.Done()
-			respRCON = query.RCON(g.ctx, servers, "status")
-		}()
-		go func() {
-			defer wg.Done()
-			respA2S = query.A2SInfo(servers)
-		}()
-		wg.Wait()
-		for name, resp := range respRCON {
-			s, errPs := extra.ParseStatus(resp, true)
-			if errPs != nil {
-				log.Warnf("Failed to parse server state (%s): %v", name, errPs)
-				return
-			}
-			var (
-				addr  string
-				port  int
-				slots int
-			)
-			for _, srv := range servers {
-				if srv.ServerName == name {
-					addr = srv.Address
-					port = srv.Port
-					slots = srv.Slots(s.PlayersMax)
-					break
-				}
-			}
-			a2sinfo, found := respA2S[name]
-			if !found {
-				log.Warnf("Failed to get a2s server info for: %s", name)
-			}
-			state.SetServer(name, state.ServerState{
-				Addr: addr, Port: port, Slots: slots, GameType: state.TF2, A2SInfo: a2sinfo, Status: s, Alive: found})
+		for _, srv := range servers {
+			ss := serverState{}
+			wg.Add(1)
+			go func(server model.Server) {
+				defer wg.Done()
+				iwg := &sync.WaitGroup{}
+				iwg.Add(2)
+				go func() {
+					defer iwg.Done()
+					status, errS := query.GetServerStatus(server)
+					if errS != nil {
+						log.Warnf("Failed to update server status: %v", errS)
+						return
+					}
+					ss.Status = status
+				}()
+				go func() {
+					defer iwg.Done()
+					a, errA := query.A2SQueryServer(server)
+					if errA != nil {
+						log.Warnf("Failed to update a2s status: %v", errA)
+						return
+					}
+					ss.A2S = a
+				}()
+				iwg.Wait()
+				newServersMu.Lock()
+				newServers[server.ServerName] = ss
+				newServersMu.Unlock()
+			}(srv)
 		}
+		wg.Wait()
+		g.serversStateMu.Lock()
+		g.serversState = newServers
+		g.serversStateMu.Unlock()
+		log.Infof("Updated %d servers", len(servers))
 	}
-	update()
-	ticker := time.NewTicker(time.Second * 60)
+	// Leave buffer between our context timeout and the update frequency
+	to := time.Duration(float64(freq) * 0.75)
+	ic, cancel := context.WithTimeout(g.ctx, to)
+	defer cancel()
+	update(ic)
+	ticker := time.NewTicker(freq)
 	for {
 		select {
 		case <-ticker.C:
-			update()
+			go func() {
+				tc, tcCancel := context.WithTimeout(g.ctx, to)
+				defer tcCancel()
+				update(tc)
+			}()
 		case <-g.ctx.Done():
 			return
 		}
@@ -142,11 +160,11 @@ func (g *Gbans) banSweeper() {
 		select {
 		case <-ticker.C:
 			bans, err := g.db.GetExpiredBans(g.ctx)
-			if err != nil {
-				log.Warnf("Failed to get expired bans")
+			if err != nil && !errors.Is(err, store.ErrNoResult) {
+				log.Warnf("Failed to get expired bans: %v", err)
 			} else {
 				for _, ban := range bans {
-					if err := g.db.DropBan(g.ctx, ban); err != nil {
+					if err := g.db.DropBan(g.ctx, &ban); err != nil {
 						log.Errorf("Failed to drop expired ban: %v", err)
 					} else {
 						log.Infof("ban expired: %v", ban)
@@ -154,11 +172,11 @@ func (g *Gbans) banSweeper() {
 				}
 			}
 			netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
-			if err2 != nil {
-				log.Warnf("Failed to get expired bans")
+			if err2 != nil && !errors.Is(err2, store.ErrNoResult) {
+				log.Warnf("Failed to get expired netbans: %v", err2)
 			} else {
 				for _, ban := range netBans {
-					if err := g.db.DropNetBan(g.ctx, ban); err != nil {
+					if err := g.db.DropNetBan(g.ctx, &ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)

@@ -111,11 +111,17 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	}
 	var ban model.BannedPerson
 	if errBP := b.db.GetBanBySteamID(ctx, sid, true, &ban); errBP != nil {
-
+		if !errors.Is(errBP, store.ErrNoResult) {
+			log.Errorf("Failed to get ban by steamid: %v", errBP)
+			return errCommandFailed
+		}
 	}
 	bannedNets, errBN := b.db.GetBanNet(ctx, player.IPAddr)
 	if errBN != nil {
-
+		if !errors.Is(errBN, store.ErrNoResult) {
+			log.Errorf("Failed to get bannets by addr: %v", errBN)
+			return errCommandFailed
+		}
 	}
 	banned := false
 	muted := false
@@ -143,13 +149,19 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 
 	// TODO waitgroup?
 	var asn ip2location.ASNRecord
-	b.db.GetASNRecord(ctx, player.IPAddr, &asn)
+	if errASN := b.db.GetASNRecord(ctx, player.IPAddr, &asn); errASN != nil {
+		log.Warnf("Failed to fetch ASN record: %v", errASN)
+	}
 
 	var location ip2location.LocationRecord
-	b.db.GetLocationRecord(ctx, player.IPAddr, &location)
+	if errLoc := b.db.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
+		log.Warnf("Failed to fetch Location record: %v", errLoc)
+	}
 
 	var proxy ip2location.ProxyRecord
-	b.db.GetProxyRecord(ctx, player.IPAddr, &proxy)
+	if errProxy := b.db.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && errProxy != store.ErrNoResult {
+		log.Errorf("Failed to fetch proxy record: %v", errProxy)
+	}
 
 	title := fmt.Sprintf("Profile of: %s", player.PersonaName)
 	if ban.Ban.BanID > 0 {
@@ -410,7 +422,7 @@ func (b *Bot) onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 }
 
 func (b *Bot) onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
-	servers, err := b.db.GetServers(ctx)
+	servers, err := b.db.GetServers(ctx, false)
 	if err != nil {
 		return errCommandFailed
 	}

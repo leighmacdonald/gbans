@@ -124,7 +124,7 @@ func (g *Gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerI
 }
 
 func (g *Gbans) getAllServerStatus(ctx context.Context) (map[model.Server]extra.Status, error) {
-	servers, err := g.db.GetServers(ctx)
+	servers, err := g.db.GetServers(ctx, false)
 	if err != nil {
 		return nil, err
 	}

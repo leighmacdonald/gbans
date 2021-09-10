@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
@@ -286,7 +285,7 @@ func (w *Web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		servers, err := db.GetServers(ctx)
+		servers, err := db.GetServers(ctx, true)
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -433,7 +432,7 @@ func (w *Web) onAPIGetStats(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		stats.ServersAlive = state.ServersAlive()
+		stats.ServersAlive = 1
 		responseOK(c, http.StatusOK, stats)
 	}
 }

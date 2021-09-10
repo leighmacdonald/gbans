@@ -34,6 +34,7 @@ require (
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rumblefrog/go-a2s v1.0.0
+	github.com/sethvargo/go-limiter v0.7.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/cobra v1.2.1

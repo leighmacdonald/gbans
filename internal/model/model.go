@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/extra"
@@ -186,8 +187,8 @@ type BannedPerson struct {
 	HistoryIP          []PersonIPRecord  `json:"history_ip" db:"-"`
 }
 
-func NewBannedPerson() *BannedPerson {
-	return &BannedPerson{
+func NewBannedPerson() BannedPerson {
+	return BannedPerson{
 		Ban: Ban{
 			CreatedOn: config.Now(),
 			UpdatedOn: config.Now(),
@@ -244,7 +245,11 @@ type Server struct {
 	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password string `db:"password" json:"password"`
+	Password  string              `db:"password" json:"password"`
+	IsEnabled bool                `json:"is_enabled"`
+	Region    string              `json:"region"`
+	CC        string              `json:"cc"`
+	Location  ip2location.LatLong `json:"location"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`
@@ -442,4 +447,29 @@ type BDIds struct {
 		} `json:"last_seen"`
 	} `json:"players"`
 	Version int `json:"version"`
+}
+
+type DemoFile struct {
+	DemoID    int64     `json:"demo_id"`
+	ServerID  int64     `json:"server_id"`
+	Title     string    `json:"title"`
+	Data      []byte    `json:"data,omitempty"`
+	CreatedOn time.Time `json:"created_on"`
+	Size      int64     `json:"size"`
+	Downloads int64     `json:"downloads"`
+}
+
+func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
+	size := int64(len(rawData))
+	if size == 0 {
+		return DemoFile{}, errors.New("Empty demo")
+	}
+	return DemoFile{
+		ServerID:  serverId,
+		Title:     title,
+		Data:      rawData,
+		CreatedOn: config.Now(),
+		Size:      size,
+		Downloads: 0,
+	}, nil
 }

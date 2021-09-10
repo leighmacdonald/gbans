@@ -1,14 +1,54 @@
-import path from 'path';
-import CopyWebpackPlugin from 'copy-webpack-plugin';
+/* eslint-disable */
+const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const outPath = path.resolve('../internal/web/dist');
 
-const config = {
+const devMode = process.env.NODE_ENV !== 'production';
+const paths = {
+    src: path.join(__dirname, 'src'),
+    dist: outPath
+};
+
+module.exports = {
     entry: './src/index.tsx',
-    devtool: 'source-map',
+    output: {
+        path: path.join(paths.dist),
+        publicPath: '/static/',
+        filename: devMode ? '[name].js' : '[name].[chunkhash:8].bundle.js',
+        clean: true
+    },
+    devtool: devMode ? 'inline-source-map' : false,
     performance: {
         maxAssetSize: 1000000,
         maxEntrypointSize: 1000000
+    },
+    optimization: {
+        // runtimeChunk: 'single',
+        splitChunks: {
+            chunks: 'all',
+            // chunks: 'async',
+            minSize: 2000,
+            minRemainingSize: 0,
+            minChunks: 10,
+            maxAsyncRequests: 3,
+            maxInitialRequests: 3,
+            enforceSizeThreshold: 5000,
+            cacheGroups: {
+                defaultVendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10,
+                    reuseExistingChunk: true
+                },
+                default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true
+                }
+            }
+        }
     },
     module: {
         rules: [
@@ -34,19 +74,29 @@ const config = {
         extensions: ['.tsx', '.ts', '.js']
     },
     plugins: [
-        new CopyWebpackPlugin({
-            patterns: [{ from: 'src/icons' }]
+        new CopyPlugin({
+            // TODO dont hard code these
+            patterns: [
+                { from: 'src/icons/android-chrome-192x192.png' },
+                { from: 'src/icons/android-chrome-512x512.png' },
+                { from: 'src/icons/apple-touch-icon.png' },
+                // { from: 'src/icons/favicon.svg' },
+                { from: 'src/icons/favicon-16x16.png' },
+                { from: 'src/icons/favicon-32x32.png' },
+                { from: 'src/icons/site.webmanifest' }
+            ]
+        }),
+        new HtmlWebpackPlugin({
+            template: path.join(paths.src, 'index.html'),
+            filename: path.join(paths.dist, 'index.html'),
+            inject: true,
+            hash: !devMode,
+            minify: {
+                removeComments: !devMode,
+                collapseWhitespace: !devMode,
+                minifyJS: !devMode,
+                minifyCSS: !devMode
+            }
         })
-    ],
-    output: {
-        filename: 'bundle.js',
-        // This is stored under the go tree because you cannot traverse up directories
-        // when specifying the path for go:embed
-        path: outPath,
-        sourceMapFilename: '[name].ts.map',
-        assetModuleFilename: 'images/[hash][ext][query]'
-    }
+    ]
 };
-
-// noinspection JSUnusedGlobalSymbols
-export default config;

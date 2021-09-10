@@ -1,11 +1,7 @@
 package app
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"net/http"
 	"os"
 	"testing"
 )
@@ -29,23 +25,23 @@ import (
 //	}
 //}
 
-func newTestReq(method string, route string, body interface{}, token string) *http.Request {
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	return req
-}
+//func newTestReq(method string, route string, body interface{}, token string) *http.Request {
+//	b, _ := json.Marshal(body)
+//	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
+//	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+//	return req
+//}
 
-type httpTestResult struct {
-	Code int
-	Body interface{}
-}
+//type httpTestResult struct {
+//	Code int
+//	Body interface{}
+//}
 
-type httpTestUnit struct {
-	r *http.Request
-	e httpTestResult
-	m string
-}
+//type httpTestUnit struct {
+//	r *http.Request
+//	e httpTestResult
+//	m string
+//}
 
 //func createToken(sid steamid.SID64, pr model.Privilege) string {
 //	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
