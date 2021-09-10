@@ -14,28 +14,7 @@ import (
 	"time"
 )
 
-const baseLayout = `<!doctype html>
-    <html class="no-js" lang="en">
-    <head>
-        <meta charset="utf-8"/>
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width"/>
-		<link rel="apple-touch-icon" sizes="180x180" href="/assets/dist/apple-touch-icon.png">
-		<link rel="icon" type="image/png" sizes="32x32" href="/assets/dist/favicon-32x32.png">
-		<link rel="icon" type="image/png" sizes="16x16" href="/assets/dist/favicon-16x16.png">
-		<link rel="manifest" href="/assets/dist/site.webmanifest">
-		<link rel="mask-icon" href="/assets/dist/safari-pinned-tab.svg" color="#5bbad5">
-		<meta name="msapplication-TileColor" content="#941739">
-		<meta name="theme-color" content="#ffffff">
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-        <title>gbans</title>
-    </head>
-    <body>
-    <div id="root"></div>
-    <script src="/assets/dist/bundle.js"></script>
-    </body>
-    </html>`
+const baseLayout = ``
 
 //go:embed dist
 var content embed.FS

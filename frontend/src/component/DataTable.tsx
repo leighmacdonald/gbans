@@ -216,7 +216,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                             key={`${headCell.id}-${index}`}
                             align={headCell.numeric ? 'right' : 'left'}
                             padding={
-                                headCell.disablePadding ? 'none' : 'default'
+                                headCell.disablePadding ? 'none' : 'normal'
                             }
                             sortDirection={
                                 orderBy === headCell.id ? order : false
@@ -458,11 +458,8 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                         count={rows.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
-                        onChangePage={handleChangePage}
-                        onChangeRowsPerPage={handleChangeRowsPerPage}
-                        onPageChange={(_, page) => {
-                            console.log(`page changed -> ${page}`);
-                        }}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
                     />
                 </Paper>
                 <FormControlLabel

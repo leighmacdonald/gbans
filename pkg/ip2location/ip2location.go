@@ -121,8 +121,8 @@ type ASNRecord struct {
 }
 
 type LatLong struct {
-	Latitude  float64
-	Longitude float64
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 // Location provides a container and some helper functions for location data
@@ -402,37 +402,37 @@ func extractZip(data []byte, dest string, filename string) error {
 	}
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
-		rc, err := f.Open()
-		if err != nil {
-			return err
+		rc, errO := f.Open()
+		if errO != nil {
+			return errO
 		}
 		defer func() {
-			if err := rc.Close(); err != nil {
-				panic(err)
+			if errC := rc.Close(); errC != nil {
+				log.Errorf("Failed to close zip: %v", errC)
 			}
 		}()
 
 		p := filepath.Join(dest, f.Name)
 
 		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(p, f.Mode()); err != nil {
-				return err
+			if errM := os.MkdirAll(p, f.Mode()); errM != nil {
+				return errM
 			}
 		} else {
-			if err := os.MkdirAll(filepath.Dir(p), f.Mode()); err != nil {
-				return err
+			if errD := os.MkdirAll(filepath.Dir(p), f.Mode()); errD != nil {
+				return errD
 			}
-			f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return err
+			fo, errF := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if errF != nil {
+				return errF
 			}
 			defer func() {
-				if err := f.Close(); err != nil {
-					panic(err)
+				if errC2 := fo.Close(); errC2 != nil {
+					panic(errC2)
 				}
 			}()
 
-			_, err = io.Copy(f, rc)
+			_, err = io.Copy(fo, rc)
 			if err != nil {
 				return err
 			}
@@ -441,9 +441,9 @@ func extractZip(data []byte, dest string, filename string) error {
 	}
 	for _, f := range r.File {
 		if f.Name == filename {
-			err := extractAndWriteFile(f)
-			if err != nil {
-				return err
+			errX := extractAndWriteFile(f)
+			if errX != nil {
+				return errX
 			}
 			break
 		}

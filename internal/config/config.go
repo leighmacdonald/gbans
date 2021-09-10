@@ -133,6 +133,7 @@ type generalConfig struct {
 	WarningExceededDurationValue string        `mapstructure:"warning_exceeded_duration"`
 	WarningExceededDuration      time.Duration `mapstructure:"-"`
 	UseUTC                       bool          `mapstructure:"use_utc"`
+	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 }
 
 type discordConfig struct {
@@ -255,6 +256,7 @@ func init() {
 	viper.SetDefault("general.warning_exceeded_action", Kick)
 	viper.SetDefault("general.warning_exceeded_duration", "1w")
 	viper.SetDefault("general.use_utc", true)
+	viper.SetDefault("general.server_status_update_freq", "60s")
 
 	viper.SetDefault("http.host", "127.0.0.1")
 	viper.SetDefault("http.port", 6006)

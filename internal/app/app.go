@@ -2,9 +2,7 @@ package app
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
@@ -25,25 +23,30 @@ var (
 	BuildVersion = "master"
 )
 
+// Gbans is the main application struct.
+// It implements the action.Executor interface
 type Gbans struct {
 	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
-	logRawQueue chan web.LogPayload
-	bot         discord.ChatBot
-	db          store.Store
-	web         web.WebHandler
+	logRawQueue    chan web.LogPayload
+	bot            discord.ChatBot
+	db             store.Store
+	web            web.WebHandler
+	serversState   map[string]serverState
+	serversStateMu *sync.RWMutex
 }
 
 // New instantiates a new application
 func New() (*Gbans, error) {
 	g := Gbans{
-		ctx:         context.Background(),
-		warnings:    map[steamid.SID64][]userWarning{},
-		warningsMu:  &sync.RWMutex{},
-		logRawQueue: make(chan web.LogPayload, 50),
+		ctx:            context.Background(),
+		warnings:       map[steamid.SID64][]userWarning{},
+		warningsMu:     &sync.RWMutex{},
+		serversStateMu: &sync.RWMutex{},
+		logRawQueue:    make(chan web.LogPayload, 50),
 	}
 	s, se := store.New(config.DB.DSN)
 	if se != nil {
@@ -83,7 +86,11 @@ func (g *Gbans) Start() {
 		log.Warnf("External Network ban lists not enabled")
 	}
 
-	defer g.Stop()
+	defer func() {
+		if errC := g.Close(); errC != nil {
+			log.Errorf("Returned closing error: %v", errC)
+		}
+	}()
 
 	// Start the discord service
 	if config.Discord.Enabled {
@@ -106,8 +113,8 @@ func (g *Gbans) Start() {
 	}
 }
 
-// Stop cleans up the application and closes connections
-func (g *Gbans) Stop() error {
+// Close cleans up the application and closes connections
+func (g *Gbans) Close() error {
 	return g.db.Close()
 }
 
@@ -282,7 +289,7 @@ func (g *Gbans) logReader() {
 func (g *Gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	g.warningsMu.Lock()
 	defer g.warningsMu.Unlock()
-	const msg = "Warning limit exceeded"
+	//const msg = "Warning limit exceeded"
 	_, found := g.warnings[sid64]
 	if !found {
 		g.warnings[sid64] = []userWarning{}
@@ -292,6 +299,7 @@ func (g *Gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 		CreatedOn:  config.Now(),
 	})
 	if len(g.warnings[sid64]) >= config.General.WarningLimit {
+		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(g.warnings[sid64]))
 		//var act action.Action
 		//switch config.General.WarningExceededAction {
 		//case config.Gag:
@@ -339,7 +347,11 @@ func (g *Gbans) initDiscord() {
 		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 			log.Warnf("Error registering discord log event reader")
 		}
-		go g.bot.Start(g.ctx, config.Discord.Token, events)
+		go func() {
+			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {
+				log.Errorf("Bot returned error: %v", errBS)
+			}
+		}()
 	} else {
 		log.Fatalf("Discord enabled, but bot token invalid")
 	}
@@ -358,14 +370,14 @@ func initNetBans() {
 //
 // This function will replace the discord member id value in the target field with
 // the found SteamID, if any.
-func validateLink(ctx context.Context, db store.Store, sourceID action.Source, target *action.Source) error {
-	var p model.Person
-	if err := db.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
-		if err == store.ErrNoResult {
-			return consts.ErrUnlinkedAccount
-		}
-		return consts.ErrInternal
-	}
-	*target = action.Source(p.SteamID.String())
-	return nil
-}
+//func validateLink(ctx context.Context, db store.Store, sourceID action.Source, target *action.Source) error {
+//	var p model.Person
+//	if err := db.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
+//		if err == store.ErrNoResult {
+//			return consts.ErrUnlinkedAccount
+//		}
+//		return consts.ErrInternal
+//	}
+//	*target = action.Source(p.SteamID.String())
+//	return nil
+//}

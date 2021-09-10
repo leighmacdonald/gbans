@@ -16,7 +16,7 @@ func A2SInfo(servers []model.Server) map[string]*a2s.ServerInfo {
 		wg.Add(1)
 		go func(server model.Server) {
 			defer wg.Done()
-			resp, err := a2sQuery(server)
+			resp, err := A2SQueryServer(server)
 			if err != nil {
 				log.Errorf("A2S: %v", err)
 				return
@@ -30,7 +30,7 @@ func A2SInfo(servers []model.Server) map[string]*a2s.ServerInfo {
 	return responses
 }
 
-func a2sQuery(server model.Server) (*a2s.ServerInfo, error) {
+func A2SQueryServer(server model.Server) (*a2s.ServerInfo, error) {
 	client, err := a2s.NewClient(server.Addr())
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to create a2s client")

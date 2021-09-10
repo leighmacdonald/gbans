@@ -8,7 +8,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -22,9 +25,6 @@ var registered = false
 
 func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
 	ws := newWebSocketState(logMsgChan, db)
-	jsRoutes := func(c *gin.Context) {
-		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
-	}
 	r.Use(gin.Logger())
 	if !registered {
 		prom := ginprom.New(func(p *ginprom.Prometheus) {
@@ -34,24 +34,40 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 		r.Use(prom.Instrument())
 		registered = true
 	}
-	// Dont use session for static assets
+	staticPath := config.HTTP.StaticPath
+	if staticPath == "" {
+		staticPath = "internal/web/dist"
+	}
+	ap, err := filepath.Abs(staticPath)
+	if err != nil {
+		log.Fatalf("Invalid static path")
+	}
+	// Don't use session for static assets
 	// Note that we only use embedded assets for !release modes
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
 	if config.General.Mode == config.Release {
-		r.StaticFS("/assets", http.FS(content))
+		r.StaticFS("/static", http.FS(content))
 	} else {
-		r.StaticFS("/assets/dist", http.Dir(config.HTTP.StaticPath))
+		r.StaticFS("/static", http.Dir(ap))
 	}
+	idxPath := filepath.Join(ap, "index.html")
 	for _, rt := range []string{
 		"/", "/servers", "/profile", "/bans", "/appeal", "/settings",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
 		"/admin/import", "/admin/filters", "/404", "/logout"} {
-		r.GET(rt, jsRoutes)
+		r.GET(rt, func(c *gin.Context) {
+			idx, err := os.ReadFile(idxPath)
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				log.Errorf("Failed to load index.html")
+				return
+			}
+			c.Data(200, "text/html", idx)
+		})
 	}
 
 	r.GET("/metrics", prometheusHandler())
-
 	r.GET("/login/success", w.onLoginSuccess())
 	r.GET("/auth/callback", w.onOpenIDCallback())
 	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
