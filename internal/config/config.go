@@ -55,6 +55,12 @@ type relayConfig struct {
 	ChannelIDs []string `mapstructure:"channel_ids"`
 }
 
+type rpcConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Addr    string `mapstructure:"addr"`
+	LogAddr string `mapstructure:"log_addr"`
+}
+
 type filterConfig struct {
 	Enabled         bool     `mapstructure:"enabled"`
 	IsWarning       bool     `mapstructure:"is_warning"`
@@ -65,6 +71,7 @@ type filterConfig struct {
 
 type rootConfig struct {
 	General generalConfig `mapstructure:"general"`
+	RPC     rpcConfig     `mapstructure:"rpc"`
 	HTTP    httpConfig    `mapstructure:"http"`
 	Relay   relayConfig   `mapstructure:"relay"`
 	Filter  filterConfig  `mapstructure:"word_filter"`
@@ -182,6 +189,7 @@ var (
 	Discord discordConfig
 	Log     logConfig
 	Net     netBans
+	RPC     rpcConfig
 )
 
 // Read reads in config file and ENV variables if set.
@@ -230,6 +238,7 @@ func Read(cfgFiles ...string) {
 	DB = cfg.DB
 	Log = cfg.Log
 	Net = cfg.NetBans
+	RPC = cfg.RPC
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
@@ -266,6 +275,9 @@ func init() {
 	viper.SetDefault("http.static_path", "frontend/dist")
 	viper.SetDefault("http.cookie_key", golib.RandomString(32))
 	viper.SetDefault("http.client_timeout", "10s")
+
+	viper.SetDefault("rpc.addr", "0.0.0.0:7779")
+	viper.SetDefault("rpc.enabled", true)
 
 	viper.SetDefault("filter.enabled", false)
 	viper.SetDefault("filter.is_warning", true)

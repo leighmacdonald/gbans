@@ -4,11 +4,8 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/relay"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // relayCmd starts the log relay service
@@ -19,19 +16,21 @@ var relayCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		go func() {
-			if err2 := relay.New(ctx, config.Relay.ServerName, config.Relay.LogPath,
-				config.Relay.Host, config.Relay.Password); err2 != nil {
-				log.Fatalf("Exited client: %v", err2)
-			}
-		}()
-		exitChan := make(chan os.Signal, 10)
-		signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
-		select {
-		case <-exitChan:
-			return
-		case <-ctx.Done():
-			return
+		agent, err2 := relay.NewAgent(ctx, relay.Opts{
+			ServerAddress:    config.RPC.Addr,
+			LogListenAddress: config.RPC.LogAddr,
+			Instances: []relay.Instance{
+				{
+					Name:   "yyc-1",
+					Secret: []byte("yyc-1"),
+				},
+			},
+		})
+		if err2 != nil {
+			log.Fatalf("Exited client: %v", err2)
+		}
+		if err3 := agent.Start(); err3 != nil {
+			log.Errorf("Agent returned error: %v", err3)
 		}
 	},
 }

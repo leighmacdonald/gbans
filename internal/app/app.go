@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/relay"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -37,6 +38,7 @@ type Gbans struct {
 	web            web.WebHandler
 	serversState   map[string]serverState
 	serversStateMu *sync.RWMutex
+	rpc            relay.Server
 }
 
 // New instantiates a new application
@@ -60,9 +62,12 @@ func New() (*Gbans, error) {
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
+
+	g.rpc = relay.NewServer(g.ctx, config.RPC.Addr)
 	g.db = s
 	g.bot = b
 	g.web = w
+
 	return &g, nil
 }
 
@@ -105,6 +110,15 @@ func (g *Gbans) Start() {
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
 		g.initFilters()
+	}
+
+	if config.RPC.Enabled {
+		go func() {
+			if errRPC := g.rpc.Start(); errRPC != nil {
+				log.Errorf("Failed to start RPC service: %v", errRPC)
+				return
+			}
+		}()
 	}
 
 	// Start the HTTP server
