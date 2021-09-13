@@ -144,7 +144,7 @@ func TestMain(m *testing.M) {
 //	s := model.Server{
 //		ServerName:     golib.RandomString(10),
 //		Token:          "",
-//		Address:        "localhost",
+//		ServerAddress:        "localhost",
 //		Port:           27015,
 //		RCON:           "password",
 //		ReservedSlots:  8,
