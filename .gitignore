@@ -37,3 +37,5 @@ sourcemod/.vscode/
 /*.zip
 node_modules
 /seed.json
+/game_template/
+depots

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
@@ -71,13 +72,14 @@ func (g *Gbans) profileUpdater() {
 }
 
 type serverState struct {
-	NameLong string
-	Name     string
-	Host     string
-	Enabled  bool
-	A2S      *a2s.ServerInfo
-	Status   extra.Status
-	Players  []extra.Player
+	NameLong   string
+	Name       string
+	Host       string
+	Enabled    bool
+	A2S        *a2s.ServerInfo
+	Status     extra.Status
+	Players    []extra.Player
+	lastUpdate time.Time
 }
 
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
@@ -107,7 +109,7 @@ func (g *Gbans) serverStateUpdater() {
 					defer iwg.Done()
 					status, errS := query.GetServerStatus(server)
 					if errS != nil {
-						log.Warnf("Failed to update server status: %v", errS)
+						log.Debugf("Failed to update server status: %v", errS)
 						return
 					}
 					ss.Status = status
@@ -116,12 +118,13 @@ func (g *Gbans) serverStateUpdater() {
 					defer iwg.Done()
 					a, errA := query.A2SQueryServer(server)
 					if errA != nil {
-						log.Warnf("Failed to update a2s status: %v", errA)
+						log.Debugf("Failed to update a2s status: %v", errA)
 						return
 					}
 					ss.A2S = a
 				}()
 				iwg.Wait()
+				ss.lastUpdate = time.Now()
 				newServersMu.Lock()
 				newServers[server.ServerName] = ss
 				newServersMu.Unlock()
@@ -153,9 +156,55 @@ func (g *Gbans) serverStateUpdater() {
 	}
 }
 
+func (g *Gbans) mapChanger(timeout time.Duration) {
+	type at struct {
+		lastActive time.Time
+		triggered  bool
+	}
+	activity := map[string]*at{}
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			g.serversStateMu.Lock()
+			for serverId, state := range g.serversState {
+				act, found := activity[serverId]
+				if !found || len(state.Status.Players) > 0 {
+					activity[serverId] = &at{time.Now(), false}
+					continue
+				}
+				if !act.triggered && time.Since(act.lastActive) > timeout {
+					ctx, cancel := context.WithTimeout(g.ctx, time.Second*30)
+					var srv model.Server
+					if err := g.db.GetServerByName(ctx, serverId, &srv); err != nil {
+						cancel()
+						g.l.Errorf("Failed to get server for map changer: %v", err)
+						continue
+					}
+					cancel()
+					if srv.DefaultMap == "" {
+						g.l.Errorf("Cannot change to default map, value not set")
+						continue
+					}
+					if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", srv.DefaultMap)); err != nil {
+						g.l.Errorf("failed to exec mapchanger rcon: %v", err)
+						return
+					}
+					g.l.WithFields(log.Fields{"map": srv.DefaultMap, "reason": "no_activity", "srv": serverId}).
+						Infof("Idle map change triggered")
+					act.triggered = true
+				}
+			}
+			g.serversStateMu.Unlock()
+		case <-g.ctx.Done():
+			return
+		}
+	}
+}
+
 func (g *Gbans) banSweeper() {
 	log.Debug("ban sweeper routine started")
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Minute)
 	for {
 		select {
 		case <-ticker.C:
