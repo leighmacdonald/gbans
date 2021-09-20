@@ -352,7 +352,7 @@ func (g Gbans) PSay(args action.PSayRequest) error {
 //}
 
 func (g Gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
-	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil {
+	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
 		return err
 	}
 	if p.UpdatedOn == p.CreatedOn || time.Since(p.UpdatedOn) > 15*time.Second {

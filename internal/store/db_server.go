@@ -35,10 +35,9 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 
 func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
 	var servers []model.Server
-	var qb sq.SelectBuilder
-	qb = sq.Select(columnsServer...).From(string(tableServer))
+	qb := sb.Select(columnsServer...).From(string(tableServer))
 	if !includeDisabled {
-		sb = sb.Where(sq.Eq{"is_enabled": true})
+		qb = qb.Where(sq.Eq{"is_enabled": true})
 	}
 	q, a, e := qb.ToSql()
 	if e != nil {

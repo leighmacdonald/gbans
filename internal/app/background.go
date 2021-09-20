@@ -21,7 +21,7 @@ import (
 // The 100 oldest profiles are updated on each execution
 func (g *Gbans) profileUpdater() {
 	var update = func() {
-		ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+		ctx, cancel := context.WithTimeout(g.ctx, time.Minute*10)
 		defer cancel()
 		people, pErr := g.db.GetExpiredProfiles(ctx, 100)
 		if pErr != nil {
@@ -92,7 +92,7 @@ func (g *Gbans) serverStateUpdater() {
 	var update = func(ctx context.Context) {
 		servers, err := g.db.GetServers(ctx, false)
 		if err != nil {
-			log.Errorf("Failed to fetch servers to update")
+			log.Errorf("Failed to fetch servers to update: %v", err)
 			return
 		}
 		newServers := map[string]serverState{}
@@ -174,7 +174,7 @@ func (g *Gbans) mapChanger(timeout time.Duration) {
 					continue
 				}
 				if !act.triggered && time.Since(act.lastActive) > timeout {
-					ctx, cancel := context.WithTimeout(g.ctx, time.Second*30)
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 					var srv model.Server
 					if err := g.db.GetServerByName(ctx, serverId, &srv); err != nil {
 						cancel()
@@ -188,7 +188,7 @@ func (g *Gbans) mapChanger(timeout time.Duration) {
 					}
 					if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", srv.DefaultMap)); err != nil {
 						g.l.Errorf("failed to exec mapchanger rcon: %v", err)
-						return
+						continue
 					}
 					g.l.WithFields(log.Fields{"map": srv.DefaultMap, "reason": "no_activity", "srv": serverId}).
 						Infof("Idle map change triggered")

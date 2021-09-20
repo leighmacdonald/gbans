@@ -55,13 +55,13 @@ func TestServer(t *testing.T) {
 	require.Equal(t, s1.TokenCreatedOn.Second(), s1Get.TokenCreatedOn.Second())
 	require.Equal(t, s1.CreatedOn.Second(), s1Get.CreatedOn.Second())
 	require.Equal(t, s1.UpdatedOn.Second(), s1Get.UpdatedOn.Second())
-	sLenA, eS := db.GetServers(ctx)
+	sLenA, eS := db.GetServers(ctx, false)
 	require.NoError(t, eS, "Failed to fetch servers")
 	require.True(t, len(sLenA) > 0, "Empty server results")
 	require.NoError(t, db.DropServer(ctx, s1.ServerID))
 	var d model.Server
 	require.True(t, errors.Is(db.GetServer(ctx, s1.ServerID, &d), ErrNoResult))
-	sLenB, _ := db.GetServers(ctx)
+	sLenB, _ := db.GetServers(ctx, false)
 	require.True(t, len(sLenA)-1 == len(sLenB))
 }
 
