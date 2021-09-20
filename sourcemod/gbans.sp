@@ -408,7 +408,6 @@ public
 void OnClientAuthorized(int client, const char[] auth) {
     char ip[16];
     GetClientIP(client, ip, sizeof(ip));
-    GetClientUserId(client);
     /* Do not check bots nor check player with lan steamid. */
     if (auth[0] == 'B' /*|| auth[9] == 'L'*/) {
         g_players[client].authed = true;
