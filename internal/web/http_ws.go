@@ -17,7 +17,10 @@ import (
 
 type PayloadType int
 
-const sendQueueSize = 100
+const (
+	sendQueueSize = 100
+	recvQueueSize = 100
+)
 
 type State int32
 
@@ -162,20 +165,20 @@ func (s *socketSession) err(errType PayloadType, err error, args ...interface{})
 	s.send(newWSErr(errType, err))
 }
 
-// newWebSocketState allocates and connects all websocket routes and session states
-func newWebSocketState(logMsgChan chan LogPayload, db store.Store) *socketState {
-	ws := melody.New()
+// newClientServiceState allocates and connects all websocket routes and session states
+func newClientServiceState(logMsgChan chan LogPayload, db store.Store) *socketState {
+	wsWeb := melody.New()
 	wss := &socketState{
 		RWMutex:    &sync.RWMutex{},
-		ws:         ws,
+		ws:         wsWeb,
 		db:         db,
 		sessions:   map[*melody.Session]*socketSession{},
 		logMsgChan: logMsgChan,
 	}
-	ws.HandleMessage(wss.onMessage)
-	ws.HandleConnect(wss.onWSConnect)
-	ws.HandleDisconnect(wss.onWSDisconnect)
-	ws.HandleError(func(session *melody.Session, err error) {
+	wsWeb.HandleMessage(wss.onMessage)
+	wsWeb.HandleConnect(wss.onWSConnect)
+	wsWeb.HandleDisconnect(wss.onWSDisconnect)
+	wsWeb.HandleError(func(session *melody.Session, err error) {
 		log.Errorf("WSERR: %v", err)
 		// dc?
 	})
@@ -214,39 +217,6 @@ func newWSErr(errType PayloadType, err error) []byte {
 		Data:        d,
 	})
 	return b
-}
-
-func (ws *socketState) authenticateServer(ctx context.Context, req SocketAuthReq, s *socketSession) error {
-	s.IsClient = false
-	if req.Token == "" || req.ServerName == "" {
-		return consts.ErrAuthentication
-	}
-	var server model.Server
-	if e := ws.db.GetServerByName(ctx, req.ServerName, &server); e != nil {
-		return consts.ErrAuthentication
-	}
-	if server.Password == "" {
-		s.Log().Errorf("Server has empty password!!!")
-		return consts.ErrAuthentication
-	}
-	if req.Token != server.Password {
-		s.Log().Errorf("Invalid password used for server auth")
-		return consts.ErrAuthentication
-	}
-	b, errEnc := EncodeWSPayload(AuthOKType, WebSocketAuthResp{
-		Status:  true,
-		Message: "Successfully authenticated",
-	})
-	if errEnc != nil {
-		s.Log().Errorf("Failed to encode auth response payload: %v", errEnc)
-		return consts.ErrAuthentication
-	}
-	if err := s.session.Write(b); err != nil {
-		s.Log().Errorf("Failed to write client success response: %v", err)
-	}
-
-	s.Log().Debugf("WS server authhenticated successfully")
-	return nil
 }
 
 func (ws *socketState) authenticateClient(ctx context.Context, req SocketAuthReq, s *socketSession) error {
@@ -315,11 +285,7 @@ func (ws *socketState) onAwaitingAuthentication(ctx context.Context, w *SocketPa
 		return
 	}
 	var e error
-	if req.IsServer {
-		e = ws.authenticateServer(ctx, req, c)
-	} else {
-		e = ws.authenticateClient(ctx, req, c)
-	}
+	e = ws.authenticateClient(ctx, req, c)
 	if e != nil {
 		c.err(AuthFailType, e)
 		return

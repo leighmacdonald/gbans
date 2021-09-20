@@ -1,5 +1,5 @@
 begin;
 
-ALTER TABLE IF EXISTS server ADD COLUMN IF NOT EXISTS enabled bool not null default true;
+ALTER TABLE IF EXISTS server ADD COLUMN IF NOT EXISTS is_enabled bool not null default true;
 
 commit;

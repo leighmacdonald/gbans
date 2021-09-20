@@ -95,7 +95,7 @@ func New(dsn string) (Store, error) {
 	if config.DB.AutoMigrate {
 		if errM := ndb.Migrate(MigrateUp); errM != nil {
 			if errM.Error() == "no change" {
-				log.Infof("Migration at latest version")
+				log.Debugf("Migration at latest version")
 			} else {
 				log.Fatalf("Could not migrate schema: %v", errM)
 			}
