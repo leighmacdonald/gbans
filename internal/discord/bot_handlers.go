@@ -105,11 +105,11 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
-	var player model.Person
+	player := model.NewPerson(sid)
 	if errP := b.executor.PersonBySID(sid, "", &player); errP != nil {
 		return errCommandFailed
 	}
-	var ban model.BannedPerson
+	ban := model.NewBannedPerson()
 	if errBP := b.db.GetBanBySteamID(ctx, sid, true, &ban); errBP != nil {
 		if !errors.Is(errBP, store.ErrNoResult) {
 			log.Errorf("Failed to get ban by steamid: %v", errBP)
@@ -398,7 +398,7 @@ func (b *Bot) onSay(_ context.Context, _ *discordgo.Session, m *discordgo.Intera
 		return errCommandFailed
 	}
 	r.Value = "Sent message successfully"
-	return consts.ErrInvalidSID
+	return nil
 }
 
 func (b *Bot) onCSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
@@ -408,7 +408,7 @@ func (b *Bot) onCSay(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 		return errCommandFailed
 	}
 	r.Value = "Sent message successfully"
-	return consts.ErrInvalidSID
+	return nil
 }
 
 func (b *Bot) onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
@@ -418,7 +418,7 @@ func (b *Bot) onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 		return errCommandFailed
 	}
 	r.Value = "Sent message successfully"
-	return consts.ErrInvalidSID
+	return nil
 }
 
 func (b *Bot) onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {

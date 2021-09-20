@@ -12,37 +12,31 @@ import (
 )
 
 func (db *pgStore) DropBan(ctx context.Context, ban *model.Ban) error {
-	q, a, e := sb.Delete(string(tableBan)).Where(sq.Eq{"ban_id": ban.BanID}).ToSql()
-	if e != nil {
-		return e
-	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	const q = `DELETE FROM ban WHERE ban_id = $1`
+	if _, err := db.c.Exec(ctx, q, ban.BanID); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
 func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier interface{}, full bool, b *model.BannedPerson) error {
-	q, a, e := sb.Select(
-		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
-		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-		"p.steam_id as sid2", "p.created_on as created_on2", "p.updated_on as updated_on2", "p.communityvisibilitystate",
-		"p.profilestate",
-		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
-		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
-		"p.permission_level", "p.discord_id", "p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban",
-		"p.days_since_last_ban").
-		From(fmt.Sprintf("%s b", tableBan)).
-		LeftJoin("person p ON b.steam_id = p.steam_id").
-		GroupBy("b.ban_id, p.steam_id").
-		Where(sq.And{sq.Eq{fmt.Sprintf("b.%s", column): identifier}, sq.Gt{"b.valid_until": config.Now()}}).
-		OrderBy("b.created_on DESC").
-		Limit(1).
-		ToSql()
-	if e != nil {
-		return e
-	}
-	if err := db.c.QueryRow(ctx, q, a...).
+	var q = fmt.Sprintf(`
+	SELECT
+		b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
+		b.reason_text, b.note, b.ban_source, b.valid_until, b.created_on, b.updated_on,
+		p.steam_id as sid2, p.created_on as created_on2, p.updated_on as updated_on2, p.communityvisibilitystate,
+		p.profilestate,
+		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
+		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
+		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
+		p.days_since_last_ban
+	FROM ban b
+	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
+	WHERE b.%s = $1 AND b.valid_until > $2
+	GROUP BY b.ban_id, p.steam_id
+	ORDER BY b.created_on DESC
+	LIMIT 1`, column)
+	if err := db.c.QueryRow(ctx, q, identifier, config.Now()).
 		Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
 			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn,
@@ -166,17 +160,12 @@ func (db *pgStore) SaveBan(ctx context.Context, ban *model.Ban) error {
 }
 
 func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
-	q, a, e := sb.Insert("ban").
-		Columns("steam_id", "author_id", "ban_type", "reason", "reason_text",
-			"note", "valid_until", "created_on", "updated_on", "ban_source").
-		Values(ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
-			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).
-		Suffix("RETURNING ban_id").
-		ToSql()
-	if e != nil {
-		return e
-	}
-	err := db.c.QueryRow(ctx, q, a...).Scan(&ban.BanID)
+	const q = `
+		INSERT INTO ban (steam_id, ban_type, reason, valid_until, created_on, updated_on) 
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING ban_id`
+	err := db.c.QueryRow(ctx, q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
+		ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
 	if err != nil {
 		return dbErr(err)
 	}
@@ -184,21 +173,14 @@ func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
 }
 
 func (db *pgStore) updateBan(ctx context.Context, ban *model.Ban) error {
-	q, a, e := sb.Update("ban").
-		Set("author_id", ban.AuthorID).
-		Set("ban_type", ban.BanType).
-		Set("reason", ban.Reason).
-		Set("reason_text", ban.ReasonText).
-		Set("note", ban.Note).
-		Set("valid_until", ban.ValidUntil).
-		Set("updated_on", ban.UpdatedOn).
-		Set("ban_source", ban.Source).
-		Where(sq.Eq{"ban_id": ban.BanID}).
-		ToSql()
-	if e != nil {
-		return e
-	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	const q = `
+		UPDATE 
+		    ban 
+		SET 
+		    author_id = $2, ban_id = $3, reason = $4, reason_text = $5, note = $6, valid_until = $7, updated_on = $8, ban_source = $9
+		WHERE ban_id = $1`
+	if _, err := db.c.Exec(ctx, q, ban.BanID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
+		ban.UpdatedOn, ban.Source); err != nil {
 		return dbErr(err)
 	}
 	return nil
@@ -239,26 +221,20 @@ func (db *pgStore) GetExpiredBans(ctx context.Context) ([]model.Ban, error) {
 
 // GetBans returns all bans that fit the filter criteria passed in
 func (db *pgStore) GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedPerson, error) {
-	q, a, e := sb.Select(
-		"b.ban_id", "b.steam_id", "b.author_id", "b.ban_type", "b.reason",
-		"b.reason_text", "b.note", "b.ban_source", "b.valid_until", "b.created_on", "b.updated_on",
-		"p.steam_id", "p.created_on", "p.updated_on", "p.communityvisibilitystate", "p.profilestate",
-		"p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull", "p.avatarhash",
-		"p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode", "p.loccityid",
-		"p.permission_level", "p.discord_id", "p.community_banned", "p.vac_bans", "p.game_bans",
-		"p.economy_ban", "p.days_since_last_ban").
-		From(fmt.Sprintf("%s b", string(tableBan))).
-		LeftJoin("person p on p.steam_id = b.steam_id").
-		OrderBy(fmt.Sprintf("b.%s", o.OrderBy)).
-		Limit(o.Limit).
-		Offset(o.Offset).
-		ToSql()
-
-	if e != nil {
-		return nil, errors.Wrapf(e, "Failed to execute: %s", q)
-	}
+	q := fmt.Sprintf(`SELECT
+		b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
+		b.reason_text, b.note, b.ban_source, b.valid_until, b.created_on, b.updated_on,
+		p.steam_id as sid2, p.created_on as created_on2, p.updated_on as updated_on2, p.communityvisibilitystate,
+		p.profilestate,
+		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
+		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
+		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
+		p.days_since_last_ban
+	FROM ban b
+	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
+	ORDER BY b.%s LIMIT %d OFFSET %d`, o.OrderBy, o.Limit, o.Offset)
 	var bans []model.BannedPerson
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := db.c.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -282,17 +258,16 @@ func (db *pgStore) GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedP
 }
 
 func (db *pgStore) GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.Time) ([]model.Ban, error) {
-	q, a, e := sb.
-		Select("ban_id", "steam_id", "author_id", "ban_type", "reason", "reason_text", "note",
-			"valid_until", "created_on", "updated_on", "ban_source").
-		From(string(tableBan)).
-		Where(sq.Lt{"updated_on": t}).
-		Limit(o.Limit).Offset(o.Offset).ToSql()
-	if e != nil {
-		return nil, e
-	}
+	q := fmt.Sprintf(`
+		SELECT
+			b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
+			b.reason_text, b.note, b.valid_until, b.created_on, b.updated_on, b.ban_source
+		FROM ban b 
+		WHERE updated_on < $1 
+		LIMIT %d 
+		OFFSET %d`, o.Limit, o.Offset)
 	var bans []model.Ban
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := db.c.Query(ctx, q, t)
 	if err != nil {
 		return nil, err
 	}

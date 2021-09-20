@@ -17,13 +17,10 @@ import (
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
 func (db *pgStore) GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
-	q, _, e := sb.Select("net_id", "cidr", "source", "created_on", "updated_on", "reason", "valid_until").
-		From("ban_net").
-		Suffix("WHERE $1 <<= cidr").
-		ToSql()
-	if e != nil {
-		return nil, e
-	}
+	const q = `
+		SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until 
+		FROM ban_net
+		WHERE $1 <<= cidr`
 	var nets []model.BanNet
 	rows, err := db.c.Query(ctx, q, ip.String())
 	if err != nil {

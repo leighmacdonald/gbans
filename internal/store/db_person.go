@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -231,16 +232,15 @@ func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *mode
 }
 
 func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error) {
-	q, a, e := sb.Select(profileColumns...).
-		From("person").
-		OrderBy("updated_on ASC").
-		Limit(uint64(limit)).
-		ToSql()
-	if e != nil {
-		return nil, dbErr(e)
-	}
+	q := fmt.Sprintf(`SELECT steam_id, created_on, updated_on,
+	communityvisibilitystate, profilestate, personaname, profileurl, avatar,
+	avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated,
+	loccountrycode, locstatecode, loccityid, permission_level, discord_id,
+	community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban
+	FROM person ORDER BY updated_on LIMIT %d`, limit)
+
 	var people []model.Person
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := db.c.Query(ctx, q)
 	if err != nil {
 		return nil, dbErr(err)
 	}

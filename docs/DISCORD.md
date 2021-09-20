@@ -17,7 +17,8 @@ channel are trustworthy. Only users under this role will be allowed to use privi
 - There is currently no direct RCON command for the bot. gbans will use RCON internally, but it's not exposed to the bot
 yet. Once finer access controls get integrated it will possibly, also be added.
 - All bans, steamid & network, apply to all servers, there is currently no way to ban on specific servers only.
-
+- You must enable the `applications.commands` and `bot` oauth roles.
+ 
 ### Common Arg/Term Reference
 
 These are the more thorough details of the arguments used in the bot commands below.

@@ -42,7 +42,7 @@ type Gbans struct {
 
 // New instantiates a new application
 func New() (*Gbans, error) {
-	g := Gbans{
+	g := &Gbans{
 		ctx:            context.Background(),
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
@@ -67,7 +67,7 @@ func New() (*Gbans, error) {
 	g.bot = b
 	g.web = w
 
-	return &g, nil
+	return g, nil
 }
 
 type warnReason int
