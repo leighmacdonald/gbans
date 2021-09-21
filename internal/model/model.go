@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
+	"github.com/rumblefrog/go-a2s"
 	"net"
 	"regexp"
 	"time"
@@ -265,6 +266,20 @@ func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
 }
 
+type ServerStateCollection map[string]ServerState
+
+func (c ServerStateCollection) ByRegion() map[string][]ServerState {
+	rm := map[string][]ServerState{}
+	for serverId, server := range c {
+		_, exists := rm[server.Region]
+		if !exists {
+			rm[server.Region] = []ServerState{}
+		}
+		rm[server.Region] = append(rm[server.Region], c[serverId])
+	}
+	return rm
+}
+
 func NewServer(name string, address string, port int) Server {
 	return Server{
 		ServerName:     name,
@@ -279,6 +294,20 @@ func NewServer(name string, address string, port int) Server {
 		CreatedOn:      config.Now(),
 		UpdatedOn:      config.Now(),
 	}
+}
+
+type ServerState struct {
+	NameLong    string
+	Name        string
+	Host        string
+	Enabled     bool
+	Region      string
+	CountryCode string
+	Reserved    int
+	A2S         a2s.ServerInfo
+	Status      extra.Status
+	Players     []extra.Player
+	LastUpdate  time.Time
 }
 
 type Person struct {
@@ -408,6 +437,16 @@ type PlayerInfo struct {
 	SteamID steamid.SID64
 	InGame  bool
 	Valid   bool
+}
+
+func NewPlayerInfo() PlayerInfo {
+	return PlayerInfo{
+		Player:  &extra.Player{},
+		Server:  nil,
+		SteamID: 0,
+		InGame:  false,
+		Valid:   false,
+	}
 }
 
 type LogQueryOpts struct {

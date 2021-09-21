@@ -14,13 +14,13 @@ import (
 )
 
 func ExecRCON(server model.Server, cmd string) (string, error) {
-	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
+	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
 	if err != nil {
-		return "", errors.Errorf("Failed to dial server: %s", server.ServerName)
+		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerName, err)
 	}
 	resp, err2 := r.Exec(sanitizeRCONCommand(cmd))
 	if err2 != nil {
-		return "", errors.Errorf("Failed to exec command: %v", err)
+		return "", errors.Errorf("Failed to exec command: %v", err2)
 	}
 	return resp, nil
 }
@@ -60,7 +60,7 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 func GetServerStatus(server model.Server) (extra.Status, error) {
 	resp, err := ExecRCON(server, "status")
 	if err != nil {
-		log.Errorf("Failed to exec rcon command: %v", err)
+		log.Debugf("Failed to exec rcon command: %v", err)
 		return extra.Status{}, err
 	}
 	status, err2 := extra.ParseStatus(resp, true)

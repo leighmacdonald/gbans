@@ -161,8 +161,8 @@ func (db *pgStore) SaveBan(ctx context.Context, ban *model.Ban) error {
 
 func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
 	const q = `
-		INSERT INTO ban (steam_id, ban_type, reason, valid_until, created_on, updated_on) 
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO ban (steam_id, author_id, ban_type, reason, reason_text, note, valid_until, created_on, updated_on, ban_source) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING ban_id`
 	err := db.c.QueryRow(ctx, q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
 		ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
@@ -241,7 +241,7 @@ func (db *pgStore) GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedP
 	defer rows.Close()
 	for rows.Next() {
 		b := model.NewBannedPerson()
-		if err := rows.Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
+		if errS := rows.Scan(&b.Ban.BanID, &b.Ban.SteamID, &b.Ban.AuthorID, &b.Ban.BanType, &b.Ban.Reason, &b.Ban.ReasonText,
 			&b.Ban.Note, &b.Ban.Source, &b.Ban.ValidUntil, &b.Ban.CreatedOn, &b.Ban.UpdatedOn,
 			&b.Person.SteamID, &b.Person.CreatedOn, &b.Person.UpdatedOn,
 			&b.Person.CommunityVisibilityState, &b.Person.ProfileState, &b.Person.PersonaName, &b.Person.ProfileURL,
@@ -249,8 +249,8 @@ func (db *pgStore) GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedP
 			&b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
 			&b.Person.LocStateCode, &b.Person.LocCityID, &b.Person.PermissionLevel,
 			&b.Person.DiscordID, &b.Person.CommunityBanned, &b.Person.VACBans, &b.Person.GameBans, &b.Person.EconomyBan,
-			&b.Person.DaysSinceLastBan); err != nil {
-			return nil, err
+			&b.Person.DaysSinceLastBan); errS != nil {
+			return nil, errS
 		}
 		bans = append(bans, b)
 	}

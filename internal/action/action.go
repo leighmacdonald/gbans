@@ -16,6 +16,7 @@ type Executor interface {
 	Find(playerStr string, ip string, pi *model.PlayerInfo) error
 	FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error
 	PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error
+	GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error
 	Mute(args MuteRequest, pi *model.PlayerInfo) error
 	Ban(args BanRequest, b *model.Ban) error
 	Unban(args UnbanRequest) (bool, error)
@@ -26,6 +27,7 @@ type Executor interface {
 	PSay(args PSayRequest) error
 	ResolveSID(sidStr string) (steamid.SID64, error)
 	SetSteam(args SetSteamIDRequest) (bool, error)
+	ServerState() model.ServerStateCollection
 }
 
 var (

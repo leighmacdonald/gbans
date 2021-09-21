@@ -142,18 +142,21 @@ type generalConfig struct {
 	UseUTC                       bool          `mapstructure:"use_utc"`
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 	DefaultMap                   string        `mapstructure:"default_map"`
+	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
 }
 
 type discordConfig struct {
-	Enabled      bool     `mapstructure:"enabled"`
-	AppID        string   `mapstructure:"app_id"`
-	Token        string   `mapstructure:"token"`
-	ModRoleID    string   `mapstructure:"mod_role_id"`
-	GuildID      string   `mapstructure:"guild_id"`
-	Perms        int      `mapstructure:"perms"`
-	Prefix       string   `mapstructure:"prefix"`
-	ModChannels  []string `mapstructure:"mod_channel_ids"`
-	LogChannelID string   `mapstructure:"log_channel_id"`
+	Enabled                bool     `mapstructure:"enabled"`
+	AppID                  string   `mapstructure:"app_id"`
+	Token                  string   `mapstructure:"token"`
+	ModRoleID              string   `mapstructure:"mod_role_id"`
+	GuildID                string   `mapstructure:"guild_id"`
+	Perms                  int      `mapstructure:"perms"`
+	Prefix                 string   `mapstructure:"prefix"`
+	ModChannels            []string `mapstructure:"mod_channel_ids"`
+	LogChannelID           string   `mapstructure:"log_channel_id"`
+	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
+	PublicLogChannelId     string   `mapstructure:"public_log_channel_id"`
 }
 
 type logConfig struct {
@@ -268,6 +271,7 @@ func init() {
 	viper.SetDefault("general.use_utc", true)
 	viper.SetDefault("general.server_status_update_freq", "60s")
 	viper.SetDefault("general.default_map", "pl_badwater")
+	viper.SetDefault("general.map_changer_enabled", false)
 
 	viper.SetDefault("http.host", "127.0.0.1")
 	viper.SetDefault("http.port", 6006)
@@ -295,6 +299,8 @@ func init() {
 	viper.SetDefault("discord.prefix", "!")
 	viper.SetDefault("discord.mod_channel_ids", nil)
 	viper.SetDefault("discord.guild_id", "")
+	viper.SetDefault("discord.public_log_channel_enable", false)
+	viper.SetDefault("discord.public_log_channel_id", "")
 
 	viper.SetDefault("network_bans.enabled", false)
 	viper.SetDefault("network_bans.max_age", "1d")

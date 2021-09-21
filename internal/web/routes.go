@@ -88,6 +88,7 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	serverAuth := r.Use(w.authMiddleWare(db))
 	serverAuth.POST("/api/ping_mod", w.onPostPingMod(bot))
 	serverAuth.POST("/api/check", w.onPostServerCheck(db))
+	serverAuth.POST("/api/demo", w.onPostDemo(db))
 
 	// Basic logged in user
 	authed := r.Use(w.authMiddleware(db, model.PAuthenticated))

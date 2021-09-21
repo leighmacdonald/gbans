@@ -80,9 +80,11 @@ func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 		    loccountrycode = $14, locstatecode = $15, loccityid = $16, permission_level = $17, discord_id = $18,
 		    community_banned = $19, vac_bans = $20, game_bans = $21, economy_ban = $22, days_since_last_ban = $23
 		WHERE steam_id = $1`
-	if _, err := db.c.Exec(ctx, q, p.SteamID, p.UpdatedOn, p.CommunityVisibilityState, p.ProfileState, p.PersonaName,
-		p.ProfileURL, p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName,
-		p.TimeCreated, p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel, p.DiscordID,
+	if _, err := db.c.Exec(ctx, q, p.SteamID, p.UpdatedOn, p.PlayerSummary.CommunityVisibilityState,
+		p.PlayerSummary.ProfileState, p.PlayerSummary.PersonaName, p.PlayerSummary.ProfileURL, p.PlayerSummary.Avatar,
+		p.PlayerSummary.AvatarMedium, p.PlayerSummary.AvatarFull, p.PlayerSummary.AvatarHash,
+		p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.TimeCreated, p.PlayerSummary.LocCountryCode,
+		p.PlayerSummary.LocStateCode, p.PlayerSummary.LocCityID, p.PermissionLevel, p.DiscordID,
 		p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan); err != nil {
 		return dbErr(err)
 	}
@@ -99,10 +101,12 @@ func (db *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
 			"loccityid", "permission_level", "discord_id", "community_banned", "vac_bans", "game_bans",
 			"economy_ban", "days_since_last_ban").
 		Values(p.CreatedOn, p.UpdatedOn, p.SteamID,
-			p.CommunityVisibilityState, p.ProfileState, p.PersonaName, p.ProfileURL,
-			p.Avatar, p.AvatarMedium, p.AvatarFull, p.AvatarHash, p.PersonaState, p.RealName, p.TimeCreated,
-			p.LocCountryCode, p.LocStateCode, p.LocCityID, p.PermissionLevel, p.DiscordID, p.CommunityBanned, p.VACBans,
-			p.GameBans, p.EconomyBan, p.DaysSinceLastBan).
+			p.PlayerSummary.CommunityVisibilityState, p.PlayerSummary.ProfileState, p.PlayerSummary.PersonaName,
+			p.PlayerSummary.ProfileURL,
+			p.PlayerSummary.Avatar, p.PlayerSummary.AvatarMedium, p.PlayerSummary.AvatarFull, p.PlayerSummary.AvatarHash,
+			p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.PlayerSummary.TimeCreated,
+			p.PlayerSummary.LocCountryCode, p.PlayerSummary.LocStateCode, p.PlayerSummary.LocCityID, p.PermissionLevel,
+			p.DiscordID, p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan).
 		ToSql()
 	if e != nil {
 		return e

@@ -3,8 +3,8 @@ package web
 import (
 	"context"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"

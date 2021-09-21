@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -13,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net"
 	"strings"
-	"sync"
+	"time"
 )
 
 // Find will attempt to match an input string to a steam id and if connected, a
@@ -31,7 +30,6 @@ func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 			Server: &model.Server{},
 		}
 		err      error
-		sid      steamid.SID64
 		inGame   = false
 		valid    = false
 		foundSid steamid.SID64
@@ -43,21 +41,12 @@ func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 			inGame = true
 		}
 	} else {
-		sidFS, errFS := steamid.ResolveSID64(g.ctx, playerStr)
-		if errFS == nil && sidFS.Valid() {
-			foundSid = sidFS
-
-			if err = g.findPlayerBySID(g.ctx, sidFS, pi); err == nil {
-				inGame = true
-			}
-		} else {
-			if err = g.findPlayerByName(g.ctx, playerStr, pi); err == nil {
-				foundSid = result.Player.SID
-				inGame = true
-			}
+		if err = g.findPlayerByName(g.ctx, playerStr, pi); err == nil {
+			foundSid = result.Player.SID
+			inGame = true
 		}
 	}
-	if sid.Valid() || foundSid.Valid() {
+	if pi != nil && pi.Player.SID.Valid() || foundSid.Valid() {
 		valid = true
 	}
 	pi.Valid = valid
@@ -67,16 +56,16 @@ func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 
 func (g *Gbans) findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
 	name = strings.ToLower(name)
-	statuses, err := g.getAllServerStatus(ctx)
-	if err != nil {
-		return err
-	}
-	for server, status := range statuses {
-		for _, player := range status.Players {
+	for serverId, status := range g.ServerState() {
+		for _, player := range status.Status.Players {
 			if strings.Contains(strings.ToLower(player.Name), name) {
+				var srv model.Server
+				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+					return errGS
+				}
 				pi.Valid = true
 				pi.InGame = true
-				pi.Server = &server
+				pi.Server = &srv
 				pi.Player = &player
 				return nil
 			}
@@ -86,16 +75,16 @@ func (g *Gbans) findPlayerByName(ctx context.Context, name string, pi *model.Pla
 }
 
 func (g *Gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
-	statuses, err := g.getAllServerStatus(ctx)
-	if err != nil {
-		return err
-	}
-	for server, status := range statuses {
-		for _, player := range status.Players {
+	for serverId, status := range g.ServerState() {
+		for _, player := range status.Status.Players {
 			if player.SID == sid {
+				var srv model.Server
+				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+					return errGS
+				}
 				pi.Valid = true
 				pi.InGame = true
-				pi.Server = &server
+				pi.Server = &srv
 				pi.Player = &player
 				return nil
 			}
@@ -105,16 +94,16 @@ func (g *Gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *mode
 }
 
 func (g *Gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
-	statuses, err := g.getAllServerStatus(ctx)
-	if err != nil {
-		return err
-	}
-	for server, status := range statuses {
+	for serverId, status := range g.ServerState() {
 		for _, player := range status.Players {
 			if ip.Equal(player.IP) {
+				var srv model.Server
+				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+					return errGS
+				}
 				pi.Valid = true
 				pi.InGame = true
-				pi.Server = &server
+				pi.Server = &srv
 				pi.Player = &player
 				return nil
 			}
@@ -123,46 +112,31 @@ func (g *Gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerI
 	return consts.ErrUnknownID
 }
 
-func (g *Gbans) getAllServerStatus(ctx context.Context) (map[model.Server]extra.Status, error) {
-	servers, err := g.db.GetServers(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	statuses := make(map[model.Server]extra.Status)
-	mu := &sync.RWMutex{}
-	wg := &sync.WaitGroup{}
-	for _, s := range servers {
-		wg.Add(1)
-		go func(server model.Server) {
-			defer wg.Done()
-			status, err2 := query.GetServerStatus(server)
-			if err2 != nil {
-				log.Errorf("Failed to parse status output: %v", err2)
-				return
-			}
-			mu.Lock()
-			statuses[server] = status
-			mu.Unlock()
-		}(s)
-	}
-	wg.Wait()
-	return statuses, nil
+// ServerState returns a copy of the current known state for all servers.
+func (g *Gbans) ServerState() model.ServerStateCollection {
+	g.serversStateMu.RLock()
+	state := g.serversState
+	g.serversStateMu.RUnlock()
+	return state
 }
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
 func (g Gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
-	statuses, err := g.getAllServerStatus(g.ctx)
-	if err != nil {
-		return err
-	}
-	for server, status := range statuses {
+	for serverId, status := range g.ServerState() {
 		for _, player := range status.Players {
 			if ipNet.Contains(player.IP) {
+				c, cancel := context.WithTimeout(g.ctx, time.Second*5)
+				var srv model.Server
+				if errGS := g.db.GetServerByName(c, serverId, &srv); errGS != nil {
+					cancel()
+					return errGS
+				}
 				pi.Valid = true
 				pi.InGame = true
-				pi.Server = &server
+				pi.Server = &srv
 				pi.Player = &player
+				cancel()
 			}
 		}
 	}
@@ -172,7 +146,6 @@ func (g Gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
 // GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
 func (g Gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
-	// TODO make these non-fatal errors?
 	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get Player summary: %v", err)
@@ -181,8 +154,8 @@ func (g Gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID6
 	if errBans != nil || len(vac) != 1 {
 		return errors.Wrapf(err, "Failed to get Player ban state: %v", err)
 	}
-	if err := g.db.GetOrCreatePersonBySteamID(ctx, sid, p); err != nil {
-		return errors.Wrapf(err, "Failed to get person: %v", err)
+	if errGP := g.db.GetOrCreatePersonBySteamID(ctx, sid, p); err != nil {
+		return errors.Wrapf(errGP, "Failed to get person: %d", sid)
 	}
 	p.SteamID = sid
 	p.CommunityBanned = vac[0].CommunityBanned

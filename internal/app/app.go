@@ -35,7 +35,7 @@ type Gbans struct {
 	bot            discord.ChatBot
 	db             store.Store
 	web            web.WebHandler
-	serversState   map[string]serverState
+	serversState   map[string]model.ServerState
 	serversStateMu *sync.RWMutex
 	l              *log.Entry
 }

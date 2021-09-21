@@ -41,6 +41,33 @@ func responseOK(c *gin.Context, status int, data interface{}) {
 	})
 }
 
+type demoPostRequest struct {
+	ServerName string `form:"server_name"`
+}
+
+func (w *Web) onPostDemo(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var r demoPostRequest
+		if errR := c.Bind(&r); errR != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		f, hdr, err := c.Request.FormFile("file")
+		if err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var server model.Server
+		if errS := db.GetServerByName(c, r.ServerName, &server); errS != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var d []byte
+		f.Read(d)
+		model.NewDemoFile(server.ServerID, hdr.Filename, d)
+	}
+}
+
 func (w *Web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`

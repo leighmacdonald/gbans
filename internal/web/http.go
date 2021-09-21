@@ -38,7 +38,13 @@ func (w Web) ListenAndServe() error {
 // This function blocks on the context
 func New(logMsgChan chan LogPayload, db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
 	var httpServer *http.Server
+	if config.General.Mode == config.Release {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
 	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
 
 	log.Infof("Starting HTTP service")
 	httpServer = &http.Server{

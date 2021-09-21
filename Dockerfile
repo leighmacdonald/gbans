@@ -9,7 +9,7 @@ RUN yarn
 RUN yarn build
 RUN yarn run copy
 
-FROM golang:1.16-alpine as build
+FROM golang:1.17.1-alpine as build
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 WORKDIR /build
 RUN apk add make git gcc libc-dev
@@ -20,7 +20,7 @@ COPY pkg pkg
 COPY internal internal
 RUN make build
 
-FROM alpine:3.14.0
+FROM alpine:3.14.2
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 EXPOSE 6006
 RUN apk add dumb-init

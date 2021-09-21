@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -116,7 +117,7 @@ func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	if errDur != nil {
 		return errDur
 	}
-	var existing model.BannedPerson
+	existing := model.NewBannedPerson()
 	err := g.db.GetBanBySteamID(g.ctx, target, false, &existing)
 	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return store.ErrDuplicate
@@ -143,9 +144,47 @@ func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
 		return err2
 	}
 	go func() {
+		banNotice := &discordgo.MessageEmbed{
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", b.SteamID),
+			Type:  discordgo.EmbedTypeRich,
+			Title: fmt.Sprintf("User Banned (#%d)", b.BanID),
+			Color: 10038562,
+		}
+		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
+			Name:   "STEAM",
+			Value:  string(steamid.SID64ToSID(b.SteamID)),
+			Inline: true,
+		})
+		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
+			Name:   "STEAM3",
+			Value:  string(steamid.SID64ToSID3(b.SteamID)),
+			Inline: true,
+		})
+		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
+			Name:   "SID64",
+			Value:  b.SteamID.String(),
+			Inline: true,
+		})
+		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
+			Name:   "Expires In",
+			Value:  config.FmtDuration(b.ValidUntil),
+			Inline: false,
+		})
+		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
+			Name:   "Expires At",
+			Value:  config.FmtTimeShort(b.ValidUntil),
+			Inline: false,
+		})
+		if config.Discord.PublicLogChannelEnable {
+			if errPLC := g.bot.SendEmbed(config.Discord.PublicLogChannelId, banNotice); errPLC != nil {
+				log.Errorf("Failed to send ban notice to public channel: %v", errPLC)
+			}
+		}
+	}()
+	go func() {
 		ipAddr := ""
 		// kick the user if they currently are playing on a server
-		var pi model.PlayerInfo
+		pi := model.NewPlayerInfo()
 		_ = g.Find(target.String(), "", &pi)
 		if pi.Valid && pi.InGame {
 			ipAddr = pi.Player.IP.String()
@@ -153,7 +192,7 @@ func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
 				fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
 				log.Errorf("Faied to kick user afeter b: %v", errR)
 			}
-			var p model.Person
+			p := model.NewPerson(pi.Player.SID)
 			if errG := g.db.GetOrCreatePersonBySteamID(g.ctx, pi.Player.SID, &p); errG != nil {
 				log.Errorf("Failed to fetch banned player: %v", errG)
 			}
@@ -367,6 +406,9 @@ func (g Gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) er
 		if err := g.db.SavePerson(g.ctx, p); err != nil {
 			log.Errorf("Failed to save updated profile: %v", errW)
 			return nil
+		}
+		if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
+			return err
 		}
 	}
 	return nil

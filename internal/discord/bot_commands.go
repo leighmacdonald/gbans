@@ -328,7 +328,7 @@ type responseMsgType int
 
 const (
 	mtString responseMsgType = iota
-	mtInteractive
+	mtEmbed
 	mtImage
 )
 
@@ -348,6 +348,7 @@ const (
 
 func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	cmd := botCmd(i.Data.Name)
+	r := botResponse{MsgType: mtString}
 	if h, ok := b.commandHandlers[cmd]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. Discord will time out commands that don't respond within a
@@ -358,34 +359,28 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 				Content: "Calculating numberwang...",
 			},
 		}); err != nil {
-			log.Errorf("Failed to send servers pre response: %v", err)
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
+			respErr(&r, fmt.Sprintf("Error: %s", err.Error()))
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
 			return
 		}
 		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		r := botResponse{MsgType: mtString}
+
 		if err := h(c, s, i, &r); err != nil {
 			// TODO User facing errors only
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, fmt.Sprintf("Error: %s", err.Error())); sendE != nil {
+			respErr(&r, fmt.Sprintf("Error: %s", err.Error()))
+			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		switch r.MsgType {
-		case mtString:
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r.Value.(string)); sendE != nil {
-				log.Errorf("Failed sending success response for interaction: %v", sendE)
-			}
-		case mtInteractive:
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r.Value.(string)); sendE != nil {
-				log.Errorf("Failed sending success response for interaction: %v", sendE)
-			}
-		case mtImage:
-			// TODO
+		if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
+			log.Errorf("Failed sending success response for interaction: %v", sendE)
+		} else {
+			log.Debugf("Send message embed")
 		}
 	}
 }

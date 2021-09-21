@@ -40,9 +40,9 @@ func A2SQueryServer(server model.Server) (*a2s.ServerInfo, error) {
 			log.WithFields(log.Fields{"server": server.ServerName}).Errorf("Failed to close a2s client: %v", err)
 		}
 	}()
-	info, err := client.QueryInfo() // QueryInfo, QueryPlayer, QueryRules
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to query server info")
+	info, err2 := client.QueryInfo() // QueryInfo, QueryPlayer, QueryRules
+	if err2 != nil {
+		return nil, errors.Wrapf(err2, "Failed to query server info")
 	}
 	return info, nil
 }

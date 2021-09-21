@@ -18,6 +18,10 @@ import (
 	"time"
 )
 
+const (
+	embedIconURL = "https://raw.githubusercontent.com/leighmacdonald/gbans/master/frontend/src/icons/logo.svg"
+)
+
 var (
 	errCommandFailed = errors.New("Command failed")
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
@@ -196,7 +200,7 @@ func (b *Bot) sendChannelMessage(s *discordgo.Session, c string, msg string, wra
 	return nil
 }
 
-func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, msg string) error {
+func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
 	b.connectedMu.RLock()
 	if !b.connected {
 		b.connectedMu.RUnlock()
@@ -204,18 +208,36 @@ func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Inte
 		return nil
 	}
 	b.connectedMu.RUnlock()
-	msg = discordMsgWrapper + msg + discordMsgWrapper
-	if len(msg) > discordMaxMsgLen {
-		return errTooLarge
+
+	e := &discordgo.WebhookEdit{
+		Content:         "",
+		Embeds:          nil,
+		AllowedMentions: nil,
 	}
-	return s.InteractionResponseEdit(config.Discord.AppID, i, &discordgo.WebhookEdit{Content: msg})
+	switch r.MsgType {
+	case mtString:
+		e.Content = r.Value.(string)
+		if len(e.Content) > discordMaxMsgLen {
+			return errTooLarge
+		}
+	case mtEmbed:
+		e.Embeds = append(e.Embeds, r.Value.(*discordgo.MessageEmbed))
+	}
+	return s.InteractionResponseEdit(config.Discord.AppID, i, e)
 }
 
 func (b *Bot) Send(channelId string, message string, wrap bool) error {
 	return b.sendChannelMessage(b.dg, channelId, message, wrap)
 }
+func (b *Bot) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
+		return errSend
+	}
+	return nil
+}
 
 type ChatBot interface {
 	Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error
 	Send(channelId string, message string, wrap bool) error
+	SendEmbed(channelId string, message *discordgo.MessageEmbed) error
 }
