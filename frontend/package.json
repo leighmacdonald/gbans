@@ -44,7 +44,7 @@
     "@types/lodash": "^4.14.173",
     "@types/lodash-es": "^4.17.5",
     "@types/node": "^16.9.4",
-    "@types/react": "^17.0.21",
+    "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@types/react-router-dom": "^5.1.9",
     "@types/steamid": "^2.0.0",
