@@ -263,14 +263,17 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	return people, nil
 }
 
-func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt, error) {
-	const q = `
+func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
+	q := `
 		SELECT l.source_id, coalesce(p.personaname, ''), l.extra
 		FROM server_log l
 		LEFT JOIN person p on l.source_id = p.steam_id
 		WHERE source_id = $1
 		  AND (event_type = 10 OR event_type = 11) 
 		ORDER BY l.created_on DESC`
+	if limit > 0 {
+		q += fmt.Sprintf(" LIMIT %d", limit)
+	}
 	rows, err := db.c.Query(ctx, q, sid64.String())
 	if err != nil {
 		return nil, dbErr(err)

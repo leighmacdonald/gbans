@@ -37,9 +37,9 @@ type seedData struct {
 	}
 }
 
-// testDataCmd loads the db schema
-var testDataCmd = &cobra.Command{
-	Use:   "test_data",
+// seedCmd loads the db schema
+var seedCmd = &cobra.Command{
+	Use:   "seed",
 	Short: "Add testing data",
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := store.New(config.DB.DSN)
@@ -147,8 +147,8 @@ var testDataCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(testDataCmd)
+	rootCmd.AddCommand(seedCmd)
 
-	testDataCmd.Flags().StringVarP(&testRconPass, "rcon", "r", "testing", "Sets the rcon password for test data")
-	testDataCmd.Flags().StringVarP(&seedFile, "seed", "s", "seed.json", "Seed the database with this content")
+	seedCmd.Flags().StringVarP(&testRconPass, "rcon", "r", "testing", "Sets the rcon password for seed data")
+	seedCmd.Flags().StringVarP(&seedFile, "seed", "s", "seed.json", "Seed the database with this content")
 }

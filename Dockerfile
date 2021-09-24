@@ -7,7 +7,6 @@ COPY frontend frontend
 WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
-RUN yarn run copy
 
 FROM golang:1.17.1-alpine as build
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"

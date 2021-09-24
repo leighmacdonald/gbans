@@ -182,7 +182,7 @@ func TestMain(m *testing.M) {
 //	}
 //	defer ws.Close()
 //
-//	checkResp := func(t *testing.T, pt web.PayloadType, req interface{}, rt web.PayloadType, res interface{}) {
+//	checkResp := func(t *testing.T, pt web.Type, req interface{}, rt web.Type, res interface{}) {
 //		p, errEnc := web.EncodeWSPayload(pt, req)
 //		if errEnc != nil {
 //			t.FailNow()
@@ -197,8 +197,8 @@ func TestMain(m *testing.M) {
 //		var resp web.SocketPayload
 //		state := int32(web.Closed)
 //		require.NoError(t, json.Unmarshal(respBytes, &resp), "Failed to decode response")
-//		require.Equal(t, rt, resp.PayloadType, "Got invalid payload type")
-//		switch resp.PayloadType {
+//		require.Equal(t, rt, resp.Type, "Got invalid payload type")
+//		switch resp.Type {
 //		case web.ErrType:
 //			var wsErr web.WSErrRes
 //			require.NoError(t, json.Unmarshal(resp.Data, &wsErr))

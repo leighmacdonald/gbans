@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -42,7 +41,7 @@ var (
 	}
 )
 
-func respErr(r *botResponse, m string) {
+func RespErr(r *botResponse, m string) {
 	r.Value = &discordgo.MessageEmbed{
 		URL:      "",
 		Type:     discordgo.EmbedTypeRich,
@@ -61,8 +60,8 @@ func respErr(r *botResponse, m string) {
 	r.MsgType = mtEmbed
 }
 
-func respOk(title string) *discordgo.MessageEmbed {
-	return &discordgo.MessageEmbed{
+func RespOk(r *botResponse, title string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       title,
 		Description: "",
@@ -75,6 +74,11 @@ func respOk(title string) *discordgo.MessageEmbed {
 		Author:      nil,
 		Fields:      nil,
 	}
+	if r != nil {
+		r.MsgType = mtEmbed
+		r.Value = embed
+	}
+	return embed
 }
 
 func (b *Bot) onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
@@ -86,11 +90,10 @@ func (b *Bot) onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.Int
 	if !pi.Valid || !pi.InGame {
 		return consts.ErrUnknownID
 	}
-	e := respOk("Player Found")
+	e := RespOk(r, "Player Found")
 	p := model.NewPerson(pi.SteamID)
 	if errP := b.executor.GetOrCreateProfileBySteamID(ctx, pi.SteamID, "", &p); errP != nil {
-		respErr(r, "Failed to get profile")
-		return nil
+		return errors.New("Failed to get profile")
 	}
 	e.Type = discordgo.EmbedTypeRich
 	e.Image = &discordgo.MessageEmbedImage{URL: p.AvatarFull}
@@ -122,8 +125,6 @@ func (b *Bot) onFind(ctx context.Context, _ *discordgo.Session, m *discordgo.Int
 		Value:  fmt.Sprintf("steam://%s:%d", pi.Server.Address, pi.Server.Port),
 		Inline: false,
 	})
-	r.Value = e
-	r.MsgType = mtEmbed
 	return nil
 }
 
@@ -144,12 +145,16 @@ func (b *Bot) onMute(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 
 func (b *Bot) onBanIP(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	reason := model.Custom.String()
-	if len(m.Data.Options) > 2 {
-		reason = m.Data.Options[2].Value.(string)
+	if len(m.Data.Options) > 3 {
+		reason = m.Data.Options[3].Value.(string)
 	}
 	var bn model.BanNet
-	if err := b.executor.BanNetwork(action.NewBanNet(action.Discord, "", m.Member.User.ID, reason,
+	if err := b.executor.BanNetwork(action.NewBanNet(
+		action.Discord,
 		m.Data.Options[1].Value.(string),
+		m.Member.User.ID,
+		reason,
+		m.Data.Options[2].Value.(string),
 		m.Data.Options[0].Value.(string)), &bn); err != nil {
 		return err
 	}
@@ -170,7 +175,7 @@ func (b *Bot) onBanIP(_ context.Context, _ *discordgo.Session, m *discordgo.Inte
 			}
 		}
 	}(m.Data.Options[0].Value.(string))
-	r.Value = "IP ban created successfully"
+	RespOk(r, "IP ban created successfully")
 	return nil
 }
 
@@ -196,7 +201,7 @@ func (b *Bot) onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.Inte
 		}
 		return errCommandFailed
 	}
-	e := respOk("User Banned")
+	e := RespOk(r, "User Banned")
 	e.Title = fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)
 	e.Description = ban.Note
 	if ban.ReasonText != "" {
@@ -231,9 +236,6 @@ func (b *Bot) onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.Inte
 		Value:  config.FmtTimeShort(ban.ValidUntil),
 		Inline: false,
 	})
-	r.MsgType = mtEmbed
-	r.Value = e
-
 	return nil
 }
 
@@ -478,7 +480,7 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 			Inline: true,
 		})
 	}
-	e := respOk(title)
+	e := RespOk(r, title)
 	e.URL = player.ProfileURL
 	e.Timestamp = createdAt
 	e.Color = color
@@ -487,8 +489,6 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	e.Video = nil
 	e.Author = author
 	e.Fields = fields
-	r.Value = e
-	r.MsgType = mtEmbed
 	return nil
 }
 
@@ -514,30 +514,26 @@ func (b *Bot) onHistoryIP(ctx context.Context, _ *discordgo.Session, m *discordg
 	if errIPH != nil && errIPH != store.ErrNoResult {
 		return errCommandFailed
 	}
-
-	t := defaultTable(fmt.Sprintf("IP History of: %s", p.PersonaName))
-	t.AppendSeparator()
-	t.SuppressEmptyColumns()
+	e := RespOk(r, fmt.Sprintf("Chat History of: %s", p.PersonaName))
 	lastIp := net.IP{}
-	for _, rec := range records {
-		if rec.IP.Equal(lastIp) {
+	for _, l := range records {
+		if l.IP.Equal(lastIp) {
 			continue
 		}
-		t.AppendRow(table.Row{
-			rec.IP.String(),
-			rec.CreatedOn.Format("Mon Jan 2 15:04:05"),
-			fmt.Sprintf("%s, %s", rec.CityName, rec.CountryCode),
-			fmt.Sprintf("(%d) %s", rec.ASNum, rec.ASName),
-			fmt.Sprintf("%s, %s, %s, %s", rec.ISP, rec.UsageType, rec.Threat, rec.DomainUsed),
+		e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+			Name: l.IP.String(),
+			Value: fmt.Sprintf("%s %s %s %s %s %s %s %s", config.FmtTimeShort(l.CreatedOn), l.CountryCode,
+				l.CityName, l.ASName, l.ISP, l.UsageType, l.Threat, l.DomainUsed),
+			Inline: false,
 		})
-		lastIp = rec.IP
+		lastIp = l.IP
 	}
-	r.Value = t.Render()
+	e.Description = "IP history (20 max)"
 	return nil
 }
 
 func (b *Bot) onHistoryChat(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
-	sid, err := b.executor.ResolveSID(m.Data.Options[0].Value.(string))
+	sid, err := b.executor.ResolveSID(m.Data.Options[0].Options[0].Value.(string))
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
@@ -545,21 +541,19 @@ func (b *Bot) onHistoryChat(ctx context.Context, _ *discordgo.Session, m *discor
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
-	hist, errC := b.db.GetChatHistory(ctx, sid)
-	if errC != nil && errC != store.ErrNoResult {
+	hist, errC := b.db.GetChatHistory(ctx, sid, 25)
+	if errC != nil && !errors.Is(errC, store.ErrNoResult) {
 		return errCommandFailed
 	}
-	t := defaultTable(fmt.Sprintf("Chat History of: %s", p.PersonaName))
-	t.AppendHeader(table.Row{"Time", "Message"})
-	t.AppendSeparator()
-	t.SuppressEmptyColumns()
-	for _, l := range hist {
-		t.AppendRow(table.Row{
-			config.FmtTimeShort(l.CreatedOn),
-			l.Msg,
-		})
+	if errors.Is(errC, store.ErrNoResult) {
+		return errors.New("No chat history found")
 	}
-	r.Value = t.Render()
+	var lines []string
+	for _, l := range hist {
+		lines = append(lines, fmt.Sprintf("%s: %s", config.FmtTimeShort(l.CreatedOn), l.Msg))
+	}
+	e := RespOk(r, fmt.Sprintf("Chat History of: %s", p.PersonaName))
+	e.Description = strings.Join(lines, "\n")
 	return nil
 }
 
@@ -579,10 +573,8 @@ func (b *Bot) onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo
 	if errS := b.db.SavePerson(ctx, &p); errS != nil {
 		return errCommandFailed
 	}
-	e := respOk("Steam Account Linked")
+	e := RespOk(r, "Steam Account Linked")
 	e.Description = "Your steam and discord accounts are now linked"
-	r.Value = e
-	r.MsgType = mtEmbed
 	return nil
 }
 
@@ -606,7 +598,7 @@ func (b *Bot) onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	if errBS := b.db.SaveBan(ctx, &ban.Ban); errBS != nil {
 		return errCommandFailed
 	}
-	e := respOk("User Unbanned Successfully")
+	e := RespOk(r, "User Unbanned Successfully")
 	e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
 		Name:   "STEAM",
 		Value:  string(steamid.SID64ToSID(sid)),
@@ -622,13 +614,11 @@ func (b *Bot) onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 		Value:  sid.String(),
 		Inline: true,
 	})
-	r.Value = e
-	r.MsgType = mtEmbed
 	return nil
 }
 
 func (b *Bot) onKick(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
-	sid, err := b.executor.ResolveSID(m.Data.Options[0].Options[0].Value.(string))
+	sid, err := b.executor.ResolveSID(m.Data.Options[0].Value.(string))
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
@@ -656,9 +646,7 @@ func (b *Bot) onSay(_ context.Context, _ *discordgo.Session, m *discordgo.Intera
 	if errS := b.executor.Say(action.NewSay(action.Discord, server, msg)); errS != nil {
 		return errCommandFailed
 	}
-	e := respOk("Sent message successfully")
-	r.Value = e
-	r.MsgType = mtEmbed
+	RespOk(r, "Sent message successfully")
 	return nil
 }
 
@@ -668,9 +656,7 @@ func (b *Bot) onCSay(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 	if errS := b.executor.CSay(action.NewCSay(action.Discord, server, msg)); errS != nil {
 		return errCommandFailed
 	}
-	e := respOk("Sent message successfully")
-	r.Value = e
-	r.MsgType = mtEmbed
+	RespOk(r, "Sent message successfully")
 	return nil
 }
 
@@ -680,12 +666,11 @@ func (b *Bot) onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 	if errS := b.executor.PSay(action.NewPSay(action.Discord, player, msg)); errS != nil {
 		return errCommandFailed
 	}
-	e := respOk("Sent message successfully")
-	r.Value = e
-	r.MsgType = mtEmbed
+	RespOk(r, "Sent message successfully")
 	return nil
 }
 
+// TODO dont hard code this
 func mapRegion(n string) string {
 	switch n {
 	case "asia":
@@ -773,17 +758,6 @@ func (b *Bot) onServers(ctx context.Context, _ *discordgo.Session, m *discordgo.
 	return nil
 }
 
-func defaultTable(title string) table.Writer {
-	t := table.NewWriter()
-	t.SetAllowedRowLength(150)
-	t.SuppressEmptyColumns()
-	if title != "" {
-		t.SetTitle(title)
-	}
-	t.SetStyle(table.StyleRounded)
-	return t
-}
-
 func (b *Bot) onPlayers(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	var server model.Server
 	if errS := b.db.GetServerByName(ctx, m.Data.Options[0].Value.(string), &server); errS != nil {
@@ -799,13 +773,11 @@ func (b *Bot) onPlayers(ctx context.Context, _ *discordgo.Session, m *discordgo.
 	}
 
 	var rows []string
-	e := respOk(fmt.Sprintf("Current Players: %s", server.ServerName))
+	e := RespOk(r, fmt.Sprintf("Current Players: %s", server.ServerName))
 	for _, p := range status.Players {
 		rows = append(rows, fmt.Sprintf("`%d` [%s](https://steamcommunity.com/profiles/%d)", p.SID, p.Name, p.SID))
 	}
 	e.Description = strings.Join(rows, "\n")
-	r.Value = e
-	r.MsgType = mtEmbed
 	return nil
 }
 

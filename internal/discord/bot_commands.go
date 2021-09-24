@@ -99,6 +99,7 @@ func (b *Bot) botRegisterSlashCommands() error {
 					Description: "Network range to block eg: 12.34.56.78/32 (1 host) | 12.34.56.0/24 (256 hosts)",
 					Required:    true,
 				},
+				optUserID,
 				optDuration,
 				optReason,
 			},
@@ -268,12 +269,13 @@ func (b *Bot) botRegisterSlashCommands() error {
 			},
 		},
 	}
-	modPerm := []*discordgo.ApplicationCommandPermission{
-		{
-			ID:         config.Discord.ModRoleID,
+	var modPerms []*discordgo.ApplicationCommandPermission
+	for _, roleId := range config.Discord.ModRoleIDs {
+		modPerms = append(modPerms, &discordgo.ApplicationCommandPermission{
+			ID:         roleId,
 			Type:       1,
 			Permission: true,
-		},
+		})
 	}
 	// NOTE
 	// We are manually calling the API to set permissions as this is not yet a feature for the discordgo library
@@ -284,10 +286,10 @@ func (b *Bot) botRegisterSlashCommands() error {
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
-		if !command.DefaultPermission {
+		if !command.DefaultPermission && len(modPerms) > 0 {
 			perms = append(perms, permissionRequest{
 				ID:          command.ID,
-				Permissions: modPerm,
+				Permissions: modPerms,
 			})
 		}
 	}
@@ -359,7 +361,7 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 				Content: "Calculating numberwang...",
 			},
 		}); err != nil {
-			respErr(&r, fmt.Sprintf("Error: %s", err.Error()))
+			RespErr(&r, fmt.Sprintf("Error: %s", err.Error()))
 			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
@@ -370,7 +372,7 @@ func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.Interaction
 
 		if err := h(c, s, i, &r); err != nil {
 			// TODO User facing errors only
-			respErr(&r, fmt.Sprintf("Error: %s", err.Error()))
+			RespErr(&r, fmt.Sprintf("Error: %s", err.Error()))
 			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}

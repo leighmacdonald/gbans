@@ -46,7 +46,7 @@ func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 			inGame = true
 		}
 	}
-	if pi != nil && pi.Player.SID.Valid() || foundSid.Valid() {
+	if pi != nil && pi.Player != nil && pi.Player.SID.Valid() || foundSid.Valid() {
 		valid = true
 	}
 	pi.Valid = valid

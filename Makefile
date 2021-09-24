@@ -7,9 +7,6 @@ DEBUG_FLAGS = -gcflags "all=-N -l"
 
 all: frontend build
 
-protoc:
-	protoc --go_out=. --go_opt=paths=import --go-grpc_out=. --go-grpc_opt=paths=import proto/server_event.proto
-
 vet:
 	@go vet . ./...
 
@@ -98,7 +95,3 @@ docker_dump:
 
 docker_restore:
 	docker exec gbans-postgres pg_dump -U gbans -f gbans.sql
-
-update_deps:
-	go get -u .\...
-	cd frontend && yarn upgrade

@@ -149,7 +149,7 @@ type discordConfig struct {
 	Enabled                bool     `mapstructure:"enabled"`
 	AppID                  string   `mapstructure:"app_id"`
 	Token                  string   `mapstructure:"token"`
-	ModRoleID              string   `mapstructure:"mod_role_id"`
+	ModRoleIDs             []string `mapstructure:"mod_role_ids"`
 	GuildID                string   `mapstructure:"guild_id"`
 	Perms                  int      `mapstructure:"perms"`
 	Prefix                 string   `mapstructure:"prefix"`
@@ -294,7 +294,7 @@ func init() {
 	viper.SetDefault("discord.enabled", false)
 	viper.SetDefault("discord.app_id", 0)
 	viper.SetDefault("discord.token", "")
-	viper.SetDefault("discord.mod_role_id", 0)
+	viper.SetDefault("discord.mod_role_ids", []string{})
 	viper.SetDefault("discord.perms", 125958)
 	viper.SetDefault("discord.prefix", "!")
 	viper.SetDefault("discord.mod_channel_ids", nil)

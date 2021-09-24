@@ -33,7 +33,7 @@ You should now have a binary in the project root called `gbans` or `gbans.exe` i
 
 Copy the example configuration `gbans_example.yml` and name it `gbans.yml`. It should be in
 the same directory as the binary. Configure it as desired. Discord is currently highly recommended, at 
-least until the webui is created.
+least until the webui is more feature complete.
 
 #### Adding servers
 

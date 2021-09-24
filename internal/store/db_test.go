@@ -216,7 +216,7 @@ func TestGetChatHistory(t *testing.T) {
 		},
 	}
 	require.NoError(t, db.BatchInsertServerLogs(ctx, logs))
-	hist, errHist := db.GetChatHistory(ctx, sid)
+	hist, errHist := db.GetChatHistory(ctx, sid, 100)
 	require.NoError(t, errHist, "Failed to fetch chat history")
 	require.True(t, len(hist) >= 2, "History size too small: %d", len(hist))
 	require.Equal(t, "test-2", hist[0].Msg)

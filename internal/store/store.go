@@ -68,7 +68,7 @@ type MigrationStore interface {
 
 type StatStore interface {
 	GetStats(ctx context.Context, s *model.Stats) error
-	GetChatHistory(ctx context.Context, sid64 steamid.SID64) ([]logparse.SayEvt, error)
+	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error)
 	FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error)
 	BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error
 }

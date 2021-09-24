@@ -25,7 +25,6 @@ var registered = false
 
 func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
 	clientRPCService := newClientServiceState(logMsgChan, db)
-	serverRPCService := newAgentServiceState()
 	r.Use(gin.Logger())
 	if !registered {
 		prom := ginprom.New(func(p *ginprom.Prometheus) {
@@ -79,8 +78,7 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())
-	r.GET("/ws/web", clientRPCService.onWSStart)
-	r.GET("/ws/rpc", serverRPCService.onWSStart)
+	r.GET("/api/ws", clientRPCService.onWSStart)
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))

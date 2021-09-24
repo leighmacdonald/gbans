@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -18,6 +19,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -91,10 +93,35 @@ func (w *Web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 		if pi.InGame {
 			name += fmt.Sprintf(" (%s)", pi.Player.Name)
 		}
+		var roleStrings []string
+		for _, i := range config.Discord.ModRoleIDs {
+			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", i))
+		}
+		e := discord.RespOk(nil, "New User Report")
+		e.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
+		if pi.Player.Name != "" {
+			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+				Name:   "Reporter",
+				Value:  pi.Player.Name,
+				Inline: true,
+			})
+		}
+		if req.SteamID.String() != "" {
+			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+				Name:   "ReporterSID",
+				Value:  req.SteamID.String(),
+				Inline: true,
+			})
+		}
+		if req.ServerName != "" {
+			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+				Name:   "Server",
+				Value:  req.ServerName,
+				Inline: true,
+			})
+		}
 		for _, chanId := range config.Discord.ModChannels {
-			m := fmt.Sprintf("<@&%s> [%s] (%s): %s", config.Discord.ModRoleID, req.ServerName, name, req.Reason)
-			err := bot.Send(chanId, m, false)
-			if err != nil {
+			if errSend := bot.SendEmbed(chanId, e); errSend != nil {
 				responseErr(c, http.StatusInternalServerError, nil)
 				return
 			}
@@ -268,7 +295,7 @@ func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
-		var ban model.BannedPerson
+		ban := model.NewBannedPerson()
 		if errB := db.GetBanBySteamID(ctx, steamID, false, &ban); errB != nil {
 			if errB == store.ErrNoResult {
 				resp.BanType = model.OK

@@ -3,7 +3,9 @@ package agent
 import (
 	"bytes"
 	"context"
-	"github.com/leighmacdonald/gbans/internal/web"
+	"encoding/json"
+	"github.com/leighmacdonald/gbans/internal/web/ws"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
@@ -26,12 +28,18 @@ type Agent struct {
 	ctx         context.Context
 	messageChan chan string
 	opts        Opts
-	client      *web.RPCClient
+	client      *ws.Client
 	l           log.Logger
 }
 
 func NewAgent(ctx context.Context, o Opts) (*Agent, error) {
-	c, err := web.NewRPCClient(o.ServerAddress)
+	handlers := ws.Handlers{
+		ws.Sup: func(payload ws.Payload) error {
+			log.Debugf("Got sup.")
+			return nil
+		},
+	}
+	c, err := ws.NewClient(o.ServerAddress, handlers)
 	if err != nil {
 		return nil, err
 	}
@@ -45,26 +53,21 @@ const (
 	mbSecret   = 0x53
 )
 
-func (a *Agent) connect() error {
-	go a.client.Start()
-	return nil
-}
-
 func (a *Agent) Start() error {
-	// TODO auto retry/error handling
-	if err3 := a.connect(); err3 != nil {
-		log.Errorf("Agent returned error: %v", err3)
-	}
-	go a.LogListener()
-	return nil
+	go func() {
+		if err := a.logListener(); err != nil {
+			log.Errorf("Log listener returned err: %v", err)
+		}
+	}()
+	return a.client.Connect()
 }
 
-// LogListener receives srcds log broadcasts
+// logListener receives srcds log broadcasts
 // mp_logdetail 3
 // sv_logsecret xxx
 // logaddress_add 192.168.0.101:7777
 // log on
-func (a *Agent) LogListener() error {
+func (a *Agent) logListener() error {
 	l, err := net.ListenPacket("udp", a.opts.LogListenAddress)
 	if err != nil {
 		return err
@@ -77,6 +80,7 @@ func (a *Agent) LogListener() error {
 	a.l.WithFields(log.Fields{"addr": a.opts.LogListenAddress}).Debugf("Listening")
 	doneChan := make(chan error, 1)
 	buffer := make([]byte, 1024)
+	log.Infof("Listening on: %s", a.opts.LogListenAddress)
 	go func() {
 		var (
 			n     int
@@ -86,8 +90,9 @@ func (a *Agent) LogListener() error {
 		for {
 			n, cAddr, errR = l.ReadFrom(buffer)
 			if errR != nil {
-				doneChan <- errR
-				return
+				log.Errorf("Failed to read from udp buff: %v", errR)
+				// doneChan <- errR
+				continue
 			}
 			log.WithFields(log.Fields{"addr": cAddr.String(), "size": n}).Debugf("Got log message")
 			if n < 16 {
@@ -111,7 +116,14 @@ func (a *Agent) LogListener() error {
 				msg = string(buffer[idx : n-2])
 			}
 			msg = strings.TrimRight(msg, "\r\n")
-			if errSend := a.client.Send(web.SrvLogRaw, msg); errSend != nil {
+			if errSend := a.client.Send(ws.Payload{
+				Type: ws.SrvLogRaw,
+				Data: json.RawMessage(msg),
+			}); errSend != nil {
+				if errors.Is(errSend, ws.ErrQueueFull) {
+					log.WithFields(log.Fields{"msg": msg}).Warnf("Msg discarded")
+					continue
+				}
 				if errSend != io.EOF {
 					doneChan <- errSend
 					return

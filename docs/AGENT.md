@@ -2,17 +2,23 @@
 
 The agent is, or will soon to be, capable of:
 
-- Console redirection
-  - Forwarding stdout/stderr/stdin between remote processes
-- Game Installation
-  - Download game server files via [DepotDownloader](https://github.com/SteamRE/DepotDownloader)
-  - Generate custom per-server configurations.
-  - Copy plugins or any other files to the remote game installation
-  - Update & Verify game data
-- Basic Controls
-  - Start
-  - Stop
-  - Restart
+- [x] UDP Listener to receive logs from game servers 
+  - [x] `logaddress_add` is used to send log lines in real-time over the local network, avoiding writing logs to local disk.
+  - [ ] `sv_logsecret` To identify the server sending the message.
+  - [ ] Forward message to central server
+- [ ] Console redirection
+  - [ ] Forwarding stdout/stderr/stdin between remote processes
+- [ ] Game Installation
+  - [x] Download game server files via [DepotDownloader](https://github.com/SteamRE/DepotDownloader)
+  - [ ] Generate custom per-server configurations.
+  - [ ] Copy plugins or any other files to the remote game installation
+  - [ ] Update & Verify game data
+- [ ] Basic Controls
+  - [ ] Start
+  - [ ] Stop
+  - [ ] Restart
+  
+The agent will buffer 50 messages by default. Further messages are ignored.
 
 ## Topology
 

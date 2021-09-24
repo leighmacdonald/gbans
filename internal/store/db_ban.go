@@ -48,7 +48,7 @@ func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier
 		return dbErr(err)
 	}
 	if full {
-		h, err := db.GetChatHistory(ctx, b.Person.SteamID)
+		h, err := db.GetChatHistory(ctx, b.Person.SteamID, 25)
 		if err == nil {
 			b.HistoryChat = h
 		}
