@@ -17,7 +17,7 @@ developing.
 
     {
         "settings": {
-            "rcon": "yepx2"
+            "rcon": "common_rcon_password"
         },
         "admins": [ "76561198084134025" ],
         "players": [
