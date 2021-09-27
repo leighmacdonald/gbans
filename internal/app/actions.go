@@ -38,7 +38,7 @@ func (g gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
 	if duration > 0 {
 		until = config.Now().Add(duration)
 	}
-	var b model.BannedPerson
+	b := model.NewBannedPerson()
 	if err2 := g.db.GetBanBySteamID(g.ctx, target, false, &b); err2 != nil && err2 != store.ErrNoResult {
 		log.Errorf("Error getting b from db: %v", err2)
 		return errors.New("Internal DB Error")
@@ -86,7 +86,7 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 	//if errSrc != nil {
 	//	return false, errSrc
 	//}
-	var b model.BannedPerson
+	b := model.NewBannedPerson()
 	err := g.db.GetBanBySteamID(g.ctx, target, false, &b)
 	if err != nil {
 		if err == store.ErrNoResult {

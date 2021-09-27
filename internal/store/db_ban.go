@@ -161,7 +161,7 @@ func (db *pgStore) SaveBan(ctx context.Context, ban *model.Ban) error {
 
 func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
 	const q = `
-		INSERT INTO ban (steam_id, author_id, ban_type, reason, reason_text, note, valid_until, created_on, updated_on, ban_source) 
+		INSERT INTO ban (steam_id, author_id, ban_type, reason, reason_text, note, valid_until, created_on, updated_on, ban_source)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING ban_id`
 	err := db.c.QueryRow(ctx, q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
@@ -174,20 +174,20 @@ func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
 
 func (db *pgStore) updateBan(ctx context.Context, ban *model.Ban) error {
 	const q = `
-		UPDATE 
-		    ban 
-		SET 
-		    author_id = $2, ban_id = $3, reason = $4, reason_text = $5, note = $6, valid_until = $7, updated_on = $8, ban_source = $9
+		UPDATE
+		    ban
+		SET
+		    author_id = $2, reason = $3, reason_text = $4, note = $5, valid_until = $6, updated_on = $7, ban_source = $8, ban_type = $9
 		WHERE ban_id = $1`
-	if _, err := db.c.Exec(ctx, q, ban.BanID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
-		ban.UpdatedOn, ban.Source); err != nil {
+	if _, err := db.c.Exec(ctx, q, ban.BanID, ban.AuthorID, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
+		ban.UpdatedOn, ban.Source, ban.BanType); err != nil {
 		return dbErr(err)
 	}
 	return nil
 }
 
 func (db *pgStore) GetExpiredBans(ctx context.Context) ([]model.Ban, error) {
-	const q = `SELECT ban_id, steam_id, author_id, ban_type, reason, reason_text, 
+	const q = `SELECT ban_id, steam_id, author_id, ban_type, reason, reason_text,
        note, valid_until, ban_source, created_on, updated_on FROM ban
        WHERE valid_until < $1`
 	var bans []model.Ban
@@ -262,9 +262,9 @@ func (db *pgStore) GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.
 		SELECT
 			b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
 			b.reason_text, b.note, b.valid_until, b.created_on, b.updated_on, b.ban_source
-		FROM ban b 
-		WHERE updated_on < $1 
-		LIMIT %d 
+		FROM ban b
+		WHERE updated_on < $1
+		LIMIT %d
 		OFFSET %d`, o.Limit, o.Offset)
 	var bans []model.Ban
 	rows, err := db.c.Query(ctx, q, t)
