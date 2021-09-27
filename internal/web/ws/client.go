@@ -1,10 +1,13 @@
 package ws
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"os/signal"
+	"io"
+	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -16,6 +19,7 @@ func NewClient(host string, handlers Handlers) (*Client, error) {
 		done:      make(chan struct{}),
 		recvQueue: make(chan Payload, 100),
 		sendQueue: make(chan Payload, 100),
+		connMu:    &sync.RWMutex{},
 	}
 	return c, nil
 }
@@ -28,6 +32,10 @@ type Client struct {
 	log       *log.Entry
 	handlers  Handlers
 	done      chan struct{}
+	conn      *websocket.Conn
+	connMu    *sync.RWMutex
+	bytesSent int64
+	bytesRecv int64
 }
 
 func (c *Client) onMessage() {
@@ -38,7 +46,8 @@ func (c *Client) onMessage() {
 		case req := <-c.recvQueue:
 			handler, found := c.handlers[req.Type]
 			if !found {
-				c.log.Warnf("Unhandled payload type: %v")
+				c.log.Warnf("Unhandled payload type: %v", req.Type)
+				continue
 			}
 			if hErr := handler(req); hErr != nil {
 				c.log.Errorf("Error handling message: %v", hErr)
@@ -47,13 +56,29 @@ func (c *Client) onMessage() {
 	}
 }
 
-func (c *Client) reader(conn *websocket.Conn) {
-	defer close(c.done)
+func (c *Client) reader() {
 	for {
-		var payload Payload
-		if e := conn.ReadJSON(&payload); e != nil {
-			c.log.Errorf("Failed to read json from server: %v", e)
+		mt, r, err := c.conn.NextReader()
+		if err != nil {
+			c.connMu.Lock()
+			c.conn = nil
+			c.connMu.Unlock()
+			c.log.Errorf("Reader error: %v", err)
+			return
+		}
+		if mt == websocket.BinaryMessage {
+			log.Debugf("Got non text message")
 			continue
+		}
+		var payload Payload
+		err = json.NewDecoder(r).Decode(&payload)
+		if err == io.EOF {
+			// One value is expected in the message.
+			err = io.ErrUnexpectedEOF
+		}
+		if err != nil {
+			c.log.Errorf("Error decoding json from server: %v", err)
+			return
 		}
 		c.recvQueue <- payload
 	}
@@ -68,21 +93,31 @@ func (c *Client) Send(payload Payload) error {
 	}
 }
 
-func (c *Client) Connect() error {
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+func (c *Client) connect() error {
 	conn, _, err := websocket.DefaultDialer.Dial(c.host, nil)
 	if err != nil {
 		return err
 	}
+	c.connMu.Lock()
+	c.conn = conn
+	c.connMu.Unlock()
+	return nil
+}
+
+func (c *Client) connLoop() error {
+	c.done = make(chan struct{})
+	defer close(c.done)
+	if errConn := c.connect(); errConn != nil {
+		return errors.Wrapf(errConn, "Failed to connect to ws api")
+	}
 	defer func() {
-		if errC := conn.Close(); errC != nil {
+		if errC := c.conn.Close(); errC != nil {
 			c.log.Errorf("Failed closing websocket connection cleanly: %v", errC)
 		}
 	}()
 	c.log.Debugf("Connected")
 	go c.onMessage()
-	go c.reader(conn)
+	go c.reader()
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
@@ -91,15 +126,30 @@ func (c *Client) Connect() error {
 			c.log.Debugf("Disconnected")
 			return nil
 		case <-ticker.C:
-			if errSup := c.Send(Payload{Type: Sup, Data: nil}); errSup != nil {
-				c.log.Errorf("Failed to send sup: %v", errSup)
-				continue
+			b, err := json.Marshal(Ping{Nonce: rand.Int63()})
+			if err != nil {
+				return err
+			}
+			if errSup := c.Send(Payload{Type: Sup, Data: b}); errSup != nil && !errors.Is(errSup, ErrQueueFull) {
+				return errors.Wrapf(errSup, "Failed to send sup response")
 			}
 			c.log.Debugf("Send sup")
 		case p := <-c.sendQueue:
-			if errWrite := conn.WriteJSON(p); errWrite != nil {
-				c.log.Errorf("Failed to write json to ws")
+			if c.conn != nil {
+				if errWrite := c.conn.WriteJSON(p); errWrite != nil {
+					return errors.Wrapf(errWrite, "Failed to write json to ws")
+				}
 			}
+		}
+	}
+}
+
+func (c *Client) Start() error {
+	for {
+		log.Debugf("Initiating ws connection")
+		if err := c.connLoop(); err != nil {
+			log.Errorf("Conn error (reconnecting): %v", err)
+			time.Sleep(time.Second * 10)
 		}
 	}
 }

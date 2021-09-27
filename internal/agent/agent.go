@@ -59,7 +59,7 @@ func (a *Agent) Start() error {
 			log.Errorf("Log listener returned err: %v", err)
 		}
 	}()
-	return a.client.Connect()
+	return a.client.Start()
 }
 
 // logListener receives srcds log broadcasts
@@ -116,12 +116,19 @@ func (a *Agent) logListener() error {
 				msg = string(buffer[idx : n-2])
 			}
 			msg = strings.TrimRight(msg, "\r\n")
+			b, errEnv := json.Marshal(ws.LogPayload{
+				ServerName: "",
+				Message:    msg,
+			})
+			if errEnv != nil {
+				continue
+			}
 			if errSend := a.client.Send(ws.Payload{
 				Type: ws.SrvLogRaw,
-				Data: json.RawMessage(msg),
+				Data: b,
 			}); errSend != nil {
 				if errors.Is(errSend, ws.ErrQueueFull) {
-					log.WithFields(log.Fields{"msg": msg}).Warnf("Msg discarded")
+					log.WithFields(log.Fields{"msg": msg}).Debugf("Msg discarded")
 					continue
 				}
 				if errSend != io.EOF {

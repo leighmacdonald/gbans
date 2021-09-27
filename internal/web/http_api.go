@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -535,14 +536,13 @@ func (w *Web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 	}
 }
 
-// LogPayload is the container for log/message payloads
-type LogPayload struct {
-	ServerName string `json:"server_name"`
-	Message    string `json:"message"`
-}
-
 func (w *Web) onAPIPostServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		responseOK(c, http.StatusOK, gin.H{})
 	}
+}
+
+func (w *Web) onSup(p ws.Payload) error {
+
+	return nil
 }

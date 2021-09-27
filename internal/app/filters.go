@@ -41,7 +41,7 @@ func IsFilteredWord(body string) (bool, *model.Filter) {
 	return false, nil
 }
 
-func (g *Gbans) filterWorker() {
+func (g *gbans) filterWorker() {
 	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)

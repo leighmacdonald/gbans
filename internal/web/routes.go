@@ -2,11 +2,13 @@ package web
 
 import (
 	"github.com/Depado/ginprom"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -23,9 +25,23 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
-	clientRPCService := newClientServiceState(logMsgChan, db)
+func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan ws.LogPayload) {
+	handlers := ws.Handlers{
+		ws.Sup: w.onSup,
+	}
+	rpcService := ws.NewService(handlers, logMsgChan)
 	r.Use(gin.Logger())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOriginFunc = func(requestedOrigin string) bool {
+		for _, allowedOrigin := range config.HTTP.CorsOrigins {
+			if allowedOrigin == requestedOrigin {
+				return true
+			}
+		}
+		return false
+	}
+	corsConfig.AddAllowMethods("OPTIONS")
+	r.Use(cors.New(corsConfig))
 	if !registered {
 		prom := ginprom.New(func(p *ginprom.Prometheus) {
 			p.Namespace = "gbans"
@@ -78,7 +94,7 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())
-	r.GET("/api/ws", clientRPCService.onWSStart)
+	r.GET("/api/ws", rpcService.Start())
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))

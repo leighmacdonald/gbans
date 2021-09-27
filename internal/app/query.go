@@ -23,7 +23,7 @@ import (
 //
 // Valid will be set to true if the value is a Valid steamid, even if the Player is not
 // actively connected
-func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
+func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &extra.Player{},
@@ -54,7 +54,7 @@ func (g Gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 	return nil
 }
 
-func (g *Gbans) findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
+func (g *gbans) findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
 	name = strings.ToLower(name)
 	for serverId, status := range g.ServerState() {
 		for _, player := range status.Status.Players {
@@ -74,7 +74,7 @@ func (g *Gbans) findPlayerByName(ctx context.Context, name string, pi *model.Pla
 	return consts.ErrUnknownID
 }
 
-func (g *Gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
+func (g *gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
 	for serverId, status := range g.ServerState() {
 		for _, player := range status.Status.Players {
 			if player.SID == sid {
@@ -93,7 +93,7 @@ func (g *Gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *mode
 	return consts.ErrUnknownID
 }
 
-func (g *Gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
+func (g *gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
 	for serverId, status := range g.ServerState() {
 		for _, player := range status.Players {
 			if ip.Equal(player.IP) {
@@ -113,7 +113,7 @@ func (g *Gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerI
 }
 
 // ServerState returns a copy of the current known state for all servers.
-func (g *Gbans) ServerState() model.ServerStateCollection {
+func (g *gbans) ServerState() model.ServerStateCollection {
 	g.serversStateMu.RLock()
 	state := g.serversState
 	g.serversStateMu.RUnlock()
@@ -122,7 +122,7 @@ func (g *Gbans) ServerState() model.ServerStateCollection {
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func (g Gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
+func (g gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
 	for serverId, status := range g.ServerState() {
 		for _, player := range status.Players {
 			if ipNet.Contains(player.IP) {
@@ -145,7 +145,7 @@ func (g Gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
 
 // GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func (g Gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
+func (g gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
 	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get Player summary: %v", err)

@@ -21,7 +21,7 @@ import (
 
 // Mute will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
 // If duration set to 0, the value of config.DefaultExpiration() will be used.
-func (g Gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
+func (g gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
 	target, err := args.Target.SID64()
 	if err != nil {
 		return errors.Errorf("Failed to get steam id from: %s", args.Target)
@@ -77,7 +77,7 @@ func (g Gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (g Gbans) Unban(args action.UnbanRequest) (bool, error) {
+func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return false, errTar
@@ -104,7 +104,7 @@ func (g Gbans) Unban(args action.UnbanRequest) (bool, error) {
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
+func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -209,7 +209,7 @@ func (g Gbans) Ban(args action.BanRequest, b *model.Ban) error {
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of config.DefaultExpiration() will be used.
-func (g Gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error {
+func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -270,7 +270,7 @@ func (g Gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error
 }
 
 // Kick will kick the steam id from all servers.
-func (g Gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
+func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -291,7 +291,7 @@ func (g Gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	return nil
 }
 
-func (g Gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
+func (g gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
 	sid, err := steamid.ResolveSID64(g.ctx, string(args.Target))
 	if err != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
@@ -310,7 +310,7 @@ func (g Gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
 	return true, nil
 }
 
-func (g Gbans) Say(args action.SayRequest) error {
+func (g gbans) Say(args action.SayRequest) error {
 	var server model.Server
 	if err := g.db.GetServerByName(g.ctx, args.Server, &server); err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args.Server)
@@ -327,7 +327,7 @@ func (g Gbans) Say(args action.SayRequest) error {
 	return nil
 }
 
-func (g Gbans) CSay(args action.CSayRequest) error {
+func (g gbans) CSay(args action.CSayRequest) error {
 	var (
 		servers []model.Server
 		err     error
@@ -349,7 +349,7 @@ func (g Gbans) CSay(args action.CSayRequest) error {
 	return nil
 }
 
-func (g Gbans) PSay(args action.PSayRequest) error {
+func (g gbans) PSay(args action.PSayRequest) error {
 	var pi model.PlayerInfo
 	_ = g.Find(string(args.Target), "", &pi)
 	if !pi.Valid || !pi.InGame {
@@ -390,7 +390,7 @@ func (g Gbans) PSay(args action.PSayRequest) error {
 //	return nil, errors.New("unimplemented")
 //}
 
-func (g Gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
+func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
 	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
 		return err
 	}
@@ -414,7 +414,7 @@ func (g Gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) er
 	return nil
 }
 
-func (g Gbans) ResolveSID(sidStr string) (steamid.SID64, error) {
+func (g gbans) ResolveSID(sidStr string) (steamid.SID64, error) {
 	c, cancel := context.WithTimeout(g.ctx, time.Second*5)
 	defer cancel()
 	return steamid.ResolveSID64(c, sidStr)

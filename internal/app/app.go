@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
+	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -23,15 +24,15 @@ var (
 	BuildVersion = "master"
 )
 
-// Gbans is the main application struct.
+// gbans is the main application struct.
 // It implements the action.Executor interface
-type Gbans struct {
+type gbans struct {
 	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
-	logRawQueue    chan web.LogPayload
+	logRawQueue    chan ws.LogPayload
 	bot            discord.ChatBot
 	db             store.Store
 	web            web.WebHandler
@@ -41,13 +42,13 @@ type Gbans struct {
 }
 
 // New instantiates a new application
-func New() (*Gbans, error) {
-	g := &Gbans{
+func New() (*gbans, error) {
+	g := &gbans{
 		ctx:            context.Background(),
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan web.LogPayload, 50),
+		logRawQueue:    make(chan ws.LogPayload, 50),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
 	s, se := store.New(config.DB.DSN)
@@ -82,7 +83,7 @@ type userWarning struct {
 }
 
 // Start is the main application entry point
-func (g *Gbans) Start() {
+func (g *gbans) Start() {
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
 		initNetBans()
@@ -118,12 +119,12 @@ func (g *Gbans) Start() {
 }
 
 // Close cleans up the application and closes connections
-func (g *Gbans) Close() error {
+func (g *gbans) Close() error {
 	return g.db.Close()
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
-func (g *Gbans) warnWorker() {
+func (g *gbans) warnWorker() {
 	t := time.NewTicker(1 * time.Second)
 	for {
 		select {
@@ -153,7 +154,7 @@ func (g *Gbans) warnWorker() {
 }
 
 // logWriter handles tak
-func (g *Gbans) logWriter() {
+func (g *gbans) logWriter() {
 	const (
 		freq = time.Second * 10
 	)
@@ -184,7 +185,7 @@ func (g *Gbans) logWriter() {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func (g *Gbans) logReader() {
+func (g *gbans) logReader() {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
@@ -290,7 +291,7 @@ func (g *Gbans) logReader() {
 // restarts will wipe the users history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func (g *Gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
+func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	g.warningsMu.Lock()
 	defer g.warningsMu.Unlock()
 	//const msg = "Warning limit exceeded"
@@ -322,7 +323,7 @@ func (g *Gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	}
 }
 
-func (g *Gbans) initFilters() {
+func (g *gbans) initFilters() {
 	// TODO load external lists via http
 	c, cancel := context.WithTimeout(g.ctx, time.Second*15)
 	defer cancel()
@@ -334,7 +335,7 @@ func (g *Gbans) initFilters() {
 	g.l.Debugf("Loaded %d filtered words", len(words))
 }
 
-func (g *Gbans) initWorkers() {
+func (g *gbans) initWorkers() {
 	go g.banSweeper()
 	go g.mapChanger(time.Second * 5)
 	go g.serverStateUpdater()
@@ -346,7 +347,7 @@ func (g *Gbans) initWorkers() {
 	//go state.LogMeter(ctx)
 }
 
-func (g *Gbans) initDiscord() {
+func (g *gbans) initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.ServerEvent)
 		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {

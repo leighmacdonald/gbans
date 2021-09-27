@@ -98,6 +98,7 @@ type httpConfig struct {
 	CookieKey             string `mapstructure:"cookie_key"`
 	ClientTimeout         string `mapstructure:"client_timeout"`
 	ClientTimeoutDuration time.Duration
+	CorsOrigins           []string `mapstructure:"cors_origins"`
 }
 
 // Addr returns the address in host:port format

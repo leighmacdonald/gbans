@@ -175,7 +175,7 @@ func TestMain(m *testing.M) {
 //	defer s.Close()
 //	u := "ws" + strings.TrimPrefix(s.URL, "http") + "/ws"
 //
-//	// Connect to the server
+//	// Start to the server
 //	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
 //	if err != nil {
 //		t.Fatalf("%v", err)

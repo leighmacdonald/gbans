@@ -17,7 +17,7 @@ import (
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func (g *Gbans) profileUpdater() {
+func (g *gbans) profileUpdater() {
 	var update = func() {
 		ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
 		defer cancel()
@@ -71,7 +71,7 @@ func (g *Gbans) profileUpdater() {
 
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
 // information. This data is accessed often so it is cached
-func (g *Gbans) serverStateUpdater() {
+func (g *gbans) serverStateUpdater() {
 	freq, errD := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errD != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
@@ -140,7 +140,7 @@ func (g *Gbans) serverStateUpdater() {
 	}
 }
 
-func (g *Gbans) mapChanger(timeout time.Duration) {
+func (g *gbans) mapChanger(timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
@@ -191,7 +191,7 @@ func (g *Gbans) mapChanger(timeout time.Duration) {
 }
 
 // banSweeper
-func (g *Gbans) banSweeper() {
+func (g *gbans) banSweeper() {
 	log.Debug("ban sweeper routine started")
 	ticker := time.NewTicker(time.Minute)
 	for {

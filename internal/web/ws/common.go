@@ -58,3 +58,13 @@ func Encode(t Type, p interface{}) ([]byte, error) {
 	}
 	return f, nil
 }
+
+// LogPayload is the container for log/message payloads
+type LogPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
+}
+
+type Ping struct {
+	Nonce int64
+}
