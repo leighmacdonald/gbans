@@ -296,7 +296,7 @@ func (g gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
 	if err != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
 	}
-	var p model.Person
+	p := model.NewPerson(sid)
 	if errP := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); errP != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
 	}

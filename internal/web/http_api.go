@@ -428,7 +428,7 @@ func (w *Web) onAPIProfile(db store.Store) gin.HandlerFunc {
 				return
 			}
 		}
-		var person model.Person
+		person := model.NewPerson(sid)
 		if err2 := db.GetOrCreatePersonBySteamID(cx, sid, &person); err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -510,7 +510,7 @@ func (w *Web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 		}
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		var ban model.BannedPerson
+		ban := model.NewBannedPerson()
 		if errB := db.GetBanByBanID(cx, sid, false, &ban); errB != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			log.Errorf("Failed to fetch bans: %v", errB)

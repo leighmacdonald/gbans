@@ -124,6 +124,7 @@ type pgStore struct {
 	c *pgxpool.Pool
 }
 
+// Close will close the underlying database connection if it exists
 func (db *pgStore) Close() error {
 	if db.c != nil {
 		db.c.Close()
@@ -248,10 +249,8 @@ func (db *pgStore) Import(ctx context.Context, root string) error {
 				return err2
 			}
 			for _, im := range imported {
-				var (
-					b1 model.Person
-					b2 model.Person
-				)
+				b1 := model.NewPerson(steamid.SID64(im.SteamID))
+				b2 := model.NewPerson(steamid.SID64(im.AuthorID))
 				if e1 := db.GetOrCreatePersonBySteamID(ctx, steamid.SID64(im.SteamID), &b1); e1 != nil {
 					return e1
 				}

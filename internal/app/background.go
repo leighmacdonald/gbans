@@ -42,7 +42,7 @@ func (g *gbans) profileUpdater() {
 				log.Errorf("Failed to parse steamid from webapi: %v", err3)
 				continue
 			}
-			var p model.Person
+			p := model.NewPerson(sid)
 			if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
 				log.Errorf("Failed to get person: %v", err4)
 				continue

@@ -133,12 +133,12 @@ func (db *pgStore) SaveAppeal(ctx context.Context, appeal *model.Appeal) error {
 // New records will have the Ban.BanID set automatically
 func (db *pgStore) SaveBan(ctx context.Context, ban *model.Ban) error {
 	// Ensure the foreign keys are satisfied
-	var p model.Person
+	p := model.NewPerson(ban.SteamID)
 	err := db.GetOrCreatePersonBySteamID(ctx, ban.SteamID, &p)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get person for ban")
 	}
-	var a model.Person
+	a := model.NewPerson(ban.AuthorID)
 	err2 := db.GetOrCreatePersonBySteamID(ctx, ban.AuthorID, &a)
 	if err2 != nil {
 		return errors.Wrapf(err, "Failed to get author for ban")

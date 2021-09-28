@@ -107,7 +107,7 @@ func TestBan(t *testing.T) {
 	defer cancel()
 	b1 := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
 	require.NoError(t, db.SaveBan(ctx, &b1), "Failed to add ban")
-	var b1Fetched model.BannedPerson
+	b1Fetched := model.NewBannedPerson()
 	require.NoError(t, db.GetBanBySteamID(ctx, 76561198044052046, false, &b1Fetched))
 	banEqual(&b1, &b1Fetched.Ban)
 
@@ -120,12 +120,12 @@ func TestBan(t *testing.T) {
 	b1Fetched.Ban.Note = "test note"
 	b1Fetched.Ban.Source = model.Web
 	require.NoError(t, db.SaveBan(ctx, &b1Fetched.Ban), "Failed to edit ban")
-	var b1FetchedUpdated model.BannedPerson
+	b1FetchedUpdated := model.NewBannedPerson()
 	require.NoError(t, db.GetBanBySteamID(ctx, 76561198044052046, false, &b1FetchedUpdated))
 	banEqual(&b1Fetched.Ban, &b1FetchedUpdated.Ban)
 
 	require.NoError(t, db.DropBan(ctx, &b1), "Failed to drop ban")
-	var vb model.BannedPerson
+	vb := model.NewBannedPerson()
 	errMissing := db.GetBanBySteamID(ctx, b1.SteamID, false, &vb)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, ErrNoResult))
@@ -170,10 +170,10 @@ func TestPerson(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 	require.NoError(t, db.SavePerson(ctx, &p1))
-	var p2Fetched model.Person
+	p2Fetched := model.NewPerson(p2.SteamID)
 	require.NoError(t, db.GetOrCreatePersonBySteamID(ctx, p2.SteamID, &p2Fetched))
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
-	var pBadID model.Person
+	pBadID := model.NewPerson(0)
 	require.Error(t, db.GetPersonBySteamID(ctx, 0, &pBadID))
 	require.Nil(t, pBadID)
 	ips, eH := db.GetIPHistory(ctx, p1.SteamID)

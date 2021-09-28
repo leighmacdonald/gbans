@@ -269,7 +269,7 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 		muted     = false
 		reason    = ""
 		createdAt = ""
-		a         model.Person
+		a         = model.NewPerson(sid)
 		author    *discordgo.MessageEmbedAuthor
 	)
 	var expiry time.Time
@@ -506,7 +506,7 @@ func (b *Bot) onHistoryIP(ctx context.Context, _ *discordgo.Session, m *discordg
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
-	var p model.Person
+	p := model.NewPerson(sid)
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
@@ -537,7 +537,7 @@ func (b *Bot) onHistoryChat(ctx context.Context, _ *discordgo.Session, m *discor
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
-	var p model.Person
+	p := model.NewPerson(sid)
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
@@ -562,7 +562,7 @@ func (b *Bot) onSetSteam(ctx context.Context, _ *discordgo.Session, m *discordgo
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
-	var p model.Person
+	p := model.NewPerson(sid)
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
@@ -622,7 +622,7 @@ func (b *Bot) onKick(_ context.Context, _ *discordgo.Session, m *discordgo.Inter
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
-	var p model.Person
+	p := model.NewPerson(sid)
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}

@@ -61,7 +61,7 @@ var seedCmd = &cobra.Command{
 		defer cancel()
 
 		for _, adminSid := range seed.Admins {
-			var p model.Person
+			p := model.NewPerson(adminSid)
 			if errGP := db.GetOrCreatePersonBySteamID(ctx, adminSid, &p); errGP != nil {
 				log.Fatalf("Failed to get person: %v", errGP)
 			}
@@ -79,7 +79,7 @@ var seedCmd = &cobra.Command{
 			}
 		}
 		for _, playerSid := range seed.Players {
-			var p model.Person
+			p := model.NewPerson(playerSid)
 			_ = db.GetOrCreatePersonBySteamID(ctx, playerSid, &p)
 			sum1, err := steamweb.PlayerSummaries(steamid.Collection{p.SteamID})
 			if err != nil {

@@ -45,7 +45,7 @@ func (w *Web) authMiddleWare(db store.Store) gin.HandlerFunc {
 			if config.General.Mode == "test" && token == testToken {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				var loggedInPerson model.Person
+				loggedInPerson := model.NewPerson(config.General.Owner)
 				if err2 := db.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -74,7 +74,7 @@ func (w *Web) authMiddleWare(db store.Store) gin.HandlerFunc {
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
-				var loggedInPerson model.Person
+				loggedInPerson := model.NewPerson(steamid.SID64(claims.SteamID))
 				if err := db.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
@@ -121,7 +121,7 @@ func (w *Web) onOpenIDCallback() gin.HandlerFunc {
 			c.Redirect(302, ref)
 			return
 		}
-		var p model.Person
+		p := model.NewPerson(sid)
 		if errP := w.executor.PersonBySID(sid, "", &p); errP != nil {
 			log.Errorf("Failed to fetch user profile: %v", errP)
 			c.Redirect(302, ref)
@@ -246,7 +246,7 @@ func (w *Web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerF
 			}
 			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 			defer cancel()
-			var loggedInPerson model.Person
+			loggedInPerson := model.NewPerson(sid)
 
 			if err3 := db.GetPersonBySteamID(cx, sid, &loggedInPerson); err3 != nil {
 				log.Errorf("Failed to load persons session user: %v", err3)
