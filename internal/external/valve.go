@@ -7,8 +7,8 @@ import (
 )
 
 // parseValveSID parses the format: banid 0 STEAM_0:1:16683555
-func parseValveSID(src []byte) ([]steamid.SID64, error) {
-	var ids []steamid.SID64
+func parseValveSID(src []byte) (steamid.Collection, error) {
+	var ids steamid.Collection
 	for _, line := range strings.Split(string(src), "\r\n") {
 		pcs := strings.SplitN(line, " ", 3)
 		if len(pcs) != 3 {

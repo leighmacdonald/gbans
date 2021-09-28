@@ -27,6 +27,7 @@ var (
 // gbans is the main application struct.
 // It implements the action.Executor interface
 type gbans struct {
+	// Top-level context
 	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
@@ -42,9 +43,9 @@ type gbans struct {
 }
 
 // New instantiates a new application
-func New() (*gbans, error) {
+func New(ctx context.Context) (*gbans, error) {
 	g := &gbans{
-		ctx:            context.Background(),
+		ctx:            ctx,
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},

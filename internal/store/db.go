@@ -43,19 +43,13 @@ var (
 type tableName string
 
 const (
-	tableBan tableName = "ban"
-	//tableBanAppeal    tableName = "ban_appeal"
-	tableBanNet       tableName = "ban_net"
 	tableFilteredWord tableName = "filtered_word"
 	tableNetLocation  tableName = "net_location"
 	tableNetProxy     tableName = "net_proxy"
 	tableNetASN       tableName = "net_asn"
-	//tablePerson       tableName = "person"
-	tablePersonIP tableName = "person_ip"
-	//tablePersonNames  tableName = "person_names"
-	tableServer tableName = "server"
-	tableDemo   tableName = "demo"
-	//tableServerLog tableName = "server_log"
+	tablePersonIP     tableName = "person_ip"
+	tableServer       tableName = "server"
+	tableDemo         tableName = "demo"
 )
 
 // QueryFilter provides a structure for common query parameters
@@ -131,8 +125,8 @@ type pgStore struct {
 }
 
 func (db *pgStore) Close() error {
-	if db != nil {
-		return db.Close()
+	if db.c != nil {
+		db.c.Close()
 	}
 	return nil
 }

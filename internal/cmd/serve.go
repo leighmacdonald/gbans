@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/app"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -12,10 +13,12 @@ var serveCmd = &cobra.Command{
 	Short: "",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		application, err := app.New()
+		ctx := context.Background()
+		application, err := app.New(ctx)
 		if err != nil {
 			log.Panicf("Application error: %v", err)
 		}
+		defer application.Close()
 		application.Start()
 	},
 }

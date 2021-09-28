@@ -100,7 +100,7 @@ type ProxyRecord struct {
 	ISP         string
 	Domain      string
 	UsageType   string
-	ASN         int
+	ASN         int64
 	AS          string
 	LastSeen    time.Time
 	Threat      string
@@ -116,7 +116,7 @@ type ASNRecord struct {
 	IPFrom *net.IP
 	IPTo   *net.IP
 	CIDR   *net.IPNet
-	ASNum  uint32
+	ASNum  uint64
 	ASName string
 }
 
@@ -130,7 +130,7 @@ type Location struct {
 	ISOCode string
 	LatLong LatLong
 	// Autonomous system number (ASN)
-	ASN uint32
+	ASN uint64
 	// Autonomous system (AS) name
 	AS string
 }
@@ -267,11 +267,11 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 		if err2 != nil {
 			continue
 		}
-		asNum, err := strconv.ParseUint(row[3], 10, 32)
+		asNum, err := strconv.ParseUint(row[3], 10, 64)
 		if err != nil {
 			continue
 		}
-		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: cidr, ASNum: uint32(asNum), ASName: row[4]})
+		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: cidr, ASNum: asNum, ASName: row[4]})
 	}
 	return records, nil
 }
@@ -339,13 +339,13 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 		asn := int64(0)
 		var err error
 		if row[10] != "-" {
-			asn, err = strconv.ParseInt(row[10], 10, 32)
+			asn, err = strconv.ParseInt(row[10], 10, 64)
 			if err != nil {
 				return nil, errors.Wrapf(err, "Failed to convert asn: %s (%s)", row[10], err)
 			}
 		}
 
-		t, err := strconv.ParseUint(row[12], 10, 64)
+		t, err := strconv.ParseInt(row[12], 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to convert last_seen: %s (%s)", row[10], err)
 		}
@@ -360,9 +360,9 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 			ISP:         row[7],
 			Domain:      row[8],
 			UsageType:   row[9],
-			ASN:         int(asn),
+			ASN:         asn,
 			AS:          row[11],
-			LastSeen:    time.Unix(int64(t), 0),
+			LastSeen:    time.Unix(t, 0),
 			Threat:      row[13],
 		})
 	}
