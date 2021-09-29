@@ -91,6 +91,7 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	r.GET("/api/profile", w.onAPIProfile(db))
 	r.GET("/api/servers", w.onAPIGetServers(db))
 	r.GET("/api/stats", w.onAPIGetStats(db))
+	r.GET("/api/competitive", w.onAPIGetCompHist(db))
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())

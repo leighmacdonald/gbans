@@ -248,6 +248,7 @@ type Server struct {
 	// Password is what the server uses to generate a token to make authenticated calls
 	Password   string              `db:"password" json:"password"`
 	IsEnabled  bool                `json:"is_enabled"`
+	Deleted    bool                `json:"deleted"`
 	Region     string              `json:"region"`
 	CC         string              `json:"cc"`
 	Location   ip2location.LatLong `json:"location"`

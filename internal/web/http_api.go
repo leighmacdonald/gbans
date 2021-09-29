@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -475,6 +476,29 @@ func (w *Web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 			w = append(w, f.Word.String())
 		}
 		responseOK(c, http.StatusOK, resp{Count: len(words), Words: w})
+	}
+}
+
+func (w *Web) onAPIGetCompHist(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sidStr := c.DefaultQuery("sid", "")
+		if sidStr == "" {
+			responseErr(c, http.StatusBadRequest, "missing sid")
+			return
+		}
+		sid, err := steamid.StringToSID64(sidStr)
+		if err != nil || !sid.Valid() {
+			responseErr(c, http.StatusBadRequest, "invalid sid")
+			return
+		}
+		cx, cancel := context.WithTimeout(c, time.Second*10)
+		defer cancel()
+		var hist external.CompHist
+		if err := external.FetchCompHist(cx, sid, &hist); err != nil {
+			responseErr(c, http.StatusInternalServerError, "query failed")
+			return
+		}
+		responseOK(c, http.StatusOK, hist)
 	}
 }
 

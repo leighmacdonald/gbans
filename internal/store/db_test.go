@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+// TODO setup/teardown of db
 func TestMain(m *testing.M) {
 	config.Read()
 	config.General.Mode = config.Test
@@ -35,14 +36,17 @@ func TestServer(t *testing.T) {
 		Port:           27015,
 		RCON:           "test",
 		Password:       "test",
+		IsEnabled:      true,
 		TokenCreatedOn: config.Now(),
 		CreatedOn:      config.Now(),
 		UpdatedOn:      config.Now(),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
+	// Save new server
 	require.NoError(t, db.SaveServer(ctx, &s1))
 	require.True(t, s1.ServerID > 0)
+	// Fetch saved server
 	var s1Get model.Server
 	require.NoError(t, db.GetServer(ctx, s1.ServerID, &s1Get))
 	require.Equal(t, s1.ServerID, s1Get.ServerID)
@@ -55,9 +59,11 @@ func TestServer(t *testing.T) {
 	require.Equal(t, s1.TokenCreatedOn.Second(), s1Get.TokenCreatedOn.Second())
 	require.Equal(t, s1.CreatedOn.Second(), s1Get.CreatedOn.Second())
 	require.Equal(t, s1.UpdatedOn.Second(), s1Get.UpdatedOn.Second())
+	// Fetch all enabled servers
 	sLenA, eS := db.GetServers(ctx, false)
-	require.NoError(t, eS, "Failed to fetch servers")
+	require.NoError(t, eS, "Failed to fetch enabled servers")
 	require.True(t, len(sLenA) > 0, "Empty server results")
+	// Delete a server
 	require.NoError(t, db.DropServer(ctx, s1.ServerID))
 	var d model.Server
 	require.True(t, errors.Is(db.GetServer(ctx, s1.ServerID, &d), ErrNoResult))
@@ -134,12 +140,15 @@ func TestBan(t *testing.T) {
 func TestFilteredWords(t *testing.T) {
 	//
 }
+func randSID() steamid.SID64 {
+	return steamid.SID64(76561197960265728 + rand.Int63n(100000000))
+}
 
 func TestAppeal(t *testing.T) {
 	db, err := New(config.DB.DSN)
 	require.NoError(t, err, "Failed to connect to test database")
-	b1 := model.NewBan(steamid.RandSID64(), 76561198003911389, time.Hour*24)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	b1 := model.NewBan(randSID(), 76561198003911389, time.Hour*24)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1000)
 	defer cancel()
 	require.NoError(t, db.SaveBan(ctx, &b1), "Failed to add ban")
 	appeal := model.Appeal{
@@ -165,8 +174,8 @@ func TestAppeal(t *testing.T) {
 func TestPerson(t *testing.T) {
 	db, err := New(config.DB.DSN)
 	require.NoError(t, err, "Failed to connect to test database")
-	p1 := model.NewPerson(76561198083950961)
-	p2 := model.NewPerson(76561198044052046)
+	p1 := model.NewPerson(randSID())
+	p2 := model.NewPerson(randSID())
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 	require.NoError(t, db.SavePerson(ctx, &p1))
@@ -175,7 +184,6 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
 	pBadID := model.NewPerson(0)
 	require.Error(t, db.GetPersonBySteamID(ctx, 0, &pBadID))
-	require.Nil(t, pBadID)
 	ips, eH := db.GetIPHistory(ctx, p1.SteamID)
 	require.NoError(t, eH)
 	require.NoError(t, db.AddPersonIP(ctx, &p1, "10.0.0.2"), "failed to add ip record")

@@ -13,12 +13,12 @@ import (
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map"}
+	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted"}
 
 func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Server) error {
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
-		Where(sq.Eq{"server_id": serverID}).
+		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
 		ToSql()
 	if e != nil {
 		return e
@@ -27,7 +27,7 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
 			&s.ReservedSlots, &s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap); err != nil {
+			&s.DefaultMap, &s.Deleted); err != nil {
 		return dbErr(err)
 	}
 	return nil
@@ -36,9 +36,11 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
 	var servers []model.Server
 	qb := sb.Select(columnsServer...).From(string(tableServer))
+	cond := sq.And{sq.Eq{"deleted": false}}
 	if !includeDisabled {
-		qb = qb.Where(sq.Eq{"is_enabled": true})
+		cond = append(cond, sq.Eq{"is_enabled": true})
 	}
+	qb = qb.Where(cond)
 	q, a, e := qb.ToSql()
 	if e != nil {
 		return nil, dbErr(e)
@@ -53,7 +55,7 @@ func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]mode
 		if err2 := rows.Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots,
 			&s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap); err2 != nil {
+			&s.DefaultMap, &s.Deleted); err2 != nil {
 			return nil, err2
 		}
 		servers = append(servers, s)
@@ -67,7 +69,7 @@ func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]mode
 func (db *pgStore) GetServerByName(ctx context.Context, serverName string, s *model.Server) error {
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
-		Where(sq.Eq{"short_name": serverName}).
+		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
 		ToSql()
 	if e != nil {
 		return e
@@ -76,7 +78,7 @@ func (db *pgStore) GetServerByName(ctx context.Context, serverName string, s *mo
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots,
 			&s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap); err != nil {
+			&s.DefaultMap, &s.Deleted); err != nil {
 		return err
 	}
 	return nil
@@ -96,12 +98,12 @@ func (db *pgStore) insertServer(ctx context.Context, s *model.Server) error {
 	const q = `
 		INSERT INTO server (
 		    short_name, token, address, port, rcon, token_created_on, 
-		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, location, default_map) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, location, default_map, deleted) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		RETURNING server_id;`
 	err := db.c.QueryRow(ctx, q, s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
 		s.ReservedSlots, s.CreatedOn, s.UpdatedOn, s.Password, s.IsEnabled, s.Region, s.CC,
-		s.Location.String(), s.DefaultMap).Scan(&s.ServerID)
+		s.Location.String(), s.DefaultMap, s.Deleted).Scan(&s.ServerID)
 	if err != nil {
 		return dbErr(err)
 	}
@@ -121,6 +123,7 @@ func (db *pgStore) updateServer(ctx context.Context, s *model.Server) error {
 		Set("reserved_slots", s.ReservedSlots).
 		Set("password", s.Password).
 		Set("is_enabled", s.IsEnabled).
+		Set("deleted", s.Deleted).
 		Set("region", s.Region).
 		Set("cc", s.CC).
 		Set("location", s.Location.String()).
@@ -137,11 +140,8 @@ func (db *pgStore) updateServer(ctx context.Context, s *model.Server) error {
 }
 
 func (db *pgStore) DropServer(ctx context.Context, serverID int64) error {
-	q, a, e := sb.Delete(string(tableServer)).Where(sq.Eq{"server_id": serverID}).ToSql()
-	if e != nil {
-		return e
-	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	const q = `UPDATE server set deleted = true WHERE server_id = $1`
+	if _, err := db.c.Exec(ctx, q, serverID); err != nil {
 		return err
 	}
 	return nil
