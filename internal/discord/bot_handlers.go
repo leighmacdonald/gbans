@@ -264,7 +264,7 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	}
 	var (
 		fields    []*discordgo.MessageEmbedField
-		color     = 3066993 // #2ECC71 green
+		color     = green // #2ECC71 green
 		banned    = false
 		muted     = false
 		reason    = ""
@@ -295,12 +295,12 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	banStateStr := "no"
 	if banned {
 		// #992D22 red
-		color = 10038562
+		color = red
 		banStateStr = "banned"
 	}
 	if muted {
 		// #E67E22 orange
-		color = 15105570
+		color = orange
 		banStateStr = "muted"
 	}
 	fields = append(fields, &discordgo.MessageEmbedField{
@@ -341,7 +341,7 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 		log.Errorf("Failed to fetch proxy record: %v", errProxy)
 	}
 
-	title := fmt.Sprintf("%s", player.PersonaName)
+	title := player.PersonaName
 	if ban.Ban.BanID > 0 {
 		if ban.Ban.BanType == model.Banned {
 			title += " (BANNED)"
@@ -483,7 +483,7 @@ func (b *Bot) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.In
 	e := RespOk(r, title)
 	e.URL = player.ProfileURL
 	e.Timestamp = createdAt
-	e.Color = color
+	e.Color = int(color)
 	e.Image = &discordgo.MessageEmbedImage{URL: player.AvatarFull}
 	e.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: player.Avatar}
 	e.Video = nil

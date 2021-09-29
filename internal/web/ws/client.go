@@ -34,8 +34,8 @@ type Client struct {
 	done      chan struct{}
 	conn      *websocket.Conn
 	connMu    *sync.RWMutex
-	bytesSent int64
-	bytesRecv int64
+	//bytesSent int64
+	//bytesRecv int64
 }
 
 func (c *Client) onMessage() {

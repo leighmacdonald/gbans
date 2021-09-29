@@ -33,10 +33,7 @@ var agentCmd = &cobra.Command{
 		if errStart := agent.Start(); errStart != nil {
 			log.Errorf("Agent exited: %v", errStart)
 		}
-		select {
-		case <-ctx.Done():
-			return
-		}
+		<-ctx.Done()
 	},
 }
 

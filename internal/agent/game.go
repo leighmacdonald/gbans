@@ -39,6 +39,7 @@ func NewSourceDS(gameDir string, appId steamid.AppID) (*SourceDS, error) {
 		appId:    appId,
 		gameDir:  gameDir,
 		template: "default",
+		game:     "tf",
 		cmd:      exec.Command(execPath),
 		l:        log.WithFields(log.Fields{"app": appId, "dir": gameDir, "template": "default"}),
 	}

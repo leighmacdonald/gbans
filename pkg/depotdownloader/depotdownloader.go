@@ -64,8 +64,8 @@ func (d DepotDownloader) Start() error {
 		d.DepotDLL,
 		"-app", fmt.Sprintf("%d", d.AppID),
 		"-dir", d.InstallPath,
-		"-max-downloads", "16",
-		"-max-servers", "20",
+		"-max-downloads", fmt.Sprintf("%d", d.maxDownloads),
+		"-max-servers", fmt.Sprintf("%d", d.maxServers),
 		"-language", "english",
 	}
 	if d.validate {

@@ -67,8 +67,22 @@ func (w *Web) onPostDemo(db store.Store) gin.HandlerFunc {
 			return
 		}
 		var d []byte
-		f.Read(d)
-		model.NewDemoFile(server.ServerID, hdr.Filename, d)
+		_, errRead := f.Read(d)
+		if errRead != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		demo, errDF := model.NewDemoFile(server.ServerID, hdr.Filename, d)
+		if errDF != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		if errSave := db.SaveDemo(c, &demo); errSave != nil {
+			log.Errorf("Failed to save demo to store: %v", errSave)
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusCreated, demo)
 	}
 }
 
@@ -91,10 +105,10 @@ func (w *Web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 		if err != nil {
 			log.Error("Failed to find player on /mod call")
 		}
-		name := req.SteamID.String()
-		if pi.InGame {
-			name += fmt.Sprintf(" (%s)", pi.Player.Name)
-		}
+		//name := req.SteamID.String()
+		//if pi.InGame {
+		//	name = fmt.Sprintf("%s (%s)", name, pi.Player.Name)
+		//}
 		var roleStrings []string
 		for _, i := range config.Discord.ModRoleIDs {
 			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", i))

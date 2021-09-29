@@ -99,21 +99,25 @@ func (a *Agent) logListener() error {
 				a.l.Warnf("Recieved payload too small")
 				continue
 			}
-			if bytes.Compare(buffer[0:4], header) != 0 {
+			if !bytes.Equal(buffer[0:4], header) {
 				a.l.Warnf("Got invalid header")
 				continue
 			}
 			var msg string
 			idx := bytes.Index(buffer, []byte("L "))
-			if buffer[4] == mbSecret {
+			switch buffer[4] {
+			case mbSecret:
 				// has password
 				if idx >= 0 {
 					pw := buffer[5:idx]
 					log.Debugln(string(pw))
 				}
 				msg = string(buffer[idx : n-2])
-			} else {
+			case mbNoSecret:
 				msg = string(buffer[idx : n-2])
+			default:
+				log.Errorf("Invalid log message type")
+				continue
 			}
 			msg = strings.TrimRight(msg, "\r\n")
 			b, errEnv := json.Marshal(ws.LogPayload{

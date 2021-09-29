@@ -23,6 +23,8 @@ import (
 //
 // Valid will be set to true if the value is a Valid steamid, even if the Player is not
 // actively connected
+//
+// TODO cleanup this mess
 func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
@@ -34,16 +36,29 @@ func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 		valid    = false
 		foundSid steamid.SID64
 	)
+	ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+	defer cancel()
 	if ip != "" {
-		err = g.findPlayerByIP(g.ctx, net.ParseIP(ip), pi)
+		err = g.findPlayerByIP(ctx, net.ParseIP(ip), pi)
 		if err == nil {
 			foundSid = result.Player.SID
 			inGame = true
 		}
 	} else {
-		if err = g.findPlayerByName(g.ctx, playerStr, pi); err == nil {
-			foundSid = result.Player.SID
-			inGame = true
+		found := false
+		sid, errSid := steamid.StringToSID64(playerStr)
+		if errSid == nil && sid.Valid() {
+			if errPSID := g.findPlayerBySID(ctx, sid, pi); errPSID == nil {
+				foundSid = sid
+				found = true
+				inGame = true
+			}
+		}
+		if !found {
+			if err = g.findPlayerByName(ctx, playerStr, pi); err == nil {
+				foundSid = result.Player.SID
+				inGame = true
+			}
 		}
 	}
 	if pi != nil && pi.Player != nil && pi.Player.SID.Valid() || foundSid.Valid() {

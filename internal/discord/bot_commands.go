@@ -331,7 +331,7 @@ type responseMsgType int
 const (
 	mtString responseMsgType = iota
 	mtEmbed
-	mtImage
+	//mtImage
 )
 
 type botResponse struct {

@@ -18,9 +18,9 @@ import (
 	"time"
 )
 
-const (
-	embedIconURL = "https://raw.githubusercontent.com/leighmacdonald/gbans/master/frontend/src/icons/logo.svg"
-)
+//const (
+//	embedIconURL = "https://raw.githubusercontent.com/leighmacdonald/gbans/master/frontend/src/icons/logo.svg"
+//)
 
 var (
 	errCommandFailed = errors.New("Command failed")

@@ -496,7 +496,7 @@ type DemoFile struct {
 	DemoID    int64     `json:"demo_id"`
 	ServerID  int64     `json:"server_id"`
 	Title     string    `json:"title"`
-	Data      []byte    `json:"data,omitempty"`
+	Data      []byte    `json:"-"` // Dont send mega data to frontend by accident
 	CreatedOn time.Time `json:"created_on"`
 	Size      int64     `json:"size"`
 	Downloads int64     `json:"downloads"`
