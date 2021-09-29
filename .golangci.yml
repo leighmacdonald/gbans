@@ -1,0 +1,3 @@
+run:
+  skip-files:
+    - internal/web/data.go

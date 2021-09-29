@@ -2,7 +2,6 @@ package web
 
 import (
 	"crypto/tls"
-	"embed"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -14,13 +13,6 @@ import (
 	"net/http"
 	"time"
 )
-
-const baseLayout = ``
-
-// This is marked nolint because when testing the go code, the frontend files are not
-// present in the dist directory yet which causes a typecheck linter error
-//go:embed dist
-var content embed.FS //nolint
 
 type WebHandler interface {
 	ListenAndServe() error
