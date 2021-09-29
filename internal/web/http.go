@@ -17,8 +17,10 @@ import (
 
 const baseLayout = ``
 
+// This is marked nolint because when testing the go code, the frontend files are not
+// present in the dist directory yet which causes a typecheck linter error
 //go:embed dist
-var content embed.FS
+var content embed.FS //nolint
 
 type WebHandler interface {
 	ListenAndServe() error
