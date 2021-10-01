@@ -23,7 +23,7 @@ require (
 	github.com/jackc/puddle v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leighmacdonald/golib v1.1.0
-	github.com/leighmacdonald/rcon v1.0.6
+	github.com/leighmacdonald/rcon v1.0.7
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.0-20210803010711-64b0e363d418
 	github.com/mattn/go-isatty v0.0.14 // indirect
