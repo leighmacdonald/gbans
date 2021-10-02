@@ -1,5 +1,5 @@
 begin;
-ALTER TABLE IF EXISTS server_log ADD COLUMN IF NOT EXISTS payload jsonb NOT NULL;
+ALTER TABLE IF EXISTS server_log ADD COLUMN IF NOT EXISTS payload jsonb NOT NULL default '{}';
 ALTER TABLE IF EXISTS server_log DROP COLUMN IF EXISTS weapon;
 ALTER TABLE IF EXISTS server_log DROP COLUMN IF EXISTS damage;
 ALTER TABLE IF EXISTS server_log DROP COLUMN IF EXISTS attacker_position;
