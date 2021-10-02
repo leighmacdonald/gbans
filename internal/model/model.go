@@ -13,6 +13,7 @@ import (
 	"github.com/rumblefrog/go-a2s"
 	"net"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -267,7 +268,18 @@ func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
 }
 
+// TODO move findPlayerBy* methods to here
 type ServerStateCollection map[string]ServerState
+
+func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
+	for _, server := range c {
+		if strings.ToLower(server.Name) == strings.ToLower(name) {
+			*state = server
+			return true
+		}
+	}
+	return false
+}
 
 func (c ServerStateCollection) ByRegion() map[string][]ServerState {
 	rm := map[string][]ServerState{}
@@ -406,12 +418,12 @@ type ServerEvent struct {
 
 type Filter struct {
 	WordID    int
-	Word      *regexp.Regexp
+	Pattern   *regexp.Regexp
 	CreatedOn time.Time
 }
 
 func (f *Filter) Match(value string) bool {
-	return f.Word.MatchString(value)
+	return f.Pattern.MatchString(value)
 }
 
 // RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.

@@ -487,7 +487,7 @@ func (w *Web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 		}
 		var w []string
 		for _, f := range words {
-			w = append(w, f.Word.String())
+			w = append(w, f.Pattern.String())
 		}
 		responseOK(c, http.StatusOK, resp{Count: len(words), Words: w})
 	}

@@ -15,7 +15,7 @@ func TestNewBanNet(t *testing.T) {
 func TestFilter_Match(t *testing.T) {
 	f := Filter{
 		WordID:    1,
-		Word:      regexp.MustCompile(`(po+p)`),
+		Pattern:   regexp.MustCompile(`(po+p)`),
 		CreatedOn: time.Now(),
 	}
 	require.True(t, f.Match("super pooooooper"))

@@ -9,6 +9,6 @@ var (
 	ErrInvalidSID       = errors.New("Invalid steamid")
 	ErrMalformedRequest = errors.New("Malformed request")
 	ErrInternal         = errors.New("Internal error :(")
-	ErrUnknownID        = errors.New("Could not find matching player/steamid")
+	ErrUnknownID        = errors.New("Could not find matching server/player/steamid")
 	ErrUnlinkedAccount  = errors.New("You must link your steam and discord accounts, see: /set_steam")
 )

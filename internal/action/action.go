@@ -7,11 +7,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/pkg/errors"
 	"net"
 	"time"
 )
 
+// Executor implements the common interface for the core application functionality. Its currently implemented
+// like this so that we can avoid cyclic dependency issues. This is a strong candidate for a better refactor.
+// The secondary purpose is to allow a common interface for executing action logic in a common manner from
+// multiple different interfaces, such as web and discord.
 type Executor interface {
 	Find(playerStr string, ip string, pi *model.PlayerInfo) error
 	FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error
@@ -28,20 +31,24 @@ type Executor interface {
 	ResolveSID(sidStr string) (steamid.SID64, error)
 	SetSteam(args SetSteamIDRequest) (bool, error)
 	ServerState() model.ServerStateCollection
+	ContainsFilteredWord(body string) (bool, model.Filter)
+	FilterDel(ctx context.Context, args FilterDelRequest) (bool, error)
+	FilterAdd(args FilterAddRequest) (model.Filter, error)
+	FilterCheck(args FilterCheckRequest) []model.Filter
 }
-
-var (
-	ErrInvalidArgs = errors.New("Invalid args")
-)
 
 type Origin int
 
 const (
+	// Core is when internal systems triggered the event. eg: background workers/word filters
 	Core Origin = iota
+	// Discord is a event that was via discord application commands
 	Discord
+	// Web is for events triggered via the web or API interface
 	Web
 )
 
+// BaseOrigin defines the base struct for all actions. It just marks where the event originated.
 type BaseOrigin struct {
 	Origin Origin
 }
@@ -321,6 +328,7 @@ func NewGetChatHistory(o Origin, target string, page int) GetChatHistoryRequest 
 	}
 }
 
+// Target defines who the request is being made against
 type Target string
 
 func (t Target) SID64() (steamid.SID64, error) {
@@ -334,6 +342,7 @@ func (t Target) SID64() (steamid.SID64, error) {
 	return v, nil
 }
 
+// Source defines who initiated the request
 type Source string
 
 func (a Source) SID64() (steamid.SID64, error) {
@@ -347,6 +356,8 @@ func (a Source) SID64() (steamid.SID64, error) {
 	return v, nil
 }
 
+// Duration defines the length of time the action should be valid for
+// A duration of 0 will be interpreted as permanent and set to 10 years in the future
 type Duration string
 
 func (d Duration) Value() (time.Duration, error) {

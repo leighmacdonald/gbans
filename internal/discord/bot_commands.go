@@ -39,7 +39,7 @@ const (
 	cmdFilterCheck botCmd = "check"
 )
 
-func (b *Bot) botRegisterSlashCommands() error {
+func (b *DiscordClient) botRegisterSlashCommands() error {
 	// TODO register the commands again upon adding new servers to update autocomplete opts
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
@@ -302,21 +302,23 @@ type permissionRequest struct {
 	Permissions []*discordgo.ApplicationCommandPermission `json:"permissions"`
 }
 
+// registerCommandPermissions is used to additionally apply further restrictions to
+// application commands that discordgo itself does not support yet.
 func registerCommandPermissions(perms []permissionRequest) error {
-	hc := util.NewHTTPClient()
-	b, err := json.Marshal(perms)
+	httpClient := util.NewHTTPClient()
+	body, err := json.Marshal(perms)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to set command permissions")
 	}
 	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions",
 		config.Discord.AppID, config.Discord.GuildID)
-	req, err2 := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(b))
+	req, err2 := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(body))
 	if err2 != nil {
 		return errors.Wrapf(err2, "Failed to create http request for discord permissions")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
-	resp, err3 := hc.Do(req)
+	resp, err3 := httpClient.Do(req)
 	if err3 != nil {
 		return errors.Wrapf(err3, "Failed to perform http request for discord permissions")
 	}
@@ -348,41 +350,43 @@ const (
 	discordWrapperTotalLen = discordMaxMsgLen - (len(discordMsgWrapper) * 2)
 )
 
-func (b *Bot) onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	cmd := botCmd(i.Data.Name)
-	r := botResponse{MsgType: mtString}
-	if h, ok := b.commandHandlers[cmd]; ok {
+// onInteractionCreate is called when a user initiates an application command. All commands are sent
+// through this interface.
+// https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
+func (b *DiscordClient) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	cmd := botCmd(interaction.Data.Name)
+	response := botResponse{MsgType: mtString}
+	if handler, ok := b.commandHandlers[cmd]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. Discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
-		if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 			Data: &discordgo.InteractionApplicationCommandResponseData{
 				Content: "Calculating numberwang...",
 			},
 		}); err != nil {
-			RespErr(&r, fmt.Sprintf("Error: %s", err.Error()))
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
+			RespErr(&response, fmt.Sprintf("Error: %session", err.Error()))
+			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
 			return
 		}
-		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-
-		if err := h(c, s, i, &r); err != nil {
+		if err := handler(ctx, session, interaction, &response); err != nil {
 			// TODO User facing errors only
-			RespErr(&r, fmt.Sprintf("Error: %s", err.Error()))
-			if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
+			RespErr(&response, fmt.Sprintf("Error: %session", err.Error()))
+			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		if sendE := b.sendInteractionMessageEdit(s, i.Interaction, r); sendE != nil {
+		if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 			log.Errorf("Failed sending success response for interaction: %v", sendE)
 		} else {
-			log.Debugf("Send message embed")
+			log.Debugf("Sent message embed")
 		}
 	}
 }

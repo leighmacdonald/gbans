@@ -313,7 +313,7 @@ func TestFilters(t *testing.T) {
 		var byId model.Filter
 		require.NoError(t, db.GetFilterByID(context.Background(), savedFilters[1].WordID, &byId))
 		require.Equal(t, savedFilters[1].WordID, byId.WordID)
-		require.Equal(t, savedFilters[1].Word.String(), byId.Word.String())
+		require.Equal(t, savedFilters[1].Pattern.String(), byId.Pattern.String())
 	}
 	droppedFilters, err3 := db.GetFilters(context.Background())
 	require.NoError(t, err3)

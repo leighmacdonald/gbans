@@ -12,6 +12,17 @@
 gbans is intended to be a more modern & secure replacement 
 for [sourcebans](https://github.com/GameConnect/sourcebansv1) / [sourcebans++](https://sbpp.dev).
 
+
+## Stability / Usage Notice
+
+While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the project on a 
+community with around 50 servers, I would not recommend non-developers use the project yet. It's still in fairly 
+major development mode and large sections are still incomplete or function but very rough. This is 
+very notable for the web frontend which we don't really use yet. Sticking with the discord command interface is the 
+best current way to interact with the system.
+
+Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
+
 ## Primary differences from sourcebans++
 
 - No direct SQL queries across networks. Exposing MySQL to the internet is a very poor security practice. You can 

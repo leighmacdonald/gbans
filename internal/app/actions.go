@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -363,32 +364,69 @@ func (g gbans) PSay(args action.PSayRequest) error {
 	return nil
 }
 
-//func (g Gbans) filterAdd(args action.FilterAddRequest) (*model.Filter, error) {
-//	f, err := g.db.InsertFilter(g.ctx, args.Filter)
-//	if err != nil {
-//		if err == store.ErrDuplicate {
-//			return nil, store.ErrDuplicate
-//		}
-//		log.Errorf("Error saving filter word: %v", err)
-//		return nil, consts.ErrInternal
-//	}
-//	return f, nil
-//}
-//
-//func (g Gbans) filterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
-//	var filter model.Filter
-//	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
-//		return false, err
-//	}
-//	if err2 := g.db.DropFilter(ctx, &filter); err2 != nil {
-//		return false, err2
-//	}
-//	return true, nil
-//}
-//
-//func (g Gbans) filterCheck(ctx context.Context, args action.FilterCheckRequest) ([]*model.Filter, error) {
-//	return nil, errors.New("unimplemented")
-//}
+func (g gbans) FilterAdd(args action.FilterAddRequest) (model.Filter, error) {
+	re, err := regexp.Compile(args.Filter)
+	if err != nil {
+		return model.Filter{}, errors.Wrapf(err, "Invalid regex format")
+	}
+	filter := model.Filter{Pattern: re, CreatedOn: config.Now()}
+	if errSave := g.db.SaveFilter(g.ctx, &filter); errSave != nil {
+		if errSave == store.ErrDuplicate {
+			return filter, store.ErrDuplicate
+		}
+		log.Errorf("Error saving filter word: %v", err)
+		return filter, consts.ErrInternal
+	}
+	return filter, nil
+}
+
+func (g gbans) FilterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
+	var filter model.Filter
+	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
+		return false, err
+	}
+	if err2 := g.db.DropFilter(ctx, &filter); err2 != nil {
+		return false, err2
+	}
+	return true, nil
+}
+
+func (g gbans) FilterCheck(args action.FilterCheckRequest) []model.Filter {
+	if args.Message == "" {
+		return nil
+	}
+	words := strings.Split(strings.ToLower(args.Message), " ")
+	wordFiltersMu.RLock()
+	defer wordFiltersMu.RUnlock()
+	var found []model.Filter
+	for _, filter := range wordFilters {
+		for _, word := range words {
+			if filter.Match(word) {
+				found = append(found, filter)
+			}
+		}
+	}
+	return found
+}
+
+// ContainsFilteredWord checks to see if the body of text contains a known filtered word
+// It will only return the first matched filter found.
+func (g gbans) ContainsFilteredWord(body string) (bool, model.Filter) {
+	if body == "" {
+		return false, model.Filter{}
+	}
+	words := strings.Split(strings.ToLower(body), " ")
+	wordFiltersMu.RLock()
+	defer wordFiltersMu.RUnlock()
+	for _, filter := range wordFilters {
+		for _, word := range words {
+			if filter.Match(word) {
+				return true, filter
+			}
+		}
+	}
+	return false, model.Filter{}
+}
 
 func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
 	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {

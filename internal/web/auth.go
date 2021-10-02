@@ -149,7 +149,7 @@ func (w *Web) onOpenIDCallback() gin.HandlerFunc {
 
 func (w *Web) onLoginSuccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Data(200, gin.MIMEHTML, []byte(baseLayout))
+		c.Data(200, gin.MIMEHTML, []byte(``))
 	}
 }
 

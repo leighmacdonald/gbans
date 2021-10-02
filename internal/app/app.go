@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/event"
@@ -27,7 +28,7 @@ var (
 // gbans is the main application struct.
 // It implements the action.Executor interface
 type gbans struct {
-	// Top-level context
+	// Top-level background context
 	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
@@ -77,6 +78,15 @@ type warnReason int
 const (
 	warnLanguage warnReason = iota
 )
+
+func warnReasonString(reason warnReason) string {
+	switch reason {
+	case warnLanguage:
+		return "Language"
+	default:
+		return "Unset"
+	}
+}
 
 type userWarning struct {
 	WarnReason warnReason
@@ -294,8 +304,6 @@ func (g *gbans) logReader() {
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
 func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	g.warningsMu.Lock()
-	defer g.warningsMu.Unlock()
-	//const msg = "Warning limit exceeded"
 	_, found := g.warnings[sid64]
 	if !found {
 		g.warnings[sid64] = []userWarning{}
@@ -304,23 +312,27 @@ func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 		WarnReason: reason,
 		CreatedOn:  config.Now(),
 	})
+	g.warningsMu.Unlock()
 	if len(g.warnings[sid64]) >= config.General.WarningLimit {
+		var pi model.PlayerInfo
 		g.l.Errorf("Warn limit exceeded (%d): %d", sid64, len(g.warnings[sid64]))
-		//var act action.Action
-		//switch config.General.WarningExceededAction {
-		//case config.Gag:
-		//	act = action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), msg,
-		//		config.General.WarningExceededDuration.String())
-		//case config.Ban:
-		//	act = action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), msg,
-		//		config.General.WarningExceededDuration.String())
-		//case config.Kick:
-		//	act = action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), msg)
-		//}
-		//res := <-act.Enqueue().Wait()
-		//if res.Err != nil {
-		//	log.Errorf("Failed to ban Player after too many warnings: %v", res.Err)
-		//}
+		switch config.General.WarningExceededAction {
+		case config.Gag:
+			if err := g.Mute(action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+				config.General.WarningExceededDuration.String()), &pi); err != nil {
+
+			}
+		case config.Ban:
+			var ban model.Ban
+			if err := g.Ban(action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+				config.General.WarningExceededDuration.String()), &ban); err != nil {
+
+			}
+		case config.Kick:
+			if err := g.Kick(action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi); err != nil {
+
+			}
+		}
 	}
 }
 
@@ -356,7 +368,7 @@ func (g *gbans) initDiscord() {
 		}
 		go func() {
 			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {
-				g.l.Errorf("Bot returned error: %v", errBS)
+				g.l.Errorf("DiscordClient returned error: %v", errBS)
 			}
 		}()
 	} else {

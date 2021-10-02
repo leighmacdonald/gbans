@@ -56,10 +56,10 @@ type PersonStore interface {
 }
 
 type FilterStore interface {
-	InsertFilter(ctx context.Context, rx string) (*model.Filter, error)
+	SaveFilter(ctx context.Context, filter *model.Filter) error
 	DropFilter(ctx context.Context, filter *model.Filter) error
-	GetFilterByID(ctx context.Context, wordId int, f *model.Filter) error
-	GetFilters(ctx context.Context) ([]*model.Filter, error)
+	GetFilterByID(ctx context.Context, wordId int, filter *model.Filter) error
+	GetFilters(ctx context.Context) ([]model.Filter, error)
 }
 
 type MigrationStore interface {

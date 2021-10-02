@@ -113,15 +113,12 @@ func (db *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error
 }
 
 func (db *pgStore) GetASNRecord(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error {
-	q, _, e := sb.Select("ip_from", "ip_to", "cidr", "as_num", "as_name").
-		From("net_asn").
-		Where("$1 << cidr").
-		Limit(1).
-		ToSql()
-	if e != nil {
-		return e
-	}
-	if err := db.c.QueryRow(ctx, q, ip).
+	const q = `
+		SELECT ip_from, ip_to, cidr, as_num, as_name 
+		FROM net_asn
+		WHERE $1::inet <@ ip_range
+		LIMIT 1`
+	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); err != nil {
 		return dbErr(err)
 	}
@@ -132,8 +129,8 @@ func (db *pgStore) GetLocationRecord(ctx context.Context, ip net.IP, r *ip2locat
 	const q = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
-		WHERE $1 <@ ip_range`
-	if err := db.c.QueryRow(ctx, q, ip).
+		WHERE $1::inet <@ ip_range`
+	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
 		return dbErr(err)
 	}
@@ -145,8 +142,8 @@ func (db *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
-		WHERE $1 <@ ip_range`
-	if err := db.c.QueryRow(ctx, q, ip).
+		WHERE $1::inet <@ ip_range`
+	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
 			&r.Domain, &r.UsageType, &r.ASN, &r.AS, &r.LastSeen, &r.Threat); err != nil {
 		return dbErr(err)

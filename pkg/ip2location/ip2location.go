@@ -42,6 +42,38 @@ const (
 	geoDatabaseProxyFile = "IP2PROXY-LITE-PX10.CSV"
 )
 
+type ProxyType string
+
+const PUB ProxyType = "PUB"
+
+type ThreatType string
+
+const (
+	ThreatUnknown           ThreatType = "-"
+	ThreatSpam              ThreatType = "SPAM"
+	ThreatBotnet            ThreatType = "BOTNET"
+	ThreatScanner           ThreatType = "SCANNER"
+	ThreatSpamBotnet        ThreatType = "SPAM/BOTNET"
+	ThreatSpamScanner       ThreatType = "SPAM/SCANNER"
+	ThreatSpamScannerBotnet ThreatType = "SPAM/SCANNER/BOTNET"
+)
+
+type UsageType string
+
+const (
+	UsageContentDeliveryNetwork UsageType = "CDN"
+	UsageISPFixedMobile         UsageType = "ISP/MOB"
+	UsageCommercial             UsageType = "COM"
+	UsageISPMobile              UsageType = "MOB"
+	UsageLibrary                UsageType = "LIB"
+	UsageDataCenter             UsageType = "DCH"
+	UsageMilitary               UsageType = "MIL"
+	UsageGovernment             UsageType = "GOV"
+	UsageISPFixed               UsageType = "ISP"
+	UsageOrganization           UsageType = "ORG"
+	UsageEducation              UsageType = "EDU"
+)
+
 // LocationRecord
 // "16781312","16785407","JP","Japan","Tokyo","Tokyo","35.689506","139.691700"
 // ip_from 	INT (10)† / DECIMAL (39,0)†† 	First IP address show netblock.
@@ -92,18 +124,18 @@ type LocationRecord struct {
 type ProxyRecord struct {
 	IPFrom      *net.IP
 	IPTo        *net.IP
-	ProxyType   string
+	ProxyType   ProxyType
 	CountryCode string
 	CountryName string
 	RegionName  string
 	CityName    string
 	ISP         string
 	Domain      string
-	UsageType   string
+	UsageType   UsageType
 	ASN         int64
 	AS          string
 	LastSeen    time.Time
-	Threat      string
+	Threat      ThreatType
 }
 
 // ASNRecord
@@ -352,18 +384,18 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 		records = append(records, ProxyRecord{
 			IPFrom:      &ipFrom,
 			IPTo:        &ipTo,
-			ProxyType:   row[2],
+			ProxyType:   ProxyType(row[2]),
 			CountryCode: row[3],
 			CountryName: row[4],
 			RegionName:  row[5],
 			CityName:    row[6],
 			ISP:         row[7],
 			Domain:      row[8],
-			UsageType:   row[9],
+			UsageType:   UsageType(row[9]),
 			ASN:         asn,
 			AS:          row[11],
 			LastSeen:    time.Unix(t, 0),
-			Threat:      row[13],
+			Threat:      ThreatType(row[13]),
 		})
 	}
 	return records, nil

@@ -2,32 +2,20 @@ package store
 
 import (
 	"context"
-	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"regexp"
 )
 
-func (db *pgStore) InsertFilter(ctx context.Context, rx string) (*model.Filter, error) {
-	r, e := regexp.Compile(rx)
-	if e != nil {
-		return nil, e
-	}
-	filter := &model.Filter{
-		Word:      r,
-		CreatedOn: config.Now(),
-	}
-	q, a, e := sb.Insert(string(tableFilteredWord)).
-		Columns("word", "created_on").
-		Values(rx, filter.CreatedOn).
-		Suffix("RETURNING word_id").
-		ToSql()
-	if e != nil {
-		return nil, e
-	}
-	if err := db.c.QueryRow(ctx, q, a...).Scan(&filter.WordID); err != nil {
+func (db *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
+	_, err := db.insertFilter(ctx, filter)
+	return err
+}
+
+func (db *pgStore) insertFilter(ctx context.Context, filter *model.Filter) (*model.Filter, error) {
+	const q = `INSERT INTO filtered_word (word, created_on) VALUES ($1, $2) RETURNING word_id`
+	if err := db.c.QueryRow(ctx, q, filter.Pattern.String(), filter.CreatedOn).Scan(&filter.WordID); err != nil {
 		return nil, dbErr(err)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)
@@ -35,13 +23,8 @@ func (db *pgStore) InsertFilter(ctx context.Context, rx string) (*model.Filter, 
 }
 
 func (db *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
-	q, a, e := sb.Delete(string(tableFilteredWord)).
-		Where(sq.Eq{"word_id": filter.WordID}).
-		ToSql()
-	if e != nil {
-		return dbErr(e)
-	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	const q = `DELETE FROM filtered_word WHERE word_id = $1`
+	if _, err := db.c.Exec(ctx, q, filter.WordID); err != nil {
 		return dbErr(err)
 	}
 	log.Debugf("Deleted filter: %d", filter.WordID)
@@ -49,34 +32,25 @@ func (db *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
 }
 
 func (db *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model.Filter) error {
-	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).
-		Where(sq.Eq{"word_id": wordId}).
-		ToSql()
-	if e != nil {
-		return dbErr(e)
-	}
+	const q = `SELECT word_id, word, created_on from filtered_word WHERE word_id = $1`
 	var w string
-	if err := db.c.QueryRow(ctx, q, a...).Scan(&f.WordID, &w, &f.CreatedOn); err != nil {
+	if err := db.c.QueryRow(ctx, q, wordId).Scan(&f.WordID, &w, &f.CreatedOn); err != nil {
 		return errors.Wrapf(err, "Failed to load filter")
 	}
 	rx, er := regexp.Compile(w)
 	if er != nil {
 		return er
 	}
-	f.Word = rx
+	f.Pattern = rx
 	return nil
 }
 
-func (db *pgStore) GetFilters(ctx context.Context) ([]*model.Filter, error) {
-	q, a, e := sb.Select("word_id", "word", "created_on").From(string(tableFilteredWord)).ToSql()
-	if e != nil {
-		return nil, dbErr(e)
-	}
-	rows, err := db.c.Query(ctx, q, a...)
+func (db *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error) {
+	rows, err := db.c.Query(ctx, `SELECT word_id, word, created_on from filtered_word`)
 	if err != nil {
 		return nil, dbErr(err)
 	}
-	var filters []*model.Filter
+	var filters []model.Filter
 	defer rows.Close()
 	for rows.Next() {
 		var f model.Filter
@@ -88,8 +62,8 @@ func (db *pgStore) GetFilters(ctx context.Context) ([]*model.Filter, error) {
 		if er != nil {
 			return nil, er
 		}
-		f.Word = rx
-		filters = append(filters, &f)
+		f.Pattern = rx
+		filters = append(filters, f)
 	}
 	return filters, nil
 }

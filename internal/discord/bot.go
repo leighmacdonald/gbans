@@ -27,7 +27,7 @@ var (
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-type Bot struct {
+type DiscordClient struct {
 	dg              *discordgo.Session
 	connectedMu     *sync.RWMutex
 	connected       bool
@@ -36,9 +36,9 @@ type Bot struct {
 	db              store.Store
 }
 
-// New instantiates a new, unconnected, Bot instance
-func New(executor action.Executor, s store.Store) (*Bot, error) {
-	b := Bot{
+// New instantiates a new, unconnected, DiscordClient instance
+func New(executor action.Executor, s store.Store) (*DiscordClient, error) {
+	b := DiscordClient{
 		dg:          nil,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
@@ -66,10 +66,10 @@ func New(executor action.Executor, s store.Store) (*Bot, error) {
 	return &b, nil
 }
 
-func (b *Bot) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
+func (b *DiscordClient) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to connect to discord. Bot unavailable")
+		return errors.Wrapf(err, "Failed to connect to discord. DiscordClient unavailable")
 
 	}
 	defer func() {
@@ -105,7 +105,7 @@ func (b *Bot) Start(ctx context.Context, token string, eventChan chan model.Serv
 // discordMessageQueueReader functions by registering event handlers for the two user message events
 // Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func (b *Bot) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
+func (b *DiscordClient) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
 	for {
@@ -142,11 +142,11 @@ func (b *Bot) discordMessageQueueReader(ctx context.Context, eventChan chan mode
 	}
 }
 
-func (b *Bot) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	log.Infof("Bot is connected & ready")
+func (b *DiscordClient) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+	log.Infof("DiscordClient is connected & ready")
 }
 
-func (b *Bot) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
+func (b *DiscordClient) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	log.Info("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
 		IdleSince: nil,
@@ -172,14 +172,14 @@ func (b *Bot) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	b.connectedMu.Unlock()
 }
 
-func (b *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+func (b *DiscordClient) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	b.connectedMu.Lock()
 	b.connected = false
 	b.connectedMu.Unlock()
 	log.Info("Disconnected from session ws API")
 }
 
-func (b *Bot) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
+func (b *DiscordClient) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
 	b.connectedMu.RLock()
 	if !b.connected {
 		b.connectedMu.RUnlock()
@@ -200,7 +200,7 @@ func (b *Bot) sendChannelMessage(s *discordgo.Session, c string, msg string, wra
 	return nil
 }
 
-func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
+func (b *DiscordClient) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
 	b.connectedMu.RLock()
 	if !b.connected {
 		b.connectedMu.RUnlock()
@@ -226,16 +226,53 @@ func (b *Bot) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Inte
 	return s.InteractionResponseEdit(config.Discord.AppID, i, e)
 }
 
-func (b *Bot) Send(channelId string, message string, wrap bool) error {
+func (b *DiscordClient) Send(channelId string, message string, wrap bool) error {
 	return b.sendChannelMessage(b.dg, channelId, message, wrap)
 }
-func (b *Bot) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+
+func (b *DiscordClient) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
 	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
 		return errSend
 	}
 	return nil
 }
 
+func addFieldInline(e *discordgo.MessageEmbed, title string, value string) {
+	addFieldRaw(e, title, value, true)
+}
+
+func addField(e *discordgo.MessageEmbed, title string, value string) {
+	addFieldRaw(e, title, value, false)
+}
+
+func addFieldRaw(e *discordgo.MessageEmbed, title string, value string, inline bool) {
+	const maxEmbedFields = 25
+	if len(e.Fields) >= maxEmbedFields {
+		log.Warnf("Dropping embed fields. Already at max count: %d", maxEmbedFields)
+		return
+	}
+	e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+		Name:   title,
+		Value:  value,
+		Inline: inline,
+	})
+}
+
+func addFieldsSteamID(e *discordgo.MessageEmbed, sid steamid.SID64) {
+	addFieldInline(e, "STEAM", string(steamid.SID64ToSID(sid)))
+	addFieldInline(e, "STEAM3", string(steamid.SID64ToSID3(sid)))
+	addFieldInline(e, "SID64", sid.String())
+}
+
+func addFieldFilter(e *discordgo.MessageEmbed, filter model.Filter) {
+	addFieldInline(e, "Pattern", filter.Pattern.String())
+	addFieldInline(e, "ID", fmt.Sprintf("%d", filter.WordID))
+}
+
+// ChatBot defines a interface for communication with 3rd party service bots
+// Currently this is only used for discord, but other providers such as
+// Guilded, Matrix, IRC, etc. are planned.
+// TODO decouple embed's from discordgo
 type ChatBot interface {
 	Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error
 	Send(channelId string, message string, wrap bool) error
