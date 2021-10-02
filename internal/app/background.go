@@ -214,7 +214,7 @@ func (g *gbans) banSweeper() {
 				log.Warnf("Failed to get expired netbans: %v", err2)
 			} else {
 				for _, ban := range netBans {
-					if err := g.db.DropNetBan(g.ctx, &ban); err != nil {
+					if err := g.db.DropBanNet(g.ctx, &ban); err != nil {
 						log.Errorf("Failed to drop expired network ban: %v", err)
 					} else {
 						log.Infof("Network ban expired: %v", ban)

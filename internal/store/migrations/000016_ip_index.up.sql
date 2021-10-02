@@ -1,5 +1,5 @@
 begin;
-
+DROP TYPE IF EXISTS iprange;
 CREATE TYPE iprange AS range (subtype=inet);
 
 ALTER TABLE net_location ADD COLUMN IF NOT EXISTS ip_range iprange;
