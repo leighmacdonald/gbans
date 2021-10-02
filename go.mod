@@ -23,7 +23,7 @@ require (
 	github.com/jackc/puddle v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leighmacdonald/golib v1.1.0
-	github.com/leighmacdonald/rcon v1.0.6
+	github.com/leighmacdonald/rcon v1.0.7
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.0-20210803010711-64b0e363d418
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -41,9 +41,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/yohcop/openid-go v1.0.0
+	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20210928044308-7d9f5e0b762b // indirect
-	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
+	golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6 // indirect
+	golang.org/x/sys v0.0.0-20211002104244-808efd93c36d // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
 )
