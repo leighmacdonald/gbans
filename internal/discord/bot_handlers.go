@@ -299,11 +299,12 @@ func (b *DiscordClient) onCheck(ctx context.Context, _ *discordgo.Session, m *di
 	title := player.PersonaName
 	if ban.Ban.BanID > 0 {
 		if ban.Ban.BanType == model.Banned {
-			title += " (BANNED)"
+			title = fmt.Sprintf("%s (BANNED)", title)
 		} else if ban.Ban.BanType == model.NoComm {
-			title += " (MUTED)"
+			title = fmt.Sprintf("%s (MUTED)", title)
 		}
 	}
+	e.Title = title
 	if player.RealName != "" {
 		addFieldInline(e, "Real Name", player.RealName)
 	}
@@ -326,7 +327,7 @@ func (b *DiscordClient) onCheck(ctx context.Context, _ *discordgo.Session, m *di
 	if ban.Ban.BanID > 0 {
 		addFieldInline(e, "Reason", reason)
 		addFieldInline(e, "Created", config.FmtTimeShort(ban.Ban.CreatedOn))
-		if expiry.AddDate(5, 0, 0).Sub(time.Now()) > time.Hour*24*365*5 {
+		if time.Until(expiry) > time.Hour*24*365*5 {
 			addFieldInline(e, "Expires", "Permanent")
 		} else {
 			addFieldInline(e, "Expires", config.FmtDuration(expiry))
@@ -625,7 +626,6 @@ func (b *DiscordClient) onPlayers(ctx context.Context, _ *discordgo.Session, m *
 			var proxy ip2location.ProxyRecord
 			if errLoc := b.db.GetProxyRecord(ctx, p.IP, &proxy); errLoc == nil {
 				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", proxy.ProxyType, proxy.Threat, proxy.UsageType)
-				return errCommandFailed
 			}
 			rows = append(rows, fmt.Sprintf(":flag_%s: `%d` [%s](https://steamcommunity.com/profiles/%d) %dms [%s](https://spyse.com/target/as/%d) %s",
 				strings.ToLower(loc.CountryCode), p.SID, p.Name, p.SID, p.Ping, asn.ASName, asn.ASNum, proxyStr))
@@ -697,9 +697,9 @@ func (b *DiscordClient) onFilterCheck(_ context.Context, _ *discordgo.Session, m
 	})
 	title := ""
 	if len(matches) == 0 {
-		title = fmt.Sprintf("No Match Found")
+		title = "No Match Found"
 	} else {
-		title = fmt.Sprintf("Matched Found")
+		title = "Matched Found"
 	}
 	e := RespOk(r, title)
 	for _, filter := range matches {

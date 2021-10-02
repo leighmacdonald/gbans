@@ -273,7 +273,7 @@ type ServerStateCollection map[string]ServerState
 
 func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
-		if strings.ToLower(server.Name) == strings.ToLower(name) {
+		if strings.EqualFold(server.Name, name) {
 			*state = server
 			return true
 		}

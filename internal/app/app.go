@@ -316,22 +316,20 @@ func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	if len(g.warnings[sid64]) >= config.General.WarningLimit {
 		var pi model.PlayerInfo
 		g.l.Errorf("Warn limit exceeded (%d): %d", sid64, len(g.warnings[sid64]))
+		var err error
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			if err := g.Mute(action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
-				config.General.WarningExceededDuration.String()), &pi); err != nil {
-
-			}
+			err = g.Mute(action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+				config.General.WarningExceededDuration.String()), &pi)
 		case config.Ban:
 			var ban model.Ban
-			if err := g.Ban(action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
-				config.General.WarningExceededDuration.String()), &ban); err != nil {
-
-			}
+			err = g.Ban(action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+				config.General.WarningExceededDuration.String()), &ban)
 		case config.Kick:
-			if err := g.Kick(action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi); err != nil {
-
-			}
+			err = g.Kick(action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
+		}
+		if err != nil {
+			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).Errorf("Failed to apply warning action: %v", err)
 		}
 	}
 }

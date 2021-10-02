@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 )
@@ -298,10 +299,13 @@ func TestFilters(t *testing.T) {
 	existingFilters, err := db.GetFilters(context.Background())
 	require.NoError(t, err)
 	words := []string{golib.RandomString(10), golib.RandomString(10)}
-	var savedFilters []*model.Filter
+	var savedFilters []model.Filter
 	for _, word := range words {
-		f, e := db.InsertFilter(context.Background(), word)
-		require.NoError(t, e, "Failed to insert filter: %s", word)
+		f := model.Filter{
+			Pattern:   regexp.MustCompile(word),
+			CreatedOn: config.Now(),
+		}
+		require.NoError(t, db.SaveFilter(context.Background(), &f), "Failed to insert filter: %s", word)
 		require.True(t, f.WordID > 0)
 		savedFilters = append(savedFilters, f)
 	}
@@ -309,7 +313,7 @@ func TestFilters(t *testing.T) {
 	require.NoError(t, err2)
 	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 	if savedFilters != nil {
-		require.NoError(t, db.DropFilter(context.Background(), savedFilters[0]))
+		require.NoError(t, db.DropFilter(context.Background(), &savedFilters[0]))
 		var byId model.Filter
 		require.NoError(t, db.GetFilterByID(context.Background(), savedFilters[1].WordID, &byId))
 		require.Equal(t, savedFilters[1].WordID, byId.WordID)

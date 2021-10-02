@@ -43,13 +43,12 @@ var (
 type tableName string
 
 const (
-	tableFilteredWord tableName = "filtered_word"
-	tableNetLocation  tableName = "net_location"
-	tableNetProxy     tableName = "net_proxy"
-	tableNetASN       tableName = "net_asn"
-	tablePersonIP     tableName = "person_ip"
-	tableServer       tableName = "server"
-	tableDemo         tableName = "demo"
+	tableNetLocation tableName = "net_location"
+	tableNetProxy    tableName = "net_proxy"
+	tableNetASN      tableName = "net_asn"
+	tablePersonIP    tableName = "person_ip"
+	tableServer      tableName = "server"
+	tableDemo        tableName = "demo"
 )
 
 // QueryFilter provides a structure for common query parameters
