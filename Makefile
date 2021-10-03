@@ -23,7 +23,7 @@ bump_deps:
 build: fmt vet linux64 windows64
 
 frontend:
-	cd frontend && yarn && yarn run build && yarn run copy
+	cd frontend && yarn && yarn run build
 
 linux64:
 	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
