@@ -18,14 +18,16 @@ Precompiled binaries will be provided once the project is in a more stable state
 - [golang 1.16+](https://golang.org/) gbans is written in go. Version >=1.16 is *REQUIRED* due to using iofs embed features.
 - [PostgreSQL](https://www.postgresql.org/) is used as the data store. Version 12 is the only version currently tested
 against. However i believe anything 10 and up should work. Please let me know if this is not the case.
-    - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
+  - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
+- [NodeJS 14+](https://nodejs.org/en/) To build frontend 
+  - [yarn](https://yarnpkg.com/) JS package manager
 
 Basic steps to build the binary packages:
 
     1. git clone git@github.com:leighmacdonald/gbans.git && cd gbans
-    2. make dist
+    2. make
  
-You should now have a binary in the project root called `gbans` or `gbans.exe` if on windows.
+You should now have a binary located at `./build/$platform/gbans`
 
 ## Configuration
 

@@ -1,0 +1,123 @@
+general:
+  site_name: "gbans"
+  steam_key:
+  owner: 76561198000000000
+  # Run mode for the HTTP service
+  # NOTE: Changing this will toggle between using embedded assets (release) and using
+  # assets served from the filesystem (debug)
+  #
+  # Should normally be "release"
+  mode: "release" # release, debug, test
+  server_status_update_freq: 60s
+
+http:
+  # Listen on this ip address
+  # 0.0.0.0 = Any
+  host: 0.0.0.0
+  # Listen on this port
+  port: 6006
+  # Enable TLS?
+  # If running behind a reverse proxy that performs TLS for you its safe to leave this as false
+  # However if you are exposing the service directly to the internet, then you are *highly* advised to enable this.
+  tls: false
+  # tls_auto: enable or disable the generation of SSL certs through let's encrypt for free. This is only
+  # used if tls is also enabled.
+  tls_auto: false
+  # External URL that people will access your site through
+  # This is also used for tls_auto when requesting a new certificate
+  domain: https://gbans.domain.com
+  static_path: internal/web/dist
+  client_timeout: 20s
+  # Encryption key for cookies
+  cookie_key: change_me
+  cors_origins:
+    - "https://uncletopia.com"
+
+word_filter:
+  enabled: false
+  warnings: 3
+  ping_discord: false
+  external_enabled: false
+  external_sources:
+    - https://raw.githubusercontent.com/RobertJGabriel/Google-profanity-words/master/list.txt
+
+relay:
+  # Enable/disable the log relay functionality
+  enabled: false
+  # Output messages to these channels
+  channel_ids:
+    - "13141312312312313"
+
+database:
+  # DSN/URL to your database
+  # eg: "postgresql://gbans:gbans@postgres:5432/gbans"
+  dsn: "postgresql://gbans:gbans@postgres:5432/gbans"
+
+rpc:
+  enabled: false
+  addr: "wss://gbans.example.com/api/ws"
+  log_addr: "192.168.0.101:7777"
+
+discord:
+  # Enable optional discord integration
+  enabled: false
+  # Same as discord client id
+  app_id:
+  # Your discord bot token
+  # See: https://discord.com/developers/applications
+  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  mod_role_ids: []
+  # People in these channels automatically have moderator privilege
+  # To find these, Right click the channel -> copy id
+  mod_channel_ids:
+    - "123456789012345678"
+    - "234567890123456789"
+  public_log_channel_id: "000000000000000000"
+  # Commands all start with this character
+  prefix: "!"
+
+logging:
+  # Set the debug log level
+  level: debug
+  # Force console colours when it cant guess. This is mostly useful on windows
+  force_colours: true
+  # Force disable any colouring
+  disable_colours: false
+  # Show the function + line number where the log message was created
+  report_caller: false
+  # Show full timestamps in the logs
+  full_timestamp: false
+
+network_bans:
+  enabled: false
+  max_age: 1d
+  cache_path: .cache
+  ip2location:
+    enabled: false
+    # Sign up for free ip2location account @ https://lite.ip2location.com/sign-up to get token
+    token:
+    asn_enabled: false
+    ip_enabled: false
+    proxy_enabled: false
+  sources:
+    - name: tf2bd
+      url: https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/staging/cfg/playerlist.official.json
+      type: tf2bd
+    - name: bdd
+      url: https://tf2bdd.pazer.us/v1/steamids
+      type: tf2bd
+    - name: erjv
+      url: https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt
+      type: cidr
+    - name: proxy-list-socks5
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt
+      type: s5
+    - name: proxy-list-socks4
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt
+      type: s4
+    - name: proxy-list-http
+      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt
+      type: http
+    - name: ET
+      url: https://rules.emergingthreats.net/open-nogpl/snort-2.9.0/emerging.rules.tar.gz
+      type: snort
