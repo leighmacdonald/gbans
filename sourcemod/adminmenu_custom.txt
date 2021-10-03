@@ -20,7 +20,7 @@
 				"title"		"Reason"
 				"1"		"harassment"
 				"1."		"Harassment"
-				"2"		"exploitng"
+				"2"		"exploiting"
 				"2."		"Exploiting"
 				"3"		"afk"
 				"3."		"AFK"

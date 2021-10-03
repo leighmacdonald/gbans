@@ -10,8 +10,8 @@ import (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "",
-	Long:  ``,
+	Short: "Starts the gbans service",
+	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		application, err := app.New(ctx)

@@ -63,9 +63,9 @@ func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
 	if config.General.Mode == config.Release {
-		r.StaticFS("/static", http.FS(content))
+		r.StaticFS("/dist", http.FS(content))
 	} else {
-		r.StaticFS("/static", http.Dir(ap))
+		r.StaticFS("/dist", http.Dir(ap))
 	}
 	idxPath := filepath.Join(ap, "index.html")
 	for _, rt := range []string{

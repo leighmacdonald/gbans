@@ -32,6 +32,7 @@ sourcemod/.vscode/
 *.js
 *.jsx
 /internal/web/dist/
+!/internal/web/dist/.gitkeep
 /out/production/gbans/
 /build/
 /*.zip

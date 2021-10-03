@@ -17,15 +17,6 @@ import (
 	"time"
 )
 
-var (
-	ErrRCON = errors.New("RCON error")
-)
-
-const (
-	LenDiscordID = 18
-	LenSteamID   = 17
-)
-
 // BanType defines the state of the ban for a user, 0 being no ban
 type BanType int
 
@@ -95,6 +86,7 @@ var reasonStr = map[Reason]string{
 	Exploiting:       "Exploiting",
 	WarningsExceeded: "Warnings Exceeding",
 	Spam:             "Spam",
+	Language:         "Language",
 }
 
 func (r Reason) String() string {
@@ -265,7 +257,8 @@ type Server struct {
 	// Auto generated id
 	ServerID int64 `db:"server_id" json:"server_id"`
 	// ServerName is a short reference name for the server eg: us-1
-	ServerName string `db:"short_name" json:"server_name"`
+	ServerName     string `db:"short_name" json:"server_name"`
+	ServerNameLong string `db:"server_name_long" json:"server_name_long"`
 	// Token is the current valid authentication token that the server uses to make authenticated requests
 	Token string `db:"token" json:"token"`
 	// Address is the ip of the server

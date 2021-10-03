@@ -259,13 +259,12 @@ func (w *Web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
 	}
 }
 
-type CheckRequest struct {
-	ClientID int    `json:"client_id"`
-	SteamID  string `json:"steam_id"`
-	IP       net.IP `json:"ip"`
-}
-
 func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
+	type checkRequest struct {
+		ClientID int    `json:"client_id"`
+		SteamID  string `json:"steam_id"`
+		IP       net.IP `json:"ip"`
+	}
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
 		SteamID  string        `json:"steam_id"`
@@ -273,7 +272,7 @@ func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 		Msg      string        `json:"msg"`
 	}
 	return func(c *gin.Context) {
-		var req CheckRequest
+		var req checkRequest
 		if err := c.BindJSON(&req); err != nil {
 			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,

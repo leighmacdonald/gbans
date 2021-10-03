@@ -45,7 +45,7 @@ type gbans struct {
 
 // New instantiates a new application
 func New(ctx context.Context) (*gbans, error) {
-	g := &gbans{
+	application := &gbans{
 		ctx:            ctx,
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
@@ -53,24 +53,24 @@ func New(ctx context.Context) (*gbans, error) {
 		logRawQueue:    make(chan ws.LogPayload, 50),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
-	s, se := store.New(config.DB.DSN)
+	dbStore, se := store.New(config.DB.DSN)
 	if se != nil {
 		return nil, errors.Wrapf(se, "Failed to setup store")
 	}
-	b, be := discord.New(g, s)
+	discordBot, be := discord.New(application, dbStore)
 	if be != nil {
 		return nil, errors.Wrapf(be, "Failed to setup bot")
 	}
-	w, we := web.New(g.logRawQueue, s, b, g)
+	webService, we := web.New(application.logRawQueue, dbStore, discordBot, application)
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
 
-	g.db = s
-	g.bot = b
-	g.web = w
+	application.db = dbStore
+	application.bot = discordBot
+	application.web = webService
 
-	return g, nil
+	return application, nil
 }
 
 type warnReason int

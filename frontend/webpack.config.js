@@ -16,9 +16,9 @@ module.exports = {
     entry: './src/index.tsx',
     output: {
         path: path.join(paths.dist),
-        publicPath: '/static/',
+        publicPath: '/dist',
         filename: devMode ? '[name].js' : '[name].[chunkhash:8].bundle.js',
-        clean: true
+        clean: false
     },
     devtool: devMode ? 'inline-source-map' : false,
     performance: {
