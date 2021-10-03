@@ -79,7 +79,7 @@ func (db *pgStore) SaveBanNet(ctx context.Context, banNet *model.BanNet) error {
 	return db.insertBanNet(ctx, banNet)
 }
 
-func (db *pgStore) DropNetBan(ctx context.Context, ban *model.BanNet) error {
+func (db *pgStore) DropBanNet(ctx context.Context, ban *model.BanNet) error {
 	q, a, e := sb.Delete("ban_net").Where(sq.Eq{"net_id": ban.NetID}).ToSql()
 	if e != nil {
 		return e
@@ -112,7 +112,28 @@ func (db *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error
 	return bans, nil
 }
 
-func (db *pgStore) GetASNRecord(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error {
+func (db *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+	const q = `
+		SELECT ip_from, ip_to, cidr, as_num, as_name 
+		FROM net_asn
+		WHERE as_num = $1`
+	rows, err := db.c.Query(ctx, q, asNum)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var records ip2location.ASNRecords
+	for rows.Next() {
+		var r ip2location.ASNRecord
+		if errRow := rows.Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); errRow != nil {
+			return nil, dbErr(errRow)
+		}
+		records = append(records, r)
+	}
+	return records, nil
+}
+
+func (db *pgStore) GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error {
 	const q = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 
 		FROM net_asn
@@ -261,4 +282,45 @@ func (db *pgStore) InsertBlockListData(ctx context.Context, d *ip2location.Block
 		}
 	}
 	return nil
+}
+
+func (db *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error {
+	const q = `
+		SELECT ban_asn_id, as_num, origin, author_id, target_id, reason, valid_until, created_on, updated_on 
+		FROM ban_asn 
+		WHERE as_num = $1`
+	if err := db.c.QueryRow(ctx, q, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.AuthorID,
+		&banASN.TargetID, &banASN.Reason, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn); err != nil {
+		return dbErr(err)
+	}
+	return nil
+}
+
+func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
+	b.UpdatedOn = config.Now()
+	if b.BanASNId > 0 {
+		const q = `
+			UPDATE ban_asn 
+			SET as_num = $2, origin = $3, author_id = $4, target_id = $5, reason = $6,
+				valid_until = $7, updated_on = $8
+			WHERE ban_asn_id = $1`
+
+		_, errUpd := db.c.Exec(ctx, q, b.BanASNId, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
+			b.Reason, b.ValidUntil, b.UpdatedOn)
+		return dbErr(errUpd)
+
+	}
+	const qi = `
+		INSERT INTO ban_asn (as_num, origin, author_id, target_id, reason, valid_until, updated_on, created_on)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING ban_asn_id`
+	errIns := db.c.QueryRow(ctx, qi, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
+		b.Reason, b.ValidUntil, b.UpdatedOn, b.CreatedOn).Scan(&b.BanASNId)
+	return dbErr(errIns)
+}
+
+func (db *pgStore) DropBanASN(ctx context.Context, ban *model.BanASN) error {
+	const q = `DELETE FROM ban_asn WHERE ban_asn_id = $1`
+	_, err := db.c.Exec(ctx, q, ban.BanASNId)
+	return dbErr(err)
 }

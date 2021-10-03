@@ -34,13 +34,16 @@ type BanStore interface {
 	SaveBan(ctx context.Context, ban *model.Ban) error
 	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
 	SaveBanNet(ctx context.Context, banNet *model.BanNet) error
-	DropNetBan(ctx context.Context, ban *model.BanNet) error
+	DropBanNet(ctx context.Context, ban *model.BanNet) error
 	DropBan(ctx context.Context, ban *model.Ban) error
 	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
 	GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.Time) ([]model.Ban, error)
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
 	Import(ctx context.Context, root string) error
+	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
+	SaveBanASN(ctx context.Context, banASN *model.BanASN) error
+	DropBanASN(ctx context.Context, ban *model.BanASN) error
 }
 
 type PersonStore interface {
@@ -75,7 +78,8 @@ type StatStore interface {
 
 type NetworkStore interface {
 	InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) error
-	GetASNRecord(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error
+	GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error
+	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetLocationRecord(ctx context.Context, ip net.IP, l *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ip net.IP, l *ip2location.ProxyRecord) error
 	GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]model.PersonIPRecord, error)

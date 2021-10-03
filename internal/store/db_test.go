@@ -333,7 +333,7 @@ func TestFilters(t *testing.T) {
 func TestBanASN(t *testing.T) {
 	var author model.Person
 	require.NoError(t, testDb.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &author))
-	b1 := model.NewBanASN(1, author.SteamID, "test", time.Now().Add(time.Minute*10))
+	b1 := model.NewBanASN(1, author.SteamID, "test", time.Minute*10)
 	require.NoError(t, testDb.SaveBanASN(context.Background(), &b1))
 	require.True(t, b1.BanASNId > 0)
 	var f1 model.BanASN

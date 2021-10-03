@@ -319,14 +319,14 @@ func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 		var err error
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			err = g.Mute(action.NewMute(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+			err = g.Mute(action.NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
 				config.General.WarningExceededDuration.String()), &pi)
 		case config.Ban:
 			var ban model.Ban
-			err = g.Ban(action.NewBan(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+			err = g.Ban(action.NewBan(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
 				config.General.WarningExceededDuration.String()), &ban)
 		case config.Kick:
-			err = g.Kick(action.NewKick(action.Core, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
+			err = g.Kick(action.NewKick(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
 		}
 		if err != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).Errorf("Failed to apply warning action: %v", err)
@@ -387,7 +387,7 @@ func initNetBans() {
 //
 // This function will replace the discord member id value in the target field with
 // the found SteamID, if any.
-//func validateLink(ctx context.Context, db store.Store, sourceID action.Source, target *action.Source) error {
+//func validateLink(ctx context.Context, db store.Store, sourceID action.Author, target *action.Author) error {
 //	var p model.Person
 //	if err := db.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
 //		if err == store.ErrNoResult {
@@ -395,6 +395,6 @@ func initNetBans() {
 //		}
 //		return consts.ErrInternal
 //	}
-//	*target = action.Source(p.SteamID.String())
+//	*target = action.Author(p.SteamID.String())
 //	return nil
 //}

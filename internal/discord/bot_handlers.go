@@ -12,10 +12,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -116,7 +118,7 @@ func (b *DiscordClient) onMute(_ context.Context, _ *discordgo.Session, m *disco
 		reasonStr = m.Data.Options[2].Value.(string)
 	}
 	var pi model.PlayerInfo
-	if err := b.executor.Mute(action.NewMute(action.Discord, playerID, m.Member.User.ID,
+	if err := b.executor.Mute(action.NewMute(model.Bot, playerID, m.Member.User.ID,
 		reasonStr, m.Data.Options[1].Value.(string)), &pi); err != nil {
 		return err
 	}
@@ -124,19 +126,60 @@ func (b *DiscordClient) onMute(_ context.Context, _ *discordgo.Session, m *disco
 	return nil
 }
 
+func (b *DiscordClient) onBanASN(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	asNumStr := m.Data.Options[0].Options[0].Value.(string)
+	duration := m.Data.Options[0].Options[1].Value.(string)
+	reason := m.Data.Options[0].Options[2].Value.(string)
+	targetId := steamid.SID64(0)
+	if len(m.Data.Options[0].Options) > 3 {
+		targetId = steamid.SID64(m.Data.Options[0].Options[3].Value.(int64))
+	}
+	author := model.NewPerson(0)
+	if errA := b.db.GetPersonByDiscordID(ctx, m.Interaction.Member.User.ID, &author); errA != nil {
+		if errA == store.ErrNoResult {
+			return errors.New("Must set steam id. See /set_steam")
+		}
+		return errors.New("Error fetching author info")
+	}
+	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
+	if errConv != nil {
+		return errors.New("Invalid ASN")
+	}
+	networks, errNets := b.db.GetASNRecordsByNum(ctx, asNum)
+	if errNets != nil {
+		if errNets == store.ErrNoResult {
+			return errors.New("No networks found matching ASN")
+		}
+		return errors.New("Error fetching asn networks")
+	}
+
+	req := action.NewBanASN(model.Bot, targetId.String(), author.SteamID.String(), reason, duration, asNum)
+	var ba model.BanASN
+	if err := b.executor.BanASN(req, &ba); err != nil {
+		if errors.Is(err, store.ErrDuplicate) {
+			return errors.New("Duplicate ASN ban")
+		}
+		return errCommandFailed
+	}
+	e := RespOk(r, "ASN Ban Created Successfully")
+	addField(e, "ASNum", asNumStr)
+	addField(e, "Total IPs Blocked", fmt.Sprintf("%d", networks.Hosts()))
+	return nil
+}
+
 func (b *DiscordClient) onBanIP(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	reason := model.Custom.String()
-	if len(m.Data.Options) > 3 {
-		reason = m.Data.Options[3].Value.(string)
+	if len(m.Data.Options[0].Options) > 3 {
+		reason = m.Data.Options[0].Options[3].Value.(string)
 	}
 	var bn model.BanNet
 	if err := b.executor.BanNetwork(action.NewBanNet(
-		action.Discord,
-		m.Data.Options[1].Value.(string),
-		m.Member.User.ID,
+		model.Bot,
+		m.Data.Options[0].Options[1].Value.(string),
+		m.Member.User.ID, // FIXME
 		reason,
-		m.Data.Options[2].Value.(string),
-		m.Data.Options[0].Value.(string)), &bn); err != nil {
+		m.Data.Options[0].Options[2].Value.(string),
+		m.Data.Options[0].Options[0].Value.(string)), &bn); err != nil {
 		return err
 	}
 
@@ -155,16 +198,16 @@ func (b *DiscordClient) onBanIP(_ context.Context, _ *discordgo.Session, m *disc
 				log.Debug(resp)
 			}
 		}
-	}(m.Data.Options[0].Value.(string))
+	}(m.Data.Options[0].Options[0].Value.(string))
 	RespOk(r, "IP ban created successfully")
 	return nil
 }
 
-// onBan !ban <id> <duration> [reason]
-func (b *DiscordClient) onBan(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+// onBanSteam !ban <id> <duration> [reason]
+func (b *DiscordClient) onBanSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	reason := ""
-	if len(m.Data.Options) > 2 {
-		reason = m.Data.Options[2].Value.(string)
+	if len(m.Data.Options[0].Options) > 2 {
+		reason = m.Data.Options[0].Options[2].Value.(string)
 	}
 	author := model.NewPerson(0)
 	if errA := b.db.GetPersonByDiscordID(ctx, m.Interaction.Member.User.ID, &author); errA != nil {
@@ -174,8 +217,8 @@ func (b *DiscordClient) onBan(ctx context.Context, _ *discordgo.Session, m *disc
 		return errors.New("Error fetching author info")
 	}
 	var ban model.Ban
-	a := action.NewBan(action.Discord, m.Data.Options[0].Value.(string), author.SteamID.String(),
-		reason, m.Data.Options[1].Value.(string))
+	a := action.NewBan(model.Bot, m.Data.Options[0].Options[0].Value.(string), author.SteamID.String(),
+		reason, m.Data.Options[0].Options[1].Value.(string))
 	if err := b.executor.Ban(a, &ban); err != nil {
 		if errors.Is(err, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
@@ -279,7 +322,7 @@ func (b *DiscordClient) onCheck(ctx context.Context, _ *discordgo.Session, m *di
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		if errASN := b.db.GetASNRecord(ctx, player.IPAddr, &asn); errASN != nil {
+		if errASN := b.db.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
 			log.Warnf("Failed to fetch ASN record: %v", errASN)
 		}
 	}()
@@ -446,8 +489,8 @@ func (b *DiscordClient) onSetSteam(ctx context.Context, _ *discordgo.Session, m 
 	return nil
 }
 
-func (b *DiscordClient) onUnban(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
-	sid, err := b.executor.ResolveSID(m.Data.Options[0].Value.(string))
+func (b *DiscordClient) onUnbanSteam(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	sid, err := b.executor.ResolveSID(m.Data.Options[0].Options[0].Value.(string))
 	if err != nil {
 		return consts.ErrInvalidSID
 	}
@@ -471,6 +514,43 @@ func (b *DiscordClient) onUnban(ctx context.Context, _ *discordgo.Session, m *di
 	return nil
 }
 
+func (b *DiscordClient) onUnbanASN(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	asNumStr, ok := m.Data.Options[0].Options[0].Value.(string)
+	if !ok {
+		return errors.New("invalid asn")
+	}
+	req := action.UnbanASNRequest{
+		BaseOrigin: action.BaseOrigin{Origin: model.Bot},
+		ASNum:      asNumStr,
+		Reason:     "",
+	}
+	banExisted, err := b.executor.UnbanASN(ctx, req)
+	if err != nil {
+		if errors.Is(err, store.ErrNoResult) {
+			return errors.New("Ban for ASN does not exist")
+		}
+		return errCommandFailed
+	}
+	if !banExisted {
+		return errors.New("Ban for ASN does not exist")
+	}
+	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
+	if errConv != nil {
+		return errors.New("Invalid ASN")
+	}
+	networks, errNets := b.db.GetASNRecordsByNum(ctx, asNum)
+	if errNets != nil {
+		if errNets == store.ErrNoResult {
+			return errors.New("No networks found matching ASN")
+		}
+		return errors.New("Error fetching asn networks")
+	}
+	e := RespOk(r, "ASN Networks Unbanned Successfully")
+	addField(e, "ASN", asNumStr)
+	addField(e, "Hosts", fmt.Sprintf("%d", networks.Hosts()))
+	return nil
+}
+
 func (b *DiscordClient) onKick(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	sid, err := b.executor.ResolveSID(m.Data.Options[0].Value.(string))
 	if err != nil {
@@ -486,7 +566,7 @@ func (b *DiscordClient) onKick(_ context.Context, _ *discordgo.Session, m *disco
 		reason = m.Data.Options[1].Value.(string)
 	}
 	var pi model.PlayerInfo
-	errPI := b.executor.Kick(action.NewKick(action.Discord, p.SteamID.String(), "", reason), &pi)
+	errPI := b.executor.Kick(action.NewKick(model.Bot, p.SteamID.String(), "", reason), &pi)
 	if errPI != nil {
 		return errCommandFailed
 	}
@@ -497,7 +577,7 @@ func (b *DiscordClient) onKick(_ context.Context, _ *discordgo.Session, m *disco
 func (b *DiscordClient) onSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	server := m.Data.Options[0].Value.(string)
 	msg := m.Data.Options[1].Value.(string)
-	if errS := b.executor.Say(action.NewSay(action.Discord, server, msg)); errS != nil {
+	if errS := b.executor.Say(action.NewSay(model.Bot, server, msg)); errS != nil {
 		return errCommandFailed
 	}
 	RespOk(r, "Sent message successfully")
@@ -507,7 +587,7 @@ func (b *DiscordClient) onSay(_ context.Context, _ *discordgo.Session, m *discor
 func (b *DiscordClient) onCSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	server := m.Data.Options[0].Value.(string)
 	msg := m.Data.Options[1].Value.(string)
-	if errS := b.executor.CSay(action.NewCSay(action.Discord, server, msg)); errS != nil {
+	if errS := b.executor.CSay(action.NewCSay(model.Bot, server, msg)); errS != nil {
 		return errCommandFailed
 	}
 	RespOk(r, "Sent message successfully")
@@ -517,7 +597,7 @@ func (b *DiscordClient) onCSay(_ context.Context, _ *discordgo.Session, m *disco
 func (b *DiscordClient) onPSay(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	player := m.Data.Options[0].Value.(string)
 	msg := m.Data.Options[1].Value.(string)
-	if errS := b.executor.PSay(action.NewPSay(action.Discord, player, msg)); errS != nil {
+	if errS := b.executor.PSay(action.NewPSay(model.Bot, player, msg)); errS != nil {
 		return errCommandFailed
 	}
 	RespOk(r, "Sent message successfully")
@@ -613,7 +693,7 @@ func (b *DiscordClient) onPlayers(ctx context.Context, _ *discordgo.Session, m *
 	if len(state.Status.Players) > 0 {
 		for _, p := range state.Status.Players {
 			var asn ip2location.ASNRecord
-			if errASN := b.db.GetASNRecord(ctx, p.IP, &asn); errASN != nil {
+			if errASN := b.db.GetASNRecordByIP(ctx, p.IP, &asn); errASN != nil {
 				log.Errorf("Failed to get asn record: %v", errASN)
 				return errCommandFailed
 			}
@@ -637,6 +717,31 @@ func (b *DiscordClient) onPlayers(ctx context.Context, _ *discordgo.Session, m *
 	return nil
 }
 
+func (b *DiscordClient) onBan(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	switch m.Data.Options[0].Name {
+	case "steam":
+		return b.onBanSteam(ctx, s, m, r)
+	case "ip":
+		return b.onBanIP(ctx, s, m, r)
+	case "asn":
+		return b.onBanASN(ctx, s, m, r)
+	default:
+		return errCommandFailed
+	}
+}
+func (b *DiscordClient) onUnban(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	switch m.Data.Options[0].Name {
+	case "steam":
+		return b.onUnbanSteam(ctx, s, m, r)
+	case "ip":
+		return errCommandFailed
+		//return b.onUnbanIP(ctx, s, m, r)
+	case "asn":
+		return b.onUnbanASN(ctx, s, m, r)
+	default:
+		return errCommandFailed
+	}
+}
 func (b *DiscordClient) onFilter(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	switch m.Data.Options[0].Name {
 	case string(cmdFilterAdd):
@@ -660,8 +765,8 @@ func (b *DiscordClient) onFilterAdd(ctx context.Context, _ *discordgo.Session, m
 		return errors.New("Error fetching author info")
 	}
 	af, err := b.executor.FilterAdd(action.FilterAddRequest{
-		BaseOrigin: action.BaseOrigin{Origin: action.Discord},
-		Source:     action.Source(author.SteamID.String()),
+		BaseOrigin: action.BaseOrigin{Origin: model.Bot},
+		Author:     action.Author(author.SteamID.String()),
 		Filter:     filter,
 	})
 	if err != nil {
@@ -692,7 +797,7 @@ func (b *DiscordClient) onFilterDel(ctx context.Context, _ *discordgo.Session, m
 func (b *DiscordClient) onFilterCheck(_ context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	message := m.Data.Options[0].Options[0].Value.(string)
 	matches := b.executor.FilterCheck(action.FilterCheckRequest{
-		BaseOrigin: action.BaseOrigin{Origin: action.Discord},
+		BaseOrigin: action.BaseOrigin{Origin: model.Bot},
 		Message:    message,
 	})
 	title := ""

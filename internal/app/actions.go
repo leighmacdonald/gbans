@@ -16,6 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -27,9 +28,9 @@ func (g gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
 	if err != nil {
 		return errors.Errorf("Failed to get steam id from: %s", args.Target)
 	}
-	source, errSrc := args.Source.SID64()
+	source, errSrc := args.Author.SID64()
 	if errSrc != nil {
-		return errors.Errorf("Failed to get steam id from: %s", args.Source)
+		return errors.Errorf("Failed to get steam id from: %s", args.Author)
 	}
 	duration, errDur := args.Duration.Value()
 	if errDur != nil {
@@ -103,6 +104,23 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 	return true, nil
 }
 
+func (g gbans) UnbanASN(ctx context.Context, args action.UnbanASNRequest) (bool, error) {
+	asNum, errConv := strconv.ParseInt(args.ASNum, 10, 64)
+	if errConv != nil {
+		return false, errConv
+	}
+	var ba model.BanASN
+	if err := g.db.GetBanASN(g.ctx, asNum, &ba); err != nil {
+		return false, err
+	}
+	if errDrop := g.db.DropBanASN(ctx, &ba); errDrop != nil {
+		log.Errorf("Failed to drop ASN ban: %v", errDrop)
+		return false, errDrop
+	}
+	log.Infof("ASN unbanned: %d", asNum)
+	return true, nil
+}
+
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
 func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
@@ -110,7 +128,7 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	if errTar != nil {
 		return errTar
 	}
-	source, errSrc := args.Source.SID64()
+	source, errSrc := args.Author.SID64()
 	if errSrc != nil {
 		return errSrc
 	}
@@ -205,6 +223,35 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	}()
 	return nil
 }
+func (g gbans) BanASN(args action.BanASNRequest, banASN *model.BanASN) error {
+	target, errTar := args.Target.SID64()
+	if errTar != nil {
+		return errTar
+	}
+	author, errSrc := args.Author.SID64()
+	if errSrc != nil {
+		return errSrc
+	}
+	duration, errDur := args.Duration.Value()
+	if errDur != nil {
+		return errDur
+	}
+	until := config.DefaultExpiration()
+	if duration.Seconds() != 0 {
+		until = config.Now().Add(duration)
+	}
+	banASN.Origin = args.Origin
+	banASN.TargetID = target
+	banASN.AuthorID = author
+	banASN.ValidUntil = until
+	banASN.Reason = args.Reason
+	banASN.ASNum = args.ASNum
+	if errSave := g.db.SaveBanASN(context.TODO(), banASN); errSave != nil {
+		return errSave
+	}
+	// TODO Kick all current players matching
+	return nil
+}
 
 // BanNetwork adds a new network to the banned network list. It will accept any Valid CIDR format.
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
@@ -215,7 +262,7 @@ func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error
 	if errTar != nil {
 		return errTar
 	}
-	source, errSrc := args.Source.SID64()
+	source, errSrc := args.Author.SID64()
 	if errSrc != nil {
 		return errSrc
 	}
