@@ -152,6 +152,16 @@ type ASNRecord struct {
 	ASName string
 }
 
+type ASNRecords []ASNRecord
+
+func (r ASNRecords) Hosts() uint32 {
+	total := uint32(0)
+	for _, n := range r {
+		total += util.IP2Int(*n.IPTo) - util.IP2Int(*n.IPFrom)
+	}
+	return total
+}
+
 type LatLong struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`

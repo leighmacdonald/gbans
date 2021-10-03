@@ -47,7 +47,6 @@ func New(executor action.Executor, s store.Store) (*DiscordClient, error) {
 	}
 	var commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      b.onBan,
-		cmdBanIP:    b.onBanIP,
 		cmdCheck:    b.onCheck,
 		cmdCSay:     b.onCSay,
 		cmdFind:     b.onFind,

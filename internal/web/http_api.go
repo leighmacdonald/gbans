@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web/ws"
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -189,7 +190,7 @@ func (w *Web) onAPIPostBanCreate() gin.HandlerFunc {
 		}
 		if r.Network != "" {
 			var b model.BanNet
-			if bErr := w.executor.BanNetwork(action.NewBanNet(action.Web, r.SteamID.String(),
+			if bErr := w.executor.BanNetwork(action.NewBanNet(model.Web, r.SteamID.String(),
 				currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network), &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
@@ -201,7 +202,7 @@ func (w *Web) onAPIPostBanCreate() gin.HandlerFunc {
 			responseOK(c, http.StatusCreated, banNet)
 		} else {
 			var b model.Ban
-			if bErr := w.executor.Ban(action.NewBan(action.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
+			if bErr := w.executor.Ban(action.NewBan(model.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
 				r.ReasonText, r.Duration), &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
@@ -302,14 +303,31 @@ func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 			resp.BanType = model.Banned
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
 			responseOK(c, http.StatusOK, resp)
+			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason}).Infof("Player dropped")
 			return
 		}
 		// Check SteamID
-		steamID, err := steamid.ResolveSID64(context.Background(), req.SteamID)
-		if err != nil || !steamID.Valid() {
+		steamID, errResolve := steamid.ResolveSID64(context.Background(), req.SteamID)
+		if errResolve != nil || !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
 			responseErr(c, http.StatusBadRequest, resp)
 			return
+		}
+		var asnRecord ip2location.ASNRecord
+		errASN := db.GetASNRecordByIP(ctx, req.IP, &asnRecord)
+		if errASN == nil {
+			var asnBan model.BanASN
+			if errASNBan := db.GetBanASN(ctx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
+				if !errors.Is(errASNBan, store.ErrNoResult) {
+					log.Errorf("Failed to fetch asn ban: %v", errASNBan)
+				}
+			} else {
+				resp.BanType = model.Banned
+				resp.Msg = asnBan.Reason
+				responseOK(c, http.StatusOK, resp)
+				log.WithFields(log.Fields{"type": "asn", "reason": asnBan.Reason}).Infof("Player dropped")
+				return
+			}
 		}
 		ban := model.NewBannedPerson()
 		if errB := db.GetBanBySteamID(ctx, steamID, false, &ban); errB != nil {

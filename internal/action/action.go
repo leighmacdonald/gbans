@@ -22,8 +22,10 @@ type Executor interface {
 	GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error
 	Mute(args MuteRequest, pi *model.PlayerInfo) error
 	Ban(args BanRequest, b *model.Ban) error
-	Unban(args UnbanRequest) (bool, error)
 	BanNetwork(args BanNetRequest, net *model.BanNet) error
+	BanASN(args BanASNRequest, net *model.BanASN) error
+	Unban(args UnbanRequest) (bool, error)
+	UnbanASN(ctx context.Context, args UnbanASNRequest) (bool, error)
 	Kick(args KickRequest, pi *model.PlayerInfo) error
 	Say(args SayRequest) error
 	CSay(args CSayRequest) error
@@ -37,20 +39,9 @@ type Executor interface {
 	FilterCheck(args FilterCheckRequest) []model.Filter
 }
 
-type Origin int
-
-const (
-	// Core is when internal systems triggered the event. eg: background workers/word filters
-	Core Origin = iota
-	// Discord is a event that was via discord application commands
-	Discord
-	// Web is for events triggered via the web or API interface
-	Web
-)
-
 // BaseOrigin defines the base struct for all actions. It just marks where the event originated.
 type BaseOrigin struct {
-	Origin Origin
+	Origin model.Origin
 }
 
 type GetChatHistoryRequest struct {
@@ -69,19 +60,19 @@ type GetOrCreateProfileBySteamIDRequest GetOrCreatePersonByIDRequest
 
 type FilterAddRequest struct {
 	BaseOrigin
-	Source
+	Author
 	Filter string
 }
 
 type FilterDelRequest struct {
 	BaseOrigin
-	Source
+	Author
 	FilterID int
 }
 
 type FilterCheckRequest struct {
 	BaseOrigin
-	Source
+	Author
 	Message string
 }
 
@@ -92,7 +83,7 @@ type ServerByNameRequest struct {
 
 type SayRequest struct {
 	BaseOrigin
-	Source
+	Author
 	Server  string
 	Message string
 }
@@ -101,22 +92,28 @@ type CSayRequest SayRequest
 
 type PSayRequest struct {
 	BaseOrigin
-	Source
+	Author
 	Target
 	Message string
+}
+
+type UnbanASNRequest struct {
+	BaseOrigin
+	ASNum  string
+	Reason string
 }
 
 type KickRequest struct {
 	BaseOrigin
 	Target
-	Source
+	Author
 	Reason string
 }
 
 type BanRequest struct {
 	BaseOrigin
 	Target
-	Source
+	Author
 	Duration
 	Reason string
 }
@@ -127,12 +124,20 @@ type UnbanRequest KickRequest
 type BanNetRequest struct {
 	BaseOrigin
 	Target
-	Source
+	Author
 	Duration
 	CIDR   string
 	Reason string
 }
 
+type BanASNRequest struct {
+	BaseOrigin
+	Target
+	Author
+	Duration
+	ASNum  int64
+	Reason string
+}
 type ProfileRequest struct {
 	BaseOrigin
 	Target
@@ -154,7 +159,7 @@ type GetBanRequest struct {
 type GetBanNetRequest GetBanRequest
 type GetHistoryIPRequest struct {
 	BaseOrigin
-	Source
+	Author
 	Target
 }
 type GetHistoryChatRequest GetHistoryIPRequest
@@ -171,87 +176,98 @@ type GetASNRecordRequest struct {
 type GetLocationRecordRequest GetASNRecordRequest
 type GetProxyRecordRequest GetASNRecordRequest
 
-func NewFindByCIDR(o Origin, cidr *net.IPNet) FindCIDRRequest {
+func NewFindByCIDR(o model.Origin, cidr *net.IPNet) FindCIDRRequest {
 	return FindCIDRRequest{
 		BaseOrigin: BaseOrigin{Origin: o},
 		CIDR:       cidr,
 	}
 }
 
-func NewFind(o Origin, q string) FindRequest {
+func NewFind(o model.Origin, q string) FindRequest {
 	return FindRequest{BaseOrigin: BaseOrigin{o}, Query: q}
 }
 
-func NewMute(o Origin, target string, author string, reason string, duration string) MuteRequest {
+func NewMute(o model.Origin, target string, author string, reason string, duration string) MuteRequest {
 	return MuteRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
-		Source:     Source(author),
+		Author:     Author(author),
 		Reason:     reason,
 		Duration:   Duration(duration),
 	}
 }
 
-func NewKick(o Origin, target string, author string, reason string) KickRequest {
+func NewKick(o model.Origin, target string, author string, reason string) KickRequest {
 	return KickRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
-		Source:     Source(author),
+		Author:     Author(author),
 		Reason:     reason,
 	}
 }
 
-func NewBan(o Origin, target string, author string, reason string, duration string) BanRequest {
+func NewBan(o model.Origin, target string, author string, reason string, duration string) BanRequest {
 	return BanRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
-		Source:     Source(author),
+		Author:     Author(author),
 		Reason:     reason,
 		Duration:   Duration(duration),
 	}
 }
 
-func NewBanNet(o Origin, target string, author string, reason string, duration string, cidr string) BanNetRequest {
+func NewBanNet(o model.Origin, target string, author string, reason string, duration string, cidr string) BanNetRequest {
 	return BanNetRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
-		Source:     Source(author),
+		Author:     Author(author),
 		Reason:     reason,
 		Duration:   Duration(duration),
 		CIDR:       cidr,
 	}
 }
 
-func NewUnban(o Origin, target string, author string, reason string) UnbanRequest {
+func NewBanASN(o model.Origin, target string, author string, reason string, duration string, asNum int64) BanASNRequest {
+	return BanASNRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+		ASNum:      asNum,
+	}
+}
+
+func NewUnban(o model.Origin, target string, author string, reason string) UnbanRequest {
 	return UnbanRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
-		Source:     Source(author),
+		Author:     Author(author),
 		Reason:     reason,
 	}
 }
 
-func NewGetBan(o Origin, target string) GetBanRequest {
+func NewGetBan(o model.Origin, target string) GetBanRequest {
 	return GetBanRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetBanNet(o Origin, target string) GetBanNetRequest {
+func NewGetBanNet(o model.Origin, target string) GetBanNetRequest {
 	return GetBanNetRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetHistoryIP(o Origin, target string) GetHistoryIPRequest {
+func NewGetHistoryIP(o model.Origin, target string) GetHistoryIPRequest {
 	return GetHistoryIPRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetHistoryChat(o Origin, target string) GetHistoryChatRequest {
+func NewGetHistoryChat(o model.Origin, target string) GetHistoryChatRequest {
 	return GetHistoryChatRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewGetPersonByID(o Origin, target string) GetPersonByIDRequest {
+func NewGetPersonByID(o model.Origin, target string) GetPersonByIDRequest {
 	return GetPersonByIDRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
 }
 
-func NewSetSteamID(o Origin, target string, discordID string) SetSteamIDRequest {
+func NewSetSteamID(o model.Origin, target string, discordID string) SetSteamIDRequest {
 	return SetSteamIDRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
@@ -259,27 +275,27 @@ func NewSetSteamID(o Origin, target string, discordID string) SetSteamIDRequest 
 	}
 }
 
-func NewGetASNRecord(o Origin, ipAddr string) GetASNRecordRequest {
+func NewGetASNRecord(o model.Origin, ipAddr string) GetASNRecordRequest {
 	return GetASNRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewGetLocationRecord(o Origin, ipAddr string) GetLocationRecordRequest {
+func NewGetLocationRecord(o model.Origin, ipAddr string) GetLocationRecordRequest {
 	return GetLocationRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewGetProxyRecord(o Origin, ipAddr string) GetProxyRecordRequest {
+func NewGetProxyRecord(o model.Origin, ipAddr string) GetProxyRecordRequest {
 	return GetProxyRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
 }
 
-func NewSay(o Origin, server string, message string) SayRequest {
+func NewSay(o model.Origin, server string, message string) SayRequest {
 	return SayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
 }
 
-func NewCSay(o Origin, server string, message string) CSayRequest {
+func NewCSay(o model.Origin, server string, message string) CSayRequest {
 	return CSayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
 }
 
-func NewPSay(o Origin, target string, message string) PSayRequest {
+func NewPSay(o model.Origin, target string, message string) PSayRequest {
 	return PSayRequest{
 		BaseOrigin: BaseOrigin{o},
 		Message:    message,
@@ -287,25 +303,25 @@ func NewPSay(o Origin, target string, message string) PSayRequest {
 	}
 }
 
-func NewServerByName(o Origin, serverID string) ServerByNameRequest {
+func NewServerByName(o model.Origin, serverID string) ServerByNameRequest {
 	return ServerByNameRequest{BaseOrigin: BaseOrigin{o}, ServerName: serverID}
 }
 
-func NewFilterAdd(o Origin, filter string) FilterAddRequest {
+func NewFilterAdd(o model.Origin, filter string) FilterAddRequest {
 	return FilterAddRequest{BaseOrigin: BaseOrigin{o}, Filter: filter}
 }
 
-func NewFilterDel(o Origin, filterID int) FilterDelRequest {
+func NewFilterDel(o model.Origin, filterID int) FilterDelRequest {
 	return FilterDelRequest{BaseOrigin: BaseOrigin{o}, FilterID: filterID}
 }
 
-func NewFilterCheck(o Origin, message string) FilterCheckRequest {
+func NewFilterCheck(o model.Origin, message string) FilterCheckRequest {
 	return FilterCheckRequest{
 		BaseOrigin: BaseOrigin{o},
 		Message:    message}
 }
 
-func NewGetOrCreatePersonByID(o Origin, target string, ipAddr string) GetOrCreatePersonByIDRequest {
+func NewGetOrCreatePersonByID(o model.Origin, target string, ipAddr string) GetOrCreatePersonByIDRequest {
 	return GetOrCreatePersonByIDRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
@@ -313,7 +329,7 @@ func NewGetOrCreatePersonByID(o Origin, target string, ipAddr string) GetOrCreat
 	}
 }
 
-func NewGetOrCreateProfileBySteamID(o Origin, target string, ipAddr string) GetOrCreateProfileBySteamIDRequest {
+func NewGetOrCreateProfileBySteamID(o model.Origin, target string, ipAddr string) GetOrCreateProfileBySteamIDRequest {
 	return GetOrCreateProfileBySteamIDRequest{
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
@@ -321,7 +337,7 @@ func NewGetOrCreateProfileBySteamID(o Origin, target string, ipAddr string) GetO
 	}
 }
 
-func NewGetChatHistory(o Origin, target string, page int) GetChatHistoryRequest {
+func NewGetChatHistory(o model.Origin, target string, page int) GetChatHistoryRequest {
 	return GetChatHistoryRequest{
 		Target: Target(target),
 		Page:   page,
@@ -342,10 +358,10 @@ func (t Target) SID64() (steamid.SID64, error) {
 	return v, nil
 }
 
-// Source defines who initiated the request
-type Source string
+// Author defines who initiated the request
+type Author string
 
-func (a Source) SID64() (steamid.SID64, error) {
+func (a Author) SID64() (steamid.SID64, error) {
 	v, err := steamid.ResolveSID64(context.Background(), string(a))
 	if err != nil {
 		return 0, consts.ErrInvalidSID

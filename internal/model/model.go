@@ -41,21 +41,21 @@ const (
 	Banned BanType = 2
 )
 
-// BanSource defines the origin of the ban or action
-type BanSource int
+// Origin defines the origin of the ban or action
+type Origin int
 
 const (
 	// System is an automatic ban triggered by the service
-	System BanSource = 0
+	System Origin = 0
 	// Bot is a ban using the discord bot interface
-	Bot BanSource = 1
+	Bot Origin = 1
 	// Web is a ban using the web-ui
-	Web BanSource = 2
+	Web Origin = 2
 	// InGame is a ban using the sourcemod plugin
-	InGame BanSource = 3
+	InGame Origin = 3
 )
 
-func (s BanSource) String() string {
+func (s Origin) String() string {
 	switch s {
 	case System:
 		return "System"
@@ -101,12 +101,41 @@ func (r Reason) String() string {
 	return reasonStr[r]
 }
 
+type BanASN struct {
+	BanASNId   int64
+	ASNum      int64
+	Origin     Origin
+	AuthorID   steamid.SID64
+	TargetID   steamid.SID64
+	Reason     string
+	ValidUntil time.Time
+	CreatedOn  time.Time
+	UpdatedOn  time.Time
+}
+
+func NewBanASN(asn int64, authorId steamid.SID64, reason string, duration time.Duration) BanASN {
+	if duration.Seconds() == 0 {
+		// 100 Years
+		duration = time.Hour * 8760 * 100
+	}
+	return BanASN{
+		ASNum:      asn,
+		Origin:     System,
+		AuthorID:   authorId,
+		TargetID:   0,
+		Reason:     reason,
+		ValidUntil: config.Now().Add(duration),
+		CreatedOn:  config.Now(),
+		UpdatedOn:  config.Now(),
+	}
+}
+
 type BanNet struct {
 	NetID      int64         `db:"net_id"`
 	SteamID    steamid.SID64 `db:"steam_id"`
 	AuthorID   steamid.SID64 `db:"author_id"`
 	CIDR       *net.IPNet    `db:"cidr"`
-	Source     BanSource     `db:"source"`
+	Source     Origin        `db:"source"`
 	Reason     string        `db:"reason"`
 	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
@@ -132,7 +161,7 @@ func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duratio
 	}
 }
 
-func NewBanNet(cidr string, reason string, duration time.Duration, source BanSource) (BanNet, error) {
+func NewBanNet(cidr string, reason string, duration time.Duration, source Origin) (BanNet, error) {
 	_, n, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return BanNet{}, err
@@ -167,8 +196,8 @@ type Ban struct {
 	// ReasonText is returned to the client when kicked trying to join the server
 	ReasonText string `db:"reason_text" json:"reason_text"`
 	// Note is a supplementary note added by admins that is hidden from normal view
-	Note   string    `db:"note" json:"note"`
-	Source BanSource `json:"ban_source" db:"ban_source"`
+	Note   string `db:"note" json:"note"`
+	Source Origin `json:"ban_source" db:"ban_source"`
 	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
 	ValidUntil time.Time `json:"valid_until" db:"valid_until"`
 	CreatedOn  time.Time `db:"created_on" json:"created_on"`

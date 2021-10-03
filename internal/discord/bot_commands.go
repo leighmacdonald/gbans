@@ -18,7 +18,6 @@ type botCmd string
 
 const (
 	cmdBan         botCmd = "ban"
-	cmdBanIP       botCmd = "banip"
 	cmdFind        botCmd = "find"
 	cmdMute        botCmd = "mute"
 	cmdCheck       botCmd = "check"
@@ -34,9 +33,9 @@ const (
 	cmdHistoryIP   botCmd = "ip"
 	cmdHistoryChat botCmd = "chat"
 	cmdFilter      botCmd = "filter"
-	cmdFilterAdd   botCmd = "add"
-	cmdFilterDel   botCmd = "del"
-	cmdFilterCheck botCmd = "check"
+	cmdFilterAdd   botCmd = "filter_add"
+	cmdFilterDel   botCmd = "filter_del"
+	cmdFilterCheck botCmd = "filter_check"
 )
 
 func (b *DiscordClient) botRegisterSlashCommands() error {
@@ -46,6 +45,12 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 		Name:        "user_identifier",
 		Description: "SteamID in any format OR profile url",
 		Required:    true,
+	}
+	optUserIDOptional := &discordgo.ApplicationCommandOption{
+		Type:        discordgo.ApplicationCommandOptionString,
+		Name:        "user_identifier",
+		Description: "Optional SteamID in any format OR profile url to attach to a command",
+		Required:    false,
 	}
 	optServerID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
@@ -71,39 +76,15 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 		Description: "Duration [s,m,h,d,w,M,y]N|0",
 		Required:    true,
 	}
+	optAsn := &discordgo.ApplicationCommandOption{
+		Type:        discordgo.ApplicationCommandOptionString,
+		Name:        "asn",
+		Description: "An Autonomous System (AS) is a group of one or more IP prefixes run by one or more network operators",
+		Required:    true,
+	}
 
 	slashCommands := []*discordgo.ApplicationCommand{
-		{
-			Name:        string(cmdBan),
-			Description: "Ban and kick a user from all servers",
 
-			Options: []*discordgo.ApplicationCommandOption{
-				optUserID,
-				optDuration,
-				optReason,
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "note",
-					Description: "Mod only notes for the ban reason",
-					Required:    false,
-				},
-			},
-		},
-		{
-			Name:        string(cmdBanIP),
-			Description: "Ban and kick a network from connecting to all servers",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "cidr",
-					Description: "Network range to block eg: 12.34.56.78/32 (1 host) | 12.34.56.0/24 (256 hosts)",
-					Required:    true,
-				},
-				optUserID,
-				optDuration,
-				optReason,
-			},
-		},
 		{
 			Name:        string(cmdFind),
 			Description: "Find a user on any of the servers",
@@ -125,14 +106,6 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 			Description:   "Get ban status for a steam id",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
-			},
-		},
-		{
-			Name:        string(cmdUnban),
-			Description: "Unban a previously banned player",
-			Options: []*discordgo.ApplicationCommandOption{
-				optUserID,
-				optReason,
 			},
 		},
 		{
@@ -224,11 +197,86 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID: config.Discord.AppID,
+			Name:          "ban",
+			Description:   "Manage steam, ip and ASN bans",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "steam",
+					Description: "Ban and kick a user from all servers",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+						optDuration,
+						optReason,
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "note",
+							Description: "Mod only notes for the ban reason",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Name:        "asn",
+					Description: "Ban network(s) via their parent ASN (Autonomous System Number) from connecting to all servers",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						optAsn,
+						optDuration,
+						optReason,
+						optUserIDOptional,
+					},
+				},
+				{
+					Name:        "ip",
+					Description: "Ban and kick a network from connecting to all servers",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "cidr",
+							Description: "Network range to block eg: 12.34.56.78/32 (1 host) | 12.34.56.0/24 (256 hosts)",
+							Required:    true,
+						},
+						optUserID,
+						optDuration,
+						optReason,
+					},
+				},
+			},
+		},
+		{
+			ApplicationID: config.Discord.AppID,
+			Name:          "unban",
+			Description:   "Manage steam, ip and ASN bans",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "steam",
+					Description: "Unban a previously banned player",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+						optReason,
+					},
+				},
+				// TODO ip
+				{
+					Name:        "asn",
+					Description: "Unban a previously banned ASN",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						optAsn,
+					},
+				},
+			},
+		},
+		{
+			ApplicationID: config.Discord.AppID,
 			Name:          string(cmdFilter),
 			Description:   "Manage and test global word filters",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(cmdFilterAdd),
+					Name:        "add",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Add a new filtered word",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -241,7 +289,7 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 					},
 				},
 				{
-					Name:        string(cmdFilterDel),
+					Name:        "del",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Remove a filtered word",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -254,7 +302,7 @@ func (b *DiscordClient) botRegisterSlashCommands() error {
 					},
 				},
 				{
-					Name:        string(cmdFilterCheck),
+					Name:        "check",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Check if a string has a matching filter",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -376,7 +424,7 @@ func (b *DiscordClient) onInteractionCreate(session *discordgo.Session, interact
 		defer cancel()
 		if err := handler(ctx, session, interaction, &response); err != nil {
 			// TODO User facing errors only
-			RespErr(&response, fmt.Sprintf("Error: %session", err.Error()))
+			RespErr(&response, err.Error())
 			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
