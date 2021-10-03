@@ -6,8 +6,6 @@
 #include <sdktools>
 #include <sourcemod>
 #include <system2> // system2 extension
-#include <tf2>
-#include <tf2_stocks>
 
 #define DEBUG
 
