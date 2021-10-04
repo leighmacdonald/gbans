@@ -1,3 +1,5 @@
+// Package store provides functionality for communicating with the backend database. The database
+// must implement the Store interface.
 package store
 
 import (

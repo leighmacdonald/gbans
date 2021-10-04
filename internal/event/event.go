@@ -1,3 +1,6 @@
+// Package event implements an event dispatcher for incoming log events. It sends the
+// messages to the registered matching event reader channels that have been registered for the
+// event type.
 package event
 
 import (
@@ -34,6 +37,7 @@ func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) err
 	return nil
 }
 
+// Emit is used to send out events to and registered reader channels.
 func Emit(le model.ServerEvent) {
 	// Ensure we also send to Any handlers for all events.
 	logEventReadersMu.RLock()
@@ -59,6 +63,7 @@ func removeChan(channels []chan model.ServerEvent, c chan model.ServerEvent) []c
 	return newChannels
 }
 
+// UnregisterConsumer will remove the channel from any matching event readers
 func UnregisterConsumer(r chan model.ServerEvent) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()

@@ -1,3 +1,4 @@
+// Package state is used for exporting state or other stats to prometheus.
 package state
 
 import (

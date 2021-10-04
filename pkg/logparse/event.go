@@ -29,6 +29,7 @@ type WPausedEvt EmptyEvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WResumedEvt EmptyEvt
 
+// SourcePlayer represents the player who initiated the event
 type SourcePlayer struct {
 	Name string        `json:"name"`
 	PID  int           `json:"pid"`
@@ -37,7 +38,6 @@ type SourcePlayer struct {
 }
 
 // TargetPlayer maps the common secondary player values name_2
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type TargetPlayer struct {
 	Name2 string        `json:"name2"`
 	PID2  int           `json:"pid2"`
@@ -45,7 +45,6 @@ type TargetPlayer struct {
 	Team2 Team          `json:"team2"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type LogStartEvt struct {
 	File    string `json:"file"`
 	Game    string `json:"game"`
@@ -53,17 +52,17 @@ type LogStartEvt struct {
 	EmptyEvt
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+// LogStopEvt is the server shutting down the map and closing the log
 type LogStopEvt EmptyEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+// CVAREvt is emitted on a cvar change
 type CVAREvt struct {
 	CVAR  string `json:"cvar"`
 	Value string `json:"value"`
 	EmptyEvt
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+// RCONEvt is emitted on a rcon connection executing a command
 type RCONEvt struct {
 	Cmd string `json:"cmd"`
 	EmptyEvt

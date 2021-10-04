@@ -1,4 +1,5 @@
-// Package action defines a set of common argument structures
+// Package action defines a set of common argument structures. This is used so that we can more easily
+// share functionality between the multiple different interfaces.
 package action
 
 import (

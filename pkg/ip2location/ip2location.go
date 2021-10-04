@@ -1,3 +1,4 @@
+// Package ip2location implements downloading and parsing of ip2location databases.
 package ip2location
 
 import (

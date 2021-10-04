@@ -18,7 +18,7 @@ var agentCmd = &cobra.Command{
 		agent, err2 := agent.NewAgent(ctx, agent.Opts{
 			ServerAddress:    config.RPC.Addr,
 			LogListenAddress: config.RPC.LogAddr,
-			Instances: []agent.Instance{
+			Instances: agent.InstanceCollection{
 				{
 					Name:   "abc-1",
 					Secret: []byte("abc-1"),
@@ -29,7 +29,7 @@ var agentCmd = &cobra.Command{
 			log.Fatalf("Could not create rpc client: %v", err2)
 		}
 		if errStart := agent.Start(); errStart != nil {
-			log.Errorf("Agent exited: %v", errStart)
+			log.Errorf("agent exited: %v", errStart)
 		}
 		<-ctx.Done()
 	},

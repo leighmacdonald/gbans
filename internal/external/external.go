@@ -1,3 +1,4 @@
+// Package external implements functionality for communicating and parsing external or 3rd party data sources.
 package external
 
 import (

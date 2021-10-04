@@ -1,3 +1,5 @@
+// Package agent implements a service that can create, delete, manage, etc. local or remote game installations.
+// The agent communicates with the main gbans instance via websockets over the `/api/ws` route
 package agent
 
 import (
@@ -12,19 +14,26 @@ import (
 	"strings"
 )
 
-type Instance struct {
+// instance represents a unique game instance on a single physical machine.
+type instance struct {
 	Name string
-	// sv_logsecret to identify the server sending the entry
+	// sv_logsecret to identify the server sending the entry, this must be unique
+	// for logs to be associated with the correct server instance
 	Secret []byte
 }
 
+// InstanceCollection represents a collection of instance configurations
+type InstanceCollection []instance
+
+// Opts defines what kind of options to use for the agent and connections
 type Opts struct {
 	ServerAddress    string
 	LogListenAddress string
-	Instances        []Instance
+	Instances        InstanceCollection
 }
 
-type Agent struct {
+// agent implements the actual agent functionality
+type agent struct {
 	ctx         context.Context
 	messageChan chan string
 	opts        Opts
@@ -32,7 +41,8 @@ type Agent struct {
 	l           log.Logger
 }
 
-func NewAgent(ctx context.Context, o Opts) (*Agent, error) {
+// NewAgent allocates and configures a new agent instance
+func NewAgent(ctx context.Context, o Opts) (*agent, error) {
 	handlers := ws.Handlers{
 		ws.Sup: func(payload ws.Payload) error {
 			log.Debugf("Got sup.")
@@ -43,7 +53,7 @@ func NewAgent(ctx context.Context, o Opts) (*Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Agent{ctx: ctx, opts: o, messageChan: make(chan string), client: c}, nil
+	return &agent{ctx: ctx, opts: o, messageChan: make(chan string), client: c}, nil
 }
 
 var header = []byte{255, 255, 255, 255}
@@ -53,7 +63,9 @@ const (
 	mbSecret   = 0x53
 )
 
-func (a *Agent) Start() error {
+// Start initiates the local UDP based log listener socket as well as starts the main
+// agent connection handler loop.
+func (a *agent) Start() error {
 	go func() {
 		if err := a.logListener(); err != nil {
 			log.Errorf("Log listener returned err: %v", err)
@@ -67,7 +79,7 @@ func (a *Agent) Start() error {
 // sv_logsecret xxx
 // logaddress_add 192.168.0.101:7777
 // log on
-func (a *Agent) logListener() error {
+func (a *agent) logListener() error {
 	l, err := net.ListenPacket("udp", a.opts.LogListenAddress)
 	if err != nil {
 		return err

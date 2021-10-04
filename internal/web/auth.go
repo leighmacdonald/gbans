@@ -35,7 +35,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func (w *Web) authMiddleWare(db store.Store) gin.HandlerFunc {
+func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
@@ -88,7 +88,7 @@ func (w *Web) authMiddleWare(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onGetLogout() gin.HandlerFunc {
+func (w *web) onGetLogout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO Logout key / mark as invalid manually
 		log.WithField("fn", "onGetLogout").Warnf("Unimplemented")
@@ -96,7 +96,7 @@ func (w *Web) onGetLogout() gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onOpenIDCallback() gin.HandlerFunc {
+func (w *web) onOpenIDCallback() gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(c *gin.Context) {
 		ref, found := c.GetQuery("return_url")
@@ -147,7 +147,7 @@ func (w *Web) onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onLoginSuccess() gin.HandlerFunc {
+func (w *web) onLoginSuccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Data(200, gin.MIMEHTML, []byte(``))
 	}
@@ -157,7 +157,7 @@ func getTokenKey(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 
-func (w *Web) onTokenRefresh() gin.HandlerFunc {
+func (w *web) onTokenRefresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ah := c.GetHeader("Authorization")
 		tp := strings.SplitN(ah, " ", 2)
@@ -222,7 +222,7 @@ func NewJWT(steamID steamid.SID64) (string, error) {
 	return token, nil
 }
 
-func (w *Web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
+func (w *web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}

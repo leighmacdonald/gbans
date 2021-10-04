@@ -1,3 +1,4 @@
+// Package model defines common model structures used in many places throughout the application.
 package model
 
 import (

@@ -1,3 +1,4 @@
+// Package web implements the HTTP and websocket services for the frontend client and backend server.
 package web
 
 import (
@@ -18,14 +19,14 @@ type WebHandler interface {
 	ListenAndServe() error
 }
 
-type Web struct {
+type web struct {
 	httpServer *http.Server
 	executor   action.Executor
 	db         store.Store
 	bot        discord.ChatBot
 }
 
-func (w Web) ListenAndServe() error {
+func (w web) ListenAndServe() error {
 	return w.httpServer.ListenAndServe()
 }
 
@@ -71,7 +72,7 @@ func New(logMsgChan chan ws.LogPayload, db store.Store, bot discord.ChatBot, exe
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	w := Web{httpServer: httpServer, executor: exec, bot: bot, db: db}
+	w := web{httpServer: httpServer, executor: exec, bot: bot, db: db}
 	w.setupRouter(router, db, bot, logMsgChan)
 	return w, nil
 }

@@ -1,3 +1,4 @@
+// Package query implements functionality for making RCON and A2S queries
 package query
 
 import (
@@ -13,6 +14,8 @@ import (
 	"time"
 )
 
+// ExecRCON executes the given command against the server provided. It returns the command
+// output.
 func ExecRCON(server model.Server, cmd string) (string, error) {
 	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
 	if err != nil {
@@ -25,6 +28,7 @@ func ExecRCON(server model.Server, cmd string) (string, error) {
 	return resp, nil
 }
 
+// RCON is used to execute rcon commands against multiple servers
 func RCON(ctx context.Context, servers []model.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
 	mu := &sync.RWMutex{}
@@ -57,6 +61,7 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 	return responses
 }
 
+// GetServerStatus fetches and parses status output for the server
 func GetServerStatus(server model.Server) (extra.Status, error) {
 	resp, err := ExecRCON(server, "status")
 	if err != nil {

@@ -1,3 +1,5 @@
+// Package depotdownloader implements a go interface to the depotDownloader .net application used to
+// download and update game assets.
 package depotdownloader
 
 import (
@@ -17,10 +19,10 @@ const (
 	tf2server steamid.AppID = 232250
 )
 
-// DepotDownloader provides a simple wrapper around https://github.com/SteamRE/DepotDownloader
+// depotDownloader provides a simple wrapper around https://github.com/SteamRE/DepotDownloader
 // since as far as im aware there is no native solution for downloading the depots available
 // currently.
-type DepotDownloader struct {
+type depotDownloader struct {
 	AppID        steamid.AppID
 	InstallPath  string
 	DotNetExec   string
@@ -32,9 +34,9 @@ type DepotDownloader struct {
 
 const depotDLLName = "DepotDownloader.dll"
 
-// New sets up a DepotDownloader for the specified game.
+// New sets up a depotDownloader for the specified game.
 // It currently expects the executable to be found on the PATH
-func New(appID steamid.AppID, installPath string) (*DepotDownloader, error) {
+func New(appID steamid.AppID, installPath string) (*depotDownloader, error) {
 	depotPath, found := os.LookupEnv("DEPOT_DOWNLOADER")
 	if !found {
 		return nil, errors.New("Must set DEPOT_DOWNLOADER env var to directory containing")
@@ -48,8 +50,8 @@ func New(appID steamid.AppID, installPath string) (*DepotDownloader, error) {
 	if err != nil {
 		return nil, errors.New("Failed to located dotnet executable")
 	}
-	log.Debugf("DepotDownloader executable is %s", p)
-	return &DepotDownloader{
+	log.Debugf("depotDownloader executable is %s", p)
+	return &depotDownloader{
 		AppID:       appID,
 		InstallPath: installPath,
 		DotNetExec:  p,
@@ -59,7 +61,7 @@ func New(appID steamid.AppID, installPath string) (*DepotDownloader, error) {
 }
 
 // Start performs the actual downloading
-func (d DepotDownloader) Start() error {
+func (d depotDownloader) Start() error {
 	args := []string{
 		d.DepotDLL,
 		"-app", fmt.Sprintf("%d", d.AppID),

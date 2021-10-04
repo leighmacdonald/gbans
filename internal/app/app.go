@@ -1,3 +1,4 @@
+// Package app is the main application and entry point. It implements the action.Executor and io.Closer interfaces.
 package app
 
 import (
@@ -240,11 +241,11 @@ func (g *gbans) logReader() {
 			}
 			asValue, asFound := v.Values["assister_position"]
 			if asFound {
-				var aspv logparse.Pos
-				if err := logparse.NewPosFromString(asValue, &aspv); err != nil {
+				var asPosValue logparse.Pos
+				if err := logparse.NewPosFromString(asValue, &asPosValue); err != nil {
 					g.l.Warnf("Failed to parse assister position: %v", err)
 				}
-				aspos = aspv
+				aspos = asPosValue
 			}
 			var weapon logparse.Weapon
 			weaponValue, weaponFound := v.Values["weapon"]
@@ -299,7 +300,7 @@ func (g *gbans) logReader() {
 }
 
 // addWarning records a user warning into memory. This is not persistent, so application
-// restarts will wipe the users history.
+// restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
 func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {

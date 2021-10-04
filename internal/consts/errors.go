@@ -1,3 +1,4 @@
+// Package consts contains common errors and constants
 package consts
 
 import "github.com/pkg/errors"

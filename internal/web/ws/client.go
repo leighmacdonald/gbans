@@ -1,3 +1,4 @@
+// Package ws implements a websocket client and server for communication between the host and agents.
 package ws
 
 import (

@@ -50,7 +50,7 @@ type demoPostRequest struct {
 	ServerName string `form:"server_name"`
 }
 
-func (w *Web) onPostDemo(db store.Store) gin.HandlerFunc {
+func (w *web) onPostDemo(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r demoPostRequest
 		if errR := c.Bind(&r); errR != nil {
@@ -87,7 +87,7 @@ func (w *Web) onPostDemo(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
+func (w *web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -159,7 +159,7 @@ type apiBanRequest struct {
 	Network    string        `json:"network"`
 }
 
-func (w *Web) onAPIPostBanCreate() gin.HandlerFunc {
+func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r apiBanRequest
 		if err := c.BindJSON(&r); err != nil {
@@ -216,7 +216,7 @@ func (w *Web) onAPIPostBanCreate() gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
+func (w *web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`
@@ -259,7 +259,7 @@ func (w *Web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
+func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int    `json:"client_id"`
 		SteamID  string `json:"steam_id"`
@@ -368,7 +368,7 @@ func (w *Web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //	}
 //}
 
-func (w *Web) onAPIGetServers(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -382,7 +382,7 @@ func (w *Web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
+func (w *web) queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
 	var qf store.QueryFilter
 	if err := c.BindUri(&qf); err != nil {
 		return nil, err
@@ -390,7 +390,7 @@ func (w *Web) queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error)
 	return &qf, nil
 }
 
-func (w *Web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		qf, err := w.queryFilterFromContext(c)
 		if err != nil {
@@ -408,7 +408,7 @@ func (w *Web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPICurrentProfile() gin.HandlerFunc {
+func (w *web) onAPICurrentProfile() gin.HandlerFunc {
 	type resp struct {
 		Player  *model.Person            `json:"player"`
 		Friends []steamweb.PlayerSummary `json:"friends"`
@@ -436,7 +436,7 @@ func (w *Web) onAPICurrentProfile() gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIProfile(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
 	type req struct {
 		Query string `form:"query"`
 	}
@@ -489,7 +489,7 @@ func (w *Web) onAPIProfile(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 	type resp struct {
 		Count int      `json:"count"`
 		Words []string `json:"words"`
@@ -510,7 +510,7 @@ func (w *Web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIGetCompHist(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetCompHist(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sidStr := c.DefaultQuery("sid", "")
 		if sidStr == "" {
@@ -533,7 +533,7 @@ func (w *Web) onAPIGetCompHist(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIGetStats(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetStats(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
@@ -551,7 +551,7 @@ func loadBanMeta(_ *model.BannedPerson) {
 
 }
 
-func (w *Web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		banIDStr := c.Param("ban_id")
 		if banIDStr == "" {
@@ -576,7 +576,7 @@ func (w *Web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIGetBans(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		o := store.NewQueryFilter("")
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -591,13 +591,13 @@ func (w *Web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *Web) onAPIPostServer() gin.HandlerFunc {
+func (w *web) onAPIPostServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		responseOK(c, http.StatusOK, gin.H{})
 	}
 }
 
-func (w *Web) onSup(p ws.Payload) error {
+func (w *web) onSup(p ws.Payload) error {
 
 	return nil
 }

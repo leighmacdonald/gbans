@@ -1,3 +1,4 @@
+// Package discord implements the ChatBot interface using discord as the underlying chat service
 package discord
 
 import (

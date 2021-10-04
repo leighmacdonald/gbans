@@ -1,3 +1,21 @@
+// Package cmd implements the CLI (Command Line Interface) of the application.
+//
+// ban asn - Ban based on ASN
+// ban cidr - Ban a IP or network with CIDR notation
+// ban steam - Ban a player via steamid or vanity name
+// import - Imports bans from a folder in json format
+// migrate - Initiate a database migration manually
+// net update - Download and import the latest ip2location databases
+// seed - Pre seed the database with data, used for development mostly
+// serve - The main application service entry point
+// server create - Create a new server
+// server delete - Delete a server
+// server list - List known servers
+// server update - Update an existing server
+// unban asn - Unban a ASN
+// unban cidr - Unban a CIDR network or IP
+// unban steam - Unban a steam profile
+//
 package cmd
 
 import (

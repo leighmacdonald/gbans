@@ -15,14 +15,11 @@ import (
 	"time"
 )
 
-type State int32
+type connState int32
 
 const (
-	Closed State = iota
-	Opened
-	AwaitingAuthentication
-	Authenticated
-	Closing
+	closed connState = iota
+	closing
 )
 
 // socketService holds the global websocket session state and handlers
@@ -38,7 +35,7 @@ type socketService struct {
 // clientSession represents the state of a client connected via websockets
 type clientSession struct {
 	IsClient bool
-	State    State
+	State    connState
 	Person   model.Person
 	// Is log broadcasting enabled
 	BroadcastLog        bool
@@ -146,6 +143,7 @@ func NewService(handlers Handlers, logMsgChan chan LogPayload) *socketService {
 	return service
 }
 
+// Start is the websocket api handler entry point
 func (s *socketService) Start() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := s.ws.HandleRequest(c.Writer, c.Request); err != nil {
@@ -254,7 +252,7 @@ func (s *socketService) onAuthenticatedPayload(w *Payload, c *clientSession) {
 // by default.
 func (s *socketService) onConnect(session *melody.Session) {
 	client := &clientSession{
-		State:     Closed,
+		State:     closed,
 		ctx:       context.Background(),
 		eventChan: make(chan model.ServerEvent),
 		session:   session,
@@ -281,14 +279,14 @@ func (s *socketService) onDisconnect(session *melody.Session) {
 		log.Errorf("Unregistered s client")
 		return
 	}
-	c.State = Closing
+	c.State = closing
 	delete(s.sessions, session)
 	log.WithField("addr", session.Request.RemoteAddr).Infof("WS client disconnect")
 	if err := event.UnregisterConsumer(c.eventChan); err != nil {
 		log.Errorf("Failed to unregister event consumer")
 	}
 	// TODO flush remaining queues
-	c.State = Closed
+	c.State = closed
 }
 
 type SocketAuthReq struct {

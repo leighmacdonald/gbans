@@ -25,7 +25,7 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *Web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan ws.LogPayload) {
+func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan ws.LogPayload) {
 	handlers := ws.Handlers{
 		ws.Sup: w.onSup,
 	}
