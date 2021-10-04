@@ -217,8 +217,7 @@ func (ll LatLong) String() string {
 }
 
 // Update will fetch a new geoip database from maxmind and install it, uncompressed,
-// into the configured geodb_path config file path usually defined in the configuration
-// files.
+// into the configured geodb_path defined in the configuration file.
 func Update(outputPath string, apiKey string) error {
 	type dlParam struct {
 		dbName   string

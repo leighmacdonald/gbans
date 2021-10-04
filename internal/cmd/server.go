@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,6 +29,43 @@ var serverCmd = &cobra.Command{
 	Long:  `Functionality for creating, or modifying server configurations`,
 }
 
+var serverListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all servers",
+	Long:  `List all servers`,
+	Run: func(cmd *cobra.Command, args []string) {
+		db, err := store.New(config.DB.DSN)
+		if err != nil {
+			log.Fatalf("Failed to setup db connection: %v", err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		servers, errFetch := db.GetServers(ctx, false)
+		if errFetch != nil {
+			if errors.Is(errFetch, store.ErrNoResult) {
+				log.Infof("No servers")
+				return
+			}
+			log.Fatalf("Failed to fetch servers: %v", errFetch)
+		}
+		var rows [][]string
+		for _, srv := range servers {
+			rows = append(rows, []string{
+				fmt.Sprintf("%d", srv.ServerID),
+				srv.ServerName,
+				srv.ServerNameLong,
+				srv.Addr(),
+				srv.Region,
+				srv.CC,
+				fmt.Sprintf("%.4f %.4f", srv.Location.Latitude, srv.Location.Longitude),
+			})
+		}
+		opts := golib.DefaultTableOpts()
+		opts.Title = "Servers"
+		opts.Headers = []string{"id", "name", "name_long", "address", "region", "country", "location"}
+		fmt.Println(golib.ToTable(rows, opts))
+	},
+}
 var serverCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a server",
@@ -145,6 +184,7 @@ func init() {
 	serverCmd.AddCommand(serverCreateCmd)
 	serverCmd.AddCommand(serverDeleteCmd)
 	serverCmd.AddCommand(serverUpdateCmd)
+	serverCmd.AddCommand(serverListCmd)
 
 	rootCmd.AddCommand(serverCmd)
 

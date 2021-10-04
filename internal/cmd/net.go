@@ -18,8 +18,8 @@ var netCmd = &cobra.Command{
 
 var netUpdateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update any enabled block lists",
-	Long:  `Update any enabled block lists`,
+	Short: "Updates ip2location dataset",
+	Long:  `Updates ip2location dataset`,
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := store.New(config.DB.DSN)
 		if err != nil {

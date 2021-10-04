@@ -14,7 +14,6 @@ WORKDIR /build
 RUN apk add make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./
 RUN go mod download
-COPY --from=frontend /build/internal/web/dist internal/web/dist
 COPY pkg pkg
 COPY internal internal
 RUN make build
@@ -25,6 +24,7 @@ EXPOSE 6006
 RUN apk add dumb-init
 WORKDIR /app
 VOLUME ["/app/.cache"]
+COPY --from=frontend /build/dist .
 COPY --from=build /build/build/linux64/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]

@@ -254,7 +254,7 @@ func Read(cfgFiles ...string) {
 		log.Errorf("Failed to set steam api key: %v", err)
 	}
 	if found {
-		log.Infof("Using config file: %s", viper.ConfigFileUsed())
+		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
 	} else {
 		log.Warnf("No configuration found, defaults used")
 	}

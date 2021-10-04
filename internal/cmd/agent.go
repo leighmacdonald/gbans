@@ -11,9 +11,8 @@ import (
 // agentCmd starts the log relay service
 var agentCmd = &cobra.Command{
 	Use:   "agent",
-	Short: "gbans agent",
-	Long: `gbans remote administration agent
-`,
+	Short: "gbans remote agent",
+	Long:  `gbans remote agent`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		agent, err2 := agent.NewAgent(ctx, agent.Opts{
@@ -21,15 +20,14 @@ var agentCmd = &cobra.Command{
 			LogListenAddress: config.RPC.LogAddr,
 			Instances: []agent.Instance{
 				{
-					Name:   "yyc-1",
-					Secret: []byte("yyc-1"),
+					Name:   "abc-1",
+					Secret: []byte("abc-1"),
 				},
 			},
 		})
 		if err2 != nil {
 			log.Fatalf("Could not create rpc client: %v", err2)
 		}
-
 		if errStart := agent.Start(); errStart != nil {
 			log.Errorf("Agent exited: %v", errStart)
 		}

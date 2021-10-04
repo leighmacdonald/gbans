@@ -4,7 +4,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const outPath = path.resolve('../internal/web/dist');
+const outPath = path.resolve('../dist');
 
 const devMode = process.env.NODE_ENV !== 'production';
 const paths = {
@@ -16,7 +16,7 @@ module.exports = {
     entry: './src/index.tsx',
     output: {
         path: path.join(paths.dist),
-        publicPath: '/dist',
+        publicPath: '/dist/',
         filename: devMode ? '[name].js' : '[name].[chunkhash:8].bundle.js',
         clean: false
     },
