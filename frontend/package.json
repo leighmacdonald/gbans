@@ -58,7 +58,7 @@
     "date-fns": "^2.24.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-jest": "^24.5.0",
+    "eslint-plugin-jest": "^24.5.2",
     "eslint-plugin-no-loops": "^0.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.26.1",
