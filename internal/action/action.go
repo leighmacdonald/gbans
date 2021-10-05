@@ -21,7 +21,6 @@ type Executor interface {
 	FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error
 	PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error
 	GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error
-	Mute(args MuteRequest, pi *model.PlayerInfo) error
 	Ban(args BanRequest, b *model.Ban) error
 	BanNetwork(args BanNetRequest, net *model.BanNet) error
 	BanASN(args BanASNRequest, net *model.BanASN) error
@@ -116,7 +115,8 @@ type BanRequest struct {
 	Target
 	Author
 	Duration
-	Reason string
+	Reason  string
+	BanType model.BanType
 }
 
 type MuteRequest BanRequest
@@ -188,8 +188,9 @@ func NewFind(o model.Origin, q string) FindRequest {
 	return FindRequest{BaseOrigin: BaseOrigin{o}, Query: q}
 }
 
-func NewMute(o model.Origin, target string, author string, reason string, duration string) MuteRequest {
-	return MuteRequest{
+func NewMute(o model.Origin, target string, author string, reason string, duration string) BanRequest {
+	return BanRequest{
+		BanType:    model.NoComm,
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
 		Author:     Author(author),
@@ -209,6 +210,7 @@ func NewKick(o model.Origin, target string, author string, reason string) KickRe
 
 func NewBan(o model.Origin, target string, author string, reason string, duration string) BanRequest {
 	return BanRequest{
+		BanType:    model.Banned,
 		BaseOrigin: BaseOrigin{o},
 		Target:     Target(target),
 		Author:     Author(author),

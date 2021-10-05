@@ -21,61 +21,6 @@ import (
 	"time"
 )
 
-// Mute will apply a mute to the players steam id. Mutes are propagated to the servers immediately.
-// If duration set to 0, the value of config.DefaultExpiration() will be used.
-func (g gbans) Mute(args action.MuteRequest, pi *model.PlayerInfo) error {
-	target, err := args.Target.SID64()
-	if err != nil {
-		return errors.Errorf("Failed to get steam id from: %s", args.Target)
-	}
-	source, errSrc := args.Author.SID64()
-	if errSrc != nil {
-		return errors.Errorf("Failed to get steam id from: %s", args.Author)
-	}
-	duration, errDur := args.Duration.Value()
-	if errDur != nil {
-		return errDur
-	}
-	until := config.DefaultExpiration()
-	if duration > 0 {
-		until = config.Now().Add(duration)
-	}
-	b := model.NewBannedPerson()
-	if err2 := g.db.GetBanBySteamID(g.ctx, target, false, &b); err2 != nil && err2 != store.ErrNoResult {
-		log.Errorf("Error getting b from db: %v", err2)
-		return errors.New("Internal DB Error")
-	} else if err2 != nil {
-		b = model.BannedPerson{
-			Ban:    model.NewBan(target, source, duration),
-			Person: model.NewPerson(target),
-		}
-		b.Ban.BanType = model.NoComm
-	}
-	if b.Ban.BanType == model.Banned {
-		return errors.New("Person is already banned")
-	}
-	b.Ban.BanType = model.NoComm
-	b.Ban.Reason = model.Custom
-	b.Ban.ReasonText = args.Reason
-	b.Ban.ValidUntil = until
-	if err3 := g.db.SaveBan(g.ctx, &b.Ban); err3 != nil {
-		log.Errorf("Failed to save b: %v", err3)
-		return err3
-	}
-
-	if errF := g.Find(target.String(), "", pi); errF != nil {
-		return nil
-	}
-	if pi.InGame {
-		log.Infof("Gagging in-game Player")
-		query.RCON(g.ctx, []model.Server{*pi.Server},
-			fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(target))),
-			fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(target))))
-	}
-	log.Infof("Gagged Player successfully")
-	return nil
-}
-
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
@@ -104,6 +49,7 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 	return true, nil
 }
 
+// UnbanASN will remove an existing ASN ban
 func (g gbans) UnbanASN(ctx context.Context, args action.UnbanASNRequest) (bool, error) {
 	asNum, errConv := strconv.ParseInt(args.ASNum, 10, 64)
 	if errConv != nil {
@@ -150,12 +96,12 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	}
 	b.SteamID = target
 	b.AuthorID = source
-	b.BanType = model.Banned
+	b.BanType = args.BanType
 	b.Reason = model.Custom
 	b.ReasonText = args.Reason
 	b.Note = ""
 	b.ValidUntil = until
-	b.Source = model.System
+	b.Source = args.Origin
 	b.CreatedOn = config.Now()
 	b.UpdatedOn = config.Now()
 
@@ -200,29 +146,42 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 			}
 		}
 	}()
-	go func() {
-		ipAddr := ""
-		// kick the user if they currently are playing on a server
-		pi := model.NewPlayerInfo()
-		_ = g.Find(target.String(), "", &pi)
-		if pi.Valid && pi.InGame {
-			ipAddr = pi.Player.IP.String()
-			if _, errR := query.ExecRCON(*pi.Server,
-				fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
-				log.Errorf("Faied to kick user afeter b: %v", errR)
+	ipAddr := ""
+	// kick the user if they currently are playing on a server
+	pi := model.NewPlayerInfo()
+	_ = g.Find(target.String(), "", &pi)
+	if pi.Valid && pi.InGame {
+		switch args.BanType {
+		case model.NoComm:
+			{
+				log.Infof("Gagging in-game Player")
+				query.RCON(g.ctx, []model.Server{*pi.Server},
+					fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(target))),
+					fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(target))))
 			}
-			p := model.NewPerson(pi.Player.SID)
-			if errG := g.db.GetOrCreatePersonBySteamID(g.ctx, pi.Player.SID, &p); errG != nil {
-				log.Errorf("Failed to fetch banned player: %v", errG)
-			}
-			p.IPAddr = net.ParseIP(ipAddr)
-			if errS := g.db.SavePerson(g.ctx, &p); errS != nil {
-				log.Errorf("Failed to update banned player up: %v", errS)
+		case model.Banned:
+			{
+				log.Infof("Banning and kicking in-game Player")
+				ipAddr = pi.Player.IP.String()
+				if _, errR := query.ExecRCON(*pi.Server,
+					fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
+					log.Errorf("Faied to kick user after ban: %v", errR)
+				}
 			}
 		}
-	}()
+		p := model.NewPerson(pi.Player.SID)
+		if errG := g.db.GetOrCreatePersonBySteamID(g.ctx, pi.Player.SID, &p); errG != nil {
+			log.Errorf("Failed to fetch banned player: %v", errG)
+		}
+		p.IPAddr = net.ParseIP(ipAddr)
+		if errS := g.db.SavePerson(g.ctx, &p); errS != nil {
+			log.Errorf("Failed to update banned player ip: %v", errS)
+		}
+	}
 	return nil
 }
+
+// BanASN will ban all network ranges associated with the requested ASN
 func (g gbans) BanASN(args action.BanASNRequest, banASN *model.BanASN) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
@@ -317,7 +276,7 @@ func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error
 	return nil
 }
 
-// Kick will kick the steam id from all servers.
+// Kick will kick the steam id from whatever server it is connected to.
 func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
@@ -346,6 +305,9 @@ func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	return nil
 }
 
+// SetSteam is used to associate a discord user with either steam id. This is used
+// instead of requiring users to link their steam account to discord itself. It also
+// means the bot does not require more priviledges intents.
 func (g gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
 	sid, err := steamid.ResolveSID64(g.ctx, string(args.Target))
 	if err != nil || !sid.Valid() {
@@ -365,6 +327,7 @@ func (g gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
 	return true, nil
 }
 
+// Say is used to send a message to the server via sm_say
 func (g gbans) Say(args action.SayRequest) error {
 	var server model.Server
 	if err := g.db.GetServerByName(g.ctx, args.Server, &server); err != nil {
@@ -382,6 +345,7 @@ func (g gbans) Say(args action.SayRequest) error {
 	return nil
 }
 
+// CSay is used to send a centered message to the server via sm_csay
 func (g gbans) CSay(args action.CSayRequest) error {
 	var (
 		servers []model.Server
@@ -404,6 +368,7 @@ func (g gbans) CSay(args action.CSayRequest) error {
 	return nil
 }
 
+// PSay is used to send a private message to a player
 func (g gbans) PSay(args action.PSayRequest) error {
 	var pi model.PlayerInfo
 	_ = g.Find(string(args.Target), "", &pi)
@@ -418,6 +383,7 @@ func (g gbans) PSay(args action.PSayRequest) error {
 	return nil
 }
 
+// FilterAdd creates a new chat filter using a regex pattern
 func (g gbans) FilterAdd(args action.FilterAddRequest) (model.Filter, error) {
 	re, err := regexp.Compile(args.Filter)
 	if err != nil {
@@ -434,6 +400,7 @@ func (g gbans) FilterAdd(args action.FilterAddRequest) (model.Filter, error) {
 	return filter, nil
 }
 
+// FilterDel removed and existing chat filter
 func (g gbans) FilterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
 	var filter model.Filter
 	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
@@ -445,6 +412,7 @@ func (g gbans) FilterDel(ctx context.Context, args action.FilterDelRequest) (boo
 	return true, nil
 }
 
+// FilterCheck can be used to check if a phrase will match any filters
 func (g gbans) FilterCheck(args action.FilterCheckRequest) []model.Filter {
 	if args.Message == "" {
 		return nil
@@ -482,6 +450,7 @@ func (g gbans) ContainsFilteredWord(body string) (bool, model.Filter) {
 	return false, model.Filter{}
 }
 
+// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
 func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
 	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
 		return err
@@ -506,6 +475,7 @@ func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) er
 	return nil
 }
 
+// ResolveSID is just a simple helper for calling steamid.ResolveSID64
 func (g gbans) ResolveSID(sidStr string) (steamid.SID64, error) {
 	c, cancel := context.WithTimeout(g.ctx, time.Second*5)
 	defer cancel()

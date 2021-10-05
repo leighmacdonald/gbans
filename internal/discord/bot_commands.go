@@ -38,7 +38,7 @@ const (
 	cmdFilterCheck botCmd = "filter_check"
 )
 
-func (b *DiscordClient) botRegisterSlashCommands() error {
+func (b *discord) botRegisterSlashCommands() error {
 	// TODO register the commands again upon adding new servers to update autocomplete opts
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
@@ -401,12 +401,12 @@ const (
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-func (b *DiscordClient) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	cmd := botCmd(interaction.Data.Name)
 	response := botResponse{MsgType: mtString}
 	if handler, ok := b.commandHandlers[cmd]; ok {
 		// sendPreResponse should be called for any commands that call external services or otherwise
-		// could not return a response instantly. Discord will time out commands that don't respond within a
+		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
 		if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,

@@ -113,7 +113,7 @@ func (g *gbans) Start() {
 	if config.Discord.Enabled {
 		g.initDiscord()
 	} else {
-		g.l.Warnf("Discord bot not enabled")
+		g.l.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
@@ -165,7 +165,8 @@ func (g *gbans) warnWorker() {
 	}
 }
 
-// logWriter handles tak
+// logWriter handles writing log events to the database. It does it in batches for performance
+// reasons.
 func (g *gbans) logWriter() {
 	const (
 		freq = time.Second * 10
@@ -315,18 +316,18 @@ func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	})
 	g.warningsMu.Unlock()
 	if len(g.warnings[sid64]) >= config.General.WarningLimit {
-		var pi model.PlayerInfo
+		var ban model.Ban
 		g.l.Errorf("Warn limit exceeded (%d): %d", sid64, len(g.warnings[sid64]))
 		var err error
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			err = g.Mute(action.NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
-				config.General.WarningExceededDuration.String()), &pi)
+			err = g.Ban(action.NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+				config.General.WarningExceededDuration.String()), &ban)
 		case config.Ban:
-			var ban model.Ban
 			err = g.Ban(action.NewBan(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
 				config.General.WarningExceededDuration.String()), &ban)
 		case config.Kick:
+			var pi model.PlayerInfo
 			err = g.Kick(action.NewKick(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
 		}
 		if err != nil {
@@ -367,11 +368,11 @@ func (g *gbans) initDiscord() {
 		}
 		go func() {
 			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {
-				g.l.Errorf("DiscordClient returned error: %v", errBS)
+				g.l.Errorf("discord returned error: %v", errBS)
 			}
 		}()
 	} else {
-		g.l.Fatalf("Discord enabled, but bot token invalid")
+		g.l.Fatalf("discord enabled, but bot token invalid")
 	}
 }
 

@@ -140,6 +140,13 @@ func (g *gbans) serverStateUpdater() {
 	}
 }
 
+// mapChanger watches over servers and checks for servers on maps with 0 players.
+// If there is no player for a long enough duration and the map is not one of the
+// maps in the default map set, a changelevel request will be made to the server
+//
+// Relevant config values:
+// - general.map_changer_enabled
+// - general.default_map
 func (g *gbans) mapChanger(timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
@@ -190,7 +197,7 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 	}
 }
 
-// banSweeper
+// banSweeper periodically will query the database for expired bans and remove them.
 func (g *gbans) banSweeper() {
 	log.Debug("ban sweeper routine started")
 	ticker := time.NewTicker(time.Minute)

@@ -5,30 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
-	"sync"
 )
-
-func A2SInfo(servers []model.Server) map[string]*a2s.ServerInfo {
-	responses := make(map[string]*a2s.ServerInfo)
-	mu := &sync.RWMutex{}
-	wg := &sync.WaitGroup{}
-	for _, s := range servers {
-		wg.Add(1)
-		go func(server model.Server) {
-			defer wg.Done()
-			resp, err := A2SQueryServer(server)
-			if err != nil {
-				log.Errorf("A2S: %v", err)
-				return
-			}
-			mu.Lock()
-			responses[server.ServerName] = resp
-			mu.Unlock()
-		}(s)
-	}
-	wg.Wait()
-	return responses
-}
 
 func A2SQueryServer(server model.Server) (*a2s.ServerInfo, error) {
 	client, err := a2s.NewClient(server.Addr())

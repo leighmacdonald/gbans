@@ -9,8 +9,10 @@
 ![Lines of Code](https://tokei.rs/b1/github/leighmacdonald/gbans)
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
-gbans is intended to be a more modern & secure replacement 
-for [sourcebans](https://github.com/GameConnect/sourcebansv1) / [sourcebans++](https://sbpp.dev).
+gbans was initially intended to be a more modern & secure replacement 
+for [sourcebans](https://github.com/GameConnect/sourcebansv1) / [sourcebans++](https://sbpp.dev). It has since
+had its scope expanded to include more optional support for general game server management tasks as well
+as future plans for in depth plater stat tracking.
 
 
 ## Stability / Usage Notice
@@ -33,43 +35,55 @@ authentication token.
 - Communication over HTTPS
 - Discord bot integration for administration & announcements.
 - Built using [Go](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in 
-webserver that is safe to directly expose to the internet. This means its not necessary to setup MySQL, 
+webserver that is safe to directly expose to the internet. This means it's not necessary to setup MySQL, 
 Nginx/Apache and PHP on your server.
 - Non-legacy codebase that is (hopefully) not a nightmare to hack on.
 
 ## Features
 
-- [ ] Import of existing sourcebans database
-- [ ] Import/Export of gbans databases
-- [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
+- [ ] General
+  - [x] Multi server support
+  - [x] Global bans
+  - [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
+  - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
+  - [ ] Import/Export of gbans databases
+  - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
+  - [ ] Multi-tenant support
 - [x] Game support
    - [x] Team Fortress 2
-- [ ] 3rd party ban lists 
-   - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json)
-   - [ ] Known VPN Networks
-   - [ ] Known non-residential addresses 
-   - [ ] Known proxies
-- [x] Multi server support
-- [x] Global bans
-- [x] Subnet & IP bans (CIDR)
+- [ ] Blocking lists & types 
+  - [x] Valves source server banip config 
+  - [ ] Existing sourcebans database
+  - [x] [CIDR/IP](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) bans
+  - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json)
+  - [ ] Known VPN Networks
+  - [ ] Known non-residential addresses 
+  - [ ] Known proxies
+  - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
 - [x] Database support
   - [x] Postgresql w/PostGIS
-- [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
-- [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
+- [ ] Remote Agent
+  - [x] Install & Update game installations
+  - [ ] Apply custom configs and plugins per server
+  - [ ] Relay game logs to central service
 - [ ] SourceMod Plugin
-    - [x] Game server authentication
-    - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
-    - [ ] `/gb_unban` Unban a previously banned user
-    - [ ] `/gb_kick` Kick a user
-    - [x] `/gb_mod or /mod <message>` Call for a mod on discord
+  - [x] Game server authentication
+  - [x] Restrict banned players from connecting
+  - [x] Restrict muted/gagged players on join
+  - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
+  - [ ] `/gb_unban` Unban a previously banned user
+  - [ ] `/gb_kick` Kick a user
+  - [x] `/gb_mod or /mod <message>` Call for a mod on discord
 - [ ] User Interfaces
-    - [x] Discord
-    - [ ] Web
-- [ ] Game server logs
-   - [x] Remote relay agent `gbans relay -h`
-   - [x] Parsing  
-   - [x] Indexing 
-   - [ ] Querying
+  - [x] CLI
+  - [x] Discord
+  - [ ] Web
+  - [ ] Matrix
+- [ ] Game server logs event storage and processing
+  - [x] Remote relay agent `gbans relay -h`
+  - [x] Parsing  
+  - [x] Indexing 
+  - [ ] Querying
     
 ## Docker
 

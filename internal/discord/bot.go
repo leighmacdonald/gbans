@@ -28,7 +28,8 @@ var (
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-type DiscordClient struct {
+// discord implements the ChatBot interface for the discord chat platform.
+type discord struct {
 	dg              *discordgo.Session
 	connectedMu     *sync.RWMutex
 	connected       bool
@@ -37,9 +38,9 @@ type DiscordClient struct {
 	db              store.Store
 }
 
-// New instantiates a new, unconnected, DiscordClient instance
-func New(executor action.Executor, s store.Store) (*DiscordClient, error) {
-	b := DiscordClient{
+// New instantiates a new, unconnected, discord instance
+func New(executor action.Executor, s store.Store) (*discord, error) {
+	b := discord{
 		dg:          nil,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
@@ -66,10 +67,10 @@ func New(executor action.Executor, s store.Store) (*DiscordClient, error) {
 	return &b, nil
 }
 
-func (b *DiscordClient) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
+func (b *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to connect to discord. DiscordClient unavailable")
+		return errors.Wrapf(err, "Failed to connect to discord. discord unavailable")
 
 	}
 	defer func() {
@@ -87,7 +88,7 @@ func (b *DiscordClient) Start(ctx context.Context, token string, eventChan chan 
 	// In this example, we only care about receiving message events.
 	b.dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
-	// Open a websocket connection to Discord and begin listening.
+	// Open a websocket connection to discord and begin listening.
 	err = b.dg.Open()
 	if err != nil {
 		return errors.Wrap(err, "Error opening discord connection")
@@ -103,9 +104,9 @@ func (b *DiscordClient) Start(ctx context.Context, token string, eventChan chan 
 }
 
 // discordMessageQueueReader functions by registering event handlers for the two user message events
-// Discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
+// discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func (b *DiscordClient) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
+func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
 	for {
@@ -142,11 +143,11 @@ func (b *DiscordClient) discordMessageQueueReader(ctx context.Context, eventChan
 	}
 }
 
-func (b *DiscordClient) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	log.Infof("DiscordClient is connected & ready")
+func (b *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+	log.Infof("discord is connected & ready")
 }
 
-func (b *DiscordClient) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
+func (b *discord) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	log.Info("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
 		IdleSince: nil,
@@ -172,14 +173,14 @@ func (b *DiscordClient) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 	b.connectedMu.Unlock()
 }
 
-func (b *DiscordClient) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+func (b *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	b.connectedMu.Lock()
 	b.connected = false
 	b.connectedMu.Unlock()
 	log.Info("Disconnected from session ws API")
 }
 
-func (b *DiscordClient) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
+func (b *discord) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
 	b.connectedMu.RLock()
 	if !b.connected {
 		b.connectedMu.RUnlock()
@@ -200,7 +201,7 @@ func (b *DiscordClient) sendChannelMessage(s *discordgo.Session, c string, msg s
 	return nil
 }
 
-func (b *DiscordClient) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
+func (b *discord) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
 	b.connectedMu.RLock()
 	if !b.connected {
 		b.connectedMu.RUnlock()
@@ -226,11 +227,11 @@ func (b *DiscordClient) sendInteractionMessageEdit(s *discordgo.Session, i *disc
 	return s.InteractionResponseEdit(config.Discord.AppID, i, e)
 }
 
-func (b *DiscordClient) Send(channelId string, message string, wrap bool) error {
+func (b *discord) Send(channelId string, message string, wrap bool) error {
 	return b.sendChannelMessage(b.dg, channelId, message, wrap)
 }
 
-func (b *DiscordClient) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
 	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
 		return errSend
 	}
