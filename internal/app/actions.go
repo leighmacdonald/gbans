@@ -329,13 +329,20 @@ func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	//}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	_ = g.Find(target.String(), "", &foundPI)
-	if pi.Valid && pi.InGame {
-		if _, errR := query.ExecRCON(*pi.Server, fmt.Sprintf("sm_kick #%d %s", pi.Player.UserID, args.Reason)); errR != nil {
-			log.Errorf("Faied to kick user afeter ban: %v", errR)
-		}
+	if errF := g.Find(target.String(), "", &foundPI); errF != nil {
+		return errF
 	}
-	pi = &foundPI
+
+	if foundPI.Valid && foundPI.InGame {
+		resp, errR := query.ExecRCON(*foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, args.Reason))
+		if errR != nil {
+			log.Errorf("Faied to kick user afeter ban: %v", errR)
+			return errR
+		}
+		log.Debugf("RCON response: %s", resp)
+	}
+	*pi = foundPI
+
 	return nil
 }
 

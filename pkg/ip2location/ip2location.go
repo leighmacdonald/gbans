@@ -455,7 +455,9 @@ func extractZip(data []byte, dest string, filename string) error {
 		}()
 
 		p := filepath.Join(dest, f.Name)
-
+		if strings.Contains(p, "..") {
+			return errors.New("Insecure zip extraction detected")
+		}
 		if f.FileInfo().IsDir() {
 			if errM := os.MkdirAll(p, f.Mode()); errM != nil {
 				return errM

@@ -62,6 +62,7 @@ func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 		}
 	}
 	if pi != nil && pi.Player != nil && pi.Player.SID.Valid() || foundSid.Valid() {
+		pi.SteamID = pi.Player.SID
 		valid = true
 	}
 	pi.Valid = valid

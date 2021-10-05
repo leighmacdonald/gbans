@@ -560,7 +560,6 @@ func (b *DiscordClient) onKick(_ context.Context, _ *discordgo.Session, m *disco
 	if errP := b.executor.PersonBySID(sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
-
 	reason := ""
 	if len(m.Data.Options) > 1 {
 		reason = m.Data.Options[1].Value.(string)
@@ -570,7 +569,13 @@ func (b *DiscordClient) onKick(_ context.Context, _ *discordgo.Session, m *disco
 	if errPI != nil {
 		return errCommandFailed
 	}
-	r.Value = fmt.Sprintf("[%s] User kicked: %s", pi.Server.ServerName, pi.Player.Name)
+	if pi.Server != nil && pi.Server.ServerID > 0 {
+		e := RespOk(r, "User Kicked")
+		addFieldsSteamID(e, sid)
+		addField(e, "Name", pi.Player.Name)
+	} else {
+		return errors.New("User not found")
+	}
 	return nil
 }
 
@@ -580,7 +585,9 @@ func (b *DiscordClient) onSay(_ context.Context, _ *discordgo.Session, m *discor
 	if errS := b.executor.Say(action.NewSay(model.Bot, server, msg)); errS != nil {
 		return errCommandFailed
 	}
-	RespOk(r, "Sent message successfully")
+	e := RespOk(r, "Sent center message successfully")
+	addField(e, "Server", server)
+	addField(e, "Message", msg)
 	return nil
 }
 
@@ -590,7 +597,9 @@ func (b *DiscordClient) onCSay(_ context.Context, _ *discordgo.Session, m *disco
 	if errS := b.executor.CSay(action.NewCSay(model.Bot, server, msg)); errS != nil {
 		return errCommandFailed
 	}
-	RespOk(r, "Sent message successfully")
+	e := RespOk(r, "Sent console message successfully")
+	addField(e, "Server", server)
+	addField(e, "Message", msg)
 	return nil
 }
 
@@ -600,7 +609,9 @@ func (b *DiscordClient) onPSay(_ context.Context, _ *discordgo.Session, m *disco
 	if errS := b.executor.PSay(action.NewPSay(model.Bot, player, msg)); errS != nil {
 		return errCommandFailed
 	}
-	RespOk(r, "Sent message successfully")
+	e := RespOk(r, "Sent private message successfully")
+	addField(e, "Player", player)
+	addField(e, "Message", msg)
 	return nil
 }
 
@@ -691,24 +702,34 @@ func (b *DiscordClient) onPlayers(ctx context.Context, _ *discordgo.Session, m *
 	var rows []string
 	e := RespOk(r, fmt.Sprintf("Current Players: %s", server.ServerName))
 	if len(state.Status.Players) > 0 {
+		sort.SliceStable(state.Status.Players, func(i, j int) bool {
+			return state.Status.Players[i].Name < state.Status.Players[j].Name
+		})
 		for _, p := range state.Status.Players {
 			var asn ip2location.ASNRecord
 			if errASN := b.db.GetASNRecordByIP(ctx, p.IP, &asn); errASN != nil {
-				log.Errorf("Failed to get asn record: %v", errASN)
-				return errCommandFailed
+				// Will fail for LAN ips
+				log.Warnf("Failed to get asn record: %v", errASN)
 			}
 			var loc ip2location.LocationRecord
 			if errLoc := b.db.GetLocationRecord(ctx, p.IP, &loc); errLoc != nil {
-				log.Errorf("Failed to get location record: %v", errLoc)
-				return errCommandFailed
+				log.Warnf("Failed to get location record: %v", errLoc)
 			}
 			proxyStr := ""
 			var proxy ip2location.ProxyRecord
 			if errLoc := b.db.GetProxyRecord(ctx, p.IP, &proxy); errLoc == nil {
 				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", proxy.ProxyType, proxy.Threat, proxy.UsageType)
 			}
-			rows = append(rows, fmt.Sprintf(":flag_%s: `%d` [%s](https://steamcommunity.com/profiles/%d) %dms [%s](https://spyse.com/target/as/%d) %s",
-				strings.ToLower(loc.CountryCode), p.SID, p.Name, p.SID, p.Ping, asn.ASName, asn.ASNum, proxyStr))
+			flag := ""
+			if loc.CountryCode != "" {
+				flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(loc.CountryCode))
+			}
+			asStr := ""
+			if asn.ASNum > 0 {
+				asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", asn.ASNum)
+			}
+			rows = append(rows, fmt.Sprintf("%s`%d` %s`%3dms` [%s](https://steamcommunity.com/profiles/%d)%s",
+				flag, p.SID, asStr, p.Ping, p.Name, p.SID, proxyStr))
 		}
 		e.Description = strings.Join(rows, "\n")
 	} else {
