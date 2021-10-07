@@ -142,7 +142,7 @@ type generalConfig struct {
 	WarningExceededDuration      time.Duration `mapstructure:"-"`
 	UseUTC                       bool          `mapstructure:"use_utc"`
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
-	DefaultMap                   string        `mapstructure:"default_map"`
+	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
 }
 
@@ -271,7 +271,7 @@ func init() {
 	viper.SetDefault("general.warning_exceeded_duration", "1w")
 	viper.SetDefault("general.use_utc", true)
 	viper.SetDefault("general.server_status_update_freq", "60s")
-	viper.SetDefault("general.default_map", "pl_badwater")
+	viper.SetDefault("general.default_maps", []string{"pl_badwater"})
 	viper.SetDefault("general.map_changer_enabled", false)
 
 	viper.SetDefault("http.host", "127.0.0.1")

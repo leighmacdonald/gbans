@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -153,7 +154,7 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 		triggered  bool
 	}
 	activity := map[string]*at{}
-	ticker := time.NewTicker(time.Second * 15)
+	ticker := time.NewTicker(time.Second * 60)
 	for {
 		select {
 		case <-ticker.C:
@@ -161,36 +162,56 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 				continue
 			}
 			g.serversStateMu.RLock()
-			for serverId, state := range g.ServerState() {
+			stateCopy := g.ServerState()
+			g.serversStateMu.RUnlock()
+			for serverId, state := range stateCopy {
 				act, found := activity[serverId]
 				if !found || len(state.Status.Players) > 0 {
 					activity[serverId] = &at{time.Now(), false}
 					continue
 				}
 				if !act.triggered && time.Since(act.lastActive) > timeout {
+					isDefaultMap := false
+					for _, m := range config.General.DefaultMaps {
+						if m == stateCopy[serverId].A2S.Map {
+							isDefaultMap = true
+							break
+						}
+					}
+					if isDefaultMap {
+						continue
+					}
 					var srv model.Server
 					if err := g.db.GetServerByName(context.Background(), serverId, &srv); err != nil {
 						g.l.Errorf("Failed to get server for map changer: %v", err)
 						continue
 					}
-					if srv.DefaultMap == "" {
-						g.l.Errorf("Cannot change to default map, value not set")
+					nextMap := srv.DefaultMap
+					if nextMap == "" {
+						nextMap = config.General.DefaultMaps[rand.Intn(len(config.General.DefaultMaps))]
+					}
+					if nextMap == "" {
+						g.l.Errorf("Failed to get valid nextMap value")
 						continue
 					}
 					if srv.DefaultMap == state.Status.Map {
 						continue
 					}
-					go func() {
-						if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", srv.DefaultMap)); err != nil {
+					go func(s model.Server, mapName string) {
+						var l = g.l.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "srv": serverId})
+						l.Infof("Idle map change triggered")
+						if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", mapName)); err != nil {
 							g.l.Errorf("failed to exec mapchanger rcon: %v", err)
 						}
-					}()
-					g.l.WithFields(log.Fields{"map": srv.DefaultMap, "reason": "no_activity", "srv": serverId}).
-						Infof("Idle map change triggered")
+						l.Infof("Idle map change complete")
+					}(srv, nextMap)
 					act.triggered = true
+					continue
+				}
+				if act.triggered {
+					act.triggered = false
 				}
 			}
-			g.serversStateMu.RUnlock()
 		case <-g.ctx.Done():
 			return
 		}

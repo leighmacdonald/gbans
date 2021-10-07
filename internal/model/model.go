@@ -324,7 +324,7 @@ func NewServer(name string, address string, port int) Server {
 		RCON:           golib.RandomString(10),
 		ReservedSlots:  0,
 		Password:       golib.RandomString(10),
-		DefaultMap:     config.General.DefaultMap,
+		DefaultMap:     "",
 		IsEnabled:      true,
 		TokenCreatedOn: time.Unix(0, 0),
 		CreatedOn:      config.Now(),

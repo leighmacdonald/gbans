@@ -16,6 +16,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
@@ -25,6 +26,10 @@ var (
 	// BuildVersion holds the current git revision, as of build time
 	BuildVersion = "master"
 )
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 // gbans is the main application struct.
 // It implements the action.Executor interface
