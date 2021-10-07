@@ -225,30 +225,54 @@ func (g *gbans) banSweeper() {
 	for {
 		select {
 		case <-ticker.C:
-			bans, err := g.db.GetExpiredBans(g.ctx)
-			if err != nil && !errors.Is(err, store.ErrNoResult) {
-				log.Warnf("Failed to get expired bans: %v", err)
-			} else {
-				for _, ban := range bans {
-					if err := g.db.DropBan(g.ctx, &ban); err != nil {
-						log.Errorf("Failed to drop expired ban: %v", err)
-					} else {
-						log.Infof("ban expired: %v", ban)
+			wg := &sync.WaitGroup{}
+			wg.Add(3)
+			go func() {
+				defer wg.Done()
+				bans, err := g.db.GetExpiredBans(g.ctx)
+				if err != nil && !errors.Is(err, store.ErrNoResult) {
+					log.Warnf("Failed to get expired bans: %v", err)
+				} else {
+					for _, ban := range bans {
+						if err := g.db.DropBan(g.ctx, &ban); err != nil {
+							log.Errorf("Failed to drop expired ban: %v", err)
+						} else {
+							log.Infof("ban expired: %v", ban)
+						}
 					}
 				}
-			}
-			netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
-			if err2 != nil && !errors.Is(err2, store.ErrNoResult) {
-				log.Warnf("Failed to get expired netbans: %v", err2)
-			} else {
-				for _, ban := range netBans {
-					if err := g.db.DropBanNet(g.ctx, &ban); err != nil {
-						log.Errorf("Failed to drop expired network ban: %v", err)
-					} else {
-						log.Infof("Network ban expired: %v", ban)
+			}()
+			go func() {
+				defer wg.Done()
+				netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
+				if err2 != nil && !errors.Is(err2, store.ErrNoResult) {
+					log.Warnf("Failed to get expired netbans: %v", err2)
+				} else {
+					for _, ban := range netBans {
+						if err := g.db.DropBanNet(g.ctx, &ban); err != nil {
+							log.Errorf("Failed to drop expired network ban: %v", err)
+						} else {
+							log.Infof("Network ban expired: %v", ban)
+						}
 					}
 				}
-			}
+			}()
+			go func() {
+				defer wg.Done()
+				asnBans, err3 := g.db.GetExpiredASNBans(g.ctx)
+				if err3 != nil && !errors.Is(err3, store.ErrNoResult) {
+					log.Warnf("Failed to get expired asnbans: %v", err3)
+				} else {
+					for _, asnBan := range asnBans {
+						if err := g.db.DropBanASN(g.ctx, &asnBan); err != nil {
+							log.Errorf("Failed to drop expired asn ban: %v", err)
+						} else {
+							log.Infof("ASN ban expired: %v", asnBan)
+						}
+					}
+				}
+			}()
+			wg.Wait()
 		case <-g.ctx.Done():
 			log.Debugf("banSweeper shutting down")
 			return
