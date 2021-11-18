@@ -3,7 +3,7 @@ module github.com/leighmacdonald/gbans
 go 1.16
 
 require (
-	github.com/Depado/ginprom v1.7.2
+	github.com/Depado/ginprom v1.7.3
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/PuerkitoBio/goquery v1.7.1
 	github.com/andybalholm/cascadia v1.3.1 // indirect
@@ -39,7 +39,6 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tabbed/pqtype v0.1.1
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/yohcop/openid-go v1.0.0
 	go.uber.org/atomic v1.9.0 // indirect
