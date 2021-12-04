@@ -1,11 +1,11 @@
-.PHONY: all test clean build install frontend
+.PHONY: all test clean build install frontend sourcemod
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
 GIT_TAG =
 GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
-all: frontend build
+all: frontend sourcemod build
 
 vet:
 	@go vet . ./...
@@ -45,6 +45,9 @@ dist-master: frontend build
 
 run:
 	@go run $(GO_FLAGS) -race main.go
+
+sourcemod:
+	@./sm.sh
 
 install:
 	@go install $(GO_FLAGS) ./...

@@ -6,8 +6,6 @@
 #include <sdktools>
 #include <sourcemod>
 #include <system2> // system2 extension
-#include <tf2>
-#include <tf2_stocks>
 
 #define DEBUG
 
@@ -108,7 +106,6 @@ void CheckPlayer(int client, const char[] auth, const char[] ip) {
     delete obj;
     delete req;
 }
-
 
 void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                  HTTPRequestMethod method) {

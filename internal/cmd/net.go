@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"context"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 var netCmd = &cobra.Command{
@@ -33,7 +34,7 @@ var netUpdateCmd = &cobra.Command{
 		if errRead != nil {
 			log.Fatalf("Failed to read: %v", errRead)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*600)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*30)
 		defer cancel()
 		if errIns := db.InsertBlockListData(ctx, d); errIns != nil {
 			log.Fatalf("Failed to import: %v", errIns)
