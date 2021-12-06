@@ -8,7 +8,7 @@ WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
 
-FROM golang:1.17.1-alpine as build
+FROM golang:1.17.4-alpine as build
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 WORKDIR /build
 RUN apk add make git gcc libc-dev
