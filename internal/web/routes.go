@@ -98,6 +98,10 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	r.GET("/api/auth/logout", w.onGetLogout())
 	r.GET("/api/ws", rpcService.Start())
 
+	// Service discovery endpoints
+	r.GET("/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))
+	r.GET("/sd/ansible/hosts", w.onAPIGetPrometheusHosts(db))
+
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
 	// IsServer Auth Request
