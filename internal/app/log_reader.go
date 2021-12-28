@@ -58,6 +58,9 @@ func (srv *RemoteSrcdsLogSource) updateDNS() {
 	log.Debugf("Updated DNS mappings")
 }
 
+// Start initiates the udp network log read loop. DNS names are used to
+// map the server logs to the internal known server id. The DNS is updated
+// every 60 minutes so that it remains up to date.
 func (srv *RemoteSrcdsLogSource) Start() {
 	type newMsg struct {
 		source string

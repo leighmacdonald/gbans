@@ -269,6 +269,11 @@ func (g *gbans) logReader() {
 					class = logparse.Spectator
 				}
 			}
+			extra := ""
+			extraValue, extraFound := v.Values["msg"]
+			if extraFound {
+				extra = extraValue
+			}
 			var damage int
 			dmgValue, dmgFound := v.Values["damage"]
 			if dmgFound {
@@ -282,7 +287,7 @@ func (g *gbans) logReader() {
 			target := getPlayer("sid2", v.Values)
 			for _, k := range []string{
 				"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
-				"date", "time", "weapon", "damage", "class",
+				"date", "time", "weapon", "damage", "class", "msg",
 				"attacker_position", "victim_position", "assister_position",
 			} {
 				delete(v.Values, k)
@@ -299,6 +304,7 @@ func (g *gbans) logReader() {
 				VictimPOS:   vpos,
 				AssisterPOS: aspos,
 				CreatedOn:   config.Now(),
+				Extra:       extra,
 			}
 
 			event.Emit(se)
