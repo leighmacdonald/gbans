@@ -72,7 +72,7 @@ func New(ctx context.Context) (*gbans, error) {
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
-	logSrc, errLogSrc := NewRemoteSrcdsLogSource(27115, dbStore, application.logRawQueue)
+	logSrc, errLogSrc := NewRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, application.logRawQueue)
 	if errLogSrc != nil {
 		return nil, errors.Wrapf(we, "Failed to setup udp log src")
 	}
@@ -285,20 +285,11 @@ func (g *gbans) logReader() {
 				}
 				damage = int(damageP)
 			}
-			source := getPlayer("sid", v.Values)
-			target := getPlayer("sid2", v.Values)
-			for _, k := range []string{
-				"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
-				"date", "time", "weapon", "damage", "class", "msg",
-				"attacker_position", "victim_position", "assister_position",
-			} {
-				delete(v.Values, k)
-			}
 			se := model.ServerEvent{
 				Server:      &s,
 				EventType:   v.MsgType,
-				Source:      source,
-				Target:      target,
+				Source:      getPlayer("sid", v.Values),
+				Target:      getPlayer("sid2", v.Values),
 				PlayerClass: class,
 				Weapon:      weapon,
 				Damage:      damage,

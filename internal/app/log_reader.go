@@ -15,21 +15,19 @@ import (
 type RemoteSrcdsLogSource struct {
 	*sync.RWMutex
 	udpAddr   *net.UDPAddr
-	port      int
 	sink      chan web.LogPayload
 	db        store.Store
 	serverMap map[string]string
 }
 
-func NewRemoteSrcdsLogSource(listenPort int, db store.Store, sink chan web.LogPayload) (*RemoteSrcdsLogSource, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf(":%d", listenPort))
+func NewRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan web.LogPayload) (*RemoteSrcdsLogSource, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
 	}
 	return &RemoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
 		udpAddr:   udpAddr,
-		port:      listenPort,
 		db:        db,
 		sink:      sink,
 		serverMap: map[string]string{},
