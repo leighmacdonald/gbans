@@ -270,7 +270,7 @@ type Server struct {
 	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password   string              `db:"password" json:"password"`
+	Password   string              `db:"password" json:"-"`
 	IsEnabled  bool                `json:"is_enabled"`
 	Deleted    bool                `json:"deleted"`
 	Region     string              `json:"region"`

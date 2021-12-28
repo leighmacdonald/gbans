@@ -41,7 +41,6 @@ func New(logMsgChan chan LogPayload, db store.Store, bot discord.ChatBot, exec a
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	log.Infof("Starting HTTP service")
 	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),
 		Handler:        router,

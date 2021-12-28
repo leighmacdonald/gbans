@@ -58,7 +58,6 @@ type relayConfig struct {
 type rpcConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
 	Addr    string `mapstructure:"addr"`
-	LogAddr string `mapstructure:"log_addr"`
 }
 
 type filterConfig struct {
@@ -166,6 +165,7 @@ type logConfig struct {
 	DisableColours bool   `mapstructure:"disable_colours"`
 	ReportCaller   bool   `mapstructure:"report_caller"`
 	FullTimestamp  bool   `mapstructure:"full_timestamp"`
+	SrcdsLogAddr   string `mapstructure:"srcds_log_addr"`
 }
 
 type netBans struct {
@@ -194,7 +194,6 @@ var (
 	Discord discordConfig
 	Log     logConfig
 	Net     netBans
-	RPC     rpcConfig
 )
 
 // Read reads in config file and ENV variables if set.
@@ -243,7 +242,6 @@ func Read(cfgFiles ...string) {
 	DB = cfg.DB
 	Log = cfg.Log
 	Net = cfg.NetBans
-	RPC = cfg.RPC
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
@@ -282,9 +280,6 @@ func init() {
 	viper.SetDefault("http.static_path", "frontend/dist")
 	viper.SetDefault("http.cookie_key", golib.RandomString(32))
 	viper.SetDefault("http.client_timeout", "10s")
-
-	viper.SetDefault("rpc.addr", "0.0.0.0:7779")
-	viper.SetDefault("rpc.enabled", true)
 
 	viper.SetDefault("filter.enabled", false)
 	viper.SetDefault("filter.is_warning", true)
@@ -326,6 +321,7 @@ func init() {
 	viper.SetDefault("log.disable_colours", false)
 	viper.SetDefault("log.report_caller", false)
 	viper.SetDefault("log.full_timestamp", false)
+	viper.SetDefault("log.srcds_log_addr", ":27115")
 
 	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
 	viper.SetDefault("database.auto_migrate", true)

@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -133,6 +134,7 @@ func (g *gbans) Start() {
 		g.initFilters()
 	}
 
+	log.WithFields(log.Fields{"service": "http", "status": "ready"}).Infof("Service status changed")
 	// Start the HTTP server
 	if err := g.web.ListenAndServe(); err != nil {
 		g.l.Errorf("Error shutting down service: %v", err)
@@ -360,7 +362,7 @@ func (g *gbans) initFilters() {
 		g.l.Fatal("Failed to load word list")
 	}
 	importFilteredWords(words)
-	g.l.Debugf("Loaded %d filtered words", len(words))
+	g.l.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
 func (g *gbans) initWorkers() {
@@ -373,7 +375,7 @@ func (g *gbans) initWorkers() {
 	go g.logWriter()
 	go g.filterWorker()
 	go g.initLogSrc()
-	//go state.LogMeter(ctx)
+	go state.LogMeter(g.ctx)
 }
 
 func (g *gbans) initLogSrc() {

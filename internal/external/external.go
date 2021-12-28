@@ -76,7 +76,7 @@ func Import(list config.BanList) error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to load list")
 	}
-	log.Infof("Loaded %d blocks from %s", cnt, list.Name)
+	log.WithFields(log.Fields{"count": cnt, "list": list.Name, "type": "steam"}).Debugf("Loaded blocklist")
 	return nil
 }
 

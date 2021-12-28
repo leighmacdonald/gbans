@@ -33,7 +33,7 @@ func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) err
 		}
 		logEventReaders[msgType] = append(logEventReaders[msgType], r)
 	}
-	log.Debugf("Registered %d event readers", len(msgTypes))
+	log.WithFields(log.Fields{"count": len(msgTypes)}).Trace("Registered event reader(s)")
 	return nil
 }
 

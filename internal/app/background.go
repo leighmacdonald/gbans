@@ -54,7 +54,7 @@ func (g *gbans) profileUpdater() {
 				continue
 			}
 		}
-		log.Debugf("Updated %d profiles", len(summaries))
+		log.WithFields(log.Fields{"count": len(summaries)}).Trace("Profiles updated")
 	}
 	update()
 	ticker := time.NewTicker(time.Second * 60)
@@ -102,7 +102,7 @@ func (g *gbans) serverStateUpdater() {
 					defer iwg.Done()
 					status, errS := query.GetServerStatus(server)
 					if errS != nil {
-						log.Debugf("Failed to update server status: %v", errS)
+						log.Tracef("Failed to update server status: %v", errS)
 						return
 					}
 					ss.Status = status
@@ -111,7 +111,7 @@ func (g *gbans) serverStateUpdater() {
 					defer iwg.Done()
 					a, errA := query.A2SQueryServer(server)
 					if errA != nil {
-						log.Debugf("Failed to update a2s status: %v", errA)
+						log.Tracef("Failed to update a2s status: %v", errA)
 						return
 					}
 					ss.A2S = *a
@@ -127,7 +127,7 @@ func (g *gbans) serverStateUpdater() {
 		g.serversStateMu.Lock()
 		g.serversState = newServers
 		g.serversStateMu.Unlock()
-		log.Debugf("Updated %d servers", len(servers))
+		log.WithFields(log.Fields{"count": len(servers)}).Tracef("Servers updated")
 	}
 	update(g.ctx)
 	ticker := time.NewTicker(freq)
@@ -220,7 +220,7 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 
 // banSweeper periodically will query the database for expired bans and remove them.
 func (g *gbans) banSweeper() {
-	log.Debug("ban sweeper routine started")
+	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
 	for {
 		select {
