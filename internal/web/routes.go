@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -25,11 +24,11 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan ws.LogPayload) {
-	handlers := ws.Handlers{
-		ws.Sup: w.onSup,
+func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
+	handlers := Handlers{
+		Sup: w.onSup,
 	}
-	rpcService := ws.NewService(handlers, logMsgChan)
+	rpcService := NewService(handlers, logMsgChan)
 	r.Use(gin.Logger())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOriginFunc = func(requestedOrigin string) bool {
@@ -99,8 +98,8 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, lo
 	r.GET("/api/ws", rpcService.Start())
 
 	// Service discovery endpoints
-	r.GET("/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))
-	r.GET("/sd/ansible/hosts", w.onAPIGetPrometheusHosts(db))
+	r.GET("/api/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))
+	r.GET("/api/sd/ansible/hosts", w.onAPIGetPrometheusHosts(db))
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))

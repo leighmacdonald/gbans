@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -40,7 +39,8 @@ type gbans struct {
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
-	logRawQueue    chan ws.LogPayload
+	logRawQueue    chan web.LogPayload
+	gameLogSource  *RemoteSrcdsLogSource
 	bot            discord.ChatBot
 	db             store.Store
 	web            web.WebHandler
@@ -56,7 +56,7 @@ func New(ctx context.Context) (*gbans, error) {
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan ws.LogPayload, 50),
+		logRawQueue:    make(chan web.LogPayload),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
 	dbStore, se := store.New(config.DB.DSN)
@@ -71,7 +71,11 @@ func New(ctx context.Context) (*gbans, error) {
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
-
+	logSrc, errLogSrc := NewRemoteSrcdsLogSource(27115, dbStore, application.logRawQueue)
+	if errLogSrc != nil {
+		return nil, errors.Wrapf(we, "Failed to setup udp log src")
+	}
+	application.gameLogSource = logSrc
 	application.db = dbStore
 	application.bot = discordBot
 	application.web = webService
@@ -362,7 +366,12 @@ func (g *gbans) initWorkers() {
 	go g.logReader()
 	go g.logWriter()
 	go g.filterWorker()
+	go g.initLogSrc()
 	//go state.LogMeter(ctx)
+}
+
+func (g *gbans) initLogSrc() {
+	g.gameLogSource.Start()
 }
 
 func (g *gbans) initDiscord() {

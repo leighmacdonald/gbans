@@ -1,4 +1,4 @@
-package ws
+package web
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/olahol/melody.v1"
 	"sync"
@@ -314,4 +315,68 @@ func newWSErr(errType Type, err error) Payload {
 		Type: errType,
 		Data: d,
 	}
+}
+
+var (
+	ErrQueueFull = errors.New("Send queue full")
+)
+
+type PayloadHandler func(payload Payload) error
+
+type Handlers map[Type]PayloadHandler
+
+type Type int
+
+const (
+	OKType Type = iota
+	ErrType
+	Sup
+
+	// Server <-> Server events
+	SrvStart
+	SrvStop
+	SrvRestart
+	SrvCopy
+	SrvInstall
+	SrvUninstall
+	SrvLogRaw
+
+	// Server <-> Web Client
+	AuthType
+	AuthFailType
+	AuthOKType
+	LogType
+	LogQueryOpts
+	LogQueryResults
+)
+
+type Payload struct {
+	Type Type            `json:"payload_type"`
+	Data json.RawMessage `json:"data"`
+}
+
+// Encode will return an encoded payload suitable for transmission over the wire
+func Encode(t Type, p interface{}) ([]byte, error) {
+	b, e1 := json.Marshal(p)
+	if e1 != nil {
+		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload base payload")
+	}
+	f, e2 := json.Marshal(Payload{
+		Type: t,
+		Data: b,
+	})
+	if e2 != nil {
+		return nil, errors.Wrapf(e1, "failed to EncodeWSPayload sub payload")
+	}
+	return f, nil
+}
+
+// LogPayload is the container for log/message payloads
+type LogPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
+}
+
+type Ping struct {
+	Nonce int64
 }

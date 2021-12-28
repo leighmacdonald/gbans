@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -32,7 +31,7 @@ func (w web) ListenAndServe() error {
 
 // New sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func New(logMsgChan chan ws.LogPayload, db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
+func New(logMsgChan chan LogPayload, db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.Release {
 		gin.SetMode(gin.ReleaseMode)

@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -405,7 +404,12 @@ func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
 		Targets []string          `json:"targets"`
 		Labels  map[string]string `json:"labels"`
 	}
+	type portMap struct {
+		Type string
+		Port int
+	}
 	return func(c *gin.Context) {
+		var staticConfigs []promStaticConfig
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		servers, err := db.GetServers(ctx, true)
@@ -414,14 +418,26 @@ func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		var hosts []string
-		for _, server := range servers {
-			hosts = append(hosts, server.Address)
+		for _, nodePortConfig := range []portMap{{"node", 9100}} {
+			ps := promStaticConfig{Targets: nil, Labels: map[string]string{}}
+			ps.Labels["__meta_prometheus_job"] = nodePortConfig.Type
+			for _, server := range servers {
+				host := fmt.Sprintf("%s:%d", server.Address, nodePortConfig.Port)
+				found := false
+				for _, h := range ps.Targets {
+					if h == host {
+						found = true
+						break
+					}
+				}
+				if !found {
+					ps.Targets = append(ps.Targets, host)
+				}
+			}
+			staticConfigs = append(staticConfigs, ps)
 		}
-		responseOK(c, http.StatusOK, []promStaticConfig{{
-			Targets: hosts,
-			Labels:  nil,
-		}})
+		// Don't wrap in our custom response format
+		c.JSON(200, staticConfigs)
 	}
 }
 
@@ -654,7 +670,7 @@ func (w *web) onAPIPostServer() gin.HandlerFunc {
 	}
 }
 
-func (w *web) onSup(p ws.Payload) error {
+func (w *web) onSup(p Payload) error {
 
 	return nil
 }
