@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Home } from './page/Home';
 import { Settings } from './page/Settings';
 import { Appeal } from './page/Appeal';
@@ -24,12 +24,11 @@ import {
 } from './util/api';
 import { AdminBan } from './page/AdminBan';
 import { AdminServerLog } from './page/AdminServerLog';
-import { TopBarWithRouter } from './component/TopBar';
+import { TopBar } from './component/TopBar';
 import { makeStyles } from '@material-ui/core/styles';
 import { Container } from '@material-ui/core';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { Logout } from './page/Logout';
-import { Redirect } from 'react-router';
 import { PageNotFound } from './page/PageNotFound';
 import { PrivateRoute } from './component/PrivateRoute';
 
@@ -73,76 +72,70 @@ export const App = (): JSX.Element => {
                 <Container maxWidth={'lg'}>
                     <main className={classes.content}>
                         <div className={classes.toolbar} />
-                        <TopBarWithRouter />
+                        <TopBar />
                         <UserFlashCtx.Provider value={{ flashes, setFlashes }}>
                             <Flashes flashes={flashes} />
                         </UserFlashCtx.Provider>
-                        <Switch>
-                            <Route exact path={'/'} component={Home} />
-                            <Route
-                                exact
-                                path={'/servers'}
-                                component={Servers}
-                            />
-                            <Route exact path={'/bans'} component={Bans} />
-                            <Route exact path={'/appeal'} component={Appeal} />
-                            <Route exact path={'/report'} component={Report} />
-                            <Route
-                                exact
-                                path={'/settings'}
-                                component={Settings}
-                            />
-                            <Route
-                                path={'/profile/:steam_id'}
-                                component={Profile}
-                            />
-                            <Route path={'/ban/:ban_id'} component={BanView} />
-                            <Route
-                                exact
-                                path={'/admin/ban'}
-                                component={AdminBan}
-                            />
-                            <Route
-                                exact
-                                path={'/admin/filters'}
-                                component={AdminFilters}
-                            />
-                            <Route
-                                exact
-                                path={'/admin/reports'}
-                                component={AdminReports}
-                            />
+                        <Routes>
+                            <Route path={'/'}>
+                                <Home />
+                            </Route>
+                            <Route path={'/servers'}>
+                                <Servers />
+                            </Route>
+                            <Route path={'/bans'}>
+                                <Bans />
+                            </Route>
+                            <Route path={'/appeal'}>
+                                <Appeal />
+                            </Route>
+                            <Route path={'/report'}>
+                                <Report />
+                            </Route>
+                            <Route path={'/settings'}>
+                                <Settings />
+                            </Route>
+                            <Route path={'/profile/:steam_id'}>
+                                <Profile />
+                            </Route>
+                            <Route path={'/ban/:ban_id'}>
+                                <BanView />
+                            </Route>
+                            <Route path={'/admin/ban'}>
+                                <AdminBan />
+                            </Route>
+                            <Route path={'/admin/filters'}>
+                                <AdminFilters />
+                            </Route>
+                            <Route path={'/admin/reports'}>
+                                <AdminReports />
+                            </Route>
                             <PrivateRoute
                                 permission={PermissionLevel.Admin}
-                                exact
                                 path={'/admin/import'}
-                                component={AdminImport}
-                            />
+                            >
+                                <AdminImport />
+                            </PrivateRoute>
 
-                            <Route
-                                exact
-                                path={'/admin/people'}
-                                component={AdminPeople}
-                            />
-                            <Route
-                                exact
-                                path={'/admin/server_logs'}
-                                component={AdminServerLog}
-                            />
-                            <Route
-                                exact
-                                path={'/admin/servers'}
-                                component={AdminServers}
-                            />
-                            <Route
-                                exact
-                                path={'/login/success'}
-                                component={LoginSuccess}
-                            />
-                            <Route exact path={'/logout'} component={Logout} />
-                            <Route path="/404" component={PageNotFound} />
-                            <Redirect to="/404" />
-                        </Switch>
+                            <Route path={'/admin/people'}>
+                                <AdminPeople />
+                            </Route>
+                            <Route path={'/admin/server_logs'}>
+                                <AdminServerLog />
+                            </Route>
+                            <Route path={'/admin/servers'}>
+                                <AdminServers />
+                            </Route>
+                            <Route path={'/login/success'}>
+                                <LoginSuccess />
+                            </Route>
+                            <Route path={'/logout'}>
+                                <Logout />
+                            </Route>
+                            <Route path="/404">
+                                <PageNotFound />
+                            </Route>
+                        </Routes>
                         <Footer />
                     </main>
                 </Container>

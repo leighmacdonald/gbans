@@ -10,6 +10,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
@@ -33,10 +34,9 @@ import SpellcheckIcon from '@material-ui/icons/Spellcheck';
 import DnsIcon from '@material-ui/icons/Dns';
 import SubjectIcon from '@material-ui/icons/Subject';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { GLink } from './GLink';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import steamLogo from '../icons/steam_login_sm.png';
+import { useNavigate } from 'react-router-dom';
 
 const useStyles = makeStyles((theme: Theme) => ({
     grow: {
@@ -112,8 +112,9 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
+export const TopBar = (): JSX.Element => {
     const classes = useStyles();
+    const navigate = useNavigate();
     const [anchorProfileMenuEl, setAnchorProfileMenuEl] =
         useState<Element | null>(null);
     const [anchorAdminMenuEl, setAnchorAdminMenuEl] = useState<Element | null>(
@@ -156,7 +157,7 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
     const adminMenuId = 'admin-menu';
 
     const loadRoute = (route: string) => {
-        history.push(route);
+        navigate(route);
         handleProfileMenuClose();
         handleAdminMenuClose();
         handleMobileMenuClose();
@@ -391,5 +392,3 @@ const TopBar = ({ history }: RouteComponentProps): JSX.Element => {
         </>
     );
 };
-
-export const TopBarWithRouter = withRouter(TopBar);

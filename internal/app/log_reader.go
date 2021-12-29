@@ -93,10 +93,10 @@ func (srv *RemoteSrcdsLogSource) Start() {
 			}
 		}
 	}()
-	t := time.NewTicker(time.Minute * 60)
+	ticker := time.NewTicker(time.Minute * 60)
 	for {
 		select {
-		case <-t.C:
+		case <-ticker.C:
 			srv.updateDNS()
 		case logPayload := <-inChan:
 			serverName, found := srv.serverMap[logPayload.source]

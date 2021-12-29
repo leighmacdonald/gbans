@@ -1,21 +1,21 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { apiGetBan, BannedPerson } from '../util/api';
 import { NotNull } from '../util/types';
 import { Grid, Typography } from '@material-ui/core';
 
-interface BanViewParams {
-    ban_id: string;
-}
-
 export const BanView = (): JSX.Element => {
     const [loading, setLoading] = React.useState<boolean>(true);
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
-    const { ban_id } = useParams<BanViewParams>();
+    const { ban_id } = useParams();
     useEffect(() => {
         const loadBan = async () => {
             try {
-                setBan((await apiGetBan(parseInt(ban_id))) as BannedPerson);
+                setBan(
+                    (await apiGetBan(
+                        parseInt(ban_id ?? '0') || 0
+                    )) as BannedPerson
+                );
                 setLoading(false);
             } catch (e) {
                 alert(`Failed to load ban: ${e}`);

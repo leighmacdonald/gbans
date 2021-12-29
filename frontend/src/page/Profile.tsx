@@ -2,32 +2,27 @@ import React, { useEffect } from 'react';
 import { apiGetProfile, PlayerProfile } from '../util/api';
 import { Nullable } from '../util/types';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { RouteComponentProps } from 'react-router-dom';
 import { Grid } from '@material-ui/core';
+import { useParams } from 'react-router';
 
-type TParams = { id: string };
-
-export const Profile = ({
-    match
-}: RouteComponentProps<TParams>): JSX.Element => {
+export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const { currentUser } = useCurrentUserCtx();
+    const { id } = useParams();
     useEffect(() => {
         const fetchProfile = async () => {
-            if (match.params.id === currentUser.player.steam_id.toString()) {
+            if (id === currentUser.player.steam_id.toString()) {
                 setProfile(currentUser);
                 setLoading(false);
             } else {
-                setProfile(
-                    (await apiGetProfile(match.params.id)) as PlayerProfile
-                );
+                setProfile((await apiGetProfile(id || '')) as PlayerProfile);
                 setLoading(false);
             }
         };
         // noinspection JSIgnoredPromiseFromCall
         fetchProfile();
-    }, [currentUser, match.params.id]);
+    }, [currentUser, id]);
     return (
         <Grid container>
             {loading && (

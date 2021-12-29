@@ -1,5 +1,5 @@
 # node-sass does not compile with node:16 yet
-FROM node:15 as frontend
+FROM node:16 as frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
@@ -8,8 +8,7 @@ WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
 
-FROM golang:1.17.1-alpine as build
-LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
+FROM golang:alpine as build
 WORKDIR /build
 RUN apk add make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./
