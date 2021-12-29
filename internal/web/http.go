@@ -26,12 +26,13 @@ type web struct {
 }
 
 func (w web) ListenAndServe() error {
+	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
 	return w.httpServer.ListenAndServe()
 }
 
 // New sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func New(logMsgChan chan LogPayload, db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
+func New(db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.Release {
 		gin.SetMode(gin.ReleaseMode)
@@ -71,7 +72,7 @@ func New(logMsgChan chan LogPayload, db store.Store, bot discord.ChatBot, exec a
 		httpServer.TLSConfig = tlsVar
 	}
 	w := web{httpServer: httpServer, executor: exec, bot: bot, db: db}
-	w.setupRouter(router, db, bot, logMsgChan)
+	w.setupRouter(router, db, bot)
 	return w, nil
 }
 

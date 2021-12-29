@@ -57,7 +57,7 @@ func New(ctx context.Context) (*gbans, error) {
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan web.LogPayload),
+		logRawQueue:    make(chan web.LogPayload, 100),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
 	dbStore, se := store.New(config.DB.DSN)
@@ -68,7 +68,7 @@ func New(ctx context.Context) (*gbans, error) {
 	if be != nil {
 		return nil, errors.Wrapf(be, "Failed to setup bot")
 	}
-	webService, we := web.New(application.logRawQueue, dbStore, discordBot, application)
+	webService, we := web.New(dbStore, discordBot, application)
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
@@ -134,7 +134,6 @@ func (g *gbans) Start() {
 		g.initFilters()
 	}
 
-	log.WithFields(log.Fields{"service": "http", "status": "ready"}).Infof("Service status changed")
 	// Start the HTTP server
 	if err := g.web.ListenAndServe(); err != nil {
 		g.l.Errorf("Error shutting down service: %v", err)
@@ -376,8 +375,10 @@ func (g *gbans) initLogSrc() {
 func (g *gbans) initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.ServerEvent)
-		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
-			g.l.Warnf("Error registering discord log event reader")
+		if len(config.Discord.LogChannelID) > 0 {
+			if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+				g.l.Warnf("Error registering discord log event reader")
+			}
 		}
 		go func() {
 			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {

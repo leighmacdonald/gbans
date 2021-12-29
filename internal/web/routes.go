@@ -24,11 +24,11 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot, logMsgChan chan LogPayload) {
+func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	handlers := Handlers{
 		Sup: w.onSup,
 	}
-	rpcService := NewService(handlers, logMsgChan)
+	rpcService := NewService(handlers)
 	r.Use(gin.Logger())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOriginFunc = func(requestedOrigin string) bool {

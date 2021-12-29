@@ -125,14 +125,13 @@ func (s *clientSession) err(errType Type, err error, args ...interface{}) {
 }
 
 // NewService allocates and connects all websocket routes and session states
-func NewService(handlers Handlers, logMsgChan chan LogPayload) *socketService {
+func NewService(handlers Handlers) *socketService {
 	ws := melody.New()
 	service := &socketService{
-		RWMutex:    &sync.RWMutex{},
-		ws:         ws,
-		sessions:   map[*melody.Session]*clientSession{},
-		handlers:   handlers,
-		logMsgChan: logMsgChan,
+		RWMutex:  &sync.RWMutex{},
+		ws:       ws,
+		sessions: map[*melody.Session]*clientSession{},
+		handlers: handlers,
 	}
 	ws.HandleMessage(service.onMessage)
 	ws.HandleConnect(service.onConnect)

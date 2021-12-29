@@ -40,15 +40,20 @@ func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) err
 // Emit is used to send out events to and registered reader channels.
 func Emit(le model.ServerEvent) {
 	// Ensure we also send to Any handlers for all events.
-	logEventReadersMu.RLock()
-	defer logEventReadersMu.RUnlock()
 	for _, typ := range []logparse.MsgType{le.EventType, logparse.Any} {
+		logEventReadersMu.RLock()
 		readers, ok := logEventReaders[typ]
+		logEventReadersMu.RUnlock()
 		if !ok {
 			continue
 		}
-		for _, reader := range readers {
-			reader <- le
+		for rt, reader := range readers {
+			select {
+			case reader <- le:
+			default:
+				log.WithFields(log.Fields{"type": rt}).Errorf("Failed to write to log event channel")
+			}
+
 		}
 	}
 }

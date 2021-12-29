@@ -61,6 +61,7 @@ func (srv *RemoteSrcdsLogSource) updateDNS() {
 // every 60 minutes so that it remains up to date.
 func (srv *RemoteSrcdsLogSource) Start() {
 	type newMsg struct {
+		secure bool
 		source string
 		body   string
 	}
@@ -74,20 +75,21 @@ func (srv *RemoteSrcdsLogSource) Start() {
 			log.Errorf("Failed to close connection cleanly: %v", errConnClose)
 		}
 	}()
-
+	msgId := 0
 	inChan := make(chan newMsg)
 	srv.updateDNS()
 	go func() {
-		buffer := make([]byte, 4096)
 		for {
+			buffer := make([]byte, 1024)
 			n, src, readErr := connection.ReadFromUDP(buffer)
 			if readErr != nil {
 				log.Warnf("UDP log read error: %v", readErr)
 				continue
 			}
 			inChan <- newMsg{
+				secure: buffer[4] == 'S',
 				source: fmt.Sprintf("%s:%d", src.IP, src.Port),
-				body:   string(buffer[4 : n-1]),
+				body:   string(buffer[5 : n-1]),
 			}
 		}
 	}()
@@ -100,19 +102,20 @@ func (srv *RemoteSrcdsLogSource) Start() {
 			serverName, found := srv.serverMap[logPayload.source]
 			if !found {
 				log.Warnf("Rejecting unknown log source: %s [%s]", logPayload.source, logPayload.body)
+				continue
+			}
+			if !logPayload.secure {
+				select {
+				case srv.sink <- web.LogPayload{ServerName: serverName, Message: logPayload.body}:
+				default:
+					log.WithFields(log.Fields{"size": len(srv.sink)}).Warnf("Log sink full")
+				}
+			} else {
 
 			}
-			switch logPayload.body[0] {
-			case 'R':
-				srv.sink <- web.LogPayload{
-					ServerName: serverName,
-					Message:    logPayload.body[1:], // strip "R" log prefix added to remote logs
-				}
-			case 'S':
-				log.Debugf("[SRCLOG] (sec) %s", logPayload.body)
-			default:
-				log.Debugf("[SRCLOG] (unhandled type) %s", logPayload.body)
-			}
+			log.WithFields(log.Fields{"id": msgId, "server": serverName, "sec": logPayload.secure, "body": logPayload.body}).
+				Tracef("Srcds remote log")
+			msgId++
 		}
 	}
 }
