@@ -42,6 +42,7 @@ type BanStore interface {
 	GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.Time) ([]model.Ban, error)
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
+	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
 	Import(ctx context.Context, root string) error
 	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
 	SaveBanASN(ctx context.Context, banASN *model.BanASN) error

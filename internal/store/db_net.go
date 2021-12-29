@@ -112,6 +112,28 @@ func (db *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error
 	return bans, nil
 }
 
+func (db *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
+	const q = `
+		SELECT ban_asn_id, as_num, origin, author_id, target_id, reason, valid_until, created_on, updated_on
+		FROM ban_asn
+		WHERE valid_until < $1`
+	var bans []model.BanASN
+	rows, err := db.c.Query(ctx, q, config.Now())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var b model.BanASN
+		if err2 := rows.Scan(&b.BanASNId, &b.ASNum, &b.Origin, &b.AuthorID, &b.TargetID,
+			&b.Reason, &b.ValidUntil, &b.CreatedOn, &b.UpdatedOn); err2 != nil {
+			return nil, err2
+		}
+		bans = append(bans, b)
+	}
+	return bans, nil
+}
+
 func (db *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
 	const q = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 

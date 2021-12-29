@@ -9,13 +9,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
@@ -26,6 +27,10 @@ var (
 	BuildVersion = "master"
 )
 
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
 // gbans is the main application struct.
 // It implements the action.Executor interface
 type gbans struct {
@@ -35,7 +40,8 @@ type gbans struct {
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
-	logRawQueue    chan ws.LogPayload
+	logRawQueue    chan web.LogPayload
+	gameLogSource  *RemoteSrcdsLogSource
 	bot            discord.ChatBot
 	db             store.Store
 	web            web.WebHandler
@@ -51,7 +57,7 @@ func New(ctx context.Context) (*gbans, error) {
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan ws.LogPayload, 50),
+		logRawQueue:    make(chan web.LogPayload, 100),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
 	dbStore, se := store.New(config.DB.DSN)
@@ -62,11 +68,15 @@ func New(ctx context.Context) (*gbans, error) {
 	if be != nil {
 		return nil, errors.Wrapf(be, "Failed to setup bot")
 	}
-	webService, we := web.New(application.logRawQueue, dbStore, discordBot, application)
+	webService, we := web.New(dbStore, discordBot, application)
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
-
+	logSrc, errLogSrc := NewRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, application.logRawQueue)
+	if errLogSrc != nil {
+		return nil, errors.Wrapf(we, "Failed to setup udp log src")
+	}
+	application.gameLogSource = logSrc
 	application.db = dbStore
 	application.bot = discordBot
 	application.web = webService
@@ -260,6 +270,11 @@ func (g *gbans) logReader() {
 					class = logparse.Spectator
 				}
 			}
+			extra := ""
+			extraValue, extraFound := v.Values["msg"]
+			if extraFound {
+				extra = extraValue
+			}
 			var damage int
 			dmgValue, dmgFound := v.Values["damage"]
 			if dmgFound {
@@ -269,20 +284,11 @@ func (g *gbans) logReader() {
 				}
 				damage = int(damageP)
 			}
-			source := getPlayer("sid", v.Values)
-			target := getPlayer("sid2", v.Values)
-			for _, k := range []string{
-				"", "pid", "pid2", "sid", "sid2", "team", "team2", "name", "name2",
-				"date", "time", "weapon", "damage", "class",
-				"attacker_position", "victim_position", "assister_position",
-			} {
-				delete(v.Values, k)
-			}
 			se := model.ServerEvent{
 				Server:      &s,
 				EventType:   v.MsgType,
-				Source:      source,
-				Target:      target,
+				Source:      getPlayer("sid", v.Values),
+				Target:      getPlayer("sid2", v.Values),
 				PlayerClass: class,
 				Weapon:      weapon,
 				Damage:      damage,
@@ -290,6 +296,7 @@ func (g *gbans) logReader() {
 				VictimPOS:   vpos,
 				AssisterPOS: aspos,
 				CreatedOn:   config.Now(),
+				Extra:       extra,
 			}
 
 			event.Emit(se)
@@ -345,7 +352,7 @@ func (g *gbans) initFilters() {
 		g.l.Fatal("Failed to load word list")
 	}
 	importFilteredWords(words)
-	g.l.Debugf("Loaded %d filtered words", len(words))
+	g.l.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
 func (g *gbans) initWorkers() {
@@ -357,14 +364,21 @@ func (g *gbans) initWorkers() {
 	go g.logReader()
 	go g.logWriter()
 	go g.filterWorker()
-	//go state.LogMeter(ctx)
+	go g.initLogSrc()
+	go state.LogMeter(g.ctx)
+}
+
+func (g *gbans) initLogSrc() {
+	g.gameLogSource.Start()
 }
 
 func (g *gbans) initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.ServerEvent)
-		if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
-			g.l.Warnf("Error registering discord log event reader")
+		if len(config.Discord.LogChannelID) > 0 {
+			if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+				g.l.Warnf("Error registering discord log event reader")
+			}
 		}
 		go func() {
 			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {

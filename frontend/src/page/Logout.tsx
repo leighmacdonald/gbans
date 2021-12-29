@@ -1,8 +1,8 @@
 import React from 'react';
-import { Redirect } from 'react-router';
+import { Navigate } from 'react-router-dom';
 import { handleOnLogout } from '../util/api';
 
 export const Logout = (): JSX.Element => {
     handleOnLogout();
-    return <Redirect to={'/'} />;
+    return <Navigate to={'/'} />;
 };

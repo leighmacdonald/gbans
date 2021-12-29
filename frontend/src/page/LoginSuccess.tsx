@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router';
+import { Navigate } from 'react-router';
 import { PermissionLevel } from '../util/api';
 
 export const LoginSuccess = (): JSX.Element => {
@@ -19,5 +19,5 @@ export const LoginSuccess = (): JSX.Element => {
     if (next_url == null || next_url == '') {
         next_url = '/';
     }
-    return <Redirect to={next_url} />;
+    return <Navigate to={next_url} />;
 };

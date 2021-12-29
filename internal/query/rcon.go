@@ -49,7 +49,7 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 			for _, command := range commands {
 				resp, errR := conn.Exec(sanitizeRCONCommand(command))
 				if errR != nil {
-					log.Debugf("Failed to exec rcon command %s: %v", server.ServerName, errR)
+					log.Tracef("Failed to exec rcon command %s: %v", server.ServerName, errR)
 				}
 				mu.Lock()
 				responses[server.ServerName] = resp
@@ -65,7 +65,7 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 func GetServerStatus(server model.Server) (extra.Status, error) {
 	resp, err := ExecRCON(server, "status")
 	if err != nil {
-		log.Debugf("Failed to exec rcon command: %v", err)
+		log.Tracef("Failed to exec rcon command: %v", err)
 		return extra.Status{}, err
 	}
 	status, err2 := extra.ParseStatus(resp, true)

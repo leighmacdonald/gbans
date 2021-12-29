@@ -68,6 +68,7 @@ func New(executor action.Executor, s store.Store) (*discord, error) {
 }
 
 func (b *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
+	// Immediately connects, so we connect within the Start func
 	d, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to connect to discord. discord unavailable")
@@ -85,7 +86,6 @@ func (b *discord) Start(ctx context.Context, token string, eventChan chan model.
 	b.dg.AddHandler(b.onDisconnect)
 	b.dg.AddHandler(b.onInteractionCreate)
 
-	// In this example, we only care about receiving message events.
 	b.dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to discord and begin listening.
@@ -93,7 +93,10 @@ func (b *discord) Start(ctx context.Context, token string, eventChan chan model.
 	if err != nil {
 		return errors.Wrap(err, "Error opening discord connection")
 	}
-	go b.discordMessageQueueReader(ctx, eventChan)
+
+	if len(config.Discord.LogChannelID) > 0 {
+		go b.discordMessageQueueReader(ctx, eventChan)
+	}
 
 	if err2 := b.botRegisterSlashCommands(); err2 != nil {
 		log.Errorf("Failed to register discord slash commands: %v", err2)
@@ -144,11 +147,11 @@ func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan 
 }
 
 func (b *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	log.Infof("discord is connected & ready")
+	log.WithFields(log.Fields{"service": "discord", "status": "ready"}).Infof("Service status changed")
 }
 
 func (b *discord) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
-	log.Info("Connected to session ws API")
+	log.Tracef("Connected to session ws API")
 	d := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{

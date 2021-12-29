@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web/ws"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -27,12 +26,13 @@ type web struct {
 }
 
 func (w web) ListenAndServe() error {
+	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
 	return w.httpServer.ListenAndServe()
 }
 
 // New sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func New(logMsgChan chan ws.LogPayload, db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
+func New(db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.Release {
 		gin.SetMode(gin.ReleaseMode)
@@ -42,7 +42,6 @@ func New(logMsgChan chan ws.LogPayload, db store.Store, bot discord.ChatBot, exe
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	log.Infof("Starting HTTP service")
 	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),
 		Handler:        router,
@@ -73,7 +72,7 @@ func New(logMsgChan chan ws.LogPayload, db store.Store, bot discord.ChatBot, exe
 		httpServer.TLSConfig = tlsVar
 	}
 	w := web{httpServer: httpServer, executor: exec, bot: bot, db: db}
-	w.setupRouter(router, db, bot, logMsgChan)
+	w.setupRouter(router, db, bot)
 	return w, nil
 }
 

@@ -270,7 +270,7 @@ type Server struct {
 	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password   string              `db:"password" json:"password"`
+	Password   string              `db:"password" json:"-"`
 	IsEnabled  bool                `json:"is_enabled"`
 	Deleted    bool                `json:"deleted"`
 	Region     string              `json:"region"`
@@ -324,7 +324,7 @@ func NewServer(name string, address string, port int) Server {
 		RCON:           golib.RandomString(10),
 		ReservedSlots:  0,
 		Password:       golib.RandomString(10),
-		DefaultMap:     config.General.DefaultMap,
+		DefaultMap:     "",
 		IsEnabled:      true,
 		TokenCreatedOn: time.Unix(0, 0),
 		CreatedOn:      config.Now(),
