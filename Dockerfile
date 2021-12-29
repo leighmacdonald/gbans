@@ -1,5 +1,5 @@
 # node-sass does not compile with node:16 yet
-FROM node:16 as frontend
+FROM node:alpine as frontend
 WORKDIR /build
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
@@ -17,7 +17,7 @@ COPY pkg pkg
 COPY internal internal
 RUN make build
 
-FROM alpine:3.14.2
+FROM alpine:latest
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 EXPOSE 6006
 RUN apk add dumb-init

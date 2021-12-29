@@ -160,12 +160,13 @@ type discordConfig struct {
 }
 
 type logConfig struct {
-	Level          string `mapstructure:"level"`
-	ForceColours   bool   `mapstructure:"force_colours"`
-	DisableColours bool   `mapstructure:"disable_colours"`
-	ReportCaller   bool   `mapstructure:"report_caller"`
-	FullTimestamp  bool   `mapstructure:"full_timestamp"`
-	SrcdsLogAddr   string `mapstructure:"srcds_log_addr"`
+	Level                string `mapstructure:"level"`
+	ForceColours         bool   `mapstructure:"force_colours"`
+	DisableColours       bool   `mapstructure:"disable_colours"`
+	ReportCaller         bool   `mapstructure:"report_caller"`
+	FullTimestamp        bool   `mapstructure:"full_timestamp"`
+	SrcdsLogAddr         string `mapstructure:"srcds_log_addr"`
+	SrcdsLogExternalHost string `mapstructure:"srcds_log_external_host"`
 }
 
 type netBans struct {
@@ -322,6 +323,7 @@ func init() {
 	viper.SetDefault("log.report_caller", false)
 	viper.SetDefault("log.full_timestamp", false)
 	viper.SetDefault("log.srcds_log_addr", ":27115")
+	viper.SetDefault("log.srcds_log_external_host", "")
 
 	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
 	viper.SetDefault("database.auto_migrate", true)

@@ -57,7 +57,7 @@ func New(ctx context.Context) (*gbans, error) {
 		warnings:       map[steamid.SID64][]userWarning{},
 		warningsMu:     &sync.RWMutex{},
 		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan web.LogPayload, 100),
+		logRawQueue:    make(chan web.LogPayload, 1000),
 		l:              log.WithFields(log.Fields{"module": "app"}),
 	}
 	dbStore, se := store.New(config.DB.DSN)
@@ -182,7 +182,7 @@ func (g *gbans) logWriter() {
 		freq = time.Second * 10
 	)
 	var logCache []model.ServerEvent
-	events := make(chan model.ServerEvent, 100)
+	events := make(chan model.ServerEvent, 1000)
 	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
 		g.l.Warnf("logWriter Tried to register duplicate reader channel")
 	}

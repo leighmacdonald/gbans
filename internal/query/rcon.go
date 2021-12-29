@@ -17,7 +17,7 @@ import (
 // ExecRCON executes the given command against the server provided. It returns the command
 // output.
 func ExecRCON(server model.Server, cmd string) (string, error) {
-	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
+	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
 	if err != nil {
 		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerName, err)
 	}

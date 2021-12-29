@@ -41,22 +41,11 @@ word_filter:
   external_sources:
     - https://raw.githubusercontent.com/RobertJGabriel/Google-profanity-words/master/list.txt
 
-relay:
-  # Enable/disable the log relay functionality
-  enabled: false
-  # Output messages to these channels
-  channel_ids:
-    - "13141312312312313"
 
 database:
   # DSN/URL to your database
   # eg: "postgresql://gbans:gbans@postgres:5432/gbans"
   dsn: "postgresql://gbans:gbans@postgres:5432/gbans"
-
-rpc:
-  enabled: false
-  addr: "wss://gbans.example.com/api/ws"
-  log_addr: "192.168.0.101:7777"
 
 discord:
   # Enable optional discord integration
@@ -87,6 +76,10 @@ logging:
   report_caller: false
   # Show full timestamps in the logs
   full_timestamp: false
+
+  srcds_log_addr: ":27115"
+
+  srcds_log_external_host: "external.host.com"
 
 network_bans:
   enabled: false
