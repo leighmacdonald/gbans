@@ -77,64 +77,58 @@ export const App = (): JSX.Element => {
                             <Flashes flashes={flashes} />
                         </UserFlashCtx.Provider>
                         <Routes>
-                            <Route path={'/'}>
-                                <Home />
-                            </Route>
-                            <Route path={'/servers'}>
-                                <Servers />
-                            </Route>
-                            <Route path={'/bans'}>
-                                <Bans />
-                            </Route>
-                            <Route path={'/appeal'}>
-                                <Appeal />
-                            </Route>
-                            <Route path={'/report'}>
-                                <Report />
-                            </Route>
-                            <Route path={'/settings'}>
-                                <Settings />
-                            </Route>
-                            <Route path={'/profile/:steam_id'}>
-                                <Profile />
-                            </Route>
-                            <Route path={'/ban/:ban_id'}>
-                                <BanView />
-                            </Route>
-                            <Route path={'/admin/ban'}>
-                                <AdminBan />
-                            </Route>
-                            <Route path={'/admin/filters'}>
-                                <AdminFilters />
-                            </Route>
-                            <Route path={'/admin/reports'}>
-                                <AdminReports />
-                            </Route>
-                            <PrivateRoute
-                                permission={PermissionLevel.Admin}
+                            <Route path={'/'} element={<Home />} />
+                            <Route path={'/servers'} element={<Servers />} />
+                            <Route path={'/bans'} element={<Bans />} />
+                            <Route path={'/appeal'} element={<Appeal />} />
+                            <Route path={'/report'} element={<Report />} />
+                            <Route path={'/settings'} element={<Settings />} />
+                            <Route
+                                path={'/profile/:steam_id'}
+                                element={<Profile />}
+                            />
+                            <Route
+                                path={'/ban/:ban_id'}
+                                element={<BanView />}
+                            />
+                            <Route path={'/admin/ban'} element={<AdminBan />} />
+                            <Route
+                                path={'/admin/filters'}
+                                element={<AdminFilters />}
+                            />
+                            <Route
+                                path={'/admin/reports'}
+                                element={<AdminReports />}
+                            />
+                            <Route
                                 path={'/admin/import'}
-                            >
-                                <AdminImport />
-                            </PrivateRoute>
+                                element={
+                                    <PrivateRoute
+                                        permission={PermissionLevel.Admin}
+                                    >
+                                        <AdminImport />
+                                    </PrivateRoute>
+                                }
+                            />
 
-                            <Route path={'/admin/people'}>
-                                <AdminPeople />
-                            </Route>
-                            <Route path={'/admin/server_logs'}>
-                                <AdminServerLog />
-                            </Route>
-                            <Route path={'/admin/servers'}>
-                                <AdminServers />
-                            </Route>
-                            <Route path={'/login/success'}>
-                                <LoginSuccess />
-                            </Route>
-                            <Route path={'/logout'}>
-                                <Logout />
-                            </Route>
-                            <Route path="/404">
-                                <PageNotFound />
-                            </Route>
+                            <Route
+                                path={'/admin/people'}
+                                element={<AdminPeople />}
+                            />
+                            <Route
+                                path={'/admin/server_logs'}
+                                element={<AdminServerLog />}
+                            />
+                            <Route
+                                path={'/admin/servers'}
+                                element={<AdminServers />}
+                            />
+                            <Route
+                                path={'/login/success'}
+                                element={<LoginSuccess />}
+                            />
+                            <Route path={'/logout'} element={<Logout />} />
+                            <Route path="/404" element={<PageNotFound />} />
                         </Routes>
                         <Footer />
                     </main>
