@@ -368,35 +368,35 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //}
 
 //
-func (w *web) onAPIGetAnsibleHosts(db store.Store) gin.HandlerFunc {
-	type groupConfig struct {
-		Hosts    []string               `json:"hosts"`
-		Vars     map[string]interface{} `json:"vars"`
-		Children []string               `json:"children"`
-	}
-	type ansibleStaticConfig map[string]groupConfig
-
-	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		servers, err := db.GetServers(ctx, true)
-		if err != nil {
-			log.Errorf("Failed to fetch servers: %s", err)
-			responseErr(c, http.StatusInternalServerError, nil)
-			return
-		}
-		var hosts []string
-		for _, server := range servers {
-			hosts = append(hosts, server.Address)
-		}
-		hostCfg := ansibleStaticConfig{"all": groupConfig{
-			Hosts:    hosts,
-			Vars:     nil,
-			Children: nil,
-		}}
-		responseOK(c, http.StatusOK, hostCfg)
-	}
-}
+//func (w *web) onAPIGetAnsibleHosts(db store.Store) gin.HandlerFunc {
+//	type groupConfig struct {
+//		Hosts    []string               `json:"hosts"`
+//		Vars     map[string]interface{} `json:"vars"`
+//		Children []string               `json:"children"`
+//	}
+//	type ansibleStaticConfig map[string]groupConfig
+//
+//	return func(c *gin.Context) {
+//		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+//		defer cancel()
+//		servers, err := db.GetServers(ctx, true)
+//		if err != nil {
+//			log.Errorf("Failed to fetch servers: %s", err)
+//			responseErr(c, http.StatusInternalServerError, nil)
+//			return
+//		}
+//		var hosts []string
+//		for _, server := range servers {
+//			hosts = append(hosts, server.Address)
+//		}
+//		hostCfg := ansibleStaticConfig{"all": groupConfig{
+//			Hosts:    hosts,
+//			Vars:     nil,
+//			Children: nil,
+//		}}
+//		responseOK(c, http.StatusOK, hostCfg)
+//	}
+//}
 
 // https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
 func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
