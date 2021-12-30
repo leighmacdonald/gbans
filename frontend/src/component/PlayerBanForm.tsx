@@ -8,24 +8,23 @@ import {
     PlayerProfile
 } from '../util/api';
 import { Nullable } from '../util/types';
-
+import { log } from '../util/errors';
+import Grid from '@mui/material/Grid';
 import {
     Button,
     FormControl,
     FormControlLabel,
     FormHelperText,
     FormLabel,
-    Grid,
     InputLabel,
-    MenuItem,
     Radio,
     RadioGroup,
     Select,
     TextField,
     Typography
-} from '@material-ui/core';
-import { VoiceOverOffSharp } from '@material-ui/icons';
-import { log } from '../util/errors';
+} from '@mui/material';
+import { VoiceOverOffSharp } from '@mui/icons-material';
+import MenuItem from '@mui/material/MenuItem';
 
 const ip2int = (ip: string): number =>
     ip
@@ -145,19 +144,21 @@ export const PlayerBanForm = ({
     };
 
     const handleUpdateDuration = (
-        evt: React.ChangeEvent<{ value: unknown }>
+        evt: React.ChangeEvent<{ value: unknown }> | any
     ) => {
         setDuration((evt.target.value as Duration) ?? Duration.durInf);
     };
-    const handleUpdateNote = (evt: SyntheticEvent) => {
+    const handleUpdateNote = (evt: SyntheticEvent | any) => {
         setNoteText((evt.target as HTMLInputElement).value);
     };
 
-    const onChangeFStream = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const onChangeFStream = (
+        evt: React.ChangeEvent<HTMLInputElement> | any
+    ) => {
         setFSteam((evt.target as HTMLInputElement).value);
     };
 
-    const onChangeType = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const onChangeType = (evt: React.ChangeEvent<HTMLInputElement> | any) => {
         setBanType(evt.target.value as BanType);
     };
 

@@ -1,18 +1,11 @@
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import React from 'react';
-import {
-    AppBar,
-    Chip,
-    Grid,
-    Paper,
-    Tab,
-    Tabs,
-    Typography
-} from '@material-ui/core';
 import { PlayerProfile } from '../util/api';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
 import { GLink } from './GLink';
+import { AppBar, Chip, Tab, Tabs, Typography } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import ClearIcon from '@mui/icons-material/Clear';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -20,27 +13,11 @@ interface TabPanelProps {
     value: number | string;
 }
 
-const useStyles = makeStyles((theme: Theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-        textAlign: 'center',
-        color: theme.palette.text.secondary
-    },
-    ok: {
-        backgroundColor: theme.palette.success.main
-    },
-    error: {
-        backgroundColor: theme.palette.error.main
-    }
-}));
-
 function TabPanel(props: TabPanelProps) {
-    const classes = useStyles();
     const { children, value, index, ...other } = props;
 
     return (
         <Paper
-            className={classes.paper}
             variant={'outlined'}
             role="tabpanel"
             hidden={value !== index}
@@ -65,11 +42,10 @@ export const a11yProps = (index: number | string): Record<string, string> => {
 };
 
 export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
-    const classes = useStyles();
     const [value, setValue] = React.useState('one');
 
     const handleChange = (
-        _: React.ChangeEvent<Record<string, unknown>>,
+        _: React.ChangeEvent<Record<string, unknown>> | any,
         newValue: string
     ) => {
         setValue(newValue);
@@ -123,32 +99,22 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                             </Grid>
                             <Grid container>
                                 <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.ok}
-                                        label={'VAC'}
-                                        icon={<CheckIcon />}
-                                    />
+                                    <Chip label={'VAC'} icon={<CheckIcon />} />
                                 </Grid>
                                 <Grid item xs={3}>
                                     <Chip
-                                        className={classes.ok}
                                         label={'Trade'}
                                         icon={<CheckIcon />}
                                     />
                                 </Grid>
                                 <Grid item xs={3}>
                                     <Chip
-                                        className={classes.ok}
                                         label="Community"
                                         icon={<CheckIcon />}
                                     />
                                 </Grid>
                                 <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.error}
-                                        label={'Game'}
-                                        icon={<ClearIcon />}
-                                    />
+                                    <Chip label={'Game'} icon={<ClearIcon />} />
                                 </Grid>
                             </Grid>
                         </Grid>

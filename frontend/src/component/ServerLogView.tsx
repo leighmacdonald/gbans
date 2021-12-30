@@ -1,15 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SteamID from 'steamid';
-import {
-    FormControl,
-    Grid,
-    Input,
-    makeStyles,
-    MenuItem,
-    Select,
-    Switch,
-    TextField
-} from '@material-ui/core';
 import { log } from '../util/errors';
 import {
     apiGetServers,
@@ -31,23 +21,15 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { takeRight } from 'lodash-es';
 import { parseDateTime } from '../util/text';
 import format from 'date-fns/format';
-
-const useStyles = makeStyles((theme) => ({
-    formControl: {
-        margin: theme.spacing(1),
-        minWidth: 120
-    },
-    chips: {
-        display: 'flex',
-        flexWrap: 'wrap'
-    },
-    chip: {
-        margin: 2
-    },
-    noLabel: {
-        marginTop: theme.spacing(3)
-    }
-}));
+import {
+    FormControl,
+    Grid,
+    Input,
+    Select,
+    Switch,
+    TextField
+} from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
 
 enum State {
     Closed,
@@ -75,7 +57,6 @@ const sessionStateString = {
 
 export const ServerLogView = (): JSX.Element => {
     const maxCacheSize = 10000;
-    const classes = useStyles();
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     const messageHistory = useRef<LogEvent[]>([]);
     const [servers, setServers] = useState<Server[]>([]);
@@ -204,8 +185,15 @@ export const ServerLogView = (): JSX.Element => {
     const handleChangeFilterMsg = (
         event: React.ChangeEvent<HTMLSelectElement> | any
     ) => {
-        const v = event.target.value.filter(StringIsNumber);
-        setFilterMsgTypes(v);
+        const selectedOptions = event.currentTarget.selectedOptions;
+        const n: MsgType[] = [];
+        // eslint-disable-next-line no-loops/no-loops
+        for (let i = 0; i < selectedOptions.length; i++) {
+            if (StringIsNumber(selectedOptions[i].value)) {
+                n.push(parseInt(selectedOptions[i].value));
+            }
+        }
+        setFilterMsgTypes(n);
     };
 
     const handleChangeServers = (
@@ -268,7 +256,7 @@ export const ServerLogView = (): JSX.Element => {
         <Grid container>
             <Grid container>
                 <Grid item xs={3}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <TextField
                             onChange={onFilterSteamIDChange}
                             id="standard-basic"
@@ -278,7 +266,7 @@ export const ServerLogView = (): JSX.Element => {
                     </FormControl>
                 </Grid>
                 <Grid item xs={3}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <TextField
                             label="Text Query"
                             id="msg-filters"
@@ -288,7 +276,7 @@ export const ServerLogView = (): JSX.Element => {
                     </FormControl>
                 </Grid>
                 <Grid item xs={3}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <Switch
                             title={'test'}
                             checked={orderDesc}
@@ -299,7 +287,7 @@ export const ServerLogView = (): JSX.Element => {
                     </FormControl>
                 </Grid>
                 <Grid item xs={3}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <Select
                             label="Limit results"
                             id="limit-filters"
@@ -321,7 +309,7 @@ export const ServerLogView = (): JSX.Element => {
             </Grid>
             <Grid container>
                 <Grid item xs={12}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <Select
                             label=" Server Filters"
                             id="server-filters"
@@ -341,7 +329,7 @@ export const ServerLogView = (): JSX.Element => {
             </Grid>
             <Grid container>
                 <Grid item xs={12}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    <FormControl fullWidth>
                         <Select
                             label="Message Filters"
                             id="msg-filters"

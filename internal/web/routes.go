@@ -71,7 +71,7 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	for _, rt := range []string{
 		"/", "/servers", "/profile", "/bans", "/appeal", "/settings",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
-		"/admin/import", "/admin/filters", "/404", "/logout"} {
+		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success"} {
 		r.GET(rt, func(c *gin.Context) {
 			idx, err := os.ReadFile(idxPath)
 			if err != nil {
@@ -84,7 +84,6 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	}
 
 	r.GET("/metrics", prometheusHandler())
-	r.GET("/login/success", w.onLoginSuccess())
 	r.GET("/auth/callback", w.onOpenIDCallback())
 	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
 	r.POST("/api/bans", w.onAPIGetBans(db))

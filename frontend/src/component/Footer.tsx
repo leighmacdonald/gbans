@@ -1,5 +1,6 @@
+import Grid from '@mui/material/Grid';
 import React from 'react';
-import { Grid, Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
 
 export const Footer = (): JSX.Element => {
     return (

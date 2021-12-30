@@ -147,12 +147,6 @@ func (w *web) onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func (w *web) onLoginSuccess() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Data(200, gin.MIMEHTML, []byte(``))
-	}
-}
-
 func getTokenKey(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }

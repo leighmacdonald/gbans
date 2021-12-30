@@ -1,10 +1,9 @@
+import React, { useEffect, useState } from 'react';
+import Toolbar from '@mui/material/Toolbar';
 import {
     Checkbox,
-    createStyles,
     FormControlLabel,
     IconButton,
-    lighten,
-    Paper,
     Switch,
     Table,
     TableBody,
@@ -14,16 +13,12 @@ import {
     TablePagination,
     TableRow,
     TableSortLabel,
-    Toolbar,
     Tooltip,
     Typography
-} from '@material-ui/core';
-import React, { useEffect, useState } from 'react';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import clsx from 'clsx';
-import DeleteIcon from '@material-ui/icons/Delete';
-import FilterListIcon from '@material-ui/icons/FilterList';
-import { StyledTableCell } from './Tables';
+} from '@mui/material';
+import Paper from '@mui/material/Paper';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     if (b[orderBy] < a[orderBy]) {
@@ -37,10 +32,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 
 export type Order = 'asc' | 'desc';
 
-const stableSort = <T extends unknown>(
-    array: T[],
-    comparator: (a: T, b: T) => number
-) => {
+const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number) => {
     const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
     stabilizedThis.sort((a, b) => {
         const order = comparator(a[0], b[0]);
@@ -58,7 +50,7 @@ interface HeadCell<TRecord> {
 }
 
 interface EnhancedTableProps<TRecord> {
-    classes: ReturnType<typeof useStyles>;
+    classes?: string[];
     numSelected: number;
     onRequestSort: (
         event: React.MouseEvent<unknown>,
@@ -71,61 +63,10 @@ interface EnhancedTableProps<TRecord> {
     headers: HeadCell<TRecord>[];
 }
 
-const useToolbarStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(1)
-        },
-        highlight:
-            theme.palette.type === 'light'
-                ? {
-                      color: theme.palette.secondary.main,
-                      backgroundColor: lighten(
-                          theme.palette.secondary.light,
-                          0.85
-                      )
-                  }
-                : {
-                      color: theme.palette.text.primary,
-                      backgroundColor: theme.palette.secondary.dark
-                  },
-        title: {
-            flex: '1 1 100%'
-        }
-    })
-);
-
 export interface EnhancedTableToolbarProps {
     numSelected: number;
     heading: string;
 }
-
-export const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            width: '100%'
-        },
-        paper: {
-            width: '100%',
-            marginBottom: theme.spacing(2)
-        },
-        table: {
-            minWidth: 750
-        },
-        visuallyHidden: {
-            border: 0,
-            clip: 'rect(0 0 0 0)',
-            height: 1,
-            margin: -1,
-            overflow: 'hidden',
-            padding: 0,
-            position: 'absolute',
-            top: 20,
-            width: 1
-        }
-    })
-);
 
 export interface TableProps<TRecord> {
     headers: HeadCell<TRecord>[];
@@ -135,33 +76,25 @@ export interface TableProps<TRecord> {
     showToolbar: boolean;
 }
 
-export const CreateDataTable = <TRecord extends unknown>(): ((
+export const CreateDataTable = <TRecord,>(): ((
     props: TableProps<TRecord>
 ) => JSX.Element) => {
-    const classes = useToolbarStyles();
     const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         const { numSelected, heading } = props;
 
         return (
             <Toolbar
-                className={clsx(classes.root, {
-                    [classes.highlight]: numSelected > 0
-                })}
+            // className={clsx(classes.root, {[classes.highlight]: numSelected > 0})}
             >
                 {numSelected > 0 ? (
-                    <Typography
-                        className={classes.title}
-                        variant="subtitle1"
-                        component="div"
-                    >
+                    <Typography variant={'subtitle1'} component={'div'}>
                         {numSelected} selected
                     </Typography>
                 ) : (
                     <Typography
-                        className={classes.title}
-                        variant="h6"
-                        id="tableTitle"
-                        component="div"
+                        variant={'h6'}
+                        id={'tableTitle'}
+                        component={'div'}
                     >
                         {heading}
                     </Typography>
@@ -185,7 +118,6 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
 
     function EnhancedTableHead<TRecord>(props: EnhancedTableProps<TRecord>) {
         const {
-            classes,
             onSelectAllClick,
             order,
             orderBy,
@@ -201,7 +133,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
         return (
             <TableHead>
                 <TableRow>
-                    <StyledTableCell padding="checkbox">
+                    <TableCell padding="checkbox">
                         <Checkbox
                             indeterminate={
                                 numSelected > 0 && numSelected < rowCount
@@ -210,9 +142,9 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                             onChange={onSelectAllClick}
                             inputProps={{ 'aria-label': 'select all desserts' }}
                         />
-                    </StyledTableCell>
+                    </TableCell>
                     {props.headers.map((headCell, index) => (
-                        <StyledTableCell
+                        <TableCell
                             key={`${headCell.id}-${index}`}
                             align={headCell.numeric ? 'right' : 'left'}
                             padding={
@@ -231,14 +163,14 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                             >
                                 {headCell.label}
                                 {orderBy === headCell.id ? (
-                                    <span className={classes.visuallyHidden}>
+                                    <span>
                                         {order === 'desc'
                                             ? 'sorted descending'
                                             : 'sorted ascending'}
                                     </span>
                                 ) : null}
                             </TableSortLabel>
-                        </StyledTableCell>
+                        </TableCell>
                     ))}
                 </TableRow>
             </TableHead>
@@ -265,8 +197,7 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
             loadData();
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
-        // eslint-disable-next-line
-        const classes = useStyles();
+
         // eslint-disable-next-line
         const [order, setOrder] = React.useState<Order>('asc');
         // eslint-disable-next-line
@@ -352,8 +283,8 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                 : (a, b) => -descendingComparator(a, b, orderBy);
         };
         return (
-            <div className={classes.root}>
-                <Paper className={classes.paper}>
+            <div>
+                <Paper>
                     {showToolbar && (
                         <EnhancedTableToolbar
                             numSelected={selected.length}
@@ -362,13 +293,11 @@ export const CreateDataTable = <TRecord extends unknown>(): ((
                     )}
                     <TableContainer>
                         <Table
-                            className={classes.table}
                             aria-labelledby="tableTitle"
                             size={dense ? 'small' : 'medium'}
                             aria-label="enhanced table"
                         >
                             <EnhancedTableHead
-                                classes={classes}
                                 numSelected={selected.length}
                                 order={order}
                                 orderBy={orderBy}

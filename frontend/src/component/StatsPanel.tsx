@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
-import { apiGetStats, DatabaseStats } from '../util/api';
 import {
-    Paper,
     Table,
     TableBody,
+    TableCell,
     TableContainer,
     TableHead,
     TableRow
-} from '@material-ui/core';
-import { StyledTableCell, StyledTableRow } from './Tables';
+} from '@mui/material';
+import Paper from '@mui/material/Paper';
+import React, { useEffect } from 'react';
+import { apiGetStats, DatabaseStats } from '../util/api';
 import { log } from '../util/errors';
 
 export const StatsPanel = (): JSX.Element => {
@@ -44,91 +44,77 @@ export const StatsPanel = (): JSX.Element => {
             <Table aria-label="customized table">
                 <TableHead>
                     <TableRow>
-                        <StyledTableCell>Metric</StyledTableCell>
-                        <StyledTableCell align="right">Value</StyledTableCell>
+                        <TableCell>Metric</TableCell>
+                        <TableCell align="right">Value</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans Total
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans 1 Week
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_week}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_week}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans 1 Month
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_month}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_month}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans 3 Months
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_3month}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_3month}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans 6 Months
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_6month}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_6month}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Bans 1 Year
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_year}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_year}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             CIDR Bans
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
-                            {stats.bans_cidr}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                        <TableCell align="right">{stats.bans_cidr}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Appeals (Open)
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
+                        </TableCell>
+                        <TableCell align="right">
                             {stats.appeals_open}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Appeals (Closed)
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
+                        </TableCell>
+                        <TableCell align="right">
                             {stats.appeals_closed}
-                        </StyledTableCell>
-                    </StyledTableRow>
-                    <StyledTableRow>
-                        <StyledTableCell component="th" scope="row">
+                        </TableCell>
+                    </TableRow>
+                    <TableRow>
+                        <TableCell component="th" scope="row">
                             Servers (Alive)
-                        </StyledTableCell>
-                        <StyledTableCell align="right">
+                        </TableCell>
+                        <TableCell align="right">
                             {stats.servers_total} ({stats.servers_alive})
-                        </StyledTableCell>
-                    </StyledTableRow>
+                        </TableCell>
+                    </TableRow>
                 </TableBody>
             </Table>
         </TableContainer>

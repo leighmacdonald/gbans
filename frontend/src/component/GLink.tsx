@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import React, { forwardRef, useMemo } from 'react';
-import { Button } from '@material-ui/core';
+import { Button } from '@mui/material';
 
 interface GLinkProps {
     icon?: string | JSX.Element;

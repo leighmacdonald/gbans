@@ -1,9 +1,9 @@
 import React from 'react';
-import { Alert } from '@material-ui/lab';
-import { Color } from '@material-ui/lab/Alert/Alert';
+import { Alert } from '@mui/lab';
+import { AlertColor } from '@mui/material/Alert/Alert';
 
 export interface Flash {
-    level: Color;
+    level: AlertColor;
     heading: string;
     message: string;
     closable?: boolean;
@@ -18,7 +18,7 @@ export const Flashes = ({ flashes }: FlashesProps): JSX.Element => (
     <>
         {flashes.map((f, i) => {
             return (
-                <Alert key={`alert-${i}`} severity={f.level}>
+                <Alert key={`alert-${i}`} color={f.level}>
                     {f.message}
                 </Alert>
             );

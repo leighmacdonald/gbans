@@ -1,27 +1,15 @@
+import Grid from '@mui/material/Grid';
 import React, { useState } from 'react';
-import { Button, createStyles, Grid, TextField } from '@material-ui/core';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            '& > *': {
-                margin: theme.spacing(1),
-                width: '25ch'
-            }
-        }
-    })
-);
+import { Button, TextField } from '@mui/material';
 
 export const ServerAddForm = (): JSX.Element => {
-    const classes = useStyles();
     const [name, setName] = useState<string>('');
     const [address, setAddress] = useState<string>('');
     const [port, setPort] = useState<number>(27015);
 
     return (
         <Grid container>
-            <form className={classes.root} noValidate autoComplete="off">
+            <form noValidate autoComplete="off">
                 <Grid item xs={12}>
                     <TextField
                         id="standard-basic"
@@ -39,7 +27,7 @@ export const ServerAddForm = (): JSX.Element => {
                         label="Hostname or IP"
                         fullWidth
                         value={address}
-                        onChange={(v) => {
+                        onChange={(v: any) => {
                             setAddress(v.target.value);
                         }}
                     />
@@ -51,7 +39,7 @@ export const ServerAddForm = (): JSX.Element => {
                         label="Port (Default: 27015)"
                         fullWidth
                         value={port}
-                        onChange={(v) => {
+                        onChange={(v: any) => {
                             setPort(parseInt(v.target.value));
                         }}
                     />
