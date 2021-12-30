@@ -18,7 +18,22 @@ import (
 	"time"
 )
 
-type RemoteSrcdsLogSource struct {
+type srcdsPacket byte
+
+const (
+	// Normal log messages (deprecated)
+	s2aLogString srcdsPacket = 0x52
+	// Sent when using sv_logsecret
+	s2aLogString2 srcdsPacket = 0x53
+)
+
+// remoteSrcdsLogSource handles reading inbound srcds log packets, and emitting a web.LogPayload
+// that can be further parsed/processed.
+//
+// On, start and every hour after, a new sv_logsecret value for every instance is randomly generated and
+// assigned remotely over rcon. This allows us to associate certain semi secret id's with specific server
+// instances
+type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	udpAddr   *net.UDPAddr
 	sink      chan web.LogPayload
@@ -27,12 +42,12 @@ type RemoteSrcdsLogSource struct {
 	dnsMap    map[string]string
 }
 
-func NewRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan web.LogPayload) (*RemoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan web.LogPayload) (*remoteSrcdsLogSource, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
 	}
-	return &RemoteSrcdsLogSource{
+	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
 		udpAddr:   udpAddr,
 		db:        db,
@@ -43,7 +58,7 @@ func NewRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan web.Lo
 }
 
 // Updates DNS -> IP mappings
-func (srv *RemoteSrcdsLogSource) updateDNS() {
+func (srv *remoteSrcdsLogSource) updateDNS() {
 	newServers := map[string]string{}
 	servers, errServers := srv.db.GetServers(context.Background(), true)
 	if errServers != nil {
@@ -64,7 +79,7 @@ func (srv *RemoteSrcdsLogSource) updateDNS() {
 	log.Debugf("Updated DNS mappings")
 }
 
-func (srv *RemoteSrcdsLogSource) updateSecrets() {
+func (srv *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int64]string{}
 	servers, errServers := srv.db.GetServers(context.Background(), true)
 	if errServers != nil {
@@ -81,7 +96,7 @@ func (srv *RemoteSrcdsLogSource) updateSecrets() {
 		newServers[newId] = server.ServerName
 		go func(s model.Server, i int64) {
 			for _, cmd := range []string{
-				fmt.Sprintf("sv_logsecret %d", i),
+				//fmt.Sprintf("sv_logsecret %d", i),
 				fmt.Sprintf("logaddress_add %s", config.Log.SrcdsLogExternalHost),
 			} {
 				_, errRcon := query.ExecRCON(s, cmd)
@@ -102,7 +117,7 @@ func (srv *RemoteSrcdsLogSource) updateSecrets() {
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (srv *RemoteSrcdsLogSource) Start() {
+func (srv *remoteSrcdsLogSource) Start() {
 	type newMsg struct {
 		secure    bool
 		source    int64
@@ -131,14 +146,14 @@ func (srv *RemoteSrcdsLogSource) Start() {
 				log.Warnf("UDP log read error: %v", readErr)
 				continue
 			}
-			switch buffer[4] {
-			case 0x52:
+			switch srcdsPacket(buffer[4]) {
+			case s2aLogString:
 				inChan <- newMsg{
 					secure:    false,
 					sourceDNS: fmt.Sprintf("%s:%d", src.IP, src.Port),
 					body:      string(buffer[5 : n-2]),
 				}
-			case 0x53:
+			case s2aLogString2:
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
@@ -169,7 +184,7 @@ func (srv *RemoteSrcdsLogSource) Start() {
 				serverName, found := srv.secretMap[logPayload.source]
 				srv.RUnlock()
 				if !found {
-					log.Warnf("Rejecting unknown secret log source: %s [%s]", logPayload.sourceDNS, logPayload.body)
+					log.Tracef("Rejecting unknown secret log source: %s [%s]", logPayload.sourceDNS, logPayload.body)
 					continue
 				}
 				payload.ServerName = serverName
@@ -178,7 +193,7 @@ func (srv *RemoteSrcdsLogSource) Start() {
 				serverName, found := srv.dnsMap[logPayload.sourceDNS]
 				srv.RUnlock()
 				if !found {
-					log.Warnf("Rejecting unknown dns log source: %d [%s]", logPayload.source, logPayload.body)
+					log.Tracef("Rejecting unknown dns log source: %d [%s]", logPayload.source, logPayload.body)
 					continue
 				}
 				payload.ServerName = serverName

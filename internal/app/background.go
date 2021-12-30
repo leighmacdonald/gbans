@@ -77,28 +77,44 @@ func (g *gbans) serverStateUpdater() {
 	if errD != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
 	}
-	var update = func(ctx context.Context) {
+	var update = func(ctx context.Context) (model.ServerStateCollection, error) {
 		servers, err := g.db.GetServers(ctx, false)
 		if err != nil {
-			log.Errorf("Failed to fetch servers to update: %v", err)
-			return
+			return nil, errors.Wrapf(err, "Failed to get servers")
 		}
-		newServers := map[string]model.ServerState{}
-		newServersMu := &sync.RWMutex{}
+
+		newServers := model.ServerStateCollection{}
+		done := make(chan interface{})
+		results := make(chan model.ServerState)
+
+		wgC := &sync.WaitGroup{}
+		wgC.Add(1)
+		go func() {
+			defer wgC.Done()
+			for {
+				select {
+				case <-done:
+					return
+				case r := <-results:
+					newServers[r.Name] = r
+				}
+			}
+		}()
+
 		wg := &sync.WaitGroup{}
 		for _, srv := range servers {
-			ss := model.ServerState{}
-			ss.Region = srv.Region
-			ss.Enabled = srv.IsEnabled
-			ss.CountryCode = srv.CC
-			ss.Name = srv.ServerName
-			ss.Reserved = 8
 			wg.Add(1)
 			go func(server model.Server) {
 				defer wg.Done()
+				ss := model.ServerState{}
+				ss.Region = server.Region
+				ss.Enabled = server.IsEnabled
+				ss.CountryCode = server.CC
+				ss.Name = server.ServerName
+				ss.Reserved = 8
 				iwg := &sync.WaitGroup{}
 				iwg.Add(2)
-				go func() {
+				go func(state *model.ServerState) {
 					defer iwg.Done()
 					status, errS := query.GetServerStatus(server)
 					if errS != nil {
@@ -106,8 +122,8 @@ func (g *gbans) serverStateUpdater() {
 						return
 					}
 					ss.Status = status
-				}()
-				go func() {
+				}(&ss)
+				go func(state *model.ServerState) {
 					defer iwg.Done()
 					a, errA := query.A2SQueryServer(server)
 					if errA != nil {
@@ -115,26 +131,43 @@ func (g *gbans) serverStateUpdater() {
 						return
 					}
 					ss.A2S = *a
-				}()
+				}(&ss)
 				iwg.Wait()
 				ss.LastUpdate = time.Now()
-				newServersMu.Lock()
-				newServers[server.ServerName] = ss
-				newServersMu.Unlock()
+				results <- ss
 			}(srv)
 		}
 		wg.Wait()
-		g.serversStateMu.Lock()
-		g.serversState = newServers
-		g.serversStateMu.Unlock()
+		close(done)
+		wgC.Wait()
 		log.WithFields(log.Fields{"count": len(servers)}).Tracef("Servers updated")
+		c := model.ServerStateCollection{}
+		for k, v := range newServers {
+			c[k] = v
+		}
+		return c, nil
 	}
-	update(g.ctx)
+	ns, errNs := update(g.ctx)
+	if errNs != nil {
+		log.Errorf("Failed to update servers: %v", errNs)
+	} else {
+		g.Lock()
+		g.serversState = ns
+		g.Unlock()
+	}
+
 	ticker := time.NewTicker(freq)
 	for {
 		select {
 		case <-ticker.C:
-			update(g.ctx)
+			ns, errNs := update(g.ctx)
+			if errNs != nil {
+				log.Errorf("Failed to update servers: %v", errNs)
+			} else {
+				g.Lock()
+				g.serversState = ns
+				g.Unlock()
+			}
 		case <-g.ctx.Done():
 			return
 		}
@@ -161,9 +194,9 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 			if !config.General.MapChangerEnabled {
 				continue
 			}
-			g.serversStateMu.RLock()
+			g.RLock()
 			stateCopy := g.ServerState()
-			g.serversStateMu.RUnlock()
+			g.RUnlock()
 			for serverId, state := range stateCopy {
 				act, found := activity[serverId]
 				if !found || len(state.Status.Players) > 0 {

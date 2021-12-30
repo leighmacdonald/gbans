@@ -130,9 +130,13 @@ func (g *gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerI
 
 // ServerState returns a copy of the current known state for all servers.
 func (g *gbans) ServerState() model.ServerStateCollection {
-	g.serversStateMu.RLock()
-	defer g.serversStateMu.RUnlock()
-	return g.serversState
+	roState := model.ServerStateCollection{}
+	g.RLock()
+	defer g.RUnlock()
+	for k, v := range g.serversState {
+		roState[k] = v
+	}
+	return roState
 }
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range

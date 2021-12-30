@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -34,31 +33,31 @@ func init() {
 // gbans is the main application struct.
 // It implements the action.Executor interface
 type gbans struct {
+	*sync.RWMutex
 	// Top-level background context
 	ctx context.Context
 	// Holds ephemeral user warning state for things such as word filters
 	warnings   map[steamid.SID64][]userWarning
 	warningsMu *sync.RWMutex
 	// When a server posts log entries they are sent through here
-	logRawQueue    chan web.LogPayload
-	gameLogSource  *RemoteSrcdsLogSource
-	bot            discord.ChatBot
-	db             store.Store
-	web            web.WebHandler
-	serversState   map[string]model.ServerState
-	serversStateMu *sync.RWMutex
-	l              *log.Entry
+	logRawQueue   chan web.LogPayload
+	gameLogSource *remoteSrcdsLogSource
+	bot           discord.ChatBot
+	db            store.Store
+	web           web.WebHandler
+	serversState  map[string]model.ServerState
+	l             *log.Entry
 }
 
 // New instantiates a new application
 func New(ctx context.Context) (*gbans, error) {
 	application := &gbans{
-		ctx:            ctx,
-		warnings:       map[steamid.SID64][]userWarning{},
-		warningsMu:     &sync.RWMutex{},
-		serversStateMu: &sync.RWMutex{},
-		logRawQueue:    make(chan web.LogPayload, 1000),
-		l:              log.WithFields(log.Fields{"module": "app"}),
+		RWMutex:     &sync.RWMutex{},
+		ctx:         ctx,
+		warnings:    map[steamid.SID64][]userWarning{},
+		warningsMu:  &sync.RWMutex{},
+		logRawQueue: make(chan web.LogPayload, 1000),
+		l:           log.WithFields(log.Fields{"module": "app"}),
 	}
 	dbStore, se := store.New(config.DB.DSN)
 	if se != nil {
@@ -72,7 +71,7 @@ func New(ctx context.Context) (*gbans, error) {
 	if we != nil {
 		return nil, errors.Wrapf(we, "Failed to setup web")
 	}
-	logSrc, errLogSrc := NewRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, application.logRawQueue)
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, application.logRawQueue)
 	if errLogSrc != nil {
 		return nil, errors.Wrapf(we, "Failed to setup udp log src")
 	}
@@ -365,7 +364,7 @@ func (g *gbans) initWorkers() {
 	go g.logWriter()
 	go g.filterWorker()
 	go g.initLogSrc()
-	go state.LogMeter(g.ctx)
+	go g.logMetricsConsumer()
 }
 
 func (g *gbans) initLogSrc() {

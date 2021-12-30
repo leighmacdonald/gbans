@@ -78,7 +78,7 @@ logging:
   full_timestamp: false
 
   srcds_log_addr: ":27115"
-
+  # The external dns/ip to access the log server
   srcds_log_external_host: "external.host.com"
 
 network_bans:
