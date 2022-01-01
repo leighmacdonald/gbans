@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
@@ -18,11 +19,11 @@ import (
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func (g *gbans) profileUpdater() {
+func profileUpdater() {
 	var update = func() {
-		ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
-		people, pErr := g.db.GetExpiredProfiles(ctx, 100)
+		people, pErr := db.GetExpiredProfiles(ctx, 100)
 		if pErr != nil {
 			log.Errorf("Failed to get expired profiles: %v", pErr)
 			return
@@ -44,12 +45,12 @@ func (g *gbans) profileUpdater() {
 				continue
 			}
 			p := model.NewPerson(sid)
-			if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
+			if err4 := db.GetOrCreatePersonBySteamID(ctx, sid, &p); err4 != nil {
 				log.Errorf("Failed to get person: %v", err4)
 				continue
 			}
 			p.PlayerSummary = &s
-			if err5 := g.db.SavePerson(g.ctx, &p); err5 != nil {
+			if err5 := db.SavePerson(ctx, &p); err5 != nil {
 				log.Errorf("Failed to save person: %v", err5)
 				continue
 			}
@@ -62,7 +63,7 @@ func (g *gbans) profileUpdater() {
 		select {
 		case <-ticker.C:
 			update()
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			log.Debugf("profileUpdater shutting down")
 			return
 		}
@@ -72,13 +73,13 @@ func (g *gbans) profileUpdater() {
 
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
 // information. This data is accessed often so it is cached
-func (g *gbans) serverStateUpdater() {
+func serverStateUpdater() {
 	freq, errD := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errD != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
 	}
 	var update = func(ctx context.Context) (model.ServerStateCollection, error) {
-		servers, err := g.db.GetServers(ctx, false)
+		servers, err := db.GetServers(ctx, false)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to get servers")
 		}
@@ -131,6 +132,11 @@ func (g *gbans) serverStateUpdater() {
 						return
 					}
 					ss.A2S = *a
+					playerCountHistogram.With(prometheus.Labels{"server_name": server.ServerName}).
+						Observe(float64(a.Players))
+					if a.Players > 1 {
+						mapCountHistogram.With(prometheus.Labels{"map": a.Map}).Observe(freq.Seconds())
+					}
 				}(&ss)
 				iwg.Wait()
 				ss.LastUpdate = time.Now()
@@ -147,28 +153,27 @@ func (g *gbans) serverStateUpdater() {
 		}
 		return c, nil
 	}
-	ns, errNs := update(g.ctx)
+	ns, errNs := update(ctx)
 	if errNs != nil {
 		log.Errorf("Failed to update servers: %v", errNs)
 	} else {
-		g.Lock()
-		g.serversState = ns
-		g.Unlock()
+		serversStateMu.Lock()
+		serversState = ns
+		serversStateMu.Unlock()
 	}
-
 	ticker := time.NewTicker(freq)
 	for {
 		select {
 		case <-ticker.C:
-			ns, errNs := update(g.ctx)
+			ns, errNs := update(ctx)
 			if errNs != nil {
 				log.Errorf("Failed to update servers: %v", errNs)
 			} else {
-				g.Lock()
-				g.serversState = ns
-				g.Unlock()
+				serversStateMu.Lock()
+				serversState = ns
+				serversStateMu.Unlock()
 			}
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -181,7 +186,7 @@ func (g *gbans) serverStateUpdater() {
 // Relevant config values:
 // - general.map_changer_enabled
 // - general.default_map
-func (g *gbans) mapChanger(timeout time.Duration) {
+func mapChanger(timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
@@ -194,9 +199,9 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 			if !config.General.MapChangerEnabled {
 				continue
 			}
-			g.RLock()
-			stateCopy := g.ServerState()
-			g.RUnlock()
+			serversStateMu.RLock()
+			stateCopy := ServerState()
+			serversStateMu.RUnlock()
 			for serverId, state := range stateCopy {
 				act, found := activity[serverId]
 				if !found || len(state.Status.Players) > 0 {
@@ -215,8 +220,8 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 						continue
 					}
 					var srv model.Server
-					if err := g.db.GetServerByName(context.Background(), serverId, &srv); err != nil {
-						g.l.Errorf("Failed to get server for map changer: %v", err)
+					if err := db.GetServerByName(context.Background(), serverId, &srv); err != nil {
+						log.Errorf("Failed to get server for map changer: %v", err)
 						continue
 					}
 					nextMap := srv.DefaultMap
@@ -224,17 +229,17 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 						nextMap = config.General.DefaultMaps[rand.Intn(len(config.General.DefaultMaps))]
 					}
 					if nextMap == "" {
-						g.l.Errorf("Failed to get valid nextMap value")
+						log.Errorf("Failed to get valid nextMap value")
 						continue
 					}
 					if srv.DefaultMap == state.Status.Map {
 						continue
 					}
 					go func(s model.Server, mapName string) {
-						var l = g.l.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "srv": serverId})
+						var l = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "srv": serverId})
 						l.Infof("Idle map change triggered")
 						if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", mapName)); err != nil {
-							g.l.Errorf("failed to exec mapchanger rcon: %v", err)
+							l.Errorf("failed to exec mapchanger rcon: %v", err)
 						}
 						l.Infof("Idle map change complete")
 					}(srv, nextMap)
@@ -245,14 +250,14 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 					act.triggered = false
 				}
 			}
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
-func (g *gbans) banSweeper() {
+func banSweeper() {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
 	for {
@@ -262,12 +267,12 @@ func (g *gbans) banSweeper() {
 			wg.Add(3)
 			go func() {
 				defer wg.Done()
-				bans, err := g.db.GetExpiredBans(g.ctx)
+				bans, err := db.GetExpiredBans(ctx)
 				if err != nil && !errors.Is(err, store.ErrNoResult) {
 					log.Warnf("Failed to get expired bans: %v", err)
 				} else {
 					for _, ban := range bans {
-						if err := g.db.DropBan(g.ctx, &ban); err != nil {
+						if err := db.DropBan(ctx, &ban); err != nil {
 							log.Errorf("Failed to drop expired ban: %v", err)
 						} else {
 							log.Infof("ban expired: %v", ban)
@@ -277,12 +282,12 @@ func (g *gbans) banSweeper() {
 			}()
 			go func() {
 				defer wg.Done()
-				netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
+				netBans, err2 := db.GetExpiredNetBans(ctx)
 				if err2 != nil && !errors.Is(err2, store.ErrNoResult) {
 					log.Warnf("Failed to get expired netbans: %v", err2)
 				} else {
 					for _, ban := range netBans {
-						if err := g.db.DropBanNet(g.ctx, &ban); err != nil {
+						if err := db.DropBanNet(ctx, &ban); err != nil {
 							log.Errorf("Failed to drop expired network ban: %v", err)
 						} else {
 							log.Infof("Network ban expired: %v", ban)
@@ -292,12 +297,12 @@ func (g *gbans) banSweeper() {
 			}()
 			go func() {
 				defer wg.Done()
-				asnBans, err3 := g.db.GetExpiredASNBans(g.ctx)
+				asnBans, err3 := db.GetExpiredASNBans(ctx)
 				if err3 != nil && !errors.Is(err3, store.ErrNoResult) {
 					log.Warnf("Failed to get expired asnbans: %v", err3)
 				} else {
 					for _, asnBan := range asnBans {
-						if err := g.db.DropBanASN(g.ctx, &asnBan); err != nil {
+						if err := db.DropBanASN(ctx, &asnBan); err != nil {
 							log.Errorf("Failed to drop expired asn ban: %v", err)
 						} else {
 							log.Infof("ASN ban expired: %v", asnBan)
@@ -306,7 +311,7 @@ func (g *gbans) banSweeper() {
 				}
 			}()
 			wg.Wait()
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			log.Debugf("banSweeper shutting down")
 			return
 		}

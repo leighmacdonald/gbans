@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -21,10 +20,364 @@ import (
 	"time"
 )
 
+// BaseOrigin defines the base struct for all actions. It just marks where the event originated.
+type BaseOrigin struct {
+	Origin model.Origin
+}
+
+type GetChatHistoryRequest struct {
+	BaseOrigin
+	Target
+	Page int
+}
+
+type GetOrCreatePersonByIDRequest struct {
+	BaseOrigin
+	Target
+	IPAddr string
+}
+
+type GetOrCreateProfileBySteamIDRequest GetOrCreatePersonByIDRequest
+
+type FilterAddRequest struct {
+	BaseOrigin
+	Author
+	Filter string
+}
+
+type FilterDelRequest struct {
+	BaseOrigin
+	Author
+	FilterID int
+}
+
+type FilterCheckRequest struct {
+	BaseOrigin
+	Author
+	Message string
+}
+
+type ServerByNameRequest struct {
+	BaseOrigin
+	ServerName string
+}
+
+type SayRequest struct {
+	BaseOrigin
+	Author
+	Server  string
+	Message string
+}
+
+type CSayRequest SayRequest
+
+type PSayRequest struct {
+	BaseOrigin
+	Author
+	Target
+	Message string
+}
+
+type UnbanASNRequest struct {
+	BaseOrigin
+	ASNum  string
+	Reason string
+}
+
+type KickRequest struct {
+	BaseOrigin
+	Target
+	Author
+	Reason string
+}
+
+type BanRequest struct {
+	BaseOrigin
+	Target
+	Author
+	Duration
+	Reason  string
+	BanType model.BanType
+}
+
+type MuteRequest BanRequest
+type UnbanRequest KickRequest
+
+type BanNetRequest struct {
+	BaseOrigin
+	Target
+	Author
+	Duration
+	CIDR   string
+	Reason string
+}
+
+type BanASNRequest struct {
+	BaseOrigin
+	Target
+	Author
+	Duration
+	ASNum  int64
+	Reason string
+}
+type ProfileRequest struct {
+	BaseOrigin
+	Target
+	IPAddr string
+}
+
+type FindCIDRRequest struct {
+	BaseOrigin
+	CIDR *net.IPNet
+}
+type FindRequest struct {
+	BaseOrigin
+	Query string
+}
+type GetBanRequest struct {
+	BaseOrigin
+	Target
+}
+type GetBanNetRequest GetBanRequest
+type GetHistoryIPRequest struct {
+	BaseOrigin
+	Author
+	Target
+}
+type GetHistoryChatRequest GetHistoryIPRequest
+type GetPersonByIDRequest GetBanRequest
+type SetSteamIDRequest struct {
+	BaseOrigin
+	Target
+	DiscordID string
+}
+type GetASNRecordRequest struct {
+	BaseOrigin
+	IPAddr string
+}
+type GetLocationRecordRequest GetASNRecordRequest
+type GetProxyRecordRequest GetASNRecordRequest
+
+func NewFindByCIDR(o model.Origin, cidr *net.IPNet) FindCIDRRequest {
+	return FindCIDRRequest{
+		BaseOrigin: BaseOrigin{Origin: o},
+		CIDR:       cidr,
+	}
+}
+
+func NewFind(o model.Origin, q string) FindRequest {
+	return FindRequest{BaseOrigin: BaseOrigin{o}, Query: q}
+}
+
+func NewMute(o model.Origin, target string, author string, reason string, duration string) BanRequest {
+	return BanRequest{
+		BanType:    model.NoComm,
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+	}
+}
+
+func NewKick(o model.Origin, target string, author string, reason string) KickRequest {
+	return KickRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+	}
+}
+
+func NewBan(o model.Origin, target string, author string, reason string, duration string) BanRequest {
+	return BanRequest{
+		BanType:    model.Banned,
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+	}
+}
+
+func NewBanNet(o model.Origin, target string, author string, reason string, duration string, cidr string) BanNetRequest {
+	return BanNetRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+		CIDR:       cidr,
+	}
+}
+
+func NewBanASN(o model.Origin, target string, author string, reason string, duration string, asNum int64) BanASNRequest {
+	return BanASNRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+		Duration:   Duration(duration),
+		ASNum:      asNum,
+	}
+}
+
+func NewUnban(o model.Origin, target string, author string, reason string) UnbanRequest {
+	return UnbanRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		Author:     Author(author),
+		Reason:     reason,
+	}
+}
+
+func NewGetBan(o model.Origin, target string) GetBanRequest {
+	return GetBanRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
+}
+
+func NewGetBanNet(o model.Origin, target string) GetBanNetRequest {
+	return GetBanNetRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
+}
+
+func NewGetHistoryIP(o model.Origin, target string) GetHistoryIPRequest {
+	return GetHistoryIPRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
+}
+
+func NewGetHistoryChat(o model.Origin, target string) GetHistoryChatRequest {
+	return GetHistoryChatRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
+}
+
+func NewGetPersonByID(o model.Origin, target string) GetPersonByIDRequest {
+	return GetPersonByIDRequest{BaseOrigin: BaseOrigin{o}, Target: Target(target)}
+}
+
+func NewSetSteamID(o model.Origin, target string, discordID string) SetSteamIDRequest {
+	return SetSteamIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		DiscordID:  discordID,
+	}
+}
+
+func NewGetASNRecord(o model.Origin, ipAddr string) GetASNRecordRequest {
+	return GetASNRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
+}
+
+func NewGetLocationRecord(o model.Origin, ipAddr string) GetLocationRecordRequest {
+	return GetLocationRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
+}
+
+func NewGetProxyRecord(o model.Origin, ipAddr string) GetProxyRecordRequest {
+	return GetProxyRecordRequest{BaseOrigin: BaseOrigin{o}, IPAddr: ipAddr}
+}
+
+func NewSay(o model.Origin, server string, message string) SayRequest {
+	return SayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
+}
+
+func NewCSay(o model.Origin, server string, message string) CSayRequest {
+	return CSayRequest{BaseOrigin: BaseOrigin{o}, Server: server, Message: message}
+}
+
+func NewPSay(o model.Origin, target string, message string) PSayRequest {
+	return PSayRequest{
+		BaseOrigin: BaseOrigin{o},
+		Message:    message,
+		Target:     Target(target),
+	}
+}
+
+func NewServerByName(o model.Origin, serverID string) ServerByNameRequest {
+	return ServerByNameRequest{BaseOrigin: BaseOrigin{o}, ServerName: serverID}
+}
+
+func NewFilterAdd(o model.Origin, filter string) FilterAddRequest {
+	return FilterAddRequest{BaseOrigin: BaseOrigin{o}, Filter: filter}
+}
+
+func NewFilterDel(o model.Origin, filterID int) FilterDelRequest {
+	return FilterDelRequest{BaseOrigin: BaseOrigin{o}, FilterID: filterID}
+}
+
+func NewFilterCheck(o model.Origin, message string) FilterCheckRequest {
+	return FilterCheckRequest{
+		BaseOrigin: BaseOrigin{o},
+		Message:    message}
+}
+
+func NewGetOrCreatePersonByID(o model.Origin, target string, ipAddr string) GetOrCreatePersonByIDRequest {
+	return GetOrCreatePersonByIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		IPAddr:     ipAddr,
+	}
+}
+
+func NewGetOrCreateProfileBySteamID(o model.Origin, target string, ipAddr string) GetOrCreateProfileBySteamIDRequest {
+	return GetOrCreateProfileBySteamIDRequest{
+		BaseOrigin: BaseOrigin{o},
+		Target:     Target(target),
+		IPAddr:     ipAddr,
+	}
+}
+
+func NewGetChatHistory(o model.Origin, target string, page int) GetChatHistoryRequest {
+	return GetChatHistoryRequest{
+		Target: Target(target),
+		Page:   page,
+	}
+}
+
+// Target defines who the request is being made against
+type Target string
+
+func (t Target) SID64() (steamid.SID64, error) {
+	v, err := steamid.ResolveSID64(context.Background(), string(t))
+	if err != nil {
+		return 0, consts.ErrInvalidSID
+	}
+	if !v.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return v, nil
+}
+
+// Author defines who initiated the request
+type Author string
+
+func (a Author) SID64() (steamid.SID64, error) {
+	v, err := steamid.ResolveSID64(context.Background(), string(a))
+	if err != nil {
+		return 0, consts.ErrInvalidSID
+	}
+	if !v.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return v, nil
+}
+
+// Duration defines the length of time the action should be valid for
+// A duration of 0 will be interpreted as permanent and set to 10 years in the future
+type Duration string
+
+func (d Duration) Value() (time.Duration, error) {
+	dur, err := config.ParseDuration(string(d))
+	if err != nil {
+		return 0, consts.ErrInvalidDuration
+	}
+	if dur < 0 {
+		return 0, consts.ErrInvalidDuration
+	}
+	if dur == 0 {
+		dur = time.Hour * 24 * 365 * 10
+	}
+	return dur, nil
+}
+
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
+func Unban(args UnbanRequest) (bool, error) {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return false, errTar
@@ -34,7 +387,7 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 	//	return false, errSrc
 	//}
 	b := model.NewBannedPerson()
-	err := g.db.GetBanBySteamID(g.ctx, target, false, &b)
+	err := db.GetBanBySteamID(ctx, target, false, &b)
 	if err != nil {
 		if err == store.ErrNoResult {
 			return false, nil
@@ -42,7 +395,7 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 		return false, err
 	}
 	b.Ban.ValidUntil = config.Now()
-	if err2 := g.db.SaveBan(g.ctx, &b.Ban); err2 != nil {
+	if err2 := db.SaveBan(ctx, &b.Ban); err2 != nil {
 		return false, errors.Wrapf(err2, "Failed to save unban")
 	}
 	log.Infof("Player unbanned: %v", target)
@@ -50,16 +403,16 @@ func (g gbans) Unban(args action.UnbanRequest) (bool, error) {
 }
 
 // UnbanASN will remove an existing ASN ban
-func (g gbans) UnbanASN(ctx context.Context, args action.UnbanASNRequest) (bool, error) {
+func UnbanASN(ctx context.Context, args UnbanASNRequest) (bool, error) {
 	asNum, errConv := strconv.ParseInt(args.ASNum, 10, 64)
 	if errConv != nil {
 		return false, errConv
 	}
 	var ba model.BanASN
-	if err := g.db.GetBanASN(g.ctx, asNum, &ba); err != nil {
+	if err := db.GetBanASN(ctx, asNum, &ba); err != nil {
 		return false, err
 	}
-	if errDrop := g.db.DropBanASN(ctx, &ba); errDrop != nil {
+	if errDrop := db.DropBanASN(ctx, &ba); errDrop != nil {
 		log.Errorf("Failed to drop ASN ban: %v", errDrop)
 		return false, errDrop
 	}
@@ -69,7 +422,7 @@ func (g gbans) UnbanASN(ctx context.Context, args action.UnbanASNRequest) (bool,
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
+func Ban(args BanRequest, b *model.Ban) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -83,7 +436,7 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 		return errDur
 	}
 	existing := model.NewBannedPerson()
-	err := g.db.GetBanBySteamID(g.ctx, target, false, &existing)
+	err := db.GetBanBySteamID(ctx, target, false, &existing)
 	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return store.ErrDuplicate
 	}
@@ -105,7 +458,7 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	b.CreatedOn = config.Now()
 	b.UpdatedOn = config.Now()
 
-	if err2 := g.db.SaveBan(g.ctx, b); err2 != nil {
+	if err2 := db.SaveBan(ctx, b); err2 != nil {
 		return err2
 	}
 	go func() {
@@ -141,7 +494,7 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 			Inline: false,
 		})
 		if config.Discord.PublicLogChannelEnable {
-			if errPLC := g.bot.SendEmbed(config.Discord.PublicLogChannelId, banNotice); errPLC != nil {
+			if errPLC := bot.SendEmbed(config.Discord.PublicLogChannelId, banNotice); errPLC != nil {
 				log.Errorf("Failed to send ban notice to public channel: %v", errPLC)
 			}
 		}
@@ -149,13 +502,13 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 	ipAddr := ""
 	// kick the user if they currently are playing on a server
 	pi := model.NewPlayerInfo()
-	_ = g.Find(target.String(), "", &pi)
+	_ = Find(target.String(), "", &pi)
 	if pi.Valid && pi.InGame {
 		switch args.BanType {
 		case model.NoComm:
 			{
 				log.Infof("Gagging in-game Player")
-				query.RCON(g.ctx, []model.Server{*pi.Server},
+				query.RCON(ctx, []model.Server{*pi.Server},
 					fmt.Sprintf(`sm_gag "#%s"`, string(steamid.SID64ToSID(target))),
 					fmt.Sprintf(`sm_mute "#%s"`, string(steamid.SID64ToSID(target))))
 			}
@@ -170,11 +523,11 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 			}
 		}
 		p := model.NewPerson(pi.Player.SID)
-		if errG := g.db.GetOrCreatePersonBySteamID(g.ctx, pi.Player.SID, &p); errG != nil {
+		if errG := db.GetOrCreatePersonBySteamID(ctx, pi.Player.SID, &p); errG != nil {
 			log.Errorf("Failed to fetch banned player: %v", errG)
 		}
 		p.IPAddr = net.ParseIP(ipAddr)
-		if errS := g.db.SavePerson(g.ctx, &p); errS != nil {
+		if errS := db.SavePerson(ctx, &p); errS != nil {
 			log.Errorf("Failed to update banned player ip: %v", errS)
 		}
 	}
@@ -182,7 +535,7 @@ func (g gbans) Ban(args action.BanRequest, b *model.Ban) error {
 }
 
 // BanASN will ban all network ranges associated with the requested ASN
-func (g gbans) BanASN(args action.BanASNRequest, banASN *model.BanASN) error {
+func BanASN(args BanASNRequest, banASN *model.BanASN) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -205,7 +558,7 @@ func (g gbans) BanASN(args action.BanASNRequest, banASN *model.BanASN) error {
 	banASN.ValidUntil = until
 	banASN.Reason = args.Reason
 	banASN.ASNum = args.ASNum
-	if errSave := g.db.SaveBanASN(context.TODO(), banASN); errSave != nil {
+	if errSave := db.SaveBanASN(context.TODO(), banASN); errSave != nil {
 		return errSave
 	}
 	// TODO Kick all current players matching
@@ -216,7 +569,7 @@ func (g gbans) BanASN(args action.BanASNRequest, banASN *model.BanASN) error {
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of config.DefaultExpiration() will be used.
-func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error {
+func BanNetwork(args BanNetRequest, banNet *model.BanNet) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -255,12 +608,12 @@ func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error
 	banNet.UpdatedOn = config.Now()
 	banNet.ValidUntil = until
 
-	if err := g.db.SaveBanNet(g.ctx, banNet); err != nil {
+	if err := db.SaveBanNet(ctx, banNet); err != nil {
 		return err
 	}
 	go func() {
 		var pi model.PlayerInfo
-		if errPI := g.FindPlayerByCIDR(cidr, &pi); errPI != nil {
+		if errPI := FindPlayerByCIDR(cidr, &pi); errPI != nil {
 			return
 		}
 		if pi.Player != nil && pi.Server != nil {
@@ -277,7 +630,7 @@ func (g gbans) BanNetwork(args action.BanNetRequest, banNet *model.BanNet) error
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
+func Kick(args KickRequest, pi *model.PlayerInfo) error {
 	target, errTar := args.Target.SID64()
 	if errTar != nil {
 		return errTar
@@ -288,7 +641,7 @@ func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 	//}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errF := g.Find(target.String(), "", &foundPI); errF != nil {
+	if errF := Find(target.String(), "", &foundPI); errF != nil {
 		return errF
 	}
 
@@ -308,29 +661,29 @@ func (g gbans) Kick(args action.KickRequest, pi *model.PlayerInfo) error {
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more priviledges intents.
-func (g gbans) SetSteam(args action.SetSteamIDRequest) (bool, error) {
-	sid, err := steamid.ResolveSID64(g.ctx, string(args.Target))
+func SetSteam(args SetSteamIDRequest) (bool, error) {
+	sid, err := steamid.ResolveSID64(ctx, string(args.Target))
 	if err != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
 	}
 	p := model.NewPerson(sid)
-	if errP := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); errP != nil || !sid.Valid() {
+	if errP := db.GetOrCreatePersonBySteamID(ctx, sid, &p); errP != nil || !sid.Valid() {
 		return false, consts.ErrInvalidSID
 	}
 	if (p.DiscordID) != "" {
 		return false, errors.Errorf("Discord account already linked to steam account: %d", p.SteamID.Int64())
 	}
 	p.DiscordID = args.DiscordID
-	if errS := g.db.SavePerson(g.ctx, &p); errS != nil {
+	if errS := db.SavePerson(ctx, &p); errS != nil {
 		return false, consts.ErrInternal
 	}
 	return true, nil
 }
 
 // Say is used to send a message to the server via sm_say
-func (g gbans) Say(args action.SayRequest) error {
+func Say(args SayRequest) error {
 	var server model.Server
-	if err := g.db.GetServerByName(g.ctx, args.Server, &server); err != nil {
+	if err := db.GetServerByName(ctx, args.Server, &server); err != nil {
 		return errors.Errorf("Failed to fetch server: %s", args.Server)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, args.Message)
@@ -346,32 +699,32 @@ func (g gbans) Say(args action.SayRequest) error {
 }
 
 // CSay is used to send a centered message to the server via sm_csay
-func (g gbans) CSay(args action.CSayRequest) error {
+func CSay(args CSayRequest) error {
 	var (
 		servers []model.Server
 		err     error
 	)
 	if args.Server == "*" {
-		servers, err = g.db.GetServers(g.ctx, false)
+		servers, err = db.GetServers(ctx, false)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to fetch servers")
 		}
 	} else {
 		var server model.Server
-		if errS := g.db.GetServerByName(g.ctx, args.Server, &server); errS != nil {
+		if errS := db.GetServerByName(ctx, args.Server, &server); errS != nil {
 			return errors.Wrapf(errS, "Failed to fetch server: %s", args.Server)
 		}
 		servers = append(servers, server)
 	}
 	msg := fmt.Sprintf(`sm_csay %s`, args.Message)
-	_ = query.RCON(g.ctx, servers, msg)
+	_ = query.RCON(ctx, servers, msg)
 	return nil
 }
 
 // PSay is used to send a private message to a player
-func (g gbans) PSay(args action.PSayRequest) error {
+func PSay(args PSayRequest) error {
 	var pi model.PlayerInfo
-	_ = g.Find(string(args.Target), "", &pi)
+	_ = Find(string(args.Target), "", &pi)
 	if !pi.Valid || !pi.InGame {
 		return consts.ErrUnknownID
 	}
@@ -384,13 +737,13 @@ func (g gbans) PSay(args action.PSayRequest) error {
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
-func (g gbans) FilterAdd(args action.FilterAddRequest) (model.Filter, error) {
+func FilterAdd(args FilterAddRequest) (model.Filter, error) {
 	re, err := regexp.Compile(args.Filter)
 	if err != nil {
 		return model.Filter{}, errors.Wrapf(err, "Invalid regex format")
 	}
 	filter := model.Filter{Pattern: re, CreatedOn: config.Now()}
-	if errSave := g.db.SaveFilter(g.ctx, &filter); errSave != nil {
+	if errSave := db.SaveFilter(ctx, &filter); errSave != nil {
 		if errSave == store.ErrDuplicate {
 			return filter, store.ErrDuplicate
 		}
@@ -401,19 +754,19 @@ func (g gbans) FilterAdd(args action.FilterAddRequest) (model.Filter, error) {
 }
 
 // FilterDel removed and existing chat filter
-func (g gbans) FilterDel(ctx context.Context, args action.FilterDelRequest) (bool, error) {
+func FilterDel(ctx context.Context, args FilterDelRequest) (bool, error) {
 	var filter model.Filter
-	if err := g.db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
+	if err := db.GetFilterByID(ctx, args.FilterID, &filter); err != nil {
 		return false, err
 	}
-	if err2 := g.db.DropFilter(ctx, &filter); err2 != nil {
+	if err2 := db.DropFilter(ctx, &filter); err2 != nil {
 		return false, err2
 	}
 	return true, nil
 }
 
 // FilterCheck can be used to check if a phrase will match any filters
-func (g gbans) FilterCheck(args action.FilterCheckRequest) []model.Filter {
+func FilterCheck(args FilterCheckRequest) []model.Filter {
 	if args.Message == "" {
 		return nil
 	}
@@ -433,7 +786,7 @@ func (g gbans) FilterCheck(args action.FilterCheckRequest) []model.Filter {
 
 // ContainsFilteredWord checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (g gbans) ContainsFilteredWord(body string) (bool, model.Filter) {
+func ContainsFilteredWord(body string) (bool, model.Filter) {
 	if body == "" {
 		return false, model.Filter{}
 	}
@@ -451,8 +804,8 @@ func (g gbans) ContainsFilteredWord(body string) (bool, model.Filter) {
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
-	if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
+func PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) error {
+	if err := db.GetPersonBySteamID(ctx, sid, p); err != nil && err != store.ErrNoResult {
 		return err
 	}
 	if p.UpdatedOn == p.CreatedOn || time.Since(p.UpdatedOn) > 15*time.Second {
@@ -464,11 +817,11 @@ func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) er
 		var sum = s[0]
 		p.PlayerSummary = &sum
 		p.UpdatedOn = time.Now()
-		if err := g.db.SavePerson(g.ctx, p); err != nil {
+		if err := db.SavePerson(ctx, p); err != nil {
 			log.Errorf("Failed to save updated profile: %v", errW)
 			return nil
 		}
-		if err := g.db.GetPersonBySteamID(g.ctx, sid, p); err != nil && err != store.ErrNoResult {
+		if err := db.GetPersonBySteamID(ctx, sid, p); err != nil && err != store.ErrNoResult {
 			return err
 		}
 	}
@@ -476,8 +829,8 @@ func (g gbans) PersonBySID(sid steamid.SID64, ipAddr string, p *model.Person) er
 }
 
 // ResolveSID is just a simple helper for calling steamid.ResolveSID64
-func (g gbans) ResolveSID(sidStr string) (steamid.SID64, error) {
-	c, cancel := context.WithTimeout(g.ctx, time.Second*5)
+func ResolveSID(sidStr string) (steamid.SID64, error) {
+	c, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	return steamid.ResolveSID64(c, sidStr)
 }

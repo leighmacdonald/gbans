@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
@@ -36,13 +35,13 @@ const (
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	udpAddr   *net.UDPAddr
-	sink      chan web.LogPayload
+	sink      chan LogPayload
 	db        store.Store
 	secretMap map[int64]string
 	dnsMap    map[string]string
 }
 
-func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan web.LogPayload) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan LogPayload) (*remoteSrcdsLogSource, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
@@ -95,10 +94,12 @@ func (srv *remoteSrcdsLogSource) updateSecrets() {
 		}
 		newServers[newId] = server.ServerName
 		go func(s model.Server, i int64) {
-			for _, cmd := range []string{
-				//fmt.Sprintf("sv_logsecret %d", i),
-				fmt.Sprintf("logaddress_add %s", config.Log.SrcdsLogExternalHost),
-			} {
+			var rconCommands []string
+			if config.Debug.UpdateSRCDSLogSecrets {
+				rconCommands = append(rconCommands, fmt.Sprintf("sv_logsecret %d", i))
+			}
+			rconCommands = append(rconCommands, fmt.Sprintf("logaddress_add %s", config.Log.SrcdsLogExternalHost))
+			for _, cmd := range rconCommands {
 				_, errRcon := query.ExecRCON(s, cmd)
 				if errRcon != nil {
 					log.Errorf("Failed to run srcds log command: %s [%s]", cmd, errRcon)
@@ -117,7 +118,7 @@ func (srv *remoteSrcdsLogSource) updateSecrets() {
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (srv *remoteSrcdsLogSource) Start() {
+func (srv *remoteSrcdsLogSource) start() {
 	type newMsg struct {
 		secure    bool
 		source    int64
@@ -178,7 +179,7 @@ func (srv *remoteSrcdsLogSource) Start() {
 			srv.updateSecrets()
 			srv.updateDNS()
 		case logPayload := <-inChan:
-			payload := web.LogPayload{Message: logPayload.body}
+			payload := LogPayload{Message: logPayload.body}
 			if logPayload.secure {
 				srv.RLock()
 				serverName, found := srv.secretMap[logPayload.source]

@@ -78,6 +78,7 @@ type rootConfig struct {
 	Discord discordConfig `mapstructure:"discord"`
 	Log     logConfig     `mapstructure:"logging"`
 	NetBans netBans       `mapstructure:"network_bans"`
+	Debug   debugConfig   `mapstructure:"debug"`
 }
 
 type dbConfig struct {
@@ -108,12 +109,12 @@ func (h httpConfig) Addr() string {
 type runMode string
 
 const (
-	// Release is production mode, minimal logging
-	Release runMode = "release"
-	// Debug has much more logging and uses non-embedded assets
-	Debug runMode = "debug"
-	// Test is for unit tests
-	Test runMode = "test"
+	// ReleaseMode is production mode, minimal logging
+	ReleaseMode runMode = "release"
+	// DebugMode has much more logging and uses non-embedded assets
+	DebugMode runMode = "debug"
+	// TestMode is for unit tests
+	TestMode runMode = "test"
 )
 
 // String returns the string value of the runMode
@@ -169,6 +170,10 @@ type logConfig struct {
 	SrcdsLogExternalHost string `mapstructure:"srcds_log_external_host"`
 }
 
+type debugConfig struct {
+	UpdateSRCDSLogSecrets bool `mapstructure:"update_srcds_log_secrets"`
+}
+
 type netBans struct {
 	Enabled     bool        `mapstructure:"enabled"`
 	MaxAge      string      `mapstructure:"max_age"`
@@ -195,6 +200,7 @@ var (
 	Discord discordConfig
 	Log     logConfig
 	Net     netBans
+	Debug   debugConfig
 )
 
 // Read reads in config file and ENV variables if set.
@@ -243,6 +249,7 @@ func Read(cfgFiles ...string) {
 	DB = cfg.DB
 	Log = cfg.Log
 	Net = cfg.NetBans
+	Debug = cfg.Debug
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
@@ -281,6 +288,8 @@ func init() {
 	viper.SetDefault("http.static_path", "frontend/dist")
 	viper.SetDefault("http.cookie_key", golib.RandomString(32))
 	viper.SetDefault("http.client_timeout", "10s")
+
+	viper.SetDefault("debug.update_srcds_log_secrets", true)
 
 	viper.SetDefault("filter.enabled", false)
 	viper.SetDefault("filter.is_warning", true)

@@ -1,4 +1,4 @@
-package discord
+package app
 
 import (
 	"bytes"
@@ -414,7 +414,7 @@ func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *d
 				Content: "Calculating numberwang...",
 			},
 		}); err != nil {
-			RespErr(&response, fmt.Sprintf("Error: %session", err.Error()))
+			respErr(&response, fmt.Sprintf("Error: %session", err.Error()))
 			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
@@ -424,7 +424,7 @@ func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *d
 		defer cancel()
 		if err := handler(ctx, session, interaction, &response); err != nil {
 			// TODO User facing errors only
-			RespErr(&response, err.Error())
+			respErr(&response, err.Error())
 			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}

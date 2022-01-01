@@ -25,7 +25,7 @@ import (
 // actively connected
 //
 // TODO cleanup this mess
-func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
+func Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &extra.Player{},
@@ -36,10 +36,10 @@ func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 		valid    = false
 		foundSid steamid.SID64
 	)
-	ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	if ip != "" {
-		err = g.findPlayerByIP(ctx, net.ParseIP(ip), pi)
+		err = findPlayerByIP(ctx, net.ParseIP(ip), pi)
 		if err == nil {
 			foundSid = result.Player.SID
 			inGame = true
@@ -48,14 +48,14 @@ func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 		found := false
 		sid, errSid := steamid.StringToSID64(playerStr)
 		if errSid == nil && sid.Valid() {
-			if errPSID := g.findPlayerBySID(ctx, sid, pi); errPSID == nil {
+			if errPSID := findPlayerBySID(ctx, sid, pi); errPSID == nil {
 				foundSid = sid
 				found = true
 				inGame = true
 			}
 		}
 		if !found {
-			if err = g.findPlayerByName(ctx, playerStr, pi); err == nil {
+			if err = findPlayerByName(ctx, playerStr, pi); err == nil {
 				foundSid = result.Player.SID
 				inGame = true
 			}
@@ -70,13 +70,13 @@ func (g gbans) Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 	return nil
 }
 
-func (g *gbans) findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
+func findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
 	name = strings.ToLower(name)
-	for serverId, status := range g.ServerState() {
+	for serverId, status := range ServerState() {
 		for _, player := range status.Status.Players {
 			if strings.Contains(strings.ToLower(player.Name), name) {
 				var srv model.Server
-				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+				if errGS := db.GetServerByName(ctx, serverId, &srv); errGS != nil {
 					return errGS
 				}
 				pi.Valid = true
@@ -90,12 +90,12 @@ func (g *gbans) findPlayerByName(ctx context.Context, name string, pi *model.Pla
 	return consts.ErrUnknownID
 }
 
-func (g *gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
-	for serverId, status := range g.ServerState() {
+func findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
+	for serverId, status := range ServerState() {
 		for _, player := range status.Status.Players {
 			if player.SID == sid {
 				var srv model.Server
-				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+				if errGS := db.GetServerByName(ctx, serverId, &srv); errGS != nil {
 					return errGS
 				}
 				pi.Valid = true
@@ -109,12 +109,12 @@ func (g *gbans) findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *mode
 	return consts.ErrUnknownID
 }
 
-func (g *gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
-	for serverId, status := range g.ServerState() {
+func findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
+	for serverId, status := range ServerState() {
 		for _, player := range status.Players {
 			if ip.Equal(player.IP) {
 				var srv model.Server
-				if errGS := g.db.GetServerByName(ctx, serverId, &srv); errGS != nil {
+				if errGS := db.GetServerByName(ctx, serverId, &srv); errGS != nil {
 					return errGS
 				}
 				pi.Valid = true
@@ -129,11 +129,11 @@ func (g *gbans) findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerI
 }
 
 // ServerState returns a copy of the current known state for all servers.
-func (g *gbans) ServerState() model.ServerStateCollection {
+func ServerState() model.ServerStateCollection {
 	roState := model.ServerStateCollection{}
-	g.RLock()
-	defer g.RUnlock()
-	for k, v := range g.serversState {
+	serversStateMu.RLock()
+	defer serversStateMu.RUnlock()
+	for k, v := range serversState {
 		roState[k] = v
 	}
 	return roState
@@ -141,13 +141,13 @@ func (g *gbans) ServerState() model.ServerStateCollection {
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func (g gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
-	for serverId, status := range g.ServerState() {
+func FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
+	for serverId, status := range ServerState() {
 		for _, player := range status.Players {
 			if ipNet.Contains(player.IP) {
-				c, cancel := context.WithTimeout(g.ctx, time.Second*5)
+				c, cancel := context.WithTimeout(ctx, time.Second*5)
 				var srv model.Server
-				if errGS := g.db.GetServerByName(c, serverId, &srv); errGS != nil {
+				if errGS := db.GetServerByName(c, serverId, &srv); errGS != nil {
 					cancel()
 					return errGS
 				}
@@ -164,7 +164,7 @@ func (g gbans) FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
 
 // GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func (g gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
+func GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
 	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get Player summary: %v", err)
@@ -173,7 +173,7 @@ func (g gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID6
 	if errBans != nil || len(vac) != 1 {
 		return errors.Wrapf(err, "Failed to get Player ban state: %v", err)
 	}
-	if errGP := g.db.GetOrCreatePersonBySteamID(ctx, sid, p); err != nil {
+	if errGP := db.GetOrCreatePersonBySteamID(ctx, sid, p); err != nil {
 		return errors.Wrapf(errGP, "Failed to get person: %d", sid)
 	}
 	p.SteamID = sid
@@ -189,11 +189,11 @@ func (g gbans) GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID6
 	} else {
 		log.Warnf("Failed to fetch Player summary for: %v", sid)
 	}
-	if errSave := g.db.SavePerson(ctx, p); errSave != nil {
+	if errSave := db.SavePerson(ctx, p); errSave != nil {
 		return errors.Wrapf(errSave, "Failed to save person")
 	}
 	if ipAddr != "" && !p.IPAddr.Equal(net.ParseIP(ipAddr)) {
-		if errIP := g.db.AddPersonIP(ctx, p, ipAddr); errIP != nil {
+		if errIP := db.AddPersonIP(ctx, p, ipAddr); errIP != nil {
 			return errors.Wrapf(errIP, "Could not add ip record")
 		}
 		p.IPAddr = net.ParseIP(ipAddr)

@@ -58,6 +58,12 @@ var (
 			Help: "Total shots hit",
 		},
 		[]string{"weapon"})
+	playerCountHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "gbans_player_count", Help: "Players on a server",
+	}, []string{"server_name"})
+	mapCountHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "gbans_map_played", Help: "Map played",
+	}, []string{"map"})
 )
 
 func init() {
@@ -69,13 +75,15 @@ func init() {
 		shotHitCounter,
 		logEventCounter,
 		sayCounter,
+		playerCountHistogram,
+		mapCountHistogram,
 	} {
 		_ = prometheus.Register(m)
 	}
 }
 
 // logMetricsConsumer processes incoming log events and updated any associated metrics
-func (g *gbans) logMetricsConsumer() {
+func logMetricsConsumer() {
 	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Any}); err != nil {
 		log.Errorf("Failed to register event consumer")
@@ -83,7 +91,7 @@ func (g *gbans) logMetricsConsumer() {
 	}
 	for {
 		select {
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
 		case e := <-c:
 			logEventCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()

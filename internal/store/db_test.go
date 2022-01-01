@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		}
 	}
 	config.Read()
-	config.General.Mode = config.Test
+	config.General.Mode = config.TestMode
 	db, err := New(config.DB.DSN)
 	if err != nil {
 		log.Errorf("Failed to connect to test database: %v", err)

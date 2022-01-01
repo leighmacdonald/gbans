@@ -3,14 +3,11 @@ package app
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -23,64 +20,26 @@ import (
 
 var (
 	// BuildVersion holds the current git revision, as of build time
-	BuildVersion = "master"
+	BuildVersion   = "master"
+	ctx            context.Context
+	warnings       map[steamid.SID64][]userWarning
+	warningsMu     *sync.RWMutex
+	logRawQueue    chan LogPayload
+	gameLogSource  *remoteSrcdsLogSource
+	bot            ChatBot
+	db             store.Store
+	webHandler     WebHandler
+	serversState   map[string]model.ServerState
+	serversStateMu *sync.RWMutex
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
-}
-
-// gbans is the main application struct.
-// It implements the action.Executor interface
-type gbans struct {
-	*sync.RWMutex
-	// Top-level background context
-	ctx context.Context
-	// Holds ephemeral user warning state for things such as word filters
-	warnings   map[steamid.SID64][]userWarning
-	warningsMu *sync.RWMutex
-	// When a server posts log entries they are sent through here
-	logRawQueue   chan web.LogPayload
-	gameLogSource *remoteSrcdsLogSource
-	bot           discord.ChatBot
-	db            store.Store
-	web           web.WebHandler
-	serversState  map[string]model.ServerState
-	l             *log.Entry
-}
-
-// New instantiates a new application
-func New(ctx context.Context) (*gbans, error) {
-	application := &gbans{
-		RWMutex:     &sync.RWMutex{},
-		ctx:         ctx,
-		warnings:    map[steamid.SID64][]userWarning{},
-		warningsMu:  &sync.RWMutex{},
-		logRawQueue: make(chan web.LogPayload, 1000),
-		l:           log.WithFields(log.Fields{"module": "app"}),
-	}
-	dbStore, se := store.New(config.DB.DSN)
-	if se != nil {
-		return nil, errors.Wrapf(se, "Failed to setup store")
-	}
-	discordBot, be := discord.New(application, dbStore)
-	if be != nil {
-		return nil, errors.Wrapf(be, "Failed to setup bot")
-	}
-	webService, we := web.New(dbStore, discordBot, application)
-	if we != nil {
-		return nil, errors.Wrapf(we, "Failed to setup web")
-	}
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, application.logRawQueue)
-	if errLogSrc != nil {
-		return nil, errors.Wrapf(we, "Failed to setup udp log src")
-	}
-	application.gameLogSource = logSrc
-	application.db = dbStore
-	application.bot = discordBot
-	application.web = webService
-
-	return application, nil
+	serversStateMu = &sync.RWMutex{}
+	ctx = context.Background()
+	warnings = map[steamid.SID64][]userWarning{}
+	warningsMu = &sync.RWMutex{}
+	logRawQueue = make(chan LogPayload, 1000)
 }
 
 type warnReason int
@@ -104,71 +63,96 @@ type userWarning struct {
 }
 
 // Start is the main application entry point
-func (g *gbans) Start() {
+func Start() error {
+	dbStore, se := store.New(config.DB.DSN)
+	if se != nil {
+		return errors.Wrapf(se, "Failed to setup store")
+	}
+	db = dbStore
+
+	discordBot, be := NewDiscord()
+	if be != nil {
+		return errors.Wrapf(be, "Failed to setup bot")
+	}
+	bot = discordBot
+
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, logRawQueue)
+	if errLogSrc != nil {
+		return errors.Wrapf(errLogSrc, "Failed to setup udp log src")
+	}
+	gameLogSource = logSrc
+
+	webService, we := NewWeb()
+	if we != nil {
+		return errors.Wrapf(we, "Failed to setup web")
+	}
+	webHandler = webService
+
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
 		initNetBans()
 	} else {
-		g.l.Warnf("External Network ban lists not enabled")
+		log.Warnf("External Network ban lists not enabled")
 	}
 
 	defer func() {
-		if errC := g.Close(); errC != nil {
-			g.l.Errorf("Returned closing error: %v", errC)
+		if errC := Close(); errC != nil {
+			log.Errorf("Returned closing error: %v", errC)
 		}
 	}()
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		g.initDiscord()
+		initDiscord()
 	} else {
-		g.l.Warnf("discord bot not enabled")
+		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	g.initWorkers()
+	initWorkers()
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		g.initFilters()
+		initFilters()
 	}
 
 	// Start the HTTP server
-	if err := g.web.ListenAndServe(); err != nil {
-		g.l.Errorf("Error shutting down service: %v", err)
+	if err := webHandler.ListenAndServe(); err != nil {
+		return errors.Wrapf(err, "Error shutting down service")
 	}
+	return nil
 }
 
 // Close cleans up the application and closes connections
-func (g *gbans) Close() error {
-	return g.db.Close()
+func Close() error {
+	return db.Close()
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
-func (g *gbans) warnWorker() {
+func warnWorker() {
 	t := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case <-t.C:
 			now := config.Now()
-			g.warningsMu.Lock()
-			for k := range g.warnings {
-				for i, w := range g.warnings[k] {
+			warningsMu.Lock()
+			for k := range warnings {
+				for i, w := range warnings[k] {
 					if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
-						if len(g.warnings[k]) > 1 {
-							g.warnings[k] = append(g.warnings[k][:i], g.warnings[k][i+1])
+						if len(warnings[k]) > 1 {
+							warnings[k] = append(warnings[k][:i], warnings[k][i+1])
 						} else {
-							g.warnings[k] = nil
+							warnings[k] = nil
 						}
 					}
-					if len(g.warnings[k]) == 0 {
-						delete(g.warnings, k)
+					if len(warnings[k]) == 0 {
+						delete(warnings, k)
 					}
 				}
 			}
-			g.warningsMu.Unlock()
-		case <-g.ctx.Done():
-			g.l.Debugf("warnWorker shutting down")
+			warningsMu.Unlock()
+		case <-ctx.Done():
+			log.Debugf("warnWorker shutting down")
 			return
 		}
 	}
@@ -176,14 +160,14 @@ func (g *gbans) warnWorker() {
 
 // logWriter handles writing log events to the database. It does it in batches for performance
 // reasons.
-func (g *gbans) logWriter() {
+func logWriter() {
 	const (
 		freq = time.Second * 10
 	)
 	var logCache []model.ServerEvent
 	events := make(chan model.ServerEvent, 1000)
 	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
-		g.l.Warnf("logWriter Tried to register duplicate reader channel")
+		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	t := time.NewTicker(freq)
 	for {
@@ -194,12 +178,12 @@ func (g *gbans) logWriter() {
 			if len(logCache) == 0 {
 				continue
 			}
-			if errI := g.db.BatchInsertServerLogs(g.ctx, logCache); errI != nil {
-				g.l.Errorf("Failed to batch insert logs: %v", errI)
+			if errI := db.BatchInsertServerLogs(ctx, logCache); errI != nil {
+				log.Errorf("Failed to batch insert logs: %v", errI)
 			}
 			logCache = nil
-		case <-g.ctx.Done():
-			g.l.Debugf("logWriter shuttings down")
+		case <-ctx.Done():
+			log.Debugf("logWriter shuttings down")
 			return
 		}
 	}
@@ -207,14 +191,14 @@ func (g *gbans) logWriter() {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func (g *gbans) logReader() {
+func logReader() {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
 			s := steamid.SID3ToSID64(steamid.SID3(sid1Str))
 			p := model.NewPerson(s)
-			if err := g.db.GetOrCreatePersonBySteamID(g.ctx, s, &p); err != nil {
-				g.l.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
+			if err := db.GetOrCreatePersonBySteamID(ctx, s, &p); err != nil {
+				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
 				return nil
 			}
 			return &p
@@ -223,11 +207,11 @@ func (g *gbans) logReader() {
 	}
 	for {
 		select {
-		case raw := <-g.logRawQueue:
+		case raw := <-logRawQueue:
 			v := logparse.Parse(raw.Message)
 			var s model.Server
-			if e := g.db.GetServerByName(g.ctx, raw.ServerName, &s); e != nil {
-				g.l.Errorf("Failed to get server for log message: %v", e)
+			if e := db.GetServerByName(ctx, raw.ServerName, &s); e != nil {
+				log.Errorf("Failed to get server for log message: %v", e)
 				continue
 			}
 			var (
@@ -237,7 +221,7 @@ func (g *gbans) logReader() {
 			if aposFound {
 				var apv logparse.Pos
 				if err := logparse.NewPosFromString(aposValue, &apv); err != nil {
-					g.l.Warnf("Failed to parse attacker position: %v", err)
+					log.Warnf("Failed to parse attacker position: %v", err)
 				}
 				apos = apv
 			}
@@ -245,7 +229,7 @@ func (g *gbans) logReader() {
 			if vposFound {
 				var vpv logparse.Pos
 				if err := logparse.NewPosFromString(vposValue, &vpv); err != nil {
-					g.l.Warnf("Failed to parse victim position: %v", err)
+					log.Warnf("Failed to parse victim position: %v", err)
 				}
 				vpos = vpv
 			}
@@ -253,7 +237,7 @@ func (g *gbans) logReader() {
 			if asFound {
 				var asPosValue logparse.Pos
 				if err := logparse.NewPosFromString(asValue, &asPosValue); err != nil {
-					g.l.Warnf("Failed to parse assister position: %v", err)
+					log.Warnf("Failed to parse assister position: %v", err)
 				}
 				aspos = asPosValue
 			}
@@ -279,7 +263,7 @@ func (g *gbans) logReader() {
 			if dmgFound {
 				damageP, err := strconv.ParseInt(dmgValue, 10, 32)
 				if err != nil {
-					g.l.Warnf("failed to parse damage value: %v", err)
+					log.Warnf("failed to parse damage value: %v", err)
 				}
 				damage = int(damageP)
 			}
@@ -299,8 +283,8 @@ func (g *gbans) logReader() {
 			}
 
 			event.Emit(se)
-		case <-g.ctx.Done():
-			g.l.Debugf("logReader shutting down")
+		case <-ctx.Done():
+			log.Debugf("logReader shutting down")
 			return
 		}
 	}
@@ -310,31 +294,31 @@ func (g *gbans) logReader() {
 // restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
-	g.warningsMu.Lock()
-	_, found := g.warnings[sid64]
+func addWarning(sid64 steamid.SID64, reason warnReason) {
+	warningsMu.Lock()
+	_, found := warnings[sid64]
 	if !found {
-		g.warnings[sid64] = []userWarning{}
+		warnings[sid64] = []userWarning{}
 	}
-	g.warnings[sid64] = append(g.warnings[sid64], userWarning{
+	warnings[sid64] = append(warnings[sid64], userWarning{
 		WarnReason: reason,
 		CreatedOn:  config.Now(),
 	})
-	g.warningsMu.Unlock()
-	if len(g.warnings[sid64]) >= config.General.WarningLimit {
+	warningsMu.Unlock()
+	if len(warnings[sid64]) >= config.General.WarningLimit {
 		var ban model.Ban
-		g.l.Errorf("Warn limit exceeded (%d): %d", sid64, len(g.warnings[sid64]))
+		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
 		var err error
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			err = g.Ban(action.NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+			err = Ban(NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
 				config.General.WarningExceededDuration.String()), &ban)
 		case config.Ban:
-			err = g.Ban(action.NewBan(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
+			err = Ban(NewBan(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
 				config.General.WarningExceededDuration.String()), &ban)
 		case config.Kick:
 			var pi model.PlayerInfo
-			err = g.Kick(action.NewKick(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
+			err = Kick(NewKick(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
 		}
 		if err != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).Errorf("Failed to apply warning action: %v", err)
@@ -342,50 +326,50 @@ func (g *gbans) addWarning(sid64 steamid.SID64, reason warnReason) {
 	}
 }
 
-func (g *gbans) initFilters() {
+func initFilters() {
 	// TODO load external lists via http
-	c, cancel := context.WithTimeout(g.ctx, time.Second*15)
+	c, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
-	words, err := g.db.GetFilters(c)
+	words, err := db.GetFilters(c)
 	if err != nil {
-		g.l.Fatal("Failed to load word list")
+		log.Fatal("Failed to load word list")
 	}
 	importFilteredWords(words)
-	g.l.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
+	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func (g *gbans) initWorkers() {
-	go g.banSweeper()
-	go g.mapChanger(time.Second * 5)
-	go g.serverStateUpdater()
-	go g.profileUpdater()
-	go g.warnWorker()
-	go g.logReader()
-	go g.logWriter()
-	go g.filterWorker()
-	go g.initLogSrc()
-	go g.logMetricsConsumer()
+func initWorkers() {
+	go banSweeper()
+	go mapChanger(time.Second * 5)
+	go serverStateUpdater()
+	go profileUpdater()
+	go warnWorker()
+	go logReader()
+	go logWriter()
+	go filterWorker()
+	go initLogSrc()
+	go logMetricsConsumer()
 }
 
-func (g *gbans) initLogSrc() {
-	g.gameLogSource.Start()
+func initLogSrc() {
+	gameLogSource.start()
 }
 
-func (g *gbans) initDiscord() {
+func initDiscord() {
 	if config.Discord.Token != "" {
 		events := make(chan model.ServerEvent)
 		if len(config.Discord.LogChannelID) > 0 {
 			if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
-				g.l.Warnf("Error registering discord log event reader")
+				log.Warnf("Error registering discord log event reader")
 			}
 		}
 		go func() {
-			if errBS := g.bot.Start(g.ctx, config.Discord.Token, events); errBS != nil {
-				g.l.Errorf("discord returned error: %v", errBS)
+			if errBS := bot.Start(ctx, config.Discord.Token, events); errBS != nil {
+				log.Errorf("discord returned error: %v", errBS)
 			}
 		}()
 	} else {
-		g.l.Fatalf("discord enabled, but bot token invalid")
+		log.Fatalf("discord enabled, but bot token invalid")
 	}
 }
 

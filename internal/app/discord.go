@@ -1,14 +1,12 @@
 // Package discord implements the ChatBot interface using discord as the underlying chat service
-package discord
+package app
 
 import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -34,18 +32,14 @@ type discord struct {
 	connectedMu     *sync.RWMutex
 	connected       bool
 	commandHandlers map[botCmd]botCommandHandler
-	executor        action.Executor
-	db              store.Store
 }
 
-// New instantiates a new, unconnected, discord instance
-func New(executor action.Executor, s store.Store) (*discord, error) {
+// NewDiscord instantiates a new, unconnected, discord instance
+func NewDiscord() (*discord, error) {
 	b := discord{
 		dg:          nil,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
-		executor:    executor,
-		db:          s,
 	}
 	var commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      b.onBan,

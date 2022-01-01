@@ -10,7 +10,7 @@ import (
 
 func TestMain(m *testing.M) {
 	config.Read()
-	config.General.Mode = config.Test
+	config.General.Mode = config.TestMode
 	os.Exit(m.Run())
 }
 

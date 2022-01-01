@@ -1,14 +1,11 @@
 // Package web implements the HTTP and websocket services for the frontend client and backend server.
-package web
+package app
 
 import (
 	"crypto/tls"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -20,9 +17,6 @@ type WebHandler interface {
 
 type web struct {
 	httpServer *http.Server
-	executor   action.Executor
-	db         store.Store
-	bot        discord.ChatBot
 }
 
 func (w web) ListenAndServe() error {
@@ -30,11 +24,11 @@ func (w web) ListenAndServe() error {
 	return w.httpServer.ListenAndServe()
 }
 
-// New sets up the router and starts the API HTTP handlers
+// NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func New(db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler, error) {
+func NewWeb() (WebHandler, error) {
 	var httpServer *http.Server
-	if config.General.Mode == config.Release {
+	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
@@ -71,8 +65,8 @@ func New(db store.Store, bot discord.ChatBot, exec action.Executor) (WebHandler,
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	w := web{httpServer: httpServer, executor: exec, bot: bot, db: db}
-	w.setupRouter(router, db, bot)
+	w := web{httpServer: httpServer}
+	w.setupRouter(router)
 	return w, nil
 }
 

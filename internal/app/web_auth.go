@@ -1,4 +1,4 @@
-package web
+package app
 
 import (
 	"context"
@@ -35,7 +35,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
+func (w *web) authMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
@@ -122,7 +122,7 @@ func (w *web) onOpenIDCallback() gin.HandlerFunc {
 			return
 		}
 		p := model.NewPerson(sid)
-		if errP := w.executor.PersonBySID(sid, "", &p); errP != nil {
+		if errP := PersonBySID(sid, "", &p); errP != nil {
 			log.Errorf("Failed to fetch user profile: %v", errP)
 			c.Redirect(302, ref)
 			return

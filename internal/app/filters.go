@@ -24,7 +24,7 @@ func importFilteredWords(filters []model.Filter) {
 	wordFilters = filters
 }
 
-func (g *gbans) filterWorker() {
+func filterWorker() {
 	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
@@ -32,11 +32,11 @@ func (g *gbans) filterWorker() {
 	for {
 		select {
 		case evt := <-c:
-			matched, _ := g.ContainsFilteredWord(evt.Extra)
+			matched, _ := ContainsFilteredWord(evt.Extra)
 			if matched {
-				g.addWarning(evt.Source.SteamID, warnLanguage)
+				addWarning(evt.Source.SteamID, warnLanguage)
 			}
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}

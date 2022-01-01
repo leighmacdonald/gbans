@@ -1,13 +1,11 @@
-package web
+package app
 
 import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/action"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
@@ -86,7 +84,7 @@ func (w *web) onPostDemo(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
+func (w *web) onPostPingMod() gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -101,7 +99,7 @@ func (w *web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 			return
 		}
 		var pi model.PlayerInfo
-		err := w.executor.Find(req.SteamID.String(), "", &pi)
+		err := Find(req.SteamID.String(), "", &pi)
 		if err != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -113,7 +111,7 @@ func (w *web) onPostPingMod(bot discord.ChatBot) gin.HandlerFunc {
 		for _, i := range config.Discord.ModRoleIDs {
 			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", i))
 		}
-		e := discord.RespOk(nil, "New User Report")
+		e := respOk(nil, "New User Report")
 		e.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
 		if pi.Player.Name != "" {
 			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
@@ -189,7 +187,7 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 		}
 		if r.Network != "" {
 			var b model.BanNet
-			if bErr := w.executor.BanNetwork(action.NewBanNet(model.Web, r.SteamID.String(),
+			if bErr := BanNetwork(NewBanNet(model.Web, r.SteamID.String(),
 				currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network), &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
@@ -201,7 +199,7 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 			responseOK(c, http.StatusCreated, banNet)
 		} else {
 			var b model.Ban
-			if bErr := w.executor.Ban(action.NewBan(model.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
+			if bErr := Ban(NewBan(model.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
 				r.ReasonText, r.Duration), &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
@@ -583,7 +581,7 @@ func (w *web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *web) onAPIGetCompHist(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetCompHist() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sidStr := c.DefaultQuery("sid", "")
 		if sidStr == "" {

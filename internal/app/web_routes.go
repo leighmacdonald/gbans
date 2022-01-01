@@ -1,13 +1,11 @@
-package web
+package app
 
 import (
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -24,7 +22,7 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
+func (w *web) setupRouter(r *gin.Engine) {
 	handlers := Handlers{
 		Sup: w.onSup,
 	}
@@ -61,7 +59,7 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	// Note that we only use embedded assets for !release modes
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
-	//if config.General.Mode == config.Release {
+	//if config.General.Mode == config.ReleaseMode {
 	//	r.StaticFS("/dist", http.FS(content))
 	//} else {
 	//	r.StaticFS("/dist", http.Dir(ap))
@@ -90,7 +88,7 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	r.GET("/api/profile", w.onAPIProfile(db))
 	r.GET("/api/servers", w.onAPIGetServers(db))
 	r.GET("/api/stats", w.onAPIGetStats(db))
-	r.GET("/api/competitive", w.onAPIGetCompHist(db))
+	r.GET("/api/competitive", w.onAPIGetCompHist())
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())
@@ -103,8 +101,8 @@ func (w *web) setupRouter(r *gin.Engine, db store.Store, bot discord.ChatBot) {
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
 	// IsServer Auth Request
-	serverAuth := r.Use(w.authMiddleWare(db))
-	serverAuth.POST("/api/ping_mod", w.onPostPingMod(bot))
+	serverAuth := r.Use(w.authMiddleWare())
+	serverAuth.POST("/api/ping_mod", w.onPostPingMod())
 	serverAuth.POST("/api/check", w.onPostServerCheck(db))
 	serverAuth.POST("/api/demo", w.onPostDemo(db))
 
