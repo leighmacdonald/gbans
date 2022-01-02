@@ -185,7 +185,7 @@ func (srv *remoteSrcdsLogSource) start() {
 				serverName, found := srv.secretMap[logPayload.source]
 				srv.RUnlock()
 				if !found {
-					log.Tracef("Rejecting unknown secret log source: %s [%s]", logPayload.sourceDNS, logPayload.body)
+					log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
 					continue
 				}
 				payload.ServerName = serverName
@@ -194,7 +194,7 @@ func (srv *remoteSrcdsLogSource) start() {
 				serverName, found := srv.dnsMap[logPayload.sourceDNS]
 				srv.RUnlock()
 				if !found {
-					log.Tracef("Rejecting unknown dns log source: %d [%s]", logPayload.source, logPayload.body)
+					log.Tracef("Rejecting unknown dns log author: %d [%s]", logPayload.source, logPayload.body)
 					continue
 				}
 				payload.ServerName = serverName

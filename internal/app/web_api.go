@@ -99,7 +99,7 @@ func (w *web) onPostPingMod() gin.HandlerFunc {
 			return
 		}
 		var pi model.PlayerInfo
-		err := Find(req.SteamID.String(), "", &pi)
+		err := Find(model.Target(req.SteamID.String()), "", &pi)
 		if err != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -186,9 +186,17 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 			return
 		}
 		if r.Network != "" {
+			bn := banNetworkOpts{
+				banOpts: banOpts{target: model.Target(r.SteamID.String()),
+					author:   model.Target(currentPerson(c).SteamID.String()),
+					duration: model.Duration(r.Duration),
+					reason:   r.ReasonText,
+					origin:   model.Web,
+				},
+				cidr: r.Network,
+			}
 			var b model.BanNet
-			if bErr := BanNetwork(NewBanNet(model.Web, r.SteamID.String(),
-				currentPerson(c).SteamID.String(), r.ReasonText, r.Duration, r.Network), &b); bErr != nil {
+			if bErr := BanNetwork(bn, &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
 					return
@@ -198,9 +206,15 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 			}
 			responseOK(c, http.StatusCreated, banNet)
 		} else {
+			bo := banOpts{
+				target:   model.Target(r.SteamID.String()),
+				author:   model.Target(currentPerson(c).SteamID.String()),
+				duration: model.Duration(r.Duration),
+				reason:   r.ReasonText,
+				origin:   model.Web,
+			}
 			var b model.Ban
-			if bErr := Ban(NewBan(model.Web, r.SteamID.String(), currentPerson(c).SteamID.String(),
-				r.ReasonText, r.Duration), &b); bErr != nil {
+			if bErr := Ban(bo, &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
 					return
@@ -669,6 +683,5 @@ func (w *web) onAPIPostServer() gin.HandlerFunc {
 }
 
 func (w *web) onSup(p Payload) error {
-
 	return nil
 }

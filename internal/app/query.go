@@ -25,7 +25,7 @@ import (
 // actively connected
 //
 // TODO cleanup this mess
-func Find(playerStr string, ip string, pi *model.PlayerInfo) error {
+func Find(playerStr model.Target, ip string, pi *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &extra.Player{},
@@ -46,7 +46,7 @@ func Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 		}
 	} else {
 		found := false
-		sid, errSid := steamid.StringToSID64(playerStr)
+		sid, errSid := steamid.StringToSID64(string(playerStr))
 		if errSid == nil && sid.Valid() {
 			if errPSID := findPlayerBySID(ctx, sid, pi); errPSID == nil {
 				foundSid = sid
@@ -55,7 +55,7 @@ func Find(playerStr string, ip string, pi *model.PlayerInfo) error {
 			}
 		}
 		if !found {
-			if err = findPlayerByName(ctx, playerStr, pi); err == nil {
+			if err = findPlayerByName(ctx, string(playerStr), pi); err == nil {
 				foundSid = result.Player.SID
 				inGame = true
 			}

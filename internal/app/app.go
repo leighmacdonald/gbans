@@ -309,19 +309,28 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		var ban model.Ban
 		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
 		var err error
+		bo := banOpts{
+			target:   model.Target(sid64.String()),
+			author:   model.Target(config.General.Owner.String()),
+			duration: model.Duration(config.General.WarningExceededDuration.String()),
+			reason:   warnReasonString(reason),
+			origin:   model.System,
+		}
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			err = Ban(NewMute(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
-				config.General.WarningExceededDuration.String()), &ban)
+			bo.banType = model.NoComm
+			err = Ban(bo, &ban)
 		case config.Ban:
-			err = Ban(NewBan(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason),
-				config.General.WarningExceededDuration.String()), &ban)
+			bo.banType = model.Banned
+			err = Ban(bo, &ban)
 		case config.Kick:
 			var pi model.PlayerInfo
-			err = Kick(NewKick(model.System, sid64.String(), config.General.Owner.String(), warnReasonString(reason)), &pi)
+			err = Kick(model.System, model.Target(sid64.String()),
+				model.Target(config.General.Owner.String()), warnReasonString(reason), &pi)
 		}
 		if err != nil {
-			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).Errorf("Failed to apply warning action: %v", err)
+			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
+				Errorf("Failed to apply warning action: %v", err)
 		}
 	}
 }

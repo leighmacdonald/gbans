@@ -2,8 +2,10 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
@@ -17,6 +19,38 @@ import (
 	"strings"
 	"time"
 )
+
+// Target defines who the request is being made against
+type Target string
+
+func (t Target) SID64() (steamid.SID64, error) {
+	v, err := steamid.ResolveSID64(context.Background(), string(t))
+	if err != nil {
+		return 0, consts.ErrInvalidSID
+	}
+	if !v.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return v, nil
+}
+
+// Duration defines the length of time the action should be valid for
+// A duration of 0 will be interpreted as permanent and set to 10 years in the future
+type Duration string
+
+func (d Duration) Value() (time.Duration, error) {
+	dur, err := config.ParseDuration(string(d))
+	if err != nil {
+		return 0, consts.ErrInvalidDuration
+	}
+	if dur < 0 {
+		return 0, consts.ErrInvalidDuration
+	}
+	if dur == 0 {
+		dur = time.Hour * 24 * 365 * 10
+	}
+	return dur, nil
+}
 
 // BanType defines the state of the ban for a user, 0 being no ban
 type BanType int
@@ -366,6 +400,11 @@ type Person struct {
 // LoggedIn checks for a valid steamID
 func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
+}
+
+// AsTarget checks for a valid steamID
+func (p *Person) AsTarget() Target {
+	return Target(p.SteamID.String())
 }
 
 // NewPerson allocates a new default person instance
