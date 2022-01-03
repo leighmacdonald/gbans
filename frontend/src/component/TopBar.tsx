@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { handleOnLogin, PermissionLevel } from '../util/api';
-import { GLink } from './GLink';
 import steamLogo from '../icons/steam_login_sm.png';
 import { useNavigate } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';
@@ -18,148 +17,121 @@ import SubjectIcon from '@mui/icons-material/Subject';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import StorageIcon from '@mui/icons-material/Storage';
 import HistoryIcon from '@mui/icons-material/History';
-import MoreIcon from '@mui/icons-material/More';
-import SearchIcon from '@mui/icons-material/Search';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import MenuIcon from '@mui/icons-material/Menu';
 
 import {
     AppBar,
     Avatar,
-    Badge,
+    Box,
     Button,
-    Divider,
+    Container,
     IconButton,
-    InputBase,
     ListItemText,
     Menu,
     Toolbar,
+    Tooltip,
     Typography
 } from '@mui/material';
-//
-// const useStyles = makeStyles((theme: Theme) => ({
-//     grow: {
-//         flexGrow: 1
-//     },
-//     menuButton: {
-//         marginRight: theme.spacing(2)
-//     },
-//     title: {
-//         display: 'none',
-//         [theme.breakpoints.up('sm')]: {
-//             display: 'block'
-//         }
-//     },
-//     search: {
-//         position: 'relative',
-//         borderRadius: theme.shape.borderRadius,
-//         backgroundColor: alpha(theme.palette.common.white, 0.15),
-//         '&:hover': {
-//             backgroundColor: alpha(theme.palette.common.white, 0.25)
-//         },
-//         marginRight: theme.spacing(2),
-//         marginLeft: 0,
-//         width: '100%',
-//         [theme.breakpoints.up('sm')]: {
-//             marginLeft: theme.spacing(3),
-//             width: 'auto'
-//         }
-//     },
-//     searchIcon: {
-//         padding: theme.spacing(0, 2),
-//         height: '100%',
-//         position: 'absolute',
-//         pointerEvents: 'none',
-//         display: 'flex',
-//         alignItems: 'center',
-//         justifyContent: 'center'
-//     },
-//     inputRoot: {
-//         color: 'inherit'
-//     },
-//     inputInput: {
-//         padding: theme.spacing(1, 1, 1, 0),
-//         // vertical padding + font size from searchIcon
-//         paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
-//         transition: theme.transitions.create('width'),
-//         width: '100%',
-//         [theme.breakpoints.up('md')]: {
-//             width: '20ch'
-//         }
-//     },
-//     sectionDesktop: {
-//         display: 'none',
-//         [theme.breakpoints.up('md')]: {
-//             display: 'flex'
-//         }
-//     },
-//     sectionMobile: {
-//         display: 'flex',
-//         [theme.breakpoints.up('md')]: {
-//             display: 'none'
-//         }
-//     },
-//     root: {
-//         display: 'flex'
-//     },
-//     appBar: {
-//         zIndex: theme.zIndex.drawer + 1,
-//         transition: theme.transitions.create(['width', 'margin'], {
-//             easing: theme.transitions.easing.sharp,
-//             duration: theme.transitions.duration.leavingScreen
-//         })
-//     }
-// }));
 
-export const TopBar = (): JSX.Element => {
+interface menuRoute {
+    to: string;
+    text: string;
+    icon: JSX.Element;
+}
+
+export const TopBar = () => {
     const navigate = useNavigate();
-    const [anchorProfileMenuEl, setAnchorProfileMenuEl] =
-        useState<Element | null>(null);
-    const [anchorAdminMenuEl, setAnchorAdminMenuEl] = useState<Element | null>(
+    const { currentUser } = useCurrentUserCtx();
+    const perms = parseInt(localStorage.getItem('permission_level') || '1');
+    const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
     );
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-        useState<Element | null>(null);
-
-    const isProfileMenuOpen = Boolean(anchorProfileMenuEl);
-    const isAdminMenuOpen = Boolean(anchorAdminMenuEl);
-    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
-    const { currentUser } = useCurrentUserCtx();
-
-    const handleAdminMenuOpen = (event: React.MouseEvent) => {
-        setAnchorAdminMenuEl(event.currentTarget);
+    const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
+        null
+    );
+    const [anchorElAdmin, setAnchorElAdmin] =
+        React.useState<null | HTMLElement>(null);
+    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElNav(event.currentTarget);
     };
-    const handleAdminMenuClose = () => {
-        setAnchorAdminMenuEl(null);
-        handleMobileMenuClose();
+    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElUser(event.currentTarget);
     };
 
-    const handleProfileMenuOpen = (event: React.MouseEvent) => {
-        setAnchorProfileMenuEl(event.currentTarget);
+    const handleOpenAdminMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElAdmin(event.currentTarget);
     };
 
-    const handleMobileMenuClose = () => {
-        setMobileMoreAnchorEl(null);
+    const handleCloseNavMenu = () => {
+        setAnchorElNav(null);
     };
 
-    const handleProfileMenuClose = () => {
-        setAnchorProfileMenuEl(null);
-        handleMobileMenuClose();
+    const handleCloseUserMenu = () => {
+        setAnchorElUser(null);
     };
-
-    const handleMobileMenuOpen = (event: React.MouseEvent) => {
-        setMobileMoreAnchorEl(event.currentTarget);
+    const handleCloseAdminMenu = () => {
+        setAnchorElAdmin(null);
     };
-
-    const menuId = 'primary-search-account-menu';
-    const adminMenuId = 'admin-menu';
-
     const loadRoute = (route: string) => {
         navigate(route);
-        handleProfileMenuClose();
-        handleAdminMenuClose();
-        handleMobileMenuClose();
+        // handleProfileMenuClose();
+        // handleAdminMenuClose();
+        // handleMobileMenuClose();
     };
 
+    const menuItems: menuRoute[] = [
+        { to: '/', text: 'Dashboard', icon: <DashboardIcon /> },
+        { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
+        { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
+        { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> }
+    ];
+
+    const userItems: menuRoute[] = [
+        { to: '/profile', text: 'Profile', icon: <AccountCircleIcon /> },
+        { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
+        { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
+    ];
+
+    const adminItems: menuRoute[] = [];
+    if (perms >= PermissionLevel.Moderator) {
+        adminItems.push({
+            to: '/admin/ban',
+            text: 'Ban Player/Net',
+            icon: <BlockIcon />
+        });
+        adminItems.push({
+            to: '/admin/reports',
+            text: 'Reports',
+            icon: <ReportIcon />
+        });
+        adminItems.push({
+            to: '/admin/filters',
+            text: 'Filtered Words',
+            icon: <SubjectIcon />
+        });
+    }
+    if (perms >= PermissionLevel.Admin) {
+        adminItems.push({
+            to: '/admin/people',
+            text: 'People',
+            icon: <PregnantWomanIcon />
+        });
+        adminItems.push({
+            to: '/admin/import',
+            text: 'Import',
+            icon: <ImportExportIcon />
+        });
+        adminItems.push({
+            to: '/admin/servers',
+            text: 'Servers',
+            icon: <DnsIcon />
+        });
+        adminItems.push({
+            to: '/admin/server_logs',
+            text: 'Server Logs',
+            icon: <SubjectIcon />
+        });
+    }
     const renderLinkedMenuItem = (
         text: string,
         route: string,
@@ -171,213 +143,180 @@ export const TopBar = (): JSX.Element => {
         </MenuItem>
     );
 
-    const renderProfileMenu = (
-        <Menu
-            anchorEl={anchorProfileMenuEl}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            id={menuId}
-            keepMounted
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={isProfileMenuOpen}
-            onClose={handleProfileMenuClose}
-        >
-            {renderLinkedMenuItem('Profile', '/profile', <AccountCircleIcon />)}
-            {renderLinkedMenuItem('Settings', '/settings', <SettingsIcon />)}
-            <Divider light />
-            {renderLinkedMenuItem('Logout', '/logout', <ExitToAppIcon />)}
-        </Menu>
-    );
-    const perms = parseInt(localStorage.getItem('permission_level') || '1');
-    const renderAdminMenu = (
-        <Menu
-            anchorEl={anchorAdminMenuEl}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            id={adminMenuId}
-            keepMounted
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={isAdminMenuOpen}
-            onClose={handleAdminMenuClose}
-        >
-            {perms >= PermissionLevel.Moderator &&
-                renderLinkedMenuItem(
-                    'Ban Player/Net',
-                    '/admin/ban',
-                    <BlockIcon />
-                )}
-            {perms >= PermissionLevel.Moderator &&
-                renderLinkedMenuItem(
-                    'Reports',
-                    '/admin/reports',
-                    <ReportIcon />
-                )}
-            {perms >= PermissionLevel.Admin &&
-                renderLinkedMenuItem(
-                    'People',
-                    '/admin/people',
-                    <PregnantWomanIcon />
-                )}
-            {perms >= PermissionLevel.Admin &&
-                renderLinkedMenuItem(
-                    'Import',
-                    '/admin/import',
-                    <ImportExportIcon />
-                )}
-            {perms >= PermissionLevel.Moderator &&
-                renderLinkedMenuItem(
-                    'Filtered Words',
-                    '/admin/filters',
-                    <SubjectIcon />
-                )}
-            {perms >= PermissionLevel.Admin &&
-                renderLinkedMenuItem('Servers', '/admin/servers', <DnsIcon />)}
-            {perms >= PermissionLevel.Admin &&
-                renderLinkedMenuItem(
-                    'Server Logs',
-                    '/admin/server_logs',
-                    <SubjectIcon />
-                )}
-        </Menu>
-    );
-
-    const mobileMenuId = 'primary-search-account-menu-mobile';
-    const renderMobileMenu = (
-        <Menu
-            anchorEl={mobileMoreAnchorEl}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            id={mobileMenuId}
-            keepMounted
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={isMobileMenuOpen}
-            onClose={handleMobileMenuClose}
-        >
-            <MenuItem>
-                <IconButton
-                    aria-label="show 0 new notifications"
-                    color="inherit"
-                >
-                    <Badge badgeContent={0} color="secondary">
-                        <NotificationsIcon />
-                    </Badge>
-                </IconButton>
-                <p>Notifications</p>
-            </MenuItem>
-            <MenuItem onClick={handleProfileMenuOpen}>
-                <IconButton
-                    aria-label="account of current user"
-                    aria-controls="primary-search-account-menu"
-                    aria-haspopup="true"
-                    color="inherit"
-                >
-                    <AccountCircleIcon />
-                </IconButton>
-                <p>Profile</p>
-            </MenuItem>
-        </Menu>
-    );
-
     return (
-        <>
-            <div>
-                <AppBar position="fixed">
-                    <Toolbar>
-                        <Typography variant="h6" noWrap>
-                            <GLink
-                                to={'/'}
-                                primary={'Dashboard'}
-                                icon={<DashboardIcon />}
-                            />
-                        </Typography>
-                        <GLink
-                            to={'/bans'}
-                            primary={'Bans'}
-                            icon={<BlockIcon />}
-                        />
-                        <GLink
-                            to={'/servers'}
-                            primary={'Servers'}
-                            icon={<StorageIcon />}
-                        />
-                        <GLink
-                            to={'/appeal'}
-                            primary={'Appeal'}
-                            icon={<HistoryIcon />}
-                        />
-                        <div>
-                            <div>
-                                <SearchIcon />
-                            </div>
-                            <InputBase
-                                placeholder="Search…"
-                                inputProps={{ 'aria-label': 'search' }}
-                            />
-                        </div>
-                        <div />
-                        <div>
-                            {!currentUser.player ||
-                                (currentUser?.player.steam_id === '' && (
-                                    <Button onClick={handleOnLogin}>
-                                        <img
-                                            src={steamLogo}
-                                            alt={'Steam Login'}
-                                        />
-                                    </Button>
-                                ))}
-                            {currentUser?.player.steam_id != '' && (
+        <AppBar position="static">
+            <Container maxWidth="xl">
+                <Toolbar disableGutters>
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        component="div"
+                        sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
+                    >
+                        Uncletopia
+                    </Typography>
+
+                    <Box
+                        sx={{
+                            flexGrow: 1,
+                            display: { xs: 'flex', md: 'none' }
+                        }}
+                    >
+                        <IconButton
+                            size="large"
+                            aria-label="account of current user"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleOpenNavMenu}
+                            color="inherit"
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorElNav}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'left'
+                            }}
+                            keepMounted
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'left'
+                            }}
+                            open={Boolean(anchorElNav)}
+                            onClose={handleCloseNavMenu}
+                            sx={{
+                                display: { xs: 'block', md: 'none' }
+                            }}
+                        >
+                            {menuItems.map((value) => {
+                                return renderLinkedMenuItem(
+                                    value.text,
+                                    value.to,
+                                    value.icon
+                                );
+                            })}
+                        </Menu>
+                    </Box>
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        component="div"
+                        sx={{
+                            flexGrow: 1,
+                            display: { xs: 'flex', md: 'none' }
+                        }}
+                    >
+                        LOGO
+                    </Typography>
+                    <Box
+                        sx={{
+                            flexGrow: 1,
+                            display: { xs: 'none', md: 'flex' }
+                        }}
+                    >
+                        {menuItems.map((value) => {
+                            return renderLinkedMenuItem(
+                                value.text,
+                                value.to,
+                                value.icon
+                            );
+                        })}
+                    </Box>
+
+                    <Box sx={{ flexGrow: 0 }}>
+                        {!currentUser.player ||
+                            (currentUser?.player.steam_id === '' && (
+                                <Button onClick={handleOnLogin}>
+                                    <img src={steamLogo} alt={'Steam Login'} />
+                                </Button>
+                            ))}
+                        {currentUser.player &&
+                            currentUser?.player.steam_id &&
+                            adminItems && (
                                 <>
-                                    <IconButton
-                                        aria-label="no notifications"
-                                        color="inherit"
-                                    >
-                                        <Badge badgeContent={0}>
-                                            <NotificationsIcon />
-                                        </Badge>
-                                    </IconButton>
-                                    {perms >= PermissionLevel.Moderator && (
-                                        <IconButton
-                                            edge="end"
-                                            aria-label="admin menu"
-                                            aria-controls={menuId}
+                                    <Tooltip title="Mod/Admin">
+                                        <Button
+                                            sx={{ p: 0 }}
+                                            size="large"
+                                            aria-label="account of current user"
+                                            aria-controls="menu-appbar"
                                             aria-haspopup="true"
-                                            onClick={handleAdminMenuOpen}
+                                            onClick={handleOpenAdminMenu}
                                             color="inherit"
                                         >
-                                            <SettingsIcon />
-                                        </IconButton>
-                                    )}
+                                            Admin
+                                        </Button>
+                                    </Tooltip>
+                                    <Menu
+                                        sx={{ mt: '45px' }}
+                                        id="menu-appbar"
+                                        anchorEl={anchorElAdmin}
+                                        anchorOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        keepMounted
+                                        transformOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        open={Boolean(anchorElAdmin)}
+                                        onClose={handleCloseAdminMenu}
+                                    >
+                                        {adminItems.map((value) => {
+                                            return renderLinkedMenuItem(
+                                                value.text,
+                                                value.to,
+                                                value.icon
+                                            );
+                                        })}
+                                    </Menu>
+                                </>
+                            )}
+                        {currentUser.player && currentUser?.player.steam_id && (
+                            <>
+                                <Tooltip title="User Settings">
                                     <IconButton
-                                        edge="end"
-                                        aria-label="account of current user"
-                                        aria-controls={menuId}
-                                        aria-haspopup="true"
-                                        onClick={handleProfileMenuOpen}
-                                        color="inherit"
+                                        onClick={handleOpenUserMenu}
+                                        sx={{ p: 0 }}
                                     >
                                         <Avatar
                                             alt={currentUser.player.personaname}
                                             src={currentUser.player.avatar}
                                         />
                                     </IconButton>
-                                </>
-                            )}
-                        </div>
-                        <div>
-                            <IconButton
-                                aria-label="show more"
-                                aria-controls={mobileMenuId}
-                                aria-haspopup="true"
-                                onClick={handleMobileMenuOpen}
-                                color="inherit"
-                            >
-                                <MoreIcon />
-                            </IconButton>
-                        </div>
-                    </Toolbar>
-                </AppBar>
-
-                {perms >= PermissionLevel.Moderator && renderAdminMenu}
-                {renderMobileMenu}
-                {renderProfileMenu}
-            </div>
-        </>
+                                </Tooltip>
+                                <Menu
+                                    sx={{ mt: '45px' }}
+                                    id="menu-appbar"
+                                    anchorEl={anchorElUser}
+                                    anchorOrigin={{
+                                        vertical: 'top',
+                                        horizontal: 'right'
+                                    }}
+                                    keepMounted
+                                    transformOrigin={{
+                                        vertical: 'top',
+                                        horizontal: 'right'
+                                    }}
+                                    open={Boolean(anchorElUser)}
+                                    onClose={handleCloseUserMenu}
+                                >
+                                    {userItems.map((value) => {
+                                        return renderLinkedMenuItem(
+                                            value.text,
+                                            value.to,
+                                            value.icon
+                                        );
+                                    })}
+                                </Menu>
+                            </>
+                        )}
+                    </Box>
+                </Toolbar>
+            </Container>
+        </AppBar>
     );
 };

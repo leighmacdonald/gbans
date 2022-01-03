@@ -64,7 +64,7 @@ testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 lint:
-	@golangci-lint run
+	@golangci-lint run --fast
 
 bench:
 	@go test -run=NONE -bench=. $(GO_FLAGS) ./...

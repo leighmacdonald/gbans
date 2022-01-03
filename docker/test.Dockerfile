@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine
+FROM golang:alpine
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 WORKDIR /build
 RUN apk add make git build-base dumb-init yarn
