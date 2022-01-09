@@ -8,7 +8,7 @@ WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
 
-FROM golang:alpine as build
+FROM golang:1.18beta1-alpine as build
 WORKDIR /build
 RUN apk add make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -16,7 +17,8 @@ type WebHandler interface {
 }
 
 type web struct {
-	httpServer *http.Server
+	httpServer         *http.Server
+	botSendMessageChan chan discordPayload
 }
 
 func (w web) ListenAndServe() error {
@@ -26,7 +28,7 @@ func (w web) ListenAndServe() error {
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb() (WebHandler, error) {
+func NewWeb(db store.Store, botSendMessageChan chan discordPayload) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -65,8 +67,8 @@ func NewWeb() (WebHandler, error) {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	w := web{httpServer: httpServer}
-	w.setupRouter(router)
+	w := web{httpServer: httpServer, botSendMessageChan: botSendMessageChan}
+	w.setupRouter(db, router)
 	return w, nil
 }
 

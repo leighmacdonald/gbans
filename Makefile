@@ -1,8 +1,6 @@
 .PHONY: all test clean build install frontend sourcemod
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
-GIT_TAG =
-GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
 all: frontend sourcemod build

@@ -96,7 +96,7 @@ type Pos struct {
 	Z float64 `json:"z"`
 }
 
-// String returns a ST_MakePointM
+// Encode returns a ST_MakePointM
 // Uses ESPG 4326 (WSG-84)
 func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
@@ -156,6 +156,22 @@ const (
 	Spy       PlayerClass = 9
 	Multi     PlayerClass = 10
 )
+
+func (pc PlayerClass) String() string {
+	return map[PlayerClass]string{
+		Spectator: "spectator",
+		Scout:     "scout",
+		Soldier:   "soldier",
+		Pyro:      "pyro",
+		Demo:      "demo",
+		Heavy:     "heavy",
+		Engineer:  "engineer",
+		Medic:     "medic",
+		Sniper:    "sniper",
+		Spy:       "spy",
+		Multi:     "multi",
+	}[pc]
+}
 
 // Medigun holds which medigun a player was using
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

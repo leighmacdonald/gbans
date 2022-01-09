@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -22,11 +23,7 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (w *web) setupRouter(r *gin.Engine) {
-	handlers := Handlers{
-		Sup: w.onSup,
-	}
-	rpcService := NewService(handlers)
+func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.Use(gin.Logger())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOriginFunc = func(requestedOrigin string) bool {
@@ -82,7 +79,7 @@ func (w *web) setupRouter(r *gin.Engine) {
 	}
 
 	r.GET("/metrics", prometheusHandler())
-	r.GET("/auth/callback", w.onOpenIDCallback())
+	r.GET("/auth/callback", w.onOpenIDCallback(db))
 	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
 	r.POST("/api/bans", w.onAPIGetBans(db))
 	r.GET("/api/profile", w.onAPIProfile(db))
@@ -92,7 +89,6 @@ func (w *web) setupRouter(r *gin.Engine) {
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())
-	r.GET("/api/ws", rpcService.Start())
 
 	// Service discovery endpoints
 	r.GET("/api/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))
@@ -101,19 +97,19 @@ func (w *web) setupRouter(r *gin.Engine) {
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
 	// IsServer Auth Request
-	serverAuth := r.Use(w.authMiddleWare())
-	serverAuth.POST("/api/ping_mod", w.onPostPingMod())
+	serverAuth := r.Use(w.authMiddleWare(db))
+	serverAuth.POST("/api/ping_mod", w.onPostPingMod(db))
 	serverAuth.POST("/api/check", w.onPostServerCheck(db))
 	serverAuth.POST("/api/demo", w.onPostDemo(db))
 
-	// Basic logged in user
+	// Basic logged-in user
 	authed := r.Use(w.authMiddleware(db, model.PAuthenticated))
 	authed.GET("/api/current_profile", w.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", w.onTokenRefresh())
 
 	// Moderator access
 	modRoute := r.Use(w.authMiddleware(db, model.PModerator))
-	modRoute.POST("/api/ban", w.onAPIPostBanCreate())
+	modRoute.POST("/api/ban", w.onAPIPostBanCreate(db))
 
 	// Admin access
 	modAdmin := r.Use(w.authMiddleware(db, model.PAdmin))

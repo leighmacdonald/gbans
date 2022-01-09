@@ -35,13 +35,13 @@ const (
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	udpAddr   *net.UDPAddr
-	sink      chan LogPayload
+	sink      chan model.LogPayload
 	db        store.Store
 	secretMap map[int64]string
 	dnsMap    map[string]string
 }
 
-func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan LogPayload) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
@@ -179,7 +179,7 @@ func (srv *remoteSrcdsLogSource) start() {
 			srv.updateSecrets()
 			srv.updateDNS()
 		case logPayload := <-inChan:
-			payload := LogPayload{Message: logPayload.body}
+			payload := model.LogPayload{Message: logPayload.body}
 			if logPayload.secure {
 				srv.RLock()
 				serverName, found := srv.secretMap[logPayload.source]

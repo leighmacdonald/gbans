@@ -41,6 +41,11 @@ int g_port;
 char g_host[128];
 char g_server_name[128];
 char g_server_key[41];
+new String:g_sDemoName[256] = "";
+new String:g_sLastDemoName[256] = "";
+
+new Handle:output_file = INVALID_HANDLE;
+new Handle:postForm = INVALID_HANDLE;
 
 public
 Plugin myinfo = {name = PLUGIN_NAME, author = PLUGIN_AUTHOR, description = "gbans game client",
@@ -60,6 +65,9 @@ void OnPluginStart() {
     RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
+
+	RegServerCmd("tv_record", Command_StartRecord);
+	RegServerCmd("tv_stoprecord", Command_StopRecord);
 }
 
 void ReadConfig() {
@@ -416,4 +424,89 @@ void OnClientAuthorized(int client, const char[] auth) {
     PrintToServer("[GB] Checking ban state for: %s", auth);
 #endif
     CheckPlayer(client, auth, ip);
+}
+
+public Action:Command_StartRecord(args)
+{
+	if (strlen(g_sDemoName) == 0) {
+		GetCmdArgString(g_sDemoName, sizeof(g_sDemoName));
+		StripQuotes(g_sDemoName);
+		CStrToLower(g_sDemoName);
+	}
+	return Plugin_Continue;
+}
+
+public Action:Command_StopRecord(args)
+{
+	TrimString(g_sDemoName);
+	if (strlen(g_sDemoName) != 0) {
+		PrintToChatAll("[demos.tf]: Demo recording completed");
+		g_sLastDemoName = g_sDemoName;
+		g_sDemoName = "";
+		CreateTimer(3.0, StartDemoUpload);
+	}
+	return Plugin_Continue;
+}
+
+public Action:StartDemoUpload(Handle:timer)
+{
+	decl String:fullPath[128];
+	Format(fullPath, sizeof(fullPath), "%s.dem", g_sLastDemoName);
+	UploadDemo(fullPath);
+}
+
+UploadDemo(const String:fullPath[])
+{
+	decl String:APIKey[128];
+	GetConVarString(g_hCvarAPIKey, APIKey, sizeof(APIKey));
+	decl String:BaseUrl[64];
+	GetConVarString(g_hCvarUrl, BaseUrl, sizeof(BaseUrl));
+	new String:Map[64];
+	GetCurrentMap(Map, sizeof(Map));
+	PrintToChatAll("Uploading demo %s", fullPath);
+	new Handle:curl = curl_easy_init();
+	CURL_DEFAULT_OPT(curl);
+
+	postForm = curl_httppost();
+	curl_formadd(postForm, CURLFORM_COPYNAME, "demo", CURLFORM_FILE, fullPath, CURLFORM_END);
+	curl_formadd(postForm, CURLFORM_COPYNAME, "name", CURLFORM_COPYCONTENTS, fullPath, CURLFORM_END);
+ 	curl_formadd(postForm, CURLFORM_COPYNAME, "key", CURLFORM_COPYCONTENTS, APIKey, CURLFORM_END);
+	curl_easy_setopt_handle(curl, CURLOPT_HTTPPOST, postForm);
+
+	output_file = curl_OpenFile("output_demo.json", "w");
+	curl_easy_setopt_handle(curl, CURLOPT_WRITEDATA, output_file);
+	decl String:fullUrl[128];
+	Format(fullUrl, sizeof(fullUrl), "%s/upload", BaseUrl);
+	curl_easy_setopt_string(curl, CURLOPT_URL, fullUrl);
+	curl_easy_perform_thread(curl, onComplete);
+}
+
+public onComplete(Handle:hndl, CURLcode:code)
+{
+	if(code != CURLE_OK)
+	{
+		new String:error_buffer[256];
+		curl_easy_strerror(code, error_buffer, sizeof(error_buffer));
+		CloseHandle(output_file);
+		CloseHandle(hndl);
+		PrintToChatAll("cURLCode error: %d", code);
+	}
+	else
+	{
+		CloseHandle(output_file);
+		CloseHandle(hndl);
+		ShowResponse();
+	}
+	CloseHandle(postForm);
+	return;
+}
+
+public ShowResponse()
+{
+	new Handle:resultFile = OpenFile("output_demo.json", "r");
+	new String:output[512];
+	ReadFileString(resultFile, output, sizeof(output));
+	PrintToChatAll("[demos.tf]: %s", output);
+    LogToGame("[demos.tf]: %s", output);
+	return;
 }

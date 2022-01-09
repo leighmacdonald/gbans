@@ -3,7 +3,11 @@ package store
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"sync"
 )
 
 func (db *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
@@ -31,4 +35,133 @@ func (db *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
 	}
 	return nil
 
+}
+
+type PlayerStats struct {
+	Kills   int64
+	Assists int64
+	Deaths  int64
+	Damage  int64
+	Healing int64
+	Shots   int64
+	Hits    int64
+}
+
+// GetPlayerStats calculates and returns basic stats for a player using the server_log events
+// FIXME Since we currently run on high-core count hardware with nvme drives
+// we are running the queries concurrently for now
+func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64) (PlayerStats, error) {
+	var stats PlayerStats
+	wg := &sync.WaitGroup{}
+	mu := &sync.RWMutex{}
+
+	wg.Add(7)
+	go func() {
+		defer wg.Done()
+		dmg, errDmg := db.getPlayerDamage(ctx, sid)
+		if errDmg != nil {
+			log.Warnf("Failed to get player damage")
+		}
+		mu.Lock()
+		stats.Damage = dmg
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		dmg, errDmg := db.getPlayerHealing(ctx, sid)
+		if errDmg != nil {
+			log.Warnf("Failed to get player damage")
+		}
+		mu.Lock()
+		stats.Damage = dmg
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.ShotFired)
+		if errDmg != nil {
+			log.Warnf("Failed to get player shits fired")
+		}
+		mu.Lock()
+		stats.Shots = count
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.ShotHit)
+		if errDmg != nil {
+			log.Warnf("Failed to get player shots hit")
+		}
+		mu.Lock()
+		stats.Hits = count
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.Killed)
+		if errDmg != nil {
+			log.Warnf("Failed to get player kills")
+		}
+		mu.Lock()
+		stats.Kills = count
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.KillAssist)
+		if errDmg != nil {
+			log.Warnf("Failed to get player assists")
+		}
+		mu.Lock()
+		stats.Assists = count
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		count, errDmg := db.getPlayerEventTargetCount(ctx, sid, logparse.Killed)
+		if errDmg != nil {
+			log.Warnf("Failed to get player deaths")
+		}
+		mu.Lock()
+		stats.Deaths = count
+		mu.Unlock()
+	}()
+	wg.Wait()
+	return stats, nil
+}
+
+func (db *pgStore) getPlayerDamage(ctx context.Context, sid steamid.SID64) (int64, error) {
+	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
+	var dmg int64
+	if err := db.c.QueryRow(ctx, q, sid.Int64(), logparse.Damage).Scan(&dmg); err != nil {
+		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
+	}
+	return dmg, nil
+}
+
+func (db *pgStore) getPlayerHealing(ctx context.Context, sid steamid.SID64) (int64, error) {
+	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
+	var dmg int64
+	if err := db.c.QueryRow(ctx, q, sid.Int64(), logparse.Healed).Scan(&dmg); err != nil {
+		return 0, errors.Wrapf(err, "Failed to fetch player healing sum")
+	}
+	return dmg, nil
+}
+
+func (db *pgStore) getPlayerEventCount(ctx context.Context, sid steamid.SID64, event logparse.MsgType) (int64, error) {
+	const q = `SELECT count(*) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
+	var count int64
+	if err := db.c.QueryRow(ctx, q, sid.Int64(), event).Scan(&count); err != nil {
+		return 0, errors.Wrapf(err, "Failed to fetch player event count")
+	}
+	return count, nil
+}
+
+func (db *pgStore) getPlayerEventTargetCount(ctx context.Context, sid steamid.SID64, event logparse.MsgType) (int64, error) {
+	const q = `SELECT count(*) as total FROM server_log s WHERE s.target_id = $1 AND event_type = $2`
+	var count int64
+	if err := db.c.QueryRow(ctx, q, sid.Int64(), event).Scan(&count); err != nil {
+		return 0, errors.Wrapf(err, "Failed to fetch player event target count")
+	}
+	return count, nil
 }

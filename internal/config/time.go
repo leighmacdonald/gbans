@@ -98,6 +98,9 @@ func FmtDuration(t time.Time) string {
 	if min > 0 {
 		pcs = append(pcs, fmt.Sprintf("%dm", min))
 	}
+	if len(pcs) == 0 {
+		return "~now"
+	}
 	return strings.Join(pcs, " ")
 }
 

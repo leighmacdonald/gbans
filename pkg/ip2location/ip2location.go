@@ -184,7 +184,7 @@ func (ll *LatLong) Value() (driver.Value, error) {
 }
 
 // Scan implements the sql.Scanner interface for conversion to our custom type
-func (ll *LatLong) Scan(v interface{}) error {
+func (ll *LatLong) Scan(v any) error {
 	// Should be more strictly to check this type.
 	llStrB, ok := v.([]byte)
 	if !ok {
@@ -472,7 +472,7 @@ func extractZip(data []byte, dest string, filename string) error {
 			}
 			defer func() {
 				if errC2 := fo.Close(); errC2 != nil {
-					panic(errC2)
+					log.Errorf("Error closing open zip file: %v", errC2)
 				}
 			}()
 

@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
@@ -24,13 +25,10 @@ var (
 	ctx            context.Context
 	warnings       map[steamid.SID64][]userWarning
 	warningsMu     *sync.RWMutex
-	logRawQueue    chan LogPayload
-	gameLogSource  *remoteSrcdsLogSource
-	bot            ChatBot
-	db             store.Store
-	webHandler     WebHandler
+	logRawQueue    chan model.LogPayload
 	serversState   map[string]model.ServerState
 	serversStateMu *sync.RWMutex
+	discordSendMsg chan discordPayload
 )
 
 func init() {
@@ -39,7 +37,8 @@ func init() {
 	ctx = context.Background()
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logRawQueue = make(chan LogPayload, 1000)
+	logRawQueue = make(chan model.LogPayload, 1000)
+	discordSendMsg = make(chan discordPayload)
 }
 
 type warnReason int
@@ -62,31 +61,27 @@ type userWarning struct {
 	CreatedOn  time.Time
 }
 
+type discordPayload struct {
+	channelId string
+	message   *discordgo.MessageEmbed
+}
+
 // Start is the main application entry point
 func Start() error {
 	dbStore, se := store.New(config.DB.DSN)
 	if se != nil {
 		return errors.Wrapf(se, "Failed to setup store")
 	}
-	db = dbStore
+	defer func() {
+		if errClose := dbStore.Close(); errClose != nil {
+			log.Errorf("Error cleanly closing app: %v", errClose)
+		}
+	}()
 
-	discordBot, be := NewDiscord()
-	if be != nil {
-		return errors.Wrapf(be, "Failed to setup bot")
-	}
-	bot = discordBot
-
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, dbStore, logRawQueue)
-	if errLogSrc != nil {
-		return errors.Wrapf(errLogSrc, "Failed to setup udp log src")
-	}
-	gameLogSource = logSrc
-
-	webService, we := NewWeb()
+	webService, we := NewWeb(dbStore, discordSendMsg)
 	if we != nil {
 		return errors.Wrapf(we, "Failed to setup web")
 	}
-	webHandler = webService
 
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
@@ -95,37 +90,26 @@ func Start() error {
 		log.Warnf("External Network ban lists not enabled")
 	}
 
-	defer func() {
-		if errC := Close(); errC != nil {
-			log.Errorf("Returned closing error: %v", errC)
-		}
-	}()
-
 	// Start the discord service
 	if config.Discord.Enabled {
-		initDiscord()
+		go initDiscord(dbStore, discordSendMsg)
 	} else {
 		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	initWorkers()
+	initWorkers(dbStore, discordSendMsg)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		initFilters()
+		initFilters(dbStore)
 	}
 
-	// Start the HTTP server
-	if err := webHandler.ListenAndServe(); err != nil {
+	// Start & block, listening on the HTTP server
+	if err := webService.ListenAndServe(); err != nil {
 		return errors.Wrapf(err, "Error shutting down service")
 	}
 	return nil
-}
-
-// Close cleans up the application and closes connections
-func Close() error {
-	return db.Close()
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
@@ -160,7 +144,7 @@ func warnWorker() {
 
 // logWriter handles writing log events to the database. It does it in batches for performance
 // reasons.
-func logWriter() {
+func logWriter(db store.StatStore) {
 	const (
 		freq = time.Second * 10
 	)
@@ -191,7 +175,7 @@ func logWriter() {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func logReader() {
+func logReader(db store.Store) {
 	getPlayer := func(id string, v map[string]string) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
@@ -294,7 +278,7 @@ func logReader() {
 // restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(sid64 steamid.SID64, reason warnReason) {
+func addWarning(db store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
 	warningsMu.Lock()
 	_, found := warnings[sid64]
 	if !found {
@@ -319,13 +303,13 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 		switch config.General.WarningExceededAction {
 		case config.Gag:
 			bo.banType = model.NoComm
-			err = Ban(bo, &ban)
+			err = Ban(db, bo, &ban, botSendMessageChan)
 		case config.Ban:
 			bo.banType = model.Banned
-			err = Ban(bo, &ban)
+			err = Ban(db, bo, &ban, botSendMessageChan)
 		case config.Kick:
 			var pi model.PlayerInfo
-			err = Kick(model.System, model.Target(sid64.String()),
+			err = Kick(db, model.System, model.Target(sid64.String()),
 				model.Target(config.General.Owner.String()), warnReasonString(reason), &pi)
 		}
 		if err != nil {
@@ -335,7 +319,7 @@ func addWarning(sid64 steamid.SID64, reason warnReason) {
 	}
 }
 
-func initFilters() {
+func initFilters(db store.FilterStore) {
 	// TODO load external lists via http
 	c, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
@@ -347,25 +331,33 @@ func initFilters() {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func initWorkers() {
-	go banSweeper()
-	go mapChanger(time.Second * 5)
-	go serverStateUpdater()
-	go profileUpdater()
+func initWorkers(db store.Store, botSendMessageChan chan discordPayload) {
+	go banSweeper(db)
+	go mapChanger(db, time.Second*5)
+	go serverStateUpdater(db)
+	go profileUpdater(db)
 	go warnWorker()
-	go logReader()
-	go logWriter()
-	go filterWorker()
-	go initLogSrc()
+	go logReader(db)
+	go logWriter(db)
+	go filterWorker(db, botSendMessageChan)
+	go initLogSrc(db)
 	go logMetricsConsumer()
 }
 
-func initLogSrc() {
-	gameLogSource.start()
+func initLogSrc(db store.Store) {
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, db, logRawQueue)
+	if errLogSrc != nil {
+		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
+	}
+	logSrc.start()
 }
 
-func initDiscord() {
+func initDiscord(db store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {
+		bot, be := NewDiscord(db)
+		if be != nil {
+			log.Fatalf("Failed to setup bot: %v", be)
+		}
 		events := make(chan model.ServerEvent)
 		if len(config.Discord.LogChannelID) > 0 {
 			if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
@@ -373,10 +365,18 @@ func initDiscord() {
 			}
 		}
 		go func() {
-			if errBS := bot.Start(ctx, config.Discord.Token, events); errBS != nil {
-				log.Errorf("discord returned error: %v", errBS)
+			for {
+				select {
+				case m := <-botSendMessageChan:
+					if errSend := bot.SendEmbed(m.channelId, m.message); errSend != nil {
+						log.Errorf("Failed to send discord message: %v", errSend)
+					}
+				}
 			}
 		}()
+		if errBS := bot.Start(ctx, config.Discord.Token, events); errBS != nil {
+			log.Errorf("discord returned error: %v", errBS)
+		}
 	} else {
 		log.Fatalf("discord enabled, but bot token invalid")
 	}

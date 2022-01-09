@@ -283,5 +283,5 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 	if errC := tx.Commit(lCtx); errC != nil {
 		log.Errorf("Failed to commit log entries: %v", errC)
 	}
-	return nil
+	return re
 }

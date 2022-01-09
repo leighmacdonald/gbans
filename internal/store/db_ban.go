@@ -19,7 +19,7 @@ func (db *pgStore) DropBan(ctx context.Context, ban *model.Ban) error {
 	return nil
 }
 
-func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier interface{}, full bool, b *model.BannedPerson) error {
+func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, full bool, b *model.BannedPerson) error {
 	var q = fmt.Sprintf(`
 	SELECT
 		b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,

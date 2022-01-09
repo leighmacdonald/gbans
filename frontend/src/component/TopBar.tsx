@@ -74,9 +74,6 @@ export const TopBar = () => {
     };
     const loadRoute = (route: string) => {
         navigate(route);
-        // handleProfileMenuClose();
-        // handleAdminMenuClose();
-        // handleMobileMenuClose();
     };
 
     const menuItems: menuRoute[] = [
@@ -146,7 +143,7 @@ export const TopBar = () => {
     return (
         <AppBar position="static">
             <Container maxWidth="xl">
-                <Toolbar disableGutters>
+                <Toolbar disableGutters variant="dense">
                     <Typography
                         variant="h6"
                         noWrap
@@ -228,9 +225,14 @@ export const TopBar = () => {
                     <Box sx={{ flexGrow: 0 }}>
                         {!currentUser.player ||
                             (currentUser?.player.steam_id === '' && (
-                                <Button onClick={handleOnLogin}>
-                                    <img src={steamLogo} alt={'Steam Login'} />
-                                </Button>
+                                <Tooltip title="Steam Login">
+                                    <Button onClick={handleOnLogin}>
+                                        <img
+                                            src={steamLogo}
+                                            alt={'Steam Login'}
+                                        />
+                                    </Button>
+                                </Tooltip>
                             ))}
                         {currentUser.player &&
                             currentUser?.player.steam_id &&

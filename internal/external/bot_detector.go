@@ -19,8 +19,8 @@ type tf2bdSchema struct {
 			PlayerName string `json:"player_name,omitempty"`
 			Time       int    `json:"time,omitempty"`
 		} `json:"last_seen,omitempty"`
-		Steamid interface{} `json:"steamid"`
-		Proof   []string    `json:"proof,omitempty"`
+		Steamid any      `json:"steamid"`
+		Proof   []string `json:"proof,omitempty"`
 	} `json:"players"`
 }
 
@@ -30,11 +30,11 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 		return nil, err
 	}
 	var ids []steamid.SID64
-	var err error
 	for _, s := range t.Players {
 		var id steamid.SID64
 		switch s.Steamid.(type) {
 		case string:
+			var err error
 			id, err = steamid.StringToSID64(s.Steamid.(string))
 			if err != nil {
 				return nil, err

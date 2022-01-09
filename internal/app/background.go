@@ -19,7 +19,7 @@ import (
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func profileUpdater() {
+func profileUpdater(db store.PersonStore) {
 	var update = func() {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
@@ -73,7 +73,7 @@ func profileUpdater() {
 
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
 // information. This data is accessed often so it is cached
-func serverStateUpdater() {
+func serverStateUpdater(db store.ServerStore) {
 	freq, errD := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errD != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
@@ -85,7 +85,7 @@ func serverStateUpdater() {
 		}
 
 		newServers := model.ServerStateCollection{}
-		done := make(chan interface{})
+		done := make(chan any)
 		results := make(chan model.ServerState)
 
 		wgC := &sync.WaitGroup{}
@@ -132,10 +132,10 @@ func serverStateUpdater() {
 						return
 					}
 					ss.A2S = *a
-					playerCountHistogram.With(prometheus.Labels{"server_name": server.ServerName}).
+					playerCounter.With(prometheus.Labels{"server_name": server.ServerName}).
 						Observe(float64(a.Players))
 					if a.Players > 1 {
-						mapCountHistogram.With(prometheus.Labels{"map": a.Map}).Observe(freq.Seconds())
+						mapCounter.With(prometheus.Labels{"map": a.Map}).Add(freq.Seconds())
 					}
 				}(&ss)
 				iwg.Wait()
@@ -186,7 +186,7 @@ func serverStateUpdater() {
 // Relevant config values:
 // - general.map_changer_enabled
 // - general.default_map
-func mapChanger(timeout time.Duration) {
+func mapChanger(db store.ServerStore, timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
@@ -257,7 +257,7 @@ func mapChanger(timeout time.Duration) {
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
-func banSweeper() {
+func banSweeper(db store.Store) {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
 	for {

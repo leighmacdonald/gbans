@@ -14,12 +14,12 @@ type LogsTFResult struct {
 	Results    int  `json:"results"`
 	Total      int  `json:"total"`
 	Parameters struct {
-		Player   string      `json:"player"`
-		Uploader interface{} `json:"uploader"`
-		Title    interface{} `json:"title"`
-		Map      interface{} `json:"map"`
-		Limit    int         `json:"limit"`
-		Offset   int         `json:"offset"`
+		Player   string `json:"player"`
+		Uploader any    `json:"uploader"`
+		Title    any    `json:"title"`
+		Map      any    `json:"map"`
+		Limit    int    `json:"limit"`
+		Offset   int    `json:"offset"`
 	} `json:"parameters"`
 	Logs []struct {
 		ID      int    `json:"id"`

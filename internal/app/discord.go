@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -17,31 +18,37 @@ import (
 	"time"
 )
 
-//const (
-//	embedIconURL = "https://raw.githubusercontent.com/leighmacdonald/gbans/master/frontend/src/icons/logo.svg"
-//)
-
 var (
 	errCommandFailed = errors.New("Command failed")
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
+func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
+		return errSend
+	}
+	return nil
+}
+
 // discord implements the ChatBot interface for the discord chat platform.
 type discord struct {
-	dg              *discordgo.Session
-	connectedMu     *sync.RWMutex
-	connected       bool
-	commandHandlers map[botCmd]botCommandHandler
+	dg                 *discordgo.Session
+	db                 store.Store
+	connectedMu        *sync.RWMutex
+	connected          bool
+	commandHandlers    map[botCmd]botCommandHandler
+	botSendMessageChan chan discordPayload
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord() (*discord, error) {
+func NewDiscord(db store.Store) (*discord, error) {
 	b := discord{
 		dg:          nil,
+		db:          db,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
 	}
-	var commandHandlers = map[botCmd]botCommandHandler{
+	b.commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      b.onBan,
 		cmdCheck:    b.onCheck,
 		cmdCSay:     b.onCSay,
@@ -56,8 +63,8 @@ func NewDiscord() (*discord, error) {
 		cmdSetSteam: b.onSetSteam,
 		cmdHistory:  b.onHistory,
 		cmdFilter:   b.onFilter,
+		cmdStats:    b.onStats,
 	}
-	b.commandHandlers = commandHandlers
 	return &b, nil
 }
 
@@ -88,9 +95,7 @@ func (b *discord) Start(ctx context.Context, token string, eventChan chan model.
 		return errors.Wrap(err, "Error opening discord connection")
 	}
 
-	if len(config.Discord.LogChannelID) > 0 {
-		go b.discordMessageQueueReader(ctx, eventChan)
-	}
+	go b.discordMessageQueueReader(ctx, eventChan)
 
 	if err2 := b.botRegisterSlashCommands(); err2 != nil {
 		log.Errorf("Failed to register discord slash commands: %v", err2)
@@ -226,13 +231,6 @@ func (b *discord) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.
 
 func (b *discord) Send(channelId string, message string, wrap bool) error {
 	return b.sendChannelMessage(b.dg, channelId, message, wrap)
-}
-
-func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
-	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
-		return errSend
-	}
-	return nil
 }
 
 func addFieldInline(e *discordgo.MessageEmbed, title string, value string) {

@@ -128,6 +128,12 @@ func (r Reason) String() string {
 	return reasonStr[r]
 }
 
+// LogPayload is the container for log/message payloads
+type LogPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
+}
+
 type BanASN struct {
 	BanASNId   int64
 	ASNum      int64
@@ -502,7 +508,7 @@ type RawLogEvent struct {
 }
 
 // Unmarshal is just a helper to
-func (e *RawLogEvent) Unmarshal(output interface{}) error {
+func (e *RawLogEvent) Unmarshal(output any) error {
 	return logparse.Unmarshal(e.Event, output)
 }
 

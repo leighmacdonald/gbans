@@ -29,6 +29,10 @@ const (
 	cmdSay         botCmd = "say"
 	cmdServers     botCmd = "servers"
 	cmdSetSteam    botCmd = "set_steam"
+	cmdStats       botCmd = "stats"
+	cmdStatsGlobal botCmd = "global"
+	cmdStatsPlayer botCmd = "player"
+	cmdStatsServer botCmd = "server"
 	cmdHistory     botCmd = "history"
 	cmdHistoryIP   botCmd = "ip"
 	cmdHistoryChat botCmd = "chat"
@@ -39,7 +43,6 @@ const (
 )
 
 func (b *discord) botRegisterSlashCommands() error {
-	// TODO register the commands again upon adding new servers to update autocomplete opts
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "user_identifier",
@@ -271,6 +274,36 @@ func (b *discord) botRegisterSlashCommands() error {
 			},
 		},
 		{
+			ApplicationID:     config.Discord.AppID,
+			Name:              string(cmdStats),
+			Description:       "Query stats",
+			DefaultPermission: true,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        string(cmdStatsPlayer),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Get a players stats",
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+					},
+				},
+				{
+					Name:        string(cmdStatsServer),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Get a servers stats",
+					Options: []*discordgo.ApplicationCommandOption{
+						optServerID,
+					},
+				},
+				{
+					Name:        string(cmdStatsGlobal),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Description: "Get a global stats",
+					Options:     []*discordgo.ApplicationCommandOption{},
+				},
+			},
+		},
+		{
 			ApplicationID: config.Discord.AppID,
 			Name:          string(cmdFilter),
 			Description:   "Manage and test global word filters",
@@ -386,7 +419,7 @@ const (
 
 type botResponse struct {
 	MsgType responseMsgType
-	Value   interface{}
+	Value   any
 }
 
 type botCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error

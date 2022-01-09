@@ -35,7 +35,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func (w *web) authMiddleWare() gin.HandlerFunc {
+func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := model.NewPerson(0)
 		ah := c.GetHeader("Authorization")
@@ -96,7 +96,7 @@ func (w *web) onGetLogout() gin.HandlerFunc {
 	}
 }
 
-func (w *web) onOpenIDCallback() gin.HandlerFunc {
+func (w *web) onOpenIDCallback(db store.Store) gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(c *gin.Context) {
 		ref, found := c.GetQuery("return_url")
@@ -122,7 +122,7 @@ func (w *web) onOpenIDCallback() gin.HandlerFunc {
 			return
 		}
 		p := model.NewPerson(sid)
-		if errP := PersonBySID(sid, "", &p); errP != nil {
+		if errP := PersonBySID(db, sid, "", &p); errP != nil {
 			log.Errorf("Failed to fetch user profile: %v", errP)
 			c.Redirect(302, ref)
 			return
@@ -147,7 +147,7 @@ func (w *web) onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func getTokenKey(_ *jwt.Token) (interface{}, error) {
+func getTokenKey(_ *jwt.Token) (any, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 

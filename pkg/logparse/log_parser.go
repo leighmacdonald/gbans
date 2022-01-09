@@ -344,7 +344,7 @@ func Parse(l string) Results {
 }
 
 func decodeTeam() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -357,7 +357,7 @@ func decodeTeam() mapstructure.DecodeHookFunc {
 }
 
 func decodePlayerClass() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -370,7 +370,7 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 }
 
 func decodePos() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -383,7 +383,7 @@ func decodePos() mapstructure.DecodeHookFunc {
 }
 
 func decodeSID3() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -399,7 +399,7 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 }
 
 func decodeMedigun() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -412,7 +412,7 @@ func decodeMedigun() mapstructure.DecodeHookFunc {
 }
 
 func decodePickupItem() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -425,7 +425,7 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 }
 
 func decodeWeapon() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
@@ -440,7 +440,7 @@ func decodeWeapon() mapstructure.DecodeHookFunc {
 // Unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-func Unmarshal(input interface{}, output interface{}) error {
+func Unmarshal(input any, output any) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			decodeTeam(),

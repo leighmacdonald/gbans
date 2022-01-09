@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -24,7 +25,7 @@ func importFilteredWords(filters []model.Filter) {
 	wordFilters = filters
 }
 
-func filterWorker() {
+func filterWorker(db store.Store, botSendMessageChan chan discordPayload) {
 	c := make(chan model.ServerEvent)
 	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
 		log.Fatalf("Failed to register event reader: %v", err)
@@ -34,7 +35,7 @@ func filterWorker() {
 		case evt := <-c:
 			matched, _ := ContainsFilteredWord(evt.Extra)
 			if matched {
-				addWarning(evt.Source.SteamID, warnLanguage)
+				addWarning(db, evt.Source.SteamID, warnLanguage, botSendMessageChan)
 			}
 		case <-ctx.Done():
 			return

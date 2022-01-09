@@ -5,6 +5,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -25,7 +26,7 @@ import (
 // actively connected
 //
 // TODO cleanup this mess
-func Find(playerStr model.Target, ip string, pi *model.PlayerInfo) error {
+func Find(db store.Store, playerStr model.Target, ip string, pi *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &extra.Player{},
@@ -36,10 +37,10 @@ func Find(playerStr model.Target, ip string, pi *model.PlayerInfo) error {
 		valid    = false
 		foundSid steamid.SID64
 	)
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	if ip != "" {
-		err = findPlayerByIP(ctx, net.ParseIP(ip), pi)
+		err = findPlayerByIP(c, db, net.ParseIP(ip), pi)
 		if err == nil {
 			foundSid = result.Player.SID
 			inGame = true
@@ -48,14 +49,14 @@ func Find(playerStr model.Target, ip string, pi *model.PlayerInfo) error {
 		found := false
 		sid, errSid := steamid.StringToSID64(string(playerStr))
 		if errSid == nil && sid.Valid() {
-			if errPSID := findPlayerBySID(ctx, sid, pi); errPSID == nil {
+			if errPSID := findPlayerBySID(c, db, sid, pi); errPSID == nil {
 				foundSid = sid
 				found = true
 				inGame = true
 			}
 		}
 		if !found {
-			if err = findPlayerByName(ctx, string(playerStr), pi); err == nil {
+			if err = findPlayerByName(c, db, string(playerStr), pi); err == nil {
 				foundSid = result.Player.SID
 				inGame = true
 			}
@@ -70,7 +71,7 @@ func Find(playerStr model.Target, ip string, pi *model.PlayerInfo) error {
 	return nil
 }
 
-func findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) error {
+func findPlayerByName(ctx context.Context, db store.ServerStore, name string, pi *model.PlayerInfo) error {
 	name = strings.ToLower(name)
 	for serverId, status := range ServerState() {
 		for _, player := range status.Status.Players {
@@ -90,7 +91,7 @@ func findPlayerByName(ctx context.Context, name string, pi *model.PlayerInfo) er
 	return consts.ErrUnknownID
 }
 
-func findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInfo) error {
+func findPlayerBySID(ctx context.Context, db store.ServerStore, sid steamid.SID64, pi *model.PlayerInfo) error {
 	for serverId, status := range ServerState() {
 		for _, player := range status.Status.Players {
 			if player.SID == sid {
@@ -109,7 +110,7 @@ func findPlayerBySID(ctx context.Context, sid steamid.SID64, pi *model.PlayerInf
 	return consts.ErrUnknownID
 }
 
-func findPlayerByIP(ctx context.Context, ip net.IP, pi *model.PlayerInfo) error {
+func findPlayerByIP(ctx context.Context, db store.ServerStore, ip net.IP, pi *model.PlayerInfo) error {
 	for serverId, status := range ServerState() {
 		for _, player := range status.Players {
 			if ip.Equal(player.IP) {
@@ -141,7 +142,7 @@ func ServerState() model.ServerStateCollection {
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
+func FindPlayerByCIDR(db store.ServerStore, ipNet *net.IPNet, pi *model.PlayerInfo) error {
 	for serverId, status := range ServerState() {
 		for _, player := range status.Players {
 			if ipNet.Contains(player.IP) {
@@ -164,7 +165,7 @@ func FindPlayerByCIDR(ipNet *net.IPNet, pi *model.PlayerInfo) error {
 
 // GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func GetOrCreateProfileBySteamID(ctx context.Context, sid steamid.SID64, ipAddr string, p *model.Person) error {
+func GetOrCreateProfileBySteamID(ctx context.Context, db store.Store, sid steamid.SID64, ipAddr string, p *model.Person) error {
 	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get Player summary: %v", err)

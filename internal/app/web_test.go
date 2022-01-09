@@ -25,7 +25,7 @@ import (
 //	}
 //}
 
-//func newTestReq(method string, route string, body interface{}, token string) *http.Request {
+//func newTestReq(method string, route string, body any, token string) *http.Request {
 //	b, _ := json.Marshal(body)
 //	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
 //	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -34,7 +34,7 @@ import (
 
 //type httpTestResult struct {
 //	Code int
-//	Body interface{}
+//	Body any
 //}
 
 //type httpTestUnit struct {
@@ -120,7 +120,7 @@ func TestMain(m *testing.M) {
 //		if w.Code != http.StatusOK {
 //			return false
 //		}
-//		var r web.APIResponse
+//		var r web.apiResponse
 //		b, err := ioutil.ReadAll(w.Body)
 //		require.NoError(t, err, "Failed to read body")
 //		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
@@ -182,7 +182,7 @@ func TestMain(m *testing.M) {
 //	}
 //	defer ws.Close()
 //
-//	checkResp := func(t *testing.T, pt web.Type, req interface{}, rt web.Type, res interface{}) {
+//	checkResp := func(t *testing.T, pt web.Type, req any, rt web.Type, res any) {
 //		p, errEnc := web.EncodeWSPayload(pt, req)
 //		if errEnc != nil {
 //			t.FailNow()

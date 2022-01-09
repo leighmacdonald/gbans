@@ -23,21 +23,21 @@ import (
 	"time"
 )
 
-type APIResponse struct {
-	Status  bool        `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+type apiResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
-func responseErr(c *gin.Context, status int, data interface{}) {
-	c.JSON(status, APIResponse{
+func responseErr(c *gin.Context, status int, data any) {
+	c.JSON(status, apiResponse{
 		Status: false,
 		Data:   data,
 	})
 }
 
-func responseOK(c *gin.Context, status int, data interface{}) {
-	c.JSON(status, APIResponse{
+func responseOK(c *gin.Context, status int, data any) {
+	c.JSON(status, apiResponse{
 		Status: true,
 		Data:   data,
 	})
@@ -84,7 +84,7 @@ func (w *web) onPostDemo(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *web) onPostPingMod() gin.HandlerFunc {
+func (w *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -99,7 +99,7 @@ func (w *web) onPostPingMod() gin.HandlerFunc {
 			return
 		}
 		var pi model.PlayerInfo
-		err := Find(model.Target(req.SteamID.String()), "", &pi)
+		err := Find(db, model.Target(req.SteamID.String()), "", &pi)
 		if err != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -135,7 +135,10 @@ func (w *web) onPostPingMod() gin.HandlerFunc {
 			})
 		}
 		for _, chanId := range config.Discord.ModChannels {
-			if errSend := bot.SendEmbed(chanId, e); errSend != nil {
+			select {
+			case w.botSendMessageChan <- discordPayload{channelId: chanId, message: e}:
+			default:
+				log.Warnf("Cannot send discord payload, channel full")
 				responseErr(c, http.StatusInternalServerError, nil)
 				return
 			}
@@ -156,7 +159,7 @@ type apiBanRequest struct {
 	Network    string        `json:"network"`
 }
 
-func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
+func (w *web) onAPIPostBanCreate(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var r apiBanRequest
 		if err := c.BindJSON(&r); err != nil {
@@ -196,7 +199,7 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 				cidr: r.Network,
 			}
 			var b model.BanNet
-			if bErr := BanNetwork(bn, &b); bErr != nil {
+			if bErr := BanNetwork(db, bn, &b); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
 					return
@@ -214,7 +217,7 @@ func (w *web) onAPIPostBanCreate() gin.HandlerFunc {
 				origin:   model.Web,
 			}
 			var b model.Ban
-			if bErr := Ban(bo, &b); bErr != nil {
+			if bErr := Ban(db, bo, &b, w.botSendMessageChan); bErr != nil {
 				if errors.Is(bErr, store.ErrDuplicate) {
 					responseErr(c, http.StatusConflict, "Duplicate ban")
 					return
@@ -383,7 +386,7 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //func (w *web) onAPIGetAnsibleHosts(db store.Store) gin.HandlerFunc {
 //	type groupConfig struct {
 //		Hosts    []string               `json:"hosts"`
-//		Vars     map[string]interface{} `json:"vars"`
+//		Vars     map[string]any `json:"vars"`
 //		Children []string               `json:"children"`
 //	}
 //	type ansibleStaticConfig map[string]groupConfig
@@ -682,6 +685,18 @@ func (w *web) onAPIPostServer() gin.HandlerFunc {
 	}
 }
 
-func (w *web) onSup(p Payload) error {
-	return nil
+func (w *web) onAPIEvents(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var q model.LogQueryOpts
+		if errBind := c.BindJSON(&q); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		events, err := db.FindLogEvents(c, q)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, events)
+	}
 }
