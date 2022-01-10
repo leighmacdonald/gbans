@@ -849,9 +849,9 @@ func (b *discord) onStats(ctx context.Context, s *discordgo.Session, m *discordg
 	case string(cmdStatsPlayer):
 		return b.onStatsPlayer(ctx, s, m, r)
 	case string(cmdStatsGlobal):
-		return errCommandFailed
+		return b.onStatsGlobal(ctx, s, m, r)
 	case string(cmdStatsServer):
-		return errCommandFailed
+		return b.onStatsServer(ctx, s, m, r)
 	default:
 		return errCommandFailed
 	}
@@ -890,6 +890,52 @@ func (b *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, m *di
 	addFieldInline(e, "Assists", fmt.Sprintf("%d", stats.Assists))
 	addFieldInline(e, "K:D", fmt.Sprintf("%.2f", kd))
 	addFieldInline(e, "KA:D", fmt.Sprintf("%.2f", kad))
+	addFieldInline(e, "Damage", fmt.Sprintf("%d", stats.Damage))
+	addFieldInline(e, "DamageTaken", fmt.Sprintf("%d", stats.DamageTaken))
+	addFieldInline(e, "Healing", fmt.Sprintf("%d", stats.Healing))
+	addFieldInline(e, "Shots", fmt.Sprintf("%d", stats.Shots))
+	addFieldInline(e, "Hits", fmt.Sprintf("%d", stats.Hits))
+	addFieldInline(e, "Accuracy", fmt.Sprintf("%.2f%%", acc))
+	return nil
+}
+
+func (b *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
+	serverIdStr := m.Data.Options[0].Options[0].Value.(string)
+	var server model.Server
+	if errServer := b.db.GetServerByName(ctx, serverIdStr, &server); errServer != nil {
+		return errServer
+	}
+	stats, errStats := b.db.GetServerStats(ctx, server.ServerID)
+	if errStats != nil {
+		return errCommandFailed
+	}
+	acc := 0.0
+	if stats.Hits > 0 && stats.Shots > 0 {
+		acc = float64(stats.Hits) / float64(stats.Shots) * 100
+	}
+	e := respOk(r, fmt.Sprintf("Server stats for %s ", server.ServerName))
+	addFieldInline(e, "Kills", fmt.Sprintf("%d", stats.Kills))
+	addFieldInline(e, "Assists", fmt.Sprintf("%d", stats.Assists))
+	addFieldInline(e, "Damage", fmt.Sprintf("%d", stats.Damage))
+	addFieldInline(e, "Healing", fmt.Sprintf("%d", stats.Healing))
+	addFieldInline(e, "Shots", fmt.Sprintf("%d", stats.Shots))
+	addFieldInline(e, "Hits", fmt.Sprintf("%d", stats.Hits))
+	addFieldInline(e, "Accuracy", fmt.Sprintf("%.2f%%", acc))
+	return nil
+}
+
+func (b *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, r *botResponse) error {
+	stats, errStats := b.db.GetGlobalStats(ctx)
+	if errStats != nil {
+		return errCommandFailed
+	}
+	acc := 0.0
+	if stats.Hits > 0 && stats.Shots > 0 {
+		acc = float64(stats.Hits) / float64(stats.Shots) * 100
+	}
+	e := respOk(r, fmt.Sprintf("Global stats"))
+	addFieldInline(e, "Kills", fmt.Sprintf("%d", stats.Kills))
+	addFieldInline(e, "Assists", fmt.Sprintf("%d", stats.Assists))
 	addFieldInline(e, "Damage", fmt.Sprintf("%d", stats.Damage))
 	addFieldInline(e, "Healing", fmt.Sprintf("%d", stats.Healing))
 	addFieldInline(e, "Shots", fmt.Sprintf("%d", stats.Shots))

@@ -78,6 +78,8 @@ type StatStore interface {
 	FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error)
 	BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error
 	GetPlayerStats(ctx context.Context, sid steamid.SID64) (PlayerStats, error)
+	GetServerStats(ctx context.Context, serverId int64) (ServerStats, error)
+	GetGlobalStats(ctx context.Context) (GlobalStats, error)
 }
 
 type NetworkStore interface {

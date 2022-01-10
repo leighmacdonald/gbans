@@ -52,7 +52,7 @@ var (
 	//rxDamageRealHeal := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(Damage "(?P<Damage>\d+)"\) \(realdamage "(?P<realdamage>\d+)"\) \(weapon "(?P<weapon>.+?)"\) \(healing "(?P<healing>\d+)"\)`)
 	// rxDamage := regexp.MustCompile(dp + `triggered "Damage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>".+?Damage "(?P<Damage>\d+)"\) \(weapon "(?P<weapon>\S+)"\)`)
 	// Old format only?
-	rxDamageOld = regexp.MustCompile(dp + `triggered "Damage" \(Damage "(?P<Damage>\d+)"\)`)
+	rxDamageOld = regexp.MustCompile(dp + `triggered "Damage" \(damage "(?P<damage>\d+)"\)`)
 	rxKilled    = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)"\s(?P<keypairs>.+?)$`)
 	//rxKilledCustom         = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)" \(customkill "(?P<customkill>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
 	rxAssist               = regexp.MustCompile(dp + `triggered "kill assist" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" \(assister_position "(?P<aspos>.+?)"\) \(attacker_position "(?P<apos>.+?)"\) \(victim_position "(?P<vpos>.+?)"\)`)
@@ -144,7 +144,7 @@ var (
 	}
 )
 
-func parsePickupItem(hp string, item *PickupItem) bool {
+func ParsePickupItem(hp string, item *PickupItem) bool {
 	switch hp {
 	case "ammopack_small":
 		fallthrough
@@ -166,7 +166,7 @@ func parsePickupItem(hp string, item *PickupItem) bool {
 	return true
 }
 
-func parseMedigun(gunStr string, gun *Medigun) bool {
+func ParseMedigun(gunStr string, gun *Medigun) bool {
 	switch strings.ToLower(gunStr) {
 	case "medigun":
 		*gun = Uber
@@ -404,7 +404,7 @@ func decodeMedigun() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var m Medigun
-		if !parseMedigun(d.(string), &m) {
+		if !ParseMedigun(d.(string), &m) {
 			return d, nil
 		}
 		return m, nil
@@ -417,7 +417,7 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var m PickupItem
-		if !parsePickupItem(d.(string), &m) {
+		if !ParsePickupItem(d.(string), &m) {
 			return d, nil
 		}
 		return m, nil

@@ -173,6 +173,88 @@ func logWriter(db store.StatStore) {
 	}
 }
 
+type playerEventState struct {
+	team      logparse.Team
+	class     logparse.PlayerClass
+	updatedAt time.Time
+}
+
+type playerCache struct {
+	*sync.RWMutex
+	state map[steamid.SID64]playerEventState
+}
+
+func newPlayerCache() *playerCache {
+	pc := playerCache{
+		RWMutex: &sync.RWMutex{},
+		state:   map[steamid.SID64]playerEventState{},
+	}
+	go pc.cleanupWorker()
+	return &pc
+}
+
+func (c playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
+	c.Lock()
+	defer c.Unlock()
+	s, found := c.state[sid]
+	if !found {
+		s = playerEventState{}
+	}
+	s.team = team
+	s.updatedAt = time.Now()
+	c.state[sid] = s
+}
+
+func (c playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
+	c.Lock()
+	defer c.Unlock()
+	s, found := c.state[sid]
+	if !found {
+		s = playerEventState{}
+	}
+	s.class = class
+	s.updatedAt = time.Now()
+	c.state[sid] = s
+}
+
+func (c playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
+	c.RLock()
+	defer c.RUnlock()
+	pc, found := c.state[sid]
+	if !found {
+		return logparse.Spectator
+	}
+	return pc.class
+}
+
+func (c playerCache) getTeam(sid steamid.SID64) logparse.Team {
+	c.RLock()
+	defer c.RUnlock()
+	pc, found := c.state[sid]
+	if !found {
+		return logparse.SPEC
+	}
+	return pc.team
+}
+
+func (c playerCache) cleanupWorker() {
+	t := time.NewTicker(20 * time.Second)
+	for {
+		select {
+		case <-t.C:
+			now := time.Now()
+			c.Lock()
+			for k, v := range c.state {
+				if now.Sub(v.updatedAt) > time.Hour {
+					delete(c.state, k)
+					log.WithFields(log.Fields{"sid": k}).Debugf("Player cache expired")
+				}
+			}
+			c.Unlock()
+		}
+	}
+}
+
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(db store.Store) {
@@ -189,6 +271,7 @@ func logReader(db store.Store) {
 		}
 		return nil
 	}
+	pc := newPlayerCache()
 	for {
 		select {
 		case raw := <-logRawQueue:
@@ -198,6 +281,8 @@ func logReader(db store.Store) {
 				log.Errorf("Failed to get server for log message: %v", e)
 				continue
 			}
+			var source = getPlayer("sid", v.Values)
+			var target = getPlayer("sid2", v.Values)
 			var (
 				apos, vpos, aspos logparse.Pos
 			)
@@ -236,6 +321,10 @@ func logReader(db store.Store) {
 				if !logparse.ParsePlayerClass(classValue, &class) {
 					class = logparse.Spectator
 				}
+			} else {
+				if source != nil {
+					class = pc.getClass(source.SteamID)
+				}
 			}
 			extra := ""
 			extraValue, extraFound := v.Values["msg"]
@@ -243,7 +332,10 @@ func logReader(db store.Store) {
 				extra = extraValue
 			}
 			var damage int
-			dmgValue, dmgFound := v.Values["damage"]
+			dmgValue, dmgFound := v.Values["realdamage"]
+			if !dmgFound {
+				dmgValue, dmgFound = v.Values["damage"]
+			}
 			if dmgFound {
 				damageP, err := strconv.ParseInt(dmgValue, 10, 32)
 				if err != nil {
@@ -251,21 +343,59 @@ func logReader(db store.Store) {
 				}
 				damage = int(damageP)
 			}
+			var item logparse.PickupItem
+			itemValue, itemFound := v.Values["item"]
+			if itemFound {
+				if !logparse.ParsePickupItem(itemValue, &item) {
+					item = 0
+				}
+			}
+
+			var team logparse.Team
+			teamValue, teamFound := v.Values["team"]
+			if teamFound {
+				if !logparse.ParseTeam(teamValue, &team) {
+					team = 0
+				}
+			} else {
+				if source != nil {
+					team = pc.getTeam(source.SteamID)
+				}
+			}
+
+			var healing int
+			healingValue, healingFound := v.Values["healing"]
+			if healingFound {
+				healingP, err := strconv.ParseInt(healingValue, 10, 32)
+				if err != nil {
+					log.Warnf("failed to parse healing value: %v", err)
+				}
+				healing = int(healingP)
+			}
+
 			se := model.ServerEvent{
 				Server:      &s,
 				EventType:   v.MsgType,
-				Source:      getPlayer("sid", v.Values),
-				Target:      getPlayer("sid2", v.Values),
+				Source:      source,
+				Target:      target,
 				PlayerClass: class,
+				Team:        team,
+				Item:        item,
 				Weapon:      weapon,
 				Damage:      damage,
 				AttackerPOS: apos,
 				VictimPOS:   vpos,
 				AssisterPOS: aspos,
+				Healing:     healing,
 				CreatedOn:   config.Now(),
 				Extra:       extra,
 			}
-
+			switch v.MsgType {
+			case logparse.SpawnedAs:
+				pc.setClass(se.Source.SteamID, se.PlayerClass)
+			case logparse.JoinedTeam:
+				pc.setTeam(se.Source.SteamID, se.Team)
+			}
 			event.Emit(se)
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")

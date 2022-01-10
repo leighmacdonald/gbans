@@ -387,24 +387,24 @@ type permissionRequest struct {
 // application commands that discordgo itself does not support yet.
 func registerCommandPermissions(perms []permissionRequest) error {
 	httpClient := util.NewHTTPClient()
-	body, err := json.Marshal(perms)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to set command permissions")
+	body, errUnmarshal := json.Marshal(perms)
+	if errUnmarshal != nil {
+		return errors.Wrapf(errUnmarshal, "Failed to set command permissions")
 	}
 	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions",
 		config.Discord.AppID, config.Discord.GuildID)
-	req, err2 := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(body))
-	if err2 != nil {
-		return errors.Wrapf(err2, "Failed to create http request for discord permissions")
+	req, errNewReq := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(body))
+	if errNewReq != nil {
+		return errors.Wrapf(errNewReq, "Failed to create http request for discord permissions")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
-	resp, err3 := httpClient.Do(req)
-	if err3 != nil {
-		return errors.Wrapf(err3, "Failed to perform http request for discord permissions")
+	resp, errDo := httpClient.Do(req)
+	if errDo != nil {
+		return errors.Wrapf(errDo, "Failed to perform http request for discord permissions")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrapf(err3, "Error response code trying to perform http request for discord permissions: %d", resp.StatusCode)
+		return errors.Wrapf(errDo, "Error response code trying to perform http request for discord permissions: %d", resp.StatusCode)
 	}
 	return nil
 }
@@ -437,7 +437,7 @@ const (
 func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	cmd := botCmd(interaction.Data.Name)
 	response := botResponse{MsgType: mtString}
-	if handler, ok := b.commandHandlers[cmd]; ok {
+	if handler, handlerFound := b.commandHandlers[cmd]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
@@ -453,9 +453,9 @@ func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *d
 			}
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		lCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
-		if err := handler(ctx, session, interaction, &response); err != nil {
+		if err := handler(lCtx, session, interaction, &response); err != nil {
 			// TODO User facing errors only
 			respErr(&response, err.Error())
 			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {

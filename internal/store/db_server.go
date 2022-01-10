@@ -223,10 +223,10 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
 	const (
 		stmtName = "insert-log"
-		query    = `
-		INSERT INTO server_log (
+		query    = `INSERT INTO server_log (
 		    server_id, event_type, source_id, target_id, created_on, weapon, damage, 
-		    item, extra, player_class, attacker_position, victim_position, assister_position
+		    item, extra, player_class, attacker_position, victim_position, assister_position,
+            player_team, healing
 		) VALUES (
 		    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
 		    CASE WHEN $11 != 0 AND $12 != 0 AND $13 != 0 THEN
@@ -237,7 +237,7 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 			END,
 		    CASE WHEN $17 != 0 AND $18 != 0 AND $19 != 0 THEN
 		          ST_SetSRID(ST_MakePoint($17, $18, $19), 4326)
-			END)`
+			END, $20, $21)`
 	)
 	tx, err := db.c.Begin(ctx)
 	if err != nil {
@@ -269,7 +269,8 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 			lg.Item, lg.Extra, lg.PlayerClass,
 			lg.AttackerPOS.Y, lg.AttackerPOS.X, lg.AttackerPOS.Z,
 			lg.VictimPOS.Y, lg.VictimPOS.X, lg.VictimPOS.Z,
-			lg.AssisterPOS.Y, lg.AssisterPOS.X, lg.AssisterPOS.Z); re != nil {
+			lg.AssisterPOS.Y, lg.AssisterPOS.X, lg.AssisterPOS.Z,
+			lg.Team, lg.Healing); re != nil {
 			re = errors.Wrapf(re, "Failed to write log entries")
 			break
 		}

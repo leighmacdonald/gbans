@@ -457,6 +457,35 @@ func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
 }
 
 func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
+	type playerInfo struct {
+		SteamID       steamid.SID64 `json:"steam_id"`
+		Name          string        `json:"name"`
+		UserId        int           `json:"user_id"`
+		ConnectedTime int64         `json:"connected_secs"`
+	}
+	type serverInfo struct {
+		ServerID int64 `db:"server_id" json:"server_id"`
+		// ServerName is a short reference name for the server eg: us-1
+		ServerName     string `json:"server_name"`
+		ServerNameLong string `json:"server_name_long"`
+		Address        string `json:"address"`
+		// Port is the port of the server
+		Port              int          `json:"port"`
+		PasswordProtected bool         `json:"password_protected"`
+		VAC               bool         `json:"vac"`
+		Region            string       `json:"region"`
+		CC                string       `json:"cc"`
+		Latitude          float64      `json:"latitude"`
+		Longitude         float64      `json:"longitude"`
+		CurrentMap        string       `json:"current_map"`
+		Tags              []string     `json:"tags"`
+		DefaultMap        string       `json:"default_map"`
+		ReservedSlots     int          `json:"reserved_slots"`
+		CreatedOn         time.Time    `json:"created_on"`
+		UpdatedOn         time.Time    `json:"updated_on"`
+		PlayersMax        int          `json:"players_max"`
+		Players           []playerInfo `json:"players"`
+	}
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -466,7 +495,47 @@ func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, servers)
+		currentState := ServerState()
+		var si []serverInfo
+		for _, srv := range servers {
+			v := serverInfo{
+				ServerID:          srv.ServerID,
+				ServerName:        srv.ServerName,
+				ServerNameLong:    srv.ServerNameLong,
+				Address:           srv.Address,
+				Port:              srv.Port,
+				PasswordProtected: srv.Password != "",
+				Region:            srv.Region,
+				CC:                srv.CC,
+				Latitude:          srv.Location.Latitude,
+				Longitude:         srv.Location.Longitude,
+				CurrentMap:        "",
+				DefaultMap:        srv.DefaultMap,
+				ReservedSlots:     srv.ReservedSlots,
+				CreatedOn:         srv.CreatedOn,
+				UpdatedOn:         srv.UpdatedOn,
+				Players:           nil,
+			}
+			state, stateFound := currentState[v.ServerName]
+			if stateFound {
+				v.VAC = state.A2S.VAC
+				v.CurrentMap = state.Status.Map
+				v.PlayersMax = state.Status.PlayersMax
+				v.Tags = state.Status.Tags
+				for _, pl := range state.Status.Players {
+					v.Players = append(v.Players, playerInfo{
+						SteamID:       pl.SID,
+						Name:          pl.Name,
+						UserId:        pl.UserID,
+						ConnectedTime: int64(pl.ConnectedTime.Seconds()),
+					})
+				}
+			}
+
+			si = append(si, v)
+		}
+
+		responseOK(c, http.StatusOK, si)
 	}
 }
 
