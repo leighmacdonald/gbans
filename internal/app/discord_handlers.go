@@ -195,11 +195,19 @@ func (b *discord) onBanIP(_ context.Context, _ *discordgo.Session, m *discordgo.
 	if len(m.Data.Options[0].Options) > 3 {
 		reason = m.Data.Options[0].Options[3].Value.(string)
 	}
+	author := model.NewPerson(0)
+	if errA := b.db.GetPersonByDiscordID(ctx, m.Interaction.Member.User.ID, &author); errA != nil {
+		if errA == store.ErrNoResult {
+			return errors.New("Must set steam id. See /set_steam")
+		}
+		return errors.New("Error fetching author info")
+	}
+	target := m.Data.Options[0].Options[1].Value.(string)
 	opts := banNetworkOpts{
 		banOpts: banOpts{
-			target:   model.Target(""),
-			author:   model.Target(m.Member.User.ID),
-			duration: model.Duration(m.Data.Options[0].Options[1].Value.(string)),
+			target:   model.Target(target),
+			author:   model.Target(author.SteamID.String()),
+			duration: model.Duration(m.Data.Options[0].Options[2].Value.(string)),
 			banType:  model.Banned,
 			reason:   reason,
 			origin:   model.Bot,
@@ -867,7 +875,6 @@ func (b *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, m *di
 	if errP := PersonBySID(b.db, sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
-
 	stats, errStats := b.db.GetPlayerStats(ctx, sid)
 	if errStats != nil {
 		return errCommandFailed
