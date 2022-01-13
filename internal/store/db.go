@@ -32,7 +32,7 @@ import (
 var (
 	// ErrNoResult is returned on successful queries which return no rows
 	ErrNoResult = errors.New("No results found")
-	// ErrDuplicate is returned when a duplicate row value is attempted to be inserted
+	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted
 	ErrDuplicate = errors.New("Duplicate entity")
 	// Use $ for pg based queries
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)

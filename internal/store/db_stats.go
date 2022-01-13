@@ -2,12 +2,15 @@ package store
 
 import (
 	"context"
+	"fmt"
+	"github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 func (db *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
@@ -56,6 +59,9 @@ type PlayerStats struct {
 	Healing     int64
 	Shots       int64
 	Hits        int64
+	Games       int64
+	Wins        int64
+	Losses      int64
 }
 
 type ServerStats struct {
@@ -67,6 +73,11 @@ type ServerStats struct {
 	Hits    int64
 }
 
+type statResult struct {
+	result *int64
+	query  statQueryOpts
+}
+
 // GetPlayerStats calculates and returns basic stats for a player using the server_log events
 // FIXME Since we currently run on high-core count hardware with nvme drives
 // we are running the queries concurrently for now
@@ -74,390 +85,135 @@ func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64) (Playe
 	var stats PlayerStats
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
-
-	wg.Add(8)
-	go func() {
-		defer wg.Done()
-		dmg, errDmg := db.getPlayerDamage(ctx, sid)
-		if errDmg != nil {
-			log.Warnf("Failed to get player damage")
-		}
-		mu.Lock()
-		stats.Damage = dmg
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		dmg, errDmg := db.getPlayerDamageTaken(ctx, sid)
-		if errDmg != nil {
-			log.Warnf("Failed to get player damage taken")
-		}
-		mu.Lock()
-		stats.DamageTaken = dmg
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		healing, errDmg := db.getPlayerHealing(ctx, sid)
-		if errDmg != nil {
-			log.Warnf("Failed to get player healing")
-		}
-		mu.Lock()
-		stats.Healing = healing
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.ShotFired)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shits fired")
-		}
-		mu.Lock()
-		stats.Shots = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.ShotHit)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shots hit")
-		}
-		mu.Lock()
-		stats.Hits = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.Killed)
-		if errDmg != nil {
-			log.Warnf("Failed to get player kills")
-		}
-		mu.Lock()
-		stats.Kills = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getPlayerEventTargetCount(ctx, sid, logparse.Killed)
-		if errDmg != nil {
-			log.Warnf("Failed to get player deaths")
-		}
-		mu.Lock()
-		stats.Deaths = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getPlayerEventCount(ctx, sid, logparse.KillAssist)
-		if errDmg != nil {
-			log.Warnf("Failed to get player assists")
-		}
-		mu.Lock()
-		stats.Assists = count
-		mu.Unlock()
-	}()
+	queries := []statResult{
+		{&stats.Damage, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.DamageTaken, statQueryOpts{targetId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Deaths, statQueryOpts{targetId: sid, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+	}
+	wg.Add(len(queries))
+	for _, query := range queries {
+		go func(v *int64, q statQueryOpts) {
+			defer wg.Done()
+			dmg, errDmg := db.getEventSum(ctx, q)
+			if errDmg != nil {
+				log.Warnf("Failed to get player damage")
+			}
+			mu.Lock()
+			*v = dmg
+			mu.Unlock()
+		}(query.result, query.query)
+	}
 	wg.Wait()
 	return stats, nil
 }
 
-func (db *pgStore) getPlayerDamage(ctx context.Context, sid steamid.SID64) (int64, error) {
-	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64(), logparse.Damage).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
-	}
-	return dmg, nil
+type statQueryOpts struct {
+	sourceId    steamid.SID64
+	targetId    steamid.SID64
+	serverId    int64
+	msgTypes    []logparse.MsgType
+	since       *time.Time
+	sumColumn   string
+	countColumn string
 }
 
-func (db *pgStore) getMedicDrops(ctx context.Context, sid steamid.SID64) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64(), logparse.MedicDeath).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
+func (db *pgStore) getEventSum(ctx context.Context, opts statQueryOpts) (int64, error) {
+	var qb squirrel.SelectBuilder
+	if opts.sumColumn != "" && opts.countColumn != "" {
+		return 0, errors.New("sumColumn and countColumn are mutually exclusive")
+	} else if opts.sumColumn != "" {
+		qb = sb.Select(fmt.Sprintf("SUM(s.%s) as result", opts.sumColumn))
+	} else {
+		qb = sb.Select("COUNT(s.*) as result")
 	}
-	return dmg, nil
-}
-
-func (db *pgStore) getMedicUses(ctx context.Context, sid steamid.SID64) (int64, error) {
-	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64(), logparse.Damage).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
+	var ands squirrel.And
+	if opts.serverId > 0 {
+		ands = append(ands, squirrel.Eq{"s.server_id": opts.serverId})
 	}
-	return dmg, nil
-}
-
-func (db *pgStore) getPlayerDamageTaken(ctx context.Context, sid steamid.SID64) (int64, error) {
-	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.target_id = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64()).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage taken sum")
+	if opts.sourceId != 0 {
+		ands = append(ands, squirrel.Eq{"s.source_id": opts.sourceId})
 	}
-	return dmg, nil
-}
-
-func (db *pgStore) getPlayerHealing(ctx context.Context, sid steamid.SID64) (int64, error) {
-	const q = `SELECT sum(s.healing) as total FROM server_log s WHERE s.source_id = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64()).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player healing sum")
+	if opts.targetId != 0 {
+		ands = append(ands, squirrel.Eq{"s.target_id": opts.targetId})
 	}
-	return dmg, nil
-}
-
-func (db *pgStore) getPlayerEventCount(ctx context.Context, sid steamid.SID64, event logparse.MsgType) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
-	var count int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64(), event).Scan(&count); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player event count")
+	var mTypes squirrel.Or
+	for _, mt := range opts.msgTypes {
+		mTypes = append(mTypes, squirrel.Eq{"event_type": mt})
 	}
-	return count, nil
-}
-
-func (db *pgStore) getPlayerEventTargetCount(ctx context.Context, sid steamid.SID64, event logparse.MsgType) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.target_id = $1 AND event_type = $2`
-	var count int64
-	if err := db.c.QueryRow(ctx, q, sid.Int64(), event).Scan(&count); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player event target count")
+	qb = qb.From("server_log s")
+	ands = append(ands, mTypes)
+	query, args, errQuery := qb.Where(ands).ToSql()
+	if errQuery != nil {
+		return 0, errors.Wrapf(errQuery, "Failed to to generate query")
 	}
-	return count, nil
+	log.Tracef("getEventSum: %s", query)
+	//const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
+	var value int64
+	if err := db.c.QueryRow(ctx, query, args...).Scan(&value); err != nil {
+		return 0, errors.Wrapf(err, "Failed to fetch player result sum")
+	}
+	return value, nil
 }
 
 func (db *pgStore) GetGlobalStats(ctx context.Context) (GlobalStats, error) {
 	var stats GlobalStats
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
-
-	wg.Add(6)
-	go func() {
-		defer wg.Done()
-		dmg, errDmg := db.getGlobalDamage(ctx)
-		if errDmg != nil {
-			log.Warnf("Failed to get player damage")
-		}
-		mu.Lock()
-		stats.Damage = dmg
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		healing, errDmg := db.getGlobalHealing(ctx)
-		if errDmg != nil {
-			log.Warnf("Failed to get player healing")
-		}
-		mu.Lock()
-		stats.Healing = healing
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getGlobalEventCount(ctx, logparse.ShotFired)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shits fired")
-		}
-		mu.Lock()
-		stats.Shots = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getGlobalEventCount(ctx, logparse.ShotHit)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shots hit")
-		}
-		mu.Lock()
-		stats.Hits = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getGlobalEventCount(ctx, logparse.Killed)
-		if errDmg != nil {
-			log.Warnf("Failed to get player kills")
-		}
-		mu.Lock()
-		stats.Kills = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getGlobalEventCount(ctx, logparse.KillAssist)
-		if errDmg != nil {
-			log.Warnf("Failed to get player assists")
-		}
-		mu.Lock()
-		stats.Assists = count
-		mu.Unlock()
-	}()
+	queries := []statResult{
+		{&stats.Damage, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+	}
+	wg.Add(len(queries))
+	for _, query := range queries {
+		go func(v *int64, q statQueryOpts) {
+			defer wg.Done()
+			value, errStat := db.getEventSum(ctx, q)
+			if errStat != nil {
+				log.Warnf("Failed to get stat value: %v", errStat)
+			}
+			mu.Lock()
+			*v = value
+			mu.Unlock()
+		}(query.result, query.query)
+	}
 	wg.Wait()
 	return stats, nil
 }
 
-func (db *pgStore) GetServerStats(ctx context.Context, sid int64) (ServerStats, error) {
+func (db *pgStore) GetServerStats(ctx context.Context, serverId int64) (ServerStats, error) {
 	var stats ServerStats
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
-
-	wg.Add(6)
-	go func() {
-		defer wg.Done()
-		dmg, errDmg := db.getServerDamage(ctx, sid)
-		if errDmg != nil {
-			log.Warnf("Failed to get player damage")
-		}
-		mu.Lock()
-		stats.Damage = dmg
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		healing, errDmg := db.getServerHealing(ctx, sid)
-		if errDmg != nil {
-			log.Warnf("Failed to get player healing")
-		}
-		mu.Lock()
-		stats.Healing = healing
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getServerEventCount(ctx, sid, logparse.ShotFired)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shits fired")
-		}
-		mu.Lock()
-		stats.Shots = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getServerEventCount(ctx, sid, logparse.ShotHit)
-		if errDmg != nil {
-			log.Warnf("Failed to get player shots hit")
-		}
-		mu.Lock()
-		stats.Hits = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getServerEventCount(ctx, sid, logparse.Killed)
-		if errDmg != nil {
-			log.Warnf("Failed to get player kills")
-		}
-		mu.Lock()
-		stats.Kills = count
-		mu.Unlock()
-	}()
-	go func() {
-		defer wg.Done()
-		count, errDmg := db.getServerEventCount(ctx, sid, logparse.KillAssist)
-		if errDmg != nil {
-			log.Warnf("Failed to get player assists")
-		}
-		mu.Lock()
-		stats.Assists = count
-		mu.Unlock()
-	}()
+	queries := []statResult{
+		{&stats.Damage, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+	}
+	wg.Add(len(queries))
+	for _, query := range queries {
+		go func(v *int64, q statQueryOpts) {
+			defer wg.Done()
+			value, errStat := db.getEventSum(ctx, q)
+			if errStat != nil {
+				log.Warnf("Failed to get stat value: %v", errStat)
+			}
+			mu.Lock()
+			*v = value
+			mu.Unlock()
+		}(query.result, query.query)
+	}
 	wg.Wait()
 	return stats, nil
-}
-
-func (db *pgStore) getServerDamage(ctx context.Context, sid int64) (int64, error) {
-	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.server_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid, logparse.Damage).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getServerMedicDrops(ctx context.Context, sid int64) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.server_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid, logparse.MedicDeath).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch server medic drops sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getServerUses(ctx context.Context, sid int64) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.server_id = $1 AND event_type = $2`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid, logparse.EmptyUber).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getServerHealing(ctx context.Context, sid int64) (int64, error) {
-	const q = `SELECT sum(s.healing) as total FROM server_log s WHERE s.server_id = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, sid).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player healing sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getServerEventCount(ctx context.Context, sid int64, event logparse.MsgType) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.server_id = $1 AND event_type = $2`
-	var count int64
-	if err := db.c.QueryRow(ctx, q, sid, event).Scan(&count); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player event count")
-	}
-	return count, nil
-}
-
-func (db *pgStore) getServerEventTargetCount(ctx context.Context, sid int64, event logparse.MsgType) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.server_id = $1 AND event_type = $2`
-	var count int64
-	if err := db.c.QueryRow(ctx, q, sid, event).Scan(&count); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player event target count")
-	}
-	return count, nil
-}
-
-func (db *pgStore) getGlobalDamage(ctx context.Context) (int64, error) {
-	const q = `SELECT sum(s.damage) as total FROM server_log s WHERE event_type = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, logparse.Damage).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getGlobalMedicDrops(ctx context.Context) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.event_type = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, logparse.MedicDeath).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch server medic drops sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getGlobalUses(ctx context.Context) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE s.event_type = $1`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q, logparse.EmptyUber).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player damage sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getGlobalHealing(ctx context.Context) (int64, error) {
-	const q = `SELECT sum(s.healing) as total FROM server_log s`
-	var dmg int64
-	if err := db.c.QueryRow(ctx, q).Scan(&dmg); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player healing sum")
-	}
-	return dmg, nil
-}
-
-func (db *pgStore) getGlobalEventCount(ctx context.Context, event logparse.MsgType) (int64, error) {
-	const q = `SELECT count(*) as total FROM server_log s WHERE event_type = $1`
-	var count int64
-	if err := db.c.QueryRow(ctx, q, event).Scan(&count); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player event count")
-	}
-	return count, nil
 }

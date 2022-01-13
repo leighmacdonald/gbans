@@ -219,7 +219,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	return events, nil
 }
 
-// TODO dont treat all origin positions as invalid
+// BatchInsertServerLogs save server log events to the database using a
 func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
 	const (
 		stmtName = "insert-log"
@@ -279,10 +279,10 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 		if errR := tx.Rollback(lCtx); errR != nil {
 			return errors.Wrapf(errR, "BatchInsertServerLogs rollback failed")
 		}
-		return re
+		return errors.Wrapf(re, "Failed to commit log entries")
 	}
 	if errC := tx.Commit(lCtx); errC != nil {
-		log.Errorf("Failed to commit log entries: %v", errC)
+		return errors.Wrapf(errC, "Failed to commit log entries")
 	}
-	return re
+	return nil
 }
