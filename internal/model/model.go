@@ -612,69 +612,70 @@ func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error)
 	}, nil
 }
 
-// commonStats contains shared stats that are used across all models
-type commonStats struct {
-	Kills        int64
-	Assists      int64
-	Damage       int64
-	Healing      int64
-	Shots        int64
-	Hits         int64
-	Suicides     int64
-	Extinguishes int64
+// CommonStats contains shared stats that are used across all models
+type CommonStats struct {
+	Kills        int64 `json:"kills,omitempty"`
+	Assists      int64 `json:"assists,omitempty"`
+	Damage       int64 `json:"damage,omitempty"`
+	Healing      int64 `json:"healing,omitempty"`
+	Shots        int64 `json:"shots,omitempty"`
+	Hits         int64 `json:"hits,omitempty"`
+	Suicides     int64 `json:"suicides,omitempty"`
+	Extinguishes int64 `json:"extinguishes,omitempty"`
 
-	PointCaptures int64
-	PointDefends  int64
+	PointCaptures int64 `json:"point_captures,omitempty"`
+	PointDefends  int64 `json:"point_defends,omitempty"`
 
-	MedicDroppedUber int64
+	MedicDroppedUber int64 `json:"medic_dropped_uber,omitempty"`
 
-	ObjectBuilt     int64
-	ObjectDestroyed int64
+	ObjectBuilt     int64 `json:"object_built,omitempty"`
+	ObjectDestroyed int64 `json:"object_destroyed,omitempty"`
 
-	Messages     int64
-	MessagesTeam int64
+	Messages     int64 `json:"messages,omitempty"`
+	MessagesTeam int64 `json:"messages_team,omitempty"`
 
-	PickupAmmoLarge  int64
-	PickupAmmoMedium int64
-	PickupAmmoSmall  int64
-	PickupHPLarge    int64
-	PickupHPMedium   int64
-	PickupHPSmall    int64
+	PickupAmmoLarge  int64 `json:"pickup_ammo_large,omitempty"`
+	PickupAmmoMedium int64 `json:"pickup_ammo_medium,omitempty"`
+	PickupAmmoSmall  int64 `json:"pickup_ammo_small,omitempty"`
+	PickupHPLarge    int64 `json:"pickup_hp_large,omitempty"`
+	PickupHPMedium   int64 `json:"pickup_hp_medium,omitempty"`
+	PickupHPSmall    int64 `json:"pickup_hp_small,omitempty"`
 
-	SpawnScout    int64
-	SpawnSoldier  int64
-	SpawnPyro     int64
-	SpawnDemo     int64
-	SpawnHeavy    int64
-	SpawnEngineer int64
-	SpawnMedic    int64
-	SpawnSpy      int64
-	SpawnSniper   int64
+	SpawnScout    int64 `json:"spawn_scout,omitempty"`
+	SpawnSoldier  int64 `json:"spawn_soldier,omitempty"`
+	SpawnPyro     int64 `json:"spawn_pyro,omitempty"`
+	SpawnDemo     int64 `json:"spawn_demo,omitempty"`
+	SpawnHeavy    int64 `json:"spawn_heavy,omitempty"`
+	SpawnEngineer int64 `json:"spawn_engineer,omitempty"`
+	SpawnMedic    int64 `json:"spawn_medic,omitempty"`
+	SpawnSpy      int64 `json:"spawn_spy,omitempty"`
+	SpawnSniper   int64 `json:"spawn_sniper,omitempty"`
 
-	Dominations int64
-	Revenges    int64
+	Dominations int64 `json:"dominations,omitempty"`
+	Revenges    int64 `json:"revenges,omitempty"`
 
-	Playtime time.Duration
+	Playtime time.Duration `json:"playtime,omitempty"`
 }
 
 type GlobalStats struct {
-	commonStats
-	UniquePlayers int64
+	CommonStats
+	UniquePlayers int64 `json:"unique_players"`
 }
 
 type MapStats struct {
+	CommonStats
 }
 
 type PlayerStats struct {
-	commonStats
-	Deaths      int64
-	Games       int64
-	Wins        int64
-	Losses      int64
-	DamageTaken int64
-	Dominated   int64
+	CommonStats
+	Deaths      int64 `json:"deaths" json:"deaths,omitempty"`
+	Games       int64 `json:"games,omitempty"`
+	Wins        int64 `json:"wins,omitempty"`
+	Losses      int64 `json:"losses,omitempty"`
+	DamageTaken int64 `json:"damage_taken,omitempty"`
+	Dominated   int64 `json:"dominated,omitempty"`
 }
 
 type ServerStats struct {
-	commonStats
+	CommonStats
 }
