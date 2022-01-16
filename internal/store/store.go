@@ -77,9 +77,10 @@ type StatStore interface {
 	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error)
 	FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error)
 	BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error
-	GetPlayerStats(ctx context.Context, sid steamid.SID64) (PlayerStats, error)
-	GetServerStats(ctx context.Context, serverId int64) (ServerStats, error)
-	GetGlobalStats(ctx context.Context) (GlobalStats, error)
+	GetPlayerStats(ctx context.Context, sid steamid.SID64, stats *model.PlayerStats) error
+	GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error
+	GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error
+	RebuildStats(ctx context.Context) error
 }
 
 type NetworkStore interface {

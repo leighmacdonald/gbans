@@ -482,15 +482,15 @@ type ServerEvent struct {
 	// Weapon is the weapon used to perform certain events
 	Weapon logparse.Weapon `json:"weapon"`
 	// Damage is how much (real) damage or in the case of medi-guns, healing
-	Damage  int `json:"damage"`
-	Healing int `json:"healing"`
+	Damage  int64 `json:"damage"`
+	Healing int64 `json:"healing"`
 	// Item is the item a player picked up
 	Item logparse.PickupItem `json:"item"`
 	// AttackerPOS is the 3d position of the source of the event
 	AttackerPOS logparse.Pos `json:"attacker_pos"`
 	VictimPOS   logparse.Pos `json:"victim_pos"`
 	AssisterPOS logparse.Pos `json:"assister_pos"`
-	// Extra contains any unparsed unformatted data. Most used for say/say_team text
+	// Extra contains any general event data. Most often used for say/say_team text
 	Extra string `json:"extra"`
 	// Team is the last known team the player was as tracked by the playerStateCache OR the team that
 	// a player switched to in a join_team event
@@ -610,4 +610,71 @@ func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error)
 		Size:      size,
 		Downloads: 0,
 	}, nil
+}
+
+// commonStats contains shared stats that are used across all models
+type commonStats struct {
+	Kills        int64
+	Assists      int64
+	Damage       int64
+	Healing      int64
+	Shots        int64
+	Hits         int64
+	Suicides     int64
+	Extinguishes int64
+
+	PointCaptures int64
+	PointDefends  int64
+
+	MedicDroppedUber int64
+
+	ObjectBuilt     int64
+	ObjectDestroyed int64
+
+	Messages     int64
+	MessagesTeam int64
+
+	PickupAmmoLarge  int64
+	PickupAmmoMedium int64
+	PickupAmmoSmall  int64
+	PickupHPLarge    int64
+	PickupHPMedium   int64
+	PickupHPSmall    int64
+
+	SpawnScout    int64
+	SpawnSoldier  int64
+	SpawnPyro     int64
+	SpawnDemo     int64
+	SpawnHeavy    int64
+	SpawnEngineer int64
+	SpawnMedic    int64
+	SpawnSpy      int64
+	SpawnSniper   int64
+
+	Dominations int64
+	Revenges    int64
+
+	Playtime time.Duration
+}
+
+type GlobalStats struct {
+	commonStats
+	UniquePlayers int64
+}
+
+type MapStats struct {
+}
+
+type PlayerStats struct {
+	commonStats
+	Deaths      int64
+	Games       int64
+	Wins        int64
+	Losses      int64
+	DamageTaken int64
+	Dominated   int64
+}
+
+type ServerStats struct {
+	commonStats
 }

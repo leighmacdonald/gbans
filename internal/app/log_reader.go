@@ -57,9 +57,9 @@ func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.
 }
 
 // Updates DNS -> IP mappings
-func (srv *remoteSrcdsLogSource) updateDNS() {
+func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 	newServers := map[string]string{}
-	servers, errServers := srv.db.GetServers(context.Background(), true)
+	servers, errServers := remoteSrc.db.GetServers(context.Background(), true)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -72,15 +72,15 @@ func (srv *remoteSrcdsLogSource) updateDNS() {
 		}
 		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerName
 	}
-	srv.Lock()
-	defer srv.Unlock()
-	srv.dnsMap = newServers
+	remoteSrc.Lock()
+	defer remoteSrc.Unlock()
+	remoteSrc.dnsMap = newServers
 	log.Debugf("Updated DNS mappings")
 }
 
-func (srv *remoteSrcdsLogSource) updateSecrets() {
+func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int64]string{}
-	servers, errServers := srv.db.GetServers(context.Background(), true)
+	servers, errServers := remoteSrc.db.GetServers(context.Background(), true)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -109,23 +109,23 @@ func (srv *remoteSrcdsLogSource) updateSecrets() {
 
 		}(server, newId)
 	}
-	srv.Lock()
-	defer srv.Unlock()
-	srv.secretMap = newServers
+	remoteSrc.Lock()
+	defer remoteSrc.Unlock()
+	remoteSrc.secretMap = newServers
 	log.Debugf("Updated secret mappings")
 }
 
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (srv *remoteSrcdsLogSource) start() {
+func (remoteSrc *remoteSrcdsLogSource) start() {
 	type newMsg struct {
 		secure    bool
 		source    int64
 		sourceDNS string
 		body      string
 	}
-	connection, err := net.ListenUDP("udp4", srv.udpAddr)
+	connection, err := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if err != nil {
 		log.Errorf("Failed to start log listener: %v", err)
 		return
@@ -136,9 +136,9 @@ func (srv *remoteSrcdsLogSource) start() {
 		}
 	}()
 	msgId := 0
-	inChan := make(chan newMsg)
-	srv.updateSecrets()
-	srv.updateDNS()
+	msgIngressChan := make(chan newMsg)
+	remoteSrc.updateSecrets()
+	remoteSrc.updateDNS()
 	go func() {
 		for {
 			buffer := make([]byte, 1024)
@@ -149,26 +149,23 @@ func (srv *remoteSrcdsLogSource) start() {
 			}
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
-				inChan <- newMsg{
+				msgIngressChan <- newMsg{
 					secure:    false,
 					sourceDNS: fmt.Sprintf("%s:%d", src.IP, src.Port),
-					body:      string(buffer[5 : n-2]),
-				}
+					body:      string(buffer[5 : n-2])}
 			case s2aLogString2:
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
+					log.Warnf("Received malformed log message: Failed to find marker")
 					continue
 				}
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 64)
 				if errConv != nil {
+					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
 					continue
 				}
-				inChan <- newMsg{
-					secure: true,
-					source: secret,
-					body:   line[idx : n-2],
-				}
+				msgIngressChan <- newMsg{secure: true, source: secret, body: line[idx : n-2]}
 			}
 		}
 	}()
@@ -176,23 +173,23 @@ func (srv *remoteSrcdsLogSource) start() {
 	for {
 		select {
 		case <-ticker.C:
-			srv.updateSecrets()
-			srv.updateDNS()
-		case logPayload := <-inChan:
+			remoteSrc.updateSecrets()
+			remoteSrc.updateDNS()
+		case logPayload := <-msgIngressChan:
 			payload := model.LogPayload{Message: logPayload.body}
 			if logPayload.secure {
-				srv.RLock()
-				serverName, found := srv.secretMap[logPayload.source]
-				srv.RUnlock()
+				remoteSrc.RLock()
+				serverName, found := remoteSrc.secretMap[logPayload.source]
+				remoteSrc.RUnlock()
 				if !found {
 					log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
 					continue
 				}
 				payload.ServerName = serverName
 			} else {
-				srv.RLock()
-				serverName, found := srv.dnsMap[logPayload.sourceDNS]
-				srv.RUnlock()
+				remoteSrc.RLock()
+				serverName, found := remoteSrc.dnsMap[logPayload.sourceDNS]
+				remoteSrc.RUnlock()
 				if !found {
 					log.Tracef("Rejecting unknown dns log author: %d [%s]", logPayload.source, logPayload.body)
 					continue
@@ -200,9 +197,9 @@ func (srv *remoteSrcdsLogSource) start() {
 				payload.ServerName = serverName
 			}
 			select {
-			case srv.sink <- payload:
+			case remoteSrc.sink <- payload:
 			default:
-				log.WithFields(log.Fields{"size": len(srv.sink)}).Warnf("Log sink full")
+				log.WithFields(log.Fields{"size": len(remoteSrc.sink)}).Warnf("Log sink full")
 			}
 			log.WithFields(log.Fields{"id": msgId, "server": payload.ServerName, "sec": logPayload.secure, "body": logPayload.body}).
 				Tracef("Srcds remote log")

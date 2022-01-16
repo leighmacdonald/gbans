@@ -875,8 +875,9 @@ func (b *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, m *di
 	if errP := PersonBySID(b.db, sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
-	stats, errStats := b.db.GetPlayerStats(ctx, sid)
-	if errStats != nil {
+	var stats model.PlayerStats
+
+	if errStats := b.db.GetPlayerStats(ctx, sid, &stats); errStats != nil {
 		return errCommandFailed
 	}
 	kd := 0.0
@@ -908,12 +909,14 @@ func (b *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, m *di
 
 func (b *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {
 	serverIdStr := m.Data.Options[0].Options[0].Value.(string)
-	var server model.Server
+	var (
+		server model.Server
+		stats  model.ServerStats
+	)
 	if errServer := b.db.GetServerByName(ctx, serverIdStr, &server); errServer != nil {
 		return errServer
 	}
-	stats, errStats := b.db.GetServerStats(ctx, server.ServerID)
-	if errStats != nil {
+	if errStats := b.db.GetServerStats(ctx, server.ServerID, &stats); errStats != nil {
 		return errCommandFailed
 	}
 	acc := 0.0
@@ -932,7 +935,8 @@ func (b *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, m *di
 }
 
 func (b *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, r *botResponse) error {
-	stats, errStats := b.db.GetGlobalStats(ctx)
+	var stats model.GlobalStats
+	errStats := b.db.GetGlobalStats(ctx, &stats)
 	if errStats != nil {
 		return errCommandFailed
 	}

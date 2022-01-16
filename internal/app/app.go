@@ -271,7 +271,7 @@ func logReader(db store.Store) {
 		}
 		return nil
 	}
-	pc := newPlayerCache()
+	playerStateCache := newPlayerCache()
 	for {
 		select {
 		case raw := <-logRawQueue:
@@ -293,6 +293,7 @@ func logReader(db store.Store) {
 					log.Warnf("Failed to parse attacker position: %v", err)
 				}
 				apos = apv
+				delete(v.Values, "attacker_position")
 			}
 			vposValue, vposFound := v.Values["victim_position"]
 			if vposFound {
@@ -301,6 +302,7 @@ func logReader(db store.Store) {
 					log.Warnf("Failed to parse victim position: %v", err)
 				}
 				vpos = vpv
+				delete(v.Values, "victim_position")
 			}
 			asValue, asFound := v.Values["assister_position"]
 			if asFound {
@@ -309,6 +311,7 @@ func logReader(db store.Store) {
 					log.Warnf("Failed to parse assister position: %v", err)
 				}
 				aspos = asPosValue
+				delete(v.Values, "assister_position")
 			}
 			var weapon logparse.Weapon
 			weaponValue, weaponFound := v.Values["weapon"]
@@ -321,17 +324,17 @@ func logReader(db store.Store) {
 				if !logparse.ParsePlayerClass(classValue, &class) {
 					class = logparse.Spectator
 				}
-			} else {
-				if source != nil {
-					class = pc.getClass(source.SteamID)
-				}
+				delete(v.Values, "class")
+			} else if source != nil {
+				class = playerStateCache.getClass(source.SteamID)
 			}
 			extra := ""
 			extraValue, extraFound := v.Values["msg"]
 			if extraFound {
 				extra = extraValue
+				delete(v.Values, "msg")
 			}
-			var damage int
+			var damage int64
 			dmgValue, dmgFound := v.Values["realdamage"]
 			if !dmgFound {
 				dmgValue, dmgFound = v.Values["damage"]
@@ -341,7 +344,9 @@ func logReader(db store.Store) {
 				if err != nil {
 					log.Warnf("failed to parse damage value: %v", err)
 				}
-				damage = int(damageP)
+				damage = damageP
+				delete(v.Values, "realdamage")
+				delete(v.Values, "damage")
 			}
 			var item logparse.PickupItem
 			itemValue, itemFound := v.Values["item"]
@@ -359,18 +364,18 @@ func logReader(db store.Store) {
 				}
 			} else {
 				if source != nil {
-					team = pc.getTeam(source.SteamID)
+					team = playerStateCache.getTeam(source.SteamID)
 				}
 			}
 
-			var healing int
+			var healing int64
 			healingValue, healingFound := v.Values["healing"]
 			if healingFound {
 				healingP, err := strconv.ParseInt(healingValue, 10, 32)
 				if err != nil {
 					log.Warnf("failed to parse healing value: %v", err)
 				}
-				healing = int(healingP)
+				healing = healingP
 			}
 
 			se := model.ServerEvent{
@@ -392,9 +397,9 @@ func logReader(db store.Store) {
 			}
 			switch v.MsgType {
 			case logparse.SpawnedAs:
-				pc.setClass(se.Source.SteamID, se.PlayerClass)
+				playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
 			case logparse.JoinedTeam:
-				pc.setTeam(se.Source.SteamID, se.Team)
+				playerStateCache.setTeam(se.Source.SteamID, se.Team)
 			}
 			event.Emit(se)
 		case <-ctx.Done():

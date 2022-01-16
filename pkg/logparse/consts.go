@@ -102,6 +102,7 @@ func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }
 
+// NewPosFromString parses a players 3d position
 func NewPosFromString(s string, p *Pos) error {
 	pcs := strings.Split(s, " ")
 	if len(pcs) != 3 {
@@ -329,7 +330,7 @@ func WeaponFromString(s string) Weapon {
 	return UnknownWeapon
 }
 
-// weaponNames defines string versions for all all known weapons
+// weaponNames defines string versions for all known weapons
 var weaponNames = map[Weapon]string{
 	UnknownWeapon:         "unknown",
 	AiFlamethrower:        "ai_flamethrower",
