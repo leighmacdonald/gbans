@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Toolbar from '@mui/material/Toolbar';
 import {
     Checkbox,
-    FormControlLabel,
     IconButton,
-    Switch,
     Table,
     TableBody,
     TableCell,
@@ -20,7 +18,7 @@ import Paper from '@mui/material/Paper';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
     if (b[orderBy] < a[orderBy]) {
         return -1;
     }
@@ -28,7 +26,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
         return 1;
     }
     return 0;
-}
+};
 
 export type Order = 'asc' | 'desc';
 
@@ -46,7 +44,7 @@ interface HeadCell<TRecord> {
     disablePadding: boolean;
     id: keyof TRecord;
     label: string;
-    numeric: boolean;
+    cell_type: 'steam_id' | 'number' | 'bool' | 'string' | 'date' | 'flag';
 }
 
 interface EnhancedTableProps<TRecord> {
@@ -146,7 +144,11 @@ export const CreateDataTable = <TRecord,>(): ((
                     {props.headers.map((headCell, index) => (
                         <TableCell
                             key={`${headCell.id}-${index}`}
-                            align={headCell.numeric ? 'right' : 'left'}
+                            align={
+                                headCell.cell_type === 'number'
+                                    ? 'right'
+                                    : 'left'
+                            }
                             padding={
                                 headCell.disablePadding ? 'none' : 'normal'
                             }
@@ -207,8 +209,6 @@ export const CreateDataTable = <TRecord,>(): ((
         // eslint-disable-next-line
         const [page, setPage] = React.useState(0);
         // eslint-disable-next-line
-        const [dense, setDense] = React.useState(false);
-        // eslint-disable-next-line
         const [rowsPerPage, setRowsPerPage] = React.useState(10);
         // eslint-disable-next-line
 
@@ -263,12 +263,6 @@ export const CreateDataTable = <TRecord,>(): ((
             setPage(0);
         };
 
-        const handleChangeDense = (
-            event: React.ChangeEvent<HTMLInputElement>
-        ) => {
-            setDense(event.target.checked);
-        };
-
         const isSelected = (name: string) => selected.indexOf(name) !== -1;
 
         const emptyRows =
@@ -294,7 +288,7 @@ export const CreateDataTable = <TRecord,>(): ((
                     <TableContainer>
                         <Table
                             aria-labelledby="tableTitle"
-                            size={dense ? 'small' : 'medium'}
+                            size={'small'}
                             aria-label="enhanced table"
                         >
                             <EnhancedTableHead
@@ -371,8 +365,7 @@ export const CreateDataTable = <TRecord,>(): ((
                                 {emptyRows > 0 && (
                                     <TableRow
                                         style={{
-                                            height:
-                                                (dense ? 33 : 53) * emptyRows
+                                            height: 33 * emptyRows
                                         }}
                                     >
                                         <TableCell colSpan={6} />
@@ -391,12 +384,6 @@ export const CreateDataTable = <TRecord,>(): ((
                         onRowsPerPageChange={handleChangeRowsPerPage}
                     />
                 </Paper>
-                <FormControlLabel
-                    control={
-                        <Switch checked={dense} onChange={handleChangeDense} />
-                    }
-                    label="Dense padding"
-                />
             </div>
         );
     };

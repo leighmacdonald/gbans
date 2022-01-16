@@ -4,19 +4,19 @@ import { log } from '../util/errors';
 import {
     apiGetServers,
     encode,
+    eventNames,
+    MsgType,
     PayloadType,
     Person,
+    Pos,
     Server,
+    ServerEvent,
+    StringIsNumber,
+    Team,
     WebSocketAuthResp,
     WebSocketPayload
 } from '../util/api';
-import {
-    eventNames,
-    LogEvent,
-    MsgType,
-    Pos,
-    StringIsNumber
-} from '../util/game_events';
+
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { takeRight } from 'lodash-es';
 import { parseDateTime } from '../util/text';
@@ -58,7 +58,7 @@ const sessionStateString = {
 export const ServerLogView = (): JSX.Element => {
     const maxCacheSize = 10000;
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const messageHistory = useRef<LogEvent[]>([]);
+    const messageHistory = useRef<ServerEvent[]>([]);
     const [servers, setServers] = useState<Server[]>([]);
     const [orderDesc, setOrderDesc] = useState<boolean>(false);
     const [query, setQuery] = useState<string>('');
@@ -75,7 +75,7 @@ export const ServerLogView = (): JSX.Element => {
     const [filterSteamID, setFilterSteamID] = useState<SteamID>(
         new SteamID('')
     );
-    const [filteredMessages, setFilteredMessages] = useState<LogEvent[]>([]);
+    const [filteredMessages, setFilteredMessages] = useState<ServerEvent[]>([]);
     const [sessionState, setSessionState] = useState<State>(State.Closed);
     const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
         `${proto}://${location.host}${
@@ -148,7 +148,7 @@ export const ServerLogView = (): JSX.Element => {
             case State.Authenticated: {
                 switch (p.payload_type) {
                     case PayloadType.logQueryResults: {
-                        const r = p.data as LogEvent;
+                        const r = p.data as ServerEvent;
                         messageHistory.current.push(r);
                         if (messageHistory.current.length >= maxCacheSize) {
                             messageHistory.current.shift();
@@ -229,8 +229,8 @@ export const ServerLogView = (): JSX.Element => {
         if (filterSteamID.isValid()) {
             logs = logs.filter(
                 (s) =>
-                    s.player1?.steam_id == filterSteamID.getSteamID64() ||
-                    s.player2?.steam_id == filterSteamID.getSteamID64()
+                    s.source?.steam_id == filterSteamID.getSteamID64() ||
+                    s.target?.steam_id == filterSteamID.getSteamID64()
             );
         }
         if (
@@ -239,7 +239,7 @@ export const ServerLogView = (): JSX.Element => {
         ) {
             logs = logs.filter((s) => filterMsgTypes.includes(s.event_type));
         }
-        logs = takeRight<LogEvent>(logs, renderLimit);
+        logs = takeRight<ServerEvent>(logs, renderLimit);
         setFilteredMessages(logs);
     }, [
         setFilterServerIDs,
@@ -390,15 +390,17 @@ const renderEventTimeColumn = (t: string): JSX.Element => {
     );
 };
 
-const renderPosColumn = (p: Pos): JSX.Element => {
-    return (
+const renderPosColumn = (p?: Pos): JSX.Element => {
+    return p ? (
         <span>
             {p.x}, {p.y}, {p.z}
         </span>
+    ) : (
+        <></>
     );
 };
 
-export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
+export const renderServerLog = (l: ServerEvent, i: number): JSX.Element => {
     if (!l) {
         return <></>;
     }
@@ -408,13 +410,13 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             break;
         }
         case MsgType.UnknownMsg: {
-            v = <div>{JSON.stringify(l.event)}</div>;
+            v = <div>{JSON.stringify(l.event_type)}</div>;
             break;
         }
         case MsgType.Killed: {
             v = (
                 <div>
-                    Weapon: <b>{l.event['weapon']}</b>
+                    Weapon: <b>{l.meta_data?.weapon as string}</b>
                 </div>
             );
             break;
@@ -426,8 +428,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.Suicide: {
             v = (
                 <div>
-                    Suicided (pos:{' '}
-                    <b>{renderPosColumn(l.event['pos'] as Pos)}</b>)
+                    Suicided (pos: <b>{renderPosColumn(l.attacker_pos)}</b>)
                 </div>
             );
             break;
@@ -435,7 +436,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.ShotFired: {
             v = (
                 <div>
-                    <b>{l.event['weapon']}</b>
+                    <b>{l.meta_data?.weapon as string}</b>
                 </div>
             );
             break;
@@ -443,7 +444,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.ShotHit: {
             v = (
                 <div>
-                    <b>{l.event['weapon']}</b>
+                    <b>{l.meta_data?.weapon as string}</b>
                 </div>
             );
             break;
@@ -457,7 +458,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             break;
         }
         case MsgType.Pickup: {
-            v = <div>{l.event['pickup']}</div>;
+            v = <div>{l.item}</div>;
             break;
         }
         case MsgType.EmptyUber: {
@@ -467,18 +468,22 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.MedicDeath: {
             v = (
                 <div>
-                    Medic death (uber: {l.event['uber']}) (healing:{' '}
-                    {l.event['healing']})
+                    Medic death (uber: {l.meta_data?.uber as string}) (healing:{' '}
+                    {l.healing})
                 </div>
             );
             break;
         }
         case MsgType.MedicDeathEx: {
-            v = <div>Medic death (pct: {l.event['uber_pct']})</div>;
+            v = <div>Medic death (pct: {l.meta_data?.uber_pct as number})</div>;
             break;
         }
         case MsgType.LostUberAdv: {
-            v = <div>Uber advantage lost ({l.event['advtime']}s)</div>;
+            v = (
+                <div>
+                    Uber advantage lost ({l.meta_data?.advtime as string}s)
+                </div>
+            );
             break;
         }
         case MsgType.ChargeReady: {
@@ -492,7 +497,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.ChargeDeployed: {
             v = (
                 <div>
-                    Charge deployed (<b>{l.event['medigun']}</b>)
+                    Charge deployed (<b>{l.meta_data?.medigun as string}</b>)
                 </div>
             );
             break;
@@ -500,7 +505,8 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.ChargeEnded: {
             v = (
                 <div>
-                    Charge ended (duration: <b>{l.event['duration']}s</b>)
+                    Charge ended (duration:{' '}
+                    <b>{l.meta_data?.duration as string}s</b>)
                 </div>
             );
             break;
@@ -508,7 +514,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.Healed: {
             v = (
                 <div>
-                    <b>{l.event['healing']}</b>
+                    <b>{l.healing}</b>
                 </div>
             );
             break;
@@ -516,7 +522,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.Extinguished: {
             v = (
                 <div>
-                    With <b>{l.event['weapon']}</b>
+                    With <b>{l.meta_data?.weapon as string}</b>
                 </div>
             );
             break;
@@ -524,7 +530,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.BuiltObject: {
             v = (
                 <div>
-                    Built <b>{l.event['object']}</b>
+                    Built <b>{l.meta_data?.object as string}</b>
                 </div>
             );
             break;
@@ -532,7 +538,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.CarryObject: {
             v = (
                 <div>
-                    Carried <b>{l.event['object']}</b>
+                    Carried <b>{l.meta_data?.object as string}</b>
                 </div>
             );
             break;
@@ -540,8 +546,8 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.KilledObject: {
             v = (
                 <div>
-                    Destroyed <b>{l.event['object']}</b> with{' '}
-                    <b>{l.event['weapon']}</b>
+                    Destroyed <b>{l.meta_data?.object as string}</b> with{' '}
+                    <b>{l.meta_data?.weapon as string}</b>
                 </div>
             );
             break;
@@ -549,7 +555,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.DetonatedObject: {
             v = (
                 <div>
-                    Detonated <b>{l.event['object']}</b>
+                    Detonated <b>{l.meta_data?.object as string}</b>
                 </div>
             );
             break;
@@ -557,7 +563,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.DropObject: {
             v = (
                 <div>
-                    Dropped <b>{l.event['object']}</b>
+                    Dropped <b>{l.meta_data?.object as string}</b>
                 </div>
             );
             break;
@@ -565,7 +571,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.FirstHealAfterSpawn: {
             v = (
                 <div>
-                    First heal took <b>{l.event['time']}s</b>
+                    First heal took <b>{l.meta_data?.time as number}s</b>
                 </div>
             );
             break;
@@ -573,23 +579,25 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.CaptureBlocked: {
             v = (
                 <div>
-                    Capture <b>Blocked</b> <b>{l.event['cp_name']}</b> (
-                    <b>{l.event['cp']}</b>
+                    Capture <b>Blocked</b>{' '}
+                    <b>{l.meta_data?.cp_name as string}</b> (
+                    <b>{l.meta_data?.cp as string}</b>
                 </div>
             );
             break;
         }
         case MsgType.KilledCustom: {
-            v = <div>custom_kill {l.event['custom_kill']}</div>;
+            v = <div>custom_kill {l.meta_data?.custom_kill as string}</div>;
             break;
         }
         case MsgType.PointCaptured: {
             v = (
                 <div>
-                    Team <b>{l.event['team']}</b>
-                    CP <b>{l.event['cp_name']}</b> (<b>{l.event['cp']}</b>) Num{' '}
-                    Num <b>{l.event['num_cappers']}</b>
-                    <b>{l.event['body']}</b>
+                    Team <b>{l.team}</b>
+                    CP <b>{l.meta_data?.cp_name as string}</b> (
+                    <b>{l.meta_data?.cp as string}</b>) Num Num{' '}
+                    <b>{l.meta_data?.num_cappers as number}</b>
+                    <b>{l.meta_data?.extra as string}</b>
                 </div>
             );
             break;
@@ -597,7 +605,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.JoinedTeam: {
             v = (
                 <div>
-                    <b>{l.event['team']}</b>
+                    <b>{l.team}</b>
                 </div>
             );
             break;
@@ -605,7 +613,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.ChangeClass: {
             v = (
                 <div>
-                    <b>{l.event['class']}</b>
+                    <b>{l.player_class}</b>
                 </div>
             );
             break;
@@ -613,7 +621,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.SpawnedAs: {
             v = (
                 <div>
-                    <b>{l.event['class']}</b>
+                    <b>{l.player_class}</b>
                 </div>
             );
             break;
@@ -635,13 +643,13 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             break;
         }
         case MsgType.WRoundWin: {
-            v = <div>Round win {l.event['winner']}</div>;
+            v = <div>Round win {l.meta_data?.winner as string}</div>;
             break;
         }
         case MsgType.WRoundLen: {
             v = (
                 <div>
-                    Round length <b>{l.event['length']}</b>
+                    Round length <b>{l.meta_data?.length as string}</b>
                 </div>
             );
             break;
@@ -649,8 +657,8 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.WTeamScore: {
             v = (
                 <div>
-                    {l.event['team']} Score {l.event['score']} Players{' '}
-                    {l.event['players']}
+                    {l.team} Score {l.meta_data?.score as number} Players{' '}
+                    {l.meta_data?.players as number}
                 </div>
             );
             break;
@@ -658,13 +666,14 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.WTeamFinalScore: {
             v = (
                 <div>
-                    Score {l.event['score']} Players {l.event['players']}
+                    Score {l.meta_data?.score as number} Players{' '}
+                    {l.meta_data?.players as number}
                 </div>
             );
             break;
         }
         case MsgType.WGameOver: {
-            v = <div>Game Over (reason: {l.event['reason']})</div>;
+            v = <div>Game Over (reason: {l.meta_data?.reason as string})</div>;
             break;
         }
         case MsgType.WPaused: {
@@ -686,7 +695,8 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.CVAR: {
             v = (
                 <div>
-                    CVAR <b>{l.event['cvar']}</b> &gt; <b>{l.event['value']}</b>
+                    CVAR <b>{l.meta_data?.cvar as string}</b> &gt;{' '}
+                    <b>{l.meta_data?.value as string}</b>
                 </div>
             );
             break;
@@ -708,7 +718,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             break;
         }
         case MsgType.RCON: {
-            v = <div>RCON {JSON.stringify(l.event)}</div>;
+            v = <div>RCON {JSON.stringify(l.meta_data)}</div>;
             break;
         }
         case MsgType.LogStart: {
@@ -720,18 +730,10 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
             break;
         }
         case MsgType.Damage: {
-            let rd = <></>;
-            if (l.event['realdamage']) {
-                rd = (
-                    <span>
-                        {' (real: '} <b>{l.event['realdamage']}</b>
-                        {')'}
-                    </span>
-                );
-            }
             v = (
                 <div>
-                    {'(damage: '} <b>{l.event['damage']}</b>){rd}
+                    {' '}
+                    {'(damage: '} <b>{l.damage}</b>)
                 </div>
             );
             break;
@@ -741,7 +743,7 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
                 <div>
                     <b>
                         {'(team) '}
-                        {l.event['msg']}
+                        {l.extra}
                     </b>
                 </div>
             );
@@ -750,20 +752,20 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         case MsgType.Say: {
             v = (
                 <div>
-                    <b>{l.event['msg']}</b>
+                    <b>{l.extra}</b>
                 </div>
             );
             break;
         }
         default: {
-            v = <div>{JSON.stringify(l.event)}</div>;
+            v = <div>{JSON.stringify(l)}</div>;
         }
     }
     let bg = 'inherit';
-    if (l.event['team']) {
-        if (l.event['team'] === 'Red') {
+    if (l.team) {
+        if (l.team === Team.RED) {
             bg = 'rgba(139,12,12,0.25)';
-        } else if (l.event['team'] === 'Blue') {
+        } else if (l.team === Team.BLU) {
             bg = 'rgba(12,48,139,0.25)';
         }
     }
@@ -772,16 +774,16 @@ export const renderServerLog = (l: LogEvent, i: number): JSX.Element => {
         <Grid key={`sl-${i}`} item xs={12}>
             <Grid container style={{ backgroundColor: bg }}>
                 <Grid item xs={1}>
-                    {renderEventTimeColumn(l.created_on)}
+                    {renderEventTimeColumn(l.created_on.toISOString())}
                 </Grid>
                 <Grid item xs={1}>
                     {renderServerColumn(l.server)}
                 </Grid>
                 <Grid item xs={2}>
-                    {renderPersonColumn(l.player1)}
+                    {renderPersonColumn(l.source)}
                 </Grid>
                 <Grid item xs={2}>
-                    {renderPersonColumn(l.player2)}
+                    {renderPersonColumn(l.target)}
                 </Grid>
                 <Grid item xs={1}>
                     {renderEventTypeColumn(l.event_type)}

@@ -14,27 +14,56 @@ export const ServerList = (): JSX.Element =>
                 id: 'server_name',
                 disablePadding: false,
                 label: 'Name',
-                numeric: false
+                cell_type: 'string'
+            },
+            {
+                id: 'server_name_long',
+                disablePadding: false,
+                label: 'Name Long',
+                cell_type: 'string'
             },
             {
                 id: 'address',
                 disablePadding: false,
                 label: 'Host',
-                numeric: false
-            },
-            { id: 'port', disablePadding: false, label: 'Port', numeric: true },
-            {
-                id: 'rcon',
-                disablePadding: false,
-                label: 'RCON',
-                numeric: false
+                cell_type: 'string'
             },
             {
-                id: 'token_created_on',
+                id: 'port',
                 disablePadding: false,
-                label: 'Token Last Updated',
-                numeric: false
+                label: 'Port',
+                cell_type: 'number'
+            },
+            {
+                id: 'password_protected',
+                disablePadding: false,
+                label: 'Private',
+                cell_type: 'bool'
+            },
+            {
+                id: 'region',
+                disablePadding: false,
+                label: 'Region',
+                cell_type: 'string'
+            },
+            {
+                id: 'cc',
+                disablePadding: false,
+                label: 'Country',
+                cell_type: 'flag'
+            },
+            {
+                id: 'latitude',
+                disablePadding: false,
+                label: 'Lat',
+                cell_type: 'number'
+            },
+            {
+                id: 'longitude',
+                disablePadding: false,
+                label: 'Lon',
+                cell_type: 'number'
             }
         ],
-        showToolbar: false
+        showToolbar: true
     });
