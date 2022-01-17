@@ -129,7 +129,7 @@ func TestParse(t *testing.T) {
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:24:14: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "1") (player1 "Hacksaw<12><[U:1:68745073]><Red>") (position1 "101 98 -313")`, PointCaptured), &value13))
 	require.EqualValues(t, PointCapturedEvt{
 		Team: RED, CP: 0, CPName: "#koth_viaduct_cap", NumCappers: 1,
-		Body: `(player1 "Hacksaw<12><[U:1:68745073]><Red>") (position1 "101 98 -313")`}, value13)
+		Player1: "Hacksaw<12><[U:1:68745073]><Red>", Position1: Pos{X: 101, Y: 98, Z: -313}}, value13)
 
 	var value14 ConnectedEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:24:22: "amogus gaming<13><[U:1:1089803558]><>" Connected, address "139.47.95.130:47949"`, Connected), &value14))
@@ -145,15 +145,10 @@ func TestParse(t *testing.T) {
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:26:33: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "obj_attachment_sapper") (objectowner "idk<9><[U:1:1170132017]><Blue>") (attacker_position "2 -579 -255")`, KilledObject), &value16))
 	require.EqualValues(t, KilledObjectEvt{
 		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
-		TargetPlayer: TargetPlayer{
-			Name2: "idk",
-			PID2:  9,
-			SID2:  steamid.SID3ToSID64("[U:1:1170132017]"),
-			Team2: BLU,
-		},
-		Object: "OBJ_SENTRYGUN",
-		Weapon: Sapper,
-		APos:   Pos{X: 2, Y: -579, Z: -255}}, value16)
+		Owner:        "idk<9><[U:1:1170132017]><Blue>",
+		Object:       "OBJ_SENTRYGUN",
+		Weapon:       Sapper,
+		APos:         Pos{X: 2, Y: -579, Z: -255}}, value16)
 
 	var value17 CarryObjectEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:30:45: "idk<9><[U:1:1170132017]><Blue>" triggered "player_carryobject" (object "OBJ_SENTRYGUN") (position "1074 -2279 -423")`, CarryObject), &value17))
@@ -170,7 +165,10 @@ func TestParse(t *testing.T) {
 	var value19 BuiltObjectEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:32:30: "idk<9><[U:1:1170132017]><Blue>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "880 -152 -255")`, BuiltObject), &value19))
 	require.EqualValues(t, BuiltObjectEvt{
-		SourcePlayer: SourcePlayer{Name: "idk", PID: 9, SID: 0x110000145becc31, Team: 2}, Object: "OBJ_SENTRYGUN", Pos: Pos{X: 880, Y: -152, Z: -255}}, value19)
+		SourcePlayer: SourcePlayer{Name: "idk", PID: 9, SID: 0x110000145becc31, Team: 2},
+		Object:       "OBJ_SENTRYGUN",
+		Pos:          Pos{X: 880, Y: -152, Z: -255},
+	}, value19)
 
 	var value20 WRoundWinEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:29:49: World triggered "Round_Win" (winner "Red")`, WRoundWin), &value20))
@@ -186,19 +184,21 @@ func TestParse(t *testing.T) {
 
 	var value23 SayEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:29:57: "Hacksaw<12><[U:1:68745073]><Red>" say "gg"`, Say), &value23))
-	require.EqualValues(t, SayEvt{SourcePlayer: SourcePlayer{Name: "Hacksaw", PID: 12, SID: 0x11000010418f771, Team: 1}, Msg: "gg"}, value23)
+	require.EqualValues(t, SayEvt{
+		SourcePlayer: SourcePlayer{Name: "Hacksaw", PID: 12, SID: 0x11000010418f771, Team: 1},
+		Msg:          "gg"}, value23)
 
 	var value24 SayTeamEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:29:59: "Desmos Calculator<10><[U:1:1132396177]><Red>" say_team "gg"`, SayTeam), &value24))
-	require.EqualValues(t, SayTeamEvt{SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1}, Msg: "gg"}, value24)
+	require.EqualValues(t, SayTeamEvt{
+		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
+		Msg:          "gg"}, value24)
 
 	var value25 DominationEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:33:41: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "Domination" against "Dzefersons14<8><[U:1:1080653073]><Blue>"`, Domination), &value25))
 	require.EqualValues(t, DominationEvt{
 		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
-		TargetPlayer: TargetPlayer{
-			Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: BLU,
-		}}, value25)
+		TargetPlayer: TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: BLU}}, value25)
 
 	var value26 DisconnectedEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:33:43: "Cybermorphic<15><[U:1:901503117]><Unassigned>" Disconnected (reason "Disconnect by user.")`, Disconnected), &value26))
@@ -275,7 +275,10 @@ func TestParse(t *testing.T) {
 
 	var value42 LostUberAdvantageEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:47:32: "SEND HELP<16><[U:1:84528002]><Blue>" triggered "lost_uber_advantage" (time "44")`, LostUberAdv), &value42))
-	require.Equal(t, LostUberAdvantageEvt{SourcePlayer: SourcePlayer{Name: "SEND HELP", PID: 16, SID: 0x11000010509cb82, Team: 2}, AdvTime: 44}, value42)
+	require.Equal(t, LostUberAdvantageEvt{
+		SourcePlayer: SourcePlayer{Name: "SEND HELP", PID: 16, SID: 0x11000010509cb82, Team: 2},
+		AdvTime:      44,
+	}, value42)
 
 	var value43 EmptyUberEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:26:43: "Kwq<9><[U:1:96748980]><Blue>" triggered "empty_uber"`, EmptyUber), &value43))
@@ -287,39 +290,64 @@ func TestParse(t *testing.T) {
 
 	var value45 ShotFiredEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:28:02: "rad<6><[U:1:57823119]><Red>" triggered "shot_fired" (weapon "syringegun_medic")`, ShotFired), &value45))
-	require.EqualValues(t, ShotFiredEvt{SourcePlayer: SourcePlayer{Name: "rad", PID: 6, SID: 0x110000103724f8f, Team: 1}, Weapon: SyringeGun}, value45)
+	require.EqualValues(t, ShotFiredEvt{
+		SourcePlayer: SourcePlayer{Name: "rad", PID: 6, SID: 0x110000103724f8f, Team: 1},
+		Weapon:       SyringeGun,
+	}, value45)
 
 	var value46 ShotHitEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:28:02: "z/<14><[U:1:66656848]><Blue>" triggered "shot_hit" (weapon "blackbox")`, ShotHit), &value46))
-	require.EqualValues(t, ShotHitEvt{SourcePlayer: SourcePlayer{Name: "z/", PID: 14, SID: 0x110000103f91a50, Team: 2}, Weapon: Blackbox}, value46)
+	require.EqualValues(t, ShotHitEvt{
+		SourcePlayer: SourcePlayer{Name: "z/", PID: 14, SID: 0x110000103f91a50, Team: 2},
+		Weapon:       Blackbox,
+	}, value46)
 
 	var value47 DamageEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:28:01: "rad<6><[U:1:57823119]><Red>" triggered "damage" against "z/<14><[U:1:66656848]><Blue>" (damage "11") (weapon "syringegun_medic")`, Damage), &value47))
 	require.EqualValues(t, DamageEvt{
 		SourcePlayer: SourcePlayer{Name: "rad", PID: 6, SID: 0x110000103724f8f, Team: 1},
 		TargetPlayer: TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.SID3ToSID64("[U:1:66656848]"), Team2: BLU},
-		Weapon:       SyringeGun, Damage: 11}, value47)
+		Weapon:       SyringeGun,
+		Damage:       11,
+	}, value47)
 
 	var value48 DamageEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:29:54: "rad<6><[U:1:57823119]><Red>" triggered "damage" against "z/<14><[U:1:66656848]><Blue>" (damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, Damage), &value48))
 	require.EqualValues(t, DamageEvt{
 		SourcePlayer: SourcePlayer{Name: "rad", PID: 6, SID: 0x110000103724f8f, Team: 1},
 		TargetPlayer: TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.SID3ToSID64("[U:1:66656848]"), Team2: BLU},
-		Damage:       88, RealDamage: 32, Weapon: Ubersaw, Healing: 110}, value48)
+		Damage:       88,
+		RealDamage:   32,
+		Weapon:       Ubersaw,
+		Healing:      110,
+	}, value48)
 
 	var value49 KilledEvt
 	require.NoError(t, Unmarshal(pa(`L 05/21/2021 - 20:46:13: "Five<636><[U:1:66374745]><Blue>" killed "2-D<658><[U:1:126712178]><Red>" with "scattergun" (attacker_position "803 -693 -235") (victim_position "663 -899 -165")`, Killed), &value49))
 	require.EqualValues(t, KilledEvt{
 		SourcePlayer: SourcePlayer{Name: "Five", PID: 636, SID: steamid.SID3ToSID64("[U:1:66374745]"), Team: BLU},
 		TargetPlayer: TargetPlayer{Name2: "2-D", PID2: 658, SID2: steamid.SID3ToSID64("[U:1:126712178]"), Team2: RED},
-		APos:         Pos{X: 803, Y: -693, Z: -235}, VPos: Pos{X: 663, Y: -899, Z: -165},
-		Weapon: Scattergun,
+		APos:         Pos{X: 803, Y: -693, Z: -235},
+		VPos:         Pos{X: 663, Y: -899, Z: -165},
+		Weapon:       Scattergun,
 	}, value49)
 
 }
 
 func TestParseKVs(t *testing.T) {
-	m := map[string]string{}
-	require.True(t, parseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m))
-	require.Equal(t, map[string]string{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m)
+	m1 := map[string]string{}
+	require.True(t, parseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
+	require.Equal(t, map[string]string{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
+
+	m2 := map[string]string{}
+	require.True(t, parseKVs(`L 01/16/2022 - 21:24:11: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, m2))
+	require.Equal(t, map[string]string{
+		"cp":         "0",
+		"cpname":     "#koth_viaduct_cap",
+		"numcappers": "2",
+		"player1":    "cube elegy<15><[U:1:84002473]><Red>",
+		"position1":  "-156 -105 1601",
+		"player2":    "bink<24><[U:1:164995715]><Red>",
+		"position2":  "57 78 1602",
+	}, m2)
 }
