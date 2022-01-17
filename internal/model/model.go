@@ -614,47 +614,48 @@ func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error)
 
 // CommonStats contains shared stats that are used across all models
 type CommonStats struct {
-	Kills        int64 `json:"kills,omitempty"`
-	Assists      int64 `json:"assists,omitempty"`
-	Damage       int64 `json:"damage,omitempty"`
-	Healing      int64 `json:"healing,omitempty"`
-	Shots        int64 `json:"shots,omitempty"`
-	Hits         int64 `json:"hits,omitempty"`
-	Suicides     int64 `json:"suicides,omitempty"`
-	Extinguishes int64 `json:"extinguishes,omitempty"`
+	Kills        int64 `json:"kills"`
+	Assists      int64 `json:"assists"`
+	Damage       int64 `json:"damage"`
+	Healing      int64 `json:"healing"`
+	Shots        int64 `json:"shots"`
+	Hits         int64 `json:"hits"`
+	Suicides     int64 `json:"suicides"`
+	Extinguishes int64 `json:"extinguishes"`
 
-	PointCaptures int64 `json:"point_captures,omitempty"`
-	PointDefends  int64 `json:"point_defends,omitempty"`
+	PointCaptures int64 `json:"point_captures"`
+	PointDefends  int64 `json:"point_defends"`
 
-	MedicDroppedUber int64 `json:"medic_dropped_uber,omitempty"`
+	MedicDroppedUber int64 `json:"medic_dropped_uber"`
 
-	ObjectBuilt     int64 `json:"object_built,omitempty"`
-	ObjectDestroyed int64 `json:"object_destroyed,omitempty"`
+	ObjectBuilt     int64 `json:"object_built"`
+	ObjectDestroyed int64 `json:"object_destroyed"`
 
-	Messages     int64 `json:"messages,omitempty"`
-	MessagesTeam int64 `json:"messages_team,omitempty"`
+	Messages     int64 `json:"messages"`
+	MessagesTeam int64 `json:"messages_team"`
 
-	PickupAmmoLarge  int64 `json:"pickup_ammo_large,omitempty"`
-	PickupAmmoMedium int64 `json:"pickup_ammo_medium,omitempty"`
-	PickupAmmoSmall  int64 `json:"pickup_ammo_small,omitempty"`
-	PickupHPLarge    int64 `json:"pickup_hp_large,omitempty"`
-	PickupHPMedium   int64 `json:"pickup_hp_medium,omitempty"`
-	PickupHPSmall    int64 `json:"pickup_hp_small,omitempty"`
+	PickupAmmoLarge  int64 `json:"pickup_ammo_large"`
+	PickupAmmoMedium int64 `json:"pickup_ammo_medium"`
+	PickupAmmoSmall  int64 `json:"pickup_ammo_small"`
+	PickupHPLarge    int64 `json:"pickup_hp_large"`
+	PickupHPMedium   int64 `json:"pickup_hp_medium"`
+	PickupHPSmall    int64 `json:"pickup_hp_small"`
 
-	SpawnScout    int64 `json:"spawn_scout,omitempty"`
-	SpawnSoldier  int64 `json:"spawn_soldier,omitempty"`
-	SpawnPyro     int64 `json:"spawn_pyro,omitempty"`
-	SpawnDemo     int64 `json:"spawn_demo,omitempty"`
-	SpawnHeavy    int64 `json:"spawn_heavy,omitempty"`
-	SpawnEngineer int64 `json:"spawn_engineer,omitempty"`
-	SpawnMedic    int64 `json:"spawn_medic,omitempty"`
-	SpawnSpy      int64 `json:"spawn_spy,omitempty"`
-	SpawnSniper   int64 `json:"spawn_sniper,omitempty"`
+	SpawnScout    int64 `json:"spawn_scout"`
+	SpawnSoldier  int64 `json:"spawn_soldier"`
+	SpawnPyro     int64 `json:"spawn_pyro"`
+	SpawnDemo     int64 `json:"spawn_demo"`
+	SpawnHeavy    int64 `json:"spawn_heavy"`
+	SpawnEngineer int64 `json:"spawn_engineer"`
+	SpawnMedic    int64 `json:"spawn_medic"`
+	SpawnSniper   int64 `json:"spawn_sniper"`
+	SpawnSpy      int64 `json:"spawn_spy"`
 
-	Dominations int64 `json:"dominations,omitempty"`
-	Revenges    int64 `json:"revenges,omitempty"`
+	Dominations int64 `json:"dominations"`
+	Revenges    int64 `json:"revenges"`
 
-	Playtime time.Duration `json:"playtime,omitempty"`
+	Playtime   time.Duration `json:"playtime"`
+	EventCount int64         `json:"event_count"`
 }
 
 type GlobalStats struct {
@@ -668,12 +669,13 @@ type MapStats struct {
 
 type PlayerStats struct {
 	CommonStats
-	Deaths      int64 `json:"deaths" json:"deaths,omitempty"`
-	Games       int64 `json:"games,omitempty"`
-	Wins        int64 `json:"wins,omitempty"`
-	Losses      int64 `json:"losses,omitempty"`
-	DamageTaken int64 `json:"damage_taken,omitempty"`
-	Dominated   int64 `json:"dominated,omitempty"`
+	Deaths       int64 `json:"deaths"`
+	Games        int64 `json:"games"`
+	Wins         int64 `json:"wins"`
+	Losses       int64 `json:"losses"`
+	DamageTaken  int64 `json:"damage_taken"`
+	Dominated    int64 `json:"dominated"`
+	HealingTaken int64 `json:"healing_taken"`
 }
 
 type ServerStats struct {

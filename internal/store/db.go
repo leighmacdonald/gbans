@@ -13,6 +13,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -123,6 +124,10 @@ type pgStore struct {
 	c *pgxpool.Pool
 }
 
+func (db *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	return db.Query(ctx, query, args...)
+}
+
 // Close will close the underlying database connection if it exists
 func (db *pgStore) Close() error {
 	if db.c != nil {
@@ -133,13 +138,13 @@ func (db *pgStore) Close() error {
 
 func (db *pgStore) truncateTable(ctx context.Context, table tableName) error {
 	if _, err := db.c.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
 
-// dbErr is used to wrap common database errors in own own error types
-func dbErr(err error) error {
+// Err is used to wrap common database errors in own own error types
+func Err(err error) error {
 	if err == nil {
 		return err
 	}

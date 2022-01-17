@@ -13,11 +13,11 @@ func (db *pgStore) GetDemo(ctx context.Context, demoId int64, d *model.DemoFile)
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
 	if e != nil {
-		return dbErr(e)
+		return Err(e)
 	}
 	if err := db.c.QueryRow(ctx, q, a...).Scan(&d.DemoID, &d.ServerID, &d.Title, &d.Data,
 		&d.CreatedOn, &d.Size, &d.Downloads); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -30,14 +30,14 @@ func (db *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 		Limit(1000).
 		ToSql()
 	if e != nil {
-		return nil, dbErr(e)
+		return nil, Err(e)
 	}
 	rows, err := db.c.Query(ctx, q, a...)
 	var rs error
 	for rows.Next() {
 		var d model.DemoFile
 		if rs = rows.Scan(&d.DemoID, &d.ServerID, &d.Title, &d.CreatedOn, &d.Size, &d.Downloads); rs != nil {
-			return nil, dbErr(err)
+			return nil, Err(err)
 		}
 		demos = append(demos, d)
 	}
@@ -63,7 +63,7 @@ func (db *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
 	}
 	err := db.c.QueryRow(ctx, q, a...).Scan(&d.ServerID)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	log.Debugf("New demo saved: %s", d.Title)
 	return nil
@@ -92,7 +92,7 @@ func (db *pgStore) DropDemo(ctx context.Context, d *model.DemoFile) error {
 		return e
 	}
 	if _, err := db.c.Exec(ctx, q, a...); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	d.DemoID = 0
 	log.Debugf("Demo deleted: %s", d.Title)

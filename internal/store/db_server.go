@@ -28,7 +28,7 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
 			&s.ReservedSlots, &s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
 			&s.DefaultMap, &s.Deleted); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -43,7 +43,7 @@ func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]mode
 	qb = qb.Where(cond)
 	q, a, e := qb.ToSql()
 	if e != nil {
-		return nil, dbErr(e)
+		return nil, Err(e)
 	}
 	rows, err := db.c.Query(ctx, q, a...)
 	if err != nil {
@@ -105,7 +105,7 @@ func (db *pgStore) insertServer(ctx context.Context, s *model.Server) error {
 		s.ReservedSlots, s.CreatedOn, s.UpdatedOn, s.Password, s.IsEnabled, s.Region, s.CC,
 		s.Location.String(), s.DefaultMap, s.Deleted).Scan(&s.ServerID)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -197,7 +197,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	}
 	rows, errQ := db.c.Query(ctx, q, a...)
 	if errQ != nil {
-		return nil, dbErr(errQ)
+		return nil, Err(errQ)
 	}
 	defer rows.Close()
 	var events []model.ServerEvent

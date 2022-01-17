@@ -16,7 +16,7 @@ func (db *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
 func (db *pgStore) insertFilter(ctx context.Context, filter *model.Filter) (*model.Filter, error) {
 	const q = `INSERT INTO filtered_word (word, created_on) VALUES ($1, $2) RETURNING word_id`
 	if err := db.c.QueryRow(ctx, q, filter.Pattern.String(), filter.CreatedOn).Scan(&filter.WordID); err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)
 	return filter, nil
@@ -25,7 +25,7 @@ func (db *pgStore) insertFilter(ctx context.Context, filter *model.Filter) (*mod
 func (db *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
 	const q = `DELETE FROM filtered_word WHERE word_id = $1`
 	if _, err := db.c.Exec(ctx, q, filter.WordID); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	log.Debugf("Deleted filter: %d", filter.WordID)
 	return nil
@@ -48,7 +48,7 @@ func (db *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model.Filte
 func (db *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error) {
 	rows, err := db.c.Query(ctx, `SELECT word_id, word, created_on from filtered_word`)
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	var filters []model.Filter
 	defer rows.Close()

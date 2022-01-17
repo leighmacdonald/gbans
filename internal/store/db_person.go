@@ -21,7 +21,7 @@ func (db *pgStore) AddPersonIP(ctx context.Context, p *model.Person, ip string) 
 		return e
 	}
 	_, err := db.c.Exec(ctx, q, a...)
-	return dbErr(err)
+	return Err(err)
 }
 
 func (db *pgStore) GetIPHistory(ctx context.Context, sid64 steamid.SID64) ([]model.PersonIPRecord, error) {
@@ -35,14 +35,14 @@ func (db *pgStore) GetIPHistory(ctx context.Context, sid64 steamid.SID64) ([]mod
 	}
 	rows, err := db.c.Query(ctx, q, a...)
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	defer rows.Close()
 	var records []model.PersonIPRecord
 	for rows.Next() {
 		var r model.PersonIPRecord
 		if err2 := rows.Scan(&r.IP, &r.CreatedOn); err2 != nil {
-			return nil, dbErr(err)
+			return nil, Err(err)
 		}
 		records = append(records, r)
 	}
@@ -55,7 +55,7 @@ func (db *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) error 
 		return e
 	}
 	if _, err := db.c.Exec(ctx, q, a...); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -86,7 +86,7 @@ func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 		p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.TimeCreated, p.PlayerSummary.LocCountryCode,
 		p.PlayerSummary.LocStateCode, p.PlayerSummary.LocCityID, p.PermissionLevel, p.DiscordID,
 		p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (db *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
 	}
 	_, err := db.c.Exec(ctx, q, a...)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	p.IsNew = false
 	return nil
@@ -151,7 +151,7 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr, &p.CommunityBanned,
 		&p.VACBans, &p.GameBans, &p.EconomyBan, &p.DaysSinceLastBan)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) ([]model.Pers
 	var people []model.Person
 	rows, err := db.c.Query(ctx, q, a...)
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -201,7 +201,7 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) ([]model.Pers
 // does not exist.
 func (db *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error {
 	err := db.GetPersonBySteamID(ctx, sid, p)
-	if err != nil && dbErr(err) == ErrNoResult {
+	if err != nil && Err(err) == ErrNoResult {
 		// FIXME
 		//p = model.NewPerson(sid)
 		p.SteamID = sid
@@ -230,7 +230,7 @@ func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *mode
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans,
 		&p.EconomyBan, &p.DaysSinceLastBan)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -246,7 +246,7 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	var people []model.Person
 	rows, err := db.c.Query(ctx, q)
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -276,7 +276,7 @@ func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limi
 	}
 	rows, err := db.c.Query(ctx, q, sid64.String())
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	defer rows.Close()
 	var hist []logparse.SayEvt

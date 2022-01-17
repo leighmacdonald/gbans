@@ -24,7 +24,7 @@ func (db *pgStore) GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, er
 	var nets []model.BanNet
 	rows, err := db.c.Query(ctx, q, ip.String())
 	if err != nil {
-		return nil, dbErr(err)
+		return nil, Err(err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -85,7 +85,7 @@ func (db *pgStore) DropBanNet(ctx context.Context, ban *model.BanNet) error {
 		return e
 	}
 	if _, err := db.c.Exec(ctx, q, a...); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	ban.NetID = 0
 	return nil
@@ -148,7 +148,7 @@ func (db *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2loca
 	for rows.Next() {
 		var r ip2location.ASNRecord
 		if errRow := rows.Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); errRow != nil {
-			return nil, dbErr(errRow)
+			return nil, Err(errRow)
 		}
 		records = append(records, r)
 	}
@@ -163,7 +163,7 @@ func (db *pgStore) GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2locati
 		LIMIT 1`
 	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -175,7 +175,7 @@ func (db *pgStore) GetLocationRecord(ctx context.Context, ip net.IP, r *ip2locat
 		WHERE $1::inet <@ ip_range`
 	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func (db *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location
 	if err := db.c.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
 			&r.Domain, &r.UsageType, &r.ASN, &r.AS, &r.LastSeen, &r.Threat); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -313,7 +313,7 @@ func (db *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *model.Ban
 		WHERE as_num = $1`
 	if err := db.c.QueryRow(ctx, q, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.AuthorID,
 		&banASN.TargetID, &banASN.Reason, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -329,7 +329,7 @@ func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
 
 		_, errUpd := db.c.Exec(ctx, q, b.BanASNId, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
 			b.Reason, b.ValidUntil, b.UpdatedOn)
-		return dbErr(errUpd)
+		return Err(errUpd)
 
 	}
 	const qi = `
@@ -338,11 +338,11 @@ func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
 		RETURNING ban_asn_id`
 	errIns := db.c.QueryRow(ctx, qi, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
 		b.Reason, b.ValidUntil, b.UpdatedOn, b.CreatedOn).Scan(&b.BanASNId)
-	return dbErr(errIns)
+	return Err(errIns)
 }
 
 func (db *pgStore) DropBanASN(ctx context.Context, ban *model.BanASN) error {
 	const q = `DELETE FROM ban_asn WHERE ban_asn_id = $1`
 	_, err := db.c.Exec(ctx, q, ban.BanASNId)
-	return dbErr(err)
+	return Err(err)
 }

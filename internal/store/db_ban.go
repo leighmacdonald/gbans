@@ -14,7 +14,7 @@ import (
 func (db *pgStore) DropBan(ctx context.Context, ban *model.Ban) error {
 	const q = `DELETE FROM ban WHERE ban_id = $1`
 	if _, err := db.c.Exec(ctx, q, ban.BanID); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -45,7 +45,7 @@ func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier
 			&b.Person.AvatarHash, &b.Person.PersonaState, &b.Person.RealName, &b.Person.TimeCreated, &b.Person.LocCountryCode,
 			&b.Person.LocStateCode, &b.Person.LocCityID, &b.Person.PermissionLevel, &b.Person.DiscordID, &b.Person.CommunityBanned,
 			&b.Person.VACBans, &b.Person.GameBans, &b.Person.EconomyBan, &b.Person.DaysSinceLastBan); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	if full {
 		h, err := db.GetChatHistory(ctx, b.Person.SteamID, 25)
@@ -99,7 +99,7 @@ func (db *pgStore) updateAppeal(ctx context.Context, appeal *model.Appeal) error
 	}
 	_, err := db.c.Exec(ctx, q, a...)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func (db *pgStore) insertAppeal(ctx context.Context, ap *model.Appeal) error {
 	}
 	err := db.c.QueryRow(ctx, q, a...).Scan(&ap.AppealID)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -167,7 +167,7 @@ func (db *pgStore) insertBan(ctx context.Context, ban *model.Ban) error {
 	err := db.c.QueryRow(ctx, q, ban.SteamID, ban.AuthorID, ban.BanType, ban.Reason, ban.ReasonText,
 		ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Source).Scan(&ban.BanID)
 	if err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (db *pgStore) updateBan(ctx context.Context, ban *model.Ban) error {
 		WHERE ban_id = $1`
 	if _, err := db.c.Exec(ctx, q, ban.BanID, ban.AuthorID, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
 		ban.UpdatedOn, ban.Source, ban.BanType); err != nil {
-		return dbErr(err)
+		return Err(err)
 	}
 	return nil
 }
