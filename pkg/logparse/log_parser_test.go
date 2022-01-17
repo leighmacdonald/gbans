@@ -43,7 +43,7 @@ func TestParseAlt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	var pa = func(s string, msgType MsgType) map[string]string {
+	var pa = func(s string, msgType MsgType) map[string]any {
 		v := Parse(s)
 		require.Equal(t, msgType, v.MsgType)
 		return v.Values
@@ -286,7 +286,19 @@ func TestParse(t *testing.T) {
 
 	var value44 PickupEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:47:34: "g о а т z<13><[U:1:41435165]><Red>" picked up item "ammopack_small"`, Pickup), &value44))
-	require.EqualValues(t, PickupEvt{SourcePlayer: SourcePlayer{Name: "g о а т z", PID: 13, SID: 0x11000010278401d, Team: 1}, Item: ItemAmmoSmall}, value44)
+	require.EqualValues(t, PickupEvt{
+		SourcePlayer: SourcePlayer{Name: "g о а т z", PID: 13, SID: 0x11000010278401d, Team: 1},
+		Item:         ItemAmmoSmall,
+		Healing:      0,
+	}, value44)
+
+	var value44b PickupEvt
+	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:47:34: "g о а т z<13><[U:1:41435165]><Red>" picked up item "medkit_medium" (healing "47")`, Pickup), &value44b))
+	require.EqualValues(t, PickupEvt{
+		SourcePlayer: SourcePlayer{Name: "g о а т z", PID: 13, SID: 0x11000010278401d, Team: 1},
+		Item:         ItemHPMedium,
+		Healing:      47,
+	}, value44b)
 
 	var value45 ShotFiredEvt
 	require.NoError(t, Unmarshal(pa(`L 07/10/2019 - 23:28:02: "rad<6><[U:1:57823119]><Red>" triggered "shot_fired" (weapon "syringegun_medic")`, ShotFired), &value45))
@@ -335,13 +347,13 @@ func TestParse(t *testing.T) {
 }
 
 func TestParseKVs(t *testing.T) {
-	m1 := map[string]string{}
+	m1 := map[string]any{}
 	require.True(t, parseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
-	require.Equal(t, map[string]string{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
+	require.Equal(t, map[string]any{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
 
-	m2 := map[string]string{}
+	m2 := map[string]any{}
 	require.True(t, parseKVs(`L 01/16/2022 - 21:24:11: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, m2))
-	require.Equal(t, map[string]string{
+	require.Equal(t, map[string]any{
 		"cp":         "0",
 		"cpname":     "#koth_viaduct_cap",
 		"numcappers": "2",

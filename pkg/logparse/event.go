@@ -274,7 +274,8 @@ type EmptyUberEvt struct {
 type PickupEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Item PickupItem
+	Item    PickupItem
+	Healing int `json:"healing" mapstructure:"healing"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

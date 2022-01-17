@@ -196,9 +196,9 @@ func (db *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint6
 			LEFT JOIN person src on src.steam_id = l.source_id
 			LEFT JOIN person tar on tar.steam_id = l.target_id
 			ORDER BY l.created_on DESC
-			OFFSET ? 
-			LIMIT ?`
-	rows, errQuery := db.Query(ctx, q, offset, limit)
+			OFFSET %d 
+			LIMIT %d`
+	rows, errQuery := db.Query(ctx, fmt.Sprintf(q, offset, limit))
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

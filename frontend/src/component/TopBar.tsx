@@ -143,7 +143,7 @@ export const TopBar = () => {
     );
 
     return (
-        <AppBar position="static">
+        <AppBar position="sticky">
             <Container maxWidth="xl">
                 <Toolbar disableGutters variant="dense">
                     <Typography

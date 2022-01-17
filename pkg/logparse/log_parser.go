@@ -59,6 +59,7 @@ var (
 	rxDomination           = regexp.MustCompile(dp + `triggered "Domination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
 	rxRevenge              = regexp.MustCompile(dp + `triggered "Revenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
 	rxPickup               = regexp.MustCompile(dp + `picked up item "(?P<item>\S+)"`)
+	rxPickupMedPack        = regexp.MustCompile(dp + `picked up item "(?P<item>\S+)"` + keyPairs)
 	rxSay                  = regexp.MustCompile(dp + `say\s+"(?P<msg>.+?)"$`)
 	rxSayTeam              = regexp.MustCompile(dp + `say_team\s+"(?P<msg>.+?)"$`)
 	rxEmptyUber            = regexp.MustCompile(dp + `triggered "empty_uber"`)
@@ -102,6 +103,7 @@ var (
 		{rxKilled, Killed},
 		{rxHealed, Healed},
 		{rxAssist, KillAssist},
+		{rxPickupMedPack, Pickup},
 		{rxPickup, Pickup},
 		{rxSpawned, SpawnedAs},
 		{rxValidated, Validated},
@@ -258,9 +260,9 @@ func ParseTeam(teamStr string, team *Team) bool {
 	return true
 }
 
-func reSubMatchMap(r *regexp.Regexp, str string) (map[string]string, bool) {
+func reSubMatchMap(r *regexp.Regexp, str string) (map[string]any, bool) {
 	match := r.FindStringSubmatch(str)
-	subMatchMap := make(map[string]string)
+	subMatchMap := make(map[string]any)
 	if match == nil {
 		return nil, false
 	}
@@ -305,7 +307,7 @@ func parseDateTime(dateStr, timeStr string) time.Time {
 	return t
 }
 
-func parseKVs(s string, out map[string]string) bool {
+func parseKVs(s string, out map[string]any) bool {
 	m := rxKVPairs.FindAllStringSubmatch(s, 10)
 	if len(m) == 0 {
 		return false
@@ -320,7 +322,7 @@ func parseKVs(s string, out map[string]string) bool {
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Results struct {
 	MsgType MsgType
-	Values  map[string]string
+	Values  map[string]any
 }
 
 // Parse will parse the log line into a known type and values
@@ -329,7 +331,10 @@ func Parse(l string) Results {
 	for _, rx := range rxParsers {
 		m, found := reSubMatchMap(rx.Rx, l)
 		if found {
-			parseKVs(m["keypairs"], m)
+			val, ok := m["keypairs"].(string)
+			if ok {
+				parseKVs(val, m)
+			}
 			delete(m, "keypairs")
 			delete(m, "")
 			return Results{rx.Type, m}
@@ -339,7 +344,7 @@ func Parse(l string) Results {
 	if found {
 		return Results{UnhandledMsg, m}
 	}
-	return Results{UnknownMsg, map[string]string{"raw": l}}
+	return Results{UnknownMsg, map[string]any{"raw": l}}
 }
 
 func decodeTeam() mapstructure.DecodeHookFunc {

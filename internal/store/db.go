@@ -125,7 +125,7 @@ type pgStore struct {
 }
 
 func (db *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	return db.Query(ctx, query, args...)
+	return db.c.Query(ctx, query, args...)
 }
 
 // Close will close the underlying database connection if it exists

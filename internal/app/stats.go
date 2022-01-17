@@ -26,6 +26,8 @@ type serverGameState struct {
 // For a simple example of usage, see internal/cmd/stats.go
 //
 // TODO
+// - Use medic death event to calc medic healing count
+// - Use healed event for tracking healing received
 // - individual game state cache to track who is on winning team
 // - Filter out certain pre-game events likes kills/damage
 // - Track current player session
@@ -315,6 +317,7 @@ func (s *StatTrak) Read(event model.ServerEvent) error {
 		sourceMonthly.MessagesTeam++
 		sourceDaily.MessagesTeam++
 		sourceWeekly.MessagesTeam++
+
 	case logparse.MedicDeath:
 		// Count drops
 		// TODO verify the calcs are correct for source & target drops
@@ -353,6 +356,7 @@ func (s *StatTrak) Read(event model.ServerEvent) error {
 		sourceMonthly.ObjectBuilt++
 		sourceDaily.ObjectBuilt++
 		sourceWeekly.ObjectBuilt++
+
 	case logparse.CaptureBlocked:
 		// Blocks
 		globalAlltime.PointDefends++

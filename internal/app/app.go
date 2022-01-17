@@ -258,10 +258,10 @@ func (c playerCache) cleanupWorker() {
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(db store.Store) {
-	getPlayer := func(id string, v map[string]string) *model.Person {
+	getPlayer := func(id string, v map[string]any) *model.Person {
 		sid1Str, ok := v[id]
 		if ok {
-			s := steamid.SID3ToSID64(steamid.SID3(sid1Str))
+			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
 			p := model.NewPerson(s)
 			if err := db.GetOrCreatePersonBySteamID(ctx, s, &p); err != nil {
 				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
@@ -289,7 +289,7 @@ func logReader(db store.Store) {
 			aposValue, aposFound := v.Values["attacker_position"]
 			if aposFound {
 				var apv logparse.Pos
-				if err := logparse.NewPosFromString(aposValue, &apv); err != nil {
+				if err := logparse.NewPosFromString(aposValue.(string), &apv); err != nil {
 					log.Warnf("Failed to parse attacker position: %v", err)
 				}
 				apos = apv
@@ -298,7 +298,7 @@ func logReader(db store.Store) {
 			vposValue, vposFound := v.Values["victim_position"]
 			if vposFound {
 				var vpv logparse.Pos
-				if err := logparse.NewPosFromString(vposValue, &vpv); err != nil {
+				if err := logparse.NewPosFromString(vposValue.(string), &vpv); err != nil {
 					log.Warnf("Failed to parse victim position: %v", err)
 				}
 				vpos = vpv
@@ -307,7 +307,7 @@ func logReader(db store.Store) {
 			asValue, asFound := v.Values["assister_position"]
 			if asFound {
 				var asPosValue logparse.Pos
-				if err := logparse.NewPosFromString(asValue, &asPosValue); err != nil {
+				if err := logparse.NewPosFromString(asValue.(string), &asPosValue); err != nil {
 					log.Warnf("Failed to parse assister position: %v", err)
 				}
 				aspos = asPosValue
@@ -316,12 +316,12 @@ func logReader(db store.Store) {
 			var weapon logparse.Weapon
 			weaponValue, weaponFound := v.Values["weapon"]
 			if weaponFound {
-				weapon = logparse.WeaponFromString(weaponValue)
+				weapon = logparse.WeaponFromString(weaponValue.(string))
 			}
 			var class logparse.PlayerClass
 			classValue, classFound := v.Values["class"]
 			if classFound {
-				if !logparse.ParsePlayerClass(classValue, &class) {
+				if !logparse.ParsePlayerClass(classValue.(string), &class) {
 					class = logparse.Spectator
 				}
 				delete(v.Values, "class")
@@ -331,7 +331,7 @@ func logReader(db store.Store) {
 			extra := ""
 			extraValue, extraFound := v.Values["msg"]
 			if extraFound {
-				extra = extraValue
+				extra = extraValue.(string)
 				delete(v.Values, "msg")
 			}
 			var damage int64
@@ -340,7 +340,7 @@ func logReader(db store.Store) {
 				dmgValue, dmgFound = v.Values["damage"]
 			}
 			if dmgFound {
-				damageP, err := strconv.ParseInt(dmgValue, 10, 32)
+				damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
 				if err != nil {
 					log.Warnf("failed to parse damage value: %v", err)
 				}
@@ -351,7 +351,7 @@ func logReader(db store.Store) {
 			var item logparse.PickupItem
 			itemValue, itemFound := v.Values["item"]
 			if itemFound {
-				if !logparse.ParsePickupItem(itemValue, &item) {
+				if !logparse.ParsePickupItem(itemValue.(string), &item) {
 					item = 0
 				}
 			}
@@ -359,7 +359,7 @@ func logReader(db store.Store) {
 			var team logparse.Team
 			teamValue, teamFound := v.Values["team"]
 			if teamFound {
-				if !logparse.ParseTeam(teamValue, &team) {
+				if !logparse.ParseTeam(teamValue.(string), &team) {
 					team = 0
 				}
 			} else {
@@ -371,13 +371,19 @@ func logReader(db store.Store) {
 			var healing int64
 			healingValue, healingFound := v.Values["healing"]
 			if healingFound {
-				healingP, err := strconv.ParseInt(healingValue, 10, 32)
+				healingP, err := strconv.ParseInt(healingValue.(string), 10, 32)
 				if err != nil {
 					log.Warnf("failed to parse healing value: %v", err)
 				}
 				healing = healingP
 			}
-
+			// Remove keys that get mapped to actual schema columns
+			for _, k := range []string{
+				"time", "date", "item", "weapon",
+				"name", "pid", "sid", "team",
+				"name2", "pid2", "sid2", "team2", "healing"} {
+				delete(v.Values, k)
+			}
 			se := model.ServerEvent{
 				Server:      &s,
 				EventType:   v.MsgType,
@@ -394,6 +400,7 @@ func logReader(db store.Store) {
 				Healing:     healing,
 				CreatedOn:   config.Now(),
 				Extra:       extra,
+				MetaData:    v.Values,
 			}
 			switch v.MsgType {
 			case logparse.SpawnedAs:

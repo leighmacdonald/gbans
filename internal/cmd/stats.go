@@ -13,6 +13,7 @@ import (
 var statsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "stats",
+	Long:  "stats",
 }
 
 var statsRebuildCmd = &cobra.Command{
