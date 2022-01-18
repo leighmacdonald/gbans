@@ -82,6 +82,8 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.GET("/auth/callback", w.onOpenIDCallback(db))
 	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
 	r.POST("/api/bans", w.onAPIGetBans(db))
+	r.POST("/api/appeal", w.onAPIPostAppeal(db))
+	r.POST("/api/appeal/:ban_id", w.onAPIGetAppeal(db))
 	r.GET("/api/profile", w.onAPIProfile(db))
 	r.GET("/api/servers", w.onAPIGetServers(db))
 	r.GET("/api/stats", w.onAPIGetStats(db))

@@ -143,7 +143,7 @@ export const TopBar = () => {
     );
 
     return (
-        <AppBar position="sticky">
+        <AppBar position="sticky" style={{ marginBottom: '3rem' }}>
             <Container maxWidth="xl">
                 <Toolbar disableGutters variant="dense">
                     <Typography

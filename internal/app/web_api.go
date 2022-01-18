@@ -659,11 +659,11 @@ func (w *web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		var w []string
+		var fWords []string
 		for _, f := range words {
-			w = append(w, f.Pattern.String())
+			fWords = append(fWords, f.Pattern.String())
 		}
-		responseOK(c, http.StatusOK, resp{Count: len(words), Words: w})
+		responseOK(c, http.StatusOK, resp{Count: len(fWords), Words: fWords})
 	}
 }
 
@@ -682,7 +682,7 @@ func (w *web) onAPIGetCompHist() gin.HandlerFunc {
 		cx, cancel := context.WithTimeout(c, time.Second*10)
 		defer cancel()
 		var hist external.CompHist
-		if err := external.FetchCompHist(cx, sid, &hist); err != nil {
+		if errFetch := external.FetchCompHist(cx, sid, &hist); errFetch != nil {
 			responseErr(c, http.StatusInternalServerError, "query failed")
 			return
 		}
@@ -715,7 +715,7 @@ func (w *web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		sid, err := strconv.ParseUint(banIDStr, 10, 64)
+		banId, err := strconv.ParseUint(banIDStr, 10, 64)
 		if err != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
@@ -723,7 +723,7 @@ func (w *web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		ban := model.NewBannedPerson()
-		if errB := db.GetBanByBanID(cx, sid, false, &ban); errB != nil {
+		if errB := db.GetBanByBanID(cx, banId, false, &ban); errB != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			log.Errorf("Failed to fetch bans: %v", errB)
 			return
@@ -767,5 +767,43 @@ func (w *web) onAPIEvents(db store.Store) gin.HandlerFunc {
 			return
 		}
 		responseOK(c, http.StatusOK, events)
+	}
+}
+
+func (w *web) onAPIPostAppeal(db store.Store) gin.HandlerFunc {
+	type newAppeal struct {
+		BanId  int    `json:"ban_id"`
+		Reason string `json:"reason"`
+	}
+	return func(c *gin.Context) {
+		var appeal newAppeal
+		if err := c.BindJSON(&appeal); err != nil {
+
+		}
+	}
+}
+
+func (w *web) onAPIGetAppeal(db store.Store) gin.HandlerFunc {
+	type Appeal struct {
+		Person model.BannedPerson `json:"person"`
+		Appeal model.Appeal       `json:"appeal"`
+	}
+	return func(c *gin.Context) {
+		banIdStr := c.Param("ban_id")
+		if banIdStr == "" {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		banId, errBanId := strconv.ParseUint(banIdStr, 10, 64)
+		if errBanId != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var appeal model.Appeal
+		if errAppeal := db.GetAppeal(c, banId, &appeal); errAppeal != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, appeal)
 	}
 }

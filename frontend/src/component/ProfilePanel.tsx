@@ -2,8 +2,18 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import React from 'react';
 import { PlayerProfile } from '../util/api';
-import { GLink } from './GLink';
-import { AppBar, Chip, Tab, Tabs, Typography } from '@mui/material';
+import {
+    AppBar,
+    Avatar,
+    Chip,
+    List,
+    ListItemAvatar,
+    ListItemButton,
+    ListItemText,
+    Tab,
+    Tabs,
+    Typography
+} from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 
@@ -120,24 +130,22 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                         </Grid>
                     </TabPanel>
                     <TabPanel value={value} index="two">
-                        <Grid container>
+                        <List dense={false}>
                             {args.profile.friends?.map((p) => (
-                                <Grid container key={p.steamid}>
-                                    <Grid item xs={3}>
-                                        <img
-                                            src={p.avatar}
+                                <ListItemButton key={p.steamid}>
+                                    <ListItemAvatar>
+                                        <Avatar
                                             alt={'Profile Picture'}
+                                            src={p.avatar}
                                         />
-                                    </Grid>
-                                    <Grid item xs={9}>
-                                        <GLink
-                                            to={`https://steamcommunity.com/profiles/${p.steam_id}`}
-                                            primary={p.personaname}
-                                        />
-                                    </Grid>
-                                </Grid>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={p.personaname}
+                                        secondary={p.steamid}
+                                    />
+                                </ListItemButton>
                             ))}
-                        </Grid>
+                        </List>
                     </TabPanel>
                 </Grid>
             )}

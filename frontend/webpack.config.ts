@@ -1,8 +1,7 @@
-/* eslint-disable */
-const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import * as path from 'path';
+import * as webpack from 'webpack';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 
 const outPath = path.resolve('../dist');
 
@@ -12,7 +11,7 @@ const paths = {
     dist: outPath
 };
 
-module.exports = {
+const config: webpack.Configuration = {
     entry: './src/index.tsx',
     output: {
         path: path.join(paths.dist),
@@ -73,6 +72,13 @@ module.exports = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js']
     },
+    // devServer: {
+    //     static: {
+    //         directory: paths.dist
+    //     },
+    //     compress: true,
+    //     port: 9000
+    // },
     plugins: [
         new CopyPlugin({
             // TODO dont hard code these
@@ -100,3 +106,5 @@ module.exports = {
         })
     ]
 };
+
+export default config;

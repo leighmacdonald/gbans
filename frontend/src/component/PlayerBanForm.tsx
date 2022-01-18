@@ -250,30 +250,6 @@ export const PlayerBanForm = ({
                 </Grid>
                 <Grid item xs={12}>
                     <FormControl fullWidth>
-                        <InputLabel id="duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select
-                            fullWidth
-                            labelId="duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            onChange={handleUpdateDuration}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth>
                         <TextField
                             id="note-field"
                             label="Moderator Notes (hidden from public)"

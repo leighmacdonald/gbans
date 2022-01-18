@@ -358,7 +358,17 @@ export const apiGetPeople = async (): Promise<Person[] | apiError> => {
 };
 
 export const handleOnLogin = (): void => {
-    const r = `${window.location.protocol}//${window.location.hostname}/auth/callback?return_url=${window.location.pathname}`;
+    let returnUrl = window.location.hostname;
+    if (
+        (window.location.protocol === 'https:' &&
+            window.location.port !== '443') ||
+        (window.location.protocol === 'http:' &&
+            window.location.port !== '80') ||
+        (window.location.port != '80' && window.location.port != '443')
+    ) {
+        returnUrl = `${returnUrl}:${window.location.port}`;
+    }
+    const r = `${window.location.protocol}//${returnUrl}/auth/callback?return_url=${window.location.pathname}`;
     const oid =
         'https://steamcommunity.com/openid/login' +
         '?openid.ns=' +
@@ -648,4 +658,8 @@ export interface ServerEvent {
     team: Team;
     created_on: Date;
     meta_data?: Record<string, unknown>;
+}
+
+export interface Appeal {
+    appeal_id: number;
 }
