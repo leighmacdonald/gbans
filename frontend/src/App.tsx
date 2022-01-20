@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import DateFnsUtils from '@date-io/date-fns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import Container from '@mui/material/Container';
+import CssBaseline from '@mui/material/CssBaseline';
+import Paper from '@mui/material/Paper';
+import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Home } from './page/Home';
 import { Settings } from './page/Settings';
@@ -8,7 +14,6 @@ import { AdminReports } from './page/AdminReports';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminImport } from './page/AdminImport';
 import { AdminPeople } from './page/AdminPeople';
-import DateFnsUtils from '@date-io/date-fns';
 import { Bans } from './page/Bans';
 import { Servers } from './page/Servers';
 import { AdminServers } from './page/AdminServers';
@@ -30,24 +35,7 @@ import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { Logout } from './page/Logout';
 import { PageNotFound } from './page/PageNotFound';
 import { PrivateRoute } from './component/PrivateRoute';
-import { LocalizationProvider } from '@mui/lab';
 import darkTheme from './themes/dark';
-import { Container, CssBaseline, ThemeProvider } from '@mui/material';
-//
-// const useStyles = makeStyles((theme) => ({
-//     toolbar: {
-//         display: 'flex',
-//         alignItems: 'center',
-//         justifyContent: 'flex-end',
-//         padding: theme.spacing(0, 1),
-//         // necessary for content to be below app bar
-//         ...theme.mixins.toolbar
-//     },
-//     content: {
-//         flexGrow: 1,
-//         padding: theme.spacing(3)
-//     }
-// }));
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -75,7 +63,7 @@ export const App = (): JSX.Element => {
                             <React.StrictMode>
                                 <CssBaseline />
                                 <Container maxWidth={'lg'}>
-                                    <main>
+                                    <Paper elevation={1}>
                                         <div />
                                         <TopBar />
                                         <UserFlashCtx.Provider
@@ -167,7 +155,7 @@ export const App = (): JSX.Element => {
                                             />
                                         </Routes>
                                         <Footer />
-                                    </main>
+                                    </Paper>
                                 </Container>
                             </React.StrictMode>
                         </ThemeProvider>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ServerLogView } from '../component/ServerLogView';
-import { Grid, Typography } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
 
 export const AdminServerLog = (): JSX.Element => {
     return (

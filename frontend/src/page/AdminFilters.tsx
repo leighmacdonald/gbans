@@ -1,11 +1,15 @@
 import React from 'react';
-import { Grid, Typography } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 
 export const AdminFilters = (): JSX.Element => {
     return (
         <Grid container>
             <Grid item xs>
-                <Typography variant={'h1'}>Filters</Typography>
+                <Paper elevation={1}>
+                    <Typography variant={'h1'}>Filters</Typography>
+                </Paper>
             </Grid>
         </Grid>
     );

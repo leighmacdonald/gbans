@@ -1,7 +1,7 @@
 import React from 'react';
+import Grid from '@mui/material/Grid';
 import { ServerAddForm } from '../component/ServerAddForm';
 import { ServerList } from '../component/ServerList';
-import { Grid } from '@mui/material';
 
 export const AdminServers = (): JSX.Element => {
     return (

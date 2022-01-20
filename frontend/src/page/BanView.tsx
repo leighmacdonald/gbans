@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 import { useParams } from 'react-router-dom';
 import { apiGetBan, BannedPerson } from '../util/api';
 import { NotNull } from '../util/types';
-import { Grid, Typography } from '@mui/material';
 
 export const BanView = (): JSX.Element => {
     const [loading, setLoading] = React.useState<boolean>(true);

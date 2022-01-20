@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import { ServerList } from '../component/ServerList';
-import { Grid, Paper } from '@mui/material';
 import { ServerMap } from '../component/ServerMap';
 import { Server } from '../util/api';
 import { LatLngLiteral } from 'leaflet';
@@ -23,10 +24,12 @@ export const Servers = (): JSX.Element => {
         >
             <Grid container>
                 <Grid item xs={12}>
-                    <ServerMap />
+                    <Paper elevation={1}>
+                        <ServerMap />
+                    </Paper>
                 </Grid>
                 <Grid item xs={12}>
-                    <Paper>
+                    <Paper elevation={1}>
                         <ServerList />
                     </Paper>
                 </Grid>

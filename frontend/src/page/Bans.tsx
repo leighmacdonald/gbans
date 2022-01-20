@@ -1,12 +1,13 @@
 import React from 'react';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import { BanList } from '../component/BanList';
-import { Grid, Paper } from '@mui/material';
 
 export const Bans = (): JSX.Element => {
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} padding={3}>
             <Grid item xs>
-                <Paper>
+                <Paper elevation={1}>
                     <BanList />
                 </Paper>
             </Grid>

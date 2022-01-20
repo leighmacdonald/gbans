@@ -64,7 +64,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.StaticFS("/dist", http.Dir(ap))
 	idxPath := filepath.Join(ap, "index.html")
 	for _, rt := range []string{
-		"/", "/servers", "/profile", "/bans", "/appeal", "/settings",
+		"/", "/servers", "/profile", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success"} {
 		r.GET(rt, func(c *gin.Context) {

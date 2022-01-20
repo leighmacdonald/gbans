@@ -10,20 +10,18 @@ import {
 import { Nullable } from '../util/types';
 import { log } from '../util/errors';
 import Grid from '@mui/material/Grid';
-import {
-    Button,
-    FormControl,
-    FormControlLabel,
-    FormHelperText,
-    FormLabel,
-    InputLabel,
-    Radio,
-    RadioGroup,
-    Select,
-    TextField,
-    Typography
-} from '@mui/material';
-import { VoiceOverOffSharp } from '@mui/icons-material';
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormLabel from '@mui/material/FormLabel';
+import InputLabel from '@mui/material/InputLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import VoiceOverOffSharp from '@mui/icons-material/VoiceOverOffSharp';
 import MenuItem from '@mui/material/MenuItem';
 
 const ip2int = (ip: string): number =>

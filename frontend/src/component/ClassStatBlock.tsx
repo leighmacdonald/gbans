@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { PlayerClass, PlayerClassNames, PlayerStats } from '../util/api';
 import Paper from '@mui/material/Paper';
-import { Avatar } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
 
 export interface ClassStatBlockProps {
     player_class: PlayerClass;

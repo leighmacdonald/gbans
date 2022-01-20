@@ -16,20 +16,17 @@ import {
     WebSocketAuthResp,
     WebSocketPayload
 } from '../util/api';
-
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { takeRight } from 'lodash-es';
 import { parseDateTime } from '../util/text';
 import format from 'date-fns/format';
-import {
-    FormControl,
-    Grid,
-    Input,
-    Select,
-    Switch,
-    TextField
-} from '@mui/material';
+import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import Input from '@mui/material/Input';
+import Select from '@mui/material/Select';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 
 enum State {
     Closed,

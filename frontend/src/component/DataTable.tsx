@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import Toolbar from '@mui/material/Toolbar';
-import {
-    Checkbox,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TablePagination,
-    TableRow,
-    TableSortLabel,
-    Tooltip,
-    Typography
-} from '@mui/material';
-import Paper from '@mui/material/Paper';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
@@ -277,114 +274,112 @@ export const CreateDataTable = <TRecord,>(): ((
                 : (a, b) => -descendingComparator(a, b, orderBy);
         };
         return (
-            <div>
-                <Paper>
-                    {showToolbar && (
-                        <EnhancedTableToolbar
+            <>
+                {showToolbar && (
+                    <EnhancedTableToolbar
+                        numSelected={selected.length}
+                        heading={heading}
+                    />
+                )}
+                <TableContainer>
+                    <Table
+                        aria-labelledby="tableTitle"
+                        size={'small'}
+                        aria-label="enhanced table"
+                    >
+                        <EnhancedTableHead
                             numSelected={selected.length}
-                            heading={heading}
+                            order={order}
+                            orderBy={orderBy}
+                            onSelectAllClick={handleSelectAllClick}
+                            onRequestSort={handleRequestSort}
+                            rowCount={rows.length}
+                            headers={headers}
                         />
-                    )}
-                    <TableContainer>
-                        <Table
-                            aria-labelledby="tableTitle"
-                            size={'small'}
-                            aria-label="enhanced table"
-                        >
-                            <EnhancedTableHead
-                                numSelected={selected.length}
-                                order={order}
-                                orderBy={orderBy}
-                                onSelectAllClick={handleSelectAllClick}
-                                onRequestSort={handleRequestSort}
-                                rowCount={rows.length}
-                                headers={headers}
-                            />
-                            <TableBody>
-                                {stableSort<TRecord>(rows, c(order, orderBy))
-                                    .slice(
-                                        page * rowsPerPage,
-                                        page * rowsPerPage + rowsPerPage
-                                    )
-                                    .map((row, index) => {
-                                        const isItemSelected = isSelected(
-                                            `${row[id_field]}-${index}`
-                                        );
-                                        const labelId = `enhanced-table-checkbox-${index}`;
+                        <TableBody>
+                            {stableSort<TRecord>(rows, c(order, orderBy))
+                                .slice(
+                                    page * rowsPerPage,
+                                    page * rowsPerPage + rowsPerPage
+                                )
+                                .map((row, index) => {
+                                    const isItemSelected = isSelected(
+                                        `${row[id_field]}-${index}`
+                                    );
+                                    const labelId = `enhanced-table-checkbox-${index}`;
 
-                                        return (
-                                            <TableRow
-                                                hover
-                                                onClick={(event) =>
-                                                    handleClick(
-                                                        event,
-                                                        `${row[id_field]}-${index}`
-                                                    )
-                                                }
-                                                role="checkbox"
-                                                aria-checked={isItemSelected}
-                                                tabIndex={-1}
-                                                key={`${row[id_field]}-${index}`}
-                                                selected={isItemSelected}
-                                            >
-                                                <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        checked={isItemSelected}
-                                                        inputProps={{
-                                                            'aria-labelledby':
-                                                                labelId
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                {headers.map((h, i) => {
-                                                    if (i === 0) {
-                                                        return (
-                                                            <TableCell
-                                                                key={`cell-${index}-${i}`}
-                                                                component="th"
-                                                                id={labelId}
-                                                                scope="row"
-                                                                padding="none"
-                                                            >
-                                                                {row[h.id]}
-                                                            </TableCell>
-                                                        );
-                                                    }
+                                    return (
+                                        <TableRow
+                                            hover
+                                            onClick={(event) =>
+                                                handleClick(
+                                                    event,
+                                                    `${row[id_field]}-${index}`
+                                                )
+                                            }
+                                            role="checkbox"
+                                            aria-checked={isItemSelected}
+                                            tabIndex={-1}
+                                            key={`${row[id_field]}-${index}`}
+                                            selected={isItemSelected}
+                                        >
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    checked={isItemSelected}
+                                                    inputProps={{
+                                                        'aria-labelledby':
+                                                            labelId
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            {headers.map((h, i) => {
+                                                if (i === 0) {
                                                     return (
                                                         <TableCell
                                                             key={`cell-${index}-${i}`}
-                                                            align="right"
+                                                            component="th"
+                                                            id={labelId}
+                                                            scope="row"
+                                                            padding="none"
                                                         >
                                                             {row[h.id]}
                                                         </TableCell>
                                                     );
-                                                })}
-                                            </TableRow>
-                                        );
-                                    })}
-                                {emptyRows > 0 && (
-                                    <TableRow
-                                        style={{
-                                            height: 33 * emptyRows
-                                        }}
-                                    >
-                                        <TableCell colSpan={6} />
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={rows.length}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
-                </Paper>
-            </div>
+                                                }
+                                                return (
+                                                    <TableCell
+                                                        key={`cell-${index}-${i}`}
+                                                        align="right"
+                                                    >
+                                                        {row[h.id]}
+                                                    </TableCell>
+                                                );
+                                            })}
+                                        </TableRow>
+                                    );
+                                })}
+                            {emptyRows > 0 && (
+                                <TableRow
+                                    style={{
+                                        height: 33 * emptyRows
+                                    }}
+                                >
+                                    <TableCell colSpan={6} />
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={rows.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </>
         );
     };
 };

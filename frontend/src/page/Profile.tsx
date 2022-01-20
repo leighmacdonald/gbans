@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
+import Grid from '@mui/material/Grid';
 import { apiGetProfile, PlayerProfile } from '../util/api';
 import { Nullable } from '../util/types';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useParams } from 'react-router';
-import { Grid } from '@mui/material';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);

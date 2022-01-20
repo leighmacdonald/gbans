@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from '@mui/lab';
+import Alert from '@mui/lab/Alert';
 import { AlertColor } from '@mui/material/Alert/Alert';
 
 export interface Flash {

@@ -1,19 +1,17 @@
 import Grid from '@mui/material/Grid';
+import AppBar from '@mui/material/AppBar';
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
+import List from '@mui/material/List';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import React from 'react';
 import { PlayerProfile } from '../util/api';
-import {
-    AppBar,
-    Avatar,
-    Chip,
-    List,
-    ListItemAvatar,
-    ListItemButton,
-    ListItemText,
-    Tab,
-    Tabs,
-    Typography
-} from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 

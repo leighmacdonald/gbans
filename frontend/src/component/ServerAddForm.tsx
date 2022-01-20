@@ -1,6 +1,7 @@
 import Grid from '@mui/material/Grid';
 import React, { useState } from 'react';
-import { Button, TextField } from '@mui/material';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 export const ServerAddForm = (): JSX.Element => {
     const [name, setName] = useState<string>('');

@@ -1,6 +1,8 @@
 import React from 'react';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { PlayerList } from '../component/PlayerList';
-import { Grid, Paper, Typography } from '@mui/material';
 
 export const AdminPeople = (): JSX.Element => {
     return (

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
+import 'leaflet/dist/leaflet.css';
 
 const UserPosition = () => {
     const map = useMap();

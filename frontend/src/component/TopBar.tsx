@@ -19,20 +19,17 @@ import StorageIcon from '@mui/icons-material/Storage';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import HistoryIcon from '@mui/icons-material/History';
 import MenuIcon from '@mui/icons-material/Menu';
-
-import {
-    AppBar,
-    Avatar,
-    Box,
-    Button,
-    Container,
-    IconButton,
-    ListItemText,
-    Menu,
-    Toolbar,
-    Tooltip,
-    Typography
-} from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
+import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 interface menuRoute {
     to: string;
@@ -82,6 +79,7 @@ export const TopBar = () => {
         { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
         { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
         { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
+        { to: '/report', text: 'Report', icon: <ReportIcon /> },
         { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> }
     ];
 
@@ -136,14 +134,14 @@ export const TopBar = () => {
         route: string,
         icon: JSX.Element
     ) => (
-        <MenuItem onClick={() => loadRoute(route)}>
+        <MenuItem onClick={() => loadRoute(route)} key={route + text}>
             <ListItemIcon>{icon}</ListItemIcon>
             <ListItemText primary={text} />
         </MenuItem>
     );
 
     return (
-        <AppBar position="sticky" style={{ marginBottom: '3rem' }}>
+        <AppBar position="sticky">
             <Container maxWidth="xl">
                 <Toolbar disableGutters variant="dense">
                     <Typography
