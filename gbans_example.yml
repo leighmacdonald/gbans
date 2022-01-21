@@ -64,6 +64,8 @@ discord:
   public_log_channel_id: "000000000000000000"
   # Commands all start with this character
   prefix: "!"
+  # Right click on the server -> copy id
+  guild_id:
 
 logging:
   # Set the debug log level
