@@ -138,7 +138,7 @@ func (db *pgStore) truncateTable(ctx context.Context, table tableName) error {
 	return nil
 }
 
-// dbErr is used to wrap common database errors in own own error types
+// dbErr is used to wrap common database errors in own error types
 func dbErr(err error) error {
 	if err == nil {
 		return err

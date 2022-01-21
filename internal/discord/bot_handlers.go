@@ -284,6 +284,10 @@ func (b *discord) onCheck(ctx context.Context, _ *discordgo.Session, m *discordg
 		banned = ban.Ban.BanType == model.Banned
 		muted = ban.Ban.BanType == model.NoComm
 		reason = ban.Ban.ReasonText
+		if len(reason) == 0 {
+			// in case a ban without a reason ever makes its way here, we make sure that Discord doesn't shit itself
+			reason = "none"
+		}
 		expiry = ban.Ban.ValidUntil
 		createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
 		if ban.Ban.AuthorID > 0 {

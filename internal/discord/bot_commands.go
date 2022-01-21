@@ -98,6 +98,7 @@ func (b *discord) botRegisterSlashCommands() error {
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 				optDuration,
+				optReason,
 			},
 		},
 		{
