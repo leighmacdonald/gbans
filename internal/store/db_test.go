@@ -95,6 +95,20 @@ func randIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))
 }
 
+func TestReport(t *testing.T) {
+	var author model.Person
+	require.NoError(t, testDb.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198003911389), &author))
+	var target model.Person
+	require.NoError(t, testDb.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &target))
+	report := model.NewReport()
+	report.AuthorId = author.SteamID
+	report.ReportedId = target.SteamID
+	report.Title = "test"
+	report.Description = "test"
+	require.NoError(t, testDb.SaveReport(context.TODO(), &report))
+
+}
+
 func TestBanNet(t *testing.T) {
 	banNetEqual := func(b1, b2 model.BanNet) {
 		require.Equal(t, b1.Reason, b2.Reason)

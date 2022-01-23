@@ -54,6 +54,18 @@ type BanStore interface {
 	DropBanASN(ctx context.Context, ban *model.BanASN) error
 }
 
+type ReportStore interface {
+	SaveReport(ctx context.Context, report *model.Report) error
+	SaveReportMedia(ctx context.Context, reportId int, media *model.ReportMedia) error
+	SaveReportMessage(ctx context.Context, reportId int, message *model.ReportMessage) error
+	DropReport(ctx context.Context, report *model.Report) error
+	DropReportMessage(ctx context.Context, message *model.ReportMessage) error
+	DropReportMedia(ctx context.Context, media *model.ReportMedia) error
+	GetReport(ctx context.Context, reportId int, report *model.Report) error
+	GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error
+	GetReportMessages(ctx context.Context, reportId int, messages []model.ReportMessage) error
+}
+
 type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *model.Person) error
@@ -108,5 +120,6 @@ type Store interface {
 	PersonStore
 	ServerStore
 	StatStore
+	ReportStore
 	io.Closer
 }

@@ -681,3 +681,82 @@ type PlayerStats struct {
 type ServerStats struct {
 	CommonStats
 }
+
+type ReportStatus int
+
+const (
+	Opened ReportStatus = iota
+	NeedMoreInfo
+	ClosedWithoutAction
+	ClosedWithAction
+)
+
+type ReportMedia struct {
+	ReportMediaId int           `json:"report_media_id"`
+	ReportId      int           `json:"report_id"`
+	AuthorId      steamid.SID64 `json:"author_id"`
+	MimeType      string        `json:"mime_type"`
+	Size          int64         `json:"size"`
+	Contents      []byte        `json:"contents"`
+	Deleted       bool          `json:"deleted"`
+	CreatedOn     time.Time     `json:"created_on"`
+	UpdatedOn     time.Time     `json:"updated_on"`
+}
+
+type ReportMessage struct {
+	ReportMessageId int           `json:"report_message_id"`
+	ReportId        int           `json:"report_id"`
+	AuthorId        steamid.SID64 `json:"author_id"`
+	Message         string        `json:"contents"`
+	Deleted         bool          `json:"deleted"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+}
+
+type Report struct {
+	ReportId     int           `json:"report_id"`
+	AuthorId     steamid.SID64 `json:"author_id"`
+	ReportedId   steamid.SID64 `json:"reported_id"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	ReportStatus ReportStatus  `json:"report_status"`
+	Deleted      bool          `json:"deleted"`
+	CreatedOn    time.Time     `json:"created_on"`
+	UpdatedOn    time.Time     `json:"updated_on"`
+	MediaIds     []int         `json:"media_ids"`
+}
+
+func NewReport() Report {
+	return Report{
+		ReportId:     0,
+		AuthorId:     0,
+		Title:        "",
+		Description:  "",
+		ReportStatus: 0,
+		CreatedOn:    config.Now(),
+		UpdatedOn:    config.Now(),
+	}
+}
+
+func NewReportMedia(reportId int) ReportMedia {
+	return ReportMedia{
+		ReportMediaId: 0,
+		ReportId:      reportId,
+		AuthorId:      0,
+		MimeType:      "",
+		Contents:      nil,
+		CreatedOn:     config.Now(),
+		UpdatedOn:     config.Now(),
+	}
+}
+
+func NewReportMessage(reportId int) ReportMessage {
+	return ReportMessage{
+		ReportMessageId: 0,
+		ReportId:        reportId,
+		AuthorId:        0,
+		Message:         "",
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
+	}
+}

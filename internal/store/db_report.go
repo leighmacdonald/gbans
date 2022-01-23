@@ -1,0 +1,213 @@
+package store
+
+import (
+	"context"
+	"github.com/leighmacdonald/gbans/internal/model"
+	log "github.com/sirupsen/logrus"
+)
+
+func (db *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
+	const q = `
+		INSERT INTO report (
+		    author_id, reported_id, report_status, title, description, deleted, created_on, updated_on
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		RETURNING report_id
+	`
+	if errQuery := db.c.QueryRow(ctx, q,
+		report.AuthorId,
+		report.ReportedId,
+		report.ReportStatus,
+		report.Deleted,
+		report.CreatedOn,
+		report.UpdatedOn,
+	).Scan(&report.ReportId); errQuery != nil {
+		return Err(errQuery)
+	}
+	log.WithFields(log.Fields{
+		"report_id": report.ReportId, "author_id": report.AuthorId,
+	}).Infof("Report saved")
+	return nil
+}
+
+func (db *pgStore) SaveReportMedia(ctx context.Context, reportId int, media *model.ReportMedia) error {
+	const q = `
+		INSERT INTO report_media (
+		    report_id, author_id, mime_type, contents, deleted, created_on, updated_on
+		)
+		VALUES (?, ?, ?, ?, ?, ?)
+		RETURNING report_media_id
+	`
+	if errQuery := db.c.QueryRow(ctx, q,
+		reportId,
+		media.AuthorId,
+		media.MimeType,
+		media.Contents,
+		media.Deleted,
+		media.CreatedOn,
+		media.UpdatedOn,
+	).Scan(&media.ReportMediaId); errQuery != nil {
+		return Err(errQuery)
+	}
+	media.ReportId = reportId
+	log.WithFields(log.Fields{
+		"report_id": reportId, "media_id": media.ReportMediaId, "author_id": media.AuthorId,
+	}).Infof("Report media saved")
+	return nil
+}
+
+func (db *pgStore) SaveReportMessage(ctx context.Context, reportId int, message *model.ReportMessage) error {
+	const q = `
+		INSERT INTO report_message (
+		    report_id, author_id, message_md, deleted, created_on, updated_on
+		)
+		VALUES (?, ?, ?, ?, ?, ?)
+		RETURNING report_message_id
+	`
+	message.ReportId = reportId
+	if errQuery := db.c.QueryRow(ctx, q,
+		message.ReportId,
+		message.AuthorId,
+		message.Message,
+		message.Deleted,
+		message.CreatedOn,
+		message.UpdatedOn,
+	).Scan(&message.ReportMessageId); errQuery != nil {
+		return Err(errQuery)
+	}
+	log.WithFields(log.Fields{
+		"report_id":  reportId,
+		"message_id": message.ReportMessageId,
+		"author_id":  message.AuthorId,
+	}).Infof("Report message saved")
+	return nil
+}
+
+func (db *pgStore) DropReport(ctx context.Context, report *model.Report) error {
+	const q = `UPDATE report SET deleted = true WHERE report_id = ?`
+	if _, errExec := db.c.Exec(ctx, q, report.ReportId); errExec != nil {
+		return Err(errExec)
+	}
+	log.WithFields(log.Fields{
+		"report_id": report.ReportId,
+		"soft":      true,
+	}).Infof("Report deleted")
+	report.Deleted = true
+	return nil
+}
+
+func (db *pgStore) DropReportMessage(ctx context.Context, message *model.ReportMessage) error {
+	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = ?`
+	if _, errExec := db.c.Exec(ctx, q, message.ReportMessageId); errExec != nil {
+		return Err(errExec)
+	}
+	log.WithFields(log.Fields{
+		"report_message_id": message.ReportMessageId,
+		"soft":              true,
+	}).Infof("Report deleted")
+	message.Deleted = true
+	return nil
+}
+
+func (db *pgStore) DropReportMedia(ctx context.Context, media *model.ReportMedia) error {
+	const q = `UPDATE report_media SET deleted = true WHERE report_media_id = ?`
+	if _, errExec := db.c.Exec(ctx, q, media.ReportMediaId); errExec != nil {
+		return Err(errExec)
+	}
+	log.WithFields(log.Fields{
+		"report_media_id": media.ReportMediaId,
+		"soft":            true,
+	}).Infof("Report deleted")
+	media.Deleted = true
+	return nil
+}
+
+func (db *pgStore) GetReport(ctx context.Context, reportId int, report *model.Report) error {
+	const q = `
+		SELECT 
+		   report_id, author_id, reported_id, report_status, title, description, 
+		   deleted, created_on, updated_on 
+		FROM report
+		WHERE deleted = false AND report_id = ?`
+	if errQuery := db.c.QueryRow(ctx, q, reportId).Scan(
+		&report.ReportId,
+		&report.AuthorId,
+		&report.ReportedId,
+		&report.ReportStatus,
+		&report.Title,
+		&report.Description,
+		&report.Deleted,
+		&report.CreatedOn,
+		&report.UpdatedOn,
+	); errQuery != nil {
+		return Err(errQuery)
+	}
+	const q2 = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = ?`
+	mediaIds, errQueryMedia := db.c.Query(ctx, q2, reportId)
+	if errQueryMedia != nil && Err(errQueryMedia) != ErrNoResult {
+		return Err(errQueryMedia)
+	}
+	defer mediaIds.Close()
+	for mediaIds.Next() {
+		var mediaId int
+		if err := mediaIds.Scan(&mediaId); err != nil {
+			return Err(err)
+		}
+		report.MediaIds = append(report.MediaIds, mediaId)
+	}
+
+	return nil
+}
+
+func (db *pgStore) GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error {
+	const q = `
+		SELECT 
+		   report_media_id, report_id, author_id, mime_type, contents, deleted, created_on, updated_on
+		FROM report_media
+		WHERE deleted = false AND report_media_id = ?`
+	if errQuery := db.c.QueryRow(ctx, q, reportId).Scan(
+		&media.ReportMediaId,
+		&media.ReportId,
+		&media.AuthorId,
+		&media.MimeType,
+		&media.Contents,
+		&media.Deleted,
+		&media.CreatedOn,
+		&media.UpdatedOn,
+	); errQuery != nil {
+		return Err(errQuery)
+	}
+	return nil
+}
+
+func (db *pgStore) GetReportMessages(ctx context.Context, reportId int, messages []model.ReportMessage) error {
+	const q = `
+		SELECT 
+		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
+		FROM report_message
+		WHERE deleted = false AND report_id = ? 
+		ORDER BY created_on`
+	rows, errQuery := db.c.Query(ctx, q, reportId)
+	if errQuery != nil {
+		if Err(errQuery) == ErrNoResult {
+			return nil
+		}
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var msg model.ReportMessage
+		if errScan := rows.Scan(
+			&msg.ReportMessageId,
+			&msg.ReportId,
+			&msg.AuthorId,
+			&msg.Message,
+			&msg.Deleted,
+			&msg.CreatedOn,
+			&msg.UpdatedOn,
+		); errScan != nil {
+			return Err(errQuery)
+		}
+		messages = append(messages, msg)
+	}
+	return nil
+}
