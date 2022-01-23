@@ -7,26 +7,25 @@ import (
 )
 
 func (db *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
-	const q = `
-		INSERT INTO report (
+	const q = `INSERT INTO report (
 		    author_id, reported_id, report_status, title, description, deleted, created_on, updated_on
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-		RETURNING report_id
-	`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8 )
+		RETURNING report_id`
 	if errQuery := db.c.QueryRow(ctx, q,
 		report.AuthorId,
 		report.ReportedId,
 		report.ReportStatus,
+		report.Title,
+		report.Description,
 		report.Deleted,
 		report.CreatedOn,
 		report.UpdatedOn,
 	).Scan(&report.ReportId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"report_id": report.ReportId, "author_id": report.AuthorId,
-	}).Infof("Report saved")
+	log.WithFields(log.Fields{"report_id": report.ReportId, "author_id": report.AuthorId}).
+		Infof("Report saved")
 	return nil
 }
 
@@ -35,7 +34,7 @@ func (db *pgStore) SaveReportMedia(ctx context.Context, reportId int, media *mod
 		INSERT INTO report_media (
 		    report_id, author_id, mime_type, contents, deleted, created_on, updated_on
 		)
-		VALUES (?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING report_media_id
 	`
 	if errQuery := db.c.QueryRow(ctx, q,
@@ -61,7 +60,7 @@ func (db *pgStore) SaveReportMessage(ctx context.Context, reportId int, message 
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
 		)
-		VALUES (?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING report_message_id
 	`
 	message.ReportId = reportId
@@ -84,7 +83,7 @@ func (db *pgStore) SaveReportMessage(ctx context.Context, reportId int, message 
 }
 
 func (db *pgStore) DropReport(ctx context.Context, report *model.Report) error {
-	const q = `UPDATE report SET deleted = true WHERE report_id = ?`
+	const q = `UPDATE report SET deleted = true WHERE report_id = $1`
 	if _, errExec := db.c.Exec(ctx, q, report.ReportId); errExec != nil {
 		return Err(errExec)
 	}
@@ -97,7 +96,7 @@ func (db *pgStore) DropReport(ctx context.Context, report *model.Report) error {
 }
 
 func (db *pgStore) DropReportMessage(ctx context.Context, message *model.ReportMessage) error {
-	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = ?`
+	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = $1`
 	if _, errExec := db.c.Exec(ctx, q, message.ReportMessageId); errExec != nil {
 		return Err(errExec)
 	}
@@ -110,7 +109,7 @@ func (db *pgStore) DropReportMessage(ctx context.Context, message *model.ReportM
 }
 
 func (db *pgStore) DropReportMedia(ctx context.Context, media *model.ReportMedia) error {
-	const q = `UPDATE report_media SET deleted = true WHERE report_media_id = ?`
+	const q = `UPDATE report_media SET deleted = true WHERE report_media_id = $1`
 	if _, errExec := db.c.Exec(ctx, q, media.ReportMediaId); errExec != nil {
 		return Err(errExec)
 	}
@@ -128,7 +127,7 @@ func (db *pgStore) GetReport(ctx context.Context, reportId int, report *model.Re
 		   report_id, author_id, reported_id, report_status, title, description, 
 		   deleted, created_on, updated_on 
 		FROM report
-		WHERE deleted = false AND report_id = ?`
+		WHERE deleted = false AND report_id = $1`
 	if errQuery := db.c.QueryRow(ctx, q, reportId).Scan(
 		&report.ReportId,
 		&report.AuthorId,
@@ -164,7 +163,7 @@ func (db *pgStore) GetReportMediaById(ctx context.Context, reportId int, media *
 		SELECT 
 		   report_media_id, report_id, author_id, mime_type, contents, deleted, created_on, updated_on
 		FROM report_media
-		WHERE deleted = false AND report_media_id = ?`
+		WHERE deleted = false AND report_media_id = $1`
 	if errQuery := db.c.QueryRow(ctx, q, reportId).Scan(
 		&media.ReportMediaId,
 		&media.ReportId,
@@ -180,20 +179,21 @@ func (db *pgStore) GetReportMediaById(ctx context.Context, reportId int, media *
 	return nil
 }
 
-func (db *pgStore) GetReportMessages(ctx context.Context, reportId int, messages []model.ReportMessage) error {
+func (db *pgStore) GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error) {
 	const q = `
 		SELECT 
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
 		FROM report_message
-		WHERE deleted = false AND report_id = ? 
+		WHERE deleted = false AND report_id = $1 
 		ORDER BY created_on`
 	rows, errQuery := db.c.Query(ctx, q, reportId)
 	if errQuery != nil {
 		if Err(errQuery) == ErrNoResult {
-			return nil
+			return nil, nil
 		}
 	}
 	defer rows.Close()
+	var messages []model.ReportMessage
 	for rows.Next() {
 		var msg model.ReportMessage
 		if errScan := rows.Scan(
@@ -205,9 +205,9 @@ func (db *pgStore) GetReportMessages(ctx context.Context, reportId int, messages
 			&msg.CreatedOn,
 			&msg.UpdatedOn,
 		); errScan != nil {
-			return Err(errQuery)
+			return nil, Err(errQuery)
 		}
 		messages = append(messages, msg)
 	}
-	return nil
+	return messages, nil
 }

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -107,6 +108,42 @@ func TestReport(t *testing.T) {
 	report.Description = "test"
 	require.NoError(t, testDb.SaveReport(context.TODO(), &report))
 
+	media1 := model.NewReportMedia(report.ReportId)
+	val1, err1 := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=")
+	require.NoError(t, err1)
+	media1.Contents = val1
+	media1.MimeType = "image/png"
+	media1.Size = 95
+	media1.AuthorId = author.SteamID
+	require.Equal(t, media1.Size, int64(len(media1.Contents)))
+
+	var2, err2 := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY7D3OPMfAARwAlO7vhiUAAAAAElFTkSuQmCC")
+	require.NoError(t, err2)
+	media2 := model.NewReportMedia(report.ReportId)
+	media2.Contents = var2
+	media2.MimeType = "image/png"
+	media2.Size = 120
+	media2.AuthorId = author.SteamID
+	require.Equal(t, media2.Size, int64(len(media2.Contents)))
+
+	require.NoError(t, testDb.SaveReportMedia(context.Background(), report.ReportId, &media1))
+	require.NoError(t, testDb.SaveReportMedia(context.Background(), report.ReportId, &media2))
+
+	msg1 := model.NewReportMessage(report.ReportId)
+	msg1.AuthorId = author.SteamID
+	msg1.Message = golib.RandomString(100)
+
+	msg2 := model.NewReportMessage(report.ReportId)
+	msg2.AuthorId = author.SteamID
+	msg2.Message = golib.RandomString(100)
+
+	require.NoError(t, testDb.SaveReportMessage(context.Background(), report.ReportId, &msg1))
+	require.NoError(t, testDb.SaveReportMessage(context.Background(), report.ReportId, &msg2))
+	var msgs []model.ReportMessage
+	msgs, msgsErr := testDb.GetReportMessages(context.Background(), report.ReportId)
+	require.NoError(t, msgsErr)
+	require.Equal(t, 2, len(msgs))
+	require.NoError(t, testDb.DropReport(context.Background(), &report))
 }
 
 func TestBanNet(t *testing.T) {

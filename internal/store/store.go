@@ -63,7 +63,7 @@ type ReportStore interface {
 	DropReportMedia(ctx context.Context, media *model.ReportMedia) error
 	GetReport(ctx context.Context, reportId int, report *model.Report) error
 	GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error
-	GetReportMessages(ctx context.Context, reportId int, messages []model.ReportMessage) error
+	GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error)
 }
 
 type PersonStore interface {
