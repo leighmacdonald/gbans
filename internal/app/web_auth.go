@@ -43,10 +43,10 @@ func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
 		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
 			if config.General.Mode == "test" && token == testToken {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				defer cancel()
 				loggedInPerson := model.NewPerson(config.General.Owner)
-				if err2 := db.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); err2 != nil {
+				if err2 := db.GetOrCreatePersonBySteamID(lCtx, config.General.Owner, &loggedInPerson); err2 != nil {
 					log.Errorf("Failed to load persons session user: %v", err2)
 					c.AbortWithStatus(http.StatusForbidden)
 					return
@@ -72,10 +72,10 @@ func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
 					log.Warnf("Invalid steamID")
 					return
 				}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 				defer cancel()
 				loggedInPerson := model.NewPerson(steamid.SID64(claims.SteamID))
-				if err := db.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); err != nil {
+				if err := db.GetPersonBySteamID(lCtx, steamid.SID64(claims.SteamID), &loggedInPerson); err != nil {
 					log.Errorf("Failed to load persons session user: %v", err)
 					c.AbortWithStatus(http.StatusForbidden)
 					return
@@ -99,51 +99,69 @@ func (w *web) onGetLogout() gin.HandlerFunc {
 func (w *web) onOpenIDCallback(db store.Store) gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(c *gin.Context) {
-		ref, found := c.GetQuery("return_url")
+		referralUrl, found := c.GetQuery("return_url")
 		if !found {
-			ref = "/"
+			referralUrl = "/"
 		}
+		var idStr string
 		fullURL := config.HTTP.Domain + c.Request.URL.String()
-		id, err := openid.Verify(fullURL, discoveryCache, nonceStore)
-		if err != nil {
-			log.Printf("Error verifying: %q\n", err)
-			c.Redirect(302, ref)
+		if config.Debug.SkipOpenIDValidation {
+			// Pull the sid out of the query without doing a signature check
+			values, errParse := url.Parse(fullURL)
+			if errParse != nil {
+				log.Errorf("Failed to parse url: %v", errParse)
+				c.Redirect(302, referralUrl)
+				return
+			}
+			idStr = values.Query().Get("openid.identity")
+		} else {
+			id, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
+			if errVerify != nil {
+				log.Errorf("Error verifying openid auth response: %v", errVerify)
+				c.Redirect(302, referralUrl)
+				return
+			}
+			idStr = id
+		}
+		match := oidRx.FindStringSubmatch(idStr)
+		if match == nil || len(match) != 2 {
+			c.Redirect(302, referralUrl)
 			return
 		}
-		m := oidRx.FindStringSubmatch(id)
-		if m == nil || len(m) != 2 {
-			c.Redirect(302, ref)
+		sid, errDecodeSid := steamid.SID64FromString(match[1])
+		if errDecodeSid != nil {
+			log.Errorf("Received invalid steamid: %v", errDecodeSid)
+			c.Redirect(302, referralUrl)
 			return
 		}
-		sid, err := steamid.SID64FromString(m[1])
-		if err != nil {
-			log.Errorf("Received invalid steamid: %v", err)
-			c.Redirect(302, ref)
-			return
-		}
-		p := model.NewPerson(sid)
-		if errP := PersonBySID(db, sid, "", &p); errP != nil {
+		person := model.NewPerson(sid)
+		if errP := getOrCreateProfileBySteamID(ctx, db, sid, "", &person); errP != nil {
 			log.Errorf("Failed to fetch user profile: %v", errP)
-			c.Redirect(302, ref)
+			c.Redirect(302, referralUrl)
+			return
+		}
+		t, errJWT := newJWT(sid)
+		if errJWT != nil {
+			log.Errorf("Failed to create new JWT: %v", errJWT)
+			c.Redirect(302, referralUrl)
 			return
 		}
 		u, errParse := url.Parse("/login/success")
 		if errParse != nil {
-			c.Redirect(302, ref)
-			return
-		}
-		t, errJWT := NewJWT(sid)
-		if errJWT != nil {
-			log.Errorf("Failed to create new JWT: %v", errJWT)
-			c.Redirect(302, ref)
+			c.Redirect(302, referralUrl)
 			return
 		}
 		v := u.Query()
 		v.Set("token", t)
-		v.Set("permission_level", fmt.Sprintf("%d", p.PermissionLevel))
-		v.Set("next_url", ref)
+		v.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
+		v.Set("next_url", referralUrl)
 		u.RawQuery = v.Encode()
 		c.Redirect(302, u.String())
+		log.WithFields(log.Fields{
+			"sid":              sid,
+			"status":           "success",
+			"permission_level": person.PermissionLevel,
+		}).Infof("User login")
 	}
 }
 
@@ -202,7 +220,7 @@ type authClaims struct {
 	jwt.StandardClaims
 }
 
-func NewJWT(steamID steamid.SID64) (string, error) {
+func newJWT(steamID steamid.SID64) (string, error) {
 	claims := &authClaims{
 		SteamID:        steamID.Int64(),
 		Exp:            config.Now().Add(time.Hour * 24).Unix(),

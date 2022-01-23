@@ -163,9 +163,9 @@ func FindPlayerByCIDR(db store.ServerStore, ipNet *net.IPNet, pi *model.PlayerIn
 	return consts.ErrUnknownID
 }
 
-// GetOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
+// getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func GetOrCreateProfileBySteamID(ctx context.Context, db store.Store, sid steamid.SID64, ipAddr string, p *model.Person) error {
+func getOrCreateProfileBySteamID(ctx context.Context, db store.Store, sid steamid.SID64, ipAddr string, p *model.Person) error {
 	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get Player summary: %v", err)

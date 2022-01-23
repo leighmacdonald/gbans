@@ -25,17 +25,15 @@ var registered = false
 
 func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.Use(gin.Logger())
+
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOriginFunc = func(requestedOrigin string) bool {
-		for _, allowedOrigin := range config.HTTP.CorsOrigins {
-			if allowedOrigin == requestedOrigin {
-				return true
-			}
-		}
-		return false
-	}
+	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
+	corsConfig.AllowHeaders = []string{"*"}
+	corsConfig.AllowWildcard = true
+	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowMethods("OPTIONS")
-	r.Use(cors.New(corsConfig))
+	r.Use(gin.Logger(), cors.New(corsConfig))
+
 	if !registered {
 		prom := ginprom.New(func(p *ginprom.Prometheus) {
 			p.Namespace = "gbans"
@@ -108,6 +106,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	authed := r.Use(w.authMiddleware(db, model.PAuthenticated))
 	authed.GET("/api/current_profile", w.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", w.onTokenRefresh())
+	authed.POST("/api/report", w.onAPIPostReportCreate(db))
 
 	// Moderator access
 	modRoute := r.Use(w.authMiddleware(db, model.PModerator))

@@ -49,7 +49,7 @@ import (
 //	p, _ := store.GetOrCreatePersonBySteamID(ctx, sid)
 //	p.PermissionLevel = pr
 //	_ = store.SavePerson(ctx, p)
-//	token, _ := web.NewJWT(p.SteamID)
+//	token, _ := web.newJWT(p.SteamID)
 //	return token
 //}
 //

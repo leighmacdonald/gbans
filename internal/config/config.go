@@ -172,6 +172,7 @@ type logConfig struct {
 
 type debugConfig struct {
 	UpdateSRCDSLogSecrets bool `mapstructure:"update_srcds_log_secrets"`
+	SkipOpenIDValidation  bool `mapstructure:"skip_open_id_validation"`
 }
 
 type netBans struct {
@@ -266,78 +267,69 @@ func Read(cfgFiles ...string) {
 	}
 }
 
+var defaultConfig = map[string]any{
+	"general.site_name":                      "gbans",
+	"general.steam_key":                      "",
+	"general.mode":                           "release",
+	"general.owner":                          76561198044052046,
+	"general.warning_timeout":                time.Hour * 6,
+	"general.warning_limit":                  3,
+	"general.warning_exceeded_action":        Kick,
+	"general.warning_exceeded_duration":      "1w",
+	"general.use_utc":                        true,
+	"general.server_status_update_freq":      "60s",
+	"general.default_maps":                   []string{"pl_badwater"},
+	"general.map_changer_enabled":            false,
+	"http.host":                              "127.0.0.1",
+	"http.port":                              6006,
+	"http.domain":                            "http://localhost:6006",
+	"http.tls":                               false,
+	"http.tls_auto":                          false,
+	"http.static_path":                       "frontend/dist",
+	"http.cookie_key":                        golib.RandomString(32),
+	"http.client_timeout":                    "10s",
+	"debug.update_srcds_log_secrets":         true,
+	"debug.skip_open_id_validation":          false,
+	"filter.enabled":                         false,
+	"filter.is_warning":                      true,
+	"filter.ping_discord":                    false,
+	"filter.external_enabled":                false,
+	"filter.external_source":                 []string{},
+	"discord.enabled":                        false,
+	"discord.app_id":                         0,
+	"discord.token":                          "",
+	"discord.mod_role_ids":                   []string{},
+	"discord.perms":                          125958,
+	"discord.mod_channel_ids":                nil,
+	"discord.guild_id":                       "",
+	"discord.public_log_channel_enable":      false,
+	"discord.public_log_channel_id":          "",
+	"network_bans.enabled":                   false,
+	"network_bans.max_age":                   "1d",
+	"network_bans.cache_path":                ".cache",
+	"network_bans.sources":                   nil,
+	"network_bans.ip2location.enabled":       false,
+	"network_bans.ip2location.token":         "",
+	"network_bans.ip2location.asn_enabled":   false,
+	"network_bans.ip2location.ip_enabled":    false,
+	"network_bans.ip2location.proxy_enabled": false,
+	"log.level":                              "info",
+	"log.force_colours":                      true,
+	"log.disable_colours":                    false,
+	"log.report_caller":                      false,
+	"log.full_timestamp":                     false,
+	"log.srcds_log_addr":                     ":27115",
+	"log.srcds_log_external_host":            "",
+	"database.dsn":                           "postgresql://localhost/gbans",
+	"database.auto_migrate":                  true,
+	"database.log_queries":                   false,
+	"database.log_write_freq":                time.Second * 10,
+}
+
 func init() {
-	viper.SetDefault("general.site_name", "gbans")
-	viper.SetDefault("general.steam_key", "")
-	viper.SetDefault("general.mode", "release")
-	viper.SetDefault("general.owner", 76561198044052046)
-	viper.SetDefault("general.warning_timeout", time.Hour*6)
-	viper.SetDefault("general.warning_limit", 3)
-	viper.SetDefault("general.warning_exceeded_action", Kick)
-	viper.SetDefault("general.warning_exceeded_duration", "1w")
-	viper.SetDefault("general.use_utc", true)
-	viper.SetDefault("general.server_status_update_freq", "60s")
-	viper.SetDefault("general.default_maps", []string{"pl_badwater"})
-	viper.SetDefault("general.map_changer_enabled", false)
-
-	viper.SetDefault("http.host", "127.0.0.1")
-	viper.SetDefault("http.port", 6006)
-	viper.SetDefault("http.domain", "http://localhost:6006")
-	viper.SetDefault("http.tls", false)
-	viper.SetDefault("http.tls_auto", false)
-	viper.SetDefault("http.static_path", "frontend/dist")
-	viper.SetDefault("http.cookie_key", golib.RandomString(32))
-	viper.SetDefault("http.client_timeout", "10s")
-
-	viper.SetDefault("debug.update_srcds_log_secrets", true)
-
-	viper.SetDefault("filter.enabled", false)
-	viper.SetDefault("filter.is_warning", true)
-	viper.SetDefault("filter.ping_discord", false)
-	viper.SetDefault("filter.external_enabled", false)
-	viper.SetDefault("filter.external_source", []string{})
-
-	viper.SetDefault("discord.enabled", false)
-	viper.SetDefault("discord.app_id", 0)
-	viper.SetDefault("discord.token", "")
-	viper.SetDefault("discord.mod_role_ids", []string{})
-	viper.SetDefault("discord.perms", 125958)
-	viper.SetDefault("discord.prefix", "!")
-	viper.SetDefault("discord.mod_channel_ids", nil)
-	viper.SetDefault("discord.guild_id", "")
-	viper.SetDefault("discord.public_log_channel_enable", false)
-	viper.SetDefault("discord.public_log_channel_id", "")
-
-	viper.SetDefault("network_bans.enabled", false)
-	viper.SetDefault("network_bans.max_age", "1d")
-	viper.SetDefault("network_bans.cache_path", ".cache")
-	viper.SetDefault("network_bans.sources", nil)
-
-	viper.SetDefault("network_bans.ip2location.enabled", false)
-	viper.SetDefault("network_bans.ip2location.token", "")
-	viper.SetDefault("network_bans.ip2location.asn_enabled", false)
-	viper.SetDefault("network_bans.ip2location.ip_enabled", false)
-	viper.SetDefault("network_bans.ip2location.proxy_enabled", false)
-
-	viper.SetDefault("relay.enabled", false)
-	viper.SetDefault("relay.host", "wss://localhost:6006")
-	viper.SetDefault("relay.password", "")
-	viper.SetDefault("relay.server_name", "")
-	viper.SetDefault("relay.log_path", "serverfiles/tf/logs")
-	viper.SetDefault("relay.channel_ids", []string{})
-
-	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.force_colours", true)
-	viper.SetDefault("log.disable_colours", false)
-	viper.SetDefault("log.report_caller", false)
-	viper.SetDefault("log.full_timestamp", false)
-	viper.SetDefault("log.srcds_log_addr", ":27115")
-	viper.SetDefault("log.srcds_log_external_host", "")
-
-	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
-	viper.SetDefault("database.auto_migrate", true)
-	viper.SetDefault("database.log_queries", false)
-	viper.SetDefault("database.log_write_freq", time.Second*10)
+	for configKey, value := range defaultConfig {
+		viper.SetDefault(configKey, value)
+	}
 }
 
 func configureLogger(l *log.Logger) {

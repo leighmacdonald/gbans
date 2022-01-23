@@ -807,3 +807,51 @@ func (w *web) onAPIGetAppeal(db store.Store) gin.HandlerFunc {
 		responseOK(c, http.StatusOK, appeal)
 	}
 }
+
+func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
+	type reportMedia struct {
+		FileName string `json:"file_name"`
+		MimeType string `json:"mime_type"`
+		Content  []byte `json:"content"`
+		Size     int64  `json:"size"`
+	}
+	type createReport struct {
+		SteamId     steamid.SID64 `json:"steam_id"`
+		Title       string        `json:"title"`
+		Description string        `json:"description"`
+		Media       []reportMedia `json:"media"`
+	}
+	return func(c *gin.Context) {
+		currentUser := currentPerson(c)
+		var cr createReport
+		if errBind := c.BindJSON(&cr); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+
+		// TODO support tx?
+		report := model.NewReport()
+		report.AuthorId = currentUser.SteamID
+		report.ReportStatus = model.Opened
+		report.Title = cr.Title
+		report.Description = cr.Description
+		report.ReportedId = cr.SteamId
+		if errReportSave := db.SaveReport(c, &report); errReportSave != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		for _, media := range cr.Media {
+			rm := model.NewReportMedia(report.ReportId)
+			rm.AuthorId = currentUser.SteamID
+			rm.Contents = media.Content
+			rm.MimeType = media.MimeType
+			rm.Size = media.Size
+			if errSaveMedia := db.SaveReportMedia(c, report.ReportId, &rm); errSaveMedia != nil {
+				responseErr(c, http.StatusInternalServerError, nil)
+				return
+			}
+		}
+		responseOK(c, http.StatusCreated, report)
+	}
+
+}

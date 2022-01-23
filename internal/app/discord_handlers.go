@@ -96,7 +96,7 @@ func (b *discord) onFind(ctx context.Context, _ *discordgo.Session, m *discordgo
 	}
 	e := respOk(r, "Player Found")
 	p := model.NewPerson(pi.SteamID)
-	if errP := GetOrCreateProfileBySteamID(ctx, b.db, pi.SteamID, "", &p); errP != nil {
+	if errP := getOrCreateProfileBySteamID(ctx, b.db, pi.SteamID, "", &p); errP != nil {
 		return errors.New("Failed to get profile")
 	}
 	e.Type = discordgo.EmbedTypeRich
@@ -285,7 +285,7 @@ func (b *discord) onCheck(ctx context.Context, _ *discordgo.Session, m *discordg
 		return consts.ErrInvalidSID
 	}
 	player := model.NewPerson(sid)
-	if errP := GetOrCreateProfileBySteamID(ctx, b.db, sid, "", &player); errP != nil {
+	if errP := getOrCreateProfileBySteamID(ctx, b.db, sid, "", &player); errP != nil {
 		return errCommandFailed
 	}
 	ban := model.NewBannedPerson()
@@ -325,7 +325,7 @@ func (b *discord) onCheck(ctx context.Context, _ *discordgo.Session, m *discordg
 		expiry = ban.Ban.ValidUntil
 		createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
 		if ban.Ban.AuthorID > 0 {
-			if errA := GetOrCreateProfileBySteamID(ctx, b.db, ban.Ban.AuthorID, "", &a); errA != nil {
+			if errA := getOrCreateProfileBySteamID(ctx, b.db, ban.Ban.AuthorID, "", &a); errA != nil {
 				log.Errorf("Failed to load author for ban: %v", errA)
 			} else {
 				author = &discordgo.MessageEmbedAuthor{

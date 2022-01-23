@@ -57,6 +57,7 @@
     "@types/webpack-dev-server": "^4.7.2",
     "@typescript-eslint/eslint-plugin": "^5.9.1",
     "@typescript-eslint/parser": "^5.9.1",
+    "base64-js": "^1.5.1",
     "chai": "^4.3.4",
     "copy-webpack-plugin": "^10.2.0",
     "cross-env": "^7.0.2",
@@ -69,6 +70,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
+    "formik": "^2.2.9",
     "history": "^5.2.0",
     "html-webpack-plugin": "^5.5.0",
     "ip-cidr": "^3.0.0",
@@ -81,6 +83,7 @@
     "moment": "^2.27.0",
     "node-sass": "^7.0.1",
     "prettier": "^2.5.1",
+    "pretty-bytes": "^5.6.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.1",
     "react-leaflet": "^3.2.5",
@@ -97,7 +100,8 @@
     "url-loader": "^4.1.1",
     "webpack": "^5.66.0",
     "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.7.3"
+    "webpack-dev-server": "^4.7.3",
+    "yup": "^0.32.11"
   },
   "browserslist": {
     "production": [

@@ -1,20 +1,25 @@
-import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
 import React from 'react';
-import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
 
 export const Footer = (): JSX.Element => {
     return (
-        <Grid
-            container
-            spacing={3}
-            alignItems="center"
-            justifyContent="space-evenly"
+        <Container
+            sx={{
+                textAlign: 'center',
+                marginTop: '1rem',
+                marginBottom: '1rem'
+            }}
         >
-            <Grid item xs={6}>
-                <Typography align={'center'} variant={'body2'}>
-                    <a href="https://github.com/leighmacdonald/gbans">gbans</a>
-                </Typography>
-            </Grid>
-        </Grid>
+            <Link
+                sx={{
+                    color: '#525252',
+                    textDecoration: 'none'
+                }}
+                href={'https://github.com/leighmacdonald/gbans'}
+            >
+                gbans
+            </Link>
+        </Container>
     );
 };

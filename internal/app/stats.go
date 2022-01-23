@@ -60,6 +60,7 @@ type serverGameState struct {
 // - Track current map to get correct map stats. Tracking the sm_nextmap cvar may partially work for old data.
 //   Update sourcemod plugin to send log event with the current map.
 // - Simplify implementation of the maps with generics
+// - Track players taking packs when they are close to 100% hp
 type StatTrak struct {
 	globalAllTimeStats *model.GlobalStats
 	serversAlltime     map[int64]*model.ServerStats

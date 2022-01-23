@@ -236,7 +236,7 @@ export const TopBar = () => {
                             ))}
                         {currentUser.player &&
                             currentUser?.player.steam_id &&
-                            adminItems && (
+                            adminItems.length > 0 && (
                                 <>
                                     <Tooltip title="Mod/Admin">
                                         <Button

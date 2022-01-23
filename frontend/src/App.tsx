@@ -154,8 +154,8 @@ export const App = (): JSX.Element => {
                                                 element={<PageNotFound />}
                                             />
                                         </Routes>
-                                        <Footer />
                                     </Paper>
+                                    <Footer />
                                 </Container>
                             </React.StrictMode>
                         </ThemeProvider>

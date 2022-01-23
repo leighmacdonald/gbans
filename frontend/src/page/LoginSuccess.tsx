@@ -1,8 +1,14 @@
 import React from 'react';
 import { Navigate } from 'react-router';
-import { PermissionLevel } from '../util/api';
+import {
+    apiGetCurrentProfile,
+    PermissionLevel,
+    PlayerProfile
+} from '../util/api';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 export const LoginSuccess = (): JSX.Element => {
+    const { setCurrentUser } = useCurrentUserCtx();
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     if (token != null && token.length > 0) {
@@ -19,5 +25,10 @@ export const LoginSuccess = (): JSX.Element => {
     if (next_url == null || next_url == '') {
         next_url = '/';
     }
+
+    apiGetCurrentProfile().then((value) => {
+        setCurrentUser(value as PlayerProfile);
+    });
+
     return <Navigate to={next_url} />;
 };
