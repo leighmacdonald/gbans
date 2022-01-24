@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useParams } from 'react-router-dom';
-import { apiGetBan, BannedPerson } from '../util/api';
+import { apiGetBan, BannedPerson } from '../api';
 import { NotNull } from '../util/types';
 
 export const BanView = (): JSX.Element => {

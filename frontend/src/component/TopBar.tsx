@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { handleOnLogin, PermissionLevel } from '../util/api';
+import { handleOnLogin, PermissionLevel } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
 import { useNavigate } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';

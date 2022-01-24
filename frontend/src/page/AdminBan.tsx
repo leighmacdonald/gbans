@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { PlayerBanForm } from '../component/PlayerBanForm';
 import { ProfilePanel } from '../component/ProfilePanel';
-import { PlayerProfile } from '../util/api';
+import { PlayerProfile } from '../api';
 
 export const AdminBan = (): JSX.Element => {
     const [profile, setProfile] = useState<PlayerProfile | undefined>();

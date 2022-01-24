@@ -1,10 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router';
-import {
-    apiGetCurrentProfile,
-    PermissionLevel,
-    PlayerProfile
-} from '../util/api';
+import { apiGetCurrentProfile, PermissionLevel, PlayerProfile } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 export const LoginSuccess = (): JSX.Element => {

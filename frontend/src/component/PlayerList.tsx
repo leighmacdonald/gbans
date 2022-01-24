@@ -1,4 +1,4 @@
-import { apiGetPeople, Person } from '../util/api';
+import { apiGetPeople, Person } from '../api';
 import { CreateDataTable } from './DataTable';
 
 export const PlayerList = (): JSX.Element =>

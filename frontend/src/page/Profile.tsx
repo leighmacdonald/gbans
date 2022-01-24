@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Grid from '@mui/material/Grid';
-import { apiGetProfile, PlayerProfile } from '../util/api';
+import { apiGetProfile, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useParams } from 'react-router';

@@ -1,4 +1,4 @@
-import { apiGetBans, IAPIBanRecord } from '../util/api';
+import { apiGetBans, IAPIBanRecord } from '../api';
 
 import { CreateDataTable } from './DataTable';
 

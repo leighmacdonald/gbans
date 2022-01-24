@@ -1,7 +1,7 @@
 import React from 'react';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { PlayerClass, PlayerClassNames, PlayerStats } from '../util/api';
+import { PlayerClass, PlayerClassNames, PlayerStats } from '../api';
 import Paper from '@mui/material/Paper';
 import Avatar from '@mui/material/Avatar';
 

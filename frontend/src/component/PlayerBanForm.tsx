@@ -1,12 +1,7 @@
 import * as React from 'react';
 import { SyntheticEvent, useEffect } from 'react';
 import IPCIDR from 'ip-cidr';
-import {
-    apiCreateBan,
-    apiGetProfile,
-    BanPayload,
-    PlayerProfile
-} from '../util/api';
+import { apiCreateBan, apiGetProfile, BanPayload, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { log } from '../util/errors';
 import Grid from '@mui/material/Grid';

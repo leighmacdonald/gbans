@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { communityVisibilityState, PlayerProfile } from '../util/api';
+import { communityVisibilityState, PlayerProfile } from '../api';
 import { noop } from 'lodash-es';
 
 export const GuestProfile: PlayerProfile = {

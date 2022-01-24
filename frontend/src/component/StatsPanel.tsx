@@ -6,7 +6,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { apiGetStats, DatabaseStats } from '../util/api';
+import { apiGetStats, DatabaseStats } from '../api';
 import { log } from '../util/errors';
 
 export const StatsPanel = (): JSX.Element => {

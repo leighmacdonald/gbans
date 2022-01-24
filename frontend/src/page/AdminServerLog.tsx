@@ -1,5 +1,4 @@
 import React from 'react';
-import { ServerLogView } from '../component/ServerLogView';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 
@@ -9,9 +8,7 @@ export const AdminServerLog = (): JSX.Element => {
             <Grid item xs={12}>
                 <Typography variant={'h1'}>Game Server Logs</Typography>
             </Grid>
-            <Grid item xs={12}>
-                <ServerLogView />
-            </Grid>
+            <Grid item xs={12} />
         </Grid>
     );
 };

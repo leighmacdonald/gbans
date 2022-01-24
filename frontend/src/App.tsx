@@ -23,11 +23,7 @@ import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanView } from './page/BanView';
-import {
-    apiGetCurrentProfile,
-    PermissionLevel,
-    PlayerProfile
-} from './util/api';
+import { apiGetCurrentProfile, PermissionLevel, PlayerProfile } from './api';
 import { AdminBan } from './page/AdminBan';
 import { AdminServerLog } from './page/AdminServerLog';
 import { TopBar } from './component/TopBar';

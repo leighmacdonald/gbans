@@ -816,7 +816,7 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 		Size     int64  `json:"size"`
 	}
 	type createReport struct {
-		SteamId     steamid.SID64 `json:"steam_id"`
+		SteamId     string        `json:"steam_id"`
 		Title       string        `json:"title"`
 		Description string        `json:"description"`
 		Media       []reportMedia `json:"media"`
@@ -826,18 +826,32 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 		var cr createReport
 		if errBind := c.BindJSON(&cr); errBind != nil {
 			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Failed to bind report: %v", errBind)
 			return
 		}
 
-		// TODO support tx?
+		sid, errSid := steamid.ResolveSID64(c, cr.SteamId)
+		if errSid != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Invaid steam_id: %v", errSid)
+			return
+		}
+		var p model.Person
+		if errCreatePerson := getOrCreateProfileBySteamID(c, db, sid, "", &p); errCreatePerson != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Could not load player profile: %v", errCreatePerson)
+			return
+		}
+		// TODO encapsulate all operations in single tx
 		report := model.NewReport()
 		report.AuthorId = currentUser.SteamID
 		report.ReportStatus = model.Opened
 		report.Title = cr.Title
 		report.Description = cr.Description
-		report.ReportedId = cr.SteamId
+		report.ReportedId = sid
 		if errReportSave := db.SaveReport(c, &report); errReportSave != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save report: %v", errReportSave)
 			return
 		}
 		for _, media := range cr.Media {
@@ -848,6 +862,7 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 			rm.Size = media.Size
 			if errSaveMedia := db.SaveReportMedia(c, report.ReportId, &rm); errSaveMedia != nil {
 				responseErr(c, http.StatusInternalServerError, nil)
+				log.Errorf("Failed to save report media: %v", errSaveMedia)
 				return
 			}
 		}

@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { ServerList } from '../component/ServerList';
 import { ServerMap } from '../component/ServerMap';
-import { Server } from '../util/api';
+import { Server } from '../api';
 import { LatLngLiteral } from 'leaflet';
 import { MapStateCtx } from '../contexts/MapStateCtx';
 

@@ -11,7 +11,7 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import React from 'react';
-import { PlayerProfile } from '../util/api';
+import { PlayerProfile } from '../api';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 

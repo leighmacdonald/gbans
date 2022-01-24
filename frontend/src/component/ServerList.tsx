@@ -1,4 +1,4 @@
-import { apiGetServers, Server } from '../util/api';
+import { apiGetServers, Server } from '../api';
 import { CreateDataTable } from './DataTable';
 
 export const ServerList = (): JSX.Element =>
