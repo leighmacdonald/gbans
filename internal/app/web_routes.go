@@ -64,7 +64,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	for _, rt := range []string{
 		"/", "/servers", "/profile", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
-		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success"} {
+		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"} {
 		r.GET(rt, func(c *gin.Context) {
 			idx, err := os.ReadFile(idxPath)
 			if err != nil {
@@ -107,6 +107,8 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	authed.GET("/api/current_profile", w.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", w.onTokenRefresh())
 	authed.POST("/api/report", w.onAPIPostReportCreate(db))
+	authed.GET("/api/report/:report_id", w.onAPIGetReport(db))
+	authed.GET("/api/report/:report_id/messages", w.onAPIGetReportMessages(db))
 
 	// Moderator access
 	modRoute := r.Use(w.authMiddleware(db, model.PModerator))

@@ -6,15 +6,18 @@ import Stack from '@mui/material/Stack';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItem from '@mui/material/ListItem';
 import List from '@mui/material/List';
-import { Fab, InputLabel, ListItemText, Select } from '@mui/material';
+import Fab from '@mui/material/Fab';
+import InputLabel from '@mui/material/InputLabel';
+import ListItemText from '@mui/material/ListItemText';
+import Select from '@mui/material/Select';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import prettyBytes from 'pretty-bytes';
 import { fromByteArray } from 'base64-js';
 import Box from '@mui/material/Box';
 import SendIcon from '@mui/icons-material/Send';
-import { apiCreateReport, BanReason, BanReasons, UploadedFile } from '../api';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
+import { apiCreateReport, BanReason, BanReasons, UploadedFile } from '../api';
 
 interface FormProps {
     uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions

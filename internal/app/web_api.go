@@ -829,7 +829,6 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 			log.Errorf("Failed to bind report: %v", errBind)
 			return
 		}
-
 		sid, errSid := steamid.ResolveSID64(c, cr.SteamId)
 		if errSid != nil {
 			responseErr(c, http.StatusBadRequest, nil)
@@ -868,5 +867,56 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 		}
 		responseOK(c, http.StatusCreated, report)
 	}
+}
 
+func getIntParam(c *gin.Context, key string) (int64, error) {
+	reportIdStr := c.Param(key)
+	if reportIdStr == "" {
+		return 0, errors.Errorf("Failed to get %s", key)
+	}
+	reportId, reportIdErr := strconv.ParseInt(reportIdStr, 10, 64)
+	if reportIdErr != nil {
+		return 0, errors.Errorf("Failed to parse %s: %v", key, reportIdErr)
+	}
+	if reportId <= 0 {
+		return 0, errors.Errorf("Invalid %s: %v", key, reportIdErr)
+	}
+	return reportId, nil
+}
+
+func (w *web) onAPIGetReportMessages(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reportId, errParam := getIntParam(c, "report_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		msgs, errMsgs := db.GetReportMessages(c, int(reportId))
+		if errMsgs != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, msgs)
+	}
+}
+
+func (w *web) onAPIGetReport(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reportId, errParam := getIntParam(c, "report_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var report model.Report
+		if errReport := db.GetReport(c, int(reportId), &report); errReport != nil {
+			if store.Err(errReport) == store.ErrNoResult {
+				responseErr(c, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Failed to load report: %v", errReport)
+			return
+		}
+		responseOK(c, http.StatusOK, report)
+	}
 }

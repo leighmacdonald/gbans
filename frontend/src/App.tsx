@@ -32,6 +32,7 @@ import { Logout } from './page/Logout';
 import { PageNotFound } from './page/PageNotFound';
 import { PrivateRoute } from './component/PrivateRoute';
 import darkTheme from './themes/dark';
+import { ReportPage } from './page/ReportPage';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -83,6 +84,10 @@ export const App = (): JSX.Element => {
                                             <Route
                                                 path={'/appeal'}
                                                 element={<Appeal />}
+                                            />
+                                            <Route
+                                                path={'/report/:report_id'}
+                                                element={<ReportPage />}
                                             />
                                             <Route
                                                 path={'/report'}

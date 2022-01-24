@@ -4,13 +4,14 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import { ReportForm } from '../component/ReportForm';
 import ListSubheader from '@mui/material/ListSubheader';
 import Stack from '@mui/material/Stack';
-import { ListItemAvatar, ListItemIcon } from '@mui/material';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import CloseIcon from '@mui/icons-material/Close';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Avatar from '@mui/material/Avatar';
+import { ReportForm } from '../component/ReportForm';
 
 type BanState = 'banned' | 'closed';
 

@@ -76,6 +76,17 @@ export interface CreateReportRequest {
     media: UploadedFile[];
 }
 
+export type BanState = 'banned' | 'closed';
+
+export interface UserReportHistory {
+    name: string;
+    target: string;
+    target_avatar: string;
+    state: BanState;
+    updated_on: Date;
+    created_on: Date;
+}
+
 export const apiCreateReport = async (opts: CreateReportRequest) => {
     const resp = await apiCall<Report, CreateReportRequest>(
         '/api/report',
@@ -83,4 +94,20 @@ export const apiCreateReport = async (opts: CreateReportRequest) => {
         opts
     );
     return resp.json as Report;
+};
+
+export const apiGetReport = async (report_id: number) => {
+    const resp = await apiCall<Report, CreateReportRequest>(
+        `/api/report/${report_id}`,
+        'GET'
+    );
+    return resp.json as Report;
+};
+
+export const apiGetReportMessages = async (report_id: number) => {
+    const resp = await apiCall<Report, CreateReportRequest>(
+        `/api/report/${report_id}/messages`,
+        'GET'
+    );
+    return resp.json as ReportMessage[];
 };

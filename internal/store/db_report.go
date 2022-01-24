@@ -141,7 +141,7 @@ func (db *pgStore) GetReport(ctx context.Context, reportId int, report *model.Re
 	); errQuery != nil {
 		return Err(errQuery)
 	}
-	const q2 = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = ?`
+	const q2 = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = $1`
 	mediaIds, errQueryMedia := db.c.Query(ctx, q2, reportId)
 	if errQueryMedia != nil && Err(errQueryMedia) != ErrNoResult {
 		return Err(errQueryMedia)

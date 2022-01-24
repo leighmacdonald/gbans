@@ -42,7 +42,7 @@ const darkTheme = createTheme({
         //     main: '#8d0101'
         // },
         background: {
-            default: '#1c1c1c'
+            default: '#363636'
         }
     }
 });
