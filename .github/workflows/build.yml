@@ -22,15 +22,15 @@ jobs:
         working-directory: ./frontend
         run: yarn run eslint:check
 
-  lint-go:
-    runs-on: ubuntu-20.04
-    env:
-      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+#  lint-go:
+#    runs-on: ubuntu-20.04
+#    env:
+#      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: golangci-lint
+#        uses: golangci/golangci-lint-action@v2
 
   lint-codeql:
     name: Analyze
@@ -64,7 +64,7 @@ jobs:
         uses: github/codeql-action/analyze@v1
 
   docker-test:
-    needs: [lint-go, lint-ts, lint-codeql]
+    needs: [lint-ts, lint-codeql] # TODO readd lint-go when golangci support generics
     runs-on: ubuntu-20.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
