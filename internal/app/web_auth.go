@@ -201,7 +201,7 @@ func (w *web) onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		// Now, create a new token for the current use, with a renewed expiration time
+		// Now, create a new token for the current user, with a renewed expiration time
 		expirationTime := config.Now().Add(24 * time.Hour)
 		claims.ExpiresAt = expirationTime.Unix()
 		outToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -234,7 +234,7 @@ func newJWT(steamID steamid.SID64) (string, error) {
 	return token, nil
 }
 
-func (w *web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
+func authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -269,6 +269,7 @@ func (w *web) authMiddleware(db store.Store, level model.Privilege) gin.HandlerF
 				c.AbortWithStatus(http.StatusForbidden)
 				return
 			}
+
 			c.Set("person", loggedInPerson)
 		}
 		c.Next()

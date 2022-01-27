@@ -62,6 +62,7 @@ type ReportStore interface {
 	DropReportMessage(ctx context.Context, message *model.ReportMessage) error
 	DropReportMedia(ctx context.Context, media *model.ReportMedia) error
 	GetReport(ctx context.Context, reportId int, report *model.Report) error
+	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error)
 	GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error
 	GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error)
 }
@@ -70,7 +71,8 @@ type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *model.Person) error
 	GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error
-	GetPeople(ctx context.Context, qf *QueryFilter) ([]model.Person, error)
+	GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error)
+	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
 	GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error
 	GetPersonByDiscordID(ctx context.Context, did string, p *model.Person) error
 	AddPersonIP(ctx context.Context, p *model.Person, ip string) error

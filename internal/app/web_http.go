@@ -79,7 +79,7 @@ func currentPerson(c *gin.Context) model.Person {
 	}
 	person, ok := p.(model.Person)
 	if !ok {
-		log.Warnf("Total not cast store.Person from session")
+		log.Errorf("Count not cast store.Person from session")
 		return model.NewPerson(0)
 	}
 	return person

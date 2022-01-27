@@ -6,12 +6,15 @@ import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import ListSubheader from '@mui/material/ListSubheader';
 import Stack from '@mui/material/Stack';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import CloseIcon from '@mui/icons-material/Close';
 import GavelIcon from '@mui/icons-material/Gavel';
-import Avatar from '@mui/material/Avatar';
 import { ReportForm } from '../component/ReportForm';
+import { apiGetReports, ReportStatus, ReportWithAuthor } from '../api';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import Link from '@mui/material/Link';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import Avatar from '@mui/material/Avatar';
 
 type BanState = 'banned' | 'closed';
 
@@ -24,49 +27,35 @@ export interface UserReportHistory {
     created_on: Date;
 }
 
-export const Report = (): JSX.Element => {
-    const [reportHistory, setReportHistory] = useState<UserReportHistory[]>([]);
+export const ReportCreatePage = (): JSX.Element => {
+    const { currentUser } = useCurrentUserCtx();
+    const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     useEffect(() => {
-        setReportHistory([
-            {
-                created_on: new Date(),
-                updated_on: new Date(),
-                state: 'banned',
-                name: 'Test Report Subject',
-                target: '76561198057999536',
-                target_avatar:
-                    'https://cdn.akamai.steamstatic.com/steamcommunity/public/images/avatars/8e/8e142e79042c28ce1ac4b59e2262dccee24713e2_full.jpg'
-            },
-            {
-                created_on: new Date(),
-                updated_on: new Date(),
-                state: 'closed',
-                name: 'Test Report Subject #2',
-                target: '76561198057999536',
-                target_avatar:
-                    'https://cdn.akamai.steamstatic.com/steamcommunity/public/images/avatars/8e/8e142e79042c28ce1ac4b59e2262dccee24713e2_full.jpg'
-            },
-            {
-                created_on: new Date(),
-                updated_on: new Date(),
-                state: 'closed',
-                name: 'The bots are invading help us!!!',
-                target: '76561198072115209',
-                target_avatar:
-                    'https://cdn.akamai.steamstatic.com/steamcommunity/public/images/avatars/e3/e3247f3517d5cea98d8ec42ccd8f4c1d6e012e28_full.jpg'
+        const loadHist = async () => {
+            if (currentUser.player.steam_id != '') {
+                const resp = await apiGetReports({
+                    author_id: currentUser.player.steam_id,
+                    limit: 10,
+                    order_by: 'created_on',
+                    desc: true
+                });
+                if (resp) {
+                    setReportHistory(resp);
+                }
             }
-        ]);
-    }, []);
+        };
+        loadHist();
+    }, [currentUser]);
 
     return (
         <Grid container spacing={3} padding={3}>
-            <Grid item xs={6}>
+            <Grid item xs={12} xl={8}>
                 <Paper elevation={1}>
                     <ReportForm />
                 </Paper>
             </Grid>
-            <Grid item xs={6}>
-                <Stack>
+            <Grid item xs={12} xl={4}>
+                <Stack spacing={2}>
                     <Paper elevation={1}>
                         <List
                             subheader={
@@ -118,7 +107,8 @@ export const Report = (): JSX.Element => {
                             {reportHistory.map((value, idx) => (
                                 <ListItem key={idx}>
                                     <ListItemIcon>
-                                        {value.state == 'banned' ? (
+                                        {value.report.report_status ==
+                                        ReportStatus.ClosedWithAction ? (
                                             <GavelIcon />
                                         ) : (
                                             <CloseIcon />
@@ -126,11 +116,18 @@ export const Report = (): JSX.Element => {
                                     </ListItemIcon>
                                     <ListItemAvatar>
                                         <Avatar
-                                            src={value.target_avatar}
+                                            src={value.author.avatar}
                                             variant={'square'}
                                         />
                                     </ListItemAvatar>
-                                    <ListItemText>{value.name}</ListItemText>
+                                    <ListItemText>
+                                        <Link
+                                            href={`/report/${value.report.report_id}`}
+                                        >
+                                            {value.author.personaname ??
+                                                value.author.steam_id}
+                                        </Link>
+                                    </ListItemText>
                                 </ListItem>
                             ))}
                         </List>

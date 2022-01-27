@@ -24,15 +24,13 @@ func prometheusHandler() gin.HandlerFunc {
 var registered = false
 
 func (w *web) setupRouter(db store.Store, r *gin.Engine) {
-	r.Use(gin.Logger())
-
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowMethods("OPTIONS")
-	r.Use(gin.Logger(), cors.New(corsConfig))
+	r.Use(cors.New(corsConfig))
 
 	if !registered {
 		prom := ginprom.New(func(p *ginprom.Prometheus) {
@@ -61,10 +59,14 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	//}
 	r.StaticFS("/dist", http.Dir(ap))
 	idxPath := filepath.Join(ap, "index.html")
-	for _, rt := range []string{
+
+	// These should match routes defined in the frontend. This allows us to use the browser
+	// based routing when serving the SPA.
+	jsRoutes := []string{
 		"/", "/servers", "/profile", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
-		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"} {
+		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
+	for _, rt := range jsRoutes {
 		r.GET(rt, func(c *gin.Context) {
 			idx, err := os.ReadFile(idxPath)
 			if err != nil {
@@ -96,6 +98,10 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 
 	// Game server plugin routes
 	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
+
+	r.GET("/api/download/report/:report_media_id", w.onAPIGetReportMedia(db))
+	r.POST("/api/resolve_profile", w.onAPIGetResolveProfile(db))
+
 	// IsServer Auth Request
 	serverAuth := r.Use(w.authMiddleWare(db))
 	serverAuth.POST("/api/ping_mod", w.onPostPingMod(db))
@@ -103,18 +109,21 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	serverAuth.POST("/api/demo", w.onPostDemo(db))
 
 	// Basic logged-in user
-	authed := r.Use(w.authMiddleware(db, model.PAuthenticated))
+	authed := r.Use(authMiddleware(db, model.PAuthenticated))
 	authed.GET("/api/current_profile", w.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", w.onTokenRefresh())
 	authed.POST("/api/report", w.onAPIPostReportCreate(db))
 	authed.GET("/api/report/:report_id", w.onAPIGetReport(db))
+	authed.POST("/api/reports", w.onAPIGetReports(db))
+	authed.POST("/api/report/:report_id/messages", w.onAPIPostReportMessage(db))
 	authed.GET("/api/report/:report_id/messages", w.onAPIGetReportMessages(db))
+	authed.GET("/api/logs/query", w.onAPILogsQuery(db))
 
 	// Moderator access
-	modRoute := r.Use(w.authMiddleware(db, model.PModerator))
+	modRoute := r.Use(authMiddleware(db, model.PModerator))
 	modRoute.POST("/api/ban", w.onAPIPostBanCreate(db))
 
 	// Admin access
-	modAdmin := r.Use(w.authMiddleware(db, model.PAdmin))
+	modAdmin := r.Use(authMiddleware(db, model.PAdmin))
 	modAdmin.POST("/api/server", w.onAPIPostServer())
 }

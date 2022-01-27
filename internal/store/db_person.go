@@ -6,6 +6,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -156,7 +157,33 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 	return nil
 }
 
-func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) ([]model.Person, error) {
+func (db *pgStore) GetPeopleBySteamID(ctx context.Context, steamids steamid.Collection) (model.People, error) {
+	qb := sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamids)})
+	q, a, e := qb.ToSql()
+	if e != nil {
+		return nil, e
+	}
+	var people model.People
+	rows, err := db.c.Query(ctx, q, a...)
+	if err != nil {
+		return nil, Err(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		p := model.NewPerson(0)
+		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.CommunityVisibilityState,
+			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
+			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
+			&p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans, &p.EconomyBan,
+			&p.DaysSinceLastBan); err2 != nil {
+			return nil, err2
+		}
+		people = append(people, p)
+	}
+	return people, nil
+}
+
+func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan
@@ -171,13 +198,13 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) ([]model.Pers
 	if qf.Limit == 0 {
 		qb = qb.Limit(100)
 	} else {
-		qb = qb.Limit(qf.Limit)
+		qb = qb.Limit(uint64(qf.Limit))
 	}
 	q, a, e := qb.ToSql()
 	if e != nil {
 		return nil, e
 	}
-	var people []model.Person
+	var people model.People
 	rows, err := db.c.Query(ctx, q, a...)
 	if err != nil {
 		return nil, Err(err)

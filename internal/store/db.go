@@ -54,11 +54,12 @@ const (
 
 // QueryFilter provides a structure for common query parameters
 type QueryFilter struct {
-	Offset   uint64 `json:"offset" uri:"offset" binding:"gte=0"`
-	Limit    uint64 `json:"limit" uri:"limit" binding:"gte=0,lte=1000"`
-	SortDesc bool   `json:"desc" uri:"desc"`
-	Query    string `json:"query" uri:"query"`
-	OrderBy  string `json:"order_by" uri:"order_by"`
+	Offset   uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
+	Limit    int    `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
+	SortDesc bool   `json:"desc,omitempty" uri:"desc"`
+	Query    string `json:"query,omitempty" uri:"query"`
+	OrderBy  string `json:"order_by,omitempty" uri:"order_by"`
+	Deleted  bool   `json:"deleted,omitempty" uri:"deleted"`
 }
 
 func (qf *QueryFilter) orderString() string {

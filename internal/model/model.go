@@ -387,14 +387,14 @@ type ServerState struct {
 }
 
 type Person struct {
-	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id"`
-	Name             string        `db:"name" json:"name"`
-	CreatedOn        time.Time     `db:"created_on" json:"created_on"`
-	UpdatedOn        time.Time     `db:"updated_on" json:"updated_on"`
-	PermissionLevel  Privilege     `db:"permission_level" json:"permission_level"`
-	IsNew            bool          `db:"-" json:"-"`
-	DiscordID        string        `db:"discord_id" json:"discord_id"`
-	IPAddr           net.IP        `db:"ip_addr" json:"ip_addr"`
+	SteamID steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	// Name             string        `db:"name" json:"name"`
+	CreatedOn        time.Time `db:"created_on" json:"created_on"`
+	UpdatedOn        time.Time `db:"updated_on" json:"updated_on"`
+	PermissionLevel  Privilege `db:"permission_level" json:"permission_level"`
+	IsNew            bool      `db:"-" json:"-"`
+	DiscordID        string    `db:"discord_id" json:"discord_id"`
+	IPAddr           net.IP    `db:"ip_addr" json:"-"`
 	CommunityBanned  bool
 	VACBans          int
 	GameBans         int
@@ -424,6 +424,16 @@ func NewPerson(sid64 steamid.SID64) Person {
 		PlayerSummary:   &steamweb.PlayerSummary{},
 		PermissionLevel: PAuthenticated,
 	}
+}
+
+type People []Person
+
+func (p People) AsMap() map[steamid.SID64]Person {
+	m := map[steamid.SID64]Person{}
+	for _, person := range p {
+		m[person.SteamID] = person
+	}
+	return m
 }
 
 // AppealState is the current state of a users ban appeal, if any.
@@ -750,12 +760,12 @@ func NewReportMedia(reportId int) ReportMedia {
 	}
 }
 
-func NewReportMessage(reportId int) ReportMessage {
+func NewReportMessage(reportId int, authorId steamid.SID64, message string) ReportMessage {
 	return ReportMessage{
 		ReportMessageId: 0,
 		ReportId:        reportId,
-		AuthorId:        0,
-		Message:         "",
+		AuthorId:        authorId,
+		Message:         message,
 		CreatedOn:       config.Now(),
 		UpdatedOn:       config.Now(),
 	}

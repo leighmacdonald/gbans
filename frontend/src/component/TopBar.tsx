@@ -205,7 +205,7 @@ export const TopBar = () => {
                             display: { xs: 'flex', md: 'none' }
                         }}
                     >
-                        LOGO
+                        Uncletopia
                     </Typography>
                     <Box
                         sx={{

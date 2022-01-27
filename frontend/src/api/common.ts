@@ -11,7 +11,7 @@ export enum PermissionLevel {
 export interface apiResponse<T> {
     status: boolean;
     resp: Response;
-    json: T | apiError;
+    json: T;
 }
 
 export interface apiError {
@@ -131,4 +131,17 @@ export interface Pos {
 export interface TimeStamped {
     created_on: Date;
     updated_on: Date;
+}
+
+export interface QueryFilter {
+    offset?: number;
+    limit?: number;
+    desc?: boolean;
+    query?: string;
+    order_by?: string;
+    deleted?: boolean;
+}
+
+export interface AuthorQueryFilter extends QueryFilter {
+    author_id: string;
 }

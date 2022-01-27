@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -119,6 +120,62 @@ func (db *pgStore) DropReportMedia(ctx context.Context, media *model.ReportMedia
 	}).Infof("Report deleted")
 	media.Deleted = true
 	return nil
+}
+
+type AuthorQueryFilter struct {
+	QueryFilter
+	AuthorId int64 `json:"author_id,string"`
+}
+
+func (db *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error) {
+	var conditions sq.And
+	conditions = append(conditions, sq.Eq{"deleted": opts.Deleted})
+	if opts.AuthorId > 0 {
+		conditions = append(conditions, sq.Eq{"author_id": opts.AuthorId})
+	}
+	qb := sb.
+		Select("report_id", "author_id", "reported_id", "report_status",
+			"title", "description", "deleted", "created_on", "updated_on").
+		From("report").
+		Where(conditions)
+	if opts.Limit > 0 {
+		qb = qb.Limit(uint64(opts.Limit))
+	}
+	//if opts.OrderBy != "" {
+	//	if opts.SortDesc {
+	//		qb = qb.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
+	//	} else {
+	//		qb = qb.OrderBy(fmt.Sprintf("%s ASC", opts.OrderBy))
+	//	}
+	//}
+	q, a, errSql := qb.ToSql()
+	if errSql != nil {
+		return nil, Err(errSql)
+	}
+	rows, errQuery := db.c.Query(ctx, q, a...)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+	var reports []model.Report
+	for rows.Next() {
+		var report model.Report
+		if errScan := rows.Scan(
+			&report.ReportId,
+			&report.AuthorId,
+			&report.ReportedId,
+			&report.ReportStatus,
+			&report.Title,
+			&report.Description,
+			&report.Deleted,
+			&report.CreatedOn,
+			&report.UpdatedOn,
+		); errScan != nil {
+			return nil, Err(errScan)
+		}
+		reports = append(reports, report)
+	}
+	return reports, nil
 }
 
 func (db *pgStore) GetReport(ctx context.Context, reportId int, report *model.Report) error {

@@ -64,3 +64,18 @@ export const apiGetPeople = async (): Promise<Person[] | apiError> => {
     const resp = await apiCall<Person[]>(`/api/players`, 'GET');
     return resp.json;
 };
+
+export interface FindProfileProps {
+    query: string;
+}
+
+export const apiGetResolveProfile = async (
+    opts: FindProfileProps
+): Promise<Person> => {
+    const resp = await apiCall<Person, FindProfileProps>(
+        '/api/resolve_profile',
+        'POST',
+        opts
+    );
+    return resp.json;
+};

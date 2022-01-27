@@ -1,4 +1,5 @@
-import { apiCall, TimeStamped } from './common';
+import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
+import { Person } from './profile';
 
 export enum ReportStatus {
     Opened,
@@ -51,6 +52,11 @@ export interface ReportMedia extends TimeStamped {
     deleted: boolean;
 }
 
+export interface ReportMessagesResponse {
+    message: ReportMessage;
+    author: Person;
+}
+
 export interface ReportMessage extends TimeStamped {
     report_message_id: number;
     report_id: number;
@@ -69,6 +75,7 @@ export interface UploadedFile {
     mime: string;
     size: number;
 }
+
 export interface CreateReportRequest {
     steam_id: string;
     title: string;
@@ -78,13 +85,9 @@ export interface CreateReportRequest {
 
 export type BanState = 'banned' | 'closed';
 
-export interface UserReportHistory {
-    name: string;
-    target: string;
-    target_avatar: string;
-    state: BanState;
-    updated_on: Date;
-    created_on: Date;
+export interface ReportWithAuthor {
+    author: Person;
+    report: Report;
 }
 
 export const apiCreateReport = async (opts: CreateReportRequest) => {
@@ -97,17 +100,61 @@ export const apiCreateReport = async (opts: CreateReportRequest) => {
 };
 
 export const apiGetReport = async (report_id: number) => {
-    const resp = await apiCall<Report, CreateReportRequest>(
+    const resp = await apiCall<ReportWithAuthor>(
         `/api/report/${report_id}`,
         'GET'
     );
-    return resp.json as Report;
+    return resp.json;
+};
+
+export const apiGetReports = async (opts: AuthorQueryFilter) => {
+    const resp = await apiCall<ReportWithAuthor[], AuthorQueryFilter>(
+        `/api/reports`,
+        'POST',
+        opts
+    );
+    return resp.json;
 };
 
 export const apiGetReportMessages = async (report_id: number) => {
-    const resp = await apiCall<Report, CreateReportRequest>(
+    const resp = await apiCall<ReportMessagesResponse[], CreateReportRequest>(
         `/api/report/${report_id}/messages`,
         'GET'
     );
-    return resp.json as ReportMessage[];
+    return resp.json;
+};
+
+export interface GetLogsRequest {
+    steam_id: number;
+    limit: number;
+}
+
+export interface UserMessageLog extends TimeStamped {
+    created_on: Date;
+    message: string;
+}
+
+export const apiGetLogs = async (steam_id: number, limit: number) => {
+    const resp = await apiCall<UserMessageLog[], GetLogsRequest>(
+        `/api/logs/query`,
+        'GET',
+        { limit, steam_id }
+    );
+    return resp.json;
+};
+
+export interface CreateReportMessage {
+    message: string;
+}
+
+export const apiCreateReportMessage = async (
+    report_id: number,
+    message: string
+) => {
+    const resp = await apiCall<ReportMessage, CreateReportMessage>(
+        `/api/report/${report_id}/messages`,
+        'POST',
+        { message }
+    );
+    return resp.json;
 };

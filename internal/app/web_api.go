@@ -6,10 +6,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -425,9 +427,7 @@ func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		var staticConfigs []promStaticConfig
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		servers, err := db.GetServers(ctx, true)
+		servers, err := db.GetServers(c, true)
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -487,9 +487,7 @@ func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 		Players           []playerInfo `json:"players"`
 	}
 	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		servers, err := db.GetServers(ctx, true)
+		servers, err := db.GetServers(c, true)
 		if err != nil {
 			log.Errorf("Failed to fetch servers: %s", err)
 			responseErr(c, http.StatusInternalServerError, nil)
@@ -554,14 +552,36 @@ func (w *web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		people, err2 := db.GetPeople(ctx, qf)
+		people, err2 := db.GetPeople(c, qf)
 		if err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
 		responseOK(c, http.StatusOK, people)
+	}
+}
+
+func (w *web) onAPIGetResolveProfile(db store.PersonStore) gin.HandlerFunc {
+	type queryParam struct {
+		Query string `json:"query"`
+	}
+	return func(c *gin.Context) {
+		var q queryParam
+		if errBind := c.BindJSON(&q); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		id, errResolve := steamid.ResolveSID64(c, q.Query)
+		if errResolve != nil {
+			responseErr(c, http.StatusOK, nil)
+			return
+		}
+		var p model.Person
+		if errPerson := getOrCreateProfileBySteamID(c, db, id, "", &p); errPerson != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, p)
 	}
 }
 
@@ -869,42 +889,66 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func getIntParam(c *gin.Context, key string) (int64, error) {
-	reportIdStr := c.Param(key)
-	if reportIdStr == "" {
+func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
+	i, err := getInt64Param(c, key)
+	if err != nil {
+		return 0, err
+	}
+	sid := steamid.SID64(i)
+	if !sid.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return sid, nil
+}
+
+func getInt64Param(c *gin.Context, key string) (int64, error) {
+	valueStr := c.Param(key)
+	if valueStr == "" {
 		return 0, errors.Errorf("Failed to get %s", key)
 	}
-	reportId, reportIdErr := strconv.ParseInt(reportIdStr, 10, 64)
-	if reportIdErr != nil {
-		return 0, errors.Errorf("Failed to parse %s: %v", key, reportIdErr)
+	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
+	if valueErr != nil {
+		return 0, errors.Errorf("Failed to parse %s: %v", key, valueErr)
 	}
-	if reportId <= 0 {
-		return 0, errors.Errorf("Invalid %s: %v", key, reportIdErr)
+	if value <= 0 {
+		return 0, errors.Errorf("Invalid %s: %v", key, valueErr)
 	}
-	return reportId, nil
+	return value, nil
 }
 
-func (w *web) onAPIGetReportMessages(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIGetReportMedia(db store.ReportStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		reportId, errParam := getIntParam(c, "report_id")
+		mediaId, errParam := getInt64Param(c, "report_media_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		msgs, errMsgs := db.GetReportMessages(c, int(reportId))
-		if errMsgs != nil {
+		var m model.ReportMedia
+		if errMedia := db.GetReportMediaById(c, int(mediaId), &m); errMedia != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, msgs)
+		c.Data(http.StatusOK, m.MimeType, m.Contents)
 	}
 }
 
-func (w *web) onAPIGetReport(db store.Store) gin.HandlerFunc {
+func (w *web) onAPIPostReportMessage(db store.ReportStore) gin.HandlerFunc {
+	type req struct {
+		Message string `json:"message"`
+	}
 	return func(c *gin.Context) {
-		reportId, errParam := getIntParam(c, "report_id")
+		reportId, errParam := getInt64Param(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var r req
+		if errBind := c.BindJSON(&r); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		if r.Message == "" {
+			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
 		var report model.Report
@@ -917,6 +961,165 @@ func (w *web) onAPIGetReport(db store.Store) gin.HandlerFunc {
 			log.Errorf("Failed to load report: %v", errReport)
 			return
 		}
+		p := currentPerson(c)
+		msg := model.NewReportMessage(int(reportId), p.SteamID, r.Message)
+		if errSave := db.SaveReportMessage(c, int(reportId), &msg); errSave != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save report message: %v", errSave)
+			return
+		}
+		responseOK(c, http.StatusCreated, msg)
+	}
+}
+
+type AuthorReportMessage struct {
+	Author  model.Person        `json:"author"`
+	Message model.ReportMessage `json:"message"`
+}
+
+func (w *web) onAPIGetReportMessages(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reportId, errParam := getInt64Param(c, "report_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		msgs, errMsgs := db.GetReportMessages(c, int(reportId))
+		if errMsgs != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var ids steamid.Collection
+		for _, msg := range msgs {
+			ids = append(ids, msg.AuthorId)
+		}
+		authors, authorsErr := db.GetPeopleBySteamID(c, ids)
+		if authorsErr != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		authorsMap := authors.AsMap()
+		var authorMsgs []AuthorReportMessage
+		for _, m := range msgs {
+			authorMsgs = append(authorMsgs, AuthorReportMessage{
+				Author:  authorsMap[m.AuthorId],
+				Message: m,
+			})
+		}
+		responseOK(c, http.StatusOK, authorMsgs)
+	}
+}
+
+type reportWithAuthor struct {
+	Author model.Person `json:"author"`
+	Report model.Report `json:"report"`
+}
+
+func (w *web) onAPIGetReports(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var opts store.AuthorQueryFilter
+		if errBind := c.BindJSON(&opts); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var f store.AuthorQueryFilter
+		if opts.Limit > 0 && opts.Limit <= 100 {
+			f.Limit = opts.Limit
+		} else {
+			f.Limit = 25
+		}
+		var userReports []reportWithAuthor
+		reports, errReports := db.GetReports(c, f)
+		if errReports != nil {
+			if store.Err(errReports) == store.ErrNoResult {
+				responseOK(c, http.StatusNoContent, nil)
+				return
+			}
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		var authorIds steamid.Collection
+		for _, report := range reports {
+			authorIds = append(authorIds, report.ReportedId)
+		}
+		authors, errAuthors := db.GetPeopleBySteamID(c, fp.Uniq[steamid.SID64](authorIds))
+		if errAuthors != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		am := authors.AsMap()
+		for _, r := range reports {
+			userReports = append(userReports, reportWithAuthor{
+				Author: am[r.ReportedId],
+				Report: r,
+			})
+		}
+
+		responseOK(c, http.StatusOK, userReports)
+	}
+}
+
+func (w *web) onAPIGetReport(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reportId, errParam := getInt64Param(c, "report_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var report reportWithAuthor
+		if errReport := db.GetReport(c, int(reportId), &report.Report); errReport != nil {
+			if store.Err(errReport) == store.ErrNoResult {
+				responseErr(c, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Failed to load report: %v", errReport)
+			return
+		}
+		if errAuthor := db.GetOrCreatePersonBySteamID(c, report.Report.AuthorId, &report.Author); errAuthor != nil {
+			if store.Err(errAuthor) == store.ErrNoResult {
+				responseErr(c, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Failed to load report author: %v", errAuthor)
+			return
+		}
 		responseOK(c, http.StatusOK, report)
+	}
+}
+
+func (w *web) onAPILogsQuery(db store.StatStore) gin.HandlerFunc {
+	type req struct {
+		SteamID string `json:"steam_id"`
+		Limit   int    `json:"limit"`
+	}
+	type logMsg struct {
+		CreatedOn time.Time `json:"created_on"`
+		Message   string    `json:"message"`
+	}
+	return func(c *gin.Context) {
+		var r req
+		if errBind := c.BindJSON(&r); errBind != nil {
+			if errBind != nil {
+				responseErr(c, http.StatusBadRequest, nil)
+				return
+			}
+		}
+		sid, errSid := steamid.StringToSID64(r.SteamID)
+		if errSid != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		hist, errHist := db.GetChatHistory(c, sid, 100)
+		if errHist != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var logs []logMsg
+		for _, h := range hist {
+			logs = append(logs, logMsg{h.CreatedOn, h.Msg})
+		}
+		responseOK(c, http.StatusOK, logs)
 	}
 }

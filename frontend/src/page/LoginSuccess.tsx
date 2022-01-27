@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router';
 import { apiGetCurrentProfile, PermissionLevel, PlayerProfile } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const LoginSuccess = (): JSX.Element => {
     const { setCurrentUser } = useCurrentUserCtx();
@@ -25,6 +26,15 @@ export const LoginSuccess = (): JSX.Element => {
     apiGetCurrentProfile().then((value) => {
         setCurrentUser(value as PlayerProfile);
     });
-
+    const { flashes, setFlashes } = useUserFlashCtx();
+    setFlashes([
+        ...flashes,
+        {
+            closable: true,
+            heading: 'header',
+            level: 'success',
+            message: 'woo msg'
+        }
+    ]);
     return <Navigate to={next_url} />;
 };

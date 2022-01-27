@@ -17,7 +17,17 @@ import Box from '@mui/material/Box';
 import SendIcon from '@mui/icons-material/Send';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
-import { apiCreateReport, BanReason, BanReasons, UploadedFile } from '../api';
+import {
+    apiCreateReport,
+    apiGetResolveProfile,
+    BanReason,
+    BanReasons,
+    Person,
+    UploadedFile
+} from '../api';
+import Typography from '@mui/material/Typography';
+import { debounce } from 'lodash-es';
+import Avatar from '@mui/material/Avatar';
 
 interface FormProps {
     uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
@@ -125,6 +135,22 @@ export const ReportForm = (): JSX.Element => {
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
     const [description, setDescription] = useState<string>('');
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+    const [profile, setProfile] = useState<Person | null>();
+    const fn = async (id: string) => {
+        const result = await apiGetResolveProfile({ query: id });
+        if (result) {
+            setProfile(result);
+        } else {
+            setProfile(null);
+        }
+    };
+    // todo fix double call
+    const fetchProfile = useCallback(
+        debounce(() => {
+            fn(steamId);
+        }, 300),
+        [steamId]
+    );
 
     const submit = useCallback(async () => {
         await apiCreateReport({
@@ -135,10 +161,15 @@ export const ReportForm = (): JSX.Element => {
         });
     }, [steamId, title, description, uploadedFiles]);
 
+    const titleIsError = title.length < 10;
     return (
-        <>
+        <Stack spacing={3} padding={3}>
+            <Box>
+                <Typography variant={'h5'}>Create a New Report</Typography>
+            </Box>
             <FormControl fullWidth>
                 <TextField
+                    error={titleIsError}
                     id="title"
                     label={'Title'}
                     variant={'filled'}
@@ -155,16 +186,24 @@ export const ReportForm = (): JSX.Element => {
                     label="Steam Profile / Steam ID"
                     id="report_subject"
                     margin={'normal'}
-                    error
-                    helperText={'Invalid ID'}
+                    error={!profile?.steam_id}
+                    helperText={profile?.steam_id != '' ? '' : 'Invalid ID'}
                     variant={'filled'}
                     value={steamId}
                     onChange={(v) => {
                         setSteamId(v.target.value);
+                        fetchProfile();
                     }}
                 />
             </FormControl>
-
+            {profile && (
+                <Stack direction={'row'}>
+                    <Avatar src={profile.avatarfull} />
+                    <Typography variant={'h4'}>
+                        {profile.personaname}
+                    </Typography>
+                </Stack>
+            )}
             <FormControl fullWidth margin={'normal'} variant={'filled'}>
                 <InputLabel id="select_ban_reason_label">Ban Reason</InputLabel>
                 <Select
@@ -222,6 +261,6 @@ export const ReportForm = (): JSX.Element => {
             >
                 Submit Report
             </Button>
-        </>
+        </Stack>
     );
 };
