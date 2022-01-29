@@ -4,7 +4,7 @@ import { CreateDataTable } from './DataTable';
 export const ServerList = (): JSX.Element =>
     CreateDataTable<Server>()({
         connector: async () => {
-            return (await apiGetServers()) as Promise<Server[]>;
+            return (await apiGetServers()) || [];
         },
         id_field: 'server_id',
         heading: 'Servers',

@@ -63,7 +63,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	// These should match routes defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
 	jsRoutes := []string{
-		"/", "/servers", "/profile", "/bans", "/appeal", "/settings", "/report",
+		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
 	for _, rt := range jsRoutes {

@@ -14,6 +14,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import { log } from '../util/errors';
 
 const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
     if (b[orderBy] < a[orderBy]) {
@@ -190,6 +191,7 @@ export const CreateDataTable = <TRecord,>(): ((
         useEffect(() => {
             const loadData = async () => {
                 const resp = (await connector()) as TRecord[];
+                log(resp[0]);
                 setRows(resp ?? []);
             };
             // noinspection JSIgnoredPromiseFromCall
@@ -206,7 +208,7 @@ export const CreateDataTable = <TRecord,>(): ((
         // eslint-disable-next-line
         const [page, setPage] = React.useState(0);
         // eslint-disable-next-line
-        const [rowsPerPage, setRowsPerPage] = React.useState(10);
+        const [rowsPerPage, setRowsPerPage] = React.useState(25);
         // eslint-disable-next-line
 
         const handleRequestSort = (
@@ -371,7 +373,7 @@ export const CreateDataTable = <TRecord,>(): ((
                     </Table>
                 </TableContainer>
                 <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
+                    rowsPerPageOptions={[10, 25, 50, 100]}
                     component="div"
                     count={rows.length}
                     rowsPerPage={rowsPerPage}

@@ -1,6 +1,6 @@
 import { MsgType, PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
-import { apiCall, apiError, Pos } from './common';
+import { apiCall, Pos } from './common';
 
 export interface Server {
     server_id: number;
@@ -62,7 +62,6 @@ export interface LogQueryOpts {
     servers: number[];
 }
 
-export const apiGetServers = async (): Promise<Server[] | apiError> => {
-    const resp = await apiCall<Server[]>(`/api/servers`, 'GET');
-    return resp.json;
+export const apiGetServers = async (): Promise<Server[]> => {
+    return await apiCall<Server[]>(`/api/servers`, 'GET');
 };

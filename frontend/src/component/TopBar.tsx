@@ -84,7 +84,11 @@ export const TopBar = () => {
     ];
 
     const userItems: menuRoute[] = [
-        { to: '/profile', text: 'Profile', icon: <AccountCircleIcon /> },
+        {
+            to: `/profile/${currentUser?.player?.steam_id}`,
+            text: 'Profile',
+            icon: <AccountCircleIcon />
+        },
         { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
         { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
     ];

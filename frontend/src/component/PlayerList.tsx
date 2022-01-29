@@ -4,7 +4,7 @@ import { CreateDataTable } from './DataTable';
 export const PlayerList = (): JSX.Element =>
     CreateDataTable<Person>()({
         connector: async () => {
-            return (await apiGetPeople()) as Promise<Person[]>;
+            return await apiGetPeople();
         },
         id_field: 'steam_id',
         heading: 'Players',

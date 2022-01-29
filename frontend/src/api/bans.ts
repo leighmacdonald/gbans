@@ -80,7 +80,7 @@ export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
         `/api/bans`,
         'POST'
     );
-    return ((resp.json as IAPIResponseBans) ?? []).map((b): IAPIBanRecord => {
+    return (resp ?? []).map((b): IAPIBanRecord => {
         return {
             author_id: b.ban.author_id,
             avatar: b.person.avatar,
@@ -116,11 +116,9 @@ export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
 export const apiGetBan = async (
     ban_id: number
 ): Promise<BannedPerson | apiError> => {
-    const resp = await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
-    return resp.json;
+    return await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
 };
 
 export const apiCreateBan = async (p: BanPayload): Promise<Ban | apiError> => {
-    const resp = await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);
-    return resp.json;
+    return await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);
 };

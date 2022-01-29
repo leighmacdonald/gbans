@@ -73,7 +73,7 @@ export enum MsgType {
     Any = 10000
 }
 
-export const eventNames: Record<MsgType, string> = {
+export const eventNames = {
     [MsgType.UnhandledMsg]: 'unknown',
     [MsgType.UnknownMsg]: 'unknown',
     [MsgType.Say]: 'say',

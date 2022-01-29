@@ -9,7 +9,7 @@ import ListItemText from '@mui/material/ListItemText';
 
 export const Appeal = (): JSX.Element => {
     return (
-        <Grid container spacing={3} padding={3}>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={6}>
                 <Paper elevation={1}>
                     <AppealForm />

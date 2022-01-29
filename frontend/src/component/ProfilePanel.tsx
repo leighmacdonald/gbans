@@ -1,4 +1,3 @@
-import Grid from '@mui/material/Grid';
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
@@ -14,6 +13,8 @@ import React from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import { PlayerProfile } from '../api';
+import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -60,14 +61,14 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
     };
 
     return (
-        <Grid container>
+        <Stack spacing={3} padding={3}>
             {!args.profile && (
-                <Grid item xs={12}>
+                <Box>
                     <Typography variant={'h3'}>No Profile Selected</Typography>
-                </Grid>
+                </Box>
             )}
             {args.profile && (
-                <Grid item xs={12}>
+                <Box>
                     <AppBar position="static">
                         <Tabs
                             value={value}
@@ -93,39 +94,21 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                         </Tabs>
                     </AppBar>
                     <TabPanel value={value} index="one">
-                        <Grid container>
-                            <Grid item xs>
-                                <img
-                                    src={args.profile?.player.avatarfull}
-                                    alt={'Avatar'}
-                                />
-                            </Grid>
-                            <Grid item xs>
-                                <Typography variant={'h3'} align={'center'}>
-                                    {args.profile?.player.personaname}
-                                </Typography>
-                            </Grid>
-                            <Grid container>
-                                <Grid item xs={3}>
-                                    <Chip label={'VAC'} icon={<CheckIcon />} />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        label={'Trade'}
-                                        icon={<CheckIcon />}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        label="Community"
-                                        icon={<CheckIcon />}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip label={'Game'} icon={<ClearIcon />} />
-                                </Grid>
-                            </Grid>
-                        </Grid>
+                        <Stack>
+                            <img
+                                src={args.profile?.player.avatarfull}
+                                alt={'Avatar'}
+                            />
+                            <Typography variant={'h3'} align={'center'}>
+                                {args.profile?.player.personaname}
+                            </Typography>
+                            <Stack direction={'row'}>
+                                <Chip label={'VAC'} icon={<CheckIcon />} />
+                                <Chip label={'Trade'} icon={<CheckIcon />} />
+                                <Chip label="Community" icon={<CheckIcon />} />
+                                <Chip label={'Game'} icon={<ClearIcon />} />
+                            </Stack>
+                        </Stack>
                     </TabPanel>
                     <TabPanel value={value} index="two">
                         <List dense={false}>
@@ -145,8 +128,8 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                             ))}
                         </List>
                     </TabPanel>
-                </Grid>
+                </Box>
             )}
-        </Grid>
+        </Stack>
     );
 };

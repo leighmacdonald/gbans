@@ -1,4 +1,4 @@
-import { apiCall, apiError } from './common';
+import { apiCall } from './common';
 
 export enum profileState {
     Incomplete = 0,
@@ -43,26 +43,16 @@ export interface PlayerProfile {
     friends: Person[];
 }
 
-export const apiGetProfile = async (
-    query: string
-): Promise<PlayerProfile | apiError> => {
-    const resp = await apiCall<PlayerProfile>(
-        `/api/profile?query=${query}`,
-        'GET'
-    );
-    return resp.json;
+export const apiGetProfile = async (query: string): Promise<PlayerProfile> => {
+    return await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 };
 
-export const apiGetCurrentProfile = async (): Promise<
-    PlayerProfile | apiError
-> => {
-    const resp = await apiCall<PlayerProfile>(`/api/current_profile`, 'GET');
-    return resp.json;
+export const apiGetCurrentProfile = async (): Promise<PlayerProfile> => {
+    return await apiCall<PlayerProfile>(`/api/current_profile`, 'GET');
 };
 
-export const apiGetPeople = async (): Promise<Person[] | apiError> => {
-    const resp = await apiCall<Person[]>(`/api/players`, 'GET');
-    return resp.json;
+export const apiGetPeople = async (): Promise<Person[]> => {
+    return await apiCall<Person[]>(`/api/players`, 'GET');
 };
 
 export interface FindProfileProps {
@@ -72,10 +62,9 @@ export interface FindProfileProps {
 export const apiGetResolveProfile = async (
     opts: FindProfileProps
 ): Promise<Person> => {
-    const resp = await apiCall<Person, FindProfileProps>(
+    return await apiCall<Person, FindProfileProps>(
         '/api/resolve_profile',
         'POST',
         opts
     );
-    return resp.json;
 };

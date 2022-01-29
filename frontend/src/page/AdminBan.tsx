@@ -5,16 +5,17 @@ import Typography from '@mui/material/Typography';
 import { PlayerBanForm } from '../component/PlayerBanForm';
 import { ProfilePanel } from '../component/ProfilePanel';
 import { PlayerProfile } from '../api';
+import Box from '@mui/material/Box';
 
 export const AdminBan = (): JSX.Element => {
     const [profile, setProfile] = useState<PlayerProfile | undefined>();
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={6}>
                 <Paper elevation={1}>
-                    <Grid item xs={12}>
+                    <Box padding={3}>
                         <Typography variant={'h1'}>Ban A Player</Typography>
-                    </Grid>
+                    </Box>
                     <PlayerBanForm
                         onProfileChanged={(p) => {
                             setProfile(p);
@@ -24,9 +25,9 @@ export const AdminBan = (): JSX.Element => {
             </Grid>
             <Grid item xs={6}>
                 <Paper elevation={1}>
-                    <Grid item xs={12}>
+                    <Box padding={3}>
                         <Typography variant={'h1'}>Player Profile</Typography>
-                    </Grid>
+                    </Box>
                     <ProfilePanel profile={profile} />
                 </Paper>
             </Grid>

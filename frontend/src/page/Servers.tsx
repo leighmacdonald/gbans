@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { ServerList } from '../component/ServerList';
 import { ServerMap } from '../component/ServerMap';
 import { Server } from '../api';
 import { LatLngLiteral } from 'leaflet';
 import { MapStateCtx } from '../contexts/MapStateCtx';
+import Stack from '@mui/material/Stack';
 
 export const Servers = (): JSX.Element => {
     const [servers, setServers] = useState<Server[]>([]);
@@ -22,18 +22,14 @@ export const Servers = (): JSX.Element => {
                 setPos
             }}
         >
-            <Grid container>
-                <Grid item xs={12}>
-                    <Paper elevation={1}>
-                        <ServerMap />
-                    </Paper>
-                </Grid>
-                <Grid item xs={12}>
-                    <Paper elevation={1}>
-                        <ServerList />
-                    </Paper>
-                </Grid>
-            </Grid>
+            <Stack spacing={3} paddingTop={3}>
+                <Paper elevation={1}>
+                    <ServerMap />
+                </Paper>
+                <Paper elevation={1}>
+                    <ServerList />
+                </Paper>
+            </Stack>
         </MapStateCtx.Provider>
     );
 };

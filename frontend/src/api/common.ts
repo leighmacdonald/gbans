@@ -1,5 +1,3 @@
-import { log } from '../util/errors';
-
 export enum PermissionLevel {
     Guest = 1,
     Banned = 2,
@@ -25,7 +23,7 @@ export const apiCall = async <
     url: string,
     method: string,
     body?: TRequestBody
-): Promise<apiResponse<TResponse>> => {
+): Promise<TResponse> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
     };
@@ -44,17 +42,20 @@ export const apiCall = async <
     opts.headers = headers;
     const resp = await fetch(url, opts);
     if (resp.status === 403 && token != '') {
-        log('invalid token');
+        throw apiErr('Invalid auth token', resp);
     }
     if (!resp.status) {
         throw apiErr('Invalid response code', resp);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const json = ((await resp.json()) as TResponse as any).data;
-    if (json?.error && json.error !== '') {
+    const json = await resp.json();
+    if (!json.status) {
+        throw apiErr('Invalid status code', resp);
+    }
+    if (!resp.ok) {
         throw apiErr(`Error received: ${json.error}`, resp);
     }
-    return { json: json, resp: resp, status: resp.ok };
+    return json.data;
 };
 
 class ApiException extends Error {

@@ -15,7 +15,8 @@ import MenuItem from '@mui/material/MenuItem';
 import SendIcon from '@mui/icons-material/Send';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import { ListItemAvatar, ListItemText } from '@mui/material';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();

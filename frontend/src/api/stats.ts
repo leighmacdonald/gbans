@@ -69,6 +69,5 @@ export interface DatabaseStats {
 }
 
 export const apiGetStats = async (): Promise<DatabaseStats> => {
-    const resp = await apiCall<DatabaseStats>(`/api/stats`, 'GET');
-    return resp.json as DatabaseStats;
+    return await apiCall<DatabaseStats>(`/api/stats`, 'GET');
 };

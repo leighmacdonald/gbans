@@ -33,7 +33,7 @@ export const LoginSuccess = (): JSX.Element => {
             closable: true,
             heading: 'header',
             level: 'success',
-            message: 'woo msg'
+            message: 'Login Successful'
         }
     ]);
     return <Navigate to={next_url} />;
