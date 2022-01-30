@@ -6,6 +6,8 @@ import { useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+
 export interface ProfileSelectionInputProps {
     renderFooter: boolean;
     id?: string;
@@ -33,6 +35,7 @@ export const ProfileSelectionInput = ({
             setLProfile(v);
         } catch (e) {
             log(e);
+            setLProfile(undefined);
         }
     };
 
@@ -41,15 +44,28 @@ export const ProfileSelectionInput = ({
         setInput(nextValue);
         loadProfile();
     };
-
+    const isError =
+        input.length > 0 && (!lProfile || !lProfile?.player.steam_id);
     return (
         <>
             <TextField
+                error={isError}
                 fullWidth={fullWidth}
                 id={id ?? 'query'}
                 label={label ?? 'Steam ID / Profile URL'}
                 onChange={onChangeInput}
                 onBlur={loadProfile}
+                color={lProfile?.player.steam_id ? 'success' : 'primary'}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Avatar
+                                src={lProfile?.player.avatar}
+                                variant={'square'}
+                            />
+                        </InputAdornment>
+                    )
+                }}
             />
             {renderFooter && (
                 <Stack

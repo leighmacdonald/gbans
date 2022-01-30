@@ -480,8 +480,8 @@ type Stats struct {
 type ServerEvent struct {
 	LogID int64 `json:"log_id"`
 	// Server is where the event happened
-	Server    *Server          `json:"server"`
-	EventType logparse.MsgType `json:"event_type"`
+	Server    *Server            `json:"server"`
+	EventType logparse.EventType `json:"event_type"`
 	// Source is the player or thing initiating the event/action
 	Source *Person `json:"source"`
 	// Target is the optional target of an event created by a Source
@@ -521,15 +521,15 @@ func (f *Filter) Match(value string) bool {
 
 // RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.
 type RawLogEvent struct {
-	LogID     int64             `json:"log_id"`
-	Type      logparse.MsgType  `json:"event_type"`
-	Event     map[string]string `json:"event"`
-	Server    Server            `json:"server"`
-	Player1   *Person           `json:"player1"`
-	Player2   *Person           `json:"player2"`
-	Assister  *Person           `json:"assister"`
-	RawEvent  string            `json:"raw_event"`
-	CreatedOn time.Time         `json:"created_on"`
+	LogID     int64              `json:"log_id"`
+	Type      logparse.EventType `json:"event_type"`
+	Event     map[string]string  `json:"event"`
+	Server    Server             `json:"server"`
+	Player1   *Person            `json:"player1"`
+	Player2   *Person            `json:"player2"`
+	Assister  *Person            `json:"assister"`
+	RawEvent  string             `json:"raw_event"`
+	CreatedOn time.Time          `json:"created_on"`
 }
 
 // Unmarshal is just a helper to
@@ -556,16 +556,16 @@ func NewPlayerInfo() PlayerInfo {
 }
 
 type LogQueryOpts struct {
-	LogTypes  []logparse.MsgType `json:"log_types"`
-	Limit     uint64             `json:"limit"`
-	OrderDesc bool               `json:"order_desc"`
-	Query     string             `json:"query"`
-	SourceID  string             `json:"source_id"`
-	TargetID  string             `json:"target_id"`
-	Servers   []int              `json:"servers"`
+	LogTypes  []logparse.EventType `json:"log_types"`
+	Limit     uint64               `json:"limit"`
+	OrderDesc bool                 `json:"order_desc"`
+	Query     string               `json:"query"`
+	SourceID  string               `json:"source_id"`
+	TargetID  string               `json:"target_id"`
+	Servers   []int                `json:"servers"`
 }
 
-func (lqo *LogQueryOpts) ValidRecordType(t logparse.MsgType) bool {
+func (lqo *LogQueryOpts) ValidRecordType(t logparse.EventType) bool {
 	if len(lqo.LogTypes) == 0 {
 		// No filters == Any
 		return true

@@ -5,6 +5,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -150,9 +151,9 @@ func (db *pgStore) DropServer(ctx context.Context, serverID int64) error {
 func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
 	b := sb.Select(
 		`l.log_id`,
+		`s.server_id`,
 		`l.event_type`,
 		`l.created_on`,
-		`s.server_id`,
 		`s.short_name`,
 		`COALESCE(source.steam_id, 0)`,
 		`COALESCE(source.personaname, '')`,
@@ -162,9 +163,26 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 		`COALESCE(target.personaname, '')`,
 		`COALESCE(target.avatarfull, '')`,
 		`COALESCE(target.avatar, '')`,
+		`l.weapon`,
+		`l.damage`,
+		`l.healing`,
+		"COALESCE(ST_X(l.attacker_position::geometry), 0)",
+		"COALESCE(ST_Y(l.attacker_position::geometry), 0)",
+		"COALESCE(ST_Z(l.attacker_position::geometry), 0)",
+		"COALESCE(ST_X(l.victim_position::geometry), 0)",
+		"COALESCE(ST_Y(l.victim_position::geometry), 0)",
+		"COALESCE(ST_Z(l.victim_position::geometry), 0)",
+		"COALESCE(ST_X(l.assister_position::geometry), 0)",
+		"COALESCE(ST_Y(l.assister_position::geometry), 0)",
+		"COALESCE(ST_Z(l.assister_position::geometry), 0)",
+		`l.item`,
+		`l.extra`,
+		`l.player_class`,
+		`l.player_team`,
+		`l.meta_data`,
 	).
 		From("server_log l").
-		LeftJoin(`server  s on s.server_id = l.server_id`).
+		LeftJoin(`server s on s.server_id = l.server_id`).
 		LeftJoin(`person source on source.steam_id = l.source_id`).
 		LeftJoin(`person target on target.steam_id = l.target_id`)
 
@@ -203,16 +221,24 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	var events []model.ServerEvent
 	for rows.Next() {
 		e := model.ServerEvent{
-			Server: &model.Server{},
-			Source: &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
-			Target: &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
+			Server:      &model.Server{},
+			Source:      &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
+			Target:      &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
+			AssisterPOS: logparse.Pos{},
+			AttackerPOS: logparse.Pos{},
+			VictimPOS:   logparse.Pos{},
 		}
 		if err2 := rows.Scan(
-			&e.LogID, &e.EventType, &e.CreatedOn,
-			&e.Server.ServerID, &e.Server.ServerName,
+			&e.LogID, &e.Server.ServerID, &e.EventType, &e.CreatedOn,
+			&e.Server.ServerName,
 			&e.Source.SteamID, &e.Source.PersonaName, &e.Source.AvatarFull, &e.Source.Avatar,
-			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar); err2 != nil {
-			return nil, err2
+			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar,
+			&e.Weapon, &e.Damage, &e.Healing,
+			&e.AttackerPOS.X, &e.AttackerPOS.Y, &e.AttackerPOS.Z,
+			&e.VictimPOS.X, &e.VictimPOS.Y, &e.VictimPOS.Z,
+			&e.AssisterPOS.X, &e.AssisterPOS.Y, &e.AssisterPOS.Z,
+			&e.Item, &e.Extra, &e.PlayerClass, &e.Team, &e.MetaData); err2 != nil {
+			return nil, Err(err2)
 		}
 		events = append(events, e)
 	}

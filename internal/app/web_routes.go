@@ -117,7 +117,9 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	authed.POST("/api/reports", w.onAPIGetReports(db))
 	authed.POST("/api/report/:report_id/messages", w.onAPIPostReportMessage(db))
 	authed.GET("/api/report/:report_id/messages", w.onAPIGetReportMessages(db))
-	authed.GET("/api/logs/query", w.onAPILogsQuery(db))
+	authed.POST("/api/logs/query", w.onAPILogsQuery(db))
+
+	authed.POST("/api/events", w.onAPIEvents(db))
 
 	// Moderator access
 	modRoute := r.Use(authMiddleware(db, model.PModerator))

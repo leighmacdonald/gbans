@@ -342,7 +342,7 @@ func TestFindLogEvents(t *testing.T) {
 	}
 	require.NoError(t, testDb.BatchInsertServerLogs(ctx, logs))
 	logEvents, errLogs := testDb.FindLogEvents(ctx, model.LogQueryOpts{
-		LogTypes: []logparse.MsgType{logparse.Killed},
+		LogTypes: []logparse.EventType{logparse.Killed},
 	})
 	require.NoError(t, errLogs, "Failed to fetch logs")
 	require.True(t, len(logEvents) >= 1, "Log size too small: %d", len(logEvents))

@@ -27,7 +27,7 @@ func TestParseAlt(t *testing.T) {
 		v := Parse(line)
 		results[i] = v
 	}
-	expected := map[MsgType]int{
+	expected := map[EventType]int{
 		SayTeam: 6,
 		Say:     18,
 	}
@@ -43,7 +43,7 @@ func TestParseAlt(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	var pa = func(s string, msgType MsgType) map[string]any {
+	var pa = func(s string, msgType EventType) map[string]any {
 		v := Parse(s)
 		require.Equal(t, msgType, v.MsgType)
 		return v.Values

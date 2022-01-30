@@ -2,13 +2,19 @@ import { useEffect, useState } from 'react';
 import { apiGetServers, Server } from '../api';
 import { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
-import { FormHelperText, InputLabel, Select } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
 import * as React from 'react';
 
-export const ServerSelect = () => {
+export interface ServerSelectProps {
+    setServerIDs: (servers: number[]) => void;
+}
+
+export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
     const [servers, setServers] = useState<Server[]>();
-    const [selectedServers, setSelectedServers] = useState<string[]>(['']);
+    const [selectedServers, setSelectedServers] = useState<number[]>([0]);
+
     useEffect(() => {
         const f = async () => {
             setServers(await apiGetServers());
@@ -16,44 +22,43 @@ export const ServerSelect = () => {
         f();
     }, []);
 
-    const containsAll = (f: string[]): boolean => {
-        return f.filter((f) => f == '').length > 0;
+    const containsAll = (f: number[]): boolean => {
+        return f.filter((f) => f == 0).length > 0;
     };
 
-    const handleChange = (event: SelectChangeEvent<string[]>) => {
-        const values = event.target.value as string[];
+    const handleChange = (event: SelectChangeEvent<number[]>) => {
+        let newValue: number[];
+        const values = event.target.value as number[];
         if (!values || (!containsAll(selectedServers) && containsAll(values))) {
-            setSelectedServers(['']);
-            return;
+            newValue = [0];
         } else if (values.length > 1) {
-            setSelectedServers(values.filter((f) => f != ''));
+            newValue = values.filter((f) => f != 0);
         } else {
-            setSelectedServers(values);
+            newValue = values;
         }
+        setSelectedServers(newValue);
+        setServerIDs(newValue);
     };
 
     return (
         <FormControl fullWidth>
             <InputLabel id="server-select-label">Servers</InputLabel>
-            <Select<string[]>
+            <Select<number[]>
                 labelId="server-select-label"
                 multiple
                 id="server-select"
                 value={selectedServers}
-                label="Age"
+                label="Servers"
                 onChange={handleChange}
             >
-                <MenuItem value={''}>All</MenuItem>
+                <MenuItem value={0}>All</MenuItem>
                 {servers &&
                     servers.map((s) => (
-                        <MenuItem value={s.server_name} key={s.server_id}>
+                        <MenuItem value={s.server_id} key={s.server_id}>
                             {s.server_name}
                         </MenuItem>
                     ))}
             </Select>
-            <FormHelperText id="server-helper-text">
-                Filter events by server id
-            </FormHelperText>
         </FormControl>
     );
 };

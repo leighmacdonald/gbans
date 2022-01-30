@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import DateFnsUtils from '@date-io/date-fns';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -53,7 +53,7 @@ export const App = (): JSX.Element => {
     return (
         <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
             <UserFlashCtx.Provider value={{ flashes, setFlashes }}>
-                <LocalizationProvider dateAdapter={DateFnsUtils}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Router>
                         <React.Fragment>
                             <ThemeProvider theme={darkTheme}>

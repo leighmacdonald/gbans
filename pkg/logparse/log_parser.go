@@ -18,7 +18,7 @@ import (
 
 type parserType struct {
 	Rx   *regexp.Regexp
-	Type MsgType
+	Type EventType
 }
 
 var (
@@ -321,7 +321,7 @@ func parseKVs(s string, out map[string]any) bool {
 // Results hold the  results of parsing a log line
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Results struct {
-	MsgType MsgType
+	MsgType EventType
 	Values  map[string]any
 }
 

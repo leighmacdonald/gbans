@@ -53,14 +53,14 @@ func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, stats 
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
 	queries := []statResult{
-		{&stats.Damage, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
-		{&stats.DamageTaken, statQueryOpts{targetId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
-		{&stats.Healing, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
-		{&stats.Shots, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
-		{&stats.Hits, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
-		{&stats.Kills, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
-		{&stats.Deaths, statQueryOpts{targetId: sid, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
-		{&stats.Assists, statQueryOpts{sourceId: sid, msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+		{&stats.Damage, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.DamageTaken, statQueryOpts{targetId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Deaths, statQueryOpts{targetId: sid, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
 	wg.Add(len(queries))
 	for _, query := range queries {
@@ -83,7 +83,7 @@ type statQueryOpts struct {
 	sourceId    steamid.SID64
 	targetId    steamid.SID64
 	serverId    int64
-	msgTypes    []logparse.MsgType
+	msgTypes    []logparse.EventType
 	since       *time.Time
 	sumColumn   string
 	countColumn string
@@ -131,12 +131,12 @@ func (db *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats)
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
 	queries := []statResult{
-		{&stats.Damage, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
-		{&stats.Healing, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
-		{&stats.Shots, statQueryOpts{msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
-		{&stats.Hits, statQueryOpts{msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
-		{&stats.Kills, statQueryOpts{msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
-		{&stats.Assists, statQueryOpts{msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+		{&stats.Damage, statQueryOpts{msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{msgTypes: []logparse.EventType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{msgTypes: []logparse.EventType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
 	wg.Add(len(queries))
 	for _, query := range queries {
@@ -159,12 +159,12 @@ func (db *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *mo
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
 	queries := []statResult{
-		{&stats.Damage, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "damage"}},
-		{&stats.Healing, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Damage}, sumColumn: "healing"}},
-		{&stats.Shots, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.ShotFired}, countColumn: "*"}},
-		{&stats.Hits, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.ShotHit}, countColumn: "*"}},
-		{&stats.Kills, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.Killed}, countColumn: "*"}},
-		{&stats.Assists, statQueryOpts{serverId: serverId, msgTypes: []logparse.MsgType{logparse.KillAssist}, countColumn: "*"}},
+		{&stats.Damage, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
+		{&stats.Healing, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Shots, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.ShotFired}, countColumn: "*"}},
+		{&stats.Hits, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.ShotHit}, countColumn: "*"}},
+		{&stats.Kills, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
+		{&stats.Assists, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
 	wg.Add(len(queries))
 	for _, query := range queries {

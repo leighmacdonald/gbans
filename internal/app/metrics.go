@@ -85,7 +85,7 @@ func init() {
 // logMetricsConsumer processes incoming log events and updated any associated metrics
 func logMetricsConsumer() {
 	c := make(chan model.ServerEvent)
-	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Any}); err != nil {
+	if err := event.RegisterConsumer(c, []logparse.EventType{logparse.Any}); err != nil {
 		log.Errorf("Failed to register event consumer")
 		return
 	}

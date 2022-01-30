@@ -150,7 +150,7 @@ func logWriter(db store.StatStore) {
 	)
 	var logCache []model.ServerEvent
 	events := make(chan model.ServerEvent, 1000)
-	if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Any}); err != nil {
+	if err := event.RegisterConsumer(events, []logparse.EventType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	t := time.NewTicker(freq)
@@ -502,7 +502,7 @@ func initDiscord(db store.Store, botSendMessageChan chan discordPayload) {
 		}
 		events := make(chan model.ServerEvent)
 		if len(config.Discord.LogChannelID) > 0 {
-			if err := event.RegisterConsumer(events, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
+			if err := event.RegisterConsumer(events, []logparse.EventType{logparse.Say, logparse.SayTeam}); err != nil {
 				log.Warnf("Error registering discord log event reader")
 			}
 		}

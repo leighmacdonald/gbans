@@ -13,17 +13,17 @@ import (
 var (
 	// Each log event can have any number of channels associated with them
 	// Events are sent to all channels in a fan-out style
-	logEventReaders   map[logparse.MsgType][]chan model.ServerEvent
+	logEventReaders   map[logparse.EventType][]chan model.ServerEvent
 	logEventReadersMu *sync.RWMutex
 )
 
 func init() {
-	logEventReaders = map[logparse.MsgType][]chan model.ServerEvent{}
+	logEventReaders = map[logparse.EventType][]chan model.ServerEvent{}
 	logEventReadersMu = &sync.RWMutex{}
 }
 
 // RegisterConsumer will register a channel to receive new log events as they come in
-func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) error {
+func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.EventType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
 	for _, msgType := range msgTypes {
@@ -40,7 +40,7 @@ func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) err
 // Emit is used to send out events to and registered reader channels.
 func Emit(le model.ServerEvent) {
 	// Ensure we also send to Any handlers for all events.
-	for _, typ := range []logparse.MsgType{le.EventType, logparse.Any} {
+	for _, typ := range []logparse.EventType{le.EventType, logparse.Any} {
 		logEventReadersMu.RLock()
 		readers, ok := logEventReaders[typ]
 		logEventReadersMu.RUnlock()

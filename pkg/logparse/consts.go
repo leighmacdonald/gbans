@@ -7,74 +7,74 @@ import (
 	"strings"
 )
 
-// MsgType defines a known, parsable message type
-type MsgType int
+// EventType defines a known, parsable message type
+type EventType int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	// UnhandledMsg is used for messages we are ignoring
-	UnhandledMsg MsgType = 0
+	UnhandledMsg EventType = 0
 	// UnknownMsg is for any unexpected message formats
-	UnknownMsg MsgType = 1
+	UnknownMsg EventType = 1
 
 	// Live player actions
 
-	Say                 MsgType = 10
-	SayTeam             MsgType = 11
-	Killed              MsgType = 12
-	KillAssist          MsgType = 13
-	Suicide             MsgType = 14
-	ShotFired           MsgType = 15
-	ShotHit             MsgType = 16
-	Damage              MsgType = 17
-	Domination          MsgType = 18
-	Revenge             MsgType = 19
-	Pickup              MsgType = 20
-	EmptyUber           MsgType = 21
-	MedicDeath          MsgType = 22
-	MedicDeathEx        MsgType = 23
-	LostUberAdv         MsgType = 24
-	ChargeReady         MsgType = 25
-	ChargeDeployed      MsgType = 26
-	ChargeEnded         MsgType = 27
-	Healed              MsgType = 28
-	Extinguished        MsgType = 29
-	BuiltObject         MsgType = 30
-	CarryObject         MsgType = 31
-	KilledObject        MsgType = 32
-	DetonatedObject     MsgType = 33
-	DropObject          MsgType = 34
-	FirstHealAfterSpawn MsgType = 35
-	CaptureBlocked      MsgType = 36
-	PointCaptured       MsgType = 48
-	JoinedTeam          MsgType = 49
-	ChangeClass         MsgType = 50
-	SpawnedAs           MsgType = 51
+	Say                 EventType = 10
+	SayTeam             EventType = 11
+	Killed              EventType = 12
+	KillAssist          EventType = 13
+	Suicide             EventType = 14
+	ShotFired           EventType = 15
+	ShotHit             EventType = 16
+	Damage              EventType = 17
+	Domination          EventType = 18
+	Revenge             EventType = 19
+	Pickup              EventType = 20
+	EmptyUber           EventType = 21
+	MedicDeath          EventType = 22
+	MedicDeathEx        EventType = 23
+	LostUberAdv         EventType = 24
+	ChargeReady         EventType = 25
+	ChargeDeployed      EventType = 26
+	ChargeEnded         EventType = 27
+	Healed              EventType = 28
+	Extinguished        EventType = 29
+	BuiltObject         EventType = 30
+	CarryObject         EventType = 31
+	KilledObject        EventType = 32
+	DetonatedObject     EventType = 33
+	DropObject          EventType = 34
+	FirstHealAfterSpawn EventType = 35
+	CaptureBlocked      EventType = 36
+	PointCaptured       EventType = 48
+	JoinedTeam          EventType = 49
+	ChangeClass         EventType = 50
+	SpawnedAs           EventType = 51
 
 	// World events not attached to specific players
 
-	WRoundOvertime  MsgType = 100
-	WRoundStart     MsgType = 101
-	WRoundWin       MsgType = 102
-	WRoundLen       MsgType = 103
-	WTeamScore      MsgType = 104
-	WTeamFinalScore MsgType = 105
-	WGameOver       MsgType = 106
-	WPaused         MsgType = 107
-	WResumed        MsgType = 108
+	WRoundOvertime  EventType = 100
+	WRoundStart     EventType = 101
+	WRoundWin       EventType = 102
+	WRoundLen       EventType = 103
+	WTeamScore      EventType = 104
+	WTeamFinalScore EventType = 105
+	WGameOver       EventType = 106
+	WPaused         EventType = 107
+	WResumed        EventType = 108
 
 	// Metadata
 
-	LogStart     MsgType = 1000
-	LogStop      MsgType = 1001
-	CVAR         MsgType = 1002
-	RCON         MsgType = 1003
-	Connected    MsgType = 1004
-	Disconnected MsgType = 1005
-	Validated    MsgType = 1006
-	Entered      MsgType = 1007
+	LogStart     EventType = 1000
+	LogStop      EventType = 1001
+	CVAR         EventType = 1002
+	RCON         EventType = 1003
+	Connected    EventType = 1004
+	Disconnected EventType = 1005
+	Validated    EventType = 1006
+	Entered      EventType = 1007
 
-	Any MsgType = 10000
+	Any EventType = 10000
 )
 
 // Team represents a players team, or spectator state
