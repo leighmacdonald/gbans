@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -157,7 +158,9 @@ func logWriter(db store.StatStore) {
 	for {
 		select {
 		case evt := <-events:
-			logCache = append(logCache, evt)
+			if evt.EventType != logparse.IgnoredMsg {
+				logCache = append(logCache, evt)
+			}
 		case <-t.C:
 			if len(logCache) == 0 {
 				continue
@@ -271,6 +274,15 @@ func logReader(db store.Store) {
 		}
 		return nil
 	}
+	var f *os.File
+	if config.Debug.WriteUnhandledLogEvents {
+		var errOf error
+		f, errOf = os.Create("./unhandled_messages.log")
+		if errOf != nil {
+			log.Panicf("Failed to open debug message log: %v", errOf)
+		}
+		defer f.Close()
+	}
 	playerStateCache := newPlayerCache()
 	for {
 		select {
@@ -327,12 +339,6 @@ func logReader(db store.Store) {
 				delete(v.Values, "class")
 			} else if source != nil {
 				class = playerStateCache.getClass(source.SteamID)
-			}
-			extra := ""
-			extraValue, extraFound := v.Values["msg"]
-			if extraFound {
-				extra = extraValue.(string)
-				delete(v.Values, "msg")
 			}
 			var damage int64
 			dmgValue, dmgFound := v.Values["realdamage"]
@@ -399,7 +405,6 @@ func logReader(db store.Store) {
 				AssisterPOS: aspos,
 				Healing:     healing,
 				CreatedOn:   config.Now(),
-				Extra:       extra,
 				MetaData:    v.Values,
 			}
 			switch v.MsgType {
@@ -407,6 +412,11 @@ func logReader(db store.Store) {
 				playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
 			case logparse.JoinedTeam:
 				playerStateCache.setTeam(se.Source.SteamID, se.Team)
+			}
+			if v.MsgType == logparse.UnknownMsg {
+				if _, errWrite := f.WriteString(raw.Message + "\n"); errWrite != nil {
+					log.Errorf("Failed to write debug log: %v", errWrite)
+				}
 			}
 			event.Emit(se)
 		case <-ctx.Done():

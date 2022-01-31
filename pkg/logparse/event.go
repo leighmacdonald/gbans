@@ -29,6 +29,16 @@ type WPausedEvt EmptyEvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WResumedEvt EmptyEvt
 
+type WRoundSetupBeginEvt EmptyEvt
+
+type WMiniRoundSelectedEvt EmptyEvt
+
+type WMiniRoundStartEvt EmptyEvt
+
+type WMiniRoundWinEvt EmptyEvt
+
+type WMiniRoundLenEvt EmptyEvt
+
 // SourcePlayer represents the player who initiated the event
 type SourcePlayer struct {
 	Name string        `json:"name"`
@@ -85,8 +95,20 @@ type ChangeClassEvt struct {
 type SuicideEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Pos Pos `json:"attacker_position" mapstructure:"attacker_position"`
+	Pos    Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	Weapon Weapon `json:"weapon"`
 }
+
+type JarateAttackEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
+	APos   Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	VPos   Pos    `json:"victim_position" mapstructure:"victim_position"`
+}
+
+type MilkAttackEvt JarateAttackEvt
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type MedicDeathEvt struct {

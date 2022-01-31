@@ -49,7 +49,7 @@ func TestParse(t *testing.T) {
 		return v.Values
 	}
 	var value1 UnhandledMsgEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:23: asdf`, UnhandledMsg), &value1))
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:23: asdf`, IgnoredMsg), &value1))
 	require.Equal(t, UnhandledMsgEvt{}, value1)
 
 	var value2 LogStartEvt
@@ -63,7 +63,7 @@ func TestParse(t *testing.T) {
 	require.Equal(t, CVAREvt{CVAR: "sm_nextmap", Value: "pl_frontier_final"}, value3)
 
 	var value4 RCONEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:24: RCON from "23.239.22.163:42004": command "status"`, RCON), &value4))
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:24: rcon from "23.239.22.163:42004": command "status"`, RCON), &value4))
 	require.EqualValues(t, RCONEvt{Cmd: "status"}, value4)
 
 	var value5 EnteredEvt
@@ -83,10 +83,11 @@ func TestParse(t *testing.T) {
 	require.EqualValues(t, ChangeClassEvt{Class: Scout}, value7)
 
 	var value8 SuicideEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:04: "Dzefersons14<8><[U:1:1080653073]><Blue>" committed Suicide with "world" (attacker_position "-1189 2513 -423")`, Suicide), &value8))
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:04: "Dzefersons14<8><[U:1:1080653073]><Blue>" committed suicide with "world" (attacker_position "-1189 2513 -423")`, Suicide), &value8))
 	require.EqualValues(t, SuicideEvt{
 		SourcePlayer: SourcePlayer{Name: "Dzefersons14", PID: 8, SID: 0x110000140697511, Team: 2},
-		Pos:          Pos{X: -1189, Y: 2513, Z: -423}}, value8)
+		Pos:          Pos{X: -1189, Y: 2513, Z: -423},
+		Weapon:       World}, value8)
 
 	var value9 WRoundStartEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:11: World triggered "Round_Start"`, WRoundStart), &value9))
@@ -234,11 +235,11 @@ func TestParse(t *testing.T) {
 	require.EqualValues(t, WTeamFinalScoreEvt{Score: 2, Players: 3}, value31)
 
 	var value32 UnhandledMsgEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:42:13: Team "RED" triggered "Intermission_Win_Limit"`, UnhandledMsg), &value32))
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:42:13: Team "RED" triggered "Intermission_Win_Limit"`, IgnoredMsg), &value32))
 	require.EqualValues(t, UnhandledMsgEvt{}, value32)
 
 	var value33 UnhandledMsgEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:42:33: [META] Loaded 0 plugins (1 already loaded)`, UnhandledMsg), &value33))
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:42:33: [META] Loaded 0 plugins (1 already loaded)`, IgnoredMsg), &value33))
 	require.EqualValues(t, UnhandledMsgEvt{}, value33)
 
 	var value34 LogStopEvt
@@ -343,6 +344,57 @@ func TestParse(t *testing.T) {
 		VPos:         Pos{X: 663, Y: -899, Z: -165},
 		Weapon:       Scattergun,
 	}, value49)
+
+	var value50 SuicideEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 02:31:27: "DaDakka!<3602><[U:1:911555463]><Blue>" committed suicide with "world" (attacker_position "1537 7316 -268")`, Suicide), &value50))
+	require.EqualValues(t, SuicideEvt{
+		SourcePlayer: SourcePlayer{Name: "DaDakka!", PID: 3602, SID: steamid.SID3ToSID64("[U:1:911555463]"), Team: BLU},
+		Pos:          Pos{X: 1537, Y: 7316, Z: -268},
+		Weapon:       World,
+	}, value50)
+
+	var value51 JarateAttackEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:18: "Banfield<2796><[U:1:958890744]><Blue>" triggered "jarate_attack" against "Legs™<2818><[U:1:42871337]><Red>" with "tf_weapon_jar" (attacker_position "1881 -1521 264") (victim_position "1729 -301 457")`, JarateAttack), &value51))
+	require.EqualValues(t, JarateAttackEvt{
+		SourcePlayer: SourcePlayer{Name: "Banfield", PID: 2796, SID: steamid.SID3ToSID64("[U:1:958890744]"), Team: BLU},
+		TargetPlayer: TargetPlayer{Name2: "Legs™", PID2: 2818, SID2: steamid.SID3ToSID64("[U:1:42871337]"), Team2: RED},
+		Weapon:       JarBased,
+		APos:         Pos{X: 1881, Y: -1521, Z: 264},
+		VPos:         Pos{X: 1729, Y: -301, Z: 457},
+	}, value51)
+
+	var value52 WMiniRoundWinEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:30: World triggered "Mini_Round_Win" (winner "Blue") (round "round_b")`, WMiniRoundWin), &value52))
+	require.EqualValues(t, WMiniRoundWinEvt{}, value52)
+
+	var value53 WMiniRoundLenEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:30: World triggered "Mini_Round_Length" (seconds "340.62")`, WMiniRoundLen), &value53))
+	require.EqualValues(t, WMiniRoundLenEvt{}, value53)
+
+	var value54 WRoundSetupBeginEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:44: World triggered "Round_Setup_Begin"`, WRoundSetupBegin), &value54))
+	require.EqualValues(t, WRoundSetupBeginEvt{}, value54)
+
+	var value55 WMiniRoundSelectedEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:44: World triggered "Mini_Round_Selected" (round "Round_A")`, WMiniRoundSelected), &value55))
+	require.EqualValues(t, WMiniRoundSelectedEvt{}, value55)
+
+	var value56 WMiniRoundStartEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:44: World triggered "Mini_Round_Start"`, WMiniRoundStart), &value56))
+	require.EqualValues(t, WMiniRoundStartEvt{}, value56)
+
+	var value57 MilkAttackEvt
+	require.NoError(t, Unmarshal(pa(`L 01/31/2022 - 03:08:44: "✪lil vandal<2953><[U:1:178417727]><Blue>" triggered "milk_attack" against "Darth Jar Jar<2965><[U:1:209106507]><Red>" with "tf_weapon_jar" (attacker_position "-1040 -854 128") (victim_position "-1516 -382 128")`, MilkAttack), &value57))
+	require.EqualValues(t, MilkAttackEvt{
+		SourcePlayer: SourcePlayer{Name: "✪lil vandal", PID: 2953, SID: steamid.SID3ToSID64("[U:1:178417727]"), Team: BLU},
+		TargetPlayer: TargetPlayer{Name2: "Darth Jar Jar", PID2: 2965, SID2: steamid.SID3ToSID64("[U:1:209106507]"), Team2: RED},
+		Weapon:       JarBased,
+		APos:         Pos{X: -1040, Y: -854, Z: 128},
+		VPos:         Pos{X: -1516, Y: -382, Z: 128},
+	}, value57)
+	// L 01/31/2022 - 02:42:53: "Sir Lance Alot<2851><[U:1:838033385]><Blue>" triggered "jarate_attack" against "joe_nathan<2836><[U:1:80764671]><Red>" with "tf_weapon_jar" (attacker_position "-1836 1453 320") (victim_position "-1058 2205 128")
+	//L 01/31/2022 - 02:42:53: "mushroom taco<1663><[U:1:137288966]><Red>" triggered "domination" against "=[MEAT]=D3thw01F<1679><[U:1:11391667]><Blue>"
+	//L 01/31/2022 - 02:42:53: "FS Gambleputty<1301><[U:1:236391333]><Blue>" triggered "milk_attack" against "Uncle Majic the Hip Hop Magicia<1336><[U:1:147658575]><Red>" with "tf_weapon_jar" (attacker_position "-1688 -4913 -285") (victim_position "-1728 -4663 -291")
 
 }
 

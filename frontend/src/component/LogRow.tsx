@@ -1,12 +1,19 @@
-import { EventType, Person, Server, ServerEvent, Team } from '../api';
-import React from 'react';
+import {
+    eventName,
+    EventTypeByName,
+    Person,
+    Server,
+    ServerEvent,
+    Team
+} from '../api';
+import React, { useMemo } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import format from 'date-fns/format';
 import parseISO from 'date-fns/parseISO';
 import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
 
 export interface EventViewProps {
     event: ServerEvent;
@@ -15,11 +22,11 @@ export interface EventViewProps {
 export const EventView = ({ event }: EventViewProps) => {
     const e: JSX.Element[] = [];
     switch (event.event_type) {
-        case EventType.Say:
-            e.push(<Typography>{event.extra ?? ''}</Typography>);
+        case EventTypeByName.say:
+            e.push(<Typography>{event.meta_data['msg'] as string}</Typography>);
             break;
-        case EventType.SayTeam:
-            e.push(<Typography>{event.extra ?? ''}</Typography>);
+        case EventTypeByName.say_team:
+            e.push(<Typography>{event.meta_data['msg'] as string}</Typography>);
             break;
         default:
             if (event?.meta_data) {
@@ -45,7 +52,7 @@ export const EventView = ({ event }: EventViewProps) => {
 };
 
 export interface EventTypeLabelProps {
-    event_type: number;
+    readonly event_type: number;
 }
 
 export const EventTypeLabel = ({ event_type }: EventTypeLabelProps) => {
@@ -53,9 +60,10 @@ export const EventTypeLabel = ({ event_type }: EventTypeLabelProps) => {
         <Typography
             variant={'body1'}
             alignContent={'center'}
-            sx={{ width: '40px' }}
+            align={'center'}
+            sx={{ width: '100px' }}
         >
-            {event_type}
+            {eventName(event_type)}
         </Typography>
     );
 };
@@ -94,13 +102,14 @@ export const teamColour = (team: Team): string => {
 
 export const PersonaNameLabel = ({ source, team }: PersonaNameLabelProps) => {
     return (
-        <Typography
-            variant={'body1'}
-            alignContent={'center'}
-            sx={{ width: '200px', overflow: 'hidden', color: teamColour(team) }}
+        <Button
+            sx={{ color: teamColour(team) }}
+            size={'small'}
+            variant={'text'}
+            startIcon={<Avatar alt={source.personaname} src={source.avatar} />}
         >
             {source.personaname}
-        </Typography>
+        </Button>
     );
 };
 
@@ -118,7 +127,7 @@ export interface DateLabelProps {
 
 export const DateLabel = ({ date }: DateLabelProps) => {
     return (
-        <Typography variant={'subtitle1'} sx={{ width: '200px' }}>
+        <Typography variant={'subtitle1'} sx={{ width: 100 }}>
             {format(parseISO(date), 'dd/MM/yy hh:mm')}
         </Typography>
     );
@@ -130,28 +139,23 @@ export interface LogRowProps {
 
 export const LogRow = ({ event }: LogRowProps): JSX.Element => {
     return (
-        <Paper>
-            <Stack
-                direction={'row'}
-                spacing={1}
-                justifyContent="left"
-                alignItems="center"
-            >
-                <ServerLabel server={event.server} />
-                <DateLabel date={event.created_on} />
-                <EventTypeLabel event_type={event.event_type} />
-                {event.source?.steam_id && (
-                    <>
-                        <SteamIDLabel source={event.source} />
-                        <PersonaNameLabel
-                            source={event.source}
-                            team={event.team}
-                        />
-                    </>
-                )}
-                {<EventView event={event} />}
-            </Stack>
-        </Paper>
+        <Stack
+            direction={'row'}
+            spacing={2}
+            justifyContent="left"
+            alignItems="center"
+        >
+            <ServerLabel server={event.server} />
+            <DateLabel date={event.created_on} />
+            <EventTypeLabel event_type={event.event_type} />
+            {event.source?.steam_id && (
+                <>
+                    {/*<SteamIDLabel source={event.source} />*/}
+                    <PersonaNameLabel source={event.source} team={event.team} />
+                </>
+            )}
+            {<EventView event={event} />}
+        </Stack>
     );
 };
 
@@ -160,11 +164,13 @@ export interface LogRowsProps {
 }
 
 export const LogRows = ({ events }: LogRowsProps) => {
-    return (
-        <Stack>
-            {events.map((e) => (
-                <LogRow event={e} key={e.log_id} />
-            ))}
-        </Stack>
-    );
+    return useMemo(() => {
+        return (
+            <Stack>
+                {events.map((e) => (
+                    <LogRow event={e} key={e.log_id} />
+                ))}
+            </Stack>
+        );
+    }, [events]);
 };

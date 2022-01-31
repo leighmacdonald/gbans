@@ -33,7 +33,11 @@ func filterWorker(db store.Store, botSendMessageChan chan discordPayload) {
 	for {
 		select {
 		case evt := <-c:
-			matched, _ := ContainsFilteredWord(evt.Extra)
+			msg, found := evt.MetaData["msg"].(string)
+			if !found {
+				continue
+			}
+			matched, _ := ContainsFilteredWord(msg)
 			if matched {
 				addWarning(db, evt.Source.SteamID, warnLanguage, botSendMessageChan)
 			}

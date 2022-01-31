@@ -60,4 +60,7 @@ create table report_message
     updated_on        timestamptz           not null
 );
 
+-- Moved to in meta_data.msg
+alter table if exists server_log drop column if exists extra;
+
 commit;

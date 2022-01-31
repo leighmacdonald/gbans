@@ -45,10 +45,9 @@ export interface ServerEvent {
     attacker_pos?: Pos;
     victim_pos?: Pos;
     assister_pos?: Pos;
-    extra?: string;
     team: Team;
     created_on: string;
-    meta_data?: object;
+    meta_data: Record<string, unknown>;
 }
 
 // Used for setting filtering / query options for realtime log event streams
@@ -60,6 +59,9 @@ export interface LogQueryOpts {
     source_id?: string;
     target_id?: string;
     servers?: number[];
+    sent_after?: Date;
+    sent_before?: Date;
+    cidr?: string;
 }
 
 export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {

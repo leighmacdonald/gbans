@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
@@ -176,7 +175,6 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 		"COALESCE(ST_Y(l.assister_position::geometry), 0)",
 		"COALESCE(ST_Z(l.assister_position::geometry), 0)",
 		`l.item`,
-		`l.extra`,
 		`l.player_class`,
 		`l.player_team`,
 		`l.meta_data`,
@@ -200,6 +198,13 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	if len(opts.LogTypes) > 0 {
 		b = b.Where(sq.Eq{"l.event_type": opts.LogTypes})
 	}
+
+	if opts.SentBefore != nil {
+		b = b.Where(sq.Lt{"l.created_on": opts.SentBefore})
+	}
+	if opts.SentAfter != nil {
+		b = b.Where(sq.Gt{"l.created_on": opts.SentAfter})
+	}
 	if opts.OrderDesc {
 		b = b.OrderBy("l.created_on DESC")
 	} else {
@@ -209,7 +214,6 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 		b = b.Limit(opts.Limit)
 	}
 	q, a, err := b.ToSql()
-	log.Debugf(q)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +241,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 			&e.AttackerPOS.X, &e.AttackerPOS.Y, &e.AttackerPOS.Z,
 			&e.VictimPOS.X, &e.VictimPOS.Y, &e.VictimPOS.Z,
 			&e.AssisterPOS.X, &e.AssisterPOS.Y, &e.AssisterPOS.Z,
-			&e.Item, &e.Extra, &e.PlayerClass, &e.Team, &e.MetaData); err2 != nil {
+			&e.Item, &e.PlayerClass, &e.Team, &e.MetaData); err2 != nil {
 			return nil, Err(err2)
 		}
 		events = append(events, e)
@@ -251,19 +255,19 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 		stmtName = "insert-log"
 		query    = `INSERT INTO server_log (
 		    server_id, event_type, source_id, target_id, created_on, weapon, damage, 
-		    item, extra, player_class, attacker_position, victim_position, assister_position,
+		    item, player_class, attacker_position, victim_position, assister_position,
             player_team, healing, meta_data
 		) VALUES (
-		    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-		    CASE WHEN $11 != 0 AND $12 != 0 AND $13 != 0 THEN
-		    	ST_SetSRID(ST_MakePoint($11, $12, $13), 4326)
+		    $1, $2, $3, $4, $5, $6, $7, $8, $9, 
+		    CASE WHEN $10 != 0 AND $11 != 0 AND $12 != 0 THEN
+		    	ST_SetSRID(ST_MakePoint($10, $11, $12), 4326)
 		    END,
-		    CASE WHEN $14 != 0 AND $15 != 0 AND $16 != 0 THEN
-		    	ST_SetSRID(ST_MakePoint($14, $15, $16), 4326)
+		    CASE WHEN $13 != 0 AND $14 != 0 AND $15 != 0 THEN
+		    	ST_SetSRID(ST_MakePoint($13, $14, $13), 4326)
 			END,
-		    CASE WHEN $17 != 0 AND $18 != 0 AND $19 != 0 THEN
-		          ST_SetSRID(ST_MakePoint($17, $18, $19), 4326)
-			END, $20, $21, $22)`
+		    CASE WHEN $16 != 0 AND $17 != 0 AND $18 != 0 THEN
+		          ST_SetSRID(ST_MakePoint($16, $17, $18), 4326)
+			END, $19, $20, $21)`
 	)
 	tx, err := db.c.Begin(ctx)
 	if err != nil {
@@ -292,7 +296,7 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 
 		if _, re = tx.Exec(lCtx, stmtName, lg.Server.ServerID, lg.EventType,
 			source.Int64(), target.Int64(), lg.CreatedOn, lg.Weapon, lg.Damage,
-			lg.Item, lg.Extra, lg.PlayerClass,
+			lg.Item, lg.PlayerClass,
 			lg.AttackerPOS.Y, lg.AttackerPOS.X, lg.AttackerPOS.Z,
 			lg.VictimPOS.Y, lg.VictimPOS.X, lg.VictimPOS.Z,
 			lg.AssisterPOS.Y, lg.AssisterPOS.X, lg.AssisterPOS.Z,

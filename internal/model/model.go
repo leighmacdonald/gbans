@@ -500,8 +500,6 @@ type ServerEvent struct {
 	AttackerPOS logparse.Pos `json:"attacker_pos"`
 	VictimPOS   logparse.Pos `json:"victim_pos"`
 	AssisterPOS logparse.Pos `json:"assister_pos"`
-	// Extra contains any general event data. Most often used for say/say_team text
-	Extra string `json:"extra"`
 	// Team is the last known team the player was as tracked by the playerStateCache OR the team that
 	// a player switched to in a join_team event
 	Team      logparse.Team  `json:"team"`
@@ -556,13 +554,15 @@ func NewPlayerInfo() PlayerInfo {
 }
 
 type LogQueryOpts struct {
-	LogTypes  []logparse.EventType `json:"log_types"`
-	Limit     uint64               `json:"limit"`
-	OrderDesc bool                 `json:"order_desc"`
-	Query     string               `json:"query"`
-	SourceID  string               `json:"source_id"`
-	TargetID  string               `json:"target_id"`
-	Servers   []int                `json:"servers"`
+	LogTypes   []logparse.EventType `json:"log_types"`
+	Limit      uint64               `json:"limit"`
+	OrderDesc  bool                 `json:"order_desc"`
+	Query      string               `json:"query"`
+	SourceID   string               `json:"source_id"`
+	TargetID   string               `json:"target_id"`
+	Servers    []int                `json:"servers"`
+	SentBefore *time.Time           `json:"sent_before,omitempty"`
+	SentAfter  *time.Time           `json:"sent_after,omitempty"`
 }
 
 func (lqo *LogQueryOpts) ValidRecordType(t logparse.EventType) bool {

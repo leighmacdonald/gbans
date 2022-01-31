@@ -171,8 +171,9 @@ type logConfig struct {
 }
 
 type debugConfig struct {
-	UpdateSRCDSLogSecrets bool `mapstructure:"update_srcds_log_secrets"`
-	SkipOpenIDValidation  bool `mapstructure:"skip_open_id_validation"`
+	UpdateSRCDSLogSecrets   bool `mapstructure:"update_srcds_log_secrets"`
+	SkipOpenIDValidation    bool `mapstructure:"skip_open_id_validation"`
+	WriteUnhandledLogEvents bool `mapstructure:"write_unhandled_log_events"`
 }
 
 type netBans struct {
@@ -290,6 +291,7 @@ var defaultConfig = map[string]any{
 	"http.client_timeout":                    "10s",
 	"debug.update_srcds_log_secrets":         true,
 	"debug.skip_open_id_validation":          false,
+	"debug.write_unhandled_log_events":       false,
 	"filter.enabled":                         false,
 	"filter.is_warning":                      true,
 	"filter.ping_discord":                    false,

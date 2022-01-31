@@ -12,8 +12,8 @@ type EventType int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	// UnhandledMsg is used for messages we are ignoring
-	UnhandledMsg EventType = 0
+	// IgnoredMsg is used for messages we are ignoring
+	IgnoredMsg EventType = 0
 	// UnknownMsg is for any unexpected message formats
 	UnknownMsg EventType = 1
 
@@ -50,29 +50,39 @@ const (
 	JoinedTeam          EventType = 49
 	ChangeClass         EventType = 50
 	SpawnedAs           EventType = 51
-
+	JarateAttack        EventType = 52
+	MilkAttack          EventType = 53
 	// World events not attached to specific players
 
-	WRoundOvertime  EventType = 100
-	WRoundStart     EventType = 101
-	WRoundWin       EventType = 102
-	WRoundLen       EventType = 103
-	WTeamScore      EventType = 104
-	WTeamFinalScore EventType = 105
-	WGameOver       EventType = 106
-	WPaused         EventType = 107
-	WResumed        EventType = 108
+	WRoundOvertime     EventType = 100
+	WRoundStart        EventType = 101
+	WRoundWin          EventType = 102
+	WRoundLen          EventType = 103
+	WTeamScore         EventType = 104
+	WTeamFinalScore    EventType = 105
+	WGameOver          EventType = 106
+	WPaused            EventType = 107
+	WResumed           EventType = 108
+	WRoundSetupEnd     EventType = 109
+	WMiniRoundWin      EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
+	WMiniRoundLen      EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
+	WMiniRoundSelected EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
+	WMiniRoundStart    EventType = 113 // World triggered "Mini_Round_Start"
+	WRoundSetupBegin   EventType = 114 // World triggered "Round_Setup_Begin"
 
 	// Metadata
 
-	LogStart     EventType = 1000
-	LogStop      EventType = 1001
-	CVAR         EventType = 1002
-	RCON         EventType = 1003
-	Connected    EventType = 1004
-	Disconnected EventType = 1005
-	Validated    EventType = 1006
-	Entered      EventType = 1007
+	LogStart         EventType = 1000
+	LogStop          EventType = 1001
+	CVAR             EventType = 1002
+	RCON             EventType = 1003
+	Connected        EventType = 1004
+	Disconnected     EventType = 1005
+	Validated        EventType = 1006
+	Entered          EventType = 1007
+	MapLoad          EventType = 1008
+	ServerConfigExec EventType = 1009
+	SteamAuth        EventType = 1010
 
 	Any EventType = 10000
 )
@@ -311,6 +321,7 @@ const (
 	WrapAssassin
 	Wrench
 	Sapper
+	JarBased
 )
 
 func (w Weapon) String() string {
@@ -386,6 +397,7 @@ var weaponNames = map[Weapon]string{
 	IronBomber:            "iron_bomber",
 	IronCurtain:           "iron_curtain",
 	Jag:                   "wrench_jag",
+	JarBased:              "tf_weapon_jar",
 	Knife:                 "knife",
 	Kukri:                 "tribalkukri",
 	Kunai:                 "kunai",
@@ -465,6 +477,7 @@ var Weapons = map[PlayerClass][]Weapon{
 		ReserveShooter,
 		Telefrag,
 		World,
+		JarBased, // reflect?
 	},
 	Scout: {
 		Atomizer,

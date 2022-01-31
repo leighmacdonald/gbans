@@ -190,7 +190,7 @@ func (db *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint6
 				l.source_id, src.personaname, src.avatarfull, src.avatar,
 			    l.target_id, tar.personaname, tar.avatarfull, tar.avatar,
 				l.weapon, l.damage, l.attacker_position, l.victim_position, l.assister_position,
-				l.item, l.extra, l.player_class, l.player_team, l.meta_data, l.healing 
+				l.item, l.player_class, l.player_team, l.meta_data, l.healing 
 			FROM server_log l
 			LEFT JOIN server srv on srv.server_id = l.server_id
 			LEFT JOIN person src on src.steam_id = l.source_id
@@ -216,7 +216,7 @@ func (db *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint6
 			&e.Source.SteamID, &e.Source.PersonaName, &e.Source.AvatarFull, &e.Source.Avatar,
 			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar,
 			&e.Weapon, &e.Damage, &e.AttackerPOS, &e.VictimPOS, &e.AssisterPOS,
-			&e.Item, &e.Extra, &e.PlayerClass, &e.Team, &e.MetaData, &e.Healing); errScan != nil {
+			&e.Item, &e.PlayerClass, &e.Team, &e.MetaData, &e.Healing); errScan != nil {
 			return nil, Err(errScan)
 		}
 		localResults = append(localResults, e)

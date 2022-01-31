@@ -302,10 +302,30 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 			BanType:  model.Unknown,
 			Msg:      "",
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-		defer cancel()
+		// Check SteamID
+		steamID, errResolve := steamid.ResolveSID64(context.Background(), req.SteamID)
+		if errResolve != nil || !steamID.Valid() {
+			resp.Msg = "Invalid steam id"
+			responseErr(c, http.StatusBadRequest, resp)
+			return
+		}
+		var person model.Person
+		if errPerson := getOrCreateProfileBySteamID(c, db, steamID, req.IP.String(), &person); errPerson != nil {
+			responseErr(c, http.StatusInternalServerError, checkResponse{
+				BanType: model.Unknown,
+				Msg:     "Error updating profile state",
+			})
+			return
+		}
+		if errUpdateIp := db.AddPersonIP(c, &person, req.IP.String()); errUpdateIp != nil {
+			responseErr(c, http.StatusInternalServerError, checkResponse{
+				BanType: model.Unknown,
+				Msg:     "Error determining state",
+			})
+			return
+		}
 		// Check IP first
-		banNet, err := db.GetBanNet(ctx, req.IP)
+		banNet, err := db.GetBanNet(c, req.IP)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
@@ -319,13 +339,6 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
 			responseOK(c, http.StatusOK, resp)
 			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason}).Infof("Player dropped")
-			return
-		}
-		// Check SteamID
-		steamID, errResolve := steamid.ResolveSID64(context.Background(), req.SteamID)
-		if errResolve != nil || !steamID.Valid() {
-			resp.Msg = "Invalid steam id"
-			responseErr(c, http.StatusBadRequest, resp)
 			return
 		}
 		var asnRecord ip2location.ASNRecord
@@ -758,10 +771,10 @@ func (w *web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 		o := store.NewQueryFilter("")
 		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		bans, err := db.GetBans(cx, o)
-		if err != nil {
+		bans, errBans := db.GetBans(cx, o)
+		if errBans != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
-			log.Errorf("Failed to fetch bans")
+			log.Errorf("Failed to fetch bans: %v", errBans)
 			return
 		}
 		responseOK(c, http.StatusOK, bans)
@@ -774,6 +787,8 @@ func (w *web) onAPIPostServer() gin.HandlerFunc {
 	}
 }
 
+// onAPIEvents handles querying server log events
+// TODO web client should provide a last_log_id to filter to recent only
 func (w *web) onAPIEvents(db store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var q model.LogQueryOpts

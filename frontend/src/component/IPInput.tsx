@@ -47,6 +47,7 @@ export const IPInput = ({ id, label, onCIDRSuccess }: IPInputProps) => {
     return (
         <FormControl sx={{ m: 1, minWidth: 200 }}>
             <TextField
+                disabled
                 value={input}
                 error={error}
                 fullWidth

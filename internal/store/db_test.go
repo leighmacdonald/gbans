@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	defer tearDown(db)
-	tearDown(db)
+	tearDown(db) // Cleanup any existing tables in case of unclean shutdown
 	if errM := db.Migrate(MigrateUp); errM != nil {
 		log.Errorf("Failed to migrate db up: %v", errM)
 		os.Exit(2)
@@ -129,14 +129,8 @@ func TestReport(t *testing.T) {
 	require.NoError(t, testDb.SaveReportMedia(context.Background(), report.ReportId, &media1))
 	require.NoError(t, testDb.SaveReportMedia(context.Background(), report.ReportId, &media2))
 
-	msg1 := model.NewReportMessage(report.ReportId)
-	msg1.AuthorId = author.SteamID
-	msg1.Message = golib.RandomString(100)
-
-	msg2 := model.NewReportMessage(report.ReportId)
-	msg2.AuthorId = author.SteamID
-	msg2.Message = golib.RandomString(100)
-
+	msg1 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
+	msg2 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
 	require.NoError(t, testDb.SaveReportMessage(context.Background(), report.ReportId, &msg1))
 	require.NoError(t, testDb.SaveReportMessage(context.Background(), report.ReportId, &msg2))
 	var msgs []model.ReportMessage
@@ -273,14 +267,14 @@ func TestGetChatHistory(t *testing.T) {
 			Server:    &s,
 			Source:    &player,
 			EventType: logparse.Say,
-			Extra:     "test-1",
+			MetaData:  map[string]any{"msg": "test-1"},
 			CreatedOn: config.Now().Add(-1 * time.Second),
 		},
 		{
 			Server:    &s,
 			Source:    &player,
 			EventType: logparse.Say,
-			Extra:     "test-2",
+			MetaData:  map[string]any{"msg": "test-2"},
 			CreatedOn: config.Now(),
 		},
 	}
@@ -314,13 +308,13 @@ func TestFindLogEvents(t *testing.T) {
 			Server:    &s,
 			Source:    &s1,
 			EventType: logparse.Say,
-			Extra:     "test-1",
+			MetaData:  map[string]any{"msg": "test-1"},
 		},
 		{
 			Server:    &s,
 			Source:    &s1,
 			EventType: logparse.Say,
-			Extra:     "test-2",
+			MetaData:  map[string]any{"msg": "test-2"},
 		},
 		{
 			Server: &s,

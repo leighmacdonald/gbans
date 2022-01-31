@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { eventNames, EventType } from '../api';
+import { eventName, EventTypeByName } from '../api';
 import { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
@@ -14,8 +14,8 @@ export interface EventTypeSelectProps {
 
 export const EventTypeSelect = ({ setEventTypes }: EventTypeSelectProps) => {
     const [selectedEventTypes, setSelectedEventTypes] = useState<number[]>([]);
-    const opts: SelectOption[] = Object.values(EventType).map((v) => {
-        return { value: v, title: eventNames[v] };
+    const opts: SelectOption[] = Object.values(EventTypeByName).map((v) => {
+        return { value: v, title: eventName(v) };
     });
     const containsAll = (f: number[]): boolean => {
         return f.filter((f) => f == -1).length > 0;
@@ -36,7 +36,7 @@ export const EventTypeSelect = ({ setEventTypes }: EventTypeSelectProps) => {
         }
         setSelectedEventTypes(newValue);
         setEventTypes(newValue);
-        console.log(eventNames[1]);
+        console.log(eventName(1));
     };
 
     return (

@@ -102,7 +102,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.GET("/api/download/report/:report_media_id", w.onAPIGetReportMedia(db))
 	r.POST("/api/resolve_profile", w.onAPIGetResolveProfile(db))
 
-	// IsServer Auth Request
+	// Server Auth Request
 	serverAuth := r.Use(w.authMiddleWare(db))
 	serverAuth.POST("/api/ping_mod", w.onPostPingMod(db))
 	serverAuth.POST("/api/check", w.onPostServerCheck(db))
