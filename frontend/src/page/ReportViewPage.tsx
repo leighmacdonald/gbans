@@ -37,7 +37,7 @@ export const ReportViewPage = (): JSX.Element => {
     }, [report_id, setReport, id]);
 
     return (
-        <Grid container spacing={3} padding={3}>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={9}>
                 {report && <ReportComponent report={report.report} />}
             </Grid>

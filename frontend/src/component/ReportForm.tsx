@@ -19,15 +19,13 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import {
     apiCreateReport,
-    apiGetResolveProfile,
     BanReason,
     BanReasons,
-    Person,
+    PlayerProfile,
     UploadedFile
 } from '../api';
 import Typography from '@mui/material/Typography';
-import { debounce } from 'lodash-es';
-import Avatar from '@mui/material/Avatar';
+import { ProfileSelectionInput } from './ProfileSelectionInput';
 
 interface FormProps {
     uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
@@ -86,7 +84,7 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
                     <Fab
                         variant={'extended'}
                         size="small"
-                        color={'secondary'}
+                        color={'primary'}
                         aria-label="upload"
                         onClick={() => {
                             const input = document.getElementById('fileInput');
@@ -130,36 +128,20 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
 };
 
 export const ReportForm = (): JSX.Element => {
-    const [steamId, setSteamId] = useState<string>('');
     const [title, setTitle] = useState<string>('');
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
     const [description, setDescription] = useState<string>('');
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-    const [profile, setProfile] = useState<Person | null>();
-    const fn = async (id: string) => {
-        const result = await apiGetResolveProfile({ query: id });
-        if (result) {
-            setProfile(result);
-        } else {
-            setProfile(null);
-        }
-    };
-    // todo fix double call
-    const fetchProfile = useCallback(
-        debounce(() => {
-            fn(steamId);
-        }, 300),
-        [steamId]
-    );
+    const [profile, setProfile] = useState<PlayerProfile | null>();
 
     const submit = useCallback(async () => {
         await apiCreateReport({
-            steam_id: steamId,
+            steam_id: profile?.player.steam_id as string,
             title: title,
             description: description,
             media: uploadedFiles
         });
-    }, [steamId, title, description, uploadedFiles]);
+    }, [title, description, uploadedFiles]);
 
     const titleIsError = title.length < 10;
     return (
@@ -172,7 +154,7 @@ export const ReportForm = (): JSX.Element => {
                     error={titleIsError}
                     id="title"
                     label={'Title'}
-                    variant={'filled'}
+                    variant={'outlined'}
                     margin={'normal'}
                     value={title}
                     onChange={(v) => {
@@ -180,37 +162,19 @@ export const ReportForm = (): JSX.Element => {
                     }}
                 />
             </FormControl>
-
-            <FormControl fullWidth>
-                <TextField
-                    label="Steam Profile / Steam ID"
-                    id="report_subject"
-                    margin={'normal'}
-                    error={!profile?.steam_id}
-                    helperText={profile?.steam_id != '' ? '' : 'Invalid ID'}
-                    variant={'filled'}
-                    value={steamId}
-                    onChange={(v) => {
-                        setSteamId(v.target.value);
-                        fetchProfile();
-                    }}
-                />
-            </FormControl>
-            {profile && (
-                <Stack direction={'row'}>
-                    <Avatar src={profile.avatarfull} />
-                    <Typography variant={'h4'}>
-                        {profile.personaname}
-                    </Typography>
-                </Stack>
-            )}
+            <ProfileSelectionInput
+                fullWidth
+                onProfileSuccess={(profile1) => {
+                    setProfile(profile1);
+                }}
+            />
             <FormControl fullWidth margin={'normal'} variant={'filled'}>
                 <InputLabel id="select_ban_reason_label">Ban Reason</InputLabel>
                 <Select
                     labelId="select_ban_reason_label"
                     id="select_ban_reason"
                     value={reason}
-                    variant={'filled'}
+                    variant={'outlined'}
                     label={'Ban Reason'}
                     onChange={(v) => {
                         setReason(v.target.value as BanReason);
@@ -239,7 +203,7 @@ export const ReportForm = (): JSX.Element => {
                 label="Description"
                 id="report_description"
                 minRows={20}
-                variant={'filled'}
+                variant={'outlined'}
                 margin={'normal'}
                 multiline
                 fullWidth
@@ -253,9 +217,8 @@ export const ReportForm = (): JSX.Element => {
                 uploadedFiles={uploadedFiles}
             />
             <Button
-                fullWidth
                 variant={'contained'}
-                color={'primary'}
+                color={'success'}
                 onClick={submit}
                 endIcon={<SendIcon />}
             >

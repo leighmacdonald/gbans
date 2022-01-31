@@ -42,11 +42,11 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	}
 	staticPath := config.HTTP.StaticPath
 	if staticPath == "" {
-		staticPath = "internal/web/dist"
+		staticPath = "./dist"
 	}
 	ap, err := filepath.Abs(staticPath)
 	if err != nil {
-		log.Fatalf("Invalid static path")
+		log.Fatalf("Invalid static path: %v", err)
 	}
 	// Don't use session for static assets
 	// Note that we only use embedded assets for !release modes
@@ -68,10 +68,10 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
 	for _, rt := range jsRoutes {
 		r.GET(rt, func(c *gin.Context) {
-			idx, err := os.ReadFile(idxPath)
-			if err != nil {
+			idx, errRead := os.ReadFile(idxPath)
+			if errRead != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Errorf("Failed to load index.html")
+				log.Errorf("Failed to load index.html from %s", idxPath)
 				return
 			}
 			c.Data(200, "text/html", idx)

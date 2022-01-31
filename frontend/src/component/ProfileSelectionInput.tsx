@@ -2,14 +2,14 @@ import TextField from '@mui/material/TextField';
 import * as React from 'react';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { log } from '../util/errors';
-import { useState } from 'react';
-import Stack from '@mui/material/Stack';
+import { ChangeEvent, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
-import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+import { useTimer } from 'react-timer-hook';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 export interface ProfileSelectionInputProps {
-    renderFooter: boolean;
     id?: string;
     label?: string;
     initialValue?: string;
@@ -22,12 +22,19 @@ export const ProfileSelectionInput = ({
     id,
     initialValue,
     label,
-    fullWidth,
-    renderFooter
+    fullWidth
 }: ProfileSelectionInputProps) => {
+    const rate = 1;
+    const [loading, setLoading] = useState<boolean>(false);
     const [input, setInput] = useState<string>(initialValue ?? '');
     const [lProfile, setLProfile] = useState<PlayerProfile>();
-
+    const { restart, pause } = useTimer({
+        expiryTimestamp: new Date(),
+        autoStart: true,
+        onExpire: async () => {
+            await loadProfile();
+        }
+    });
     const loadProfile = async () => {
         try {
             const v = await apiGetProfile(input);
@@ -37,13 +44,23 @@ export const ProfileSelectionInput = ({
             log(e);
             setLProfile(undefined);
         }
+        setLoading(false);
     };
 
-    const onChangeInput = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const onChangeInput = (evt: ChangeEvent<HTMLInputElement>) => {
         const { value: nextValue } = evt.target;
         setInput(nextValue);
-        loadProfile();
+        if (nextValue == '') {
+            setLoading(false);
+            pause();
+            return;
+        }
+        setLoading(true);
+        const time = new Date();
+        time.setSeconds(time.getSeconds() + rate);
+        restart(time);
     };
+
     const isError =
         input.length > 0 && (!lProfile || !lProfile?.player.steam_id);
     return (
@@ -59,38 +76,23 @@ export const ProfileSelectionInput = ({
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            <Avatar
-                                src={lProfile?.player.avatar}
-                                variant={'square'}
-                            />
+                            {isError ? (
+                                <ErrorOutlineIcon
+                                    color={'error'}
+                                    sx={{ width: 40 }}
+                                />
+                            ) : loading ? (
+                                <HourglassBottomIcon sx={{ width: 40 }} />
+                            ) : (
+                                <Avatar
+                                    src={lProfile?.player.avatar}
+                                    variant={'square'}
+                                />
+                            )}
                         </InputAdornment>
                     )
                 }}
             />
-            {renderFooter && (
-                <Stack
-                    spacing={3}
-                    direction={'row'}
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    {lProfile?.player.steam_id ? (
-                        <Avatar
-                            variant={'square'}
-                            alt="Avatar"
-                            src={lProfile?.player.avatarfull}
-                            sx={{ width: 56, height: 56 }}
-                        />
-                    ) : (
-                        <Typography
-                            variant={'subtitle1'}
-                            alignContent={'center'}
-                        >
-                            Invalid Steam Profile
-                        </Typography>
-                    )}
-                </Stack>
-            )}
         </>
     );
 };

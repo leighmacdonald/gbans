@@ -83,7 +83,6 @@ export const AdminServerLog = (): JSX.Element => {
                             paddingTop={3}
                         >
                             <ProfileSelectionInput
-                                renderFooter={false}
                                 fullWidth={true}
                                 onProfileSuccess={setPlayerProfile}
                             />

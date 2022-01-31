@@ -141,7 +141,7 @@ export const ReportComponent = ({
                 <Box padding={2}>
                     <Typography variant={'h2'}>{report?.title}</Typography>
                 </Box>
-                <Paper elevation={1} sx={{ width: '100%' }}>
+                <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
                     <Box
                         sx={{
                             borderBottom: 1,
@@ -200,7 +200,7 @@ export const ReportComponent = ({
                         Connection history
                     </TabPanel>
                 </Paper>
-                <Stack padding={2} spacing={2}>
+                <Stack spacing={2} paddingTop={3}>
                     {messages &&
                         messages.map((m) => (
                             <UserMessageView

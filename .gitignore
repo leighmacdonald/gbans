@@ -42,3 +42,4 @@ node_modules
 depots
 sm
 .env
+/unhandled_messages.log

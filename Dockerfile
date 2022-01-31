@@ -23,7 +23,7 @@ EXPOSE 6006
 RUN apk add dumb-init
 WORKDIR /app
 VOLUME ["/app/.cache"]
-COPY --from=frontend /build/dist .
+COPY --from=frontend /build/dist ./dist/
 COPY --from=build /build/build/linux64/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]

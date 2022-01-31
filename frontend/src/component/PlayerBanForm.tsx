@@ -136,7 +136,6 @@ export const PlayerBanForm = ({
         <Stack spacing={3} padding={3}>
             <ProfileSelectionInput
                 fullWidth
-                renderFooter
                 onProfileSuccess={(p) => {
                     setProfile(p);
                     onProfileChanged && onProfileChanged(p);
