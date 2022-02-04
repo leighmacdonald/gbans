@@ -33,27 +33,27 @@ func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
 	const baseURL = "https://api.steampowered.com/ISteamUser" +
 		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
-	req, err := http.NewRequestWithContext(context.Background(), "GET", u, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create new request")
+	req, errReq := http.NewRequestWithContext(context.Background(), "GET", u, nil)
+	if errReq != nil {
+		return nil, errors.Wrap(errReq, "Failed to create new request")
 	}
 	c := &http.Client{Timeout: time.Second * 5}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to fetch friends list")
+	resp, errDo := c.Do(req)
+	if errDo != nil {
+		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
 	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to read response body")
+	body, errRead := ioutil.ReadAll(resp.Body)
+	if errRead != nil {
+		return nil, errors.Wrap(errRead, "Failed to read response body")
 	}
 	var flr getFriendListResponse
-	if err := json.Unmarshal(b, &flr); err != nil {
-		return nil, errors.Wrap(err, "Failed to decode response body")
+	if errUnmarshal := json.Unmarshal(body, &flr); errUnmarshal != nil {
+		return nil, errors.Wrap(errUnmarshal, "Failed to decode response body")
 	}
 	var fl steamid.Collection
 	for _, friend := range flr.FriendsList.Friends {
-		sid, err2 := steamid.SID64FromString(friend.Steamid)
-		if err2 == nil {
+		sid, errSid := steamid.SID64FromString(friend.Steamid)
+		if errSid == nil {
 			fl = append(fl, sid)
 		}
 	}

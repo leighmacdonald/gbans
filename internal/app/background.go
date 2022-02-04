@@ -139,7 +139,7 @@ func serverStateUpdater(db store.ServerStore) {
 					}
 				}(&ss)
 				iwg.Wait()
-				ss.LastUpdate = time.Now()
+				ss.LastUpdate = config.Now()
 				results <- ss
 			}(srv)
 		}
@@ -205,7 +205,7 @@ func mapChanger(db store.ServerStore, timeout time.Duration) {
 			for serverId, state := range stateCopy {
 				act, found := activity[serverId]
 				if !found || len(state.Status.Players) > 0 {
-					activity[serverId] = &at{time.Now(), false}
+					activity[serverId] = &at{config.Now(), false}
 					continue
 				}
 				if !act.triggered && time.Since(act.lastActive) > timeout {

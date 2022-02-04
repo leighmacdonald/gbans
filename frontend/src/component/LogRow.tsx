@@ -3,8 +3,7 @@ import {
     EventTypeByName,
     Person,
     Server,
-    ServerEvent,
-    Team
+    ServerEvent
 } from '../api';
 import React, { useMemo } from 'react';
 import Stack from '@mui/material/Stack';
@@ -13,7 +12,10 @@ import Typography from '@mui/material/Typography';
 import format from 'date-fns/format';
 import parseISO from 'date-fns/parseISO';
 import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
+import { PlayerClassImg } from './PlayerClassImg';
+import { ProfileButton } from './ProfileButton';
+import { useServerLogQueryCtx } from '../contexts/LogQueryCtx';
+import Box from '@mui/material/Box';
 
 export interface EventViewProps {
     event: ServerEvent;
@@ -21,29 +23,59 @@ export interface EventViewProps {
 
 export const EventView = ({ event }: EventViewProps) => {
     const e: JSX.Element[] = [];
+    if (event?.target?.steam_id && event.target.personaname != '') {
+        e.push(
+            <ProfileButton
+                hideLabel
+                source={event.target}
+                team={event.team}
+                setFilter={() => {}}
+            />
+        );
+    }
     switch (event.event_type) {
+        case EventTypeByName.damage:
+            e.push(
+                <Typography variant={'subtitle1'} color={'red'}>
+                    -{event.damage}
+                </Typography>
+            );
+            break;
+        case EventTypeByName.healed:
+            e.push(
+                <Typography variant={'subtitle1'} color={'green'}>
+                    +{event.healing}
+                </Typography>
+            );
+            break;
+        case EventTypeByName.change_class:
+            e.push(<PlayerClassImg cls={event.player_class} />);
+            break;
+        case EventTypeByName.spawned_as:
+            e.push(<PlayerClassImg cls={event.player_class} />);
+            break;
         case EventTypeByName.say:
             e.push(<Typography>{event.meta_data['msg'] as string}</Typography>);
             break;
         case EventTypeByName.say_team:
             e.push(<Typography>{event.meta_data['msg'] as string}</Typography>);
             break;
-        default:
-            if (event?.meta_data) {
-                Object.entries(event?.meta_data).forEach((k) => {
-                    const v = Object.call(event?.meta_data, k) as string[];
-                    e.push(
-                        <Chip
-                            key={v[0]}
-                            //avatar={<Avatar alt="Natacha" src="/static/images/avatar/1.jpg" />}
-                            label={`${v[0]}: ${v[1]}`}
-                            variant={'filled'}
-                        />
-                    );
-                });
-            }
-            break;
     }
+
+    if (event?.meta_data) {
+        Object.entries(event?.meta_data).forEach((k) => {
+            const v = Object.call(event?.meta_data, k) as string[];
+            e.push(
+                <Chip
+                    key={v[0]}
+                    //avatar={<Avatar alt="Natacha" src="/static/images/avatar/1.jpg" />}
+                    label={`${v[0]}: ${v[1]}`}
+                    variant={'filled'}
+                />
+            );
+        });
+    }
+
     return (
         <Stack direction={'row'} spacing={1}>
             {e}
@@ -84,41 +116,21 @@ export const SteamIDLabel = ({ source }: SteamIDLabelProps) => {
     );
 };
 
-export interface PersonaNameLabelProps {
-    source: Person;
-    team: Team;
-}
-
-export const teamColour = (team: Team): string => {
-    switch (team) {
-        case Team.BLU:
-            return '#99C2D8';
-        case Team.RED:
-            return '#FB524F';
-        default:
-            return '#b98e64';
-    }
-};
-
-export const PersonaNameLabel = ({ source, team }: PersonaNameLabelProps) => {
-    return (
-        <Button
-            sx={{ color: teamColour(team) }}
-            size={'small'}
-            variant={'text'}
-            startIcon={<Avatar alt={source.personaname} src={source.avatar} />}
-        >
-            {source.personaname}
-        </Button>
-    );
-};
-
 export interface ServerLabelProps {
     server: Server;
 }
 
 export const ServerLabel = ({ server }: ServerLabelProps) => {
-    return <Button>{server.server_name}</Button>;
+    const { setSelectedServerIDs } = useServerLogQueryCtx();
+    return (
+        <Button
+            onClick={() => {
+                setSelectedServerIDs([server.server_id]);
+            }}
+        >
+            {server.server_name}
+        </Button>
+    );
 };
 
 export interface DateLabelProps {
@@ -138,6 +150,7 @@ export interface LogRowProps {
 }
 
 export const LogRow = ({ event }: LogRowProps): JSX.Element => {
+    const { setSteamID } = useServerLogQueryCtx();
     return (
         <Stack
             direction={'row'}
@@ -148,12 +161,18 @@ export const LogRow = ({ event }: LogRowProps): JSX.Element => {
             <ServerLabel server={event.server} />
             <DateLabel date={event.created_on} />
             <EventTypeLabel event_type={event.event_type} />
-            {event.source?.steam_id && (
-                <>
+            {(event.source?.steam_id && event.source?.personaname != '' && (
+                <Box sx={{ minWidth: 200 }}>
                     {/*<SteamIDLabel source={event.source} />*/}
-                    <PersonaNameLabel source={event.source} team={event.team} />
-                </>
-            )}
+                    <ProfileButton
+                        source={event.source}
+                        team={event.team}
+                        setFilter={() => {
+                            setSteamID(event.source?.steam_id ?? '');
+                        }}
+                    />
+                </Box>
+            )) || <Box sx={{ minWidth: 200 }} />}
             {<EventView event={event} />}
         </Stack>
     );

@@ -127,5 +127,5 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 
 	// Admin access
 	modAdmin := r.Use(authMiddleware(db, model.PAdmin))
-	modAdmin.POST("/api/server", w.onAPIPostServer())
+	modAdmin.POST("/api/server", w.onAPIPostServer(db))
 }

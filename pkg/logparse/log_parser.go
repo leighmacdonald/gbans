@@ -6,6 +6,7 @@ package logparse
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
@@ -27,8 +28,8 @@ var (
 	// Date stuff
 	d = `^L\s(?P<date>.+?)\s+-\s+(?P<time>.+?):\s+`
 	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>"
-	rxPlayerStr = `"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"`
-	//rxPlayer    = regexp.MustCompile(`(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator)?)>`)
+	rxPlayerStr = `"?(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"?`
+	rxPlayer    = regexp.MustCompile(rxPlayerStr)
 	// Most player events have the same common prefix
 	dp       = d + rxPlayerStr + `\s+`
 	keyPairs = `\s+(?P<keypairs>.+?)$`
@@ -330,7 +331,7 @@ func parseDateTime(dateStr, timeStr string) time.Time {
 	t, err := time.Parse("01/02/2006 15:04:05", fDateStr)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to parse date: %s", fDateStr)
-		return time.Now()
+		return config.Now()
 	}
 	return t
 }
@@ -344,6 +345,34 @@ func parseKVs(s string, out map[string]any) bool {
 		out[m[mv][1]] = m[mv][2]
 	}
 	return true
+}
+
+func processKV(m map[string]any) map[string]any {
+	out := map[string]any{}
+	for k, v := range m {
+		switch k {
+		case "objectowner":
+			ooKV, ok := reSubMatchMap(rxPlayer, v.(string))
+			if ok {
+				// TODO Make this less static to support >2 targets for events like capping points?
+				for key, val := range ooKV {
+					out[key+"2"] = val
+				}
+			}
+		case "address":
+			// Split out client port for easier queries
+			pcs := strings.Split(v.(string), ":")
+			if len(pcs) != 2 {
+				out[k] = v
+				continue
+			}
+			out["address"] = pcs[0]
+			out["port"] = pcs[1]
+		default:
+			out[k] = v
+		}
+	}
+	return out
 }
 
 // Results hold the  results of parsing a log line
@@ -365,7 +394,7 @@ func Parse(l string) Results {
 			}
 			delete(m, "keypairs")
 			delete(m, "")
-			return Results{rx.Type, m}
+			return Results{rx.Type, processKV(m)}
 		}
 	}
 	m, found := reSubMatchMap(rxUnhandled, l)
@@ -461,7 +490,7 @@ func decodeWeapon() mapstructure.DecodeHookFunc {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		w := WeaponFromString(d.(string))
+		w := ParseWeapon(d.(string))
 		if w != UnknownWeapon {
 			return w, nil
 		}

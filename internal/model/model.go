@@ -310,7 +310,7 @@ type Server struct {
 	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password   string              `db:"password" json:"-"`
+	Password   string              `db:"password" json:"password"`
 	IsEnabled  bool                `json:"is_enabled"`
 	Deleted    bool                `json:"deleted"`
 	Region     string              `json:"region"`
@@ -363,7 +363,7 @@ func NewServer(name string, address string, port int) Server {
 		Port:           port,
 		RCON:           golib.RandomString(10),
 		ReservedSlots:  0,
-		Password:       golib.RandomString(10),
+		Password:       golib.RandomString(20),
 		DefaultMap:     "",
 		IsEnabled:      true,
 		TokenCreatedOn: time.Unix(0, 0),
@@ -387,19 +387,20 @@ type ServerState struct {
 }
 
 type Person struct {
-	SteamID steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	// Name             string        `db:"name" json:"name"`
-	CreatedOn        time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn        time.Time `db:"updated_on" json:"updated_on"`
-	PermissionLevel  Privilege `db:"permission_level" json:"permission_level"`
-	IsNew            bool      `db:"-" json:"-"`
-	DiscordID        string    `db:"discord_id" json:"discord_id"`
-	IPAddr           net.IP    `db:"ip_addr" json:"-"`
-	CommunityBanned  bool
-	VACBans          int
-	GameBans         int
-	EconomyBan       string
-	DaysSinceLastBan int
+	// TODO merge use of steamid & steam_id
+	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	CreatedOn        time.Time     `json:"created_on"`
+	UpdatedOn        time.Time     `json:"updated_on"`
+	PermissionLevel  Privilege     `json:"permission_level"`
+	IsNew            bool          `json:"-"`
+	DiscordID        string        `json:"discord_id"`
+	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned  bool          `json:"community_banned"`
+	VACBans          int           `json:"vac_bans"`
+	GameBans         int           `json:"game_bans"`
+	EconomyBan       string        `json:"economy_ban"`
+	DaysSinceLastBan int           `json:"days_since_last_ban"`
+	UpdatedOnSteam   time.Time     `json:"updated_on_steam"`
 	*steamweb.PlayerSummary
 }
 
@@ -488,7 +489,7 @@ type ServerEvent struct {
 	Target *Person `json:"target"`
 	// PlayerClass is the last known class the player was as tracked by the playerStateCache OR the class that
 	// a player switch to in the case of a spawned_as event
-	PlayerClass logparse.PlayerClass `json:"class"`
+	PlayerClass logparse.PlayerClass `json:"player_class"`
 	// Weapon is the weapon used to perform certain events
 	Weapon logparse.Weapon `json:"weapon"`
 	// Damage is how much (real) damage or in the case of medi-guns, healing
@@ -505,6 +506,17 @@ type ServerEvent struct {
 	Team      logparse.Team  `json:"team"`
 	CreatedOn time.Time      `json:"created_on"`
 	MetaData  map[string]any `json:"meta_data"`
+}
+
+func NewServerEvent() ServerEvent {
+	return ServerEvent{
+		Server:      &Server{},
+		Source:      &Person{PlayerSummary: &steamweb.PlayerSummary{}},
+		Target:      &Person{PlayerSummary: &steamweb.PlayerSummary{}},
+		AssisterPOS: logparse.Pos{},
+		AttackerPOS: logparse.Pos{},
+		VictimPOS:   logparse.Pos{},
+	}
 }
 
 type Filter struct {
@@ -561,6 +573,7 @@ type LogQueryOpts struct {
 	SourceID   string               `json:"source_id"`
 	TargetID   string               `json:"target_id"`
 	Servers    []int                `json:"servers"`
+	Network    string               `json:"network"`
 	SentBefore *time.Time           `json:"sent_before,omitempty"`
 	SentAfter  *time.Time           `json:"sent_after,omitempty"`
 }

@@ -5,10 +5,9 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
+	net2 "net"
 )
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
@@ -21,7 +20,7 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
 		ToSql()
 	if e != nil {
-		return e
+		return Err(e)
 	}
 	if err := db.c.QueryRow(ctx, q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
@@ -184,6 +183,17 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 		LeftJoin(`person source on source.steam_id = l.source_id`).
 		LeftJoin(`person target on target.steam_id = l.target_id`)
 
+	if opts.Network != "" {
+		_, network, errNet := net2.ParseCIDR(opts.Network)
+		if errNet != nil {
+			return nil, Err(errNet)
+		}
+		idsByNet, errIdByNet := db.GetSteamIDsAtIP(ctx, network)
+		if errIdByNet != nil {
+			return nil, Err(errIdByNet)
+		}
+		b = b.Where(sq.Eq{"l.source_id": idsByNet})
+	}
 	s1, e1 := steamid.StringToSID64(opts.SourceID)
 	if opts.SourceID != "" && e1 == nil && s1.Valid() {
 		b = b.Where(sq.Eq{"l.source_id": s1.Int64()})
@@ -224,14 +234,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	defer rows.Close()
 	var events []model.ServerEvent
 	for rows.Next() {
-		e := model.ServerEvent{
-			Server:      &model.Server{},
-			Source:      &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
-			Target:      &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
-			AssisterPOS: logparse.Pos{},
-			AttackerPOS: logparse.Pos{},
-			VictimPOS:   logparse.Pos{},
-		}
+		e := model.NewServerEvent()
 		if err2 := rows.Scan(
 			&e.LogID, &e.Server.ServerID, &e.EventType, &e.CreatedOn,
 			&e.Server.ServerName,

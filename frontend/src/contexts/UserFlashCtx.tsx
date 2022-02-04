@@ -7,9 +7,7 @@ export type CurrentFlashes = {
 };
 export const UserFlashCtx = createContext<CurrentFlashes>({
     flashes: [],
-    setFlashes: (_) => {
-        console.log('set flash undefined');
-    }
+    setFlashes: (_) => {}
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

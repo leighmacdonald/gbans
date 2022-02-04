@@ -31,6 +31,14 @@ export interface Person {
     locstatecode: string;
     loccityid: number;
 
+    // BanStates
+    community_banned: boolean;
+    vac_bans: number;
+    game_bans: number;
+    economy_ban: boolean;
+    days_since_last_ban: number;
+    updated_on_steam: Date;
+
     // Custom attributes
     steam_id: string;
     ip_addr: string;

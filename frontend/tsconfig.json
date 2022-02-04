@@ -18,10 +18,9 @@
       "dom.iterable",
       "esnext"
     ],
-    //    "typeRoots": [
-    //      "src/types",
-    //      "./node_modules/react-leaflet/types"
-    //    ],
+      "typeRoots": [
+        "src/types",
+      ],
     "types": [
       "node",
       "jest"

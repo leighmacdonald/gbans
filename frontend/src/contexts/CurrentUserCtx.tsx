@@ -24,7 +24,13 @@ export const GuestProfile: PlayerProfile = {
         steam_id: '',
         steamid: '',
         timecreated: 0,
-        updated_on: new Date()
+        updated_on: new Date(),
+        vac_bans: 0,
+        community_banned: false,
+        days_since_last_ban: 0,
+        economy_ban: false,
+        game_bans: 0,
+        updated_on_steam: new Date()
     },
     friends: []
 };

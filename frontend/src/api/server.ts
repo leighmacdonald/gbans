@@ -9,6 +9,7 @@ export interface Server {
     address: string;
     port: number;
     password_protected: boolean;
+    password: string;
     vac: boolean;
     region: string;
     cc: string;
@@ -61,7 +62,7 @@ export interface LogQueryOpts {
     servers?: number[];
     sent_after?: Date;
     sent_before?: Date;
-    cidr?: string;
+    network?: string;
 }
 
 export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
@@ -76,6 +77,23 @@ export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
     );
 };
 
-export const apiGetServers = async (): Promise<Server[]> => {
+export const apiGetServers = async () => {
     return await apiCall<Server[]>(`/api/servers`, 'GET');
+};
+
+export interface CreateServerOpts {
+    name_short: string;
+    host: string;
+    port: number;
+    rcon: string;
+    reserved_slots: number;
+    region: string;
+    cc: string;
+    lat: number;
+    lon: number;
+    default_map: string;
+}
+
+export const apiCreateServer = async (opts: CreateServerOpts) => {
+    return await apiCall<Server, CreateServerOpts>(`/api/server`, 'POST', opts);
 };

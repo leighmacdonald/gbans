@@ -2,11 +2,14 @@ package store
 
 import (
 	"context"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
@@ -195,7 +198,7 @@ func (db *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location
 }
 
 func (db *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
-	t0 := time.Now()
+	t0 := config.Now()
 	if err := db.truncateTable(ctx, tableNetASN); err != nil {
 		return err
 	}
@@ -224,7 +227,7 @@ func (db *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord)
 }
 
 func (db *pgStore) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
-	t0 := time.Now()
+	t0 := config.Now()
 	if err := db.truncateTable(ctx, tableNetLocation); err != nil {
 		return err
 	}
@@ -253,7 +256,7 @@ func (db *pgStore) loadLocation(ctx context.Context, records []ip2location.Locat
 }
 
 func (db *pgStore) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
-	t0 := time.Now()
+	t0 := config.Now()
 	if err := db.truncateTable(ctx, tableNetProxy); err != nil {
 		return err
 	}
@@ -345,4 +348,29 @@ func (db *pgStore) DropBanASN(ctx context.Context, ban *model.BanASN) error {
 	const q = `DELETE FROM ban_asn WHERE ban_asn_id = $1`
 	_, err := db.c.Exec(ctx, q, ban.BanASNId)
 	return Err(err)
+}
+
+func (db *pgStore) GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.Collection, error) {
+	const q = `
+		SELECT DISTINCT source_id
+		FROM server_log
+		WHERE event_type = 1004 AND (meta_data->>'address')::inet <<= inet '%s';
+`
+	if ip == nil {
+		return nil, errors.New("Invalid address")
+	}
+	rows, errRows := db.c.Query(ctx, fmt.Sprintf(q, ip.String()))
+	if errRows != nil {
+		return nil, Err(errRows)
+	}
+	defer rows.Close()
+	var ids steamid.Collection
+	for rows.Next() {
+		var sid steamid.SID64
+		if errScan := rows.Scan(&sid); errScan != nil {
+			return nil, Err(errScan)
+		}
+		ids = append(ids, sid)
+	}
+	return ids, nil
 }

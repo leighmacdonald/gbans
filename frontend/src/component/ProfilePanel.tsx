@@ -1,10 +1,5 @@
 import AppBar from '@mui/material/AppBar';
-import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
-import List from '@mui/material/List';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
@@ -15,6 +10,8 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { PlayerProfile } from '../api';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import { Nullable } from '../util/types';
+import { FriendList } from './FriendList';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -40,7 +37,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export interface ProfilePanelProps {
-    profile?: PlayerProfile;
+    profile: Nullable<PlayerProfile>;
 }
 
 export const a11yProps = (index: number | string): Record<string, string> => {
@@ -111,22 +108,9 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                         </Stack>
                     </TabPanel>
                     <TabPanel value={value} index="two">
-                        <List dense={false}>
-                            {args.profile.friends?.map((p) => (
-                                <ListItemButton key={p.steamid}>
-                                    <ListItemAvatar>
-                                        <Avatar
-                                            alt={'Profile Picture'}
-                                            src={p.avatar}
-                                        />
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={p.personaname}
-                                        secondary={p.steamid}
-                                    />
-                                </ListItemButton>
-                            ))}
-                        </List>
+                        <Paper elevation={1}>
+                            <FriendList friends={args.profile?.friends} />
+                        </Paper>
                     </TabPanel>
                 </Box>
             )}

@@ -133,6 +133,7 @@ export const ReportForm = (): JSX.Element => {
     const [description, setDescription] = useState<string>('');
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     const [profile, setProfile] = useState<PlayerProfile | null>();
+    const [steamID, setSteamID] = useState<string>('');
 
     const submit = useCallback(async () => {
         await apiCreateReport({
@@ -164,6 +165,8 @@ export const ReportForm = (): JSX.Element => {
             </FormControl>
             <ProfileSelectionInput
                 fullWidth
+                input={steamID}
+                setInput={setSteamID}
                 onProfileSuccess={(profile1) => {
                     setProfile(profile1);
                 }}

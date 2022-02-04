@@ -30,13 +30,37 @@ import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { Logout } from './page/Logout';
 import { PageNotFound } from './page/PageNotFound';
 import { PrivateRoute } from './component/PrivateRoute';
-import darkTheme from './themes/dark';
+import { createThemeByMode } from './theme';
 import { ReportViewPage } from './page/ReportViewPage';
+import { PaletteMode, useMediaQuery } from '@mui/material';
+import { ColourModeContext } from './contexts/ColourModeContext';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<PlayerProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
+
+    let currentTheme = localStorage.getItem('theme') as PaletteMode;
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+    if (!currentTheme) {
+        currentTheme = prefersDarkMode ? 'dark' : 'light';
+    }
+    const [mode, setMode] = React.useState<'light' | 'dark'>(currentTheme);
+
+    const updateMode = (prevMode: PaletteMode): PaletteMode => {
+        const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);
+        localStorage.setItem('theme', m);
+        return m;
+    };
+
+    const colorMode = React.useMemo(
+        () => ({
+            toggleColorMode: () => {
+                setMode(updateMode);
+            }
+        }),
+        []
+    );
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -50,111 +74,118 @@ export const App = (): JSX.Element => {
         // noinspection JSIgnoredPromiseFromCall
         fetchProfile();
     }, [setCurrentUser]);
+
+    const theme = React.useMemo(() => createThemeByMode(mode), [mode]);
+
     return (
         <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
             <UserFlashCtx.Provider value={{ flashes, setFlashes }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Router>
                         <React.Fragment>
-                            <ThemeProvider theme={darkTheme}>
-                                <React.StrictMode>
-                                    <CssBaseline />
-                                    <Container maxWidth={'lg'}>
-                                        <TopBar />
+                            <ColourModeContext.Provider value={colorMode}>
+                                <ThemeProvider theme={theme}>
+                                    <React.StrictMode>
+                                        <CssBaseline />
+                                        <Container maxWidth={'lg'}>
+                                            <TopBar />
 
-                                        <Flashes />
+                                            <Flashes />
 
-                                        <Routes>
-                                            <Route
-                                                path={'/'}
-                                                element={<Home />}
-                                            />
-                                            <Route
-                                                path={'/servers'}
-                                                element={<Servers />}
-                                            />
-                                            <Route
-                                                path={'/bans'}
-                                                element={<Bans />}
-                                            />
-                                            <Route
-                                                path={'/appeal'}
-                                                element={<Appeal />}
-                                            />
-                                            <Route
-                                                path={'/report/:report_id'}
-                                                element={<ReportViewPage />}
-                                            />
-                                            <Route
-                                                path={'/report'}
-                                                element={<ReportCreatePage />}
-                                            />
-                                            <Route
-                                                path={'/settings'}
-                                                element={<Settings />}
-                                            />
-                                            <Route
-                                                path={'/profile/:steam_id'}
-                                                element={<Profile />}
-                                            />
-                                            <Route
-                                                path={'/ban/:ban_id'}
-                                                element={<BanView />}
-                                            />
-                                            <Route
-                                                path={'/admin/ban'}
-                                                element={<AdminBan />}
-                                            />
-                                            <Route
-                                                path={'/admin/filters'}
-                                                element={<AdminFilters />}
-                                            />
-                                            <Route
-                                                path={'/admin/reports'}
-                                                element={<AdminReports />}
-                                            />
-                                            <Route
-                                                path={'/admin/import'}
-                                                element={
-                                                    <PrivateRoute
-                                                        permission={
-                                                            PermissionLevel.Admin
-                                                        }
-                                                    >
-                                                        <AdminImport />
-                                                    </PrivateRoute>
-                                                }
-                                            />
+                                            <Routes>
+                                                <Route
+                                                    path={'/'}
+                                                    element={<Home />}
+                                                />
+                                                <Route
+                                                    path={'/servers'}
+                                                    element={<Servers />}
+                                                />
+                                                <Route
+                                                    path={'/bans'}
+                                                    element={<Bans />}
+                                                />
+                                                <Route
+                                                    path={'/appeal'}
+                                                    element={<Appeal />}
+                                                />
+                                                <Route
+                                                    path={'/report/:report_id'}
+                                                    element={<ReportViewPage />}
+                                                />
+                                                <Route
+                                                    path={'/report'}
+                                                    element={
+                                                        <ReportCreatePage />
+                                                    }
+                                                />
+                                                <Route
+                                                    path={'/settings'}
+                                                    element={<Settings />}
+                                                />
+                                                <Route
+                                                    path={'/profile/:steam_id'}
+                                                    element={<Profile />}
+                                                />
+                                                <Route
+                                                    path={'/ban/:ban_id'}
+                                                    element={<BanView />}
+                                                />
+                                                <Route
+                                                    path={'/admin/ban'}
+                                                    element={<AdminBan />}
+                                                />
+                                                <Route
+                                                    path={'/admin/filters'}
+                                                    element={<AdminFilters />}
+                                                />
+                                                <Route
+                                                    path={'/admin/reports'}
+                                                    element={<AdminReports />}
+                                                />
+                                                <Route
+                                                    path={'/admin/import'}
+                                                    element={
+                                                        <PrivateRoute
+                                                            permission={
+                                                                PermissionLevel.Admin
+                                                            }
+                                                        >
+                                                            <AdminImport />
+                                                        </PrivateRoute>
+                                                    }
+                                                />
 
-                                            <Route
-                                                path={'/admin/people'}
-                                                element={<AdminPeople />}
-                                            />
-                                            <Route
-                                                path={'/admin/server_logs'}
-                                                element={<AdminServerLog />}
-                                            />
-                                            <Route
-                                                path={'/admin/servers'}
-                                                element={<AdminServers />}
-                                            />
-                                            <Route
-                                                path={'/login/success'}
-                                                element={<LoginSuccess />}
-                                            />
-                                            <Route
-                                                path={'/logout'}
-                                                element={<Logout />}
-                                            />
-                                            <Route
-                                                path="/404"
-                                                element={<PageNotFound />}
-                                            />
-                                        </Routes>
-                                        <Footer />
-                                    </Container>
-                                </React.StrictMode>
-                            </ThemeProvider>
+                                                <Route
+                                                    path={'/admin/people'}
+                                                    element={<AdminPeople />}
+                                                />
+                                                <Route
+                                                    path={'/admin/server_logs'}
+                                                    element={<AdminServerLog />}
+                                                />
+                                                <Route
+                                                    path={'/admin/servers'}
+                                                    element={<AdminServers />}
+                                                />
+                                                <Route
+                                                    path={'/login/success'}
+                                                    element={<LoginSuccess />}
+                                                />
+                                                <Route
+                                                    path={'/logout'}
+                                                    element={<Logout />}
+                                                />
+                                                <Route
+                                                    path="/404"
+                                                    element={<PageNotFound />}
+                                                />
+                                            </Routes>
+                                            <Footer />
+                                        </Container>
+                                    </React.StrictMode>
+                                </ThemeProvider>
+                            </ColourModeContext.Provider>
                         </React.Fragment>
                     </Router>
                 </LocalizationProvider>

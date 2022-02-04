@@ -61,7 +61,14 @@ const config: webpack.Configuration = {
                 use: ['style-loader', 'css-loader', 'sass-loader']
             },
             {
-                test: /\.(jpg|png|woff|otf|ttf|svg|eot)$/,
+                test: /\.(jpg|png|svg)$/,
+                loader: 'url-loader',
+                options: {
+                    limit: 250000
+                }
+            },
+            {
+                test: /\.(woff|otf|ttf|svg|eot)$/,
                 type: 'asset/resource',
                 generator: {
                     filename: 'static/[hash][ext][query]'

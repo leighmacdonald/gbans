@@ -136,7 +136,9 @@ func TestParse(t *testing.T) {
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:24:22: "amogus gaming<13><[U:1:1089803558]><>" Connected, address "139.47.95.130:47949"`, Connected), &value14))
 	require.EqualValues(t, ConnectedEvt{
 		SourcePlayer: SourcePlayer{Name: "amogus gaming", PID: 13, SID: 0x110000140f51526, Team: 0},
-		Address:      "139.47.95.130:47949"}, value14)
+		Address:      "139.47.95.130",
+		Port:         47949,
+	}, value14)
 
 	var value15 EmptyEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:24:23: "amogus gaming<13><[U:1:1089803558]><>" STEAM USERID Validated`, Validated), &value15))
@@ -146,7 +148,7 @@ func TestParse(t *testing.T) {
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:26:33: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "obj_attachment_sapper") (objectowner "idk<9><[U:1:1170132017]><Blue>") (attacker_position "2 -579 -255")`, KilledObject), &value16))
 	require.EqualValues(t, KilledObjectEvt{
 		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
-		Owner:        "idk<9><[U:1:1170132017]><Blue>",
+		TargetPlayer: TargetPlayer{Name2: "idk", PID2: 9, SID2: 76561199130397745, Team2: BLU},
 		Object:       "OBJ_SENTRYGUN",
 		Weapon:       Sapper,
 		APos:         Pos{X: 2, Y: -579, Z: -255}}, value16)

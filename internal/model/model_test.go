@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/stretchr/testify/require"
 	"regexp"
 	"testing"
@@ -16,7 +17,7 @@ func TestFilter_Match(t *testing.T) {
 	f := Filter{
 		WordID:    1,
 		Pattern:   regexp.MustCompile(`(po+p)`),
-		CreatedOn: time.Now(),
+		CreatedOn: config.Now(),
 	}
 	require.True(t, f.Match("super pooooooper"))
 }

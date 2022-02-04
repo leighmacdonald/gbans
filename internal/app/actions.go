@@ -449,7 +449,7 @@ func PersonBySID(db store.Store, sid steamid.SID64, ipAddr string, p *model.Pers
 		}
 		var sum = s[0]
 		p.PlayerSummary = &sum
-		p.UpdatedOn = time.Now()
+		p.UpdatedOn = config.Now()
 		if err := db.SavePerson(ctx, p); err != nil {
 			log.Errorf("Failed to save updated profile: %v", errW)
 			return nil

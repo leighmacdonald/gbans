@@ -1,5 +1,5 @@
 import React from 'react';
-import Alert from '@mui/lab/Alert';
+import Alert from '@mui/material/Alert';
 import { AlertColor } from '@mui/material/Alert/Alert';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 

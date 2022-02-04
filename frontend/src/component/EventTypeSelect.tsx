@@ -17,6 +17,7 @@ export const EventTypeSelect = ({ setEventTypes }: EventTypeSelectProps) => {
     const opts: SelectOption[] = Object.values(EventTypeByName).map((v) => {
         return { value: v, title: eventName(v) };
     });
+
     const containsAll = (f: number[]): boolean => {
         return f.filter((f) => f == -1).length > 0;
     };
@@ -36,7 +37,6 @@ export const EventTypeSelect = ({ setEventTypes }: EventTypeSelectProps) => {
         }
         setSelectedEventTypes(newValue);
         setEventTypes(newValue);
-        console.log(eventName(1));
     };
 
     return (

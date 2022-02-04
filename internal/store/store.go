@@ -100,6 +100,7 @@ type StatStore interface {
 	GetPlayerStats(ctx context.Context, sid steamid.SID64, stats *model.PlayerStats) error
 	GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error
 	GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error
+	GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.Collection, error)
 }
 
 type NetworkStore interface {

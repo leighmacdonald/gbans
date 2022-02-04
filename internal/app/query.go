@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
@@ -166,30 +167,35 @@ func FindPlayerByCIDR(db store.ServerStore, ipNet *net.IPNet, pi *model.PlayerIn
 // getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
 func getOrCreateProfileBySteamID(ctx context.Context, db store.PersonStore, sid steamid.SID64, ipAddr string, p *model.Person) error {
-	sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
-	if err != nil {
-		return errors.Wrapf(err, "Failed to get Player summary: %v", err)
+	if errGP := db.GetOrCreatePersonBySteamID(ctx, sid, p); errGP != nil {
+		return errors.Wrapf(errGP, "Failed to get person instance: %d", sid)
 	}
-	vac, errBans := steam.FetchPlayerBans(steamid.Collection{sid})
-	if errBans != nil || len(vac) != 1 {
-		return errors.Wrapf(err, "Failed to get Player ban state: %v", err)
-	}
-	if errGP := db.GetOrCreatePersonBySteamID(ctx, sid, p); err != nil {
-		return errors.Wrapf(errGP, "Failed to get person: %d", sid)
+	if config.Now().Sub(p.UpdatedOnSteam) > time.Minute*60 {
+		sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get Player summary: %v", err)
+		}
+		if len(sum) > 0 {
+			s := sum[0]
+			p.PlayerSummary = &s
+		} else {
+			return errors.Errorf("Failed to fetch Player summary for %d", sid)
+		}
+		vac, errBans := steam.FetchPlayerBans(steamid.Collection{sid})
+		if errBans != nil || len(vac) != 1 {
+			return errors.Wrapf(err, "Failed to get Player ban state: %v", err)
+		} else {
+			p.CommunityBanned = vac[0].CommunityBanned
+			p.VACBans = vac[0].NumberOfVACBans
+			p.GameBans = vac[0].NumberOfGameBans
+			p.EconomyBan = vac[0].EconomyBan
+			p.CommunityBanned = vac[0].CommunityBanned
+			p.DaysSinceLastBan = vac[0].DaysSinceLastBan
+		}
+		p.UpdatedOnSteam = config.Now()
 	}
 	p.SteamID = sid
-	p.CommunityBanned = vac[0].CommunityBanned
-	p.VACBans = vac[0].NumberOfVACBans
-	p.GameBans = vac[0].NumberOfGameBans
-	p.EconomyBan = vac[0].EconomyBan
-	p.CommunityBanned = vac[0].CommunityBanned
-	p.DaysSinceLastBan = vac[0].DaysSinceLastBan
-	if len(sum) > 0 {
-		s := sum[0]
-		p.PlayerSummary = &s
-	} else {
-		log.Warnf("Failed to fetch Player summary for: %v", sid)
-	}
+
 	if errSave := db.SavePerson(ctx, p); errSave != nil {
 		return errors.Wrapf(errSave, "Failed to save person")
 	}

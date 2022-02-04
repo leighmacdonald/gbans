@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { SyntheticEvent, useEffect } from 'react';
+import { SyntheticEvent, useState } from 'react';
 import IPCIDR from 'ip-cidr';
 import { apiCreateBan, BanPayload, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
@@ -60,7 +60,7 @@ const Durations = [
 ];
 
 export interface PlayerBanFormProps {
-    onProfileChanged?: (profile: PlayerProfile) => void;
+    onProfileChanged?: (profile: Nullable<PlayerProfile>) => void;
 }
 
 export const PlayerBanForm = ({
@@ -73,10 +73,7 @@ export const PlayerBanForm = ({
     const [networkSize, setNetworkSize] = React.useState<number>(0);
     const [banType, setBanType] = React.useState<BanType>('steam');
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>();
-
-    useEffect(() => {
-        // Validate results
-    }, [profile]);
+    const [steamID, setSteamID] = useState<string>('');
 
     const handleSubmit = React.useCallback(async () => {
         if (!profile || profile?.player?.steam_id === '') {
@@ -136,6 +133,8 @@ export const PlayerBanForm = ({
         <Stack spacing={3} padding={3}>
             <ProfileSelectionInput
                 fullWidth
+                input={steamID}
+                setInput={setSteamID}
                 onProfileSuccess={(p) => {
                     setProfile(p);
                     onProfileChanged && onProfileChanged(p);

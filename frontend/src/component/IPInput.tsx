@@ -22,6 +22,7 @@ export const IPInput = ({ id, label, onCIDRSuccess }: IPInputProps) => {
         if (addr.length == 0) {
             setError(false);
             setErrorText('');
+            onCIDRSuccess('');
             return;
         }
         if (!addr.includes('/')) {
@@ -31,6 +32,7 @@ export const IPInput = ({ id, label, onCIDRSuccess }: IPInputProps) => {
             if (v.length > 1 && parseInt(v[1]) < 24) {
                 setError(true);
                 setErrorText(`CIDR range too large >${maxHosts}`);
+                onCIDRSuccess('');
                 return;
             }
         }
@@ -38,6 +40,7 @@ export const IPInput = ({ id, label, onCIDRSuccess }: IPInputProps) => {
         if (!IPCIDR.isValidAddress(addr)) {
             setError(true);
             setErrorText('Invalid ip/cidr address');
+            onCIDRSuccess('');
             return;
         }
         setError(false);
@@ -47,7 +50,6 @@ export const IPInput = ({ id, label, onCIDRSuccess }: IPInputProps) => {
     return (
         <FormControl sx={{ m: 1, minWidth: 200 }}>
             <TextField
-                disabled
                 value={input}
                 error={error}
                 fullWidth

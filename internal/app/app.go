@@ -38,7 +38,7 @@ func init() {
 	ctx = context.Background()
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logRawQueue = make(chan model.LogPayload, 1000)
+	logRawQueue = make(chan model.LogPayload, 10000)
 	discordSendMsg = make(chan discordPayload)
 }
 
@@ -155,20 +155,30 @@ func logWriter(db store.StatStore) {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	t := time.NewTicker(freq)
+	var f = func() {
+		if len(logCache) == 0 {
+			return
+		}
+		if errI := db.BatchInsertServerLogs(ctx, logCache); errI != nil {
+			log.Errorf("Failed to batch insert logs: %v", errI)
+		}
+		logCache = nil
+	}
 	for {
 		select {
 		case evt := <-events:
 			if evt.EventType != logparse.IgnoredMsg {
-				logCache = append(logCache, evt)
-			}
-		case <-t.C:
-			if len(logCache) == 0 {
 				continue
 			}
-			if errI := db.BatchInsertServerLogs(ctx, logCache); errI != nil {
-				log.Errorf("Failed to batch insert logs: %v", errI)
+			logCache = append(logCache, evt)
+			// Update immediately if we have enough volume
+			if len(logCache) >= 1000 {
+				t.Stop()
+				f()
+				t.Reset(freq)
 			}
-			logCache = nil
+		case <-t.C:
+			f()
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return
@@ -204,7 +214,7 @@ func (c playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
 		s = playerEventState{}
 	}
 	s.team = team
-	s.updatedAt = time.Now()
+	s.updatedAt = config.Now()
 	c.state[sid] = s
 }
 
@@ -216,7 +226,7 @@ func (c playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
 		s = playerEventState{}
 	}
 	s.class = class
-	s.updatedAt = time.Now()
+	s.updatedAt = config.Now()
 	c.state[sid] = s
 }
 
@@ -245,7 +255,7 @@ func (c playerCache) cleanupWorker() {
 	for {
 		select {
 		case <-t.C:
-			now := time.Now()
+			now := config.Now()
 			c.Lock()
 			for k, v := range c.state {
 				if now.Sub(v.updatedAt) > time.Hour {
@@ -301,7 +311,7 @@ func logReader(db store.Store) {
 			aposValue, aposFound := v.Values["attacker_position"]
 			if aposFound {
 				var apv logparse.Pos
-				if err := logparse.NewPosFromString(aposValue.(string), &apv); err != nil {
+				if err := logparse.ParsePOS(aposValue.(string), &apv); err != nil {
 					log.Warnf("Failed to parse attacker position: %v", err)
 				}
 				apos = apv
@@ -310,7 +320,7 @@ func logReader(db store.Store) {
 			vposValue, vposFound := v.Values["victim_position"]
 			if vposFound {
 				var vpv logparse.Pos
-				if err := logparse.NewPosFromString(vposValue.(string), &vpv); err != nil {
+				if err := logparse.ParsePOS(vposValue.(string), &vpv); err != nil {
 					log.Warnf("Failed to parse victim position: %v", err)
 				}
 				vpos = vpv
@@ -319,16 +329,16 @@ func logReader(db store.Store) {
 			asValue, asFound := v.Values["assister_position"]
 			if asFound {
 				var asPosValue logparse.Pos
-				if err := logparse.NewPosFromString(asValue.(string), &asPosValue); err != nil {
+				if err := logparse.ParsePOS(asValue.(string), &asPosValue); err != nil {
 					log.Warnf("Failed to parse assister position: %v", err)
 				}
 				aspos = asPosValue
 				delete(v.Values, "assister_position")
 			}
-			var weapon logparse.Weapon
+			weapon := logparse.UnknownWeapon
 			weaponValue, weaponFound := v.Values["weapon"]
 			if weaponFound {
-				weapon = logparse.WeaponFromString(weaponValue.(string))
+				weapon = logparse.ParseWeapon(weaponValue.(string))
 			}
 			var class logparse.PlayerClass
 			classValue, classFound := v.Values["class"]
@@ -385,9 +395,9 @@ func logReader(db store.Store) {
 			}
 			// Remove keys that get mapped to actual schema columns
 			for _, k := range []string{
-				"time", "date", "item", "weapon",
+				"time", "date", "item", "weapon", "healing",
 				"name", "pid", "sid", "team",
-				"name2", "pid2", "sid2", "team2", "healing"} {
+				"name2", "pid2", "sid2", "team2"} {
 				delete(v.Values, k)
 			}
 			se := model.ServerEvent{

@@ -79,14 +79,15 @@ func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 		    updated_on = $2, communityvisibilitystate = $3, profilestate = $4, personaname = $5, profileurl = $6, avatar = $7,
     		avatarmedium = $8, avatarfull = $9, avatarhash = $10, personastate = $11, realname = $12, timecreated = $13,
 		    loccountrycode = $14, locstatecode = $15, loccityid = $16, permission_level = $17, discord_id = $18,
-		    community_banned = $19, vac_bans = $20, game_bans = $21, economy_ban = $22, days_since_last_ban = $23
+		    community_banned = $19, vac_bans = $20, game_bans = $21, economy_ban = $22, days_since_last_ban = $23,
+			updated_on_steam = $24
 		WHERE steam_id = $1`
 	if _, err := db.c.Exec(ctx, q, p.SteamID, p.UpdatedOn, p.PlayerSummary.CommunityVisibilityState,
 		p.PlayerSummary.ProfileState, p.PlayerSummary.PersonaName, p.PlayerSummary.ProfileURL, p.PlayerSummary.Avatar,
 		p.PlayerSummary.AvatarMedium, p.PlayerSummary.AvatarFull, p.PlayerSummary.AvatarHash,
 		p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.TimeCreated, p.PlayerSummary.LocCountryCode,
 		p.PlayerSummary.LocStateCode, p.PlayerSummary.LocCityID, p.PermissionLevel, p.DiscordID,
-		p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan); err != nil {
+		p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan, p.UpdatedOnSteam); err != nil {
 		return Err(err)
 	}
 	return nil
@@ -100,14 +101,14 @@ func (db *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
 			"profilestate", "personaname", "profileurl", "avatar", "avatarmedium", "avatarfull",
 			"avatarhash", "personastate", "realname", "timecreated", "loccountrycode", "locstatecode",
 			"loccityid", "permission_level", "discord_id", "community_banned", "vac_bans", "game_bans",
-			"economy_ban", "days_since_last_ban").
+			"economy_ban", "days_since_last_ban", "updated_on_steam").
 		Values(p.CreatedOn, p.UpdatedOn, p.SteamID,
 			p.PlayerSummary.CommunityVisibilityState, p.PlayerSummary.ProfileState, p.PlayerSummary.PersonaName,
 			p.PlayerSummary.ProfileURL,
 			p.PlayerSummary.Avatar, p.PlayerSummary.AvatarMedium, p.PlayerSummary.AvatarFull, p.PlayerSummary.AvatarHash,
 			p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.PlayerSummary.TimeCreated,
 			p.PlayerSummary.LocCountryCode, p.PlayerSummary.LocStateCode, p.PlayerSummary.LocCityID, p.PermissionLevel,
-			p.DiscordID, p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan).
+			p.DiscordID, p.CommunityBanned, p.VACBans, p.GameBans, p.EconomyBan, p.DaysSinceLastBan, p.UpdatedOnSteam).
 		ToSql()
 	if e != nil {
 		return e
@@ -125,7 +126,7 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
-	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"}
+	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam"}
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
@@ -139,7 +140,8 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 	SELECT 
 	    p.steam_id, created_on, updated_on, communityvisibilitystate, profilestate, personaname, profileurl, avatar,
 		avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated, loccountrycode, locstatecode, loccityid,
-		permission_level, discord_id, a.ip_addr, community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban 
+		permission_level, discord_id, a.ip_addr, community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban,
+		updated_on_steam
 	FROM person p
 	left join addresses a on p.steam_id = a.steam_id
 	WHERE p.steam_id = $1;`
@@ -150,7 +152,7 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr, &p.CommunityBanned,
-		&p.VACBans, &p.GameBans, &p.EconomyBan, &p.DaysSinceLastBan)
+		&p.VACBans, &p.GameBans, &p.EconomyBan, &p.DaysSinceLastBan, &p.UpdatedOnSteam)
 	if err != nil {
 		return Err(err)
 	}
@@ -175,7 +177,7 @@ func (db *pgStore) GetPeopleBySteamID(ctx context.Context, steamids steamid.Coll
 			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
 			&p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans, &p.EconomyBan,
-			&p.DaysSinceLastBan); err2 != nil {
+			&p.DaysSinceLastBan, &p.UpdatedOnSteam); err2 != nil {
 			return nil, err2
 		}
 		people = append(people, p)
@@ -212,12 +214,12 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People
 	defer rows.Close()
 	for rows.Next() {
 		p := model.NewPerson(0)
-		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.CommunityVisibilityState,
+		if errScan := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.CommunityVisibilityState,
 			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
 			&p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans, &p.EconomyBan,
-			&p.DaysSinceLastBan); err2 != nil {
-			return nil, err2
+			&p.DaysSinceLastBan, &p.UpdatedOnSteam); errScan != nil {
+			return nil, errScan
 		}
 		people = append(people, p)
 	}
@@ -255,7 +257,7 @@ func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *mode
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans,
-		&p.EconomyBan, &p.DaysSinceLastBan)
+		&p.EconomyBan, &p.DaysSinceLastBan, &p.UpdatedOnSteam)
 	if err != nil {
 		return Err(err)
 	}
@@ -267,7 +269,7 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	communityvisibilitystate, profilestate, personaname, profileurl, avatar,
 	avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated,
 	loccountrycode, locstatecode, loccityid, permission_level, discord_id,
-	community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban
+	community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban, updated_on_steam
 	FROM person ORDER BY updated_on LIMIT %d`, limit)
 
 	var people []model.Person
@@ -278,12 +280,12 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	defer rows.Close()
 	for rows.Next() {
 		p := model.NewPerson(0)
-		if err2 := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.CommunityVisibilityState,
+		if errScan := rows.Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn, &p.CommunityVisibilityState,
 			&p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium, &p.AvatarFull, &p.AvatarHash,
 			&p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode, &p.LocStateCode, &p.LocCityID,
 			&p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans, &p.EconomyBan,
-			&p.DaysSinceLastBan); err2 != nil {
-			return nil, err2
+			&p.DaysSinceLastBan, &p.UpdatedOnSteam); errScan != nil {
+			return nil, errScan
 		}
 		people = append(people, p)
 	}
@@ -292,7 +294,7 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 
 func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
 	q := `
-		SELECT l.source_id, coalesce(p.personaname, ''), l.meta_data.
+		SELECT l.source_id, coalesce(p.personaname, ''), coalesce((l.meta_data->>'msg')::text, '')
 	
 		FROM server_log l
 		LEFT JOIN person p on l.source_id = p.steam_id
@@ -302,16 +304,16 @@ func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limi
 	if limit > 0 {
 		q += fmt.Sprintf(" LIMIT %d", limit)
 	}
-	rows, err := db.c.Query(ctx, q, sid64.String())
-	if err != nil {
-		return nil, Err(err)
+	rows, errQuery := db.c.Query(ctx, q, sid64.String())
+	if errQuery != nil {
+		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	var hist []logparse.SayEvt
 	for rows.Next() {
 		var h logparse.SayEvt
-		if err2 := rows.Scan(&h.SourcePlayer.SID, &h.SourcePlayer.Name, &h.Msg); err2 != nil {
-			return nil, err2
+		if errScan := rows.Scan(&h.SourcePlayer.SID, &h.SourcePlayer.Name, &h.Msg); errScan != nil {
+			return nil, errScan
 		}
 		hist = append(hist, h)
 	}

@@ -10,7 +10,6 @@ import (
 // EventType defines a known, parsable message type
 type EventType int
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	// IgnoredMsg is used for messages we are ignoring
 	IgnoredMsg EventType = 0
@@ -88,10 +87,8 @@ const (
 )
 
 // Team represents a players team, or spectator state
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Team int
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	SPEC Team = 0
 	RED  Team = 1
@@ -99,7 +96,6 @@ const (
 )
 
 // Pos is a position in 3D space
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Pos struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
@@ -112,11 +108,11 @@ func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }
 
-// NewPosFromString parses a players 3d position
-func NewPosFromString(s string, p *Pos) error {
+// ParsePOS parses a players 3d position
+func ParsePOS(s string, p *Pos) error {
 	pcs := strings.Split(s, " ")
 	if len(pcs) != 3 {
-		return errors.New("Invalid position")
+		return errors.Errorf("Invalid position: %s", s)
 	}
 	xv, ex := strconv.ParseFloat(pcs[0], 64)
 	if ex != nil {
@@ -332,7 +328,7 @@ func (w Weapon) String() string {
 	return name
 }
 
-func WeaponFromString(s string) Weapon {
+func ParseWeapon(s string) Weapon {
 	for w, v := range weaponNames {
 		if v == s {
 			return w
@@ -367,103 +363,104 @@ var weaponNames = map[Weapon]string{
 	ConscientiousObjector: "nonnonviolent_protest",
 	CowMangler:            "cow_mangler",
 	Crossbow:              "crusaders_crossbow",
-	DeflectPromode:        "deflect_promode",
-	DeflectRocket:         "deflect_rocket",
-	Degreaser:             "degreaser",
-	DemoKatana:            "demokatana",
-	Detonator:             "detonator",
-	DiamondBack:           "diamondback",
-	DirectHit:             "rocketlauncher_directhit",
-	DisciplinaryAction:    "disciplinary_action",
-	DragonsFury:           "dragons_fury",
-	DragonsFuryBonus:      "dragons_fury_bonus",
-	Enforcer:              "enforcer",
-	EscapePlan:            "unique_pickaxe_escape",
-	EternalReward:         "eternal_reward",
-	FamilyBusiness:        "family_business",
-	Fists:                 "fists",
-	FistsOfSteel:          "steel_fists",
-	FlameThrower:          "flamethrower",
-	FlareGun:              "flaregun",
-	ForceANature:          "force_a_nature",
-	FrontierJustice:       "frontier_justice",
-	FryingPan:             "fryingpan",
-	Gunslinger:            "robot_arm",
-	GunslingerCombo:       "robot_arm_combo_kill", // what is this?
-	GunslingerTaunt:       "robot_arm_blender_kill",
-	HamShank:              "ham_shank",
-	HotHand:               "hot_hand",
-	Huntsman:              "tf_projectile_arrow",
-	IronBomber:            "iron_bomber",
-	IronCurtain:           "iron_curtain",
-	Jag:                   "wrench_jag",
-	JarBased:              "tf_weapon_jar",
-	Knife:                 "knife",
-	Kukri:                 "tribalkukri",
-	Kunai:                 "kunai",
-	Letranger:             "letranger",
-	LibertyLauncher:       "liberty_launcher",
-	LockNLoad:             "loch_n_load",
-	LongHeatmaker:         "long_heatmaker",
-	LooseCannon:           "loose_cannon",
-	LooseCannonImpact:     "loose_cannon_impact",
-	Machina:               "machina",
-	MachinaPen:            "player_penetration",
-	MarketGardener:        "market_gardener",
-	Maul:                  "the_maul",
-	MiniGun:               "minigun",
-	MiniSentry:            "obj_minisentry",
-	Natascha:              "natascha",
-	NecroSmasher:          "necro_smasher",
-	Original:              "quake_rl",
-	PepPistol:             "pep_pistol",
-	Phlog:                 "phlogistinator",
-	Pistol:                "pistol",
-	PistolScout:           "pistol_scout",
-	Powerjack:             "powerjack",
-	ProjectilePipe:        "tf_projectile_pipe",
-	ProjectilePipeRemote:  "tf_projectile_pipe_remote",
-	ProjectileRocket:      "tf_projectile_rocket",
-	ProRifle:              "pro_rifle", // heatmaker?
-	ProSMG:                "pro_smg",   // carbine?
-	ProtoSyringe:          "proto_syringe",
-	Quickiebomb:           "quickiebomb_launcher",
-	Rainblower:            "rainblower",
-	RescueRanger:          "rescue_ranger",
-	ReserveShooter:        "reserve_shooter",
-	Revolver:              "revolver",
-	Sandman:               "sandman",
-	Sapper:                "obj_attachment_sapper",
-	Scattergun:            "scattergun",
-	ScorchShot:            "scorch_shot",
-	ScottishResistance:    "sticky_resistance",
-	Sentry1:               "obj_sentrygun",
-	Sentry2:               "obj_sentrygun2",
-	Sentry3:               "obj_sentrygun3",
-	SharpDresser:          "sharp_dresser",
-	ShootingStar:          "shooting_star",
-	ShortStop:             "shortstop",
-	ShotgunPrimary:        "shotgun_primary",
-	ShotgunPyro:           "shotgun_pyro",
-	ShotgunSoldier:        "shotgun_soldier",
-	Sledgehammer:          "sledgehammer",
-	SMG:                   "smg",
-	SniperRifle:           "sniperrifle",
-	SodaPopper:            "soda_popper",
-	Spycicle:              "spy_cicle",
-	SydneySleeper:         "sydney_sleeper",
-	SyringeGun:            "syringegun_medic",
-	TauntMedic:            "taunt_medic",
-	Telefrag:              "telefrag",
-	TheClassic:            "the_classic",
-	Tomislav:              "tomislav",
-	Ubersaw:               "ubersaw",
-	WarriorsSpirit:        "warrior_spirit",
-	WidowMaker:            "widowmaker",
-	World:                 "world",
-	Wrangler:              "wrangler_kill",
-	WrapAssassin:          "wrap_assassin",
-	Wrench:                "wrench",
+	// TODO add remaining deflects
+	DeflectPromode:       "deflect_promode",
+	DeflectRocket:        "deflect_rocket",
+	Degreaser:            "degreaser",
+	DemoKatana:           "demokatana",
+	Detonator:            "detonator",
+	DiamondBack:          "diamondback",
+	DirectHit:            "direct_hit",
+	DisciplinaryAction:   "disciplinary_action",
+	DragonsFury:          "dragons_fury",
+	DragonsFuryBonus:     "dragons_fury_bonus",
+	Enforcer:             "enforcer",
+	EscapePlan:           "unique_pickaxe_escape",
+	EternalReward:        "eternal_reward",
+	FamilyBusiness:       "family_business",
+	Fists:                "fists",
+	FistsOfSteel:         "steel_fists",
+	FlameThrower:         "flamethrower",
+	FlareGun:             "flaregun",
+	ForceANature:         "force_a_nature",
+	FrontierJustice:      "frontier_justice",
+	FryingPan:            "fryingpan",
+	Gunslinger:           "robot_arm",
+	GunslingerCombo:      "robot_arm_combo_kill",
+	GunslingerTaunt:      "robot_arm_blender_kill",
+	HamShank:             "ham_shank",
+	HotHand:              "hot_hand",
+	Huntsman:             "tf_projectile_arrow",
+	IronBomber:           "iron_bomber",
+	IronCurtain:          "iron_curtain",
+	Jag:                  "wrench_jag",
+	JarBased:             "tf_weapon_jar",
+	Knife:                "knife",
+	Kukri:                "tribalkukri",
+	Kunai:                "kunai",
+	Letranger:            "letranger",
+	LibertyLauncher:      "liberty_launcher",
+	LockNLoad:            "loch_n_load",
+	LongHeatmaker:        "long_heatmaker",
+	LooseCannon:          "loose_cannon",
+	LooseCannonImpact:    "loose_cannon_impact",
+	Machina:              "machina",
+	MachinaPen:           "player_penetration",
+	MarketGardener:       "market_gardener",
+	Maul:                 "the_maul",
+	MiniGun:              "minigun",
+	MiniSentry:           "obj_minisentry",
+	Natascha:             "natascha",
+	NecroSmasher:         "necro_smasher",
+	Original:             "quake_rl",
+	PepPistol:            "pep_pistol",
+	Phlog:                "phlogistinator",
+	Pistol:               "pistol",
+	PistolScout:          "pistol_scout",
+	Powerjack:            "powerjack",
+	ProjectilePipe:       "tf_projectile_pipe",
+	ProjectilePipeRemote: "tf_projectile_pipe_remote",
+	ProjectileRocket:     "tf_projectile_rocket",
+	ProRifle:             "pro_rifle", // heatmaker?
+	ProSMG:               "pro_smg",   // carbine?
+	ProtoSyringe:         "proto_syringe",
+	Quickiebomb:          "quickiebomb_launcher",
+	Rainblower:           "rainblower",
+	RescueRanger:         "rescue_ranger",
+	ReserveShooter:       "reserve_shooter",
+	Revolver:             "revolver",
+	Sandman:              "sandman",
+	Sapper:               "obj_attachment_sapper",
+	Scattergun:           "scattergun",
+	ScorchShot:           "scorch_shot",
+	ScottishResistance:   "sticky_resistance",
+	Sentry1:              "obj_sentrygun",
+	Sentry2:              "obj_sentrygun2",
+	Sentry3:              "obj_sentrygun3",
+	SharpDresser:         "sharp_dresser",
+	ShootingStar:         "shooting_star",
+	ShortStop:            "shortstop",
+	ShotgunPrimary:       "shotgun_primary",
+	ShotgunPyro:          "shotgun_pyro",
+	ShotgunSoldier:       "shotgun_soldier",
+	Sledgehammer:         "sledgehammer",
+	SMG:                  "smg",
+	SniperRifle:          "sniperrifle",
+	SodaPopper:           "soda_popper",
+	Spycicle:             "spy_cicle",
+	SydneySleeper:        "sydney_sleeper",
+	SyringeGun:           "syringegun_medic",
+	TauntMedic:           "taunt_medic",
+	Telefrag:             "telefrag",
+	TheClassic:           "the_classic",
+	Tomislav:             "tomislav",
+	Ubersaw:              "ubersaw",
+	WarriorsSpirit:       "warrior_spirit",
+	WidowMaker:           "widowmaker",
+	World:                "world",
+	Wrangler:             "wrangler_kill",
+	WrapAssassin:         "wrap_assassin",
+	Wrench:               "wrench",
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers,GoUnusedGlobalVariable

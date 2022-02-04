@@ -170,6 +170,7 @@ type ConnectedEvt struct {
 	EmptyEvt
 	SourcePlayer
 	Address string `json:"address"`
+	Port    int    `json:"port"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -183,8 +184,8 @@ type DisconnectedEvt struct {
 type KilledObjectEvt struct {
 	EmptyEvt
 	SourcePlayer
+	TargetPlayer
 	Object string `json:"object"`
-	Owner  string `json:"objectowner" mapstructure:"objectowner"`
 	Weapon Weapon `json:"weapon"`
 	APos   Pos    `json:"attacker_position"  mapstructure:"attacker_position"`
 }

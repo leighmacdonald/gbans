@@ -30,6 +30,10 @@ import Menu from '@mui/material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import { useTheme } from '@mui/material';
+import { useColourModeCtx } from '../contexts/ColourModeContext';
 
 interface menuRoute {
     to: string;
@@ -49,6 +53,10 @@ export const TopBar = () => {
     );
     const [anchorElAdmin, setAnchorElAdmin] =
         React.useState<null | HTMLElement>(null);
+
+    const theme = useTheme();
+    const colourMode = useColourModeCtx();
+
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
     };
@@ -227,6 +235,15 @@ export const TopBar = () => {
                     </Box>
 
                     <Box sx={{ flexGrow: 0 }}>
+                        <Tooltip title="Toggle light/dark mode">
+                            <IconButton onClick={colourMode.toggleColorMode}>
+                                {theme.palette.mode == 'light' ? (
+                                    <DarkModeIcon sx={{ color: '#ada03a' }} />
+                                ) : (
+                                    <LightModeIcon sx={{ color: '#ada03a' }} />
+                                )}
+                            </IconButton>
+                        </Tooltip>
                         {!currentUser.player ||
                             (currentUser?.player.steam_id === '' && (
                                 <Tooltip title="Steam Login">

@@ -8,26 +8,30 @@ import InputAdornment from '@mui/material/InputAdornment';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import { useTimer } from 'react-timer-hook';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { Nullable } from '../util/types';
 
 export interface ProfileSelectionInputProps {
     id?: string;
     label?: string;
     initialValue?: string;
     fullWidth: boolean;
-    onProfileSuccess: (profile: PlayerProfile) => void;
+    onProfileSuccess: (profile: Nullable<PlayerProfile>) => void;
+    input: string;
+    setInput: (input: string) => void;
 }
 
 export const ProfileSelectionInput = ({
     onProfileSuccess,
     id,
-    initialValue,
     label,
-    fullWidth
+    fullWidth,
+    input,
+    setInput
 }: ProfileSelectionInputProps) => {
-    const rate = 1;
+    const debounceRate = 1;
     const [loading, setLoading] = useState<boolean>(false);
-    const [input, setInput] = useState<string>(initialValue ?? '');
-    const [lProfile, setLProfile] = useState<PlayerProfile>();
+    //const [input, setInput] = useState<string>(initialValue ?? '');
+    const [lProfile, setLProfile] = useState<Nullable<PlayerProfile>>();
     const { restart, pause } = useTimer({
         expiryTimestamp: new Date(),
         autoStart: true,
@@ -35,7 +39,9 @@ export const ProfileSelectionInput = ({
             await loadProfile();
         }
     });
+
     const loadProfile = async () => {
+        setLoading(true);
         try {
             const v = await apiGetProfile(input);
             onProfileSuccess(v);
@@ -51,21 +57,26 @@ export const ProfileSelectionInput = ({
         const { value: nextValue } = evt.target;
         setInput(nextValue);
         if (nextValue == '') {
+            onProfileSuccess(null);
             setLoading(false);
+            setLProfile(null);
             pause();
             return;
         }
         setLoading(true);
         const time = new Date();
-        time.setSeconds(time.getSeconds() + rate);
+        time.setSeconds(time.getSeconds() + debounceRate);
         restart(time);
     };
 
     const isError =
-        input.length > 0 && (!lProfile || !lProfile?.player.steam_id);
+        input.length > 0 &&
+        !loading &&
+        (!lProfile || !lProfile?.player.steam_id);
     return (
         <>
             <TextField
+                value={input}
                 error={isError}
                 fullWidth={fullWidth}
                 id={id ?? 'query'}

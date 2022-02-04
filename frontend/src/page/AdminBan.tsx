@@ -6,9 +6,10 @@ import { PlayerBanForm } from '../component/PlayerBanForm';
 import { ProfilePanel } from '../component/ProfilePanel';
 import { PlayerProfile } from '../api';
 import Box from '@mui/material/Box';
+import { Nullable } from '../util/types';
 
 export const AdminBan = (): JSX.Element => {
-    const [profile, setProfile] = useState<PlayerProfile | undefined>();
+    const [profile, setProfile] = useState<Nullable<PlayerProfile>>();
     return (
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={6}>

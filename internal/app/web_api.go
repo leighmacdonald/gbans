@@ -640,28 +640,23 @@ func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-		sid, err := steamid.StringToSID64(r.Query)
-		if err != nil {
-			sid, err = steamid.ResolveSID64(cx, r.Query)
-			if err != nil {
-				responseErr(c, http.StatusNotFound, nil)
-				return
-			}
+		sid, errSid := steamid.ResolveSID64(c, r.Query)
+		if errSid != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
 		}
 		person := model.NewPerson(sid)
-		if err2 := db.GetOrCreatePersonBySteamID(cx, sid, &person); err2 != nil {
+		if err2 := getOrCreateProfileBySteamID(c, db, sid, "", &person); err2 != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		sum, err3 := steamweb.PlayerSummaries(steamid.Collection{sid})
-		if err3 != nil || len(sum) != 1 {
-			log.Errorf("Failed to get player summary: %v", err3)
-			responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
-			return
-		}
-		person.PlayerSummary = &sum[0]
+		//sum, err3 := steamweb.PlayerSummaries(steamid.Collection{sid})
+		//if err3 != nil || len(sum) != 1 {
+		//	log.Errorf("Failed to get player summary: %v", err3)
+		//	responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
+		//	return
+		//}
+		//person.PlayerSummary = &sum[0]
 		friendIDs, err4 := steam.FetchFriends(person.SteamID)
 		if err4 != nil {
 			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
@@ -672,9 +667,11 @@ func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
 		}
+
 		var response resp
 		response.Player = &person
 		response.Friends = friends
+
 		responseOK(c, http.StatusOK, response)
 	}
 }
@@ -685,9 +682,7 @@ func (w *web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
 		Words []string `json:"words"`
 	}
 	return func(c *gin.Context) {
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-		words, err := db.GetFilters(cx)
+		words, err := db.GetFilters(c)
 		if err != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
@@ -781,9 +776,41 @@ func (w *web) onAPIGetBans(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *web) onAPIPostServer() gin.HandlerFunc {
+func (w *web) onAPIPostServer(db store.ServerStore) gin.HandlerFunc {
+	type newServerReq struct {
+		NameShort     string  `json:"name_short"`
+		Host          string  `json:"host"`
+		Port          int     `json:"port"`
+		ReservedSlots int     `json:"reserved_slots"`
+		RCON          string  `json:"rcon"`
+		Lat           float64 `json:"lat"`
+		Lon           float64 `json:"lon"`
+		CC            string  `json:"cc"`
+		DefaultMap    string  `json:"default_map"`
+		Region        string  `json:"region"`
+	}
+
 	return func(c *gin.Context) {
-		responseOK(c, http.StatusOK, gin.H{})
+		var req newServerReq
+		if errBind := c.BindJSON(&req); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			log.Errorf("Failed to parse request for new server: %v", errBind)
+			return
+		}
+		srv := model.NewServer(req.NameShort, req.Host, req.Port)
+		srv.RCON = req.RCON
+		srv.ReservedSlots = req.ReservedSlots
+		srv.DefaultMap = req.DefaultMap
+		srv.Location.Latitude = req.Lat
+		srv.Location.Longitude = req.Lon
+		srv.CC = req.CC
+		srv.Region = req.Region
+		if errSave := db.SaveServer(c, &srv); errSave != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save new server: %v", errSave)
+			return
+		}
+		responseOK(c, http.StatusOK, srv)
 	}
 }
 
