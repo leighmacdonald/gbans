@@ -28,9 +28,11 @@ export const GuestProfile: PlayerProfile = {
         vac_bans: 0,
         community_banned: false,
         days_since_last_ban: 0,
-        economy_ban: false,
+        economy_ban: '',
         game_bans: 0,
-        updated_on_steam: new Date()
+        updated_on_steam: new Date(),
+        permission_level: 0,
+        discord_id: ''
     },
     friends: []
 };

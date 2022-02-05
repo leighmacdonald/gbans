@@ -1,4 +1,4 @@
-import { apiCall } from './common';
+import { apiCall, PermissionLevel } from './common';
 
 export enum profileState {
     Incomplete = 0,
@@ -35,12 +35,14 @@ export interface Person {
     community_banned: boolean;
     vac_bans: number;
     game_bans: number;
-    economy_ban: boolean;
+    economy_ban: string;
     days_since_last_ban: number;
     updated_on_steam: Date;
 
     // Custom attributes
     steam_id: string;
+    permission_level: PermissionLevel;
+    discord_id: string;
     ip_addr: string;
     created_on: Date;
     updated_on: Date;

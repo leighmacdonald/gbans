@@ -39,7 +39,7 @@ export interface Report extends TimeStamped {
     description: string;
     report_status: ReportStatus;
     deleted: boolean;
-    media_ids: number[];
+    media_ids?: number[];
 }
 
 export interface ReportMedia extends TimeStamped {

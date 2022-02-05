@@ -51,6 +51,8 @@ const (
 	SpawnedAs           EventType = 51
 	JarateAttack        EventType = 52
 	MilkAttack          EventType = 53
+	GasAttack           EventType = 54
+
 	// World events not attached to specific players
 
 	WRoundOvertime     EventType = 100

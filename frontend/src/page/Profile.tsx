@@ -14,6 +14,8 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
+import { Masonry } from '@mui/lab';
+import { format, fromUnixTime } from 'date-fns';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -69,6 +71,16 @@ export const Profile = (): JSX.Element => {
                                             <Typography variant={'subtitle1'}>
                                                 {profile.player.realname}
                                             </Typography>
+                                            <Typography variant={'body2'}>
+                                                Created:{' '}
+                                                {format(
+                                                    fromUnixTime(
+                                                        profile.player
+                                                            .timecreated
+                                                    ),
+                                                    'yyyy-mm-dd'
+                                                )}
+                                            </Typography>
                                         </Stack>
                                     </Stack>
                                 </Paper>
@@ -104,7 +116,7 @@ export const Profile = (): JSX.Element => {
                                     />
                                     <Chip
                                         color={
-                                            profile.player.economy_ban
+                                            profile.player.economy_ban != ''
                                                 ? 'error'
                                                 : 'success'
                                         }
@@ -122,21 +134,23 @@ export const Profile = (): JSX.Element => {
                             </Paper>
 
                             <Paper elevation={1}>
-                                {createExternalLinks(
-                                    profile.player.steam_id
-                                ).map((l) => {
-                                    return (
-                                        <Link
-                                            sx={{ width: 250 }}
-                                            component={Button}
-                                            href={l.url}
-                                            key={l.url}
-                                            underline="none"
-                                        >
-                                            {l.title}
-                                        </Link>
-                                    );
-                                })}
+                                <Masonry columns={3} spacing={1}>
+                                    {createExternalLinks(
+                                        profile.player.steam_id
+                                    ).map((l) => {
+                                        return (
+                                            <Link
+                                                sx={{ width: '100%' }}
+                                                component={Button}
+                                                href={l.url}
+                                                key={l.url}
+                                                underline="none"
+                                            >
+                                                {l.title}
+                                            </Link>
+                                        );
+                                    })}
+                                </Masonry>
                             </Paper>
                         </Stack>
                     </Grid>

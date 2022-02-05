@@ -267,6 +267,10 @@ func (b *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, m *disco
 		}
 		return errCommandFailed
 	}
+	createDiscordBanEmbed(ban, r)
+	return nil
+}
+func createDiscordBanEmbed(ban model.Ban, r *botResponse) *discordgo.MessageEmbed {
 	e := respOk(r, "User Banned")
 	e.Title = fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)
 	e.Description = ban.Note
@@ -276,7 +280,7 @@ func (b *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, m *disco
 	addFieldsSteamID(e, ban.SteamID)
 	addField(e, "Expires In", config.FmtDuration(ban.ValidUntil))
 	addField(e, "Expires At", config.FmtTimeShort(ban.ValidUntil))
-	return nil
+	return e
 }
 
 func (b *discord) onCheck(ctx context.Context, _ *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error {

@@ -153,7 +153,6 @@ export const PlayerClassNames: Record<PlayerClass, string> = {
     [PlayerClass.Spy]: 'spy',
     [PlayerClass.Unknown]: 'unknown'
 };
-
 export enum PickupItem {
     ItemHPSmall,
     ItemHPMedium,

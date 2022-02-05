@@ -38,7 +38,7 @@ func init() {
 	ctx = context.Background()
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logRawQueue = make(chan model.LogPayload, 10000)
+	logRawQueue = make(chan model.LogPayload, 1000)
 	discordSendMsg = make(chan discordPayload)
 }
 
@@ -147,7 +147,7 @@ func warnWorker() {
 // reasons.
 func logWriter(db store.StatStore) {
 	const (
-		freq = time.Second * 10
+		freq = time.Second * 5
 	)
 	var logCache []model.ServerEvent
 	events := make(chan model.ServerEvent, 1000)
@@ -167,7 +167,7 @@ func logWriter(db store.StatStore) {
 	for {
 		select {
 		case evt := <-events:
-			if evt.EventType != logparse.IgnoredMsg {
+			if evt.EventType == logparse.IgnoredMsg {
 				continue
 			}
 			logCache = append(logCache, evt)

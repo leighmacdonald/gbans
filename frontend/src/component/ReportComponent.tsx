@@ -3,6 +3,7 @@ import {
     apiCreateReportMessage,
     apiGetLogs,
     apiGetReportMessages,
+    PermissionLevel,
     Person,
     Report,
     ReportMessage,
@@ -138,69 +139,75 @@ export const ReportComponent = ({
     return (
         <Grid container>
             <Grid item xs={12}>
-                <Box padding={2}>
-                    <Typography variant={'h2'}>{report?.title}</Typography>
-                </Box>
-                <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
-                    <Box
-                        sx={{
-                            borderBottom: 1,
-                            borderColor: 'divider'
-                        }}
-                    >
-                        <Tabs
-                            value={value}
-                            onChange={handleChange}
-                            aria-label="ReportCreatePage detail tabs"
-                        >
-                            <Tab label="Description" />
-                            <Tab label="Evidence" />
-                            <Tab label="Chat Logs" />
-                            <Tab label="Connections" />
-                        </Tabs>
+                <Stack spacing={2}>
+                    <Box padding={2}>
+                        <Typography variant={'h2'}>{report?.title}</Typography>
                     </Box>
+                    <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
+                        <Box
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider'
+                            }}
+                        >
+                            <Tabs
+                                value={value}
+                                onChange={handleChange}
+                                aria-label="ReportCreatePage detail tabs"
+                            >
+                                <Tab label="Description" />
+                                <Tab label="Evidence" />
+                                {currentUser.player.permission_level >=
+                                    PermissionLevel.Moderator && (
+                                    <>
+                                        <Tab label="Chat Logs" />
+                                        <Tab label="Connections" />
+                                    </>
+                                )}
+                            </Tabs>
+                        </Box>
 
-                    <TabPanel value={value} index={0}>
-                        {report && (
-                            <Typography variant={'body1'}>
-                                {report.description}
-                            </Typography>
-                        )}
-                    </TabPanel>
+                        <TabPanel value={value} index={0}>
+                            {report && (
+                                <Typography variant={'body1'}>
+                                    {report.description}
+                                </Typography>
+                            )}
+                        </TabPanel>
 
-                    <TabPanel index={value} value={1}>
-                        <ImageList variant="masonry" cols={3} gap={8}>
-                            {report.media_ids.map((item_id) => (
-                                <ImageListItem key={item_id}>
-                                    <img
-                                        src={`/api/download/report/${item_id}`}
-                                        alt={''}
-                                        loading="lazy"
-                                    />
-                                </ImageListItem>
-                            ))}
-                        </ImageList>
-                    </TabPanel>
+                        <TabPanel index={value} value={1}>
+                            <ImageList variant="masonry" cols={3} gap={8}>
+                                {(report.media_ids ?? []).map((item_id) => (
+                                    <ImageListItem key={item_id}>
+                                        <img
+                                            src={`/api/download/report/${item_id}`}
+                                            alt={''}
+                                            loading="lazy"
+                                        />
+                                    </ImageListItem>
+                                ))}
+                            </ImageList>
+                        </TabPanel>
 
-                    <TabPanel value={value} index={2}>
-                        <Stack>
-                            {logs &&
-                                logs.map((log, index) => {
-                                    return (
-                                        <Box key={index}>
-                                            <Typography variant={'body2'}>
-                                                {log.message}
-                                            </Typography>
-                                        </Box>
-                                    );
-                                })}
-                        </Stack>
-                    </TabPanel>
-                    <TabPanel value={value} index={3}>
-                        Connection history
-                    </TabPanel>
-                </Paper>
-                <Stack spacing={2} paddingTop={3}>
+                        <TabPanel value={value} index={2}>
+                            <Stack>
+                                {logs &&
+                                    logs.map((log, index) => {
+                                        return (
+                                            <Box key={index}>
+                                                <Typography variant={'body2'}>
+                                                    {log.message}
+                                                </Typography>
+                                            </Box>
+                                        );
+                                    })}
+                            </Stack>
+                        </TabPanel>
+                        <TabPanel value={value} index={3}>
+                            Connection history
+                        </TabPanel>
+                    </Paper>
+
                     {messages &&
                         messages.map((m) => (
                             <UserMessageView
@@ -209,33 +216,32 @@ export const ReportComponent = ({
                                 key={m.message.report_message_id}
                             />
                         ))}
-                </Stack>
-                <Paper elevation={1}>
-                    <Paper elevation={1} sx={{ marginTop: '1rem' }}>
-                        <TextField
-                            label="Comment"
-                            id="comment"
-                            minRows={10}
-                            variant={'filled'}
-                            margin={'normal'}
-                            multiline
-                            fullWidth
-                            value={comment}
-                            onChange={(v) => {
-                                setComment(v.target.value);
-                            }}
-                        />
-                        <Button
-                            onClick={onSubmitMessage}
-                            fullWidth
-                            variant={'contained'}
-                            color={'primary'}
-                            endIcon={<SendIcon />}
-                        >
-                            Send Comment
-                        </Button>
+                    <Paper elevation={1}>
+                        <Stack spacing={2} padding={1}>
+                            <TextField
+                                label="Comment"
+                                id="comment"
+                                minRows={10}
+                                variant={'outlined'}
+                                margin={'normal'}
+                                multiline
+                                fullWidth
+                                value={comment}
+                                onChange={(v) => {
+                                    setComment(v.target.value);
+                                }}
+                            />
+                            <Button
+                                onClick={onSubmitMessage}
+                                variant={'contained'}
+                                color={'success'}
+                                endIcon={<SendIcon />}
+                            >
+                                Send Comment
+                            </Button>
+                        </Stack>
                     </Paper>
-                </Paper>
+                </Stack>
             </Grid>
         </Grid>
     );

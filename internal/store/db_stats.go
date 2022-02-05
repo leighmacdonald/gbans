@@ -55,7 +55,7 @@ func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, stats 
 	queries := []statResult{
 		{&stats.Damage, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
 		{&stats.DamageTaken, statQueryOpts{targetId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
-		{&stats.Healing, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
+		{&stats.Healing, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Healed}, sumColumn: "healing"}},
 		{&stats.Shots, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.ShotFired}, countColumn: "*"}},
 		{&stats.Hits, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.ShotHit}, countColumn: "*"}},
 		{&stats.Kills, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},

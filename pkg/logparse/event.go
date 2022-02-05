@@ -110,6 +110,8 @@ type JarateAttackEvt struct {
 
 type MilkAttackEvt JarateAttackEvt
 
+type GasAttackEvt JarateAttackEvt
+
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type MedicDeathEvt struct {
 	EmptyEvt

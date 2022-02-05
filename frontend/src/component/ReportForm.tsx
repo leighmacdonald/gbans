@@ -26,6 +26,8 @@ import {
 } from '../api';
 import Typography from '@mui/material/Typography';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
+import { log } from '../util/errors';
+import { useNavigate } from 'react-router-dom';
 
 interface FormProps {
     uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
@@ -134,14 +136,19 @@ export const ReportForm = (): JSX.Element => {
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     const [profile, setProfile] = useState<PlayerProfile | null>();
     const [steamID, setSteamID] = useState<string>('');
-
+    const navigate = useNavigate();
     const submit = useCallback(async () => {
-        await apiCreateReport({
-            steam_id: profile?.player.steam_id as string,
-            title: title,
-            description: description,
-            media: uploadedFiles
-        });
+        try {
+            const report = await apiCreateReport({
+                steam_id: profile?.player.steam_id as string,
+                title: title,
+                description: description,
+                media: uploadedFiles
+            });
+            navigate(`/report/${report.report_id}`);
+        } catch (e) {
+            log(e);
+        }
     }, [title, description, uploadedFiles]);
 
     const titleIsError = title.length < 10;

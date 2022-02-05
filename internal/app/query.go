@@ -170,7 +170,7 @@ func getOrCreateProfileBySteamID(ctx context.Context, db store.PersonStore, sid 
 	if errGP := db.GetOrCreatePersonBySteamID(ctx, sid, p); errGP != nil {
 		return errors.Wrapf(errGP, "Failed to get person instance: %d", sid)
 	}
-	if config.Now().Sub(p.UpdatedOnSteam) > time.Minute*60 {
+	if p.IsNew || config.Now().Sub(p.UpdatedOnSteam) > time.Minute*60 {
 		sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get Player summary: %v", err)
@@ -193,9 +193,10 @@ func getOrCreateProfileBySteamID(ctx context.Context, db store.PersonStore, sid 
 			p.DaysSinceLastBan = vac[0].DaysSinceLastBan
 		}
 		p.UpdatedOnSteam = config.Now()
+		log.WithFields(log.Fields{"age": config.Now().Sub(p.UpdatedOnSteam).String()}).
+			Debugf("Profile updated successfully: %s [%d]", p.PersonaName, p.SteamID.Int64())
 	}
 	p.SteamID = sid
-
 	if errSave := db.SavePerson(ctx, p); errSave != nil {
 		return errors.Wrapf(errSave, "Failed to save person")
 	}
@@ -205,6 +206,5 @@ func getOrCreateProfileBySteamID(ctx context.Context, db store.PersonStore, sid 
 		}
 		p.IPAddr = net.ParseIP(ipAddr)
 	}
-	log.Debugf("Profile updated successfully: %s [%d]", p.PersonaName, p.SteamID.Int64())
 	return nil
 }

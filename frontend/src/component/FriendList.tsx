@@ -12,6 +12,7 @@ import ArrowRight from '@mui/icons-material/ArrowRight';
 import Button from '@mui/material/Button';
 import ListSubheader from '@mui/material/ListSubheader';
 import { Person } from '../api';
+import { useTheme } from '@mui/material';
 
 export interface FriendListProps {
     friends: Person[];
@@ -48,6 +49,7 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
             </Button>
         </ButtonGroup>
     );
+    const theme = useTheme();
     return (
         <Stack>
             <List
@@ -62,6 +64,11 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                     .slice(page * limit, page * limit + limit)
                     .map((p) => (
                         <ListItemButton
+                            color={
+                                p.vac_bans > 0
+                                    ? theme.palette.error.main
+                                    : undefined
+                            }
                             key={p.steamid}
                             onClick={() => {
                                 navigate(`/profile/${p.steamid}`);

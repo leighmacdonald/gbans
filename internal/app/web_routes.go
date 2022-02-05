@@ -124,7 +124,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	// Moderator access
 	modRoute := r.Use(authMiddleware(db, model.PModerator))
 	modRoute.POST("/api/ban", w.onAPIPostBanCreate(db))
-
+	modRoute.POST("/api/report/:report_id/state", w.onAPIPostBanState(db))
 	// Admin access
 	modAdmin := r.Use(authMiddleware(db, model.PAdmin))
 	modAdmin.POST("/api/server", w.onAPIPostServer(db))

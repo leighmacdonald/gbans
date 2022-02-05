@@ -28,7 +28,7 @@ var (
 	// Date stuff
 	d = `^L\s(?P<date>.+?)\s+-\s+(?P<time>.+?):\s+`
 	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>"
-	rxPlayerStr = `"?(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"?`
+	rxPlayerStr = `"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"`
 	rxPlayer    = regexp.MustCompile(rxPlayerStr)
 	// Most player events have the same common prefix
 	dp       = d + rxPlayerStr + `\s+`
@@ -40,7 +40,7 @@ var (
 	rxCVAR                 = regexp.MustCompile(d + `server_cvar:\s+"(?P<CVAR>.+?)"\s"(?P<value>.+?)"$`)
 	rxRCON                 = regexp.MustCompile(d + `[Rr][Cc][Oo][Nn] from "(?P<ip>.+?)": command "(?P<cmd>.+?)"$`)
 	rxConnected            = regexp.MustCompile(dp + `[Cc]onnected, address(\s"(?P<address>.+?)")?$`)
-	rxDisconnected         = regexp.MustCompile(dp + `[Dd]isconnected \(reason "(?P<reason>.+?)"?\)$`)
+	rxDisconnected         = regexp.MustCompile(dp + `[Dd]isconnected \(reason "(?P<reason>.+?)$`)
 	rxValidated            = regexp.MustCompile(dp + `STEAM USERID [vV]alidated$`)
 	rxEntered              = regexp.MustCompile(dp + `[Ee]ntered the game$`)
 	rxJoinedTeam           = regexp.MustCompile(dp + `joined team "(?P<team>(Red|Blue|Spectator|Unassigned))"$`)
@@ -63,6 +63,7 @@ var (
 	rxMedicDeath           = regexp.MustCompile(dp + `triggered "medic_death" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>"` + keyPairs)
 	rxJarateAttack         = regexp.MustCompile(dp + `triggered "jarate_attack" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>" with "(?P<weapon>.+?)"` + keyPairs)
 	rxMilkAttack           = regexp.MustCompile(dp + `triggered "milk_attack" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>" with "(?P<weapon>.+?)"` + keyPairs)
+	rxGasAttack            = regexp.MustCompile(dp + `triggered "gas_attack" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>" with "(?P<weapon>.+?)"` + keyPairs)
 	rxMedicDeathEx         = regexp.MustCompile(dp + `triggered "medic_death_ex"` + keyPairs)
 	rxLostUberAdv          = regexp.MustCompile(dp + `triggered "lost_uber_advantage"` + keyPairs)
 	rxChargeReady          = regexp.MustCompile(dp + `triggered "chargeready"`)
@@ -160,6 +161,7 @@ var (
 		{rxSteamAuth, SteamAuth},
 		{rxJarateAttack, JarateAttack},
 		{rxMilkAttack, MilkAttack},
+		{rxGasAttack, GasAttack},
 		{rxWMiniRoundWin, WMiniRoundWin},
 		{rxWMiniRoundLen, WMiniRoundLen},
 		{rxWRoundSetupBegin, WRoundSetupBegin},
@@ -351,8 +353,15 @@ func processKV(m map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range m {
 		switch k {
+		case "reason":
+			// Some reasons get output with a newline, so it gets these uneven line endings
+			reason := v.(string)
+			if strings.HasSuffix(reason, `")`) {
+				reason = reason[:len(reason)-2]
+			}
+			out["reason"] = reason
 		case "objectowner":
-			ooKV, ok := reSubMatchMap(rxPlayer, v.(string))
+			ooKV, ok := reSubMatchMap(rxPlayer, "\""+v.(string)+"\"")
 			if ok {
 				// TODO Make this less static to support >2 targets for events like capping points?
 				for key, val := range ooKV {

@@ -151,6 +151,33 @@ func (w *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 		})
 	}
 }
+func (w *web) onAPIPostBanState(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		banIDStr := c.Param("report_id")
+		if banIDStr == "" {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		reportId, err := strconv.ParseUint(banIDStr, 10, 32)
+		if err != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var report model.Report
+		if errReport := db.GetReport(c, int(reportId), &report); errReport != nil {
+			if errors.Is(errReport, store.ErrNoResult) {
+				responseErr(c, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		w.botSendMessageChan <- discordPayload{
+			channelId: "",
+			message:   nil,
+		}
+	}
+}
 
 type apiBanRequest struct {
 	SteamID    steamid.SID64 `json:"steam_id"`
@@ -650,13 +677,7 @@ func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		//sum, err3 := steamweb.PlayerSummaries(steamid.Collection{sid})
-		//if err3 != nil || len(sum) != 1 {
-		//	log.Errorf("Failed to get player summary: %v", err3)
-		//	responseErr(c, http.StatusInternalServerError, "Could not fetch summary")
-		//	return
-		//}
-		//person.PlayerSummary = &sum[0]
+
 		friendIDs, err4 := steam.FetchFriends(person.SteamID)
 		if err4 != nil {
 			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")

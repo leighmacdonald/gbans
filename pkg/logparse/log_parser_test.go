@@ -68,7 +68,7 @@ func TestParse(t *testing.T) {
 
 	var value5 EnteredEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:31: "Hacksaw<12><[U:1:68745073]><>" Entered the game`, Entered), &value5))
-	require.EqualValues(t, EmptyEvt{}, value5)
+	require.EqualValues(t, EnteredEvt{}, value5)
 
 	var value6 JoinedTeamEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:35: "Hacksaw<12><[U:1:68745073]><Unassigned>" joined team "Red"`, JoinedTeam), &value6))
@@ -394,9 +394,25 @@ func TestParse(t *testing.T) {
 		APos:         Pos{X: -1040, Y: -854, Z: 128},
 		VPos:         Pos{X: -1516, Y: -382, Z: 128},
 	}, value57)
-	// L 01/31/2022 - 02:42:53: "Sir Lance Alot<2851><[U:1:838033385]><Blue>" triggered "jarate_attack" against "joe_nathan<2836><[U:1:80764671]><Red>" with "tf_weapon_jar" (attacker_position "-1836 1453 320") (victim_position "-1058 2205 128")
-	//L 01/31/2022 - 02:42:53: "mushroom taco<1663><[U:1:137288966]><Red>" triggered "domination" against "=[MEAT]=D3thw01F<1679><[U:1:11391667]><Blue>"
-	//L 01/31/2022 - 02:42:53: "FS Gambleputty<1301><[U:1:236391333]><Blue>" triggered "milk_attack" against "Uncle Majic the Hip Hop Magicia<1336><[U:1:147658575]><Red>" with "tf_weapon_jar" (attacker_position "-1688 -4913 -285") (victim_position "-1728 -4663 -291")
+	var value58 MilkAttackEvt
+	require.NoError(t, Unmarshal(pa(`L 02/04/2022 - 18:41:10: "UnEpic<6760><[U:1:132169058]><Blue>" triggered "gas_attack" against "Johnny Blaze<6800><[U:1:33228413]><Red>" with "tf_weapon_jar" (attacker_position "-4539 2731 156") (victim_position "-4384 1527 128")`, GasAttack), &value58))
+	require.EqualValues(t, GasAttackEvt{
+		SourcePlayer: SourcePlayer{Name: "UnEpic", PID: 6760, SID: steamid.SID3ToSID64("[U:1:132169058]"), Team: BLU},
+		TargetPlayer: TargetPlayer{Name2: "Johnny Blaze", PID2: 6800, SID2: steamid.SID3ToSID64("[U:1:33228413]"), Team2: RED},
+		Weapon:       JarBased,
+		APos:         Pos{X: -4539, Y: 2731, Z: 156},
+		VPos:         Pos{X: -4384, Y: 1527, Z: 128},
+	}, value58)
+
+	var value59 DisconnectedEvt
+	require.NoError(t, Unmarshal(pa(`L 02/05/2022 - 01:32:59: "Imperi<248><[U:1:1008044562]><Red>" disconnected (reason "Client left game (Steam auth ticket has been canceled)`, Disconnected), &value59))
+	require.EqualValues(t, DisconnectedEvt{SourcePlayer: SourcePlayer{Name: "Imperi", PID: 248, SID: steamid.SID3ToSID64("[U:1:1008044562]"), Team: RED},
+		Reason: "Client left game (Steam auth ticket has been canceled)"}, value59)
+	//L 02/05/2022 - 01:48:25: "Cudgeon<7124><[U:1:89643594]><Red>" triggered "flagevent" (event "dropped") (position "218 -601 -250")
+	//L 02/05/2022 - 01:49:51: World triggered "Round_Stalemate"
+	//L 02/05/2022 - 01:50:19: Started map "pl_frontier_final" (CRC "4a7ee13f724b4abd41219f056539c53c")
+	//L 02/05/2022 - 01:50:33: "Myst<291><[U:1:102591589]><Red>" disconnected (reason "Client left game (Steam auth ticket has been canceled)
+	//")
 
 }
 
