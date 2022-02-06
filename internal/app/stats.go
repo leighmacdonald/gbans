@@ -108,10 +108,9 @@ func NewStatTrak() StatTrak {
 func (s *StatTrak) getStatByMonth(st statType, year int, month time.Month, extraId int64) any {
 	switch st {
 	case globalStats:
-		y, found := s.globalByMonth[year]
+		_, found := s.globalByMonth[year]
 		if !found {
-			y = map[time.Month]*model.GlobalStats{}
-			s.globalByMonth[year] = y
+			s.globalByMonth[year] = map[time.Month]*model.GlobalStats{}
 		}
 		return s.globalByMonth[year][month]
 	case serverStats:
@@ -127,10 +126,9 @@ func (s *StatTrak) getStatByMonth(st statType, year int, month time.Month, extra
 		}
 		return y
 	default: // playerStats
-		y, found := s.playersByMonth[year]
+		_, found := s.playersByMonth[year]
 		if !found {
-			y = map[time.Month]*model.PlayerStats{}
-			s.playersByMonth[year] = y
+			s.playersByMonth[year] = map[time.Month]*model.PlayerStats{}
 		}
 		return s.playersByMonth[year][month]
 	}
@@ -139,10 +137,9 @@ func (s *StatTrak) getStatByMonth(st statType, year int, month time.Month, extra
 func (s *StatTrak) getStatByWeek(st statType, year int, week int, extraId int64) any {
 	switch st {
 	case globalStats:
-		y, found := s.globalByWeek[year]
+		_, found := s.globalByWeek[year]
 		if !found {
-			y = map[int]*model.GlobalStats{}
-			s.globalByWeek[year] = y
+			s.globalByWeek[year] = map[int]*model.GlobalStats{}
 		}
 		return s.globalByWeek[year][week]
 	case serverStats:
@@ -158,10 +155,9 @@ func (s *StatTrak) getStatByWeek(st statType, year int, week int, extraId int64)
 		}
 		return y
 	default: // playerStats
-		y, found := s.playersByWeek[year]
+		_, found := s.playersByWeek[year]
 		if !found {
-			y = map[int]*model.PlayerStats{}
-			s.playersByDay[year] = y
+			s.playersByDay[year] = map[int]*model.PlayerStats{}
 		}
 		return s.playersByWeek[year][week]
 	}
@@ -170,10 +166,9 @@ func (s *StatTrak) getStatByWeek(st statType, year int, week int, extraId int64)
 func (s *StatTrak) getStatByDay(st statType, year int, day int, extraId int64) any {
 	switch st {
 	case globalStats:
-		y, found := s.globalByDay[year]
+		_, found := s.globalByDay[year]
 		if !found {
-			y = map[int]*model.GlobalStats{}
-			s.globalByDay[year] = y
+			s.globalByDay[year] = map[int]*model.GlobalStats{}
 		}
 		return s.globalByDay[year][day]
 	case serverStats:

@@ -271,19 +271,7 @@ func (c playerCache) cleanupWorker() {
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(db store.Store) {
-	getPlayer := func(id string, v map[string]any) *model.Person {
-		sid1Str, ok := v[id]
-		if ok {
-			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-			p := model.NewPerson(s)
-			if err := db.GetOrCreatePersonBySteamID(ctx, s, &p); err != nil {
-				log.Errorf("Failed to load player1 %s: %s", sid1Str, err.Error())
-				return nil
-			}
-			return &p
-		}
-		return nil
-	}
+
 	var f *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errOf error
@@ -291,139 +279,40 @@ func logReader(db store.Store) {
 		if errOf != nil {
 			log.Panicf("Failed to open debug message log: %v", errOf)
 		}
-		defer f.Close()
+		defer func() {
+			if errClose := f.Close(); errClose != nil {
+				log.Errorf("Failed to close unhandled_messages.log: %v", errClose)
+			}
+		}()
 	}
+
+	getPlayer := func(id string, v map[string]any, p *model.Person) error {
+		sid1Str, ok := v[id]
+		if ok {
+			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
+			if err := db.GetOrCreatePersonBySteamID(ctx, s, p); err != nil {
+				return errors.Wrapf(err, "Failed to load player1 %s: %s", sid1Str, err.Error())
+			}
+			return nil
+		}
+		return nil
+	}
+
+	getServer := func(serverName string, s *model.Server) error {
+		return nil
+	}
+
 	playerStateCache := newPlayerCache()
 	for {
 		select {
 		case raw := <-logRawQueue:
-			v := logparse.Parse(raw.Message)
-			var s model.Server
-			if e := db.GetServerByName(ctx, raw.ServerName, &s); e != nil {
-				log.Errorf("Failed to get server for log message: %v", e)
+			var se model.ServerEvent
+			errSE := logToServerEvent(raw, playerStateCache, &se, getPlayer, getServer)
+			if errSE != nil {
+				log.Errorf("Failed to parse: %v", errSE)
 				continue
 			}
-			var source = getPlayer("sid", v.Values)
-			var target = getPlayer("sid2", v.Values)
-			var (
-				apos, vpos, aspos logparse.Pos
-			)
-			aposValue, aposFound := v.Values["attacker_position"]
-			if aposFound {
-				var apv logparse.Pos
-				if err := logparse.ParsePOS(aposValue.(string), &apv); err != nil {
-					log.Warnf("Failed to parse attacker position: %v", err)
-				}
-				apos = apv
-				delete(v.Values, "attacker_position")
-			}
-			vposValue, vposFound := v.Values["victim_position"]
-			if vposFound {
-				var vpv logparse.Pos
-				if err := logparse.ParsePOS(vposValue.(string), &vpv); err != nil {
-					log.Warnf("Failed to parse victim position: %v", err)
-				}
-				vpos = vpv
-				delete(v.Values, "victim_position")
-			}
-			asValue, asFound := v.Values["assister_position"]
-			if asFound {
-				var asPosValue logparse.Pos
-				if err := logparse.ParsePOS(asValue.(string), &asPosValue); err != nil {
-					log.Warnf("Failed to parse assister position: %v", err)
-				}
-				aspos = asPosValue
-				delete(v.Values, "assister_position")
-			}
-			weapon := logparse.UnknownWeapon
-			weaponValue, weaponFound := v.Values["weapon"]
-			if weaponFound {
-				weapon = logparse.ParseWeapon(weaponValue.(string))
-			}
-			var class logparse.PlayerClass
-			classValue, classFound := v.Values["class"]
-			if classFound {
-				if !logparse.ParsePlayerClass(classValue.(string), &class) {
-					class = logparse.Spectator
-				}
-				delete(v.Values, "class")
-			} else if source != nil {
-				class = playerStateCache.getClass(source.SteamID)
-			}
-			var damage int64
-			dmgValue, dmgFound := v.Values["realdamage"]
-			if !dmgFound {
-				dmgValue, dmgFound = v.Values["damage"]
-			}
-			if dmgFound {
-				damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
-				if err != nil {
-					log.Warnf("failed to parse damage value: %v", err)
-				}
-				damage = damageP
-				delete(v.Values, "realdamage")
-				delete(v.Values, "damage")
-			}
-			var item logparse.PickupItem
-			itemValue, itemFound := v.Values["item"]
-			if itemFound {
-				if !logparse.ParsePickupItem(itemValue.(string), &item) {
-					item = 0
-				}
-			}
-
-			var team logparse.Team
-			teamValue, teamFound := v.Values["team"]
-			if teamFound {
-				if !logparse.ParseTeam(teamValue.(string), &team) {
-					team = 0
-				}
-			} else {
-				if source != nil {
-					team = playerStateCache.getTeam(source.SteamID)
-				}
-			}
-
-			var healing int64
-			healingValue, healingFound := v.Values["healing"]
-			if healingFound {
-				healingP, err := strconv.ParseInt(healingValue.(string), 10, 32)
-				if err != nil {
-					log.Warnf("failed to parse healing value: %v", err)
-				}
-				healing = healingP
-			}
-			// Remove keys that get mapped to actual schema columns
-			for _, k := range []string{
-				"time", "date", "item", "weapon", "healing",
-				"name", "pid", "sid", "team",
-				"name2", "pid2", "sid2", "team2"} {
-				delete(v.Values, k)
-			}
-			se := model.ServerEvent{
-				Server:      &s,
-				EventType:   v.MsgType,
-				Source:      source,
-				Target:      target,
-				PlayerClass: class,
-				Team:        team,
-				Item:        item,
-				Weapon:      weapon,
-				Damage:      damage,
-				AttackerPOS: apos,
-				VictimPOS:   vpos,
-				AssisterPOS: aspos,
-				Healing:     healing,
-				CreatedOn:   config.Now(),
-				MetaData:    v.Values,
-			}
-			switch v.MsgType {
-			case logparse.SpawnedAs:
-				playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
-			case logparse.JoinedTeam:
-				playerStateCache.setTeam(se.Source.SteamID, se.Team)
-			}
-			if v.MsgType == logparse.UnknownMsg {
+			if se.EventType == logparse.UnknownMsg {
 				if _, errWrite := f.WriteString(raw.Message + "\n"); errWrite != nil {
 					log.Errorf("Failed to write debug log: %v", errWrite)
 				}
@@ -434,6 +323,155 @@ func logReader(db store.Store) {
 			return
 		}
 	}
+}
+
+type getPlayerFn func(id string, v map[string]any, p *model.Person) error
+type getServerFn func(serverName string, s *model.Server) error
+
+func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
+	se *model.ServerEvent, getPlayer getPlayerFn, getServer getServerFn) error {
+
+	v := logparse.Parse(raw.Message)
+	var s model.Server
+	if errServer := getServer(raw.ServerName, &s); errServer != nil {
+		return errors.Wrapf(errServer, "Failed to get server for log message: %v", raw.Message)
+	}
+	var src model.Person
+	errSrc := getPlayer("sid", v.Values, &src)
+	if errSrc != nil {
+
+	} else {
+		se.Source = &src
+	}
+	var tar model.Person
+	if errTar := getPlayer("sid2", v.Values, &tar); errTar != nil {
+
+	} else {
+		se.Target = &tar
+	}
+	aposValue, aposFound := v.Values["attacker_position"]
+	if aposFound {
+		var apv logparse.Pos
+		if err := logparse.ParsePOS(aposValue.(string), &apv); err != nil {
+			log.Warnf("Failed to parse attacker position: %v", err)
+		}
+		se.AttackerPOS = apv
+		delete(v.Values, "attacker_position")
+	}
+	vposValue, vposFound := v.Values["victim_position"]
+	if vposFound {
+		var vpv logparse.Pos
+		if err := logparse.ParsePOS(vposValue.(string), &vpv); err != nil {
+			log.Warnf("Failed to parse victim position: %v", err)
+		}
+		se.VictimPOS = vpv
+		delete(v.Values, "victim_position")
+	}
+	asValue, asFound := v.Values["assister_position"]
+	if asFound {
+		var asPosValue logparse.Pos
+		if err := logparse.ParsePOS(asValue.(string), &asPosValue); err != nil {
+			log.Warnf("Failed to parse assister position: %v", err)
+		}
+		se.AssisterPOS = asPosValue
+		delete(v.Values, "assister_position")
+	}
+	weapon := logparse.UnknownWeapon
+	weaponValue, weaponFound := v.Values["weapon"]
+	if weaponFound {
+		weapon = logparse.ParseWeapon(weaponValue.(string))
+	}
+	se.Weapon = weapon
+
+	var class logparse.PlayerClass
+	classValue, classFound := v.Values["class"]
+	if classFound {
+		if !logparse.ParsePlayerClass(classValue.(string), &class) {
+			class = logparse.Spectator
+		}
+		delete(v.Values, "class")
+	} else if se.Source != nil {
+		class = playerStateCache.getClass(se.Source.SteamID)
+	}
+	se.PlayerClass = class
+
+	var damage int64
+	dmgValue, dmgFound := v.Values["realdamage"]
+	if !dmgFound {
+		dmgValue, dmgFound = v.Values["damage"]
+	}
+	if dmgFound {
+		damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
+		if err != nil {
+			log.Warnf("failed to parse damage value: %v", err)
+		}
+		damage = damageP
+		delete(v.Values, "realdamage")
+		delete(v.Values, "damage")
+	}
+	se.Damage = damage
+
+	var item logparse.PickupItem
+	itemValue, itemFound := v.Values["item"]
+	if itemFound {
+		if !logparse.ParsePickupItem(itemValue.(string), &item) {
+			item = 0
+		}
+	}
+	se.Item = item
+
+	var team logparse.Team
+	teamValue, teamFound := v.Values["team"]
+	if teamFound {
+		if !logparse.ParseTeam(teamValue.(string), &team) {
+			team = 0
+		}
+	} else {
+		if se.Source != nil {
+			team = playerStateCache.getTeam(se.Source.SteamID)
+		}
+	}
+	se.Team = team
+
+	healingValue, healingFound := v.Values["healing"]
+	if healingFound {
+		healingP, err := strconv.ParseInt(healingValue.(string), 10, 32)
+		if err != nil {
+			log.Warnf("failed to parse healing value: %v", err)
+		}
+		se.Healing = healingP
+	}
+	// Remove keys that get mapped to actual schema columns
+	for _, k := range []string{
+		"time", "date", "item", "weapon", "healing",
+		"name", "pid", "sid", "team",
+		"name2", "pid2", "sid2", "team2"} {
+		delete(v.Values, k)
+	}
+	//se = model.ServerEvent{
+	//	Server:      &s,
+	//	EventType:   v.MsgType,
+	//	Source:      source,
+	//	Target:      target,
+	//	PlayerClass: class,
+	//	Team:        team,
+	//	Item:        item,
+	//	Weapon:      weapon,
+	//	Damage:      damage,
+	//	AttackerPOS: apos,
+	//	VictimPOS:   vpos,
+	//	AssisterPOS: aspos,
+	//	Healing:     healing,
+	//	CreatedOn:   config.Now(),
+	//	MetaData:    v.Values,
+	//}
+	switch v.MsgType {
+	case logparse.SpawnedAs:
+		playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
+	case logparse.JoinedTeam:
+		playerStateCache.setTeam(se.Source.SteamID, se.Team)
+	}
+	return nil
 }
 
 // addWarning records a user warning into memory. This is not persistent, so application

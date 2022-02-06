@@ -1,11 +1,5 @@
 package app
 
-import (
-	"github.com/leighmacdonald/gbans/internal/config"
-	"os"
-	"testing"
-)
-
 //func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
 //	w := httptest.NewRecorder()
 //	r.ServeHTTP(w, req)
@@ -53,12 +47,6 @@ import (
 //	return token
 //}
 //
-func TestMain(m *testing.M) {
-	config.Read()
-	config.General.Mode = config.TestMode
-
-	os.Exit(m.Run())
-}
 
 //
 //func TestAPICheck(t *testing.T) {

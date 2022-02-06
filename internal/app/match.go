@@ -1,6 +1,7 @@
-package model
+package app
 
 import (
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"time"
@@ -11,32 +12,53 @@ import (
 type Match struct {
 	Title             string
 	Map               string
-	PlayerSums        []MatchPlayerSum
-	MedicSums         []MatchMedicSum
+	PlayerSums        map[steamid.SID64]MatchPlayerSum
+	MedicSums         map[steamid.SID64]MatchMedicSum
 	TeamSums          map[logparse.Team]MatchTeamSum
 	Rounds            []MatchRoundSum
 	ClassKills        MatchPlayerClassSums
 	ClassKillsAssists MatchPlayerClassSums
 	ClassDeaths       MatchPlayerClassSums
+
+	playerCache playerCache
+}
+
+func (m Match) Apply(event model.ServerEvent) error {
+	switch event.EventType {
+
+	}
+	return nil
+}
+
+func NewMatch() Match {
+	return Match{
+		Title:             "",
+		Map:               "",
+		PlayerSums:        map[steamid.SID64]MatchPlayerSum{},
+		MedicSums:         map[steamid.SID64]MatchMedicSum{},
+		TeamSums:          map[logparse.Team]MatchTeamSum{},
+		Rounds:            nil,
+		ClassKills:        MatchPlayerClassSums{},
+		ClassKillsAssists: MatchPlayerClassSums{},
+		ClassDeaths:       MatchPlayerClassSums{},
+	}
 }
 
 type MatchPlayerSum struct {
-	Team         logparse.Team
-	Name         string
-	TimeStart    time.Time
-	TimeEnd      time.Time
-	Kills        int
-	Assists      int
-	Deaths       int
-	Damage       int
-	DamagePerMin int
-	DamageTaken  int
-	HealthPacks  int
-	BackStabs    int
-	HeadShots    int
-	Airshots     int
-	Captures     int
-	Classes      []logparse.PlayerClass
+	Team        logparse.Team
+	TimeStart   time.Time
+	TimeEnd     time.Time
+	Kills       int
+	Assists     int
+	Deaths      int
+	Damage      int
+	DamageTaken int
+	HealthPacks int
+	BackStabs   int
+	HeadShots   int
+	Airshots    int
+	Captures    int
+	Classes     []logparse.PlayerClass
 }
 
 type TeamScores struct {
@@ -58,12 +80,13 @@ type MatchRoundSum struct {
 
 type MatchMedicSum struct {
 	Healing             int
-	Charges             map[logparse.Weapon]int
+	Charges             map[logparse.Medigun]int
 	Drops               int
 	AvgTimeToBuild      int
 	AvgTimeBeforeUse    int
 	NearFullChargeDeath int
 	AvgUberLength       float32
+	DeathAfterCharge    int
 	MajorAdvLost        int
 	BiggestAdvLost      int
 	HealTargets         MatchPlayerClassSums
@@ -77,8 +100,8 @@ type MatchClassSums struct {
 	Heavy    int
 	Engineer int
 	Medic    int
-	Spy      int
 	Sniper   int
+	Spy      int
 }
 
 func (m MatchClassSums) Sum() int {
@@ -90,10 +113,10 @@ func (m MatchClassSums) Sum() int {
 type MatchPlayerClassSums map[steamid.SID64]MatchClassSums
 
 type MatchTeamSum struct {
-	Kills        int
-	Damage       int
-	Charges      int
-	Drops        int
-	Caps         int
-	MidFightsRed map[logparse.Team]int
+	Kills     int
+	Damage    int
+	Charges   int
+	Drops     int
+	Caps      int
+	MidFights int
 }
