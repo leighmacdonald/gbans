@@ -52,6 +52,7 @@ var (
 	rxDamage               = regexp.MustCompile(dp + `triggered "[dD]amage" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"` + keyPairs)
 	rxDamageOld            = regexp.MustCompile(dp + `triggered "[dD]amage" \(damage "(?P<damage>\d+)"\)`)
 	rxKilled               = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)"` + keyPairs)
+	rxKilledCustom         = regexp.MustCompile(dp + `killed "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>" with "(?P<weapon>.+?)"\s+(\(customkill "(?P<customkill>.+?)"\))` + keyPairs)
 	rxAssist               = regexp.MustCompile(dp + `triggered "kill assist" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"` + keyPairs)
 	rxDomination           = regexp.MustCompile(dp + `triggered "[Dd]omination" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Red|Blue)?)>"`)
 	rxRevenge              = regexp.MustCompile(dp + `triggered "[Rr]evenge" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue|Spectator)?)>"\s?(\(assist "(?P<assist>\d+)"\))?`)
@@ -112,6 +113,7 @@ var (
 		{rxShotHit, ShotHit},
 		{rxDamage, Damage},
 		{rxDamageOld, Damage},
+		{rxKilledCustom, KilledCustom}, // Must come before Killed
 		{rxKilled, Killed},
 		{rxHealed, Healed},
 		{rxAssist, KillAssist},
@@ -353,6 +355,15 @@ func processKV(m map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range m {
 		switch k {
+		case "crit":
+			switch v.(string) {
+			case "crit":
+				out["crit"] = Crit
+			case "mini":
+				out["crit"] = Mini
+			default:
+				out["crit"] = NonCrit
+			}
 		case "reason":
 			// Some reasons get output with a newline, so it gets these uneven line endings
 			reason := v.(string)

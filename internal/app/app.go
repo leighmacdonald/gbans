@@ -115,10 +115,10 @@ func Start() error {
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
 func warnWorker() {
-	t := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
-		case <-t.C:
+		case <-ticker.C:
 			now := config.Now()
 			warningsMu.Lock()
 			for k := range warnings {
@@ -171,12 +171,6 @@ func logWriter(db store.StatStore) {
 				continue
 			}
 			logCache = append(logCache, evt)
-			// Update immediately if we have enough volume
-			if len(logCache) >= 1000 {
-				t.Stop()
-				f()
-				t.Reset(freq)
-			}
 		case <-t.C:
 			f()
 		case <-ctx.Done():
@@ -206,7 +200,7 @@ func newPlayerCache() *playerCache {
 	return &pc
 }
 
-func (c playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
+func (c *playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
 	c.Lock()
 	defer c.Unlock()
 	s, found := c.state[sid]
@@ -218,7 +212,7 @@ func (c playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
 	c.state[sid] = s
 }
 
-func (c playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
+func (c *playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
 	c.Lock()
 	defer c.Unlock()
 	s, found := c.state[sid]
@@ -230,7 +224,7 @@ func (c playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
 	c.state[sid] = s
 }
 
-func (c playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
+func (c *playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
 	c.RLock()
 	defer c.RUnlock()
 	pc, found := c.state[sid]
@@ -240,7 +234,7 @@ func (c playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
 	return pc.class
 }
 
-func (c playerCache) getTeam(sid steamid.SID64) logparse.Team {
+func (c *playerCache) getTeam(sid steamid.SID64) logparse.Team {
 	c.RLock()
 	defer c.RUnlock()
 	pc, found := c.state[sid]
@@ -250,7 +244,7 @@ func (c playerCache) getTeam(sid steamid.SID64) logparse.Team {
 	return pc.team
 }
 
-func (c playerCache) cleanupWorker() {
+func (c *playerCache) cleanupWorker() {
 	t := time.NewTicker(20 * time.Second)
 	for {
 		select {
@@ -336,6 +330,7 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 	if errServer := getServer(raw.ServerName, &s); errServer != nil {
 		return errors.Wrapf(errServer, "Failed to get server for log message: %v", raw.Message)
 	}
+	se.EventType = v.MsgType
 	var src model.Person
 	errSrc := getPlayer("sid", v.Values, &src)
 	if errSrc != nil {
@@ -376,6 +371,13 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 		se.AssisterPOS = asPosValue
 		delete(v.Values, "assister_position")
 	}
+
+	critType, critTypeFound := v.Values["crit"]
+	if critTypeFound {
+		se.Crit = critType.(logparse.CritType)
+		delete(v.Values, "crit")
+	}
+
 	weapon := logparse.UnknownWeapon
 	weaponValue, weaponFound := v.Values["weapon"]
 	if weaponFound {
@@ -396,20 +398,28 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 	se.PlayerClass = class
 
 	var damage int64
-	dmgValue, dmgFound := v.Values["realdamage"]
-	if !dmgFound {
-		dmgValue, dmgFound = v.Values["damage"]
-	}
+	dmgValue, dmgFound := v.Values["damage"]
 	if dmgFound {
 		damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
 		if err != nil {
 			log.Warnf("failed to parse damage value: %v", err)
 		}
 		damage = damageP
-		delete(v.Values, "realdamage")
 		delete(v.Values, "damage")
 	}
 	se.Damage = damage
+
+	var realDamage int64
+	realDmgValue, realDmgFound := v.Values["realdamage"]
+	if realDmgFound {
+		realDamageP, err := strconv.ParseInt(realDmgValue.(string), 10, 32)
+		if err != nil {
+			log.Warnf("failed to parse damage value: %v", err)
+		}
+		realDamage = realDamageP
+		delete(v.Values, "realdamage")
+	}
+	se.RealDamage = realDamage
 
 	var item logparse.PickupItem
 	itemValue, itemFound := v.Values["item"]
@@ -448,23 +458,7 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 		"name2", "pid2", "sid2", "team2"} {
 		delete(v.Values, k)
 	}
-	//se = model.ServerEvent{
-	//	Server:      &s,
-	//	EventType:   v.MsgType,
-	//	Source:      source,
-	//	Target:      target,
-	//	PlayerClass: class,
-	//	Team:        team,
-	//	Item:        item,
-	//	Weapon:      weapon,
-	//	Damage:      damage,
-	//	AttackerPOS: apos,
-	//	VictimPOS:   vpos,
-	//	AssisterPOS: aspos,
-	//	Healing:     healing,
-	//	CreatedOn:   config.Now(),
-	//	MetaData:    v.Values,
-	//}
+	se.MetaData = v.Values
 	switch v.MsgType {
 	case logparse.SpawnedAs:
 		playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
@@ -535,7 +529,7 @@ func initWorkers(db store.Store, botSendMessageChan chan discordPayload) {
 	go banSweeper(db)
 	go mapChanger(db, time.Second*5)
 	go serverStateUpdater(db)
-	go profileUpdater(db)
+	//go profileUpdater(db)
 	go warnWorker()
 	go logReader(db)
 	go logWriter(db)

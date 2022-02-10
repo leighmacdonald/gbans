@@ -151,7 +151,7 @@ export const ReportForm = (): JSX.Element => {
         }
     }, [title, description, uploadedFiles]);
 
-    const titleIsError = title.length < 10;
+    const titleIsError = title.length > 0 && title.length < 5;
     return (
         <Stack spacing={3} padding={3}>
             <Box>

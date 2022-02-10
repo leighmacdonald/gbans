@@ -68,7 +68,6 @@ func profileUpdater(db store.PersonStore) {
 			return
 		}
 	}
-
 }
 
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
@@ -257,6 +256,7 @@ func mapChanger(db store.ServerStore, timeout time.Duration) {
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
+// TODO save history
 func banSweeper(db store.Store) {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
@@ -272,8 +272,8 @@ func banSweeper(db store.Store) {
 					log.Warnf("Failed to get expired bans: %v", err)
 				} else {
 					for _, ban := range bans {
-						if err := db.DropBan(ctx, &ban); err != nil {
-							log.Errorf("Failed to drop expired ban: %v", err)
+						if errDrop := db.DropBan(ctx, &ban); errDrop != nil {
+							log.Errorf("Failed to drop expired ban: %v", errDrop)
 						} else {
 							log.Infof("ban expired: %v", ban)
 						}

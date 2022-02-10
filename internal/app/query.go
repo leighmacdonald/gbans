@@ -200,11 +200,5 @@ func getOrCreateProfileBySteamID(ctx context.Context, db store.PersonStore, sid 
 	if errSave := db.SavePerson(ctx, p); errSave != nil {
 		return errors.Wrapf(errSave, "Failed to save person")
 	}
-	if ipAddr != "" {
-		if errIP := db.AddPersonIP(ctx, p, ipAddr); errIP != nil {
-			return errors.Wrapf(errIP, "Could not add ip record")
-		}
-		p.IPAddr = net.ParseIP(ipAddr)
-	}
 	return nil
 }

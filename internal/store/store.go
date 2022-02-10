@@ -75,8 +75,6 @@ type PersonStore interface {
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
 	GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error
 	GetPersonByDiscordID(ctx context.Context, did string, p *model.Person) error
-	AddPersonIP(ctx context.Context, p *model.Person, ip string) error
-	GetIPHistory(ctx context.Context, sid64 steamid.SID64) ([]model.PersonIPRecord, error)
 	GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error)
 }
 
@@ -109,7 +107,7 @@ type NetworkStore interface {
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetLocationRecord(ctx context.Context, ip net.IP, l *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ip net.IP, l *ip2location.ProxyRecord) error
-	GetPersonIPHistory(ctx context.Context, sid steamid.SID64) ([]model.PersonIPRecord, error)
+	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error)
 }
 
 // Store defines our composite store interface encapsulating all store interfaces

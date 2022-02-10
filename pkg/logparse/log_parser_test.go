@@ -80,7 +80,8 @@ func TestParse(t *testing.T) {
 
 	var value7 ChangeClassEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:22:36: "Hacksaw<12><[U:1:68745073]><Red>" changed role to "scout"`, ChangeClass), &value7))
-	require.EqualValues(t, ChangeClassEvt{Class: Scout}, value7)
+	require.EqualValues(t, ChangeClassEvt{SourcePlayer: SourcePlayer{
+		Name: "Hacksaw", PID: 12, SID: steamid.SID3ToSID64("[U:1:68745073]"), Team: RED}, Class: Scout}, value7)
 
 	var value8 SuicideEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:04: "Dzefersons14<8><[U:1:1080653073]><Blue>" committed suicide with "world" (attacker_position "-1189 2513 -423")`, Suicide), &value8))
@@ -104,8 +105,19 @@ func TestParse(t *testing.T) {
 		Uber:    0}, value10)
 
 	var value11 KilledEvt
-	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:44: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "spy_cicle" (customkill "backstab") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, Killed), &value11))
+	require.NoError(t, Unmarshal(pa(`L 02/05/2022 - 06:39:07: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "brass_beast" (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, Killed), &value11))
 	require.EqualValues(t, KilledEvt{
+		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
+		TargetPlayer: TargetPlayer{Name2: "Dzefersons14", PID2: 8,
+			SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: BLU,
+		},
+		APos:   Pos{X: 217, Y: -54, Z: -302},
+		VPos:   Pos{X: 203, Y: -2, Z: -319},
+		Weapon: BrassBeast}, value11)
+
+	var value11b CustomKilledEvt
+	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:44: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "spy_cicle" (customkill "backstab") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, KilledCustom), &value11b))
+	require.EqualValues(t, CustomKilledEvt{
 		SourcePlayer: SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: 0x1100001437efe91, Team: 1},
 		TargetPlayer: TargetPlayer{Name2: "Dzefersons14", PID2: 8,
 			SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: BLU,
@@ -113,7 +125,7 @@ func TestParse(t *testing.T) {
 		APos:       Pos{X: 217, Y: -54, Z: -302},
 		VPos:       Pos{X: 203, Y: -2, Z: -319},
 		Weapon:     Spycicle,
-		CustomKill: "backstab"}, value11)
+		CustomKill: "backstab"}, value11b)
 
 	var value12 KillAssistEvt
 	require.NoError(t, Unmarshal(pa(`L 02/21/2021 - 06:23:44: "Hacksaw<12><[U:1:68745073]><Red>" triggered "kill assist" against "Dzefersons14<8><[U:1:1080653073]><Blue>" (assister_position "-476 154 -254") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`, KillAssist), &value12))
@@ -408,6 +420,24 @@ func TestParse(t *testing.T) {
 	require.NoError(t, Unmarshal(pa(`L 02/05/2022 - 01:32:59: "Imperi<248><[U:1:1008044562]><Red>" disconnected (reason "Client left game (Steam auth ticket has been canceled)`, Disconnected), &value59))
 	require.EqualValues(t, DisconnectedEvt{SourcePlayer: SourcePlayer{Name: "Imperi", PID: 248, SID: steamid.SID3ToSID64("[U:1:1008044562]"), Team: RED},
 		Reason: "Client left game (Steam auth ticket has been canceled)"}, value59)
+
+	var value60 ChangeClassEvt
+	require.NoError(t, Unmarshal(pa(`L 02/05/2022 - 06:22:21: "var<3><[U:1:204626678]><Blue>" changed role to "scout"`, ChangeClass), &value60))
+	require.EqualValues(t, ChangeClassEvt{SourcePlayer: SourcePlayer{Name: "var", PID: 3, SID: steamid.SID3ToSID64("[U:1:204626678]"), Team: BLU},
+		Class: Scout}, value60)
+
+	var value61 DamageEvt
+	require.NoError(t, Unmarshal(pa(`L 02/05/2022 - 06:23:01: "Lochlore<22><[U:1:127176886]><Blue>" triggered "damage" against "Doctrine<20><[U:1:1090182064]><Red>" (damage "762") (realdamage "127") (weapon "knife") (crit "crit")`, Damage), &value61))
+	require.EqualValues(t, DamageEvt{
+		SourcePlayer: SourcePlayer{Name: "Lochlore", PID: 22, SID: steamid.SID3ToSID64("[U:1:127176886]"), Team: BLU},
+		TargetPlayer: TargetPlayer{Name2: "Doctrine", PID2: 20, SID2: steamid.SID3ToSID64("[U:1:1090182064]"), Team2: RED},
+		Damage:       762,
+		RealDamage:   127,
+		Weapon:       Knife,
+		Crit:         Crit,
+	}, value61)
+	// TODO
+	//L 02/05/2022 - 06:39:37: Team "RED" triggered "Intermission_Win_Limit"
 	//L 02/05/2022 - 01:48:25: "Cudgeon<7124><[U:1:89643594]><Red>" triggered "flagevent" (event "dropped") (position "218 -601 -250")
 	//L 02/05/2022 - 01:49:51: World triggered "Round_Stalemate"
 	//L 02/05/2022 - 01:50:19: Started map "pl_frontier_final" (CRC "4a7ee13f724b4abd41219f056539c53c")

@@ -1,3 +1,6 @@
+import { ReportStatus } from './report';
+import { format, parseISO } from 'date-fns';
+
 export enum PermissionLevel {
     Guest = 1,
     Banned = 2,
@@ -134,6 +137,18 @@ export interface TimeStamped {
     updated_on: Date;
 }
 
+export const renderDate = (d: Date | string): string => {
+    switch (typeof d) {
+        case 'object': {
+            return format(d, 'yyyy-mm-dd');
+        }
+        case 'string':
+            return format(parseISO(d), 'yyyy-mm-dd');
+        default:
+            return `${d}`;
+    }
+};
+
 export interface QueryFilter {
     offset?: number;
     limit?: number;
@@ -144,5 +159,9 @@ export interface QueryFilter {
 }
 
 export interface AuthorQueryFilter extends QueryFilter {
-    author_id: string;
+    author_id?: string;
+}
+
+export interface ReportQueryFilter extends AuthorQueryFilter {
+    report_status?: ReportStatus;
 }

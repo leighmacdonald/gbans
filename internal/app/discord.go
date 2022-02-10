@@ -1,4 +1,3 @@
-// Package discord implements the ChatBot interface using discord as the underlying chat service
 package app
 
 import (
@@ -160,7 +159,7 @@ func (b *discord) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 		Activities: []*discordgo.Activity{
 			{
 				Name:     "Cheeseburgers",
-				Type:     discordgo.ActivityTypeStreaming,
+				Type:     discordgo.ActivityTypeListening,
 				URL:      "https://" + config.HTTP.Addr(),
 				State:    "state field",
 				Details:  "Blah",

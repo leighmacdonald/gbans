@@ -115,7 +115,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	log.Debugf("Updated secret mappings")
 }
 
-// Start initiates the udp network log read loop. DNS names are used to
+// start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
 func (remoteSrc *remoteSrcdsLogSource) start() {

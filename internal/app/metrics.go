@@ -94,7 +94,10 @@ func logMetricsConsumer() {
 		case <-ctx.Done():
 			return
 		case e := <-c:
-			logEventCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+			if e.Server != nil {
+				// TODO why is this ever nil?
+				logEventCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+			}
 			switch e.EventType {
 			case logparse.Damage:
 				damageCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Add(float64(e.Damage))

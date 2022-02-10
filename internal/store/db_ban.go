@@ -53,7 +53,7 @@ func (db *pgStore) getBanByColumn(ctx context.Context, column string, identifier
 			b.HistoryChat = h
 		}
 		b.HistoryConnections = []string{}
-		ips, _ := db.GetIPHistory(ctx, b.Person.SteamID)
+		ips, _ := db.GetPersonIPHistory(ctx, b.Person.SteamID, 10000)
 		b.HistoryIP = ips
 		b.HistoryPersonaName = []string{}
 	}

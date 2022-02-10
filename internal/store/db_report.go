@@ -127,6 +127,11 @@ type AuthorQueryFilter struct {
 	AuthorId int64 `json:"author_id,string"`
 }
 
+type ReportQueryFilter struct {
+	AuthorQueryFilter
+	ReportStatus model.ReportStatus `json:"report_status"`
+}
+
 func (db *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error) {
 	var conditions sq.And
 	conditions = append(conditions, sq.Eq{"deleted": opts.Deleted})

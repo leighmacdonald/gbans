@@ -2,6 +2,7 @@ package logparse
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -52,6 +53,7 @@ const (
 	JarateAttack        EventType = 52
 	MilkAttack          EventType = 53
 	GasAttack           EventType = 54
+	KilledCustom                  = 55
 
 	// World events not attached to specific players
 
@@ -86,6 +88,14 @@ const (
 	SteamAuth        EventType = 1010
 
 	Any EventType = 10000
+)
+
+type CritType int
+
+const (
+	NonCrit CritType = iota
+	Mini
+	Crit
 )
 
 // Team represents a players team, or spectator state
@@ -262,6 +272,7 @@ const (
 	LongHeatmaker
 	LooseCannon
 	LooseCannonImpact
+	Lugermorph
 	Machina
 	MachinaPen
 	MarketGardener
@@ -406,6 +417,7 @@ var weaponNames = map[Weapon]string{
 	LongHeatmaker:        "long_heatmaker",
 	LooseCannon:          "loose_cannon",
 	LooseCannonImpact:    "loose_cannon_impact",
+	Lugermorph:           "maxgun",
 	Machina:              "machina",
 	MachinaPen:           "player_penetration",
 	MarketGardener:       "market_gardener",
@@ -471,6 +483,7 @@ var Weapons = map[PlayerClass][]Weapon{
 		ConscientiousObjector,
 		FryingPan,
 		HamShank,
+		Lugermorph,
 		NecroSmasher,
 		Pistol,
 		ReserveShooter,
@@ -607,4 +620,29 @@ var Weapons = map[PlayerClass][]Weapon{
 		SharpDresser,
 		Spycicle,
 	},
+}
+
+var backStabWeapons = []Weapon{
+	BigEarner,
+	EternalReward,
+	BlackRose,
+	Knife,
+	Kunai,
+	Spycicle,
+	SharpDresser,
+	SniperRifle,
+	Machina,
+	Ambassador,
+	DiamondBack,
+	MarketGardener,
+	// kgb
+	Backburner,
+	AwperHand,
+	ProRifle,
+	ShootingStar,
+	TheClassic,
+}
+
+func IsCritWeapon(weapon Weapon) bool {
+	return fp.Contains[Weapon](backStabWeapons, weapon)
 }

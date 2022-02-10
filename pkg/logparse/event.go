@@ -87,7 +87,7 @@ type JoinedTeamEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChangeClassEvt struct {
-	EmptyEvt
+	SourcePlayer
 	Class PlayerClass `json:"class"`
 }
 
@@ -132,10 +132,20 @@ type KilledEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
+	APos   Pos    `json:"attacker_position" mapstructure:"attacker_position"`
+	VPos   Pos    `json:"victim_position" mapstructure:"victim_position"`
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
+}
+
+//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type CustomKilledEvt struct {
+	EmptyEvt
+	SourcePlayer
+	TargetPlayer
 	APos       Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	VPos       Pos    `json:"victim_position" mapstructure:"victim_position"`
+	CustomKill string `json:"customkill"  mapstructure:"customkill"`
 	Weapon     Weapon `json:"weapon" mapstructure:"weapon"`
-	CustomKill string `json:"custom_kill"  mapstructure:"customkill"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -322,10 +332,11 @@ type DamageEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	Damage     int    `json:"damage"`
-	RealDamage int    `json:"real_damage"`
-	Weapon     Weapon `json:"weapon"`
-	Healing    int    `json:"healing,omitempty"` // On ubersaw
+	Damage     int      `json:"damage"`
+	RealDamage int      `json:"real_damage"`
+	Weapon     Weapon   `json:"weapon"`
+	Healing    int      `json:"healing,omitempty"` // On ubersaw
+	Crit       CritType `json:"crit"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

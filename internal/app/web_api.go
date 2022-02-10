@@ -344,13 +344,6 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 			})
 			return
 		}
-		if errUpdateIp := db.AddPersonIP(c, &person, req.IP.String()); errUpdateIp != nil {
-			responseErr(c, http.StatusInternalServerError, checkResponse{
-				BanType: model.Unknown,
-				Msg:     "Error determining state",
-			})
-			return
-		}
 		// Check IP first
 		banNet, err := db.GetBanNet(c, req.IP)
 		if err != nil {

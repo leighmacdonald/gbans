@@ -21,3 +21,13 @@ func TestFilter_Match(t *testing.T) {
 	}
 	require.True(t, f.Match("super pooooooper"))
 }
+
+//
+//func TestServerEvent(t *testing.T) {
+//	se := ServerEvent{
+//		MetaData: map[string]any{
+//			"crit": "1",
+//			"headshot": "0",
+//		},
+//	}
+//}

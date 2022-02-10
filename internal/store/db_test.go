@@ -241,13 +241,8 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, p2.SteamID, p2Fetched.SteamID)
 	pBadID := model.NewPerson(0)
 	require.Error(t, testDb.GetPersonBySteamID(ctx, 0, &pBadID))
-	ips, eH := testDb.GetIPHistory(ctx, p1.SteamID)
+	_, eH := testDb.GetPersonIPHistory(ctx, p1.SteamID, 1000)
 	require.NoError(t, eH)
-	require.NoError(t, testDb.AddPersonIP(ctx, &p1, "10.0.0.2"), "failed to add ip record")
-	require.NoError(t, testDb.AddPersonIP(ctx, &p1, "10.0.0.3"), "failed to add 2nd ip record")
-	ipsUpdated, eH2 := testDb.GetIPHistory(ctx, p1.SteamID)
-	require.NoError(t, eH2)
-	require.True(t, len(ipsUpdated)-len(ips) == 2)
 	require.NoError(t, testDb.DropPerson(ctx, p1.SteamID))
 }
 

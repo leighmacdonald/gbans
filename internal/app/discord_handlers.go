@@ -475,11 +475,11 @@ func (b *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, m *disc
 	if errP := PersonBySID(b.db, sid, "", &p); errP != nil {
 		return errCommandFailed
 	}
-	records, errIPH := b.db.GetIPHistory(ctx, sid)
+	records, errIPH := b.db.GetPersonIPHistory(ctx, sid, 20)
 	if errIPH != nil && errIPH != store.ErrNoResult {
 		return errCommandFailed
 	}
-	e := respOk(r, fmt.Sprintf("Chat History of: %s", p.PersonaName))
+	e := respOk(r, fmt.Sprintf("IP History of: %s", p.PersonaName))
 	lastIp := net.IP{}
 	for _, l := range records {
 		if l.IP.Equal(lastIp) {

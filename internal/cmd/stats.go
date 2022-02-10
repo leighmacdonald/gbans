@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -30,7 +29,6 @@ var statsRebuildCmd = &cobra.Command{
 			inputChan        = make(chan model.ServerEvent)
 			offset    uint64 = 0
 			limit     uint64 = 100_000
-			acc              = app.NewStatTrak()
 		)
 		var errRead error
 		for errRead == nil {
@@ -39,10 +37,8 @@ var statsRebuildCmd = &cobra.Command{
 				log.Errorf("Error fetching replat logs: %v", errFetch)
 				break
 			}
-			for _, row := range rows {
-				if errRead = acc.Read(row); errRead != nil {
-					break
-				}
+			for range rows {
+				// do stuff
 			}
 			offset++
 		}
