@@ -91,11 +91,24 @@ func TestMatch_Apply(t *testing.T) {
 		assert.Equal(t, match3124689.playerSums[sid].Healing,
 			m.playerSums[sid].Healing, "Healing incorrect %v", getName(sid))
 	}
+	for sid := range match3124689.playerSums {
+		assert.Equal(t, match3124689.playerSums[sid].Dominations,
+			m.playerSums[sid].Dominations, "Dominations incorrect %v", getName(sid))
+	}
+
+	for sid := range match3124689.playerSums {
+		assert.Equal(t, match3124689.playerSums[sid].Revenges,
+			m.playerSums[sid].Revenges, "Revenges incorrect %v", getName(sid))
+	}
 
 	// Medic sums
 	for sid := range match3124689.medicSums {
 		assert.Equal(t, match3124689.medicSums[sid].Drops,
 			m.medicSums[sid].Drops, "Drops incorrect %v", getName(sid))
+	}
+	for sid := range match3124689.medicSums {
+		assert.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
+			m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	}
 }
 
@@ -128,21 +141,27 @@ func testMatch() (Match, map[string]steamid.SID64) {
 		mapName: "koth_cascade_rc2",
 		playerSums: map[steamid.SID64]*MatchPlayerSum{
 			name["var"]: {
-				Team:        logparse.BLU,
-				TimeStart:   time.Time{},
-				TimeEnd:     time.Time{},
-				Kills:       12,
-				Assists:     10,
-				Deaths:      14,
-				Damage:      5078,
-				DamageTaken: 5399,
-				HealthPacks: 16,
-				BackStabs:   0,
-				HeadShots:   0,
-				Airshots:    0,
-				Captures:    3,
-				Classes:     []logparse.PlayerClass{logparse.Scout},
-				Healing:     370,
+				Team:              logparse.BLU,
+				TimeStart:         time.Time{},
+				TimeEnd:           time.Time{},
+				Dominations:       0,
+				Revenges:          0,
+				Dominated:         0,
+				Shots:             0,
+				Hits:              0,
+				BuildingDestroyed: 0,
+				Kills:             12,
+				Assists:           10,
+				Deaths:            14,
+				Damage:            5078,
+				DamageTaken:       5399,
+				HealthPacks:       16,
+				BackStabs:         0,
+				HeadShots:         0,
+				Airshots:          0,
+				Captures:          3,
+				Classes:           []logparse.PlayerClass{logparse.Scout},
+				Healing:           370,
 			},
 			name["para"]: {
 				Team:        logparse.BLU,

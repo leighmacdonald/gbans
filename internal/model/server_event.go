@@ -66,7 +66,18 @@ func (m ServerEvent) GetValueInt64(key string) int64 {
 	if !found {
 		return 0
 	}
-	return v.(int64)
+	switch v.(type) {
+	case string:
+		value, errConv := strconv.ParseInt(v.(string), 10, 64)
+		if errConv != nil {
+			log.WithFields(log.Fields{"key": key}).Errorf("Failed to parse key value: %v", errConv)
+		}
+		return value
+	case float64:
+		return v.(int64)
+	default:
+		return v.(int64)
+	}
 }
 
 func (m ServerEvent) GetValueInt(key string) int {

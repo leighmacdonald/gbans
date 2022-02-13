@@ -14,3 +14,4 @@ Just a semi-categorized list of TODOs in no particular order
 ## Ban / Report
 
 - Check for multiple accounts from the same IP on connect, send alert to discord, other actions...
+- Log attempts to join w/ban

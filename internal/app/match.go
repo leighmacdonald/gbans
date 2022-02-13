@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -106,14 +107,17 @@ func (m *Match) Apply(event model.ServerEvent) error {
 			m.shotHit(event.Source.SteamID)
 		case logparse.MedicDeath:
 			if event.GetValueBool("ubercharge") {
-				m.drop(event.Source.SteamID)
+				// TODO record source player stat
+				m.drop(event.Target.SteamID)
 			}
+		case logparse.MedicDeathEx:
+			m.medicDeath(event.Source.SteamID, event.GetValueInt("uberpct"))
 		case logparse.Domination:
 			m.domination(event.Source.SteamID, event.Target.SteamID)
 		case logparse.Revenge:
 			m.revenge(event.Source.SteamID)
 		case logparse.Damage:
-			// Its a pub, so why not count over kill dmg
+			// It's a pub, so why not count over kill dmg
 			if m.useRealDmg {
 				m.damage(event.Source.SteamID, event.Target.SteamID, event.RealDamage)
 			} else {
@@ -159,6 +163,10 @@ func (m *Match) getPlayerSum(sid steamid.SID64) *MatchPlayerSum {
 	_, ok := m.playerSums[sid]
 	if !ok {
 		m.playerSums[sid] = &MatchPlayerSum{}
+		if m.inMatch {
+			// Account for people who joined after Round_start event
+			m.playerSums[sid].touch()
+		}
 	}
 	return m.playerSums[sid]
 }
@@ -179,6 +187,9 @@ func (m *Match) addClass(sid steamid.SID64, class logparse.PlayerClass) {
 			// Allocate for a new medic
 			m.medicSums[sid] = &MatchMedicSum{}
 		}
+	}
+	if m.inMatch {
+		p.touch()
 	}
 }
 
@@ -229,6 +240,12 @@ func (m *Match) drop(source steamid.SID64) {
 	m.getMedicSum(source).Drops++
 }
 
+func (m *Match) medicDeath(source steamid.SID64, uberPct int) {
+	if uberPct > 95 && uberPct < 100 {
+		m.getMedicSum(source).NearFullChargeDeath++
+	}
+}
+
 func NewMatch() Match {
 	return Match{
 		MatchID:           0,
@@ -271,6 +288,15 @@ type MatchPlayerSum struct {
 	BuildingBuilt     int
 	BuildingDestroyed int
 	Classes           []logparse.PlayerClass
+	timeStart         *time.Time
+	timeEnd           *time.Time
+}
+
+func (p *MatchPlayerSum) touch() {
+	if p.timeStart == nil {
+		t := config.Now()
+		p.timeStart = &t
+	}
 }
 
 type TeamScores struct {
