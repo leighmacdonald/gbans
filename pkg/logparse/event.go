@@ -8,7 +8,7 @@ import (
 // EmptyEvt is the base event for all other events. It just contains a timestamp.
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type EmptyEvt struct {
-	CreatedOn time.Time `json:"created_on"`
+	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -87,6 +87,7 @@ type JoinedTeamEvt struct {
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChangeClassEvt struct {
+	EmptyEvt
 	SourcePlayer
 	Class PlayerClass `json:"class"`
 }

@@ -5,11 +5,8 @@
 package logparse
 
 import (
-	"fmt"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/mapstructure"
-	log "github.com/sirupsen/logrus"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -26,7 +23,7 @@ var (
 	rxKVPairs = regexp.MustCompile(`\((?P<key>.+?)\s+"(?P<value>.+?)"\)`)
 
 	// Date stuff
-	d = `^L\s(?P<date>.+?)\s+-\s+(?P<time>.+?):\s+`
+	d = `^L\s(?P<created_on>.+?):\s+`
 	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>"
 	rxPlayerStr = `"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"`
 	rxPlayer    = regexp.MustCompile(rxPlayerStr)
@@ -330,14 +327,13 @@ func parsePos(posStr string, pos *Pos) bool {
 	return true
 }
 
-func parseDateTime(dateStr, timeStr string) time.Time {
-	fDateStr := fmt.Sprintf("%s %s", dateStr, timeStr)
-	t, err := time.Parse("01/02/2006 15:04:05", fDateStr)
+func parseDateTime(dateStr string, t *time.Time) bool {
+	parsed, err := time.Parse("01/02/2006 - 15:04:05", dateStr)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to parse date: %s", fDateStr)
-		return config.Now()
+		return false
 	}
-	return t
+	*t = parsed
+	return true
 }
 
 func parseKVs(s string, out map[string]any) bool {
@@ -355,6 +351,11 @@ func processKV(m map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range m {
 		switch k {
+		//case "created_on":
+		//	var t time.Time
+		//	if parseDateTime(v.(string), &t) {
+		//		out["created_on"] = t
+		//	}
 		case "crit":
 			switch v.(string) {
 			case "crit":
@@ -419,7 +420,7 @@ func Parse(l string) Results {
 	}
 	m, found := reSubMatchMap(rxUnhandled, l)
 	if found {
-		return Results{IgnoredMsg, m}
+		return Results{IgnoredMsg, processKV(m)}
 	}
 	return Results{UnknownMsg, map[string]any{"raw": l}}
 }
@@ -518,12 +519,26 @@ func decodeWeapon() mapstructure.DecodeHookFunc {
 	}
 }
 
+func decodeTime() mapstructure.DecodeHookFunc {
+	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
+		if f.Kind() != reflect.String {
+			return d, nil
+		}
+		var t0 time.Time
+		if parseDateTime(d.(string), &t0) {
+			return t0, nil
+		}
+		return d, nil
+	}
+}
+
 // Unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 func Unmarshal(input any, output any) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			decodeTime(),
 			decodeTeam(),
 			decodePlayerClass(),
 			decodePos(),
