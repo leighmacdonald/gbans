@@ -38,7 +38,7 @@ func init() {
 	ctx = context.Background()
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logRawQueue = make(chan model.LogPayload, 1000)
+	logRawQueue = make(chan model.LogPayload, 100000)
 	discordSendMsg = make(chan discordPayload)
 }
 
@@ -150,7 +150,7 @@ func logWriter(db store.StatStore) {
 		freq = time.Second * 5
 	)
 	var logCache []model.ServerEvent
-	events := make(chan model.ServerEvent, 1000)
+	events := make(chan model.ServerEvent, 100000)
 	if err := event.RegisterConsumer(events, []logparse.EventType{logparse.Any}); err != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
@@ -171,6 +171,9 @@ func logWriter(db store.StatStore) {
 				continue
 			}
 			logCache = append(logCache, evt)
+			if len(logCache) >= 500 {
+				f()
+			}
 		case <-t.C:
 			f()
 		case <-ctx.Done():
@@ -265,7 +268,6 @@ func (c *playerCache) cleanupWorker() {
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(db store.Store) {
-
 	var f *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errOf error
@@ -293,7 +295,7 @@ func logReader(db store.Store) {
 	}
 
 	getServer := func(serverName string, s *model.Server) error {
-		return nil
+		return db.GetServerByName(ctx, serverName, s)
 	}
 
 	playerStateCache := newPlayerCache()
@@ -330,6 +332,8 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 	if errServer := getServer(raw.ServerName, &s); errServer != nil {
 		return errors.Wrapf(errServer, "Failed to get server for log message: %v", raw.Message)
 	}
+
+	se.Server = &s
 	se.EventType = v.MsgType
 	var src model.Person
 	errSrc := getPlayer("sid", v.Values, &src)
@@ -451,9 +455,17 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 		}
 		se.Healing = healingP
 	}
+
+	createdOnValue, createdOnFound := v.Values["created_on"]
+	if !createdOnFound {
+		return errors.New("created_on missing")
+	}
+
+	se.CreatedOn = createdOnValue.(time.Time)
+
 	// Remove keys that get mapped to actual schema columns
 	for _, k := range []string{
-		"time", "date", "item", "weapon", "healing",
+		"created_on", "item", "weapon", "healing",
 		"name", "pid", "sid", "team",
 		"name2", "pid2", "sid2", "team2"} {
 		delete(v.Values, k)

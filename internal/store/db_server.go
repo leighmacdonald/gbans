@@ -7,7 +7,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	net2 "net"
+	"time"
 )
 
 var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
@@ -272,6 +274,7 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 		          ST_SetSRID(ST_MakePoint($16, $17, $18), 4326)
 			END, $19, $20, $21)`
 	)
+	t0 := config.Now()
 	tx, err := db.c.Begin(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to prepare logWriter query: %v", err)
@@ -280,9 +283,6 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 	if errP != nil {
 		return errors.Wrapf(errP, "Failed to prepare logWriter query: %v", errP)
 	}
-	lCtx, cancel := context.WithTimeout(ctx, config.DB.LogWriteFreq/2)
-	defer cancel()
-
 	var re error
 	for _, lg := range logs {
 		if lg.Server == nil || lg.Server.ServerID <= 0 {
@@ -297,7 +297,7 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 			target = lg.Target.SteamID
 		}
 
-		if _, re = tx.Exec(lCtx, stmtName, lg.Server.ServerID, lg.EventType,
+		if _, re = tx.Exec(ctx, stmtName, lg.Server.ServerID, lg.EventType,
 			source.Int64(), target.Int64(), lg.CreatedOn, lg.Weapon, lg.Damage,
 			lg.Item, lg.PlayerClass,
 			lg.AttackerPOS.Y, lg.AttackerPOS.X, lg.AttackerPOS.Z,
@@ -309,13 +309,15 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 		}
 	}
 	if re != nil {
-		if errR := tx.Rollback(lCtx); errR != nil {
+		if errR := tx.Rollback(ctx); errR != nil {
 			return errors.Wrapf(errR, "BatchInsertServerLogs rollback failed")
 		}
 		return errors.Wrapf(re, "Failed to commit log entries")
 	}
-	if errC := tx.Commit(lCtx); errC != nil {
+	if errC := tx.Commit(ctx); errC != nil {
 		return errors.Wrapf(errC, "Failed to commit log entries")
 	}
+	log.WithFields(log.Fields{"count": len(logs), "duration": time.Since(t0).String()}).
+		Debug("Wrote event logs successfully")
 	return nil
 }

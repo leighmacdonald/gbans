@@ -84,6 +84,10 @@ func TestMatch_Apply(t *testing.T) {
 			m.playerSums[sid].Kills, "Kills incorrect %v", getName(sid))
 	}
 	for sid := range match3124689.playerSums {
+		assert.Equal(t, match3124689.playerSums[sid].Deaths,
+			m.playerSums[sid].Deaths, "Deaths incorrect %v", getName(sid))
+	}
+	for sid := range match3124689.playerSums {
 		assert.Equal(t, match3124689.playerSums[sid].Damage,
 			m.playerSums[sid].Damage, "Damage incorrect %v", getName(sid))
 	}
@@ -100,6 +104,10 @@ func TestMatch_Apply(t *testing.T) {
 		assert.Equal(t, match3124689.playerSums[sid].Revenges,
 			m.playerSums[sid].Revenges, "Revenges incorrect %v", getName(sid))
 	}
+	for sid := range match3124689.playerSums {
+		assert.Equal(t, match3124689.playerSums[sid].Classes,
+			m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
+	}
 
 	// Medic sums
 	for sid := range match3124689.medicSums {
@@ -109,6 +117,15 @@ func TestMatch_Apply(t *testing.T) {
 	for sid := range match3124689.medicSums {
 		assert.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
 			m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
+	}
+	for sid := range match3124689.medicSums {
+		assert.Equal(t, match3124689.medicSums[sid].Charges,
+			m.medicSums[sid].Charges, "Charges incorrect %v", getName(sid))
+	}
+
+	for team := range match3124689.teamSums {
+		assert.Equal(t, match3124689.teamSums[team].Kills,
+			m.teamSums[team].Kills, "[Team] Kills incorrect %v", team)
 	}
 }
 
@@ -170,6 +187,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       9,
 				Assists:     1,
 				Deaths:      23,
+				Revenges:    1,
 				Damage:      4022,
 				DamageTaken: 4616,
 				HealthPacks: 27,
@@ -187,6 +205,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       13,
 				Assists:     8,
 				Deaths:      5,
+				Dominations: 1,
 				Damage:      3873,
 				DamageTaken: 3537,
 				HealthPacks: 16,
@@ -204,6 +223,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       13,
 				Assists:     4,
 				Deaths:      16,
+				Dominations: 1,
 				Damage:      7598,
 				DamageTaken: 6936,
 				HealthPacks: 10,
@@ -219,6 +239,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				TimeStart:   time.Time{},
 				TimeEnd:     time.Time{},
 				Kills:       18,
+				Dominations: 1,
 				Assists:     1,
 				Deaths:      9,
 				Damage:      7250,
@@ -238,6 +259,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       3,
 				Assists:     1,
 				Deaths:      14,
+				Revenges:    1,
 				Damage:      3385,
 				DamageTaken: 3246,
 				HealthPacks: 16,
@@ -272,6 +294,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       7,
 				Assists:     0,
 				Deaths:      19,
+				Revenges:    1,
 				Damage:      2809,
 				DamageTaken: 4023,
 				HealthPacks: 5,
@@ -288,7 +311,8 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				TimeEnd:     time.Time{},
 				Kills:       13,
 				Assists:     4,
-				Deaths:      17,
+				Deaths:      16,
+				Revenges:    1,
 				Damage:      9672,
 				DamageTaken: 3450,
 				HealthPacks: 23,
@@ -306,6 +330,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       12,
 				Assists:     1,
 				Deaths:      17,
+				Revenges:    1,
 				Damage:      8796,
 				DamageTaken: 3517,
 				HealthPacks: 22,
@@ -323,6 +348,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       28,
 				Assists:     5,
 				Deaths:      11,
+				Dominations: 4,
 				Damage:      6236,
 				DamageTaken: 2932,
 				HealthPacks: 46,
@@ -340,6 +366,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       26,
 				Assists:     2,
 				Deaths:      9,
+				Dominations: 4,
 				Damage:      6107,
 				DamageTaken: 4053,
 				HealthPacks: 29,
@@ -357,6 +384,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       9,
 				Assists:     13,
 				Deaths:      8,
+				Dominations: 1,
 				Damage:      4613,
 				DamageTaken: 5054,
 				HealthPacks: 16,
@@ -391,6 +419,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       15,
 				Assists:     6,
 				Deaths:      11,
+				Revenges:    1,
 				Damage:      6708,
 				DamageTaken: 8299,
 				HealthPacks: 20,
@@ -408,6 +437,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Kills:       18,
 				Assists:     9,
 				Deaths:      12,
+				Dominations: 2,
 				Damage:      6309,
 				DamageTaken: 4655,
 				HealthPacks: 23,

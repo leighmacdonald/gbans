@@ -107,6 +107,17 @@ const (
 	BLU  Team = 2
 )
 
+func (t Team) Opponent() Team {
+	switch t {
+	case RED:
+		return BLU
+	case BLU:
+		return RED
+	default:
+		return SPEC
+	}
+}
+
 // Pos is a position in 3D space
 type Pos struct {
 	X float64 `json:"x"`

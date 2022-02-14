@@ -351,11 +351,16 @@ func processKV(m map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range m {
 		switch k {
-		//case "created_on":
-		//	var t time.Time
-		//	if parseDateTime(v.(string), &t) {
-		//		out["created_on"] = t
-		//	}
+		case "created_on":
+			var t time.Time
+			if parseDateTime(v.(string), &t) {
+				out["created_on"] = t
+			}
+		case "medigun":
+			var mg Medigun
+			if ParseMedigun(v.(string), &mg) {
+				out["medigun"] = mg
+			}
 		case "crit":
 			switch v.(string) {
 			case "crit":
@@ -543,7 +548,7 @@ func Unmarshal(input any, output any) error {
 			decodePlayerClass(),
 			decodePos(),
 			decodeSID3(),
-			decodeMedigun(),
+			//decodeMedigun(),
 			decodePickupItem(),
 			decodeWeapon(),
 		),
