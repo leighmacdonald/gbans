@@ -31,7 +31,7 @@
     "test:coverage": "jest --coverage --colors"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.5",
+    "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.5",
     "@material-ui/core": "^4.12.1",
     "@material-ui/icons": "^4.11.2",
