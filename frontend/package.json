@@ -39,7 +39,7 @@
     "@types/chai": "^4.3.0",
     "@types/copy-webpack-plugin": "^10.1.0",
     "@types/es6-promise": "^3.3.0",
-    "@types/jest": "^27.0.3",
+    "@types/jest": "^27.4.1",
     "@types/jquery": "^3.5.11",
     "@types/lodash": "^4.14.178",
     "@types/lodash-es": "^4.17.5",
