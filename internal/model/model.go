@@ -317,6 +317,7 @@ type Server struct {
 	CC         string              `json:"cc"`
 	Location   ip2location.LatLong `json:"location"`
 	DefaultMap string              `json:"default_map"`
+	LogSecret  int                 `json:"log_secret"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`

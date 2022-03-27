@@ -155,7 +155,7 @@ func logWriter(db store.StatStore) {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	t := time.NewTicker(freq)
-	var f = func() {
+	var writeLogs = func() {
 		if len(logCache) == 0 {
 			return
 		}
@@ -172,10 +172,10 @@ func logWriter(db store.StatStore) {
 			}
 			logCache = append(logCache, evt)
 			if len(logCache) >= 500 {
-				f()
+				writeLogs()
 			}
 		case <-t.C:
-			f()
+			writeLogs()
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return

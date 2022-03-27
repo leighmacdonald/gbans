@@ -171,9 +171,10 @@ type logConfig struct {
 }
 
 type debugConfig struct {
-	UpdateSRCDSLogSecrets   bool `mapstructure:"update_srcds_log_secrets"`
-	SkipOpenIDValidation    bool `mapstructure:"skip_open_id_validation"`
-	WriteUnhandledLogEvents bool `mapstructure:"write_unhandled_log_events"`
+	UpdateSRCDSLogSecrets   bool   `mapstructure:"update_srcds_log_secrets"`
+	SkipOpenIDValidation    bool   `mapstructure:"skip_open_id_validation"`
+	WriteUnhandledLogEvents bool   `mapstructure:"write_unhandled_log_events"`
+	AddRCONLogAddress       string `mapstructure:"add_rcon_log_address"`
 }
 
 type netBans struct {

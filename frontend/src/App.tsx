@@ -116,7 +116,13 @@ export const App = (): JSX.Element => {
                                                 <Route
                                                     path={'/report'}
                                                     element={
-                                                        <ReportCreatePage />
+                                                        <PrivateRoute
+                                                            permission={
+                                                                PermissionLevel.Authenticated
+                                                            }
+                                                        >
+                                                            <ReportCreatePage />
+                                                        </PrivateRoute>
                                                     }
                                                 />
                                                 <Route

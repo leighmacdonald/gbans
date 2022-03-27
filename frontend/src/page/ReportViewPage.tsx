@@ -18,6 +18,7 @@ import Avatar from '@mui/material/Avatar';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { PlayerBanForm } from '../component/PlayerBanForm';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
@@ -46,56 +47,64 @@ export const ReportViewPage = (): JSX.Element => {
                 <Stack spacing={2}>
                     {currentUser.player.permission_level >=
                         PermissionLevel.Moderator && (
-                        <Paper elevation={1}>
-                            <List
-                                subheader={
-                                    <ListSubheader
-                                        component="div"
-                                        id="nested-list-subheader"
-                                    >
-                                        Moderation Tools
-                                    </ListSubheader>
-                                }
-                            >
-                                <ListItem>
-                                    <Stack sx={{ width: '100%' }} spacing={2}>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="select-label">
-                                                Action
-                                            </InputLabel>
-                                            <Select
-                                                labelId="select-label"
-                                                id="simple-select"
-                                                value={modAction}
-                                                label="Report State"
-                                                onChange={handleChange}
-                                            >
-                                                <MenuItem value={0}>
-                                                    Opened
-                                                </MenuItem>
-                                                <MenuItem value={1}>
-                                                    Need More Info
-                                                </MenuItem>
-                                                <MenuItem value={2}>
-                                                    Closed
-                                                </MenuItem>
-                                                <MenuItem value={3}>
-                                                    Closed (Banned)
-                                                </MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                        <Button
-                                            fullWidth
-                                            variant={'contained'}
-                                            color={'primary'}
-                                            endIcon={<SendIcon />}
+                        <>
+                            <Paper elevation={1}>
+                                <List
+                                    subheader={
+                                        <ListSubheader
+                                            component="div"
+                                            id="nested-list-subheader"
                                         >
-                                            Set State
-                                        </Button>
-                                    </Stack>
-                                </ListItem>
-                            </List>
-                        </Paper>
+                                            Moderation Tools
+                                        </ListSubheader>
+                                    }
+                                >
+                                    <ListItem>
+                                        <Stack
+                                            sx={{ width: '100%' }}
+                                            spacing={2}
+                                        >
+                                            <FormControl fullWidth>
+                                                <InputLabel id="select-label">
+                                                    Action
+                                                </InputLabel>
+                                                <Select
+                                                    labelId="select-label"
+                                                    id="simple-select"
+                                                    value={modAction}
+                                                    label="Report State"
+                                                    onChange={handleChange}
+                                                >
+                                                    <MenuItem value={0}>
+                                                        Opened
+                                                    </MenuItem>
+                                                    <MenuItem value={1}>
+                                                        Need More Info
+                                                    </MenuItem>
+                                                    <MenuItem value={2}>
+                                                        Closed
+                                                    </MenuItem>
+                                                    <MenuItem value={3}>
+                                                        Closed (Banned)
+                                                    </MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                            <Button
+                                                fullWidth
+                                                variant={'contained'}
+                                                color={'primary'}
+                                                endIcon={<SendIcon />}
+                                            >
+                                                Set Report State
+                                            </Button>
+                                        </Stack>
+                                    </ListItem>
+                                </List>
+                            </Paper>
+                            <Paper elevation={1}>
+                                <PlayerBanForm />
+                            </Paper>
+                        </>
                     )}
 
                     <Paper elevation={1} sx={{ width: '100%' }}>

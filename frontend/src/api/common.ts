@@ -120,6 +120,7 @@ export const handleOnLogin = (): void => {
 
 export const handleOnLogout = (): void => {
     localStorage.removeItem('token');
+    localStorage.setItem('permission_level', `${PermissionLevel.Guest}`);
     location.reload();
 };
 

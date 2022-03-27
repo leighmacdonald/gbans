@@ -27,6 +27,8 @@ const ip2int = (ip: string): number =>
 
 type BanType = 'network' | 'steam';
 
+type ActionType = 'ban' | 'mute';
+
 export enum Duration {
     dur15m = '15m',
     dur6h = '6h',
@@ -61,12 +63,14 @@ const Durations = [
 
 export interface PlayerBanFormProps {
     onProfileChanged?: (profile: Nullable<PlayerProfile>) => void;
+    profile?: PlayerProfile;
 }
 
 export const PlayerBanForm = ({
     onProfileChanged
 }: PlayerBanFormProps): JSX.Element => {
     const [duration, setDuration] = React.useState<Duration>(Duration.dur48h);
+    const [actionType, setActionType] = React.useState<ActionType>('ban');
     const [reasonText, setReasonText] = React.useState<string>('');
     const [noteText, setNoteText] = React.useState<string>('');
     const [network, setNetwork] = React.useState<string>('');
@@ -121,6 +125,13 @@ export const PlayerBanForm = ({
     ) => {
         setDuration((evt.target.value as Duration) ?? Duration.durInf);
     };
+
+    const handleActionTypeChange = (
+        evt: React.ChangeEvent<{ value: unknown }> | any
+    ) => {
+        setActionType((evt.target.value as ActionType) ?? 'ban');
+    };
+
     const handleUpdateNote = (evt: SyntheticEvent | any) => {
         setNoteText((evt.target as HTMLInputElement).value);
     };
@@ -131,38 +142,61 @@ export const PlayerBanForm = ({
 
     return (
         <Stack spacing={3} padding={3}>
-            <ProfileSelectionInput
-                fullWidth
-                input={steamID}
-                setInput={setSteamID}
-                onProfileSuccess={(p) => {
-                    setProfile(p);
-                    onProfileChanged && onProfileChanged(p);
-                }}
-            />
-            <FormControl component="fieldset" fullWidth>
-                <FormLabel component="legend">Ban Type</FormLabel>
-                <RadioGroup
-                    aria-label="Ban Type"
-                    name="Ban Type"
-                    value={banType}
-                    onChange={onChangeType}
-                    defaultValue={'steam'}
-                    row
+            {profile && (
+                <ProfileSelectionInput
+                    fullWidth
+                    input={steamID}
+                    setInput={setSteamID}
+                    onProfileSuccess={(p) => {
+                        setProfile(p);
+                        onProfileChanged && onProfileChanged(p);
+                    }}
+                />
+            )}
+            <FormControl fullWidth>
+                <InputLabel id="actionType-label">Action Type</InputLabel>
+                <Select
+                    fullWidth
+                    labelId="actionType-label"
+                    id="actionType-helper"
+                    value={actionType}
+                    onChange={handleActionTypeChange}
                 >
-                    <FormControlLabel
-                        value="steam"
-                        control={<Radio />}
-                        label="Steam"
-                    />
-                    <FormControlLabel
-                        value="network"
-                        control={<Radio />}
-                        label="IP / Network"
-                    />
-                </RadioGroup>
+                    {['ban', 'mute'].map((v) => (
+                        <MenuItem key={`time-${v}`} value={v}>
+                            {v}
+                        </MenuItem>
+                    ))}
+                </Select>
+                <FormHelperText>
+                    Choosing custom will allow you to input a custom duration
+                </FormHelperText>
             </FormControl>
-            {banType === 'network' && (
+            {actionType == 'ban' && (
+                <FormControl component="fieldset" fullWidth>
+                    <FormLabel component="legend">Ban Type</FormLabel>
+                    <RadioGroup
+                        aria-label="Ban Type"
+                        name="Ban Type"
+                        value={banType}
+                        onChange={onChangeType}
+                        defaultValue={'steam'}
+                        row
+                    >
+                        <FormControlLabel
+                            value="steam"
+                            control={<Radio />}
+                            label="Steam"
+                        />
+                        <FormControlLabel
+                            value="network"
+                            control={<Radio />}
+                            label="IP / Network"
+                        />
+                    </RadioGroup>
+                </FormControl>
+            )}
+            {actionType == 'ban' && banType === 'network' && (
                 <>
                     <TextField
                         fullWidth={true}
@@ -175,10 +209,11 @@ export const PlayerBanForm = ({
                     </Typography>
                 </>
             )}
+
             <TextField
                 fullWidth
                 id={'reason'}
-                label={'Ban Reason'}
+                label={actionType == 'ban' ? 'Ban Reason' : 'Mute Reason'}
                 onChange={handleUpdateReasonText}
             />
             <FormControl fullWidth>

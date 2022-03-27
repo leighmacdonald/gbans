@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
 	"net"
 	"strconv"
 	"strings"
@@ -37,8 +36,9 @@ type remoteSrcdsLogSource struct {
 	udpAddr   *net.UDPAddr
 	sink      chan model.LogPayload
 	db        store.Store
-	secretMap map[int64]string
+	secretMap map[int]string
 	dnsMap    map[string]string
+	frequency time.Duration
 }
 
 func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
@@ -51,8 +51,9 @@ func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.
 		udpAddr:   udpAddr,
 		db:        db,
 		sink:      sink,
-		secretMap: map[int64]string{},
+		secretMap: map[int]string{},
 		dnsMap:    map[string]string{},
+		frequency: time.Minute * 5,
 	}, nil
 }
 
@@ -79,40 +80,39 @@ func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 }
 
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
-	newServers := map[int64]string{}
-	servers, errServers := remoteSrc.db.GetServers(context.Background(), true)
+	newServers := map[int]string{}
+	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
 	}
 	for _, server := range servers {
-		newId := rand.Int63()
-		ipAddr, errLookup := net.LookupIP(server.Address)
-		if errLookup != nil || len(ipAddr) == 0 {
-			log.Errorf("Failed to lookup dns for host: %v", errLookup)
-			continue
-		}
-		newServers[newId] = server.ServerName
-		go func(s model.Server, i int64) {
-			var rconCommands []string
-			if config.Debug.UpdateSRCDSLogSecrets {
-				rconCommands = append(rconCommands, fmt.Sprintf("sv_logsecret %d", i))
-			}
-			rconCommands = append(rconCommands, fmt.Sprintf("logaddress_add %s", config.Log.SrcdsLogExternalHost))
-			for _, cmd := range rconCommands {
-				_, errRcon := query.ExecRCON(s, cmd)
-				if errRcon != nil {
-					log.Errorf("Failed to run srcds log command: %s [%s]", cmd, errRcon)
-					break
-				}
-			}
-
-		}(server, newId)
+		newServers[server.LogSecret] = server.ServerName
 	}
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 	remoteSrc.secretMap = newServers
 	log.Debugf("Updated secret mappings")
+}
+
+func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
+	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
+	if errServers != nil {
+		log.Errorf("Failed to load servers to add log addr: %v", errServers)
+		return
+	}
+	query.RCON(context.Background(), servers, fmt.Sprintf("logaddress_add %s", addr))
+	log.Debugf("Added log address")
+}
+
+func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
+	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
+	if errServers != nil {
+		log.Errorf("Failed to load servers to del log addr: %v", errServers)
+		return
+	}
+	query.RCON(context.Background(), servers, fmt.Sprintf("logaddress_del %s", addr))
+	log.Debugf("Removed log address")
 }
 
 // start initiates the udp network log read loop. DNS names are used to
@@ -138,7 +138,11 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 	msgId := 0
 	msgIngressChan := make(chan newMsg)
 	remoteSrc.updateSecrets()
-	remoteSrc.updateDNS()
+	if config.Debug.AddRCONLogAddress != "" {
+		remoteSrc.addLogAddress(config.Debug.AddRCONLogAddress)
+		defer remoteSrc.removeLogAddress(config.Debug.AddRCONLogAddress)
+	}
+	//remoteSrc.updateDNS()
 	go func() {
 		for {
 			buffer := make([]byte, 1024)
@@ -160,8 +164,8 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 					log.Warnf("Received malformed log message: Failed to find marker")
 					continue
 				}
-				secret, errConv := strconv.ParseInt(line[5:idx], 10, 64)
-				if errConv != nil {
+				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
+				if errConv != nil { //5.188.225.147
 					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
 					continue
 				}
@@ -169,17 +173,17 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 			}
 		}
 	}()
-	ticker := time.NewTicker(time.Minute * 60)
+	ticker := time.NewTicker(remoteSrc.frequency)
 	for {
 		select {
 		case <-ticker.C:
 			remoteSrc.updateSecrets()
-			remoteSrc.updateDNS()
+			//remoteSrc.updateDNS()
 		case logPayload := <-msgIngressChan:
 			payload := model.LogPayload{Message: logPayload.body}
 			if logPayload.secure {
 				remoteSrc.RLock()
-				serverName, found := remoteSrc.secretMap[logPayload.source]
+				serverName, found := remoteSrc.secretMap[int(logPayload.source)]
 				remoteSrc.RUnlock()
 				if !found {
 					log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
