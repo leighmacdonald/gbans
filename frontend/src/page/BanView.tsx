@@ -55,7 +55,7 @@ export const BanView = (): JSX.Element => {
                                     className={'cell'}
                                     key={`chat-log-${i}`}
                                 >
-                                    <span>{value}</span>
+                                    <span>{value.message}</span>
                                 </Grid>
                             );
                         })}

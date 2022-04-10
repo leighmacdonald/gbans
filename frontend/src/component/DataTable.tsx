@@ -344,7 +344,7 @@ export const CreateDataTable = <TRecord,>(): ((
                                                             scope="row"
                                                             padding="none"
                                                         >
-                                                            {row[h.id]}
+                                                            {row[h.id] as any}
                                                         </TableCell>
                                                     );
                                                 }
@@ -353,7 +353,7 @@ export const CreateDataTable = <TRecord,>(): ((
                                                         key={`cell-${index}-${i}`}
                                                         align="right"
                                                     >
-                                                        {row[h.id]}
+                                                        {row[h.id] as any}
                                                     </TableCell>
                                                 );
                                             })}
