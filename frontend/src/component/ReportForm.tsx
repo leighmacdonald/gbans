@@ -149,7 +149,7 @@ export const ReportForm = (): JSX.Element => {
         } catch (e) {
             log(e);
         }
-    }, [title, description, uploadedFiles]);
+    }, [title, description, uploadedFiles, navigate, profile?.player.steam_id]);
 
     const titleIsError = title.length > 0 && title.length < 5;
     return (

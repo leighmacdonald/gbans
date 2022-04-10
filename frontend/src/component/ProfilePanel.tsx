@@ -50,10 +50,7 @@ export const a11yProps = (index: number | string): Record<string, string> => {
 export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
     const [value, setValue] = React.useState('one');
 
-    const handleChange = (
-        _: React.ChangeEvent<Record<string, unknown>> | any,
-        newValue: string
-    ) => {
+    const handleChange = (_: React.SyntheticEvent, newValue: string) => {
         setValue(newValue);
     };
 

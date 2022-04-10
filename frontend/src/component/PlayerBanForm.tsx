@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { SyntheticEvent, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useState } from 'react';
 import IPCIDR from 'ip-cidr';
 import { apiCreateBan, BanPayload, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
@@ -12,7 +12,7 @@ import FormLabel from '@mui/material/FormLabel';
 import InputLabel from '@mui/material/InputLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import VoiceOverOffSharp from '@mui/icons-material/VoiceOverOffSharp';
@@ -120,23 +120,19 @@ export const PlayerBanForm = ({
         setReasonText((evt.target as HTMLInputElement).value);
     };
 
-    const handleUpdateDuration = (
-        evt: React.ChangeEvent<{ value: unknown }> | any
-    ) => {
+    const handleUpdateDuration = (evt: SelectChangeEvent) => {
         setDuration((evt.target.value as Duration) ?? Duration.durInf);
     };
 
-    const handleActionTypeChange = (
-        evt: React.ChangeEvent<{ value: unknown }> | any
-    ) => {
+    const handleActionTypeChange = (evt: SelectChangeEvent) => {
         setActionType((evt.target.value as ActionType) ?? 'ban');
     };
 
-    const handleUpdateNote = (evt: SyntheticEvent | any) => {
+    const handleUpdateNote = (evt: ChangeEvent<HTMLInputElement>) => {
         setNoteText((evt.target as HTMLInputElement).value);
     };
 
-    const onChangeType = (evt: React.ChangeEvent<HTMLInputElement> | any) => {
+    const onChangeType = (evt: ChangeEvent<HTMLInputElement>) => {
         setBanType(evt.target.value as BanType);
     };
 

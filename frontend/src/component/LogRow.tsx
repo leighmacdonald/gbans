@@ -16,6 +16,7 @@ import { PlayerClassImg } from './PlayerClassImg';
 import { ProfileButton } from './ProfileButton';
 import { useServerLogQueryCtx } from '../contexts/LogQueryCtx';
 import Box from '@mui/material/Box';
+import { noop } from 'lodash-es';
 
 export interface EventViewProps {
     event: ServerEvent;
@@ -29,7 +30,7 @@ export const EventView = ({ event }: EventViewProps) => {
                 hideLabel
                 source={event.target}
                 team={event.team}
-                setFilter={() => {}}
+                setFilter={noop}
             />
         );
     }

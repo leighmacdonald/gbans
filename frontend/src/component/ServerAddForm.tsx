@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
@@ -79,7 +79,7 @@ export const ServerAddForm = (): JSX.Element => {
                 label="Hostname or IP"
                 fullWidth
                 value={address}
-                onChange={(v: any) => {
+                onChange={(v: ChangeEvent<HTMLInputElement>) => {
                     setAddress(v.target.value);
                 }}
             />
@@ -89,7 +89,7 @@ export const ServerAddForm = (): JSX.Element => {
                 label="Port (Default: 27015)"
                 fullWidth
                 value={port}
-                onChange={(v: any) => {
+                onChange={(v: ChangeEvent<HTMLInputElement>) => {
                     setPort(parseInt(v.target.value));
                 }}
             />
@@ -99,7 +99,7 @@ export const ServerAddForm = (): JSX.Element => {
                     label="Region"
                     fullWidth
                     value={region}
-                    onChange={(v: any) => {
+                    onChange={(v: ChangeEvent<HTMLInputElement>) => {
                         setRegion(v.target.value);
                     }}
                 />
@@ -108,7 +108,7 @@ export const ServerAddForm = (): JSX.Element => {
                     label="Country Code (2 chars)"
                     fullWidth
                     value={cc}
-                    onChange={(v: any) => {
+                    onChange={(v: ChangeEvent<HTMLInputElement>) => {
                         const value = v.target.value as string;
                         if (value.length <= 2) {
                             setCC(value);
@@ -122,7 +122,7 @@ export const ServerAddForm = (): JSX.Element => {
                     label="Latitude"
                     fullWidth
                     value={lat}
-                    onChange={(v: any) => {
+                    onChange={(v: ChangeEvent<HTMLInputElement>) => {
                         setLat(v.target.value);
                     }}
                 />
@@ -132,7 +132,7 @@ export const ServerAddForm = (): JSX.Element => {
                     label="Longitude"
                     fullWidth
                     value={lon}
-                    onChange={(v: any) => {
+                    onChange={(v: ChangeEvent<HTMLInputElement>) => {
                         setLon(v.target.value);
                     }}
                 />
@@ -144,7 +144,7 @@ export const ServerAddForm = (): JSX.Element => {
                 label="Reserved Slots"
                 fullWidth
                 value={reservedSlots}
-                onChange={(v: any) => {
+                onChange={(v: ChangeEvent<HTMLInputElement>) => {
                     setReservedSlots(parseInt(v.target.value));
                 }}
             />
@@ -153,7 +153,7 @@ export const ServerAddForm = (): JSX.Element => {
                 label="Default Map"
                 fullWidth
                 value={defaultMap}
-                onChange={(v: any) => {
+                onChange={(v: ChangeEvent<HTMLInputElement>) => {
                     const value = v.target.value as string;
                     setDefaultMap(value);
                 }}
@@ -163,7 +163,7 @@ export const ServerAddForm = (): JSX.Element => {
                 label="RCON Password"
                 fullWidth
                 value={rcon}
-                onChange={(v: any) => {
+                onChange={(v: ChangeEvent<HTMLInputElement>) => {
                     setRcon(v.target.value);
                 }}
             />

@@ -43,7 +43,7 @@ export const Appeal = (): JSX.Element => {
                         </ListItem>
                         <ListItem>
                             <ListItemText>
-                                f your appeal involves trying to blame other
+                                If your appeal involves trying to blame other
                                 people who reported you, or other
                                 &quot;whataboutisms&quot;, rethink your
                                 approach.

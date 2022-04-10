@@ -91,6 +91,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
 	r.GET("/api/players", w.onAPIGetPlayers(db))
 	r.GET("/api/auth/logout", w.onGetLogout())
+	r.POST("/api/news_latest", w.onAPIGetNewsLatest(db))
 
 	// Service discovery endpoints
 	r.GET("/api/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))

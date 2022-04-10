@@ -485,18 +485,18 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decodeMedigun() mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
-		if f.Kind() != reflect.String {
-			return d, nil
-		}
-		var m Medigun
-		if !ParseMedigun(d.(string), &m) {
-			return d, nil
-		}
-		return m, nil
-	}
-}
+//func decodeMedigun() mapstructure.DecodeHookFunc {
+//	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
+//		if f.Kind() != reflect.String {
+//			return d, nil
+//		}
+//		var m Medigun
+//		if !ParseMedigun(d.(string), &m) {
+//			return d, nil
+//		}
+//		return m, nil
+//	}
+//}
 
 func decodePickupItem() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {

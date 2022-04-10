@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
@@ -68,7 +68,7 @@ export const AdminServerLog = (): JSX.Element => {
         }
     });
 
-    useEffect(() => {}, [steamID]);
+    //useEffect(() => {}, [steamID]);
 
     const handleRateChange = (event: SelectChangeEvent<number>) => {
         setRate(event.target.value as number);

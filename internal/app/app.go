@@ -541,7 +541,7 @@ func initWorkers(db store.Store, botSendMessageChan chan discordPayload) {
 	go banSweeper(db)
 	go mapChanger(db, time.Second*5)
 	go serverStateUpdater(db)
-	//go profileUpdater(db)
+	go profileUpdater(db)
 	go warnWorker()
 	go logReader(db)
 	go logWriter(db)

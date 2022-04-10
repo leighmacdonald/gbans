@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { Flash } from '../component/Flashes';
+import { noop } from 'lodash-es';
 
 export type CurrentFlashes = {
     flashes: Flash[];
@@ -7,7 +8,7 @@ export type CurrentFlashes = {
 };
 export const UserFlashCtx = createContext<CurrentFlashes>({
     flashes: [],
-    setFlashes: (_) => {}
+    setFlashes: () => noop
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

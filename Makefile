@@ -53,13 +53,16 @@ install:
 test: test-go test-ts
 
 test-ts:
-	@cd frontend && yarn && yarn run test
+	@cd frontend && yarn && yarn run test --passWithNoTests
 
 test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
+
+lint-ts:
+	cd frontend && eslint . --ext .ts,.tsx
 
 lint:
 	@golangci-lint run --fast

@@ -6,7 +6,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
@@ -945,17 +944,17 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
-	i, err := getInt64Param(c, key)
-	if err != nil {
-		return 0, err
-	}
-	sid := steamid.SID64(i)
-	if !sid.Valid() {
-		return 0, consts.ErrInvalidSID
-	}
-	return sid, nil
-}
+//func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
+//	i, err := getInt64Param(c, key)
+//	if err != nil {
+//		return 0, err
+//	}
+//	sid := steamid.SID64(i)
+//	if !sid.Valid() {
+//		return 0, consts.ErrInvalidSID
+//	}
+//	return sid, nil
+//}
 
 func getInt64Param(c *gin.Context, key string) (int64, error) {
 	valueStr := c.Param(key)
@@ -1177,5 +1176,16 @@ func (w *web) onAPILogsQuery(db store.StatStore) gin.HandlerFunc {
 			logs = append(logs, logMsg{h.CreatedOn, h.Msg})
 		}
 		responseOK(c, http.StatusOK, logs)
+	}
+}
+
+func (w *web) onAPIGetNewsLatest(db store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		entries, err := db.GetNewsLatest(c, 5, false)
+		if err != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(c, http.StatusOK, entries)
 	}
 }

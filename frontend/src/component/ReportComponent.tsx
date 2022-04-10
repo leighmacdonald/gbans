@@ -120,7 +120,7 @@ export const ReportComponent = ({
             setComment('');
         };
         submit();
-    }, [comment, messages, report.report_id]);
+    }, [comment, messages, report.report_id, currentUser.player]);
 
     useEffect(() => {
         const loadMessages = async () => {

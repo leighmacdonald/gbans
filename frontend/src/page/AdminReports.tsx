@@ -18,6 +18,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import PageviewIcon from '@mui/icons-material/Pageview';
 import IconButton from '@mui/material/IconButton';
 import { useNavigate } from 'react-router-dom';
+import { noop } from 'lodash-es';
 interface AdminReportRowProps {
     report: Report;
     author: Person;
@@ -51,7 +52,7 @@ const AdminReportRow = ({
                 <ProfileButton
                     source={author}
                     team={Team.SPEC}
-                    setFilter={() => {}}
+                    setFilter={noop}
                 />
             </Stack>
         </Paper>
@@ -69,7 +70,7 @@ export const AdminReports = (): JSX.Element => {
             setReports(reports);
         };
         f();
-    }, []);
+    });
 
     return (
         <Grid container>
