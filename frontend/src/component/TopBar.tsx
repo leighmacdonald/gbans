@@ -16,7 +16,6 @@ import DnsIcon from '@mui/icons-material/Dns';
 import SubjectIcon from '@mui/icons-material/Subject';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import StorageIcon from '@mui/icons-material/Storage';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import HistoryIcon from '@mui/icons-material/History';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
@@ -84,8 +83,8 @@ export const TopBar = () => {
 
     const menuItems: menuRoute[] = [
         { to: '/', text: 'Dashboard', icon: <DashboardIcon /> },
-        { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
-        { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
+        // { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
+        // { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
         { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
         { to: '/report', text: 'Report', icon: <ReportIcon /> },
         { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> }

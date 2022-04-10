@@ -747,3 +747,12 @@ type PersonConnection struct {
 }
 
 type PersonConnections []PersonConnection
+
+type NewsEntry struct {
+	NewsId      int       `json:"news_id"`
+	Title       string    `json:"title"`
+	BodyMD      string    `json:"body_md"`
+	IsPublished bool      `json:"is_published"`
+	CreatedOn   time.Time `json:"created_on"`
+	UpdatedOn   time.Time `json:"updated_on"`
+}

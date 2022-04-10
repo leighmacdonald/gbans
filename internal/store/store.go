@@ -33,6 +33,13 @@ type DemoStore interface {
 	DropDemo(ctx context.Context, d *model.DemoFile) error
 }
 
+type NewsStore interface {
+	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error)
+	GetNewsArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error
+	SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error
+	DropNewsArticle(ctx context.Context, newsId int) error
+}
+
 type BanStore interface {
 	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, b *model.BannedPerson) error
 	GetBanByBanID(ctx context.Context, banID uint64, full bool, b *model.BannedPerson) error
@@ -122,5 +129,6 @@ type Store interface {
 	ServerStore
 	StatStore
 	ReportStore
+	NewsStore
 	io.Closer
 }
