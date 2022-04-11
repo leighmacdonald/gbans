@@ -17,7 +17,7 @@ COPY pkg pkg
 COPY internal internal
 RUN make build
 
-FROM alpine:3.14.2
+FROM alpine:3.15.4
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 EXPOSE 6006
 RUN apk add dumb-init
