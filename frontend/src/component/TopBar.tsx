@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import SettingsIcon from '@mui/icons-material/Settings';
+// import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 import BlockIcon from '@mui/icons-material/Block';
 import ReportIcon from '@mui/icons-material/Report';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
@@ -96,7 +97,7 @@ export const TopBar = () => {
             text: 'Profile',
             icon: <AccountCircleIcon />
         },
-        { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
+        // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
         { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
     ];
 
@@ -123,6 +124,11 @@ export const TopBar = () => {
             to: '/admin/people',
             text: 'People',
             icon: <PregnantWomanIcon />
+        });
+        adminItems.push({
+            to: '/admin/news',
+            text: 'News',
+            icon: <NewspaperIcon />
         });
         adminItems.push({
             to: '/admin/import',

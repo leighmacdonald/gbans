@@ -23,7 +23,7 @@ var (
 )
 
 func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
-	if _, errSend := b.dg.ChannelMessageSendEmbed(channelId, message); errSend != nil {
+	if _, errSend := b.session.ChannelMessageSendEmbed(channelId, message); errSend != nil {
 		return errSend
 	}
 	return nil
@@ -31,7 +31,7 @@ func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) e
 
 // discord implements the ChatBot interface for the discord chat platform.
 type discord struct {
-	dg                 *discordgo.Session
+	session            *discordgo.Session
 	db                 store.Store
 	connectedMu        *sync.RWMutex
 	connected          bool
@@ -42,7 +42,7 @@ type discord struct {
 // NewDiscord instantiates a new, unconnected, discord instance
 func NewDiscord(db store.Store) (*discord, error) {
 	b := discord{
-		dg:          nil,
+		session:     nil,
 		db:          db,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
@@ -75,21 +75,21 @@ func (b *discord) Start(ctx context.Context, token string, eventChan chan model.
 
 	}
 	defer func() {
-		if errDisc := b.dg.Close(); errDisc != nil {
+		if errDisc := b.session.Close(); errDisc != nil {
 			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
 		}
 	}()
-	b.dg = d
-	b.dg.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	b.dg.AddHandler(b.onReady)
-	b.dg.AddHandler(b.onConnect)
-	b.dg.AddHandler(b.onDisconnect)
-	b.dg.AddHandler(b.onInteractionCreate)
+	b.session = d
+	b.session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	b.session.AddHandler(b.onReady)
+	b.session.AddHandler(b.onConnect)
+	b.session.AddHandler(b.onDisconnect)
+	b.session.AddHandler(b.onInteractionCreate)
 
-	b.dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	b.session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to discord and begin listening.
-	err = b.dg.Open()
+	err = b.session.Open()
 	if err != nil {
 		return errors.Wrap(err, "Error opening discord connection")
 	}
@@ -136,7 +136,7 @@ func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan 
 			msg := strings.Join(sendQueue, "\n")
 			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
-					if err := b.sendChannelMessage(b.dg, channelID, m, true); err != nil {
+					if err := b.sendChannelMessage(b.session, channelID, m, true); err != nil {
 						log.Errorf("Failed to send bulk message log: %v", err)
 					}
 				}
@@ -233,7 +233,7 @@ func (b *discord) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.
 }
 
 func (b *discord) Send(channelId string, message string, wrap bool) error {
-	return b.sendChannelMessage(b.dg, channelId, message, wrap)
+	return b.sendChannelMessage(b.session, channelId, message, wrap)
 }
 
 func addFieldInline(e *discordgo.MessageEmbed, title string, value string) {

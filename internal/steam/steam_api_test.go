@@ -3,7 +3,7 @@ package steam
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -22,8 +22,8 @@ func TestFetchPlayerBans(t *testing.T) {
 		76561198189957966,
 	}
 	bans, err := FetchPlayerBans(reqIds)
-	require.NoError(t, err, "HTTP error fetching Player bans")
-	require.Equal(t, len(bans), len(reqIds))
+	assert.NoError(t, err, "HTTP error fetching Player bans")
+	assert.Equal(t, len(bans), len(reqIds))
 }
 
 func TestSteamWebAPI(t *testing.T) {
@@ -32,9 +32,9 @@ func TestSteamWebAPI(t *testing.T) {
 		return
 	}
 	friends, err := FetchFriends(76561197961279983)
-	require.NoError(t, err)
-	require.True(t, len(friends) > 100)
+	assert.NoError(t, err)
+	assert.True(t, len(friends) > 100)
 	summaries, err2 := FetchSummaries(friends)
-	require.NoError(t, err2)
-	require.Equal(t, len(friends), len(summaries))
+	assert.NoError(t, err2)
+	assert.Equal(t, len(friends), len(summaries))
 }

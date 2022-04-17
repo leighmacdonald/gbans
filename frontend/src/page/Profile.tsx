@@ -116,7 +116,7 @@ export const Profile = (): JSX.Element => {
                                     />
                                     <Chip
                                         color={
-                                            profile.player.economy_ban != ''
+                                            profile.player.economy_ban != 'none'
                                                 ? 'error'
                                                 : 'success'
                                         }

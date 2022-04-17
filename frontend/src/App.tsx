@@ -34,6 +34,7 @@ import { createThemeByMode } from './theme';
 import { ReportViewPage } from './page/ReportViewPage';
 import { PaletteMode, useMediaQuery } from '@mui/material';
 import { ColourModeContext } from './contexts/ColourModeContext';
+import { AdminNews } from './page/AdminNews';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -161,7 +162,10 @@ export const App = (): JSX.Element => {
                                                         </PrivateRoute>
                                                     }
                                                 />
-
+                                                <Route
+                                                    path={'/admin/news'}
+                                                    element={<AdminNews />}
+                                                />
                                                 <Route
                                                     path={'/admin/people'}
                                                     element={<AdminPeople />}

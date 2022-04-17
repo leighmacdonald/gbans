@@ -64,7 +64,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	// based routing when serving the SPA.
 	jsRoutes := []string{
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
-		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports",
+		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
 	for _, rt := range jsRoutes {
 		r.GET(rt, func(c *gin.Context) {

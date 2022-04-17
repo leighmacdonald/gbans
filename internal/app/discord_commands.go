@@ -364,7 +364,7 @@ func (b *discord) botRegisterSlashCommands() error {
 	// This should be removed whenever support gets merged
 	var perms []permissionRequest
 	for _, cmd := range slashCommands {
-		command, errC := b.dg.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
+		command, errC := b.session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}

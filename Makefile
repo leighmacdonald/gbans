@@ -98,4 +98,4 @@ docker_dump:
 	docker exec gbans-postgres pg_dump -U gbans > gbans.sql
 
 docker_restore:
-	cat gbans.sql | docker exec -i gbans-postgres psql -U gbans
+	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
