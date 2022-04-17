@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -35,128 +34,125 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func (w *web) authMiddleWare(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		p := model.NewPerson(0)
-		ah := c.GetHeader("Authorization")
-		tp := strings.SplitN(ah, " ", 2)
-		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
+func (web *web) authMiddleWare(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		person := model.NewPerson(0)
+		authHeader := ctx.GetHeader("Authorization")
+		tp := strings.SplitN(authHeader, " ", 2)
+		if authHeader != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
 			if config.General.Mode == "test" && token == testToken {
-				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				defer cancel()
 				loggedInPerson := model.NewPerson(config.General.Owner)
-				if err2 := db.GetOrCreatePersonBySteamID(lCtx, config.General.Owner, &loggedInPerson); err2 != nil {
-					log.Errorf("Failed to load persons session user: %v", err2)
-					c.AbortWithStatus(http.StatusForbidden)
+				if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); errGetPerson != nil {
+					log.Errorf("Failed to load persons session user: %v", errGetPerson)
+					ctx.AbortWithStatus(http.StatusForbidden)
 					return
 				}
-				p = loggedInPerson
+				person = loggedInPerson
 			} else {
 				claims := &authClaims{}
-				tkn, errC := jwt.ParseWithClaims(token, claims, getTokenKey)
-				if errC != nil {
-					if errC == jwt.ErrSignatureInvalid {
-						c.AbortWithStatus(http.StatusForbidden)
+				parsedToken, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
+				if errParseClaims != nil {
+					if errParseClaims == jwt.ErrSignatureInvalid {
+						ctx.AbortWithStatus(http.StatusForbidden)
 						return
 					}
-					c.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusForbidden)
 					return
 				}
-				if !tkn.Valid {
-					c.AbortWithStatus(http.StatusForbidden)
+				if !parsedToken.Valid {
+					ctx.AbortWithStatus(http.StatusForbidden)
 					return
 				}
 				if !steamid.SID64(claims.SteamID).Valid() {
-					c.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusForbidden)
 					log.Warnf("Invalid steamID")
 					return
 				}
-				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-				defer cancel()
+
 				loggedInPerson := model.NewPerson(steamid.SID64(claims.SteamID))
-				if err := db.GetPersonBySteamID(lCtx, steamid.SID64(claims.SteamID), &loggedInPerson); err != nil {
-					log.Errorf("Failed to load persons session user: %v", err)
-					c.AbortWithStatus(http.StatusForbidden)
+				if errGetPerson := database.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); errGetPerson != nil {
+					log.Errorf("Failed to load persons session user: %v", errGetPerson)
+					ctx.AbortWithStatus(http.StatusForbidden)
 					return
 				}
-				p = loggedInPerson
+				person = loggedInPerson
 			}
 		}
-		c.Set("person", p)
-		c.Next()
+		ctx.Set("person", person)
+		ctx.Next()
 	}
 }
 
-func (w *web) onGetLogout() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (web *web) onGetLogout() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		// TODO Logout key / mark as invalid manually
 		log.WithField("fn", "onGetLogout").Warnf("Unimplemented")
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 }
 
-func (w *web) onOpenIDCallback(db store.Store) gin.HandlerFunc {
+func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
-	return func(c *gin.Context) {
-		referralUrl, found := c.GetQuery("return_url")
+	return func(ctx *gin.Context) {
+		referralUrl, found := ctx.GetQuery("return_url")
 		if !found {
 			referralUrl = "/"
 		}
 		var idStr string
-		fullURL := config.HTTP.Domain + c.Request.URL.String()
+		fullURL := config.HTTP.Domain + ctx.Request.URL.String()
 		if config.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
-				log.Errorf("Failed to parse url: %v", errParse)
-				c.Redirect(302, referralUrl)
+				log.Errorf("Failed to parse url: %query", errParse)
+				ctx.Redirect(302, referralUrl)
 				return
 			}
 			idStr = values.Query().Get("openid.identity")
 		} else {
 			id, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				log.Errorf("Error verifying openid auth response: %v", errVerify)
-				c.Redirect(302, referralUrl)
+				log.Errorf("Error verifying openid auth response: %query", errVerify)
+				ctx.Redirect(302, referralUrl)
 				return
 			}
 			idStr = id
 		}
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
-			c.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralUrl)
 			return
 		}
 		sid, errDecodeSid := steamid.SID64FromString(match[1])
 		if errDecodeSid != nil {
-			log.Errorf("Received invalid steamid: %v", errDecodeSid)
-			c.Redirect(302, referralUrl)
+			log.Errorf("Received invalid steamid: %query", errDecodeSid)
+			ctx.Redirect(302, referralUrl)
 			return
 		}
 		person := model.NewPerson(sid)
-		if errP := getOrCreateProfileBySteamID(ctx, db, sid, "", &person); errP != nil {
-			log.Errorf("Failed to fetch user profile: %v", errP)
-			c.Redirect(302, referralUrl)
+		if errGetProfile := getOrCreateProfileBySteamID(ctx, database, sid, "", &person); errGetProfile != nil {
+			log.Errorf("Failed to fetch user profile: %query", errGetProfile)
+			ctx.Redirect(302, referralUrl)
 			return
 		}
-		t, errJWT := newJWT(sid)
+		webToken, errJWT := newJWT(sid)
 		if errJWT != nil {
-			log.Errorf("Failed to create new JWT: %v", errJWT)
-			c.Redirect(302, referralUrl)
+			log.Errorf("Failed to create new JWT: %query", errJWT)
+			ctx.Redirect(302, referralUrl)
 			return
 		}
-		u, errParse := url.Parse("/login/success")
+		parsedUrl, errParse := url.Parse("/login/success")
 		if errParse != nil {
-			c.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralUrl)
 			return
 		}
-		v := u.Query()
-		v.Set("token", t)
-		v.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
-		v.Set("next_url", referralUrl)
-		u.RawQuery = v.Encode()
-		c.Redirect(302, u.String())
+		query := parsedUrl.Query()
+		query.Set("token", webToken)
+		query.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
+		query.Set("next_url", referralUrl)
+		parsedUrl.RawQuery = query.Encode()
+		ctx.Redirect(302, parsedUrl.String())
 		log.WithFields(log.Fields{
 			"sid":              sid,
 			"status":           "success",
@@ -169,48 +165,46 @@ func getTokenKey(_ *jwt.Token) (any, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 
-func (w *web) onTokenRefresh() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ah := c.GetHeader("Authorization")
-		tp := strings.SplitN(ah, " ", 2)
+func (web *web) onTokenRefresh() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		authHeader := ctx.GetHeader("Authorization")
+		tp := strings.SplitN(authHeader, " ", 2)
 		var token string
-		if ah != "" && len(tp) == 2 && tp[0] == "Bearer" {
+		if authHeader != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token = tp[1]
 		}
 		if token == "" {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		claims := &authClaims{}
-		tkn, err := jwt.ParseWithClaims(token, claims, getTokenKey)
-		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
-				c.AbortWithStatus(http.StatusUnauthorized)
+		parsedClaims, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
+		if errParseClaims != nil {
+			if errParseClaims == jwt.ErrSignatureInvalid {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
-			c.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if !tkn.Valid {
-			c.AbortWithStatus(http.StatusUnauthorized)
+		if !parsedClaims.Valid {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		if time.Until(time.Unix(claims.ExpiresAt, 0)) > 30*time.Second {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		// Now, create a new token for the current user, with a renewed expiration time
 		expirationTime := config.Now().Add(24 * time.Hour)
 		claims.ExpiresAt = expirationTime.Unix()
 		outToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokenString, err2 := outToken.SignedString(config.HTTP.CookieKey)
-		if err2 != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+		tokenString, errSign := outToken.SignedString(config.HTTP.CookieKey)
+		if errSign != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"token": tokenString})
+		ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
 	}
 }
 
@@ -226,61 +220,57 @@ func newJWT(steamID steamid.SID64) (string, error) {
 		Exp:            config.Now().Add(time.Hour * 24).Unix(),
 		StandardClaims: jwt.StandardClaims{},
 	}
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := at.SignedString([]byte(config.HTTP.CookieKey))
-	if err != nil {
-		return "", err
+	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, errSigned := tokenWithClaims.SignedString([]byte(config.HTTP.CookieKey))
+	if errSigned != nil {
+		return "", errSigned
 	}
-	return token, nil
+	return signedToken, nil
 }
 
-func authMiddleware(db store.Store, level model.Privilege) gin.HandlerFunc {
+func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
-	return func(c *gin.Context) {
+	return func(ctx *gin.Context) {
 		hdr := header{}
-		if err := c.ShouldBindHeader(&hdr); err != nil {
-			c.AbortWithStatus(http.StatusForbidden)
+		if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
+			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		pcs := strings.Split(hdr.Authorization, " ")
 		if len(pcs) != 2 && level > model.PGuest {
-			c.AbortWithStatus(http.StatusForbidden)
+			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		if level > model.PGuest {
-			sid, err := sid64FromJWTToken(pcs[1])
-			if err != nil {
-				log.Errorf("Failed to load persons session user: %v", err)
-				c.AbortWithStatus(http.StatusForbidden)
+			sid, errFromToken := sid64FromJWTToken(pcs[1])
+			if errFromToken != nil {
+				log.Errorf("Failed to load persons session user: %v", errFromToken)
+				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
-			cx, cancel := context.WithTimeout(context.Background(), time.Second*6)
-			defer cancel()
 			loggedInPerson := model.NewPerson(sid)
-
-			if err3 := db.GetPersonBySteamID(cx, sid, &loggedInPerson); err3 != nil {
-				log.Errorf("Failed to load persons session user: %v", err3)
-				c.AbortWithStatus(http.StatusForbidden)
+			if errGetPerson := database.GetPersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
+				log.Errorf("Failed to load persons session user: %v", errGetPerson)
+				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
 			if level > loggedInPerson.PermissionLevel {
-				c.AbortWithStatus(http.StatusForbidden)
+				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
-
-			c.Set("person", loggedInPerson)
+			ctx.Set("person", loggedInPerson)
 		}
-		c.Next()
+		ctx.Next()
 	}
 }
 
 func sid64FromJWTToken(token string) (steamid.SID64, error) {
 	claims := &authClaims{}
-	tkn, errC := jwt.ParseWithClaims(token, claims, getTokenKey)
-	if errC != nil {
-		if errC == jwt.ErrSignatureInvalid {
+	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
+	if errParseClaims != nil {
+		if errParseClaims == jwt.ErrSignatureInvalid {
 			return 0, consts.ErrAuthentication
 		}
 		return 0, consts.ErrAuthentication

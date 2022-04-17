@@ -63,21 +63,21 @@ func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
 const chunkSize = 100
 
 func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, error) {
-	wg := &sync.WaitGroup{}
+	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerSummary
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
 	for i := 0; i < len(steamIDs); i += chunkSize {
-		wg.Add(1)
+		waitGroup.Add(1)
 		func() {
-			defer wg.Done()
-			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(steamQueryMaxResults, t)
-			ids := steamIDs[i : i+int(m)]
-			summaries, err := steamweb.PlayerSummaries(ids)
-			if err != nil {
+			defer waitGroup.Done()
+			total := uint64(len(steamIDs) - i)
+			maxResultsCount := golib.UMin64(steamQueryMaxResults, total)
+			ids := steamIDs[i : i+int(maxResultsCount)]
+			summaries, errSummaries := steamweb.PlayerSummaries(ids)
+			if errSummaries != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()
@@ -92,22 +92,22 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, erro
 }
 
 func FetchPlayerBans(steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
-	wg := &sync.WaitGroup{}
+	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerBanState
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
 	for i := 0; i < len(steamIDs); i += chunkSize {
-		wg.Add(1)
+		waitGroup.Add(1)
 		func() {
-			defer wg.Done()
-			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(steamQueryMaxResults, t)
-			ids := steamIDs[i : i+int(m)]
+			defer waitGroup.Done()
+			total := uint64(len(steamIDs) - i)
+			maxResults := golib.UMin64(steamQueryMaxResults, total)
+			ids := steamIDs[i : i+int(maxResults)]
 
-			bans, err := steamweb.GetPlayerBans(ids)
-			if err != nil {
+			bans, errGetPlayerBans := steamweb.GetPlayerBans(ids)
+			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()

@@ -69,9 +69,9 @@ type discordPayload struct {
 
 // Start is the main application entry point
 func Start() error {
-	dbStore, se := store.New(config.DB.DSN)
-	if se != nil {
-		return errors.Wrapf(se, "Failed to setup store")
+	dbStore, dbErr := store.New(config.DB.DSN)
+	if dbErr != nil {
+		return errors.Wrapf(dbErr, "Failed to setup store")
 	}
 	defer func() {
 		if errClose := dbStore.Close(); errClose != nil {
@@ -121,17 +121,17 @@ func warnWorker() {
 		case <-ticker.C:
 			now := config.Now()
 			warningsMu.Lock()
-			for k := range warnings {
-				for i, w := range warnings[k] {
-					if now.Sub(w.CreatedOn) > config.General.WarningTimeout {
-						if len(warnings[k]) > 1 {
-							warnings[k] = append(warnings[k][:i], warnings[k][i+1])
+			for steamId := range warnings {
+				for warnIdx, warning := range warnings[steamId] {
+					if now.Sub(warning.CreatedOn) > config.General.WarningTimeout {
+						if len(warnings[steamId]) > 1 {
+							warnings[steamId] = append(warnings[steamId][:warnIdx], warnings[steamId][warnIdx+1])
 						} else {
-							warnings[k] = nil
+							warnings[steamId] = nil
 						}
 					}
-					if len(warnings[k]) == 0 {
-						delete(warnings, k)
+					if len(warnings[steamId]) == 0 {
+						delete(warnings, steamId)
 					}
 				}
 			}
@@ -145,7 +145,7 @@ func warnWorker() {
 
 // logWriter handles writing log events to the database. It does it in batches for performance
 // reasons.
-func logWriter(db store.StatStore) {
+func logWriter(database store.StatStore) {
 	const (
 		freq = time.Second * 5
 	)
@@ -159,8 +159,8 @@ func logWriter(db store.StatStore) {
 		if len(logCache) == 0 {
 			return
 		}
-		if errI := db.BatchInsertServerLogs(ctx, logCache); errI != nil {
-			log.Errorf("Failed to batch insert logs: %v", errI)
+		if errInsert := database.BatchInsertServerLogs(ctx, logCache); errInsert != nil {
+			log.Errorf("Failed to batch insert logs: %v", errInsert)
 		}
 		logCache = nil
 	}
@@ -203,64 +203,64 @@ func newPlayerCache() *playerCache {
 	return &pc
 }
 
-func (c *playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
-	c.Lock()
-	defer c.Unlock()
-	s, found := c.state[sid]
+func (cache *playerCache) setTeam(sid steamid.SID64, team logparse.Team) {
+	cache.Lock()
+	defer cache.Unlock()
+	state, found := cache.state[sid]
 	if !found {
-		s = playerEventState{}
+		state = playerEventState{}
 	}
-	s.team = team
-	s.updatedAt = config.Now()
-	c.state[sid] = s
+	state.team = team
+	state.updatedAt = config.Now()
+	cache.state[sid] = state
 }
 
-func (c *playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
-	c.Lock()
-	defer c.Unlock()
-	s, found := c.state[sid]
+func (cache *playerCache) setClass(sid steamid.SID64, class logparse.PlayerClass) {
+	cache.Lock()
+	defer cache.Unlock()
+	state, found := cache.state[sid]
 	if !found {
-		s = playerEventState{}
+		state = playerEventState{}
 	}
-	s.class = class
-	s.updatedAt = config.Now()
-	c.state[sid] = s
+	state.class = class
+	state.updatedAt = config.Now()
+	cache.state[sid] = state
 }
 
-func (c *playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
-	c.RLock()
-	defer c.RUnlock()
-	pc, found := c.state[sid]
+func (cache *playerCache) getClass(sid steamid.SID64) logparse.PlayerClass {
+	cache.RLock()
+	defer cache.RUnlock()
+	state, found := cache.state[sid]
 	if !found {
 		return logparse.Spectator
 	}
-	return pc.class
+	return state.class
 }
 
-func (c *playerCache) getTeam(sid steamid.SID64) logparse.Team {
-	c.RLock()
-	defer c.RUnlock()
-	pc, found := c.state[sid]
+func (cache *playerCache) getTeam(sid steamid.SID64) logparse.Team {
+	cache.RLock()
+	defer cache.RUnlock()
+	state, found := cache.state[sid]
 	if !found {
 		return logparse.SPEC
 	}
-	return pc.team
+	return state.team
 }
 
-func (c *playerCache) cleanupWorker() {
-	t := time.NewTicker(20 * time.Second)
+func (cache *playerCache) cleanupWorker() {
+	ticker := time.NewTicker(20 * time.Second)
 	for {
 		select {
-		case <-t.C:
+		case <-ticker.C:
 			now := config.Now()
-			c.Lock()
-			for k, v := range c.state {
-				if now.Sub(v.updatedAt) > time.Hour {
-					delete(c.state, k)
-					log.WithFields(log.Fields{"sid": k}).Debugf("Player cache expired")
+			cache.Lock()
+			for steamId, state := range cache.state {
+				if now.Sub(state.updatedAt) > time.Hour {
+					delete(cache.state, steamId)
+					log.WithFields(log.Fields{"sid": steamId}).Debugf("Player cache expired")
 				}
 			}
-			c.Unlock()
+			cache.Unlock()
 		}
 	}
 }
@@ -268,25 +268,25 @@ func (c *playerCache) cleanupWorker() {
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
 func logReader(db store.Store) {
-	var f *os.File
+	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errOf error
-		f, errOf = os.Create("./unhandled_messages.log")
+		file, errOf = os.Create("./unhandled_messages.log")
 		if errOf != nil {
 			log.Panicf("Failed to open debug message log: %v", errOf)
 		}
 		defer func() {
-			if errClose := f.Close(); errClose != nil {
+			if errClose := file.Close(); errClose != nil {
 				log.Errorf("Failed to close unhandled_messages.log: %v", errClose)
 			}
 		}()
 	}
 
-	getPlayer := func(id string, v map[string]any, p *model.Person) error {
-		sid1Str, ok := v[id]
+	getPlayer := func(id string, playerCache map[string]any, person *model.Person) error {
+		sid1Str, ok := playerCache[id]
 		if ok {
 			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-			if err := db.GetOrCreatePersonBySteamID(ctx, s, p); err != nil {
+			if err := db.GetOrCreatePersonBySteamID(ctx, s, person); err != nil {
 				return errors.Wrapf(err, "Failed to load player1 %s: %s", sid1Str, err.Error())
 			}
 			return nil
@@ -301,19 +301,19 @@ func logReader(db store.Store) {
 	playerStateCache := newPlayerCache()
 	for {
 		select {
-		case raw := <-logRawQueue:
-			var se model.ServerEvent
-			errSE := logToServerEvent(raw, playerStateCache, &se, getPlayer, getServer)
+		case payload := <-logRawQueue:
+			var serverEvent model.ServerEvent
+			errSE := logToServerEvent(payload, playerStateCache, &serverEvent, getPlayer, getServer)
 			if errSE != nil {
 				log.Errorf("Failed to parse: %v", errSE)
 				continue
 			}
-			if se.EventType == logparse.UnknownMsg {
-				if _, errWrite := f.WriteString(raw.Message + "\n"); errWrite != nil {
+			if serverEvent.EventType == logparse.UnknownMsg {
+				if _, errWrite := file.WriteString(payload.Message + "\n"); errWrite != nil {
 					log.Errorf("Failed to write debug log: %v", errWrite)
 				}
 			}
-			event.Emit(se)
+			event.Emit(serverEvent)
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
@@ -321,161 +321,158 @@ func logReader(db store.Store) {
 	}
 }
 
-type getPlayerFn func(id string, v map[string]any, p *model.Person) error
-type getServerFn func(serverName string, s *model.Server) error
+type getPlayerFn func(id string, v map[string]any, person *model.Person) error
+type getServerFn func(serverName string, server *model.Server) error
 
-func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
-	se *model.ServerEvent, getPlayer getPlayerFn, getServer getServerFn) error {
-
-	v := logparse.Parse(raw.Message)
-	var s model.Server
-	if errServer := getServer(raw.ServerName, &s); errServer != nil {
-		return errors.Wrapf(errServer, "Failed to get server for log message: %v", raw.Message)
+func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
+	event *model.ServerEvent, getPlayer getPlayerFn, getServer getServerFn) error {
+	parseResult := logparse.Parse(payload.Message)
+	var server model.Server
+	if errServer := getServer(payload.ServerName, &server); errServer != nil {
+		return errors.Wrapf(errServer, "Failed to get server for log message: %parseResult", payload.Message)
 	}
-
-	se.Server = &s
-	se.EventType = v.MsgType
-	var src model.Person
-	errSrc := getPlayer("sid", v.Values, &src)
+	event.Server = &server
+	event.EventType = parseResult.MsgType
+	var playerSource model.Person
+	errSrc := getPlayer("sid", parseResult.Values, &playerSource)
 	if errSrc != nil {
+	} else {
+		event.Source = &playerSource
+	}
+	var playerTarget model.Person
+	if errTar := getPlayer("sid2", parseResult.Values, &playerTarget); errTar != nil {
 
 	} else {
-		se.Source = &src
+		event.Target = &playerTarget
 	}
-	var tar model.Person
-	if errTar := getPlayer("sid2", v.Values, &tar); errTar != nil {
-
-	} else {
-		se.Target = &tar
-	}
-	aposValue, aposFound := v.Values["attacker_position"]
+	aposValue, aposFound := parseResult.Values["attacker_position"]
 	if aposFound {
 		var apv logparse.Pos
 		if err := logparse.ParsePOS(aposValue.(string), &apv); err != nil {
-			log.Warnf("Failed to parse attacker position: %v", err)
+			log.Warnf("Failed to parse attacker position: %parseResult", err)
 		}
-		se.AttackerPOS = apv
-		delete(v.Values, "attacker_position")
+		event.AttackerPOS = apv
+		delete(parseResult.Values, "attacker_position")
 	}
-	vposValue, vposFound := v.Values["victim_position"]
+	vposValue, vposFound := parseResult.Values["victim_position"]
 	if vposFound {
 		var vpv logparse.Pos
 		if err := logparse.ParsePOS(vposValue.(string), &vpv); err != nil {
-			log.Warnf("Failed to parse victim position: %v", err)
+			log.Warnf("Failed to parse victim position: %parseResult", err)
 		}
-		se.VictimPOS = vpv
-		delete(v.Values, "victim_position")
+		event.VictimPOS = vpv
+		delete(parseResult.Values, "victim_position")
 	}
-	asValue, asFound := v.Values["assister_position"]
+	asValue, asFound := parseResult.Values["assister_position"]
 	if asFound {
 		var asPosValue logparse.Pos
 		if err := logparse.ParsePOS(asValue.(string), &asPosValue); err != nil {
-			log.Warnf("Failed to parse assister position: %v", err)
+			log.Warnf("Failed to parse assister position: %parseResult", err)
 		}
-		se.AssisterPOS = asPosValue
-		delete(v.Values, "assister_position")
+		event.AssisterPOS = asPosValue
+		delete(parseResult.Values, "assister_position")
 	}
 
-	critType, critTypeFound := v.Values["crit"]
+	critType, critTypeFound := parseResult.Values["crit"]
 	if critTypeFound {
-		se.Crit = critType.(logparse.CritType)
-		delete(v.Values, "crit")
+		event.Crit = critType.(logparse.CritType)
+		delete(parseResult.Values, "crit")
 	}
 
 	weapon := logparse.UnknownWeapon
-	weaponValue, weaponFound := v.Values["weapon"]
+	weaponValue, weaponFound := parseResult.Values["weapon"]
 	if weaponFound {
 		weapon = logparse.ParseWeapon(weaponValue.(string))
 	}
-	se.Weapon = weapon
+	event.Weapon = weapon
 
 	var class logparse.PlayerClass
-	classValue, classFound := v.Values["class"]
+	classValue, classFound := parseResult.Values["class"]
 	if classFound {
 		if !logparse.ParsePlayerClass(classValue.(string), &class) {
 			class = logparse.Spectator
 		}
-		delete(v.Values, "class")
-	} else if se.Source != nil {
-		class = playerStateCache.getClass(se.Source.SteamID)
+		delete(parseResult.Values, "class")
+	} else if event.Source != nil {
+		class = playerStateCache.getClass(event.Source.SteamID)
 	}
-	se.PlayerClass = class
+	event.PlayerClass = class
 
 	var damage int64
-	dmgValue, dmgFound := v.Values["damage"]
+	dmgValue, dmgFound := parseResult.Values["damage"]
 	if dmgFound {
 		damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
 		if err != nil {
-			log.Warnf("failed to parse damage value: %v", err)
+			log.Warnf("failed to parse damage value: %parseResult", err)
 		}
 		damage = damageP
-		delete(v.Values, "damage")
+		delete(parseResult.Values, "damage")
 	}
-	se.Damage = damage
+	event.Damage = damage
 
 	var realDamage int64
-	realDmgValue, realDmgFound := v.Values["realdamage"]
+	realDmgValue, realDmgFound := parseResult.Values["realdamage"]
 	if realDmgFound {
 		realDamageP, err := strconv.ParseInt(realDmgValue.(string), 10, 32)
 		if err != nil {
-			log.Warnf("failed to parse damage value: %v", err)
+			log.Warnf("failed to parse damage value: %parseResult", err)
 		}
 		realDamage = realDamageP
-		delete(v.Values, "realdamage")
+		delete(parseResult.Values, "realdamage")
 	}
-	se.RealDamage = realDamage
+	event.RealDamage = realDamage
 
 	var item logparse.PickupItem
-	itemValue, itemFound := v.Values["item"]
+	itemValue, itemFound := parseResult.Values["item"]
 	if itemFound {
 		if !logparse.ParsePickupItem(itemValue.(string), &item) {
 			item = 0
 		}
 	}
-	se.Item = item
+	event.Item = item
 
 	var team logparse.Team
-	teamValue, teamFound := v.Values["team"]
+	teamValue, teamFound := parseResult.Values["team"]
 	if teamFound {
 		if !logparse.ParseTeam(teamValue.(string), &team) {
 			team = 0
 		}
 	} else {
-		if se.Source != nil {
-			team = playerStateCache.getTeam(se.Source.SteamID)
+		if event.Source != nil {
+			team = playerStateCache.getTeam(event.Source.SteamID)
 		}
 	}
-	se.Team = team
+	event.Team = team
 
-	healingValue, healingFound := v.Values["healing"]
+	healingValue, healingFound := parseResult.Values["healing"]
 	if healingFound {
 		healingP, err := strconv.ParseInt(healingValue.(string), 10, 32)
 		if err != nil {
-			log.Warnf("failed to parse healing value: %v", err)
+			log.Warnf("failed to parse healing value: %parseResult", err)
 		}
-		se.Healing = healingP
+		event.Healing = healingP
 	}
 
-	createdOnValue, createdOnFound := v.Values["created_on"]
+	createdOnValue, createdOnFound := parseResult.Values["created_on"]
 	if !createdOnFound {
 		return errors.New("created_on missing")
 	}
 
-	se.CreatedOn = createdOnValue.(time.Time)
+	event.CreatedOn = createdOnValue.(time.Time)
 
 	// Remove keys that get mapped to actual schema columns
-	for _, k := range []string{
+	for _, key := range []string{
 		"created_on", "item", "weapon", "healing",
 		"name", "pid", "sid", "team",
 		"name2", "pid2", "sid2", "team2"} {
-		delete(v.Values, k)
+		delete(parseResult.Values, key)
 	}
-	se.MetaData = v.Values
-	switch v.MsgType {
+	event.MetaData = parseResult.Values
+	switch parseResult.MsgType {
 	case logparse.SpawnedAs:
-		playerStateCache.setClass(se.Source.SteamID, se.PlayerClass)
+		playerStateCache.setClass(event.Source.SteamID, event.PlayerClass)
 	case logparse.JoinedTeam:
-		playerStateCache.setTeam(se.Source.SteamID, se.Team)
+		playerStateCache.setTeam(event.Source.SteamID, event.Team)
 	}
 	return nil
 }
@@ -484,7 +481,7 @@ func logToServerEvent(raw model.LogPayload, playerStateCache *playerCache,
 // restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(db store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
+func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
 	warningsMu.Lock()
 	_, found := warnings[sid64]
 	if !found {
@@ -509,13 +506,13 @@ func addWarning(db store.Store, sid64 steamid.SID64, reason warnReason, botSendM
 		switch config.General.WarningExceededAction {
 		case config.Gag:
 			bo.banType = model.NoComm
-			err = Ban(db, bo, &ban, botSendMessageChan)
+			err = Ban(database, bo, &ban, botSendMessageChan)
 		case config.Ban:
 			bo.banType = model.Banned
-			err = Ban(db, bo, &ban, botSendMessageChan)
+			err = Ban(database, bo, &ban, botSendMessageChan)
 		case config.Kick:
 			var pi model.PlayerInfo
-			err = Kick(db, model.System, model.Target(sid64.String()),
+			err = Kick(database, model.System, model.Target(sid64.String()),
 				model.Target(config.General.Owner.String()), warnReasonString(reason), &pi)
 		}
 		if err != nil {
@@ -525,11 +522,11 @@ func addWarning(db store.Store, sid64 steamid.SID64, reason warnReason, botSendM
 	}
 }
 
-func initFilters(db store.FilterStore) {
+func initFilters(database store.FilterStore) {
 	// TODO load external lists via http
 	c, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
-	words, err := db.GetFilters(c)
+	words, err := database.GetFilters(c)
 	if err != nil {
 		log.Fatal("Failed to load word list")
 	}
@@ -537,32 +534,32 @@ func initFilters(db store.FilterStore) {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func initWorkers(db store.Store, botSendMessageChan chan discordPayload) {
-	go banSweeper(db)
-	go mapChanger(db, time.Second*5)
-	go serverStateUpdater(db)
-	go profileUpdater(db)
+func initWorkers(database store.Store, botSendMessageChan chan discordPayload) {
+	go banSweeper(database)
+	go mapChanger(database, time.Second*5)
+	go serverStateUpdater(database)
+	go profileUpdater(database)
 	go warnWorker()
-	go logReader(db)
-	go logWriter(db)
-	go filterWorker(db, botSendMessageChan)
-	go initLogSrc(db)
+	go logReader(database)
+	go logWriter(database)
+	go filterWorker(database, botSendMessageChan)
+	go initLogSrc(database)
 	go logMetricsConsumer()
 }
 
-func initLogSrc(db store.Store) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, db, logRawQueue)
+func initLogSrc(database store.Store) {
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, database, logRawQueue)
 	if errLogSrc != nil {
 		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
 	}
 	logSrc.start()
 }
 
-func initDiscord(db store.Store, botSendMessageChan chan discordPayload) {
+func initDiscord(database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {
-		bot, be := NewDiscord(db)
-		if be != nil {
-			log.Fatalf("Failed to setup bot: %v", be)
+		session, sessionErr := NewDiscord(database)
+		if sessionErr != nil {
+			log.Fatalf("Failed to setup session: %v", sessionErr)
 		}
 		events := make(chan model.ServerEvent)
 		if len(config.Discord.LogChannelID) > 0 {
@@ -573,15 +570,15 @@ func initDiscord(db store.Store, botSendMessageChan chan discordPayload) {
 		go func() {
 			for {
 				select {
-				case m := <-botSendMessageChan:
-					if errSend := bot.SendEmbed(m.channelId, m.message); errSend != nil {
-						log.Errorf("Failed to send discord message: %v", errSend)
+				case payload := <-botSendMessageChan:
+					if errSend := session.SendEmbed(payload.channelId, payload.message); errSend != nil {
+						log.Errorf("Failed to send discord payload: %v", errSend)
 					}
 				}
 			}
 		}()
-		if errBS := bot.Start(ctx, config.Discord.Token, events); errBS != nil {
-			log.Errorf("discord returned error: %v", errBS)
+		if errSessionStart := session.Start(ctx, config.Discord.Token, events); errSessionStart != nil {
+			log.Errorf("discord returned error: %v", errSessionStart)
 		}
 	} else {
 		log.Fatalf("discord enabled, but bot token invalid")
@@ -589,9 +586,9 @@ func initDiscord(db store.Store, botSendMessageChan chan discordPayload) {
 }
 
 func initNetBans() {
-	for _, list := range config.Net.Sources {
-		if err := external.Import(list); err != nil {
-			log.Errorf("Failed to import list: %v", err)
+	for _, banList := range config.Net.Sources {
+		if errImport := external.Import(banList); errImport != nil {
+			log.Errorf("Failed to import banList: %v", errImport)
 		}
 	}
 }
@@ -601,9 +598,9 @@ func initNetBans() {
 //
 // This function will replace the discord member id value in the target field with
 // the found SteamID, if any.
-//func validateLink(ctx context.Context, db store.Store, sourceID action.Author, target *action.Author) error {
+//func validateLink(ctx context.Context, database store.Store, sourceID action.Author, target *action.Author) error {
 //	var p model.Person
-//	if err := db.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
+//	if err := database.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
 //		if err == store.ErrNoResult {
 //			return consts.ErrUnlinkedAccount
 //		}

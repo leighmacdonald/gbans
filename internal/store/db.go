@@ -82,9 +82,9 @@ func NewQueryFilter(query string) *QueryFilter {
 
 // New sets up underlying required services.
 func New(dsn string) (Store, error) {
-	cfg, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		log.Fatalf("Unable to parse config: %v", err)
+	cfg, errConfig := pgxpool.ParseConfig(dsn)
+	if errConfig != nil {
+		log.Fatalf("Unable to parse config: %v", errConfig)
 	}
 	ndb := pgStore{}
 	if config.DB.AutoMigrate {
@@ -99,46 +99,46 @@ func New(dsn string) (Store, error) {
 		}
 	}
 	if config.DB.LogQueries {
-		lgr := log.New()
-		lvl, err2 := log.ParseLevel(config.Log.Level)
-		if err2 != nil {
-			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, err2)
+		logger := log.New()
+		logLevel, errLevel := log.ParseLevel(config.Log.Level)
+		if errLevel != nil {
+			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, errLevel)
 		}
-		lgr.SetLevel(lvl)
-		lgr.SetFormatter(&log.TextFormatter{
+		logger.SetLevel(logLevel)
+		logger.SetFormatter(&log.TextFormatter{
 			ForceColors:   config.Log.ForceColours,
 			DisableColors: config.Log.DisableColours,
 			FullTimestamp: config.Log.FullTimestamp,
 		})
-		lgr.SetReportCaller(config.Log.ReportCaller)
-		cfg.ConnConfig.Logger = logrusadapter.NewLogger(lgr)
+		logger.SetReportCaller(config.Log.ReportCaller)
+		cfg.ConnConfig.Logger = logrusadapter.NewLogger(logger)
 	}
 	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err3 != nil {
 		log.Fatalf("Failed to connect to database: %v", err3)
 	}
-	return &pgStore{c: dbConn}, nil
+	return &pgStore{conn: dbConn}, nil
 }
 
 // pgStore implements Store against a postgresql database
 type pgStore struct {
-	c *pgxpool.Pool
+	conn *pgxpool.Pool
 }
 
-func (db *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	return db.c.Query(ctx, query, args...)
+func (database *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	return database.conn.Query(ctx, query, args...)
 }
 
 // Close will close the underlying database connection if it exists
-func (db *pgStore) Close() error {
-	if db.c != nil {
-		db.c.Close()
+func (database *pgStore) Close() error {
+	if database.conn != nil {
+		database.conn.Close()
 	}
 	return nil
 }
 
-func (db *pgStore) truncateTable(ctx context.Context, table tableName) error {
-	if _, err := db.c.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
+func (database *pgStore) truncateTable(ctx context.Context, table tableName) error {
+	if _, err := database.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
 		return Err(err)
 	}
 	return nil
@@ -180,54 +180,54 @@ const (
 )
 
 // Migrate e
-func (db *pgStore) Migrate(action MigrationAction) error {
-	instance, err := sql.Open("pgx", config.DB.DSN)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to open database for migration")
+func (database *pgStore) Migrate(action MigrationAction) error {
+	instance, errOpen := sql.Open("pgx", config.DB.DSN)
+	if errOpen != nil {
+		return errors.Wrapf(errOpen, "Failed to open database for migration")
 	}
 	if errPing := instance.Ping(); errPing != nil {
-		return errors.Wrapf(errPing, "Cannot migrate, failed to connect to target server")
+		return errors.Wrapf(errPing, "Cannot migrator, failed to connect to target server")
 	}
-	driver, err2 := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
+	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
 		MigrationsTable:       "_migration",
 		SchemaName:            "public",
 		StatementTimeout:      60 * time.Second,
 		MultiStatementEnabled: true,
 	})
-	if err2 != nil {
-		return errors.Wrapf(err2, "failed to create migration driver")
+	if errMigrate != nil {
+		return errors.Wrapf(errMigrate, "failed to create migration driver")
 	}
 	defer func() {
-		if e := driver.Close(); e != nil {
-			log.Errorf("Failed to close migrate driver: %v", e)
+		if errClose := driver.Close(); errClose != nil {
+			log.Errorf("Failed to close migrator driver: %v", errClose)
 		}
 	}()
-	source, err3 := httpfs.New(http.FS(migrations), "migrations")
-	if err3 != nil {
-		return err3
+	source, errHttpFS := httpfs.New(http.FS(migrations), "migrations")
+	if errHttpFS != nil {
+		return errHttpFS
 	}
-	m, err4 := migrate.NewWithInstance("iofs", source, "pgx", driver)
-	if err4 != nil {
-		return errors.Wrapf(err4, "Failed to migrate up")
+	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx", driver)
+	if errMigrateInstance != nil {
+		return errors.Wrapf(errMigrateInstance, "Failed to migrator up")
 	}
 	switch action {
 	//case MigrateUpOne:
-	//	return m.Steps(1)
+	//	return migrator.Steps(1)
 	case MigrateDn:
-		return m.Down()
+		return migrator.Down()
 	//case MigrateDownOne:
-	//	return m.Steps(-1)
+	//	return migrator.Steps(-1)
 	case MigrateUp:
 		fallthrough
 	default:
-		return m.Up()
+		return migrator.Up()
 	}
 }
 
 // Import will import bans from a root folder.
 // The formatting is JSON with the importedBan schema defined inline
 // Valid filenames are: main_ban.json
-func (db *pgStore) Import(ctx context.Context, root string) error {
+func (database *pgStore) Import(ctx context.Context, root string) error {
 	type importedBan struct {
 		BanID      int    `json:"ban_id"`
 		SteamID    uint64 `json:"steam_id"`
@@ -245,48 +245,48 @@ func (db *pgStore) Import(ctx context.Context, root string) error {
 	return filepath.WalkDir(root, func(p string, d fs.DirEntry, e error) error {
 		switch d.Name() {
 		case "main_ban.json":
-			b, err := ioutil.ReadFile(path.Join(root, d.Name()))
-			if err != nil {
-				return err
+			body, errRead := ioutil.ReadFile(path.Join(root, d.Name()))
+			if errRead != nil {
+				return errRead
 			}
-			var imported []importedBan
-			if err2 := json.Unmarshal(b, &imported); err2 != nil {
-				return err2
+			var importedBans []importedBan
+			if errUnmarshal := json.Unmarshal(body, &importedBans); errUnmarshal != nil {
+				return errUnmarshal
 			}
-			for _, im := range imported {
-				b1 := model.NewPerson(steamid.SID64(im.SteamID))
-				b2 := model.NewPerson(steamid.SID64(im.AuthorID))
-				if e1 := db.GetOrCreatePersonBySteamID(ctx, steamid.SID64(im.SteamID), &b1); e1 != nil {
-					return e1
+			for _, imported := range importedBans {
+				banTarget := model.NewPerson(steamid.SID64(imported.SteamID))
+				author := model.NewPerson(steamid.SID64(imported.AuthorID))
+				if errGetPersonA := database.GetOrCreatePersonBySteamID(ctx, steamid.SID64(imported.SteamID), &banTarget); errGetPersonA != nil {
+					return errGetPersonA
 				}
-				if e2 := db.GetOrCreatePersonBySteamID(ctx, steamid.SID64(im.AuthorID), &b2); e2 != nil {
-					return e2
+				if errGetPersonB := database.GetOrCreatePersonBySteamID(ctx, steamid.SID64(imported.AuthorID), &author); errGetPersonB != nil {
+					return errGetPersonB
 				}
-				sum, err3 := steamweb.PlayerSummaries(steamid.Collection{b1.SteamID, b2.SteamID})
-				if err3 != nil {
-					log.Errorf("Failed to get player summary: %v", err3)
-					return err3
+				sum, errPlayerSummary := steamweb.PlayerSummaries(steamid.Collection{banTarget.SteamID, author.SteamID})
+				if errPlayerSummary != nil {
+					log.Errorf("Failed to get player summary: %v", errPlayerSummary)
+					return errPlayerSummary
 				}
 				if len(sum) > 0 {
-					b1.PlayerSummary = &sum[0]
-					if err4 := db.SavePerson(ctx, &b1); err4 != nil {
-						return err4
+					banTarget.PlayerSummary = &sum[0]
+					if errSavePerson := database.SavePerson(ctx, &banTarget); errSavePerson != nil {
+						return errSavePerson
 					}
-					if b2.SteamID.Valid() && len(sum) > 1 {
-						b2.PlayerSummary = &sum[1]
-						if err5 := db.SavePerson(ctx, &b2); err5 != nil {
-							return err5
+					if author.SteamID.Valid() && len(sum) > 1 {
+						author.PlayerSummary = &sum[1]
+						if errSavePerson := database.SavePerson(ctx, &author); errSavePerson != nil {
+							return errSavePerson
 						}
 					}
 				}
-				bn := model.NewBan(b1.SteamID, b2.SteamID, 0)
-				bn.ValidUntil = time.Unix(int64(im.Until), 0)
-				bn.ReasonText = im.ReasonText
-				bn.CreatedOn = time.Unix(int64(im.CreatedOn), 0)
-				bn.UpdatedOn = time.Unix(int64(im.UpdatedOn), 0)
-				bn.Source = model.System
-				if err4 := db.SaveBan(ctx, &bn); err4 != nil {
-					return err4
+				newBan := model.NewBan(banTarget.SteamID, author.SteamID, 0)
+				newBan.ValidUntil = time.Unix(int64(imported.Until), 0)
+				newBan.ReasonText = imported.ReasonText
+				newBan.CreatedOn = time.Unix(int64(imported.CreatedOn), 0)
+				newBan.UpdatedOn = time.Unix(int64(imported.UpdatedOn), 0)
+				newBan.Source = model.System
+				if errSaveBan := database.SaveBan(ctx, &newBan); errSaveBan != nil {
+					return errSaveBan
 				}
 			}
 		}

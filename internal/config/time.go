@@ -25,24 +25,24 @@ func init() {
 // ParseDuration works exactly like time.ParseDuration except that
 // it supports durations longer than hours
 // Formats: s, m, h, d, w, M, y
-func ParseDuration(s string) (time.Duration, error) {
-	if s == "0" {
+func ParseDuration(durationString string) (time.Duration, error) {
+	if durationString == "0" {
 		return 0, nil
 	}
-	m := reDuration.FindStringSubmatch(s)
-	if m == nil {
+	matchDuration := reDuration.FindStringSubmatch(durationString)
+	if matchDuration == nil {
 		return 0, errInvalidDuration
 	}
-	valueInt, err := strconv.ParseInt(m[1], 10, 64)
+	valueInt, err := strconv.ParseInt(matchDuration[1], 10, 64)
 	if err != nil {
 		return 0, errInvalidDuration
 	}
 	value := time.Duration(valueInt)
 	day := time.Hour * 24
-	switch m[2] {
-	case "s":
+	switch matchDuration[2] {
+	case "durationString":
 		return time.Second * value, nil
-	case "m":
+	case "matchDuration":
 		return time.Minute * value, nil
 	case "h":
 		return time.Hour * value, nil
@@ -104,25 +104,25 @@ func FmtDuration(t time.Time) string {
 	return strings.Join(pcs, " ")
 }
 
-func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
-	if a.Location() != b.Location() {
-		b = b.In(a.Location())
+func diff(from, to time.Time) (year, month, day, hour, min, sec int) {
+	if from.Location() != to.Location() {
+		to = to.In(from.Location())
 	}
-	if a.After(b) {
-		a, b = b, a
+	if from.After(to) {
+		from, to = to, from
 	}
-	y1, M1, d1 := a.Date()
-	y2, M2, d2 := b.Date()
+	year1, Month1, day1 := from.Date()
+	year2, Month2, day2 := to.Date()
 
-	h1, m1, s1 := a.Clock()
-	h2, m2, s2 := b.Clock()
+	hour1, minute1, second1 := from.Clock()
+	hour2, minute2, second2 := to.Clock()
 
-	year = y2 - y1
-	month = int(M2 - M1)
-	day = d2 - d1
-	hour = h2 - h1
-	min = m2 - m1
-	sec = s2 - s1
+	year = year2 - year1
+	month = int(Month2 - Month1)
+	day = day2 - day1
+	hour = hour2 - hour1
+	min = minute2 - minute1
+	sec = second2 - second1
 
 	// Normalize negative values
 	if sec < 0 {
@@ -139,7 +139,7 @@ func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
 	}
 	if day < 0 {
 		// days in month:
-		t := time.Date(y1, M1, 32, 0, 0, 0, 0, time.UTC)
+		t := time.Date(year1, Month1, 32, 0, 0, 0, 0, time.UTC)
 		day += 32 - t.Day()
 		month--
 	}

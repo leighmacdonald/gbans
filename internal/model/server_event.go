@@ -45,54 +45,54 @@ type ServerEvent struct {
 	MetaData  MetaData          `json:"meta_data"`
 }
 
-func (m ServerEvent) GetValueAny(key string) any {
-	v, found := m.MetaData[key]
+func (serverEvent ServerEvent) GetValueAny(key string) any {
+	value, found := serverEvent.MetaData[key]
 	if !found {
 		return nil
 	}
-	return v
+	return value
 }
 
-func (m ServerEvent) GetValueString(key string) string {
-	v, found := m.MetaData[key]
+func (serverEvent ServerEvent) GetValueString(key string) string {
+	value, found := serverEvent.MetaData[key]
 	if !found {
 		return ""
 	}
-	return v.(string)
+	return value.(string)
 }
 
-func (m ServerEvent) GetValueInt64(key string) int64 {
-	v, found := m.MetaData[key]
+func (serverEvent ServerEvent) GetValueInt64(key string) int64 {
+	value, found := serverEvent.MetaData[key]
 	if !found {
 		return 0
 	}
-	switch v.(type) {
+	switch value.(type) {
 	case string:
-		value, errConv := strconv.ParseInt(v.(string), 10, 64)
+		parsedValue, errConv := strconv.ParseInt(value.(string), 10, 64)
 		if errConv != nil {
-			log.WithFields(log.Fields{"key": key}).Errorf("Failed to parse key value: %v", errConv)
+			log.WithFields(log.Fields{"key": key}).Errorf("Failed to parse key value: %value", errConv)
 		}
-		return value
+		return parsedValue
 	case float64:
-		return v.(int64)
+		return value.(int64)
 	default:
-		return v.(int64)
+		return value.(int64)
 	}
 }
 
-func (m ServerEvent) GetValueInt(key string) int {
-	return int(m.GetValueInt64(key))
+func (serverEvent ServerEvent) GetValueInt(key string) int {
+	return int(serverEvent.GetValueInt64(key))
 }
 
-func (m ServerEvent) GetValueBool(key string) bool {
+func (serverEvent ServerEvent) GetValueBool(key string) bool {
 	// TODO is there a stringy bool value?
-	v, found := m.MetaData[key]
+	value, found := serverEvent.MetaData[key]
 	if !found {
 		return false
 	}
-	val, e := strconv.ParseBool(v.(string))
-	if e != nil {
-		log.Errorf("Failed to parse bool value: %v", e)
+	val, errParse := strconv.ParseBool(value.(string))
+	if errParse != nil {
+		log.Errorf("Failed to parse bool value: %value", errParse)
 		return false
 	}
 	return val

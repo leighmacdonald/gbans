@@ -209,9 +209,9 @@ var (
 // Read reads in config file and ENV variables if set.
 func Read(cfgFiles ...string) {
 	// Find home directory.
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Fatalf("Failed to get HOME dir: %v", err)
+	home, errHomeDir := homedir.Dir()
+	if errHomeDir != nil {
+		log.Fatalf("Failed to get HOME dir: %v", errHomeDir)
 	}
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
@@ -222,45 +222,45 @@ func Read(cfgFiles ...string) {
 	found := false
 	for _, cfgFile := range cfgFiles {
 		viper.SetConfigFile(cfgFile)
-		if err := viper.ReadInConfig(); err != nil {
+		if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
 			log.Fatalf("Failed to read config file: %s", cfgFile)
 		}
 		found = true
 	}
-	var cfg rootConfig
-	if err2 := viper.Unmarshal(&cfg); err2 != nil {
-		log.Fatalf("Invalid config file format: %v", err2)
+	var root rootConfig
+	if errUnmarshal := viper.Unmarshal(&root); errUnmarshal != nil {
+		log.Fatalf("Invalid config file format: %v", errUnmarshal)
 	}
-	if strings.HasPrefix(cfg.DB.DSN, "pgx://") {
-		cfg.DB.DSN = strings.Replace(cfg.DB.DSN, "pgx://", "postgres://", 1)
+	if strings.HasPrefix(root.DB.DSN, "pgx://") {
+		root.DB.DSN = strings.Replace(root.DB.DSN, "pgx://", "postgres://", 1)
 	}
-	d, err3 := ParseDuration(cfg.HTTP.ClientTimeout)
-	if err3 != nil {
-		d = time.Second * 10
+	clientDuration, errClientDuration := ParseDuration(root.HTTP.ClientTimeout)
+	if errClientDuration != nil {
+		clientDuration = time.Second * 10
 	}
-	cfg.HTTP.ClientTimeoutDuration = d
-	d2, err4 := ParseDuration(cfg.General.WarningExceededDurationValue)
-	if err4 != nil {
-		d2 = time.Hour * 24 * 7
+	root.HTTP.ClientTimeoutDuration = clientDuration
+	warningDuration, errWarningDuration := ParseDuration(root.General.WarningExceededDurationValue)
+	if errWarningDuration != nil {
+		warningDuration = time.Hour * 24 * 7
 	}
-	cfg.General.WarningExceededDuration = d2
-	HTTP = cfg.HTTP
-	General = cfg.General
-	Filter = cfg.Filter
-	Discord = cfg.Discord
-	Relay = cfg.Relay
-	DB = cfg.DB
-	Log = cfg.Log
-	Net = cfg.NetBans
-	Debug = cfg.Debug
+	root.General.WarningExceededDuration = warningDuration
+	HTTP = root.HTTP
+	General = root.General
+	Filter = root.Filter
+	Discord = root.Discord
+	Relay = root.Relay
+	DB = root.DB
+	Log = root.Log
+	Net = root.NetBans
+	Debug = root.Debug
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
-		log.Errorf("Failed to set steam api key: %v", err)
+		log.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
 	if errSteamWeb := steamweb.SetKey(General.SteamKey); errSteamWeb != nil {
-		log.Errorf("Failed to set steam api key: %v", err)
+		log.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
 	if found {
 		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
@@ -335,17 +335,17 @@ func init() {
 	}
 }
 
-func configureLogger(l *log.Logger) {
-	level, err := log.ParseLevel(Log.Level)
-	if err != nil {
+func configureLogger(logger *log.Logger) {
+	level, errLevel := log.ParseLevel(Log.Level)
+	if errLevel != nil {
 		log.Debugf("Invalid log level: %s", Log.Level)
 		level = log.InfoLevel
 	}
-	l.SetLevel(level)
-	l.SetFormatter(&log.TextFormatter{
+	logger.SetLevel(level)
+	logger.SetFormatter(&log.TextFormatter{
 		ForceColors:   Log.ForceColours,
 		DisableColors: Log.DisableColours,
 		FullTimestamp: Log.FullTimestamp,
 	})
-	l.SetReportCaller(Log.ReportCaller)
+	logger.SetReportCaller(Log.ReportCaller)
 }

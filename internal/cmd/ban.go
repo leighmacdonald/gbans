@@ -33,9 +33,9 @@ var banSteamCmd = &cobra.Command{
 	Short: "create a steam ban",
 	Long:  `Create a new steam ban in the database`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		db, errNewStore := store.New(config.DB.DSN)
+		if errNewStore != nil {
+			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
 			log.Fatal("Ban reason cannot be empty")
@@ -60,8 +60,8 @@ var banSteamCmd = &cobra.Command{
 		ban := model.NewBan(sid, config.General.Owner, dur)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := db.SaveBan(ctx, &ban); err != nil {
-			log.WithFields(log.Fields{"sid": sid.String()}).Fatalf("Could not create create ban: %v", err)
+		if errSaveBan := db.SaveBan(ctx, &ban); errSaveBan != nil {
+			log.WithFields(log.Fields{"sid": sid.String()}).Fatalf("Could not create create ban: %v", errSaveBan)
 		}
 		log.WithFields(log.Fields{"reason": reason, "until": ban.ValidUntil.String()}).
 			Info("Added ban successfully")
@@ -76,9 +76,9 @@ var banCIDRCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		db, errNewStore := store.New(config.DB.DSN)
+		if errNewStore != nil {
+			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
 			log.Fatal("Ban reason cannot be empty")
@@ -118,9 +118,9 @@ var banASNCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		db, errNewStore := store.New(config.DB.DSN)
+		if errNewStore != nil {
+			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		dur, errDur := config.ParseDuration(duration)
 		if errDur != nil {

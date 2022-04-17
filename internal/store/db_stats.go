@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func (db *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
+func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
 	const q = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -29,13 +29,13 @@ func (db *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
 		(SELECT COUNT(appeal_id) FROM ban_appeal WHERE appeal_state = 1 OR appeal_state = 2) as appeals_closed,
 		(SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
-	if err := db.c.QueryRow(ctx, q).
+	if errQuery := database.conn.QueryRow(ctx, q).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth,
 			&stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal,
 			&stats.AppealsOpen, &stats.AppealsClosed, &stats.FilteredWords, &stats.ServersTotal,
-		); err != nil {
-		log.Errorf("Failed to fetch stats: %v", err)
-		return Err(err)
+		); errQuery != nil {
+		log.Errorf("Failed to fetch stats: %v", errQuery)
+		return Err(errQuery)
 	}
 	return nil
 
@@ -49,9 +49,9 @@ type statResult struct {
 // GetPlayerStats calculates and returns basic stats for a player using the server_log events
 // FIXME Since we currently run on high-core count hardware with nvme drives
 // we are running the queries concurrently for now
-func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, stats *model.PlayerStats) error {
-	wg := &sync.WaitGroup{}
-	mu := &sync.RWMutex{}
+func (database *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, stats *model.PlayerStats) error {
+	waitGroup := &sync.WaitGroup{}
+	rwMutex := &sync.RWMutex{}
 	queries := []statResult{
 		{&stats.Damage, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
 		{&stats.DamageTaken, statQueryOpts{targetId: sid, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
@@ -62,20 +62,20 @@ func (db *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, stats 
 		{&stats.Deaths, statQueryOpts{targetId: sid, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
 		{&stats.Assists, statQueryOpts{sourceId: sid, msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
-	wg.Add(len(queries))
+	waitGroup.Add(len(queries))
 	for _, query := range queries {
 		go func(v *int64, q statQueryOpts) {
-			defer wg.Done()
-			dmg, errDmg := db.getEventSum(ctx, q)
+			defer waitGroup.Done()
+			dmg, errDmg := database.getEventSum(ctx, q)
 			if errDmg != nil {
 				log.Warnf("Failed to get player damage")
 			}
-			mu.Lock()
+			rwMutex.Lock()
 			*v = dmg
-			mu.Unlock()
+			rwMutex.Unlock()
 		}(query.result, query.query)
 	}
-	wg.Wait()
+	waitGroup.Wait()
 	return nil
 }
 
@@ -89,7 +89,7 @@ type statQueryOpts struct {
 	countColumn string
 }
 
-func (db *pgStore) getEventSum(ctx context.Context, opts statQueryOpts) (int64, error) {
+func (database *pgStore) getEventSum(ctx context.Context, opts statQueryOpts) (int64, error) {
 	var qb squirrel.SelectBuilder
 	if opts.sumColumn != "" && opts.countColumn != "" {
 		return 0, errors.New("sumColumn and countColumn are mutually exclusive")
@@ -121,13 +121,13 @@ func (db *pgStore) getEventSum(ctx context.Context, opts statQueryOpts) (int64, 
 	log.Tracef("getEventSum: %s", query)
 	//const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
 	var value int64
-	if err := db.c.QueryRow(ctx, query, args...).Scan(&value); err != nil {
+	if err := database.conn.QueryRow(ctx, query, args...).Scan(&value); err != nil {
 		return 0, errors.Wrapf(err, "Failed to fetch player result sum")
 	}
 	return value, nil
 }
 
-func (db *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error {
+func (database *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error {
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
 	queries := []statResult{
@@ -142,7 +142,7 @@ func (db *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats)
 	for _, query := range queries {
 		go func(v *int64, q statQueryOpts) {
 			defer wg.Done()
-			value, errStat := db.getEventSum(ctx, q)
+			value, errStat := database.getEventSum(ctx, q)
 			if errStat != nil {
 				log.Warnf("Failed to get stat value: %v", errStat)
 			}
@@ -155,7 +155,7 @@ func (db *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats)
 	return nil
 }
 
-func (db *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error {
+func (database *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error {
 	wg := &sync.WaitGroup{}
 	mu := &sync.RWMutex{}
 	queries := []statResult{
@@ -170,7 +170,7 @@ func (db *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *mo
 	for _, query := range queries {
 		go func(v *int64, q statQueryOpts) {
 			defer wg.Done()
-			value, errStat := db.getEventSum(ctx, q)
+			value, errStat := database.getEventSum(ctx, q)
 			if errStat != nil {
 				log.Warnf("Failed to get stat value: %v", errStat)
 			}
@@ -182,7 +182,7 @@ func (db *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *mo
 	wg.Wait()
 	return nil
 }
-func (db *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint64) ([]model.ServerEvent, error) {
+func (database *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint64) ([]model.ServerEvent, error) {
 	const q = `
 			SELECT 
 			    l.log_id, l.event_type, l.created_on,
@@ -198,7 +198,7 @@ func (db *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint6
 			ORDER BY l.created_on DESC
 			OFFSET %d 
 			LIMIT %d`
-	rows, errQuery := db.Query(ctx, fmt.Sprintf(q, offset, limit))
+	rows, errQuery := database.Query(ctx, fmt.Sprintf(q, offset, limit))
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

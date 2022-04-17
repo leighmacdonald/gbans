@@ -8,21 +8,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (db *pgStore) GetDemo(ctx context.Context, demoId int64, d *model.DemoFile) error {
+func (database *pgStore) GetDemo(ctx context.Context, demoId int64, d *model.DemoFile) error {
 	q, a, e := sb.Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
 	if e != nil {
 		return Err(e)
 	}
-	if err := db.c.QueryRow(ctx, q, a...).Scan(&d.DemoID, &d.ServerID, &d.Title, &d.Data,
+	if err := database.conn.QueryRow(ctx, q, a...).Scan(&d.DemoID, &d.ServerID, &d.Title, &d.Data,
 		&d.CreatedOn, &d.Size, &d.Downloads); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (db *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
+func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	var demos []model.DemoFile
 	q, a, e := sb.Select("demo_id", "server_id", "title", "created_on", "size", "downloads").
 		From("demo").
@@ -32,7 +32,7 @@ func (db *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	if e != nil {
 		return nil, Err(e)
 	}
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := database.conn.Query(ctx, q, a...)
 	var rs error
 	for rows.Next() {
 		var d model.DemoFile
@@ -44,15 +44,15 @@ func (db *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	return demos, nil
 }
 
-func (db *pgStore) SaveDemo(ctx context.Context, d *model.DemoFile) error {
+func (database *pgStore) SaveDemo(ctx context.Context, d *model.DemoFile) error {
 	if d.ServerID > 0 {
-		return db.updateDemo(ctx, d)
+		return database.updateDemo(ctx, d)
 	} else {
-		return db.insertDemo(ctx, d)
+		return database.insertDemo(ctx, d)
 	}
 }
 
-func (db *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
+func (database *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
 	q, a, e := sb.Insert(string(tableDemo)).
 		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads").
 		Values(d.ServerID, d.Title, d.Data, d.CreatedOn, d.Size, d.Downloads).
@@ -61,7 +61,7 @@ func (db *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
 	if e != nil {
 		return e
 	}
-	err := db.c.QueryRow(ctx, q, a...).Scan(&d.ServerID)
+	err := database.conn.QueryRow(ctx, q, a...).Scan(&d.ServerID)
 	if err != nil {
 		return Err(err)
 	}
@@ -69,7 +69,7 @@ func (db *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
 	return nil
 }
 
-func (db *pgStore) updateDemo(ctx context.Context, d *model.DemoFile) error {
+func (database *pgStore) updateDemo(ctx context.Context, d *model.DemoFile) error {
 	q, a, e := sb.Update(string(tableDemo)).
 		Set("title", d.Title).
 		Set("size", d.Size).
@@ -79,19 +79,19 @@ func (db *pgStore) updateDemo(ctx context.Context, d *model.DemoFile) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update demo")
 	}
 	log.Debugf("Demo updated: %s", d.Title)
 	return nil
 }
 
-func (db *pgStore) DropDemo(ctx context.Context, d *model.DemoFile) error {
+func (database *pgStore) DropDemo(ctx context.Context, d *model.DemoFile) error {
 	q, a, e := sb.Delete(string(tableDemo)).Where(sq.Eq{"demo_id": d.DemoID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return Err(err)
 	}
 	d.DemoID = 0

@@ -21,14 +21,14 @@ type web struct {
 	botSendMessageChan chan discordPayload
 }
 
-func (w web) ListenAndServe() error {
+func (web web) ListenAndServe() error {
 	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
-	return w.httpServer.ListenAndServe()
+	return web.httpServer.ListenAndServe()
 }
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb(db store.Store, botSendMessageChan chan discordPayload) (WebHandler, error) {
+func NewWeb(database store.Store, botSendMessageChan chan discordPayload) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -67,17 +67,17 @@ func NewWeb(db store.Store, botSendMessageChan chan discordPayload) (WebHandler,
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	w := web{httpServer: httpServer, botSendMessageChan: botSendMessageChan}
-	w.setupRouter(db, router)
-	return w, nil
+	webHandler := web{httpServer: httpServer, botSendMessageChan: botSendMessageChan}
+	webHandler.setupRouter(database, router)
+	return webHandler, nil
 }
 
-func currentPerson(c *gin.Context) model.Person {
-	p, found := c.Get("person")
+func currentPerson(ctx *gin.Context) model.Person {
+	maybePerson, found := ctx.Get("person")
 	if !found {
 		return model.NewPerson(0)
 	}
-	person, ok := p.(model.Person)
+	person, ok := maybePerson.(model.Person)
 	if !ok {
 		log.Errorf("Count not cast store.Person from session")
 		return model.NewPerson(0)

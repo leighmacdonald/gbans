@@ -84,8 +84,8 @@ func init() {
 
 // logMetricsConsumer processes incoming log events and updated any associated metrics
 func logMetricsConsumer() {
-	c := make(chan model.ServerEvent)
-	if err := event.RegisterConsumer(c, []logparse.EventType{logparse.Any}); err != nil {
+	eventChan := make(chan model.ServerEvent)
+	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Errorf("Failed to register event consumer")
 		return
 	}
@@ -93,34 +93,34 @@ func logMetricsConsumer() {
 		select {
 		case <-ctx.Done():
 			return
-		case e := <-c:
-			if e.Server != nil {
+		case serverEvent := <-eventChan:
+			if serverEvent.Server != nil {
 				// TODO why is this ever nil?
-				logEventCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+				logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			}
-			switch e.EventType {
+			switch serverEvent.EventType {
 			case logparse.Damage:
-				damageCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Add(float64(e.Damage))
+				damageCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Add(float64(serverEvent.Damage))
 			case logparse.Healed:
-				healingCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Add(float64(e.Damage))
+				healingCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
-				shotFiredCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Inc()
+				shotFiredCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
 			case logparse.ShotHit:
-				shotHitCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Inc()
+				shotHitCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
 			case logparse.Killed:
-				killCounter.With(prometheus.Labels{"weapon": e.Weapon.String()}).Inc()
+				killCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
 			case logparse.Say:
 				sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
 			case logparse.SayTeam:
 				sayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
 			case logparse.RCON:
-				rconCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+				rconCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Connected:
-				connectedCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+				connectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Disconnected:
-				disconnectedCounter.With(prometheus.Labels{"server_name": e.Server.ServerName}).Inc()
+				disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.SpawnedAs:
-				classCounter.With(prometheus.Labels{"class": e.PlayerClass.String()}).Inc()
+				classCounter.With(prometheus.Labels{"class": serverEvent.PlayerClass.String()}).Inc()
 			}
 		}
 	}

@@ -16,7 +16,7 @@ var columnsServer = []string{"server_id", "short_name", "token", "address", "por
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted", "log_secret"}
 
-func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Server) error {
+func (database *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Server) error {
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
@@ -24,7 +24,7 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 	if e != nil {
 		return Err(e)
 	}
-	if err := db.c.QueryRow(ctx, q, a...).
+	if err := database.conn.QueryRow(ctx, q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
 			&s.ReservedSlots, &s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
@@ -34,7 +34,7 @@ func (db *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Serve
 	return nil
 }
 
-func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
+func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
 	var servers []model.Server
 	qb := sb.Select(columnsServer...).From(string(tableServer))
 	cond := sq.And{sq.Eq{"deleted": false}}
@@ -46,7 +46,7 @@ func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]mode
 	if e != nil {
 		return nil, Err(e)
 	}
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := database.conn.Query(ctx, q, a...)
 	if err != nil {
 		return []model.Server{}, err
 	}
@@ -67,7 +67,7 @@ func (db *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]mode
 	return servers, nil
 }
 
-func (db *pgStore) GetServerByName(ctx context.Context, serverName string, s *model.Server) error {
+func (database *pgStore) GetServerByName(ctx context.Context, serverName string, s *model.Server) error {
 	q, a, e := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
@@ -75,7 +75,7 @@ func (db *pgStore) GetServerByName(ctx context.Context, serverName string, s *mo
 	if e != nil {
 		return e
 	}
-	if err := db.c.QueryRow(ctx, q, a...).
+	if err := database.conn.QueryRow(ctx, q, a...).
 		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
 			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots,
 			&s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
@@ -86,16 +86,16 @@ func (db *pgStore) GetServerByName(ctx context.Context, serverName string, s *mo
 }
 
 // SaveServer updates or creates the server data in the database
-func (db *pgStore) SaveServer(ctx context.Context, server *model.Server) error {
+func (database *pgStore) SaveServer(ctx context.Context, server *model.Server) error {
 	server.UpdatedOn = config.Now()
 	if server.ServerID > 0 {
-		return db.updateServer(ctx, server)
+		return database.updateServer(ctx, server)
 	}
 	server.CreatedOn = config.Now()
-	return db.insertServer(ctx, server)
+	return database.insertServer(ctx, server)
 }
 
-func (db *pgStore) insertServer(ctx context.Context, s *model.Server) error {
+func (database *pgStore) insertServer(ctx context.Context, s *model.Server) error {
 	const q = `
 		INSERT INTO server (
 		    short_name, token, address, port, rcon, token_created_on, 
@@ -103,7 +103,7 @@ func (db *pgStore) insertServer(ctx context.Context, s *model.Server) error {
 			default_map, deleted, log_secret) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
-	err := db.c.QueryRow(ctx, q, s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
+	err := database.conn.QueryRow(ctx, q, s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
 		s.ReservedSlots, s.CreatedOn, s.UpdatedOn, s.Password, s.IsEnabled, s.Region, s.CC,
 		s.Location.String(), s.DefaultMap, s.Deleted, &s.LogSecret).Scan(&s.ServerID)
 	if err != nil {
@@ -112,7 +112,7 @@ func (db *pgStore) insertServer(ctx context.Context, s *model.Server) error {
 	return nil
 }
 
-func (db *pgStore) updateServer(ctx context.Context, s *model.Server) error {
+func (database *pgStore) updateServer(ctx context.Context, s *model.Server) error {
 	s.UpdatedOn = config.Now()
 	q, a, e := sb.Update(string(tableServer)).
 		Set("short_name", s.ServerName).
@@ -136,21 +136,21 @@ func (db *pgStore) updateServer(ctx context.Context, s *model.Server) error {
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update s")
 	}
 	return nil
 }
 
-func (db *pgStore) DropServer(ctx context.Context, serverID int64) error {
+func (database *pgStore) DropServer(ctx context.Context, serverID int64) error {
 	const q = `UPDATE server set deleted = true WHERE server_id = $1`
-	if _, err := db.c.Exec(ctx, q, serverID); err != nil {
+	if _, err := database.conn.Exec(ctx, q, serverID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
+func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
 	b := sb.Select(
 		`l.log_id`,
 		`s.server_id`,
@@ -192,7 +192,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 		if errNet != nil {
 			return nil, Err(errNet)
 		}
-		idsByNet, errIdByNet := db.GetSteamIDsAtIP(ctx, network)
+		idsByNet, errIdByNet := database.GetSteamIDsAtIP(ctx, network)
 		if errIdByNet != nil {
 			return nil, Err(errIdByNet)
 		}
@@ -231,7 +231,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 	if err != nil {
 		return nil, err
 	}
-	rows, errQ := db.c.Query(ctx, q, a...)
+	rows, errQ := database.conn.Query(ctx, q, a...)
 	if errQ != nil {
 		return nil, Err(errQ)
 	}
@@ -257,7 +257,7 @@ func (db *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) (
 }
 
 // BatchInsertServerLogs save server log events to the database using a
-func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
+func (database *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
 	const (
 		stmtName = "insert-log"
 		query    = `INSERT INTO server_log (
@@ -277,7 +277,7 @@ func (db *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.Serve
 			END, $19, $20, $21)`
 	)
 	t0 := config.Now()
-	tx, err := db.c.Begin(ctx)
+	tx, err := database.conn.Begin(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to prepare logWriter query: %v", err)
 	}

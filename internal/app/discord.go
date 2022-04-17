@@ -22,8 +22,8 @@ var (
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
-	if _, errSend := b.session.ChannelMessageSendEmbed(channelId, message); errSend != nil {
+func (bot *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+	if _, errSend := bot.session.ChannelMessageSendEmbed(channelId, message); errSend != nil {
 		return errSend
 	}
 	return nil
@@ -32,7 +32,7 @@ func (b *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) e
 // discord implements the ChatBot interface for the discord chat platform.
 type discord struct {
 	session            *discordgo.Session
-	db                 store.Store
+	database           store.Store
 	connectedMu        *sync.RWMutex
 	connected          bool
 	commandHandlers    map[botCmd]botCommandHandler
@@ -40,64 +40,64 @@ type discord struct {
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord(db store.Store) (*discord, error) {
-	b := discord{
+func NewDiscord(database store.Store) (*discord, error) {
+	bot := discord{
 		session:     nil,
-		db:          db,
+		database:    database,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
 	}
-	b.commandHandlers = map[botCmd]botCommandHandler{
-		cmdBan:      b.onBan,
-		cmdCheck:    b.onCheck,
-		cmdCSay:     b.onCSay,
-		cmdFind:     b.onFind,
-		cmdKick:     b.onKick,
-		cmdMute:     b.onMute,
-		cmdPlayers:  b.onPlayers,
-		cmdPSay:     b.onPSay,
-		cmdSay:      b.onSay,
-		cmdServers:  b.onServers,
-		cmdUnban:    b.onUnban,
-		cmdSetSteam: b.onSetSteam,
-		cmdHistory:  b.onHistory,
-		cmdFilter:   b.onFilter,
-		cmdStats:    b.onStats,
+	bot.commandHandlers = map[botCmd]botCommandHandler{
+		cmdBan:      bot.onBan,
+		cmdCheck:    bot.onCheck,
+		cmdCSay:     bot.onCSay,
+		cmdFind:     bot.onFind,
+		cmdKick:     bot.onKick,
+		cmdMute:     bot.onMute,
+		cmdPlayers:  bot.onPlayers,
+		cmdPSay:     bot.onPSay,
+		cmdSay:      bot.onSay,
+		cmdServers:  bot.onServers,
+		cmdUnban:    bot.onUnban,
+		cmdSetSteam: bot.onSetSteam,
+		cmdHistory:  bot.onHistory,
+		cmdFilter:   bot.onFilter,
+		cmdStats:    bot.onStats,
 	}
-	return &b, nil
+	return &bot, nil
 }
 
-func (b *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
+func (bot *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
 	// Immediately connects, so we connect within the Start func
-	d, err := discordgo.New("Bot " + token)
+	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to connect to discord. discord unavailable")
 
 	}
 	defer func() {
-		if errDisc := b.session.Close(); errDisc != nil {
+		if errDisc := bot.session.Close(); errDisc != nil {
 			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
 		}
 	}()
-	b.session = d
-	b.session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	b.session.AddHandler(b.onReady)
-	b.session.AddHandler(b.onConnect)
-	b.session.AddHandler(b.onDisconnect)
-	b.session.AddHandler(b.onInteractionCreate)
+	bot.session = session
+	bot.session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	bot.session.AddHandler(bot.onReady)
+	bot.session.AddHandler(bot.onConnect)
+	bot.session.AddHandler(bot.onDisconnect)
+	bot.session.AddHandler(bot.onInteractionCreate)
 
-	b.session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	bot.session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to discord and begin listening.
-	err = b.session.Open()
+	err = bot.session.Open()
 	if err != nil {
 		return errors.Wrap(err, "Error opening discord connection")
 	}
 
-	go b.discordMessageQueueReader(ctx, eventChan)
+	go bot.discordMessageQueueReader(ctx, eventChan)
 
-	if err2 := b.botRegisterSlashCommands(); err2 != nil {
-		log.Errorf("Failed to register discord slash commands: %v", err2)
+	if errRegister := bot.botRegisterSlashCommands(); errRegister != nil {
+		log.Errorf("Failed to register discord slash commands: %v", errRegister)
 	}
 
 	<-ctx.Done()
@@ -107,26 +107,26 @@ func (b *discord) Start(ctx context.Context, token string, eventChan chan model.
 // discordMessageQueueReader functions by registering event handlers for the two user message events
 // discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
 // we queue messages and periodically send them out as multiline string blocks instead.
-func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
+func (bot *discord) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
 	messageTicker := time.NewTicker(time.Second * 10)
 	var sendQueue []string
 	for {
 		select {
-		case dm := <-eventChan:
+		case serverEvent := <-eventChan:
 			prefix := ""
-			if dm.EventType == logparse.SayTeam {
+			if serverEvent.EventType == logparse.SayTeam {
 				prefix = "(team) "
 			}
 			name := ""
 			sid := steamid.SID64(0)
-			if dm.Source != nil && dm.Source.SteamID.Valid() {
-				sid = dm.Source.SteamID
-				name = dm.Source.PersonaName
+			if serverEvent.Source != nil && serverEvent.Source.SteamID.Valid() {
+				sid = serverEvent.Source.SteamID
+				name = serverEvent.Source.PersonaName
 			}
-			msg, found := dm.MetaData["msg"]
+			msg, found := serverEvent.MetaData["msg"]
 			if found {
 				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-					dm.Server.ServerName, sid, name, prefix, msg))
+					serverEvent.Server.ServerName, sid, name, prefix, msg))
 			}
 
 		case <-messageTicker.C:
@@ -136,7 +136,7 @@ func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan 
 			msg := strings.Join(sendQueue, "\n")
 			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
-					if err := b.sendChannelMessage(b.session, channelID, m, true); err != nil {
+					if err := bot.sendChannelMessage(bot.session, channelID, m, true); err != nil {
 						log.Errorf("Failed to send bulk message log: %v", err)
 					}
 				}
@@ -148,13 +148,13 @@ func (b *discord) discordMessageQueueReader(ctx context.Context, eventChan chan 
 	}
 }
 
-func (b *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+func (bot *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	log.WithFields(log.Fields{"service": "discord", "status": "ready"}).Infof("Service status changed")
 }
 
-func (b *discord) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
+func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
 	log.Tracef("Connected to session ws API")
-	d := discordgo.UpdateStatusData{
+	status := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{
 			{
@@ -170,102 +170,102 @@ func (b *discord) onConnect(s *discordgo.Session, _ *discordgo.Connect) {
 		AFK:    false,
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
-	if err := s.UpdateStatusComplex(d); err != nil {
+	if err := session.UpdateStatusComplex(status); err != nil {
 		log.WithError(err).Errorf("Failed to update status complex")
 	}
-	b.connectedMu.Lock()
-	b.connected = true
-	b.connectedMu.Unlock()
+	bot.connectedMu.Lock()
+	bot.connected = true
+	bot.connectedMu.Unlock()
 }
 
-func (b *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	b.connectedMu.Lock()
-	b.connected = false
-	b.connectedMu.Unlock()
+func (bot *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+	bot.connectedMu.Lock()
+	bot.connected = false
+	bot.connectedMu.Unlock()
 	log.Info("Disconnected from session ws API")
 }
 
-func (b *discord) sendChannelMessage(s *discordgo.Session, c string, msg string, wrap bool) error {
-	b.connectedMu.RLock()
-	if !b.connected {
-		b.connectedMu.RUnlock()
+func (bot *discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
+	bot.connectedMu.RLock()
+	if !bot.connected {
+		bot.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	b.connectedMu.RUnlock()
+	bot.connectedMu.RUnlock()
 	if wrap {
 		msg = discordMsgWrapper + msg + discordMsgWrapper
 	}
 	if len(msg) > discordMaxMsgLen {
 		return errTooLarge
 	}
-	_, err := s.ChannelMessageSend(c, msg)
+	_, err := session.ChannelMessageSend(channelId, msg)
 	if err != nil {
 		return errors.Wrapf(err, "Failed sending success (paged) response for interaction")
 	}
 	return nil
 }
 
-func (b *discord) sendInteractionMessageEdit(s *discordgo.Session, i *discordgo.Interaction, r botResponse) error {
-	b.connectedMu.RLock()
-	if !b.connected {
-		b.connectedMu.RUnlock()
+func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
+	bot.connectedMu.RLock()
+	if !bot.connected {
+		bot.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
 	}
-	b.connectedMu.RUnlock()
+	bot.connectedMu.RUnlock()
 
-	e := &discordgo.WebhookEdit{
+	edit := &discordgo.WebhookEdit{
 		Content:         "",
 		Embeds:          nil,
 		AllowedMentions: nil,
 	}
-	switch r.MsgType {
+	switch response.MsgType {
 	case mtString:
-		e.Content = r.Value.(string)
-		if len(e.Content) > discordMaxMsgLen {
+		edit.Content = response.Value.(string)
+		if len(edit.Content) > discordMaxMsgLen {
 			return errTooLarge
 		}
 	case mtEmbed:
-		e.Embeds = append(e.Embeds, r.Value.(*discordgo.MessageEmbed))
+		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))
 	}
-	return s.InteractionResponseEdit(config.Discord.AppID, i, e)
+	return session.InteractionResponseEdit(config.Discord.AppID, interaction, edit)
 }
 
-func (b *discord) Send(channelId string, message string, wrap bool) error {
-	return b.sendChannelMessage(b.session, channelId, message, wrap)
+func (bot *discord) Send(channelId string, message string, wrap bool) error {
+	return bot.sendChannelMessage(bot.session, channelId, message, wrap)
 }
 
-func addFieldInline(e *discordgo.MessageEmbed, title string, value string) {
-	addFieldRaw(e, title, value, true)
+func addFieldInline(embed *discordgo.MessageEmbed, title string, value string) {
+	addFieldRaw(embed, title, value, true)
 }
 
-func addField(e *discordgo.MessageEmbed, title string, value string) {
-	addFieldRaw(e, title, value, false)
+func addField(embed *discordgo.MessageEmbed, title string, value string) {
+	addFieldRaw(embed, title, value, false)
 }
 
-func addFieldRaw(e *discordgo.MessageEmbed, title string, value string, inline bool) {
+func addFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
 	const maxEmbedFields = 25
-	if len(e.Fields) >= maxEmbedFields {
+	if len(embed.Fields) >= maxEmbedFields {
 		log.Warnf("Dropping embed fields. Already at max count: %d", maxEmbedFields)
 		return
 	}
-	e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 		Name:   title,
 		Value:  value,
 		Inline: inline,
 	})
 }
 
-func addFieldsSteamID(e *discordgo.MessageEmbed, sid steamid.SID64) {
-	addFieldInline(e, "STEAM", string(steamid.SID64ToSID(sid)))
-	addFieldInline(e, "STEAM3", string(steamid.SID64ToSID3(sid)))
-	addFieldInline(e, "SID64", sid.String())
+func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
+	addFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamId)))
+	addFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
+	addFieldInline(embed, "SID64", steamId.String())
 }
 
-func addFieldFilter(e *discordgo.MessageEmbed, filter model.Filter) {
-	addFieldInline(e, "Pattern", filter.Pattern.String())
-	addFieldInline(e, "ID", fmt.Sprintf("%d", filter.WordID))
+func addFieldFilter(embed *discordgo.MessageEmbed, filter model.Filter) {
+	addFieldInline(embed, "Pattern", filter.Pattern.String())
+	addFieldInline(embed, "ID", fmt.Sprintf("%d", filter.WordID))
 }
 
 // ChatBot defines a interface for communication with 3rd party service bots

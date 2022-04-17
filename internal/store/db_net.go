@@ -19,13 +19,13 @@ import (
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func (db *pgStore) GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
+func (database *pgStore) GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error) {
 	const q = `
 		SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until 
 		FROM ban_net
 		WHERE $1 <<= cidr`
 	var nets []model.BanNet
-	rows, err := db.c.Query(ctx, q, ip.String())
+	rows, err := database.conn.Query(ctx, q, ip.String())
 	if err != nil {
 		return nil, Err(err)
 	}
@@ -40,7 +40,7 @@ func (db *pgStore) GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, er
 	return nets, nil
 }
 
-func (db *pgStore) updateBanNet(ctx context.Context, banNet *model.BanNet) error {
+func (database *pgStore) updateBanNet(ctx context.Context, banNet *model.BanNet) error {
 	q, a, e := sb.Update("ban_net").
 		Set("cidr", banNet.CIDR).
 		Set("source", banNet.Source).
@@ -53,13 +53,13 @@ func (db *pgStore) updateBanNet(ctx context.Context, banNet *model.BanNet) error
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (db *pgStore) insertBanNet(ctx context.Context, banNet *model.BanNet) error {
+func (database *pgStore) insertBanNet(ctx context.Context, banNet *model.BanNet) error {
 	q, a, e := sb.Insert("ban_net").
 		Columns("cidr", "source", "created_on", "updated_on", "reason", "valid_until").
 		Values(banNet.CIDR, banNet.Source, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ValidUntil).
@@ -68,39 +68,39 @@ func (db *pgStore) insertBanNet(ctx context.Context, banNet *model.BanNet) error
 	if e != nil {
 		return e
 	}
-	err := db.c.QueryRow(ctx, q, a...).Scan(&banNet.NetID)
+	err := database.conn.QueryRow(ctx, q, a...).Scan(&banNet.NetID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (db *pgStore) SaveBanNet(ctx context.Context, banNet *model.BanNet) error {
+func (database *pgStore) SaveBanNet(ctx context.Context, banNet *model.BanNet) error {
 	if banNet.NetID > 0 {
-		return db.updateBanNet(ctx, banNet)
+		return database.updateBanNet(ctx, banNet)
 	}
-	return db.insertBanNet(ctx, banNet)
+	return database.insertBanNet(ctx, banNet)
 }
 
-func (db *pgStore) DropBanNet(ctx context.Context, ban *model.BanNet) error {
+func (database *pgStore) DropBanNet(ctx context.Context, ban *model.BanNet) error {
 	q, a, e := sb.Delete("ban_net").Where(sq.Eq{"net_id": ban.NetID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return Err(err)
 	}
 	ban.NetID = 0
 	return nil
 }
 
-func (db *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
+func (database *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error) {
 	const q = `
 		SELECT net_id, cidr, source, created_on, updated_on, reason, valid_until
 		FROM ban_net
 		WHERE valid_until < $1`
 	var bans []model.BanNet
-	rows, err := db.c.Query(ctx, q, config.Now())
+	rows, err := database.conn.Query(ctx, q, config.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +115,13 @@ func (db *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error
 	return bans, nil
 }
 
-func (db *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
+func (database *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 	const q = `
 		SELECT ban_asn_id, as_num, origin, author_id, target_id, reason, valid_until, created_on, updated_on
 		FROM ban_asn
 		WHERE valid_until < $1`
 	var bans []model.BanASN
-	rows, err := db.c.Query(ctx, q, config.Now())
+	rows, err := database.conn.Query(ctx, q, config.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -137,12 +137,12 @@ func (db *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error
 	return bans, nil
 }
 
-func (db *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+func (database *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
 	const q = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 
 		FROM net_asn
 		WHERE as_num = $1`
-	rows, err := db.c.Query(ctx, q, asNum)
+	rows, err := database.conn.Query(ctx, q, asNum)
 	if err != nil {
 		return nil, err
 	}
@@ -158,38 +158,38 @@ func (db *pgStore) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2loca
 	return records, nil
 }
 
-func (db *pgStore) GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error {
+func (database *pgStore) GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error {
 	const q = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 
 		FROM net_asn
 		WHERE $1::inet <@ ip_range
 		LIMIT 1`
-	if err := db.c.QueryRow(ctx, q, ip.String()).
+	if err := database.conn.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CIDR, &r.ASNum, &r.ASName); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (db *pgStore) GetLocationRecord(ctx context.Context, ip net.IP, r *ip2location.LocationRecord) error {
+func (database *pgStore) GetLocationRecord(ctx context.Context, ip net.IP, r *ip2location.LocationRecord) error {
 	const q = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
 		WHERE $1::inet <@ ip_range`
-	if err := db.c.QueryRow(ctx, q, ip.String()).
+	if err := database.conn.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (db *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location.ProxyRecord) error {
+func (database *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location.ProxyRecord) error {
 	const q = `
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
 		WHERE $1::inet <@ ip_range`
-	if err := db.c.QueryRow(ctx, q, ip.String()).
+	if err := database.conn.QueryRow(ctx, q, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.ProxyType, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.ISP,
 			&r.Domain, &r.UsageType, &r.ASN, &r.AS, &r.LastSeen, &r.Threat); err != nil {
 		return Err(err)
@@ -197,9 +197,9 @@ func (db *pgStore) GetProxyRecord(ctx context.Context, ip net.IP, r *ip2location
 	return nil
 }
 
-func (db *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
+func (database *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	t0 := config.Now()
-	if err := db.truncateTable(ctx, tableNetASN); err != nil {
+	if err := database.truncateTable(ctx, tableNetASN); err != nil {
 		return err
 	}
 	const q = `
@@ -211,7 +211,7 @@ func (db *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord)
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				r := db.c.SendBatch(c, &b)
+				r := database.conn.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -226,9 +226,9 @@ func (db *pgStore) loadASN(ctx context.Context, records []ip2location.ASNRecord)
 	return nil
 }
 
-func (db *pgStore) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
+func (database *pgStore) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
 	t0 := config.Now()
-	if err := db.truncateTable(ctx, tableNetLocation); err != nil {
+	if err := database.truncateTable(ctx, tableNetLocation); err != nil {
 		return err
 	}
 	const q = `
@@ -240,7 +240,7 @@ func (db *pgStore) loadLocation(ctx context.Context, records []ip2location.Locat
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				r := db.c.SendBatch(c, &b)
+				r := database.conn.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -255,9 +255,9 @@ func (db *pgStore) loadLocation(ctx context.Context, records []ip2location.Locat
 	return nil
 }
 
-func (db *pgStore) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
+func (database *pgStore) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
 	t0 := config.Now()
-	if err := db.truncateTable(ctx, tableNetProxy); err != nil {
+	if err := database.truncateTable(ctx, tableNetProxy); err != nil {
 		return err
 	}
 	const q = `
@@ -271,7 +271,7 @@ func (db *pgStore) loadProxies(ctx context.Context, records []ip2location.ProxyR
 		if i > 0 && i%100000 == 0 || len(records) == i+1 {
 			if b.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				r := db.c.SendBatch(c, &b)
+				r := database.conn.SendBatch(c, &b)
 				if err := r.Close(); err != nil {
 					cancel()
 					return err
@@ -290,38 +290,38 @@ func (db *pgStore) loadProxies(ctx context.Context, records []ip2location.ProxyR
 //
 // Note that this can take a while on slower machines. For reference it takes
 // about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func (db *pgStore) InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) error {
+func (database *pgStore) InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) error {
 	if len(d.Proxies) > 0 {
-		if err := db.loadProxies(ctx, d.Proxies, false); err != nil {
+		if err := database.loadProxies(ctx, d.Proxies, false); err != nil {
 			return err
 		}
 	}
 	if len(d.Locations4) > 0 {
-		if err := db.loadLocation(ctx, d.Locations4, false); err != nil {
+		if err := database.loadLocation(ctx, d.Locations4, false); err != nil {
 			return err
 		}
 	}
 	if len(d.ASN4) > 0 {
-		if err := db.loadASN(ctx, d.ASN4); err != nil {
+		if err := database.loadASN(ctx, d.ASN4); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (db *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error {
+func (database *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error {
 	const q = `
 		SELECT ban_asn_id, as_num, origin, author_id, target_id, reason, valid_until, created_on, updated_on 
 		FROM ban_asn 
 		WHERE as_num = $1`
-	if err := db.c.QueryRow(ctx, q, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.AuthorID,
+	if err := database.conn.QueryRow(ctx, q, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.AuthorID,
 		&banASN.TargetID, &banASN.Reason, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
+func (database *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
 	b.UpdatedOn = config.Now()
 	if b.BanASNId > 0 {
 		const q = `
@@ -330,7 +330,7 @@ func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
 				valid_until = $7, updated_on = $8
 			WHERE ban_asn_id = $1`
 
-		_, errUpd := db.c.Exec(ctx, q, b.BanASNId, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
+		_, errUpd := database.conn.Exec(ctx, q, b.BanASNId, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
 			b.Reason, b.ValidUntil, b.UpdatedOn)
 		return Err(errUpd)
 
@@ -339,18 +339,18 @@ func (db *pgStore) SaveBanASN(ctx context.Context, b *model.BanASN) error {
 		INSERT INTO ban_asn (as_num, origin, author_id, target_id, reason, valid_until, updated_on, created_on)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING ban_asn_id`
-	errIns := db.c.QueryRow(ctx, qi, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
+	errIns := database.conn.QueryRow(ctx, qi, b.ASNum, b.Origin, b.AuthorID, b.TargetID,
 		b.Reason, b.ValidUntil, b.UpdatedOn, b.CreatedOn).Scan(&b.BanASNId)
 	return Err(errIns)
 }
 
-func (db *pgStore) DropBanASN(ctx context.Context, ban *model.BanASN) error {
+func (database *pgStore) DropBanASN(ctx context.Context, ban *model.BanASN) error {
 	const q = `DELETE FROM ban_asn WHERE ban_asn_id = $1`
-	_, err := db.c.Exec(ctx, q, ban.BanASNId)
+	_, err := database.conn.Exec(ctx, q, ban.BanASNId)
 	return Err(err)
 }
 
-func (db *pgStore) GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.Collection, error) {
+func (database *pgStore) GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.Collection, error) {
 	const q = `
 		SELECT DISTINCT source_id
 		FROM server_log
@@ -359,7 +359,7 @@ func (db *pgStore) GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.
 	if ip == nil {
 		return nil, errors.New("Invalid address")
 	}
-	rows, errRows := db.c.Query(ctx, fmt.Sprintf(q, ip.String()))
+	rows, errRows := database.conn.Query(ctx, fmt.Sprintf(q, ip.String()))
 	if errRows != nil {
 		return nil, Err(errRows)
 	}

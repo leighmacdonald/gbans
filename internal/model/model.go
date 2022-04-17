@@ -24,32 +24,32 @@ import (
 type Target string
 
 func (t Target) SID64() (steamid.SID64, error) {
-	v, err := steamid.ResolveSID64(context.Background(), string(t))
-	if err != nil {
+	sid64, errResolveSID := steamid.ResolveSID64(context.Background(), string(t))
+	if errResolveSID != nil {
 		return 0, consts.ErrInvalidSID
 	}
-	if !v.Valid() {
+	if !sid64.Valid() {
 		return 0, consts.ErrInvalidSID
 	}
-	return v, nil
+	return sid64, nil
 }
 
 // Duration defines the length of time the action should be valid for
 // A duration of 0 will be interpreted as permanent and set to 10 years in the future
 type Duration string
 
-func (d Duration) Value() (time.Duration, error) {
-	dur, err := config.ParseDuration(string(d))
-	if err != nil {
+func (value Duration) Value() (time.Duration, error) {
+	duration, errDuration := config.ParseDuration(string(value))
+	if errDuration != nil {
 		return 0, consts.ErrInvalidDuration
 	}
-	if dur < 0 {
+	if duration < 0 {
 		return 0, consts.ErrInvalidDuration
 	}
-	if dur == 0 {
-		dur = time.Hour * 24 * 365 * 10
+	if duration == 0 {
+		duration = time.Hour * 24 * 365 * 10
 	}
-	return dur, nil
+	return duration, nil
 }
 
 // BanType defines the state of the ban for a user, 0 being no ban
@@ -195,16 +195,16 @@ func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duratio
 }
 
 func NewBanNet(cidr string, reason string, duration time.Duration, source Origin) (BanNet, error) {
-	_, n, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return BanNet{}, err
+	_, network, errParseCIDR := net.ParseCIDR(cidr)
+	if errParseCIDR != nil {
+		return BanNet{}, errParseCIDR
 	}
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
 	}
 	return BanNet{
-		CIDR:       n,
+		CIDR:       network,
 		Source:     source,
 		Reason:     reason,
 		CreatedOn:  config.Now(),

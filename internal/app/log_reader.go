@@ -35,13 +35,13 @@ type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	udpAddr   *net.UDPAddr
 	sink      chan model.LogPayload
-	db        store.Store
+	database  store.Store
 	secretMap map[int]string
 	dnsMap    map[string]string
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(listenAddr string, database store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
@@ -49,7 +49,7 @@ func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.
 	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
 		udpAddr:   udpAddr,
-		db:        db,
+		database:  database,
 		sink:      sink,
 		secretMap: map[int]string{},
 		dnsMap:    map[string]string{},
@@ -60,7 +60,7 @@ func newRemoteSrcdsLogSource(listenAddr string, db store.Store, sink chan model.
 // Updates DNS -> IP mappings
 func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 	newServers := map[string]string{}
-	servers, errServers := remoteSrc.db.GetServers(context.Background(), true)
+	servers, errServers := remoteSrc.database.GetServers(context.Background(), true)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -81,7 +81,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int]string{}
-	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
+	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -96,7 +96,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 }
 
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
-	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
+	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to add log addr: %v", errServers)
 		return
@@ -106,7 +106,7 @@ func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
 }
 
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
-	servers, errServers := remoteSrc.db.GetServers(context.Background(), false)
+	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to del log addr: %v", errServers)
 		return

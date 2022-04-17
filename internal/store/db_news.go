@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (db *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
+func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
 	var articles []model.NewsEntry
 	builder := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
@@ -21,7 +21,7 @@ func (db *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublis
 	if e != nil {
 		return nil, Err(e)
 	}
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := database.conn.Query(ctx, q, a...)
 	var rs error
 	for rows.Next() {
 		var entry model.NewsEntry
@@ -34,7 +34,7 @@ func (db *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublis
 	return articles, nil
 }
 
-func (db *pgStore) GetNewsArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
+func (database *pgStore) GetNewsArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
 	builder := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news")
 	if !includeUnpublished {
@@ -44,22 +44,22 @@ func (db *pgStore) GetNewsArticle(ctx context.Context, includeUnpublished bool, 
 	if e != nil {
 		return Err(e)
 	}
-	if err := db.c.QueryRow(ctx, q, a...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+	if err := database.conn.QueryRow(ctx, q, a...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (db *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	if entry.NewsId > 0 {
-		return db.updateNewsArticle(ctx, entry)
+		return database.updateNewsArticle(ctx, entry)
 	} else {
-		return db.insertNewsArticle(ctx, entry)
+		return database.insertNewsArticle(ctx, entry)
 	}
 }
 
-func (db *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	q, a, e := sb.Insert(string(tableDemo)).
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
@@ -68,7 +68,7 @@ func (db *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry
 	if e != nil {
 		return e
 	}
-	err := db.c.QueryRow(ctx, q, a...).Scan(&entry.NewsId)
+	err := database.conn.QueryRow(ctx, q, a...).Scan(&entry.NewsId)
 	if err != nil {
 		return Err(err)
 	}
@@ -76,7 +76,7 @@ func (db *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry
 	return nil
 }
 
-func (db *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	q, a, e := sb.Update(string(tableDemo)).
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
@@ -87,19 +87,19 @@ func (db *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return errors.Wrapf(err, "Failed to update article")
 	}
 	log.Debugf("News article updated: %s", entry.Title)
 	return nil
 }
 
-func (db *pgStore) DropNewsArticle(ctx context.Context, newsId int) error {
+func (database *pgStore) DropNewsArticle(ctx context.Context, newsId int) error {
 	q, a, e := sb.Delete("news").Where(sq.Eq{"news_id": newsId}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return Err(err)
 	}
 	log.Debugf("News deleted: %d", newsId)

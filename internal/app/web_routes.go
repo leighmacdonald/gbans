@@ -16,35 +16,34 @@ import (
 
 func prometheusHandler() gin.HandlerFunc {
 	h := promhttp.Handler()
-	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
+	return func(ctx *gin.Context) {
+		h.ServeHTTP(ctx.Writer, ctx.Request)
 	}
 }
 
 var registered = false
 
-func (w *web) setupRouter(db store.Store, r *gin.Engine) {
+func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowMethods("OPTIONS")
-	r.Use(cors.New(corsConfig))
-
+	engine.Use(cors.New(corsConfig))
 	if !registered {
-		prom := ginprom.New(func(p *ginprom.Prometheus) {
-			p.Namespace = "gbans"
-			p.Subsystem = "http"
+		prom := ginprom.New(func(prom *ginprom.Prometheus) {
+			prom.Namespace = "gbans"
+			prom.Subsystem = "http"
 		})
-		r.Use(prom.Instrument())
+		engine.Use(prom.Instrument())
 		registered = true
 	}
 	staticPath := config.HTTP.StaticPath
 	if staticPath == "" {
 		staticPath = "./dist"
 	}
-	ap, err := filepath.Abs(staticPath)
+	absStaticPath, err := filepath.Abs(staticPath)
 	if err != nil {
 		log.Fatalf("Invalid static path: %v", err)
 	}
@@ -53,12 +52,12 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 	// This is to allow us the ability to develop the frontend without needing to
 	// compile+re-embed the assets on each change.
 	//if config.General.Mode == config.ReleaseMode {
-	//	r.StaticFS("/dist", http.FS(content))
+	//	engine.StaticFS("/dist", http.FS(content))
 	//} else {
-	//	r.StaticFS("/dist", http.Dir(ap))
+	//	engine.StaticFS("/dist", http.Dir(absStaticPath))
 	//}
-	r.StaticFS("/dist", http.Dir(ap))
-	idxPath := filepath.Join(ap, "index.html")
+	engine.StaticFS("/dist", http.Dir(absStaticPath))
+	idxPath := filepath.Join(absStaticPath, "index.html")
 
 	// These should match routes defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
@@ -67,7 +66,7 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
 	for _, rt := range jsRoutes {
-		r.GET(rt, func(c *gin.Context) {
+		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
 			if errRead != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -78,56 +77,56 @@ func (w *web) setupRouter(db store.Store, r *gin.Engine) {
 		})
 	}
 
-	r.GET("/metrics", prometheusHandler())
-	r.GET("/auth/callback", w.onOpenIDCallback(db))
-	r.GET("/api/ban/:ban_id", w.onAPIGetBanByID(db))
-	r.POST("/api/bans", w.onAPIGetBans(db))
-	r.POST("/api/appeal", w.onAPIPostAppeal(db))
-	r.POST("/api/appeal/:ban_id", w.onAPIGetAppeal(db))
-	r.GET("/api/profile", w.onAPIProfile(db))
-	r.GET("/api/servers", w.onAPIGetServers(db))
-	r.GET("/api/stats", w.onAPIGetStats(db))
-	r.GET("/api/competitive", w.onAPIGetCompHist())
-	r.GET("/api/filtered_words", w.onAPIGetFilteredWords(db))
-	r.GET("/api/players", w.onAPIGetPlayers(db))
-	r.GET("/api/auth/logout", w.onGetLogout())
-	r.POST("/api/news_latest", w.onAPIGetNewsLatest(db))
+	engine.GET("/metrics", prometheusHandler())
+	engine.GET("/auth/callback", web.onOpenIDCallback(database))
+	engine.GET("/api/ban/:ban_id", web.onAPIGetBanByID(database))
+	engine.POST("/api/bans", web.onAPIGetBans(database))
+	engine.POST("/api/appeal", web.onAPIPostAppeal(database))
+	engine.POST("/api/appeal/:ban_id", web.onAPIGetAppeal(database))
+	engine.GET("/api/profile", web.onAPIProfile(database))
+	engine.GET("/api/servers", web.onAPIGetServers(database))
+	engine.GET("/api/stats", web.onAPIGetStats(database))
+	engine.GET("/api/competitive", web.onAPIGetCompHist())
+	engine.GET("/api/filtered_words", web.onAPIGetFilteredWords(database))
+	engine.GET("/api/players", web.onAPIGetPlayers(database))
+	engine.GET("/api/auth/logout", web.onGetLogout())
+	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 
 	// Service discovery endpoints
-	r.GET("/api/sd/prometheus/hosts", w.onAPIGetPrometheusHosts(db))
-	r.GET("/api/sd/ansible/hosts", w.onAPIGetPrometheusHosts(db))
+	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
+	engine.GET("/api/sd/ansible/hosts", web.onAPIGetPrometheusHosts(database))
 
 	// Game server plugin routes
-	r.POST("/api/server_auth", w.onSAPIPostServerAuth(db))
+	engine.POST("/api/server_auth", web.onSAPIPostServerAuth(database))
 
-	r.GET("/api/download/report/:report_media_id", w.onAPIGetReportMedia(db))
-	r.POST("/api/resolve_profile", w.onAPIGetResolveProfile(db))
+	engine.GET("/api/download/report/:report_media_id", web.onAPIGetReportMedia(database))
+	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
 	// Server Auth Request
-	serverAuth := r.Use(w.authMiddleWare(db))
-	serverAuth.POST("/api/ping_mod", w.onPostPingMod(db))
-	serverAuth.POST("/api/check", w.onPostServerCheck(db))
-	serverAuth.POST("/api/demo", w.onPostDemo(db))
+	serverAuth := engine.Use(web.authMiddleWare(database))
+	serverAuth.POST("/api/ping_mod", web.onPostPingMod(database))
+	serverAuth.POST("/api/check", web.onPostServerCheck(database))
+	serverAuth.POST("/api/demo", web.onPostDemo(database))
 
 	// Basic logged-in user
-	authed := r.Use(authMiddleware(db, model.PAuthenticated))
-	authed.GET("/api/current_profile", w.onAPICurrentProfile())
-	authed.GET("/api/auth/refresh", w.onTokenRefresh())
-	authed.POST("/api/report", w.onAPIPostReportCreate(db))
-	authed.GET("/api/report/:report_id", w.onAPIGetReport(db))
-	authed.POST("/api/reports", w.onAPIGetReports(db))
-	authed.POST("/api/report/:report_id/messages", w.onAPIPostReportMessage(db))
-	authed.GET("/api/report/:report_id/messages", w.onAPIGetReportMessages(db))
-	authed.POST("/api/logs/query", w.onAPILogsQuery(db))
+	authed := engine.Use(authMiddleware(database, model.PAuthenticated))
+	authed.GET("/api/current_profile", web.onAPICurrentProfile())
+	authed.GET("/api/auth/refresh", web.onTokenRefresh())
+	authed.POST("/api/report", web.onAPIPostReportCreate(database))
+	authed.GET("/api/report/:report_id", web.onAPIGetReport(database))
+	authed.POST("/api/reports", web.onAPIGetReports(database))
+	authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage(database))
+	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
+	authed.POST("/api/logs/query", web.onAPILogsQuery(database))
 
-	authed.POST("/api/events", w.onAPIEvents(db))
+	authed.POST("/api/events", web.onAPIEvents(database))
 
 	// Moderator access
-	modRoute := r.Use(authMiddleware(db, model.PModerator))
-	modRoute.POST("/api/ban", w.onAPIPostBanCreate(db))
-	modRoute.POST("/api/report/:report_id/state", w.onAPIPostBanState(db))
+	modRoute := engine.Use(authMiddleware(database, model.PModerator))
+	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
+	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 
 	// Admin access
-	modAdmin := r.Use(authMiddleware(db, model.PAdmin))
-	modAdmin.POST("/api/server", w.onAPIPostServer(db))
+	modAdmin := engine.Use(authMiddleware(database, model.PAdmin))
+	modAdmin.POST("/api/server", web.onAPIPostServer(database))
 }

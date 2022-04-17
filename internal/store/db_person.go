@@ -13,28 +13,28 @@ import (
 	"strings"
 )
 
-func (db *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) error {
+func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	q, a, e := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
 	if e != nil {
 		return e
 	}
-	if _, err := db.c.Exec(ctx, q, a...); err != nil {
+	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
 // SavePerson will insert or update the person record
-func (db *pgStore) SavePerson(ctx context.Context, person *model.Person) error {
+func (database *pgStore) SavePerson(ctx context.Context, person *model.Person) error {
 	person.UpdatedOn = config.Now()
 	if !person.IsNew {
-		return db.updatePerson(ctx, person)
+		return database.updatePerson(ctx, person)
 	}
 	person.CreatedOn = person.UpdatedOn
-	return db.insertPerson(ctx, person)
+	return database.insertPerson(ctx, person)
 }
 
-func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
+func (database *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 	p.UpdatedOn = config.Now()
 	const q = `
 		UPDATE person 
@@ -45,7 +45,7 @@ func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 		    community_banned = $19, vac_bans = $20, game_bans = $21, economy_ban = $22, days_since_last_ban = $23,
 			updated_on_steam = $24
 		WHERE steam_id = $1`
-	if _, err := db.c.Exec(ctx, q, p.SteamID, p.UpdatedOn, p.PlayerSummary.CommunityVisibilityState,
+	if _, err := database.conn.Exec(ctx, q, p.SteamID, p.UpdatedOn, p.PlayerSummary.CommunityVisibilityState,
 		p.PlayerSummary.ProfileState, p.PlayerSummary.PersonaName, p.PlayerSummary.ProfileURL, p.PlayerSummary.Avatar,
 		p.PlayerSummary.AvatarMedium, p.PlayerSummary.AvatarFull, p.PlayerSummary.AvatarHash,
 		p.PlayerSummary.PersonaState, p.PlayerSummary.RealName, p.TimeCreated, p.PlayerSummary.LocCountryCode,
@@ -56,7 +56,7 @@ func (db *pgStore) updatePerson(ctx context.Context, p *model.Person) error {
 	return nil
 }
 
-func (db *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
+func (database *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
 	q, a, e := sb.
 		Insert("person").
 		Columns(
@@ -76,7 +76,7 @@ func (db *pgStore) insertPerson(ctx context.Context, p *model.Person) error {
 	if e != nil {
 		return e
 	}
-	_, err := db.c.Exec(ctx, q, a...)
+	_, err := database.conn.Exec(ctx, q, a...)
 	if err != nil {
 		return Err(err)
 	}
@@ -93,7 +93,7 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on",
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error {
+func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error {
 	const q = `
     	SELECT p.steam_id,
 		   created_on,
@@ -133,7 +133,7 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 
 	p.IsNew = false
 	p.PlayerSummary = &steamweb.PlayerSummary{}
-	err := db.c.QueryRow(ctx, q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
+	err := database.conn.QueryRow(ctx, q, sid.Int64()).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.IPAddr, &p.CommunityBanned,
@@ -144,14 +144,14 @@ func (db *pgStore) GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p 
 	return nil
 }
 
-func (db *pgStore) GetPeopleBySteamID(ctx context.Context, steamids steamid.Collection) (model.People, error) {
+func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamids steamid.Collection) (model.People, error) {
 	qb := sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamids)})
 	q, a, e := qb.ToSql()
 	if e != nil {
 		return nil, e
 	}
 	var people model.People
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := database.conn.Query(ctx, q, a...)
 	if err != nil {
 		return nil, Err(err)
 	}
@@ -170,7 +170,7 @@ func (db *pgStore) GetPeopleBySteamID(ctx context.Context, steamids steamid.Coll
 	return people, nil
 }
 
-func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error) {
+func (database *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error) {
 	qb := sb.Select(profileColumns...).From("person")
 	if qf.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan
@@ -192,7 +192,7 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People
 		return nil, e
 	}
 	var people model.People
-	rows, err := db.c.Query(ctx, q, a...)
+	rows, err := database.conn.Query(ctx, q, a...)
 	if err != nil {
 		return nil, Err(err)
 	}
@@ -213,14 +213,14 @@ func (db *pgStore) GetPeople(ctx context.Context, qf *QueryFilter) (model.People
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func (db *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error {
-	err := db.GetPersonBySteamID(ctx, sid, p)
+func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error {
+	err := database.GetPersonBySteamID(ctx, sid, p)
 	if err != nil && Err(err) == ErrNoResult {
 		// FIXME
 		//p = model.NewPerson(sid)
 		p.SteamID = sid
 		p.IsNew = true
-		return db.SavePerson(ctx, p)
+		return database.SavePerson(ctx, p)
 	} else if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (db *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.S
 }
 
 // GetPersonByDiscordID returns a person by their discord_id
-func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *model.Person) error {
+func (database *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *model.Person) error {
 	q, a, e := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": did}).
@@ -238,7 +238,7 @@ func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *mode
 	}
 	p.IsNew = false
 	p.PlayerSummary = &steamweb.PlayerSummary{}
-	err := db.c.QueryRow(ctx, q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
+	err := database.conn.QueryRow(ctx, q, a...).Scan(&p.SteamID, &p.CreatedOn, &p.UpdatedOn,
 		&p.CommunityVisibilityState, &p.ProfileState, &p.PersonaName, &p.ProfileURL, &p.Avatar, &p.AvatarMedium,
 		&p.AvatarFull, &p.AvatarHash, &p.PersonaState, &p.RealName, &p.TimeCreated, &p.LocCountryCode,
 		&p.LocStateCode, &p.LocCityID, &p.PermissionLevel, &p.DiscordID, &p.CommunityBanned, &p.VACBans, &p.GameBans,
@@ -249,7 +249,7 @@ func (db *pgStore) GetPersonByDiscordID(ctx context.Context, did string, p *mode
 	return nil
 }
 
-func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error) {
+func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error) {
 	q := fmt.Sprintf(`SELECT steam_id, created_on, updated_on,
 	communityvisibilitystate, profilestate, personaname, profileurl, avatar,
 	avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated,
@@ -258,7 +258,7 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	FROM person ORDER BY updated_on LIMIT %d`, limit)
 
 	var people []model.Person
-	rows, err := db.c.Query(ctx, q)
+	rows, err := database.conn.Query(ctx, q)
 	if err != nil {
 		return nil, Err(err)
 	}
@@ -277,7 +277,7 @@ func (db *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.P
 	return people, nil
 }
 
-func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
+func (database *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
 	q := `
 		SELECT l.source_id, coalesce(p.personaname, ''), coalesce((l.meta_data->>'msg')::text, '')
 	
@@ -289,7 +289,7 @@ func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limi
 	if limit > 0 {
 		q += fmt.Sprintf(" LIMIT %d", limit)
 	}
-	rows, errQuery := db.c.Query(ctx, q, sid64.String())
+	rows, errQuery := database.conn.Query(ctx, q, sid64.String())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -305,7 +305,7 @@ func (db *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limi
 	return hist, nil
 }
 
-func (db *pgStore) GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error) {
+func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error) {
 	var q = `
 		SELECT
 			(log.meta_data->>'address')::inet, 
@@ -327,7 +327,7 @@ func (db *pgStore) GetPersonIPHistory(ctx context.Context, sid steamid.SID64, li
 		LEFT JOIN net_proxy proxy 
 		    ON (log.meta_data->>'address')::inet <@ proxy.ip_range
 		WHERE event_type = 1004 AND log.source_id = $1`
-	rows, err := db.c.Query(ctx, q, sid.Int64())
+	rows, err := database.conn.Query(ctx, q, sid.Int64())
 	if err != nil {
 		return nil, err
 	}

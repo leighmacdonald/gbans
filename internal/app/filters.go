@@ -25,21 +25,21 @@ func importFilteredWords(filters []model.Filter) {
 	wordFilters = filters
 }
 
-func filterWorker(db store.Store, botSendMessageChan chan discordPayload) {
-	c := make(chan model.ServerEvent)
-	if err := event.RegisterConsumer(c, []logparse.EventType{logparse.Say, logparse.SayTeam}); err != nil {
-		log.Fatalf("Failed to register event reader: %v", err)
+func filterWorker(database store.Store, botSendMessageChan chan discordPayload) {
+	eventChan := make(chan model.ServerEvent)
+	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
+		log.Fatalf("Failed to register event reader: %v", errRegister)
 	}
 	for {
 		select {
-		case evt := <-c:
-			msg, found := evt.MetaData["msg"].(string)
+		case serverEvent := <-eventChan:
+			msg, found := serverEvent.MetaData["msg"].(string)
 			if !found {
 				continue
 			}
 			matched, _ := ContainsFilteredWord(msg)
 			if matched {
-				addWarning(db, evt.Source.SteamID, warnLanguage, botSendMessageChan)
+				addWarning(database, serverEvent.Source.SteamID, warnLanguage, botSendMessageChan)
 			}
 		case <-ctx.Done():
 			return

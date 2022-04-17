@@ -42,7 +42,7 @@ const (
 	cmdFilterCheck botCmd = "filter_check"
 )
 
-func (b *discord) botRegisterSlashCommands() error {
+func (bot *discord) botRegisterSlashCommands() error {
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "user_identifier",
@@ -364,7 +364,7 @@ func (b *discord) botRegisterSlashCommands() error {
 	// This should be removed whenever support gets merged
 	var perms []permissionRequest
 	for _, cmd := range slashCommands {
-		command, errC := b.session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
+		command, errC := bot.session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
@@ -435,10 +435,10 @@ const (
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	cmd := botCmd(interaction.Data.Name)
 	response := botResponse{MsgType: mtString}
-	if handler, handlerFound := b.commandHandlers[cmd]; handlerFound {
+	if handler, handlerFound := bot.commandHandlers[cmd]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
@@ -449,7 +449,7 @@ func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *d
 			},
 		}); err != nil {
 			respErr(&response, fmt.Sprintf("Error: %session", err.Error()))
-			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
+			if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
 			}
 			return
@@ -459,13 +459,13 @@ func (b *discord) onInteractionCreate(session *discordgo.Session, interaction *d
 		if err := handler(lCtx, session, interaction, &response); err != nil {
 			// TODO User facing errors only
 			respErr(&response, err.Error())
-			if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
+			if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 				log.Errorf("Failed sending error message for interaction: %v", sendE)
 			}
 			log.Errorf("User command error: %v", err)
 			return
 		}
-		if sendE := b.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
+		if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
 			log.Errorf("Failed sending success response for interaction: %v", sendE)
 		} else {
 			log.Debugf("Sent message embed")

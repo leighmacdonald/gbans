@@ -30,15 +30,15 @@ type apiResponse struct {
 	Data    any    `json:"data"`
 }
 
-func responseErr(c *gin.Context, status int, data any) {
-	c.JSON(status, apiResponse{
+func responseErr(ctx *gin.Context, status int, data any) {
+	ctx.JSON(status, apiResponse{
 		Status: false,
 		Data:   data,
 	})
 }
 
-func responseOK(c *gin.Context, status int, data any) {
-	c.JSON(status, apiResponse{
+func responseOK(ctx *gin.Context, status int, data any) {
+	ctx.JSON(status, apiResponse{
 		Status: true,
 		Data:   data,
 	})
@@ -48,44 +48,44 @@ type demoPostRequest struct {
 	ServerName string `form:"server_name"`
 }
 
-func (w *web) onPostDemo(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var r demoPostRequest
-		if errR := c.Bind(&r); errR != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request demoPostRequest
+		if errBind := ctx.Bind(&request); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		f, hdr, err := c.Request.FormFile("file")
+		f, hdr, err := ctx.Request.FormFile("file")
 		if err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var server model.Server
-		if errS := db.GetServerByName(c, r.ServerName, &server); errS != nil {
-			responseErr(c, http.StatusNotFound, nil)
+		if errGetServer := database.GetServerByName(ctx, request.ServerName, &server); errGetServer != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var d []byte
 		_, errRead := f.Read(d)
 		if errRead != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		demo, errDF := model.NewDemoFile(server.ServerID, hdr.Filename, d)
-		if errDF != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		demoFile, errNewDemoFile := model.NewDemoFile(server.ServerID, hdr.Filename, d)
+		if errNewDemoFile != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		if errSave := db.SaveDemo(c, &demo); errSave != nil {
-			log.Errorf("Failed to save demo to store: %v", errSave)
-			responseErr(c, http.StatusInternalServerError, nil)
+		if errSave := database.SaveDemo(ctx, &demoFile); errSave != nil {
+			log.Errorf("Failed to save demoFile to store: %v", errSave)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusCreated, demo)
+		responseOK(ctx, http.StatusCreated, demoFile)
 	}
 }
 
-func (w *web) onPostPingMod(db store.Store) gin.HandlerFunc {
+func (web *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -93,43 +93,43 @@ func (w *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 		Reason     string        `json:"reason"`
 		Client     int           `json:"client"`
 	}
-	return func(c *gin.Context) {
+	return func(ctx *gin.Context) {
 		var req pingReq
-		if err := c.BindJSON(&req); err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		var pi model.PlayerInfo
-		err := Find(db, model.Target(req.SteamID.String()), "", &pi)
-		if err != nil {
+		var playerInfo model.PlayerInfo
+		errFind := Find(db, model.Target(req.SteamID.String()), "", &playerInfo)
+		if errFind != nil {
 			log.Error("Failed to find player on /mod call")
 		}
 		//name := req.SteamID.String()
-		//if pi.InGame {
-		//	name = fmt.Sprintf("%s (%s)", name, pi.Player.Name)
+		//if playerInfo.InGame {
+		//	name = fmt.Sprintf("%s (%s)", name, playerInfo.Player.Name)
 		//}
 		var roleStrings []string
-		for _, i := range config.Discord.ModRoleIDs {
-			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", i))
+		for _, roleID := range config.Discord.ModRoleIDs {
+			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", roleID))
 		}
-		e := respOk(nil, "New User Report")
-		e.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
-		if pi.Player.Name != "" {
-			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+		embed := respOk(nil, "New User Report")
+		embed.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
+		if playerInfo.Player.Name != "" {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "Reporter",
-				Value:  pi.Player.Name,
+				Value:  playerInfo.Player.Name,
 				Inline: true,
 			})
 		}
 		if req.SteamID.String() != "" {
-			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "ReporterSID",
 				Value:  req.SteamID.String(),
 				Inline: true,
 			})
 		}
 		if req.ServerName != "" {
-			e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "Server",
 				Value:  req.ServerName,
 				Inline: true,
@@ -137,44 +137,41 @@ func (w *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 		}
 		for _, chanId := range config.Discord.ModChannels {
 			select {
-			case w.botSendMessageChan <- discordPayload{channelId: chanId, message: e}:
+			case web.botSendMessageChan <- discordPayload{channelId: chanId, message: embed}:
 			default:
 				log.Warnf("Cannot send discord payload, channel full")
-				responseErr(c, http.StatusInternalServerError, nil)
+				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
 			}
 		}
-		responseOK(c, http.StatusOK, gin.H{
+		responseOK(ctx, http.StatusOK, gin.H{
 			"client":  req.Client,
 			"message": "Moderators have been notified",
 		})
 	}
 }
-func (w *web) onAPIPostBanState(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		banIDStr := c.Param("report_id")
+func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		banIDStr := ctx.Param("report_id")
 		if banIDStr == "" {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		reportId, err := strconv.ParseUint(banIDStr, 10, 32)
-		if err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		reportId, errParseId := strconv.ParseUint(banIDStr, 10, 32)
+		if errParseId != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var report model.Report
-		if errReport := db.GetReport(c, int(reportId), &report); errReport != nil {
+		if errReport := database.GetReport(ctx, int(reportId), &report); errReport != nil {
 			if errors.Is(errReport, store.ErrNoResult) {
-				responseErr(c, http.StatusNotFound, nil)
+				responseErr(ctx, http.StatusNotFound, nil)
 				return
 			}
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		w.botSendMessageChan <- discordPayload{
-			channelId: "",
-			message:   nil,
-		}
+		web.botSendMessageChan <- discordPayload{channelId: "", message: nil}
 	}
 }
 
@@ -187,78 +184,73 @@ type apiBanRequest struct {
 	Network    string        `json:"network"`
 }
 
-func (w *web) onAPIPostBanCreate(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var r apiBanRequest
-		if err := c.BindJSON(&r); err != nil {
-			responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var banRequest apiBanRequest
+		if errBind := ctx.BindJSON(&banRequest); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
-		//		duration, err := config.ParseDuration(r.Duration)
-		//		if err != nil {
-		//			responseErr(c, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m".
+		//		duration, errBind := config.ParseDuration(banRequest.Duration)
+		//		if errBind != nil {
+		//			responseErr(ctx, http.StatusNotAcceptable, `Invalid duration. Examples: "300m", "1.5h" or "2h45m".
 		//Valid time units are "s", "ws", "h".`)
 		//			return
 		//		}
-		var (
-			ban    *model.Ban
-			banNet *model.BanNet
-			e      error
-		)
-		if r.Network != "" {
-			_, _, e = net.ParseCIDR(r.Network)
-			if e != nil {
-				responseErr(c, http.StatusBadRequest, "Invalid network cidr definition")
+		if banRequest.Network != "" {
+			_, _, errParseCIDR := net.ParseCIDR(banRequest.Network)
+			if errParseCIDR != nil {
+				responseErr(ctx, http.StatusBadRequest, "Invalid network cidr definition")
 				return
 			}
 		}
-		if !r.SteamID.Valid() {
-			responseErr(c, http.StatusBadRequest, "Invalid steamid")
+		if !banRequest.SteamID.Valid() {
+			responseErr(ctx, http.StatusBadRequest, "Invalid steamid")
 			return
 		}
-		if r.Network != "" {
-			bn := banNetworkOpts{
-				banOpts: banOpts{target: model.Target(r.SteamID.String()),
-					author:   model.Target(currentPerson(c).SteamID.String()),
-					duration: model.Duration(r.Duration),
-					reason:   r.ReasonText,
+		if banRequest.Network != "" {
+			banNetOpts := banNetworkOpts{
+				banOpts: banOpts{target: model.Target(banRequest.SteamID.String()),
+					author:   model.Target(currentPerson(ctx).SteamID.String()),
+					duration: model.Duration(banRequest.Duration),
+					reason:   banRequest.ReasonText,
 					origin:   model.Web,
 				},
-				cidr: r.Network,
+				cidr: banRequest.Network,
 			}
-			var b model.BanNet
-			if bErr := BanNetwork(db, bn, &b); bErr != nil {
-				if errors.Is(bErr, store.ErrDuplicate) {
-					responseErr(c, http.StatusConflict, "Duplicate ban")
+			var banNet model.BanNet
+			if errBanNetwork := BanNetwork(database, banNetOpts, &banNet); errBanNetwork != nil {
+				if errors.Is(errBanNetwork, store.ErrDuplicate) {
+					responseErr(ctx, http.StatusConflict, "Duplicate ban")
 					return
 				}
-				responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+				responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 				return
 			}
-			responseOK(c, http.StatusCreated, banNet)
+			responseOK(ctx, http.StatusCreated, banNet)
 		} else {
-			bo := banOpts{
-				target:   model.Target(r.SteamID.String()),
-				author:   model.Target(currentPerson(c).SteamID.String()),
-				duration: model.Duration(r.Duration),
-				reason:   r.ReasonText,
+			newBanOpts := banOpts{
+				target:   model.Target(banRequest.SteamID.String()),
+				author:   model.Target(currentPerson(ctx).SteamID.String()),
+				duration: model.Duration(banRequest.Duration),
+				reason:   banRequest.ReasonText,
 				origin:   model.Web,
 			}
-			var b model.Ban
-			if bErr := Ban(db, bo, &b, w.botSendMessageChan); bErr != nil {
-				if errors.Is(bErr, store.ErrDuplicate) {
-					responseErr(c, http.StatusConflict, "Duplicate ban")
+			var ban model.Ban
+			if errBan := Ban(database, newBanOpts, &ban, web.botSendMessageChan); errBan != nil {
+				if errors.Is(errBan, store.ErrDuplicate) {
+					responseErr(ctx, http.StatusConflict, "Duplicate ban")
 					return
 				}
-				responseErr(c, http.StatusBadRequest, "Failed to perform ban")
+				responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 				return
 			}
-			responseOK(c, http.StatusCreated, ban)
+			responseOK(ctx, http.StatusCreated, ban)
 		}
 	}
 }
 
-func (w *web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
+func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`
@@ -267,41 +259,36 @@ func (w *web) onSAPIPostServerAuth(db store.Store) gin.HandlerFunc {
 		Status bool   `json:"status"`
 		Token  string `json:"token"`
 	}
-	return func(c *gin.Context) {
-		var req authReq
-		if err := c.BindJSON(&req); err != nil {
-			log.Errorf("Failed to decode auth request: %v", err)
-			responseErr(c, http.StatusInternalServerError, nil)
+	return func(ctx *gin.Context) {
+		var request authReq
+		if errBind := ctx.BindJSON(&request); errBind != nil {
+			log.Errorf("Failed to decode auth request: %v", errBind)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		var srv model.Server
-		err := db.GetServerByName(ctx, req.ServerName, &srv)
-		if err != nil {
-			responseErr(c, http.StatusNotFound, nil)
+		var server model.Server
+		errGetServer := database.GetServerByName(ctx, request.ServerName, &server)
+		if errGetServer != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		if srv.Password != req.Key {
-			responseErr(c, http.StatusForbidden, nil)
-			log.Warnf("Invalid server key used: %s", req.ServerName)
+		if server.Password != request.Key {
+			responseErr(ctx, http.StatusForbidden, nil)
+			log.Warnf("Invalid server key used: %s", request.ServerName)
 			return
 		}
-		srv.Token = golib.RandomString(40)
-		srv.TokenCreatedOn = config.Now()
-		if err2 := db.SaveServer(ctx, &srv); err2 != nil {
-			log.Errorf("Failed to updated server token: %v", err2)
-			responseErr(c, http.StatusInternalServerError, nil)
+		server.Token = golib.RandomString(40)
+		server.TokenCreatedOn = config.Now()
+		if errSaveServer := database.SaveServer(ctx, &server); errSaveServer != nil {
+			log.Errorf("Failed to updated server token: %v", errSaveServer)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, authResp{
-			Status: true,
-			Token:  srv.Token,
-		})
+		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: server.Token})
 	}
 }
 
-func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
+func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int    `json:"client_id"`
 		SteamID  string `json:"steam_id"`
@@ -313,83 +300,83 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 		BanType  model.BanType `json:"ban_type"`
 		Msg      string        `json:"msg"`
 	}
-	return func(c *gin.Context) {
-		var req checkRequest
-		if err := c.BindJSON(&req); err != nil {
-			responseErr(c, http.StatusInternalServerError, checkResponse{
+	return func(ctx *gin.Context) {
+		var request checkRequest
+		if errBind := ctx.BindJSON(&request); errBind != nil {
+			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error determining state",
 			})
 			return
 		}
 		resp := checkResponse{
-			ClientID: req.ClientID,
-			SteamID:  req.SteamID,
+			ClientID: request.ClientID,
+			SteamID:  request.SteamID,
 			BanType:  model.Unknown,
 			Msg:      "",
 		}
 		// Check SteamID
-		steamID, errResolve := steamid.ResolveSID64(context.Background(), req.SteamID)
+		steamID, errResolve := steamid.ResolveSID64(context.Background(), request.SteamID)
 		if errResolve != nil || !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
-			responseErr(c, http.StatusBadRequest, resp)
+			responseErr(ctx, http.StatusBadRequest, resp)
 			return
 		}
 		var person model.Person
-		if errPerson := getOrCreateProfileBySteamID(c, db, steamID, req.IP.String(), &person); errPerson != nil {
-			responseErr(c, http.StatusInternalServerError, checkResponse{
+		if errPerson := getOrCreateProfileBySteamID(ctx, database, steamID, request.IP.String(), &person); errPerson != nil {
+			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error updating profile state",
 			})
 			return
 		}
 		// Check IP first
-		banNet, err := db.GetBanNet(c, req.IP)
-		if err != nil {
-			responseErr(c, http.StatusInternalServerError, checkResponse{
+		banNet, errGetBanNet := database.GetBanNet(ctx, request.IP)
+		if errGetBanNet != nil {
+			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error determining state",
 			})
-			log.Errorf("Could not get ban net results: %v", err)
+			log.Errorf("Could not get bannedPerson net results: %v", errGetBanNet)
 			return
 		}
 		if len(banNet) > 0 {
 			resp.BanType = model.Banned
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
-			responseOK(c, http.StatusOK, resp)
+			responseOK(ctx, http.StatusOK, resp)
 			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason}).Infof("Player dropped")
 			return
 		}
 		var asnRecord ip2location.ASNRecord
-		errASN := db.GetASNRecordByIP(ctx, req.IP, &asnRecord)
+		errASN := database.GetASNRecordByIP(ctx, request.IP, &asnRecord)
 		if errASN == nil {
 			var asnBan model.BanASN
-			if errASNBan := db.GetBanASN(ctx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
+			if errASNBan := database.GetBanASN(ctx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
 				if !errors.Is(errASNBan, store.ErrNoResult) {
-					log.Errorf("Failed to fetch asn ban: %v", errASNBan)
+					log.Errorf("Failed to fetch asn bannedPerson: %v", errASNBan)
 				}
 			} else {
 				resp.BanType = model.Banned
 				resp.Msg = asnBan.Reason
-				responseOK(c, http.StatusOK, resp)
+				responseOK(ctx, http.StatusOK, resp)
 				log.WithFields(log.Fields{"type": "asn", "reason": asnBan.Reason}).Infof("Player dropped")
 				return
 			}
 		}
-		ban := model.NewBannedPerson()
-		if errB := db.GetBanBySteamID(ctx, steamID, false, &ban); errB != nil {
-			if errB == store.ErrNoResult {
+		bannedPerson := model.NewBannedPerson()
+		if errGetBan := database.GetBanBySteamID(ctx, steamID, false, &bannedPerson); errGetBan != nil {
+			if errGetBan == store.ErrNoResult {
 				resp.BanType = model.OK
-				responseErr(c, http.StatusOK, resp)
+				responseErr(ctx, http.StatusOK, resp)
 				return
 			}
 			resp.Msg = "Error determining state"
-			responseErr(c, http.StatusInternalServerError, resp)
+			responseErr(ctx, http.StatusInternalServerError, resp)
 			return
 		}
-		resp.BanType = ban.Ban.BanType
-		resp.Msg = ban.Ban.ReasonText
-		responseOK(c, http.StatusOK, resp)
+		resp.BanType = bannedPerson.Ban.BanType
+		resp.Msg = bannedPerson.Ban.ReasonText
+		responseOK(ctx, http.StatusOK, resp)
 	}
 }
 
@@ -417,7 +404,7 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //}
 
 //
-//func (w *web) onAPIGetAnsibleHosts(db store.Store) gin.HandlerFunc {
+//func (w *web) onAPIGetAnsibleHosts(database store.Store) gin.HandlerFunc {
 //	type groupConfig struct {
 //		Hosts    []string               `json:"hosts"`
 //		Vars     map[string]any `json:"vars"`
@@ -428,7 +415,7 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //	return func(c *gin.Context) {
 //		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 //		defer cancel()
-//		servers, err := db.GetServers(ctx, true)
+//		servers, err := database.GetServers(ctx, true)
 //		if err != nil {
 //			log.Errorf("Failed to fetch servers: %s", err)
 //			responseErr(c, http.StatusInternalServerError, nil)
@@ -448,7 +435,7 @@ func (w *web) onPostServerCheck(db store.Store) gin.HandlerFunc {
 //}
 
 // https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
-func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetPrometheusHosts(database store.Store) gin.HandlerFunc {
 	type promStaticConfig struct {
 		Targets []string          `json:"targets"`
 		Labels  map[string]string `json:"labels"`
@@ -457,38 +444,38 @@ func (w *web) onAPIGetPrometheusHosts(db store.Store) gin.HandlerFunc {
 		Type string
 		Port int
 	}
-	return func(c *gin.Context) {
+	return func(ctx *gin.Context) {
 		var staticConfigs []promStaticConfig
-		servers, err := db.GetServers(c, true)
-		if err != nil {
-			log.Errorf("Failed to fetch servers: %s", err)
-			responseErr(c, http.StatusInternalServerError, nil)
+		servers, errGetServers := database.GetServers(ctx, true)
+		if errGetServers != nil {
+			log.Errorf("Failed to fetch servers: %s", errGetServers)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		for _, nodePortConfig := range []portMap{{"node", 9100}} {
-			ps := promStaticConfig{Targets: nil, Labels: map[string]string{}}
-			ps.Labels["__meta_prometheus_job"] = nodePortConfig.Type
+			staticConfig := promStaticConfig{Targets: nil, Labels: map[string]string{}}
+			staticConfig.Labels["__meta_prometheus_job"] = nodePortConfig.Type
 			for _, server := range servers {
 				host := fmt.Sprintf("%s:%d", server.Address, nodePortConfig.Port)
 				found := false
-				for _, h := range ps.Targets {
-					if h == host {
+				for _, hostName := range staticConfig.Targets {
+					if hostName == host {
 						found = true
 						break
 					}
 				}
 				if !found {
-					ps.Targets = append(ps.Targets, host)
+					staticConfig.Targets = append(staticConfig.Targets, host)
 				}
 			}
-			staticConfigs = append(staticConfigs, ps)
+			staticConfigs = append(staticConfigs, staticConfig)
 		}
 		// Don't wrap in our custom response format
-		c.JSON(200, staticConfigs)
+		ctx.JSON(200, staticConfigs)
 	}
 }
 
-func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetServers(database store.Store) gin.HandlerFunc {
 	type playerInfo struct {
 		SteamID       steamid.SID64 `json:"steam_id"`
 		Name          string        `json:"name"`
@@ -496,7 +483,7 @@ func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 		ConnectedTime int64         `json:"connected_secs"`
 	}
 	type serverInfo struct {
-		ServerID int64 `db:"server_id" json:"server_id"`
+		ServerID int64 `database:"server_id" json:"server_id"`
 		// ServerName is a short reference name for the server eg: us-1
 		ServerName     string `json:"server_name"`
 		ServerNameLong string `json:"server_name_long"`
@@ -518,42 +505,42 @@ func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 		PlayersMax        int          `json:"players_max"`
 		Players           []playerInfo `json:"players"`
 	}
-	return func(c *gin.Context) {
-		servers, err := db.GetServers(c, true)
-		if err != nil {
-			log.Errorf("Failed to fetch servers: %s", err)
-			responseErr(c, http.StatusInternalServerError, nil)
+	return func(ctx *gin.Context) {
+		servers, errGetServers := database.GetServers(ctx, true)
+		if errGetServers != nil {
+			log.Errorf("Failed to fetch servers: %s", errGetServers)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		currentState := ServerState()
-		var si []serverInfo
-		for _, srv := range servers {
-			v := serverInfo{
-				ServerID:          srv.ServerID,
-				ServerName:        srv.ServerName,
-				ServerNameLong:    srv.ServerNameLong,
-				Address:           srv.Address,
-				Port:              srv.Port,
-				PasswordProtected: srv.Password != "",
-				Region:            srv.Region,
-				CC:                srv.CC,
-				Latitude:          srv.Location.Latitude,
-				Longitude:         srv.Location.Longitude,
+		var serverInfos []serverInfo
+		for _, server := range servers {
+			info := serverInfo{
+				ServerID:          server.ServerID,
+				ServerName:        server.ServerName,
+				ServerNameLong:    server.ServerNameLong,
+				Address:           server.Address,
+				Port:              server.Port,
+				PasswordProtected: server.Password != "",
+				Region:            server.Region,
+				CC:                server.CC,
+				Latitude:          server.Location.Latitude,
+				Longitude:         server.Location.Longitude,
 				CurrentMap:        "",
-				DefaultMap:        srv.DefaultMap,
-				ReservedSlots:     srv.ReservedSlots,
-				CreatedOn:         srv.CreatedOn,
-				UpdatedOn:         srv.UpdatedOn,
+				DefaultMap:        server.DefaultMap,
+				ReservedSlots:     server.ReservedSlots,
+				CreatedOn:         server.CreatedOn,
+				UpdatedOn:         server.UpdatedOn,
 				Players:           nil,
 			}
-			state, stateFound := currentState[v.ServerName]
+			state, stateFound := currentState[info.ServerName]
 			if stateFound {
-				v.VAC = state.A2S.VAC
-				v.CurrentMap = state.Status.Map
-				v.PlayersMax = state.Status.PlayersMax
-				v.Tags = state.Status.Tags
+				info.VAC = state.A2S.VAC
+				info.CurrentMap = state.Status.Map
+				info.PlayersMax = state.Status.PlayersMax
+				info.Tags = state.Status.Tags
 				for _, pl := range state.Status.Players {
-					v.Players = append(v.Players, playerInfo{
+					info.Players = append(info.Players, playerInfo{
 						SteamID:       pl.SID,
 						Name:          pl.Name,
 						UserId:        pl.UserID,
@@ -561,31 +548,29 @@ func (w *web) onAPIGetServers(db store.Store) gin.HandlerFunc {
 					})
 				}
 			}
-
-			si = append(si, v)
+			serverInfos = append(serverInfos, info)
 		}
-
-		responseOK(c, http.StatusOK, si)
+		responseOK(ctx, http.StatusOK, serverInfos)
 	}
 }
 
-func (w *web) queryFilterFromContext(c *gin.Context) (*store.QueryFilter, error) {
-	var qf store.QueryFilter
-	if err := c.BindUri(&qf); err != nil {
-		return nil, err
+func (web *web) queryFilterFromContext(ctx *gin.Context) (*store.QueryFilter, error) {
+	var queryFilter store.QueryFilter
+	if errBind := ctx.BindUri(&queryFilter); errBind != nil {
+		return nil, errBind
 	}
-	return &qf, nil
+	return &queryFilter, nil
 }
 
-func (w *web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetPlayers(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		qf, err := w.queryFilterFromContext(c)
-		if err != nil {
+		queryFilter, errFilterFromContext := web.queryFilterFromContext(c)
+		if errFilterFromContext != nil {
 			responseErr(c, http.StatusBadRequest, nil)
 			return
 		}
-		people, err2 := db.GetPeople(c, qf)
-		if err2 != nil {
+		people, errGetPeople := database.GetPeople(c, queryFilter)
+		if errGetPeople != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
@@ -593,59 +578,59 @@ func (w *web) onAPIGetPlayers(db store.Store) gin.HandlerFunc {
 	}
 }
 
-func (w *web) onAPIGetResolveProfile(db store.PersonStore) gin.HandlerFunc {
+func (web *web) onAPIGetResolveProfile(database store.PersonStore) gin.HandlerFunc {
 	type queryParam struct {
 		Query string `json:"query"`
 	}
-	return func(c *gin.Context) {
-		var q queryParam
-		if errBind := c.BindJSON(&q); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+	return func(ctx *gin.Context) {
+		var param queryParam
+		if errBind := ctx.BindJSON(&param); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		id, errResolve := steamid.ResolveSID64(c, q.Query)
+		id, errResolve := steamid.ResolveSID64(ctx, param.Query)
 		if errResolve != nil {
-			responseErr(c, http.StatusOK, nil)
+			responseErr(ctx, http.StatusOK, nil)
 			return
 		}
-		var p model.Person
-		if errPerson := getOrCreateProfileBySteamID(c, db, id, "", &p); errPerson != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		var person model.Person
+		if errPerson := getOrCreateProfileBySteamID(ctx, database, id, "", &person); errPerson != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, p)
+		responseOK(ctx, http.StatusOK, person)
 	}
 }
 
-func (w *web) onAPICurrentProfile() gin.HandlerFunc {
+func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 	type resp struct {
 		Player  *model.Person            `json:"player"`
 		Friends []steamweb.PlayerSummary `json:"friends"`
 	}
-	return func(c *gin.Context) {
-		p := currentPerson(c)
-		if !p.SteamID.Valid() {
-			responseErr(c, http.StatusForbidden, nil)
+	return func(ctx *gin.Context) {
+		person := currentPerson(ctx)
+		if !person.SteamID.Valid() {
+			responseErr(ctx, http.StatusForbidden, nil)
 			return
 		}
-		friendIDs, err := steam.FetchFriends(p.SteamID)
-		if err != nil {
-			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
+		friendIDs, errFetchFriends := steam.FetchFriends(person.SteamID)
+		if errFetchFriends != nil {
+			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
 		}
-		friends, err := steam.FetchSummaries(friendIDs)
-		if err != nil {
-			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
+		friends, errFetchSummaries := steam.FetchSummaries(friendIDs)
+		if errFetchSummaries != nil {
+			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
 		}
 		var response resp
-		response.Player = &p
+		response.Player = &person
 		response.Friends = friends
-		responseOK(c, http.StatusOK, response)
+		responseOK(ctx, http.StatusOK, response)
 	}
 }
 
-func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIProfile(database store.Store) gin.HandlerFunc {
 	type req struct {
 		Query string `form:"query"`
 	}
@@ -653,95 +638,88 @@ func (w *web) onAPIProfile(db store.Store) gin.HandlerFunc {
 		Player  *model.Person            `json:"player"`
 		Friends []steamweb.PlayerSummary `json:"friends"`
 	}
-	return func(c *gin.Context) {
-		var r req
-		if err := c.Bind(&r); err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+	return func(ctx *gin.Context) {
+		var request req
+		if errBind := ctx.Bind(&request); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		sid, errSid := steamid.ResolveSID64(c, r.Query)
-		if errSid != nil {
-			responseErr(c, http.StatusNotFound, nil)
+		sid, errResolveSID64 := steamid.ResolveSID64(ctx, request.Query)
+		if errResolveSID64 != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		person := model.NewPerson(sid)
-		if err2 := getOrCreateProfileBySteamID(c, db, sid, "", &person); err2 != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		if errGetProfile := getOrCreateProfileBySteamID(ctx, database, sid, "", &person); errGetProfile != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-
-		friendIDs, err4 := steam.FetchFriends(person.SteamID)
-		if err4 != nil {
-			responseErr(c, http.StatusServiceUnavailable, "Could not fetch friends")
+		friendIDs, errFetchFriends := steam.FetchFriends(person.SteamID)
+		if errFetchFriends != nil {
+			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
 		}
-		friends, err5 := steam.FetchSummaries(friendIDs)
-		if err5 != nil {
-			responseErr(c, http.StatusServiceUnavailable, "Could not fetch summaries")
+		friends, errFetchSummaries := steam.FetchSummaries(friendIDs)
+		if errFetchSummaries != nil {
+			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
 		}
-
 		var response resp
 		response.Player = &person
 		response.Friends = friends
-
-		responseOK(c, http.StatusOK, response)
+		responseOK(ctx, http.StatusOK, response)
 	}
 }
 
-func (w *web) onAPIGetFilteredWords(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetFilteredWords(database store.Store) gin.HandlerFunc {
 	type resp struct {
 		Count int      `json:"count"`
 		Words []string `json:"words"`
 	}
-	return func(c *gin.Context) {
-		words, err := db.GetFilters(c)
-		if err != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+	return func(ctx *gin.Context) {
+		words, errGetFilters := database.GetFilters(ctx)
+		if errGetFilters != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		var fWords []string
-		for _, f := range words {
-			fWords = append(fWords, f.Pattern.String())
+		for _, word := range words {
+			fWords = append(fWords, word.Pattern.String())
 		}
-		responseOK(c, http.StatusOK, resp{Count: len(fWords), Words: fWords})
+		responseOK(ctx, http.StatusOK, resp{Count: len(fWords), Words: fWords})
 	}
 }
 
-func (w *web) onAPIGetCompHist() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		sidStr := c.DefaultQuery("sid", "")
+func (web *web) onAPIGetCompHist() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		sidStr := ctx.DefaultQuery("sid", "")
 		if sidStr == "" {
-			responseErr(c, http.StatusBadRequest, "missing sid")
+			responseErr(ctx, http.StatusBadRequest, "missing sid")
 			return
 		}
-		sid, err := steamid.StringToSID64(sidStr)
-		if err != nil || !sid.Valid() {
-			responseErr(c, http.StatusBadRequest, "invalid sid")
+		sid, errStringToSID64 := steamid.StringToSID64(sidStr)
+		if errStringToSID64 != nil || !sid.Valid() {
+			responseErr(ctx, http.StatusBadRequest, "invalid sid")
 			return
 		}
-		cx, cancel := context.WithTimeout(c, time.Second*10)
-		defer cancel()
 		var hist external.CompHist
-		if errFetch := external.FetchCompHist(cx, sid, &hist); errFetch != nil {
-			responseErr(c, http.StatusInternalServerError, "query failed")
+		if errFetch := external.FetchCompHist(ctx, sid, &hist); errFetch != nil {
+			responseErr(ctx, http.StatusInternalServerError, "query failed")
 			return
 		}
-		responseOK(c, http.StatusOK, hist)
+		responseOK(ctx, http.StatusOK, hist)
 	}
 }
 
-func (w *web) onAPIGetStats(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
+func (web *web) onAPIGetStats(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		var stats model.Stats
-		if err := db.GetStats(cx, &stats); err != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		if errGetStats := database.GetStats(ctx, &stats); errGetStats != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		stats.ServersAlive = 1
-		responseOK(c, http.StatusOK, stats)
+		responseOK(ctx, http.StatusOK, stats)
 	}
 }
 
@@ -749,47 +727,43 @@ func loadBanMeta(_ *model.BannedPerson) {
 
 }
 
-func (w *web) onAPIGetBanByID(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		banIDStr := c.Param("ban_id")
+func (web *web) onAPIGetBanByID(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		banIDStr := ctx.Param("ban_id")
 		if banIDStr == "" {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		banId, err := strconv.ParseUint(banIDStr, 10, 64)
-		if err != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		banId, errParseUint := strconv.ParseUint(banIDStr, 10, 64)
+		if errParseUint != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		ban := model.NewBannedPerson()
-		if errB := db.GetBanByBanID(cx, banId, false, &ban); errB != nil {
-			responseErr(c, http.StatusNotFound, nil)
-			log.Errorf("Failed to fetch bans: %v", errB)
+		bannedPerson := model.NewBannedPerson()
+		if errGetBan := database.GetBanByBanID(ctx, banId, false, &bannedPerson); errGetBan != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
+			log.Errorf("Failed to fetch bans: %v", errGetBan)
 			return
 		}
-		loadBanMeta(&ban)
-		responseOK(c, http.StatusOK, ban)
+		loadBanMeta(&bannedPerson)
+		responseOK(ctx, http.StatusOK, bannedPerson)
 	}
 }
 
-func (w *web) onAPIGetBans(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		o := store.NewQueryFilter("")
-		cx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-		bans, errBans := db.GetBans(cx, o)
+func (web *web) onAPIGetBans(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		queryFilter := store.NewQueryFilter("")
+		bans, errBans := database.GetBans(ctx, queryFilter)
 		if errBans != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans: %v", errBans)
 			return
 		}
-		responseOK(c, http.StatusOK, bans)
+		responseOK(ctx, http.StatusOK, bans)
 	}
 }
 
-func (w *web) onAPIPostServer(db store.ServerStore) gin.HandlerFunc {
+func (web *web) onAPIPostServer(database store.ServerStore) gin.HandlerFunc {
 	type newServerReq struct {
 		NameShort     string  `json:"name_short"`
 		Host          string  `json:"host"`
@@ -803,87 +777,87 @@ func (w *web) onAPIPostServer(db store.ServerStore) gin.HandlerFunc {
 		Region        string  `json:"region"`
 	}
 
-	return func(c *gin.Context) {
-		var req newServerReq
-		if errBind := c.BindJSON(&req); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+	return func(ctx *gin.Context) {
+		var serverReq newServerReq
+		if errBind := ctx.BindJSON(&serverReq); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to parse request for new server: %v", errBind)
 			return
 		}
-		srv := model.NewServer(req.NameShort, req.Host, req.Port)
-		srv.RCON = req.RCON
-		srv.ReservedSlots = req.ReservedSlots
-		srv.DefaultMap = req.DefaultMap
-		srv.Location.Latitude = req.Lat
-		srv.Location.Longitude = req.Lon
-		srv.CC = req.CC
-		srv.Region = req.Region
-		if errSave := db.SaveServer(c, &srv); errSave != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		server := model.NewServer(serverReq.NameShort, serverReq.Host, serverReq.Port)
+		server.RCON = serverReq.RCON
+		server.ReservedSlots = serverReq.ReservedSlots
+		server.DefaultMap = serverReq.DefaultMap
+		server.Location.Latitude = serverReq.Lat
+		server.Location.Longitude = serverReq.Lon
+		server.CC = serverReq.CC
+		server.Region = serverReq.Region
+		if errSave := database.SaveServer(ctx, &server); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save new server: %v", errSave)
 			return
 		}
-		responseOK(c, http.StatusOK, srv)
+		responseOK(ctx, http.StatusOK, server)
 	}
 }
 
 // onAPIEvents handles querying server log events
 // TODO web client should provide a last_log_id to filter to recent only
-func (w *web) onAPIEvents(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var q model.LogQueryOpts
-		if errBind := c.BindJSON(&q); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+func (web *web) onAPIEvents(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var queryOpts model.LogQueryOpts
+		if errBind := ctx.BindJSON(&queryOpts); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		events, err := db.FindLogEvents(c, q)
-		if err != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		events, errFindLog := database.FindLogEvents(ctx, queryOpts)
+		if errFindLog != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, events)
+		responseOK(ctx, http.StatusOK, events)
 	}
 }
 
-func (w *web) onAPIPostAppeal(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIPostAppeal(database store.Store) gin.HandlerFunc {
 	type newAppeal struct {
 		BanId  int    `json:"ban_id"`
 		Reason string `json:"reason"`
 	}
-	return func(c *gin.Context) {
+	return func(ctx *gin.Context) {
 		var appeal newAppeal
-		if err := c.BindJSON(&appeal); err != nil {
+		if err := ctx.BindJSON(&appeal); err != nil {
 
 		}
 	}
 }
 
-func (w *web) onAPIGetAppeal(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetAppeal(database store.Store) gin.HandlerFunc {
 	type Appeal struct {
 		Person model.BannedPerson `json:"person"`
 		Appeal model.Appeal       `json:"appeal"`
 	}
-	return func(c *gin.Context) {
-		banIdStr := c.Param("ban_id")
+	return func(ctx *gin.Context) {
+		banIdStr := ctx.Param("ban_id")
 		if banIdStr == "" {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		banId, errBanId := strconv.ParseUint(banIdStr, 10, 64)
 		if errBanId != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var appeal model.Appeal
-		if errAppeal := db.GetAppeal(c, banId, &appeal); errAppeal != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		if errAppeal := database.GetAppeal(ctx, banId, &appeal); errAppeal != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, appeal)
+		responseOK(ctx, http.StatusOK, appeal)
 	}
 }
 
-func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 	type reportMedia struct {
 		FileName string `json:"file_name"`
 		MimeType string `json:"mime_type"`
@@ -896,23 +870,23 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 		Description string        `json:"description"`
 		Media       []reportMedia `json:"media"`
 	}
-	return func(c *gin.Context) {
-		currentUser := currentPerson(c)
-		var cr createReport
-		if errBind := c.BindJSON(&cr); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+	return func(ctx *gin.Context) {
+		currentUser := currentPerson(ctx)
+		var newReport createReport
+		if errBind := ctx.BindJSON(&newReport); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to bind report: %v", errBind)
 			return
 		}
-		sid, errSid := steamid.ResolveSID64(c, cr.SteamId)
+		sid, errSid := steamid.ResolveSID64(ctx, newReport.SteamId)
 		if errSid != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Invaid steam_id: %v", errSid)
 			return
 		}
-		var p model.Person
-		if errCreatePerson := getOrCreateProfileBySteamID(c, db, sid, "", &p); errCreatePerson != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		var person model.Person
+		if errCreatePerson := getOrCreateProfileBySteamID(ctx, database, sid, "", &person); errCreatePerson != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Could not load player profile: %v", errCreatePerson)
 			return
 		}
@@ -920,27 +894,27 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 		report := model.NewReport()
 		report.AuthorId = currentUser.SteamID
 		report.ReportStatus = model.Opened
-		report.Title = cr.Title
-		report.Description = cr.Description
+		report.Title = newReport.Title
+		report.Description = newReport.Description
 		report.ReportedId = sid
-		if errReportSave := db.SaveReport(c, &report); errReportSave != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		if errReportSave := database.SaveReport(ctx, &report); errReportSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save report: %v", errReportSave)
 			return
 		}
-		for _, media := range cr.Media {
-			rm := model.NewReportMedia(report.ReportId)
-			rm.AuthorId = currentUser.SteamID
-			rm.Contents = media.Content
-			rm.MimeType = media.MimeType
-			rm.Size = media.Size
-			if errSaveMedia := db.SaveReportMedia(c, report.ReportId, &rm); errSaveMedia != nil {
-				responseErr(c, http.StatusInternalServerError, nil)
+		for _, media := range newReport.Media {
+			reportMedia := model.NewReportMedia(report.ReportId)
+			reportMedia.AuthorId = currentUser.SteamID
+			reportMedia.Contents = media.Content
+			reportMedia.MimeType = media.MimeType
+			reportMedia.Size = media.Size
+			if errSaveMedia := database.SaveReportMedia(ctx, report.ReportId, &reportMedia); errSaveMedia != nil {
+				responseErr(ctx, http.StatusInternalServerError, nil)
 				log.Errorf("Failed to save report media: %v", errSaveMedia)
 				return
 			}
 		}
-		responseOK(c, http.StatusCreated, report)
+		responseOK(ctx, http.StatusCreated, report)
 	}
 }
 
@@ -956,8 +930,8 @@ func (w *web) onAPIPostReportCreate(db store.Store) gin.HandlerFunc {
 //	return sid, nil
 //}
 
-func getInt64Param(c *gin.Context, key string) (int64, error) {
-	valueStr := c.Param(key)
+func getInt64Param(ctx *gin.Context, key string) (int64, error) {
+	valueStr := ctx.Param(key)
 	if valueStr == "" {
 		return 0, errors.Errorf("Failed to get %s", key)
 	}
@@ -971,59 +945,59 @@ func getInt64Param(c *gin.Context, key string) (int64, error) {
 	return value, nil
 }
 
-func (w *web) onAPIGetReportMedia(db store.ReportStore) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		mediaId, errParam := getInt64Param(c, "report_media_id")
+func (web *web) onAPIGetReportMedia(database store.ReportStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		mediaId, errParam := getInt64Param(ctx, "report_media_id")
 		if errParam != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		var m model.ReportMedia
-		if errMedia := db.GetReportMediaById(c, int(mediaId), &m); errMedia != nil {
-			responseErr(c, http.StatusNotFound, nil)
+		var reportMedia model.ReportMedia
+		if errMedia := database.GetReportMediaById(ctx, int(mediaId), &reportMedia); errMedia != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		c.Data(http.StatusOK, m.MimeType, m.Contents)
+		ctx.Data(http.StatusOK, reportMedia.MimeType, reportMedia.Contents)
 	}
 }
 
-func (w *web) onAPIPostReportMessage(db store.ReportStore) gin.HandlerFunc {
+func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFunc {
 	type req struct {
 		Message string `json:"message"`
 	}
-	return func(c *gin.Context) {
-		reportId, errParam := getInt64Param(c, "report_id")
+	return func(ctx *gin.Context) {
+		reportId, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		var r req
-		if errBind := c.BindJSON(&r); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		var request req
+		if errBind := ctx.BindJSON(&request); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		if r.Message == "" {
-			responseErr(c, http.StatusBadRequest, nil)
+		if request.Message == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var report model.Report
-		if errReport := db.GetReport(c, int(reportId), &report); errReport != nil {
+		if errReport := database.GetReport(ctx, int(reportId), &report); errReport != nil {
 			if store.Err(errReport) == store.ErrNoResult {
-				responseErr(c, http.StatusNotFound, nil)
+				responseErr(ctx, http.StatusNotFound, nil)
 				return
 			}
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to load report: %v", errReport)
 			return
 		}
-		p := currentPerson(c)
-		msg := model.NewReportMessage(int(reportId), p.SteamID, r.Message)
-		if errSave := db.SaveReportMessage(c, int(reportId), &msg); errSave != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+		person := currentPerson(ctx)
+		msg := model.NewReportMessage(int(reportId), person.SteamID, request.Message)
+		if errSave := database.SaveReportMessage(ctx, int(reportId), &msg); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save report message: %v", errSave)
 			return
 		}
-		responseOK(c, http.StatusCreated, msg)
+		responseOK(ctx, http.StatusCreated, msg)
 	}
 }
 
@@ -1032,36 +1006,36 @@ type AuthorReportMessage struct {
 	Message model.ReportMessage `json:"message"`
 }
 
-func (w *web) onAPIGetReportMessages(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reportId, errParam := getInt64Param(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		msgs, errMsgs := db.GetReportMessages(c, int(reportId))
-		if errMsgs != nil {
+		reportMessages, errGetReportMessages := database.GetReportMessages(c, int(reportId))
+		if errGetReportMessages != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
 		var ids steamid.Collection
-		for _, msg := range msgs {
+		for _, msg := range reportMessages {
 			ids = append(ids, msg.AuthorId)
 		}
-		authors, authorsErr := db.GetPeopleBySteamID(c, ids)
+		authors, authorsErr := database.GetPeopleBySteamID(c, ids)
 		if authorsErr != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
 		authorsMap := authors.AsMap()
-		var authorMsgs []AuthorReportMessage
-		for _, m := range msgs {
-			authorMsgs = append(authorMsgs, AuthorReportMessage{
-				Author:  authorsMap[m.AuthorId],
-				Message: m,
+		var authorMessages []AuthorReportMessage
+		for _, message := range reportMessages {
+			authorMessages = append(authorMessages, AuthorReportMessage{
+				Author:  authorsMap[message.AuthorId],
+				Message: message,
 			})
 		}
-		responseOK(c, http.StatusOK, authorMsgs)
+		responseOK(c, http.StatusOK, authorMessages)
 	}
 }
 
@@ -1070,81 +1044,81 @@ type reportWithAuthor struct {
 	Report model.Report `json:"report"`
 }
 
-func (w *web) onAPIGetReports(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func (web *web) onAPIGetReports(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		var opts store.AuthorQueryFilter
-		if errBind := c.BindJSON(&opts); errBind != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		if errBind := ctx.BindJSON(&opts); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		var f store.AuthorQueryFilter
+		var queryFilter store.AuthorQueryFilter
 		if opts.Limit > 0 && opts.Limit <= 100 {
-			f.Limit = opts.Limit
+			queryFilter.Limit = opts.Limit
 		} else {
-			f.Limit = 25
+			queryFilter.Limit = 25
 		}
 		var userReports []reportWithAuthor
-		reports, errReports := db.GetReports(c, f)
+		reports, errReports := database.GetReports(ctx, queryFilter)
 		if errReports != nil {
 			if store.Err(errReports) == store.ErrNoResult {
-				responseOK(c, http.StatusNoContent, nil)
+				responseOK(ctx, http.StatusNoContent, nil)
 				return
 			}
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		var authorIds steamid.Collection
 		for _, report := range reports {
 			authorIds = append(authorIds, report.ReportedId)
 		}
-		authors, errAuthors := db.GetPeopleBySteamID(c, fp.Uniq[steamid.SID64](authorIds))
+		authors, errAuthors := database.GetPeopleBySteamID(ctx, fp.Uniq[steamid.SID64](authorIds))
 		if errAuthors != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		am := authors.AsMap()
-		for _, r := range reports {
+		authorMap := authors.AsMap()
+		for _, report := range reports {
 			userReports = append(userReports, reportWithAuthor{
-				Author: am[r.ReportedId],
-				Report: r,
+				Author: authorMap[report.ReportedId],
+				Report: report,
 			})
 		}
 
-		responseOK(c, http.StatusOK, userReports)
+		responseOK(ctx, http.StatusOK, userReports)
 	}
 }
 
-func (w *web) onAPIGetReport(db store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		reportId, errParam := getInt64Param(c, "report_id")
+func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		reportId, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var report reportWithAuthor
-		if errReport := db.GetReport(c, int(reportId), &report.Report); errReport != nil {
+		if errReport := database.GetReport(ctx, int(reportId), &report.Report); errReport != nil {
 			if store.Err(errReport) == store.ErrNoResult {
-				responseErr(c, http.StatusNotFound, nil)
+				responseErr(ctx, http.StatusNotFound, nil)
 				return
 			}
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to load report: %v", errReport)
 			return
 		}
-		if errAuthor := db.GetOrCreatePersonBySteamID(c, report.Report.AuthorId, &report.Author); errAuthor != nil {
+		if errAuthor := database.GetOrCreatePersonBySteamID(ctx, report.Report.AuthorId, &report.Author); errAuthor != nil {
 			if store.Err(errAuthor) == store.ErrNoResult {
-				responseErr(c, http.StatusNotFound, nil)
+				responseErr(ctx, http.StatusNotFound, nil)
 				return
 			}
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to load report author: %v", errAuthor)
 			return
 		}
-		responseOK(c, http.StatusOK, report)
+		responseOK(ctx, http.StatusOK, report)
 	}
 }
 
-func (w *web) onAPILogsQuery(db store.StatStore) gin.HandlerFunc {
+func (web *web) onAPILogsQuery(database store.StatStore) gin.HandlerFunc {
 	type req struct {
 		SteamID string `json:"steam_id"`
 		Limit   int    `json:"limit"`
@@ -1153,39 +1127,39 @@ func (w *web) onAPILogsQuery(db store.StatStore) gin.HandlerFunc {
 		CreatedOn time.Time `json:"created_on"`
 		Message   string    `json:"message"`
 	}
-	return func(c *gin.Context) {
-		var r req
-		if errBind := c.BindJSON(&r); errBind != nil {
+	return func(ctx *gin.Context) {
+		var request req
+		if errBind := ctx.BindJSON(&request); errBind != nil {
 			if errBind != nil {
-				responseErr(c, http.StatusBadRequest, nil)
+				responseErr(ctx, http.StatusBadRequest, nil)
 				return
 			}
 		}
-		sid, errSid := steamid.StringToSID64(r.SteamID)
+		sid, errSid := steamid.StringToSID64(request.SteamID)
 		if errSid != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		hist, errHist := db.GetChatHistory(c, sid, 100)
-		if errHist != nil {
-			responseErr(c, http.StatusBadRequest, nil)
+		chatHistory, errGetChatHistory := database.GetChatHistory(ctx, sid, 100)
+		if errGetChatHistory != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var logs []logMsg
-		for _, h := range hist {
-			logs = append(logs, logMsg{h.CreatedOn, h.Msg})
+		for _, history := range chatHistory {
+			logs = append(logs, logMsg{history.CreatedOn, history.Msg})
 		}
-		responseOK(c, http.StatusOK, logs)
+		responseOK(ctx, http.StatusOK, logs)
 	}
 }
 
-func (w *web) onAPIGetNewsLatest(db store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetNewsLatest(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		entries, err := db.GetNewsLatest(c, 5, false)
-		if err != nil {
+		newsLatest, errGetNewsLatest := database.GetNewsLatest(c, 5, false)
+		if errGetNewsLatest != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, entries)
+		responseOK(c, http.StatusOK, newsLatest)
 	}
 }
