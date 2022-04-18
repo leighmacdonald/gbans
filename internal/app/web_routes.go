@@ -43,9 +43,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	if staticPath == "" {
 		staticPath = "./dist"
 	}
-	absStaticPath, err := filepath.Abs(staticPath)
-	if err != nil {
-		log.Fatalf("Invalid static path: %v", err)
+	absStaticPath, errStaticPath := filepath.Abs(staticPath)
+	if errStaticPath != nil {
+		log.Fatalf("Invalid static path: %v", errStaticPath)
 	}
 	// Don't use session for static assets
 	// Note that we only use embedded assets for !release modes

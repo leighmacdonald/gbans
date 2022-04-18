@@ -62,12 +62,12 @@ type QueryFilter struct {
 	Deleted  bool   `json:"deleted,omitempty" uri:"deleted"`
 }
 
-func (qf *QueryFilter) orderString() string {
+func (queryFilter *QueryFilter) orderString() string {
 	dir := "DESC"
-	if !qf.SortDesc {
+	if !queryFilter.SortDesc {
 		dir = "ASC"
 	}
-	return fmt.Sprintf("%s %s", qf.OrderBy, dir)
+	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
 func NewQueryFilter(query string) *QueryFilter {
@@ -86,13 +86,13 @@ func New(dsn string) (Store, error) {
 	if errConfig != nil {
 		log.Fatalf("Unable to parse config: %v", errConfig)
 	}
-	ndb := pgStore{}
+	newDatabase := pgStore{}
 	if config.DB.AutoMigrate {
-		if errM := ndb.Migrate(MigrateUp); errM != nil {
-			if errM.Error() == "no change" {
+		if errMigrate := newDatabase.Migrate(MigrateUp); errMigrate != nil {
+			if errMigrate.Error() == "no change" {
 				log.Debugf("Migration at latest version")
 			} else {
-				log.Fatalf("Could not migrate schema: %v", errM)
+				log.Fatalf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
 			log.Infof("Migration completed successfully")
@@ -113,9 +113,9 @@ func New(dsn string) (Store, error) {
 		logger.SetReportCaller(config.Log.ReportCaller)
 		cfg.ConnConfig.Logger = logrusadapter.NewLogger(logger)
 	}
-	dbConn, err3 := pgxpool.ConnectConfig(context.Background(), cfg)
-	if err3 != nil {
-		log.Fatalf("Failed to connect to database: %v", err3)
+	dbConn, errConnectConfig := pgxpool.ConnectConfig(context.Background(), cfg)
+	if errConnectConfig != nil {
+		log.Fatalf("Failed to connect to database: %v", errConnectConfig)
 	}
 	return &pgStore{conn: dbConn}, nil
 }
@@ -138,31 +138,31 @@ func (database *pgStore) Close() error {
 }
 
 func (database *pgStore) truncateTable(ctx context.Context, table tableName) error {
-	if _, err := database.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); err != nil {
-		return Err(err)
+	if _, errExec := database.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
+		return Err(errExec)
 	}
 	return nil
 }
 
-// Err is used to wrap common database errors in own own error types
-func Err(err error) error {
-	if err == nil {
-		return err
+// Err is used to wrap common database errors in owr own error types
+func Err(rootError error) error {
+	if rootError == nil {
+		return rootError
 	}
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if errors.As(rootError, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
 			return ErrDuplicate
 		default:
 			log.Errorf("Unhandled store error: (%s) %s", pgErr.Code, pgErr.Message)
-			return err
+			return rootError
 		}
 	}
-	if err.Error() == "no rows in result set" {
+	if rootError.Error() == "no rows in result set" {
 		return ErrNoResult
 	}
-	return err
+	return rootError
 }
 
 // MigrationAction is the type of migration to perform

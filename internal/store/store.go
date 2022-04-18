@@ -19,15 +19,15 @@ type GenericStore interface {
 }
 
 type ServerStore interface {
-	GetServer(ctx context.Context, serverID int64, s *model.Server) error
+	GetServer(ctx context.Context, serverID int64, server *model.Server) error
 	GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error)
-	GetServerByName(ctx context.Context, serverName string, s *model.Server) error
+	GetServerByName(ctx context.Context, serverName string, server *model.Server) error
 	SaveServer(ctx context.Context, server *model.Server) error
 	DropServer(ctx context.Context, serverID int64) error
 }
 
 type DemoStore interface {
-	GetDemo(ctx context.Context, demoId int64, d *model.DemoFile) error
+	GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error
 	GetDemos(ctx context.Context) ([]model.DemoFile, error)
 	SaveDemo(ctx context.Context, d *model.DemoFile) error
 	DropDemo(ctx context.Context, d *model.DemoFile) error
@@ -41,9 +41,9 @@ type NewsStore interface {
 }
 
 type BanStore interface {
-	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, b *model.BannedPerson) error
-	GetBanByBanID(ctx context.Context, banID uint64, full bool, b *model.BannedPerson) error
-	GetAppeal(ctx context.Context, banID uint64, a *model.Appeal) error
+	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, bannedPerson *model.BannedPerson) error
+	GetBanByBanID(ctx context.Context, banID uint64, full bool, bannedPerson *model.BannedPerson) error
+	GetAppeal(ctx context.Context, banID uint64, appeal *model.Appeal) error
 	SaveAppeal(ctx context.Context, appeal *model.Appeal) error
 	SaveBan(ctx context.Context, ban *model.Ban) error
 	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
@@ -51,8 +51,8 @@ type BanStore interface {
 	DropBanNet(ctx context.Context, ban *model.BanNet) error
 	DropBan(ctx context.Context, ban *model.Ban) error
 	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
-	GetBans(ctx context.Context, o *QueryFilter) ([]model.BannedPerson, error)
-	GetBansOlderThan(ctx context.Context, o *QueryFilter, t time.Time) ([]model.Ban, error)
+	GetBans(ctx context.Context, queryFilter *QueryFilter) ([]model.BannedPerson, error)
+	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
 	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
 	Import(ctx context.Context, root string) error
@@ -77,11 +77,11 @@ type ReportStore interface {
 type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *model.Person) error
-	GetPersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
 	GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error)
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
-	GetOrCreatePersonBySteamID(ctx context.Context, sid steamid.SID64, p *model.Person) error
-	GetPersonByDiscordID(ctx context.Context, did string, p *model.Person) error
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *model.Person) error
+	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
 	GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error)
 }
 
@@ -97,7 +97,7 @@ type MigrationStore interface {
 }
 
 type StatStore interface {
-	GetStats(ctx context.Context, s *model.Stats) error
+	GetStats(ctx context.Context, stats *model.Stats) error
 	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error)
 	FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error)
 	GetReplayLogs(ctx context.Context, offset uint64, limit uint64) ([]model.ServerEvent, error)
@@ -109,11 +109,11 @@ type StatStore interface {
 }
 
 type NetworkStore interface {
-	InsertBlockListData(ctx context.Context, d *ip2location.BlockListData) error
-	GetASNRecordByIP(ctx context.Context, ip net.IP, r *ip2location.ASNRecord) error
+	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
+	GetASNRecordByIP(ctx context.Context, ip net.IP, asnRecord *ip2location.ASNRecord) error
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
-	GetLocationRecord(ctx context.Context, ip net.IP, l *ip2location.LocationRecord) error
-	GetProxyRecord(ctx context.Context, ip net.IP, l *ip2location.ProxyRecord) error
+	GetLocationRecord(ctx context.Context, ip net.IP, locationRecord *ip2location.LocationRecord) error
+	GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.ProxyRecord) error
 	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error)
 }
 

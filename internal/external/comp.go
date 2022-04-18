@@ -13,26 +13,26 @@ type CompHist struct {
 }
 
 func FetchCompHist(ctx context.Context, sid steamid.SID64, hist *CompHist) error {
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(1)
 	go func() {
-		defer wg.Done()
-		ltf, err := LogsTFOverview(sid)
-		if err != nil {
+		defer waitGroup.Done()
+		logsTFResult, errOverview := LogsTFOverview(sid)
+		if errOverview != nil {
 			return
 		}
-		hist.LogsCount = ltf.Total
+		hist.LogsCount = logsTFResult.Total
 	}()
-	wg.Add(1)
+	waitGroup.Add(1)
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		var rglProf RGLProfile
-		if err := GetRGLProfile(ctx, sid, &rglProf); err != nil {
+		if errGetRGL := GetRGLProfile(ctx, sid, &rglProf); errGetRGL != nil {
 			return
 		}
 		hist.RGLDiv = rglProf.Division
 		hist.RGLTeam = rglProf.Team
 	}()
-	wg.Wait()
+	waitGroup.Wait()
 	return nil
 }

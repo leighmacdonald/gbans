@@ -34,18 +34,18 @@ type LogsTFResult struct {
 // LogsTFOverview queries the logstf api for metadata about a players logs
 // http://logs.tf/api/v1/log?title=X&uploader=Y&player=Z&limit=N&offset=N
 func LogsTFOverview(sid steamid.SID64) (*LogsTFResult, error) {
-	c := util.NewHTTPClient()
-	resp, err := c.Get(fmt.Sprintf("https://logs.tf/api/v1/log?player=%d", sid.Int64()))
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to query logstf")
+	httpClient := util.NewHTTPClient()
+	response, errGet := httpClient.Get(fmt.Sprintf("https://logs.tf/api/v1/log?player=%d", sid.Int64()))
+	if errGet != nil {
+		return nil, errors.Wrapf(errGet, "Failed to query logstf")
 	}
-	b, err2 := ioutil.ReadAll(resp.Body)
-	if err2 != nil {
-		return nil, errors.Wrapf(err, "Failed to read logstf body")
+	body, errReadBody := ioutil.ReadAll(response.Body)
+	if errReadBody != nil {
+		return nil, errors.Wrapf(errGet, "Failed to read logstf body")
 	}
-	var r LogsTFResult
-	if err3 := json.Unmarshal(b, &r); err3 != nil {
-		return nil, errors.Wrapf(err, "Failed to unmarshal logstf body")
+	var logsTFResult LogsTFResult
+	if errUnmarshal := json.Unmarshal(body, &logsTFResult); errUnmarshal != nil {
+		return nil, errors.Wrapf(errGet, "Failed to unmarshal logstf body")
 	}
-	return &r, nil
+	return &logsTFResult, nil
 }

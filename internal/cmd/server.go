@@ -34,36 +34,36 @@ var serverListCmd = &cobra.Command{
 	Short: "List all servers",
 	Long:  `List all servers`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		servers, errFetch := db.GetServers(ctx, false)
-		if errFetch != nil {
-			if errors.Is(errFetch, store.ErrNoResult) {
+		servers, errGetServers := database.GetServers(ctx, false)
+		if errGetServers != nil {
+			if errors.Is(errGetServers, store.ErrNoResult) {
 				log.Infof("No servers")
 				return
 			}
-			log.Fatalf("Failed to fetch servers: %v", errFetch)
+			log.Fatalf("Failed to fetch servers: %v", errGetServers)
 		}
-		var rows [][]string
-		for _, srv := range servers {
-			rows = append(rows, []string{
-				fmt.Sprintf("%d", srv.ServerID),
-				srv.ServerName,
-				srv.ServerNameLong,
-				srv.Addr(),
-				srv.Region,
-				srv.CC,
-				fmt.Sprintf("%.4f %.4f", srv.Location.Latitude, srv.Location.Longitude),
+		var tableRows [][]string
+		for _, server := range servers {
+			tableRows = append(tableRows, []string{
+				fmt.Sprintf("%d", server.ServerID),
+				server.ServerName,
+				server.ServerNameLong,
+				server.Addr(),
+				server.Region,
+				server.CC,
+				fmt.Sprintf("%.4f %.4f", server.Location.Latitude, server.Location.Longitude),
 			})
 		}
 		opts := golib.DefaultTableOpts()
 		opts.Title = "Servers"
 		opts.Headers = []string{"id", "name", "name_long", "address", "region", "country", "location"}
-		fmt.Println(golib.ToTable(rows, opts))
+		fmt.Println(golib.ToTable(tableRows, opts))
 	},
 }
 var serverCreateCmd = &cobra.Command{
@@ -71,9 +71,9 @@ var serverCreateCmd = &cobra.Command{
 	Short: "create a server",
 	Long:  `Create a new server entry in the database`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		if nameLong == "" {
 			log.Fatal("Server nameLong cannot be empty")
@@ -90,14 +90,14 @@ var serverCreateCmd = &cobra.Command{
 		if rcon == "" {
 			log.Fatal("rcon password cannot be empty")
 		}
-		srv := model.NewServer(nameLong, host, port)
-		srv.RCON = rcon
+		server := model.NewServer(nameLong, host, port)
+		server.RCON = rcon
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := db.SaveServer(ctx, &srv); err != nil {
-			log.Fatalf("Could not create server: %v", err)
+		if errSaveServer := database.SaveServer(ctx, &server); errSaveServer != nil {
+			log.Fatalf("Could not create server: %v", errSaveServer)
 		}
-		log.WithFields(log.Fields{"token": srv.Password, "nameLong": nameLong}).
+		log.WithFields(log.Fields{"token": server.Password, "nameLong": nameLong}).
 			Info("Added server successfully. This password must be added to your servers gbans.cfg")
 	},
 }
@@ -110,16 +110,16 @@ var serverDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		var server model.Server
-		if err := db.GetServerByName(ctx, serverId, &server); err != nil {
-			if errors.Is(err, store.ErrNoResult) {
+		if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
+			if errors.Is(errGetServer, store.ErrNoResult) {
 				log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Server not found: %s", serverId)
 			}
-			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to setup db connection: %v", err)
+			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to setup database connection: %v", errGetServer)
 		}
 		log.WithFields(log.Fields{"server_id": serverId}).Infof("Server deleted successfully")
 	},
@@ -132,16 +132,16 @@ var serverUpdateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		var server model.Server
-		if err := db.GetServerByName(ctx, serverId, &server); err != nil {
-			if errors.Is(err, store.ErrNoResult) {
+		if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
+			if errors.Is(errGetServer, store.ErrNoResult) {
 				log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Server not found: %s", serverId)
 			}
-			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to fetch server to update: %v", err)
+			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to fetch server to update: %v", errGetServer)
 		}
 		if serverIdNew != "" {
 			server.ServerName = serverIdNew
@@ -158,7 +158,7 @@ var serverUpdateCmd = &cobra.Command{
 		if rcon != "" {
 			server.RCON = rcon
 		}
-		if errSave := db.SaveServer(ctx, &server); errSave != nil {
+		if errSave := database.SaveServer(ctx, &server); errSave != nil {
 			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to save server: %v", errSave)
 		}
 		log.WithFields(log.Fields{"server_id": serverId}).Infof("Server updated successfully")

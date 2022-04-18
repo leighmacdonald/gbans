@@ -11,7 +11,7 @@ package app
 //func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRecorder) bool) {
 //	e := gin.New()
 //	web.New()
-//	web.SetupRouter(e, logRawQueue)
+//	web.SetupRouter(e, logPayloadChan)
 //	w := httptest.NewRecorder()
 //	e.ServeHTTP(w, unit.r)
 //	if !f(w) {
@@ -51,7 +51,7 @@ package app
 //
 //func TestAPICheck(t *testing.T) {
 //	e := gin.New()
-//	web.SetupRouter(e, logRawQueue)
+//	web.SetupRouter(e, logPayloadChan)
 //	req := newTestReq("POST", "/api/check", web.CheckRequest{
 //		ClientID: 10,
 //		SteamID:  string(steamid.SID64ToSID(76561197961279983)),
@@ -102,15 +102,15 @@ package app
 //
 //func TestAPIGetServers(t *testing.T) {
 //	e := gin.New()
-//	web.SetupRouter(e, logRawQueue)
+//	web.SetupRouter(e, logPayloadChan)
 //	req, _ := http.NewRequest("GET", "/api/servers", nil)
 //	testHTTPResponse(t, e, req, func(w *httptest.ResponseRecorder) bool {
 //		if w.Code != http.StatusOK {
 //			return false
 //		}
 //		var r web.apiResponse
-//		b, err := ioutil.ReadAll(w.Body)
-//		require.NoError(t, err, "Failed to read body")
+//		b, errRead := ioutil.ReadAll(w.Body)
+//		require.NoError(t, errRead, "Failed to read body")
 //		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
 //		return true
 //	})
@@ -142,7 +142,7 @@ package app
 //		UpdatedOn:      config.Now(),
 //	}
 //	e := gin.New()
-//	web.SetupRouter(e, logRawQueue)
+//	web.SetupRouter(e, logPayloadChan)
 //	req := newTestReq("POST", "/api/server", s,
 //		createToken(76561198084134025, model.PAuthenticated))
 //	w := httptest.NewRecorder()
@@ -158,15 +158,15 @@ package app
 //
 //func TestWebSocketClient(t *testing.T) {
 //	e := gin.New()
-//	web.SetupRouter(e, logRawQueue)
+//	web.SetupRouter(e, logPayloadChan)
 //	s := httptest.NewServer(e)
 //	defer s.Close()
 //	u := "ws" + strings.TrimPrefix(s.URL, "http") + "/ws"
 //
 //	// Start to the server
-//	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
-//	if err != nil {
-//		t.Fatalf("%v", err)
+//	ws, _, errDialer := websocket.DefaultDialer.Dial(u, nil)
+//	if errDialer != nil {
+//		t.Fatalf("%v", errDialer)
 //	}
 //	defer ws.Close()
 //

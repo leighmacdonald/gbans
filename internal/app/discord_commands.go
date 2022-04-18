@@ -436,37 +436,37 @@ const (
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
 func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	cmd := botCmd(interaction.Data.Name)
+	command := botCmd(interaction.Data.Name)
 	response := botResponse{MsgType: mtString}
-	if handler, handlerFound := bot.commandHandlers[cmd]; handlerFound {
+	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
-		if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		if errRespond := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 			Data: &discordgo.InteractionApplicationCommandResponseData{
 				Content: "Calculating numberwang...",
 			},
-		}); err != nil {
-			respErr(&response, fmt.Sprintf("Error: %session", err.Error()))
-			if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
-				log.Errorf("Failed sending error message for pre-interaction: %v", sendE)
+		}); errRespond != nil {
+			respErr(&response, fmt.Sprintf("Error: %session", errRespond.Error()))
+			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+				log.Errorf("Failed sending error message for pre-interaction: %v", errSendInteraction)
 			}
 			return
 		}
 		lCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
-		if err := handler(lCtx, session, interaction, &response); err != nil {
+		if errHandleCommand := handler(lCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
-			respErr(&response, err.Error())
-			if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
-				log.Errorf("Failed sending error message for interaction: %v", sendE)
+			respErr(&response, errHandleCommand.Error())
+			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+				log.Errorf("Failed sending error message for interaction: %v", errSendInteraction)
 			}
-			log.Errorf("User command error: %v", err)
+			log.Errorf("User command error: %v", errHandleCommand)
 			return
 		}
-		if sendE := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendE != nil {
-			log.Errorf("Failed sending success response for interaction: %v", sendE)
+		if sendSendResponse := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
+			log.Errorf("Failed sending success response for interaction: %v", sendSendResponse)
 		} else {
 			log.Debugf("Sent message embed")
 		}

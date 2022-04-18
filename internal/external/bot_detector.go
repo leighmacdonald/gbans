@@ -25,27 +25,27 @@ type tf2bdSchema struct {
 }
 
 func parseTF2BD(data []byte) ([]steamid.SID64, error) {
-	var t tf2bdSchema
-	if err := json.Unmarshal(data, &t); err != nil {
-		return nil, err
+	var bdSchema tf2bdSchema
+	if errUnmarshal := json.Unmarshal(data, &bdSchema); errUnmarshal != nil {
+		return nil, errUnmarshal
 	}
-	var ids []steamid.SID64
-	for _, s := range t.Players {
+	var steamIds steamid.Collection
+	for _, player := range bdSchema.Players {
 		var id steamid.SID64
-		switch s.Steamid.(type) {
+		switch player.Steamid.(type) {
 		case string:
-			var err error
-			id, err = steamid.StringToSID64(s.Steamid.(string))
-			if err != nil {
-				return nil, err
+			parsedSid64, errParseSid64 := steamid.StringToSID64(player.Steamid.(string))
+			if errParseSid64 != nil {
+				return nil, errParseSid64
 			}
+			id = parsedSid64
 		case float64:
-			id = steamid.SID64(s.Steamid.(float64))
+			id = steamid.SID64(player.Steamid.(float64))
 		}
 		if !id.Valid() {
 			continue
 		}
-		ids = append(ids, id)
+		steamIds = append(steamIds, id)
 	}
-	return ids, nil
+	return steamIds, nil
 }

@@ -4,97 +4,99 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (database *pgStore) GetDemo(ctx context.Context, demoId int64, d *model.DemoFile) error {
-	q, a, e := sb.Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads").
+func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := sb.Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
-	if e != nil {
-		return Err(e)
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if err := database.conn.QueryRow(ctx, q, a...).Scan(&d.DemoID, &d.ServerID, &d.Title, &d.Data,
-		&d.CreatedOn, &d.Size, &d.Downloads); err != nil {
-		return Err(err)
+	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
+		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads); errQuery != nil {
+		return Err(errQuery)
 	}
 	return nil
 }
 
 func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	var demos []model.DemoFile
-	q, a, e := sb.Select("demo_id", "server_id", "title", "created_on", "size", "downloads").
+	query, args, errQueryArgs := sb.Select("demo_id", "server_id", "title", "created_on", "size", "downloads").
 		From("demo").
 		OrderBy("created_on DESC").
 		Limit(1000).
 		ToSql()
-	if e != nil {
-		return nil, Err(e)
+	if errQueryArgs != nil {
+		return nil, Err(errQueryArgs)
 	}
-	rows, err := database.conn.Query(ctx, q, a...)
-	var rs error
+	rows, errQuery := database.conn.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
 	for rows.Next() {
-		var d model.DemoFile
-		if rs = rows.Scan(&d.DemoID, &d.ServerID, &d.Title, &d.CreatedOn, &d.Size, &d.Downloads); rs != nil {
-			return nil, Err(err)
+		var demoFile model.DemoFile
+		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads); errScan != nil {
+			return nil, Err(errQuery)
 		}
-		demos = append(demos, d)
+		demos = append(demos, demoFile)
 	}
 	return demos, nil
 }
 
-func (database *pgStore) SaveDemo(ctx context.Context, d *model.DemoFile) error {
-	if d.ServerID > 0 {
-		return database.updateDemo(ctx, d)
+func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	if demoFile.ServerID > 0 {
+		return database.updateDemo(ctx, demoFile)
 	} else {
-		return database.insertDemo(ctx, d)
+		return database.insertDemo(ctx, demoFile)
 	}
 }
 
-func (database *pgStore) insertDemo(ctx context.Context, d *model.DemoFile) error {
-	q, a, e := sb.Insert(string(tableDemo)).
+func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := sb.Insert(string(tableDemo)).
 		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads").
-		Values(d.ServerID, d.Title, d.Data, d.CreatedOn, d.Size, d.Downloads).
+		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn, demoFile.Size, demoFile.Downloads).
 		Suffix("RETURNING demo_id").
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	err := database.conn.QueryRow(ctx, q, a...).Scan(&d.ServerID)
-	if err != nil {
-		return Err(err)
+	errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
+	if errQuery != nil {
+		return Err(errQuery)
 	}
-	log.Debugf("New demo saved: %s", d.Title)
+	log.Debugf("New demo saved: %s", demoFile.Title)
 	return nil
 }
 
-func (database *pgStore) updateDemo(ctx context.Context, d *model.DemoFile) error {
-	q, a, e := sb.Update(string(tableDemo)).
-		Set("title", d.Title).
-		Set("size", d.Size).
-		Set("downloads", d.Downloads).
-		Where(sq.Eq{"server_id": d.ServerID}).
+func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := sb.Update(string(tableDemo)).
+		Set("title", demoFile.Title).
+		Set("size", demoFile.Size).
+		Set("downloads", demoFile.Downloads).
+		Where(sq.Eq{"server_id": demoFile.ServerID}).
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
-		return errors.Wrapf(err, "Failed to update demo")
+	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+		return Err(errExec)
 	}
-	log.Debugf("Demo updated: %s", d.Title)
+	log.Debugf("Demo updated: %s", demoFile.Title)
 	return nil
 }
 
-func (database *pgStore) DropDemo(ctx context.Context, d *model.DemoFile) error {
-	q, a, e := sb.Delete(string(tableDemo)).Where(sq.Eq{"demo_id": d.DemoID}).ToSql()
-	if e != nil {
-		return e
+func (database *pgStore) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := sb.Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
-		return Err(err)
+	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+		return Err(errExec)
 	}
-	d.DemoID = 0
-	log.Debugf("Demo deleted: %s", d.Title)
+	demoFile.DemoID = 0
+	log.Debugf("Demo deleted: %s", demoFile.Title)
 	return nil
 }

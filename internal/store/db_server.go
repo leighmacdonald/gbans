@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	net2 "net"
+	"net"
 	"time"
 )
 
@@ -16,71 +16,72 @@ var columnsServer = []string{"server_id", "short_name", "token", "address", "por
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted", "log_secret"}
 
-func (database *pgStore) GetServer(ctx context.Context, serverID int64, s *model.Server) error {
-	q, a, e := sb.Select(columnsServer...).
+func (database *pgStore) GetServer(ctx context.Context, serverID int64, server *model.Server) error {
+	query, args, errQuery := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
 		ToSql()
-	if e != nil {
-		return Err(e)
+	if errQuery != nil {
+		return Err(errQuery)
 	}
-	if err := database.conn.QueryRow(ctx, q, a...).
-		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
-			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn,
-			&s.ReservedSlots, &s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap, &s.Deleted, &s.LogSecret); err != nil {
-		return Err(err)
+	if errRow := database.conn.QueryRow(ctx, query, args...).
+		Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
+			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
+			&server.Location.Longitude, &server.Location.Latitude,
+			&server.DefaultMap, &server.Deleted, &server.LogSecret); errRow != nil {
+		return Err(errRow)
 	}
 	return nil
 }
 
 func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
 	var servers []model.Server
-	qb := sb.Select(columnsServer...).From(string(tableServer))
+	queryBuilder := sb.Select(columnsServer...).From(string(tableServer))
 	cond := sq.And{sq.Eq{"deleted": false}}
 	if !includeDisabled {
 		cond = append(cond, sq.Eq{"is_enabled": true})
 	}
-	qb = qb.Where(cond)
-	q, a, e := qb.ToSql()
-	if e != nil {
-		return nil, Err(e)
+	queryBuilder = queryBuilder.Where(cond)
+	query, args, errQuery := queryBuilder.ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
 	}
-	rows, err := database.conn.Query(ctx, q, a...)
-	if err != nil {
-		return []model.Server{}, err
+	rows, errQueryExec := database.conn.Query(ctx, query, args...)
+	if errQueryExec != nil {
+		return []model.Server{}, errQueryExec
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var s model.Server
-		if err2 := rows.Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
-			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots,
-			&s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap, &s.Deleted, &s.LogSecret); err2 != nil {
-			return nil, err2
+		var server model.Server
+		if errScan := rows.Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
+			&server.DefaultMap, &server.Deleted, &server.LogSecret); errScan != nil {
+			return nil, errScan
 		}
-		servers = append(servers, s)
+		servers = append(servers, server)
 	}
 	if rows.Err() != nil {
-		return nil, rows.Err()
+		return nil, Err(rows.Err())
 	}
 	return servers, nil
 }
 
-func (database *pgStore) GetServerByName(ctx context.Context, serverName string, s *model.Server) error {
-	q, a, e := sb.Select(columnsServer...).
+func (database *pgStore) GetServerByName(ctx context.Context, serverName string, server *model.Server) error {
+	query, args, errQueryArgs := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if err := database.conn.QueryRow(ctx, q, a...).
-		Scan(&s.ServerID, &s.ServerName, &s.Token, &s.Address, &s.Port, &s.RCON,
-			&s.Password, &s.TokenCreatedOn, &s.CreatedOn, &s.UpdatedOn, &s.ReservedSlots,
-			&s.IsEnabled, &s.Region, &s.CC, &s.Location.Longitude, &s.Location.Latitude,
-			&s.DefaultMap, &s.Deleted, &s.LogSecret); err != nil {
-		return err
+	if errQuery := database.conn.QueryRow(ctx, query, args...).
+		Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
+			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
+		return Err(errQuery)
 	}
 	return nil
 }
@@ -95,63 +96,64 @@ func (database *pgStore) SaveServer(ctx context.Context, server *model.Server) e
 	return database.insertServer(ctx, server)
 }
 
-func (database *pgStore) insertServer(ctx context.Context, s *model.Server) error {
-	const q = `
+func (database *pgStore) insertServer(ctx context.Context, server *model.Server) error {
+	const query = `
 		INSERT INTO server (
 		    short_name, token, address, port, rcon, token_created_on, 
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, location, 
 			default_map, deleted, log_secret) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
-	err := database.conn.QueryRow(ctx, q, s.ServerName, s.Token, s.Address, s.Port, s.RCON, s.TokenCreatedOn,
-		s.ReservedSlots, s.CreatedOn, s.UpdatedOn, s.Password, s.IsEnabled, s.Region, s.CC,
-		s.Location.String(), s.DefaultMap, s.Deleted, &s.LogSecret).Scan(&s.ServerID)
+	err := database.conn.QueryRow(ctx, query, server.ServerName, server.Token, server.Address, server.Port,
+		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
+		server.Password, server.IsEnabled, server.Region, server.CC,
+		server.Location.String(), server.DefaultMap, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
 	if err != nil {
 		return Err(err)
 	}
 	return nil
 }
 
-func (database *pgStore) updateServer(ctx context.Context, s *model.Server) error {
-	s.UpdatedOn = config.Now()
-	q, a, e := sb.Update(string(tableServer)).
-		Set("short_name", s.ServerName).
-		Set("token", s.Token).
-		Set("address", s.Address).
-		Set("port", s.Port).
-		Set("rcon", s.RCON).
-		Set("token_created_on", s.TokenCreatedOn).
-		Set("updated_on", s.UpdatedOn).
-		Set("reserved_slots", s.ReservedSlots).
-		Set("password", s.Password).
-		Set("is_enabled", s.IsEnabled).
-		Set("deleted", s.Deleted).
-		Set("region", s.Region).
-		Set("cc", s.CC).
-		Set("location", s.Location.String()).
-		Set("default_map", s.DefaultMap).
-		Set("log_secret", s.LogSecret).
-		Where(sq.Eq{"server_id": s.ServerID}).
+func (database *pgStore) updateServer(ctx context.Context, server *model.Server) error {
+	server.UpdatedOn = config.Now()
+	query, args, errQueryArgs := sb.Update(string(tableServer)).
+		Set("short_name", server.ServerName).
+		Set("token", server.Token).
+		Set("address", server.Address).
+		Set("port", server.Port).
+		Set("rcon", server.RCON).
+		Set("token_created_on", server.TokenCreatedOn).
+		Set("updated_on", server.UpdatedOn).
+		Set("reserved_slots", server.ReservedSlots).
+		Set("password", server.Password).
+		Set("is_enabled", server.IsEnabled).
+		Set("deleted", server.Deleted).
+		Set("region", server.Region).
+		Set("cc", server.CC).
+		Set("location", server.Location.String()).
+		Set("default_map", server.DefaultMap).
+		Set("log_secret", server.LogSecret).
+		Where(sq.Eq{"server_id": server.ServerID}).
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
-		return errors.Wrapf(err, "Failed to update s")
+	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+		return errors.Wrapf(errExec, "Failed to update server")
 	}
 	return nil
 }
 
 func (database *pgStore) DropServer(ctx context.Context, serverID int64) error {
-	const q = `UPDATE server set deleted = true WHERE server_id = $1`
-	if _, err := database.conn.Exec(ctx, q, serverID); err != nil {
-		return err
+	const query = `UPDATE server set deleted = true WHERE server_id = $1`
+	if _, errExec := database.conn.Exec(ctx, query, serverID); errExec != nil {
+		return errExec
 	}
 	return nil
 }
 
 func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
-	b := sb.Select(
+	queryBuilder := sb.Select(
 		`l.log_id`,
 		`s.server_id`,
 		`l.event_type`,
@@ -188,76 +190,76 @@ func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryO
 		LeftJoin(`person target on target.steam_id = l.target_id`)
 
 	if opts.Network != "" {
-		_, network, errNet := net2.ParseCIDR(opts.Network)
-		if errNet != nil {
-			return nil, Err(errNet)
+		_, network, errParseCIDR := net.ParseCIDR(opts.Network)
+		if errParseCIDR != nil {
+			return nil, Err(errParseCIDR)
 		}
 		idsByNet, errIdByNet := database.GetSteamIDsAtIP(ctx, network)
 		if errIdByNet != nil {
 			return nil, Err(errIdByNet)
 		}
-		b = b.Where(sq.Eq{"l.source_id": idsByNet})
+		queryBuilder = queryBuilder.Where(sq.Eq{"l.source_id": idsByNet})
 	}
-	s1, e1 := steamid.StringToSID64(opts.SourceID)
-	if opts.SourceID != "" && e1 == nil && s1.Valid() {
-		b = b.Where(sq.Eq{"l.source_id": s1.Int64()})
+	sourceSid64, errSourceSid64 := steamid.StringToSID64(opts.SourceID)
+	if opts.SourceID != "" && errSourceSid64 == nil && sourceSid64.Valid() {
+		queryBuilder = queryBuilder.Where(sq.Eq{"l.source_id": sourceSid64.Int64()})
 	}
-	t1, e2 := steamid.StringToSID64(opts.TargetID)
-	if opts.TargetID != "" && e2 == nil && t1.Valid() {
-		b = b.Where(sq.Eq{"l.target_id": t1.Int64()})
+	targetSid64, errTargetSid64 := steamid.StringToSID64(opts.TargetID)
+	if opts.TargetID != "" && errTargetSid64 == nil && targetSid64.Valid() {
+		queryBuilder = queryBuilder.Where(sq.Eq{"l.target_id": targetSid64.Int64()})
 	}
 	if len(opts.Servers) > 0 {
-		b = b.Where(sq.Eq{"l.server_id": opts.Servers})
+		queryBuilder = queryBuilder.Where(sq.Eq{"l.server_id": opts.Servers})
 	}
 	if len(opts.LogTypes) > 0 {
-		b = b.Where(sq.Eq{"l.event_type": opts.LogTypes})
+		queryBuilder = queryBuilder.Where(sq.Eq{"l.event_type": opts.LogTypes})
 	}
 
 	if opts.SentBefore != nil {
-		b = b.Where(sq.Lt{"l.created_on": opts.SentBefore})
+		queryBuilder = queryBuilder.Where(sq.Lt{"l.created_on": opts.SentBefore})
 	}
 	if opts.SentAfter != nil {
-		b = b.Where(sq.Gt{"l.created_on": opts.SentAfter})
+		queryBuilder = queryBuilder.Where(sq.Gt{"l.created_on": opts.SentAfter})
 	}
 	if opts.OrderDesc {
-		b = b.OrderBy("l.created_on DESC")
+		queryBuilder = queryBuilder.OrderBy("l.created_on DESC")
 	} else {
-		b = b.OrderBy("l.created_on ASC")
+		queryBuilder = queryBuilder.OrderBy("l.created_on ASC")
 	}
 	if opts.Limit > 0 {
-		b = b.Limit(opts.Limit)
+		queryBuilder = queryBuilder.Limit(opts.Limit)
 	}
-	q, a, err := b.ToSql()
-	if err != nil {
-		return nil, err
+	query, args, errQueryArgs := queryBuilder.ToSql()
+	if errQueryArgs != nil {
+		return nil, errQueryArgs
 	}
-	rows, errQ := database.conn.Query(ctx, q, a...)
-	if errQ != nil {
-		return nil, Err(errQ)
+	rows, errQuery := database.conn.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	var events []model.ServerEvent
 	for rows.Next() {
-		e := model.NewServerEvent()
-		if err2 := rows.Scan(
-			&e.LogID, &e.Server.ServerID, &e.EventType, &e.CreatedOn,
-			&e.Server.ServerName,
-			&e.Source.SteamID, &e.Source.PersonaName, &e.Source.AvatarFull, &e.Source.Avatar,
-			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar,
-			&e.Weapon, &e.Damage, &e.Healing,
-			&e.AttackerPOS.X, &e.AttackerPOS.Y, &e.AttackerPOS.Z,
-			&e.VictimPOS.X, &e.VictimPOS.Y, &e.VictimPOS.Z,
-			&e.AssisterPOS.X, &e.AssisterPOS.Y, &e.AssisterPOS.Z,
-			&e.Item, &e.PlayerClass, &e.Team, &e.MetaData); err2 != nil {
-			return nil, Err(err2)
+		event := model.NewServerEvent()
+		if errScan := rows.Scan(
+			&event.LogID, &event.Server.ServerID, &event.EventType, &event.CreatedOn,
+			&event.Server.ServerName,
+			&event.Source.SteamID, &event.Source.PersonaName, &event.Source.AvatarFull, &event.Source.Avatar,
+			&event.Target.SteamID, &event.Target.PersonaName, &event.Target.AvatarFull, &event.Target.Avatar,
+			&event.Weapon, &event.Damage, &event.Healing,
+			&event.AttackerPOS.X, &event.AttackerPOS.Y, &event.AttackerPOS.Z,
+			&event.VictimPOS.X, &event.VictimPOS.Y, &event.VictimPOS.Z,
+			&event.AssisterPOS.X, &event.AssisterPOS.Y, &event.AssisterPOS.Z,
+			&event.Item, &event.PlayerClass, &event.Team, &event.MetaData); errScan != nil {
+			return nil, Err(errScan)
 		}
-		events = append(events, e)
+		events = append(events, event)
 	}
 	return events, nil
 }
 
 // BatchInsertServerLogs save server log events to the database using a
-func (database *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error {
+func (database *pgStore) BatchInsertServerLogs(ctx context.Context, serverEvents []model.ServerEvent) error {
 	const (
 		stmtName = "insert-log"
 		query    = `INSERT INTO server_log (
@@ -277,49 +279,49 @@ func (database *pgStore) BatchInsertServerLogs(ctx context.Context, logs []model
 			END, $19, $20, $21)`
 	)
 	t0 := config.Now()
-	tx, err := database.conn.Begin(ctx)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to prepare logWriter query: %v", err)
+	tx, errBeginTx := database.conn.Begin(ctx)
+	if errBeginTx != nil {
+		return errors.Wrapf(errBeginTx, "Failed to prepare logWriter query: %v", errBeginTx)
 	}
-	_, errP := tx.Prepare(ctx, stmtName, query)
-	if errP != nil {
-		return errors.Wrapf(errP, "Failed to prepare logWriter query: %v", errP)
+	_, errPrepare := tx.Prepare(ctx, stmtName, query)
+	if errPrepare != nil {
+		return errors.Wrapf(errPrepare, "Failed to prepare logWriter query: %v", errPrepare)
 	}
-	var re error
-	for _, lg := range logs {
-		if lg.Server == nil || lg.Server.ServerID <= 0 {
+	var errExec error
+	for _, serverEvent := range serverEvents {
+		if serverEvent.Server == nil || serverEvent.Server.ServerID <= 0 {
 			continue
 		}
 		source := steamid.SID64(0)
 		target := steamid.SID64(0)
-		if lg.Source != nil && lg.Source.SteamID.Valid() {
-			source = lg.Source.SteamID
+		if serverEvent.Source != nil && serverEvent.Source.SteamID.Valid() {
+			source = serverEvent.Source.SteamID
 		}
-		if lg.Target != nil && lg.Target.SteamID.Valid() {
-			target = lg.Target.SteamID
+		if serverEvent.Target != nil && serverEvent.Target.SteamID.Valid() {
+			target = serverEvent.Target.SteamID
 		}
 
-		if _, re = tx.Exec(ctx, stmtName, lg.Server.ServerID, lg.EventType,
-			source.Int64(), target.Int64(), lg.CreatedOn, lg.Weapon, lg.Damage,
-			lg.Item, lg.PlayerClass,
-			lg.AttackerPOS.Y, lg.AttackerPOS.X, lg.AttackerPOS.Z,
-			lg.VictimPOS.Y, lg.VictimPOS.X, lg.VictimPOS.Z,
-			lg.AssisterPOS.Y, lg.AssisterPOS.X, lg.AssisterPOS.Z,
-			lg.Team, lg.Healing, lg.MetaData); re != nil {
-			re = errors.Wrapf(re, "Failed to write log entries")
+		if _, errExec = tx.Exec(ctx, stmtName, serverEvent.Server.ServerID, serverEvent.EventType,
+			source.Int64(), target.Int64(), serverEvent.CreatedOn, serverEvent.Weapon, serverEvent.Damage,
+			serverEvent.Item, serverEvent.PlayerClass,
+			serverEvent.AttackerPOS.Y, serverEvent.AttackerPOS.X, serverEvent.AttackerPOS.Z,
+			serverEvent.VictimPOS.Y, serverEvent.VictimPOS.X, serverEvent.VictimPOS.Z,
+			serverEvent.AssisterPOS.Y, serverEvent.AssisterPOS.X, serverEvent.AssisterPOS.Z,
+			serverEvent.Team, serverEvent.Healing, serverEvent.MetaData); errExec != nil {
+			errExec = errors.Wrapf(errExec, "Failed to write log entries")
 			break
 		}
 	}
-	if re != nil {
-		if errR := tx.Rollback(ctx); errR != nil {
-			return errors.Wrapf(errR, "BatchInsertServerLogs rollback failed")
+	if errExec != nil {
+		if errRollback := tx.Rollback(ctx); errRollback != nil {
+			return errors.Wrapf(errRollback, "BatchInsertServerLogs rollback failed")
 		}
-		return errors.Wrapf(re, "Failed to commit log entries")
+		return errors.Wrapf(errExec, "Failed to commit log entries")
 	}
-	if errC := tx.Commit(ctx); errC != nil {
-		return errors.Wrapf(errC, "Failed to commit log entries")
+	if errCommit := tx.Commit(ctx); errCommit != nil {
+		return errors.Wrapf(errCommit, "Failed to commit log entries")
 	}
-	log.WithFields(log.Fields{"count": len(logs), "duration": time.Since(t0).String()}).
-		Debug("Wrote event logs successfully")
+	log.WithFields(log.Fields{"count": len(serverEvents), "duration": time.Since(t0).String()}).
+		Debug("Wrote event serverEvents successfully")
 	return nil
 }

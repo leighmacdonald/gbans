@@ -20,11 +20,15 @@ var statsRebuildCmd = &cobra.Command{
 	Short: "Rebuild all stats tables",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to initialize db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
-		defer db.Close()
+		defer func() {
+			if errClose := database.Close(); errClose != nil {
+				log.Errorf("Failed to close database cleanly: %v", errClose)
+			}
+		}()
 		var (
 			inputChan        = make(chan model.ServerEvent)
 			offset    uint64 = 0
@@ -32,7 +36,7 @@ var statsRebuildCmd = &cobra.Command{
 		)
 		var errRead error
 		for errRead == nil {
-			rows, errFetch := db.GetReplayLogs(ctx, offset*limit, limit)
+			rows, errFetch := database.GetReplayLogs(ctx, offset*limit, limit)
 			if errFetch != nil {
 				log.Errorf("Error fetching replat logs: %v", errFetch)
 				break

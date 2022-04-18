@@ -21,8 +21,8 @@ func TestFetchPlayerBans(t *testing.T) {
 		76561197999702457,
 		76561198189957966,
 	}
-	bans, err := FetchPlayerBans(reqIds)
-	assert.NoError(t, err, "HTTP error fetching Player bans")
+	bans, errFetch := FetchPlayerBans(reqIds)
+	assert.NoError(t, errFetch, "HTTP error fetching Player bans")
 	assert.Equal(t, len(bans), len(reqIds))
 }
 
@@ -31,10 +31,10 @@ func TestSteamWebAPI(t *testing.T) {
 		t.Skip("No steamkey set")
 		return
 	}
-	friends, err := FetchFriends(76561197961279983)
-	assert.NoError(t, err)
+	friends, errFetch := FetchFriends(76561197961279983)
+	assert.NoError(t, errFetch)
 	assert.True(t, len(friends) > 100)
-	summaries, err2 := FetchSummaries(friends)
-	assert.NoError(t, err2)
+	summaries, errFetchSummaries := FetchSummaries(friends)
+	assert.NoError(t, errFetchSummaries)
 	assert.Equal(t, len(friends), len(summaries))
 }

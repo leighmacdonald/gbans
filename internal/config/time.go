@@ -33,8 +33,8 @@ func ParseDuration(durationString string) (time.Duration, error) {
 	if matchDuration == nil {
 		return 0, errInvalidDuration
 	}
-	valueInt, err := strconv.ParseInt(matchDuration[1], 10, 64)
-	if err != nil {
+	valueInt, errParseInt := strconv.ParseInt(matchDuration[1], 10, 64)
+	if errParseInt != nil {
 		return 0, errInvalidDuration
 	}
 	value := time.Duration(valueInt)
@@ -81,27 +81,27 @@ func FmtTimeShort(t time.Time) string {
 // FmtDuration calculates and returns a string for duration differences. This handles
 // values larger than a day unlike the stdlib in functionalities
 func FmtDuration(t time.Time) string {
-	year, month, day, hour, min, _ := diff(t, Now())
-	var pcs []string
+	year, month, day, hour, minute, _ := diff(t, Now())
+	var pieces []string
 	if year > 0 {
-		pcs = append(pcs, fmt.Sprintf("%dy", year))
+		pieces = append(pieces, fmt.Sprintf("%dy", year))
 	}
 	if month > 0 {
-		pcs = append(pcs, fmt.Sprintf("%dM", month))
+		pieces = append(pieces, fmt.Sprintf("%dM", month))
 	}
 	if day > 0 {
-		pcs = append(pcs, fmt.Sprintf("%dd", day))
+		pieces = append(pieces, fmt.Sprintf("%dd", day))
 	}
 	if hour > 0 {
-		pcs = append(pcs, fmt.Sprintf("%dh", hour))
+		pieces = append(pieces, fmt.Sprintf("%dh", hour))
 	}
-	if min > 0 {
-		pcs = append(pcs, fmt.Sprintf("%dm", min))
+	if minute > 0 {
+		pieces = append(pieces, fmt.Sprintf("%dm", minute))
 	}
-	if len(pcs) == 0 {
+	if len(pieces) == 0 {
 		return "~now"
 	}
-	return strings.Join(pcs, " ")
+	return strings.Join(pieces, " ")
 }
 
 func diff(from, to time.Time) (year, month, day, hour, min, sec int) {

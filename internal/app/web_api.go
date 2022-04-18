@@ -55,8 +55,8 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		f, hdr, err := ctx.Request.FormFile("file")
-		if err != nil {
+		multipartFile, fileHeader, errFormFile := ctx.Request.FormFile("file")
+		if errFormFile != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
@@ -65,13 +65,13 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		var d []byte
-		_, errRead := f.Read(d)
+		var demoData []byte
+		_, errRead := multipartFile.Read(demoData)
 		if errRead != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		demoFile, errNewDemoFile := model.NewDemoFile(server.ServerID, hdr.Filename, d)
+		demoFile, errNewDemoFile := model.NewDemoFile(server.ServerID, fileHeader.Filename, demoData)
 		if errNewDemoFile != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
@@ -85,7 +85,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onPostPingMod(db store.Store) gin.HandlerFunc {
+func (web *web) onPostPingMod(database store.Store) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -100,7 +100,7 @@ func (web *web) onPostPingMod(db store.Store) gin.HandlerFunc {
 			return
 		}
 		var playerInfo model.PlayerInfo
-		errFind := Find(db, model.Target(req.SteamID.String()), "", &playerInfo)
+		errFind := Find(database, model.Target(req.SteamID.String()), "", &playerInfo)
 		if errFind != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -388,8 +388,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 //	}
 //	return func(c *gin.Context) {
 //		var app req
-//		if err := c.BindJSON(&app); err != nil {
-//			log.Errorf("Received malformed appeal apiBanRequest: %v", err)
+//		if errBind := c.BindJSON(&app); errBind != nil {
+//			log.Errorf("Received malformed appeal apiBanRequest: %v", errBind)
 //			responseErr(c, http.StatusBadRequest, nil)
 //			return
 //		}
@@ -415,9 +415,9 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 //	return func(c *gin.Context) {
 //		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 //		defer cancel()
-//		servers, err := database.GetServers(ctx, true)
-//		if err != nil {
-//			log.Errorf("Failed to fetch servers: %s", err)
+//		servers, errGetServers := database.GetServers(ctx, true)
+//		if errGetServers != nil {
+//			log.Errorf("Failed to fetch servers: %s", errGetServers)
 //			responseErr(c, http.StatusInternalServerError, nil)
 //			return
 //		}
@@ -826,7 +826,7 @@ func (web *web) onAPIPostAppeal(database store.Store) gin.HandlerFunc {
 	}
 	return func(ctx *gin.Context) {
 		var appeal newAppeal
-		if err := ctx.BindJSON(&appeal); err != nil {
+		if errBind := ctx.BindJSON(&appeal); errBind != nil {
 
 		}
 	}
@@ -919,9 +919,9 @@ func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 }
 
 //func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
-//	i, err := getInt64Param(c, key)
-//	if err != nil {
-//		return 0, err
+//	i, errGetParam := getInt64Param(c, key)
+//	if errGetParam != nil {
+//		return 0, errGetParam
 //	}
 //	sid := steamid.SID64(i)
 //	if !sid.Valid() {

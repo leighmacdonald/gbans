@@ -25,16 +25,16 @@ import (
 // Returns false, nil if the ban does not exist.
 func Unban(database store.Store, target steamid.SID64) (bool, error) {
 	bannedPerson := model.NewBannedPerson()
-	err := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
-	if err != nil {
-		if err == store.ErrNoResult {
+	errGetBan := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
+	if errGetBan != nil {
+		if errGetBan == store.ErrNoResult {
 			return false, nil
 		}
-		return false, err
+		return false, errGetBan
 	}
 	bannedPerson.Ban.ValidUntil = config.Now()
-	if err2 := database.SaveBan(ctx, &bannedPerson.Ban); err2 != nil {
-		return false, errors.Wrapf(err2, "Failed to save unban")
+	if errSaveBan := database.SaveBan(ctx, &bannedPerson.Ban); errSaveBan != nil {
+		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
 	log.Infof("Player unbanned: %v", target)
 	return true, nil
@@ -46,11 +46,11 @@ func UnbanASN(ctx context.Context, database store.Store, asnNum string) (bool, e
 	if errConv != nil {
 		return false, errConv
 	}
-	var ba model.BanASN
-	if err := database.GetBanASN(ctx, asNum, &ba); err != nil {
-		return false, err
+	var banASN model.BanASN
+	if errGetBanASN := database.GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
+		return false, errGetBanASN
 	}
-	if errDrop := database.DropBanASN(ctx, &ba); errDrop != nil {
+	if errDrop := database.DropBanASN(ctx, &banASN); errDrop != nil {
 		log.Errorf("Failed to drop ASN ban: %v", errDrop)
 		return false, errDrop
 	}
@@ -71,20 +71,20 @@ type banOpts struct {
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
 func Ban(database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan chan discordPayload) error {
 	existing := model.NewBannedPerson()
-	sid, errSid := opts.target.SID64()
+	targetSid64, errSid := opts.target.SID64()
 	if errSid != nil {
 		return errSid
 	}
-	aid, errAid := opts.author.SID64()
+	authorSid64, errAid := opts.author.SID64()
 	if errAid != nil {
 		return errAid
 	}
-	err := database.GetBanBySteamID(ctx, sid, false, &existing)
+	errGetExistingBan := database.GetBanBySteamID(ctx, targetSid64, false, &existing)
 	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return store.ErrDuplicate
 	}
-	if err != nil && err != store.ErrNoResult {
-		return errors.Wrapf(err, "Failed to get ban")
+	if errGetExistingBan != nil && errGetExistingBan != store.ErrNoResult {
+		return errors.Wrapf(errGetExistingBan, "Failed to get ban")
 	}
 	until := config.DefaultExpiration()
 	duration, errDuration := opts.duration.Value()
@@ -94,8 +94,8 @@ func Ban(database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan 
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
 	}
-	ban.SteamID = sid
-	ban.AuthorID = aid
+	ban.SteamID = targetSid64
+	ban.AuthorID = authorSid64
 	ban.BanType = opts.banType
 	ban.Reason = model.Custom
 	ban.ReasonText = opts.reason
@@ -164,11 +164,11 @@ type banASNOpts struct {
 // BanASN will ban all network ranges associated with the requested ASN
 func BanASN(database store.Store, opts banASNOpts, banASN *model.BanASN) error {
 	until := config.DefaultExpiration()
-	sid, errSid := opts.target.SID64()
+	targetSid64, errSid := opts.target.SID64()
 	if errSid != nil {
 		return errSid
 	}
-	aid, errAid := opts.author.SID64()
+	authorSid64, errAid := opts.author.SID64()
 	if errAid != nil {
 		return errAid
 	}
@@ -180,8 +180,8 @@ func BanASN(database store.Store, opts banASNOpts, banASN *model.BanASN) error {
 		until = config.Now().Add(duration)
 	}
 	banASN.Origin = opts.origin
-	banASN.TargetID = sid
-	banASN.AuthorID = aid
+	banASN.TargetID = targetSid64
+	banASN.AuthorID = authorSid64
 	banASN.ValidUntil = until
 	banASN.Reason = opts.reason
 	banASN.ASNum = opts.asNum
@@ -203,11 +203,11 @@ type banNetworkOpts struct {
 // If duration is 0, the value of config.DefaultExpiration() will be used.
 func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet) error {
 	until := config.DefaultExpiration()
-	sid, errSid := opts.target.SID64()
+	targetSid64, errSid := opts.target.SID64()
 	if errSid != nil {
 		return errSid
 	}
-	aid, errAid := opts.author.SID64()
+	authorSid64, errAid := opts.author.SID64()
 	if errAid != nil {
 		return errAid
 	}
@@ -218,9 +218,9 @@ func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet)
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
 	}
-	_, cidr, errCidr := net.ParseCIDR(opts.cidr)
-	if errCidr != nil {
-		return errors.Wrapf(errCidr, "Failed to parse CIDR address")
+	_, network, errParseCIDR := net.ParseCIDR(opts.cidr)
+	if errParseCIDR != nil {
+		return errors.Wrapf(errParseCIDR, "Failed to parse CIDR address")
 	}
 	// TODO
 	//_, err2 := store.GetBanNet(ctx, net.ParseIP(cidrStr))
@@ -231,28 +231,28 @@ func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet)
 	//	return "", consts.ErrDuplicateBan
 	//}
 
-	banNet.SteamID = sid
-	banNet.AuthorID = aid
-	banNet.CIDR = cidr
+	banNet.SteamID = targetSid64
+	banNet.AuthorID = authorSid64
+	banNet.CIDR = network
 	banNet.Source = model.System
 	banNet.Reason = opts.reason
 	banNet.CreatedOn = config.Now()
 	banNet.UpdatedOn = config.Now()
 	banNet.ValidUntil = until
 
-	if err := database.SaveBanNet(ctx, banNet); err != nil {
-		return err
+	if errSaveBanNet := database.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
+		return errSaveBanNet
 	}
 	go func() {
-		var pi model.PlayerInfo
-		if errPI := FindPlayerByCIDR(database, cidr, &pi); errPI != nil {
+		var playerInfo model.PlayerInfo
+		if errFindPI := FindPlayerByCIDR(database, network, &playerInfo); errFindPI != nil {
 			return
 		}
-		if pi.Player != nil && pi.Server != nil {
-			_, err2 := query.ExecRCON(*pi.Server,
-				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(pi.Player.SID)), banNet.Reason))
-			if err2 != nil {
-				log.Errorf("Failed to query for ban request: %v", err2)
+		if playerInfo.Player != nil && playerInfo.Server != nil {
+			_, errExecRCON := query.ExecRCON(*playerInfo.Server,
+				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(playerInfo.Player.SID)), banNet.Reason))
+			if errExecRCON != nil {
+				log.Errorf("Failed to query for ban request: %v", errExecRCON)
 				return
 			}
 		}
@@ -262,28 +262,28 @@ func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet)
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(database store.Store, origin model.Origin, target model.Target, author model.Target, reason string, pi *model.PlayerInfo) error {
-	aid, errAid := author.SID64()
+func Kick(database store.Store, origin model.Origin, target model.Target, author model.Target, reason string, playerInfo *model.PlayerInfo) error {
+	authorSid64, errAid := author.SID64()
 	if errAid != nil {
 		return errAid
 	}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errF := Find(database, target, "", &foundPI); errF != nil {
-		return errF
+	if errFind := Find(database, target, "", &foundPI); errFind != nil {
+		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
-		resp, errR := query.ExecRCON(*foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
-		if errR != nil {
-			log.Errorf("Faied to kick user afeter ban: %v", errR)
-			return errR
+		rconResponse, errExecRCON := query.ExecRCON(*foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
+		if errExecRCON != nil {
+			log.Errorf("Faied to kick user afeter ban: %v", errExecRCON)
+			return errExecRCON
 		}
-		log.Debugf("RCON response: %s", resp)
+		log.Debugf("RCON response: %s", rconResponse)
 	}
-	if pi != nil {
-		*pi = foundPI
+	if playerInfo != nil {
+		*playerInfo = foundPI
 	}
-	log.WithFields(log.Fields{"origin": origin, "target": target, "author": aid.String()}).
+	log.WithFields(log.Fields{"origin": origin, "target": target, "author": authorSid64.String()}).
 		Infof("User kicked")
 	return nil
 }
@@ -291,35 +291,35 @@ func Kick(database store.Store, origin model.Origin, target model.Target, author
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
-func SetSteam(database store.Store, sid steamid.SID64, discordId string) error {
-	p := model.NewPerson(sid)
-	if errP := database.GetOrCreatePersonBySteamID(ctx, sid, &p); errP != nil || !sid.Valid() {
+func SetSteam(database store.Store, sid64 steamid.SID64, discordId string) error {
+	newPerson := model.NewPerson(sid64)
+	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
-	if (p.DiscordID) != "" {
-		return errors.Errorf("Discord account already linked to steam account: %d", p.SteamID.Int64())
+	if (newPerson.DiscordID) != "" {
+		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
 	}
-	p.DiscordID = discordId
-	if errS := database.SavePerson(ctx, &p); errS != nil {
+	newPerson.DiscordID = discordId
+	if errSavePerson := database.SavePerson(ctx, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
-	log.WithFields(log.Fields{"sid": sid, "did": discordId}).Infof("Discord steamid set")
+	log.WithFields(log.Fields{"sid64": sid64, "discordId": discordId}).Infof("Discord steamid set")
 	return nil
 }
 
 // Say is used to send a message to the server via sm_say
 func Say(database store.Store, author steamid.SID64, serverName string, message string) error {
 	var server model.Server
-	if err := database.GetServerByName(ctx, serverName, &server); err != nil {
+	if errGetServer := database.GetServerByName(ctx, serverName, &server); errGetServer != nil {
 		return errors.Errorf("Failed to fetch server: %s", serverName)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, message)
-	resp, err2 := query.ExecRCON(server, msg)
-	if err2 != nil {
-		return err2
+	rconResponse, errExecRCON := query.ExecRCON(server, msg)
+	if errExecRCON != nil {
+		return errExecRCON
 	}
-	rp := strings.Split(resp, "\n")
-	if len(rp) < 2 {
+	responsePieces := strings.Split(rconResponse, "\n")
+	if len(responsePieces) < 2 {
 		return errors.Errorf("Invalid response")
 	}
 	log.WithFields(log.Fields{"author": author, "server": serverName, "msg": message}).
@@ -346,6 +346,7 @@ func CSay(database store.Store, author steamid.SID64, serverName string, message
 		servers = append(servers, server)
 	}
 	msg := fmt.Sprintf(`sm_csay %s`, message)
+	// TODO check response
 	_ = query.RCON(ctx, servers, msg)
 	log.WithFields(log.Fields{"author": author, "server": serverName, "msg": message}).
 		Infof("Server center message sent")
@@ -354,33 +355,34 @@ func CSay(database store.Store, author steamid.SID64, serverName string, message
 
 // PSay is used to send a private message to a player
 func PSay(database store.Store, author steamid.SID64, target model.Target, message string) error {
-	var pi model.PlayerInfo
-	_ = Find(database, target, "", &pi)
-	if !pi.Valid || !pi.InGame {
+	var playerInfo model.PlayerInfo
+	// TODO check resp
+	_ = Find(database, target, "", &playerInfo)
+	if !playerInfo.Valid || !playerInfo.InGame {
 		return consts.ErrUnknownID
 	}
-	msg := fmt.Sprintf(`sm_psay %d "%s"`, pi.Player.UserID, message)
-	_, err := query.ExecRCON(*pi.Server, msg)
-	if err != nil {
-		return errors.Errorf("Failed to exec psay command: %v", err)
+	msg := fmt.Sprintf(`sm_psay %d "%s"`, playerInfo.Player.UserID, message)
+	_, errExecRCON := query.ExecRCON(*playerInfo.Server, msg)
+	if errExecRCON != nil {
+		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
 	}
-	log.WithFields(log.Fields{"author": author, "server": pi.Server.ServerName, "msg": message, "target": pi.Player.SID}).
+	log.WithFields(log.Fields{"author": author, "server": playerInfo.Server.ServerName, "msg": message, "target": playerInfo.Player.SID}).
 		Infof("Private message sent")
 	return nil
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
 func FilterAdd(database store.Store, pattern string) (model.Filter, error) {
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		return model.Filter{}, errors.Wrapf(err, "Invalid regex format")
+	rx, errCompile := regexp.Compile(pattern)
+	if errCompile != nil {
+		return model.Filter{}, errors.Wrapf(errCompile, "Invalid regex format")
 	}
-	filter := model.Filter{Pattern: re, CreatedOn: config.Now()}
+	filter := model.Filter{Pattern: rx, CreatedOn: config.Now()}
 	if errSave := database.SaveFilter(ctx, &filter); errSave != nil {
 		if errSave == store.ErrDuplicate {
 			return filter, store.ErrDuplicate
 		}
-		log.Errorf("Error saving filter word: %v", err)
+		log.Errorf("Error saving filter word: %v", errCompile)
 		return filter, consts.ErrInternal
 	}
 	return filter, nil
@@ -438,32 +440,32 @@ func ContainsFilteredWord(body string) (bool, model.Filter) {
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
 func PersonBySID(database store.Store, sid steamid.SID64, ipAddr string, person *model.Person) error {
-	if err := database.GetPersonBySteamID(ctx, sid, person); err != nil && err != store.ErrNoResult {
-		return err
+	if errGetPerson := database.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
+		return errGetPerson
 	}
 	if person.UpdatedOn == person.CreatedOn || time.Since(person.UpdatedOn) > 15*time.Second {
-		s, errW := steamweb.PlayerSummaries(steamid.Collection{person.SteamID})
-		if errW != nil || len(s) != 1 {
-			log.Errorf("Failed to fetch updated profile: %v", errW)
+		summary, errSummary := steamweb.PlayerSummaries(steamid.Collection{person.SteamID})
+		if errSummary != nil || len(summary) != 1 {
+			log.Errorf("Failed to fetch updated profile: %v", errSummary)
 			return nil
 		}
-		var sum = s[0]
+		var sum = summary[0]
 		person.PlayerSummary = &sum
 		person.UpdatedOn = config.Now()
-		if err := database.SavePerson(ctx, person); err != nil {
-			log.Errorf("Failed to save updated profile: %v", errW)
+		if errSave := database.SavePerson(ctx, person); errSave != nil {
+			log.Errorf("Failed to save updated profile: %v", errSummary)
 			return nil
 		}
-		if err := database.GetPersonBySteamID(ctx, sid, person); err != nil && err != store.ErrNoResult {
-			return err
+		if errGetPersonBySid64 := database.GetPersonBySteamID(ctx, sid, person); errGetPersonBySid64 != nil && errGetPersonBySid64 != store.ErrNoResult {
+			return errGetPersonBySid64
 		}
 	}
 	return nil
 }
 
-// ResolveSID is just a simple helper for calling steamid.ResolveSID64
+// ResolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout
 func ResolveSID(sidStr string) (steamid.SID64, error) {
-	c, cancel := context.WithTimeout(ctx, time.Second*5)
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-	return steamid.ResolveSID64(c, sidStr)
+	return steamid.ResolveSID64(localCtx, sidStr)
 }

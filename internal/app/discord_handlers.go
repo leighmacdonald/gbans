@@ -88,7 +88,7 @@ func respOk(response *botResponse, title string) *discordgo.MessageEmbed {
 func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, r *botResponse) error {
 	userIdentifier := model.Target(interaction.Data.Options[0].Value.(string))
 	playerInfo := model.NewPlayerInfo()
-	if err := Find(bot.database, userIdentifier, "", &playerInfo); err != nil {
+	if errFind := Find(bot.database, userIdentifier, "", &playerInfo); errFind != nil {
 		return errCommandFailed
 	}
 	if !playerInfo.Valid || !playerInfo.InGame {
@@ -364,31 +364,31 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		addFieldInline(embed, "Network Bans", fmt.Sprintf("%d", len(bannedNets)))
 	}
 	var (
-		wg       = &sync.WaitGroup{}
-		asn      ip2location.ASNRecord
-		location ip2location.LocationRecord
-		proxy    ip2location.ProxyRecord
+		waitGroup = &sync.WaitGroup{}
+		asn       ip2location.ASNRecord
+		location  ip2location.LocationRecord
+		proxy     ip2location.ProxyRecord
 	)
-	wg.Add(3)
+	waitGroup.Add(3)
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		if errASN := bot.database.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
 			log.Warnf("Failed to fetch ASN record: %v", errASN)
 		}
 	}()
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		if errLoc := bot.database.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
 			log.Warnf("Failed to fetch Location record: %v", errLoc)
 		}
 	}()
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		if errProxy := bot.database.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && errProxy != store.ErrNoResult {
 			log.Errorf("Failed to fetch proxy record: %v", errProxy)
 		}
 	}()
-	wg.Wait()
+	waitGroup.Wait()
 	title := player.PersonaName
 	if ban.Ban.BanID > 0 {
 		if ban.Ban.BanType == model.Banned {
@@ -467,8 +467,8 @@ func (bot *discord) onHistory(ctx context.Context, session *discordgo.Session, i
 }
 
 func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	steamId, err := ResolveSID(interaction.Data.Options[0].Options[0].Value.(string))
-	if err != nil {
+	steamId, errResolve := ResolveSID(interaction.Data.Options[0].Options[0].Value.(string))
+	if errResolve != nil {
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(steamId)
@@ -583,12 +583,12 @@ func (bot *discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, intera
 
 func (bot *discord) onKick(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 	target := model.Target(interaction.Data.Options[0].Value.(string))
-	sid, errTarget := target.SID64()
+	targetSid64, errTarget := target.SID64()
 	if errTarget != nil {
 		return consts.ErrInvalidSID
 	}
-	person := model.NewPerson(sid)
-	if errPersonBySID := PersonBySID(bot.database, sid, "", &person); errPersonBySID != nil {
+	person := model.NewPerson(targetSid64)
+	if errPersonBySID := PersonBySID(bot.database, targetSid64, "", &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	reason := ""
@@ -602,7 +602,7 @@ func (bot *discord) onKick(_ context.Context, _ *discordgo.Session, interaction 
 	}
 	if playerInfo.Server != nil && playerInfo.Server.ServerID > 0 {
 		embed := respOk(response, "User Kicked")
-		addFieldsSteamID(embed, sid)
+		addFieldsSteamID(embed, targetSid64)
 		addField(embed, "Name", playerInfo.Player.Name)
 	} else {
 		return errors.New("User not found")

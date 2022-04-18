@@ -22,22 +22,26 @@ var netUpdateCmd = &cobra.Command{
 	Short: "Updates ip2location dataset",
 	Long:  `Updates ip2location dataset`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to initialize db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
-		defer db.Close()
-		if err := ip2location.Update(config.Net.CachePath, config.Net.IP2Location.Token); err != nil {
+		defer func() {
+			if errClose := database.Close(); errClose != nil {
+				log.Errorf("Failed to close database cleanly: %v", errClose)
+			}
+		}()
+		if errUpdate := ip2location.Update(config.Net.CachePath, config.Net.IP2Location.Token); errUpdate != nil {
 			log.Fatalf("Failed to update")
 		}
-		d, errRead := ip2location.Read(config.Net.CachePath)
+		blockListData, errRead := ip2location.Read(config.Net.CachePath)
 		if errRead != nil {
 			log.Fatalf("Failed to read: %v", errRead)
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*30)
 		defer cancel()
-		if errIns := db.InsertBlockListData(ctx, d); errIns != nil {
-			log.Fatalf("Failed to import: %v", errIns)
+		if errInsert := database.InsertBlockListData(ctx, blockListData); errInsert != nil {
+			log.Fatalf("Failed to import: %v", errInsert)
 		}
 	},
 }

@@ -17,17 +17,20 @@ func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUn
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})
 	}
-	q, a, e := builder.Limit(uint64(limit)).ToSql()
-	if e != nil {
-		return nil, Err(e)
+	query, args, errQueryArgs := builder.Limit(uint64(limit)).ToSql()
+	if errQueryArgs != nil {
+		return nil, Err(errQueryArgs)
 	}
-	rows, err := database.conn.Query(ctx, q, a...)
-	var rs error
+	rows, errQuery := database.conn.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
 	for rows.Next() {
 		var entry model.NewsEntry
-		if rs = rows.Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
-			&entry.CreatedOn, &entry.UpdatedOn); rs != nil {
-			return nil, Err(err)
+		if errScan := rows.Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
+			return nil, Err(errScan)
 		}
 		articles = append(articles, entry)
 	}
@@ -40,13 +43,13 @@ func (database *pgStore) GetNewsArticle(ctx context.Context, includeUnpublished 
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})
 	}
-	q, a, e := builder.OrderBy("created_on DESC").ToSql()
-	if e != nil {
-		return Err(e)
+	query, args, errQueryArgs := builder.OrderBy("created_on DESC").ToSql()
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
 	}
-	if err := database.conn.QueryRow(ctx, q, a...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
-		&entry.CreatedOn, &entry.UpdatedOn); err != nil {
-		return Err(err)
+	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
+		return Err(errQuery)
 	}
 	return nil
 }
@@ -60,47 +63,47 @@ func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsE
 }
 
 func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	q, a, e := sb.Insert(string(tableDemo)).
+	query, args, errQueryArgs := sb.Insert(string(tableDemo)).
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
 		Suffix("RETURNING news_id").
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return errQueryArgs
 	}
-	err := database.conn.QueryRow(ctx, q, a...).Scan(&entry.NewsId)
-	if err != nil {
-		return Err(err)
+	errQueryRow := database.conn.QueryRow(ctx, query, args...).Scan(&entry.NewsId)
+	if errQueryRow != nil {
+		return Err(errQueryRow)
 	}
 	log.Debugf("New article saved: %s", entry.Title)
 	return nil
 }
 
 func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	q, a, e := sb.Update(string(tableDemo)).
+	query, args, errQueryArgs := sb.Update(string(tableDemo)).
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).
 		Set("updated_on", config.Now()).
 		Where(sq.Eq{"news_id": entry.NewsId}).
 		ToSql()
-	if e != nil {
-		return e
+	if errQueryArgs != nil {
+		return errQueryArgs
 	}
-	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
-		return errors.Wrapf(err, "Failed to update article")
+	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+		return errors.Wrapf(errExec, "Failed to update article")
 	}
 	log.Debugf("News article updated: %s", entry.Title)
 	return nil
 }
 
 func (database *pgStore) DropNewsArticle(ctx context.Context, newsId int) error {
-	q, a, e := sb.Delete("news").Where(sq.Eq{"news_id": newsId}).ToSql()
-	if e != nil {
-		return e
+	query, args, errQueryArgs := sb.Delete("news").Where(sq.Eq{"news_id": newsId}).ToSql()
+	if errQueryArgs != nil {
+		return errQueryArgs
 	}
-	if _, err := database.conn.Exec(ctx, q, a...); err != nil {
-		return Err(err)
+	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+		return Err(errExec)
 	}
 	log.Debugf("News deleted: %d", newsId)
 	return nil

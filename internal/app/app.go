@@ -26,7 +26,7 @@ var (
 	ctx            context.Context
 	warnings       map[steamid.SID64][]userWarning
 	warningsMu     *sync.RWMutex
-	logRawQueue    chan model.LogPayload
+	logPayloadChan chan model.LogPayload
 	serversState   map[string]model.ServerState
 	serversStateMu *sync.RWMutex
 	discordSendMsg chan discordPayload
@@ -38,7 +38,7 @@ func init() {
 	ctx = context.Background()
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logRawQueue = make(chan model.LogPayload, 100000)
+	logPayloadChan = make(chan model.LogPayload, 100000)
 	discordSendMsg = make(chan discordPayload)
 }
 
@@ -79,9 +79,9 @@ func Start() error {
 		}
 	}()
 
-	webService, we := NewWeb(dbStore, discordSendMsg)
-	if we != nil {
-		return errors.Wrapf(we, "Failed to setup web")
+	webService, errWeb := NewWeb(dbStore, discordSendMsg)
+	if errWeb != nil {
+		return errors.Wrapf(errWeb, "Failed to setup web")
 	}
 
 	// Load in the external network block / ip ban lists to memory if enabled
@@ -107,8 +107,8 @@ func Start() error {
 	}
 
 	// Start & block, listening on the HTTP server
-	if err := webService.ListenAndServe(); err != nil {
-		return errors.Wrapf(err, "Error shutting down service")
+	if errHttpListen := webService.ListenAndServe(); errHttpListen != nil {
+		return errors.Wrapf(errHttpListen, "Error shutting down service")
 	}
 	return nil
 }
@@ -147,14 +147,14 @@ func warnWorker() {
 // reasons.
 func logWriter(database store.StatStore) {
 	const (
-		freq = time.Second * 5
+		writeFrequency = time.Second * 5
 	)
 	var logCache []model.ServerEvent
-	events := make(chan model.ServerEvent, 100000)
-	if err := event.RegisterConsumer(events, []logparse.EventType{logparse.Any}); err != nil {
+	serverEventChan := make(chan model.ServerEvent, 100000)
+	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
-	t := time.NewTicker(freq)
+	writeTicker := time.NewTicker(writeFrequency)
 	var writeLogs = func() {
 		if len(logCache) == 0 {
 			return
@@ -166,15 +166,15 @@ func logWriter(database store.StatStore) {
 	}
 	for {
 		select {
-		case evt := <-events:
-			if evt.EventType == logparse.IgnoredMsg {
+		case serverEvent := <-serverEventChan:
+			if serverEvent.EventType == logparse.IgnoredMsg {
 				continue
 			}
-			logCache = append(logCache, evt)
+			logCache = append(logCache, serverEvent)
 			if len(logCache) >= 500 {
 				writeLogs()
 			}
-		case <-t.C:
+		case <-writeTicker.C:
 			writeLogs()
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
@@ -270,10 +270,10 @@ func (cache *playerCache) cleanupWorker() {
 func logReader(db store.Store) {
 	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
-		var errOf error
-		file, errOf = os.Create("./unhandled_messages.log")
-		if errOf != nil {
-			log.Panicf("Failed to open debug message log: %v", errOf)
+		var errCreateFile error
+		file, errCreateFile = os.Create("./unhandled_messages.log")
+		if errCreateFile != nil {
+			log.Panicf("Failed to open debug message log: %v", errCreateFile)
 		}
 		defer func() {
 			if errClose := file.Close(); errClose != nil {
@@ -286,8 +286,8 @@ func logReader(db store.Store) {
 		sid1Str, ok := playerCache[id]
 		if ok {
 			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-			if err := db.GetOrCreatePersonBySteamID(ctx, s, person); err != nil {
-				return errors.Wrapf(err, "Failed to load player1 %s: %s", sid1Str, err.Error())
+			if errGetPerson := db.GetOrCreatePersonBySteamID(ctx, s, person); errGetPerson != nil {
+				return errors.Wrapf(errGetPerson, "Failed to load player1 %s: %s", sid1Str, errGetPerson.Error())
 			}
 			return nil
 		}
@@ -301,11 +301,11 @@ func logReader(db store.Store) {
 	playerStateCache := newPlayerCache()
 	for {
 		select {
-		case payload := <-logRawQueue:
+		case payload := <-logPayloadChan:
 			var serverEvent model.ServerEvent
-			errSE := logToServerEvent(payload, playerStateCache, &serverEvent, getPlayer, getServer)
-			if errSE != nil {
-				log.Errorf("Failed to parse: %v", errSE)
+			errLogServerEvent := logToServerEvent(payload, playerStateCache, &serverEvent, getPlayer, getServer)
+			if errLogServerEvent != nil {
+				log.Errorf("Failed to parse: %v", errLogServerEvent)
 				continue
 			}
 			if serverEvent.EventType == logparse.UnknownMsg {
@@ -334,42 +334,41 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 	event.Server = &server
 	event.EventType = parseResult.MsgType
 	var playerSource model.Person
-	errSrc := getPlayer("sid", parseResult.Values, &playerSource)
-	if errSrc != nil {
+	errGetSourcePlayer := getPlayer("sid", parseResult.Values, &playerSource)
+	if errGetSourcePlayer != nil {
 	} else {
 		event.Source = &playerSource
 	}
 	var playerTarget model.Person
-	if errTar := getPlayer("sid2", parseResult.Values, &playerTarget); errTar != nil {
-
+	if errGetTargetPlayer := getPlayer("sid2", parseResult.Values, &playerTarget); errGetTargetPlayer != nil {
 	} else {
 		event.Target = &playerTarget
 	}
 	aposValue, aposFound := parseResult.Values["attacker_position"]
 	if aposFound {
-		var apv logparse.Pos
-		if err := logparse.ParsePOS(aposValue.(string), &apv); err != nil {
-			log.Warnf("Failed to parse attacker position: %parseResult", err)
+		var attackerPosition logparse.Pos
+		if errParsePOS := logparse.ParsePOS(aposValue.(string), &attackerPosition); errParsePOS != nil {
+			log.Warnf("Failed to parse attacker position: %p", errParsePOS)
 		}
-		event.AttackerPOS = apv
+		event.AttackerPOS = attackerPosition
 		delete(parseResult.Values, "attacker_position")
 	}
 	vposValue, vposFound := parseResult.Values["victim_position"]
 	if vposFound {
-		var vpv logparse.Pos
-		if err := logparse.ParsePOS(vposValue.(string), &vpv); err != nil {
-			log.Warnf("Failed to parse victim position: %parseResult", err)
+		var victimPosition logparse.Pos
+		if errParsePOS := logparse.ParsePOS(vposValue.(string), &victimPosition); errParsePOS != nil {
+			log.Warnf("Failed to parse victim position: %parseResult", errParsePOS)
 		}
-		event.VictimPOS = vpv
+		event.VictimPOS = victimPosition
 		delete(parseResult.Values, "victim_position")
 	}
 	asValue, asFound := parseResult.Values["assister_position"]
 	if asFound {
-		var asPosValue logparse.Pos
-		if err := logparse.ParsePOS(asValue.(string), &asPosValue); err != nil {
-			log.Warnf("Failed to parse assister position: %parseResult", err)
+		var assisterPosition logparse.Pos
+		if errParsePOS := logparse.ParsePOS(asValue.(string), &assisterPosition); errParsePOS != nil {
+			log.Warnf("Failed to parse assister position: %parseResult", errParsePOS)
 		}
-		event.AssisterPOS = asPosValue
+		event.AssisterPOS = assisterPosition
 		delete(parseResult.Values, "assister_position")
 	}
 
@@ -401,11 +400,11 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 	var damage int64
 	dmgValue, dmgFound := parseResult.Values["damage"]
 	if dmgFound {
-		damageP, err := strconv.ParseInt(dmgValue.(string), 10, 32)
-		if err != nil {
-			log.Warnf("failed to parse damage value: %parseResult", err)
+		parsedDamage, errParseDamage := strconv.ParseInt(dmgValue.(string), 10, 32)
+		if errParseDamage != nil {
+			log.Warnf("failed to parse damage value: %parseResult", errParseDamage)
 		}
-		damage = damageP
+		damage = parsedDamage
 		delete(parseResult.Values, "damage")
 	}
 	event.Damage = damage
@@ -413,11 +412,11 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 	var realDamage int64
 	realDmgValue, realDmgFound := parseResult.Values["realdamage"]
 	if realDmgFound {
-		realDamageP, err := strconv.ParseInt(realDmgValue.(string), 10, 32)
-		if err != nil {
-			log.Warnf("failed to parse damage value: %parseResult", err)
+		parsedRealDamage, errParseRealDamage := strconv.ParseInt(realDmgValue.(string), 10, 32)
+		if errParseRealDamage != nil {
+			log.Warnf("failed to parse damage value: %parseResult", errParseRealDamage)
 		}
-		realDamage = realDamageP
+		realDamage = parsedRealDamage
 		delete(parseResult.Values, "realdamage")
 	}
 	event.RealDamage = realDamage
@@ -446,9 +445,9 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 
 	healingValue, healingFound := parseResult.Values["healing"]
 	if healingFound {
-		healingP, err := strconv.ParseInt(healingValue.(string), 10, 32)
-		if err != nil {
-			log.Warnf("failed to parse healing value: %parseResult", err)
+		healingP, errParseHealing := strconv.ParseInt(healingValue.(string), 10, 32)
+		if errParseHealing != nil {
+			log.Warnf("failed to parse healing value: %parseResult", errParseHealing)
 		}
 		event.Healing = healingP
 	}
@@ -495,8 +494,8 @@ func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, bo
 	if len(warnings[sid64]) >= config.General.WarningLimit {
 		var ban model.Ban
 		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
-		var err error
-		bo := banOpts{
+		var errBan error
+		options := banOpts{
 			target:   model.Target(sid64.String()),
 			author:   model.Target(config.General.Owner.String()),
 			duration: model.Duration(config.General.WarningExceededDuration.String()),
@@ -505,29 +504,29 @@ func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, bo
 		}
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			bo.banType = model.NoComm
-			err = Ban(database, bo, &ban, botSendMessageChan)
+			options.banType = model.NoComm
+			errBan = Ban(database, options, &ban, botSendMessageChan)
 		case config.Ban:
-			bo.banType = model.Banned
-			err = Ban(database, bo, &ban, botSendMessageChan)
+			options.banType = model.Banned
+			errBan = Ban(database, options, &ban, botSendMessageChan)
 		case config.Kick:
-			var pi model.PlayerInfo
-			err = Kick(database, model.System, model.Target(sid64.String()),
-				model.Target(config.General.Owner.String()), warnReasonString(reason), &pi)
+			var playerInfo model.PlayerInfo
+			errBan = Kick(database, model.System, model.Target(sid64.String()),
+				model.Target(config.General.Owner.String()), warnReasonString(reason), &playerInfo)
 		}
-		if err != nil {
+		if errBan != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
-				Errorf("Failed to apply warning action: %v", err)
+				Errorf("Failed to apply warning action: %v", errBan)
 		}
 	}
 }
 
 func initFilters(database store.FilterStore) {
 	// TODO load external lists via http
-	c, cancel := context.WithTimeout(ctx, time.Second*15)
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
-	words, err := database.GetFilters(c)
-	if err != nil {
+	words, errGetFilters := database.GetFilters(localCtx)
+	if errGetFilters != nil {
 		log.Fatal("Failed to load word list")
 	}
 	importFilteredWords(words)
@@ -548,7 +547,7 @@ func initWorkers(database store.Store, botSendMessageChan chan discordPayload) {
 }
 
 func initLogSrc(database store.Store) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, database, logRawQueue)
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, database, logPayloadChan)
 	if errLogSrc != nil {
 		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
 	}
@@ -563,7 +562,7 @@ func initDiscord(database store.Store, botSendMessageChan chan discordPayload) {
 		}
 		events := make(chan model.ServerEvent)
 		if len(config.Discord.LogChannelID) > 0 {
-			if err := event.RegisterConsumer(events, []logparse.EventType{logparse.Say, logparse.SayTeam}); err != nil {
+			if errRegister := event.RegisterConsumer(events, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
 				log.Warnf("Error registering discord log event reader")
 			}
 		}
@@ -600,8 +599,8 @@ func initNetBans() {
 // the found SteamID, if any.
 //func validateLink(ctx context.Context, database store.Store, sourceID action.Author, target *action.Author) error {
 //	var p model.Person
-//	if err := database.GetPersonByDiscordID(ctx, string(sourceID), &p); err != nil {
-//		if err == store.ErrNoResult {
+//	if errGetPerson := database.GetPersonByDiscordID(ctx, string(sourceID), &p); errGetPerson != nil {
+//		if errGetPerson == store.ErrNoResult {
 //			return consts.ErrUnlinkedAccount
 //		}
 //		return consts.ErrInternal

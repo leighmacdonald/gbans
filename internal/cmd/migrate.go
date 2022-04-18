@@ -18,15 +18,15 @@ var migrateCmd = &cobra.Command{
 		if downAll {
 			act = store.MigrateDn
 		}
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to initialize db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
-		if err := db.Migrate(store.MigrationAction(act)); err != nil {
-			if err.Error() == "no change" {
+		if errMigrate := database.Migrate(store.MigrationAction(act)); errMigrate != nil {
+			if errMigrate.Error() == "no change" {
 				log.Infof("Migration at latest version")
 			} else {
-				log.Fatalf("Could not migrate schema: %v", err)
+				log.Fatalf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
 			log.Infof("Migration completed successfully")

@@ -42,9 +42,9 @@ type remoteSrcdsLogSource struct {
 }
 
 func newRemoteSrcdsLogSource(listenAddr string, database store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp4", listenAddr)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to resolve UDP address")
+	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", listenAddr)
+	if errResolveUDP != nil {
+		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
 	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
@@ -125,9 +125,9 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 		sourceDNS string
 		body      string
 	}
-	connection, err := net.ListenUDP("udp4", remoteSrc.udpAddr)
-	if err != nil {
-		log.Errorf("Failed to start log listener: %v", err)
+	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
+	if errListenUDP != nil {
+		log.Errorf("Failed to start log listener: %v", errListenUDP)
 		return
 	}
 	defer func() {
@@ -146,17 +146,17 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 	go func() {
 		for {
 			buffer := make([]byte, 1024)
-			n, src, readErr := connection.ReadFromUDP(buffer)
-			if readErr != nil {
-				log.Warnf("UDP log read error: %v", readErr)
+			readLen, sourceAddress, errReadUDP := connection.ReadFromUDP(buffer)
+			if errReadUDP != nil {
+				log.Warnf("UDP log read error: %v", errReadUDP)
 				continue
 			}
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
 				msgIngressChan <- newMsg{
 					secure:    false,
-					sourceDNS: fmt.Sprintf("%s:%d", src.IP, src.Port),
-					body:      string(buffer[5 : n-2])}
+					sourceDNS: fmt.Sprintf("%s:%d", sourceAddress.IP, sourceAddress.Port),
+					body:      string(buffer[5 : readLen-2])}
 			case s2aLogString2:
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
@@ -169,7 +169,7 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
 					continue
 				}
-				msgIngressChan <- newMsg{secure: true, source: secret, body: line[idx : n-2]}
+				msgIngressChan <- newMsg{secure: true, source: secret, body: line[idx : readLen-2]}
 			}
 		}
 	}()

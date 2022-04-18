@@ -24,33 +24,33 @@ var unbanSteamCmd = &cobra.Command{
 	Short: "Unban an existing steam profile ban",
 	Long:  `Unban an existing steam profile ban`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		if steamProfile == "" {
 			log.Fatal("Steam ID cannot be empty")
 		}
-		sid, errSid := steamid.ResolveSID64(context.Background(), steamProfile)
-		if errSid != nil {
-			log.Fatalf("Failed to resolve steam id: %v", errSid)
+		sid64, errResolve := steamid.ResolveSID64(context.Background(), steamProfile)
+		if errResolve != nil {
+			log.Fatalf("Failed to resolve steam id: %v", errResolve)
 		}
-		if !sid.Valid() {
+		if !sid64.Valid() {
 			log.Fatalf("Invalid steam id")
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		ban := model.NewBannedPerson()
-		if errBan := db.GetBanBySteamID(ctx, sid, false, &ban); errBan != nil {
-			if errors.Is(errBan, store.ErrNoResult) {
-				log.WithFields(log.Fields{"sid": sid.String()}).Fatalf("No ban found for steamid")
+		if errGetBan := database.GetBanBySteamID(ctx, sid64, false, &ban); errGetBan != nil {
+			if errors.Is(errGetBan, store.ErrNoResult) {
+				log.WithFields(log.Fields{"sid64": sid64.String()}).Fatalf("No ban found for steamid")
 			}
 			log.Fatalf("Invalid steam id")
 		}
-		if errDrop := db.DropBan(ctx, &ban.Ban); errDrop != nil {
+		if errDrop := database.DropBan(ctx, &ban.Ban); errDrop != nil {
 			log.Fatalf("Failed to delete ban: %v", errDrop)
 		}
-		log.WithFields(log.Fields{"sid": sid.String()}).Info("Unbanned steam profile successfully")
+		log.WithFields(log.Fields{"sid64": sid64.String()}).Info("Unbanned steam profile successfully")
 	},
 }
 
@@ -61,9 +61,9 @@ var unbanCIDRCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		if cidr == "" {
 			log.Fatal("CIDR cannot be empty")
@@ -72,21 +72,21 @@ var unbanCIDRCmd = &cobra.Command{
 		if errParse != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to parse cidr: %v", errParse)
 		}
-		banNets, errFetch := db.GetBanNet(ctx, ip)
-		if errFetch != nil {
-			if errors.Is(errFetch, store.ErrNoResult) {
+		banNets, errGetBanNet := database.GetBanNet(ctx, ip)
+		if errGetBanNet != nil {
+			if errors.Is(errGetBanNet, store.ErrNoResult) {
 				log.WithFields(log.Fields{"cidr": cidr}).Fatalf("No intersecting cidr found")
 			}
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to fetch matching cidr ban: %v", errFetch)
+			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to fetch matching cidr ban: %v", errGetBanNet)
 		}
 		if len(banNets) == 0 {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatal("Failed to find matching banned cidr networks")
 		}
-		for _, bn := range banNets {
-			if err := db.DropBanNet(ctx, &bn); err != nil {
-				log.Fatalf("Failed to drop ban net: %v", err)
+		for _, banNet := range banNets {
+			if errDropBanNet := database.DropBanNet(ctx, &banNet); errDropBanNet != nil {
+				log.Fatalf("Failed to drop ban net: %v", errDropBanNet)
 			}
-			log.WithFields(log.Fields{"cidr": bn.CIDR.String()}).Infof("Ban net dropped")
+			log.WithFields(log.Fields{"cidr": banNet.CIDR.String()}).Infof("Ban net dropped")
 		}
 	},
 }
@@ -98,18 +98,18 @@ var unbanASNCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to setup db connection: %v", err)
+		database, errStore := store.New(config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
 		var asnBan model.BanASN
-		if errFetch := db.GetBanASN(ctx, asn, &asnBan); errFetch != nil {
+		if errFetch := database.GetBanASN(ctx, asn, &asnBan); errFetch != nil {
 			if errors.Is(errFetch, store.ErrNoResult) {
 				log.Fatalf("Existing ASN ban not found")
 			}
 			log.WithFields(log.Fields{"asn": asn}).Fatalf("Failed to fetch asn ban: %v", errFetch)
 		}
-		if errDrop := db.DropBanASN(ctx, &asnBan); errDrop != nil {
+		if errDrop := database.DropBanASN(ctx, &asnBan); errDrop != nil {
 			log.WithFields(log.Fields{"asn": asn}).Fatalf("Failed to drop asn ban: %v", errDrop)
 		}
 		log.WithFields(log.Fields{"asn": asn}).Infof("ASN ban create successfully")

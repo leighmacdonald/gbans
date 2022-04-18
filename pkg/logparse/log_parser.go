@@ -305,20 +305,20 @@ func reSubMatchMap(r *regexp.Regexp, str string) (map[string]any, bool) {
 }
 
 func parsePos(posStr string, pos *Pos) bool {
-	p := strings.SplitN(posStr, " ", 3)
-	if len(p) != 3 {
+	pieces := strings.SplitN(posStr, " ", 3)
+	if len(pieces) != 3 {
 		return false
 	}
-	x, err1 := strconv.ParseFloat(p[0], 64)
-	if err1 != nil {
+	x, errParseX := strconv.ParseFloat(pieces[0], 64)
+	if errParseX != nil {
 		return false
 	}
-	y, err2 := strconv.ParseFloat(p[1], 64)
-	if err2 != nil {
+	y, errParseY := strconv.ParseFloat(pieces[1], 64)
+	if errParseY != nil {
 		return false
 	}
-	z, err3 := strconv.ParseFloat(p[2], 64)
-	if err3 != nil {
+	z, errParseZ := strconv.ParseFloat(pieces[2], 64)
+	if errParseZ != nil {
 		return false
 	}
 	pos.X = x
@@ -328,8 +328,8 @@ func parsePos(posStr string, pos *Pos) bool {
 }
 
 func parseDateTime(dateStr string, t *time.Time) bool {
-	parsed, err := time.Parse("01/02/2006 - 15:04:05", dateStr)
-	if err != nil {
+	parsed, errParseTime := time.Parse("01/02/2006 - 15:04:05", dateStr)
+	if errParseTime != nil {
 		return false
 	}
 	*t = parsed
@@ -347,58 +347,58 @@ func parseKVs(s string, out map[string]any) bool {
 	return true
 }
 
-func processKV(m map[string]any) map[string]any {
-	out := map[string]any{}
-	for k, v := range m {
-		switch k {
+func processKV(originalKVMap map[string]any) map[string]any {
+	newKVMap := map[string]any{}
+	for key, value := range originalKVMap {
+		switch key {
 		case "created_on":
 			var t time.Time
-			if parseDateTime(v.(string), &t) {
-				out["created_on"] = t
+			if parseDateTime(value.(string), &t) {
+				newKVMap["created_on"] = t
 			}
 		case "medigun":
-			var mg Medigun
-			if ParseMedigun(v.(string), &mg) {
-				out["medigun"] = mg
+			var medigun Medigun
+			if ParseMedigun(value.(string), &medigun) {
+				newKVMap["medigun"] = medigun
 			}
 		case "crit":
-			switch v.(string) {
+			switch value.(string) {
 			case "crit":
-				out["crit"] = Crit
+				newKVMap["crit"] = Crit
 			case "mini":
-				out["crit"] = Mini
+				newKVMap["crit"] = Mini
 			default:
-				out["crit"] = NonCrit
+				newKVMap["crit"] = NonCrit
 			}
 		case "reason":
 			// Some reasons get output with a newline, so it gets these uneven line endings
-			reason := v.(string)
+			reason := value.(string)
 			if strings.HasSuffix(reason, `")`) {
 				reason = reason[:len(reason)-2]
 			}
-			out["reason"] = reason
+			newKVMap["reason"] = reason
 		case "objectowner":
-			ooKV, ok := reSubMatchMap(rxPlayer, "\""+v.(string)+"\"")
+			ooKV, ok := reSubMatchMap(rxPlayer, "\""+value.(string)+"\"")
 			if ok {
 				// TODO Make this less static to support >2 targets for events like capping points?
 				for key, val := range ooKV {
-					out[key+"2"] = val
+					newKVMap[key+"2"] = val
 				}
 			}
 		case "address":
-			// Split out client port for easier queries
-			pcs := strings.Split(v.(string), ":")
-			if len(pcs) != 2 {
-				out[k] = v
+			// Split newKVMap client port for easier queries
+			pieces := strings.Split(value.(string), ":")
+			if len(pieces) != 2 {
+				newKVMap[key] = value
 				continue
 			}
-			out["address"] = pcs[0]
-			out["port"] = pcs[1]
+			newKVMap["address"] = pieces[0]
+			newKVMap["port"] = pieces[1]
 		default:
-			out[k] = v
+			newKVMap[key] = value
 		}
 	}
-	return out
+	return newKVMap
 }
 
 // Results hold the  results of parsing a log line
@@ -409,25 +409,24 @@ type Results struct {
 }
 
 // Parse will parse the log line into a known type and values
-func Parse(l string) Results {
-	l = strings.TrimSuffix(strings.TrimSuffix(l, "\n"), "\r")
+func Parse(logLine string) Results {
 	for _, rx := range rxParsers {
-		m, found := reSubMatchMap(rx.Rx, l)
+		matchMap, found := reSubMatchMap(rx.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
 		if found {
-			val, ok := m["keypairs"].(string)
+			value, ok := matchMap["keypairs"].(string)
 			if ok {
-				parseKVs(val, m)
+				parseKVs(value, matchMap)
 			}
-			delete(m, "keypairs")
-			delete(m, "")
-			return Results{rx.Type, processKV(m)}
+			delete(matchMap, "keypairs")
+			delete(matchMap, "")
+			return Results{rx.Type, processKV(matchMap)}
 		}
 	}
-	m, found := reSubMatchMap(rxUnhandled, l)
+	m, found := reSubMatchMap(rxUnhandled, logLine)
 	if found {
 		return Results{IgnoredMsg, processKV(m)}
 	}
-	return Results{UnknownMsg, map[string]any{"raw": l}}
+	return Results{UnknownMsg, map[string]any{"raw": logLine}}
 }
 
 func decodeTeam() mapstructure.DecodeHookFunc {
@@ -448,11 +447,11 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		var cls PlayerClass
-		if !ParsePlayerClass(d.(string), &cls) {
+		var playerClass PlayerClass
+		if !ParsePlayerClass(d.(string), &playerClass) {
 			return d, nil
 		}
-		return cls, nil
+		return playerClass, nil
 	}
 }
 
@@ -477,11 +476,11 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 		if !strings.HasPrefix(d.(string), "[U") {
 			return d, nil
 		}
-		sid := steamid.SID3ToSID64(steamid.SID3(d.(string)))
-		if !sid.Valid() {
+		sid64 := steamid.SID3ToSID64(steamid.SID3(d.(string)))
+		if !sid64.Valid() {
 			return d, nil
 		}
-		return sid, nil
+		return sid64, nil
 	}
 }
 
@@ -541,7 +540,7 @@ func decodeTime() mapstructure.DecodeHookFunc {
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 func Unmarshal(input any, output any) error {
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+	decoder, errNewDecoder := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			decodeTime(),
 			decodeTeam(),
@@ -556,8 +555,8 @@ func Unmarshal(input any, output any) error {
 		WeaklyTypedInput: true, // Lets us do str -> int easily
 		Squash:           true,
 	})
-	if err != nil {
-		return err
+	if errNewDecoder != nil {
+		return errNewDecoder
 	}
 	return decoder.Decode(input)
 }

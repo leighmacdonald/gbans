@@ -9,17 +9,17 @@ import (
 )
 
 func TestNewBanNet(t *testing.T) {
-	_, err := NewBanNet("172.16.1.0/24", "test", time.Minute*10, System)
-	require.NoError(t, err)
+	_, errBanNet := NewBanNet("172.16.1.0/24", "test", time.Minute*10, System)
+	require.NoError(t, errBanNet)
 }
 
 func TestFilter_Match(t *testing.T) {
-	f := Filter{
+	filter := Filter{
 		WordID:    1,
 		Pattern:   regexp.MustCompile(`(po+p)`),
 		CreatedOn: config.Now(),
 	}
-	require.True(t, f.Match("super pooooooper"))
+	require.True(t, filter.Match("super pooooooper"))
 }
 
 //

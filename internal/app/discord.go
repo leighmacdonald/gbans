@@ -69,9 +69,9 @@ func NewDiscord(database store.Store) (*discord, error) {
 
 func (bot *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
 	// Immediately connects, so we connect within the Start func
-	session, err := discordgo.New("Bot " + token)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to connect to discord. discord unavailable")
+	session, errNewSession := discordgo.New("Bot " + token)
+	if errNewSession != nil {
+		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 
 	}
 	defer func() {
@@ -85,13 +85,11 @@ func (bot *discord) Start(ctx context.Context, token string, eventChan chan mode
 	bot.session.AddHandler(bot.onConnect)
 	bot.session.AddHandler(bot.onDisconnect)
 	bot.session.AddHandler(bot.onInteractionCreate)
-
 	bot.session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to discord and begin listening.
-	err = bot.session.Open()
-	if err != nil {
-		return errors.Wrap(err, "Error opening discord connection")
+	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
+		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
 
 	go bot.discordMessageQueueReader(ctx, eventChan)
@@ -118,15 +116,15 @@ func (bot *discord) discordMessageQueueReader(ctx context.Context, eventChan cha
 				prefix = "(team) "
 			}
 			name := ""
-			sid := steamid.SID64(0)
+			sid64 := steamid.SID64(0)
 			if serverEvent.Source != nil && serverEvent.Source.SteamID.Valid() {
-				sid = serverEvent.Source.SteamID
+				sid64 = serverEvent.Source.SteamID
 				name = serverEvent.Source.PersonaName
 			}
 			msg, found := serverEvent.MetaData["msg"]
 			if found {
 				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-					serverEvent.Server.ServerName, sid, name, prefix, msg))
+					serverEvent.Server.ServerName, sid64, name, prefix, msg))
 			}
 
 		case <-messageTicker.C:
@@ -134,10 +132,10 @@ func (bot *discord) discordMessageQueueReader(ctx context.Context, eventChan cha
 				continue
 			}
 			msg := strings.Join(sendQueue, "\n")
-			for _, m := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
+			for _, messagePart := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
 				for _, channelID := range config.Relay.ChannelIDs {
-					if err := bot.sendChannelMessage(bot.session, channelID, m, true); err != nil {
-						log.Errorf("Failed to send bulk message log: %v", err)
+					if errSendMessage := bot.sendChannelMessage(bot.session, channelID, messagePart, true); errSendMessage != nil {
+						log.Errorf("Failed to send bulk message log: %v", errSendMessage)
 					}
 				}
 			}
@@ -170,8 +168,8 @@ func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 		AFK:    false,
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
-	if err := session.UpdateStatusComplex(status); err != nil {
-		log.WithError(err).Errorf("Failed to update status complex")
+	if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
+		log.WithError(errUpdateStatus).Errorf("Failed to update status complex")
 	}
 	bot.connectedMu.Lock()
 	bot.connected = true
@@ -199,9 +197,9 @@ func (bot *discord) sendChannelMessage(session *discordgo.Session, channelId str
 	if len(msg) > discordMaxMsgLen {
 		return errTooLarge
 	}
-	_, err := session.ChannelMessageSend(channelId, msg)
-	if err != nil {
-		return errors.Wrapf(err, "Failed sending success (paged) response for interaction")
+	_, errChannelMessageSend := session.ChannelMessageSend(channelId, msg)
+	if errChannelMessageSend != nil {
+		return errors.Wrapf(errChannelMessageSend, "Failed sending success (paged) response for interaction")
 	}
 	return nil
 }
@@ -214,7 +212,6 @@ func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 		return nil
 	}
 	bot.connectedMu.RUnlock()
-
 	edit := &discordgo.WebhookEdit{
 		Content:         "",
 		Embeds:          nil,

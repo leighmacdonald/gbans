@@ -8,12 +8,12 @@ import (
 )
 
 func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
-	const q = `INSERT INTO report (
+	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, title, description, deleted, created_on, updated_on
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8 )
 		RETURNING report_id`
-	if errQuery := database.conn.QueryRow(ctx, q,
+	if errQuery := database.conn.QueryRow(ctx, query,
 		report.AuthorId,
 		report.ReportedId,
 		report.ReportStatus,
@@ -31,14 +31,14 @@ func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) e
 }
 
 func (database *pgStore) SaveReportMedia(ctx context.Context, reportId int, media *model.ReportMedia) error {
-	const q = `
+	const query = `
 		INSERT INTO report_media (
 		    report_id, author_id, mime_type, contents, deleted, created_on, updated_on
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING report_media_id
 	`
-	if errQuery := database.conn.QueryRow(ctx, q,
+	if errQuery := database.conn.QueryRow(ctx, query,
 		reportId,
 		media.AuthorId,
 		media.MimeType,
@@ -57,7 +57,7 @@ func (database *pgStore) SaveReportMedia(ctx context.Context, reportId int, medi
 }
 
 func (database *pgStore) SaveReportMessage(ctx context.Context, reportId int, message *model.ReportMessage) error {
-	const q = `
+	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
 		)
@@ -65,7 +65,7 @@ func (database *pgStore) SaveReportMessage(ctx context.Context, reportId int, me
 		RETURNING report_message_id
 	`
 	message.ReportId = reportId
-	if errQuery := database.conn.QueryRow(ctx, q,
+	if errQuery := database.conn.QueryRow(ctx, query,
 		message.ReportId,
 		message.AuthorId,
 		message.Message,
@@ -110,8 +110,8 @@ func (database *pgStore) DropReportMessage(ctx context.Context, message *model.R
 }
 
 func (database *pgStore) DropReportMedia(ctx context.Context, media *model.ReportMedia) error {
-	const q = `UPDATE report_media SET deleted = true WHERE report_media_id = $1`
-	if _, errExec := database.conn.Exec(ctx, q, media.ReportMediaId); errExec != nil {
+	const query = `UPDATE report_media SET deleted = true WHERE report_media_id = $1`
+	if _, errExec := database.conn.Exec(ctx, query, media.ReportMediaId); errExec != nil {
 		return Err(errExec)
 	}
 	log.WithFields(log.Fields{
@@ -138,22 +138,22 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 	if opts.AuthorId > 0 {
 		conditions = append(conditions, sq.Eq{"author_id": opts.AuthorId})
 	}
-	qb := sb.
+	builder := sb.
 		Select("report_id", "author_id", "reported_id", "report_status",
 			"title", "description", "deleted", "created_on", "updated_on").
 		From("report").
 		Where(conditions)
 	if opts.Limit > 0 {
-		qb = qb.Limit(uint64(opts.Limit))
+		builder = builder.Limit(uint64(opts.Limit))
 	}
 	//if opts.OrderBy != "" {
 	//	if opts.SortDesc {
-	//		qb = qb.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
+	//		builder = builder.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
 	//	} else {
-	//		qb = qb.OrderBy(fmt.Sprintf("%s ASC", opts.OrderBy))
+	//		builder = builder.OrderBy(fmt.Sprintf("%s ASC", opts.OrderBy))
 	//	}
 	//}
-	q, a, errSql := qb.ToSql()
+	q, a, errSql := builder.ToSql()
 	if errSql != nil {
 		return nil, Err(errSql)
 	}
@@ -184,13 +184,13 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 }
 
 func (database *pgStore) GetReport(ctx context.Context, reportId int, report *model.Report) error {
-	const q = `
+	const query = `
 		SELECT 
 		   report_id, author_id, reported_id, report_status, title, description, 
 		   deleted, created_on, updated_on 
 		FROM report
 		WHERE deleted = false AND report_id = $1`
-	if errQuery := database.conn.QueryRow(ctx, q, reportId).Scan(
+	if errQuery := database.conn.QueryRow(ctx, query, reportId).Scan(
 		&report.ReportId,
 		&report.AuthorId,
 		&report.ReportedId,
@@ -203,16 +203,16 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 	); errQuery != nil {
 		return Err(errQuery)
 	}
-	const q2 = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = $1`
-	mediaIds, errQueryMedia := database.conn.Query(ctx, q2, reportId)
+	const queryMedia = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = $1`
+	mediaIds, errQueryMedia := database.conn.Query(ctx, queryMedia, reportId)
 	if errQueryMedia != nil && Err(errQueryMedia) != ErrNoResult {
 		return Err(errQueryMedia)
 	}
 	defer mediaIds.Close()
 	for mediaIds.Next() {
 		var mediaId int
-		if err := mediaIds.Scan(&mediaId); err != nil {
-			return Err(err)
+		if errScanMedia := mediaIds.Scan(&mediaId); errScanMedia != nil {
+			return Err(errScanMedia)
 		}
 		report.MediaIds = append(report.MediaIds, mediaId)
 	}
@@ -221,12 +221,12 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 }
 
 func (database *pgStore) GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error {
-	const q = `
+	const query = `
 		SELECT 
 		   report_media_id, report_id, author_id, mime_type, contents, deleted, created_on, updated_on
 		FROM report_media
 		WHERE deleted = false AND report_media_id = $1`
-	if errQuery := database.conn.QueryRow(ctx, q, reportId).Scan(
+	if errQuery := database.conn.QueryRow(ctx, query, reportId).Scan(
 		&media.ReportMediaId,
 		&media.ReportId,
 		&media.AuthorId,
@@ -242,13 +242,13 @@ func (database *pgStore) GetReportMediaById(ctx context.Context, reportId int, m
 }
 
 func (database *pgStore) GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error) {
-	const q = `
+	const query = `
 		SELECT 
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
 		FROM report_message
 		WHERE deleted = false AND report_id = $1 
 		ORDER BY created_on`
-	rows, errQuery := database.conn.Query(ctx, q, reportId)
+	rows, errQuery := database.conn.Query(ctx, query, reportId)
 	if errQuery != nil {
 		if Err(errQuery) == ErrNoResult {
 			return nil, nil

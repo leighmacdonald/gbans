@@ -97,15 +97,15 @@ var banCIDRCmd = &cobra.Command{
 		if errDur != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Invalid duration: %v", errDur)
 		}
-		cidrBan, errBN := model.NewBanNet(cidr, reason, dur, model.System)
-		if errBN != nil {
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanNet instance: %v", errBN)
+		cidrBan, errNewBanNet := model.NewBanNet(cidr, reason, dur, model.System)
+		if errNewBanNet != nil {
+			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanNet instance: %v", errNewBanNet)
 		}
-		if err := db.SaveBanNet(ctx, &cidrBan); err != nil {
-			if errors.Is(err, store.ErrNoResult) {
+		if errSaveBanNet := db.SaveBanNet(ctx, &cidrBan); errSaveBanNet != nil {
+			if errors.Is(errSaveBanNet, store.ErrNoResult) {
 				log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Duplicate cidr ban found: %s", serverId)
 			}
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to setup db connection: %v", err)
+			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to setup db connection: %v", errSaveBanNet)
 		}
 		log.WithFields(log.Fields{"cidr": cidr}).Infof("CIDR ban created successfully")
 	},

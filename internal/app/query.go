@@ -170,19 +170,19 @@ func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}
 	if person.IsNew || config.Now().Sub(person.UpdatedOnSteam) > time.Minute*60 {
-		sum, err := steamweb.PlayerSummaries(steamid.Collection{sid})
-		if err != nil {
-			return errors.Wrapf(err, "Failed to get Player summary: %v", err)
+		summaries, errSummaries := steamweb.PlayerSummaries(steamid.Collection{sid})
+		if errSummaries != nil {
+			return errors.Wrapf(errSummaries, "Failed to get Player summary: %v", errSummaries)
 		}
-		if len(sum) > 0 {
-			s := sum[0]
+		if len(summaries) > 0 {
+			s := summaries[0]
 			person.PlayerSummary = &s
 		} else {
 			return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
 		vac, errBans := steam.FetchPlayerBans(steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
-			return errors.Wrapf(err, "Failed to get Player ban state: %v", err)
+			return errors.Wrapf(errSummaries, "Failed to get Player ban state: %v", errSummaries)
 		} else {
 			person.CommunityBanned = vac[0].CommunityBanned
 			person.VACBans = vac[0].NumberOfVACBans

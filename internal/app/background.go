@@ -218,8 +218,8 @@ func mapChanger(database store.ServerStore, timeout time.Duration) {
 						continue
 					}
 					var server model.Server
-					if err := database.GetServerByName(context.Background(), serverId, &server); err != nil {
-						log.Errorf("Failed to get server for map changer: %v", err)
+					if errGetServer := database.GetServerByName(context.Background(), serverId, &server); errGetServer != nil {
+						log.Errorf("Failed to get server for map changer: %v", errGetServer)
 						continue
 					}
 					nextMap := server.DefaultMap
@@ -236,8 +236,8 @@ func mapChanger(database store.ServerStore, timeout time.Duration) {
 					go func(s model.Server, mapName string) {
 						var logger = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "server": serverId})
 						logger.Infof("Idle map change triggered")
-						if _, err := query.ExecRCON(server, fmt.Sprintf("changelevel %s", mapName)); err != nil {
-							logger.Errorf("failed to exec mapchanger rcon: %v", err)
+						if _, errExecRCON := query.ExecRCON(server, fmt.Sprintf("changelevel %s", mapName)); errExecRCON != nil {
+							logger.Errorf("failed to exec mapchanger rcon: %v", errExecRCON)
 						}
 						logger.Infof("Idle map change complete")
 					}(server, nextMap)
@@ -301,8 +301,8 @@ func banSweeper(database store.Store) {
 					log.Warnf("Failed to get expired asnbans: %v", errExpiredASNBans)
 				} else {
 					for _, expiredASNBan := range expiredASNBans {
-						if err := database.DropBanASN(ctx, &expiredASNBan); err != nil {
-							log.Errorf("Failed to drop expired asn ban: %v", err)
+						if errDropASN := database.DropBanASN(ctx, &expiredASNBan); errDropASN != nil {
+							log.Errorf("Failed to drop expired asn ban: %v", errDropASN)
 						} else {
 							log.Infof("ASN ban expired: %v", expiredASNBan)
 						}

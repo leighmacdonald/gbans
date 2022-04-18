@@ -114,22 +114,22 @@ func (database *pgStore) getEventSum(ctx context.Context, opts statQueryOpts) (i
 	}
 	qb = qb.From("server_log s")
 	ands = append(ands, mTypes)
-	query, args, errQuery := qb.Where(ands).ToSql()
-	if errQuery != nil {
-		return 0, errors.Wrapf(errQuery, "Failed to to generate query")
+	query, args, errQueryArgs := qb.Where(ands).ToSql()
+	if errQueryArgs != nil {
+		return 0, errors.Wrapf(errQueryArgs, "Failed to to generate query")
 	}
 	log.Tracef("getEventSum: %s", query)
 	//const q = `SELECT sum(s.damage) as total FROM server_log s WHERE s.source_id = $1 AND event_type = $2`
 	var value int64
-	if err := database.conn.QueryRow(ctx, query, args...).Scan(&value); err != nil {
-		return 0, errors.Wrapf(err, "Failed to fetch player result sum")
+	if errQueryRow := database.conn.QueryRow(ctx, query, args...).Scan(&value); errQueryRow != nil {
+		return 0, errors.Wrapf(errQueryRow, "Failed to fetch player result sum")
 	}
 	return value, nil
 }
 
 func (database *pgStore) GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error {
-	wg := &sync.WaitGroup{}
-	mu := &sync.RWMutex{}
+	waitGroup := &sync.WaitGroup{}
+	rwMutex := &sync.RWMutex{}
 	queries := []statResult{
 		{&stats.Damage, statQueryOpts{msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
 		{&stats.Healing, statQueryOpts{msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
@@ -138,26 +138,26 @@ func (database *pgStore) GetGlobalStats(ctx context.Context, stats *model.Global
 		{&stats.Kills, statQueryOpts{msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
 		{&stats.Assists, statQueryOpts{msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
-	wg.Add(len(queries))
+	waitGroup.Add(len(queries))
 	for _, query := range queries {
 		go func(v *int64, q statQueryOpts) {
-			defer wg.Done()
+			defer waitGroup.Done()
 			value, errStat := database.getEventSum(ctx, q)
 			if errStat != nil {
 				log.Warnf("Failed to get stat value: %v", errStat)
 			}
-			mu.Lock()
+			rwMutex.Lock()
 			*v = value
-			mu.Unlock()
+			rwMutex.Unlock()
 		}(query.result, query.query)
 	}
-	wg.Wait()
+	waitGroup.Wait()
 	return nil
 }
 
 func (database *pgStore) GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error {
-	wg := &sync.WaitGroup{}
-	mu := &sync.RWMutex{}
+	waitGroup := &sync.WaitGroup{}
+	rwMutex := &sync.RWMutex{}
 	queries := []statResult{
 		{&stats.Damage, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "damage"}},
 		{&stats.Healing, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Damage}, sumColumn: "healing"}},
@@ -166,24 +166,24 @@ func (database *pgStore) GetServerStats(ctx context.Context, serverId int64, sta
 		{&stats.Kills, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.Killed}, countColumn: "*"}},
 		{&stats.Assists, statQueryOpts{serverId: serverId, msgTypes: []logparse.EventType{logparse.KillAssist}, countColumn: "*"}},
 	}
-	wg.Add(len(queries))
+	waitGroup.Add(len(queries))
 	for _, query := range queries {
 		go func(v *int64, q statQueryOpts) {
-			defer wg.Done()
+			defer waitGroup.Done()
 			value, errStat := database.getEventSum(ctx, q)
 			if errStat != nil {
 				log.Warnf("Failed to get stat value: %v", errStat)
 			}
-			mu.Lock()
+			rwMutex.Lock()
 			*v = value
-			mu.Unlock()
+			rwMutex.Unlock()
 		}(query.result, query.query)
 	}
-	wg.Wait()
+	waitGroup.Wait()
 	return nil
 }
 func (database *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit uint64) ([]model.ServerEvent, error) {
-	const q = `
+	const query = `
 			SELECT 
 			    l.log_id, l.event_type, l.created_on,
 				srv.server_id, srv.short_name,
@@ -198,28 +198,28 @@ func (database *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit
 			ORDER BY l.created_on DESC
 			OFFSET %d 
 			LIMIT %d`
-	rows, errQuery := database.Query(ctx, fmt.Sprintf(q, offset, limit))
+	rows, errQuery := database.Query(ctx, fmt.Sprintf(query, offset, limit))
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	var localResults []model.ServerEvent
 	for rows.Next() {
-		e := model.ServerEvent{
+		event := model.ServerEvent{
 			Server: &model.Server{},
 			Source: &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
 			Target: &model.Person{PlayerSummary: &steamweb.PlayerSummary{}},
 		}
 		if errScan := rows.Scan(
-			&e.LogID, &e.EventType, &e.CreatedOn,
-			&e.Server.ServerID, &e.Server.ServerName,
-			&e.Source.SteamID, &e.Source.PersonaName, &e.Source.AvatarFull, &e.Source.Avatar,
-			&e.Target.SteamID, &e.Target.PersonaName, &e.Target.AvatarFull, &e.Target.Avatar,
-			&e.Weapon, &e.Damage, &e.AttackerPOS, &e.VictimPOS, &e.AssisterPOS,
-			&e.Item, &e.PlayerClass, &e.Team, &e.MetaData, &e.Healing); errScan != nil {
+			&event.LogID, &event.EventType, &event.CreatedOn,
+			&event.Server.ServerID, &event.Server.ServerName,
+			&event.Source.SteamID, &event.Source.PersonaName, &event.Source.AvatarFull, &event.Source.Avatar,
+			&event.Target.SteamID, &event.Target.PersonaName, &event.Target.AvatarFull, &event.Target.Avatar,
+			&event.Weapon, &event.Damage, &event.AttackerPOS, &event.VictimPOS, &event.AssisterPOS,
+			&event.Item, &event.PlayerClass, &event.Team, &event.MetaData, &event.Healing); errScan != nil {
 			return nil, Err(errScan)
 		}
-		localResults = append(localResults, e)
+		localResults = append(localResults, event)
 	}
 	return localResults, nil
 }
