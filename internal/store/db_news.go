@@ -37,13 +37,26 @@ func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUn
 	return articles, nil
 }
 
-func (database *pgStore) GetNewsArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
+func (database *pgStore) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
 	builder := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news")
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})
 	}
 	query, args, errQueryArgs := builder.OrderBy("created_on DESC").ToSql()
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
+	}
+	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
+		return Err(errQuery)
+	}
+	return nil
+}
+
+func (database *pgStore) GetNewsById(ctx context.Context, newsId int, entry *model.NewsEntry) error {
+	query, args, errQueryArgs := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
+		From("news").Where(sq.Eq{"news_id": newsId}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
@@ -63,7 +76,7 @@ func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsE
 }
 
 func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	query, args, errQueryArgs := sb.Insert(string(tableDemo)).
+	query, args, errQueryArgs := sb.Insert("news").
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
 		Suffix("RETURNING news_id").
@@ -80,7 +93,7 @@ func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.New
 }
 
 func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	query, args, errQueryArgs := sb.Update(string(tableDemo)).
+	query, args, errQueryArgs := sb.Update("news").
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).

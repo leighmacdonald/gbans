@@ -335,9 +335,9 @@ func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.S
 	defer rows.Close()
 	for rows.Next() {
 		var ipRecord model.PersonIPRecord
-		if errR := rows.Scan(&ipRecord.IP, &ipRecord.CreatedOn, &ipRecord.CityName, &ipRecord.CountryName, &ipRecord.CountryCode, &ipRecord.ASName,
-			&ipRecord.ASNum, &ipRecord.ISP, &ipRecord.UsageType, &ipRecord.Threat, &ipRecord.DomainUsed); errR != nil {
-			return nil, errR
+		if errScan := rows.Scan(&ipRecord.IP, &ipRecord.CreatedOn, &ipRecord.CityName, &ipRecord.CountryName, &ipRecord.CountryCode, &ipRecord.ASName,
+			&ipRecord.ASNum, &ipRecord.ISP, &ipRecord.UsageType, &ipRecord.Threat, &ipRecord.DomainUsed); errScan != nil {
+			return nil, errScan
 		}
 		records = append(records, ipRecord)
 	}

@@ -1,29 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { ListItem, ListItemIcon, ListItemText, useTheme } from '@mui/material';
 import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
-import { apiGetNewsLatest, NewsEntry } from '../api/news';
+import { apiGetNewsAll, NewsEntry } from '../api/news';
 import FolderIcon from '@mui/icons-material/Folder';
 
-export const NewsList = () => {
+interface NewsListProps {
+    setSelectedNewsEntry: (entry: NewsEntry) => void;
+}
+
+export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     const [news, setNews] = useState<NewsEntry[]>([]);
+    const theme = useTheme();
     useEffect(() => {
         const f = async () => {
-            const entries = await apiGetNewsLatest();
-            setNews(entries);
+            try {
+                setNews(await apiGetNewsAll());
+            } catch (e) {
+                // TODO log/report
+            }
         };
         f();
     }, []);
     return (
         <Stack spacing={3} padding={3}>
             <List dense={true}>
-                {news.map((n) => {
+                {news.map((entry) => {
                     return (
-                        <ListItem key={n.news_id}>
+                        <ListItem
+                            sx={[
+                                {
+                                    '&:hover': {
+                                        cursor: 'pointer',
+                                        backgroundColor:
+                                            theme.palette.background.default
+                                    }
+                                }
+                            ]}
+                            key={entry.news_id}
+                            onClick={() => {
+                                setSelectedNewsEntry(entry);
+                            }}
+                        >
                             <ListItemIcon>
                                 <FolderIcon />
                             </ListItemIcon>
-                            <ListItemText primary={n.title} secondary={null} />
+                            <ListItemText primary={entry.title} />
                         </ListItem>
                     );
                 })}

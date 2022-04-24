@@ -1154,12 +1154,80 @@ func (web *web) onAPILogsQuery(database store.StatStore) gin.HandlerFunc {
 }
 
 func (web *web) onAPIGetNewsLatest(database store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		newsLatest, errGetNewsLatest := database.GetNewsLatest(c, 5, false)
+	return func(ctx *gin.Context) {
+		newsLatest, errGetNewsLatest := database.GetNewsLatest(ctx, 5, false)
 		if errGetNewsLatest != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(c, http.StatusOK, newsLatest)
+		responseOK(ctx, http.StatusOK, newsLatest)
+	}
+}
+
+func (web *web) onAPIGetNewsAll(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		newsLatest, errGetNewsLatest := database.GetNewsLatest(ctx, 100, true)
+		if errGetNewsLatest != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, newsLatest)
+	}
+}
+
+func (web *web) onAPIPostNewsCreate(database store.NewsStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var entry model.NewsEntry
+		if errBind := ctx.BindJSON(&entry); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if errSave := database.SaveNewsArticle(ctx, &entry); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusCreated, entry)
+
+		web.botSendMessageChan <- discordPayload{
+			channelId: "882471332254715915",
+			message: &discordgo.MessageEmbed{
+				Title:       "News Created",
+				Description: fmt.Sprintf("News Posted: %s", entry.Title)},
+		}
+	}
+}
+
+func (web *web) onAPIPostNewsUpdate(database store.NewsStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		newsId, errId := getInt64Param(ctx, "news_id")
+		if errId != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var entry model.NewsEntry
+		if errGet := database.GetNewsById(ctx, int(newsId), &entry); errGet != nil {
+			if errors.Is(store.Err(errGet), store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		if errBind := ctx.BindJSON(&entry); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if errSave := database.SaveNewsArticle(ctx, &entry); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusAccepted, entry)
+
+		web.botSendMessageChan <- discordPayload{
+			channelId: "882471332254715915",
+			message: &discordgo.MessageEmbed{
+				Title:       "News Updated",
+				Description: fmt.Sprintf("News Updated: %s", entry.Title)},
+		}
 	}
 }

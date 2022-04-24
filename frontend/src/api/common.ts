@@ -16,9 +16,18 @@ export interface apiResponse<T> {
 }
 
 export interface apiError {
+    status: number;
     error?: string;
 }
 
+/**
+ * All api requests are handled through this interface.
+ *
+ * @param url
+ * @param method
+ * @param body
+ * @param fullResponse If true, will return the full apiResponse object and not just the data.
+ */
 export const apiCall = async <
     TResponse,
     TRequestBody = Record<string, unknown>
@@ -61,7 +70,9 @@ export const apiCall = async <
     return json.data;
 };
 
-class ApiException extends Error {
+export class ValidationException extends Error {}
+
+export class ApiException extends Error {
     public resp: Response;
 
     constructor(msg: string, response: Response) {

@@ -75,7 +75,7 @@ export interface BanPayload {
     network: string;
 }
 
-export const apiGetBans = async (): Promise<IAPIBanRecord[] | apiError> => {
+export const apiGetBans = async (): Promise<IAPIBanRecord[]> => {
     const resp = await apiCall<IAPIResponseBans, QueryFilterProps>(
         `/api/bans`,
         'POST'

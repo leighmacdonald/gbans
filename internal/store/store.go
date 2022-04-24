@@ -35,7 +35,8 @@ type DemoStore interface {
 
 type NewsStore interface {
 	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error)
-	GetNewsArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error
+	GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error
+	GetNewsById(ctx context.Context, newsId int, entry *model.NewsEntry) error
 	SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error
 	DropNewsArticle(ctx context.Context, newsId int) error
 }

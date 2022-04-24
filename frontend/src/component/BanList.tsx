@@ -5,7 +5,7 @@ import { CreateDataTable } from './DataTable';
 export const BanList = (): JSX.Element =>
     CreateDataTable<IAPIBanRecord>()({
         connector: async () => {
-            return (await apiGetBans()) as Promise<IAPIBanRecord[]>;
+            return await apiGetBans();
         },
         id_field: 'ban_id',
         heading: 'Bans',

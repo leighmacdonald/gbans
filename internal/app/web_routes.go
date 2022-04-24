@@ -127,6 +127,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 
 	// Admin access
-	modAdmin := engine.Use(authMiddleware(database, model.PAdmin))
-	modAdmin.POST("/api/server", web.onAPIPostServer(database))
+	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))
+	adminRoute.POST("/api/server", web.onAPIPostServer(database))
+	adminRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
+	adminRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
+	adminRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
 }
