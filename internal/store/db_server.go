@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var columnsServer = []string{"server_id", "short_name", "token", "address", "port", "rcon", "password",
+var columnsServer = []string{"server_id", "short_name", "name", "token", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted", "log_secret"}
 
@@ -25,7 +25,7 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int64, server *
 		return Err(errQuery)
 	}
 	if errRow := database.conn.QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 			&server.Location.Longitude, &server.Location.Latitude,
@@ -54,7 +54,7 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 	defer rows.Close()
 	for rows.Next() {
 		var server model.Server
-		if errScan := rows.Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+		if errScan := rows.Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errScan != nil {
@@ -77,7 +77,7 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 		return Err(errQueryArgs)
 	}
 	if errQuery := database.conn.QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerName, &server.Token, &server.Address, &server.Port, &server.RCON,
+		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
@@ -99,12 +99,12 @@ func (database *pgStore) SaveServer(ctx context.Context, server *model.Server) e
 func (database *pgStore) insertServer(ctx context.Context, server *model.Server) error {
 	const query = `
 		INSERT INTO server (
-		    short_name, token, address, port, rcon, token_created_on, 
+		    short_name, name, token, address, port, rcon, token_created_on, 
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, location, 
 			default_map, deleted, log_secret) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING server_id;`
-	err := database.conn.QueryRow(ctx, query, server.ServerName, server.Token, server.Address, server.Port,
+	err := database.conn.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Token, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Location.String(), server.DefaultMap, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
@@ -117,7 +117,8 @@ func (database *pgStore) insertServer(ctx context.Context, server *model.Server)
 func (database *pgStore) updateServer(ctx context.Context, server *model.Server) error {
 	server.UpdatedOn = config.Now()
 	query, args, errQueryArgs := sb.Update(string(tableServer)).
-		Set("short_name", server.ServerName).
+		Set("short_name", server.ServerNameShort).
+		Set("name", server.ServerNameLong).
 		Set("token", server.Token).
 		Set("address", server.Address).
 		Set("port", server.Port).
@@ -243,7 +244,7 @@ func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryO
 		event := model.NewServerEvent()
 		if errScan := rows.Scan(
 			&event.LogID, &event.Server.ServerID, &event.EventType, &event.CreatedOn,
-			&event.Server.ServerName,
+			&event.Server.ServerNameShort,
 			&event.Source.SteamID, &event.Source.PersonaName, &event.Source.AvatarFull, &event.Source.Avatar,
 			&event.Target.SteamID, &event.Target.PersonaName, &event.Target.AvatarFull, &event.Target.Avatar,
 			&event.Weapon, &event.Damage, &event.Healing,

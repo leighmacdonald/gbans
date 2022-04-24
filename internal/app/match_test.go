@@ -44,7 +44,7 @@ func TestMatch_Apply(t *testing.T) {
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
 	mockGetTestServer := func(serverName string, s *model.Server) error {
-		if serverName == testServer.ServerName {
+		if serverName == testServer.ServerNameShort {
 			*s = testServer
 			return nil
 		}

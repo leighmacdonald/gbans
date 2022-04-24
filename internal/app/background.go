@@ -96,7 +96,7 @@ func serverStateUpdater(database store.ServerStore) {
 				case <-done:
 					return
 				case r := <-results:
-					newServers[r.Name] = r
+					newServers[r.NameShort] = &r
 				}
 			}
 		}()
@@ -109,7 +109,7 @@ func serverStateUpdater(database store.ServerStore) {
 				serverState.Region = server.Region
 				serverState.Enabled = server.IsEnabled
 				serverState.CountryCode = server.CC
-				serverState.Name = server.ServerName
+				serverState.NameShort = server.ServerNameShort
 				serverState.Reserved = 8
 				queryWaitGroup := &sync.WaitGroup{}
 				queryWaitGroup.Add(2)
@@ -130,7 +130,8 @@ func serverStateUpdater(database store.ServerStore) {
 						return
 					}
 					serverState.A2S = *a
-					playerCounter.With(prometheus.Labels{"server_name": server.ServerName}).
+					serverState.NameLong = a.Name
+					playerCounter.With(prometheus.Labels{"server_name": server.ServerNameShort}).
 						Observe(float64(a.Players))
 					if a.Players > 1 {
 						mapCounter.With(prometheus.Labels{"map": a.Map}).Add(freq.Seconds())
@@ -149,6 +150,7 @@ func serverStateUpdater(database store.ServerStore) {
 		for k, v := range newServers {
 			c[k] = v
 		}
+		log.Debugf("Updated server states")
 		return c, nil
 	}
 	newServerState, errNewServerState := update(ctx)

@@ -297,9 +297,9 @@ type PersonIPRecord struct {
 type Server struct {
 	// Auto generated id
 	ServerID int64 `db:"server_id" json:"server_id"`
-	// ServerName is a short reference name for the server eg: us-1
-	ServerName     string `db:"short_name" json:"server_name"`
-	ServerNameLong string `db:"server_name_long" json:"server_name_long"`
+	// ServerNameShort is a short reference name for the server eg: us-1
+	ServerNameShort string `db:"short_name" json:"server_name"`
+	ServerNameLong  string `db:"server_name_long" json:"server_name_long"`
 	// Token is the current valid authentication token that the server uses to make authenticated requests
 	Token string `db:"token" json:"token"`
 	// Address is the ip of the server
@@ -333,24 +333,24 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 // TODO move findPlayerBy* methods to here
-type ServerStateCollection map[string]ServerState
+type ServerStateCollection map[string]*ServerState
 
 func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
-		if strings.EqualFold(server.Name, name) {
-			*state = server
+		if strings.EqualFold(server.NameShort, name) {
+			state = server
 			return true
 		}
 	}
 	return false
 }
 
-func (c ServerStateCollection) ByRegion() map[string][]ServerState {
-	rm := map[string][]ServerState{}
+func (c ServerStateCollection) ByRegion() map[string][]*ServerState {
+	rm := map[string][]*ServerState{}
 	for serverId, server := range c {
 		_, exists := rm[server.Region]
 		if !exists {
-			rm[server.Region] = []ServerState{}
+			rm[server.Region] = []*ServerState{}
 		}
 		rm[server.Region] = append(rm[server.Region], c[serverId])
 	}
@@ -359,23 +359,23 @@ func (c ServerStateCollection) ByRegion() map[string][]ServerState {
 
 func NewServer(name string, address string, port int) Server {
 	return Server{
-		ServerName:     name,
-		Address:        address,
-		Port:           port,
-		RCON:           golib.RandomString(10),
-		ReservedSlots:  0,
-		Password:       golib.RandomString(20),
-		DefaultMap:     "",
-		IsEnabled:      true,
-		TokenCreatedOn: time.Unix(0, 0),
-		CreatedOn:      config.Now(),
-		UpdatedOn:      config.Now(),
+		ServerNameShort: name,
+		Address:         address,
+		Port:            port,
+		RCON:            golib.RandomString(10),
+		ReservedSlots:   0,
+		Password:        golib.RandomString(20),
+		DefaultMap:      "",
+		IsEnabled:       true,
+		TokenCreatedOn:  time.Unix(0, 0),
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
 	}
 }
 
 type ServerState struct {
 	NameLong    string
-	Name        string
+	NameShort   string
 	Host        string
 	Enabled     bool
 	Region      string

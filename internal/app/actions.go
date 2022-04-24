@@ -366,7 +366,7 @@ func PSay(database store.Store, author steamid.SID64, target model.Target, messa
 	if errExecRCON != nil {
 		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
 	}
-	log.WithFields(log.Fields{"author": author, "server": playerInfo.Server.ServerName, "msg": message, "target": playerInfo.Player.SID}).
+	log.WithFields(log.Fields{"author": author, "server": playerInfo.Server.ServerNameShort, "msg": message, "target": playerInfo.Player.SID}).
 		Infof("Private message sent")
 	return nil
 }

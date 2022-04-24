@@ -484,7 +484,7 @@ func (web *web) onAPIGetServers(database store.Store) gin.HandlerFunc {
 	}
 	type serverInfo struct {
 		ServerID int64 `database:"server_id" json:"server_id"`
-		// ServerName is a short reference name for the server eg: us-1
+		// ServerNameShort is a short reference name for the server eg: us-1
 		ServerName     string `json:"server_name"`
 		ServerNameLong string `json:"server_name_long"`
 		Address        string `json:"address"`
@@ -517,7 +517,7 @@ func (web *web) onAPIGetServers(database store.Store) gin.HandlerFunc {
 		for _, server := range servers {
 			info := serverInfo{
 				ServerID:          server.ServerID,
-				ServerName:        server.ServerName,
+				ServerName:        server.ServerNameShort,
 				ServerNameLong:    server.ServerNameLong,
 				Address:           server.Address,
 				Port:              server.Port,

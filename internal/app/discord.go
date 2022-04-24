@@ -124,7 +124,7 @@ func (bot *discord) discordMessageQueueReader(ctx context.Context, eventChan cha
 			msg, found := serverEvent.MetaData["msg"]
 			if found {
 				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-					serverEvent.Server.ServerName, sid64, name, prefix, msg))
+					serverEvent.Server.ServerNameShort, sid64, name, prefix, msg))
 			}
 
 		case <-messageTicker.C:

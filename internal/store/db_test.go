@@ -51,16 +51,16 @@ func TestMain(testMain *testing.M) {
 
 func TestServer(t *testing.T) {
 	serverA := model.Server{
-		ServerName:     fmt.Sprintf("test-%s", golib.RandomString(10)),
-		Token:          "",
-		Address:        "172.16.1.100",
-		Port:           27015,
-		RCON:           "test",
-		Password:       "test",
-		IsEnabled:      true,
-		TokenCreatedOn: config.Now(),
-		CreatedOn:      config.Now(),
-		UpdatedOn:      config.Now(),
+		ServerNameShort: fmt.Sprintf("test-%s", golib.RandomString(10)),
+		Token:           "",
+		Address:         "172.16.1.100",
+		Port:            27015,
+		RCON:            "test",
+		Password:        "test",
+		IsEnabled:       true,
+		TokenCreatedOn:  config.Now(),
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -71,7 +71,7 @@ func TestServer(t *testing.T) {
 	var s1Get model.Server
 	require.NoError(t, testDatabase.GetServer(ctx, serverA.ServerID, &s1Get))
 	require.Equal(t, serverA.ServerID, s1Get.ServerID)
-	require.Equal(t, serverA.ServerName, s1Get.ServerName)
+	require.Equal(t, serverA.ServerNameShort, s1Get.ServerNameShort)
 	require.Equal(t, serverA.Token, s1Get.Token)
 	require.Equal(t, serverA.Address, s1Get.Address)
 	require.Equal(t, serverA.Port, s1Get.Port)

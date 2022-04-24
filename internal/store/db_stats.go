@@ -212,7 +212,7 @@ func (database *pgStore) GetReplayLogs(ctx context.Context, offset uint64, limit
 		}
 		if errScan := rows.Scan(
 			&event.LogID, &event.EventType, &event.CreatedOn,
-			&event.Server.ServerID, &event.Server.ServerName,
+			&event.Server.ServerID, &event.Server.ServerNameShort,
 			&event.Source.SteamID, &event.Source.PersonaName, &event.Source.AvatarFull, &event.Source.Avatar,
 			&event.Target.SteamID, &event.Target.PersonaName, &event.Target.AvatarFull, &event.Target.Avatar,
 			&event.Weapon, &event.Damage, &event.AttackerPOS, &event.VictimPOS, &event.AssisterPOS,

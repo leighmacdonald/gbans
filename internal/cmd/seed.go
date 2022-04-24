@@ -122,16 +122,16 @@ var seedCmd = &cobra.Command{
 				port = server.Port
 			}
 			s := model.Server{
-				ServerName:    server.ShortName,
-				Token:         golib.RandomString(40),
-				Address:       server.Host,
-				Port:          port,
-				RCON:          rconPass,
-				ReservedSlots: 8,
-				Password:      pw,
-				IsEnabled:     server.Enabled,
-				Region:        server.Region,
-				CC:            server.CC,
+				ServerNameShort: server.ShortName,
+				Token:           golib.RandomString(40),
+				Address:         server.Host,
+				Port:            port,
+				RCON:            rconPass,
+				ReservedSlots:   8,
+				Password:        pw,
+				IsEnabled:       server.Enabled,
+				Region:          server.Region,
+				CC:              server.CC,
 				Location: ip2location.LatLong{
 					Latitude:  server.Location[0],
 					Longitude: server.Location[1],

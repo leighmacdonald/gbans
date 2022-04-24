@@ -71,7 +71,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 			log.Errorf("Failed to lookup dns for host: %v", errLookup)
 			continue
 		}
-		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerName
+		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerNameShort
 	}
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
@@ -87,7 +87,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 		return
 	}
 	for _, server := range servers {
-		newServers[server.LogSecret] = server.ServerName
+		newServers[server.LogSecret] = server.ServerNameShort
 	}
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()

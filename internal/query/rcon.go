@@ -17,9 +17,9 @@ import (
 // ExecRCON executes the given command against the server provided. It returns the command
 // output.
 func ExecRCON(server model.Server, cmd string) (string, error) {
-	console, errDial := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*10)
+	console, errDial := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
 	if errDial != nil {
-		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerName, errDial)
+		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerNameShort, errDial)
 	}
 	resp, errExec := console.Exec(sanitizeRCONCommand(cmd))
 	if errExec != nil {
@@ -38,19 +38,19 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 		waitGroup.Add(1)
 		go func(server model.Server) {
 			defer waitGroup.Done()
-			addr := fmt.Sprintf("%server:%d", server.Address, server.Port)
+			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
 			conn, errDial := rcon.Dial(ctx, addr, server.RCON, timeout)
 			if errDial != nil {
-				log.Errorf("Failed to connect to server %server: %v", server.ServerName, errDial)
+				log.Errorf("Failed to connect to server %s: %v", server.ServerNameShort, errDial)
 				return
 			}
 			for _, command := range commands {
 				resp, errExec := conn.Exec(sanitizeRCONCommand(command))
 				if errExec != nil {
-					log.Tracef("Failed to exec rcon command %server: %v", server.ServerName, errExec)
+					log.Tracef("Failed to exec rcon command %s: %v", server.ServerNameShort, errExec)
 				}
 				rwMutex.Lock()
-				responses[server.ServerName] = resp
+				responses[server.ServerNameShort] = resp
 				rwMutex.Unlock()
 			}
 		}(server)

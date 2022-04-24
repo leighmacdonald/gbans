@@ -27,7 +27,7 @@ var (
 	warnings       map[steamid.SID64][]userWarning
 	warningsMu     *sync.RWMutex
 	logPayloadChan chan model.LogPayload
-	serversState   map[string]model.ServerState
+	serversState   map[string]*model.ServerState
 	serversStateMu *sync.RWMutex
 	discordSendMsg chan discordPayload
 )

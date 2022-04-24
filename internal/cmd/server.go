@@ -52,7 +52,7 @@ var serverListCmd = &cobra.Command{
 		for _, server := range servers {
 			tableRows = append(tableRows, []string{
 				fmt.Sprintf("%d", server.ServerID),
-				server.ServerName,
+				server.ServerNameShort,
 				server.ServerNameLong,
 				server.Addr(),
 				server.Region,
@@ -144,7 +144,7 @@ var serverUpdateCmd = &cobra.Command{
 			log.WithFields(log.Fields{"server_id": serverId}).Fatalf("Failed to fetch server to update: %v", errGetServer)
 		}
 		if serverIdNew != "" {
-			server.ServerName = serverIdNew
+			server.ServerNameShort = serverIdNew
 		}
 		if nameLong != "" {
 			server.ServerNameLong = nameLong

@@ -104,7 +104,7 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interactio
 	resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
 	resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SID.Int64())
 	resp.Title = playerInfo.Player.Name
-	addFieldInline(resp, "Server", playerInfo.Server.ServerName)
+	addFieldInline(resp, "Server", playerInfo.Server.ServerNameShort)
 	addFieldsSteamID(resp, playerInfo.Player.SID)
 	addField(resp, "Connect", fmt.Sprintf("steam://%s:%d", playerInfo.Server.Address, playerInfo.Server.Port))
 	return nil
@@ -399,7 +399,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	}
 	embed.Title = title
 	if player.RealName != "" {
-		addFieldInline(embed, "Real Name", player.RealName)
+		addFieldInline(embed, "Real NameShort", player.RealName)
 	}
 	cd := time.Unix(int64(player.TimeCreated), 0)
 	addFieldInline(embed, "Age", config.FmtDuration(cd))
@@ -603,7 +603,7 @@ func (bot *discord) onKick(_ context.Context, _ *discordgo.Session, interaction 
 	if playerInfo.Server != nil && playerInfo.Server.ServerID > 0 {
 		embed := respOk(response, "User Kicked")
 		addFieldsSteamID(embed, targetSid64)
-		addField(embed, "Name", playerInfo.Player.Name)
+		addField(embed, "NameShort", playerInfo.Player.Name)
 	} else {
 		return errors.New("User not found")
 	}
@@ -697,7 +697,7 @@ func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 			stats[region+"total"] += float64(maxPlayers)
 			used += st.Status.PlayersCount
 			total += maxPlayers
-			counts = append(counts, fmt.Sprintf("%s: %2d/%2d", st.Name, st.Status.PlayersCount, maxPlayers))
+			counts = append(counts, fmt.Sprintf("%s: %2d/%2d", st.NameShort, st.Status.PlayersCount, maxPlayers))
 		}
 		msg := strings.Join(counts, "    ")
 		if msg != "" {
@@ -727,11 +727,11 @@ func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 	}
 	var state model.ServerState
 	serverStates := ServerState()
-	if !serverStates.ByName(server.ServerName, &state) {
+	if !serverStates.ByName(server.ServerNameShort, &state) {
 		return consts.ErrUnknownID
 	}
 	var rows []string
-	embed := respOk(response, fmt.Sprintf("Current Players: %s", server.ServerName))
+	embed := respOk(response, fmt.Sprintf("Current Players: %s", server.ServerNameShort))
 	if len(state.Status.Players) > 0 {
 		sort.SliceStable(state.Status.Players, func(i, j int) bool {
 			return state.Status.Players[i].Name < state.Status.Players[j].Name
@@ -930,7 +930,7 @@ func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, int
 	if stats.Hits > 0 && stats.Shots > 0 {
 		acc = float64(stats.Hits) / float64(stats.Shots) * 100
 	}
-	embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerName))
+	embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerNameShort))
 	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))

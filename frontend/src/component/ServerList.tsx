@@ -1,69 +1,38 @@
+import Stack from '@mui/material/Stack';
+import React, { useEffect } from 'react';
 import { apiGetServers, Server } from '../api';
-import { CreateDataTable } from './DataTable';
+import Typography from '@mui/material/Typography';
+import { useMapStateCtx } from '../contexts/MapStateCtx';
 
-export const ServerList = (): JSX.Element =>
-    CreateDataTable<Server>()({
-        connector: async () => {
-            return (await apiGetServers()) || [];
-        },
-        id_field: 'server_id',
-        heading: 'Servers',
-        headers: [
-            // {id: "server_id",disablePadding: true, label: "ID", numeric: true},
-            {
-                id: 'server_name',
-                disablePadding: false,
-                label: 'Name',
-                cell_type: 'string'
-            },
-            {
-                id: 'server_name_long',
-                disablePadding: false,
-                label: 'Name Long',
-                cell_type: 'string'
-            },
-            {
-                id: 'address',
-                disablePadding: false,
-                label: 'Host',
-                cell_type: 'string'
-            },
-            {
-                id: 'port',
-                disablePadding: false,
-                label: 'Port',
-                cell_type: 'number'
-            },
-            {
-                id: 'password_protected',
-                disablePadding: false,
-                label: 'Private',
-                cell_type: 'bool'
-            },
-            {
-                id: 'region',
-                disablePadding: false,
-                label: 'Region',
-                cell_type: 'string'
-            },
-            {
-                id: 'cc',
-                disablePadding: false,
-                label: 'Country',
-                cell_type: 'flag'
-            },
-            {
-                id: 'latitude',
-                disablePadding: false,
-                label: 'Lat',
-                cell_type: 'number'
-            },
-            {
-                id: 'longitude',
-                disablePadding: false,
-                label: 'Lon',
-                cell_type: 'number'
+export interface ServerListProps {
+    servers: Server[];
+}
+export const ServerList = ({ servers }: ServerListProps) => {
+    const { setServers } = useMapStateCtx();
+    useEffect(() => {
+        const fn = async () => {
+            try {
+                setServers(await apiGetServers());
+            } catch (e) {
+                alert('Failed to load server');
             }
-        ],
-        showToolbar: true
-    });
+        };
+        fn();
+    }, []);
+    return (
+        <Stack>
+            {servers.map((server) => {
+                return (
+                    <Stack
+                        direction={'column'}
+                        key={`server-${server.server_id}`}
+                    >
+                        <Typography variant={'h3'}>
+                            {server.server_name_long}
+                        </Typography>
+                    </Stack>
+                );
+            })}
+        </Stack>
+    );
+};

@@ -5,16 +5,18 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 func A2SQueryServer(server model.Server) (*a2s.ServerInfo, error) {
-	client, errClient := a2s.NewClient(server.Addr())
+	client, errClient := a2s.NewClient(server.Addr(), a2s.TimeoutOption(time.Second*5))
 	if errClient != nil {
 		return nil, errors.Wrapf(errClient, "Failed to create a2s client")
 	}
+
 	defer func() {
 		if errClose := client.Close(); errClose != nil {
-			log.WithFields(log.Fields{"server": server.ServerName}).Errorf("Failed to close a2s client: %v", errClose)
+			log.WithFields(log.Fields{"server": server.ServerNameShort}).Errorf("Failed to close a2s client: %v", errClose)
 		}
 	}()
 	info, errQuery := client.QueryInfo() // QueryInfo, QueryPlayer, QueryRules
