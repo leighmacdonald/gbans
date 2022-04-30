@@ -23,7 +23,7 @@ import (
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func Unban(database store.Store, target steamid.SID64) (bool, error) {
+func Unban(ctx context.Context, database store.Store, target steamid.SID64) (bool, error) {
 	bannedPerson := model.NewBannedPerson()
 	errGetBan := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
 	if errGetBan != nil {
@@ -69,7 +69,7 @@ type banOpts struct {
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func Ban(database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan chan discordPayload) error {
+func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan chan discordPayload) error {
 	existing := model.NewBannedPerson()
 	targetSid64, errSid := opts.target.SID64()
 	if errSid != nil {
@@ -149,7 +149,7 @@ func Ban(database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan 
 		}
 	}(botSendMessageChan)
 
-	if errKick := Kick(database, model.System, opts.target, opts.author, opts.reason, nil); errKick != nil {
+	if errKick := Kick(ctx, database, model.System, opts.target, opts.author, opts.reason, nil); errKick != nil {
 		log.Errorf("failed to kick player: %v", errKick)
 	}
 
@@ -201,7 +201,7 @@ type banNetworkOpts struct {
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of config.DefaultExpiration() will be used.
-func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet) error {
+func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, banNet *model.BanNet) error {
 	until := config.DefaultExpiration()
 	targetSid64, errSid := opts.target.SID64()
 	if errSid != nil {
@@ -245,7 +245,7 @@ func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet)
 	}
 	go func() {
 		var playerInfo model.PlayerInfo
-		if errFindPI := FindPlayerByCIDR(database, network, &playerInfo); errFindPI != nil {
+		if errFindPI := FindPlayerByCIDR(ctx, database, network, &playerInfo); errFindPI != nil {
 			return
 		}
 		if playerInfo.Player != nil && playerInfo.Server != nil {
@@ -262,14 +262,14 @@ func BanNetwork(database store.Store, opts banNetworkOpts, banNet *model.BanNet)
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(database store.Store, origin model.Origin, target model.Target, author model.Target, reason string, playerInfo *model.PlayerInfo) error {
+func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.Target, author model.Target, reason string, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
 		return errAid
 	}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errFind := Find(database, target, "", &foundPI); errFind != nil {
+	if errFind := Find(ctx, database, target, "", &foundPI); errFind != nil {
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
@@ -291,7 +291,7 @@ func Kick(database store.Store, origin model.Origin, target model.Target, author
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
-func SetSteam(database store.Store, sid64 steamid.SID64, discordId string) error {
+func SetSteam(ctx context.Context, database store.Store, sid64 steamid.SID64, discordId string) error {
 	newPerson := model.NewPerson(sid64)
 	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
@@ -308,7 +308,7 @@ func SetSteam(database store.Store, sid64 steamid.SID64, discordId string) error
 }
 
 // Say is used to send a message to the server via sm_say
-func Say(database store.Store, author steamid.SID64, serverName string, message string) error {
+func Say(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
 	var server model.Server
 	if errGetServer := database.GetServerByName(ctx, serverName, &server); errGetServer != nil {
 		return errors.Errorf("Failed to fetch server: %s", serverName)
@@ -328,7 +328,7 @@ func Say(database store.Store, author steamid.SID64, serverName string, message 
 }
 
 // CSay is used to send a centered message to the server via sm_csay
-func CSay(database store.Store, author steamid.SID64, serverName string, message string) error {
+func CSay(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
 	var (
 		servers []model.Server
 		err     error
@@ -354,10 +354,10 @@ func CSay(database store.Store, author steamid.SID64, serverName string, message
 }
 
 // PSay is used to send a private message to a player
-func PSay(database store.Store, author steamid.SID64, target model.Target, message string) error {
+func PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.Target, message string) error {
 	var playerInfo model.PlayerInfo
 	// TODO check resp
-	_ = Find(database, target, "", &playerInfo)
+	_ = Find(ctx, database, target, "", &playerInfo)
 	if !playerInfo.Valid || !playerInfo.InGame {
 		return consts.ErrUnknownID
 	}
@@ -372,7 +372,7 @@ func PSay(database store.Store, author steamid.SID64, target model.Target, messa
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
-func FilterAdd(database store.Store, pattern string) (model.Filter, error) {
+func FilterAdd(ctx context.Context, database store.Store, pattern string) (model.Filter, error) {
 	rx, errCompile := regexp.Compile(pattern)
 	if errCompile != nil {
 		return model.Filter{}, errors.Wrapf(errCompile, "Invalid regex format")
@@ -439,7 +439,7 @@ func ContainsFilteredWord(body string) (bool, model.Filter) {
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func PersonBySID(database store.Store, sid steamid.SID64, ipAddr string, person *model.Person) error {
+func PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, ipAddr string, person *model.Person) error {
 	if errGetPerson := database.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
 		return errGetPerson
 	}
@@ -464,7 +464,7 @@ func PersonBySID(database store.Store, sid steamid.SID64, ipAddr string, person 
 }
 
 // ResolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout
-func ResolveSID(sidStr string) (steamid.SID64, error) {
+func ResolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	return steamid.ResolveSID64(localCtx, sidStr)

@@ -19,7 +19,7 @@ import (
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func profileUpdater(database store.PersonStore) {
+func profileUpdater(ctx context.Context, database store.PersonStore) {
 	var update = func() {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
@@ -70,9 +70,89 @@ func profileUpdater(database store.PersonStore) {
 	}
 }
 
+func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
+		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
+		defer cancel()
+		servers, errGetServers := localDb.GetServers(cancelCtx, false)
+		if errGetServers != nil {
+			return errors.Wrapf(errGetServers, "Failed to get servers")
+		}
+		waitGroup := &sync.WaitGroup{}
+		for _, srv := range servers {
+			waitGroup.Add(1)
+			go func(server model.Server) {
+				defer waitGroup.Done()
+				newStatus, errA := query.A2SQueryServer(server)
+				if errA != nil {
+					log.Tracef("Failed to update a2s status: %v", errA)
+					return
+				}
+				serverStateA2SMu.Lock()
+				serverStateA2S[server.ServerNameShort] = *newStatus
+				serverStateA2SMu.Unlock()
+			}(srv)
+		}
+		return nil
+	}
+	ticker := time.NewTicker(updateFreq)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			log.WithFields(log.Fields{"state": "started"}).Tracef("Server status state updateStatus")
+			if errUpdate := updateStatus(ctx, database); errUpdate != nil {
+				log.Errorf("Error trying to updateStatus server status state: %v", errUpdate)
+			}
+			log.WithFields(log.Fields{"state": "success"}).Tracef("Server status state updateStatus")
+		}
+	}
+}
+
+func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
+		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
+		defer cancel()
+		servers, errGetServers := localDb.GetServers(cancelCtx, false)
+		if errGetServers != nil {
+			return errors.Wrapf(errGetServers, "Failed to get servers")
+		}
+		waitGroup := &sync.WaitGroup{}
+		for _, srv := range servers {
+			waitGroup.Add(1)
+			go func(server model.Server) {
+				defer waitGroup.Done()
+				newStatus, queryErr := query.GetServerStatus(server)
+				if queryErr != nil {
+					log.Warnf("Failed to query server status: %v", queryErr)
+					return
+				}
+				serverStateStatusMu.Lock()
+				serverStateStatus[server.ServerNameShort] = newStatus
+				serverStateStatusMu.Unlock()
+			}(srv)
+		}
+		return nil
+	}
+	ticker := time.NewTicker(updateFreq)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			log.WithFields(log.Fields{"state": "started"}).Tracef("Server status state updateStatus")
+			if errUpdate := updateStatus(ctx, database); errUpdate != nil {
+				log.Errorf("Error trying to updateStatus server status state: %v", errUpdate)
+			}
+			log.WithFields(log.Fields{"state": "success"}).Tracef("Server status state updateStatus")
+		}
+	}
+}
+
 // serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
 // information. This data is accessed often so it is cached
-func serverStateUpdater(database store.ServerStore) {
+func serverStateUpdater(ctx context.Context, database store.ServerStore) {
 	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errDuration != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
@@ -186,7 +266,7 @@ func serverStateUpdater(database store.ServerStore) {
 // Relevant config values:
 // - general.map_changer_enabled
 // - general.default_map
-func mapChanger(database store.ServerStore, timeout time.Duration) {
+func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
@@ -258,7 +338,7 @@ func mapChanger(database store.ServerStore, timeout time.Duration) {
 
 // banSweeper periodically will query the database for expired bans and remove them.
 // TODO save history
-func banSweeper(database store.Store) {
+func banSweeper(ctx context.Context, database store.Store) {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
 	for {

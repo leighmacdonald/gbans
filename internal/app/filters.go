@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -25,7 +26,7 @@ func importFilteredWords(filters []model.Filter) {
 	wordFilters = filters
 }
 
-func filterWorker(database store.Store, botSendMessageChan chan discordPayload) {
+func filterWorker(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
 		log.Fatalf("Failed to register event reader: %v", errRegister)
@@ -39,7 +40,7 @@ func filterWorker(database store.Store, botSendMessageChan chan discordPayload) 
 			}
 			matched, _ := ContainsFilteredWord(msg)
 			if matched {
-				addWarning(database, serverEvent.Source.SteamID, warnLanguage, botSendMessageChan)
+				addWarning(ctx, database, serverEvent.Source.SteamID, warnLanguage, botSendMessageChan)
 			}
 		case <-ctx.Done():
 			return

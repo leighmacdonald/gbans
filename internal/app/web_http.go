@@ -2,6 +2,7 @@
 package app
 
 import (
+	"context"
 	"crypto/tls"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -13,7 +14,7 @@ import (
 )
 
 type WebHandler interface {
-	ListenAndServe() error
+	ListenAndServe(context.Context) error
 }
 
 type web struct {
@@ -21,8 +22,19 @@ type web struct {
 	botSendMessageChan chan discordPayload
 }
 
-func (web web) ListenAndServe() error {
+func (web web) ListenAndServe(ctx context.Context) error {
 	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
+	defer log.WithFields(log.Fields{"service": "web", "status": "stopped"}).Infof("Service status changed")
+	go func() {
+		select {
+		case <-ctx.Done():
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+			if errShutdown := web.httpServer.Shutdown(shutdownCtx); errShutdown != nil {
+				log.Errorf("Error shutting down http service: %v", errShutdown)
+			}
+		}
+	}()
 	return web.httpServer.ListenAndServe()
 }
 
@@ -47,9 +59,6 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload) (WebHa
 	}
 	if config.HTTP.TLS {
 		tlsVar := &tls.Config{
-			// Causes servers to use Go's default cipher suite preferences,
-			// which are tuned to avoid attacks. Does nothing on clients.
-			PreferServerCipherSuites: true,
 			// Only use curves which have assembly implementations
 			CurvePreferences: []tls.CurveID{
 				tls.CurveP256,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
@@ -13,6 +13,7 @@ import Button from '@mui/material/Button';
 import ListSubheader from '@mui/material/ListSubheader';
 import { Person } from '../api';
 import { useTheme } from '@mui/material';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export interface FriendListProps {
     friends: Person[];
@@ -60,32 +61,34 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                     </ListSubheader>
                 }
             >
-                {(friends || [])
-                    .slice(page * limit, page * limit + limit)
-                    .map((p) => (
-                        <ListItemButton
-                            color={
-                                p.vac_bans > 0
-                                    ? theme.palette.error.main
-                                    : undefined
-                            }
-                            key={p.steamid}
-                            onClick={() => {
-                                navigate(`/profile/${p.steamid}`);
-                            }}
-                        >
-                            <ListItemAvatar>
-                                <Avatar
-                                    alt={'Profile Picture'}
-                                    src={p.avatar}
+                <Suspense fallback={<LoadingSpinner />}>
+                    {(friends || [])
+                        .slice(page * limit, page * limit + limit)
+                        .map((p) => (
+                            <ListItemButton
+                                color={
+                                    p.vac_bans > 0
+                                        ? theme.palette.error.main
+                                        : undefined
+                                }
+                                key={p.steamid}
+                                onClick={() => {
+                                    navigate(`/profile/${p.steamid}`);
+                                }}
+                            >
+                                <ListItemAvatar>
+                                    <Avatar
+                                        alt={'Profile Picture'}
+                                        src={p.avatar}
+                                    />
+                                </ListItemAvatar>
+                                <ListItemText
+                                    primary={p.personaname}
+                                    secondary={p.steamid}
                                 />
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={p.personaname}
-                                secondary={p.steamid}
-                            />
-                        </ListItemButton>
-                    ))}
+                            </ListItemButton>
+                        ))}
+                </Suspense>
             </List>
             {nav}
         </Stack>

@@ -259,6 +259,10 @@ func Read(cfgFiles ...string) {
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
 		log.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
+	_, errDuration := time.ParseDuration(General.ServerStatusUpdateFreq)
+	if errDuration != nil {
+		log.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
+	}
 	if errSteamWeb := steamweb.SetKey(General.SteamKey); errSteamWeb != nil {
 		log.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}

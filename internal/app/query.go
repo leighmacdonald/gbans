@@ -27,7 +27,7 @@ import (
 // actively connected
 //
 // TODO cleanup this mess
-func Find(database store.Store, playerStr model.Target, ip string, playerInfo *model.PlayerInfo) error {
+func Find(ctx context.Context, database store.Store, playerStr model.Target, ip string, playerInfo *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &extra.Player{},
@@ -142,7 +142,7 @@ func ServerState() model.ServerStateCollection {
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func FindPlayerByCIDR(database store.ServerStore, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
+func FindPlayerByCIDR(ctx context.Context, database store.ServerStore, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
 	for serverId, serverState := range ServerState() {
 		for _, player := range serverState.Players {
 			if ipNet.Contains(player.IP) {

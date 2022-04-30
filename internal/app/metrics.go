@@ -2,6 +2,7 @@
 package app
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -83,7 +84,7 @@ func init() {
 }
 
 // logMetricsConsumer processes incoming log events and updated any associated metrics
-func logMetricsConsumer() {
+func logMetricsConsumer(ctx context.Context) {
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Errorf("Failed to register event consumer")

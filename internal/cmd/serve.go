@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/app"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -12,7 +13,8 @@ var serveCmd = &cobra.Command{
 	Short: "Starts the gbans service",
 	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if errApp := app.Start(); errApp != nil {
+		appCtx := context.Background()
+		if errApp := app.Start(appCtx); errApp != nil {
 			log.Errorf("Application error: %v", errApp)
 		}
 	},

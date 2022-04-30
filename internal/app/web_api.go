@@ -100,7 +100,7 @@ func (web *web) onPostPingMod(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var playerInfo model.PlayerInfo
-		errFind := Find(database, model.Target(req.SteamID.String()), "", &playerInfo)
+		errFind := Find(ctx, database, model.Target(req.SteamID.String()), "", &playerInfo)
 		if errFind != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -219,7 +219,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 				cidr: banRequest.Network,
 			}
 			var banNet model.BanNet
-			if errBanNetwork := BanNetwork(database, banNetOpts, &banNet); errBanNetwork != nil {
+			if errBanNetwork := BanNetwork(ctx, database, banNetOpts, &banNet); errBanNetwork != nil {
 				if errors.Is(errBanNetwork, store.ErrDuplicate) {
 					responseErr(ctx, http.StatusConflict, "Duplicate ban")
 					return
@@ -237,7 +237,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 				origin:   model.Web,
 			}
 			var ban model.Ban
-			if errBan := Ban(database, newBanOpts, &ban, web.botSendMessageChan); errBan != nil {
+			if errBan := Ban(ctx, database, newBanOpts, &ban, web.botSendMessageChan); errBan != nil {
 				if errors.Is(errBan, store.ErrDuplicate) {
 					responseErr(ctx, http.StatusConflict, "Duplicate ban")
 					return

@@ -10,8 +10,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"os"
@@ -23,23 +25,32 @@ import (
 var (
 	// BuildVersion holds the current git revision, as of build time
 	BuildVersion   = "master"
-	ctx            context.Context
 	warnings       map[steamid.SID64][]userWarning
 	warningsMu     *sync.RWMutex
 	logPayloadChan chan model.LogPayload
 	serversState   map[string]*model.ServerState
 	serversStateMu *sync.RWMutex
-	discordSendMsg chan discordPayload
+	// Current known state of the servers rcon status command
+	serverStateStatus   map[string]extra.Status
+	serverStateStatusMu *sync.RWMutex
+	// Current known state of the servers a2s server info query
+	serverStateA2S   map[string]a2s.ServerInfo
+	serverStateA2SMu *sync.RWMutex
+	discordSendMsg   chan discordPayload
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
 	serversStateMu = &sync.RWMutex{}
-	ctx = context.Background()
+	serverStateA2SMu = &sync.RWMutex{}
+	serverStateStatusMu = &sync.RWMutex{}
+
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
 	logPayloadChan = make(chan model.LogPayload, 100000)
 	discordSendMsg = make(chan discordPayload)
+	serverStateA2S = map[string]a2s.ServerInfo{}
+	serverStateStatus = map[string]extra.Status{}
 }
 
 type warnReason int
@@ -68,7 +79,7 @@ type discordPayload struct {
 }
 
 // Start is the main application entry point
-func Start() error {
+func Start(ctx context.Context) error {
 	dbStore, dbErr := store.New(config.DB.DSN)
 	if dbErr != nil {
 		return errors.Wrapf(dbErr, "Failed to setup store")
@@ -93,28 +104,28 @@ func Start() error {
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		go initDiscord(dbStore, discordSendMsg)
+		go initDiscord(ctx, dbStore, discordSendMsg)
 	} else {
 		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	initWorkers(dbStore, discordSendMsg)
+	initWorkers(ctx, dbStore, discordSendMsg)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		initFilters(dbStore)
+		initFilters(ctx, dbStore)
 	}
 
 	// Start & block, listening on the HTTP server
-	if errHttpListen := webService.ListenAndServe(); errHttpListen != nil {
+	if errHttpListen := webService.ListenAndServe(ctx); errHttpListen != nil {
 		return errors.Wrapf(errHttpListen, "Error shutting down service")
 	}
 	return nil
 }
 
 // warnWorker will periodically flush out warning older than `config.General.WarningTimeout`
-func warnWorker() {
+func warnWorker(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
@@ -145,7 +156,7 @@ func warnWorker() {
 
 // logWriter handles writing log events to the database. It does it in batches for performance
 // reasons.
-func logWriter(database store.StatStore) {
+func logWriter(ctx context.Context, database store.StatStore) {
 	const (
 		writeFrequency = time.Second * 5
 	)
@@ -267,7 +278,7 @@ func (cache *playerCache) cleanupWorker() {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func logReader(db store.Store) {
+func logReader(ctx context.Context, db store.Store) {
 	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errCreateFile error
@@ -329,7 +340,7 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 	parseResult := logparse.Parse(payload.Message)
 	var server model.Server
 	if errServer := getServer(payload.ServerName, &server); errServer != nil {
-		return errors.Wrapf(errServer, "Failed to get server for log message: %parseResult", payload.Message)
+		return errors.Wrapf(errServer, "Failed to get server for log message: %s", payload.Message)
 	}
 	event.Server = &server
 	event.EventType = parseResult.MsgType
@@ -480,7 +491,7 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 // restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
+func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
 	warningsMu.Lock()
 	_, found := warnings[sid64]
 	if !found {
@@ -505,13 +516,13 @@ func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, bo
 		switch config.General.WarningExceededAction {
 		case config.Gag:
 			options.banType = model.NoComm
-			errBan = Ban(database, options, &ban, botSendMessageChan)
+			errBan = Ban(ctx, database, options, &ban, botSendMessageChan)
 		case config.Ban:
 			options.banType = model.Banned
-			errBan = Ban(database, options, &ban, botSendMessageChan)
+			errBan = Ban(ctx, database, options, &ban, botSendMessageChan)
 		case config.Kick:
 			var playerInfo model.PlayerInfo
-			errBan = Kick(database, model.System, model.Target(sid64.String()),
+			errBan = Kick(ctx, database, model.System, model.Target(sid64.String()),
 				model.Target(config.General.Owner.String()), warnReasonString(reason), &playerInfo)
 		}
 		if errBan != nil {
@@ -521,7 +532,7 @@ func addWarning(database store.Store, sid64 steamid.SID64, reason warnReason, bo
 	}
 }
 
-func initFilters(database store.FilterStore) {
+func initFilters(ctx context.Context, database store.FilterStore) {
 	// TODO load external lists via http
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
@@ -533,17 +544,23 @@ func initFilters(database store.FilterStore) {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func initWorkers(database store.Store, botSendMessageChan chan discordPayload) {
-	go banSweeper(database)
-	go mapChanger(database, time.Second*5)
-	go serverStateUpdater(database)
-	go profileUpdater(database)
-	go warnWorker()
-	go logReader(database)
-	go logWriter(database)
-	go filterWorker(database, botSendMessageChan)
+func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
+	go banSweeper(ctx, database)
+	go mapChanger(ctx, database, time.Second*5)
+	go serverStateUpdater(ctx, database)
+	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
+	if errDuration != nil {
+		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
+	}
+	go serverA2SStatusUpdater(ctx, database, freq)
+	go serverRCONStatusUpdater(ctx, database, freq)
+	go profileUpdater(ctx, database)
+	go warnWorker(ctx)
+	go logReader(ctx, database)
+	go logWriter(ctx, database)
+	go filterWorker(ctx, database, botSendMessageChan)
 	go initLogSrc(database)
-	go logMetricsConsumer()
+	go logMetricsConsumer(ctx)
 }
 
 func initLogSrc(database store.Store) {
@@ -554,7 +571,7 @@ func initLogSrc(database store.Store) {
 	logSrc.start()
 }
 
-func initDiscord(database store.Store, botSendMessageChan chan discordPayload) {
+func initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {
 		session, sessionErr := NewDiscord(database)
 		if sessionErr != nil {
