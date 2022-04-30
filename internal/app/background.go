@@ -93,6 +93,7 @@ func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, upd
 				serverStateA2SMu.Unlock()
 			}(srv)
 		}
+		waitGroup.Wait()
 		return nil
 	}
 	ticker := time.NewTicker(updateFreq)
@@ -121,9 +122,9 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 		waitGroup := &sync.WaitGroup{}
 		for _, srv := range servers {
 			waitGroup.Add(1)
-			go func(server model.Server) {
+			go func(c context.Context, server model.Server) {
 				defer waitGroup.Done()
-				newStatus, queryErr := query.GetServerStatus(cancelCtx, server)
+				newStatus, queryErr := query.GetServerStatus(c, server)
 				if queryErr != nil {
 					log.Tracef("Failed to query server status: %v", queryErr)
 					return
@@ -131,8 +132,9 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 				serverStateStatusMu.Lock()
 				serverStateStatus[server.ServerNameShort] = newStatus
 				serverStateStatusMu.Unlock()
-			}(srv)
+			}(cancelCtx, srv)
 		}
+		waitGroup.Wait()
 		return nil
 	}
 	ticker := time.NewTicker(updateFreq)
@@ -154,7 +156,7 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 // into a ServerState instance
 func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 	var refreshState = func() error {
-		var roState model.ServerStateCollection
+		var newState model.ServerStateCollection
 		servers, errServers := database.GetServers(ctx, true)
 		if errServers != nil {
 			return errors.Errorf("Failed to fetch servers: %v", errServers)
@@ -219,15 +221,18 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 				}
 				state.Players = knownPlayers
 			}
-			roState = append(roState, state)
+			newState = append(newState, state)
 		}
-		serverStateStatusMu.RLock()
-		serverStateA2SMu.RUnlock()
+		serverStateMu.Lock()
+		serverState = newState
+		serverStateMu.Unlock()
 		return nil
 	}
 	ticker := time.NewTicker(time.Second * 5)
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-ticker.C:
 			if errUpdate := refreshState(); errUpdate != nil {
 				log.Errorf("Failed to refreshState server state: %v", errUpdate)
