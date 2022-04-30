@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var downAll = false
@@ -18,7 +20,9 @@ var migrateCmd = &cobra.Command{
 		if downAll {
 			act = store.MigrateDn
 		}
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}

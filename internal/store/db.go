@@ -81,7 +81,7 @@ func NewQueryFilter(query string) *QueryFilter {
 }
 
 // New sets up underlying required services.
-func New(dsn string) (Store, error) {
+func New(ctx context.Context, dsn string) (Store, error) {
 	cfg, errConfig := pgxpool.ParseConfig(dsn)
 	if errConfig != nil {
 		log.Fatalf("Unable to parse config: %v", errConfig)
@@ -113,7 +113,7 @@ func New(dsn string) (Store, error) {
 		logger.SetReportCaller(config.Log.ReportCaller)
 		cfg.ConnConfig.Logger = logrusadapter.NewLogger(logger)
 	}
-	dbConn, errConnectConfig := pgxpool.ConnectConfig(context.Background(), cfg)
+	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
 	if errConnectConfig != nil {
 		log.Fatalf("Failed to connect to database: %v", errConnectConfig)
 	}
@@ -179,14 +179,14 @@ const (
 	// MigrateDownOne
 )
 
-// Migrate e
+// Migrate database schema
 func (database *pgStore) Migrate(action MigrationAction) error {
 	instance, errOpen := sql.Open("pgx", config.DB.DSN)
 	if errOpen != nil {
 		return errors.Wrapf(errOpen, "Failed to open database for migration")
 	}
 	if errPing := instance.Ping(); errPing != nil {
-		return errors.Wrapf(errPing, "Cannot migrator, failed to connect to target server")
+		return errors.Wrapf(errPing, "Cannot migrate, failed to connect to target server")
 	}
 	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
 		MigrationsTable:       "_migration",

@@ -42,7 +42,9 @@ var seedCmd = &cobra.Command{
 	Use:   "seed",
 	Short: "Add testing data",
 	Run: func(cmd *cobra.Command, args []string) {
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
@@ -57,9 +59,6 @@ var seedCmd = &cobra.Command{
 		if errUnmarshal := json.Unmarshal(rawSeedData, &seed); errUnmarshal != nil {
 			log.Fatalf("failed to unmarshal seed file: %v", errUnmarshal)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
-		defer cancel()
-
 		for _, adminSid64 := range seed.Admins {
 			person := model.NewPerson(adminSid64)
 			if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, adminSid64, &person); errGetPerson != nil {

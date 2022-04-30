@@ -80,7 +80,7 @@ type discordPayload struct {
 
 // Start is the main application entry point
 func Start(ctx context.Context) error {
-	dbStore, dbErr := store.New(config.DB.DSN)
+	dbStore, dbErr := store.New(ctx, config.DB.DSN)
 	if dbErr != nil {
 		return errors.Wrapf(dbErr, "Failed to setup store")
 	}

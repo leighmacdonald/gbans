@@ -24,7 +24,9 @@ var unbanSteamCmd = &cobra.Command{
 	Short: "Unban an existing steam profile ban",
 	Long:  `Unban an existing steam profile ban`,
 	Run: func(cmd *cobra.Command, args []string) {
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
@@ -38,8 +40,6 @@ var unbanSteamCmd = &cobra.Command{
 		if !sid64.Valid() {
 			log.Fatalf("Invalid steam id")
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
 		ban := model.NewBannedPerson()
 		if errGetBan := database.GetBanBySteamID(ctx, sid64, false, &ban); errGetBan != nil {
 			if errors.Is(errGetBan, store.ErrNoResult) {
@@ -61,7 +61,7 @@ var unbanCIDRCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		database, errStore := store.New(config.DB.DSN)
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
@@ -98,7 +98,7 @@ var unbanASNCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		database, errStore := store.New(config.DB.DSN)
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}

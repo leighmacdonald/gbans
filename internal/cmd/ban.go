@@ -33,7 +33,9 @@ var banSteamCmd = &cobra.Command{
 	Short: "create a steam ban",
 	Long:  `Create a new steam ban in the database`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db, errNewStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+		defer cancel()
+		db, errNewStore := store.New(ctx, config.DB.DSN)
 		if errNewStore != nil {
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
@@ -58,8 +60,6 @@ var banSteamCmd = &cobra.Command{
 			log.Fatalf("Invalid duration: %v", errDur)
 		}
 		ban := model.NewBan(sid, config.General.Owner, dur)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
 		if errSaveBan := db.SaveBan(ctx, &ban); errSaveBan != nil {
 			log.WithFields(log.Fields{"sid": sid.String()}).Fatalf("Could not create create ban: %v", errSaveBan)
 		}
@@ -76,7 +76,7 @@ var banCIDRCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, errNewStore := store.New(config.DB.DSN)
+		db, errNewStore := store.New(ctx, config.DB.DSN)
 		if errNewStore != nil {
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
@@ -118,7 +118,7 @@ var banASNCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		db, errNewStore := store.New(config.DB.DSN)
+		db, errNewStore := store.New(ctx, config.DB.DSN)
 		if errNewStore != nil {
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}

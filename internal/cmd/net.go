@@ -22,7 +22,9 @@ var netUpdateCmd = &cobra.Command{
 	Short: "Updates ip2location dataset",
 	Long:  `Updates ip2location dataset`,
 	Run: func(cmd *cobra.Command, args []string) {
-		database, errStore := store.New(config.DB.DSN)
+		connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancelConn()
+		database, errStore := store.New(connCtx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
@@ -38,9 +40,9 @@ var netUpdateCmd = &cobra.Command{
 		if errRead != nil {
 			log.Fatalf("Failed to read: %v", errRead)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*30)
-		defer cancel()
-		if errInsert := database.InsertBlockListData(ctx, blockListData); errInsert != nil {
+		updateCtx, cancelUpdate := context.WithTimeout(context.Background(), time.Minute*30)
+		defer cancelUpdate()
+		if errInsert := database.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
 			log.Fatalf("Failed to import: %v", errInsert)
 		}
 	},

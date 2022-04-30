@@ -34,12 +34,12 @@ var serverListCmd = &cobra.Command{
 	Short: "List all servers",
 	Long:  `List all servers`,
 	Run: func(cmd *cobra.Command, args []string) {
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
 		servers, errGetServers := database.GetServers(ctx, false)
 		if errGetServers != nil {
 			if errors.Is(errGetServers, store.ErrNoResult) {
@@ -71,7 +71,9 @@ var serverCreateCmd = &cobra.Command{
 	Short: "create a server",
 	Long:  `Create a new server entry in the database`,
 	Run: func(cmd *cobra.Command, args []string) {
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
@@ -92,8 +94,6 @@ var serverCreateCmd = &cobra.Command{
 		}
 		server := model.NewServer(nameLong, host, port)
 		server.RCON = rcon
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
 		if errSaveServer := database.SaveServer(ctx, &server); errSaveServer != nil {
 			log.Fatalf("Could not create server: %v", errSaveServer)
 		}
@@ -110,7 +110,7 @@ var serverDeleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		database, errStore := store.New(config.DB.DSN)
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}
@@ -132,7 +132,7 @@ var serverUpdateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 		defer cancel()
-		database, errStore := store.New(config.DB.DSN)
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to setup database connection: %v", errStore)
 		}

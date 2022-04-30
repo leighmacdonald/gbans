@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var statsCmd = &cobra.Command{
@@ -19,8 +20,9 @@ var statsRebuildCmd = &cobra.Command{
 	Use:   "rebuild",
 	Short: "Rebuild all stats tables",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		database, errStore := store.New(config.DB.DSN)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
 		if errStore != nil {
 			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
