@@ -28,8 +28,6 @@ var (
 	warnings       map[steamid.SID64][]userWarning
 	warningsMu     *sync.RWMutex
 	logPayloadChan chan model.LogPayload
-	serversState   map[string]*model.ServerState
-	serversStateMu *sync.RWMutex
 	// Current known state of the servers rcon status command
 	serverStateStatus   map[string]extra.Status
 	serverStateStatusMu *sync.RWMutex
@@ -37,11 +35,13 @@ var (
 	serverStateA2S   map[string]a2s.ServerInfo
 	serverStateA2SMu *sync.RWMutex
 	discordSendMsg   chan discordPayload
+	serverStateMu    *sync.RWMutex
+	serverState      model.ServerStateCollection
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
-	serversStateMu = &sync.RWMutex{}
+	serverStateMu = &sync.RWMutex{}
 	serverStateA2SMu = &sync.RWMutex{}
 	serverStateStatusMu = &sync.RWMutex{}
 
@@ -554,6 +554,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	}
 	go serverA2SStatusUpdater(ctx, database, freq)
 	go serverRCONStatusUpdater(ctx, database, freq)
+	go serverStateRefresher(ctx, database)
 	go profileUpdater(ctx, database)
 	go warnWorker(ctx)
 	go logReader(ctx, database)

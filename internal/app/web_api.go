@@ -535,13 +535,14 @@ func (web *web) onAPIGetServers(database store.Store) gin.HandlerFunc {
 				UpdatedOn:         server.UpdatedOn,
 				Players:           nil,
 			}
-			state, stateFound := currentState[info.ServerName]
+			var state model.ServerState
+			stateFound := currentState.ByName(info.ServerName, &state)
 			if stateFound {
-				info.VAC = state.A2S.VAC
-				info.CurrentMap = state.Status.Map
-				info.PlayersMax = state.Status.PlayersMax
-				info.Tags = state.Status.Tags
-				for _, pl := range state.Status.Players {
+				info.VAC = state.VAC
+				info.CurrentMap = state.Map
+				info.PlayersMax = state.MaxPlayers
+				info.Tags = state.Keywords
+				for _, pl := range state.Players {
 					info.Players = append(info.Players, playerInfo{
 						SteamID:       pl.SID,
 						Name:          pl.Name,

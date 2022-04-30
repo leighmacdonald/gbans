@@ -9,11 +9,9 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	"github.com/rumblefrog/go-a2s"
 	"net"
 	"regexp"
 	"strings"
@@ -336,24 +334,24 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 // TODO move findPlayerBy* methods to here
-type ServerStateCollection map[string]*ServerState
+type ServerStateCollection []ServerState
 
 func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
 		if strings.EqualFold(server.NameShort, name) {
-			state = server
+			state = &server
 			return true
 		}
 	}
 	return false
 }
 
-func (c ServerStateCollection) ByRegion() map[string][]*ServerState {
-	rm := map[string][]*ServerState{}
+func (c ServerStateCollection) ByRegion() map[string][]ServerState {
+	rm := map[string][]ServerState{}
 	for serverId, server := range c {
 		_, exists := rm[server.Region]
 		if !exists {
-			rm[server.Region] = []*ServerState{}
+			rm[server.Region] = []ServerState{}
 		}
 		rm[server.Region] = append(rm[server.Region], c[serverId])
 	}
@@ -376,18 +374,76 @@ func NewServer(name string, address string, port int) Server {
 	}
 }
 
+// ServerState contains the entire state for the servers. This
+// contains sensitive information and should only be used where needed
+// by admins.
 type ServerState struct {
-	NameLong    string
+	// Database
+	ServerId    int64
+	Name        string
 	NameShort   string
 	Host        string
+	Port        int
 	Enabled     bool
 	Region      string
 	CountryCode string
+	Location    ip2location.LatLong `json:"location"`
 	Reserved    int
-	A2S         a2s.ServerInfo
-	Status      extra.Status
-	Players     []extra.Player
-	LastUpdate  time.Time
+
+	LastUpdate time.Time
+
+	// A2S
+	NameA2S  string `json:"name_a2s"` // The live name can differ from default
+	Protocol uint8  `json:"protocol"`
+	Map      string `json:"map"`
+	// Name of the folder containing the game files.
+	Folder string `json:"folder"`
+	// Full name of the game.
+	Game string `json:"game"`
+	// Steam Application ID of game.
+	AppId uint16 `json:"app_id"`
+	// Number of players on the server.
+	PlayerCount int `json:"player_count"`
+	// Maximum number of players the server reports it can hold.
+	MaxPlayers int `json:"max_players"`
+	// Number of bots on the server.
+	Bots int `json:"Bots"`
+	// Indicates the type of server
+	// Rag Doll Kung Fu servers always return 0 for "Server type."
+	ServerType string `json:"server_type"`
+	// Indicates the operating system of the server
+	ServerOS string `json:"server_os"`
+	// Indicates whether the server requires a password
+	Password bool `json:"password"`
+	// Specifies whether the server uses VAC
+	VAC bool `json:"vac"`
+	// Version of the game installed on the server.
+	Version string `json:"version"`
+	// Server's SteamID.
+	SteamID steamid.SID64 `json:"steam_id"`
+	// Tags that describe the game according to the server (for future use.)
+	Keywords []string `json:"keywords"`
+	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits. The earlier AppID could have been truncated as it was forced into 16-bit storage.
+	GameID uint64 `json:"game_id"` // Needed?
+	// Spectator port number for SourceTV.
+	STVPort uint16 `json:"stv_port"`
+	// Name of the spectator server for SourceTV.
+	STVName string `json:"stv_name"`
+
+	// RCON Sourced
+	Players []ServerStatePlayer `json:"players"`
+}
+
+type ServerStatePlayer struct {
+	UserID        int           `json:"user_id"`
+	Name          string        `json:"name"`
+	SID           steamid.SID64 `json:"steam_id"`
+	ConnectedTime time.Duration `json:"connected_time"`
+	State         string        `json:"state"`
+	Ping          int           `json:"ping"`
+	Loss          int           `json:"loss"`
+	IP            net.IP        `json:"ip"`
+	Port          int           `json:"port"`
 }
 
 type Person struct {
@@ -508,7 +564,7 @@ func (e *RawLogEvent) Unmarshal(output any) error {
 }
 
 type PlayerInfo struct {
-	Player  *extra.Player
+	Player  *ServerStatePlayer
 	Server  *Server
 	SteamID steamid.SID64
 	InGame  bool
@@ -517,7 +573,7 @@ type PlayerInfo struct {
 
 func NewPlayerInfo() PlayerInfo {
 	return PlayerInfo{
-		Player:  &extra.Player{},
+		Player:  &ServerStatePlayer{},
 		Server:  nil,
 		SteamID: 0,
 		InGame:  false,

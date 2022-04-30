@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 )
@@ -149,6 +150,92 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 	}
 }
 
+// serverStateRefresher periodically compiles and caches the current known db, rcon & a2s server state
+// into a ServerState instance
+func serverStateRefresher(ctx context.Context, database store.ServerStore) {
+	var refreshState = func() error {
+		var roState model.ServerStateCollection
+		servers, errServers := database.GetServers(ctx, true)
+		if errServers != nil {
+			return errors.Errorf("Failed to fetch servers: %v", errServers)
+		}
+		serverStateA2SMu.RLock()
+		defer serverStateA2SMu.RUnlock()
+		serverStateStatusMu.RLock()
+		defer serverStateStatusMu.RUnlock()
+		for _, server := range servers {
+			var state model.ServerState
+			// use existing state for start?
+			state.ServerId = server.ServerID
+			state.Name = server.ServerNameLong
+			state.NameShort = server.ServerNameShort
+			state.Host = server.Address
+			state.Port = server.Port
+			state.Enabled = server.IsEnabled
+			state.Region = server.Region
+			state.CountryCode = server.CC
+			state.Location = server.Location
+			a2sInfo, a2sFound := serverStateA2S[server.ServerNameShort]
+			if a2sFound {
+				state.NameA2S = a2sInfo.Name
+				state.Protocol = a2sInfo.Protocol
+				state.Map = a2sInfo.Map
+				state.Folder = a2sInfo.Folder
+				state.Game = a2sInfo.Game
+				state.AppId = a2sInfo.ID
+				state.PlayerCount = int(a2sInfo.Players)
+				state.MaxPlayers = int(a2sInfo.MaxPlayers)
+				state.Bots = int(a2sInfo.Bots)
+				state.ServerType = a2sInfo.ServerType.String()
+				state.ServerOS = a2sInfo.ServerOS.String()
+				state.Password = !a2sInfo.Visibility
+				state.VAC = a2sInfo.VAC
+				state.Version = a2sInfo.Version
+				if a2sInfo.SourceTV != nil {
+					state.STVPort = a2sInfo.SourceTV.Port
+					state.STVName = a2sInfo.SourceTV.Name
+				}
+				if a2sInfo.ExtendedServerInfo != nil {
+					state.SteamID = steamid.SID64(a2sInfo.ExtendedServerInfo.SteamID)
+					state.GameID = a2sInfo.ExtendedServerInfo.GameID
+					state.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
+				}
+			}
+			statusInfo, statusFound := serverStateStatus[server.ServerNameShort]
+			if statusFound {
+				var knownPlayers []model.ServerStatePlayer
+				for _, player := range statusInfo.Players {
+					var newPlayer model.ServerStatePlayer
+					newPlayer.UserID = player.UserID
+					newPlayer.Name = player.Name
+					newPlayer.SID = player.SID
+					newPlayer.ConnectedTime = player.ConnectedTime
+					newPlayer.State = player.State
+					newPlayer.Ping = player.Ping
+					newPlayer.Loss = player.Loss
+					newPlayer.IP = player.IP
+					newPlayer.Port = player.Port
+					knownPlayers = append(knownPlayers, newPlayer)
+				}
+				state.Players = knownPlayers
+			}
+			roState = append(roState, state)
+		}
+		serverStateStatusMu.RLock()
+		serverStateA2SMu.RUnlock()
+		return nil
+	}
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ticker.C:
+			if errUpdate := refreshState(); errUpdate != nil {
+				log.Errorf("Failed to refreshState server state: %v", errUpdate)
+			}
+		}
+	}
+}
+
 // mapChanger watches over servers and checks for servers on maps with 0 players.
 // If there is no player for a long enough duration and the map is not one of the
 // maps in the default map set, a changelevel request will be made to the server
@@ -169,19 +256,17 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 			if !config.General.MapChangerEnabled {
 				continue
 			}
-			serversStateMu.RLock()
 			stateCopy := ServerState()
-			serversStateMu.RUnlock()
-			for serverId, state := range stateCopy {
-				activity, activityFound := activityMap[serverId]
-				if !activityFound || len(state.Status.Players) > 0 {
-					activityMap[serverId] = &at{config.Now(), false}
+			for _, state := range stateCopy {
+				activity, activityFound := activityMap[state.NameShort]
+				if !activityFound || len(state.Players) > 0 {
+					activityMap[state.NameShort] = &at{config.Now(), false}
 					continue
 				}
 				if !activity.triggered && time.Since(activity.lastActive) > timeout {
 					isDefaultMap := false
 					for _, m := range config.General.DefaultMaps {
-						if m == stateCopy[serverId].A2S.Map {
+						if m == state.Map {
 							isDefaultMap = true
 							break
 						}
@@ -190,7 +275,7 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 						continue
 					}
 					var server model.Server
-					if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
+					if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
 						log.Errorf("Failed to get server for map changer: %v", errGetServer)
 						continue
 					}
@@ -202,11 +287,11 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 						log.Errorf("Failed to get valid nextMap value")
 						continue
 					}
-					if server.DefaultMap == state.Status.Map {
+					if server.DefaultMap == state.Map {
 						continue
 					}
 					go func(s model.Server, mapName string) {
-						var logger = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "server": serverId})
+						var logger = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "server": state.ServerId})
 						logger.Infof("Idle map change triggered")
 						if _, errExecRCON := query.ExecRCON(ctx, server, fmt.Sprintf("changelevel %s", mapName)); errExecRCON != nil {
 							logger.Errorf("failed to exec mapchanger rcon: %v", errExecRCON)

@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -16,6 +15,13 @@ import (
 	"strings"
 	"time"
 )
+
+func ServerState() model.ServerStateCollection {
+	serverStateMu.RLock()
+	state := serverState
+	serverStateMu.RUnlock()
+	return state
+}
 
 // Find will attempt to match an input string to a steam id and if connected, a
 // matching active Player.
@@ -30,7 +36,7 @@ import (
 func Find(ctx context.Context, database store.Store, playerStr model.Target, ip string, playerInfo *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
-			Player: &extra.Player{},
+			Player: &model.ServerStatePlayer{},
 			Server: &model.Server{},
 		}
 		err      error
@@ -73,11 +79,11 @@ func Find(ctx context.Context, database store.Store, playerStr model.Target, ip 
 }
 
 func findPlayerByName(ctx context.Context, database store.ServerStore, name string, playerInfo *model.PlayerInfo) error {
-	for serverId, serverState := range ServerState() {
-		for _, player := range serverState.Status.Players {
+	for _, state := range ServerState() {
+		for _, player := range state.Players {
 			if strings.Contains(strings.ToLower(player.Name), strings.ToLower(name)) {
 				var server model.Server
-				if errGetServerByName := database.GetServerByName(ctx, serverId, &server); errGetServerByName != nil {
+				if errGetServerByName := database.GetServerByName(ctx, state.NameShort, &server); errGetServerByName != nil {
 					return errGetServerByName
 				}
 				playerInfo.Valid = true
@@ -92,11 +98,11 @@ func findPlayerByName(ctx context.Context, database store.ServerStore, name stri
 }
 
 func findPlayerBySID(ctx context.Context, database store.ServerStore, sid steamid.SID64, playerInfo *model.PlayerInfo) error {
-	for serverId, serverState := range ServerState() {
-		for _, player := range serverState.Status.Players {
+	for _, state := range ServerState() {
+		for _, player := range state.Players {
 			if player.SID == sid {
 				var server model.Server
-				if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
+				if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -111,11 +117,11 @@ func findPlayerBySID(ctx context.Context, database store.ServerStore, sid steami
 }
 
 func findPlayerByIP(ctx context.Context, database store.ServerStore, ip net.IP, playerInfo *model.PlayerInfo) error {
-	for serverId, serverState := range ServerState() {
-		for _, player := range serverState.Players {
+	for _, state := range ServerState() {
+		for _, player := range state.Players {
 			if ip.Equal(player.IP) {
 				var server model.Server
-				if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
+				if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -129,26 +135,15 @@ func findPlayerByIP(ctx context.Context, database store.ServerStore, ip net.IP, 
 	return consts.ErrUnknownID
 }
 
-// ServerState returns a copy of the current known state for all servers.
-func ServerState() model.ServerStateCollection {
-	roState := model.ServerStateCollection{}
-	serversStateMu.RLock()
-	defer serversStateMu.RUnlock()
-	for serverId, serverState := range serversState {
-		roState[serverId] = serverState
-	}
-	return roState
-}
-
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
 func FindPlayerByCIDR(ctx context.Context, database store.ServerStore, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
-	for serverId, serverState := range ServerState() {
-		for _, player := range serverState.Players {
+	for _, state := range ServerState() {
+		for _, player := range state.Players {
 			if ipNet.Contains(player.IP) {
 				localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 				var server model.Server
-				if errGetServer := database.GetServerByName(localCtx, serverId, &server); errGetServer != nil {
+				if errGetServer := database.GetServerByName(localCtx, state.NameShort, &server); errGetServer != nil {
 					cancel()
 					return errGetServer
 				}

@@ -689,15 +689,15 @@ func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 				stats[region] = 0
 				stats[region+"total"] = 0
 			}
-			maxPlayers := st.Status.PlayersMax - st.Reserved
+			maxPlayers := int(st.MaxPlayers) - st.Reserved
 			if maxPlayers <= 0 {
 				maxPlayers = 32 - st.Reserved
 			}
-			stats[region] += float64(st.Status.PlayersCount)
+			stats[region] += float64(st.PlayerCount)
 			stats[region+"total"] += float64(maxPlayers)
-			used += st.Status.PlayersCount
+			used += int(st.PlayerCount)
 			total += maxPlayers
-			counts = append(counts, fmt.Sprintf("%s: %2d/%2d", st.NameShort, st.Status.PlayersCount, maxPlayers))
+			counts = append(counts, fmt.Sprintf("%s: %2d/%2d", st.NameShort, st.PlayerCount, maxPlayers))
 		}
 		msg := strings.Join(counts, "    ")
 		if msg != "" {
@@ -732,11 +732,11 @@ func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 	}
 	var rows []string
 	embed := respOk(response, fmt.Sprintf("Current Players: %s", server.ServerNameShort))
-	if len(state.Status.Players) > 0 {
-		sort.SliceStable(state.Status.Players, func(i, j int) bool {
-			return state.Status.Players[i].Name < state.Status.Players[j].Name
+	if len(state.Players) > 0 {
+		sort.SliceStable(state.Players, func(i, j int) bool {
+			return state.Players[i].Name < state.Players[j].Name
 		})
-		for _, player := range state.Status.Players {
+		for _, player := range state.Players {
 			var asn ip2location.ASNRecord
 			if errASN := bot.database.GetASNRecordByIP(ctx, player.IP, &asn); errASN != nil {
 				// Will fail for LAN ips
