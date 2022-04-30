@@ -20,7 +20,7 @@ export interface Server {
     default_map: string;
     reserved_slots: number;
     players_max: number;
-    players: PlayerInfo[];
+    players: PlayerInfo[] | null;
     created_on: Date;
     updated_on: Date;
 }

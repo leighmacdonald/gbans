@@ -245,12 +245,11 @@ export const PlayerBanForm = ({
             </FormControl>
 
             <Button
-                fullWidth
                 key={'submit'}
                 value={'Create Ban'}
                 onClick={handleSubmit}
                 variant="contained"
-                color="primary"
+                color="error"
                 startIcon={<VoiceOverOffSharp />}
             >
                 Ban Player

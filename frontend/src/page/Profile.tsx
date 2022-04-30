@@ -16,6 +16,7 @@ import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
 import { Masonry } from '@mui/lab';
 import { format, fromUnixTime } from 'date-fns';
+import { LoadingSpinner } from '../component/LoadingSpinner';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -43,8 +44,8 @@ export const Profile = (): JSX.Element => {
     return (
         <Grid container paddingTop={3} spacing={3}>
             {loading && (
-                <Grid item xs={12}>
-                    <h3>Loading Profile...</h3>
+                <Grid item xs={12} alignContent={'center'}>
+                    <LoadingSpinner />
                 </Grid>
             )}
             {!loading && profile && profile.player.steam_id != '' && (

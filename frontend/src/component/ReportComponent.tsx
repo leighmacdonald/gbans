@@ -30,6 +30,7 @@ import Card from '@mui/material/Card';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import ButtonGroup from '@mui/material/ButtonGroup';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -231,14 +232,16 @@ export const ReportComponent = ({
                                     setComment(v.target.value);
                                 }}
                             />
-                            <Button
-                                onClick={onSubmitMessage}
-                                variant={'contained'}
-                                color={'success'}
-                                endIcon={<SendIcon />}
-                            >
-                                Send Comment
-                            </Button>
+                            <ButtonGroup>
+                                <Button
+                                    onClick={onSubmitMessage}
+                                    variant={'contained'}
+                                    endIcon={<SendIcon />}
+                                    fullWidth={false}
+                                >
+                                    Send Comment
+                                </Button>
+                            </ButtonGroup>
                         </Stack>
                     </Paper>
                 </Stack>

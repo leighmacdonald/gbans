@@ -22,9 +22,8 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
         f();
     }, []);
 
-    const containsAll = (f: number[]): boolean => {
-        return f.filter((f) => f == 0).length > 0;
-    };
+    const containsAll = (f: number[]): boolean =>
+        f.filter((f) => f == 0).length > 0;
 
     const handleChange = (event: SelectChangeEvent<number[]>) => {
         let newValue: number[];

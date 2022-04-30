@@ -178,7 +178,7 @@ export const ReportForm = (): JSX.Element => {
                     setProfile(profile1);
                 }}
             />
-            <FormControl fullWidth margin={'normal'} variant={'filled'}>
+            <FormControl margin={'normal'} variant={'filled'}>
                 <InputLabel id="select_ban_reason_label">Ban Reason</InputLabel>
                 <Select
                     labelId="select_ban_reason_label"
