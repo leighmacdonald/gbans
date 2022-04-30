@@ -315,15 +315,17 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			BanType:  model.Unknown,
 			Msg:      "",
 		}
+		responseCtx, cancelResponse := context.WithTimeout(ctx, time.Second*15)
+		defer cancelResponse()
 		// Check SteamID
-		steamID, errResolve := steamid.ResolveSID64(context.Background(), request.SteamID)
+		steamID, errResolve := steamid.ResolveSID64(responseCtx, request.SteamID)
 		if errResolve != nil || !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
 			responseErr(ctx, http.StatusBadRequest, resp)
 			return
 		}
 		var person model.Person
-		if errPerson := getOrCreateProfileBySteamID(ctx, database, steamID, request.IP.String(), &person); errPerson != nil {
+		if errPerson := getOrCreateProfileBySteamID(responseCtx, database, steamID, request.IP.String(), &person); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
 				Msg:     "Error updating profile state",
@@ -331,7 +333,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			return
 		}
 		// Check IP first
-		banNet, errGetBanNet := database.GetBanNet(ctx, request.IP)
+		banNet, errGetBanNet := database.GetBanNet(responseCtx, request.IP)
 		if errGetBanNet != nil {
 			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
@@ -348,10 +350,10 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var asnRecord ip2location.ASNRecord
-		errASN := database.GetASNRecordByIP(ctx, request.IP, &asnRecord)
+		errASN := database.GetASNRecordByIP(responseCtx, request.IP, &asnRecord)
 		if errASN == nil {
 			var asnBan model.BanASN
-			if errASNBan := database.GetBanASN(ctx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
+			if errASNBan := database.GetBanASN(responseCtx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
 				if !errors.Is(errASNBan, store.ErrNoResult) {
 					log.Errorf("Failed to fetch asn bannedPerson: %v", errASNBan)
 				}
@@ -364,7 +366,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			}
 		}
 		bannedPerson := model.NewBannedPerson()
-		if errGetBan := database.GetBanBySteamID(ctx, steamID, false, &bannedPerson); errGetBan != nil {
+		if errGetBan := database.GetBanBySteamID(responseCtx, steamID, false, &bannedPerson); errGetBan != nil {
 			if errGetBan == store.ErrNoResult {
 				resp.BanType = model.OK
 				responseErr(ctx, http.StatusOK, resp)
@@ -613,7 +615,8 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 			responseErr(ctx, http.StatusForbidden, nil)
 			return
 		}
-		friendIDs, errFetchFriends := steam.FetchFriends(person.SteamID)
+
+		friendIDs, errFetchFriends := steam.FetchFriends(ctx, person.SteamID)
 		if errFetchFriends != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
@@ -639,26 +642,29 @@ func (web *web) onAPIProfile(database store.Store) gin.HandlerFunc {
 		Friends []steamweb.PlayerSummary `json:"friends"`
 	}
 	return func(ctx *gin.Context) {
+		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
+		defer cancelRequest()
 		var request req
 		if errBind := ctx.Bind(&request); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		sid, errResolveSID64 := steamid.ResolveSID64(ctx, request.Query)
+		sid, errResolveSID64 := steamid.ResolveSID64(requestCtx, request.Query)
 		if errResolveSID64 != nil {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		person := model.NewPerson(sid)
-		if errGetProfile := getOrCreateProfileBySteamID(ctx, database, sid, "", &person); errGetProfile != nil {
+		if errGetProfile := getOrCreateProfileBySteamID(requestCtx, database, sid, "", &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		friendIDs, errFetchFriends := steam.FetchFriends(person.SteamID)
+		friendIDs, errFetchFriends := steam.FetchFriends(requestCtx, person.SteamID)
 		if errFetchFriends != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
 		}
+		// TODO add ctx to steamweb lib
 		friends, errFetchSummaries := steam.FetchSummaries(friendIDs)
 		if errFetchSummaries != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")

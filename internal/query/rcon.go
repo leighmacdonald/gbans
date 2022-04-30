@@ -16,8 +16,10 @@ import (
 
 // ExecRCON executes the given command against the server provided. It returns the command
 // output.
-func ExecRCON(server model.Server, cmd string) (string, error) {
-	console, errDial := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
+func ExecRCON(ctx context.Context, server model.Server, cmd string) (string, error) {
+	execCtx, cancelExec := context.WithTimeout(ctx, time.Second*15)
+	defer cancelExec()
+	console, errDial := rcon.Dial(execCtx, server.Addr(), server.RCON, time.Second*10)
 	if errDial != nil {
 		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerNameShort, errDial)
 	}
@@ -38,8 +40,10 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 		waitGroup.Add(1)
 		go func(server model.Server) {
 			defer waitGroup.Done()
+			rconCtx, cancelExec := context.WithTimeout(ctx, time.Second*20)
+			defer cancelExec()
 			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
-			conn, errDial := rcon.Dial(ctx, addr, server.RCON, timeout)
+			conn, errDial := rcon.Dial(rconCtx, addr, server.RCON, timeout)
 			if errDial != nil {
 				log.Errorf("Failed to connect to server %s: %v", server.ServerNameShort, errDial)
 				return
@@ -60,8 +64,10 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 }
 
 // GetServerStatus fetches and parses status output for the server
-func GetServerStatus(server model.Server) (extra.Status, error) {
-	resp, errRcon := ExecRCON(server, "status")
+func GetServerStatus(ctx context.Context, server model.Server) (extra.Status, error) {
+	rconCtx, cancelRcon := context.WithTimeout(ctx, time.Second*15)
+	defer cancelRcon()
+	resp, errRcon := ExecRCON(rconCtx, server, "status")
 	if errRcon != nil {
 		log.Tracef("Failed to exec rcon command: %v", errRcon)
 		return extra.Status{}, errRcon

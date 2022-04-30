@@ -230,7 +230,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session, interacti
 			return
 		}
 		if playerInfo.Valid && playerInfo.InGame {
-			if resp, err7 := query.ExecRCON(*playerInfo.Server, fmt.Sprintf("sm_kick %s", playerInfo.Player.Name)); err7 != nil {
+			if resp, err7 := query.ExecRCON(ctx, *playerInfo.Server, fmt.Sprintf("sm_kick %s", playerInfo.Player.Name)); err7 != nil {
 				log.Debug(resp)
 			}
 		}

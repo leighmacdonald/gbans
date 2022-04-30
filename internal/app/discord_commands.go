@@ -376,7 +376,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 		}
 	}
 
-	return registerCommandPermissions(perms)
+	return registerCommandPermissions(bot.ctx, perms)
 }
 
 type permissionRequest struct {
@@ -386,7 +386,7 @@ type permissionRequest struct {
 
 // registerCommandPermissions is used to additionally apply further restrictions to
 // application commands that discordgo itself does not support yet.
-func registerCommandPermissions(perms []permissionRequest) error {
+func registerCommandPermissions(ctx context.Context, perms []permissionRequest) error {
 	httpClient := util.NewHTTPClient()
 	body, errUnmarshal := json.Marshal(perms)
 	if errUnmarshal != nil {
@@ -394,7 +394,9 @@ func registerCommandPermissions(perms []permissionRequest) error {
 	}
 	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions",
 		config.Discord.AppID, config.Discord.GuildID)
-	req, errNewReq := http.NewRequestWithContext(context.Background(), "PUT", permUrl, bytes.NewReader(body))
+	reqCtx, cancelReq := context.WithTimeout(ctx, time.Second*10)
+	defer cancelReq()
+	req, errNewReq := http.NewRequestWithContext(reqCtx, "PUT", permUrl, bytes.NewReader(body))
 	if errNewReq != nil {
 		return errors.Wrapf(errNewReq, "Failed to create http request for discord permissions")
 	}
@@ -454,9 +456,9 @@ func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction 
 			}
 			return
 		}
-		lCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-		defer cancel()
-		if errHandleCommand := handler(lCtx, session, interaction, &response); errHandleCommand != nil {
+		commandCtx, cancelCommand := context.WithTimeout(bot.ctx, time.Second*30)
+		defer cancelCommand()
+		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
 			respErr(&response, errHandleCommand.Error())
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {

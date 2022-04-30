@@ -32,6 +32,7 @@ func (bot *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed)
 // discord implements the ChatBot interface for the discord chat platform.
 type discord struct {
 	session            *discordgo.Session
+	ctx                context.Context
 	database           store.Store
 	connectedMu        *sync.RWMutex
 	connected          bool
@@ -40,8 +41,9 @@ type discord struct {
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord(database store.Store) (*discord, error) {
+func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 	bot := discord{
+		ctx:         ctx,
 		session:     nil,
 		database:    database,
 		connectedMu: &sync.RWMutex{},

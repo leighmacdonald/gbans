@@ -29,11 +29,13 @@ type getFriendListResponse struct {
 	} `json:"friendslist"`
 }
 
-func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
+func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection, error) {
 	const baseURL = "https://api.steampowered.com/ISteamUser" +
 		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
-	req, errReq := http.NewRequestWithContext(context.Background(), "GET", u, nil)
+	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
+	defer cancelRequest()
+	req, errReq := http.NewRequestWithContext(requestCtx, "GET", u, nil)
 	if errReq != nil {
 		return nil, errors.Wrap(errReq, "Failed to create new request")
 	}

@@ -48,7 +48,7 @@ var banSteamCmd = &cobra.Command{
 		if steamProfile == "" {
 			log.Fatal("Steam ID cannot be empty")
 		}
-		sid, errSid := steamid.ResolveSID64(context.Background(), steamProfile)
+		sid, errSid := steamid.ResolveSID64(ctx, steamProfile)
 		if errSid != nil {
 			log.Fatalf("Failed to resolve steam id: %v", errSid)
 		}

@@ -249,7 +249,7 @@ func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, 
 			return
 		}
 		if playerInfo.Player != nil && playerInfo.Server != nil {
-			_, errExecRCON := query.ExecRCON(*playerInfo.Server,
+			_, errExecRCON := query.ExecRCON(ctx, *playerInfo.Server,
 				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(playerInfo.Player.SID)), banNet.Reason))
 			if errExecRCON != nil {
 				log.Errorf("Failed to query for ban request: %v", errExecRCON)
@@ -273,7 +273,7 @@ func Kick(ctx context.Context, database store.Store, origin model.Origin, target
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
-		rconResponse, errExecRCON := query.ExecRCON(*foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
+		rconResponse, errExecRCON := query.ExecRCON(ctx, *foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
 		if errExecRCON != nil {
 			log.Errorf("Faied to kick user afeter ban: %v", errExecRCON)
 			return errExecRCON
@@ -314,7 +314,7 @@ func Say(ctx context.Context, database store.Store, author steamid.SID64, server
 		return errors.Errorf("Failed to fetch server: %s", serverName)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, message)
-	rconResponse, errExecRCON := query.ExecRCON(server, msg)
+	rconResponse, errExecRCON := query.ExecRCON(ctx, server, msg)
 	if errExecRCON != nil {
 		return errExecRCON
 	}
@@ -362,7 +362,7 @@ func PSay(ctx context.Context, database store.Store, author steamid.SID64, targe
 		return consts.ErrUnknownID
 	}
 	msg := fmt.Sprintf(`sm_psay %d "%s"`, playerInfo.Player.UserID, message)
-	_, errExecRCON := query.ExecRCON(*playerInfo.Server, msg)
+	_, errExecRCON := query.ExecRCON(ctx, *playerInfo.Server, msg)
 	if errExecRCON != nil {
 		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
 	}

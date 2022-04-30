@@ -33,6 +33,7 @@ const (
 // instances
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
+	ctx       context.Context
 	udpAddr   *net.UDPAddr
 	sink      chan model.LogPayload
 	database  store.Store
@@ -41,13 +42,14 @@ type remoteSrcdsLogSource struct {
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(listenAddr string, database store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(ctx context.Context, listenAddr string, database store.Store, sink chan model.LogPayload) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", listenAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
 	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
+		ctx:       ctx,
 		udpAddr:   udpAddr,
 		database:  database,
 		sink:      sink,
@@ -60,7 +62,9 @@ func newRemoteSrcdsLogSource(listenAddr string, database store.Store, sink chan 
 // Updates DNS -> IP mappings
 func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 	newServers := map[string]string{}
-	servers, errServers := remoteSrc.database.GetServers(context.Background(), true)
+	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
+	defer cancelServers()
+	servers, errServers := remoteSrc.database.GetServers(serversCtx, true)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -81,7 +85,9 @@ func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
 
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int]string{}
-	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
+	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
+	defer cancelServers()
+	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to update DNS: %v", errServers)
 		return
@@ -96,22 +102,30 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 }
 
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
-	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
+	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*10)
+	defer cancelServers()
+	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to add log addr: %v", errServers)
 		return
 	}
-	query.RCON(context.Background(), servers, fmt.Sprintf("logaddress_add %s", addr))
+	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
+	defer cancelQuery()
+	query.RCON(queryCtx, servers, fmt.Sprintf("logaddress_add %s", addr))
 	log.Debugf("Added log address")
 }
 
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
-	servers, errServers := remoteSrc.database.GetServers(context.Background(), false)
+	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*10)
+	defer cancelServers()
+	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
 		log.Errorf("Failed to load servers to del log addr: %v", errServers)
 		return
 	}
-	query.RCON(context.Background(), servers, fmt.Sprintf("logaddress_del %s", addr))
+	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
+	defer cancelQuery()
+	query.RCON(queryCtx, servers, fmt.Sprintf("logaddress_del %s", addr))
 	log.Debugf("Removed log address")
 }
 
@@ -165,7 +179,7 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 					continue
 				}
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
-				if errConv != nil { //5.188.225.147
+				if errConv != nil {
 					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
 					continue
 				}

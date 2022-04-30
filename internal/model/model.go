@@ -24,7 +24,10 @@ import (
 type Target string
 
 func (t Target) SID64() (steamid.SID64, error) {
-	sid64, errResolveSID := steamid.ResolveSID64(context.Background(), string(t))
+	// TODO pass ctx, or remove resolve?
+	resolveCtx, cancelResolve := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelResolve()
+	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
 	if errResolveSID != nil {
 		return 0, consts.ErrInvalidSID
 	}

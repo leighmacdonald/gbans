@@ -547,7 +547,7 @@ func initFilters(ctx context.Context, database store.FilterStore) {
 func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	go banSweeper(ctx, database)
 	go mapChanger(ctx, database, time.Second*5)
-	go serverStateUpdater(ctx, database)
+
 	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errDuration != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
@@ -559,12 +559,12 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go logReader(ctx, database)
 	go logWriter(ctx, database)
 	go filterWorker(ctx, database, botSendMessageChan)
-	go initLogSrc(database)
+	go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 }
 
-func initLogSrc(database store.Store) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(config.Log.SrcdsLogAddr, database, logPayloadChan)
+func initLogSrc(ctx context.Context, database store.Store) {
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database, logPayloadChan)
 	if errLogSrc != nil {
 		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
 	}
@@ -573,7 +573,7 @@ func initLogSrc(database store.Store) {
 
 func initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {
-		session, sessionErr := NewDiscord(database)
+		session, sessionErr := NewDiscord(ctx, database)
 		if sessionErr != nil {
 			log.Fatalf("Failed to setup session: %v", sessionErr)
 		}

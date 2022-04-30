@@ -84,7 +84,7 @@ func NewQueryFilter(query string) *QueryFilter {
 func New(ctx context.Context, dsn string) (Store, error) {
 	cfg, errConfig := pgxpool.ParseConfig(dsn)
 	if errConfig != nil {
-		log.Fatalf("Unable to parse config: %v", errConfig)
+		return nil, errors.Errorf("Unable to parse config: %v", errConfig)
 	}
 	newDatabase := pgStore{}
 	if config.DB.AutoMigrate {
@@ -92,7 +92,7 @@ func New(ctx context.Context, dsn string) (Store, error) {
 			if errMigrate.Error() == "no change" {
 				log.Debugf("Migration at latest version")
 			} else {
-				log.Fatalf("Could not migrate schema: %v", errMigrate)
+				return nil, errors.Errorf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
 			log.Infof("Migration completed successfully")

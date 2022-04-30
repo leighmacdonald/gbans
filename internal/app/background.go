@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
@@ -123,9 +122,9 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 			waitGroup.Add(1)
 			go func(server model.Server) {
 				defer waitGroup.Done()
-				newStatus, queryErr := query.GetServerStatus(server)
+				newStatus, queryErr := query.GetServerStatus(cancelCtx, server)
 				if queryErr != nil {
-					log.Warnf("Failed to query server status: %v", queryErr)
+					log.Tracef("Failed to query server status: %v", queryErr)
 					return
 				}
 				serverStateStatusMu.Lock()
@@ -146,115 +145,6 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 				log.Errorf("Error trying to updateStatus server status state: %v", errUpdate)
 			}
 			log.WithFields(log.Fields{"state": "success"}).Tracef("Server status state updateStatus")
-		}
-	}
-}
-
-// serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
-// information. This data is accessed often so it is cached
-func serverStateUpdater(ctx context.Context, database store.ServerStore) {
-	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
-	if errDuration != nil {
-		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
-	}
-	var update = func(ctx context.Context) (model.ServerStateCollection, error) {
-		servers, errGetServers := database.GetServers(ctx, false)
-		if errGetServers != nil {
-			return nil, errors.Wrapf(errGetServers, "Failed to get servers")
-		}
-
-		newServers := model.ServerStateCollection{}
-		done := make(chan any)
-		results := make(chan model.ServerState)
-
-		updateWaitGroup := &sync.WaitGroup{}
-		updateWaitGroup.Add(1)
-		go func() {
-			defer updateWaitGroup.Done()
-			for {
-				select {
-				case <-done:
-					return
-				case r := <-results:
-					newServers[r.NameShort] = &r
-				}
-			}
-		}()
-		waitGroup := &sync.WaitGroup{}
-		for _, server := range servers {
-			waitGroup.Add(1)
-			go func(server model.Server) {
-				defer waitGroup.Done()
-				serverState := model.ServerState{}
-				serverState.Region = server.Region
-				serverState.Enabled = server.IsEnabled
-				serverState.CountryCode = server.CC
-				serverState.NameShort = server.ServerNameShort
-				serverState.Reserved = 8
-				queryWaitGroup := &sync.WaitGroup{}
-				queryWaitGroup.Add(2)
-				go func(state *model.ServerState) {
-					defer queryWaitGroup.Done()
-					status, errS := query.GetServerStatus(server)
-					if errS != nil {
-						log.Tracef("Failed to update server status: %v", errS)
-						return
-					}
-					serverState.Status = status
-				}(&serverState)
-				go func(state *model.ServerState) {
-					defer queryWaitGroup.Done()
-					a, errA := query.A2SQueryServer(server)
-					if errA != nil {
-						log.Tracef("Failed to update a2s status: %v", errA)
-						return
-					}
-					serverState.A2S = *a
-					serverState.NameLong = a.Name
-					playerCounter.With(prometheus.Labels{"server_name": server.ServerNameShort}).
-						Observe(float64(a.Players))
-					if a.Players > 1 {
-						mapCounter.With(prometheus.Labels{"map": a.Map}).Add(freq.Seconds())
-					}
-				}(&serverState)
-				queryWaitGroup.Wait()
-				serverState.LastUpdate = config.Now()
-				results <- serverState
-			}(server)
-		}
-		waitGroup.Wait()
-		close(done)
-		updateWaitGroup.Wait()
-		log.WithFields(log.Fields{"count": len(servers)}).Tracef("Servers updated")
-		c := model.ServerStateCollection{}
-		for k, v := range newServers {
-			c[k] = v
-		}
-		log.Debugf("Updated server states")
-		return c, nil
-	}
-	newServerState, errNewServerState := update(ctx)
-	if errNewServerState != nil {
-		log.Errorf("Failed to update servers: %v", errNewServerState)
-	} else {
-		serversStateMu.Lock()
-		serversState = newServerState
-		serversStateMu.Unlock()
-	}
-	ticker := time.NewTicker(freq)
-	for {
-		select {
-		case <-ticker.C:
-			newState, errNewState := update(ctx)
-			if errNewState != nil {
-				log.Errorf("Failed to update servers: %v", errNewState)
-			} else {
-				serversStateMu.Lock()
-				serversState = newState
-				serversStateMu.Unlock()
-			}
-		case <-ctx.Done():
-			return
 		}
 	}
 }
@@ -300,7 +190,7 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 						continue
 					}
 					var server model.Server
-					if errGetServer := database.GetServerByName(context.Background(), serverId, &server); errGetServer != nil {
+					if errGetServer := database.GetServerByName(ctx, serverId, &server); errGetServer != nil {
 						log.Errorf("Failed to get server for map changer: %v", errGetServer)
 						continue
 					}
@@ -318,7 +208,7 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 					go func(s model.Server, mapName string) {
 						var logger = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "server": serverId})
 						logger.Infof("Idle map change triggered")
-						if _, errExecRCON := query.ExecRCON(server, fmt.Sprintf("changelevel %s", mapName)); errExecRCON != nil {
+						if _, errExecRCON := query.ExecRCON(ctx, server, fmt.Sprintf("changelevel %s", mapName)); errExecRCON != nil {
 							logger.Errorf("failed to exec mapchanger rcon: %v", errExecRCON)
 						}
 						logger.Infof("Idle map change complete")
