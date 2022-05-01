@@ -11,6 +11,18 @@ export enum communityVisibilityState {
     Public = 3
 }
 
+export interface UserProfile {
+    steam_id: string;
+    created_on: Date;
+    updated_on: Date;
+    permission_level: PermissionLevel;
+    discord_id: string;
+    name: string;
+    avatar: string;
+    avatarfull: string;
+    ban_id: number;
+}
+
 export interface Person {
     // PlayerSummaries shape
     steamid: string;
@@ -57,8 +69,8 @@ export const apiGetProfile = async (query: string): Promise<PlayerProfile> => {
     return await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 };
 
-export const apiGetCurrentProfile = async (): Promise<PlayerProfile> => {
-    return await apiCall<PlayerProfile>(`/api/current_profile`, 'GET');
+export const apiGetCurrentProfile = async (): Promise<UserProfile> => {
+    return await apiCall<UserProfile>(`/api/current_profile`, 'GET');
 };
 
 export const apiGetPeople = async (): Promise<Person[]> => {

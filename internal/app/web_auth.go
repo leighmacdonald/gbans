@@ -260,7 +260,21 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
-			ctx.Set("person", loggedInPerson)
+			profile := model.UserProfile{
+				SteamID:         loggedInPerson.SteamID,
+				CreatedOn:       loggedInPerson.CreatedOn,
+				UpdatedOn:       loggedInPerson.UpdatedOn,
+				PermissionLevel: loggedInPerson.PermissionLevel,
+				DiscordID:       loggedInPerson.DiscordID,
+				Name:            loggedInPerson.PersonaName,
+				Avatar:          loggedInPerson.Avatar,
+				AvatarFull:      loggedInPerson.AvatarFull,
+			}
+			bp := model.NewBannedPerson()
+			if banErr := database.GetBanBySteamID(ctx, profile.SteamID, false, &bp); banErr == nil {
+				profile.BanID = bp.Ban.BanID
+			}
+			ctx.Set(ctxKeyUserProfile, profile)
 		}
 		ctx.Next()
 	}

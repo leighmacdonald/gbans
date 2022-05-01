@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const ctxKeyUserProfile = "user_profile"
+
 type WebHandler interface {
 	ListenAndServe(context.Context) error
 }
@@ -81,15 +83,15 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload) (WebHa
 	return webHandler, nil
 }
 
-func currentPerson(ctx *gin.Context) model.Person {
-	maybePerson, found := ctx.Get("person")
+func currentUserProfile(ctx *gin.Context) model.UserProfile {
+	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return model.NewPerson(0)
+		return model.NewUserProfile(0)
 	}
-	person, ok := maybePerson.(model.Person)
+	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
 		log.Errorf("Count not cast store.Person from session")
-		return model.NewPerson(0)
+		return model.NewUserProfile(0)
 	}
 	return person
 }

@@ -211,7 +211,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 		if banRequest.Network != "" {
 			banNetOpts := banNetworkOpts{
 				banOpts: banOpts{target: model.Target(banRequest.SteamID.String()),
-					author:   model.Target(currentPerson(ctx).SteamID.String()),
+					author:   model.Target(currentUserProfile(ctx).SteamID.String()),
 					duration: model.Duration(banRequest.Duration),
 					reason:   banRequest.ReasonText,
 					origin:   model.Web,
@@ -231,7 +231,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 		} else {
 			newBanOpts := banOpts{
 				target:   model.Target(banRequest.SteamID.String()),
-				author:   model.Target(currentPerson(ctx).SteamID.String()),
+				author:   model.Target(currentUserProfile(ctx).SteamID.String()),
 				duration: model.Duration(banRequest.Duration),
 				reason:   banRequest.ReasonText,
 				origin:   model.Web,
@@ -606,31 +606,13 @@ func (web *web) onAPIGetResolveProfile(database store.PersonStore) gin.HandlerFu
 }
 
 func (web *web) onAPICurrentProfile() gin.HandlerFunc {
-	type resp struct {
-		Player  *model.Person            `json:"player"`
-		Friends []steamweb.PlayerSummary `json:"friends"`
-	}
 	return func(ctx *gin.Context) {
-		person := currentPerson(ctx)
-		if !person.SteamID.Valid() {
+		userProfile := currentUserProfile(ctx)
+		if !userProfile.SteamID.Valid() {
 			responseErr(ctx, http.StatusForbidden, nil)
 			return
 		}
-
-		friendIDs, errFetchFriends := steam.FetchFriends(ctx, person.SteamID)
-		if errFetchFriends != nil {
-			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
-			return
-		}
-		friends, errFetchSummaries := steam.FetchSummaries(friendIDs)
-		if errFetchSummaries != nil {
-			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
-			return
-		}
-		var response resp
-		response.Player = &person
-		response.Friends = friends
-		responseOK(ctx, http.StatusOK, response)
+		responseOK(ctx, http.StatusOK, userProfile)
 	}
 }
 
@@ -878,7 +860,7 @@ func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 		Media       []reportMedia `json:"media"`
 	}
 	return func(ctx *gin.Context) {
-		currentUser := currentPerson(ctx)
+		currentUser := currentUserProfile(ctx)
 		var newReport createReport
 		if errBind := ctx.BindJSON(&newReport); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -997,7 +979,7 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 			log.Errorf("Failed to load report: %v", errReport)
 			return
 		}
-		person := currentPerson(ctx)
+		person := currentUserProfile(ctx)
 		msg := model.NewReportMessage(int(reportId), person.SteamID, request.Message)
 		if errSave := database.SaveReportMessage(ctx, int(reportId), &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)

@@ -35,6 +35,7 @@ export const ReportViewPage = (): JSX.Element => {
             const resp = await apiGetReport(id);
             setReport(resp);
         };
+        // noinspection JSIgnoredPromiseFromCall
         loadReport();
     }, [report_id, setReport, id]);
 
@@ -45,7 +46,7 @@ export const ReportViewPage = (): JSX.Element => {
             </Grid>
             <Grid item xs={3}>
                 <Stack spacing={2}>
-                    {currentUser.player.permission_level >=
+                    {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <>
                             <Paper elevation={1}>

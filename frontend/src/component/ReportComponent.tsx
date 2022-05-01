@@ -4,11 +4,11 @@ import {
     apiGetLogs,
     apiGetReportMessages,
     PermissionLevel,
-    Person,
     Report,
     ReportMessage,
     ReportMessagesResponse,
-    UserMessageLog
+    UserMessageLog,
+    UserProfile
 } from '../api';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
@@ -59,7 +59,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export interface UserMessageViewProps {
-    author: Person;
+    author: UserProfile;
     message: ReportMessage;
 }
 
@@ -77,7 +77,7 @@ const UserMessageView = ({ author, message }: UserMessageViewProps) => {
                         <MoreVertIcon />
                     </IconButton>
                 }
-                title={author.personaname}
+                title={author.name}
                 subheader={formatDistance(
                     parseJSON(message.created_on),
                     new Date(),
@@ -114,14 +114,11 @@ export const ReportComponent = ({
                 report.report_id,
                 comment
             );
-            setMessages([
-                ...messages,
-                { author: currentUser.player, message: resp }
-            ]);
+            setMessages([...messages, { author: currentUser, message: resp }]);
             setComment('');
         };
         submit();
-    }, [comment, messages, report.report_id, currentUser.player]);
+    }, [comment, messages, report.report_id, currentUser]);
 
     useEffect(() => {
         const loadMessages = async () => {
@@ -158,7 +155,7 @@ export const ReportComponent = ({
                             >
                                 <Tab label="Description" />
                                 <Tab label="Evidence" />
-                                {currentUser.player.permission_level >=
+                                {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
                                     <>
                                         <Tab label="Chat Logs" />

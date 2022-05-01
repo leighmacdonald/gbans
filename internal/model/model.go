@@ -464,6 +464,18 @@ type Person struct {
 	*steamweb.PlayerSummary
 }
 
+type UserProfile struct {
+	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+	PermissionLevel Privilege     `json:"permission_level"`
+	DiscordID       string        `json:"discord_id"`
+	Name            string        `json:"name"`
+	Avatar          string        `json:"avatar"`
+	AvatarFull      string        `json:"avatarfull"`
+	BanID           uint64        `json:"ban_id"`
+}
+
 // LoggedIn checks for a valid steamID
 func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
@@ -483,7 +495,19 @@ func NewPerson(sid64 steamid.SID64) Person {
 		CreatedOn:       t0,
 		UpdatedOn:       t0,
 		PlayerSummary:   &steamweb.PlayerSummary{},
-		PermissionLevel: PAuthenticated,
+		PermissionLevel: PGuest,
+	}
+}
+
+// NewUserProfile allocates a new default person instance
+func NewUserProfile(sid64 steamid.SID64) UserProfile {
+	t0 := config.Now()
+	return UserProfile{
+		SteamID:         sid64,
+		CreatedOn:       t0,
+		UpdatedOn:       t0,
+		PermissionLevel: PGuest,
+		Name:            "Guest",
 	}
 }
 

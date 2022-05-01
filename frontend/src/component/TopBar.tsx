@@ -93,7 +93,7 @@ export const TopBar = () => {
 
     const userItems: menuRoute[] = [
         {
-            to: `/profile/${currentUser?.player?.steam_id}`,
+            to: `/profile/${currentUser?.steam_id}`,
             text: 'Profile',
             icon: <AccountCircleIcon />
         },
@@ -249,8 +249,8 @@ export const TopBar = () => {
                                 )}
                             </IconButton>
                         </Tooltip>
-                        {!currentUser.player ||
-                            (currentUser?.player.steam_id === '' && (
+                        {!currentUser ||
+                            (currentUser.steam_id === '' && (
                                 <Tooltip title="Steam Login">
                                     <Button onClick={handleOnLogin}>
                                         <img
@@ -260,8 +260,8 @@ export const TopBar = () => {
                                     </Button>
                                 </Tooltip>
                             ))}
-                        {currentUser.player &&
-                            currentUser?.player.steam_id &&
+                        {currentUser &&
+                            currentUser?.steam_id &&
                             adminItems.length > 0 && (
                                 <>
                                     <Tooltip title="Mod/Admin">
@@ -303,7 +303,8 @@ export const TopBar = () => {
                                     </Menu>
                                 </>
                             )}
-                        {currentUser.player && currentUser?.player.steam_id && (
+
+                        {currentUser && currentUser?.steam_id && (
                             <>
                                 <Tooltip title="User Settings">
                                     <IconButton
@@ -311,8 +312,8 @@ export const TopBar = () => {
                                         sx={{ p: 0 }}
                                     >
                                         <Avatar
-                                            alt={currentUser.player.personaname}
-                                            src={currentUser.player.avatar}
+                                            alt={currentUser.name}
+                                            src={currentUser.avatar}
                                         />
                                     </IconButton>
                                 </Tooltip>

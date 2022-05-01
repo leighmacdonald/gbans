@@ -34,7 +34,8 @@ func TestMain(testMain *testing.M) {
 	}
 	config.Read()
 	config.General.Mode = config.TestMode
-	database, errNew := New(config.DB.DSN)
+	ctx := context.Background()
+	database, errNew := New(ctx, config.DB.DSN)
 	if errNew != nil {
 		log.Errorf("Failed to connect to test database: %v", errNew)
 		os.Exit(1)

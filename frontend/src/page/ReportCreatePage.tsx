@@ -32,9 +32,9 @@ export const ReportCreatePage = (): JSX.Element => {
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     useEffect(() => {
         const loadHist = async () => {
-            if (currentUser.player.steam_id != '') {
+            if (currentUser.steam_id != '') {
                 const resp = await apiGetReports({
-                    author_id: currentUser.player.steam_id,
+                    author_id: currentUser.steam_id,
                     limit: 10,
                     order_by: 'created_on',
                     desc: true
@@ -44,6 +44,7 @@ export const ReportCreatePage = (): JSX.Element => {
                 }
             }
         };
+        // noinspection JSIgnoredPromiseFromCall
         loadHist();
     }, [currentUser]);
 

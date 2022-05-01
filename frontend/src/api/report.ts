@@ -1,5 +1,5 @@
 import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
-import { Person } from './profile';
+import { Person, UserProfile } from './profile';
 
 export enum ReportStatus {
     Opened,
@@ -54,7 +54,7 @@ export interface ReportMedia extends TimeStamped {
 
 export interface ReportMessagesResponse {
     message: ReportMessage;
-    author: Person;
+    author: UserProfile;
 }
 
 export interface ReportMessage extends TimeStamped {

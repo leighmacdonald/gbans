@@ -22,7 +22,7 @@ import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanView } from './page/BanView';
-import { apiGetCurrentProfile, PermissionLevel, PlayerProfile } from './api';
+import { apiGetCurrentProfile, PermissionLevel, UserProfile } from './api';
 import { AdminBan } from './page/AdminBan';
 import { AdminServerLog } from './page/AdminServerLog';
 import { TopBar } from './component/TopBar';
@@ -38,7 +38,7 @@ import { AdminNews } from './page/AdminNews';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
-        useState<NonNullable<PlayerProfile>>(GuestProfile);
+        useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
     let currentTheme = localStorage.getItem('theme') as PaletteMode;
@@ -68,7 +68,7 @@ export const App = (): JSX.Element => {
             const token = localStorage.getItem('token');
             if (token != null && token != '') {
                 const profile =
-                    (await apiGetCurrentProfile()) as NonNullable<PlayerProfile>;
+                    (await apiGetCurrentProfile()) as NonNullable<UserProfile>;
                 setCurrentUser(profile);
             }
         };
