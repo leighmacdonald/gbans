@@ -61,7 +61,7 @@
     "eslint-plugin-no-loops": "^0.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.28.0",
-    "eslint-plugin-react-hooks": "^4.3.0",
+    "eslint-plugin-react-hooks": "^4.5.0",
     "history": "^5.2.0",
     "html-webpack-plugin": "^5.5.0",
     "ip-cidr": "^3.0.0",
