@@ -48,7 +48,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
         opts = {
             mode: 'dark',
             primary: {
-                main: '#5b7a8c'
+                main: '#f5e7de'
             },
             secondary: {
                 main: '#836312'
