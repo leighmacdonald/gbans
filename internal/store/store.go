@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"io"
 	"net"
@@ -97,6 +98,12 @@ type MigrationStore interface {
 	Migrate(action MigrationAction) error
 }
 
+type WikiStore interface {
+	GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error
+	DeleteWikiPageBySlug(ctx context.Context, slug string) error
+	SaveWikiPage(ctx context.Context, page *wiki.Page) error
+}
+
 type StatStore interface {
 	GetStats(ctx context.Context, stats *model.Stats) error
 	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error)
@@ -131,5 +138,6 @@ type Store interface {
 	StatStore
 	ReportStore
 	NewsStore
+	WikiStore
 	io.Closer
 }

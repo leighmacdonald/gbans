@@ -158,6 +158,7 @@ type discordConfig struct {
 	LogChannelID           string   `mapstructure:"log_channel_id"`
 	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
 	PublicLogChannelId     string   `mapstructure:"public_log_channel_id"`
+	ModLogChannelId        string   `mapstructure:"mod_log_channel_id"`
 }
 
 type logConfig struct {

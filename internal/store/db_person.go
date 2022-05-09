@@ -280,7 +280,6 @@ func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]m
 func (database *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
 	query := `
 		SELECT l.source_id, coalesce(p.personaname, ''), coalesce((l.meta_data->>'msg')::text, '')
-	
 		FROM server_log l
 		LEFT JOIN person p on l.source_id = p.steam_id
 		WHERE source_id = $1

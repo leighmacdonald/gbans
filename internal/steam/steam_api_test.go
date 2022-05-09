@@ -1,11 +1,13 @@
 package steam
 
 import (
+	"context"
+	"os"
+	"testing"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -31,7 +33,7 @@ func TestSteamWebAPI(t *testing.T) {
 		t.Skip("No steamkey set")
 		return
 	}
-	friends, errFetch := FetchFriends(76561197961279983)
+	friends, errFetch := FetchFriends(context.Background(), 76561197961279983)
 	assert.NoError(t, errFetch)
 	assert.True(t, len(friends) > 100)
 	summaries, errFetchSummaries := FetchSummaries(friends)

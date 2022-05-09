@@ -119,7 +119,7 @@ export const apiGetReportMessages = async (report_id: number) => {
 };
 
 export interface GetLogsRequest {
-    steam_id: number;
+    steam_id: string;
     limit: number;
 }
 
@@ -128,10 +128,10 @@ export interface UserMessageLog extends TimeStamped {
     message: string;
 }
 
-export const apiGetLogs = async (steam_id: number, limit: number) => {
+export const apiGetLogs = async (steam_id: string, limit: number) => {
     return await apiCall<UserMessageLog[], GetLogsRequest>(
         `/api/logs/query`,
-        'GET',
+        'POST',
         { limit, steam_id }
     );
 };

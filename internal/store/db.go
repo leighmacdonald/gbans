@@ -174,9 +174,9 @@ const (
 	// MigrateDn Fully downgrades the schema
 	MigrateDn
 	// MigrateUpOne Upgrade the schema by one revision
-	// MigrateUpOne
+	MigrateUpOne
 	// MigrateDownOne Downgrade the schema by one revision
-	// MigrateDownOne
+	MigrateDownOne
 )
 
 // Migrate database schema
@@ -211,12 +211,12 @@ func (database *pgStore) Migrate(action MigrationAction) error {
 		return errors.Wrapf(errMigrateInstance, "Failed to migrator up")
 	}
 	switch action {
-	//case MigrateUpOne:
-	//	return migrator.Steps(1)
+	case MigrateUpOne:
+		return migrator.Steps(1)
 	case MigrateDn:
 		return migrator.Down()
-	//case MigrateDownOne:
-	//	return migrator.Steps(-1)
+	case MigrateDownOne:
+		return migrator.Steps(-1)
 	case MigrateUp:
 		fallthrough
 	default:

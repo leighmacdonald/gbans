@@ -117,6 +117,7 @@ export const ReportComponent = ({
             setMessages([...messages, { author: currentUser, message: resp }]);
             setComment('');
         };
+        // noinspection JSIgnoredPromiseFromCall
         submit();
     }, [comment, messages, report.report_id, currentUser]);
 
@@ -125,12 +126,14 @@ export const ReportComponent = ({
             const resp = await apiGetReportMessages(report.report_id);
             setMessages(resp);
         };
+        // noinspection JSIgnoredPromiseFromCall
         loadMessages();
 
         const loadUserLogs = async () => {
-            const resp = await apiGetLogs(report.reported_id, 100);
+            const resp = await apiGetLogs(`${report.reported_id}`, 100);
             setLogs(resp);
         };
+        // noinspection JSIgnoredPromiseFromCall
         loadUserLogs();
     }, [report]);
 

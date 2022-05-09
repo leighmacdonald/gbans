@@ -28,6 +28,7 @@ import Typography from '@mui/material/Typography';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import { log } from '../util/errors';
 import { useNavigate } from 'react-router-dom';
+import ButtonGroup from '@mui/material/ButtonGroup';
 
 interface FormProps {
     uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
@@ -84,9 +85,8 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
             <Box sx={{ '& > :not(style)': { m: 1 } }}>
                 <label htmlFor="fileInput">
                     <Fab
-                        variant={'extended'}
-                        size="small"
-                        color={'primary'}
+                        size={'small'}
+                        color={'secondary'}
                         aria-label="upload"
                         onClick={() => {
                             const input = document.getElementById('fileInput');
@@ -99,8 +99,7 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
                             );
                         }}
                     >
-                        <FileUploadIcon sx={{ mr: 1 }} />
-                        Upload Evidence
+                        <FileUploadIcon />
                     </Fab>
                 </label>
             </Box>
@@ -226,14 +225,16 @@ export const ReportForm = (): JSX.Element => {
                 setUploadedFiles={setUploadedFiles}
                 uploadedFiles={uploadedFiles}
             />
-            <Button
-                variant={'contained'}
-                color={'success'}
-                onClick={submit}
-                endIcon={<SendIcon />}
-            >
-                Submit Report
-            </Button>
+            <ButtonGroup>
+                <Button
+                    variant={'contained'}
+                    color={'primary'}
+                    onClick={submit}
+                    endIcon={<SendIcon />}
+                >
+                    Submit Report
+                </Button>
+            </ButtonGroup>
         </Stack>
     );
 };

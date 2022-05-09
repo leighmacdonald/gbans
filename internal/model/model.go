@@ -379,19 +379,17 @@ func NewServer(name string, address string, port int) Server {
 // by admins.
 type ServerState struct {
 	// Database
-	ServerId    int64
-	Name        string
-	NameShort   string
-	Host        string
-	Port        int
-	Enabled     bool
-	Region      string
-	CountryCode string
+	ServerId    int64               `json:"server_id"`
+	Name        string              `json:"name"`
+	NameShort   string              `json:"name_short"`
+	Host        string              `json:"host"`
+	Port        int                 `json:"port"`
+	Enabled     bool                `json:"enabled"`
+	Region      string              `json:"region"`
+	CountryCode string              `json:"cc"`
 	Location    ip2location.LatLong `json:"location"`
-	Reserved    int
-
-	LastUpdate time.Time
-
+	Reserved    int                 `json:"reserved"`
+	LastUpdate  time.Time           `json:"last_update"`
 	// A2S
 	NameA2S  string `json:"name_a2s"` // The live name can differ from default
 	Protocol uint8  `json:"protocol"`
@@ -441,9 +439,9 @@ type ServerStatePlayer struct {
 	ConnectedTime time.Duration `json:"connected_time"`
 	State         string        `json:"state"`
 	Ping          int           `json:"ping"`
-	Loss          int           `json:"loss"`
-	IP            net.IP        `json:"ip"`
-	Port          int           `json:"port"`
+	Loss          int           `json:"-"`
+	IP            net.IP        `json:"-"`
+	Port          int           `json:"-"`
 }
 
 type Person struct {
