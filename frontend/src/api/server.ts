@@ -1,6 +1,50 @@
 import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos } from './common';
+import { LatLngLiteral } from 'leaflet';
+
+export interface ServerState {
+    server_id: number;
+    name: string;
+    name_short: string;
+    host: string;
+    port: number;
+    enabled: boolean;
+    region: string;
+    cc: string;
+    location: LatLngLiteral;
+    reserved: number;
+    last_update: string;
+    name_a2s: string;
+    protocol: number;
+    map: string;
+    folder: string;
+    game: string;
+    app_id: number;
+    player_count: number;
+    max_players: number;
+    bots: number;
+    server_type: string;
+    server_os: string;
+    password: boolean;
+    vac: boolean;
+    version: string;
+    steam_id: string;
+    keywords: string[];
+    game_id: number;
+    stv_port: number;
+    stv_name: string;
+    players: ServerStatePlayer[];
+}
+
+export interface ServerStatePlayer {
+    user_id: number;
+    name: string;
+    steam_id: string;
+    connected_time: number;
+    state: string;
+    ping: number;
+}
 
 export interface Server {
     server_id: number;
@@ -8,19 +52,14 @@ export interface Server {
     server_name_long: string;
     address: string;
     port: number;
-    password_protected: boolean;
     password: string;
-    vac: boolean;
     region: string;
     cc: string;
     latitude: number;
     longitude: number;
-    current_map: string;
-    tags: string[];
     default_map: string;
     reserved_slots: number;
     players_max: number;
-    players: PlayerInfo[] | null;
     created_on: Date;
     updated_on: Date;
 }
@@ -78,7 +117,7 @@ export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
 };
 
 export const apiGetServers = async () => {
-    return await apiCall<Server[]>(`/api/servers`, 'GET');
+    return await apiCall<ServerState[]>(`/api/servers`, 'GET');
 };
 
 export interface CreateServerOpts {

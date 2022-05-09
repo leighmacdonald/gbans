@@ -1,14 +1,14 @@
 import { createContext, useContext } from 'react';
 import noop from 'lodash-es/noop';
 import { LatLngLiteral } from 'leaflet';
-import { Server } from '../api';
+import { ServerState } from '../api';
 
 export type MapState = {
     pos: LatLngLiteral;
     setPos: (pos: LatLngLiteral) => void;
 
-    servers: Server[];
-    setServers: (servers: Server[]) => void;
+    servers: ServerState[];
+    setServers: (servers: ServerState[]) => void;
 };
 
 export const MapStateCtx = createContext<MapState>({

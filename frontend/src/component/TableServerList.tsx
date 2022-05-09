@@ -1,8 +1,8 @@
-import { apiGetServers, Server } from '../api';
+import { apiGetServers, ServerState } from '../api';
 import { CreateDataTable } from './DataTable';
 
 export const TableServerList = (): JSX.Element =>
-    CreateDataTable<Server>()({
+    CreateDataTable<ServerState>()({
         connector: async () => {
             return (await apiGetServers()) || [];
         },
@@ -11,19 +11,19 @@ export const TableServerList = (): JSX.Element =>
         headers: [
             // {id: "server_id",disablePadding: true, label: "ID", numeric: true},
             {
-                id: 'server_name',
+                id: 'name_short',
                 disablePadding: false,
                 label: 'Name',
                 cell_type: 'string'
             },
             {
-                id: 'server_name_long',
+                id: 'name',
                 disablePadding: false,
                 label: 'Name Long',
                 cell_type: 'string'
             },
             {
-                id: 'address',
+                id: 'host',
                 disablePadding: false,
                 label: 'Host',
                 cell_type: 'string'
@@ -35,7 +35,7 @@ export const TableServerList = (): JSX.Element =>
                 cell_type: 'number'
             },
             {
-                id: 'password_protected',
+                id: 'password',
                 disablePadding: false,
                 label: 'Private',
                 cell_type: 'bool'
@@ -53,15 +53,9 @@ export const TableServerList = (): JSX.Element =>
                 cell_type: 'flag'
             },
             {
-                id: 'latitude',
+                id: 'location',
                 disablePadding: false,
                 label: 'Lat',
-                cell_type: 'number'
-            },
-            {
-                id: 'longitude',
-                disablePadding: false,
-                label: 'Lon',
                 cell_type: 'number'
             }
         ],

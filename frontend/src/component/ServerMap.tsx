@@ -55,10 +55,10 @@ export const ServerMarkers = () => {
                 //const dis = getDistance(pos, { lat: s.latitude, lng: s.longitude }) / 1000;
                 return (
                     <Circle
-                        center={{ lat: s.latitude, lng: s.longitude }}
+                        center={s.location}
                         radius={50000}
                         color={'green'}
-                        key={s.server_id}
+                        key={s.name_short}
                     />
                 );
             }),
