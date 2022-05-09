@@ -30,7 +30,7 @@ export interface apiError {
  */
 export const apiCall = async <
     TResponse,
-    TRequestBody = Record<string, unknown>
+    TRequestBody = Record<string, unknown> | object
 >(
     url: string,
     method: string,

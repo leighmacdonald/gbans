@@ -64,7 +64,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	jsRoutes := []string{
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
-		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id"}
+		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
+		"/wiki/*slug"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -84,13 +85,14 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	engine.POST("/api/appeal", web.onAPIPostAppeal(database))
 	engine.POST("/api/appeal/:ban_id", web.onAPIGetAppeal(database))
 	engine.GET("/api/profile", web.onAPIProfile(database))
-	engine.GET("/api/servers", web.onAPIGetServers(database))
+	engine.GET("/api/servers", web.onAPIGetServers())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
 	engine.GET("/api/competitive", web.onAPIGetCompHist())
 	engine.GET("/api/filtered_words", web.onAPIGetFilteredWords(database))
 	engine.GET("/api/players", web.onAPIGetPlayers(database))
 	engine.GET("/api/auth/logout", web.onGetLogout())
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
+	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -125,6 +127,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	modRoute := engine.Use(authMiddleware(database, model.PModerator))
 	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
+	modRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))

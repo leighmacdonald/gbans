@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -477,83 +478,10 @@ func (web *web) onAPIGetPrometheusHosts(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIGetServers(database store.Store) gin.HandlerFunc {
-	type playerInfo struct {
-		SteamID       steamid.SID64 `json:"steam_id"`
-		Name          string        `json:"name"`
-		UserId        int           `json:"user_id"`
-		ConnectedTime int64         `json:"connected_secs"`
-	}
-	type serverInfo struct {
-		ServerID int64 `database:"server_id" json:"server_id"`
-		// ServerNameShort is a short reference name for the server eg: us-1
-		ServerName     string `json:"server_name"`
-		ServerNameLong string `json:"server_name_long"`
-		Address        string `json:"address"`
-		// Port is the port of the server
-		Port              int          `json:"port"`
-		PasswordProtected bool         `json:"password_protected"`
-		VAC               bool         `json:"vac"`
-		Region            string       `json:"region"`
-		CC                string       `json:"cc"`
-		Latitude          float64      `json:"latitude"`
-		Longitude         float64      `json:"longitude"`
-		CurrentMap        string       `json:"current_map"`
-		Tags              []string     `json:"tags"`
-		DefaultMap        string       `json:"default_map"`
-		ReservedSlots     int          `json:"reserved_slots"`
-		CreatedOn         time.Time    `json:"created_on"`
-		UpdatedOn         time.Time    `json:"updated_on"`
-		PlayersMax        int          `json:"players_max"`
-		Players           []playerInfo `json:"players"`
-	}
+// onAPIGetServers returns the current known cached server state
+func (web *web) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		servers, errGetServers := database.GetServers(ctx, true)
-		if errGetServers != nil {
-			log.Errorf("Failed to fetch servers: %s", errGetServers)
-			responseErr(ctx, http.StatusInternalServerError, nil)
-			return
-		}
-		currentState := ServerState()
-		var serverInfos []serverInfo
-		for _, server := range servers {
-			info := serverInfo{
-				ServerID:          server.ServerID,
-				ServerName:        server.ServerNameShort,
-				ServerNameLong:    server.ServerNameLong,
-				Address:           server.Address,
-				Port:              server.Port,
-				PasswordProtected: server.Password != "",
-				Region:            server.Region,
-				CC:                server.CC,
-				Latitude:          server.Location.Latitude,
-				Longitude:         server.Location.Longitude,
-				CurrentMap:        "",
-				DefaultMap:        server.DefaultMap,
-				ReservedSlots:     server.ReservedSlots,
-				CreatedOn:         server.CreatedOn,
-				UpdatedOn:         server.UpdatedOn,
-				Players:           nil,
-			}
-			var state model.ServerState
-			stateFound := currentState.ByName(info.ServerName, &state)
-			if stateFound {
-				info.VAC = state.VAC
-				info.CurrentMap = state.Map
-				info.PlayersMax = state.MaxPlayers
-				info.Tags = state.Keywords
-				for _, pl := range state.Players {
-					info.Players = append(info.Players, playerInfo{
-						SteamID:       pl.SID,
-						Name:          pl.Name,
-						UserId:        pl.UserID,
-						ConnectedTime: int64(pl.ConnectedTime.Seconds()),
-					})
-				}
-			}
-			serverInfos = append(serverInfos, info)
-		}
-		responseOK(ctx, http.StatusOK, serverInfos)
+		responseOK(ctx, http.StatusOK, ServerState())
 	}
 }
 
@@ -904,6 +832,14 @@ func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 			}
 		}
 		responseOK(ctx, http.StatusCreated, report)
+		msg := &discordgo.MessageEmbed{
+			Title:       "New report created",
+			Description: report.Title,
+		}
+		addField(msg, "Author", report.AuthorId.String())
+		web.botSendMessageChan <- discordPayload{
+			channelId: config.Discord.ModLogChannelId,
+			message:   msg}
 	}
 }
 
@@ -987,6 +923,15 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 			return
 		}
 		responseOK(ctx, http.StatusCreated, msg)
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "New report message posted",
+			Description: msg.Message,
+		}
+		addField(embed, "Author", report.AuthorId.String())
+		web.botSendMessageChan <- discordPayload{
+			channelId: config.Discord.ModLogChannelId,
+			message:   embed}
 	}
 }
 
@@ -1218,5 +1163,58 @@ func (web *web) onAPIPostNewsUpdate(database store.NewsStore) gin.HandlerFunc {
 				Title:       "News Updated",
 				Description: fmt.Sprintf("News Updated: %s", entry.Title)},
 		}
+	}
+}
+
+func (web *web) onAPIGetWikiSlug(database store.WikiStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		slug := ctx.Param("slug")
+		if slug[0] == '/' {
+			slug = slug[1:]
+		}
+		var page wiki.Page
+		if errGetWikiSlug := database.GetWikiPageBySlug(ctx, slug, &page); errGetWikiSlug != nil {
+			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
+				responseOK(ctx, http.StatusOK, page)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, page)
+	}
+}
+
+func (web *web) onAPISaveWikiSlug(database store.WikiStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request wiki.Page
+		if errBind := ctx.BindJSON(&request); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if request.Slug == "" || request.Title == "" || request.BodyMD == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var page wiki.Page
+		if errGetWikiSlug := database.GetWikiPageBySlug(ctx, request.Slug, &page); errGetWikiSlug != nil {
+			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
+				page.CreatedOn = time.Now()
+				page.Revision += 1
+				page.Slug = request.Slug
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+		} else {
+			page = page.NewRevision()
+		}
+		page.Title = request.Title
+		page.BodyMD = request.BodyMD
+		if errSave := database.SaveWikiPage(ctx, &page); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusCreated, page)
 	}
 }

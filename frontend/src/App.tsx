@@ -35,6 +35,7 @@ import { ReportViewPage } from './page/ReportViewPage';
 import { PaletteMode, useMediaQuery } from '@mui/material';
 import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
+import { WikiPage } from './page/WikiPage';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -105,6 +106,14 @@ export const App = (): JSX.Element => {
                                                 <Route
                                                     path={'/bans'}
                                                     element={<Bans />}
+                                                />
+                                                <Route
+                                                    path={'/wiki'}
+                                                    element={<WikiPage />}
+                                                />
+                                                <Route
+                                                    path={'/wiki/:slug'}
+                                                    element={<WikiPage />}
                                                 />
                                                 <Route
                                                     path={'/appeal'}
