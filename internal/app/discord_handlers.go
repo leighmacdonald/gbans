@@ -106,7 +106,7 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interactio
 	resp.Title = playerInfo.Player.Name
 	addFieldInline(resp, "Server", playerInfo.Server.ServerNameShort)
 	addFieldsSteamID(resp, playerInfo.Player.SID)
-	addField(resp, "Connect", fmt.Sprintf("steam://%s:%d", playerInfo.Server.Address, playerInfo.Server.Port))
+	addField(resp, "Connect", fmt.Sprintf("steam://connect/%s:%d", playerInfo.Server.Address, playerInfo.Server.Port))
 	return nil
 }
 
