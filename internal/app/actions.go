@@ -130,14 +130,20 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 			Value:  ban.SteamID.String(),
 			Inline: true,
 		})
+		expIn := "Permanent"
+		expAt := "Permanent"
+		if ban.ValidUntil.Year()-time.Now().Year() < 5 {
+			expIn = config.FmtDuration(ban.ValidUntil)
+			expAt = config.FmtTimeShort(ban.ValidUntil)
+		}
 		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
 			Name:   "Expires In",
-			Value:  config.FmtDuration(ban.ValidUntil),
+			Value:  expIn,
 			Inline: false,
 		})
 		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
 			Name:   "Expires At",
-			Value:  config.FmtTimeShort(ban.ValidUntil),
+			Value:  expAt,
 			Inline: false,
 		})
 		if config.Discord.PublicLogChannelEnable {

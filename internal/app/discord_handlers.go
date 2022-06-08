@@ -265,6 +265,7 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, intera
 		if errors.Is(errBan, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
 		}
+		log.Errorf("Failed to execute ban: %v", errBan)
 		return errCommandFailed
 	}
 	createDiscordBanEmbed(ban, response)
@@ -278,8 +279,14 @@ func createDiscordBanEmbed(ban model.Ban, response *botResponse) *discordgo.Mess
 		addField(embed, "Reason", ban.ReasonText)
 	}
 	addFieldsSteamID(embed, ban.SteamID)
-	addField(embed, "Expires In", config.FmtDuration(ban.ValidUntil))
-	addField(embed, "Expires At", config.FmtTimeShort(ban.ValidUntil))
+	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
+		addField(embed, "Expires In", "Permanent")
+		addField(embed, "Expires At", "Permanent")
+	} else {
+		addField(embed, "Expires In", config.FmtDuration(ban.ValidUntil))
+		addField(embed, "Expires At", config.FmtTimeShort(ban.ValidUntil))
+	}
+
 	return embed
 }
 
@@ -778,6 +785,7 @@ func (bot *discord) onBan(ctx context.Context, session *discordgo.Session, inter
 	case "asn":
 		return bot.onBanASN(ctx, session, interaction, response)
 	default:
+		log.Errorf("Invalid ban type selected")
 		return errCommandFailed
 	}
 }

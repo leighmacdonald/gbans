@@ -16,6 +16,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { PermissionLevel } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import Paper from '@mui/material/Paper';
+import EditIcon from '@mui/icons-material/Edit';
 
 const defaultPage: Page = {
     slug: '',
@@ -86,23 +88,36 @@ const WikiEditForm = ({
                 </Stack>
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
-                <Typography variant={'h3'}>{title}</Typography>
-                <article dangerouslySetInnerHTML={{ __html: bodyHTML }} />
-            </TabPanel>
-            <ButtonGroup>
-                <Button
-                    variant={'outlined'}
-                    onClick={() => {
-                        if (title === '' || bodyMD === '') {
-                            alert('Title and Body cannot be empty');
-                        } else {
-                            onSave(title, bodyMD);
-                        }
+                <Box
+                    sx={(theme) => {
+                        return {
+                            a: {
+                                color: theme.palette.text.primary
+                            }
+                        };
                     }}
                 >
-                    Save
-                </Button>
-            </ButtonGroup>
+                    <Typography variant={'h1'}>{title}</Typography>
+                    <article dangerouslySetInnerHTML={{ __html: bodyHTML }} />
+                </Box>
+            </TabPanel>
+            <Box padding={3}>
+                <ButtonGroup>
+                    <Button
+                        variant={'contained'}
+                        color={'primary'}
+                        onClick={() => {
+                            if (title === '' || bodyMD === '') {
+                                alert('Title and Body cannot be empty');
+                            } else {
+                                onSave(title, bodyMD);
+                            }
+                        }}
+                    >
+                        Save
+                    </Button>
+                </ButtonGroup>
+            </Box>
         </Stack>
     );
 };
@@ -151,7 +166,7 @@ export const WikiPage = (): JSX.Element => {
                     log(e);
                 });
         },
-        [page, flashes, setFlashes]
+        [page, slug, setFlashes, flashes]
     );
 
     const bodyHTML = useMemo(() => {
@@ -164,61 +179,82 @@ export const WikiPage = (): JSX.Element => {
         <Grid container paddingTop={3} spacing={3}>
             {loading && (
                 <Grid item xs={12} alignContent={'center'}>
-                    <LoadingSpinner />
+                    <Paper elevation={1}>
+                        <LoadingSpinner />
+                    </Paper>
                 </Grid>
             )}
             {!loading && !editMode && page.revision > 0 && (
                 <Grid item xs={12}>
-                    <Typography variant={'h3'}>{page.title}</Typography>
-                    <article dangerouslySetInnerHTML={{ __html: bodyHTML }} />
-                    {currentUser.permission_level >=
-                        PermissionLevel.Moderator && (
-                        <ButtonGroup>
-                            <Button
-                                variant={'text'}
-                                onClick={() => {
-                                    setEditMode(true);
+                    <Paper elevation={1}>
+                        <Stack padding={3}>
+                            <Typography variant={'h1'}>{page.title}</Typography>
+                            <Box
+                                sx={(theme) => {
+                                    return {
+                                        a: {
+                                            color: theme.palette.text.primary
+                                        }
+                                    };
                                 }}
-                            >
-                                Edit
-                            </Button>
-                        </ButtonGroup>
-                    )}
+                                dangerouslySetInnerHTML={{ __html: bodyHTML }}
+                            />
+                            {currentUser.permission_level >=
+                                PermissionLevel.Moderator && (
+                                <ButtonGroup>
+                                    <Button
+                                        variant={'contained'}
+                                        color={'primary'}
+                                        onClick={() => {
+                                            setEditMode(true);
+                                        }}
+                                        startIcon={<EditIcon />}
+                                    >
+                                        Edit Page
+                                    </Button>
+                                </ButtonGroup>
+                            )}
+                        </Stack>
+                    </Paper>
                 </Grid>
             )}
             {!loading && !editMode && page.revision == 0 && (
                 <Grid item xs={12}>
-                    <Stack spacing={3}>
-                        <Typography variant={'h1'}>
-                            Wiki Entry Not Found
-                        </Typography>
-                        <Typography variant={'h3'}>
-                            slug: {slug || 'home'}
-                        </Typography>
-                        {currentUser.permission_level >=
-                            PermissionLevel.Moderator && (
-                            <Typography variant={'body1'}>
-                                <Button
-                                    variant={'contained'}
-                                    color={'success'}
-                                    onClick={() => {
-                                        setEditMode(true);
-                                    }}
-                                >
-                                    Create It
-                                </Button>
+                    <Paper elevation={1}>
+                        <Stack spacing={3} padding={3}>
+                            <Typography variant={'h1'}>
+                                Wiki Entry Not Found
                             </Typography>
-                        )}
-                    </Stack>
+                            <Typography variant={'h3'}>
+                                slug: {slug || 'home'}
+                            </Typography>
+                            {currentUser.permission_level >=
+                                PermissionLevel.Moderator && (
+                                <Typography variant={'body1'}>
+                                    <Button
+                                        variant={'contained'}
+                                        color={'primary'}
+                                        onClick={() => {
+                                            setEditMode(true);
+                                        }}
+                                    >
+                                        Create It
+                                    </Button>
+                                </Typography>
+                            )}
+                        </Stack>
+                    </Paper>
                 </Grid>
             )}
             {!loading && editMode && (
                 <Grid item xs={12}>
-                    <WikiEditForm
-                        initialTitleValue={page.title}
-                        initialBodyMDValue={page.body_md}
-                        onSave={onSave}
-                    />
+                    <Paper elevation={1}>
+                        <WikiEditForm
+                            initialTitleValue={page.title}
+                            initialBodyMDValue={page.body_md}
+                            onSave={onSave}
+                        />
+                    </Paper>
                 </Grid>
             )}
         </Grid>
