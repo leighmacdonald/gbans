@@ -3,6 +3,8 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { StatsPanel } from '../component/StatsPanel';
 import { NewsView } from '../component/NewsView';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 export const Home = (): JSX.Element => {
     return (
@@ -11,9 +13,20 @@ export const Home = (): JSX.Element => {
                 <NewsView />
             </Grid>
             <Grid item xs={3}>
-                <Paper elevation={1}>
-                    <StatsPanel />
-                </Paper>
+                <Stack spacing={3}>
+                    <Paper elevation={1}>
+                        <Button
+                            fullWidth
+                            color={'success'}
+                            variant={'contained'}
+                        >
+                            Play Now!
+                        </Button>
+                    </Paper>
+                    <Paper elevation={1}>
+                        <StatsPanel />
+                    </Paper>
+                </Stack>
             </Grid>
         </Grid>
     );

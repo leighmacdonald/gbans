@@ -19,6 +19,8 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { PlayerBanForm } from '../component/PlayerBanForm';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
@@ -41,6 +43,13 @@ export const ReportViewPage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
+            <Grid item xs={12}>
+                <Box padding={2}>
+                    <Typography variant={'h2'}>
+                        {report?.report.title}
+                    </Typography>
+                </Box>
+            </Grid>
             <Grid item xs={9}>
                 {report && <ReportComponent report={report.report} />}
             </Grid>

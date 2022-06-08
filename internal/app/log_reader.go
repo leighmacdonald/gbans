@@ -188,6 +188,7 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 		}
 	}()
 	ticker := time.NewTicker(remoteSrc.frequency)
+	errCount := 0
 	for {
 		select {
 		case <-ticker.C:
@@ -217,7 +218,10 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 			select {
 			case remoteSrc.sink <- payload:
 			default:
-				log.WithFields(log.Fields{"size": len(remoteSrc.sink)}).Warnf("Log sink full")
+				errCount++
+				if errCount%1000 == 0 {
+					log.WithFields(log.Fields{"size": len(remoteSrc.sink)}).Warnf("Log sink full")
+				}
 			}
 			log.WithFields(log.Fields{"id": msgId, "server": payload.ServerName, "sec": logPayload.secure, "body": logPayload.body}).
 				Tracef("Srcds remote log")

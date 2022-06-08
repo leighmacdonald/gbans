@@ -7,7 +7,6 @@ import ThemeProvider from '@mui/material/styles/ThemeProvider';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Home } from './page/Home';
 import { Settings } from './page/Settings';
-import { Appeal } from './page/Appeal';
 import { ReportCreatePage } from './page/ReportCreatePage';
 import { AdminReports } from './page/AdminReports';
 import { AdminFilters } from './page/AdminFilters';
@@ -115,10 +114,10 @@ export const App = (): JSX.Element => {
                                                     path={'/wiki/:slug'}
                                                     element={<WikiPage />}
                                                 />
-                                                <Route
-                                                    path={'/appeal'}
-                                                    element={<Appeal />}
-                                                />
+                                                {/*<Route*/}
+                                                {/*    path={'/appeal'}*/}
+                                                {/*    element={<Appeal />}*/}
+                                                {/*/>*/}
                                                 <Route
                                                     path={'/report/:report_id'}
                                                     element={<ReportViewPage />}

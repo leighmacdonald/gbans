@@ -4,6 +4,7 @@ import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import { apiGetNewsAll, NewsEntry } from '../api/news';
 import FolderIcon from '@mui/icons-material/Folder';
+import { logErr } from '../util/errors';
 
 interface NewsListProps {
     setSelectedNewsEntry: (entry: NewsEntry) => void;
@@ -13,14 +14,11 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     const [news, setNews] = useState<NewsEntry[]>([]);
     const theme = useTheme();
     useEffect(() => {
-        const f = async () => {
-            try {
-                setNews(await apiGetNewsAll());
-            } catch (e) {
-                // TODO log/report
-            }
-        };
-        f();
+        apiGetNewsAll()
+            .then((r) => {
+                setNews(r || []);
+            })
+            .catch(logErr);
     }, []);
     return (
         <Stack spacing={3} padding={3}>

@@ -31,6 +31,7 @@ import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import { logErr } from '../util/errors';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -49,11 +50,7 @@ function TabPanel(props: TabPanelProps) {
             aria-labelledby={`tab-${index}`}
             {...other}
         >
-            {value === index && (
-                <Box sx={{ p: 3 }}>
-                    <Typography>{children}</Typography>
-                </Box>
-            )}
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
         </div>
     );
 }
@@ -109,41 +106,37 @@ export const ReportComponent = ({
         setValue(newValue);
     };
     const onSubmitMessage = useCallback(() => {
-        const submit = async () => {
-            const resp = await apiCreateReportMessage(
-                report.report_id,
-                comment
-            );
-            setMessages([...messages, { author: currentUser, message: resp }]);
-            setComment('');
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        submit();
+        apiCreateReportMessage(report.report_id, comment)
+            .then((response) => {
+                setMessages([
+                    ...messages,
+                    { author: currentUser, message: response }
+                ]);
+                setComment('');
+            })
+            .catch(logErr);
     }, [comment, messages, report.report_id, currentUser]);
 
     useEffect(() => {
-        const loadMessages = async () => {
-            const resp = await apiGetReportMessages(report.report_id);
-            setMessages(resp);
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        loadMessages();
+        apiGetReportMessages(report.report_id)
+            .then((r) => {
+                setMessages(r);
+            })
+            .catch(logErr);
+    }, [report]);
 
-        const loadUserLogs = async () => {
-            const resp = await apiGetLogs(`${report.reported_id}`, 100);
-            setLogs(resp);
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        loadUserLogs();
+    useEffect(() => {
+        apiGetLogs(`${report.reported_id}`, 100)
+            .then((r) => {
+                setLogs(r);
+            })
+            .catch(logErr);
     }, [report]);
 
     return (
         <Grid container>
             <Grid item xs={12}>
                 <Stack spacing={2}>
-                    <Box padding={2}>
-                        <Typography variant={'h2'}>{report?.title}</Typography>
-                    </Box>
                     <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
                         <Box
                             sx={{
@@ -160,10 +153,11 @@ export const ReportComponent = ({
                                 <Tab label="Evidence" />
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <>
-                                        <Tab label="Chat Logs" />
-                                        <Tab label="Connections" />
-                                    </>
+                                    <Tab label="Chat Logs" />
+                                )}
+                                {currentUser.permission_level >=
+                                    PermissionLevel.Moderator && (
+                                    <Tab label="Connections" />
                                 )}
                             </Tabs>
                         </Box>
@@ -177,12 +171,21 @@ export const ReportComponent = ({
                         </TabPanel>
 
                         <TabPanel index={value} value={1}>
-                            <ImageList variant="masonry" cols={3} gap={8}>
+                            <ImageList
+                                variant="masonry"
+                                cols={3}
+                                gap={8}
+                                rowHeight={164}
+                            >
                                 {(report.media_ids ?? []).map((item_id) => (
                                     <ImageListItem key={item_id}>
                                         <img
+                                            style={{
+                                                width: '256px',
+                                                height: '144px'
+                                            }}
                                             src={`/api/download/report/${item_id}`}
-                                            alt={''}
+                                            alt={'Evidence #' + item_id}
                                             loading="lazy"
                                         />
                                     </ImageListItem>
