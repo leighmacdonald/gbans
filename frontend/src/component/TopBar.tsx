@@ -147,6 +147,7 @@ export const TopBar = () => {
             icon: <SubjectIcon />
         });
     }
+
     const renderLinkedMenuItem = (
         text: string,
         route: string,

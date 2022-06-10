@@ -112,7 +112,7 @@ func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
 	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
 	defer cancelQuery()
 	query.RCON(queryCtx, servers, fmt.Sprintf("logaddress_add %s", addr))
-	log.Debugf("Added log address")
+	log.WithField("addr", addr).Infof("Added log address")
 }
 
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {

@@ -18,6 +18,14 @@ import { PermissionLevel } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import Paper from '@mui/material/Paper';
 import EditIcon from '@mui/icons-material/Edit';
+import IconButton from '@mui/material/IconButton';
+import ImageIcon from '@mui/icons-material/Image';
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
+import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
+import ImagesearchRollerIcon from '@mui/icons-material/ImagesearchRoller';
+import { Tooltip } from '@mui/material';
 
 const defaultPage: Page = {
     slug: '',
@@ -72,6 +80,70 @@ const WikiEditForm = ({
                             setTitle(title);
                         }}
                     />
+                    <Stack direction={'row'} alignItems={'center'}>
+                        <Typography variant={'subtitle1'}>Upload</Typography>
+                        <ButtonGroup>
+                            <Tooltip title={'Download remote image'}>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Add Picture"
+                                    component="span"
+                                >
+                                    <ImageIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={'Paste image'}>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Paste image"
+                                    component="span"
+                                >
+                                    <ImagesearchRollerIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </ButtonGroup>
+                        <Typography variant={'subtitle1'}>Format</Typography>
+                        <ButtonGroup>
+                            <Tooltip title={'Embolden selected text'}>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Bold"
+                                    component="span"
+                                >
+                                    <FormatBoldIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={'Underline selected text'}>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Underline"
+                                    component="span"
+                                >
+                                    <FormatUnderlinedIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={'Decrease indent of selected text'}>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Decrease indent"
+                                    component="span"
+                                >
+                                    <FormatIndentDecreaseIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip
+                                title={'Increase indent of  selected text'}
+                            >
+                                <IconButton
+                                    color="primary"
+                                    aria-label="Increase indent"
+                                    component="span"
+                                >
+                                    <FormatIndentIncreaseIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </ButtonGroup>
+                    </Stack>
                     <TextField
                         id="body"
                         label="Body (Markdown)"

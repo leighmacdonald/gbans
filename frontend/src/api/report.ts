@@ -150,3 +150,12 @@ export const apiCreateReportMessage = async (
         { message }
     );
 };
+
+export const apiReportSetState = async (
+    report_id: number,
+    stateAction: ReportStatus
+) => {
+    return await apiCall(`/api/report_status/${report_id}`, 'POST', {
+        status: stateAction
+    });
+};
