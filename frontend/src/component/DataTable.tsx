@@ -143,7 +143,7 @@ export const CreateDataTable = <TRecord,>(): ((
                     </TableCell>
                     {props.headers.map((headCell, index) => (
                         <TableCell
-                            key={`${headCell.id}-${index}`}
+                            key={`${String(headCell.id)}-${index}`}
                             align={
                                 headCell.cell_type === 'number'
                                     ? 'right'

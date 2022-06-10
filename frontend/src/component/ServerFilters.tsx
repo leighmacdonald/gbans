@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect } from 'react';
+import React, { ChangeEvent, useCallback, useEffect } from 'react';
 import { getDistance } from '../util/gis';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import {
@@ -70,14 +70,13 @@ export const ServerFilters = () => {
     ) => {
         setFilterByRegion(checked);
     };
-
-    const defaultState = {
-        showOpenOnly: false,
-        selectedRegion: 'any',
-        filterByRegion: false,
-        customRange: 1500
-    };
     useEffect(() => {
+        const defaultState = {
+            showOpenOnly: false,
+            selectedRegion: 'any',
+            filterByRegion: false,
+            customRange: 1500
+        };
         let state = defaultState;
         try {
             const val = localStorage.getItem('filters');
@@ -96,9 +95,9 @@ export const ServerFilters = () => {
         );
         setFilterByRegion(state?.filterByRegion || defaultState.filterByRegion);
         setCustomRange(state?.customRange || defaultState.customRange);
-    }, []);
+    }, [setCustomRange, setFilterByRegion, setSelectedRegion, setShowOpenOnly]);
 
-    const saveFilterState = () => {
+    const saveFilterState = useCallback(() => {
         localStorage.setItem(
             'filters',
             JSON.stringify({
@@ -108,7 +107,7 @@ export const ServerFilters = () => {
                 customRange: customRange
             })
         );
-    };
+    }, [customRange, filterByRegion, selectedRegion, showOpenOnly]);
 
     useEffect(() => {
         let s = servers;
@@ -133,7 +132,10 @@ export const ServerFilters = () => {
         filterByRegion,
         customRange,
         setServers,
-        servers
+        servers,
+        setSelectedServers,
+        saveFilterState,
+        pos
     ]);
 
     const marks = [
@@ -225,7 +227,7 @@ export const ServerFilters = () => {
                     valueLabelDisplay="auto"
                     value={customRange}
                     marks={marks}
-                    onChange={(_event, value) => {
+                    onChange={(_: Event, value: number | number[]) => {
                         setCustomRange(value as number);
                     }}
                 />
