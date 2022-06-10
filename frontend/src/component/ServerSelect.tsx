@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import * as React from 'react';
+import { logErr } from '../util/errors';
 
 export interface ServerSelectProps {
     setServerIDs: (servers: number[]) => void;
@@ -16,11 +17,11 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
     const [selectedServers, setSelectedServers] = useState<number[]>([0]);
 
     useEffect(() => {
-        const f = async () => {
-            setServers(await apiGetServers());
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        f();
+        apiGetServers()
+            .then((servers) => {
+                setServers(servers || []);
+            })
+            .catch(logErr);
     }, []);
 
     const containsAll = (f: number[]): boolean =>
