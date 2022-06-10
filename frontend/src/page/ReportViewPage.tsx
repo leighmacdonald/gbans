@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -7,7 +7,14 @@ import ListSubheader from '@mui/material/ListSubheader';
 import Stack from '@mui/material/Stack';
 import { ReportComponent } from '../component/ReportComponent';
 import { useParams } from 'react-router-dom';
-import { apiGetReport, PermissionLevel, ReportWithAuthor } from '../api';
+import {
+    ApiException,
+    apiGetReport,
+    apiReportSetState,
+    PermissionLevel,
+    ReportStatus,
+    ReportWithAuthor
+} from '../api';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -21,25 +28,44 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { PlayerBanForm } from '../component/PlayerBanForm';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { logErr } from '../util/errors';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
     const id = parseInt(report_id || '');
     const [report, setReport] = useState<ReportWithAuthor>();
-    const [modAction, setModAction] = React.useState('');
+    const [stateAction, setStateAction] = React.useState(ReportStatus.Opened);
     const { currentUser } = useCurrentUserCtx();
-    const handleChange = (event: SelectChangeEvent) => {
-        setModAction(event.target.value as string);
+    const { flashes, setFlashes } = useUserFlashCtx();
+
+    const handleReportStateChange = (event: SelectChangeEvent<number>) => {
+        setStateAction(event.target.value as ReportStatus);
     };
 
     useEffect(() => {
-        const loadReport = async () => {
-            const resp = await apiGetReport(id);
-            setReport(resp);
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        loadReport();
+        apiGetReport(id)
+            .then((r) => {
+                if (r) {
+                    setReport(r);
+                }
+            })
+            .catch(logErr);
     }, [report_id, setReport, id]);
+
+    const onSetReportState = useCallback(() => {
+        apiReportSetState(id, stateAction).catch((error: ApiException) => {
+            setFlashes([
+                ...flashes,
+                {
+                    heading: 'Error',
+                    level: 'error',
+                    message: error.message,
+                    closable: true
+                }
+            ]);
+        });
+    }, [flashes, id, setFlashes, stateAction]);
 
     return (
         <Grid container spacing={3} paddingTop={3}>
@@ -81,20 +107,38 @@ export const ReportViewPage = (): JSX.Element => {
                                                 <Select
                                                     labelId="select-label"
                                                     id="simple-select"
-                                                    value={modAction}
+                                                    value={stateAction}
                                                     label="Report State"
-                                                    onChange={handleChange}
+                                                    onChange={
+                                                        handleReportStateChange
+                                                    }
                                                 >
-                                                    <MenuItem value={0}>
+                                                    <MenuItem
+                                                        value={
+                                                            ReportStatus.Opened
+                                                        }
+                                                    >
                                                         Opened
                                                     </MenuItem>
-                                                    <MenuItem value={1}>
+                                                    <MenuItem
+                                                        value={
+                                                            ReportStatus.NeedMoreInfo
+                                                        }
+                                                    >
                                                         Need More Info
                                                     </MenuItem>
-                                                    <MenuItem value={2}>
+                                                    <MenuItem
+                                                        value={
+                                                            ReportStatus.ClosedWithoutAction
+                                                        }
+                                                    >
                                                         Closed
                                                     </MenuItem>
-                                                    <MenuItem value={3}>
+                                                    <MenuItem
+                                                        value={
+                                                            ReportStatus.ClosedWithAction
+                                                        }
+                                                    >
                                                         Closed (Banned)
                                                     </MenuItem>
                                                 </Select>
@@ -104,6 +148,7 @@ export const ReportViewPage = (): JSX.Element => {
                                                 variant={'contained'}
                                                 color={'primary'}
                                                 endIcon={<SendIcon />}
+                                                onClick={onSetReportState}
                                             >
                                                 Set Report State
                                             </Button>

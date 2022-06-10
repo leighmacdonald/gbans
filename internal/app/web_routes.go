@@ -119,6 +119,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	authed.POST("/api/reports", web.onAPIGetReports(database))
 	authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage(database))
 	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
+	authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus(database))
 	authed.POST("/api/logs/query", web.onAPILogsQuery(database))
 
 	authed.POST("/api/events", web.onAPIEvents(database))

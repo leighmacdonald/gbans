@@ -6,7 +6,6 @@ import Stack from '@mui/material/Stack';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItem from '@mui/material/ListItem';
 import List from '@mui/material/List';
-import Fab from '@mui/material/Fab';
 import InputLabel from '@mui/material/InputLabel';
 import ListItemText from '@mui/material/ListItemText';
 import Select from '@mui/material/Select';
@@ -84,9 +83,11 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
 
             <Box sx={{ '& > :not(style)': { m: 1 } }}>
                 <label htmlFor="fileInput">
-                    <Fab
+                    <Button
+                        endIcon={<FileUploadIcon />}
                         size={'small'}
-                        color={'secondary'}
+                        variant={'contained'}
+                        color={'primary'}
                         aria-label="upload"
                         onClick={() => {
                             const input = document.getElementById('fileInput');
@@ -99,8 +100,8 @@ const FileUploaderForm: React.FunctionComponent<FormProps> = ({
                             );
                         }}
                     >
-                        <FileUploadIcon />
-                    </Fab>
+                        Upload Evidence
+                    </Button>
                 </label>
             </Box>
             <List>
@@ -160,7 +161,7 @@ export const ReportForm = (): JSX.Element => {
                 <TextField
                     error={titleIsError}
                     id="title"
-                    label={'Title'}
+                    label={'Subject'}
                     variant={'outlined'}
                     margin={'normal'}
                     value={title}
@@ -178,7 +179,9 @@ export const ReportForm = (): JSX.Element => {
                 }}
             />
             <FormControl margin={'normal'} variant={'filled'}>
-                <InputLabel id="select_ban_reason_label">Ban Reason</InputLabel>
+                <InputLabel id="select_ban_reason_label">
+                    Report Reason
+                </InputLabel>
                 <Select
                     labelId="select_ban_reason_label"
                     id="select_ban_reason"
@@ -228,7 +231,7 @@ export const ReportForm = (): JSX.Element => {
             <ButtonGroup>
                 <Button
                     variant={'contained'}
-                    color={'primary'}
+                    color={'success'}
                     onClick={submit}
                     endIcon={<SendIcon />}
                 >

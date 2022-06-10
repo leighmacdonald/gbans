@@ -25,24 +25,38 @@ import (
 	"time"
 )
 
+// apiResponse represents the common high level response of all api responses. All child data is
+// returned by the Data field.
 type apiResponse struct {
+	// Status is a simple truthy status of the response. See response codes for more specific
+	// error handling scenarios
 	Status  bool   `json:"status"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`
 }
 
-func responseErr(ctx *gin.Context, status int, data any) {
+func responseErrUser(ctx *gin.Context, status int, data any, userMsg string, args ...any) {
 	ctx.JSON(status, apiResponse{
-		Status: false,
-		Data:   data,
+		Status:  false,
+		Message: fmt.Sprintf(userMsg, args...),
+		Data:    data,
+	})
+}
+
+func responseErr(ctx *gin.Context, status int, data any) {
+	ctx.JSON(status, apiResponse{Status: false, Data: data})
+}
+
+func responseOKUser(ctx *gin.Context, status int, data any, userMsg string, args ...any) {
+	ctx.JSON(status, apiResponse{
+		Status:  true,
+		Message: fmt.Sprintf(userMsg, args...),
+		Data:    data,
 	})
 }
 
 func responseOK(ctx *gin.Context, status int, data any) {
-	ctx.JSON(status, apiResponse{
-		Status: true,
-		Data:   data,
-	})
+	ctx.JSON(status, apiResponse{Status: true, Data: data})
 }
 
 type demoPostRequest struct {
@@ -63,7 +77,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 		}
 		var server model.Server
 		if errGetServer := database.GetServerByName(ctx, request.ServerName, &server); errGetServer != nil {
-			responseErr(ctx, http.StatusNotFound, nil)
+			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", request.ServerName)
 			return
 		}
 		var demoData []byte
@@ -940,6 +954,42 @@ type AuthorReportMessage struct {
 	Message model.ReportMessage `json:"message"`
 }
 
+func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc {
+	type stateUpdateReq struct {
+		Status model.ReportStatus `json:"status"`
+	}
+	return func(c *gin.Context) {
+		reportId, errParam := getInt64Param(c, "report_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var newStatus stateUpdateReq
+		if errBind := c.BindJSON(&newStatus); errBind != nil {
+			responseErr(c, http.StatusBadRequest, nil)
+			return
+		}
+		var report model.Report
+		if errGet := database.GetReport(c, int(reportId), &report); errGet != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to get report to set state: %v", errGet)
+			return
+		}
+		if report.ReportStatus == newStatus.Status {
+			responseOK(c, http.StatusConflict, nil)
+			return
+		}
+
+		report.ReportStatus = newStatus.Status
+		if errSave := database.SaveReport(c, &report); errSave != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save report state: %v", errSave)
+			return
+		}
+		responseOK(c, http.StatusAccepted, nil)
+	}
+}
+
 func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reportId, errParam := getInt64Param(c, "report_id")
@@ -991,6 +1041,8 @@ func (web *web) onAPIGetReports(database store.Store) gin.HandlerFunc {
 		} else {
 			queryFilter.Limit = 25
 		}
+		user := currentUserProfile(ctx)
+		queryFilter.AuthorId = user.SteamID.Int64()
 		var userReports []reportWithAuthor
 		reports, errReports := database.GetReports(ctx, queryFilter)
 		if errReports != nil {

@@ -7,14 +7,14 @@ import Paper from '@mui/material/Paper';
 import ListSubheader from '@mui/material/ListSubheader';
 import Stack from '@mui/material/Stack';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import CloseIcon from '@mui/icons-material/Close';
-import GavelIcon from '@mui/icons-material/Gavel';
 import { ReportForm } from '../component/ReportForm';
-import { apiGetReports, ReportStatus, ReportWithAuthor } from '../api';
+import { apiGetReports, ReportWithAuthor } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
+import { logErr } from '../util/errors';
+import { ReportStatusIcon } from '../component/ReportStatusIcon';
 
 type BanState = 'banned' | 'closed';
 
@@ -31,21 +31,18 @@ export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     useEffect(() => {
-        const loadHist = async () => {
-            if (currentUser.steam_id != '') {
-                const resp = await apiGetReports({
-                    author_id: currentUser.steam_id,
-                    limit: 10,
-                    order_by: 'created_on',
-                    desc: true
-                });
-                if (resp) {
-                    setReportHistory(resp);
-                }
-            }
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        loadHist();
+        if (currentUser.steam_id != '') {
+            apiGetReports({
+                author_id: currentUser.steam_id,
+                limit: 10,
+                order_by: 'created_on',
+                desc: true
+            })
+                .then((resp) => {
+                    resp && setReportHistory(resp);
+                })
+                .catch(logErr);
+        }
     }, [currentUser]);
 
     return (
@@ -89,7 +86,22 @@ export const ReportCreatePage = (): JSX.Element => {
                         </List>
                         <List>
                             <ListItem>
-                                <ListItemText>Some more stuff..</ListItemText>
+                                <ListItemText>
+                                    Its only possible to open a single report
+                                    against a particular player. If you wish to
+                                    add more evidence or discus further an
+                                    existing report, please open the existing
+                                    report and add it by creating a new message
+                                    there.
+                                </ListItemText>
+                            </ListItem>
+                        </List>
+                        <List>
+                            <ListItem>
+                                <ListItemText>
+                                    You can see the status of your more recent
+                                    reports below.
+                                </ListItemText>
                             </ListItem>
                         </List>
                     </Paper>
@@ -108,12 +120,11 @@ export const ReportCreatePage = (): JSX.Element => {
                             {reportHistory.map((value, idx) => (
                                 <ListItem key={idx}>
                                     <ListItemIcon>
-                                        {value.report.report_status ==
-                                        ReportStatus.ClosedWithAction ? (
-                                            <GavelIcon />
-                                        ) : (
-                                            <CloseIcon />
-                                        )}
+                                        <ReportStatusIcon
+                                            reportStatus={
+                                                value.report.report_status
+                                            }
+                                        />
                                     </ListItemIcon>
                                     <ListItemAvatar>
                                         <Avatar
