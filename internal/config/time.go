@@ -40,9 +40,9 @@ func ParseDuration(durationString string) (time.Duration, error) {
 	value := time.Duration(valueInt)
 	day := time.Hour * 24
 	switch matchDuration[2] {
-	case "durationString":
+	case "s":
 		return time.Second * value, nil
-	case "matchDuration":
+	case "m":
 		return time.Minute * value, nil
 	case "h":
 		return time.Hour * value, nil

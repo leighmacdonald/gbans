@@ -17,6 +17,7 @@ import {
 import Box from '@mui/material/Box';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { getDistance } from '../util/gis';
+import Link from '@mui/material/Link';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -36,13 +37,16 @@ export const LinearProgressWithLabel = (
 export interface ServerListProps {
     servers: ServerState[];
 }
+
 export interface ServerRowProps {
     server: ServerState;
 }
+
 export const ServerRow = ({ server }: ServerRowProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const [copied, setCopied] = useState<boolean>(false);
+
     const handlePopoverOpen = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -105,7 +109,13 @@ export const ServerRow = ({ server }: ServerRowProps) => {
                     onClose={handlePopoverClose}
                     disableRestoreFocus
                 >
-                    <Typography sx={{ p: 1 }}>{server.map}</Typography>
+                    <Link
+                        target={
+                            'https://wiki.teamfortress.com/wiki/' + server.map
+                        }
+                    >
+                        <Typography sx={{ p: 1 }}>{server.map}</Typography>
+                    </Link>
                 </Popover>
             </div>
             <Typography variant={'h6'} sx={{ minWidth: 100 }}>
@@ -138,6 +148,7 @@ export const ServerRow = ({ server }: ServerRowProps) => {
         </Stack>
     );
 };
+
 export const ServerList = () => {
     const { selectedServers, pos } = useMapStateCtx();
     if (selectedServers.length === 0) {

@@ -287,16 +287,16 @@ func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount in
 	match.getPlayerSum(target).HealingTaken += amount
 }
 
-func (match *Match) pointCapture(team logparse.Team, sources steamid.Collection) {
-	for _, sid := range sources {
-		match.getPlayerSum(sid).Captures++
-	}
-	match.getTeamSum(team).Caps++
-}
+//func (match *Match) pointCapture(team logparse.Team, sources steamid.Collection) {
+//	for _, sid := range sources {
+//		match.getPlayerSum(sid).Captures++
+//	}
+//	match.getTeamSum(team).Caps++
+//}
 
-func (match *Match) midFight(team logparse.Team) {
-	match.getTeamSum(team).MidFights++
-}
+//func (match *Match) midFight(team logparse.Team) {
+//	match.getTeamSum(team).MidFights++
+//}
 
 func (match *Match) killed(source steamid.SID64, target steamid.SID64, team logparse.Team) {
 	src := match.getPlayerSum(source)
@@ -394,7 +394,7 @@ type MatchPlayerSum struct {
 	BuildingDestroyed int
 	Classes           []logparse.PlayerClass
 	timeStart         *time.Time
-	timeEnd           *time.Time
+	//timeEnd           *time.Time
 }
 
 func (playerSum *MatchPlayerSum) touch() {

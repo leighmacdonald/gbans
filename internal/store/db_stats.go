@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
@@ -80,11 +79,11 @@ func (database *pgStore) GetPlayerStats(ctx context.Context, sid steamid.SID64, 
 }
 
 type statQueryOpts struct {
-	sourceId    steamid.SID64
-	targetId    steamid.SID64
-	serverId    int64
-	msgTypes    []logparse.EventType
-	since       *time.Time
+	sourceId steamid.SID64
+	targetId steamid.SID64
+	serverId int64
+	msgTypes []logparse.EventType
+	//since       *time.Time
 	sumColumn   string
 	countColumn string
 }

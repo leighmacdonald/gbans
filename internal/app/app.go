@@ -261,18 +261,16 @@ func (cache *playerCache) getTeam(sid steamid.SID64) logparse.Team {
 func (cache *playerCache) cleanupWorker() {
 	ticker := time.NewTicker(20 * time.Second)
 	for {
-		select {
-		case <-ticker.C:
-			now := config.Now()
-			cache.Lock()
-			for steamId, state := range cache.state {
-				if now.Sub(state.updatedAt) > time.Hour {
-					delete(cache.state, steamId)
-					log.WithFields(log.Fields{"sid": steamId}).Debugf("Player cache expired")
-				}
+		<-ticker.C
+		now := config.Now()
+		cache.Lock()
+		for steamId, state := range cache.state {
+			if now.Sub(state.updatedAt) > time.Hour {
+				delete(cache.state, steamId)
+				log.WithFields(log.Fields{"sid": steamId}).Debugf("Player cache expired")
 			}
-			cache.Unlock()
 		}
+		cache.Unlock()
 	}
 }
 
@@ -587,6 +585,8 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 		go func() {
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case payload := <-botSendMessageChan:
 					if errSend := session.SendEmbed(payload.channelId, payload.message); errSend != nil {
 						log.Errorf("Failed to send discord payload: %v", errSend)

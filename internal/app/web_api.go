@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
@@ -63,6 +64,33 @@ type demoPostRequest struct {
 	ServerName string `form:"server_name"`
 }
 
+func (web *web) onPostLog(database store.Store) gin.HandlerFunc {
+	type ServerLogUpload struct {
+		ServerName string `json:"server_name"`
+		Body       string `json:"body"`
+	}
+	return func(ctx *gin.Context) {
+		var upload ServerLogUpload
+		if errBind := ctx.BindJSON(&upload); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if upload.ServerName == "" || upload.Body == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		rawLogs, errDecode := base64.StdEncoding.DecodeString(upload.Body)
+		if errDecode != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		for _, row := range strings.Split(string(rawLogs), "\n") {
+			log.Debugf(row)
+		}
+		responseOK(ctx, http.StatusCreated, nil)
+	}
+}
+
 func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request demoPostRequest
@@ -96,7 +124,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(ctx, http.StatusCreated, demoFile)
+		responseOKUser(ctx, http.StatusCreated, demoFile, "Demo uploaded successfully")
 	}
 }
 
@@ -758,16 +786,18 @@ func (web *web) onAPIPostAppeal(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var appeal newAppeal
 		if errBind := ctx.BindJSON(&appeal); errBind != nil {
-
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
 		}
+		responseErr(ctx, http.StatusServiceUnavailable, nil)
 	}
 }
 
 func (web *web) onAPIGetAppeal(database store.Store) gin.HandlerFunc {
-	type Appeal struct {
-		Person model.BannedPerson `json:"person"`
-		Appeal model.Appeal       `json:"appeal"`
-	}
+	//type Appeal struct {
+	//	Person model.BannedPerson `json:"person"`
+	//	Appeal model.Appeal       `json:"appeal"`
+	//}
 	return func(ctx *gin.Context) {
 		banIdStr := ctx.Param("ban_id")
 		if banIdStr == "" {

@@ -959,7 +959,7 @@ func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *
 	if stats.Hits > 0 && stats.Shots > 0 {
 		acc = float64(stats.Hits) / float64(stats.Shots) * 100
 	}
-	embed := respOk(response, fmt.Sprintf("Global stats"))
+	embed := respOk(response, "Global stats")
 	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))

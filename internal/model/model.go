@@ -339,7 +339,7 @@ type ServerStateCollection []ServerState
 func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
 		if strings.EqualFold(server.NameShort, name) {
-			state = &server
+			*state = server
 			return true
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,17 +15,17 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestFetchPlayerBans(t *testing.T) {
-	reqIds := steamid.Collection{
-		76561198044052046,
-		76561198059958958,
-		76561197999702457,
-		76561198189957966,
-	}
-	bans, errFetch := FetchPlayerBans(reqIds)
-	assert.NoError(t, errFetch, "HTTP error fetching Player bans")
-	assert.Equal(t, len(bans), len(reqIds))
-}
+//func TestFetchPlayerBans(t *testing.T) {
+//	reqIds := steamid.Collection{
+//		76561198044052046,
+//		76561198059958958,
+//		76561197999702457,
+//		76561198189957966,
+//	}
+//	bans, errFetch := FetchPlayerBans(reqIds)
+//	assert.NoError(t, errFetch, "HTTP error fetching Player bans")
+//	assert.Equal(t, len(bans), len(reqIds))
+//}
 
 func TestSteamWebAPI(t *testing.T) {
 	if config.General.SteamKey == "" {

@@ -373,10 +373,7 @@ func processKV(originalKVMap map[string]any) map[string]any {
 		case "reason":
 			// Some reasons get output with a newline, so it gets these uneven line endings
 			reason := value.(string)
-			if strings.HasSuffix(reason, `")`) {
-				reason = reason[:len(reason)-2]
-			}
-			newKVMap["reason"] = reason
+			newKVMap["reason"] = strings.TrimSuffix(reason, `")`)
 		case "objectowner":
 			ooKV, ok := reSubMatchMap(rxPlayer, "\""+value.(string)+"\"")
 			if ok {

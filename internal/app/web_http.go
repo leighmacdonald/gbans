@@ -28,13 +28,11 @@ func (web web) ListenAndServe(ctx context.Context) error {
 	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
 	defer log.WithFields(log.Fields{"service": "web", "status": "stopped"}).Infof("Service status changed")
 	go func() {
-		select {
-		case <-ctx.Done():
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-			defer cancel()
-			if errShutdown := web.httpServer.Shutdown(shutdownCtx); errShutdown != nil {
-				log.Errorf("Error shutting down http service: %v", errShutdown)
-			}
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		if errShutdown := web.httpServer.Shutdown(shutdownCtx); errShutdown != nil {
+			log.Errorf("Error shutting down http service: %v", errShutdown)
 		}
 	}()
 	return web.httpServer.ListenAndServe()

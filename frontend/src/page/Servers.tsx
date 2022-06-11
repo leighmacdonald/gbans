@@ -121,7 +121,7 @@ export const Servers = (): JSX.Element => {
         onExpire: () => {
             apiGetServers()
                 .then((servers) => {
-                    setServers(servers);
+                    setServers(servers || []);
                     restart(nextExpiry());
                 })
                 .catch((e) => {
@@ -153,7 +153,7 @@ export const Servers = (): JSX.Element => {
                 <Paper elevation={3}>
                     <ServerMap />
                 </Paper>
-                <Paper elevation={3}>
+                <Paper elevation={3} sx={{ padding: '0.2rem' }}>
                     <ServerStats />
                 </Paper>
                 <Paper elevation={3}>

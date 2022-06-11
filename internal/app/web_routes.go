@@ -109,6 +109,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	serverAuth.POST("/api/ping_mod", web.onPostPingMod(database))
 	serverAuth.POST("/api/check", web.onPostServerCheck(database))
 	serverAuth.POST("/api/demo", web.onPostDemo(database))
+	serverAuth.POST("/api/log", web.onPostLog(database))
 
 	// Basic logged-in user
 	authed := engine.Use(authMiddleware(database, model.PAuthenticated))

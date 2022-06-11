@@ -66,9 +66,9 @@ func (serverEvent ServerEvent) GetValueInt64(key string) int64 {
 	if !found {
 		return 0
 	}
-	switch value.(type) {
+	switch v := value.(type) {
 	case string:
-		parsedValue, errConv := strconv.ParseInt(value.(string), 10, 64)
+		parsedValue, errConv := strconv.ParseInt(v, 10, 64)
 		if errConv != nil {
 			log.WithFields(log.Fields{"key": key}).Errorf("Failed to parse key value: %value", errConv)
 		}

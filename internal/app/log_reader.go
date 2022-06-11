@@ -60,28 +60,28 @@ func newRemoteSrcdsLogSource(ctx context.Context, listenAddr string, database st
 }
 
 // Updates DNS -> IP mappings
-func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
-	newServers := map[string]string{}
-	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
-	defer cancelServers()
-	servers, errServers := remoteSrc.database.GetServers(serversCtx, true)
-	if errServers != nil {
-		log.Errorf("Failed to load servers to update DNS: %v", errServers)
-		return
-	}
-	for _, server := range servers {
-		ipAddr, errLookup := net.LookupIP(server.Address)
-		if errLookup != nil || len(ipAddr) == 0 {
-			log.Errorf("Failed to lookup dns for host: %v", errLookup)
-			continue
-		}
-		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerNameShort
-	}
-	remoteSrc.Lock()
-	defer remoteSrc.Unlock()
-	remoteSrc.dnsMap = newServers
-	log.Debugf("Updated DNS mappings")
-}
+//func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
+//	newServers := map[string]string{}
+//	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
+//	defer cancelServers()
+//	servers, errServers := remoteSrc.database.GetServers(serversCtx, true)
+//	if errServers != nil {
+//		log.Errorf("Failed to load servers to update DNS: %v", errServers)
+//		return
+//	}
+//	for _, server := range servers {
+//		ipAddr, errLookup := net.LookupIP(server.Address)
+//		if errLookup != nil || len(ipAddr) == 0 {
+//			log.Errorf("Failed to lookup dns for host: %v", errLookup)
+//			continue
+//		}
+//		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerNameShort
+//	}
+//	remoteSrc.Lock()
+//	defer remoteSrc.Unlock()
+//	remoteSrc.dnsMap = newServers
+//	log.Debugf("Updated DNS mappings")
+//}
 
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int]string{}

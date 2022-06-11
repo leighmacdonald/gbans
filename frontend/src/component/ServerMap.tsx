@@ -51,7 +51,7 @@ export const ServerMarkers = () => {
     const { servers } = useMapStateCtx();
     const d = useMemo(
         () =>
-            servers.map((s) => {
+            (servers || []).map((s) => {
                 //const dis = getDistance(pos, { lat: s.latitude, lng: s.longitude }) / 1000;
                 return (
                     <Circle

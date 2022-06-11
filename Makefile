@@ -48,7 +48,8 @@ run:
 	@go run $(GO_FLAGS) -race main.go
 
 sourcemod:
-	@./sm.sh
+	@./sourcemod/build/package/addons/sourcemod/scripting/spcomp -i./sourcemod/include sourcemod/gbans.sp -ogbans.smx
+
 
 install:
 	@go install $(GO_FLAGS) ./...
@@ -68,7 +69,7 @@ lint-ts:
 	cd frontend && eslint . --ext .ts,.tsx
 
 lint:
-	@golangci-lint run --fast
+	@golangci-lint run
 
 bench:
 	@go test -run=NONE -bench=. $(GO_FLAGS) ./...
