@@ -12,45 +12,46 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 )
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func (g *gbans) profileUpdater() {
+func profileUpdater(ctx context.Context, database store.PersonStore) {
 	var update = func() {
-		ctx, cancel := context.WithTimeout(g.ctx, time.Second*10)
+		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
-		people, pErr := g.db.GetExpiredProfiles(ctx, 100)
-		if pErr != nil {
-			log.Errorf("Failed to get expired profiles: %v", pErr)
+		people, errGetExpired := database.GetExpiredProfiles(localCtx, 100)
+		if errGetExpired != nil {
+			log.Errorf("Failed to get expired profiles: %v", errGetExpired)
 			return
 		}
 		var sids steamid.Collection
-		for _, p := range people {
-			sids = append(sids, p.SteamID)
+		for _, person := range people {
+			sids = append(sids, person.SteamID)
 		}
-		summaries, err2 := steamweb.PlayerSummaries(sids)
-		if err2 != nil {
-			log.Errorf("Failed to get Player summaries: %v", err2)
+		summaries, errSummaries := steamweb.PlayerSummaries(sids)
+		if errSummaries != nil {
+			log.Errorf("Failed to get Player summaries: %v", errSummaries)
 			return
 		}
-		for _, s := range summaries {
+		for _, summary := range summaries {
 			// TODO batch update upserts
-			sid, err3 := steamid.SID64FromString(s.Steamid)
-			if err3 != nil {
-				log.Errorf("Failed to parse steamid from webapi: %v", err3)
+			sid, errSid := steamid.SID64FromString(summary.Steamid)
+			if errSid != nil {
+				log.Errorf("Failed to parse steamid from webapi: %v", errSid)
 				continue
 			}
-			p := model.NewPerson(sid)
-			if err4 := g.db.GetOrCreatePersonBySteamID(g.ctx, sid, &p); err4 != nil {
-				log.Errorf("Failed to get person: %v", err4)
+			person := model.NewPerson(sid)
+			if errGetPerson := database.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
+				log.Errorf("Failed to get person: %v", errGetPerson)
 				continue
 			}
-			p.PlayerSummary = &s
-			if err5 := g.db.SavePerson(g.ctx, &p); err5 != nil {
-				log.Errorf("Failed to save person: %v", err5)
+			person.PlayerSummary = &summary
+			if errSavePerson := database.SavePerson(localCtx, &person); errSavePerson != nil {
+				log.Errorf("Failed to save person: %v", errSavePerson)
 				continue
 			}
 		}
@@ -62,81 +63,180 @@ func (g *gbans) profileUpdater() {
 		select {
 		case <-ticker.C:
 			update()
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			log.Debugf("profileUpdater shutting down")
 			return
 		}
 	}
-
 }
 
-// serverStateUpdater concurrently ( num_servers * 2) updates all known servers' A2S and rcon status
-// information. This data is accessed often so it is cached
-func (g *gbans) serverStateUpdater() {
-	freq, errD := time.ParseDuration(config.General.ServerStatusUpdateFreq)
-	if errD != nil {
-		log.Fatalf("Failed to parse server_status_update_freq: %v", errD)
-	}
-	var update = func(ctx context.Context) {
-		servers, err := g.db.GetServers(ctx, false)
-		if err != nil {
-			log.Errorf("Failed to fetch servers to update: %v", err)
-			return
+func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
+		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
+		defer cancel()
+		servers, errGetServers := localDb.GetServers(cancelCtx, false)
+		if errGetServers != nil {
+			return errors.Wrapf(errGetServers, "Failed to get servers")
 		}
-		newServers := map[string]model.ServerState{}
-		newServersMu := &sync.RWMutex{}
-		wg := &sync.WaitGroup{}
+		waitGroup := &sync.WaitGroup{}
 		for _, srv := range servers {
-			ss := model.ServerState{}
-			ss.Region = srv.Region
-			ss.Enabled = srv.IsEnabled
-			ss.CountryCode = srv.CC
-			ss.Name = srv.ServerName
-			ss.Reserved = 8
-			wg.Add(1)
+			waitGroup.Add(1)
 			go func(server model.Server) {
-				defer wg.Done()
-				iwg := &sync.WaitGroup{}
-				iwg.Add(2)
-				go func() {
-					defer iwg.Done()
-					status, errS := query.GetServerStatus(server)
-					if errS != nil {
-						log.Tracef("Failed to update server status: %v", errS)
-						return
-					}
-					ss.Status = status
-				}()
-				go func() {
-					defer iwg.Done()
-					a, errA := query.A2SQueryServer(server)
-					if errA != nil {
-						log.Tracef("Failed to update a2s status: %v", errA)
-						return
-					}
-					ss.A2S = *a
-				}()
-				iwg.Wait()
-				ss.LastUpdate = time.Now()
-				newServersMu.Lock()
-				newServers[server.ServerName] = ss
-				newServersMu.Unlock()
+				defer waitGroup.Done()
+				newStatus, errA := query.A2SQueryServer(server)
+				if errA != nil {
+					log.Tracef("Failed to update a2s status: %v", errA)
+					return
+				}
+				serverStateA2SMu.Lock()
+				serverStateA2S[server.ServerNameShort] = *newStatus
+				serverStateA2SMu.Unlock()
 			}(srv)
 		}
-		wg.Wait()
-		g.serversStateMu.Lock()
-		g.serversState = newServers
-		g.serversStateMu.Unlock()
-		log.WithFields(log.Fields{"count": len(servers)}).Tracef("Servers updated")
+		waitGroup.Wait()
+		return nil
 	}
-	update(g.ctx)
-	ticker := time.NewTicker(freq)
+	ticker := time.NewTicker(updateFreq)
 	for {
 		select {
-		case <-ticker.C:
-			update(g.ctx)
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
+		case <-ticker.C:
+			log.WithFields(log.Fields{"state": "started"}).Tracef("Server status state updateStatus")
+			if errUpdate := updateStatus(ctx, database); errUpdate != nil {
+				log.Errorf("Error trying to updateStatus server status state: %v", errUpdate)
+			}
+			log.WithFields(log.Fields{"state": "success"}).Tracef("Server status state updateStatus")
+		}
+	}
+}
+
+func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
+		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
+		defer cancel()
+		servers, errGetServers := localDb.GetServers(cancelCtx, false)
+		if errGetServers != nil {
+			return errors.Wrapf(errGetServers, "Failed to get servers")
+		}
+		waitGroup := &sync.WaitGroup{}
+		for _, srv := range servers {
+			waitGroup.Add(1)
+			go func(c context.Context, server model.Server) {
+				defer waitGroup.Done()
+				newStatus, queryErr := query.GetServerStatus(c, server)
+				if queryErr != nil {
+					log.Tracef("Failed to query server status: %v", queryErr)
+					return
+				}
+				serverStateStatusMu.Lock()
+				serverStateStatus[server.ServerNameShort] = newStatus
+				serverStateStatusMu.Unlock()
+			}(cancelCtx, srv)
+		}
+		waitGroup.Wait()
+		return nil
+	}
+	ticker := time.NewTicker(updateFreq)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			log.WithFields(log.Fields{"state": "started"}).Tracef("Server status state updateStatus")
+			if errUpdate := updateStatus(ctx, database); errUpdate != nil {
+				log.Errorf("Error trying to updateStatus server status state: %v", errUpdate)
+			}
+			log.WithFields(log.Fields{"state": "success"}).Tracef("Server status state updateStatus")
+		}
+	}
+}
+
+// serverStateRefresher periodically compiles and caches the current known db, rcon & a2s server state
+// into a ServerState instance
+func serverStateRefresher(ctx context.Context, database store.ServerStore) {
+	var refreshState = func() error {
+		var newState model.ServerStateCollection
+		servers, errServers := database.GetServers(ctx, true)
+		if errServers != nil {
+			return errors.Errorf("Failed to fetch servers: %v", errServers)
+		}
+		serverStateA2SMu.RLock()
+		defer serverStateA2SMu.RUnlock()
+		serverStateStatusMu.RLock()
+		defer serverStateStatusMu.RUnlock()
+		for _, server := range servers {
+			var state model.ServerState
+			// use existing state for start?
+			state.ServerId = server.ServerID
+			state.Name = server.ServerNameLong
+			state.NameShort = server.ServerNameShort
+			state.Host = server.Address
+			state.Port = server.Port
+			state.Enabled = server.IsEnabled
+			state.Region = server.Region
+			state.CountryCode = server.CC
+			state.Location = server.Location
+			a2sInfo, a2sFound := serverStateA2S[server.ServerNameShort]
+			if a2sFound {
+				state.NameA2S = a2sInfo.Name
+				state.Protocol = a2sInfo.Protocol
+				state.Map = a2sInfo.Map
+				state.Folder = a2sInfo.Folder
+				state.Game = a2sInfo.Game
+				state.AppId = a2sInfo.ID
+				state.PlayerCount = int(a2sInfo.Players)
+				state.MaxPlayers = int(a2sInfo.MaxPlayers)
+				state.Bots = int(a2sInfo.Bots)
+				state.ServerType = a2sInfo.ServerType.String()
+				state.ServerOS = a2sInfo.ServerOS.String()
+				state.Password = !a2sInfo.Visibility
+				state.VAC = a2sInfo.VAC
+				state.Version = a2sInfo.Version
+				if a2sInfo.SourceTV != nil {
+					state.STVPort = a2sInfo.SourceTV.Port
+					state.STVName = a2sInfo.SourceTV.Name
+				}
+				if a2sInfo.ExtendedServerInfo != nil {
+					state.SteamID = steamid.SID64(a2sInfo.ExtendedServerInfo.SteamID)
+					state.GameID = a2sInfo.ExtendedServerInfo.GameID
+					state.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
+				}
+			}
+			statusInfo, statusFound := serverStateStatus[server.ServerNameShort]
+			if statusFound {
+				var knownPlayers []model.ServerStatePlayer
+				for _, player := range statusInfo.Players {
+					var newPlayer model.ServerStatePlayer
+					newPlayer.UserID = player.UserID
+					newPlayer.Name = player.Name
+					newPlayer.SID = player.SID
+					newPlayer.ConnectedTime = player.ConnectedTime
+					newPlayer.State = player.State
+					newPlayer.Ping = player.Ping
+					newPlayer.Loss = player.Loss
+					newPlayer.IP = player.IP
+					newPlayer.Port = player.Port
+					knownPlayers = append(knownPlayers, newPlayer)
+				}
+				state.Players = knownPlayers
+			}
+			newState = append(newState, state)
+		}
+		serverStateMu.Lock()
+		serverState = newState
+		serverStateMu.Unlock()
+		return nil
+	}
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if errUpdate := refreshState(); errUpdate != nil {
+				log.Errorf("Failed to refreshState server state: %v", errUpdate)
+			}
 		}
 	}
 }
@@ -148,12 +248,12 @@ func (g *gbans) serverStateUpdater() {
 // Relevant config values:
 // - general.map_changer_enabled
 // - general.default_map
-func (g *gbans) mapChanger(timeout time.Duration) {
+func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
 	}
-	activity := map[string]*at{}
+	activityMap := map[string]*at{}
 	ticker := time.NewTicker(time.Second * 60)
 	for {
 		select {
@@ -161,19 +261,17 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 			if !config.General.MapChangerEnabled {
 				continue
 			}
-			g.serversStateMu.RLock()
-			stateCopy := g.ServerState()
-			g.serversStateMu.RUnlock()
-			for serverId, state := range stateCopy {
-				act, found := activity[serverId]
-				if !found || len(state.Status.Players) > 0 {
-					activity[serverId] = &at{time.Now(), false}
+			stateCopy := ServerState()
+			for _, state := range stateCopy {
+				activity, activityFound := activityMap[state.NameShort]
+				if !activityFound || len(state.Players) > 0 {
+					activityMap[state.NameShort] = &at{config.Now(), false}
 					continue
 				}
-				if !act.triggered && time.Since(act.lastActive) > timeout {
+				if !activity.triggered && time.Since(activity.lastActive) > timeout {
 					isDefaultMap := false
 					for _, m := range config.General.DefaultMaps {
-						if m == stateCopy[serverId].A2S.Map {
+						if m == state.Map {
 							isDefaultMap = true
 							break
 						}
@@ -181,99 +279,100 @@ func (g *gbans) mapChanger(timeout time.Duration) {
 					if isDefaultMap {
 						continue
 					}
-					var srv model.Server
-					if err := g.db.GetServerByName(context.Background(), serverId, &srv); err != nil {
-						g.l.Errorf("Failed to get server for map changer: %v", err)
+					var server model.Server
+					if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
+						log.Errorf("Failed to get server for map changer: %v", errGetServer)
 						continue
 					}
-					nextMap := srv.DefaultMap
+					nextMap := server.DefaultMap
 					if nextMap == "" {
 						nextMap = config.General.DefaultMaps[rand.Intn(len(config.General.DefaultMaps))]
 					}
 					if nextMap == "" {
-						g.l.Errorf("Failed to get valid nextMap value")
+						log.Errorf("Failed to get valid nextMap value")
 						continue
 					}
-					if srv.DefaultMap == state.Status.Map {
+					if server.DefaultMap == state.Map {
 						continue
 					}
 					go func(s model.Server, mapName string) {
-						var l = g.l.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "srv": serverId})
-						l.Infof("Idle map change triggered")
-						if _, err := query.ExecRCON(srv, fmt.Sprintf("changelevel %s", mapName)); err != nil {
-							g.l.Errorf("failed to exec mapchanger rcon: %v", err)
+						var logger = log.WithFields(log.Fields{"map": nextMap, "reason": "no_activity", "server": state.ServerId})
+						logger.Infof("Idle map change triggered")
+						if _, errExecRCON := query.ExecRCON(ctx, server, fmt.Sprintf("changelevel %s", mapName)); errExecRCON != nil {
+							logger.Errorf("failed to exec mapchanger rcon: %v", errExecRCON)
 						}
-						l.Infof("Idle map change complete")
-					}(srv, nextMap)
-					act.triggered = true
+						logger.Infof("Idle map change complete")
+					}(server, nextMap)
+					activity.triggered = true
 					continue
 				}
-				if act.triggered {
-					act.triggered = false
+				if activity.triggered {
+					activity.triggered = false
 				}
 			}
-		case <-g.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
-func (g *gbans) banSweeper() {
+// TODO save history
+func banSweeper(ctx context.Context, database store.Store) {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
 	for {
 		select {
 		case <-ticker.C:
-			wg := &sync.WaitGroup{}
-			wg.Add(3)
+			waitGroup := &sync.WaitGroup{}
+			waitGroup.Add(3)
 			go func() {
-				defer wg.Done()
-				bans, err := g.db.GetExpiredBans(g.ctx)
-				if err != nil && !errors.Is(err, store.ErrNoResult) {
-					log.Warnf("Failed to get expired bans: %v", err)
+				defer waitGroup.Done()
+				expiredBans, errExpiredBans := database.GetExpiredBans(ctx)
+				if errExpiredBans != nil && !errors.Is(errExpiredBans, store.ErrNoResult) {
+					log.Warnf("Failed to get expired expiredBans: %v", errExpiredBans)
 				} else {
-					for _, ban := range bans {
-						if err := g.db.DropBan(g.ctx, &ban); err != nil {
-							log.Errorf("Failed to drop expired ban: %v", err)
+					for _, expiredBan := range expiredBans {
+						if errDrop := database.DropBan(ctx, &expiredBan); errDrop != nil {
+							log.Errorf("Failed to drop expired expiredBan: %v", errDrop)
 						} else {
-							log.Infof("ban expired: %v", ban)
+							log.Infof("expiredBan expired: %v", expiredBan)
 						}
 					}
 				}
 			}()
 			go func() {
-				defer wg.Done()
-				netBans, err2 := g.db.GetExpiredNetBans(g.ctx)
-				if err2 != nil && !errors.Is(err2, store.ErrNoResult) {
-					log.Warnf("Failed to get expired netbans: %v", err2)
+				defer waitGroup.Done()
+				expiredNetBans, errExpiredNetBans := database.GetExpiredNetBans(ctx)
+				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, store.ErrNoResult) {
+					log.Warnf("Failed to get expired netbans: %v", errExpiredNetBans)
 				} else {
-					for _, ban := range netBans {
-						if err := g.db.DropBanNet(g.ctx, &ban); err != nil {
-							log.Errorf("Failed to drop expired network ban: %v", err)
+					for _, expiredNetBan := range expiredNetBans {
+						if errDropBanNet := database.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil {
+							log.Errorf("Failed to drop expired network expiredNetBan: %v", errDropBanNet)
 						} else {
-							log.Infof("Network ban expired: %v", ban)
+							log.Infof("Network expiredNetBan expired: %v", expiredNetBan)
 						}
 					}
 				}
 			}()
 			go func() {
-				defer wg.Done()
-				asnBans, err3 := g.db.GetExpiredASNBans(g.ctx)
-				if err3 != nil && !errors.Is(err3, store.ErrNoResult) {
-					log.Warnf("Failed to get expired asnbans: %v", err3)
+				defer waitGroup.Done()
+				expiredASNBans, errExpiredASNBans := database.GetExpiredASNBans(ctx)
+				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, store.ErrNoResult) {
+					log.Warnf("Failed to get expired asnbans: %v", errExpiredASNBans)
 				} else {
-					for _, asnBan := range asnBans {
-						if err := g.db.DropBanASN(g.ctx, &asnBan); err != nil {
-							log.Errorf("Failed to drop expired asn ban: %v", err)
+					for _, expiredASNBan := range expiredASNBans {
+						if errDropASN := database.DropBanASN(ctx, &expiredASNBan); errDropASN != nil {
+							log.Errorf("Failed to drop expired asn ban: %v", errDropASN)
 						} else {
-							log.Infof("ASN ban expired: %v", asnBan)
+							log.Infof("ASN ban expired: %v", expiredASNBan)
 						}
 					}
 				}
 			}()
-			wg.Wait()
-		case <-g.ctx.Done():
+			waitGroup.Wait()
+		case <-ctx.Done():
 			log.Debugf("banSweeper shutting down")
 			return
 		}

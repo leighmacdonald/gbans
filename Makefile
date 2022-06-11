@@ -1,8 +1,9 @@
 .PHONY: all test clean build install frontend sourcemod
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+TAGGED_IMAGE = ghcr.io/leighmacdonald/gbans:$(BRANCH)
+
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
-GIT_TAG =
-GO_FLAGS = -ldflags "-X 'github.com/leighmacdonald/gbans/service.BuildVersion=`git describe --abbrev=0`'"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
 all: frontend sourcemod build
@@ -47,7 +48,8 @@ run:
 	@go run $(GO_FLAGS) -race main.go
 
 sourcemod:
-	@./sm.sh
+	@./sourcemod/build/package/addons/sourcemod/scripting/spcomp -i./sourcemod/include sourcemod/gbans.sp -ogbans.smx
+
 
 install:
 	@go install $(GO_FLAGS) ./...
@@ -55,13 +57,16 @@ install:
 test: test-go test-ts
 
 test-ts:
-	@cd frontend && yarn && yarn run test
+	@cd frontend && yarn && yarn run test --passWithNoTests
 
 test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
+
+lint-ts:
+	cd frontend && eslint . --ext .ts,.tsx
 
 lint:
 	@golangci-lint run
@@ -97,4 +102,4 @@ docker_dump:
 	docker exec gbans-postgres pg_dump -U gbans > gbans.sql
 
 docker_restore:
-	docker exec gbans-postgres pg_dump -U gbans -f gbans.sql
+	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans

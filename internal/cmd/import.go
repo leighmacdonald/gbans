@@ -17,14 +17,14 @@ var importCmd = &cobra.Command{
 	Short: "Create or update the database schema",
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO add user confirmation on recreate
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to connect to db: %v", err)
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 		defer cancel()
-		if err := db.Import(ctx, importPath); err != nil {
-			log.Fatalf("Failed to import: %v", err)
+		database, errStore := store.New(ctx, config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to connect to database: %v", errStore)
+		}
+		if errImport := database.Import(ctx, importPath); errImport != nil {
+			log.Fatalf("Failed to import: %v", errImport)
 		}
 	},
 }

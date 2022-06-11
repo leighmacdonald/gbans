@@ -6,11 +6,11 @@ import (
 )
 
 func TestLogsTFOverview(t *testing.T) {
-	r1, err := LogsTFOverview(76561198084134025)
-	require.NoError(t, err)
-	require.True(t, r1.Total > 100)
+	tfResult1, errTFOverview1 := LogsTFOverview(76561198084134025)
+	require.NoError(t, errTFOverview1)
+	require.True(t, tfResult1.Total > 100)
 
-	r2, err2 := LogsTFOverview(123456)
-	require.NoError(t, err2)
-	require.True(t, r2.Total == 0)
+	tfResult2, errTFOverview2 := LogsTFOverview(123456)
+	require.NoError(t, errTFOverview2)
+	require.True(t, tfResult2.Total == 0)
 }

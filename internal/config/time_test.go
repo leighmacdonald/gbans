@@ -39,8 +39,8 @@ func TestParseDuration(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		d, err := ParseDuration(test.input)
-		require.NoError(t, err, "Failed to parse: %s", test.input)
+		d, errParseDuration := ParseDuration(test.input)
+		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
 		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
 	}
 }

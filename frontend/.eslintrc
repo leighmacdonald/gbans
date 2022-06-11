@@ -10,11 +10,6 @@
     "react": {
       "version": "17"
     }
-//    "linkComponents": [
-//      // Components used as alternatives to <a> for linking, eg. <Link to={ url } />
-//      "Hyperlink",
-//      {"name": "Link", "linkAttribute": "to"}
-//    ]
   },
   "plugins": [
     "prettier",
@@ -34,8 +29,16 @@
   ],
   "rules": {
     "prettier/prettier": 2,
+    "@typescript-eslint/no-explicit-any": "warn",
     //"no-console": 2,
-    "no-loops/no-loops": 2,
-    "react/prop-types": [2, { "ignore": ["children"] }]
+    "no-loops/no-loops": "warn",
+    "react/prop-types": [
+      2,
+      {
+        "ignore": [
+          "children"
+        ]
+      }
+    ]
   }
 }

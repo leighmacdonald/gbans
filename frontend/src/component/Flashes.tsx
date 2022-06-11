@@ -1,9 +1,10 @@
 import React from 'react';
-import { Alert } from '@material-ui/lab';
-import { Color } from '@material-ui/lab/Alert/Alert';
+import Alert from '@mui/material/Alert';
+import { AlertColor } from '@mui/material/Alert/Alert';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export interface Flash {
-    level: Color;
+    level: AlertColor;
     heading: string;
     message: string;
     closable?: boolean;
@@ -14,14 +15,27 @@ export interface FlashesProps {
     flashes: Flash[];
 }
 
-export const Flashes = ({ flashes }: FlashesProps): JSX.Element => (
-    <>
-        {flashes.map((f, i) => {
-            return (
-                <Alert key={`alert-${i}`} severity={f.level}>
-                    {f.message}
-                </Alert>
-            );
-        })}
-    </>
-);
+export const Flashes = (): JSX.Element => {
+    const { flashes, setFlashes } = useUserFlashCtx();
+    return (
+        <>
+            {flashes.map((f, i) => {
+                return (
+                    <Alert
+                        key={`alert-${i}`}
+                        severity={f.level}
+                        onClose={() => {
+                            setFlashes(
+                                flashes.filter(
+                                    (flash) => flash.message != f.message
+                                )
+                            );
+                        }}
+                    >
+                        {f.message}
+                    </Alert>
+                );
+            })}
+        </>
+    );
+};

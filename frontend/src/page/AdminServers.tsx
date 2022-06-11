@@ -1,16 +1,21 @@
 import React from 'react';
-import { Grid } from '@material-ui/core';
+import Grid from '@mui/material/Grid';
 import { ServerAddForm } from '../component/ServerAddForm';
-import { ServerList } from '../component/ServerList';
+import { TableServerList } from '../component/TableServerList';
+import Paper from '@mui/material/Paper';
 
 export const AdminServers = (): JSX.Element => {
     return (
-        <Grid container>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={8}>
-                <ServerList />
+                <Paper elevation={1}>
+                    <TableServerList />
+                </Paper>
             </Grid>
             <Grid item xs={4}>
-                <ServerAddForm />
+                <Paper elevation={1}>
+                    <ServerAddForm />
+                </Paper>
             </Grid>
         </Grid>
     );

@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 import { useParams } from 'react-router-dom';
-import { apiGetBan, BannedPerson } from '../util/api';
+import { apiGetBan, BannedPerson } from '../api';
 import { NotNull } from '../util/types';
-import { Grid, Typography } from '@material-ui/core';
 
 export const BanView = (): JSX.Element => {
     const [loading, setLoading] = React.useState<boolean>(true);
@@ -54,7 +55,7 @@ export const BanView = (): JSX.Element => {
                                     className={'cell'}
                                     key={`chat-log-${i}`}
                                 >
-                                    <span>{value}</span>
+                                    <span>{value.message}</span>
                                 </Grid>
                             );
                         })}

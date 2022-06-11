@@ -34,9 +34,9 @@ server admins will not ever do this.
 authentication token.
 - Communication over HTTPS
 - Discord bot integration for administration & announcements.
-- Built using [Go](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in 
-webserver that is safe to directly expose to the internet. This means it's not necessary to setup MySQL, 
-Nginx/Apache and PHP on your server.
+- Built using [Go 1.18beta1+](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in
+  webserver that is safe to directly expose to the internet. This means it's not necessary to setup MySQL, Nginx/Apache
+  and PHP on your server.
 - Non-legacy codebase that is (hopefully) not a nightmare to hack on.
 
 ## Features

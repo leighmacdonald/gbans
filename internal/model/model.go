@@ -2,21 +2,56 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	"github.com/rumblefrog/go-a2s"
 	"net"
 	"regexp"
 	"strings"
 	"time"
 )
+
+// Target defines who the request is being made against
+type Target string
+
+func (t Target) SID64() (steamid.SID64, error) {
+	// TODO pass ctx, or remove resolve?
+	resolveCtx, cancelResolve := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelResolve()
+	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
+	if errResolveSID != nil {
+		return 0, consts.ErrInvalidSID
+	}
+	if !sid64.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return sid64, nil
+}
+
+// Duration defines the length of time the action should be valid for
+// A duration of 0 will be interpreted as permanent and set to 10 years in the future
+type Duration string
+
+func (value Duration) Value() (time.Duration, error) {
+	duration, errDuration := config.ParseDuration(string(value))
+	if errDuration != nil {
+		return 0, consts.ErrInvalidDuration
+	}
+	if duration < 0 {
+		return 0, consts.ErrInvalidDuration
+	}
+	if duration == 0 {
+		duration = time.Hour * 24 * 365 * 10
+	}
+	return duration, nil
+}
 
 // BanType defines the state of the ban for a user, 0 being no ban
 type BanType int
@@ -94,6 +129,12 @@ func (r Reason) String() string {
 	return reasonStr[r]
 }
 
+// LogPayload is the container for log/message payloads
+type LogPayload struct {
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
+}
+
 type BanASN struct {
 	BanASNId   int64
 	ASNum      int64
@@ -155,16 +196,16 @@ func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duratio
 }
 
 func NewBanNet(cidr string, reason string, duration time.Duration, source Origin) (BanNet, error) {
-	_, n, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return BanNet{}, err
+	_, network, errParseCIDR := net.ParseCIDR(cidr)
+	if errParseCIDR != nil {
+		return BanNet{}, errParseCIDR
 	}
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
 	}
 	return BanNet{
-		CIDR:       n,
+		CIDR:       network,
 		Source:     source,
 		Reason:     reason,
 		CreatedOn:  config.Now(),
@@ -257,9 +298,9 @@ type PersonIPRecord struct {
 type Server struct {
 	// Auto generated id
 	ServerID int64 `db:"server_id" json:"server_id"`
-	// ServerName is a short reference name for the server eg: us-1
-	ServerName     string `db:"short_name" json:"server_name"`
-	ServerNameLong string `db:"server_name_long" json:"server_name_long"`
+	// ServerNameShort is a short reference name for the server eg: us-1
+	ServerNameShort string `db:"short_name" json:"server_name"`
+	ServerNameLong  string `db:"server_name_long" json:"server_name_long"`
 	// Token is the current valid authentication token that the server uses to make authenticated requests
 	Token string `db:"token" json:"token"`
 	// Address is the ip of the server
@@ -270,13 +311,14 @@ type Server struct {
 	RCON          string `db:"rcon" json:"-"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password   string              `db:"password" json:"-"`
+	Password   string              `db:"password" json:"password"`
 	IsEnabled  bool                `json:"is_enabled"`
 	Deleted    bool                `json:"deleted"`
 	Region     string              `json:"region"`
 	CC         string              `json:"cc"`
 	Location   ip2location.LatLong `json:"location"`
 	DefaultMap string              `json:"default_map"`
+	LogSecret  int                 `json:"log_secret"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`
@@ -292,11 +334,11 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 // TODO move findPlayerBy* methods to here
-type ServerStateCollection map[string]ServerState
+type ServerStateCollection []ServerState
 
 func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
-		if strings.EqualFold(server.Name, name) {
+		if strings.EqualFold(server.NameShort, name) {
 			*state = server
 			return true
 		}
@@ -318,54 +360,128 @@ func (c ServerStateCollection) ByRegion() map[string][]ServerState {
 
 func NewServer(name string, address string, port int) Server {
 	return Server{
-		ServerName:     name,
-		Address:        address,
-		Port:           port,
-		RCON:           golib.RandomString(10),
-		ReservedSlots:  0,
-		Password:       golib.RandomString(10),
-		DefaultMap:     "",
-		IsEnabled:      true,
-		TokenCreatedOn: time.Unix(0, 0),
-		CreatedOn:      config.Now(),
-		UpdatedOn:      config.Now(),
+		ServerNameShort: name,
+		Address:         address,
+		Port:            port,
+		RCON:            golib.RandomString(10),
+		ReservedSlots:   0,
+		Password:        golib.RandomString(20),
+		DefaultMap:      "",
+		IsEnabled:       true,
+		TokenCreatedOn:  time.Unix(0, 0),
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
 	}
 }
 
+// ServerState contains the entire state for the servers. This
+// contains sensitive information and should only be used where needed
+// by admins.
 type ServerState struct {
-	NameLong    string
-	Name        string
-	Host        string
-	Enabled     bool
-	Region      string
-	CountryCode string
-	Reserved    int
-	A2S         a2s.ServerInfo
-	Status      extra.Status
-	Players     []extra.Player
-	LastUpdate  time.Time
+	// Database
+	ServerId    int64               `json:"server_id"`
+	Name        string              `json:"name"`
+	NameShort   string              `json:"name_short"`
+	Host        string              `json:"host"`
+	Port        int                 `json:"port"`
+	Enabled     bool                `json:"enabled"`
+	Region      string              `json:"region"`
+	CountryCode string              `json:"cc"`
+	Location    ip2location.LatLong `json:"location"`
+	Reserved    int                 `json:"reserved"`
+	LastUpdate  time.Time           `json:"last_update"`
+	// A2S
+	NameA2S  string `json:"name_a2s"` // The live name can differ from default
+	Protocol uint8  `json:"protocol"`
+	Map      string `json:"map"`
+	// Name of the folder containing the game files.
+	Folder string `json:"folder"`
+	// Full name of the game.
+	Game string `json:"game"`
+	// Steam Application ID of game.
+	AppId uint16 `json:"app_id"`
+	// Number of players on the server.
+	PlayerCount int `json:"player_count"`
+	// Maximum number of players the server reports it can hold.
+	MaxPlayers int `json:"max_players"`
+	// Number of bots on the server.
+	Bots int `json:"Bots"`
+	// Indicates the type of server
+	// Rag Doll Kung Fu servers always return 0 for "Server type."
+	ServerType string `json:"server_type"`
+	// Indicates the operating system of the server
+	ServerOS string `json:"server_os"`
+	// Indicates whether the server requires a password
+	Password bool `json:"password"`
+	// Specifies whether the server uses VAC
+	VAC bool `json:"vac"`
+	// Version of the game installed on the server.
+	Version string `json:"version"`
+	// Server's SteamID.
+	SteamID steamid.SID64 `json:"steam_id"`
+	// Tags that describe the game according to the server (for future use.)
+	Keywords []string `json:"keywords"`
+	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits. The earlier AppID could have been truncated as it was forced into 16-bit storage.
+	GameID uint64 `json:"game_id"` // Needed?
+	// Spectator port number for SourceTV.
+	STVPort uint16 `json:"stv_port"`
+	// Name of the spectator server for SourceTV.
+	STVName string `json:"stv_name"`
+
+	// RCON Sourced
+	Players []ServerStatePlayer `json:"players"`
+}
+
+type ServerStatePlayer struct {
+	UserID        int           `json:"user_id"`
+	Name          string        `json:"name"`
+	SID           steamid.SID64 `json:"steam_id"`
+	ConnectedTime time.Duration `json:"connected_time"`
+	State         string        `json:"state"`
+	Ping          int           `json:"ping"`
+	Loss          int           `json:"-"`
+	IP            net.IP        `json:"-"`
+	Port          int           `json:"-"`
 }
 
 type Person struct {
-	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id"`
-	Name             string        `db:"name" json:"name"`
-	CreatedOn        time.Time     `db:"created_on" json:"created_on"`
-	UpdatedOn        time.Time     `db:"updated_on" json:"updated_on"`
-	PermissionLevel  Privilege     `db:"permission_level" json:"permission_level"`
-	IsNew            bool          `db:"-" json:"-"`
-	DiscordID        string        `db:"discord_id" json:"discord_id"`
-	IPAddr           net.IP        `db:"ip_addr" json:"ip_addr"`
-	CommunityBanned  bool
-	VACBans          int
-	GameBans         int
-	EconomyBan       string
-	DaysSinceLastBan int
+	// TODO merge use of steamid & steam_id
+	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	CreatedOn        time.Time     `json:"created_on"`
+	UpdatedOn        time.Time     `json:"updated_on"`
+	PermissionLevel  Privilege     `json:"permission_level"`
+	IsNew            bool          `json:"-"`
+	DiscordID        string        `json:"discord_id"`
+	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned  bool          `json:"community_banned"`
+	VACBans          int           `json:"vac_bans"`
+	GameBans         int           `json:"game_bans"`
+	EconomyBan       string        `json:"economy_ban"`
+	DaysSinceLastBan int           `json:"days_since_last_ban"`
+	UpdatedOnSteam   time.Time     `json:"updated_on_steam"`
 	*steamweb.PlayerSummary
+}
+
+type UserProfile struct {
+	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+	PermissionLevel Privilege     `json:"permission_level"`
+	DiscordID       string        `json:"discord_id"`
+	Name            string        `json:"name"`
+	Avatar          string        `json:"avatar"`
+	AvatarFull      string        `json:"avatarfull"`
+	BanID           uint64        `json:"ban_id"`
 }
 
 // LoggedIn checks for a valid steamID
 func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
+}
+
+// AsTarget checks for a valid steamID
+func (p *Person) AsTarget() Target {
+	return Target(p.SteamID.String())
 }
 
 // NewPerson allocates a new default person instance
@@ -377,8 +493,30 @@ func NewPerson(sid64 steamid.SID64) Person {
 		CreatedOn:       t0,
 		UpdatedOn:       t0,
 		PlayerSummary:   &steamweb.PlayerSummary{},
-		PermissionLevel: PAuthenticated,
+		PermissionLevel: PGuest,
 	}
+}
+
+// NewUserProfile allocates a new default person instance
+func NewUserProfile(sid64 steamid.SID64) UserProfile {
+	t0 := config.Now()
+	return UserProfile{
+		SteamID:         sid64,
+		CreatedOn:       t0,
+		UpdatedOn:       t0,
+		PermissionLevel: PGuest,
+		Name:            "Guest",
+	}
+}
+
+type People []Person
+
+func (p People) AsMap() map[steamid.SID64]Person {
+	m := map[steamid.SID64]Person{}
+	for _, person := range p {
+		m[person.SteamID] = person
+	}
+	return m
 }
 
 // AppealState is the current state of a users ban appeal, if any.
@@ -419,26 +557,6 @@ type Stats struct {
 	ServersTotal  int `json:"servers_total"`
 }
 
-// ServerEvent is a flat struct encapsulating a parsed log event
-// Fields being present is event dependent, so do not assume everything will be
-// available
-type ServerEvent struct {
-	LogID       int64                `json:"log_id"`
-	Server      *Server              `json:"server"`
-	EventType   logparse.MsgType     `json:"event_type"`
-	Source      *Person              `json:"source"`
-	Target      *Person              `json:"target"`
-	PlayerClass logparse.PlayerClass `json:"class"`
-	Weapon      logparse.Weapon      `json:"weapon"`
-	Damage      int                  `json:"damage"`
-	Item        logparse.PickupItem  `json:"item"`
-	AttackerPOS logparse.Pos         `json:"attacker_pos"`
-	VictimPOS   logparse.Pos         `json:"victim_pos"`
-	AssisterPOS logparse.Pos         `json:"assister_pos"`
-	Extra       string               `json:"extra"`
-	CreatedOn   time.Time            `json:"created_on"`
-}
-
 type Filter struct {
 	WordID    int
 	Pattern   *regexp.Regexp
@@ -451,24 +569,24 @@ func (f *Filter) Match(value string) bool {
 
 // RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.
 type RawLogEvent struct {
-	LogID     int64             `json:"log_id"`
-	Type      logparse.MsgType  `json:"event_type"`
-	Event     map[string]string `json:"event"`
-	Server    Server            `json:"server"`
-	Player1   *Person           `json:"player1"`
-	Player2   *Person           `json:"player2"`
-	Assister  *Person           `json:"assister"`
-	RawEvent  string            `json:"raw_event"`
-	CreatedOn time.Time         `json:"created_on"`
+	LogID     int64              `json:"log_id"`
+	Type      logparse.EventType `json:"event_type"`
+	Event     map[string]string  `json:"event"`
+	Server    Server             `json:"server"`
+	Player1   *Person            `json:"player1"`
+	Player2   *Person            `json:"player2"`
+	Assister  *Person            `json:"assister"`
+	RawEvent  string             `json:"raw_event"`
+	CreatedOn time.Time          `json:"created_on"`
 }
 
 // Unmarshal is just a helper to
-func (e *RawLogEvent) Unmarshal(output interface{}) error {
+func (e *RawLogEvent) Unmarshal(output any) error {
 	return logparse.Unmarshal(e.Event, output)
 }
 
 type PlayerInfo struct {
-	Player  *extra.Player
+	Player  *ServerStatePlayer
 	Server  *Server
 	SteamID steamid.SID64
 	InGame  bool
@@ -477,7 +595,7 @@ type PlayerInfo struct {
 
 func NewPlayerInfo() PlayerInfo {
 	return PlayerInfo{
-		Player:  &extra.Player{},
+		Player:  &ServerStatePlayer{},
 		Server:  nil,
 		SteamID: 0,
 		InGame:  false,
@@ -486,16 +604,19 @@ func NewPlayerInfo() PlayerInfo {
 }
 
 type LogQueryOpts struct {
-	LogTypes  []logparse.MsgType `json:"log_types"`
-	Limit     uint64             `json:"limit"`
-	OrderDesc bool               `json:"order_desc"`
-	Query     string             `json:"query"`
-	SourceID  string             `json:"source_id"`
-	TargetID  string             `json:"target_id"`
-	Servers   []int              `json:"servers"`
+	LogTypes   []logparse.EventType `json:"log_types"`
+	Limit      uint64               `json:"limit"`
+	OrderDesc  bool                 `json:"order_desc"`
+	Query      string               `json:"query"`
+	SourceID   string               `json:"source_id"`
+	TargetID   string               `json:"target_id"`
+	Servers    []int                `json:"servers"`
+	Network    string               `json:"network"`
+	SentBefore *time.Time           `json:"sent_before,omitempty"`
+	SentAfter  *time.Time           `json:"sent_after,omitempty"`
 }
 
-func (lqo *LogQueryOpts) ValidRecordType(t logparse.MsgType) bool {
+func (lqo *LogQueryOpts) ValidRecordType(t logparse.EventType) bool {
 	if len(lqo.LogTypes) == 0 {
 		// No filters == Any
 		return true
@@ -550,4 +671,169 @@ func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error)
 		Size:      size,
 		Downloads: 0,
 	}, nil
+}
+
+// CommonStats contains shared stats that are used across all models
+type CommonStats struct {
+	Kills        int64 `json:"kills"`
+	Assists      int64 `json:"assists"`
+	Damage       int64 `json:"damage"`
+	Healing      int64 `json:"healing"`
+	Shots        int64 `json:"shots"`
+	Hits         int64 `json:"hits"`
+	Suicides     int64 `json:"suicides"`
+	Extinguishes int64 `json:"extinguishes"`
+
+	PointCaptures int64 `json:"point_captures"`
+	PointDefends  int64 `json:"point_defends"`
+
+	MedicDroppedUber int64 `json:"medic_dropped_uber"`
+
+	ObjectBuilt     int64 `json:"object_built"`
+	ObjectDestroyed int64 `json:"object_destroyed"`
+
+	Messages     int64 `json:"messages"`
+	MessagesTeam int64 `json:"messages_team"`
+
+	PickupAmmoLarge  int64 `json:"pickup_ammo_large"`
+	PickupAmmoMedium int64 `json:"pickup_ammo_medium"`
+	PickupAmmoSmall  int64 `json:"pickup_ammo_small"`
+	PickupHPLarge    int64 `json:"pickup_hp_large"`
+	PickupHPMedium   int64 `json:"pickup_hp_medium"`
+	PickupHPSmall    int64 `json:"pickup_hp_small"`
+
+	SpawnScout    int64 `json:"spawn_scout"`
+	SpawnSoldier  int64 `json:"spawn_soldier"`
+	SpawnPyro     int64 `json:"spawn_pyro"`
+	SpawnDemo     int64 `json:"spawn_demo"`
+	SpawnHeavy    int64 `json:"spawn_heavy"`
+	SpawnEngineer int64 `json:"spawn_engineer"`
+	SpawnMedic    int64 `json:"spawn_medic"`
+	SpawnSniper   int64 `json:"spawn_sniper"`
+	SpawnSpy      int64 `json:"spawn_spy"`
+
+	Dominations int64 `json:"dominations"`
+	Revenges    int64 `json:"revenges"`
+
+	Playtime   time.Duration `json:"playtime"`
+	EventCount int64         `json:"event_count"`
+}
+
+type GlobalStats struct {
+	CommonStats
+	UniquePlayers int64 `json:"unique_players"`
+}
+
+type MapStats struct {
+	CommonStats
+}
+
+type PlayerStats struct {
+	CommonStats
+	Deaths       int64 `json:"deaths"`
+	Games        int64 `json:"games"`
+	Wins         int64 `json:"wins"`
+	Losses       int64 `json:"losses"`
+	DamageTaken  int64 `json:"damage_taken"`
+	Dominated    int64 `json:"dominated"`
+	HealingTaken int64 `json:"healing_taken"`
+}
+
+type ServerStats struct {
+	CommonStats
+}
+
+type ReportStatus int
+
+const (
+	Opened ReportStatus = iota
+	NeedMoreInfo
+	ClosedWithoutAction
+	ClosedWithAction
+)
+
+type ReportMedia struct {
+	ReportMediaId int           `json:"report_media_id"`
+	ReportId      int           `json:"report_id"`
+	AuthorId      steamid.SID64 `json:"author_id"`
+	MimeType      string        `json:"mime_type"`
+	Size          int64         `json:"size"`
+	Contents      []byte        `json:"contents"`
+	Deleted       bool          `json:"deleted"`
+	CreatedOn     time.Time     `json:"created_on"`
+	UpdatedOn     time.Time     `json:"updated_on"`
+}
+
+type ReportMessage struct {
+	ReportMessageId int           `json:"report_message_id"`
+	ReportId        int           `json:"report_id"`
+	AuthorId        steamid.SID64 `json:"author_id"`
+	Message         string        `json:"contents"`
+	Deleted         bool          `json:"deleted"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+}
+
+type Report struct {
+	ReportId     int           `json:"report_id"`
+	AuthorId     steamid.SID64 `json:"author_id"`
+	ReportedId   steamid.SID64 `json:"reported_id"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	ReportStatus ReportStatus  `json:"report_status"`
+	Deleted      bool          `json:"deleted"`
+	CreatedOn    time.Time     `json:"created_on"`
+	UpdatedOn    time.Time     `json:"updated_on"`
+	MediaIds     []int         `json:"media_ids"`
+}
+
+func NewReport() Report {
+	return Report{
+		ReportId:     0,
+		AuthorId:     0,
+		Title:        "",
+		Description:  "",
+		ReportStatus: 0,
+		CreatedOn:    config.Now(),
+		UpdatedOn:    config.Now(),
+	}
+}
+
+func NewReportMedia(reportId int) ReportMedia {
+	return ReportMedia{
+		ReportMediaId: 0,
+		ReportId:      reportId,
+		AuthorId:      0,
+		MimeType:      "",
+		Contents:      nil,
+		CreatedOn:     config.Now(),
+		UpdatedOn:     config.Now(),
+	}
+}
+
+func NewReportMessage(reportId int, authorId steamid.SID64, message string) ReportMessage {
+	return ReportMessage{
+		ReportMessageId: 0,
+		ReportId:        reportId,
+		AuthorId:        authorId,
+		Message:         message,
+		CreatedOn:       config.Now(),
+		UpdatedOn:       config.Now(),
+	}
+}
+
+type PersonConnection struct {
+	CreatedOn time.Time `json:"created_on"`
+	Address   net.IP    `json:"address"`
+}
+
+type PersonConnections []PersonConnection
+
+type NewsEntry struct {
+	NewsId      int       `json:"news_id"`
+	Title       string    `json:"title"`
+	BodyMD      string    `json:"body_md"`
+	IsPublished bool      `json:"is_published"`
+	CreatedOn   time.Time `json:"created_on"`
+	UpdatedOn   time.Time `json:"updated_on"`
 }

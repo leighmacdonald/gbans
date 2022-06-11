@@ -1,8 +1,10 @@
 package app
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -24,19 +26,23 @@ func importFilteredWords(filters []model.Filter) {
 	wordFilters = filters
 }
 
-func (g *gbans) filterWorker() {
-	c := make(chan model.ServerEvent)
-	if err := event.RegisterConsumer(c, []logparse.MsgType{logparse.Say, logparse.SayTeam}); err != nil {
-		log.Fatalf("Failed to register event reader: %v", err)
+func filterWorker(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
+	eventChan := make(chan model.ServerEvent)
+	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
+		log.Fatalf("Failed to register event reader: %v", errRegister)
 	}
 	for {
 		select {
-		case evt := <-c:
-			matched, _ := g.ContainsFilteredWord(evt.Extra)
-			if matched {
-				g.addWarning(evt.Source.SteamID, warnLanguage)
+		case serverEvent := <-eventChan:
+			msg, found := serverEvent.MetaData["msg"].(string)
+			if !found {
+				continue
 			}
-		case <-g.ctx.Done():
+			matched, _ := ContainsFilteredWord(msg)
+			if matched {
+				addWarning(ctx, database, serverEvent.Source.SteamID, warnLanguage, botSendMessageChan)
+			}
+		case <-ctx.Done():
 			return
 		}
 	}

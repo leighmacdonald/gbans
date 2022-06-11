@@ -13,17 +13,17 @@ import (
 var (
 	// Each log event can have any number of channels associated with them
 	// Events are sent to all channels in a fan-out style
-	logEventReaders   map[logparse.MsgType][]chan model.ServerEvent
+	logEventReaders   map[logparse.EventType][]chan model.ServerEvent
 	logEventReadersMu *sync.RWMutex
 )
 
 func init() {
-	logEventReaders = map[logparse.MsgType][]chan model.ServerEvent{}
+	logEventReaders = map[logparse.EventType][]chan model.ServerEvent{}
 	logEventReadersMu = &sync.RWMutex{}
 }
 
 // RegisterConsumer will register a channel to receive new log events as they come in
-func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) error {
+func RegisterConsumer(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
 	for _, msgType := range msgTypes {
@@ -31,25 +31,25 @@ func RegisterConsumer(r chan model.ServerEvent, msgTypes []logparse.MsgType) err
 		if !found {
 			logEventReaders[msgType] = []chan model.ServerEvent{}
 		}
-		logEventReaders[msgType] = append(logEventReaders[msgType], r)
+		logEventReaders[msgType] = append(logEventReaders[msgType], serverEventChan)
 	}
 	log.WithFields(log.Fields{"count": len(msgTypes)}).Trace("Registered event reader(s)")
 	return nil
 }
 
 // Emit is used to send out events to and registered reader channels.
-func Emit(le model.ServerEvent) {
+func Emit(serverEvent model.ServerEvent) {
 	// Ensure we also send to Any handlers for all events.
-	for _, typ := range []logparse.MsgType{le.EventType, logparse.Any} {
+	for _, eventType := range []logparse.EventType{serverEvent.EventType, logparse.Any} {
 		logEventReadersMu.RLock()
-		readers, ok := logEventReaders[typ]
+		readers, ok := logEventReaders[eventType]
 		logEventReadersMu.RUnlock()
 		if !ok {
 			continue
 		}
 		for rt, reader := range readers {
 			select {
-			case reader <- le:
+			case reader <- serverEvent:
 			default:
 				log.WithFields(log.Fields{"type": rt}).Errorf("Failed to write to log event channel")
 			}
@@ -58,22 +58,22 @@ func Emit(le model.ServerEvent) {
 	}
 }
 
-func removeChan(channels []chan model.ServerEvent, c chan model.ServerEvent) []chan model.ServerEvent {
+func removeChan(channels []chan model.ServerEvent, serverEventChan chan model.ServerEvent) []chan model.ServerEvent {
 	var newChannels []chan model.ServerEvent
-	for _, i := range channels {
-		if i != c {
-			newChannels = append(newChannels, i)
+	for _, channel := range channels {
+		if channel != serverEventChan {
+			newChannels = append(newChannels, channel)
 		}
 	}
 	return newChannels
 }
 
 // UnregisterConsumer will remove the channel from any matching event readers
-func UnregisterConsumer(r chan model.ServerEvent) error {
+func UnregisterConsumer(serverEventChan chan model.ServerEvent) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
-	for k, v := range logEventReaders {
-		logEventReaders[k] = removeChan(v, r)
+	for eType, eventReaders := range logEventReaders {
+		logEventReaders[eType] = removeChan(eventReaders, serverEventChan)
 	}
 	return nil
 }

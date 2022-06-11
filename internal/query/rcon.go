@@ -16,14 +16,16 @@ import (
 
 // ExecRCON executes the given command against the server provided. It returns the command
 // output.
-func ExecRCON(server model.Server, cmd string) (string, error) {
-	r, err := rcon.Dial(context.Background(), server.Addr(), server.RCON, time.Second*5)
-	if err != nil {
-		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerName, err)
+func ExecRCON(ctx context.Context, server model.Server, cmd string) (string, error) {
+	execCtx, cancelExec := context.WithTimeout(ctx, time.Second*15)
+	defer cancelExec()
+	console, errDial := rcon.Dial(execCtx, server.Addr(), server.RCON, time.Second*10)
+	if errDial != nil {
+		return "", errors.Errorf("Failed to dial server: %s (%v)", server.ServerNameShort, errDial)
 	}
-	resp, err2 := r.Exec(sanitizeRCONCommand(cmd))
-	if err2 != nil {
-		return "", errors.Errorf("Failed to exec command: %v", err2)
+	resp, errExec := console.Exec(sanitizeRCONCommand(cmd))
+	if errExec != nil {
+		return "", errors.Errorf("Failed to exec command: %v", errExec)
 	}
 	return resp, nil
 }
@@ -31,47 +33,49 @@ func ExecRCON(server model.Server, cmd string) (string, error) {
 // RCON is used to execute rcon commands against multiple servers
 func RCON(ctx context.Context, servers []model.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
-	mu := &sync.RWMutex{}
+	rwMutex := &sync.RWMutex{}
 	timeout := time.Second * 10
-	wg := &sync.WaitGroup{}
-	for _, s := range servers {
-		wg.Add(1)
+	waitGroup := &sync.WaitGroup{}
+	for _, server := range servers {
+		waitGroup.Add(1)
 		go func(server model.Server) {
-			defer wg.Done()
-			lCtx, cancel := context.WithTimeout(ctx, timeout)
-			defer cancel()
+			defer waitGroup.Done()
+			rconCtx, cancelExec := context.WithTimeout(ctx, time.Second*20)
+			defer cancelExec()
 			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
-			conn, err := rcon.Dial(lCtx, addr, server.RCON, timeout)
-			if err != nil {
-				log.Errorf("Failed to connect to server %s: %v", server.ServerName, err)
+			conn, errDial := rcon.Dial(rconCtx, addr, server.RCON, timeout)
+			if errDial != nil {
+				log.Errorf("Failed to connect to server %s: %v", server.ServerNameShort, errDial)
 				return
 			}
 			for _, command := range commands {
-				resp, errR := conn.Exec(sanitizeRCONCommand(command))
-				if errR != nil {
-					log.Tracef("Failed to exec rcon command %s: %v", server.ServerName, errR)
+				resp, errExec := conn.Exec(sanitizeRCONCommand(command))
+				if errExec != nil {
+					log.Tracef("Failed to exec rcon command %s: %v", server.ServerNameShort, errExec)
 				}
-				mu.Lock()
-				responses[server.ServerName] = resp
-				mu.Unlock()
+				rwMutex.Lock()
+				responses[server.ServerNameShort] = resp
+				rwMutex.Unlock()
 			}
-		}(s)
+		}(server)
 	}
-	wg.Wait()
+	waitGroup.Wait()
 	return responses
 }
 
 // GetServerStatus fetches and parses status output for the server
-func GetServerStatus(server model.Server) (extra.Status, error) {
-	resp, err := ExecRCON(server, "status")
-	if err != nil {
-		log.Tracef("Failed to exec rcon command: %v", err)
-		return extra.Status{}, err
+func GetServerStatus(ctx context.Context, server model.Server) (extra.Status, error) {
+	rconCtx, cancelRcon := context.WithTimeout(ctx, time.Second*15)
+	defer cancelRcon()
+	resp, errRcon := ExecRCON(rconCtx, server, "status")
+	if errRcon != nil {
+		log.Tracef("Failed to exec rcon command: %v", errRcon)
+		return extra.Status{}, errRcon
 	}
-	status, err2 := extra.ParseStatus(resp, true)
-	if err2 != nil {
-		log.Errorf("Failed to parse status output: %v", err2)
-		return extra.Status{}, err2
+	status, errParse := extra.ParseStatus(resp, true)
+	if errParse != nil {
+		log.Errorf("Failed to parse status output: %v", errParse)
+		return extra.Status{}, errParse
 	}
 	return status, nil
 }

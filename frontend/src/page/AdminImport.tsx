@@ -1,5 +1,6 @@
 import React from 'react';
-import { Grid, Typography } from '@material-ui/core';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
 
 export const AdminImport = (): JSX.Element => {
     return (

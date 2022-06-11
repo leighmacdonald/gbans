@@ -78,6 +78,7 @@ type rootConfig struct {
 	Discord discordConfig `mapstructure:"discord"`
 	Log     logConfig     `mapstructure:"logging"`
 	NetBans netBans       `mapstructure:"network_bans"`
+	Debug   debugConfig   `mapstructure:"debug"`
 }
 
 type dbConfig struct {
@@ -108,12 +109,12 @@ func (h httpConfig) Addr() string {
 type runMode string
 
 const (
-	// Release is production mode, minimal logging
-	Release runMode = "release"
-	// Debug has much more logging and uses non-embedded assets
-	Debug runMode = "debug"
-	// Test is for unit tests
-	Test runMode = "test"
+	// ReleaseMode is production mode, minimal logging
+	ReleaseMode runMode = "release"
+	// DebugMode has much more logging and uses non-embedded assets
+	DebugMode runMode = "debug"
+	// TestMode is for unit tests
+	TestMode runMode = "test"
 )
 
 // String returns the string value of the runMode
@@ -157,15 +158,24 @@ type discordConfig struct {
 	LogChannelID           string   `mapstructure:"log_channel_id"`
 	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
 	PublicLogChannelId     string   `mapstructure:"public_log_channel_id"`
+	ModLogChannelId        string   `mapstructure:"mod_log_channel_id"`
 }
 
 type logConfig struct {
-	Level          string `mapstructure:"level"`
-	ForceColours   bool   `mapstructure:"force_colours"`
-	DisableColours bool   `mapstructure:"disable_colours"`
-	ReportCaller   bool   `mapstructure:"report_caller"`
-	FullTimestamp  bool   `mapstructure:"full_timestamp"`
-	SrcdsLogAddr   string `mapstructure:"srcds_log_addr"`
+	Level                string `mapstructure:"level"`
+	ForceColours         bool   `mapstructure:"force_colours"`
+	DisableColours       bool   `mapstructure:"disable_colours"`
+	ReportCaller         bool   `mapstructure:"report_caller"`
+	FullTimestamp        bool   `mapstructure:"full_timestamp"`
+	SrcdsLogAddr         string `mapstructure:"srcds_log_addr"`
+	SrcdsLogExternalHost string `mapstructure:"srcds_log_external_host"`
+}
+
+type debugConfig struct {
+	UpdateSRCDSLogSecrets   bool   `mapstructure:"update_srcds_log_secrets"`
+	SkipOpenIDValidation    bool   `mapstructure:"skip_open_id_validation"`
+	WriteUnhandledLogEvents bool   `mapstructure:"write_unhandled_log_events"`
+	AddRCONLogAddress       string `mapstructure:"add_rcon_log_address"`
 }
 
 type netBans struct {
@@ -194,14 +204,15 @@ var (
 	Discord discordConfig
 	Log     logConfig
 	Net     netBans
+	Debug   debugConfig
 )
 
 // Read reads in config file and ENV variables if set.
 func Read(cfgFiles ...string) {
 	// Find home directory.
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Fatalf("Failed to get HOME dir: %v", err)
+	home, errHomeDir := homedir.Dir()
+	if errHomeDir != nil {
+		log.Fatalf("Failed to get HOME dir: %v", errHomeDir)
 	}
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
@@ -212,44 +223,49 @@ func Read(cfgFiles ...string) {
 	found := false
 	for _, cfgFile := range cfgFiles {
 		viper.SetConfigFile(cfgFile)
-		if err := viper.ReadInConfig(); err != nil {
+		if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
 			log.Fatalf("Failed to read config file: %s", cfgFile)
 		}
 		found = true
 	}
-	var cfg rootConfig
-	if err2 := viper.Unmarshal(&cfg); err2 != nil {
-		log.Fatalf("Invalid config file format: %v", err2)
+	var root rootConfig
+	if errUnmarshal := viper.Unmarshal(&root); errUnmarshal != nil {
+		log.Fatalf("Invalid config file format: %v", errUnmarshal)
 	}
-	if strings.HasPrefix(cfg.DB.DSN, "pgx://") {
-		cfg.DB.DSN = strings.Replace(cfg.DB.DSN, "pgx://", "postgres://", 1)
+	if strings.HasPrefix(root.DB.DSN, "pgx://") {
+		root.DB.DSN = strings.Replace(root.DB.DSN, "pgx://", "postgres://", 1)
 	}
-	d, err3 := ParseDuration(cfg.HTTP.ClientTimeout)
-	if err3 != nil {
-		d = time.Second * 10
+	clientDuration, errClientDuration := ParseDuration(root.HTTP.ClientTimeout)
+	if errClientDuration != nil {
+		clientDuration = time.Second * 10
 	}
-	cfg.HTTP.ClientTimeoutDuration = d
-	d2, err4 := ParseDuration(cfg.General.WarningExceededDurationValue)
-	if err4 != nil {
-		d2 = time.Hour * 24 * 7
+	root.HTTP.ClientTimeoutDuration = clientDuration
+	warningDuration, errWarningDuration := ParseDuration(root.General.WarningExceededDurationValue)
+	if errWarningDuration != nil {
+		warningDuration = time.Hour * 24 * 7
 	}
-	cfg.General.WarningExceededDuration = d2
-	HTTP = cfg.HTTP
-	General = cfg.General
-	Filter = cfg.Filter
-	Discord = cfg.Discord
-	Relay = cfg.Relay
-	DB = cfg.DB
-	Log = cfg.Log
-	Net = cfg.NetBans
+	root.General.WarningExceededDuration = warningDuration
+	HTTP = root.HTTP
+	General = root.General
+	Filter = root.Filter
+	Discord = root.Discord
+	Relay = root.Relay
+	DB = root.DB
+	Log = root.Log
+	Net = root.NetBans
+	Debug = root.Debug
 
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
-		log.Errorf("Failed to set steam api key: %v", err)
+		log.Errorf("Failed to set steam api key: %v", errHomeDir)
+	}
+	_, errDuration := time.ParseDuration(General.ServerStatusUpdateFreq)
+	if errDuration != nil {
+		log.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
 	}
 	if errSteamWeb := steamweb.SetKey(General.SteamKey); errSteamWeb != nil {
-		log.Errorf("Failed to set steam api key: %v", err)
+		log.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
 	if found {
 		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
@@ -258,88 +274,83 @@ func Read(cfgFiles ...string) {
 	}
 }
 
-func init() {
-	viper.SetDefault("general.site_name", "gbans")
-	viper.SetDefault("general.steam_key", "")
-	viper.SetDefault("general.mode", "release")
-	viper.SetDefault("general.owner", 76561198044052046)
-	viper.SetDefault("general.warning_timeout", time.Hour*6)
-	viper.SetDefault("general.warning_limit", 3)
-	viper.SetDefault("general.warning_exceeded_action", Kick)
-	viper.SetDefault("general.warning_exceeded_duration", "1w")
-	viper.SetDefault("general.use_utc", true)
-	viper.SetDefault("general.server_status_update_freq", "60s")
-	viper.SetDefault("general.default_maps", []string{"pl_badwater"})
-	viper.SetDefault("general.map_changer_enabled", false)
-
-	viper.SetDefault("http.host", "127.0.0.1")
-	viper.SetDefault("http.port", 6006)
-	viper.SetDefault("http.domain", "http://localhost:6006")
-	viper.SetDefault("http.tls", false)
-	viper.SetDefault("http.tls_auto", false)
-	viper.SetDefault("http.static_path", "frontend/dist")
-	viper.SetDefault("http.cookie_key", golib.RandomString(32))
-	viper.SetDefault("http.client_timeout", "10s")
-
-	viper.SetDefault("filter.enabled", false)
-	viper.SetDefault("filter.is_warning", true)
-	viper.SetDefault("filter.ping_discord", false)
-	viper.SetDefault("filter.external_enabled", false)
-	viper.SetDefault("filter.external_source", []string{})
-
-	viper.SetDefault("discord.enabled", false)
-	viper.SetDefault("discord.app_id", 0)
-	viper.SetDefault("discord.token", "")
-	viper.SetDefault("discord.mod_role_ids", []string{})
-	viper.SetDefault("discord.perms", 125958)
-	viper.SetDefault("discord.prefix", "!")
-	viper.SetDefault("discord.mod_channel_ids", nil)
-	viper.SetDefault("discord.guild_id", "")
-	viper.SetDefault("discord.public_log_channel_enable", false)
-	viper.SetDefault("discord.public_log_channel_id", "")
-
-	viper.SetDefault("network_bans.enabled", false)
-	viper.SetDefault("network_bans.max_age", "1d")
-	viper.SetDefault("network_bans.cache_path", ".cache")
-	viper.SetDefault("network_bans.sources", nil)
-
-	viper.SetDefault("network_bans.ip2location.enabled", false)
-	viper.SetDefault("network_bans.ip2location.token", "")
-	viper.SetDefault("network_bans.ip2location.asn_enabled", false)
-	viper.SetDefault("network_bans.ip2location.ip_enabled", false)
-	viper.SetDefault("network_bans.ip2location.proxy_enabled", false)
-
-	viper.SetDefault("relay.enabled", false)
-	viper.SetDefault("relay.host", "wss://localhost:6006")
-	viper.SetDefault("relay.password", "")
-	viper.SetDefault("relay.server_name", "")
-	viper.SetDefault("relay.log_path", "serverfiles/tf/logs")
-	viper.SetDefault("relay.channel_ids", []string{})
-
-	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.force_colours", true)
-	viper.SetDefault("log.disable_colours", false)
-	viper.SetDefault("log.report_caller", false)
-	viper.SetDefault("log.full_timestamp", false)
-	viper.SetDefault("log.srcds_log_addr", ":27115")
-
-	viper.SetDefault("database.dsn", "postgresql://localhost/gbans")
-	viper.SetDefault("database.auto_migrate", true)
-	viper.SetDefault("database.log_queries", false)
-	viper.SetDefault("database.log_write_freq", time.Second*10)
+var defaultConfig = map[string]any{
+	"general.site_name":                      "gbans",
+	"general.steam_key":                      "",
+	"general.mode":                           "release",
+	"general.owner":                          76561198044052046,
+	"general.warning_timeout":                time.Hour * 6,
+	"general.warning_limit":                  3,
+	"general.warning_exceeded_action":        Kick,
+	"general.warning_exceeded_duration":      "1w",
+	"general.use_utc":                        true,
+	"general.server_status_update_freq":      "60s",
+	"general.default_maps":                   []string{"pl_badwater"},
+	"general.map_changer_enabled":            false,
+	"http.host":                              "127.0.0.1",
+	"http.port":                              6006,
+	"http.domain":                            "http://localhost:6006",
+	"http.tls":                               false,
+	"http.tls_auto":                          false,
+	"http.static_path":                       "frontend/dist",
+	"http.cookie_key":                        golib.RandomString(32),
+	"http.client_timeout":                    "10s",
+	"debug.update_srcds_log_secrets":         true,
+	"debug.skip_open_id_validation":          false,
+	"debug.write_unhandled_log_events":       false,
+	"filter.enabled":                         false,
+	"filter.is_warning":                      true,
+	"filter.ping_discord":                    false,
+	"filter.external_enabled":                false,
+	"filter.external_source":                 []string{},
+	"discord.enabled":                        false,
+	"discord.app_id":                         0,
+	"discord.token":                          "",
+	"discord.mod_role_ids":                   []string{},
+	"discord.perms":                          125958,
+	"discord.mod_channel_ids":                nil,
+	"discord.guild_id":                       "",
+	"discord.public_log_channel_enable":      false,
+	"discord.public_log_channel_id":          "",
+	"network_bans.enabled":                   false,
+	"network_bans.max_age":                   "1d",
+	"network_bans.cache_path":                ".cache",
+	"network_bans.sources":                   nil,
+	"network_bans.ip2location.enabled":       false,
+	"network_bans.ip2location.token":         "",
+	"network_bans.ip2location.asn_enabled":   false,
+	"network_bans.ip2location.ip_enabled":    false,
+	"network_bans.ip2location.proxy_enabled": false,
+	"log.level":                              "info",
+	"log.force_colours":                      true,
+	"log.disable_colours":                    false,
+	"log.report_caller":                      false,
+	"log.full_timestamp":                     false,
+	"log.srcds_log_addr":                     ":27115",
+	"log.srcds_log_external_host":            "",
+	"database.dsn":                           "postgresql://localhost/gbans",
+	"database.auto_migrate":                  true,
+	"database.log_queries":                   false,
+	"database.log_write_freq":                time.Second * 10,
 }
 
-func configureLogger(l *log.Logger) {
-	level, err := log.ParseLevel(Log.Level)
-	if err != nil {
+func init() {
+	for configKey, value := range defaultConfig {
+		viper.SetDefault(configKey, value)
+	}
+}
+
+func configureLogger(logger *log.Logger) {
+	level, errLevel := log.ParseLevel(Log.Level)
+	if errLevel != nil {
 		log.Debugf("Invalid log level: %s", Log.Level)
 		level = log.InfoLevel
 	}
-	l.SetLevel(level)
-	l.SetFormatter(&log.TextFormatter{
+	logger.SetLevel(level)
+	logger.SetFormatter(&log.TextFormatter{
 		ForceColors:   Log.ForceColours,
 		DisableColors: Log.DisableColours,
 		FullTimestamp: Log.FullTimestamp,
 	})
-	l.SetReportCaller(Log.ReportCaller)
+	logger.SetReportCaller(Log.ReportCaller)
 }

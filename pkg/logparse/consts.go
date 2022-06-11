@@ -2,110 +2,140 @@ package logparse
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
 )
 
-// MsgType defines a known, parsable message type
-type MsgType int
+// EventType defines a known, parsable message type
+type EventType int
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	// UnhandledMsg is used for messages we are ignoring
-	UnhandledMsg MsgType = 0
+	// IgnoredMsg is used for messages we are ignoring
+	IgnoredMsg EventType = 0
 	// UnknownMsg is for any unexpected message formats
-	UnknownMsg MsgType = 1
+	UnknownMsg EventType = 1
 
 	// Live player actions
 
-	Say                 MsgType = 10
-	SayTeam             MsgType = 11
-	Killed              MsgType = 12
-	KillAssist          MsgType = 13
-	Suicide             MsgType = 14
-	ShotFired           MsgType = 15
-	ShotHit             MsgType = 16
-	Damage              MsgType = 17
-	Domination          MsgType = 18
-	Revenge             MsgType = 19
-	Pickup              MsgType = 20
-	EmptyUber           MsgType = 21
-	MedicDeath          MsgType = 22
-	MedicDeathEx        MsgType = 23
-	LostUberAdv         MsgType = 24
-	ChargeReady         MsgType = 25
-	ChargeDeployed      MsgType = 26
-	ChargeEnded         MsgType = 27
-	Healed              MsgType = 28
-	Extinguished        MsgType = 29
-	BuiltObject         MsgType = 30
-	CarryObject         MsgType = 31
-	KilledObject        MsgType = 32
-	DetonatedObject     MsgType = 33
-	DropObject          MsgType = 34
-	FirstHealAfterSpawn MsgType = 35
-	CaptureBlocked      MsgType = 36
-	PointCaptured       MsgType = 48
-	JoinedTeam          MsgType = 49
-	ChangeClass         MsgType = 50
-	SpawnedAs           MsgType = 51
+	Say                 EventType = 10
+	SayTeam             EventType = 11
+	Killed              EventType = 12
+	KillAssist          EventType = 13
+	Suicide             EventType = 14
+	ShotFired           EventType = 15
+	ShotHit             EventType = 16
+	Damage              EventType = 17
+	Domination          EventType = 18
+	Revenge             EventType = 19
+	Pickup              EventType = 20
+	EmptyUber           EventType = 21
+	MedicDeath          EventType = 22
+	MedicDeathEx        EventType = 23
+	LostUberAdv         EventType = 24
+	ChargeReady         EventType = 25
+	ChargeDeployed      EventType = 26
+	ChargeEnded         EventType = 27
+	Healed              EventType = 28
+	Extinguished        EventType = 29
+	BuiltObject         EventType = 30
+	CarryObject         EventType = 31
+	KilledObject        EventType = 32
+	DetonatedObject     EventType = 33
+	DropObject          EventType = 34
+	FirstHealAfterSpawn EventType = 35
+	CaptureBlocked      EventType = 36
+	PointCaptured       EventType = 48
+	JoinedTeam          EventType = 49
+	ChangeClass         EventType = 50
+	SpawnedAs           EventType = 51
+	JarateAttack        EventType = 52
+	MilkAttack          EventType = 53
+	GasAttack           EventType = 54
+	KilledCustom                  = 55
 
 	// World events not attached to specific players
 
-	WRoundOvertime  MsgType = 100
-	WRoundStart     MsgType = 101
-	WRoundWin       MsgType = 102
-	WRoundLen       MsgType = 103
-	WTeamScore      MsgType = 104
-	WTeamFinalScore MsgType = 105
-	WGameOver       MsgType = 106
-	WPaused         MsgType = 107
-	WResumed        MsgType = 108
+	WRoundOvertime     EventType = 100
+	WRoundStart        EventType = 101
+	WRoundWin          EventType = 102
+	WRoundLen          EventType = 103
+	WTeamScore         EventType = 104
+	WTeamFinalScore    EventType = 105
+	WGameOver          EventType = 106
+	WPaused            EventType = 107
+	WResumed           EventType = 108
+	WRoundSetupEnd     EventType = 109
+	WMiniRoundWin      EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
+	WMiniRoundLen      EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
+	WMiniRoundSelected EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
+	WMiniRoundStart    EventType = 113 // World triggered "Mini_Round_Start"
+	WRoundSetupBegin   EventType = 114 // World triggered "Round_Setup_Begin"
 
 	// Metadata
 
-	LogStart     MsgType = 1000
-	LogStop      MsgType = 1001
-	CVAR         MsgType = 1002
-	RCON         MsgType = 1003
-	Connected    MsgType = 1004
-	Disconnected MsgType = 1005
-	Validated    MsgType = 1006
-	Entered      MsgType = 1007
+	LogStart         EventType = 1000
+	LogStop          EventType = 1001
+	CVAR             EventType = 1002
+	RCON             EventType = 1003
+	Connected        EventType = 1004
+	Disconnected     EventType = 1005
+	Validated        EventType = 1006
+	Entered          EventType = 1007
+	MapLoad          EventType = 1008
+	ServerConfigExec EventType = 1009
+	SteamAuth        EventType = 1010
 
-	Any MsgType = 10000
+	Any EventType = 10000
+)
+
+type CritType int
+
+const (
+	NonCrit CritType = iota
+	Mini
+	Crit
 )
 
 // Team represents a players team, or spectator state
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Team int
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
 	SPEC Team = 0
 	RED  Team = 1
 	BLU  Team = 2
 )
 
+func (t Team) Opponent() Team {
+	switch t {
+	case RED:
+		return BLU
+	case BLU:
+		return RED
+	default:
+		return SPEC
+	}
+}
+
 // Pos is a position in 3D space
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Pos struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
 	Z float64 `json:"z"`
 }
 
-// String returns a ST_MakePointM
+// Encode returns a ST_MakePointM
 // Uses ESPG 4326 (WSG-84)
 func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }
 
-func NewPosFromString(s string, p *Pos) error {
+// ParsePOS parses a players 3d position
+func ParsePOS(s string, p *Pos) error {
 	pcs := strings.Split(s, " ")
 	if len(pcs) != 3 {
-		return errors.New("Invalid position")
+		return errors.Errorf("Invalid position: %s", s)
 	}
 	xv, ex := strconv.ParseFloat(pcs[0], 64)
 	if ex != nil {
@@ -144,18 +174,34 @@ type PlayerClass int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	Spectator PlayerClass = 0
-	Scout     PlayerClass = 1
-	Soldier   PlayerClass = 2
-	Pyro      PlayerClass = 3
-	Demo      PlayerClass = 4
-	Heavy     PlayerClass = 5
-	Engineer  PlayerClass = 6
-	Medic     PlayerClass = 7
-	Sniper    PlayerClass = 8
-	Spy       PlayerClass = 9
-	Multi     PlayerClass = 10
+	Spectator PlayerClass = iota
+	Scout
+	Soldier
+	Pyro
+	Demo
+	Heavy
+	Engineer
+	Medic
+	Sniper
+	Spy
+	Multi
 )
+
+func (pc PlayerClass) String() string {
+	return map[PlayerClass]string{
+		Spectator: "spectator",
+		Scout:     "scout",
+		Soldier:   "soldier",
+		Pyro:      "pyro",
+		Demo:      "demo",
+		Heavy:     "heavy",
+		Engineer:  "engineer",
+		Medic:     "medic",
+		Sniper:    "sniper",
+		Spy:       "spy",
+		Multi:     "multi",
+	}[pc]
+}
 
 // Medigun holds which medigun a player was using
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
@@ -237,6 +283,7 @@ const (
 	LongHeatmaker
 	LooseCannon
 	LooseCannonImpact
+	Lugermorph
 	Machina
 	MachinaPen
 	MarketGardener
@@ -294,6 +341,7 @@ const (
 	WrapAssassin
 	Wrench
 	Sapper
+	JarBased
 )
 
 func (w Weapon) String() string {
@@ -304,7 +352,7 @@ func (w Weapon) String() string {
 	return name
 }
 
-func WeaponFromString(s string) Weapon {
+func ParseWeapon(s string) Weapon {
 	for w, v := range weaponNames {
 		if v == s {
 			return w
@@ -313,7 +361,7 @@ func WeaponFromString(s string) Weapon {
 	return UnknownWeapon
 }
 
-// weaponNames defines string versions for all all known weapons
+// weaponNames defines string versions for all known weapons
 var weaponNames = map[Weapon]string{
 	UnknownWeapon:         "unknown",
 	AiFlamethrower:        "ai_flamethrower",
@@ -339,102 +387,105 @@ var weaponNames = map[Weapon]string{
 	ConscientiousObjector: "nonnonviolent_protest",
 	CowMangler:            "cow_mangler",
 	Crossbow:              "crusaders_crossbow",
-	DeflectPromode:        "deflect_promode",
-	DeflectRocket:         "deflect_rocket",
-	Degreaser:             "degreaser",
-	DemoKatana:            "demokatana",
-	Detonator:             "detonator",
-	DiamondBack:           "diamondback",
-	DirectHit:             "rocketlauncher_directhit",
-	DisciplinaryAction:    "disciplinary_action",
-	DragonsFury:           "dragons_fury",
-	DragonsFuryBonus:      "dragons_fury_bonus",
-	Enforcer:              "enforcer",
-	EscapePlan:            "unique_pickaxe_escape",
-	EternalReward:         "eternal_reward",
-	FamilyBusiness:        "family_business",
-	Fists:                 "fists",
-	FistsOfSteel:          "steel_fists",
-	FlameThrower:          "flamethrower",
-	FlareGun:              "flaregun",
-	ForceANature:          "force_a_nature",
-	FrontierJustice:       "frontier_justice",
-	FryingPan:             "fryingpan",
-	Gunslinger:            "robot_arm",
-	GunslingerCombo:       "robot_arm_combo_kill", // what is this?
-	GunslingerTaunt:       "robot_arm_blender_kill",
-	HamShank:              "ham_shank",
-	HotHand:               "hot_hand",
-	Huntsman:              "tf_projectile_arrow",
-	IronBomber:            "iron_bomber",
-	IronCurtain:           "iron_curtain",
-	Jag:                   "wrench_jag",
-	Knife:                 "knife",
-	Kukri:                 "tribalkukri",
-	Kunai:                 "kunai",
-	Letranger:             "letranger",
-	LibertyLauncher:       "liberty_launcher",
-	LockNLoad:             "loch_n_load",
-	LongHeatmaker:         "long_heatmaker",
-	LooseCannon:           "loose_cannon",
-	LooseCannonImpact:     "loose_cannon_impact",
-	Machina:               "machina",
-	MachinaPen:            "player_penetration",
-	MarketGardener:        "market_gardener",
-	Maul:                  "the_maul",
-	MiniGun:               "minigun",
-	MiniSentry:            "obj_minisentry",
-	Natascha:              "natascha",
-	NecroSmasher:          "necro_smasher",
-	Original:              "quake_rl",
-	PepPistol:             "pep_pistol",
-	Phlog:                 "phlogistinator",
-	Pistol:                "pistol",
-	PistolScout:           "pistol_scout",
-	Powerjack:             "powerjack",
-	ProjectilePipe:        "tf_projectile_pipe",
-	ProjectilePipeRemote:  "tf_projectile_pipe_remote",
-	ProjectileRocket:      "tf_projectile_rocket",
-	ProRifle:              "pro_rifle", // heatmaker?
-	ProSMG:                "pro_smg",   // carbine?
-	ProtoSyringe:          "proto_syringe",
-	Quickiebomb:           "quickiebomb_launcher",
-	Rainblower:            "rainblower",
-	RescueRanger:          "rescue_ranger",
-	ReserveShooter:        "reserve_shooter",
-	Revolver:              "revolver",
-	Sandman:               "sandman",
-	Sapper:                "obj_attachment_sapper",
-	Scattergun:            "scattergun",
-	ScorchShot:            "scorch_shot",
-	ScottishResistance:    "sticky_resistance",
-	Sentry1:               "obj_sentrygun",
-	Sentry2:               "obj_sentrygun2",
-	Sentry3:               "obj_sentrygun3",
-	SharpDresser:          "sharp_dresser",
-	ShootingStar:          "shooting_star",
-	ShortStop:             "shortstop",
-	ShotgunPrimary:        "shotgun_primary",
-	ShotgunPyro:           "shotgun_pyro",
-	ShotgunSoldier:        "shotgun_soldier",
-	Sledgehammer:          "sledgehammer",
-	SMG:                   "smg",
-	SniperRifle:           "sniperrifle",
-	SodaPopper:            "soda_popper",
-	Spycicle:              "spy_cicle",
-	SydneySleeper:         "sydney_sleeper",
-	SyringeGun:            "syringegun_medic",
-	TauntMedic:            "taunt_medic",
-	Telefrag:              "telefrag",
-	TheClassic:            "the_classic",
-	Tomislav:              "tomislav",
-	Ubersaw:               "ubersaw",
-	WarriorsSpirit:        "warrior_spirit",
-	WidowMaker:            "widowmaker",
-	World:                 "world",
-	Wrangler:              "wrangler_kill",
-	WrapAssassin:          "wrap_assassin",
-	Wrench:                "wrench",
+	// TODO add remaining deflects
+	DeflectPromode:       "deflect_promode",
+	DeflectRocket:        "deflect_rocket",
+	Degreaser:            "degreaser",
+	DemoKatana:           "demokatana",
+	Detonator:            "detonator",
+	DiamondBack:          "diamondback",
+	DirectHit:            "direct_hit",
+	DisciplinaryAction:   "disciplinary_action",
+	DragonsFury:          "dragons_fury",
+	DragonsFuryBonus:     "dragons_fury_bonus",
+	Enforcer:             "enforcer",
+	EscapePlan:           "unique_pickaxe_escape",
+	EternalReward:        "eternal_reward",
+	FamilyBusiness:       "family_business",
+	Fists:                "fists",
+	FistsOfSteel:         "steel_fists",
+	FlameThrower:         "flamethrower",
+	FlareGun:             "flaregun",
+	ForceANature:         "force_a_nature",
+	FrontierJustice:      "frontier_justice",
+	FryingPan:            "fryingpan",
+	Gunslinger:           "robot_arm",
+	GunslingerCombo:      "robot_arm_combo_kill",
+	GunslingerTaunt:      "robot_arm_blender_kill",
+	HamShank:             "ham_shank",
+	HotHand:              "hot_hand",
+	Huntsman:             "tf_projectile_arrow",
+	IronBomber:           "iron_bomber",
+	IronCurtain:          "iron_curtain",
+	Jag:                  "wrench_jag",
+	JarBased:             "tf_weapon_jar",
+	Knife:                "knife",
+	Kukri:                "tribalkukri",
+	Kunai:                "kunai",
+	Letranger:            "letranger",
+	LibertyLauncher:      "liberty_launcher",
+	LockNLoad:            "loch_n_load",
+	LongHeatmaker:        "long_heatmaker",
+	LooseCannon:          "loose_cannon",
+	LooseCannonImpact:    "loose_cannon_impact",
+	Lugermorph:           "maxgun",
+	Machina:              "machina",
+	MachinaPen:           "player_penetration",
+	MarketGardener:       "market_gardener",
+	Maul:                 "the_maul",
+	MiniGun:              "minigun",
+	MiniSentry:           "obj_minisentry",
+	Natascha:             "natascha",
+	NecroSmasher:         "necro_smasher",
+	Original:             "quake_rl",
+	PepPistol:            "pep_pistol",
+	Phlog:                "phlogistinator",
+	Pistol:               "pistol",
+	PistolScout:          "pistol_scout",
+	Powerjack:            "powerjack",
+	ProjectilePipe:       "tf_projectile_pipe",
+	ProjectilePipeRemote: "tf_projectile_pipe_remote",
+	ProjectileRocket:     "tf_projectile_rocket",
+	ProRifle:             "pro_rifle", // heatmaker?
+	ProSMG:               "pro_smg",   // carbine?
+	ProtoSyringe:         "proto_syringe",
+	Quickiebomb:          "quickiebomb_launcher",
+	Rainblower:           "rainblower",
+	RescueRanger:         "rescue_ranger",
+	ReserveShooter:       "reserve_shooter",
+	Revolver:             "revolver",
+	Sandman:              "sandman",
+	Sapper:               "obj_attachment_sapper",
+	Scattergun:           "scattergun",
+	ScorchShot:           "scorch_shot",
+	ScottishResistance:   "sticky_resistance",
+	Sentry1:              "obj_sentrygun",
+	Sentry2:              "obj_sentrygun2",
+	Sentry3:              "obj_sentrygun3",
+	SharpDresser:         "sharp_dresser",
+	ShootingStar:         "shooting_star",
+	ShortStop:            "shortstop",
+	ShotgunPrimary:       "shotgun_primary",
+	ShotgunPyro:          "shotgun_pyro",
+	ShotgunSoldier:       "shotgun_soldier",
+	Sledgehammer:         "sledgehammer",
+	SMG:                  "smg",
+	SniperRifle:          "sniperrifle",
+	SodaPopper:           "soda_popper",
+	Spycicle:             "spy_cicle",
+	SydneySleeper:        "sydney_sleeper",
+	SyringeGun:           "syringegun_medic",
+	TauntMedic:           "taunt_medic",
+	Telefrag:             "telefrag",
+	TheClassic:           "the_classic",
+	Tomislav:             "tomislav",
+	Ubersaw:              "ubersaw",
+	WarriorsSpirit:       "warrior_spirit",
+	WidowMaker:           "widowmaker",
+	World:                "world",
+	Wrangler:             "wrangler_kill",
+	WrapAssassin:         "wrap_assassin",
+	Wrench:               "wrench",
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers,GoUnusedGlobalVariable
@@ -443,11 +494,13 @@ var Weapons = map[PlayerClass][]Weapon{
 		ConscientiousObjector,
 		FryingPan,
 		HamShank,
+		Lugermorph,
 		NecroSmasher,
 		Pistol,
 		ReserveShooter,
 		Telefrag,
 		World,
+		JarBased, // reflect?
 	},
 	Scout: {
 		Atomizer,
@@ -578,4 +631,29 @@ var Weapons = map[PlayerClass][]Weapon{
 		SharpDresser,
 		Spycicle,
 	},
+}
+
+var backStabWeapons = []Weapon{
+	BigEarner,
+	EternalReward,
+	BlackRose,
+	Knife,
+	Kunai,
+	Spycicle,
+	SharpDresser,
+	SniperRifle,
+	Machina,
+	Ambassador,
+	DiamondBack,
+	MarketGardener,
+	// kgb
+	Backburner,
+	AwperHand,
+	ProRifle,
+	ShootingStar,
+	TheClassic,
+}
+
+func IsCritWeapon(weapon Weapon) bool {
+	return fp.Contains[Weapon](backStabWeapons, weapon)
 }

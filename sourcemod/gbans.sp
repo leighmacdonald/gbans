@@ -1,5 +1,6 @@
 #pragma semicolon 1
 #pragma tabsize 4
+#pragma newdecls required
 
 #include <basecomm>
 #include <json> // sm-json
@@ -60,6 +61,7 @@ void OnPluginStart() {
     RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
+
 }
 
 void ReadConfig() {

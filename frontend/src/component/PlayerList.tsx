@@ -1,10 +1,10 @@
-import { apiGetPeople, Person } from '../util/api';
+import { apiGetPeople, Person } from '../api';
 import { CreateDataTable } from './DataTable';
 
 export const PlayerList = (): JSX.Element =>
     CreateDataTable<Person>()({
         connector: async () => {
-            return (await apiGetPeople()) as Promise<Person[]>;
+            return await apiGetPeople();
         },
         id_field: 'steam_id',
         heading: 'Players',
@@ -14,31 +14,31 @@ export const PlayerList = (): JSX.Element =>
                 id: 'steam_id',
                 disablePadding: false,
                 label: 'Steam ID',
-                numeric: true
+                cell_type: 'number'
             },
             {
                 id: 'personaname',
                 disablePadding: false,
                 label: 'Name',
-                numeric: false
+                cell_type: 'string'
             },
             {
                 id: 'loccountrycode',
                 disablePadding: false,
                 label: 'Country',
-                numeric: false
+                cell_type: 'flag'
             },
             {
                 id: 'created_on',
                 disablePadding: false,
-                label: 'Create On',
-                numeric: false
+                label: 'Created',
+                cell_type: 'date'
             },
             {
                 id: 'updated_on',
                 disablePadding: false,
-                label: 'Last Updated',
-                numeric: false
+                label: 'Updated',
+                cell_type: 'date'
             }
         ],
         showToolbar: false

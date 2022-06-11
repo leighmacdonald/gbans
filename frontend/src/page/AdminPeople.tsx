@@ -1,29 +1,19 @@
 import React from 'react';
-import { Grid, Paper, Typography } from '@material-ui/core';
-import { makeStyles, Theme } from '@material-ui/core/styles';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { PlayerList } from '../component/PlayerList';
-
-const useStyles = makeStyles((theme: Theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-        textAlign: 'center',
-        color: theme.palette.text.secondary
-    },
-    header: {
-        paddingBottom: '16px'
-    }
-}));
+import Stack from '@mui/material/Stack';
 
 export const AdminPeople = (): JSX.Element => {
-    const classes = useStyles();
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={12}>
-                <Paper className={classes.paper}>
-                    <Typography variant={'h2'} className={classes.header}>
-                        Known Players
-                    </Typography>
-                    <PlayerList />
+                <Paper elevation={1}>
+                    <Stack padding={3}>
+                        <Typography variant={'h2'}>Known Players</Typography>
+                        <PlayerList />
+                    </Stack>
                 </Paper>
             </Grid>
         </Grid>

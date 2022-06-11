@@ -1,31 +1,22 @@
 import React, { useState } from 'react';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { PlayerBanForm } from '../component/PlayerBanForm';
-import { Grid, Paper, Typography } from '@material-ui/core';
-import { makeStyles, Theme } from '@material-ui/core/styles';
 import { ProfilePanel } from '../component/ProfilePanel';
-import { PlayerProfile } from '../util/api';
-
-const useStyles = makeStyles((theme: Theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-        textAlign: 'center',
-        color: theme.palette.text.secondary
-    },
-    header: {
-        paddingBottom: '16px'
-    }
-}));
+import { PlayerProfile } from '../api';
+import Box from '@mui/material/Box';
+import { Nullable } from '../util/types';
 
 export const AdminBan = (): JSX.Element => {
-    const classes = useStyles();
-    const [profile, setProfile] = useState<PlayerProfile | undefined>();
+    const [profile, setProfile] = useState<Nullable<PlayerProfile>>();
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={6}>
-                <Paper className={classes.paper}>
-                    <Grid item xs={12}>
+                <Paper elevation={1}>
+                    <Box padding={3}>
                         <Typography variant={'h1'}>Ban A Player</Typography>
-                    </Grid>
+                    </Box>
                     <PlayerBanForm
                         onProfileChanged={(p) => {
                             setProfile(p);
@@ -34,10 +25,10 @@ export const AdminBan = (): JSX.Element => {
                 </Paper>
             </Grid>
             <Grid item xs={6}>
-                <Paper className={classes.paper}>
-                    <Grid item xs={12}>
+                <Paper elevation={1}>
+                    <Box padding={3}>
                         <Typography variant={'h1'}>Player Profile</Typography>
-                    </Grid>
+                    </Box>
                     <ProfilePanel profile={profile} />
                 </Paper>
             </Grid>

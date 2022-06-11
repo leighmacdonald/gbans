@@ -13,13 +13,10 @@ var serveCmd = &cobra.Command{
 	Short: "Starts the gbans service",
 	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		application, err := app.New(ctx)
-		if err != nil {
-			log.Panicf("Application error: %v", err)
+		rootCtx := context.Background()
+		if errApp := app.Start(rootCtx); errApp != nil {
+			log.Errorf("Application error: %v", errApp)
 		}
-		defer application.Close()
-		application.Start()
 	},
 }
 

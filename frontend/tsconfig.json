@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "newLine": "LF",
     "outDir": "./lib/",
@@ -12,16 +12,19 @@
     //"isolatedModules": true,
     "resolveJsonModule": true,
     "lib": [
-        "es2015",
-        "es2017",
-        "dom",
-        "dom.iterable",
-        "esnext"
+      "es2015",
+      "es2017",
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
-//    "typeRoots": [
-//      "src/types",
-//      "./node_modules/react-leaflet/types"
-//    ],
+      "typeRoots": [
+        "src/types",
+      ],
+    "types": [
+      "node",
+      "jest"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -31,5 +34,10 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
   }
 }

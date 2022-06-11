@@ -24,35 +24,34 @@ type RGLProfile struct {
 	Team     string
 }
 
-func GetRGLProfile(ctx context.Context, sid steamid.SID64, profile *RGLProfile) error {
-	if !sid.Valid() {
+func GetRGLProfile(ctx context.Context, sid64 steamid.SID64, profile *RGLProfile) error {
+	if !sid64.Valid() {
 		return errors.New("Invalid profile")
 	}
-	l := log.WithFields(log.Fields{"sid": sid.Int64(), "service": "rgl"})
-	l.Debugf("Fetching profile")
+	logger := log.WithFields(log.Fields{"sid64": sid64.Int64(), "service": "rgl"})
+	logger.Debugf("Fetching profile")
 	httpClient := &http.Client{Timeout: time.Second * 15}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(rglUrl, sid.Int64()), nil)
-	if err != nil {
-		return err
+	request, errNewRequest := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(rglUrl, sid64.Int64()), nil)
+	if errNewRequest != nil {
+		return errNewRequest
 	}
-	resp, errResp := httpClient.Do(req)
-	if errResp != nil {
-		return errResp
+	response, errDoRequest := httpClient.Do(request)
+	if errDoRequest != nil {
+		return errDoRequest
 	}
 	// Load the HTML document
-	doc, errR := goquery.NewDocumentFromReader(resp.Body)
-	if errR != nil {
-		return errR
+	document, errDocumentReader := goquery.NewDocumentFromReader(response.Body)
+	if errDocumentReader != nil {
+		return errDocumentReader
 	}
-	errMsg := doc.Find("#ContentPlaceHolder1_Main_lblTimelineMessage").Text()
-	if strings.Contains(strings.ToLower(errMsg), "player does not exist in rgl") {
+	errFind := document.Find("#ContentPlaceHolder1_Main_lblTimelineMessage").Text()
+	if strings.Contains(strings.ToLower(errFind), "player does not exist in rgl") {
 		return ErrNoProfile
 	}
-	profile.Division = doc.Find("a#ContentPlaceHolder1_Main_hlDivisionName").Text()
-	profile.Team = doc.Find("a#ContentPlaceHolder1_Main_hlTeamName").Text()
+	profile.Division = document.Find("a#ContentPlaceHolder1_Main_hlDivisionName").Text()
+	profile.Team = document.Find("a#ContentPlaceHolder1_Main_hlTeamName").Text()
 
-	l.WithFields(log.Fields{"team": profile.Team, "div": profile.Division}).
+	logger.WithFields(log.Fields{"team": profile.Team, "div": profile.Division}).
 		Debugf("Fetched rgl profile successfully")
 	return nil
 }

@@ -29,31 +29,33 @@ type getFriendListResponse struct {
 	} `json:"friendslist"`
 }
 
-func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
+func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection, error) {
 	const baseURL = "https://api.steampowered.com/ISteamUser" +
 		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
-	req, err := http.NewRequestWithContext(context.Background(), "GET", u, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create new request")
+	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
+	defer cancelRequest()
+	req, errReq := http.NewRequestWithContext(requestCtx, "GET", u, nil)
+	if errReq != nil {
+		return nil, errors.Wrap(errReq, "Failed to create new request")
 	}
 	c := &http.Client{Timeout: time.Second * 5}
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to fetch friends list")
+	resp, errDo := c.Do(req)
+	if errDo != nil {
+		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
 	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to read response body")
+	body, errRead := ioutil.ReadAll(resp.Body)
+	if errRead != nil {
+		return nil, errors.Wrap(errRead, "Failed to read response body")
 	}
 	var flr getFriendListResponse
-	if err := json.Unmarshal(b, &flr); err != nil {
-		return nil, errors.Wrap(err, "Failed to decode response body")
+	if errUnmarshal := json.Unmarshal(body, &flr); errUnmarshal != nil {
+		return nil, errors.Wrap(errUnmarshal, "Failed to decode response body")
 	}
 	var fl steamid.Collection
 	for _, friend := range flr.FriendsList.Friends {
-		sid, err2 := steamid.SID64FromString(friend.Steamid)
-		if err2 == nil {
+		sid, errSid := steamid.SID64FromString(friend.Steamid)
+		if errSid == nil {
 			fl = append(fl, sid)
 		}
 	}
@@ -63,21 +65,21 @@ func FetchFriends(sid64 steamid.SID64) (steamid.Collection, error) {
 const chunkSize = 100
 
 func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, error) {
-	wg := &sync.WaitGroup{}
+	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerSummary
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
 	for i := 0; i < len(steamIDs); i += chunkSize {
-		wg.Add(1)
+		waitGroup.Add(1)
 		func() {
-			defer wg.Done()
-			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(steamQueryMaxResults, t)
-			ids := steamIDs[i : i+int(m)]
-			summaries, err := steamweb.PlayerSummaries(ids)
-			if err != nil {
+			defer waitGroup.Done()
+			total := uint64(len(steamIDs) - i)
+			maxResultsCount := golib.UMin64(steamQueryMaxResults, total)
+			ids := steamIDs[i : i+int(maxResultsCount)]
+			summaries, errSummaries := steamweb.PlayerSummaries(ids)
+			if errSummaries != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()
@@ -92,22 +94,22 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, erro
 }
 
 func FetchPlayerBans(steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
-	wg := &sync.WaitGroup{}
+	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerBanState
 		resultsMu = &sync.RWMutex{}
 	)
 	hasErr := int32(0)
 	for i := 0; i < len(steamIDs); i += chunkSize {
-		wg.Add(1)
+		waitGroup.Add(1)
 		func() {
-			defer wg.Done()
-			t := uint64(len(steamIDs) - i)
-			m := golib.UMin64(steamQueryMaxResults, t)
-			ids := steamIDs[i : i+int(m)]
+			defer waitGroup.Done()
+			total := uint64(len(steamIDs) - i)
+			maxResults := golib.UMin64(steamQueryMaxResults, total)
+			ids := steamIDs[i : i+int(maxResults)]
 
-			bans, err := steamweb.GetPlayerBans(ids)
-			if err != nil {
+			bans, errGetPlayerBans := steamweb.GetPlayerBans(ids)
+			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
 			resultsMu.Lock()

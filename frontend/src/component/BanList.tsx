@@ -1,11 +1,11 @@
-import { apiGetBans, IAPIBanRecord } from '../util/api';
+import { apiGetBans, IAPIBanRecord } from '../api';
 
 import { CreateDataTable } from './DataTable';
 
 export const BanList = (): JSX.Element =>
     CreateDataTable<IAPIBanRecord>()({
         connector: async () => {
-            return (await apiGetBans()) as Promise<IAPIBanRecord[]>;
+            return await apiGetBans();
         },
         id_field: 'ban_id',
         heading: 'Bans',
@@ -14,38 +14,38 @@ export const BanList = (): JSX.Element =>
                 id: 'personaname',
                 disablePadding: false,
                 label: 'Name',
-                numeric: false
+                cell_type: 'string'
             },
             {
                 id: 'reason_text',
                 disablePadding: false,
                 label: 'Reason',
-                numeric: false
+                cell_type: 'string'
             },
             {
                 id: 'ip_addr',
                 disablePadding: false,
                 label: 'IP/Net',
-                numeric: false
+                cell_type: 'string'
             },
             {
                 id: 'valid_until',
                 disablePadding: false,
                 label: 'Valid Until',
-                numeric: false
+                cell_type: 'date'
             },
             {
                 id: 'realname',
                 disablePadding: false,
                 label: 'Real Name',
-                numeric: false
+                cell_type: 'string'
             },
             {
                 id: 'source',
                 disablePadding: false,
                 label: 'Source',
-                numeric: false
+                cell_type: 'string'
             }
         ],
-        showToolbar: false
+        showToolbar: true
     });

@@ -1,31 +1,24 @@
 import * as React from 'react';
-import { SyntheticEvent, useEffect } from 'react';
+import { ChangeEvent, SyntheticEvent, useState } from 'react';
 import IPCIDR from 'ip-cidr';
-import {
-    apiCreateBan,
-    apiGetProfile,
-    BanPayload,
-    PlayerProfile
-} from '../util/api';
+import { apiCreateBan, BanPayload, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
-
-import {
-    Button,
-    FormControl,
-    FormControlLabel,
-    FormHelperText,
-    FormLabel,
-    Grid,
-    InputLabel,
-    MenuItem,
-    Radio,
-    RadioGroup,
-    Select,
-    TextField,
-    Typography
-} from '@material-ui/core';
-import { VoiceOverOffSharp } from '@material-ui/icons';
 import { log } from '../util/errors';
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormLabel from '@mui/material/FormLabel';
+import InputLabel from '@mui/material/InputLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import VoiceOverOffSharp from '@mui/icons-material/VoiceOverOffSharp';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import { ProfileSelectionInput } from './ProfileSelectionInput';
 
 const ip2int = (ip: string): number =>
     ip
@@ -33,6 +26,8 @@ const ip2int = (ip: string): number =>
         .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
 
 type BanType = 'network' | 'steam';
+
+type ActionType = 'ban' | 'mute';
 
 export enum Duration {
     dur15m = '15m',
@@ -67,41 +62,22 @@ const Durations = [
 ];
 
 export interface PlayerBanFormProps {
-    onProfileChanged?: (profile: PlayerProfile) => void;
+    onProfileChanged?: (profile: Nullable<PlayerProfile>) => void;
+    profile?: PlayerProfile;
 }
 
 export const PlayerBanForm = ({
     onProfileChanged
 }: PlayerBanFormProps): JSX.Element => {
-    const [fSteam, setFSteam] = React.useState<string>(
-        'https://steamcommunity.com/id/SQUIRRELLY/'
-    );
     const [duration, setDuration] = React.useState<Duration>(Duration.dur48h);
+    const [actionType, setActionType] = React.useState<ActionType>('ban');
     const [reasonText, setReasonText] = React.useState<string>('');
     const [noteText, setNoteText] = React.useState<string>('');
     const [network, setNetwork] = React.useState<string>('');
     const [networkSize, setNetworkSize] = React.useState<number>(0);
     const [banType, setBanType] = React.useState<BanType>('steam');
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>();
-    const loadPlayerSummary = async () => {
-        try {
-            const p = (await apiGetProfile(fSteam)) as PlayerProfile;
-            setProfile(p);
-            if (onProfileChanged) {
-                onProfileChanged(p);
-            }
-        } catch (e) {
-            log(e);
-        }
-    };
-    useEffect(() => {
-        // Validate results
-    }, [profile]);
-    const handleUpdateFSteam = React.useCallback(loadPlayerSummary, [
-        onProfileChanged,
-        setProfile,
-        fSteam
-    ]);
+    const [steamID, setSteamID] = useState<string>('');
 
     const handleSubmit = React.useCallback(async () => {
         if (!profile || profile?.player?.steam_id === '') {
@@ -144,161 +120,140 @@ export const PlayerBanForm = ({
         setReasonText((evt.target as HTMLInputElement).value);
     };
 
-    const handleUpdateDuration = (
-        evt: React.ChangeEvent<{ value: unknown }>
-    ) => {
+    const handleUpdateDuration = (evt: SelectChangeEvent) => {
         setDuration((evt.target.value as Duration) ?? Duration.durInf);
     };
-    const handleUpdateNote = (evt: SyntheticEvent) => {
+
+    const handleActionTypeChange = (evt: SelectChangeEvent) => {
+        setActionType((evt.target.value as ActionType) ?? 'ban');
+    };
+
+    const handleUpdateNote = (evt: ChangeEvent<HTMLInputElement>) => {
         setNoteText((evt.target as HTMLInputElement).value);
     };
 
-    const onChangeFStream = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        setFSteam((evt.target as HTMLInputElement).value);
-    };
-
-    const onChangeType = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const onChangeType = (evt: ChangeEvent<HTMLInputElement>) => {
         setBanType(evt.target.value as BanType);
     };
 
     return (
-        <form noValidate>
-            <Grid container spacing={3}>
-                <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        id={'query'}
-                        label={'Steam ID / Profile URL'}
-                        onChange={onChangeFStream}
-                        onBlur={handleUpdateFSteam}
-                    />
-                </Grid>
-
-                <Grid item xs={12}>
-                    <FormControl component="fieldset" fullWidth>
-                        <FormLabel component="legend">Ban Type</FormLabel>
-                        <RadioGroup
-                            aria-label="gender"
-                            name="gender1"
-                            value={banType}
-                            onChange={onChangeType}
-                            defaultValue={'steam'}
-                            row
-                        >
-                            <FormControlLabel
-                                value="steam"
-                                control={<Radio />}
-                                label="Steam"
-                            />
-                            <FormControlLabel
-                                value="network"
-                                control={<Radio />}
-                                label="IP / Network"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-                </Grid>
-                {banType === 'network' && (
-                    <>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth={true}
-                                id={'network'}
-                                label={'Network Range (CIDR Format)'}
-                                onChange={handleUpdateNetwork}
-                            />
-                        </Grid>
-                        <Grid item>
-                            <Typography variant={'body1'}>
-                                Current number of hosts in range: {networkSize}
-                            </Typography>
-                        </Grid>
-                    </>
-                )}
-                <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        id={'reason'}
-                        label={'Ban Reason'}
-                        onChange={handleUpdateReasonText}
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth>
-                        <InputLabel id="duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select
-                            fullWidth
-                            labelId="duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            onChange={handleUpdateDuration}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth>
-                        <InputLabel id="duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select
-                            fullWidth
-                            labelId="duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            onChange={handleUpdateDuration}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                    <FormControl fullWidth>
-                        <TextField
-                            id="note-field"
-                            label="Moderator Notes (hidden from public)"
-                            multiline
-                            value={noteText}
-                            onChange={handleUpdateNote}
-                            rows={10}
-                            defaultValue={noteText}
-                            variant="outlined"
-                        />
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button
-                        fullWidth
-                        key={'submit'}
-                        value={'Create Ban'}
-                        onClick={handleSubmit}
-                        variant="contained"
-                        color="primary"
-                        startIcon={<VoiceOverOffSharp />}
+        <Stack spacing={3} padding={3}>
+            {profile && (
+                <ProfileSelectionInput
+                    fullWidth
+                    input={steamID}
+                    setInput={setSteamID}
+                    onProfileSuccess={(p) => {
+                        setProfile(p);
+                        onProfileChanged && onProfileChanged(p);
+                    }}
+                />
+            )}
+            <FormControl fullWidth>
+                <InputLabel id="actionType-label">Action Type</InputLabel>
+                <Select
+                    fullWidth
+                    labelId="actionType-label"
+                    id="actionType-helper"
+                    value={actionType}
+                    onChange={handleActionTypeChange}
+                >
+                    {['ban', 'mute'].map((v) => (
+                        <MenuItem key={`time-${v}`} value={v}>
+                            {v}
+                        </MenuItem>
+                    ))}
+                </Select>
+                <FormHelperText>
+                    Choosing custom will allow you to input a custom duration
+                </FormHelperText>
+            </FormControl>
+            {actionType == 'ban' && (
+                <FormControl component="fieldset" fullWidth>
+                    <FormLabel component="legend">Ban Type</FormLabel>
+                    <RadioGroup
+                        aria-label="Ban Type"
+                        name="Ban Type"
+                        value={banType}
+                        onChange={onChangeType}
+                        defaultValue={'steam'}
+                        row
                     >
-                        Ban Player
-                    </Button>
-                </Grid>
-            </Grid>
-        </form>
+                        <FormControlLabel
+                            value="steam"
+                            control={<Radio />}
+                            label="Steam"
+                        />
+                        <FormControlLabel
+                            value="network"
+                            control={<Radio />}
+                            label="IP / Network"
+                        />
+                    </RadioGroup>
+                </FormControl>
+            )}
+            {actionType == 'ban' && banType === 'network' && (
+                <>
+                    <TextField
+                        fullWidth={true}
+                        id={'network'}
+                        label={'Network Range (CIDR Format)'}
+                        onChange={handleUpdateNetwork}
+                    />
+                    <Typography variant={'body1'}>
+                        Current number of hosts in range: {networkSize}
+                    </Typography>
+                </>
+            )}
+
+            <TextField
+                fullWidth
+                id={'reason'}
+                label={actionType == 'ban' ? 'Ban Reason' : 'Mute Reason'}
+                onChange={handleUpdateReasonText}
+            />
+            <FormControl fullWidth>
+                <InputLabel id="duration-label">Ban Duration</InputLabel>
+                <Select
+                    fullWidth
+                    labelId="duration-label"
+                    id="duration-helper"
+                    value={duration}
+                    onChange={handleUpdateDuration}
+                >
+                    {Durations.map((v) => (
+                        <MenuItem key={`time-${v}`} value={v}>
+                            {v}
+                        </MenuItem>
+                    ))}
+                </Select>
+                <FormHelperText>
+                    Choosing custom will allow you to input a custom duration
+                </FormHelperText>
+            </FormControl>
+
+            <FormControl fullWidth>
+                <TextField
+                    id="note-field"
+                    label="Moderator Notes (hidden from public)"
+                    multiline
+                    value={noteText}
+                    onChange={handleUpdateNote}
+                    rows={10}
+                    variant="outlined"
+                />
+            </FormControl>
+
+            <Button
+                key={'submit'}
+                value={'Create Ban'}
+                onClick={handleSubmit}
+                variant="contained"
+                color="error"
+                startIcon={<VoiceOverOffSharp />}
+            >
+                Ban Player
+            </Button>
+        </Stack>
     );
 };

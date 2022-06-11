@@ -1,57 +1,98 @@
 module github.com/leighmacdonald/gbans
 
-go 1.16
+go 1.18
 
 require (
-	github.com/Depado/ginprom v1.7.3
-	github.com/Masterminds/squirrel v1.5.2
+	github.com/Depado/ginprom v1.7.4
+	github.com/Masterminds/squirrel v1.5.3
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/bketelsen/crypt v0.0.4 // indirect
-	github.com/bwmarrin/discordgo v0.23.3-0.20210410202908-577e7dd4f6cc
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/bwmarrin/discordgo v0.25.0
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.7
-	github.com/go-kit/kit v0.10.0 // indirect
-	github.com/go-playground/validator/v10 v10.9.0 // indirect
+	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/jackc/pgconn v1.10.1
-	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
-	github.com/jackc/pgx/v4 v4.14.1
-	github.com/jackc/puddle v1.2.1 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/golang-migrate/migrate/v4 v4.15.2
+	github.com/gomarkdown/markdown v0.0.0-20220607163217-45f7c050e2d1
+	github.com/jackc/pgconn v1.12.1
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
+	github.com/jackc/pgx/v4 v4.16.1
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.7
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.0-20210803010711-64b0e363d418
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/microcosm-cc/bluemonday v1.0.16 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.18
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.4.3
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.32.1 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/client_golang v1.12.2
 	github.com/rumblefrog/go-a2s v1.0.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/afero v1.7.1 // indirect
-	github.com/spf13/cobra v1.3.0
-	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.0
-	github.com/ugorji/go v1.2.6 // indirect
+	github.com/spf13/cobra v1.4.0
+	github.com/spf13/viper v1.12.0
+	github.com/stretchr/testify v1.7.2
 	github.com/yohcop/openid-go v1.0.0
+)
+
+require (
+	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/validator/v10 v10.11.0 // indirect
+	github.com/goccy/go-json v0.9.7 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.11.0 // indirect
+	github.com/jackc/puddle v1.2.1 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/lib/pq v1.10.4 // indirect
+	github.com/magiconair/properties v1.8.6 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/common v0.34.0 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/rogpeppe/go-internal v1.8.1 // indirect
+	github.com/russross/blackfriday v2.0.0+incompatible // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/spf13/afero v1.8.2 // indirect
+	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/subosito/gotenv v1.4.0 // indirect
+	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
+	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
+	google.golang.org/protobuf v1.28.0 // indirect
+	gopkg.in/ini.v1 v1.66.6 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // Partial support for command permissions added

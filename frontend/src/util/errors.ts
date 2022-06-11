@@ -19,3 +19,7 @@ export const log = (msg: unknown, level: Level = Level.err): void => {
         noop();
     }
 };
+
+export const logErr = (exception: unknown): void => {
+    return log(exception, Level.err);
+};

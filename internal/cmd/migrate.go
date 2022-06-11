@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var downAll = false
@@ -18,15 +20,17 @@ var migrateCmd = &cobra.Command{
 		if downAll {
 			act = store.MigrateDn
 		}
-		db, err := store.New(config.DB.DSN)
-		if err != nil {
-			log.Fatalf("Failed to initialize db connection: %v", err)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
+		defer cancel()
+		database, errStore := store.New(ctx, config.DB.DSN)
+		if errStore != nil {
+			log.Fatalf("Failed to initialize database connection: %v", errStore)
 		}
-		if err := db.Migrate(store.MigrationAction(act)); err != nil {
-			if err.Error() == "no change" {
+		if errMigrate := database.Migrate(store.MigrationAction(act)); errMigrate != nil {
+			if errMigrate.Error() == "no change" {
 				log.Infof("Migration at latest version")
 			} else {
-				log.Fatalf("Could not migrate schema: %v", err)
+				log.Fatalf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
 			log.Infof("Migration completed successfully")

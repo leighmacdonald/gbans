@@ -1,18 +1,17 @@
+import AppBar from '@mui/material/AppBar';
+import Chip from '@mui/material/Chip';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 import React from 'react';
-import {
-    AppBar,
-    Chip,
-    Grid,
-    Paper,
-    Tab,
-    Tabs,
-    Typography
-} from '@material-ui/core';
-import { PlayerProfile } from '../util/api';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import CheckIcon from '@material-ui/icons/Check';
-import ClearIcon from '@material-ui/icons/Clear';
-import { GLink } from './GLink';
+import CheckIcon from '@mui/icons-material/Check';
+import ClearIcon from '@mui/icons-material/Clear';
+import { PlayerProfile } from '../api';
+import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
+import { Nullable } from '../util/types';
+import { FriendList } from './FriendList';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -20,27 +19,11 @@ interface TabPanelProps {
     value: number | string;
 }
 
-const useStyles = makeStyles((theme: Theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-        textAlign: 'center',
-        color: theme.palette.text.secondary
-    },
-    ok: {
-        backgroundColor: theme.palette.success.main
-    },
-    error: {
-        backgroundColor: theme.palette.error.main
-    }
-}));
-
 function TabPanel(props: TabPanelProps) {
-    const classes = useStyles();
     const { children, value, index, ...other } = props;
 
     return (
         <Paper
-            className={classes.paper}
             variant={'outlined'}
             role="tabpanel"
             hidden={value !== index}
@@ -54,7 +37,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export interface ProfilePanelProps {
-    profile?: PlayerProfile;
+    profile: Nullable<PlayerProfile>;
 }
 
 export const a11yProps = (index: number | string): Record<string, string> => {
@@ -65,25 +48,21 @@ export const a11yProps = (index: number | string): Record<string, string> => {
 };
 
 export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
-    const classes = useStyles();
     const [value, setValue] = React.useState('one');
 
-    const handleChange = (
-        _: React.ChangeEvent<Record<string, unknown>>,
-        newValue: string
-    ) => {
+    const handleChange = (_: React.SyntheticEvent, newValue: string) => {
         setValue(newValue);
     };
 
     return (
-        <Grid container>
+        <Stack spacing={3} padding={3}>
             {!args.profile && (
-                <Grid item xs={12}>
+                <Box>
                     <Typography variant={'h3'}>No Profile Selected</Typography>
-                </Grid>
+                </Box>
             )}
             {args.profile && (
-                <Grid item xs={12}>
+                <Box>
                     <AppBar position="static">
                         <Tabs
                             value={value}
@@ -109,72 +88,29 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                         </Tabs>
                     </AppBar>
                     <TabPanel value={value} index="one">
-                        <Grid container>
-                            <Grid item xs>
-                                <img
-                                    src={args.profile?.player.avatarfull}
-                                    alt={'Avatar'}
-                                />
-                            </Grid>
-                            <Grid item xs>
-                                <Typography variant={'h3'} align={'center'}>
-                                    {args.profile?.player.personaname}
-                                </Typography>
-                            </Grid>
-                            <Grid container>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.ok}
-                                        label={'VAC'}
-                                        icon={<CheckIcon />}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.ok}
-                                        label={'Trade'}
-                                        icon={<CheckIcon />}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.ok}
-                                        label="Community"
-                                        icon={<CheckIcon />}
-                                    />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Chip
-                                        className={classes.error}
-                                        label={'Game'}
-                                        icon={<ClearIcon />}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </Grid>
+                        <Stack>
+                            <img
+                                src={args.profile?.player.avatarfull}
+                                alt={'Avatar'}
+                            />
+                            <Typography variant={'h3'} align={'center'}>
+                                {args.profile?.player.personaname}
+                            </Typography>
+                            <Stack direction={'row'}>
+                                <Chip label={'VAC'} icon={<CheckIcon />} />
+                                <Chip label={'Trade'} icon={<CheckIcon />} />
+                                <Chip label="Community" icon={<CheckIcon />} />
+                                <Chip label={'Game'} icon={<ClearIcon />} />
+                            </Stack>
+                        </Stack>
                     </TabPanel>
                     <TabPanel value={value} index="two">
-                        <Grid container>
-                            {args.profile.friends?.map((p) => (
-                                <Grid container key={p.steamid}>
-                                    <Grid item xs={3}>
-                                        <img
-                                            src={p.avatar}
-                                            alt={'Profile Picture'}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={9}>
-                                        <GLink
-                                            to={`https://steamcommunity.com/profiles/${p.steam_id}`}
-                                            primary={p.personaname}
-                                        />
-                                    </Grid>
-                                </Grid>
-                            ))}
-                        </Grid>
+                        <Paper elevation={1}>
+                            <FriendList friends={args.profile?.friends} />
+                        </Paper>
                     </TabPanel>
-                </Grid>
+                </Box>
             )}
-        </Grid>
+        </Stack>
     );
 };
