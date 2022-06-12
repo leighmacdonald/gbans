@@ -11,12 +11,18 @@ import (
 	"time"
 )
 
-func (database *pgStore) DropBan(ctx context.Context, ban *model.Ban) error {
-	const query = `DELETE FROM ban WHERE ban_id = $1`
-	if _, errExec := database.conn.Exec(ctx, query, ban.BanID); errExec != nil {
-		return Err(errExec)
+func (database *pgStore) DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error {
+	if hardDelete {
+		const query = `DELETE FROM ban WHERE ban_id = $1`
+		if _, errExec := database.conn.Exec(ctx, query, ban.BanID); errExec != nil {
+			return Err(errExec)
+		}
+		ban.BanID = 0
+		return nil
+	} else {
+		ban.Deleted = true
+		return database.updateBan(ctx, ban)
 	}
-	return nil
 }
 
 func (database *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, full bool, person *model.BannedPerson) error {
@@ -29,7 +35,7 @@ func (database *pgStore) getBanByColumn(ctx context.Context, column string, iden
 		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
 		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
 		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
-		p.days_since_last_ban
+		p.days_since_last_ban, b.deleted
 	FROM ban b
 	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
 	WHERE b.%s = $1 AND b.valid_until > $2
@@ -44,7 +50,8 @@ func (database *pgStore) getBanByColumn(ctx context.Context, column string, iden
 			&person.Person.ProfileURL, &person.Person.Avatar, &person.Person.AvatarMedium, &person.Person.AvatarFull,
 			&person.Person.AvatarHash, &person.Person.PersonaState, &person.Person.RealName, &person.Person.TimeCreated, &person.Person.LocCountryCode,
 			&person.Person.LocStateCode, &person.Person.LocCityID, &person.Person.PermissionLevel, &person.Person.DiscordID, &person.Person.CommunityBanned,
-			&person.Person.VACBans, &person.Person.GameBans, &person.Person.EconomyBan, &person.Person.DaysSinceLastBan); errQuery != nil {
+			&person.Person.VACBans, &person.Person.GameBans, &person.Person.EconomyBan, &person.Person.DaysSinceLastBan,
+			&person.Ban.Deleted); errQuery != nil {
 		return Err(errQuery)
 	}
 	if full {
@@ -177,10 +184,11 @@ func (database *pgStore) updateBan(ctx context.Context, ban *model.Ban) error {
 		UPDATE
 		    ban
 		SET
-		    author_id = $2, reason = $3, reason_text = $4, note = $5, valid_until = $6, updated_on = $7, ban_source = $8, ban_type = $9
+		    author_id = $2, reason = $3, reason_text = $4, note = $5, valid_until = $6, updated_on = $7, 
+			ban_source = $8, ban_type = $9, deleted = $10
 		WHERE ban_id = $1`
 	if _, errExec := database.conn.Exec(ctx, query, ban.BanID, ban.AuthorID, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
-		ban.UpdatedOn, ban.Source, ban.BanType); errExec != nil {
+		ban.UpdatedOn, ban.Source, ban.BanType, ban.Deleted); errExec != nil {
 		return Err(errExec)
 	}
 	return nil
@@ -188,8 +196,8 @@ func (database *pgStore) updateBan(ctx context.Context, ban *model.Ban) error {
 
 func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.Ban, error) {
 	const q = `SELECT ban_id, steam_id, author_id, ban_type, reason, reason_text,
-       note, valid_until, ban_source, created_on, updated_on FROM ban
-       WHERE valid_until < $1`
+       note, valid_until, ban_source, created_on, updated_on, deleted FROM ban
+       WHERE valid_until < $1 AND deleted = false`
 	var bans []model.Ban
 	rows, errQuery := database.conn.Query(ctx, q, config.Now())
 	if errQuery != nil {
@@ -199,7 +207,7 @@ func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.Ban, error
 	for rows.Next() {
 		var ban model.Ban
 		if errScan := rows.Scan(&ban.BanID, &ban.SteamID, &ban.AuthorID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
-			&ban.ValidUntil, &ban.Source, &ban.CreatedOn, &ban.UpdatedOn); errScan != nil {
+			&ban.ValidUntil, &ban.Source, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted); errScan != nil {
 			return nil, errScan
 		}
 		bans = append(bans, ban)
@@ -229,9 +237,10 @@ func (database *pgStore) GetBans(ctx context.Context, filter *QueryFilter) ([]mo
 		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
 		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
 		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
-		p.days_since_last_ban
+		p.days_since_last_ban, b.deleted
 	FROM ban b
 	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
+	WHERE b.deleted = false 
 	ORDER BY b.%s LIMIT %d OFFSET %d`, filter.OrderBy, filter.Limit, filter.Offset)
 	var bans []model.BannedPerson
 	rows, errQuery := database.conn.Query(ctx, query)
@@ -249,7 +258,8 @@ func (database *pgStore) GetBans(ctx context.Context, filter *QueryFilter) ([]mo
 			&bannedPerson.Person.PersonaState, &bannedPerson.Person.RealName, &bannedPerson.Person.TimeCreated, &bannedPerson.Person.LocCountryCode,
 			&bannedPerson.Person.LocStateCode, &bannedPerson.Person.LocCityID, &bannedPerson.Person.PermissionLevel,
 			&bannedPerson.Person.DiscordID, &bannedPerson.Person.CommunityBanned, &bannedPerson.Person.VACBans, &bannedPerson.Person.GameBans, &bannedPerson.Person.EconomyBan,
-			&bannedPerson.Person.DaysSinceLastBan); errScan != nil {
+			&bannedPerson.Person.DaysSinceLastBan,
+			&bannedPerson.Ban.Deleted); errScan != nil {
 			return nil, Err(errScan)
 		}
 		bans = append(bans, bannedPerson)
@@ -260,10 +270,10 @@ func (database *pgStore) GetBans(ctx context.Context, filter *QueryFilter) ([]mo
 func (database *pgStore) GetBansOlderThan(ctx context.Context, filter *QueryFilter, since time.Time) ([]model.Ban, error) {
 	query := fmt.Sprintf(`
 		SELECT
-			b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
-			b.reason_text, b.note, b.valid_until, b.created_on, b.updated_on, b.ban_source
+			b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason, b.reason_text, b.note, 
+			b.ban_source, b.valid_until, b.created_on, b.updated_on, b.deleted
 		FROM ban b
-		WHERE updated_on < $1
+		WHERE updated_on < $1 AND deleted = false
 		LIMIT %d
 		OFFSET %d`, filter.Limit, filter.Offset)
 	var bans []model.Ban
@@ -275,7 +285,7 @@ func (database *pgStore) GetBansOlderThan(ctx context.Context, filter *QueryFilt
 	for rows.Next() {
 		var ban model.Ban
 		if errQuery = rows.Scan(&ban.BanID, &ban.SteamID, &ban.AuthorID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
-			&ban.Source, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn); errQuery != nil {
+			&ban.Source, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted); errQuery != nil {
 			return nil, errQuery
 		}
 		bans = append(bans, ban)

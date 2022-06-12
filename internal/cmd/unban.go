@@ -47,7 +47,7 @@ var unbanSteamCmd = &cobra.Command{
 			}
 			log.Fatalf("Invalid steam id")
 		}
-		if errDrop := database.DropBan(ctx, &ban.Ban); errDrop != nil {
+		if errDrop := database.DropBan(ctx, &ban.Ban, false); errDrop != nil {
 			log.Fatalf("Failed to delete ban: %v", errDrop)
 		}
 		log.WithFields(log.Fields{"sid64": sid64.String()}).Info("Unbanned steam profile successfully")
