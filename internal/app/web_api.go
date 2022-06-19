@@ -167,6 +167,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 		}
 		var server model.Server
 		if errGetServer := database.GetServerByName(ctx, upload.ServerName, &server); errGetServer != nil {
+			log.WithFields(log.Fields{"server": upload.ServerName}).Errorf("Server not found")
 			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 			return
 		}
