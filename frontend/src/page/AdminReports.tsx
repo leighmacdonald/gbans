@@ -19,6 +19,7 @@ import PageviewIcon from '@mui/icons-material/Pageview';
 import IconButton from '@mui/material/IconButton';
 import { useNavigate } from 'react-router-dom';
 import { noop } from 'lodash-es';
+import { logErr } from '../util/errors';
 interface AdminReportRowProps {
     report: Report;
     author: Person;
@@ -64,12 +65,12 @@ export const AdminReports = (): JSX.Element => {
     const [reportStatus] = useState<ReportStatus>(ReportStatus.Opened);
 
     useEffect(() => {
-        const f = async () => {
-            const opts: ReportQueryFilter = { report_status: reportStatus };
-            const reports = await apiGetReports(opts);
-            setReports(reports);
-        };
-        f();
+        const opts: ReportQueryFilter = { report_status: reportStatus };
+        apiGetReports(opts)
+            .then((reports) => {
+                setReports(reports || []);
+            })
+            .catch(logErr);
     });
 
     return (

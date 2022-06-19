@@ -32,26 +32,28 @@ export const ProfileSelectionInput = ({
     const [loading, setLoading] = useState<boolean>(false);
     //const [input, setInput] = useState<string>(initialValue ?? '');
     const [lProfile, setLProfile] = useState<Nullable<PlayerProfile>>();
+
+    const loadProfile = () => {
+        if (input) {
+            setLoading(true);
+            apiGetProfile(input)
+                .then((profile) => {
+                    onProfileSuccess(profile);
+                    setLProfile(profile);
+                    setLoading(false);
+                })
+                .catch((e) => {
+                    log(e);
+                    setLProfile(undefined);
+                });
+        }
+    };
+
     const { restart, pause } = useTimer({
         expiryTimestamp: new Date(),
         autoStart: true,
-        onExpire: async () => {
-            await loadProfile();
-        }
+        onExpire: loadProfile
     });
-
-    const loadProfile = async () => {
-        setLoading(true);
-        try {
-            const v = await apiGetProfile(input);
-            onProfileSuccess(v);
-            setLProfile(v);
-        } catch (e) {
-            log(e);
-            setLProfile(undefined);
-        }
-        setLoading(false);
-    };
 
     const onChangeInput = (evt: ChangeEvent<HTMLInputElement>) => {
         const { value: nextValue } = evt.target;

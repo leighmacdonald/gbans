@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-// import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import BlockIcon from '@mui/icons-material/Block';
@@ -119,17 +119,17 @@ export const TopBar = () => {
             text: 'Filtered Words',
             icon: <SubjectIcon />
         });
+        adminItems.push({
+            to: '/admin/news',
+            text: 'News',
+            icon: <NewspaperIcon />
+        });
     }
     if (perms >= PermissionLevel.Admin) {
         adminItems.push({
             to: '/admin/people',
             text: 'People',
             icon: <PregnantWomanIcon />
-        });
-        adminItems.push({
-            to: '/admin/news',
-            text: 'News',
-            icon: <NewspaperIcon />
         });
         adminItems.push({
             to: '/admin/import',
@@ -267,8 +267,8 @@ export const TopBar = () => {
                             adminItems.length > 0 && (
                                 <>
                                     <Tooltip title="Mod/Admin">
-                                        <Button
-                                            sx={{ p: 0 }}
+                                        <IconButton
+                                            sx={{ p: 0, marginRight: '0.5rem' }}
                                             size="large"
                                             aria-label="account of current user"
                                             aria-controls="menu-appbar"
@@ -276,8 +276,8 @@ export const TopBar = () => {
                                             onClick={handleOpenAdminMenu}
                                             color="inherit"
                                         >
-                                            Admin
-                                        </Button>
+                                            <SettingsIcon />
+                                        </IconButton>
                                     </Tooltip>
                                     <Menu
                                         sx={{ mt: '45px' }}

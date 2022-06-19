@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -35,6 +35,7 @@ import { PaletteMode, useMediaQuery } from '@mui/material';
 import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
+import { logErr } from './util/errors';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -46,7 +47,7 @@ export const App = (): JSX.Element => {
     if (!currentTheme) {
         currentTheme = prefersDarkMode ? 'dark' : 'light';
     }
-    const [mode, setMode] = React.useState<'light' | 'dark'>(currentTheme);
+    const [mode, setMode] = useState<'light' | 'dark'>(currentTheme);
 
     const updateMode = (prevMode: PaletteMode): PaletteMode => {
         const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);
@@ -54,7 +55,7 @@ export const App = (): JSX.Element => {
         return m;
     };
 
-    const colorMode = React.useMemo(
+    const colorMode = useMemo(
         () => ({
             toggleColorMode: () => {
                 setMode(updateMode);
@@ -62,21 +63,19 @@ export const App = (): JSX.Element => {
         }),
         []
     );
-
+    //NonNullable<UserProfile>
     useEffect(() => {
-        const fetchProfile = async () => {
-            const token = localStorage.getItem('token');
-            if (token != null && token != '') {
-                const profile =
-                    (await apiGetCurrentProfile()) as NonNullable<UserProfile>;
-                setCurrentUser(profile);
-            }
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        fetchProfile();
+        const token = localStorage.getItem('token');
+        if (token != null && token != '') {
+            apiGetCurrentProfile()
+                .then((profile) => {
+                    setCurrentUser(profile);
+                })
+                .catch(logErr);
+        }
     }, [setCurrentUser]);
 
-    const theme = React.useMemo(() => createThemeByMode(mode), [mode]);
+    const theme = useMemo(() => createThemeByMode(mode), [mode]);
 
     return (
         <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
@@ -127,7 +126,7 @@ export const App = (): JSX.Element => {
                                                     element={
                                                         <PrivateRoute
                                                             permission={
-                                                                PermissionLevel.Authenticated
+                                                                PermissionLevel.User
                                                             }
                                                         >
                                                             <ReportCreatePage />

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { NewsList } from '../component/NewsList';
@@ -60,6 +60,10 @@ export const AdminNews = (): JSX.Element => {
         fn();
     }, [flashes, selectedNewsEntry, setFlashes]);
 
+    useEffect(() => {
+        setBodyHTML(marked(selectedNewsEntry.body_md));
+    }, [selectedNewsEntry.body_md]);
+
     return (
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={8}>
@@ -84,7 +88,6 @@ export const AdminNews = (): JSX.Element => {
                                         title: v.target.value
                                     };
                                 });
-                                setBodyHTML(marked.parse(v.target.value));
                             }}
                         />
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -112,7 +115,6 @@ export const AdminNews = (): JSX.Element => {
                                             body_md: event.target.value
                                         };
                                     });
-                                    setBodyHTML(marked(event.target.value));
                                 }}
                             />
                         </TabPanel>

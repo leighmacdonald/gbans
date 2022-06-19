@@ -112,7 +112,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	serverAuth.POST("/api/log", web.onPostLog(database))
 
 	// Basic logged-in user
-	authed := engine.Use(authMiddleware(database, model.PAuthenticated))
+	authed := engine.Use(authMiddleware(database, model.PUser))
 	authed.GET("/api/current_profile", web.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", web.onTokenRefresh())
 	authed.POST("/api/report", web.onAPIPostReportCreate(database))
@@ -130,11 +130,12 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug(database))
+	modRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
+	modRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
+	modRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))
 	adminRoute.POST("/api/server", web.onAPIPostServer(database))
-	adminRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
-	adminRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
-	adminRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
+
 }

@@ -232,6 +232,8 @@ type Ban struct {
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note   string `db:"note" json:"note"`
 	Source Origin `json:"ban_source" db:"ban_source"`
+	// Deleted is used for soft-deletes
+	Deleted bool `json:"deleted" db:"deleted"`
 	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
 	ValidUntil time.Time `json:"valid_until" db:"valid_until"`
 	CreatedOn  time.Time `db:"created_on" json:"created_on"`
@@ -493,7 +495,7 @@ func NewPerson(sid64 steamid.SID64) Person {
 		CreatedOn:       t0,
 		UpdatedOn:       t0,
 		PlayerSummary:   &steamweb.PlayerSummary{},
-		PermissionLevel: PGuest,
+		PermissionLevel: PUser,
 	}
 }
 
@@ -504,7 +506,7 @@ func NewUserProfile(sid64 steamid.SID64) UserProfile {
 		SteamID:         sid64,
 		CreatedOn:       t0,
 		UpdatedOn:       t0,
-		PermissionLevel: PGuest,
+		PermissionLevel: PUser,
 		Name:            "Guest",
 	}
 }

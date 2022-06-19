@@ -13,6 +13,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { sum } from 'lodash-es';
 import Grid from '@mui/material/Grid';
+import Container from '@mui/material/Container';
 
 function LinearProgressWithLabel(
     props: LinearProgressProps & { value: number }
@@ -40,17 +41,22 @@ export const ServerStats = () => {
         if (!Object.hasOwn(acc, cv.region)) {
             acc[cv.region] = [];
         }
-
         acc[cv.region].push(cv);
         return acc;
     }, {} as Record<string, ServerState[]>);
     const keys = Object.keys(regions);
     keys.sort();
     return (
-        <Grid container justifyContent="center" spacing={3}>
-            <Grid item xs>
-                <Grid container spacing={3} style={{ paddingLeft: '10px' }}>
-                    <Grid item xs={3}>
+        <Container>
+            <Grid
+                container
+                direction="row"
+                justifyContent="space-evenly"
+                alignItems="flex-start"
+                justifyItems={'center'}
+            >
+                <Grid item xs={2} xl={4}>
+                    <Paper elevation={1} sx={{ padding: 2 }}>
                         <Typography
                             style={{ display: 'inline' }}
                             variant={'subtitle1'}
@@ -61,22 +67,23 @@ export const ServerStats = () => {
                         <LinearProgressWithLabel
                             value={Math.round((use / cap) * 100)}
                         />
-                    </Grid>
-                    {keys.map((v) => {
-                        const pSum = sum(
-                            (
-                                (Object.hasOwn(regions, v) && regions[v]) ||
-                                []
-                            ).map((value) => value?.players?.length || 0)
-                        );
-                        const pMax = sum(
-                            (
-                                (Object.hasOwn(regions, v) && regions[v]) ||
-                                []
-                            ).map((value) => value?.max_players || 24)
-                        );
-                        return (
-                            <Grid item xs={3} key={`stat-${v}`}>
+                    </Paper>
+                </Grid>
+
+                {keys.map((v) => {
+                    const pSum = sum(
+                        ((Object.hasOwn(regions, v) && regions[v]) || []).map(
+                            (value) => value?.players?.length || 0
+                        )
+                    );
+                    const pMax = sum(
+                        ((Object.hasOwn(regions, v) && regions[v]) || []).map(
+                            (value) => value?.max_players || 24
+                        )
+                    );
+                    return (
+                        <Grid item xs={3} key={`stat-${v}`}>
+                            <Paper elevation={1} sx={{ padding: 2 }}>
                                 <Typography
                                     style={{ display: 'inline' }}
                                     variant={'subtitle1'}
@@ -87,12 +94,12 @@ export const ServerStats = () => {
                                 <LinearProgressWithLabel
                                     value={Math.round((pSum / pMax) * 100)}
                                 />
-                            </Grid>
-                        );
-                    })}
-                </Grid>
+                            </Paper>
+                        </Grid>
+                    );
+                })}
             </Grid>
-        </Grid>
+        </Container>
     );
 };
 
@@ -153,12 +160,8 @@ export const Servers = (): JSX.Element => {
                 <Paper elevation={3}>
                     <ServerMap />
                 </Paper>
-                <Paper elevation={3} sx={{ padding: '0.2rem' }}>
-                    <ServerStats />
-                </Paper>
-                <Paper elevation={3}>
-                    <ServerFilters />
-                </Paper>
+                <ServerStats />
+                <ServerFilters />
                 <Paper elevation={1}>
                     <ServerList />
                 </Paper>

@@ -12,10 +12,7 @@ export const LoginSuccess = (): JSX.Element => {
         localStorage.setItem('token', token);
         localStorage.setItem(
             'permission_level',
-            `${
-                urlParams.get('permission_level') ??
-                PermissionLevel.Authenticated
-            }`
+            `${urlParams.get('permission_level') ?? PermissionLevel.User}`
         );
     }
     let next_url = urlParams.get('next_url');

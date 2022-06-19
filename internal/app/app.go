@@ -161,20 +161,11 @@ func logWriter(ctx context.Context, database store.StatStore) {
 		writeFrequency = time.Second * 5
 	)
 	var logCache []model.ServerEvent
-	serverEventChan := make(chan model.ServerEvent, 100000)
+	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	writeTicker := time.NewTicker(writeFrequency)
-	var writeLogs = func() {
-		if len(logCache) == 0 {
-			return
-		}
-		if errInsert := database.BatchInsertServerLogs(ctx, logCache); errInsert != nil {
-			log.Errorf("Failed to batch insert logs: %v", errInsert)
-		}
-		logCache = nil
-	}
 	for {
 		select {
 		case serverEvent := <-serverEventChan:
@@ -182,11 +173,14 @@ func logWriter(ctx context.Context, database store.StatStore) {
 				continue
 			}
 			logCache = append(logCache, serverEvent)
-			if len(logCache) >= 500 {
-				writeLogs()
-			}
 		case <-writeTicker.C:
-			writeLogs()
+			if len(logCache) == 0 {
+				return
+			}
+			if errInsert := database.BatchInsertServerLogs(ctx, logCache); errInsert != nil {
+				log.Errorf("Failed to batch insert logs: %v", errInsert)
+			}
+			logCache = nil
 		case <-ctx.Done():
 			log.Debugf("logWriter shuttings down")
 			return
@@ -576,12 +570,6 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 		if sessionErr != nil {
 			log.Fatalf("Failed to setup session: %v", sessionErr)
 		}
-		events := make(chan model.ServerEvent)
-		if len(config.Discord.LogChannelID) > 0 {
-			if errRegister := event.RegisterConsumer(events, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
-				log.Warnf("Error registering discord log event reader")
-			}
-		}
 		go func() {
 			for {
 				select {
@@ -594,7 +582,7 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 				}
 			}
 		}()
-		if errSessionStart := session.Start(ctx, config.Discord.Token, events); errSessionStart != nil {
+		if errSessionStart := session.Start(ctx, config.Discord.Token); errSessionStart != nil {
 			log.Errorf("discord returned error: %v", errSessionStart)
 		}
 	} else {

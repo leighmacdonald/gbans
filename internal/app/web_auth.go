@@ -239,11 +239,11 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 			return
 		}
 		pcs := strings.Split(hdr.Authorization, " ")
-		if len(pcs) != 2 && level > model.PGuest {
+		if len(pcs) != 2 && level > model.PUser {
 			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}
-		if level > model.PGuest {
+		if level >= model.PUser {
 			sid, errFromToken := sid64FromJWTToken(pcs[1])
 			if errFromToken != nil {
 				log.Errorf("Failed to load persons session user: %v", errFromToken)

@@ -7,12 +7,14 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -21,6 +23,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -60,16 +64,55 @@ func responseOK(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, apiResponse{Status: true, Data: data})
 }
 
-type demoPostRequest struct {
-	ServerName string `form:"server_name"`
+type RemoteServiceType string
+
+const (
+	SSH RemoteServiceType = "ssh"
+	// HTTP         RemoteServiceType = "http"
+	GBansDemos   RemoteServiceType = "gbans_demo"
+	GBansGameLog RemoteServiceType = "gbans_log"
+)
+
+type ServerLogUpload struct {
+	ServerName string            `json:"server_name"`
+	MapName    string            `json:"map_name"`
+	Body       string            `json:"body"`
+	Type       RemoteServiceType `json:"type"`
 }
 
-func (web *web) onPostLog(database store.Store) gin.HandlerFunc {
-	type ServerLogUpload struct {
-		ServerName string `json:"server_name"`
-		Body       string `json:"body"`
-	}
+func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		var file *os.File
+		if config.Debug.WriteUnhandledLogEvents {
+			var errCreateFile error
+			file, errCreateFile = os.Create("./unhandled_messages.log")
+			if errCreateFile != nil {
+				log.Panicf("Failed to open debug message log: %v", errCreateFile)
+			}
+			defer func() {
+				if errClose := file.Close(); errClose != nil {
+					log.Errorf("Failed to close unhandled_messages.log: %v", errClose)
+				}
+			}()
+		}
+
+		getPlayer := func(id string, playerCache map[string]any, person *model.Person) error {
+			sid1Str, ok := playerCache[id]
+			if ok {
+				s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
+				if errGetPerson := db.GetOrCreatePersonBySteamID(ctx, s, person); errGetPerson != nil {
+					return errors.Wrapf(errGetPerson, "Failed to load player1 %s: %s", sid1Str, errGetPerson.Error())
+				}
+				return nil
+			}
+			return nil
+		}
+
+		getServer := func(serverName string, s *model.Server) error {
+			return db.GetServerByName(ctx, serverName, s)
+		}
+
+		playerStateCache := newPlayerCache()
 		var upload ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -84,47 +127,69 @@ func (web *web) onPostLog(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		for _, row := range strings.Split(string(rawLogs), "\n") {
-			log.Debugf(row)
-		}
 		responseOK(ctx, http.StatusCreated, nil)
+		go func() {
+			for _, row := range strings.Split(string(rawLogs), "\n") {
+				if row == "" {
+					continue
+				}
+				var serverEvent model.ServerEvent
+				errLogServerEvent := logToServerEvent(model.LogPayload{
+					ServerName: upload.ServerName,
+					Message:    row,
+				}, playerStateCache, &serverEvent, getPlayer, getServer)
+				if errLogServerEvent != nil {
+					log.Errorf("Failed to parse: %v", errLogServerEvent)
+					continue
+				}
+				if serverEvent.EventType == logparse.UnknownMsg {
+					if _, errWrite := file.WriteString(row + "\n"); errWrite != nil {
+						log.Errorf("Failed to write debug log: %v", errWrite)
+					}
+				}
+				event.Emit(serverEvent)
+
+			}
+		}()
 	}
 }
 
 func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request demoPostRequest
-		if errBind := ctx.Bind(&request); errBind != nil {
+		var upload ServerLogUpload
+		if errBind := ctx.BindJSON(&upload); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		multipartFile, fileHeader, errFormFile := ctx.Request.FormFile("file")
-		if errFormFile != nil {
+		if upload.ServerName == "" || upload.Body == "" || upload.MapName == "" {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var server model.Server
-		if errGetServer := database.GetServerByName(ctx, request.ServerName, &server); errGetServer != nil {
-			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", request.ServerName)
+		if errGetServer := database.GetServerByName(ctx, upload.ServerName, &server); errGetServer != nil {
+			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 			return
 		}
-		var demoData []byte
-		_, errRead := multipartFile.Read(demoData)
-		if errRead != nil {
+		rawDemo, errDecode := base64.StdEncoding.DecodeString(upload.Body)
+		if errDecode != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		dateStr := config.Now().Format("2006-01-02_15:04")
+		name := fmt.Sprintf("demo-%s-%s-%s.dem", server.ServerNameShort, dateStr, upload.MapName)
+		outDir := path.Join(config.General.DemoRootPath, server.ServerNameShort)
+		if errMkDir := os.MkdirAll(outDir, 0775); errMkDir != nil {
+			log.Errorf("Failed to create demo dir: %v", errMkDir)
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		demoFile, errNewDemoFile := model.NewDemoFile(server.ServerID, fileHeader.Filename, demoData)
-		if errNewDemoFile != nil {
+		outPath := path.Join(outDir, name)
+		if errWrite := os.WriteFile(outPath, rawDemo, 0775); errWrite != nil {
+			log.Errorf("Failed to write demo: %v", errWrite)
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		if errSave := database.SaveDemo(ctx, &demoFile); errSave != nil {
-			log.Errorf("Failed to save demoFile to store: %v", errSave)
-			responseErr(ctx, http.StatusInternalServerError, nil)
-			return
-		}
-		responseOKUser(ctx, http.StatusCreated, demoFile, "Demo uploaded successfully")
+		responseOK(ctx, http.StatusCreated, gin.H{"path": outPath})
 	}
 }
 

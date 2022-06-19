@@ -333,7 +333,7 @@ func banSweeper(ctx context.Context, database store.Store) {
 					log.Warnf("Failed to get expired expiredBans: %v", errExpiredBans)
 				} else {
 					for _, expiredBan := range expiredBans {
-						if errDrop := database.DropBan(ctx, &expiredBan); errDrop != nil {
+						if errDrop := database.DropBan(ctx, &expiredBan, false); errDrop != nil {
 							log.Errorf("Failed to drop expired expiredBan: %v", errDrop)
 						} else {
 							log.Infof("expiredBan expired: %v", expiredBan)

@@ -86,7 +86,7 @@ var seedCmd = &cobra.Command{
 				log.Errorf("Failed to get player summary: %v", errSummary)
 				return
 			}
-			person.PermissionLevel = model.PAuthenticated
+			person.PermissionLevel = model.PUser
 			person.PlayerSummary = &summary[0]
 			if errSave := database.SavePerson(ctx, &person); errSave != nil {
 				log.Errorf("Failed to save person: %v", errSave)

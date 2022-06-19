@@ -166,7 +166,7 @@ export const ServerList = () => {
                 })
                 .sort((a, b) => {
                     // Sort by position if we have a non-default position.
-                    // otherwise sort by server name
+                    // otherwise, sort by server name
                     if (pos.lat !== 42.434719) {
                         if (a.distance > b.distance) {
                             return 1;

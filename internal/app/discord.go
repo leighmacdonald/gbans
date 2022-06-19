@@ -7,14 +7,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"strings"
 	"sync"
-	"time"
 )
 
 var (
@@ -69,7 +65,7 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 	return &bot, nil
 }
 
-func (bot *discord) Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error {
+func (bot *discord) Start(ctx context.Context, token string) error {
 	// Immediately connects, so we connect within the Start func
 	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
@@ -94,58 +90,12 @@ func (bot *discord) Start(ctx context.Context, token string, eventChan chan mode
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
 
-	go bot.discordMessageQueueReader(ctx, eventChan)
-
 	if errRegister := bot.botRegisterSlashCommands(); errRegister != nil {
 		log.Errorf("Failed to register discord slash commands: %v", errRegister)
 	}
 
 	<-ctx.Done()
 	return nil
-}
-
-// discordMessageQueueReader functions by registering event handlers for the two user message events
-// discord will rate limit you once you start approaching 5-10 servers of active users. Because of this
-// we queue messages and periodically send them out as multiline string blocks instead.
-func (bot *discord) discordMessageQueueReader(ctx context.Context, eventChan chan model.ServerEvent) {
-	messageTicker := time.NewTicker(time.Second * 10)
-	var sendQueue []string
-	for {
-		select {
-		case serverEvent := <-eventChan:
-			prefix := ""
-			if serverEvent.EventType == logparse.SayTeam {
-				prefix = "(team) "
-			}
-			name := ""
-			sid64 := steamid.SID64(0)
-			if serverEvent.Source != nil && serverEvent.Source.SteamID.Valid() {
-				sid64 = serverEvent.Source.SteamID
-				name = serverEvent.Source.PersonaName
-			}
-			msg, found := serverEvent.MetaData["msg"]
-			if found {
-				sendQueue = append(sendQueue, fmt.Sprintf("[%s] %d **%s** %s%s",
-					serverEvent.Server.ServerNameShort, sid64, name, prefix, msg))
-			}
-
-		case <-messageTicker.C:
-			if len(sendQueue) == 0 {
-				continue
-			}
-			msg := strings.Join(sendQueue, "\n")
-			for _, messagePart := range util.StringChunkDelimited(msg, discordWrapperTotalLen) {
-				for _, channelID := range config.Relay.ChannelIDs {
-					if errSendMessage := bot.sendChannelMessage(bot.session, channelID, messagePart, true); errSendMessage != nil {
-						log.Errorf("Failed to send bulk message log: %v", errSendMessage)
-					}
-				}
-			}
-			sendQueue = nil
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 func (bot *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {

@@ -191,7 +191,7 @@ func TestBan(t *testing.T) {
 	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, false, &b1FetchedUpdated))
 	banEqual(&b1Fetched.Ban, &b1FetchedUpdated.Ban)
 
-	require.NoError(t, testDatabase.DropBan(ctx, &b1), "Failed to drop ban")
+	require.NoError(t, testDatabase.DropBan(ctx, &b1, false), "Failed to drop ban")
 	vb := model.NewBannedPerson()
 	errMissing := testDatabase.GetBanBySteamID(ctx, b1.SteamID, false, &vb)
 	require.Error(t, errMissing)

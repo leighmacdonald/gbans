@@ -38,7 +38,7 @@ func (database *pgStore) getBanByColumn(ctx context.Context, column string, iden
 		p.days_since_last_ban, b.deleted
 	FROM ban b
 	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
-	WHERE b.%s = $1 AND b.valid_until > $2
+	WHERE b.%s = $1 AND b.valid_until > $2 AND b.deleted = false
 	GROUP BY b.ban_id, p.steam_id
 	ORDER BY b.created_on DESC
 	LIMIT 1`, column)

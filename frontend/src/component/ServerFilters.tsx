@@ -14,6 +14,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import { uniq } from 'lodash-es';
 import { SelectChangeEvent } from '@mui/material/Select';
+import Paper from '@mui/material/Paper';
 
 // const useStyles = makeStyles((theme) => ({
 //     root: {
@@ -158,80 +159,84 @@ export const ServerFilters = () => {
     ];
 
     return (
-        <Grid
-            container
-            style={{
-                width: '100%',
-                flexWrap: 'nowrap',
-                alignItems: 'center'
-                // justifyContent: 'center'
-            }}
-        >
-            <Grid item xs={2}>
-                <Typography variant={'h4'} align={'center'}>
-                    Filters
-                </Typography>
+        <Paper elevation={1}>
+            <Grid
+                container
+                style={{
+                    width: '100%',
+                    flexWrap: 'nowrap',
+                    alignItems: 'center'
+                    // justifyContent: 'center'
+                }}
+            >
+                <Grid item xs={2}>
+                    <Typography variant={'h4'} align={'center'}>
+                        Filters
+                    </Typography>
+                </Grid>
+                <Grid item xs>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={showOpenOnly}
+                                onChange={onShowOpenOnlyChanged}
+                                name="checkedA"
+                            />
+                        }
+                        label="Open Slots"
+                    />
+                </Grid>
+                <Grid item xs>
+                    <FormControl>
+                        <InputLabel id="region-selector-label">
+                            Region
+                        </InputLabel>
+                        <Select<string>
+                            disabled={filterByRegion}
+                            labelId="region-selector-label"
+                            id="region-selector"
+                            value={selectedRegion}
+                            onChange={onRegionsChange}
+                        >
+                            {regions.map((r) => {
+                                return (
+                                    <MenuItem key={`region-${r}`} value={r}>
+                                        {r}
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={filterByRegion}
+                                onChange={onRegionsToggleEnabledChanged}
+                                name="regionsEnabled"
+                            />
+                        }
+                        label="By Range"
+                    />
+                </Grid>
+                <Grid item xs style={{ paddingRight: '2rem' }}>
+                    <Slider
+                        style={{ zIndex: 1000 }}
+                        disabled={!filterByRegion}
+                        defaultValue={1000}
+                        aria-labelledby="custom-range"
+                        step={100}
+                        max={5000}
+                        valueLabelDisplay="auto"
+                        value={customRange}
+                        marks={marks}
+                        onChange={(_: Event, value: number | number[]) => {
+                            setCustomRange(value as number);
+                        }}
+                    />
+                </Grid>
             </Grid>
-            <Grid item xs>
-                <FormControlLabel
-                    control={
-                        <Switch
-                            checked={showOpenOnly}
-                            onChange={onShowOpenOnlyChanged}
-                            name="checkedA"
-                        />
-                    }
-                    label="Open Slots"
-                />
-            </Grid>
-            <Grid item xs>
-                <FormControl>
-                    <InputLabel id="region-selector-label">Region</InputLabel>
-                    <Select<string>
-                        disabled={filterByRegion}
-                        labelId="region-selector-label"
-                        id="region-selector"
-                        value={selectedRegion}
-                        onChange={onRegionsChange}
-                    >
-                        {regions.map((r) => {
-                            return (
-                                <MenuItem key={`region-${r}`} value={r}>
-                                    {r}
-                                </MenuItem>
-                            );
-                        })}
-                    </Select>
-                </FormControl>
-            </Grid>
-            <Grid item xs>
-                <FormControlLabel
-                    control={
-                        <Switch
-                            checked={filterByRegion}
-                            onChange={onRegionsToggleEnabledChanged}
-                            name="regionsEnabled"
-                        />
-                    }
-                    label="By Range"
-                />
-            </Grid>
-            <Grid item xs style={{ paddingRight: '2rem' }}>
-                <Slider
-                    style={{ zIndex: 1000 }}
-                    disabled={!filterByRegion}
-                    defaultValue={1000}
-                    aria-labelledby="custom-range"
-                    step={100}
-                    max={5000}
-                    valueLabelDisplay="auto"
-                    value={customRange}
-                    marks={marks}
-                    onChange={(_: Event, value: number | number[]) => {
-                        setCustomRange(value as number);
-                    }}
-                />
-            </Grid>
-        </Grid>
+        </Paper>
     );
 };

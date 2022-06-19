@@ -51,7 +51,7 @@ type BanStore interface {
 	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
 	SaveBanNet(ctx context.Context, banNet *model.BanNet) error
 	DropBanNet(ctx context.Context, ban *model.BanNet) error
-	DropBan(ctx context.Context, ban *model.Ban) error
+	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
 	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
 	GetBans(ctx context.Context, queryFilter *QueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)

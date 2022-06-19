@@ -25,7 +25,7 @@ import {
 } from '../api';
 import Typography from '@mui/material/Typography';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
-import { log } from '../util/errors';
+import { logErr } from '../util/errors';
 import { useNavigate } from 'react-router-dom';
 import ButtonGroup from '@mui/material/ButtonGroup';
 
@@ -138,17 +138,16 @@ export const ReportForm = (): JSX.Element => {
     const [steamID, setSteamID] = useState<string>('');
     const navigate = useNavigate();
     const submit = useCallback(async () => {
-        try {
-            const report = await apiCreateReport({
-                steam_id: profile?.player.steam_id as string,
-                title: title,
-                description: description,
-                media: uploadedFiles
-            });
-            navigate(`/report/${report.report_id}`);
-        } catch (e) {
-            log(e);
-        }
+        apiCreateReport({
+            steam_id: profile?.player.steam_id as string,
+            title: title,
+            description: description,
+            media: uploadedFiles
+        })
+            .then((report) => {
+                navigate(`/report/${report.report_id}`);
+            })
+            .catch(logErr);
     }, [title, description, uploadedFiles, navigate, profile?.player.steam_id]);
 
     const titleIsError = title.length > 0 && title.length < 5;

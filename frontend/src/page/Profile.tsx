@@ -5,7 +5,7 @@ import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import { log } from '../util/errors';
+import { logErr } from '../util/errors';
 import Paper from '@mui/material/Paper';
 import { FriendList } from '../component/FriendList';
 import { createExternalLinks } from '../util/history';
@@ -25,20 +25,20 @@ export const Profile = (): JSX.Element => {
     const { steam_id } = useParams();
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            log(steam_id);
-            if (steam_id != '') {
-                setLoading(true);
-                try {
-                    setProfile(await apiGetProfile(steam_id || ''));
-                } catch (e) {
-                    log(e);
-                }
+        if (!steam_id) {
+            return;
+        }
+        setLoading(true);
+        apiGetProfile(steam_id || '')
+            .then((profile) => {
+                profile && setProfile(profile);
+            })
+            .catch((err) => {
+                logErr(err);
+            })
+            .finally(() => {
                 setLoading(false);
-            }
-        };
-        // noinspection JSIgnoredPromiseFromCall
-        fetchProfile();
+            });
     }, [steam_id]);
 
     return (

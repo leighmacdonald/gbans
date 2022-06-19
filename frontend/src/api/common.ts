@@ -2,9 +2,8 @@ import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
 
 export enum PermissionLevel {
-    Guest = 1,
-    Banned = 2,
-    Authenticated = 10,
+    Banned = 0,
+    User = 1,
     Moderator = 50,
     Admin = 100
 }
@@ -131,7 +130,7 @@ export const handleOnLogin = (): void => {
 
 export const handleOnLogout = (): void => {
     localStorage.removeItem('token');
-    localStorage.setItem('permission_level', `${PermissionLevel.Guest}`);
+    localStorage.setItem('permission_level', `${PermissionLevel.User}`);
     location.reload();
 };
 

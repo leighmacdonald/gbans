@@ -14,6 +14,7 @@ package config
 import (
 	"fmt"
 	"github.com/leighmacdonald/steamweb"
+	"os"
 	"strings"
 	"time"
 
@@ -46,20 +47,6 @@ type BanList struct {
 	Type BanListType `mapstructure:"type"`
 }
 
-type relayConfig struct {
-	Enabled    bool     `mapstructure:"enabled"`
-	Host       string   `mapstructure:"host"`
-	Password   string   `mapstructure:"password"`
-	ServerName string   `mapstructure:"server_name"`
-	LogPath    string   `mapstructure:"log_path"`
-	ChannelIDs []string `mapstructure:"channel_ids"`
-}
-
-type rpcConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Addr    string `mapstructure:"addr"`
-}
-
 type filterConfig struct {
 	Enabled         bool     `mapstructure:"enabled"`
 	IsWarning       bool     `mapstructure:"is_warning"`
@@ -70,9 +57,7 @@ type filterConfig struct {
 
 type rootConfig struct {
 	General generalConfig `mapstructure:"general"`
-	RPC     rpcConfig     `mapstructure:"rpc"`
 	HTTP    httpConfig    `mapstructure:"http"`
-	Relay   relayConfig   `mapstructure:"relay"`
 	Filter  filterConfig  `mapstructure:"word_filter"`
 	DB      dbConfig      `mapstructure:"database"`
 	Discord discordConfig `mapstructure:"discord"`
@@ -144,6 +129,7 @@ type generalConfig struct {
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
+	DemoRootPath                 string        `mapstructure:"demo_root_path"`
 }
 
 type discordConfig struct {
@@ -199,7 +185,6 @@ var (
 	General generalConfig
 	HTTP    httpConfig
 	Filter  filterConfig
-	Relay   relayConfig
 	DB      dbConfig
 	Discord discordConfig
 	Log     logConfig
@@ -244,12 +229,14 @@ func Read(cfgFiles ...string) {
 	if errWarningDuration != nil {
 		warningDuration = time.Hour * 24 * 7
 	}
+	if errDemoRoot := os.MkdirAll(root.General.DemoRootPath, 0775); errDemoRoot != nil {
+		log.Fatalf("Failed to create demo_root_path: %v", errDemoRoot)
+	}
 	root.General.WarningExceededDuration = warningDuration
 	HTTP = root.HTTP
 	General = root.General
 	Filter = root.Filter
 	Discord = root.Discord
-	Relay = root.Relay
 	DB = root.DB
 	Log = root.Log
 	Net = root.NetBans

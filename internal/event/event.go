@@ -47,13 +47,8 @@ func Emit(serverEvent model.ServerEvent) {
 		if !ok {
 			continue
 		}
-		for rt, reader := range readers {
-			select {
-			case reader <- serverEvent:
-			default:
-				log.WithFields(log.Fields{"type": rt}).Errorf("Failed to write to log event channel")
-			}
-
+		for _, reader := range readers {
+			reader <- serverEvent
 		}
 	}
 }
