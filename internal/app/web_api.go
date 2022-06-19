@@ -176,8 +176,8 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		dateStr := config.Now().Format("2006-01-02_15:04")
-		name := fmt.Sprintf("demo-%s-%s-%s.dem", server.ServerNameShort, dateStr, upload.MapName)
+		dateStr := config.Now().Format("2006-01-02_15-04-05")
+		name := fmt.Sprintf("demo_%s_%s_%s.dem", server.ServerNameShort, dateStr, upload.MapName)
 		outDir := path.Join(config.General.DemoRootPath, server.ServerNameShort)
 		if errMkDir := os.MkdirAll(outDir, 0775); errMkDir != nil {
 			log.Errorf("Failed to create demo dir: %v", errMkDir)
