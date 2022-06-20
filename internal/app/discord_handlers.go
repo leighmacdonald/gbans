@@ -450,7 +450,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		addFieldInline(embed, "Proxy Type", string(proxy.ProxyType))
 		addFieldInline(embed, "Proxy", string(proxy.Threat))
 	}
-	if logData.Total > 0 {
+	if logData != nil && logData.Total > 0 {
 		addFieldInline(embed, "Logs.tf", fmt.Sprintf("%d", logData.Total))
 	}
 
