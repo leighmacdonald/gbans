@@ -50,7 +50,7 @@
     "@types/lodash-es": "^4.17.6",
     "@types/marked": "^4.0.3",
     "@types/node": "^18.0.0",
-    "@types/react": "^18.0.13",
+    "@types/react": "^18.0.14",
     "@types/react-dom": "^18.0.5",
     "@types/react-leaflet": "^2.8.2",
     "@types/steamid": "^2.0.1",
