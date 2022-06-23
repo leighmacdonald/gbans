@@ -67,10 +67,10 @@ func responseOK(ctx *gin.Context, status int, data any) {
 type RemoteServiceType string
 
 const (
-	SSH RemoteServiceType = "ssh"
-	// HTTP         RemoteServiceType = "http"
-	GBansDemos   RemoteServiceType = "gbans_demo"
-	GBansGameLog RemoteServiceType = "gbans_log"
+//SSH RemoteServiceType = "ssh"
+// HTTP         RemoteServiceType = "http"
+//GBansDemos   RemoteServiceType = "gbans_demo"
+//GBansGameLog RemoteServiceType = "gbans_log"
 )
 
 type ServerLogUpload struct {
@@ -127,9 +127,9 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		responseOK(ctx, http.StatusCreated, nil)
-		go func() {
-			for _, row := range strings.Split(string(rawLogs), "\n") {
+		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
+		go func(logs string) {
+			for _, row := range strings.Split(logs, "\n") {
 				if row == "" {
 					continue
 				}
@@ -148,9 +148,8 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 					}
 				}
 				event.Emit(serverEvent)
-
 			}
-		}()
+		}(string(rawLogs))
 	}
 }
 
@@ -844,7 +843,7 @@ func (web *web) onAPIEvents(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIPostAppeal(database store.Store) gin.HandlerFunc {
+func (web *web) onAPIPostAppeal(_ store.Store) gin.HandlerFunc {
 	type newAppeal struct {
 		BanId  int    `json:"ban_id"`
 		Reason string `json:"reason"`

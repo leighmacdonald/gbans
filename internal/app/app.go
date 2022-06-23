@@ -175,7 +175,7 @@ func logWriter(ctx context.Context, database store.StatStore) {
 			logCache = append(logCache, serverEvent)
 		case <-writeTicker.C:
 			if len(logCache) == 0 {
-				return
+				continue
 			}
 			if errInsert := database.BatchInsertServerLogs(ctx, logCache); errInsert != nil {
 				log.Errorf("Failed to batch insert logs: %v", errInsert)
