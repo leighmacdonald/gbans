@@ -21,6 +21,7 @@ const (
 	cmdFind        botCmd = "find"
 	cmdMute        botCmd = "mute"
 	cmdCheck       botCmd = "check"
+	cmdCheckIp     botCmd = "checkip"
 	cmdUnban       botCmd = "unban"
 	cmdKick        botCmd = "kick"
 	cmdPlayers     botCmd = "players"
@@ -85,6 +86,12 @@ func (bot *discord) botRegisterSlashCommands() error {
 		Description: "An Autonomous System (AS) is a group of one or more IP prefixes run by one or more network operators",
 		Required:    true,
 	}
+	optIpAddr := &discordgo.ApplicationCommandOption{
+		Type:        discordgo.ApplicationCommandOptionString,
+		Name:        "ip",
+		Description: "IP address to check",
+		Required:    true,
+	}
 
 	slashCommands := []*discordgo.ApplicationCommand{
 
@@ -110,6 +117,14 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Description:   "Get ban status for a steam id",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
+			},
+		},
+		{
+			ApplicationID: config.Discord.AppID,
+			Name:          string(cmdCheckIp),
+			Description:   "Check if a ip is banned",
+			Options: []*discordgo.ApplicationCommandOption{
+				optIpAddr,
 			},
 		},
 		{
@@ -430,8 +445,6 @@ type botCommandHandler func(ctx context.Context, s *discordgo.Session, m *discor
 const (
 	discordMaxMsgLen  = 2000
 	discordMsgWrapper = "```"
-	// Accounts for the char lens: ``````
-	discordWrapperTotalLen = discordMaxMsgLen - (len(discordMsgWrapper) * 2)
 )
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent

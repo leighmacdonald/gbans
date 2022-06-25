@@ -17,6 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -64,22 +65,6 @@ func responseOK(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, apiResponse{Status: true, Data: data})
 }
 
-type RemoteServiceType string
-
-const (
-//SSH RemoteServiceType = "ssh"
-// HTTP         RemoteServiceType = "http"
-//GBansDemos   RemoteServiceType = "gbans_demo"
-//GBansGameLog RemoteServiceType = "gbans_log"
-)
-
-type ServerLogUpload struct {
-	ServerName string            `json:"server_name"`
-	MapName    string            `json:"map_name"`
-	Body       string            `json:"body"`
-	Type       RemoteServiceType `json:"type"`
-}
-
 func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var file *os.File
@@ -113,7 +98,7 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 		}
 
 		playerStateCache := newPlayerCache()
-		var upload ServerLogUpload
+		var upload srcdsup.ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -127,35 +112,36 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
+		logLines := strings.Split(string(rawLogs), "\n")
+		log.WithFields(log.Fields{"count": len(logLines)}).Debugf("Uploaded log file")
 		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
-		go func(logs string) {
-			for _, row := range strings.Split(logs, "\n") {
-				if row == "" {
-					continue
-				}
-				var serverEvent model.ServerEvent
-				errLogServerEvent := logToServerEvent(model.LogPayload{
-					ServerName: upload.ServerName,
-					Message:    row,
-				}, playerStateCache, &serverEvent, getPlayer, getServer)
-				if errLogServerEvent != nil {
-					log.Errorf("Failed to parse: %v", errLogServerEvent)
-					continue
-				}
-				if serverEvent.EventType == logparse.UnknownMsg {
-					if _, errWrite := file.WriteString(row + "\n"); errWrite != nil {
-						log.Errorf("Failed to write debug log: %v", errWrite)
-					}
-				}
-				event.Emit(serverEvent)
+		// TODO improve insert performance of this via summing
+		for _, row := range strings.Split(string(rawLogs), "\n") {
+			if row == "" {
+				continue
 			}
-		}(string(rawLogs))
+			var serverEvent model.ServerEvent
+			errLogServerEvent := logToServerEvent(model.LogPayload{
+				ServerName: upload.ServerName,
+				Message:    row,
+			}, playerStateCache, &serverEvent, getPlayer, getServer)
+			if errLogServerEvent != nil {
+				log.Errorf("Failed to parse: %v", errLogServerEvent)
+				continue
+			}
+			if serverEvent.EventType == logparse.UnknownMsg {
+				if _, errWrite := file.WriteString(row + "\n"); errWrite != nil {
+					log.Errorf("Failed to write debug log: %v", errWrite)
+				}
+			}
+			event.Emit(serverEvent)
+		}
 	}
 }
 
 func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var upload ServerLogUpload
+		var upload srcdsup.ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return

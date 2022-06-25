@@ -157,15 +157,15 @@ func warnWorker(ctx context.Context) {
 // logWriter handles writing log events to the database. It does it in batches for performance
 // reasons.
 func logWriter(ctx context.Context, database store.StatStore) {
-	const (
-		writeFrequency = time.Second * 5
+	const writeFrequency = time.Second * 5
+	var (
+		logCache        []model.ServerEvent
+		serverEventChan = make(chan model.ServerEvent)
+		writeTicker     = time.NewTicker(writeFrequency)
 	)
-	var logCache []model.ServerEvent
-	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
-	writeTicker := time.NewTicker(writeFrequency)
 	for {
 		select {
 		case serverEvent := <-serverEventChan:
@@ -457,11 +457,11 @@ func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
 
 	createdOnValue, createdOnFound := parseResult.Values["created_on"]
 	if !createdOnFound {
-		return errors.New("created_on missing")
+		// log.Warnf("created_on missing")
+		event.CreatedOn = config.Now()
+	} else {
+		event.CreatedOn = createdOnValue.(time.Time)
 	}
-
-	event.CreatedOn = createdOnValue.(time.Time)
-
 	// Remove keys that get mapped to actual schema columns
 	for _, key := range []string{
 		"created_on", "item", "weapon", "healing",
@@ -552,7 +552,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go logReader(ctx, database)
 	go logWriter(ctx, database)
 	go filterWorker(ctx, database, botSendMessageChan)
-	go initLogSrc(ctx, database)
+	//go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 }
 
