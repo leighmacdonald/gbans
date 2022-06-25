@@ -125,6 +125,9 @@ type NetworkStore interface {
 	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error)
 }
 
+type CacheStore interface {
+}
+
 // Store defines our composite store interface encapsulating all store interfaces
 type Store interface {
 	GenericStore

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -69,6 +70,11 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 }
 
 func (database *pgStore) GetServerByName(ctx context.Context, serverName string, server *model.Server) error {
+	cachedServer, ok := database.serverCache.Get(serverName)
+	if ok {
+		server = &cachedServer
+		return nil
+	}
 	query, args, errQueryArgs := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
@@ -83,6 +89,7 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
 		return Err(errQuery)
 	}
+	database.serverCache.Set(serverName, *server, cache.WithExpiration(time.Hour))
 	return nil
 }
 

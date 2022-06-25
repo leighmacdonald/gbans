@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	log "github.com/sirupsen/logrus"
+	ginlogrus "github.com/toorop/gin-logrus"
 	"net/http"
 	"time"
 )
@@ -48,7 +49,8 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload) (WebHa
 		gin.SetMode(gin.DebugMode)
 	}
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	l := log.StandardLogger()
+	router.Use(ginlogrus.Logger(l), gin.Recovery())
 
 	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),

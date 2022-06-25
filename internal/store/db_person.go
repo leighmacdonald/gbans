@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -11,6 +12,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"strings"
+	"time"
 )
 
 func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) error {
@@ -131,6 +133,11 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	FROM person person
 	WHERE person.steam_id = $1;`
 
+	cachedPerson, ok := database.playerCache.Get(sid64)
+	if ok {
+		person = &cachedPerson
+		return nil
+	}
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 	errQuery := database.conn.QueryRow(ctx, query, sid64.Int64()).Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn,
@@ -141,6 +148,7 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+	database.playerCache.Set(sid64, *person, cache.WithExpiration(time.Hour))
 	return nil
 }
 

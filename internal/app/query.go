@@ -191,7 +191,7 @@ func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore
 			"age":  config.Now().Sub(person.UpdatedOnSteam).String(),
 			"sid":  person.SteamID.Int64(),
 			"name": person.PersonaName,
-		}).Debug("Profile updated")
+		}).Trace("Profile updated")
 	}
 	person.SteamID = sid
 	if errSavePerson := database.SavePerson(ctx, person); errSavePerson != nil {

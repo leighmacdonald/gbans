@@ -80,6 +80,17 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 				}
 			}()
 		}
+		playerStateCache := newPlayerCache()
+
+		var upload srcdsup.ServerLogUpload
+		if errBind := ctx.BindJSON(&upload); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if upload.ServerName == "" || upload.Body == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
 
 		getPlayer := func(id string, playerCache map[string]any, person *model.Person) error {
 			sid1Str, ok := playerCache[id]
@@ -92,21 +103,23 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 			}
 			return nil
 		}
-
+		allServers, allServersErr := db.GetServers(ctx, false)
+		if allServersErr != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
 		getServer := func(serverName string, s *model.Server) error {
-			return db.GetServerByName(ctx, serverName, s)
+			for _, server := range allServers {
+				if server.ServerNameShort == serverName {
+					s = &server
+				}
+			}
+			if s == nil {
+				return errors.Errorf("Unknown server: %s", serverName)
+			}
+			return nil
 		}
 
-		playerStateCache := newPlayerCache()
-		var upload srcdsup.ServerLogUpload
-		if errBind := ctx.BindJSON(&upload); errBind != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		if upload.ServerName == "" || upload.Body == "" {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
 		rawLogs, errDecode := base64.StdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -115,7 +128,12 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 		logLines := strings.Split(string(rawLogs), "\n")
 		log.WithFields(log.Fields{"count": len(logLines)}).Debugf("Uploaded log file")
 		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
+		ctx.Next()
+
 		// TODO improve insert performance of this via summing
+		match := NewMatch()
+		match.title = upload.ServerName
+		match.mapName = upload.MapName
 		for _, row := range strings.Split(string(rawLogs), "\n") {
 			if row == "" {
 				continue
@@ -135,6 +153,42 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 				}
 			}
 			event.Emit(serverEvent)
+			if errApply := match.Apply(serverEvent); errApply != nil {
+				if !errors.Is(errApply, ErrIgnored) {
+					log.WithFields(log.Fields{"event": serverEvent.EventType}).Warnf("Failed to apply event: %v", errApply)
+				}
+			}
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Type:        discordgo.EmbedTypeRich,
+			Title:       fmt.Sprintf("Match results - %s - %s", upload.ServerName, upload.MapName),
+			Description: "Match results",
+			Color:       int(green),
+		}
+		redScore := 0
+		bluScore := 0
+		for _, round := range match.rounds {
+			redScore += round.Score.Red
+			bluScore += round.Score.Blu
+		}
+
+		addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
+		addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+		for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
+			teamStats, statsFound := match.teamSums[team]
+			if statsFound {
+				addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
+				addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
+				addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
+				addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
+			}
+		}
+		log.Debugf("Sending discord summary")
+		select {
+		case web.botSendMessageChan <- discordPayload{channelId: config.Discord.LogChannelID, message: embed}:
+		default:
+			log.Warnf("Cannot send discord payload, channel full")
 		}
 	}
 }

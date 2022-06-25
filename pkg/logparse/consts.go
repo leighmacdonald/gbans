@@ -107,6 +107,17 @@ const (
 	BLU  Team = 2
 )
 
+func (t Team) String() string {
+	switch t {
+	case RED:
+		return "RED"
+	case BLU:
+		return "BLU"
+	default:
+		return "SPEC"
+	}
+}
+
 func (t Team) Opponent() Team {
 	switch t {
 	case RED:
