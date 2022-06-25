@@ -3,6 +3,7 @@ module github.com/leighmacdonald/gbans
 go 1.18
 
 require (
+	github.com/Code-Hex/go-generics-cache v1.0.1
 	github.com/Depado/ginprom v1.7.4
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/PuerkitoBio/goquery v1.8.0
@@ -30,6 +31,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.2
+	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	github.com/yohcop/openid-go v1.0.0
 )
 
@@ -90,6 +92,7 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
 	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
 	golang.org/x/text v0.3.7 // indirect
