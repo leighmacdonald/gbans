@@ -40,7 +40,7 @@ func TestMain(testMain *testing.M) {
 		}
 	}()
 	testDatabase = dbStore
-	webService, errWeb := NewWeb(dbStore, discordSendMsg)
+	webService, errWeb := NewWeb(dbStore, discordSendMsg, logFileChan)
 	if errWeb != nil {
 		tearDown(dbStore)
 		log.Errorf("Failed to setup web: %v", errWeb)
@@ -62,7 +62,7 @@ func TestMain(testMain *testing.M) {
 	}
 
 	// Start the background goroutine workers
-	initWorkers(testCtx, dbStore, discordSendMsg)
+	initWorkers(testCtx, dbStore, discordSendMsg, logFileChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {

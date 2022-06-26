@@ -107,7 +107,7 @@ type WikiStore interface {
 
 type StatStore interface {
 	GetStats(ctx context.Context, stats *model.Stats) error
-	MatchSave(ctx context.Context, match *model.Match, server model.Server) error
+	MatchSave(ctx context.Context, match *model.Match) error
 	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
 }
 

@@ -234,7 +234,6 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 func logToServerEvent(ctx context.Context, server model.Server, msg string, db store.Store, playerStateCache *playerCache,
 	event *model.ServerEvent) error {
 	parseResult := logparse.Parse(msg)
-
 	event.Server = server
 	event.EventType = parseResult.MsgType
 	var playerSource model.Person

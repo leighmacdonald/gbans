@@ -986,7 +986,7 @@ func (bot *discord) onMatch(ctx context.Context, _ *discordgo.Session, interacti
 	if errServer := bot.database.GetServer(ctx, match.ServerId, &server); errServer != nil {
 		return errCommandFailed
 	}
-	embed := respOk(response, fmt.Sprintf("Match results - %s - %s", server.ServerNameShort, match.MapName))
+	embed := respOk(response, fmt.Sprintf("%s - %s", server.ServerNameShort, match.MapName))
 	embed.Color = int(green)
 	embed.URL = fmt.Sprintf("https://gbans.uncletopia.com/match/%d", match.MatchID)
 
@@ -996,19 +996,29 @@ func (bot *discord) onMatch(ctx context.Context, _ *discordgo.Session, interacti
 		redScore += round.Score.Red
 		bluScore += round.Score.Blu
 	}
-
+	top := match.TopPlayers()
 	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
 	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+	addFieldInline(embed, "Players", fmt.Sprintf("%d", len(top)))
 	found := 0
 	for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
 		teamStats, statsFound := match.TeamSums[team]
 		if statsFound {
 			addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
 			addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
-			addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
-			addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
+			addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Caps))
 			found++
 		}
 	}
+	desc := "`Top players\n" +
+		"N. K:D dmg heal sid\n"
+	for i, player := range top {
+		desc += fmt.Sprintf("%d %d:%d %d %d %s\n", i+1, player.Kills, player.Deaths, player.Damage, player.Healing, player.SteamId.String())
+		if i == 9 {
+			break
+		}
+	}
+	desc += "`"
+	embed.Description = desc
 	return nil
 }

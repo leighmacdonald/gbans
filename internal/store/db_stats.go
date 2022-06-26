@@ -8,9 +8,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (database *pgStore) MatchSave(ctx context.Context, match *model.Match, server model.Server) error {
+func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) error {
 	const q = `INSERT INTO match (server_id, map, created_on, title) VALUES ($1, $2, $3, $4) RETURNING match_id`
-	if errMatch := database.QueryRow(ctx, q, server.ServerID, match.MapName, match.CreatedOn, match.Title).
+	if errMatch := database.QueryRow(ctx, q, match.ServerId, match.MapName, match.CreatedOn, match.Title).
 		Scan(&match.MatchID); errMatch != nil {
 		return errors.Wrapf(errMatch, "Failed to setup match")
 	}

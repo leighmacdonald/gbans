@@ -160,19 +160,24 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	match := model.NewMatch()
+	var curServer model.Server
 	for {
 		select {
 		case evt := <-eventChan:
+			if match.ServerId == 0 && evt.Server.ServerID > 0 {
+				curServer = evt.Server
+				match.ServerId = curServer.ServerID
+			}
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt); errApply != nil {
 				log.Tracef("Error applying event: %v", errApply)
 			}
 			switch evt.EventType {
 			case logparse.WGameOver:
-				if errSave := db.MatchSave(ctx, &match, evt.Server); errSave != nil {
+				if errSave := db.MatchSave(ctx, &match); errSave != nil {
 					log.Errorf("Failed to save match: %v", errSave)
 				}
-				sendDiscordNotif(evt.Server, &match)
+				sendDiscordNotif(curServer, &match)
 				match = model.NewMatch()
 				log.Debugf("New match summary created")
 			}
@@ -347,6 +352,7 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 		select {
 		case logFile := <-logFileChan:
 			emitted := 0
+
 			for _, logLine := range logFile.Lines {
 				var serverEvent model.ServerEvent
 				errLogServerEvent := logToServerEvent(ctx, logFile.Server, logLine, db, playerStateCache, &serverEvent)

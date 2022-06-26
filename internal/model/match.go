@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"sort"
 	"time"
 )
 
@@ -90,6 +91,22 @@ type Match struct {
 	inMatch    bool // We ignore most events until Round_Start event
 	inRound    bool
 	useRealDmg bool
+}
+
+func (match *Match) playerSlice() []MatchPlayerSum {
+	var players []MatchPlayerSum
+	for _, p := range match.PlayerSums {
+		players = append(players, *p)
+	}
+	return players
+}
+
+func (match *Match) TopPlayers() []MatchPlayerSum {
+	players := match.playerSlice()
+	sort.SliceStable(players, func(i, j int) bool {
+		return players[i].Kills > players[j].Kills
+	})
+	return players
 }
 
 func (match *Match) Apply(event ServerEvent) error {
