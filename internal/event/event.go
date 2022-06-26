@@ -22,8 +22,8 @@ func init() {
 	logEventReadersMu = &sync.RWMutex{}
 }
 
-// RegisterConsumer will register a channel to receive new log events as they come in
-func RegisterConsumer(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
+// Consume will register a channel to receive new log events as they come in
+func Consume(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
 	for _, msgType := range msgTypes {

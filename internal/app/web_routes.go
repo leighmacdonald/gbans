@@ -23,7 +23,7 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
+func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC chan *LogFilePayload) {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
@@ -111,7 +111,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	serverAuth.POST("/api/ping_mod", web.onPostPingMod(database))
 	serverAuth.POST("/api/check", web.onPostServerCheck(database))
 	serverAuth.POST("/api/demo", web.onPostDemo(database))
-	serverAuth.POST("/api/log", web.onPostLog(database))
+	serverAuth.POST("/api/log", web.onPostLog(database, logFileC))
 
 	// Basic logged-in user
 	authed := engine.Use(authMiddleware(database, model.PUser))

@@ -90,7 +90,7 @@ func Start(ctx context.Context) error {
 		}
 	}()
 
-	webService, errWeb := NewWeb(dbStore, discordSendMsg)
+	webService, errWeb := NewWeb(dbStore, discordSendMsg, logFileChan)
 	if errWeb != nil {
 		return errors.Wrapf(errWeb, "Failed to setup web")
 	}
@@ -110,7 +110,7 @@ func Start(ctx context.Context) error {
 	}
 
 	// Start the background goroutine workers
-	initWorkers(ctx, dbStore, discordSendMsg)
+	initWorkers(ctx, dbStore, discordSendMsg, logFileChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
@@ -155,24 +155,26 @@ func warnWorker(ctx context.Context) {
 }
 
 func matchSummarizer(ctx context.Context, db store.Store) {
-	serverEventChan := make(chan model.ServerEvent)
-	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{
-		logparse.Any,
-	}); errRegister != nil {
+	eventChan := make(chan model.ServerEvent)
+	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	match := model.NewMatch()
 	for {
 		select {
-		case evt := <-serverEventChan:
+		case evt := <-eventChan:
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt); errApply != nil {
 				log.Tracef("Error applying event: %v", errApply)
 			}
 			switch evt.EventType {
 			case logparse.WGameOver:
-				db.MatchSave(ctx, &match)
+				if errSave := db.MatchSave(ctx, &match, evt.Server); errSave != nil {
+					log.Errorf("Failed to save match: %v", errSave)
+				}
+				sendDiscordNotif(evt.Server, &match)
 				match = model.NewMatch()
+				log.Debugf("New match summary created")
 			}
 		}
 	}
@@ -218,7 +220,7 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 
 func playerStateWriter(ctx context.Context, database store.Store) {
 	serverEventChan := make(chan model.ServerEvent)
-	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{
+	if errRegister := event.Consume(serverEventChan, []logparse.EventType{
 		logparse.Connected,
 		logparse.Disconnected,
 		logparse.Say,
@@ -344,6 +346,7 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 	for {
 		select {
 		case logFile := <-logFileChan:
+			emitted := 0
 			for _, logLine := range logFile.Lines {
 				var serverEvent model.ServerEvent
 				errLogServerEvent := logToServerEvent(ctx, logFile.Server, logLine, db, playerStateCache, &serverEvent)
@@ -357,7 +360,9 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 					}
 				}
 				event.Emit(serverEvent)
+				emitted++
 			}
+			log.WithFields(log.Fields{"count": emitted}).Debugf("Completed emitting logfile events")
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
@@ -422,7 +427,7 @@ func initFilters(ctx context.Context, database store.FilterStore) {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
+func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload, logFileC chan *LogFilePayload) {
 	go banSweeper(ctx, database)
 	go mapChanger(ctx, database, time.Second*5)
 
@@ -435,10 +440,11 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go serverStateRefresher(ctx, database)
 	go profileUpdater(ctx, database)
 	go warnWorker(ctx)
-	go logReader(ctx, logFileChan, database)
+	go logReader(ctx, logFileC, database)
 	go filterWorker(ctx, database, botSendMessageChan)
 	//go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
+	go matchSummarizer(ctx, database)
 }
 
 // UDP log sink

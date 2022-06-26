@@ -86,7 +86,7 @@ func init() {
 // logMetricsConsumer processes incoming log events and updated any associated metrics
 func logMetricsConsumer(ctx context.Context) {
 	eventChan := make(chan model.ServerEvent)
-	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
+	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Errorf("Failed to register event consumer")
 		return
 	}

@@ -293,7 +293,7 @@ type PersonIPRecord struct {
 
 type Server struct {
 	// Auto generated id
-	ServerID int64 `db:"server_id" json:"server_id"`
+	ServerID int `db:"server_id" json:"server_id"`
 	// ServerNameShort is a short reference name for the server eg: us-1
 	ServerNameShort string `db:"short_name" json:"server_name"`
 	ServerNameLong  string `db:"server_name_long" json:"server_name_long"`
@@ -375,7 +375,7 @@ func NewServer(name string, address string, port int) Server {
 // by admins.
 type ServerState struct {
 	// Database
-	ServerId    int64               `json:"server_id"`
+	ServerId    int                 `json:"server_id"`
 	Name        string              `json:"name"`
 	NameShort   string              `json:"name_short"`
 	Host        string              `json:"host"`

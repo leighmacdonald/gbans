@@ -16,6 +16,7 @@ var ErrUnhandled = errors.New("Unhandled msg")
 func NewMatch() Match {
 	return Match{
 		MatchID:           0,
+		ServerId:          0,
 		Title:             "Team Fortress 3",
 		MapName:           "pl_you_didnt_set_this",
 		PlayerSums:        map[steamid.SID64]*MatchPlayerSum{},
@@ -26,6 +27,7 @@ func NewMatch() Match {
 		ClassKillsAssists: MatchPlayerClassSums{},
 		ClassDeaths:       MatchPlayerClassSums{},
 		inMatch:           false,
+		CreatedOn:         config.Now(),
 	}
 }
 
@@ -71,7 +73,8 @@ func NewMatch() Match {
 // - Simplify implementation of the maps with generics
 // - Track players taking packs when they are close to 100% hp
 type Match struct {
-	MatchID           int64
+	MatchID           int
+	ServerId          int
 	Title             string
 	MapName           string
 	PlayerSums        map[steamid.SID64]*MatchPlayerSum
@@ -81,6 +84,7 @@ type Match struct {
 	ClassKills        MatchPlayerClassSums
 	ClassKillsAssists MatchPlayerClassSums
 	ClassDeaths       MatchPlayerClassSums
+	CreatedOn         time.Time
 
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch    bool // We ignore most events until Round_Start event
@@ -209,8 +213,8 @@ func (match *Match) roundStart() {
 	match.inMatch = true
 	match.inRound = true
 	for _, playerSum := range match.PlayerSums {
-		if playerSum.timeStart == nil {
-			*playerSum.timeStart = config.Now()
+		if playerSum.TimeStart == nil {
+			*playerSum.TimeStart = config.Now()
 		}
 	}
 }
@@ -368,9 +372,11 @@ func (match *Match) medicLostAdv(source steamid.SID64, timeAdv int) {
 }
 
 type MatchPlayerSum struct {
+	MatchPlayerSumID  int
+	SteamId           steamid.SID64
 	Team              logparse.Team
-	TimeStart         time.Time
-	TimeEnd           time.Time
+	TimeStart         *time.Time
+	TimeEnd           *time.Time
 	Kills             int
 	Assists           int
 	Deaths            int
@@ -392,14 +398,12 @@ type MatchPlayerSum struct {
 	BuildingBuilt     int
 	BuildingDestroyed int
 	Classes           []logparse.PlayerClass
-	timeStart         *time.Time
-	//timeEnd           *time.Time
 }
 
 func (playerSum *MatchPlayerSum) touch() {
-	if playerSum.timeStart == nil {
+	if playerSum.TimeStart == nil {
 		t := config.Now()
-		playerSum.timeStart = &t
+		playerSum.TimeStart = &t
 	}
 }
 
@@ -421,6 +425,9 @@ type MatchRoundSum struct {
 }
 
 type MatchMedicSum struct {
+	MatchMedicId        int
+	MatchId             int
+	SteamId             steamid.SID64
 	Healing             int
 	Charges             map[logparse.Medigun]int
 	Drops               int
@@ -461,12 +468,15 @@ func (classSum *MatchClassSums) Sum() int {
 type MatchPlayerClassSums map[steamid.SID64]*MatchClassSums
 
 type MatchTeamSum struct {
-	Kills     int
-	Damage    int64
-	Charges   int
-	Drops     int
-	Caps      int
-	MidFights int
+	MatchTeamId int
+	MatchId     int
+	Team        logparse.Team
+	Kills       int
+	Damage      int64
+	Charges     int
+	Drops       int
+	Caps        int
+	MidFights   int
 }
 
 func newMatchTeamSum() *MatchTeamSum {

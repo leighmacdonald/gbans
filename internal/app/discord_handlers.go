@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -971,3 +972,43 @@ func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, inter
 //	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
 //	return nil
 //}
+
+func (bot *discord) onMatch(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+	matchId, matchIdOk := interaction.Data.Options[0].Value.(float64)
+	if !matchIdOk {
+		return errCommandFailed
+	}
+	match, errMatch := bot.database.MatchGetById(ctx, int(matchId))
+	if errMatch != nil {
+		return errCommandFailed
+	}
+	var server model.Server
+	if errServer := bot.database.GetServer(ctx, match.ServerId, &server); errServer != nil {
+		return errCommandFailed
+	}
+	embed := respOk(response, fmt.Sprintf("Match results - %s - %s", server.ServerNameShort, match.MapName))
+	embed.Color = int(green)
+	embed.URL = fmt.Sprintf("https://gbans.uncletopia.com/match/%d", match.MatchID)
+
+	redScore := 0
+	bluScore := 0
+	for _, round := range match.Rounds {
+		redScore += round.Score.Red
+		bluScore += round.Score.Blu
+	}
+
+	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
+	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+	found := 0
+	for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
+		teamStats, statsFound := match.TeamSums[team]
+		if statsFound {
+			addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
+			addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
+			addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
+			addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
+			found++
+		}
+	}
+	return nil
+}

@@ -60,6 +60,7 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 		cmdSetSteam: bot.onSetSteam,
 		cmdHistory:  bot.onHistory,
 		cmdFilter:   bot.onFilter,
+		cmdMatch:    bot.onMatch,
 		//cmdStats:    bot.onStats,
 	}
 	return &bot, nil
@@ -169,9 +170,12 @@ func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 	}
 	switch response.MsgType {
 	case mtString:
-		edit.Content = response.Value.(string)
-		if len(edit.Content) > discordMaxMsgLen {
-			return errTooLarge
+		val, ok := response.Value.(string)
+		if ok && val != "" {
+			edit.Content = val
+			if len(edit.Content) > discordMaxMsgLen {
+				return errTooLarge
+			}
 		}
 	case mtEmbed:
 		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))

@@ -17,14 +17,15 @@ import (
 type GenericStore interface {
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 	Exec(ctx context.Context, query string, args ...any) error
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
 }
 
 type ServerStore interface {
-	GetServer(ctx context.Context, serverID int64, server *model.Server) error
+	GetServer(ctx context.Context, serverID int, server *model.Server) error
 	GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error)
 	GetServerByName(ctx context.Context, serverName string, server *model.Server) error
 	SaveServer(ctx context.Context, server *model.Server) error
-	DropServer(ctx context.Context, serverID int64) error
+	DropServer(ctx context.Context, serverID int) error
 }
 
 type DemoStore interface {
@@ -106,7 +107,8 @@ type WikiStore interface {
 
 type StatStore interface {
 	GetStats(ctx context.Context, stats *model.Stats) error
-	MatchSave(ctx context.Context, match *model.Match) error
+	MatchSave(ctx context.Context, match *model.Match, server model.Server) error
+	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
 }
 
 type NetworkStore interface {

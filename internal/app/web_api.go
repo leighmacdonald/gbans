@@ -63,7 +63,7 @@ func responseOK(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, apiResponse{Status: true, Data: data})
 }
 
-func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
+func (web *web) onPostLog(db store.Store, logFileC chan *LogFilePayload) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var upload srcdsup.ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
@@ -88,11 +88,12 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 		log.WithFields(log.Fields{"count": len(logLines)}).Debugf("Uploaded log file")
 		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
 		// Send the log to the logReader() for actual processing
-		web.logFileChan <- &LogFilePayload{
+		logFileC <- &LogFilePayload{
 			Server: server,
 			Lines:  logLines,
 			Map:    upload.MapName,
 		}
+		log.Tracef("File upload complete")
 	}
 }
 

@@ -17,7 +17,7 @@ var columnsServer = []string{"server_id", "short_name", "name", "token", "addres
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted", "log_secret"}
 
-func (database *pgStore) GetServer(ctx context.Context, serverID int64, server *model.Server) error {
+func (database *pgStore) GetServer(ctx context.Context, serverID int, server *model.Server) error {
 	query, args, errQuery := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
@@ -152,7 +152,7 @@ func (database *pgStore) updateServer(ctx context.Context, server *model.Server)
 	return nil
 }
 
-func (database *pgStore) DropServer(ctx context.Context, serverID int64) error {
+func (database *pgStore) DropServer(ctx context.Context, serverID int) error {
 	const query = `UPDATE server set deleted = true WHERE server_id = $1`
 	if _, errExec := database.conn.Exec(ctx, query, serverID); errExec != nil {
 		return errExec

@@ -41,6 +41,7 @@ const (
 	cmdFilterAdd   botCmd = "filter_add"
 	cmdFilterDel   botCmd = "filter_del"
 	cmdFilterCheck botCmd = "filter_check"
+	cmdMatch       botCmd = "match"
 )
 
 func (bot *discord) botRegisterSlashCommands() error {
@@ -92,9 +93,21 @@ func (bot *discord) botRegisterSlashCommands() error {
 		Description: "IP address to check",
 		Required:    true,
 	}
+	optMatchId := &discordgo.ApplicationCommandOption{
+		Type:        discordgo.ApplicationCommandOptionInteger,
+		Name:        "match_id",
+		Description: "MatchID of any previously uploaded match",
+		Required:    true,
+	}
 
 	slashCommands := []*discordgo.ApplicationCommand{
-
+		{
+			Name:        string(cmdMatch),
+			Description: "Show a match summary",
+			Options: []*discordgo.ApplicationCommandOption{
+				optMatchId,
+			},
+		},
 		{
 			Name:        string(cmdFind),
 			Description: "Find a user on any of the servers",
@@ -401,6 +414,7 @@ type permissionRequest struct {
 
 // registerCommandPermissions is used to additionally apply further restrictions to
 // application commands that discordgo itself does not support yet.
+// FIXME I suspect this is not required anymore
 func registerCommandPermissions(ctx context.Context, perms []permissionRequest) error {
 	httpClient := util.NewHTTPClient()
 	body, errUnmarshal := json.Marshal(perms)

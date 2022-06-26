@@ -28,7 +28,7 @@ func importFilteredWords(filters []model.Filter) {
 
 func filterWorker(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	eventChan := make(chan model.ServerEvent)
-	if errRegister := event.RegisterConsumer(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
+	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
 		log.Fatalf("Failed to register event reader: %v", errRegister)
 	}
 	for {

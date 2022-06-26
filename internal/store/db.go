@@ -133,12 +133,17 @@ type pgStore struct {
 }
 
 func (database *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	return database.conn.Query(ctx, query, args...)
+	rows, err := database.conn.Query(ctx, query, args...)
+	return rows, Err(err)
+}
+
+func (database *pgStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	return database.conn.QueryRow(ctx, query, args...)
 }
 
 func (database *pgStore) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := database.conn.Exec(ctx, query, args...)
-	return err
+	return Err(err)
 }
 
 // Close will close the underlying database connection if it exists
