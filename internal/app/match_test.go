@@ -1,11 +1,15 @@
 package app
 
 import (
+	"context"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -16,6 +20,12 @@ import (
 )
 
 func TestMatch_Apply(t *testing.T) {
+	// mock?
+	dbStore, dbErr := store.New(context.Background(), config.DB.DSN)
+	if dbErr != nil {
+		log.Errorf("Failed to setup store: %v", dbErr)
+		return
+	}
 	p := golib.FindFile(path.Join("test_data", "log_3124689.log"), "gbans")
 	if p == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
@@ -24,46 +34,25 @@ func TestMatch_Apply(t *testing.T) {
 	body, errRead := ioutil.ReadFile(p)
 	require.NoError(t, errRead)
 	playerStateCache := newPlayerCache()
-	m := NewMatch()
-
-	players := map[steamid.SID64]*model.Person{}
-
-	mockGetTestPlayer := func(id string, v map[string]any, p *model.Person) error {
-		sid1Str, ok := v[id]
-		if ok {
-			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-			_, found := players[s]
-			if !found {
-				lp := model.NewPerson(s)
-				players[s] = &lp
-			}
-			*p = *players[s]
-		}
-		return nil
-	}
+	m := model.NewMatch()
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
-	mockGetTestServer := func(serverName string, s *model.Server) error {
-		if serverName == testServer.ServerNameShort {
-			*s = testServer
-			return nil
-		}
-		return errors.New("server not found")
-	}
+
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {
 			continue
 		}
 		var se model.ServerEvent
-		require.NoError(t, logToServerEvent(model.LogPayload{ServerName: "tst-1", Message: line},
+		require.NoError(t, logToServerEvent(context.Background(),
+			testServer,
+			line,
+			dbStore,
 			playerStateCache,
 			&se,
-			mockGetTestPlayer,
-			mockGetTestServer,
 		), "Failed to create ServerEvent")
 		err := m.Apply(se)
-		if err != nil && !errors.Is(err, ErrIgnored) {
+		if err != nil && !errors.Is(err, model.ErrIgnored) {
 			t.Errorf("Failed to Apply: %v", err)
 		}
 	}
@@ -79,30 +68,30 @@ func TestMatch_Apply(t *testing.T) {
 	}
 
 	// Player sum values
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Kills,
-			m.playerSums[sid].Kills, "Kills incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Kills,
+			m.PlayerSums[sid].Kills, "Kills incorrect %v", getName(sid))
 	}
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Deaths,
-			m.playerSums[sid].Deaths, "Deaths incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Deaths,
+			m.PlayerSums[sid].Deaths, "Deaths incorrect %v", getName(sid))
 	}
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Damage,
-			m.playerSums[sid].Damage, "Damage incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Damage,
+			m.PlayerSums[sid].Damage, "Damage incorrect %v", getName(sid))
 	}
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Healing,
-			m.playerSums[sid].Healing, "Healing incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Healing,
+			m.PlayerSums[sid].Healing, "Healing incorrect %v", getName(sid))
 	}
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Dominations,
-			m.playerSums[sid].Dominations, "Dominations incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Dominations,
+			m.PlayerSums[sid].Dominations, "Dominations incorrect %v", getName(sid))
 	}
 
-	for sid := range match3124689.playerSums {
-		assert.Equal(t, match3124689.playerSums[sid].Revenges,
-			m.playerSums[sid].Revenges, "Revenges incorrect %v", getName(sid))
+	for sid := range match3124689.PlayerSums {
+		assert.Equal(t, match3124689.PlayerSums[sid].Revenges,
+			m.PlayerSums[sid].Revenges, "Revenges incorrect %v", getName(sid))
 	}
 	//for sid := range match3124689.playerSums {
 	//	assert.Equal(t, match3124689.playerSums[sid].Classes,
@@ -110,17 +99,17 @@ func TestMatch_Apply(t *testing.T) {
 	//}
 
 	// Medic sums
-	for sid := range match3124689.medicSums {
-		assert.Equal(t, match3124689.medicSums[sid].Drops,
-			m.medicSums[sid].Drops, "Drops incorrect %v", getName(sid))
+	for sid := range match3124689.MedicSums {
+		assert.Equal(t, match3124689.MedicSums[sid].Drops,
+			m.MedicSums[sid].Drops, "Drops incorrect %v", getName(sid))
 	}
 	//for sid := range match3124689.medicSums {
 	//	assert.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	//}
-	for sid := range match3124689.medicSums {
-		assert.Equal(t, match3124689.medicSums[sid].Charges,
-			m.medicSums[sid].Charges, "Charges incorrect %v", getName(sid))
+	for sid := range match3124689.MedicSums {
+		assert.Equal(t, match3124689.MedicSums[sid].Charges,
+			m.MedicSums[sid].Charges, "Charges incorrect %v", getName(sid))
 	}
 
 	//for team := range match3124689.teamSums {
@@ -130,7 +119,7 @@ func TestMatch_Apply(t *testing.T) {
 }
 
 // https://logs.tf/3124689
-func testMatch() (Match, map[string]steamid.SID64) {
+func testMatch() (model.Match, map[string]steamid.SID64) {
 	name := map[string]steamid.SID64{
 		"var":                76561198164892406,
 		"para":               76561198057150173,
@@ -153,10 +142,10 @@ func testMatch() (Match, map[string]steamid.SID64) {
 		"WitlessConnor":      76561198073709029,
 	}
 
-	match := Match{
-		title:   "Qixalite Booking: RED vs BLU",
-		mapName: "koth_cascade_rc2",
-		playerSums: map[steamid.SID64]*MatchPlayerSum{
+	match := model.Match{
+		Title:   "Qixalite Booking: RED vs BLU",
+		MapName: "koth_cascade_rc2",
+		PlayerSums: map[steamid.SID64]*model.MatchPlayerSum{
 			name["var"]: {
 				Team:              logparse.BLU,
 				TimeStart:         time.Time{},
@@ -500,7 +489,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Healing:     57,
 			},
 		},
-		medicSums: map[steamid.SID64]*MatchMedicSum{
+		MedicSums: map[steamid.SID64]*model.MatchMedicSum{
 			name["avg Q enjoyer"]: {
 				Healing: 17368,
 				Charges: map[logparse.Medigun]int{
@@ -514,7 +503,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				MajorAdvLost:        1,
 				BiggestAdvLost:      39,
 				DeathAfterCharge:    0,
-				HealTargets:         map[steamid.SID64]*MatchClassSums{},
+				HealTargets:         map[steamid.SID64]*model.MatchClassSums{},
 			},
 			name["Golden Terrestrial"]: {
 				Healing: 19545,
@@ -529,10 +518,10 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				MajorAdvLost:        0,
 				BiggestAdvLost:      0,
 				DeathAfterCharge:    1,
-				HealTargets:         map[steamid.SID64]*MatchClassSums{},
+				HealTargets:         map[steamid.SID64]*model.MatchClassSums{},
 			},
 		},
-		teamSums: map[logparse.Team]*MatchTeamSum{
+		TeamSums: map[logparse.Team]*model.MatchTeamSum{
 			logparse.RED: {
 				Kills:     122,
 				Damage:    40201,
@@ -550,10 +539,10 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				MidFights: 1,
 			},
 		},
-		rounds: []*MatchRoundSum{
+		Rounds: []*model.MatchRoundSum{
 			{
 				Length: 313 * time.Second,
-				Score: TeamScores{
+				Score: model.TeamScores{
 					Red: 1,
 					Blu: 0,
 				},
@@ -567,7 +556,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 			},
 			{
 				Length: 378 * time.Second,
-				Score: TeamScores{
+				Score: model.TeamScores{
 					Red: 2,
 					Blu: 0,
 				},
@@ -581,7 +570,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 			},
 			{
 				Length: 325 * time.Second,
-				Score: TeamScores{
+				Score: model.TeamScores{
 					Red: 3,
 					Blu: 0,
 				},
@@ -594,7 +583,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				MidFight:  logparse.RED,
 			},
 		},
-		classKills: map[steamid.SID64]*MatchClassSums{
+		ClassKills: map[steamid.SID64]*model.MatchClassSums{
 			name["avg Q enjoyer"]: {
 				Scout:    0,
 				Soldier:  0,
@@ -794,7 +783,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		classKillsAssists: map[steamid.SID64]*MatchClassSums{
+		ClassKillsAssists: map[steamid.SID64]*model.MatchClassSums{
 			name["avg Q enjoyer"]: {
 				Scout:    1,
 				Soldier:  1,
@@ -994,7 +983,7 @@ func testMatch() (Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		classDeaths: map[steamid.SID64]*MatchClassSums{
+		ClassDeaths: map[steamid.SID64]*model.MatchClassSums{
 			name["avg Q enjoyer"]: {
 				Scout:    2,
 				Soldier:  3,

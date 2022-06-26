@@ -48,10 +48,9 @@ package app
 //}
 //
 
-//
 //func TestAPICheck(t *testing.T) {
 //	e := gin.New()
-//	web.SetupRouter(e, logPayloadChan)
+//	setupRouter(e, logPayloadChan)
 //	req := newTestReq("POST", "/api/check", web.CheckRequest{
 //		ClientID: 10,
 //		SteamID:  string(steamid.SID64ToSID(76561197961279983)),
@@ -62,7 +61,7 @@ package app
 //	e.ServeHTTP(w, req)
 //	require.Equal(t, http.StatusForbidden, w.Code)
 //}
-//
+
 //func TestOnAPIPostBan(t *testing.T) {
 //	type req struct {
 //		// TODO replace string with SID64 when steam package gets fixed

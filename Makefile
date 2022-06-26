@@ -81,7 +81,8 @@ pg_test_service:
 	docker-compose -f docker/docker-compose.yml up --abort-on-container-exit --exit-code-from postgres --remove-orphans --build postgres
 
 docker_test:
-	docker-compose -f docker/docker-compose-test.yml up --renew-anon-volumes --abort-on-container-exit --exit-code-from gbans-test --remove-orphans --build
+	docker-compose -f docker/docker-compose-test.yml run --rm gbans-test
+	docker-compose -f docker/docker-compose-test.yml rm -fsv
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
