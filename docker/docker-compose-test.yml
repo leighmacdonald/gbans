@@ -12,21 +12,24 @@ services:
     networks:
       - test_network
     environment:
-      GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
+      GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5434/gbans
       GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
     command: ["make", "test"]
 
   postgres:
     image: postgis/postgis:13-3.1-alpine
     restart: always
+    expose:
+      - "5434"
     ports:
-      - 5432:5432
+      - 5434:5434
     environment:
       POSTGRES_USER: gbans
       POSTGRES_DB: gbans
       POSTGRES_PASSWORD: gbans
     networks:
       - test_network
+    command: "-p 5434"
 
 volumes:
   dl_cache:
