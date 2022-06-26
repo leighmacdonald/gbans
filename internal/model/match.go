@@ -1,8 +1,7 @@
-package app
+package model
 
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -17,15 +16,15 @@ var ErrUnhandled = errors.New("Unhandled msg")
 func NewMatch() Match {
 	return Match{
 		MatchID:           0,
-		title:             "Qixalite Booking: RED vs BLU",
-		mapName:           "koth_cascade_rc2",
-		playerSums:        map[steamid.SID64]*MatchPlayerSum{},
-		medicSums:         map[steamid.SID64]*MatchMedicSum{},
-		teamSums:          map[logparse.Team]*MatchTeamSum{},
-		rounds:            nil,
-		classKills:        MatchPlayerClassSums{},
-		classKillsAssists: MatchPlayerClassSums{},
-		classDeaths:       MatchPlayerClassSums{},
+		Title:             "Team Fortress 3",
+		MapName:           "pl_you_didnt_set_this",
+		PlayerSums:        map[steamid.SID64]*MatchPlayerSum{},
+		MedicSums:         map[steamid.SID64]*MatchMedicSum{},
+		TeamSums:          map[logparse.Team]*MatchTeamSum{},
+		Rounds:            nil,
+		ClassKills:        MatchPlayerClassSums{},
+		ClassKillsAssists: MatchPlayerClassSums{},
+		ClassDeaths:       MatchPlayerClassSums{},
 		inMatch:           false,
 	}
 }
@@ -73,15 +72,15 @@ func NewMatch() Match {
 // - Track players taking packs when they are close to 100% hp
 type Match struct {
 	MatchID           int64
-	title             string
-	mapName           string
-	playerSums        map[steamid.SID64]*MatchPlayerSum
-	medicSums         map[steamid.SID64]*MatchMedicSum
-	teamSums          map[logparse.Team]*MatchTeamSum
-	rounds            []*MatchRoundSum
-	classKills        MatchPlayerClassSums
-	classKillsAssists MatchPlayerClassSums
-	classDeaths       MatchPlayerClassSums
+	Title             string
+	MapName           string
+	PlayerSums        map[steamid.SID64]*MatchPlayerSum
+	MedicSums         map[steamid.SID64]*MatchMedicSum
+	TeamSums          map[logparse.Team]*MatchTeamSum
+	Rounds            []*MatchRoundSum
+	ClassKills        MatchPlayerClassSums
+	ClassKillsAssists MatchPlayerClassSums
+	ClassDeaths       MatchPlayerClassSums
 
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch    bool // We ignore most events until Round_Start event
@@ -89,12 +88,12 @@ type Match struct {
 	useRealDmg bool
 }
 
-func (match *Match) Apply(event model.ServerEvent) error {
+func (match *Match) Apply(event ServerEvent) error {
 	switch event.EventType {
 	case logparse.MapLoad:
 		mapName, ok := event.MetaData["map"]
 		if ok {
-			match.mapName = mapName.(string)
+			match.MapName = mapName.(string)
 		}
 		return nil
 	case logparse.IgnoredMsg:
@@ -179,37 +178,37 @@ func (match *Match) Apply(event model.ServerEvent) error {
 }
 
 func (match *Match) getPlayerSum(sid steamid.SID64) *MatchPlayerSum {
-	_, ok := match.playerSums[sid]
+	_, ok := match.PlayerSums[sid]
 	if !ok {
-		match.playerSums[sid] = &MatchPlayerSum{}
+		match.PlayerSums[sid] = &MatchPlayerSum{}
 		if match.inMatch {
 			// Account for people who joined after Round_start event
-			match.playerSums[sid].touch()
+			match.PlayerSums[sid].touch()
 		}
 	}
-	return match.playerSums[sid]
+	return match.PlayerSums[sid]
 }
 
 func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
-	_, ok := match.medicSums[sid]
+	_, ok := match.MedicSums[sid]
 	if !ok {
-		match.medicSums[sid] = newMatchMedicSum()
+		match.MedicSums[sid] = newMatchMedicSum()
 	}
-	return match.medicSums[sid]
+	return match.MedicSums[sid]
 }
 
 func (match *Match) getTeamSum(team logparse.Team) *MatchTeamSum {
-	_, ok := match.teamSums[team]
+	_, ok := match.TeamSums[team]
 	if !ok {
-		match.teamSums[team] = newMatchTeamSum()
+		match.TeamSums[team] = newMatchTeamSum()
 	}
-	return match.teamSums[team]
+	return match.TeamSums[team]
 }
 
 func (match *Match) roundStart() {
 	match.inMatch = true
 	match.inRound = true
-	for _, playerSum := range match.playerSums {
+	for _, playerSum := range match.PlayerSums {
 		if playerSum.timeStart == nil {
 			*playerSum.timeStart = config.Now()
 		}
@@ -219,6 +218,7 @@ func (match *Match) roundStart() {
 func (match *Match) roundWin(team logparse.Team) {
 	match.inMatch = true
 	match.inRound = false
+	//match.rounds[0].Score.
 }
 
 func (match *Match) gameOver() {
@@ -235,7 +235,7 @@ func (match *Match) addClass(sid steamid.SID64, class logparse.PlayerClass) {
 		playerSum.Classes = append(playerSum.Classes, class)
 		if class == logparse.Medic {
 			// Allocate for a new medic
-			match.medicSums[sid] = newMatchMedicSum()
+			match.MedicSums[sid] = newMatchMedicSum()
 		}
 	}
 	if match.inMatch {
@@ -299,9 +299,8 @@ func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount in
 //}
 
 func (match *Match) killed(source steamid.SID64, target steamid.SID64, team logparse.Team) {
-	src := match.getPlayerSum(source)
 	if match.inRound {
-		src.Kills++
+		match.getPlayerSum(source).Kills++
 		match.getPlayerSum(target).Deaths++
 		match.getTeamSum(team).Kills++
 	}

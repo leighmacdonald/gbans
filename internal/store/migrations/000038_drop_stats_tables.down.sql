@@ -1,6 +1,6 @@
 begin;
 
-create table stats_global_alltime
+create table if not exists stats_global_alltime
 (
     -- Common stats
     kills              bigint default 0 not null,
@@ -54,7 +54,7 @@ create table stats_global_alltime
 
 );
 
-create table stats_global_monthly
+create table if not exists stats_global_monthly
 (
     year               bigint           not null,
     month              bigint           not null,
@@ -109,9 +109,9 @@ create table stats_global_monthly
     unique_players     bigint default 0 not null
 
 );
-create unique index stats_global_monthly_uindex on stats_global_monthly (year, month);
+create unique index if not exists stats_global_monthly_uindex on stats_global_monthly (year, month);
 
-create table stats_global_weekly
+create table if not exists stats_global_weekly
 (
     year               bigint           not null,
     week               bigint           not null,
@@ -166,9 +166,9 @@ create table stats_global_weekly
     unique_players     bigint default 0 not null
 
 );
-create unique index stats_global_weekly_uindex on stats_global_weekly (year, week);
+create unique index if not exists stats_global_weekly_uindex on stats_global_weekly (year, week);
 
-create table stats_global_daily
+create table if not exists stats_global_daily
 (
     year               bigint           not null,
     day                bigint           not null,
@@ -224,9 +224,9 @@ create table stats_global_daily
     unique_players     bigint default 0 not null
 
 );
-create unique index stats_global_daily_uindex on stats_global_daily (year, day);
+create unique index if not exists stats_global_daily_uindex on stats_global_daily (year, day);
 
-create table stats_player_alltime
+create table if not exists stats_player_alltime
 (
     steam_id           bigint           not null
         constraint stats_player_alltime_person_steam_id_fk references person,
@@ -279,9 +279,9 @@ create table stats_player_alltime
 
 );
 
-create unique index stats_player_alltime_uindex on stats_player_alltime (steam_id);
+create unique index if not exists stats_player_alltime_uindex on stats_player_alltime (steam_id);
 
-create table stats_player_monthly
+create table if not exists stats_player_monthly
 (
     steam_id           bigint           not null
         constraint stats_player_alltime_person_steam_id_fk references person,
@@ -336,9 +336,9 @@ create table stats_player_monthly
 
 );
 
-create unique index stats_player_monthly_uindex on stats_player_monthly (steam_id, year, month);
+create unique index if not exists stats_player_monthly_uindex on stats_player_monthly (steam_id, year, month);
 
-create table stats_player_weekly
+create table if not exists stats_player_weekly
 (
     steam_id           bigint           not null
         constraint stats_player_alltime_person_steam_id_fk references person,
@@ -393,9 +393,9 @@ create table stats_player_weekly
 
 );
 
-create unique index stats_player_weekly_uindex on stats_player_weekly (steam_id, year, week);
+create unique index if not exists stats_player_weekly_uindex on stats_player_weekly (steam_id, year, week);
 
-create table stats_player_daily
+create table if not exists stats_player_daily
 (
     steam_id           bigint           not null
         constraint stats_player_alltime_person_steam_id_fk
@@ -451,9 +451,9 @@ create table stats_player_daily
 
 );
 
-create unique index stats_player_daily_uindex on stats_player_daily (steam_id, year, day);
+create unique index if not exists stats_player_daily_uindex on stats_player_daily (steam_id, year, day);
 
-create table stats_server_alltime
+create table if not exists stats_server_alltime
 (
     server_id          bigint           not null
         constraint stats_server_alltime_fk
@@ -499,9 +499,9 @@ create table stats_server_alltime
 
 );
 
-create unique index stats_server_alltime_uindex on stats_server_alltime (server_id);
+create unique index if not exists stats_server_alltime_uindex on stats_server_alltime (server_id);
 
-create table stats_server_monthly
+create table if not exists stats_server_monthly
 (
     server_id          bigint           not null
         constraint stats_server_weekly_fk
@@ -551,7 +551,7 @@ create table stats_server_monthly
 
 create unique index stats_server_monthly_uindex on stats_server_monthly (server_id, year, month);
 
-create table stats_server_weekly
+create table if not exists stats_server_weekly
 (
     server_id          bigint           not null
         constraint stats_server_weekly_fk
@@ -599,9 +599,9 @@ create table stats_server_weekly
 
 );
 
-create unique index stats_server_weekly_uindex on stats_server_weekly (server_id, year, week);
+create unique index if not exists stats_server_weekly_uindex on stats_server_weekly (server_id, year, week);
 
-create table stats_server_daily
+create table if not exists stats_server_daily
 (
     server_id          bigint           not null
         constraint stats_server_daily_fk
@@ -650,9 +650,9 @@ create table stats_server_daily
 
 );
 
-create unique index stats_server_daily_uindex on stats_server_daily (server_id, year, day);
+create unique index if not exists stats_server_daily_uindex on stats_server_daily (server_id, year, day);
 
-create table stats_map_alltime
+create table if not exists stats_map_alltime
 (
     map_name           varchar          not null primary key,
 
@@ -697,9 +697,9 @@ create table stats_map_alltime
 
 );
 
-create unique index stats_server_map_uindex on stats_map_alltime (map_name);
+create unique index if not exists tats_server_map_uindex on stats_map_alltime (map_name);
 
-create table stats_map_monthly
+create table if not exists stats_map_monthly
 (
     map_name           varchar          not null primary key,
     year               bigint           not null,
@@ -745,9 +745,9 @@ create table stats_map_monthly
 
 );
 
-create unique index stats_map_monthly_uindex on stats_map_monthly (map_name, year, month);
+create unique index if not exists stats_map_monthly_uindex on stats_map_monthly (map_name, year, month);
 
-create table stats_map_weekly
+create table if not exists stats_map_weekly
 (
     map_name           varchar          not null primary key,
     year               bigint           not null,
@@ -793,9 +793,9 @@ create table stats_map_weekly
 
 );
 
-create unique index stats_map_weekly_uindex on stats_map_weekly (map_name, year, week);
+create unique index if not exists stats_map_weekly_uindex on stats_map_weekly (map_name, year, week);
 
-create table stats_map_daily
+create table if not exists stats_map_daily
 (
     map_name           varchar          not null primary key,
     year               bigint           not null,
@@ -842,6 +842,6 @@ create table stats_map_daily
 
 );
 
-create unique index stats_map_daily_uindex on stats_map_daily (map_name, year, day);
+create unique index if not exists stats_map_daily_uindex on stats_map_daily (map_name, year, day);
 
 commit;

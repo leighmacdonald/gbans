@@ -274,6 +274,7 @@ var defaultConfig = map[string]any{
 	"general.server_status_update_freq":      "60s",
 	"general.default_maps":                   []string{"pl_badwater"},
 	"general.map_changer_enabled":            false,
+	"general.demo_root_path":                 "./.demos/",
 	"http.host":                              "127.0.0.1",
 	"http.port":                              6006,
 	"http.domain":                            "http://localhost:6006",

@@ -297,15 +297,15 @@ func (database *pgStore) BatchInsertServerLogs(ctx context.Context, serverEvents
 	}
 	var errExec error
 	for _, serverEvent := range serverEvents {
-		if serverEvent.Server == nil || serverEvent.Server.ServerID <= 0 {
+		if serverEvent.Server.ServerID == 0 || serverEvent.Server.ServerID <= 0 {
 			continue
 		}
 		source := steamid.SID64(0)
 		target := steamid.SID64(0)
-		if serverEvent.Source != nil && serverEvent.Source.SteamID.Valid() {
+		if !serverEvent.Source.SteamID.Valid() {
 			source = serverEvent.Source.SteamID
 		}
-		if serverEvent.Target != nil && serverEvent.Target.SteamID.Valid() {
+		if !serverEvent.Target.SteamID.Valid() {
 			target = serverEvent.Target.SteamID
 		}
 

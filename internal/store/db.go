@@ -136,6 +136,11 @@ func (database *pgStore) Query(ctx context.Context, query string, args ...any) (
 	return database.conn.Query(ctx, query, args...)
 }
 
+func (database *pgStore) Exec(ctx context.Context, query string, args ...any) error {
+	_, err := database.conn.Exec(ctx, query, args...)
+	return err
+}
+
 // Close will close the underlying database connection if it exists
 func (database *pgStore) Close() error {
 	if database.conn != nil {

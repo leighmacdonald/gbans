@@ -95,7 +95,7 @@ func logMetricsConsumer(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case serverEvent := <-eventChan:
-			if serverEvent.Server != nil {
+			if serverEvent.Server.ServerID == 0 {
 				// TODO why is this ever nil?
 				logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
 			}

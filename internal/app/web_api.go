@@ -7,14 +7,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
@@ -67,21 +65,6 @@ func responseOK(ctx *gin.Context, status int, data any) {
 
 func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var file *os.File
-		if config.Debug.WriteUnhandledLogEvents {
-			var errCreateFile error
-			file, errCreateFile = os.Create("./unhandled_messages.log")
-			if errCreateFile != nil {
-				log.Panicf("Failed to open debug message log: %v", errCreateFile)
-			}
-			defer func() {
-				if errClose := file.Close(); errClose != nil {
-					log.Errorf("Failed to close unhandled_messages.log: %v", errClose)
-				}
-			}()
-		}
-		playerStateCache := newPlayerCache()
-
 		var upload srcdsup.ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -91,35 +74,11 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-
-		getPlayer := func(id string, playerCache map[string]any, person *model.Person) error {
-			sid1Str, ok := playerCache[id]
-			if ok {
-				s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-				if errGetPerson := db.GetOrCreatePersonBySteamID(ctx, s, person); errGetPerson != nil {
-					return errors.Wrapf(errGetPerson, "Failed to load player1 %s: %s", sid1Str, errGetPerson.Error())
-				}
-				return nil
-			}
-			return nil
-		}
-		allServers, allServersErr := db.GetServers(ctx, false)
-		if allServersErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, nil)
+		var server model.Server
+		if errServer := db.GetServerByName(ctx, upload.ServerName, &server); errServer != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		getServer := func(serverName string, s *model.Server) error {
-			for _, server := range allServers {
-				if server.ServerNameShort == serverName {
-					s = &server
-				}
-			}
-			if s == nil {
-				return errors.Errorf("Unknown server: %s", serverName)
-			}
-			return nil
-		}
-
 		rawLogs, errDecode := base64.StdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -128,67 +87,11 @@ func (web *web) onPostLog(db store.Store) gin.HandlerFunc {
 		logLines := strings.Split(string(rawLogs), "\n")
 		log.WithFields(log.Fields{"count": len(logLines)}).Debugf("Uploaded log file")
 		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
-		ctx.Next()
-
-		// TODO improve insert performance of this via summing
-		match := NewMatch()
-		match.title = upload.ServerName
-		match.mapName = upload.MapName
-		for _, row := range strings.Split(string(rawLogs), "\n") {
-			if row == "" {
-				continue
-			}
-			var serverEvent model.ServerEvent
-			errLogServerEvent := logToServerEvent(model.LogPayload{
-				ServerName: upload.ServerName,
-				Message:    row,
-			}, playerStateCache, &serverEvent, getPlayer, getServer)
-			if errLogServerEvent != nil {
-				log.Errorf("Failed to parse: %v", errLogServerEvent)
-				continue
-			}
-			if serverEvent.EventType == logparse.UnknownMsg {
-				if _, errWrite := file.WriteString(row + "\n"); errWrite != nil {
-					log.Errorf("Failed to write debug log: %v", errWrite)
-				}
-			}
-			event.Emit(serverEvent)
-			if errApply := match.Apply(serverEvent); errApply != nil {
-				if !errors.Is(errApply, ErrIgnored) {
-					log.WithFields(log.Fields{"event": serverEvent.EventType}).Warnf("Failed to apply event: %v", errApply)
-				}
-			}
-		}
-
-		embed := &discordgo.MessageEmbed{
-			Type:        discordgo.EmbedTypeRich,
-			Title:       fmt.Sprintf("Match results - %s - %s", upload.ServerName, upload.MapName),
-			Description: "Match results",
-			Color:       int(green),
-		}
-		redScore := 0
-		bluScore := 0
-		for _, round := range match.rounds {
-			redScore += round.Score.Red
-			bluScore += round.Score.Blu
-		}
-
-		addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
-		addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
-		for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
-			teamStats, statsFound := match.teamSums[team]
-			if statsFound {
-				addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
-				addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
-				addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
-				addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
-			}
-		}
-		log.Debugf("Sending discord summary")
-		select {
-		case web.botSendMessageChan <- discordPayload{channelId: config.Discord.LogChannelID, message: embed}:
-		default:
-			log.Warnf("Cannot send discord payload, channel full")
+		// Send the log to the logReader() for actual processing
+		web.logFileChan <- &LogFilePayload{
+			Server: server,
+			Lines:  logLines,
+			Map:    upload.MapName,
 		}
 	}
 }
@@ -438,13 +341,13 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 
 func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 	type checkRequest struct {
-		ClientID int    `json:"client_id"`
-		SteamID  string `json:"steam_id"`
-		IP       net.IP `json:"ip"`
+		ClientID int         `json:"client_id"`
+		SteamID  steamid.SID `json:"steam_id"`
+		IP       net.IP      `json:"ip"`
 	}
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
-		SteamID  string        `json:"steam_id"`
+		SteamID  steamid.SID   `json:"steam_id"`
 		BanType  model.BanType `json:"ban_type"`
 		Msg      string        `json:"msg"`
 	}
@@ -466,8 +369,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 		responseCtx, cancelResponse := context.WithTimeout(ctx, time.Second*15)
 		defer cancelResponse()
 		// Check SteamID
-		steamID, errResolve := steamid.ResolveSID64(responseCtx, request.SteamID)
-		if errResolve != nil || !steamID.Valid() {
+		steamID := steamid.SIDToSID64(request.SteamID)
+		if !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
 			responseErr(ctx, http.StatusBadRequest, resp)
 			return
@@ -874,12 +777,12 @@ func (web *web) onAPIEvents(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		events, errFindLog := database.FindLogEvents(ctx, queryOpts)
-		if errFindLog != nil {
-			responseErr(ctx, http.StatusInternalServerError, nil)
-			return
-		}
-		responseOK(ctx, http.StatusOK, events)
+		//events, errFindLog := database.FindLogEvents(ctx, queryOpts)
+		//if errFindLog != nil {
+		//	responseErr(ctx, http.StatusInternalServerError, nil)
+		//	return
+		//}
+		responseOK(ctx, http.StatusOK, nil)
 	}
 }
 
@@ -1256,20 +1159,20 @@ func (web *web) onAPILogsQuery(database store.StatStore) gin.HandlerFunc {
 				return
 			}
 		}
-		sid, errSid := steamid.StringToSID64(request.SteamID)
-		if errSid != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		chatHistory, errGetChatHistory := database.GetChatHistory(ctx, sid, 100)
-		if errGetChatHistory != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
+		//sid, errSid := steamid.StringToSID64(request.SteamID)
+		//if errSid != nil {
+		//	responseErr(ctx, http.StatusBadRequest, nil)
+		//	return
+		//}
+		//chatHistory, errGetChatHistory := database.GetChatHistory(ctx, sid, 100)
+		//if errGetChatHistory != nil {
+		//	responseErr(ctx, http.StatusBadRequest, nil)
+		//	return
+		//}
 		var logs []logMsg
-		for _, history := range chatHistory {
-			logs = append(logs, logMsg{history.CreatedOn, history.Msg})
-		}
+		//for _, history := range chatHistory {
+		//	logs = append(logs, logMsg{history.CreatedOn, history.Msg})
+		//}
 		responseOK(ctx, http.StatusOK, logs)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -23,6 +24,7 @@ func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) 
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+	database.playerCache.Delete(steamID)
 	return nil
 }
 
@@ -55,6 +57,7 @@ func (database *pgStore) updatePerson(ctx context.Context, person *model.Person)
 		person.CommunityBanned, person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam); errExec != nil {
 		return Err(errExec)
 	}
+	database.playerCache.Delete(person.SteamID)
 	return nil
 }
 
@@ -83,6 +86,7 @@ func (database *pgStore) insertPerson(ctx context.Context, person *model.Person)
 		return Err(errExec)
 	}
 	person.IsNew = false
+	database.playerCache.Delete(person.SteamID)
 	return nil
 }
 
@@ -116,14 +120,14 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 		   loccityid,
 		   permission_level,
 		   discord_id,
-		   (
-			   SELECT (e.meta_data ->> 'address')::inet
-			   FROM server_log e
-			   WHERE e.event_type = 1004
-				 AND e.source_id = person.steam_id
-			   ORDER BY e.created_on DESC
-			   LIMIT 1
-		   ),
+/*		   //(
+			//   SELECT (e.meta_data ->> 'address')::inet
+			//   FROM server_log e
+			//   WHERE e.event_type = 1004
+			//	 AND e.source_id = person.steam_id
+			//   ORDER BY e.created_on DESC
+			//   LIMIT 1
+		   //),*/
 		   community_banned,
 		   vac_bans,
 		   game_bans,
@@ -132,10 +136,12 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 		   updated_on_steam
 	FROM person person
 	WHERE person.steam_id = $1;`
-
+	if !sid64.Valid() {
+		return consts.ErrInvalidSID
+	}
 	cachedPerson, ok := database.playerCache.Get(sid64)
-	if ok {
-		person = &cachedPerson
+	if ok && cachedPerson.SteamID.Valid() {
+		*person = cachedPerson
 		return nil
 	}
 	person.IsNew = false
@@ -143,7 +149,7 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	errQuery := database.conn.QueryRow(ctx, query, sid64.Int64()).Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn,
 		&person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
 		&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode,
-		&person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.IPAddr, &person.CommunityBanned,
+		&person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID /*&person.IPAddr,*/, &person.CommunityBanned,
 		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam)
 	if errQuery != nil {
 		return Err(errQuery)
@@ -152,6 +158,7 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	return nil
 }
 
+// TODO search cached people first
 func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error) {
 	queryBuilder := sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamIds)})
 	query, args, errQueryArgs := queryBuilder.ToSql()
@@ -229,10 +236,8 @@ func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 s
 		person.SteamID = sid64
 		person.IsNew = true
 		return database.SavePerson(ctx, person)
-	} else if errGetPerson != nil {
-		return errGetPerson
 	}
-	return nil
+	return errGetPerson
 }
 
 // GetPersonByDiscordID returns a person by their discord_id
@@ -286,67 +291,69 @@ func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]m
 }
 
 func (database *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error) {
-	query := `
-		SELECT l.source_id, coalesce(p.personaname, ''), coalesce((l.meta_data->>'msg')::text, '')
-		FROM server_log l
-		LEFT JOIN person p on l.source_id = p.steam_id
-		WHERE source_id = $1
-		  AND (event_type = 10 OR event_type = 11) 
-		ORDER BY l.created_on DESC`
-	if limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", limit)
-	}
-	rows, errQuery := database.conn.Query(ctx, query, sid64.String())
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
-	defer rows.Close()
-	var hist []logparse.SayEvt
-	for rows.Next() {
-		var event logparse.SayEvt
-		if errScan := rows.Scan(&event.SourcePlayer.SID, &event.SourcePlayer.Name, &event.Msg); errScan != nil {
-			return nil, errScan
-		}
-		hist = append(hist, event)
-	}
-	return hist, nil
+	//query := `
+	//	SELECT l.source_id, coalesce(p.personaname, ''), coalesce((l.meta_data->>'msg')::text, '')
+	//	FROM server_log l
+	//	LEFT JOIN person p on l.source_id = p.steam_id
+	//	WHERE source_id = $1
+	//	  AND (event_type = 10 OR event_type = 11)
+	//	ORDER BY l.created_on DESC`
+	//if limit > 0 {
+	//	query += fmt.Sprintf(" LIMIT %d", limit)
+	//}
+	//rows, errQuery := database.conn.Query(ctx, query, sid64.String())
+	//if errQuery != nil {
+	//	return nil, Err(errQuery)
+	//}
+	//defer rows.Close()
+	//var hist []logparse.SayEvt
+	//for rows.Next() {
+	//	var event logparse.SayEvt
+	//	if errScan := rows.Scan(&event.SourcePlayer.SID, &event.SourcePlayer.Name, &event.Msg); errScan != nil {
+	//		return nil, errScan
+	//	}
+	//	hist = append(hist, event)
+	//}
+	//return hist, nil
+	return nil, nil
 }
 
 func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]model.PersonIPRecord, error) {
-	var query = `
-		SELECT
-			(log.meta_data->>'address')::inet, 
-		    log.created_on,
-			loc.city_name,
-		    loc.country_name, 
-		    loc.country_code,
-			asn.as_name, 
-		    asn.as_num,
-			coalesce(proxy.isp, ''), 
-		    coalesce(proxy.usage_type, ''),
-			coalesce(proxy.threat, ''),
-		    coalesce(proxy.domain_used, '')
-		FROM server_log log
-		LEFT JOIN net_location loc 
-		    ON (log.meta_data->>'address')::inet <@ loc.ip_range
-		LEFT JOIN net_asn asn 
-		    ON (log.meta_data->>'address')::inet <@ asn.ip_range
-		LEFT JOIN net_proxy proxy 
-		    ON (log.meta_data->>'address')::inet <@ proxy.ip_range
-		WHERE event_type = 1004 AND log.source_id = $1`
-	rows, errQuery := database.conn.Query(ctx, query, sid64.Int64())
-	if errQuery != nil {
-		return nil, errQuery
-	}
-	var records []model.PersonIPRecord
-	defer rows.Close()
-	for rows.Next() {
-		var ipRecord model.PersonIPRecord
-		if errScan := rows.Scan(&ipRecord.IP, &ipRecord.CreatedOn, &ipRecord.CityName, &ipRecord.CountryName, &ipRecord.CountryCode, &ipRecord.ASName,
-			&ipRecord.ASNum, &ipRecord.ISP, &ipRecord.UsageType, &ipRecord.Threat, &ipRecord.DomainUsed); errScan != nil {
-			return nil, errScan
-		}
-		records = append(records, ipRecord)
-	}
-	return records, nil
+	//var query = `
+	//	SELECT
+	//		(log.meta_data->>'address')::inet,
+	//	    log.created_on,
+	//		loc.city_name,
+	//	    loc.country_name,
+	//	    loc.country_code,
+	//		asn.as_name,
+	//	    asn.as_num,
+	//		coalesce(proxy.isp, ''),
+	//	    coalesce(proxy.usage_type, ''),
+	//		coalesce(proxy.threat, ''),
+	//	    coalesce(proxy.domain_used, '')
+	//	FROM server_log log
+	//	LEFT JOIN net_location loc
+	//	    ON (log.meta_data->>'address')::inet <@ loc.ip_range
+	//	LEFT JOIN net_asn asn
+	//	    ON (log.meta_data->>'address')::inet <@ asn.ip_range
+	//	LEFT JOIN net_proxy proxy
+	//	    ON (log.meta_data->>'address')::inet <@ proxy.ip_range
+	//	WHERE event_type = 1004 AND log.source_id = $1`
+	//rows, errQuery := database.conn.Query(ctx, query, sid64.Int64())
+	//if errQuery != nil {
+	//	return nil, errQuery
+	//}
+	//var records []model.PersonIPRecord
+	//defer rows.Close()
+	//for rows.Next() {
+	//	var ipRecord model.PersonIPRecord
+	//	if errScan := rows.Scan(&ipRecord.IP, &ipRecord.CreatedOn, &ipRecord.CityName, &ipRecord.CountryName, &ipRecord.CountryCode, &ipRecord.ASName,
+	//		&ipRecord.ASNum, &ipRecord.ISP, &ipRecord.UsageType, &ipRecord.Threat, &ipRecord.DomainUsed); errScan != nil {
+	//		return nil, errScan
+	//	}
+	//	records = append(records, ipRecord)
+	//}
+	//return records, nil
+	return nil, nil
 }

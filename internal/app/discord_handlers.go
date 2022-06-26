@@ -469,7 +469,8 @@ func (bot *discord) onHistory(ctx context.Context, session *discordgo.Session, i
 	case string(cmdHistoryIP):
 		return bot.onHistoryIP(ctx, session, interaction, response)
 	default:
-		return bot.onHistoryChat(ctx, session, interaction, response)
+		return errCommandFailed
+		//return bot.onHistoryChat(ctx, session, interaction, response)
 	}
 }
 
@@ -500,30 +501,31 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 	return nil
 }
 
-func (bot *discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	steamId, errResolveSID := ResolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
-	if errResolveSID != nil {
-		return consts.ErrInvalidSID
-	}
-	person := model.NewPerson(steamId)
-	if errPersonBySID := PersonBySID(ctx, bot.database, steamId, "", &person); errPersonBySID != nil {
-		return errCommandFailed
-	}
-	chatHistory, errChatHistory := bot.database.GetChatHistory(ctx, steamId, 25)
-	if errChatHistory != nil && !errors.Is(errChatHistory, store.ErrNoResult) {
-		return errCommandFailed
-	}
-	if errors.Is(errChatHistory, store.ErrNoResult) {
-		return errors.New("No chat history found")
-	}
-	var lines []string
-	for _, sayEvent := range chatHistory {
-		lines = append(lines, fmt.Sprintf("%s: %s", config.FmtTimeShort(sayEvent.CreatedOn), sayEvent.Msg))
-	}
-	embed := respOk(response, fmt.Sprintf("Chat History of: %s", person.PersonaName))
-	embed.Description = strings.Join(lines, "\n")
-	return nil
-}
+//
+//func (bot *discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//	steamId, errResolveSID := ResolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
+//	if errResolveSID != nil {
+//		return consts.ErrInvalidSID
+//	}
+//	person := model.NewPerson(steamId)
+//	if errPersonBySID := PersonBySID(ctx, bot.database, steamId, "", &person); errPersonBySID != nil {
+//		return errCommandFailed
+//	}
+//	chatHistory, errChatHistory := bot.database.GetChatHistory(ctx, steamId, 25)
+//	if errChatHistory != nil && !errors.Is(errChatHistory, store.ErrNoResult) {
+//		return errCommandFailed
+//	}
+//	if errors.Is(errChatHistory, store.ErrNoResult) {
+//		return errors.New("No chat history found")
+//	}
+//	var lines []string
+//	for _, sayEvent := range chatHistory {
+//		lines = append(lines, fmt.Sprintf("%s: %s", config.FmtTimeShort(sayEvent.CreatedOn), sayEvent.Msg))
+//	}
+//	embed := respOk(response, fmt.Sprintf("Chat History of: %s", person.PersonaName))
+//	embed.Description = strings.Join(lines, "\n")
+//	return nil
+//}
 
 func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 	steamId, errResolveSID := ResolveSID(ctx, interaction.Data.Options[0].Value.(string))
@@ -868,104 +870,104 @@ func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, inter
 	return nil
 }
 
-func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	switch interaction.Data.Options[0].Name {
-	case string(cmdStatsPlayer):
-		return bot.onStatsPlayer(ctx, session, interaction, response)
-	case string(cmdStatsGlobal):
-		return bot.onStatsGlobal(ctx, session, interaction, response)
-	case string(cmdStatsServer):
-		return bot.onStatsServer(ctx, session, interaction, response)
-	default:
-		return errCommandFailed
-	}
-}
-
-func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	target := model.Target(interaction.Data.Options[0].Options[0].Value.(string))
-	sid, errSid := target.SID64()
-	if errSid != nil {
-		return errSid
-	}
-	person := model.NewPerson(sid)
-	if errPersonBySID := PersonBySID(ctx, bot.database, sid, "", &person); errPersonBySID != nil {
-		return errCommandFailed
-	}
-	var stats model.PlayerStats
-	if errStats := bot.database.GetPlayerStats(ctx, sid, &stats); errStats != nil {
-		return errCommandFailed
-	}
-	kd := 0.0
-	if stats.Deaths > 0 && stats.Kills > 0 {
-		kd = float64(stats.Kills) / float64(stats.Deaths)
-	}
-	kad := 0.0
-	if stats.Deaths > 0 && (stats.Kills+stats.Assists) > 0 {
-		kad = float64(stats.Kills+stats.Assists) / float64(stats.Deaths)
-	}
-	acc := 0.0
-	if stats.Hits > 0 && stats.Shots > 0 {
-		acc = float64(stats.Hits) / float64(stats.Shots) * 100
-	}
-	embed := respOk(response, fmt.Sprintf("Player stats for %s (%d)", person.PersonaName, person.SteamID.Int64()))
-	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
-	addFieldInline(embed, "Deaths", fmt.Sprintf("%d", stats.Deaths))
-	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
-	addFieldInline(embed, "K:D", fmt.Sprintf("%.2f", kd))
-	addFieldInline(embed, "KA:D", fmt.Sprintf("%.2f", kad))
-	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-	addFieldInline(embed, "DamageTaken", fmt.Sprintf("%d", stats.DamageTaken))
-	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
-	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
-	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
-	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
-	return nil
-}
-
-func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	serverIdStr := interaction.Data.Options[0].Options[0].Value.(string)
-	var (
-		server model.Server
-		stats  model.ServerStats
-	)
-	if errServer := bot.database.GetServerByName(ctx, serverIdStr, &server); errServer != nil {
-		return errServer
-	}
-	if errStats := bot.database.GetServerStats(ctx, server.ServerID, &stats); errStats != nil {
-		return errCommandFailed
-	}
-	acc := 0.0
-	if stats.Hits > 0 && stats.Shots > 0 {
-		acc = float64(stats.Hits) / float64(stats.Shots) * 100
-	}
-	embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerNameShort))
-	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
-	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
-	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
-	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
-	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
-	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
-	return nil
-}
-
-func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
-	var stats model.GlobalStats
-	errStats := bot.database.GetGlobalStats(ctx, &stats)
-	if errStats != nil {
-		return errCommandFailed
-	}
-	acc := 0.0
-	if stats.Hits > 0 && stats.Shots > 0 {
-		acc = float64(stats.Hits) / float64(stats.Shots) * 100
-	}
-	embed := respOk(response, "Global stats")
-	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
-	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
-	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
-	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
-	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
-	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
-	return nil
-}
+//func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//	switch interaction.Data.Options[0].Name {
+//	case string(cmdStatsPlayer):
+//		return bot.onStatsPlayer(ctx, session, interaction, response)
+//	case string(cmdStatsGlobal):
+//		return bot.onStatsGlobal(ctx, session, interaction, response)
+//	case string(cmdStatsServer):
+//		return bot.onStatsServer(ctx, session, interaction, response)
+//	default:
+//		return errCommandFailed
+//	}
+//}
+//
+//func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//	target := model.Target(interaction.Data.Options[0].Options[0].Value.(string))
+//	sid, errSid := target.SID64()
+//	if errSid != nil {
+//		return errSid
+//	}
+//	person := model.NewPerson(sid)
+//	if errPersonBySID := PersonBySID(ctx, bot.database, sid, "", &person); errPersonBySID != nil {
+//		return errCommandFailed
+//	}
+//	var stats model.PlayerStats
+//	if errStats := bot.database.GetPlayerStats(ctx, sid, &stats); errStats != nil {
+//		return errCommandFailed
+//	}
+//	kd := 0.0
+//	if stats.Deaths > 0 && stats.Kills > 0 {
+//		kd = float64(stats.Kills) / float64(stats.Deaths)
+//	}
+//	kad := 0.0
+//	if stats.Deaths > 0 && (stats.Kills+stats.Assists) > 0 {
+//		kad = float64(stats.Kills+stats.Assists) / float64(stats.Deaths)
+//	}
+//	acc := 0.0
+//	if stats.Hits > 0 && stats.Shots > 0 {
+//		acc = float64(stats.Hits) / float64(stats.Shots) * 100
+//	}
+//	embed := respOk(response, fmt.Sprintf("Player stats for %s (%d)", person.PersonaName, person.SteamID.Int64()))
+//	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
+//	addFieldInline(embed, "Deaths", fmt.Sprintf("%d", stats.Deaths))
+//	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
+//	addFieldInline(embed, "K:D", fmt.Sprintf("%.2f", kd))
+//	addFieldInline(embed, "KA:D", fmt.Sprintf("%.2f", kad))
+//	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
+//	addFieldInline(embed, "DamageTaken", fmt.Sprintf("%d", stats.DamageTaken))
+//	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
+//	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
+//	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
+//	return nil
+//}
+//
+//func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//	serverIdStr := interaction.Data.Options[0].Options[0].Value.(string)
+//	var (
+//		server model.Server
+//		stats  model.ServerStats
+//	)
+//	if errServer := bot.database.GetServerByName(ctx, serverIdStr, &server); errServer != nil {
+//		return errServer
+//	}
+//	if errStats := bot.database.GetServerStats(ctx, server.ServerID, &stats); errStats != nil {
+//		return errCommandFailed
+//	}
+//	acc := 0.0
+//	if stats.Hits > 0 && stats.Shots > 0 {
+//		acc = float64(stats.Hits) / float64(stats.Shots) * 100
+//	}
+//	embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerNameShort))
+//	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
+//	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
+//	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
+//	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
+//	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
+//	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
+//	return nil
+//}
+//
+//func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
+//	var stats model.GlobalStats
+//	errStats := bot.database.GetGlobalStats(ctx, &stats)
+//	if errStats != nil {
+//		return errCommandFailed
+//	}
+//	acc := 0.0
+//	if stats.Hits > 0 && stats.Shots > 0 {
+//		acc = float64(stats.Hits) / float64(stats.Shots) * 100
+//	}
+//	embed := respOk(response, "Global stats")
+//	addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
+//	addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
+//	addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
+//	addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//	addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
+//	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
+//	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
+//	return nil
+//}

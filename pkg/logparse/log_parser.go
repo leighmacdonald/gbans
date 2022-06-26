@@ -414,6 +414,7 @@ func Parse(logLine string) Results {
 			if ok {
 				parseKVs(value, matchMap)
 			}
+			// Temporary values
 			delete(matchMap, "keypairs")
 			delete(matchMap, "")
 			return Results{rx.Type, processKV(matchMap)}

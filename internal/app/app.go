@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/event"
@@ -17,17 +18,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
 
 var (
 	// BuildVersion holds the current git revision, as of build time
-	BuildVersion   = "master"
-	warnings       map[steamid.SID64][]userWarning
-	warningsMu     *sync.RWMutex
-	logPayloadChan chan model.LogPayload
+	BuildVersion = "master"
+	warnings     map[steamid.SID64][]userWarning
+	warningsMu   *sync.RWMutex
+	logFileChan  chan *LogFilePayload
 	// Current known state of the servers rcon status command
 	serverStateStatus   map[string]extra.Status
 	serverStateStatusMu *sync.RWMutex
@@ -47,7 +47,7 @@ func init() {
 
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
-	logPayloadChan = make(chan model.LogPayload, 100000)
+	logFileChan = make(chan *LogFilePayload, 10)
 	discordSendMsg = make(chan discordPayload)
 	serverStateA2S = map[string]a2s.ServerInfo{}
 	serverStateStatus = map[string]extra.Status{}
@@ -154,36 +154,86 @@ func warnWorker(ctx context.Context) {
 	}
 }
 
-// logWriter handles writing log events to the database. It does it in batches for performance
-// reasons.
-func logWriter(ctx context.Context, database store.StatStore) {
-	const writeFrequency = time.Second * 5
-	var (
-		logCache        []model.ServerEvent
-		serverEventChan = make(chan model.ServerEvent)
-		writeTicker     = time.NewTicker(writeFrequency)
-	)
-	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
+func matchSummarizer(ctx context.Context, db store.Store) {
+	serverEventChan := make(chan model.ServerEvent)
+	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{
+		logparse.Any,
+	}); errRegister != nil {
+		log.Warnf("logWriter Tried to register duplicate reader channel")
+	}
+	match := model.NewMatch()
+	for {
+		select {
+		case evt := <-serverEventChan:
+			// Apply the update before any secondary side effects trigger
+			if errApply := match.Apply(evt); errApply != nil {
+				log.Tracef("Error applying event: %v", errApply)
+			}
+			switch evt.EventType {
+			case logparse.WGameOver:
+				db.MatchSave(ctx, &match)
+				match = model.NewMatch()
+			}
+		}
+	}
+}
+
+func sendDiscordNotif(server model.Server, match *model.Match) {
+	embed := &discordgo.MessageEmbed{
+		Type:        discordgo.EmbedTypeRich,
+		Title:       fmt.Sprintf("Match results - %s - %s", server.ServerNameShort, match.MapName),
+		Description: "Match results",
+		Color:       int(green),
+		URL:         fmt.Sprintf("https://gbans.uncletopia.com/match/%d", match.MatchID),
+	}
+	redScore := 0
+	bluScore := 0
+	for _, round := range match.Rounds {
+		redScore += round.Score.Red
+		bluScore += round.Score.Blu
+	}
+
+	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
+	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+	found := 0
+	for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
+		teamStats, statsFound := match.TeamSums[team]
+		if statsFound {
+			addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
+			addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
+			addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
+			addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
+			found++
+		}
+	}
+	if found == 2 {
+		log.Debugf("Sending discord summary")
+		select {
+		case discordSendMsg <- discordPayload{channelId: config.Discord.LogChannelID, message: embed}:
+		default:
+			log.Warnf("Cannot send discord payload, channel full")
+		}
+	}
+}
+
+func playerStateWriter(ctx context.Context, database store.Store) {
+	serverEventChan := make(chan model.ServerEvent)
+	if errRegister := event.RegisterConsumer(serverEventChan, []logparse.EventType{
+		logparse.Connected,
+		logparse.Disconnected,
+		logparse.Say,
+		logparse.SayTeam,
+	}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	for {
 		select {
-		case serverEvent := <-serverEventChan:
-			if serverEvent.EventType == logparse.IgnoredMsg {
-				continue
+		case evt := <-serverEventChan:
+			switch evt.EventType {
+			case logparse.Connected:
+			case logparse.Disconnected:
+
 			}
-			logCache = append(logCache, serverEvent)
-		case <-writeTicker.C:
-			if len(logCache) == 0 {
-				continue
-			}
-			if errInsert := database.BatchInsertServerLogs(ctx, logCache); errInsert != nil {
-				log.Errorf("Failed to batch insert logs: %v", errInsert)
-			}
-			logCache = nil
-		case <-ctx.Done():
-			log.Debugf("logWriter shuttings down")
-			return
 		}
 	}
 }
@@ -268,9 +318,15 @@ func (cache *playerCache) cleanupWorker() {
 	}
 }
 
+type LogFilePayload struct {
+	Server model.Server
+	Lines  []string
+	Map    string
+}
+
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func logReader(ctx context.Context, db store.Store) {
+func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.Store) {
 	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errCreateFile error
@@ -284,199 +340,29 @@ func logReader(ctx context.Context, db store.Store) {
 			}
 		}()
 	}
-
-	getPlayer := func(id string, playerCache map[string]any, person *model.Person) error {
-		sid1Str, ok := playerCache[id]
-		if ok {
-			s := steamid.SID3ToSID64(steamid.SID3(sid1Str.(string)))
-			if errGetPerson := db.GetOrCreatePersonBySteamID(ctx, s, person); errGetPerson != nil {
-				return errors.Wrapf(errGetPerson, "Failed to load player1 %s: %s", sid1Str, errGetPerson.Error())
-			}
-			return nil
-		}
-		return nil
-	}
-
-	getServer := func(serverName string, s *model.Server) error {
-		return db.GetServerByName(ctx, serverName, s)
-	}
-
 	playerStateCache := newPlayerCache()
 	for {
 		select {
-		case payload := <-logPayloadChan:
-			var serverEvent model.ServerEvent
-			errLogServerEvent := logToServerEvent(payload, playerStateCache, &serverEvent, getPlayer, getServer)
-			if errLogServerEvent != nil {
-				log.Errorf("Failed to parse: %v", errLogServerEvent)
-				continue
-			}
-			if serverEvent.EventType == logparse.UnknownMsg {
-				if _, errWrite := file.WriteString(payload.Message + "\n"); errWrite != nil {
-					log.Errorf("Failed to write debug log: %v", errWrite)
+		case logFile := <-logFileChan:
+			for _, logLine := range logFile.Lines {
+				var serverEvent model.ServerEvent
+				errLogServerEvent := logToServerEvent(ctx, logFile.Server, logLine, db, playerStateCache, &serverEvent)
+				if errLogServerEvent != nil {
+					log.Errorf("Failed to parse: %v", errLogServerEvent)
+					continue
 				}
+				if serverEvent.EventType == logparse.UnknownMsg {
+					if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
+						log.Errorf("Failed to write debug log: %v", errWrite)
+					}
+				}
+				event.Emit(serverEvent)
 			}
-			event.Emit(serverEvent)
 		case <-ctx.Done():
 			log.Debugf("logReader shutting down")
 			return
 		}
 	}
-}
-
-type getPlayerFn func(id string, v map[string]any, person *model.Person) error
-type getServerFn func(serverName string, server *model.Server) error
-
-func logToServerEvent(payload model.LogPayload, playerStateCache *playerCache,
-	event *model.ServerEvent, getPlayer getPlayerFn, getServer getServerFn) error {
-	parseResult := logparse.Parse(payload.Message)
-	var server model.Server
-	if errServer := getServer(payload.ServerName, &server); errServer != nil {
-		return errors.Wrapf(errServer, "Failed to get server for log message: %s", payload.Message)
-	}
-	event.Server = &server
-	event.EventType = parseResult.MsgType
-	var playerSource model.Person
-	errGetSourcePlayer := getPlayer("sid", parseResult.Values, &playerSource)
-	if errGetSourcePlayer != nil {
-	} else {
-		event.Source = &playerSource
-	}
-	var playerTarget model.Person
-	if errGetTargetPlayer := getPlayer("sid2", parseResult.Values, &playerTarget); errGetTargetPlayer != nil {
-	} else {
-		event.Target = &playerTarget
-	}
-	aposValue, aposFound := parseResult.Values["attacker_position"]
-	if aposFound {
-		var attackerPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(aposValue.(string), &attackerPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse attacker position: %p", errParsePOS)
-		}
-		event.AttackerPOS = attackerPosition
-		delete(parseResult.Values, "attacker_position")
-	}
-	vposValue, vposFound := parseResult.Values["victim_position"]
-	if vposFound {
-		var victimPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(vposValue.(string), &victimPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse victim position: %parseResult", errParsePOS)
-		}
-		event.VictimPOS = victimPosition
-		delete(parseResult.Values, "victim_position")
-	}
-	asValue, asFound := parseResult.Values["assister_position"]
-	if asFound {
-		var assisterPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(asValue.(string), &assisterPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse assister position: %parseResult", errParsePOS)
-		}
-		event.AssisterPOS = assisterPosition
-		delete(parseResult.Values, "assister_position")
-	}
-
-	critType, critTypeFound := parseResult.Values["crit"]
-	if critTypeFound {
-		event.Crit = critType.(logparse.CritType)
-		delete(parseResult.Values, "crit")
-	}
-
-	weapon := logparse.UnknownWeapon
-	weaponValue, weaponFound := parseResult.Values["weapon"]
-	if weaponFound {
-		weapon = logparse.ParseWeapon(weaponValue.(string))
-	}
-	event.Weapon = weapon
-
-	var class logparse.PlayerClass
-	classValue, classFound := parseResult.Values["class"]
-	if classFound {
-		if !logparse.ParsePlayerClass(classValue.(string), &class) {
-			class = logparse.Spectator
-		}
-		delete(parseResult.Values, "class")
-	} else if event.Source != nil {
-		class = playerStateCache.getClass(event.Source.SteamID)
-	}
-	event.PlayerClass = class
-
-	var damage int64
-	dmgValue, dmgFound := parseResult.Values["damage"]
-	if dmgFound {
-		parsedDamage, errParseDamage := strconv.ParseInt(dmgValue.(string), 10, 32)
-		if errParseDamage != nil {
-			log.Warnf("failed to parse damage value: %parseResult", errParseDamage)
-		}
-		damage = parsedDamage
-		delete(parseResult.Values, "damage")
-	}
-	event.Damage = damage
-
-	var realDamage int64
-	realDmgValue, realDmgFound := parseResult.Values["realdamage"]
-	if realDmgFound {
-		parsedRealDamage, errParseRealDamage := strconv.ParseInt(realDmgValue.(string), 10, 32)
-		if errParseRealDamage != nil {
-			log.Warnf("failed to parse damage value: %parseResult", errParseRealDamage)
-		}
-		realDamage = parsedRealDamage
-		delete(parseResult.Values, "realdamage")
-	}
-	event.RealDamage = realDamage
-
-	var item logparse.PickupItem
-	itemValue, itemFound := parseResult.Values["item"]
-	if itemFound {
-		if !logparse.ParsePickupItem(itemValue.(string), &item) {
-			item = 0
-		}
-	}
-	event.Item = item
-
-	var team logparse.Team
-	teamValue, teamFound := parseResult.Values["team"]
-	if teamFound {
-		if !logparse.ParseTeam(teamValue.(string), &team) {
-			team = 0
-		}
-	} else {
-		if event.Source != nil {
-			team = playerStateCache.getTeam(event.Source.SteamID)
-		}
-	}
-	event.Team = team
-
-	healingValue, healingFound := parseResult.Values["healing"]
-	if healingFound {
-		healingP, errParseHealing := strconv.ParseInt(healingValue.(string), 10, 32)
-		if errParseHealing != nil {
-			log.Warnf("failed to parse healing value: %parseResult", errParseHealing)
-		}
-		event.Healing = healingP
-	}
-
-	createdOnValue, createdOnFound := parseResult.Values["created_on"]
-	if !createdOnFound {
-		// log.Warnf("created_on missing")
-		event.CreatedOn = config.Now()
-	} else {
-		event.CreatedOn = createdOnValue.(time.Time)
-	}
-	// Remove keys that get mapped to actual schema columns
-	for _, key := range []string{
-		"created_on", "item", "weapon", "healing",
-		"name", "pid", "sid", "team",
-		"name2", "pid2", "sid2", "team2"} {
-		delete(parseResult.Values, key)
-	}
-	event.MetaData = parseResult.Values
-	switch parseResult.MsgType {
-	case logparse.SpawnedAs:
-		playerStateCache.setClass(event.Source.SteamID, event.PlayerClass)
-	case logparse.JoinedTeam:
-		playerStateCache.setTeam(event.Source.SteamID, event.Team)
-	}
-	return nil
 }
 
 // addWarning records a user warning into memory. This is not persistent, so application
@@ -549,20 +435,20 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go serverStateRefresher(ctx, database)
 	go profileUpdater(ctx, database)
 	go warnWorker(ctx)
-	go logReader(ctx, database)
-	go logWriter(ctx, database)
+	go logReader(ctx, logFileChan, database)
 	go filterWorker(ctx, database, botSendMessageChan)
 	//go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 }
 
-func initLogSrc(ctx context.Context, database store.Store) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database, logPayloadChan)
-	if errLogSrc != nil {
-		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
-	}
-	logSrc.start()
-}
+// UDP log sink
+//func initLogSrc(ctx context.Context, database store.Store) {
+//	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database, logPayloadChan)
+//	if errLogSrc != nil {
+//		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
+//	}
+//	logSrc.start()
+//}
 
 func initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {

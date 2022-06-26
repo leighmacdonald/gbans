@@ -60,7 +60,7 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 		cmdSetSteam: bot.onSetSteam,
 		cmdHistory:  bot.onHistory,
 		cmdFilter:   bot.onFilter,
-		cmdStats:    bot.onStats,
+		//cmdStats:    bot.onStats,
 	}
 	return &bot, nil
 }
@@ -89,11 +89,9 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
-
 	if errRegister := bot.botRegisterSlashCommands(); errRegister != nil {
 		log.Errorf("Failed to register discord slash commands: %v", errRegister)
 	}
-
 	<-ctx.Done()
 	return nil
 }

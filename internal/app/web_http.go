@@ -23,6 +23,7 @@ type WebHandler interface {
 type web struct {
 	httpServer         *http.Server
 	botSendMessageChan chan discordPayload
+	logFileChan        chan *LogFilePayload
 }
 
 func (web web) ListenAndServe(ctx context.Context) error {

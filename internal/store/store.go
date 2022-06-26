@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"io"
@@ -17,6 +16,7 @@ import (
 
 type GenericStore interface {
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	Exec(ctx context.Context, query string, args ...any) error
 }
 
 type ServerStore interface {
@@ -106,14 +106,7 @@ type WikiStore interface {
 
 type StatStore interface {
 	GetStats(ctx context.Context, stats *model.Stats) error
-	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) ([]logparse.SayEvt, error)
-	FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error)
-	GetReplayLogs(ctx context.Context, offset uint64, limit uint64) ([]model.ServerEvent, error)
-	BatchInsertServerLogs(ctx context.Context, logs []model.ServerEvent) error
-	GetPlayerStats(ctx context.Context, sid steamid.SID64, stats *model.PlayerStats) error
-	GetServerStats(ctx context.Context, serverId int64, stats *model.ServerStats) error
-	GetGlobalStats(ctx context.Context, stats *model.GlobalStats) error
-	GetSteamIDsAtIP(ctx context.Context, ip *net.IPNet) (steamid.Collection, error)
+	MatchSave(ctx context.Context, match *model.Match) error
 }
 
 type NetworkStore interface {

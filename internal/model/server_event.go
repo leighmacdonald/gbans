@@ -16,12 +16,12 @@ type MetaData map[string]any
 type ServerEvent struct {
 	LogID int64 `json:"log_id"`
 	// Server is where the event happened
-	Server    *Server            `json:"server"`
+	Server    Server             `json:"server"`
 	EventType logparse.EventType `json:"event_type"`
 	// Source is the player or thing initiating the event/action
-	Source *Person `json:"source"`
+	Source Person `json:"source"`
 	// Target is the optional target of an event created by a Source
-	Target *Person `json:"target"`
+	Target Person `json:"target"`
 	// PlayerClass is the last known class the player was as tracked by the playerStateCache OR the class that
 	// a player switch to in the case of a spawned_as event
 	PlayerClass logparse.PlayerClass `json:"player_class"`
@@ -100,9 +100,9 @@ func (serverEvent ServerEvent) GetValueBool(key string) bool {
 
 func NewServerEvent() ServerEvent {
 	return ServerEvent{
-		Server:      &Server{},
-		Source:      &Person{PlayerSummary: &steamweb.PlayerSummary{}},
-		Target:      &Person{PlayerSummary: &steamweb.PlayerSummary{}},
+		Server:      Server{},
+		Source:      Person{PlayerSummary: &steamweb.PlayerSummary{}},
+		Target:      Person{PlayerSummary: &steamweb.PlayerSummary{}},
 		AssisterPOS: logparse.Pos{},
 		AttackerPOS: logparse.Pos{},
 		VictimPOS:   logparse.Pos{},

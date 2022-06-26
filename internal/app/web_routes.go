@@ -30,7 +30,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine) {
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowMethods("OPTIONS")
-	engine.Use(cors.New(corsConfig))
+	if config.General.Mode != config.TestMode {
+		engine.Use(cors.New(corsConfig))
+	}
 	if !registered {
 		prom := ginprom.New(func(prom *ginprom.Prometheus) {
 			prom.Namespace = "gbans"
