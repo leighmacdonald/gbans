@@ -88,7 +88,7 @@
     "pretty-bytes": "^6.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-leaflet": "^4.0.0",
+    "react-leaflet": "^4.0.1",
     "react-router": "^6.3.0",
     "react-router-dom": "^6.3.0",
     "react-timer-hook": "^3.0.5",
