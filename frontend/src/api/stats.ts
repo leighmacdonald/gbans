@@ -71,3 +71,109 @@ export interface DatabaseStats {
 export const apiGetStats = async (): Promise<DatabaseStats> => {
     return await apiCall<DatabaseStats>(`/api/stats`, 'GET');
 };
+
+export interface MatchPlayerSum {
+    MatchPlayerSumID: number;
+    SteamId: number;
+    Team: number;
+    TimeStart?: string;
+    TimeEnd?: string;
+    Kills: number;
+    Assists: number;
+    Deaths: number;
+    Dominations: number;
+    Dominated: number;
+    Revenges: number;
+    Damage: number;
+    DamageTaken: number;
+    Healing: number;
+    HealingTaken: number;
+    HealthPacks: number;
+    BackStabs: number;
+    HeadShots: number;
+    Airshots: number;
+    Captures: number;
+    Shots: number;
+    Hits: number;
+    Extinguishes: number;
+    BuildingBuilt: number;
+    BuildingDestroyed: number;
+    Classes: number;
+}
+
+export interface MatchMedicSum {
+    MatchMedicId: number;
+    MatchId: number;
+    SteamId: number;
+    Healing: number;
+    Charges: { [key: number]: number };
+    Drops: number;
+    AvgTimeToBuild: number;
+    AvgTimeBeforeUse: number;
+    NearFullChargeDeath: number;
+    AvgUberLength: number;
+    DeathAfterCharge: number;
+    MajorAdvLost: number;
+    BiggestAdvLost: number;
+    HealTargets: { [key: number]: number };
+}
+
+export interface MatchTeamSum {
+    MatchTeamId: number;
+    MatchId: number;
+    Team: number;
+    Kills: number;
+    Damage: number;
+    Charges: number;
+    Drops: number;
+    Caps: number;
+    MidFights: number;
+}
+
+export interface TeamScores {
+    Red: number;
+    Blu: number;
+}
+
+export interface MatchRoundSum {
+    Length: number;
+    Score: TeamScores;
+    KillsBlu: number;
+    KillsRed: number;
+    UbersBlu: number;
+    UbersRed: number;
+    DamageBlu: number;
+    DamageRed: number;
+    MidFight: number;
+}
+
+export interface MatchClassSums {
+    Scout: number;
+    Soldier: number;
+    Pyro: number;
+    Demoman: number;
+    Heavy: number;
+    Engineer: number;
+    Medic: number;
+    Sniper: number;
+    Spy: number;
+}
+
+export interface Match {
+    MatchID: number;
+    ServerId: number;
+    Title: string;
+    MapName: string;
+    PlayerSums: MatchPlayerSum[];
+    MedicSums: MatchMedicSum[];
+    TeamSums: MatchTeamSum[];
+    Rounds: MatchRoundSum[];
+    ClassKills: { [key: number]: MatchClassSums };
+    ClassKillsAssists: { [key: number]: MatchClassSums };
+    ClassDeaths: { [key: number]: MatchClassSums };
+    CreatedOn: string;
+}
+
+export const apiGetMatch = async (match_id: number): Promise<Match> => {
+    return await apiCall<Match>(`/api/match/${match_id}`, 'GET');
+};

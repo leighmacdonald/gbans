@@ -176,8 +176,9 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 			case logparse.WGameOver:
 				if errSave := db.MatchSave(ctx, &match); errSave != nil {
 					log.Errorf("Failed to save match: %v", errSave)
+				} else {
+					sendDiscordNotif(curServer, &match)
 				}
-				sendDiscordNotif(curServer, &match)
 				match = model.NewMatch()
 				log.Debugf("New match summary created")
 			}
@@ -203,15 +204,12 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
 	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
 	found := 0
-	for _, team := range []logparse.Team{logparse.RED, logparse.BLU} {
-		teamStats, statsFound := match.TeamSums[team]
-		if statsFound {
-			addFieldInline(embed, fmt.Sprintf("%s Kills", team.String()), fmt.Sprintf("%d", teamStats.Kills))
-			addFieldInline(embed, fmt.Sprintf("%s Damage", team.String()), fmt.Sprintf("%d", teamStats.Damage))
-			addFieldInline(embed, fmt.Sprintf("%s Ubers", team.String()), fmt.Sprintf("%d", teamStats.Charges))
-			addFieldInline(embed, fmt.Sprintf("%s Drops", team.String()), fmt.Sprintf("%d", teamStats.Drops))
-			found++
-		}
+	for _, teamStats := range match.TeamSums {
+		addFieldInline(embed, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
+		addFieldInline(embed, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
+		addFieldInline(embed, fmt.Sprintf("%s Ubers", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Charges))
+		addFieldInline(embed, fmt.Sprintf("%s Drops", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Drops))
+		found++
 	}
 	if found == 2 {
 		log.Debugf("Sending discord summary")

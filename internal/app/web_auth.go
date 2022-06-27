@@ -239,7 +239,7 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 			return
 		}
 		pcs := strings.Split(hdr.Authorization, " ")
-		if len(pcs) != 2 && level > model.PUser {
+		if len(pcs) != 2 && level >= model.PUser {
 			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}

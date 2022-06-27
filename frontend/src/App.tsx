@@ -36,6 +36,7 @@ import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
 import { logErr } from './util/errors';
+import { MatchPage } from './page/MatchPage';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -120,6 +121,10 @@ export const App = (): JSX.Element => {
                                                 <Route
                                                     path={'/report/:report_id'}
                                                     element={<ReportViewPage />}
+                                                />
+                                                <Route
+                                                    path={'/match/:match_id'}
+                                                    element={<MatchPage />}
                                                 />
                                                 <Route
                                                     path={'/report'}

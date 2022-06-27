@@ -71,8 +71,8 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 
 func (database *pgStore) GetServerByName(ctx context.Context, serverName string, server *model.Server) error {
 	cachedServer, ok := database.serverCache.Get(serverName)
-	if ok {
-		server = &cachedServer
+	if ok && cachedServer.ServerID > 0 {
+		*server = cachedServer
 		return nil
 	}
 	query, args, errQueryArgs := sb.Select(columnsServer...).
@@ -89,7 +89,8 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
 		return Err(errQuery)
 	}
-	database.serverCache.Set(serverName, *server, cache.WithExpiration(time.Hour))
+	s := *server
+	database.serverCache.Set(serverName, s, cache.WithExpiration(time.Hour))
 	return nil
 }
 

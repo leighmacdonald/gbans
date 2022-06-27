@@ -60,7 +60,7 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 		cmdSetSteam: bot.onSetSteam,
 		cmdHistory:  bot.onHistory,
 		cmdFilter:   bot.onFilter,
-		cmdMatch:    bot.onMatch,
+		cmdLog:      bot.onLog,
 		//cmdStats:    bot.onStats,
 	}
 	return &bot, nil

@@ -9,6 +9,12 @@ import (
 )
 
 func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) error {
+	for _, p := range match.PlayerSums {
+		var player model.Person
+		if errPlayer := database.GetOrCreatePersonBySteamID(ctx, p.SteamId, &player); errPlayer != nil {
+			return errors.Wrapf(errPlayer, "Failed to create person")
+		}
+	}
 	const q = `INSERT INTO match (server_id, map, created_on, title) VALUES ($1, $2, $3, $4) RETURNING match_id`
 	if errMatch := database.QueryRow(ctx, q, match.ServerId, match.MapName, match.CreatedOn, match.Title).
 		Scan(&match.MatchID); errMatch != nil {
@@ -27,13 +33,13 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
 		    $17, $18, $19, $20, $21, $22, 
 		    $23, $24, $25
 		) RETURNING match_player_id`
-	for sid, s := range match.PlayerSums {
+	for _, s := range match.PlayerSums {
 		endTime := &match.CreatedOn
 		if s.TimeEnd != nil {
 			// Use match end time
 			endTime = s.TimeEnd
 		}
-		if errPlayerExec := database.QueryRow(ctx, pq, match.MatchID, sid, s.Team,
+		if errPlayerExec := database.QueryRow(ctx, pq, match.MatchID, s.SteamId, s.Team,
 			s.TimeStart, endTime, s.Kills, s.Assists, s.Deaths, s.Dominations, s.Dominated,
 			s.Revenges, s.Damage, s.DamageTaken, s.Healing, s.HealingTaken, s.HealthPacks,
 			s.BackStabs, s.HeadShots, s.Airshots, s.Captures, s.Shots, s.Extinguishes,
@@ -48,12 +54,12 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
             near_full_charge_death, avg_uber_length, death_after_charge, major_adv_lost, biggest_adv_lost) 
             VALUES ($1, $2, $3, $4, $5,$6, $7, $8, $9, $10,$11, $12) RETURNING match_medic_id`
 
-	for sid, s := range match.MedicSums {
+	for _, s := range match.MedicSums {
 		charges := 0
 		for _, mg := range s.Charges {
 			charges += mg
 		}
-		if errMedExec := database.QueryRow(ctx, mq, match.MatchID, sid, s.Healing, charges, s.Drops, s.AvgTimeToBuild,
+		if errMedExec := database.QueryRow(ctx, mq, match.MatchID, s.SteamId, s.Healing, charges, s.Drops, s.AvgTimeToBuild,
 			s.AvgTimeBeforeUse, s.NearFullChargeDeath, s.AvgUberLength, s.DeathAfterCharge, s.MajorAdvLost,
 			s.BiggestAdvLost).Scan(&s.MatchMedicId); errMedExec != nil {
 			return errors.Wrapf(errMedExec, "Failed to write medic sum")
@@ -61,18 +67,19 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
 	}
 
 	const tq = `INSERT INTO match_team (
-                    match_id, team, kills, damage, charges, drops, caps, mid_fights
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING match_team_id`
-
-	for team, s := range match.TeamSums {
-		if errTeamExec := database.QueryRow(ctx, tq, match.MatchID, team, s.Kills, s.Damage, s.Charges, s.Drops,
+		match_id, team, kills, damage, charges, drops, caps, mid_fights
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	RETURNING match_team_id`
+	// FIXME team value unset
+	for i, s := range match.TeamSums {
+		if errTeamExec := database.QueryRow(ctx, tq, match.MatchID, i+1, s.Kills, s.Damage, s.Charges, s.Drops,
 			s.Caps, s.MidFights).Scan(&s.MatchTeamId); errTeamExec != nil {
 			return errors.Wrapf(errTeamExec, "Failed to write team sum")
 		}
 	}
 	return nil
 }
+
 func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
 	m := model.NewMatch()
 	m.MatchID = matchId
@@ -104,7 +111,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 			&s.BuildingBuilt, &s.BuildingDestroyed); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
-		m.PlayerSums[s.SteamId] = &s
+		m.PlayerSums = append(m.PlayerSums, &s)
 	}
 	const qMed = `
 		SELECT 
@@ -135,7 +142,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 		}
 		// FIXME all charges are counted as uber for now
 		ms.Charges[logparse.Uber] = charges
-		m.MedicSums[ms.SteamId] = &ms
+		m.MedicSums = append(m.MedicSums, &ms)
 	}
 
 	const qTeam = `
@@ -156,7 +163,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 			&ts.Drops, &ts.Caps, &ts.MidFights); errRow != nil {
 			return nil, errors.Wrapf(errRow, "Failed to scan match medics")
 		}
-		m.TeamSums[ts.Team] = &ts
+		m.TeamSums = append(m.TeamSums, &ts)
 	}
 	return &m, nil
 }

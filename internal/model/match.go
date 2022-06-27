@@ -1,13 +1,16 @@
 package model
 
 import (
+	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -20,16 +23,54 @@ func NewMatch() Match {
 		ServerId:          0,
 		Title:             "Team Fortress 3",
 		MapName:           "pl_you_didnt_set_this",
-		PlayerSums:        map[steamid.SID64]*MatchPlayerSum{},
-		MedicSums:         map[steamid.SID64]*MatchMedicSum{},
-		TeamSums:          map[logparse.Team]*MatchTeamSum{},
+		PlayerSums:        MatchPlayerSums{},
+		MedicSums:         []*MatchMedicSum{},
+		TeamSums:          []*MatchTeamSum{},
 		Rounds:            nil,
 		ClassKills:        MatchPlayerClassSums{},
 		ClassKillsAssists: MatchPlayerClassSums{},
 		ClassDeaths:       MatchPlayerClassSums{},
 		inMatch:           false,
 		CreatedOn:         config.Now(),
+		curRound:          -1,
+		inRound:           false,
+		useRealDmg:        false,
 	}
+}
+
+type MatchRoundSums []*MatchRoundSum
+type MatchTeamSums []*MatchTeamSum
+
+func (mps MatchTeamSums) GetByTeam(team logparse.Team) (*MatchTeamSum, error) {
+	for _, m := range mps {
+		if m.Team == team {
+			return m, nil
+		}
+	}
+	return nil, consts.ErrInvalidTeam
+}
+
+type MatchMedicSums []*MatchMedicSum
+
+func (mps MatchMedicSums) GetBySteamId(steamId steamid.SID64) (*MatchMedicSum, error) {
+	for _, m := range mps {
+		if m.SteamId == steamId {
+			return m, nil
+		}
+	}
+	return nil, consts.ErrInvalidSID
+}
+
+type MatchPlayerSums []*MatchPlayerSum
+
+func (mps MatchPlayerSums) GetBySteamId(steamId steamid.SID64) (*MatchPlayerSum, error) {
+	for _, m := range mps {
+		if m.SteamId == steamId {
+			return m, nil
+		}
+	}
+
+	return nil, consts.ErrUnknownID
 }
 
 // Match and its related Match* structs are designed as a close to 1:1 mirror of the
@@ -78,10 +119,10 @@ type Match struct {
 	ServerId          int
 	Title             string
 	MapName           string
-	PlayerSums        map[steamid.SID64]*MatchPlayerSum
-	MedicSums         map[steamid.SID64]*MatchMedicSum
-	TeamSums          map[logparse.Team]*MatchTeamSum
-	Rounds            []*MatchRoundSum
+	PlayerSums        MatchPlayerSums
+	MedicSums         MatchMedicSums
+	TeamSums          MatchTeamSums
+	Rounds            MatchRoundSums
 	ClassKills        MatchPlayerClassSums
 	ClassKillsAssists MatchPlayerClassSums
 	ClassDeaths       MatchPlayerClassSums
@@ -91,6 +132,7 @@ type Match struct {
 	inMatch    bool // We ignore most events until Round_Start event
 	inRound    bool
 	useRealDmg bool
+	curRound   int
 }
 
 func (match *Match) playerSlice() []MatchPlayerSum {
@@ -134,10 +176,28 @@ func (match *Match) Apply(event ServerEvent) error {
 		match.roundWin(event.Team)
 		return nil
 	}
+
 	if !match.inMatch || !match.inRound {
 		return nil
 	}
 	switch event.EventType {
+	case logparse.PointCaptured:
+		players := steamid.Collection{}
+		count := event.GetValueInt("numcappers")
+		for i := 0; i < count; i++ {
+			sidVal := event.GetValueString(fmt.Sprintf("player%d", i+1))
+			pcs := strings.Split(strings.ReplaceAll(sidVal, "><", " "), " ")
+			if len(pcs) != 3 {
+				continue
+			}
+			val := steamid.SID3ToSID64(steamid.SID3(pcs[1]))
+			if val.Valid() {
+				players = append(players, val)
+			} else {
+				log.Warnf("Failed to parse player")
+			}
+		}
+		match.pointCapture(event.Team, players)
 	case logparse.SpawnedAs:
 		match.addClass(event.Source.SteamID, event.PlayerClass)
 	case logparse.ChangeClass:
@@ -199,36 +259,75 @@ func (match *Match) Apply(event ServerEvent) error {
 }
 
 func (match *Match) getPlayerSum(sid steamid.SID64) *MatchPlayerSum {
-	_, ok := match.PlayerSums[sid]
-	if !ok {
-		match.PlayerSums[sid] = &MatchPlayerSum{}
-		if match.inMatch {
-			// Account for people who joined after Round_start event
-			match.PlayerSums[sid].touch()
+	if !sid.Valid() {
+		log.Fatalf("err")
+	}
+	m, err := match.PlayerSums.GetBySteamId(sid)
+	if err != nil {
+		if errors.Is(err, consts.ErrUnknownID) {
+			t0 := config.Now()
+			ps := &MatchPlayerSum{
+				SteamId:   sid,
+				TimeStart: &t0,
+			}
+			if match.inMatch {
+				// Account for people who joined after Round_start event
+				ps.touch()
+			}
+			match.PlayerSums = append(match.PlayerSums, ps)
+			return ps
 		}
 	}
-	return match.PlayerSums[sid]
+	return m
 }
 
 func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
-	_, ok := match.MedicSums[sid]
-	if !ok {
-		match.MedicSums[sid] = newMatchMedicSum()
+	m, _ := match.MedicSums.GetBySteamId(sid)
+	if m != nil {
+		return m
 	}
-	return match.MedicSums[sid]
+	ms := &MatchMedicSum{
+		SteamId: sid,
+		Charges: map[logparse.Medigun]int{
+			logparse.Uber:       0,
+			logparse.Kritzkrieg: 0,
+			logparse.Vaccinator: 0,
+			logparse.QuickFix:   0,
+		},
+	}
+	match.MedicSums = append(match.MedicSums, ms)
+	return ms
 }
 
 func (match *Match) getTeamSum(team logparse.Team) *MatchTeamSum {
-	_, ok := match.TeamSums[team]
-	if !ok {
-		match.TeamSums[team] = newMatchTeamSum()
+	m, _ := match.TeamSums.GetByTeam(team)
+	if m != nil {
+		return m
 	}
-	return match.TeamSums[team]
+	ts := newMatchTeamSum(team)
+	match.TeamSums = append(match.TeamSums, ts)
+	return ts
+}
+
+func (match *Match) getRound() *MatchRoundSum {
+	return match.Rounds[match.curRound]
 }
 
 func (match *Match) roundStart() {
 	match.inMatch = true
 	match.inRound = true
+	match.curRound++
+	match.Rounds = append(match.Rounds, &MatchRoundSum{
+		Length:    0,
+		Score:     TeamScores{},
+		KillsBlu:  0,
+		KillsRed:  0,
+		UbersBlu:  0,
+		UbersRed:  0,
+		DamageBlu: 0,
+		DamageRed: 0,
+		MidFight:  0,
+	})
 	for _, playerSum := range match.PlayerSums {
 		if playerSum.TimeStart == nil {
 			*playerSum.TimeStart = config.Now()
@@ -237,9 +336,9 @@ func (match *Match) roundStart() {
 }
 
 func (match *Match) roundWin(team logparse.Team) {
+	match.getRound().RoundWinner = team
 	match.inMatch = true
 	match.inRound = false
-	//match.rounds[0].Score.
 }
 
 func (match *Match) gameOver() {
@@ -256,7 +355,7 @@ func (match *Match) addClass(sid steamid.SID64, class logparse.PlayerClass) {
 		playerSum.Classes = append(playerSum.Classes, class)
 		if class == logparse.Medic {
 			// Allocate for a new medic
-			match.MedicSums[sid] = newMatchMedicSum()
+			match.MedicSums = append(match.MedicSums, newMatchMedicSum(sid))
 		}
 	}
 	if match.inMatch {
@@ -306,24 +405,30 @@ func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage in
 func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount int64) {
 	match.getPlayerSum(source).Healing += amount
 	match.getPlayerSum(target).HealingTaken += amount
+	match.getMedicSum(source).Healing += amount
 }
 
-//func (match *Match) pointCapture(team logparse.Team, sources steamid.Collection) {
-//	for _, sid := range sources {
-//		match.getPlayerSum(sid).Captures++
-//	}
-//	match.getTeamSum(team).Caps++
-//}
+func (match *Match) pointCapture(team logparse.Team, sources steamid.Collection) {
+	for _, sid := range sources {
+		match.getPlayerSum(sid).Captures++
+	}
+	match.getTeamSum(team).Caps++
+}
 
-//func (match *Match) midFight(team logparse.Team) {
-//	match.getTeamSum(team).MidFights++
-//}
+func (match *Match) midFight(team logparse.Team) {
+	match.getTeamSum(team).MidFights++
+}
 
 func (match *Match) killed(source steamid.SID64, target steamid.SID64, team logparse.Team) {
 	if match.inRound {
 		match.getPlayerSum(source).Kills++
 		match.getPlayerSum(target).Deaths++
 		match.getTeamSum(team).Kills++
+		if team == logparse.BLU {
+			match.getRound().KillsBlu++
+		} else if team == logparse.RED {
+			match.getRound().KillsRed++
+		}
 	}
 }
 
@@ -351,6 +456,8 @@ func (match *Match) killedCustom(source steamid.SID64, target steamid.SID64, cus
 		match.getPlayerSum(source).HeadShots++
 	case "airshot":
 		match.getPlayerSum(source).Airshots++
+	default:
+		log.Fatalf("Custom type unknown: %s", custom)
 	}
 	match.getPlayerSum(source).Kills++
 	match.getPlayerSum(target).Deaths++
@@ -430,22 +537,23 @@ type TeamScores struct {
 }
 
 type MatchRoundSum struct {
-	Length    time.Duration
-	Score     TeamScores
-	KillsBlu  int
-	KillsRed  int
-	UbersBlu  int
-	UbersRed  int
-	DamageBlu int
-	DamageRed int
-	MidFight  logparse.Team
+	Length      time.Duration
+	Score       TeamScores
+	KillsBlu    int
+	KillsRed    int
+	UbersBlu    int
+	UbersRed    int
+	DamageBlu   int
+	DamageRed   int
+	RoundWinner logparse.Team
+	MidFight    logparse.Team
 }
 
 type MatchMedicSum struct {
 	MatchMedicId        int
 	MatchId             int
 	SteamId             steamid.SID64
-	Healing             int
+	Healing             int64
 	Charges             map[logparse.Medigun]int
 	Drops               int
 	AvgTimeToBuild      int
@@ -458,13 +566,20 @@ type MatchMedicSum struct {
 	HealTargets         MatchPlayerClassSums
 }
 
-func newMatchMedicSum() *MatchMedicSum {
+func newMatchMedicSum(steamId steamid.SID64) *MatchMedicSum {
 	return &MatchMedicSum{
-		Charges: map[logparse.Medigun]int{},
+		SteamId: steamId,
+		Charges: map[logparse.Medigun]int{
+			logparse.Uber:       0,
+			logparse.Kritzkrieg: 0,
+			logparse.Vaccinator: 0,
+			logparse.QuickFix:   0,
+		},
 	}
 }
 
 type MatchClassSums struct {
+	SteamId  steamid.SID64
 	Scout    int
 	Soldier  int
 	Pyro     int
@@ -482,7 +597,7 @@ func (classSum *MatchClassSums) Sum() int {
 		classSum.Medic + classSum.Spy + classSum.Sniper
 }
 
-type MatchPlayerClassSums map[steamid.SID64]*MatchClassSums
+type MatchPlayerClassSums []*MatchClassSums
 
 type MatchTeamSum struct {
 	MatchTeamId int
@@ -496,6 +611,8 @@ type MatchTeamSum struct {
 	MidFights   int
 }
 
-func newMatchTeamSum() *MatchTeamSum {
-	return &MatchTeamSum{}
+func newMatchTeamSum(team logparse.Team) *MatchTeamSum {
+	return &MatchTeamSum{
+		Team: team,
+	}
 }

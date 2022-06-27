@@ -41,7 +41,7 @@ const (
 	cmdFilterAdd   botCmd = "filter_add"
 	cmdFilterDel   botCmd = "filter_del"
 	cmdFilterCheck botCmd = "filter_check"
-	cmdMatch       botCmd = "match"
+	cmdLog         botCmd = "log"
 )
 
 func (bot *discord) botRegisterSlashCommands() error {
@@ -102,8 +102,8 @@ func (bot *discord) botRegisterSlashCommands() error {
 
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
-			Name:        string(cmdMatch),
-			Description: "Show a match summary",
+			Name:        string(cmdLog),
+			Description: "Show a match log summary",
 			Options: []*discordgo.ApplicationCommandOption{
 				optMatchId,
 			},

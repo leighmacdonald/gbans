@@ -67,7 +67,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug"}
+		"/wiki/*slug", "/match/:match_id"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -95,6 +95,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/auth/logout", web.onGetLogout())
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
+	engine.GET("/api/match/:match_id", web.onAPIGetMatch(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))

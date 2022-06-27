@@ -66,50 +66,64 @@ func TestMatch_Apply(t *testing.T) {
 		}
 		return "???"
 	}
-
+	getPS := func(m model.Match, sid steamid.SID64) *model.MatchPlayerSum {
+		ps, err := m.PlayerSums.GetBySteamId(sid)
+		if err != nil {
+			t.Fatalf("Failed to fetch player sum")
+		}
+		return ps
+	}
 	// Player sum values
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Kills,
-			m.PlayerSums[sid].Kills, "Kills incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Kills,
+			getPS(m, ps.SteamId).Kills, "Kills incorrect %v", getName(ps.SteamId))
 	}
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Deaths,
-			m.PlayerSums[sid].Deaths, "Deaths incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Deaths,
+			getPS(m, ps.SteamId).Deaths, "Deaths incorrect %v", getName(ps.SteamId))
 	}
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Damage,
-			m.PlayerSums[sid].Damage, "Damage incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Damage,
+			getPS(m, ps.SteamId).Damage, "Damage incorrect %v", getName(ps.SteamId))
 	}
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Healing,
-			m.PlayerSums[sid].Healing, "Healing incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Healing,
+			getPS(m, ps.SteamId).Healing, "Healing incorrect %v", getName(ps.SteamId))
 	}
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Dominations,
-			m.PlayerSums[sid].Dominations, "Dominations incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Dominations,
+			getPS(m, ps.SteamId).Dominations, "Dominations incorrect %v", getName(ps.SteamId))
 	}
 
-	for sid := range match3124689.PlayerSums {
-		assert.Equal(t, match3124689.PlayerSums[sid].Revenges,
-			m.PlayerSums[sid].Revenges, "Revenges incorrect %v", getName(sid))
+	for _, ps := range match3124689.PlayerSums {
+		assert.Equal(t, getPS(match3124689, ps.SteamId).Revenges,
+			getPS(m, ps.SteamId).Revenges, "Revenges incorrect %v", getName(ps.SteamId))
 	}
 	//for sid := range match3124689.playerSums {
 	//	assert.Equal(t, match3124689.playerSums[sid].Classes,
 	//		m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
 	//}
 
+	getMS := func(m model.Match, sid steamid.SID64) *model.MatchMedicSum {
+		ms, err := m.MedicSums.GetBySteamId(sid)
+		if err != nil {
+			t.Fatalf("Failed to fetch player sum")
+		}
+		return ms
+	}
+
 	// Medic sums
-	for sid := range match3124689.MedicSums {
-		assert.Equal(t, match3124689.MedicSums[sid].Drops,
-			m.MedicSums[sid].Drops, "Drops incorrect %v", getName(sid))
+	for _, ms := range match3124689.MedicSums {
+		assert.Equal(t, getMS(match3124689, ms.SteamId).Drops,
+			getMS(m, ms.SteamId).Drops, "Drops incorrect %v", getName(ms.SteamId))
 	}
 	//for sid := range match3124689.medicSums {
 	//	assert.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	//}
-	for sid := range match3124689.MedicSums {
-		assert.Equal(t, match3124689.MedicSums[sid].Charges,
-			m.MedicSums[sid].Charges, "Charges incorrect %v", getName(sid))
+	for _, ms := range match3124689.MedicSums {
+		assert.Equal(t, getMS(match3124689, ms.SteamId).Charges,
+			getMS(m, ms.SteamId).Charges, "Charges incorrect %v", getName(ms.SteamId))
 	}
 
 	//for team := range match3124689.teamSums {
@@ -120,33 +134,13 @@ func TestMatch_Apply(t *testing.T) {
 
 // https://logs.tf/3124689
 func testMatch() (model.Match, map[string]steamid.SID64) {
-	name := map[string]steamid.SID64{
-		"var":                76561198164892406,
-		"para":               76561198057150173,
-		"sentar":             76561198126692772,
-		"Pride (Pyro Main)":  76561198036671190,
-		"jumbuck":            76561198084686835,
-		"freakyjoy1.ttv":     76561198061174192,
-		"avg Q enjoyer":      76561198113244106,
-		"ExCalibre":          76561198423392803,
-		"nomodick":           76561198051884373,
-		"Lochlore":           76561198087442614,
-		"Link":               76561198043171944,
-		"Tunaaaaaa":          76561198809011070,
-		"Tiger":              76561198271399587,
-		"Invidia":            76561198096251579,
-		"El Sur":             76561198383642609,
-		"maz":                76561198050517054,
-		"Golden Terrestrial": 76561198082713023,
-		"Doctrine":           76561199050447792,
-		"WitlessConnor":      76561198073709029,
-	}
 
 	match := model.Match{
 		Title:   "Qixalite Booking: RED vs BLU",
 		MapName: "koth_cascade_rc2",
-		PlayerSums: map[steamid.SID64]*model.MatchPlayerSum{
-			name["var"]: {
+		PlayerSums: []*model.MatchPlayerSum{
+			{
+				SteamId:           76561198164892406,
 				Team:              logparse.BLU,
 				TimeStart:         &time.Time{},
 				TimeEnd:           &time.Time{},
@@ -169,7 +163,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:           []logparse.PlayerClass{logparse.Scout},
 				Healing:           370,
 			},
-			name["para"]: {
+			{
+				SteamId:     76561198057150173,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -187,7 +182,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     754,
 			},
-			name["sentar"]: {
+			{
+				SteamId:     76561198126692772,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -205,7 +201,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     481,
 			},
-			name["Pride (Pyro Main)"]: {
+			{
+				SteamId:     76561198036671190,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -223,7 +220,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     436,
 			},
-			name["jumbuck"]: {
+			{
+				SteamId:     76561198084686835,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -241,7 +239,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1187,
 			},
-			name["freakyjoy1.ttv"]: {
+			{
+				SteamId:     76561198061174192,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -259,7 +258,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Sniper},
 				Healing:     686,
 			},
-			name["avg Q enjoyer"]: {
+			{
+				SteamId:     76561198113244106,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -276,7 +276,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     17708,
 			},
-			name["ExCalibre"]: {
+			{
+				SteamId:     76561198423392803,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -294,7 +295,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Sniper, logparse.Engineer},
 				Healing:     395,
 			},
-			name["nomodick"]: {
+			{
+				SteamId:     76561198051884373,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -312,7 +314,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Spy, logparse.Pyro},
 				Healing:     456,
 			},
-			name["Lochlore"]: {
+			{
+				SteamId:     76561198087442614,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -330,7 +333,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Spy},
 				Healing:     546,
 			},
-			name["Link"]: {
+			{
+				SteamId:     76561198043171944,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -348,7 +352,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Scout},
 				Healing:     1036,
 			},
-			name["Tunaaaaaa"]: {
+			{
+				SteamId:     76561198809011070,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -366,7 +371,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     1313,
 			},
-			name["Tiger"]: {
+			{
+				SteamId:     76561198271399587,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -384,7 +390,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     553,
 			},
-			name["Invidia"]: {
+			{
+				SteamId:     76561198096251579,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -401,7 +408,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     0,
 			},
-			name["El Sur"]: {
+			{
+				SteamId:     76561198383642609,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -419,7 +427,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1216,
 			},
-			name["maz"]: {
+			{
+				SteamId:     76561198050517054,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -437,7 +446,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Scout},
 				Healing:     922,
 			},
-			name["Golden Terrestrial"]: {
+			{
+				SteamId:     76561198082713023,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -454,7 +464,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     19762,
 			},
-			name["Doctrine"]: {
+			{
+				SteamId:     76561199050447792,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -471,7 +482,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Classes:     []logparse.PlayerClass{logparse.Sniper},
 				Healing:     101,
 			},
-			name["WitlessConnor"]: {
+			{
+				SteamId:     76561198073709029,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -489,8 +501,9 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Healing:     57,
 			},
 		},
-		MedicSums: map[steamid.SID64]*model.MatchMedicSum{
-			name["avg Q enjoyer"]: {
+		MedicSums: []*model.MatchMedicSum{
+			{
+				SteamId: 76561198113244106,
 				Healing: 17368,
 				Charges: map[logparse.Medigun]int{
 					logparse.Uber: 4,
@@ -503,9 +516,10 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MajorAdvLost:        1,
 				BiggestAdvLost:      39,
 				DeathAfterCharge:    0,
-				HealTargets:         map[steamid.SID64]*model.MatchClassSums{},
+				HealTargets:         []*model.MatchClassSums{},
 			},
-			name["Golden Terrestrial"]: {
+			{
+				SteamId: 76561198082713023,
 				Healing: 19545,
 				Charges: map[logparse.Medigun]int{
 					logparse.Uber: 6,
@@ -518,11 +532,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MajorAdvLost:        0,
 				BiggestAdvLost:      0,
 				DeathAfterCharge:    1,
-				HealTargets:         map[steamid.SID64]*model.MatchClassSums{},
+				HealTargets:         []*model.MatchClassSums{},
 			},
 		},
-		TeamSums: map[logparse.Team]*model.MatchTeamSum{
-			logparse.RED: {
+		TeamSums: []*model.MatchTeamSum{
+			{
+				Team:      logparse.RED,
 				Kills:     122,
 				Damage:    40201,
 				Charges:   6,
@@ -530,7 +545,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Caps:      6,
 				MidFights: 2,
 			},
-			logparse.BLU: {
+			{
+				Team:      logparse.BLU,
 				Kills:     104,
 				Damage:    45512,
 				Charges:   4,
@@ -583,8 +599,9 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MidFight:  logparse.RED,
 			},
 		},
-		ClassKills: map[steamid.SID64]*model.MatchClassSums{
-			name["avg Q enjoyer"]: {
+		ClassKills: []*model.MatchClassSums{
+			{
+				SteamId:  76561198113244106,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,
@@ -595,7 +612,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      3,
 			},
-			name["Doctrine"]: {
+			{
+				SteamId:  76561199050447792,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     2,
@@ -606,7 +624,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["El Sur"]: {
+			{
+				SteamId:  76561198383642609,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     1,
@@ -617,7 +636,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      3,
 			},
-			name["ExCalibre"]: {
+			{
+				SteamId:  76561198423392803,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -628,7 +648,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["freakyjoy1.ttv"]: {
+			{
+				SteamId:  76561198061174192,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -639,7 +660,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["Golden Terrestrial"]: {
+			{
+				SteamId:  76561198082713023,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,
@@ -650,7 +672,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      1,
 			},
-			name["Invidia"]: {
+			{
+				SteamId:  76561198096251579,
 				Scout:    2,
 				Soldier:  1,
 				Pyro:     1,
@@ -661,7 +684,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      2,
 			},
-			name["jumbuck"]: {
+			{
+				SteamId:  76561198084686835,
 				Scout:    7,
 				Soldier:  1,
 				Pyro:     1,
@@ -672,7 +696,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      2,
 			},
-			name["Link"]: {
+			{
+				SteamId:  76561198043171944,
 				Scout:    1,
 				Soldier:  7,
 				Pyro:     0,
@@ -683,7 +708,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   7,
 				Spy:      4,
 			},
-			name["Lochlore"]: {
+			{
+				SteamId:  76561198087442614,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     2,
@@ -694,7 +720,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      0,
 			},
-			name["maz"]: {
+			{
+				SteamId:  76561198050517054,
 				Scout:    0,
 				Soldier:  6,
 				Pyro:     2,
@@ -705,7 +732,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      2,
 			},
-			name["nomodick"]: {
+			{
+				SteamId:  76561198051884373,
 				Scout:    4,
 				Soldier:  0,
 				Pyro:     1,
@@ -716,7 +744,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["para"]: {
+			{
+				SteamId:  76561198057150173,
 				Scout:    2,
 				Soldier:  0,
 				Pyro:     1,
@@ -727,7 +756,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      0,
 			},
-			name["Pride (Pyro Main)"]: {
+			{
+				SteamId:  76561198036671190,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     3,
@@ -738,7 +768,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["sentar"]: {
+			{
+				SteamId:  76561198126692772,
 				Scout:    1,
 				Soldier:  4,
 				Pyro:     0,
@@ -749,7 +780,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      2,
 			},
-			name["Tiger"]: {
+			{
+				SteamId:  76561198271399587,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     1,
@@ -760,7 +792,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      1,
 			},
-			name["Tunaaaaaa"]: {
+			{
+				SteamId:  76561198809011070,
 				Scout:    4,
 				Soldier:  3,
 				Pyro:     2,
@@ -771,7 +804,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   8,
 				Spy:      3,
 			},
-			name["var"]: {
+			{
+				SteamId:  76561198164892406,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     1,
@@ -783,8 +817,9 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		ClassKillsAssists: map[steamid.SID64]*model.MatchClassSums{
-			name["avg Q enjoyer"]: {
+		ClassKillsAssists: []*model.MatchClassSums{
+			{
+				SteamId:  76561198113244106,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     1,
@@ -795,7 +830,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      3,
 			},
-			name["Doctrine"]: {
+			{
+				SteamId:  76561199050447792,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     2,
@@ -806,7 +842,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   3,
 				Spy:      1,
 			},
-			name["El Sur"]: {
+			{
+				SteamId:  76561198383642609,
 				Scout:    2,
 				Soldier:  6,
 				Pyro:     1,
@@ -817,7 +854,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      4,
 			},
-			name["ExCalibre"]: {
+			{
+				SteamId:  76561198423392803,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -828,7 +866,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["freakyjoy1.ttv"]: {
+			{
+				SteamId:  76561198061174192,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     1,
@@ -839,7 +878,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["Golden Terrestrial"]: {
+			{
+				SteamId:  76561198082713023,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     2,
@@ -850,7 +890,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      3,
 			},
-			name["Invidia"]: {
+			{
+				SteamId:  76561198096251579,
 				Scout:    3,
 				Soldier:  2,
 				Pyro:     1,
@@ -861,7 +902,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      2,
 			},
-			name["jumbuck"]: {
+			{
+				SteamId:  76561198084686835,
 				Scout:    7,
 				Soldier:  1,
 				Pyro:     1,
@@ -872,7 +914,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      2,
 			},
-			name["Link"]: {
+			{
+				SteamId:  76561198043171944,
 				Scout:    2,
 				Soldier:  8,
 				Pyro:     1,
@@ -883,7 +926,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   7,
 				Spy:      4,
 			},
-			name["Lochlore"]: {
+			{
+				SteamId:  76561198087442614,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     2,
@@ -894,7 +938,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      0,
 			},
-			name["maz"]: {
+			{
+				SteamId:  76561198050517054,
 				Scout:    1,
 				Soldier:  6,
 				Pyro:     6,
@@ -905,7 +950,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   3,
 				Spy:      4,
 			},
-			name["nomodick"]: {
+			{
+				SteamId:  76561198051884373,
 				Scout:    4,
 				Soldier:  1,
 				Pyro:     1,
@@ -916,7 +962,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["para"]: {
+			{
+				SteamId:  76561198057150173,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     1,
@@ -927,7 +974,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      0,
 			},
-			name["Pride (Pyro Main)"]: {
+			{
+				SteamId:  76561198036671190,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     4,
@@ -938,7 +986,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["sentar"]: {
+			{
+				SteamId:  76561198126692772,
 				Scout:    3,
 				Soldier:  5,
 				Pyro:     0,
@@ -949,7 +998,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      5,
 			},
-			name["Tiger"]: {
+			{
+				SteamId:  76561198271399587,
 				Scout:    3,
 				Soldier:  3,
 				Pyro:     2,
@@ -960,7 +1010,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      5,
 			},
-			name["Tunaaaaaa"]: {
+			{
+				SteamId:  76561198809011070,
 				Scout:    4,
 				Soldier:  4,
 				Pyro:     2,
@@ -971,7 +1022,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   8,
 				Spy:      3,
 			},
-			name["var"]: {
+			{
+				SteamId:  76561198164892406,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     3,
@@ -983,8 +1035,9 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		ClassDeaths: map[steamid.SID64]*model.MatchClassSums{
-			name["avg Q enjoyer"]: {
+		ClassDeaths: []*model.MatchClassSums{
+			{
+				SteamId:  76561198113244106,
 				Scout:    2,
 				Soldier:  3,
 				Pyro:     0,
@@ -995,7 +1048,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      1,
 			},
-			name["Doctrine"]: {
+			{
+				SteamId:  76561199050447792,
 				Scout:    1,
 				Soldier:  2,
 				Pyro:     1,
@@ -1006,7 +1060,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   3,
 				Spy:      2,
 			},
-			name["El Sur"]: {
+			{
+				SteamId:  76561198383642609,
 				Scout:    4,
 				Soldier:  1,
 				Pyro:     0,
@@ -1017,7 +1072,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      0,
 			},
-			name["ExCalibre"]: {
+			{
+				SteamId:  76561198423392803,
 				Scout:    7,
 				Soldier:  5,
 				Pyro:     1,
@@ -1028,7 +1084,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   4,
 				Spy:      1,
 			},
-			name["freakyjoy1.ttv"]: {
+			{
+				SteamId:  76561198061174192,
 				Scout:    4,
 				Soldier:  5,
 				Pyro:     0,
@@ -1039,7 +1096,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["Golden Terrestrial"]: {
+			{
+				SteamId:  76561198082713023,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     1,
@@ -1050,7 +1108,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      2,
 			},
-			name["Invidia"]: {
+			{
+				SteamId:  76561198096251579,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     4,
@@ -1061,7 +1120,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      5,
 			},
-			name["jumbuck"]: {
+			{
+				SteamId:  76561198084686835,
 				Scout:    2,
 				Soldier:  0,
 				Pyro:     0,
@@ -1072,7 +1132,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      1,
 			},
-			name["Link"]: {
+			{
+				SteamId:  76561198043171944,
 				Scout:    0,
 				Soldier:  2,
 				Pyro:     3,
@@ -1083,7 +1144,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      0,
 			},
-			name["Lochlore"]: {
+			{
+				SteamId:  76561198087442614,
 				Scout:    5,
 				Soldier:  3,
 				Pyro:     1,
@@ -1094,7 +1156,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["maz"]: {
+			{
+				SteamId:  76561198050517054,
 				Scout:    2,
 				Soldier:  2,
 				Pyro:     2,
@@ -1105,7 +1168,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      1,
 			},
-			name["nomodick"]: {
+			{
+				SteamId:  76561198051884373,
 				Scout:    3,
 				Soldier:  1,
 				Pyro:     3,
@@ -1116,7 +1180,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   2,
 				Spy:      0,
 			},
-			name["para"]: {
+			{
+				SteamId:  76561198057150173,
 				Scout:    7,
 				Soldier:  3,
 				Pyro:     3,
@@ -1127,7 +1192,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      0,
 			},
-			name["Pride (Pyro Main)"]: {
+			{
+				SteamId:  76561198036671190,
 				Scout:    2,
 				Soldier:  1,
 				Pyro:     2,
@@ -1138,7 +1204,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   4,
 				Spy:      3,
 			},
-			name["sentar"]: {
+			{
+				SteamId:  76561198126692772,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -1149,7 +1216,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      1,
 			},
-			name["Tiger"]: {
+			{
+				SteamId:  76561198271399587,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     0,
@@ -1160,7 +1228,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   0,
 				Spy:      2,
 			},
-			name["Tunaaaaaa"]: {
+			{
+				SteamId:  76561198809011070,
 				Scout:    1,
 				Soldier:  0,
 				Pyro:     4,
@@ -1171,7 +1240,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   1,
 				Spy:      0,
 			},
-			name["var"]: {
+			{
+				SteamId:  76561198164892406,
 				Scout:    1,
 				Soldier:  4,
 				Pyro:     1,
@@ -1182,7 +1252,8 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Sniper:   3,
 				Spy:      2,
 			},
-			name["WitlessConnor"]: {
+			{
+				SteamId:  76561198073709029,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,
@@ -1195,5 +1266,25 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 			},
 		},
 	}
-	return match, name
+	return match, map[string]steamid.SID64{
+		"var":                76561198164892406,
+		"para":               76561198057150173,
+		"sentar":             76561198126692772,
+		"Pride (Pyro Main)":  76561198036671190,
+		"jumbuck":            76561198084686835,
+		"freakyjoy1.ttv":     76561198061174192,
+		"avg Q enjoyer":      76561198113244106,
+		"ExCalibre":          76561198423392803,
+		"nomodick":           76561198051884373,
+		"Lochlore":           76561198087442614,
+		"Link":               76561198043171944,
+		"Tunaaaaaa":          76561198809011070,
+		"Tiger":              76561198271399587,
+		"Invidia":            76561198096251579,
+		"El Sur":             76561198383642609,
+		"maz":                76561198050517054,
+		"Golden Terrestrial": 76561198082713023,
+		"Doctrine":           76561199050447792,
+		"WitlessConnor":      76561198073709029,
+	}
 }

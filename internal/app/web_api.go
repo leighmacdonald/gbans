@@ -1309,3 +1309,30 @@ func (web *web) onAPISaveWikiSlug(database store.WikiStore) gin.HandlerFunc {
 		responseOK(ctx, http.StatusCreated, page)
 	}
 }
+
+func (web *web) onAPIGetMatch(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		matchIdStr := ctx.Param("match_id")
+		if matchIdStr[0] == '/' {
+			matchIdStr = matchIdStr[1:]
+		}
+		matchId, matchIdErr := strconv.ParseInt(matchIdStr, 10, 32)
+		if matchIdErr != nil {
+			log.Errorf("Invalid match_id value")
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		match, errMatch := database.MatchGetById(ctx, int(matchId))
+		if errMatch != nil {
+			if errors.Is(errMatch, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			log.WithFields(log.Fields{"match_id": matchId}).
+				Errorf("Failed to load match")
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, match)
+	}
+}
