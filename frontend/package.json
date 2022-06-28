@@ -93,7 +93,7 @@
     "react-router-dom": "^6.3.0",
     "react-timer-hook": "^3.0.5",
     "sass": "^1.53.0",
-    "sass-loader": "^13.0.1",
+    "sass-loader": "^13.0.2",
     "steamid": "^2.0.0",
     "style-loader": "^3.3.1",
     "ts-loader": "^9.3.1",
