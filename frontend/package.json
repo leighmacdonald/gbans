@@ -32,7 +32,7 @@
     "test:coverage": "jest --coverage --colors"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.5",
+    "@babel/core": "^7.18.6",
     "@babel/preset-env": "^7.18.2",
     "@date-io/date-fns": "^2.14.0",
     "@emotion/react": "^11.9.3",
