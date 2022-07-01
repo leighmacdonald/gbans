@@ -12,13 +12,13 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/gomarkdown/markdown v0.0.0-20220607163217-45f7c050e2d1
+	github.com/gomarkdown/markdown v0.0.0-20220627144906-e9a81102ebeb
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.7
-	github.com/leighmacdonald/srcdsup v0.0.0-20220625045454-55ba7ecb173e
+	github.com/leighmacdonald/srcdsup v0.0.0-20220701022439-0ee481ebe223
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.0-20210803010711-64b0e363d418
 	github.com/microcosm-cc/bluemonday v1.0.18
@@ -46,7 +46,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
-	github.com/goccy/go-json v0.9.7 // indirect
+	github.com/goccy/go-json v0.9.8 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -92,9 +92,9 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
-	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
+	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d // indirect
+	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
+	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
