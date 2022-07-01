@@ -19,7 +19,13 @@ import { IPInput } from '../component/IPInput';
 import { ServerSelect } from '../component/ServerSelect';
 import { LogRows } from '../component/LogRow';
 import { EventTypeSelect } from '../component/EventTypeSelect';
-import { findLogs, LogQueryOpts, PlayerProfile, ServerEvent } from '../api';
+import {
+    findLogs,
+    LogQueryOpts,
+    PlayerProfile,
+    ServerEvent,
+    SteamID
+} from '../api';
 import FormGroup from '@mui/material/FormGroup';
 import { ServerLogQueryCtx } from '../contexts/LogQueryCtx';
 import { Nullable } from '../util/types';
@@ -39,13 +45,13 @@ export const AdminServerLog = (): JSX.Element => {
     const [beforeDate, setBeforeDate] = React.useState<Nullable<Date>>(null);
     const [selectedServerIDs, setSelectedServerIDs] = useState<number[]>([0]);
     const [cidr, setCidr] = useState<string>('');
-    const [steamID, setSteamID] = useState<string>('');
+    const [steamID, setSteamID] = useState<SteamID>(BigInt(0));
     const { restart, pause, resume } = useTimer({
         expiryTimestamp: new Date(),
         autoStart: true,
         onExpire: async () => {
             const opts: LogQueryOpts = {
-                source_id: playerProfile?.player.steam_id ?? '',
+                source_id: playerProfile?.player.steam_id,
                 limit: limit,
                 order_desc: true,
                 servers: selectedServerIDs,

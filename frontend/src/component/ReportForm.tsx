@@ -21,6 +21,7 @@ import {
     BanReason,
     BanReasons,
     PlayerProfile,
+    SteamID,
     UploadedFile
 } from '../api';
 import Typography from '@mui/material/Typography';
@@ -135,20 +136,22 @@ export const ReportForm = (): JSX.Element => {
     const [description, setDescription] = useState<string>('');
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     const [profile, setProfile] = useState<PlayerProfile | null>();
-    const [steamID, setSteamID] = useState<string>('');
+    const [steamID, setSteamID] = useState<SteamID>(BigInt(0));
     const navigate = useNavigate();
     const submit = useCallback(async () => {
-        apiCreateReport({
-            steam_id: profile?.player.steam_id as string,
-            title: title,
-            description: description,
-            media: uploadedFiles
-        })
-            .then((report) => {
-                navigate(`/report/${report.report_id}`);
+        if (profile) {
+            apiCreateReport({
+                steam_id: profile?.player.steam_id,
+                title: title,
+                description: description,
+                media: uploadedFiles
             })
-            .catch(logErr);
-    }, [title, description, uploadedFiles, navigate, profile?.player.steam_id]);
+                .then((report) => {
+                    navigate(`/report/${report.report_id}`);
+                })
+                .catch(logErr);
+        }
+    }, [profile, title, description, uploadedFiles, navigate]);
 
     const titleIsError = title.length > 0 && title.length < 5;
     return (

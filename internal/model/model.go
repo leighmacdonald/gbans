@@ -266,9 +266,13 @@ func NewBannedPerson() BannedPerson {
 	}
 }
 
-type ChatLog struct {
-	Message   string
-	CreatedOn time.Time
+type PersonChat struct {
+	PersonChatId int64
+	SteamId      steamid.SID64
+	ServerId     int
+	TeamChat     bool
+	Message      string
+	CreatedOn    time.Time
 }
 
 type IPRecord struct {

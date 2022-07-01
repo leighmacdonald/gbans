@@ -112,7 +112,7 @@ export const SteamIDLabel = ({ source }: SteamIDLabelProps) => {
             alignContent={'center'}
             sx={{ width: '150px', overflow: 'hidden' }}
         >
-            {source.steam_id}
+            {source.steam_id.toString()}
         </Typography>
     );
 };
@@ -169,7 +169,9 @@ export const LogRow = ({ event }: LogRowProps): JSX.Element => {
                         source={event.source}
                         team={event.team}
                         setFilter={() => {
-                            setSteamID(event.source?.steam_id ?? '');
+                            if (event.source?.steam_id) {
+                                setSteamID(event.source?.steam_id);
+                            }
                         }}
                     />
                 </Box>

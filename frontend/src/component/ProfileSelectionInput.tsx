@@ -1,6 +1,6 @@
 import TextField from '@mui/material/TextField';
 import * as React from 'react';
-import { apiGetProfile, PlayerProfile } from '../api';
+import { apiGetProfile, PlayerProfile, SteamID } from '../api';
 import { log } from '../util/errors';
 import { ChangeEvent, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
@@ -16,8 +16,8 @@ export interface ProfileSelectionInputProps {
     initialValue?: string;
     fullWidth: boolean;
     onProfileSuccess: (profile: Nullable<PlayerProfile>) => void;
-    input: string;
-    setInput: (input: string) => void;
+    input: SteamID;
+    setInput: (input: SteamID) => void;
 }
 
 export const ProfileSelectionInput = ({
@@ -57,7 +57,7 @@ export const ProfileSelectionInput = ({
 
     const onChangeInput = (evt: ChangeEvent<HTMLInputElement>) => {
         const { value: nextValue } = evt.target;
-        setInput(nextValue);
+        setInput(nextValue as unknown as SteamID);
         if (nextValue == '') {
             onProfileSuccess(null);
             setLoading(false);
@@ -72,9 +72,7 @@ export const ProfileSelectionInput = ({
     };
 
     const isError =
-        input.length > 0 &&
-        !loading &&
-        (!lProfile || !lProfile?.player.steam_id);
+        input > 0 && !loading && (!lProfile || !lProfile?.player.steam_id);
     return (
         <>
             <TextField

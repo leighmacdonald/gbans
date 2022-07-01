@@ -1,4 +1,4 @@
-import { Person, Team } from '../api';
+import { Person, SteamID, Team } from '../api';
 import Avatar from '@mui/material/Avatar';
 import React from 'react';
 import Typography from '@mui/material/Typography';
@@ -29,7 +29,7 @@ export interface PersonaNameLabelProps {
     hideLabel?: boolean;
     source: Person;
     team: Team;
-    setFilter: (sid: string) => void;
+    setFilter: (sid: SteamID) => void;
 }
 
 export const ProfileButton = ({

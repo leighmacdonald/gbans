@@ -1,4 +1,4 @@
-import { PickupItem, PlayerClass, Team, Weapon } from './const';
+import { PickupItem, PlayerClass, SteamID, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos } from './common';
 import { LatLngLiteral } from 'leaflet';
@@ -96,7 +96,7 @@ export interface LogQueryOpts {
     limit?: number;
     order_desc?: boolean;
     query?: string;
-    source_id?: string;
+    source_id?: SteamID;
     target_id?: string;
     servers?: number[];
     sent_after?: Date;

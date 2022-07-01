@@ -1,5 +1,6 @@
 import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
+import { SteamID } from './const';
 
 export enum ReportStatus {
     Opened,
@@ -77,7 +78,7 @@ export interface UploadedFile {
 }
 
 export interface CreateReportRequest {
-    steam_id: string;
+    steam_id: SteamID;
     title: string;
     description: string;
     media: UploadedFile[];

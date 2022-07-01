@@ -241,7 +241,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if sid1Found {
 		errGetSourcePlayer := db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1.(string))), &playerSource)
 		if errGetSourcePlayer != nil {
-			return errors.Wrapf(errGetSourcePlayer, "Failed to get source player")
+			return errors.Wrapf(errGetSourcePlayer, "Failed to get source player [%s]", msg)
 		} else {
 			event.Source = playerSource
 		}

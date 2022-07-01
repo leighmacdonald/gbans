@@ -34,7 +34,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { useTheme } from '@mui/material';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
-
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 interface menuRoute {
     to: string;
     text: string;
@@ -89,6 +89,7 @@ export const TopBar = () => {
         { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
         { to: '/report', text: 'Report', icon: <ReportIcon /> },
         // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> },
+        { to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> },
         { to: '/wiki', text: 'Wiki', icon: <ArticleIcon /> }
     ];
 

@@ -1,5 +1,6 @@
 import { apiCall, apiError, QueryFilterProps } from './common';
 import { communityVisibilityState, Person, profileState } from './profile';
+import { SteamID } from './const';
 
 export interface ChatMessage {
     message: string;
@@ -36,7 +37,7 @@ export type IAPIResponseBans = BannedPerson[];
 export interface IAPIBanRecord {
     ban_id: number;
     net_id: number;
-    steam_id: string;
+    steam_id: SteamID;
     cidr: string;
     author_id: number;
     ban_type: number;

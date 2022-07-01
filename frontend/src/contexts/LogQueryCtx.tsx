@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { Nullable } from '../util/types';
 import { noop } from 'lodash-es';
+import { SteamID } from '../api';
 
 export type ServerLogQuery = {
     rate: number;
@@ -17,8 +18,8 @@ export type ServerLogQuery = {
     setSelectedServerIDs: (ids: number[]) => void;
     cidr: string;
     setCidr: (cidr: string) => void;
-    steamID: string;
-    setSteamID: (cidr: string) => void;
+    steamID: SteamID;
+    setSteamID: (steam_id: SteamID) => void;
 };
 
 export const ServerLogQueryCtx = createContext<ServerLogQuery>({
@@ -36,7 +37,7 @@ export const ServerLogQueryCtx = createContext<ServerLogQuery>({
     setSelectedServerIDs: () => noop,
     cidr: '',
     setCidr: () => noop,
-    steamID: '',
+    steamID: BigInt(0),
     setSteamID: () => noop
 });
 

@@ -1,3 +1,5 @@
+export type SteamID = bigint;
+
 export enum Team {
     SPEC,
     RED,

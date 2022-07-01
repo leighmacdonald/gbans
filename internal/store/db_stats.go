@@ -2,10 +2,13 @@ package store
 
 import (
 	"context"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) error {
@@ -80,6 +83,61 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
 	return nil
 }
 
+type MatchesQueryOpts struct {
+	SteamID   steamid.SID64 `json:"steam_id"`
+	ServerId  int           `json:"server_id"`
+	Map       string        `json:"map"`
+	Limit     uint64        `json:"limit"`
+	OrderDesc bool          `json:"order_desc"`
+	TimeStart *time.Time    `json:"time_start,omitempty"`
+	TimeEnd   *time.Time    `json:"time_end,omitempty"`
+}
+
+func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error) {
+	qb := sb.Select("m.match_id", "m.server_id", "m.map", "m.created_on",
+		"COALESCE(sum(mp.kills), 0)",
+		"COALESCE(sum(mp.assists), 0)",
+		"COALESCE(sum(mp.damage), 0)",
+		"COALESCE(sum(mp.healing), 0)",
+		"COALESCE(sum(mp.airshots), 0)").
+		From("match m").
+		LeftJoin("match_player mp on m.match_id = mp.match_id").
+		GroupBy("m.match_id")
+	if opts.Map != "" {
+		qb = qb.Where(sq.Eq{"m.map_name": opts.Map})
+	}
+	if opts.SteamID > 0 {
+		qb = qb.Where(sq.Eq{"m.server_id": opts.ServerId})
+	}
+	if opts.OrderDesc {
+		qb = qb.OrderBy("m.match_id DESC")
+	} else {
+		qb = qb.OrderBy("m.match_id ASC")
+	}
+	if opts.Limit > 0 {
+		qb = qb.Limit(opts.Limit)
+	}
+	query, args, errQueryArgs := qb.ToSql()
+	if errQueryArgs != nil {
+		return nil, errors.Wrapf(errQueryArgs, "Failed to build query")
+	}
+	rows, errQuery := database.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, errors.Wrapf(errQuery, "Failed to query matches")
+	}
+	defer rows.Close()
+	var matches model.MatchSummaryCollection
+	for rows.Next() {
+		var m model.MatchSummary
+		if errScan := rows.Scan(&m.MatchID, &m.ServerId, &m.MapName,
+			&m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
+			return nil, errors.Wrapf(errScan, "Failed to scan match row")
+		}
+		matches = append(matches, &m)
+	}
+	return matches, nil
+}
+
 func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
 	m := model.NewMatch()
 	m.MatchID = matchId
@@ -93,9 +151,9 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 		    match_player_id, steam_id, team, time_start, time_end, kills, assists,
        		deaths, dominations, dominated, revenges, damage, damage_taken, healing, healing_taken, health_packs, 
        		backstabs, headshots, airshots, captures, shots, extinguishes, hits, buildings, 
-       		buildings_destroyed 
+       		buildings_destroyed, (kills::real/deaths::real), ((kills::real+assists::real)/deaths::real)
 		FROM 
-		    match_player 
+		    match_player
 		WHERE 
 		    match_id = $1`
 	playerRows, errPlayer := database.Query(ctx, qp, matchId)
@@ -108,7 +166,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamId, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists,
 			&s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken,
 			&s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.Airshots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits,
-			&s.BuildingBuilt, &s.BuildingDestroyed); errRow != nil {
+			&s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
 		m.PlayerSums = append(m.PlayerSums, &s)
@@ -165,6 +223,15 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 		}
 		m.TeamSums = append(m.TeamSums, &ts)
 	}
+	var ids steamid.Collection
+	for _, p := range m.PlayerSums {
+		ids = append(ids, p.SteamId)
+	}
+	players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
+	if errPlayers != nil {
+		return nil, errors.Wrapf(errPlayers, "Failed to load players")
+	}
+	m.Players = players
 	return &m, nil
 }
 
@@ -192,5 +259,4 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 		return Err(errQuery)
 	}
 	return nil
-
 }

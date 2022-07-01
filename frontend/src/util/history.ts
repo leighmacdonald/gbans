@@ -1,4 +1,5 @@
 import { createBrowserHistory } from 'history';
+import { SteamID } from '../api';
 export default createBrowserHistory();
 
 export const to = (url: string) => {
@@ -10,7 +11,7 @@ export interface LinkProps {
     url: string;
 }
 
-export const createExternalLinks = (steam_id: string): LinkProps[] => {
+export const createExternalLinks = (steam_id: SteamID): LinkProps[] => {
     return [
         {
             title: 'Steam',

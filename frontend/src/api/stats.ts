@@ -1,4 +1,6 @@
 import { apiCall } from './common';
+import { Person } from './profile';
+import { SteamID } from './const';
 
 export interface CommonStats {
     kills: number;
@@ -45,12 +47,7 @@ export interface PlayerStats extends CommonStats {
     dominated: number;
 }
 
-export interface GlobalStats extends CommonStats {
-    unique_players: number;
-}
-
 export type ServerStats = CommonStats;
-export type MapStats = CommonStats;
 
 export interface DatabaseStats {
     bans: number;
@@ -74,12 +71,14 @@ export const apiGetStats = async (): Promise<DatabaseStats> => {
 
 export interface MatchPlayerSum {
     MatchPlayerSumID: number;
-    SteamId: number;
+    SteamId: SteamID;
     Team: number;
     TimeStart?: string;
     TimeEnd?: string;
     Kills: number;
     Assists: number;
+    KDRatio: number;
+    KADRatio: number;
     Deaths: number;
     Dominations: number;
     Dominated: number;
@@ -104,7 +103,7 @@ export interface MatchPlayerSum {
 export interface MatchMedicSum {
     MatchMedicId: number;
     MatchId: number;
-    SteamId: number;
+    SteamId: SteamID;
     Healing: number;
     Charges: { [key: number]: number };
     Drops: number;
@@ -117,6 +116,10 @@ export interface MatchMedicSum {
     BiggestAdvLost: number;
     HealTargets: { [key: number]: number };
 }
+
+export const ratio = (a: number, b: number): number => {
+    return a / b;
+};
 
 export interface MatchTeamSum {
     MatchTeamId: number;
@@ -159,11 +162,28 @@ export interface MatchClassSums {
     Spy: number;
 }
 
-export interface Match {
+export interface MatchSummary {
+    match_id: number;
+    server_id: number;
+    map_name: string;
+    created_on: Date;
+    player_count: number;
+    kills: number;
+    assists: number;
+    damage: number;
+    healing: number;
+    airshots: number;
+}
+
+export interface BaseMatch {
     MatchID: number;
     ServerId: number;
     Title: string;
     MapName: string;
+    CreatedOn: Date;
+}
+
+export interface Match extends BaseMatch {
     PlayerSums: MatchPlayerSum[];
     MedicSums: MatchMedicSum[];
     TeamSums: MatchTeamSum[];
@@ -171,9 +191,29 @@ export interface Match {
     ClassKills: { [key: number]: MatchClassSums };
     ClassKillsAssists: { [key: number]: MatchClassSums };
     ClassDeaths: { [key: number]: MatchClassSums };
-    CreatedOn: string;
+    Players: Person[];
 }
 
 export const apiGetMatch = async (match_id: number): Promise<Match> => {
-    return await apiCall<Match>(`/api/match/${match_id}`, 'GET');
+    return await apiCall<Match>(`/api/log/${match_id}`, 'GET');
+};
+
+export interface MatchesQueryOpts {
+    steam_id?: SteamID;
+    server_id?: number;
+    map?: string;
+    limit: number;
+    order_desc?: boolean;
+    time_start?: Date;
+    time_end?: Date;
+}
+
+export const apiGetMatches = async (
+    opts: MatchesQueryOpts
+): Promise<MatchSummary[]> => {
+    return await apiCall<MatchSummary[], MatchesQueryOpts>(
+        `/api/logs`,
+        'POST',
+        opts
+    );
 };

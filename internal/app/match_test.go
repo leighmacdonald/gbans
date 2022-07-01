@@ -43,16 +43,15 @@ func TestMatch_Apply(t *testing.T) {
 		if line == "" {
 			continue
 		}
-		var se model.ServerEvent
+		var event model.ServerEvent
 		require.NoError(t, logToServerEvent(context.Background(),
 			testServer,
 			line,
 			dbStore,
 			playerStateCache,
-			&se,
+			&event,
 		), "Failed to create ServerEvent")
-		err := m.Apply(se)
-		if err != nil && !errors.Is(err, model.ErrIgnored) {
+		if err := m.Apply(event); err != nil && !errors.Is(err, model.ErrIgnored) {
 			t.Errorf("Failed to Apply: %v", err)
 		}
 	}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChangeEvent, SyntheticEvent, useState } from 'react';
 import IPCIDR from 'ip-cidr';
-import { apiCreateBan, BanPayload, PlayerProfile } from '../api';
+import { apiCreateBan, BanPayload, PlayerProfile, SteamID } from '../api';
 import { Nullable } from '../util/types';
 import { log } from '../util/errors';
 import Button from '@mui/material/Button';
@@ -77,10 +77,10 @@ export const PlayerBanForm = ({
     const [networkSize, setNetworkSize] = React.useState<number>(0);
     const [banType, setBanType] = React.useState<BanType>('steam');
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>();
-    const [steamID, setSteamID] = useState<string>('');
+    const [steamID, setSteamID] = useState<SteamID>(BigInt(0));
 
     const handleSubmit = React.useCallback(async () => {
-        if (!profile || profile?.player?.steam_id === '') {
+        if (!profile || profile?.player?.steam_id) {
             return;
         }
         const opts: BanPayload = {

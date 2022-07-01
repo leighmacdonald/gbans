@@ -158,7 +158,7 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	return nil
 }
 
-// TODO search cached people first
+// TODO search cached people first?
 func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error) {
 	queryBuilder := sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamIds)})
 	query, args, errQueryArgs := queryBuilder.ToSql()

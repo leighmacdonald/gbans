@@ -1,4 +1,5 @@
 import { apiCall, PermissionLevel } from './common';
+import { SteamID } from './const';
 
 export enum profileState {
     Incomplete = 0,
@@ -52,7 +53,7 @@ export interface Person {
     updated_on_steam: Date;
 
     // Custom attributes
-    steam_id: string;
+    steam_id: SteamID;
     permission_level: PermissionLevel;
     discord_id: string;
     ip_addr: string;
@@ -65,7 +66,7 @@ export interface PlayerProfile {
     friends: Person[];
 }
 
-export const apiGetProfile = async (query: string): Promise<PlayerProfile> => {
+export const apiGetProfile = async (query: SteamID): Promise<PlayerProfile> => {
     return await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 };
 

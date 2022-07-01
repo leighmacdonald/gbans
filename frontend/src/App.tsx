@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Container from '@mui/material/Container';
@@ -37,6 +37,8 @@ import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
 import { logErr } from './util/errors';
 import { MatchPage } from './page/MatchPage';
+import { AlertColor } from '@mui/material/Alert/Alert';
+import { MatchListPage } from './page/MatchListPage';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -78,9 +80,29 @@ export const App = (): JSX.Element => {
 
     const theme = useMemo(() => createThemeByMode(mode), [mode]);
 
+    const sendFlash = useCallback(
+        (
+            level: AlertColor,
+            message: string,
+            heading = 'header',
+            closable = true
+        ) => {
+            setFlashes([
+                ...flashes,
+                {
+                    closable: closable ?? false,
+                    heading: heading,
+                    level: level,
+                    message: message
+                }
+            ]);
+        },
+        [flashes, setFlashes]
+    );
+
     return (
         <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
-            <UserFlashCtx.Provider value={{ flashes, setFlashes }}>
+            <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Router>
                         <React.Fragment>
@@ -123,8 +145,12 @@ export const App = (): JSX.Element => {
                                                     element={<ReportViewPage />}
                                                 />
                                                 <Route
-                                                    path={'/match/:match_id'}
+                                                    path={'/log/:match_id'}
                                                     element={<MatchPage />}
+                                                />
+                                                <Route
+                                                    path={'/logs'}
+                                                    element={<MatchListPage />}
                                                 />
                                                 <Route
                                                     path={'/report'}

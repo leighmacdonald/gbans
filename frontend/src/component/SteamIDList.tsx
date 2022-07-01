@@ -7,7 +7,7 @@ import { ListItem, useTheme } from '@mui/material';
 import SteamID from 'steamid';
 
 export interface SteamIDListProps {
-    steam_id: string;
+    steam_id: bigint;
 }
 
 export const SteamIDList = ({ steam_id }: SteamIDListProps) => {

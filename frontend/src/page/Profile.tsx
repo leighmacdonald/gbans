@@ -17,6 +17,7 @@ import { SteamIDList } from '../component/SteamIDList';
 import { Masonry } from '@mui/lab';
 import { format, fromUnixTime } from 'date-fns';
 import { LoadingSpinner } from '../component/LoadingSpinner';
+import { MatchHistory } from '../component/MatchHistory';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -29,7 +30,7 @@ export const Profile = (): JSX.Element => {
             return;
         }
         setLoading(true);
-        apiGetProfile(steam_id || '')
+        apiGetProfile(steam_id as unknown as bigint)
             .then((profile) => {
                 profile && setProfile(profile);
             })
@@ -48,7 +49,7 @@ export const Profile = (): JSX.Element => {
                     <LoadingSpinner />
                 </Grid>
             )}
-            {!loading && profile && profile.player.steam_id != '' && (
+            {!loading && profile && profile.player.steam_id > 0 && (
                 <>
                     <Grid item xs={8}>
                         <Stack spacing={3}>
@@ -152,6 +153,13 @@ export const Profile = (): JSX.Element => {
                                         );
                                     })}
                                 </Masonry>
+                            </Paper>
+                            <Paper elevation={1}>
+                                <Typography variant={'body1'}>asd</Typography>
+                                <MatchHistory
+                                    steam_id={profile.player.steam_id}
+                                    limit={25}
+                                />
                             </Paper>
                         </Stack>
                     </Grid>

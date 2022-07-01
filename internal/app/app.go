@@ -189,10 +189,10 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 func sendDiscordNotif(server model.Server, match *model.Match) {
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
-		Title:       fmt.Sprintf("Match results - %s - %s", server.ServerNameShort, match.MapName),
+		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
 		Description: "Match results",
 		Color:       int(green),
-		URL:         fmt.Sprintf("https://gbans.uncletopia.com/match/%d", match.MatchID),
+		URL:         fmt.Sprintf("https://gbans.uncletopia.com/log/%d", match.MatchID),
 	}
 	redScore := 0
 	bluScore := 0
@@ -201,16 +201,15 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 		bluScore += round.Score.Blu
 	}
 
-	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
-	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
 	found := 0
 	for _, teamStats := range match.TeamSums {
 		addFieldInline(embed, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
 		addFieldInline(embed, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
-		addFieldInline(embed, fmt.Sprintf("%s Ubers", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Charges))
-		addFieldInline(embed, fmt.Sprintf("%s Drops", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Drops))
+		addFieldInline(embed, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
 		found++
 	}
+	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
+	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
 	if found == 2 {
 		log.Debugf("Sending discord summary")
 		select {
@@ -235,7 +234,11 @@ func playerStateWriter(ctx context.Context, database store.Store) {
 		select {
 		case evt := <-serverEventChan:
 			switch evt.EventType {
+			case logparse.Say:
+			case logparse.SayTeam:
+
 			case logparse.Connected:
+
 			case logparse.Disconnected:
 
 			}
@@ -358,7 +361,7 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 					log.Errorf("Failed to parse: %v", errLogServerEvent)
 					continue
 				}
-				if serverEvent.EventType == logparse.UnknownMsg {
+				if serverEvent.EventType == logparse.UnknownMsg && config.Debug.WriteUnhandledLogEvents {
 					if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
 						log.Errorf("Failed to write debug log: %v", errWrite)
 					}

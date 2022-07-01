@@ -79,7 +79,7 @@ func (web *web) onPostLog(db store.Store, logFileC chan *LogFilePayload) gin.Han
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		rawLogs, errDecode := base64.StdEncoding.DecodeString(upload.Body)
+		rawLogs, errDecode := base64.RawStdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -114,7 +114,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 			return
 		}
-		rawDemo, errDecode := base64.StdEncoding.DecodeString(upload.Body)
+		rawDemo, errDecode := base64.RawStdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -769,24 +769,6 @@ func (web *web) onAPIPostServer(database store.ServerStore) gin.HandlerFunc {
 	}
 }
 
-// onAPIEvents handles querying server log events
-// TODO web client should provide a last_log_id to filter to recent only
-func (web *web) onAPIEvents(database store.Store) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var queryOpts model.LogQueryOpts
-		if errBind := ctx.BindJSON(&queryOpts); errBind != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		//events, errFindLog := database.FindLogEvents(ctx, queryOpts)
-		//if errFindLog != nil {
-		//	responseErr(ctx, http.StatusInternalServerError, nil)
-		//	return
-		//}
-		responseOK(ctx, http.StatusOK, nil)
-	}
-}
-
 func (web *web) onAPIPostAppeal(_ store.Store) gin.HandlerFunc {
 	type newAppeal struct {
 		BanId  int    `json:"ban_id"`
@@ -1143,7 +1125,7 @@ func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPILogsQuery(database store.StatStore) gin.HandlerFunc {
+func (web *web) onAPILogsQuery(_ store.StatStore) gin.HandlerFunc {
 	type req struct {
 		SteamID string `json:"steam_id"`
 		Limit   int    `json:"limit"`
@@ -1310,6 +1292,22 @@ func (web *web) onAPISaveWikiSlug(database store.WikiStore) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPIGetMatches(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var opts store.MatchesQueryOpts
+		if errBind := ctx.BindJSON(&opts); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		matches, matchesErr := database.Matches(ctx, opts)
+		if matchesErr != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, matches)
+	}
+}
+
 func (web *web) onAPIGetMatch(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		matchIdStr := ctx.Param("match_id")
@@ -1329,7 +1327,7 @@ func (web *web) onAPIGetMatch(database store.Store) gin.HandlerFunc {
 				return
 			}
 			log.WithFields(log.Fields{"match_id": matchId}).
-				Errorf("Failed to load match")
+				Errorf("Failed to load match: %v", errMatch)
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}

@@ -74,11 +74,12 @@ export const ServerRow = ({ server }: ServerRowProps) => {
             <Tooltip title={server.cc}>
                 <Box>
                     <Flag countryCode={server.cc} />
+                    <Typography variant={'h5'} sx={{ width: '100%' }}>
+                        {server.name}
+                    </Typography>
                 </Box>
             </Tooltip>
-            <Typography variant={'h5'} sx={{ width: '100%' }}>
-                {server.name}
-            </Typography>
+
             <div>
                 <Typography
                     aria-owns={open ? 'mouse-over-popover' : undefined}
