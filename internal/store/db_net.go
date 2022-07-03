@@ -53,10 +53,8 @@ func (database *pgStore) updateBanNet(ctx context.Context, banNet *model.BanNet)
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
-		return Err(errExec)
-	}
-	return nil
+	_, errExec := database.conn.Exec(ctx, query, args...)
+	return Err(errExec)
 }
 
 func (database *pgStore) insertBanNet(ctx context.Context, banNet *model.BanNet) error {
@@ -68,11 +66,7 @@ func (database *pgStore) insertBanNet(ctx context.Context, banNet *model.BanNet)
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	errQueryRow := database.conn.QueryRow(ctx, query, args...).Scan(&banNet.NetID)
-	if errQueryRow != nil {
-		return Err(errQueryRow)
-	}
-	return nil
+	return Err(database.conn.QueryRow(ctx, query, args...).Scan(&banNet.NetID))
 }
 
 func (database *pgStore) SaveBanNet(ctx context.Context, banNet *model.BanNet) error {

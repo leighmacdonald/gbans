@@ -52,6 +52,7 @@ export const MatchPage = (): JSX.Element => {
 
     const playerTableDef: UserTableProps<MatchPlayerSum> = useMemo(() => {
         return {
+            rowsPerPage: 100,
             columnOrder: [
                 'SteamId',
                 'Kills',
@@ -74,7 +75,7 @@ export const MatchPage = (): JSX.Element => {
                     sortKey: 'SteamId',
                     tooltip: 'Profile',
                     align: 'left',
-                    renderer: (value) => {
+                    renderer: (_, value) => {
                         const p = first(
                             (match?.Players || []).filter(
                                 (p) => p.steam_id == value
@@ -160,6 +161,7 @@ export const MatchPage = (): JSX.Element => {
 
     const medicTableDef: UserTableProps<MatchMedicSum> = useMemo(() => {
         return {
+            rowsPerPage: 100,
             columnOrder: [
                 'SteamId',
                 'Healing',
@@ -174,7 +176,7 @@ export const MatchPage = (): JSX.Element => {
                     sortKey: 'SteamId',
                     tooltip: 'Profile',
                     align: 'left',
-                    renderer: (value) => {
+                    renderer: (_, value) => {
                         const p = first(
                             (match?.Players || []).filter(
                                 (p) => p.steam_id == value
@@ -226,6 +228,7 @@ export const MatchPage = (): JSX.Element => {
 
     const teamTableDef: UserTableProps<MatchTeamSum> = useMemo(() => {
         return {
+            rowsPerPage: 100,
             columnOrder: [
                 'Team',
                 'Kills',

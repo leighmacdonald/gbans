@@ -179,6 +179,9 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 			state.Location = server.Location
 			a2sInfo, a2sFound := serverStateA2S[server.ServerNameShort]
 			if a2sFound {
+				if a2sInfo.Name != "" && state.Name != a2sInfo.Name {
+					state.Name = a2sInfo.Name
+				}
 				state.NameA2S = a2sInfo.Name
 				state.Protocol = a2sInfo.Protocol
 				state.Map = a2sInfo.Map
@@ -205,6 +208,10 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 			}
 			statusInfo, statusFound := serverStateStatus[server.ServerNameShort]
 			if statusFound {
+				if state.Name != statusInfo.ServerName && statusInfo.ServerName == "" {
+					state.Name = statusInfo.ServerName
+				}
+
 				var knownPlayers []model.ServerStatePlayer
 				for _, player := range statusInfo.Players {
 					var newPlayer model.ServerStatePlayer

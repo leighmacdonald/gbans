@@ -53,10 +53,10 @@ export const ServerStats = () => {
                 direction="row"
                 justifyContent="space-evenly"
                 alignItems="flex-start"
-                justifyItems={'center'}
+                justifyItems={'left'}
             >
-                <Grid item xs={2} xl={4}>
-                    <Paper elevation={1} sx={{ padding: 2 }}>
+                <Grid item xs={3} xl={4} padding={1}>
+                    <Paper elevation={1} sx={{ padding: 3 }}>
                         <Typography
                             style={{ display: 'inline' }}
                             variant={'subtitle1'}
@@ -82,8 +82,8 @@ export const ServerStats = () => {
                         )
                     );
                     return (
-                        <Grid item xs={3} key={`stat-${v}`}>
-                            <Paper elevation={1} sx={{ padding: 2 }}>
+                        <Grid item xs={3} xl={4} key={`stat-${v}`} padding={1}>
+                            <Paper elevation={1} sx={{ padding: 3 }}>
                                 <Typography
                                     style={{ display: 'inline' }}
                                     variant={'subtitle1'}

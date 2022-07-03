@@ -8,7 +8,7 @@ def upload():
         data = f.read()
     url = "http://localhost:6006/api/log"
     pv = {
-        'server_name': 'localhost-1',
+        'server_name': 'test-1',
         'map_name': 'pl_meme',
         'body': base64.b64encode(data.encode('utf-8')).decode('ascii'),
         'type': "gbans_log"

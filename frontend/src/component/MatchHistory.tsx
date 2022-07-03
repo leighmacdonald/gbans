@@ -22,6 +22,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
 
     const matchTableDef: UserTableProps<MatchSummary> = useMemo(() => {
         return {
+            rowsPerPage: 25,
             columnOrder: [
                 'match_id',
                 // 'server_id',
@@ -40,7 +41,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
                     sortKey: 'match_id',
                     sortType: 'number',
                     align: 'left',
-                    renderer: (value) => {
+                    renderer: (_, value) => {
                         return (
                             <Typography
                                 variant={'button'}

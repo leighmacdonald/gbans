@@ -155,7 +155,9 @@ export const Profile = (): JSX.Element => {
                                 </Masonry>
                             </Paper>
                             <Paper elevation={1}>
-                                <Typography variant={'body1'}>asd</Typography>
+                                <Typography variant={'h6'}>
+                                    Match History
+                                </Typography>
                                 <MatchHistory
                                     steam_id={profile.player.steam_id}
                                     limit={25}

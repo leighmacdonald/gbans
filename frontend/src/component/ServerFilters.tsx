@@ -111,7 +111,24 @@ export const ServerFilters = () => {
     }, [customRange, filterByRegion, selectedRegion, showOpenOnly]);
 
     useEffect(() => {
-        let s = servers;
+        let s = servers
+            .map((srv) => {
+                return { ...srv, distance: getDistance(pos, srv.location) };
+            })
+            .sort((a, b) => {
+                // Sort by position if we have a non-default position.
+                // otherwise, sort by server name
+                if (pos.lat !== 42.434719) {
+                    if (a.distance > b.distance) {
+                        return 1;
+                    }
+                    if (a.distance < b.distance) {
+                        return -1;
+                    }
+                    return 0;
+                }
+                return ('' + a.name_short).localeCompare(b.name_short);
+            });
         if (!filterByRegion && !selectedRegion.includes('any')) {
             s = s.filter((srv) => selectedRegion.includes(srv.region));
         }
@@ -165,7 +182,8 @@ export const ServerFilters = () => {
                 style={{
                     width: '100%',
                     flexWrap: 'nowrap',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    padding: 10
                     // justifyContent: 'center'
                 }}
             >

@@ -162,6 +162,7 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 	match := model.NewMatch()
 	var curServer model.Server
 	for {
+		// TODO reset on match start incase of stale data
 		select {
 		case evt := <-eventChan:
 			if match.ServerId == 0 && evt.Server.ServerID > 0 {
@@ -353,25 +354,35 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 		select {
 		case logFile := <-logFileChan:
 			emitted := 0
-
+			failed := 0
+			unknown := 0
+			ignored := 0
 			for _, logLine := range logFile.Lines {
 				var serverEvent model.ServerEvent
 				errLogServerEvent := logToServerEvent(ctx, logFile.Server, logLine, db, playerStateCache, &serverEvent)
 				if errLogServerEvent != nil {
 					log.Errorf("Failed to parse: %v", errLogServerEvent)
+					failed++
 					continue
 				}
-				if serverEvent.EventType == logparse.UnknownMsg && config.Debug.WriteUnhandledLogEvents {
-					if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
-						log.Errorf("Failed to write debug log: %v", errWrite)
+				if serverEvent.EventType == logparse.IgnoredMsg {
+					ignored++
+					continue
+				} else if serverEvent.EventType == logparse.UnknownMsg {
+					unknown++
+					if config.Debug.WriteUnhandledLogEvents {
+						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
+							log.Errorf("Failed to write debug log: %v", errWrite)
+						}
 					}
 				}
 				event.Emit(serverEvent)
 				emitted++
 			}
-			log.WithFields(log.Fields{"count": emitted}).Debugf("Completed emitting logfile events")
+			log.WithFields(log.Fields{"ok": emitted, "failed": failed, "unknown": unknown, "ignored": ignored}).
+				Debugf("Completed emitting logfile events")
 		case <-ctx.Done():
-			log.Debugf("logReader shutting down")
+			log.Trace("logReader shutting down")
 			return
 		}
 	}

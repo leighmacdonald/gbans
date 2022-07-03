@@ -79,7 +79,7 @@ func (web *web) onPostLog(db store.Store, logFileC chan *LogFilePayload) gin.Han
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		rawLogs, errDecode := base64.RawStdEncoding.DecodeString(upload.Body)
+		rawLogs, errDecode := base64.StdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -101,10 +101,16 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var upload srcdsup.ServerLogUpload
 		if errBind := ctx.BindJSON(&upload); errBind != nil {
+			log.Debugf("Failed to parse demo payload: %v", errBind)
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		if upload.ServerName == "" || upload.Body == "" || upload.MapName == "" {
+			log.WithFields(log.Fields{
+				"server_name": upload.ServerName,
+				"map_name":    upload.MapName,
+				"body_len":    len(upload.Body),
+			}).Debug("Missing demo params")
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
@@ -114,7 +120,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 			return
 		}
-		rawDemo, errDecode := base64.RawStdEncoding.DecodeString(upload.Body)
+		rawDemo, errDecode := base64.StdEncoding.DecodeString(upload.Body)
 		if errDecode != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
