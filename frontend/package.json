@@ -51,7 +51,7 @@
     "@types/marked": "^4.0.3",
     "@types/node": "^18.0.0",
     "@types/react": "^18.0.14",
-    "@types/react-dom": "^18.0.5",
+    "@types/react-dom": "^18.0.6",
     "@types/react-leaflet": "^2.8.2",
     "@types/steamid": "^2.0.1",
     "@types/webpack": "^5.28.0",
