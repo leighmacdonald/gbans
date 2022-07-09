@@ -56,7 +56,7 @@ const (
 // QueryFilter provides a structure for common query parameters
 type QueryFilter struct {
 	Offset   uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
-	Limit    int    `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
+	Limit    uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
 	SortDesc bool   `json:"desc,omitempty" uri:"desc"`
 	Query    string `json:"query,omitempty" uri:"query"`
 	OrderBy  string `json:"order_by,omitempty" uri:"order_by"`

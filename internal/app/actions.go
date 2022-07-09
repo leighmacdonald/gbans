@@ -65,6 +65,7 @@ type banOpts struct {
 	banType  model.BanType
 	reason   string
 	origin   model.Origin
+	modNote  string
 }
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
@@ -99,7 +100,7 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 	ban.BanType = opts.banType
 	ban.Reason = model.Custom
 	ban.ReasonText = opts.reason
-	ban.Note = ""
+	ban.Note = opts.modNote
 	ban.ValidUntil = until
 	ban.Source = opts.origin
 	ban.CreatedOn = config.Now()

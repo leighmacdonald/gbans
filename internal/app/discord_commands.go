@@ -244,7 +244,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        "note",
 							Description: "Mod only notes for the ban reason",
-							Required:    false,
+							Required:    true,
 						},
 					},
 				},

@@ -111,6 +111,8 @@ const (
 	WarningsExceeded Reason = 7
 	Spam             Reason = 8
 	Language         Reason = 9
+	Profile          Reason = 10
+	ItemDescriptions Reason = 11
 )
 
 var reasonStr = map[Reason]string{
@@ -123,6 +125,8 @@ var reasonStr = map[Reason]string{
 	WarningsExceeded: "Warnings Exceeding",
 	Spam:             "Spam",
 	Language:         "Language",
+	Profile:          "Profile",
+	ItemDescriptions: "Item Name/Descriptions",
 }
 
 func (r Reason) String() string {

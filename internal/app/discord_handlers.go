@@ -245,6 +245,10 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, intera
 	if len(interaction.Data.Options[0].Options) > 2 {
 		reason = interaction.Data.Options[0].Options[2].Value.(string)
 	}
+	modNote := ""
+	if len(interaction.Data.Options[0].Options) > 3 {
+		modNote = interaction.Data.Options[0].Options[3].Value.(string)
+	}
 	author := model.NewPerson(0)
 	if errGetAuthor := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {
 		if errGetAuthor == store.ErrNoResult {
@@ -259,6 +263,7 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, intera
 		banType:  model.Banned,
 		reason:   reason,
 		origin:   model.Bot,
+		modNote:  modNote,
 	}
 	var ban model.Ban
 	if errBan := Ban(ctx, bot.database, opts, &ban, bot.botSendMessageChan); errBan != nil {
@@ -406,7 +411,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	}
 	embed.Title = title
 	if player.RealName != "" {
-		addFieldInline(embed, "Real NameShort", player.RealName)
+		addFieldInline(embed, "Real Name", player.RealName)
 	}
 	cd := time.Unix(int64(player.TimeCreated), 0)
 	addFieldInline(embed, "Age", config.FmtDuration(cd))
@@ -433,6 +438,9 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 			addFieldInline(embed, "Expires", config.FmtDuration(expiry))
 		}
 		addFieldInline(embed, "Author", fmt.Sprintf("<@%s>", authorProfile.DiscordID))
+		if ban.Ban.Note != "" {
+			addField(embed, "Mod Note", ban.Ban.Note)
+		}
 	}
 	if player.IPAddr != nil {
 		addFieldInline(embed, "Last IP", player.IPAddr.String())

@@ -10,11 +10,7 @@ export const MatchListPage = (): JSX.Element => {
         <Stack>
             <Box marginTop={3}>
                 <Paper elevation={1}>
-                    <Typography
-                        variant={'h1'}
-                        textAlign={'center'}
-                        marginBottom={2}
-                    >
+                    <Typography variant={'h1'} textAlign={'center'} padding={2}>
                         Match History
                     </Typography>
                 </Paper>

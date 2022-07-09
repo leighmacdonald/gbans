@@ -25,7 +25,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
             rowsPerPage: 25,
             columnOrder: [
                 'match_id',
-                // 'server_id',
+                'server_id',
                 'map_name',
                 'kills',
                 'damage',
@@ -37,7 +37,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
             columns: [
                 {
                     tooltip: 'Match ID',
-                    label: 'Match ID',
+                    label: '#',
                     sortKey: 'match_id',
                     sortType: 'number',
                     align: 'left',
@@ -52,6 +52,11 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
                             </Typography>
                         );
                     }
+                },
+                {
+                    tooltip: 'Server ID',
+                    label: 'Srv',
+                    sortKey: 'server_id'
                 },
                 {
                     tooltip: 'Map',

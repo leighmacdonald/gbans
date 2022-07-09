@@ -49,6 +49,8 @@ export function defaultRenderer(
     type: string
 ): ReactNode {
     switch (type) {
+        case 'date':
+            return new Date(value as string).toDateString();
         case 'float':
             return ((value as number) ?? 0).toFixed(2);
         default:
@@ -121,7 +123,7 @@ export const UserTable = <T,>({
                                                 order === 'asc' ? 'desc' : 'asc'
                                             );
                                         } else {
-                                            setSortColumn(col.sortKey as any);
+                                            setSortColumn(col.sortKey as never);
                                             setOrder('desc');
                                         }
                                     }}

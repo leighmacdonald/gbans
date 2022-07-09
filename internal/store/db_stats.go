@@ -84,11 +84,10 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
 }
 
 type MatchesQueryOpts struct {
+	QueryFilter
 	SteamID   steamid.SID64 `json:"steam_id"`
 	ServerId  int           `json:"server_id"`
 	Map       string        `json:"map"`
-	Limit     uint64        `json:"limit"`
-	OrderDesc bool          `json:"order_desc"`
 	TimeStart *time.Time    `json:"time_start,omitempty"`
 	TimeEnd   *time.Time    `json:"time_end,omitempty"`
 }
@@ -107,9 +106,9 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 		qb = qb.Where(sq.Eq{"m.map_name": opts.Map})
 	}
 	if opts.SteamID > 0 {
-		qb = qb.Where(sq.Eq{"m.server_id": opts.ServerId})
+		qb = qb.Where(sq.Eq{"mp.steam_id": opts.SteamID})
 	}
-	if opts.OrderDesc {
+	if opts.SortDesc {
 		qb = qb.OrderBy("m.match_id DESC")
 	} else {
 		qb = qb.OrderBy("m.match_id ASC")

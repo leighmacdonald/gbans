@@ -6,6 +6,9 @@ import { NewsView } from '../component/NewsView';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import StorageIcon from '@mui/icons-material/Storage';
+import GavelIcon from '@mui/icons-material/Gavel';
+import EventIcon from '@mui/icons-material/Event';
+import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
 import { useNavigate } from 'react-router-dom';
 
 export const Home = (): JSX.Element => {
@@ -28,6 +31,45 @@ export const Home = (): JSX.Element => {
                             }}
                         >
                             Play Now!
+                        </Button>
+                    </Paper>
+                    <Paper elevation={1}>
+                        <Button
+                            startIcon={<GavelIcon />}
+                            fullWidth
+                            color={'info'}
+                            variant={'contained'}
+                            onClick={() => {
+                                navigate('/wiki/Rules');
+                            }}
+                        >
+                            Rules
+                        </Button>
+                    </Paper>
+                    <Paper elevation={1}>
+                        <Button
+                            startIcon={<EventIcon />}
+                            fullWidth
+                            color={'info'}
+                            variant={'contained'}
+                            onClick={() => {
+                                navigate('/wiki/Events');
+                            }}
+                        >
+                            Events
+                        </Button>
+                    </Paper>
+                    <Paper elevation={1}>
+                        <Button
+                            startIcon={<MarkUnreadChatAltIcon />}
+                            fullWidth
+                            color={'info'}
+                            variant={'contained'}
+                            onClick={() => {
+                                window.open('https://discord.gg/uncletopia');
+                            }}
+                        >
+                            Discord
                         </Button>
                     </Paper>
                     <Paper elevation={1}>

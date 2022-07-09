@@ -1,4 +1,4 @@
-import { apiCall } from './common';
+import { apiCall, QueryFilter } from './common';
 import { Person } from './profile';
 import { SteamID } from './const';
 
@@ -198,12 +198,10 @@ export const apiGetMatch = async (match_id: number): Promise<Match> => {
     return await apiCall<Match>(`/api/log/${match_id}`, 'GET');
 };
 
-export interface MatchesQueryOpts {
+export interface MatchesQueryOpts extends QueryFilter {
     steam_id?: SteamID;
     server_id?: number;
     map?: string;
-    limit: number;
-    order_desc?: boolean;
     time_start?: Date;
     time_end?: Date;
 }

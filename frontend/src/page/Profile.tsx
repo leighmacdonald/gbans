@@ -18,6 +18,7 @@ import { Masonry } from '@mui/lab';
 import { format, fromUnixTime } from 'date-fns';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MatchHistory } from '../component/MatchHistory';
+import { Heading } from '../component/Heading';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -94,6 +95,7 @@ export const Profile = (): JSX.Element => {
                             </Stack>
 
                             <Paper elevation={1}>
+                                <Heading>Steam Community Status</Heading>
                                 <Stack
                                     direction="row"
                                     spacing={2}
@@ -136,6 +138,7 @@ export const Profile = (): JSX.Element => {
                             </Paper>
 
                             <Paper elevation={1}>
+                                <Heading>External Links</Heading>
                                 <Masonry columns={3} spacing={1}>
                                     {createExternalLinks(
                                         profile.player.steam_id
@@ -155,9 +158,7 @@ export const Profile = (): JSX.Element => {
                                 </Masonry>
                             </Paper>
                             <Paper elevation={1}>
-                                <Typography variant={'h6'}>
-                                    Match History
-                                </Typography>
+                                <Heading>Match History</Heading>
                                 <MatchHistory
                                     steam_id={profile.player.steam_id}
                                     limit={25}
