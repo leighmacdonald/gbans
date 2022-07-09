@@ -49,7 +49,7 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload, logFil
 		gin.SetMode(gin.DebugMode)
 	}
 	router := gin.New()
-	l := log.StandardLogger()
+	l := log.New()
 	router.Use(ginlogrus.Logger(l), gin.Recovery())
 
 	httpServer = &http.Server{

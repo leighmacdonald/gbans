@@ -13,6 +13,16 @@ import (
 	"sync"
 )
 
+const (
+	maxEmbedFields      = 25
+	minUsernameChars    = 2
+	maxUsernameChars    = 32
+	maxAuthorChars      = 256
+	maxFieldNameChars   = 256
+	maxFieldValueChars  = 1024
+	maxDescriptionChars = 2048
+)
+
 var (
 	errCommandFailed = errors.New("Command failed")
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
@@ -196,16 +206,22 @@ func addField(embed *discordgo.MessageEmbed, title string, value string) {
 }
 
 func addFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
-	const maxEmbedFields = 25
 	if len(embed.Fields) >= maxEmbedFields {
 		log.Warnf("Dropping embed fields. Already at max count: %d", maxEmbedFields)
 		return
 	}
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-		Name:   title,
-		Value:  value,
+		Name:   truncate(title, maxFieldNameChars),
+		Value:  truncate(value, maxFieldValueChars),
 		Inline: inline,
 	})
+}
+
+func truncate(str string, maxLen int) string {
+	if len(str) > maxLen {
+		return str[:maxLen]
+	}
+	return str
 }
 
 func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
@@ -227,4 +243,121 @@ type ChatBot interface {
 	Start(ctx context.Context, token string, eventChan chan model.ServerEvent) error
 	Send(channelId string, message string, wrap bool) error
 	SendEmbed(channelId string, message *discordgo.MessageEmbed) error
+}
+
+type DiscordLogHook struct {
+	MinLevel    log.Level
+	messageChan chan discordPayload
+}
+
+func NewDiscordLogHook(messageChan chan discordPayload) *DiscordLogHook {
+	return &DiscordLogHook{
+		messageChan: messageChan,
+		MinLevel:    log.DebugLevel,
+	}
+}
+
+func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
+	title := entry.Message
+	if title == "" {
+		title = "Log Message"
+	}
+	embed := &discordgo.MessageEmbed{
+		Type:        discordgo.EmbedTypeRich,
+		Title:       title,
+		Description: truncate(entry.Message, maxDescriptionChars),
+		Color:       int(green),
+		Footer:      &defaultFooter,
+		Provider:    &defaultProvider,
+		Author:      &discordgo.MessageEmbedAuthor{Name: "gbans"},
+	}
+	fieldCount := 0
+	for name, value := range entry.Data {
+		var msg string
+		switch value.(type) {
+		case string:
+			msg = value.(string)
+		case int:
+			msg = fmt.Sprintf("%d", value)
+		case int64:
+			msg = fmt.Sprintf("%d", value)
+		case uint:
+			msg = fmt.Sprintf("%d", value)
+		case uint64:
+			msg = fmt.Sprintf("%d", value)
+		default:
+			msg = fmt.Sprintf("%v", value)
+		}
+		if len(msg) > 40 {
+			addField(embed, name, msg)
+		} else {
+			addFieldInline(embed, name, msg)
+		}
+		fieldCount++
+		if fieldCount == maxEmbedFields {
+			break
+		}
+	}
+	select {
+	case hook.messageChan <- discordPayload{
+		channelId: config.Discord.LogChannelID,
+		message:   embed,
+	}:
+	default:
+		return errors.New("Failed to write discord logger msg: chan full")
+	}
+	return nil
+}
+
+func (hook *DiscordLogHook) Levels() []log.Level {
+	return LevelThreshold(hook.MinLevel)
+}
+
+// LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int)
+type LevelColors struct {
+	Trace int
+	Debug int
+	Info  int
+	Warn  int
+	Error int
+	Panic int
+	Fatal int
+}
+
+// DefaultLevelColors is a struct of the default colors used
+var DefaultLevelColors = LevelColors{
+	Trace: 3092790,
+	Debug: 10170623,
+	Info:  3581519,
+	Warn:  14327864,
+	Error: 13631488,
+	Panic: 13631488,
+	Fatal: 13631488,
+}
+
+// LevelThreshold returns a slice of all the levels above and including the level specified
+func LevelThreshold(level log.Level) []log.Level {
+	return log.AllLevels[:level+1]
+}
+
+// LevelColor returns the respective color for the logrus level
+func (lc LevelColors) LevelColor(level log.Level) int {
+	switch level {
+	case log.TraceLevel:
+		return lc.Trace
+	case log.DebugLevel:
+		return lc.Debug
+	case log.InfoLevel:
+		return lc.Info
+	case log.WarnLevel:
+		return lc.Warn
+	case log.ErrorLevel:
+		return lc.Error
+	case log.PanicLevel:
+		return lc.Panic
+	case log.FatalLevel:
+		return lc.Fatal
+	default:
+		return lc.Warn
+	}
 }

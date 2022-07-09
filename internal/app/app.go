@@ -160,6 +160,12 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
 	}
 	match := model.NewMatch()
+
+	var reset = func() {
+		match = model.NewMatch()
+		log.Debugf("New match summary created")
+	}
+
 	var curServer model.Server
 	for {
 		// TODO reset on match start incase of stale data
@@ -168,6 +174,10 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 			if match.ServerId == 0 && evt.Server.ServerID > 0 {
 				curServer = evt.Server
 				match.ServerId = curServer.ServerID
+			}
+			switch evt.EventType {
+			case logparse.MapLoad:
+				reset()
 			}
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt); errApply != nil {
@@ -180,9 +190,10 @@ func matchSummarizer(ctx context.Context, db store.Store) {
 				} else {
 					sendDiscordNotif(curServer, &match)
 				}
-				match = model.NewMatch()
-				log.Debugf("New match summary created")
+				reset()
 			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -230,6 +241,7 @@ func playerStateWriter(ctx context.Context, database store.Store) {
 		logparse.SayTeam,
 	}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
+		return
 	}
 	for {
 		select {
@@ -239,7 +251,6 @@ func playerStateWriter(ctx context.Context, database store.Store) {
 			case logparse.SayTeam:
 
 			case logparse.Connected:
-
 			case logparse.Disconnected:
 
 			}
@@ -492,6 +503,8 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 				}
 			}
 		}()
+		l := log.StandardLogger()
+		l.AddHook(NewDiscordLogHook(botSendMessageChan))
 		if errSessionStart := session.Start(ctx, config.Discord.Token); errSessionStart != nil {
 			log.Errorf("discord returned error: %v", errSessionStart)
 		}
