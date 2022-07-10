@@ -841,3 +841,10 @@ type NewsEntry struct {
 	CreatedOn   time.Time `json:"created_on"`
 	UpdatedOn   time.Time `json:"updated_on"`
 }
+
+type UserUploadedFile struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+	Mime    string `json:"mime"`
+	Size    int64  `json:"size"`
+}

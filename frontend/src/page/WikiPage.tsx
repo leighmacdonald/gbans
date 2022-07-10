@@ -1,11 +1,17 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { log } from '../util/errors';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { apiGetWikiPage, apiSaveWikiPage, Page, renderWiki } from '../api/wiki';
+import {
+    apiGetWikiPage,
+    apiSaveWikiMedia,
+    apiSaveWikiPage,
+    Page,
+    renderWiki
+} from '../api/wiki';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
@@ -24,8 +30,8 @@ import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
-import ImagesearchRollerIcon from '@mui/icons-material/ImagesearchRoller';
 import { Tooltip } from '@mui/material';
+import { FileUploadModal } from '../component/FileUploadModal';
 
 const defaultPage: Page = {
     slug: '',
@@ -47,17 +53,39 @@ const WikiEditForm = ({
     initialBodyMDValue,
     initialTitleValue
 }: WikiEditFormProps): JSX.Element => {
-    const [setTabValue, setTabSetTabValue] = React.useState(0);
-    const [bodyHTML, setBodyHTML] = React.useState('');
-    const [bodyMD, setBodyMD] = React.useState(initialBodyMDValue);
-    const [title, setTitle] = React.useState(initialTitleValue);
+    const [setTabValue, setTabSetTabValue] = useState(0);
+    const [bodyHTML, setBodyHTML] = useState('');
+    const [bodyMD, setBodyMD] = useState(initialBodyMDValue);
+    const [title, setTitle] = useState(initialTitleValue);
+    const [open, setOpen] = useState(false);
+    const [cursorPos, setCursorPos] = useState(0);
 
-    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_: React.SyntheticEvent, newValue: number) =>
         setTabSetTabValue(newValue);
-    };
+
+    useEffect(() => {
+        setBodyHTML(renderWiki(bodyMD));
+    }, [bodyMD]);
 
     return (
         <Stack>
+            <FileUploadModal
+                open={open}
+                setOpen={setOpen}
+                onSave={(v) => {
+                    apiSaveWikiMedia(v).then((resp) => {
+                        if (!resp.author_id) {
+                            return;
+                        }
+                        setOpen(false);
+                        const newBody =
+                            bodyMD.slice(0, cursorPos) +
+                            `![${resp.name}](media://${resp.name})` +
+                            bodyMD.slice(cursorPos);
+                        setBodyMD(newBody);
+                    });
+                }}
+            />
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs
                     value={setTabValue}
@@ -83,22 +111,14 @@ const WikiEditForm = ({
                     <Stack direction={'row'} alignItems={'center'}>
                         <Typography variant={'subtitle1'}>Upload</Typography>
                         <ButtonGroup>
-                            <Tooltip title={'Download remote image'}>
+                            <Tooltip title={'Insert Image'}>
                                 <IconButton
                                     color="primary"
-                                    aria-label="Add Picture"
+                                    aria-label="Insert Image Button"
                                     component="span"
+                                    onClick={() => setOpen(true)}
                                 >
                                     <ImageIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title={'Paste image'}>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Paste image"
-                                    component="span"
-                                >
-                                    <ImagesearchRollerIcon />
                                 </IconButton>
                             </Tooltip>
                         </ButtonGroup>
@@ -153,8 +173,8 @@ const WikiEditForm = ({
                         value={bodyMD ?? ''}
                         onChange={(event) => {
                             const body = event.target.value;
+                            setCursorPos(event.target.selectionEnd ?? 0);
                             setBodyMD(body);
-                            setBodyHTML(renderWiki(body));
                         }}
                     />
                 </Stack>
@@ -264,6 +284,9 @@ export const WikiPage = (): JSX.Element => {
                             <Box
                                 sx={(theme) => {
                                     return {
+                                        img: {
+                                            maxWidth: '100%'
+                                        },
                                         a: {
                                             color: theme.palette.text.primary
                                         }

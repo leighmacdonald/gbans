@@ -97,6 +97,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
+	engine.GET("/wiki_media/:name", web.onGetWikiMedia(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -131,6 +132,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug(database))
+	modRoute.POST("/api/wiki/media", web.onAPISaveWikiMedia(database))
 	modRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
 	modRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
 	modRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))

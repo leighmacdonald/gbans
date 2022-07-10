@@ -1,5 +1,6 @@
 import { apiCall } from './common';
 import { marked } from 'marked';
+import { BaseUploadedMedia, UserUploadedFile } from './report';
 
 export interface Page {
     slug: string;
@@ -10,15 +11,30 @@ export interface Page {
     updated_on: Date;
 }
 
-export const apiGetWikiPage = async (slug: string): Promise<Page> => {
-    return await apiCall<Page>(`/api/wiki/slug/${slug}`, 'GET');
-};
+export const apiGetWikiPage = async (slug: string) =>
+    await apiCall<Page>(`/api/wiki/slug/${slug}`, 'GET');
 
-export const apiSaveWikiPage = async (page: Page): Promise<Page> => {
-    return await apiCall<Page>(`/api/wiki/slug`, 'POST', page);
-};
+export const apiSaveWikiPage = async (page: Page) =>
+    await apiCall<Page>(`/api/wiki/slug`, 'POST', page);
 
-export const renderWiki = (md: string) => {
-    md = md.replace(/(wiki:\/\/)/gi, '/wiki/');
-    return marked(md);
-};
+export const renderWiki = (md: string) =>
+    marked(
+        md
+            .replace(/(wiki:\/\/)/gi, '/wiki/')
+            .replace(/(media:\/\/)/gi, '/wiki_media/')
+    );
+
+export interface MediaUploadRequest extends UserUploadedFile {
+    wiki_url: string;
+}
+
+export interface MediaUploadResponse extends BaseUploadedMedia {
+    url: string;
+}
+
+export const apiSaveWikiMedia = async (upload: UserUploadedFile) =>
+    await apiCall<MediaUploadResponse, UserUploadedFile>(
+        `/api/wiki/media`,
+        'POST',
+        upload
+    );

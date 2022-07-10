@@ -47,3 +47,55 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	log.Debugf("Wiki page saved: %s", page.Title)
 	return nil
 }
+
+func (database *pgStore) SaveWikiMedia(ctx context.Context, media *wiki.Media) error {
+	const query = `
+		INSERT INTO wiki_media (
+		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING wiki_media_id
+	`
+	if errQuery := database.conn.QueryRow(ctx, query,
+		media.AuthorId,
+		media.MimeType,
+		media.Name,
+		media.Contents,
+		media.Size,
+		media.Deleted,
+		media.CreatedOn,
+		media.UpdatedOn,
+	).Scan(&media.WikiMediaId); errQuery != nil {
+		return Err(errQuery)
+	}
+	log.WithFields(log.Fields{
+		"wiki_media_id": media.WikiMediaId,
+		"author_id":     media.AuthorId,
+		"name":          media.Name,
+		"size":          media.Size,
+		"mime":          media.MimeType,
+	}).Infof("Wiki media created")
+	return nil
+}
+
+func (database *pgStore) GetWikiMediaByName(ctx context.Context, name string, media *wiki.Media) error {
+	const query = `
+		SELECT 
+		   wiki_media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
+		FROM wiki_media
+		WHERE deleted = false AND name = $1`
+	if errQuery := database.conn.QueryRow(ctx, query, name).Scan(
+		&media.WikiMediaId,
+		&media.AuthorId,
+		&media.Name,
+		&media.Size,
+		&media.MimeType,
+		&media.Contents,
+		&media.Deleted,
+		&media.CreatedOn,
+		&media.UpdatedOn,
+	); errQuery != nil {
+		return Err(errQuery)
+	}
+	return nil
+}

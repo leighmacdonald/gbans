@@ -1,4 +1,4 @@
-import { apiCall, PermissionLevel } from './common';
+import { apiCall, PermissionLevel, TimeStamped } from './common';
 import { SteamID } from './const';
 
 export enum profileState {
@@ -12,10 +12,8 @@ export enum communityVisibilityState {
     Public = 3
 }
 
-export interface UserProfile {
+export interface UserProfile extends TimeStamped {
     steam_id: string;
-    created_on: Date;
-    updated_on: Date;
     permission_level: PermissionLevel;
     discord_id: string;
     name: string;
@@ -24,7 +22,7 @@ export interface UserProfile {
     ban_id: number;
 }
 
-export interface Person {
+export interface Person extends TimeStamped {
     // PlayerSummaries shape
     steamid: string;
     communityvisibilitystate: communityVisibilityState;
@@ -57,8 +55,6 @@ export interface Person {
     permission_level: PermissionLevel;
     discord_id: string;
     ip_addr: string;
-    created_on: Date;
-    updated_on: Date;
 }
 
 export interface PlayerProfile {
@@ -66,17 +62,14 @@ export interface PlayerProfile {
     friends: Person[];
 }
 
-export const apiGetProfile = async (query: SteamID): Promise<PlayerProfile> => {
-    return await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
-};
+export const apiGetProfile = async (query: SteamID): Promise<PlayerProfile> =>
+    await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 
-export const apiGetCurrentProfile = async (): Promise<UserProfile> => {
-    return await apiCall<UserProfile>(`/api/current_profile`, 'GET');
-};
+export const apiGetCurrentProfile = async (): Promise<UserProfile> =>
+    await apiCall<UserProfile>(`/api/current_profile`, 'GET');
 
-export const apiGetPeople = async (): Promise<Person[]> => {
-    return await apiCall<Person[]>(`/api/players`, 'GET');
-};
+export const apiGetPeople = async (): Promise<Person[]> =>
+    await apiCall<Person[]>(`/api/players`, 'GET');
 
 export interface FindProfileProps {
     query: string;
@@ -84,10 +77,9 @@ export interface FindProfileProps {
 
 export const apiGetResolveProfile = async (
     opts: FindProfileProps
-): Promise<Person> => {
-    return await apiCall<Person, FindProfileProps>(
+): Promise<Person> =>
+    await apiCall<Person, FindProfileProps>(
         '/api/resolve_profile',
         'POST',
         opts
     );
-};

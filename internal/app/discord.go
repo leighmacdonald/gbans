@@ -258,18 +258,18 @@ func NewDiscordLogHook(messageChan chan discordPayload) *DiscordLogHook {
 }
 
 func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
-	title := entry.Message
-	if title == "" {
-		title = "Log Message"
-	}
+	//title := entry.Message
+	//if title == "" {
+	//	title = "Log Message"
+	//}
 	embed := &discordgo.MessageEmbed{
-		Type:        discordgo.EmbedTypeRich,
-		Title:       title,
+		Type: discordgo.EmbedTypeRich,
+		//Title:       title,
 		Description: truncate(entry.Message, maxDescriptionChars),
 		Color:       int(green),
-		Footer:      &defaultFooter,
-		Provider:    &defaultProvider,
-		Author:      &discordgo.MessageEmbedAuthor{Name: "gbans"},
+		//Footer:      &defaultFooter,
+		Provider: &defaultProvider,
+		//Author:   &discordgo.MessageEmbedAuthor{Name: "gbans"},
 	}
 	fieldCount := 0
 	for name, value := range entry.Data {

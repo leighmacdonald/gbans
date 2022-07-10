@@ -1245,6 +1245,45 @@ func (web *web) onAPIPostNewsUpdate(database store.NewsStore) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPISaveWikiMedia(database store.WikiStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var upload model.UserUploadedFile
+		if errBind := ctx.BindJSON(&upload); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		content, decodeErr := base64.StdEncoding.DecodeString(upload.Content)
+		if decodeErr != nil {
+			responseErr(ctx, http.StatusUnprocessableEntity, nil)
+			return
+		}
+		if int64(len(content)) != upload.Size {
+			responseErr(ctx, http.StatusUnprocessableEntity, nil)
+			return
+		}
+		media := wiki.Media{
+			AuthorId:  currentUserProfile(ctx).SteamID,
+			MimeType:  upload.Mime,
+			Size:      upload.Size,
+			Contents:  content,
+			Name:      upload.Name,
+			Deleted:   false,
+			CreatedOn: config.Now(),
+			UpdatedOn: config.Now(),
+		}
+		if errSave := database.SaveWikiMedia(ctx, &media); errSave != nil {
+			log.Errorf("Failed to save wiki media: %v", errSave)
+			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
+				responseErrUser(ctx, http.StatusConflict, nil, "Duplicate media name")
+				return
+			}
+			responseErrUser(ctx, http.StatusInternalServerError, nil, "Could not same media")
+			return
+		}
+		responseOKUser(ctx, http.StatusAccepted, media, "Media uploaded successfully")
+	}
+}
+
 func (web *web) onAPIGetWikiSlug(database store.WikiStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		slug := ctx.Param("slug")
@@ -1261,6 +1300,24 @@ func (web *web) onAPIGetWikiSlug(database store.WikiStore) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusOK, page)
+	}
+}
+func (web *web) onGetWikiMedia(database store.WikiStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		if name[0] == '/' {
+			name = name[1:]
+		}
+		var media wiki.Media
+		if errMedia := database.GetWikiMediaByName(ctx, name, &media); errMedia != nil {
+			if errors.Is(store.Err(errMedia), store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+			}
+			return
+		}
+		ctx.Data(http.StatusOK, media.MimeType, media.Contents)
 	}
 }
 

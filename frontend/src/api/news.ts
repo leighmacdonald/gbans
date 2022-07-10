@@ -9,13 +9,11 @@ export interface NewsEntry {
     updated_on: Date;
 }
 
-export const apiGetNewsLatest = async (): Promise<NewsEntry[]> => {
-    return await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST');
-};
+export const apiGetNewsLatest = async (): Promise<NewsEntry[]> =>
+    await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST');
 
-export const apiGetNewsAll = async (): Promise<NewsEntry[]> => {
-    return await apiCall<NewsEntry[]>(`/api/news_all`, 'POST');
-};
+export const apiGetNewsAll = async (): Promise<NewsEntry[]> =>
+    await apiCall<NewsEntry[]>(`/api/news_all`, 'POST');
 
 export const apiNewsSave = async (entry: NewsEntry): Promise<NewsEntry> => {
     if (entry.body_md === '') {

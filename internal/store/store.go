@@ -103,6 +103,8 @@ type WikiStore interface {
 	GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error
 	SaveWikiPage(ctx context.Context, page *wiki.Page) error
+	SaveWikiMedia(ctx context.Context, media *wiki.Media) error
+	GetWikiMediaByName(ctx context.Context, name string, media *wiki.Media) error
 }
 
 type StatStore interface {

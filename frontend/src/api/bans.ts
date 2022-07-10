@@ -116,10 +116,8 @@ export const apiGetBans = async (): Promise<IAPIBanRecord[]> => {
 
 export const apiGetBan = async (
     ban_id: number
-): Promise<BannedPerson | apiError> => {
-    return await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
-};
+): Promise<BannedPerson | apiError> =>
+    await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
 
-export const apiCreateBan = async (p: BanPayload): Promise<Ban | apiError> => {
-    return await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);
-};
+export const apiCreateBan = async (p: BanPayload): Promise<Ban | apiError> =>
+    await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);

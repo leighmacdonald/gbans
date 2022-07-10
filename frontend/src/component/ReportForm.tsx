@@ -22,7 +22,7 @@ import {
     BanReasons,
     PlayerProfile,
     SteamID,
-    UploadedFile
+    UserUploadedFile
 } from '../api';
 import Typography from '@mui/material/Typography';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
@@ -31,8 +31,8 @@ import { useNavigate } from 'react-router-dom';
 import ButtonGroup from '@mui/material/ButtonGroup';
 
 interface FormProps {
-    uploadedFiles: UploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
-    setUploadedFiles: (files: UploadedFile[]) => void;
+    uploadedFiles: UserUploadedFile[]; //(fileName:Blob) => Promise<void>, // callback taking a string and then dispatching a store actions
+    setUploadedFiles: (files: UserUploadedFile[]) => void;
 }
 
 const FileUploaderForm: React.FunctionComponent<FormProps> = ({
@@ -134,7 +134,7 @@ export const ReportForm = (): JSX.Element => {
     const [title, setTitle] = useState<string>('');
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
     const [description, setDescription] = useState<string>('');
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+    const [uploadedFiles, setUploadedFiles] = useState<UserUploadedFile[]>([]);
     const [profile, setProfile] = useState<PlayerProfile | null>();
     const [steamID, setSteamID] = useState<SteamID>(BigInt(0));
     const navigate = useNavigate();
