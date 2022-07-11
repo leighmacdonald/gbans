@@ -239,17 +239,16 @@ type Ban struct {
 }
 
 func (b Ban) String() string {
-	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v",
-		b.SteamID.Int64(), b.Source, b.ReasonText, b.BanType)
+	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", b.SteamID.Int64(), b.Source, b.ReasonText, b.BanType)
 }
 
 type BannedPerson struct {
 	Ban                Ban               `json:"ban"`
 	Person             Person            `json:"person"`
-	HistoryChat        []logparse.SayEvt `json:"history_chat" db:"-"`
+	HistoryChat        PersonMessages    `json:"history_chat" db:"-"`
 	HistoryPersonaName []string          `json:"history_personaname" db:"-"`
 	HistoryConnections []string          `json:"history_connections" db:"-"`
-	HistoryIP          []PersonIPRecord  `json:"history_ip" db:"-"`
+	HistoryIP          PersonConnections `json:"history_ip" db:"-"`
 }
 
 func NewBannedPerson() BannedPerson {
@@ -279,14 +278,9 @@ type PersonChat struct {
 	CreatedOn    time.Time
 }
 
-type IPRecord struct {
-	IPAddr    net.IP    `json:"ip_addr"`
-	CreatedOn time.Time `json:"created_on"`
-}
-
 // PersonIPRecord holds a composite result of the more relevant ip2location results
 type PersonIPRecord struct {
-	IP          net.IP
+	IPAddr      net.IP
 	CreatedOn   time.Time
 	CityName    string
 	CountryName string
@@ -537,7 +531,7 @@ const (
 
 type Appeal struct {
 	AppealID    int         `db:"appeal_id" json:"appeal_id"`
-	BanID       uint64      `db:"ban_id" json:"ban_id"`
+	BanID       int64       `db:"ban_id" json:"ban_id"`
 	AppealText  string      `db:"appeal_text" json:"appeal_text"`
 	AppealState AppealState `db:"appeal_state" json:"appeal_state"`
 	Email       string      `db:"email" json:"email"`
@@ -826,13 +820,6 @@ func NewReportMessage(reportId int, authorId steamid.SID64, message string) Repo
 	}
 }
 
-type PersonConnection struct {
-	CreatedOn time.Time `json:"created_on"`
-	Address   net.IP    `json:"address"`
-}
-
-type PersonConnections []PersonConnection
-
 type NewsEntry struct {
 	NewsId      int       `json:"news_id"`
 	Title       string    `json:"title"`
@@ -848,3 +835,27 @@ type UserUploadedFile struct {
 	Mime    string `json:"mime"`
 	Size    int64  `json:"size"`
 }
+
+type PersonConnection struct {
+	PersonConnectionId int64
+	IPAddr             net.IP
+	SteamId            steamid.SID64
+	PersonaName        string
+	CreatedOn          time.Time
+	IPInfo             PersonIPRecord
+}
+
+type PersonConnections []PersonConnection
+
+type PersonMessage struct {
+	PersonMessageId int64
+	SteamId         steamid.SID64
+	PersonaName     string
+	ServerName      string
+	ServerId        int
+	Body            string
+	Team            bool
+	CreatedOn       time.Time
+}
+
+type PersonMessages []PersonMessage

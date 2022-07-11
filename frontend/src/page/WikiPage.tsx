@@ -30,7 +30,7 @@ import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
-import { Tooltip } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
 import { FileUploadModal } from '../component/FileUploadModal';
 
 const defaultPage: Page = {

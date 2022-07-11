@@ -2,6 +2,7 @@ package util
 
 import (
 	log "github.com/sirupsen/logrus"
+	"math"
 	"strconv"
 )
 
@@ -14,4 +15,17 @@ func StringToFloat64(numericString string, defaultValue float64) float64 {
 		return defaultValue
 	}
 	return value
+}
+
+const DefaultIntAllocate int = 0
+
+func StringToInt(desired string) int {
+	parsed, err := strconv.Atoi(desired)
+	if err != nil {
+		return DefaultIntAllocate
+	}
+	if parsed > 0 && parsed <= math.MaxInt32 {
+		return parsed
+	}
+	return DefaultIntAllocate
 }

@@ -1,13 +1,11 @@
 import React, { ChangeEvent, useCallback, useEffect } from 'react';
 import { getDistance } from '../util/gis';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
-import {
-    FormControlLabel,
-    InputLabel,
-    Select,
-    Slider,
-    Switch
-} from '@mui/material';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import Slider from '@mui/material/Slider';
+import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';

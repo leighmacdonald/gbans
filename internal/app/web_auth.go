@@ -113,7 +113,7 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 		} else {
 			id, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				log.Errorf("Error verifying openid auth response: %query", errVerify)
+				log.Errorf("Error verifying openid auth response: %v", errVerify)
 				ctx.Redirect(302, referralUrl)
 				return
 			}

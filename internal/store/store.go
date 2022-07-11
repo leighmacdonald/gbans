@@ -45,8 +45,8 @@ type NewsStore interface {
 
 type BanStore interface {
 	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, bannedPerson *model.BannedPerson) error
-	GetBanByBanID(ctx context.Context, banID uint64, full bool, bannedPerson *model.BannedPerson) error
-	GetAppeal(ctx context.Context, banID uint64, appeal *model.Appeal) error
+	GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error
+	GetAppeal(ctx context.Context, banID int64, appeal *model.Appeal) error
 	SaveAppeal(ctx context.Context, appeal *model.Appeal) error
 	SaveBan(ctx context.Context, ban *model.Ban) error
 	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
@@ -86,6 +86,10 @@ type PersonStore interface {
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *model.Person) error
 	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
 	GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error)
+	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) (model.PersonConnections, error)
+	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) (model.PersonMessages, error)
+	AddChatHistory(ctx context.Context, message *model.PersonMessage) error
+	AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error
 }
 
 type FilterStore interface {
@@ -120,7 +124,6 @@ type NetworkStore interface {
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetLocationRecord(ctx context.Context, ip net.IP, locationRecord *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.ProxyRecord) error
-	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) ([]model.PersonIPRecord, error)
 }
 
 type CacheStore interface {

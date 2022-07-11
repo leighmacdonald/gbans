@@ -35,6 +35,7 @@ export const FileUploadModal = ({
 }: FileUploadModalProps): JSX.Element => {
     const [url, setUrl] = useState('');
     const [upload, setUpload] = useState<Nullable<UserUploadedFile>>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleUploadedFile = useCallback(({ target }: any) => {
         const file = target.files[0];
         const reader = new FileReader();
@@ -100,7 +101,7 @@ export const FileUploadModal = ({
                     <label htmlFor="contained-button-file">
                         <input
                             id="contained-button-file"
-                            accept="image/*"
+                            accept="image/*,video/*"
                             type="file"
                             hidden={true}
                             onChange={handleUploadedFile}

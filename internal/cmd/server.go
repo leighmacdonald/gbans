@@ -97,8 +97,9 @@ var serverCreateCmd = &cobra.Command{
 		if errSaveServer := database.SaveServer(ctx, &server); errSaveServer != nil {
 			log.Fatalf("Could not create server: %v", errSaveServer)
 		}
-		log.WithFields(log.Fields{"token": server.Password, "nameLong": nameLong}).
+		log.WithFields(log.Fields{"nameLong": nameLong}).
 			Info("Added server successfully. This password must be added to your servers gbans.cfg")
+		fmt.Println(server.Password)
 	},
 }
 

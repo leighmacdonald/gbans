@@ -8,7 +8,7 @@ import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
 
 const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number) => {
     const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
@@ -158,6 +158,7 @@ export const UserTable = <T,>({
                                         col?.renderer ?? defaultRenderer
                                     )(
                                         row,
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         (row as any)[col.sortKey],
                                         col?.sortType || 'string'
                                     );

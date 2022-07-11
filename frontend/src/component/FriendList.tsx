@@ -12,7 +12,7 @@ import ArrowRight from '@mui/icons-material/ArrowRight';
 import Button from '@mui/material/Button';
 import ListSubheader from '@mui/material/ListSubheader';
 import { Person } from '../api';
-import { useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export interface FriendListProps {

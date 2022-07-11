@@ -6,11 +6,12 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import { Flag } from './Flag';
-import { LinearProgress, LinearProgressProps } from '@mui/material';
+import LinearProgress from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { UserTable } from './UserTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { LinearProgressProps } from '@mui/material/LinearProgress';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }

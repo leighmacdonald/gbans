@@ -108,11 +108,10 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 }
 
 func (bot *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	log.WithFields(log.Fields{"service": "discord", "status": "ready"}).Infof("Service status changed")
+	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
 }
 
 func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
-	log.Tracef("Connected to session ws API")
 	status := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{
@@ -135,13 +134,14 @@ func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 	bot.connectedMu.Lock()
 	bot.connected = true
 	bot.connectedMu.Unlock()
+	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).Infof("Discord state changed")
 }
 
 func (bot *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.connectedMu.Lock()
 	bot.connected = false
 	bot.connectedMu.Unlock()
-	log.Info("Disconnected from session ws API")
+	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
 }
 
 func (bot *discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
@@ -266,7 +266,7 @@ func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
 		Type: discordgo.EmbedTypeRich,
 		//Title:       title,
 		Description: truncate(entry.Message, maxDescriptionChars),
-		Color:       int(green),
+		Color:       DefaultLevelColors.LevelColor(entry.Level),
 		//Footer:      &defaultFooter,
 		Provider: &defaultProvider,
 		//Author:   &discordgo.MessageEmbedAuthor{Name: "gbans"},
@@ -304,7 +304,8 @@ func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
 		message:   embed,
 	}:
 	default:
-		return errors.New("Failed to write discord logger msg: chan full")
+		// errors.New("Failed to write discord logger msg: chan full")
+		return nil
 	}
 	return nil
 }

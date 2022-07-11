@@ -5,6 +5,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -88,7 +89,7 @@ func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.New
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	log.Debugf("New article saved: %s", entry.Title)
+	log.Debugf("New article saved: %s", util.SanitizeLog(entry.Title))
 	return nil
 }
 
@@ -106,7 +107,7 @@ func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.New
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update article")
 	}
-	log.Debugf("News article updated: %s", entry.Title)
+	log.Debugf("News article updated: %s", util.SanitizeLog(entry.Title))
 	return nil
 }
 

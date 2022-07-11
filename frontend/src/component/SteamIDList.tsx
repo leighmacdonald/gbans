@@ -3,7 +3,8 @@ import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import ListSubheader from '@mui/material/ListSubheader';
-import { ListItem, useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
+import ListItem from '@mui/material/ListItem';
 import SteamID from 'steamid';
 
 export interface SteamIDListProps {

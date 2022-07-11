@@ -232,11 +232,9 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 	}
 }
 
-func playerStateWriter(ctx context.Context, database store.Store) {
+func playerMessageWriter(ctx context.Context, database store.Store) {
 	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := event.Consume(serverEventChan, []logparse.EventType{
-		logparse.Connected,
-		logparse.Disconnected,
 		logparse.Say,
 		logparse.SayTeam,
 	}); errRegister != nil {
@@ -248,11 +246,28 @@ func playerStateWriter(ctx context.Context, database store.Store) {
 		case evt := <-serverEventChan:
 			switch evt.EventType {
 			case logparse.Say:
+				fallthrough
 			case logparse.SayTeam:
-
-			case logparse.Connected:
-			case logparse.Disconnected:
-
+				body := evt.GetValueString("msg")
+				if body == "" {
+					log.Warnf("Empty person message body, skipping")
+					continue
+				}
+				msg := model.PersonMessage{
+					SteamId:     evt.Source.SteamID,
+					PersonaName: evt.Source.PersonaName,
+					ServerName:  evt.Server.ServerNameLong,
+					ServerId:    evt.Server.ServerID,
+					Body:        body,
+					Team:        evt.EventType == logparse.SayTeam,
+					CreatedOn:   evt.CreatedOn,
+				}
+				lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+				if errChat := database.AddChatHistory(lCtx, &msg); errChat != nil {
+					log.Errorf("Failed to add chat history: %v", errChat)
+				}
+				cancel()
+				log.WithFields(log.Fields{"msg": msg}).Debugf("Saved mesasge")
 			}
 		}
 	}
@@ -474,6 +489,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	//go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 	go matchSummarizer(ctx, database)
+	go playerMessageWriter(ctx, database)
 }
 
 // UDP log sink

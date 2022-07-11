@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { ListItem, ListItemIcon, ListItemText, useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
+import ListItem from '@mui/material/ListItem';
 import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import { apiGetNewsAll, NewsEntry } from '../api/news';
 import FolderIcon from '@mui/icons-material/Folder';
 import { logErr } from '../util/errors';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 
 interface NewsListProps {
     setSelectedNewsEntry: (entry: NewsEntry) => void;

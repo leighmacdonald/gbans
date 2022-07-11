@@ -498,12 +498,13 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 	embed := respOk(response, fmt.Sprintf("IP History of: %s", person.PersonaName))
 	lastIp := net.IP{}
 	for _, ipRecord := range ipRecords {
-		if ipRecord.IP.Equal(lastIp) {
+		if ipRecord.IPAddr.Equal(lastIp) {
 			continue
 		}
-		addField(embed, ipRecord.IP.String(), fmt.Sprintf("%s %s %s %s %s %s %s %s", config.FmtTimeShort(ipRecord.CreatedOn), ipRecord.CountryCode,
-			ipRecord.CityName, ipRecord.ASName, ipRecord.ISP, ipRecord.UsageType, ipRecord.Threat, ipRecord.DomainUsed))
-		lastIp = ipRecord.IP
+		// TODO Join query for connections and geoip lookup data
+		//addField(embed, ipRecord.IpAddr.String(), fmt.Sprintf("%s %s %s %s %s %s %s %s", config.FmtTimeShort(ipRecord.CreatedOn), ipRecord.CountryCode,
+		//	ipRecord.CityName, ipRecord.ASName, ipRecord.ISP, ipRecord.UsageType, ipRecord.Threat, ipRecord.DomainUsed))
+		//lastIp = ipRecord.IpAddr
 	}
 	embed.Description = "IP history (20 max)"
 	return nil

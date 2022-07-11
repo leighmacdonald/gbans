@@ -34,3 +34,10 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 	}
 	return results
 }
+
+func SanitizeLog(s string) string {
+	for _, char := range []string{"\n", "\r"} {
+		s = strings.Replace(s, char, "", -1)
+	}
+	return s
+}

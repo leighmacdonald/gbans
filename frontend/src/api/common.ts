@@ -25,7 +25,6 @@ export interface apiError {
  * @param url
  * @param method
  * @param body
- * @param fullResponse If true, will return the full apiResponse object and not just the data.
  */
 export const apiCall = async <
     TResponse,
@@ -94,16 +93,11 @@ export interface QueryFilterProps {
 
 export const handleOnLogin = (): void => {
     let returnUrl = window.location.hostname;
-    if (
-        (window.location.protocol === 'https:' &&
-            window.location.port !== '443') ||
-        (window.location.protocol === 'http:' &&
-            window.location.port !== '80') ||
-        (window.location.port != '80' && window.location.port != '443')
-    ) {
+    if (window.location.port !== '') {
         returnUrl = `${returnUrl}:${window.location.port}`;
     }
     const r = `${window.location.protocol}//${returnUrl}/auth/callback?return_url=${window.location.pathname}`;
+    console.log(r);
     const oid =
         'https://steamcommunity.com/openid/login' +
         '?openid.ns=' +

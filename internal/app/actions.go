@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -290,7 +291,7 @@ func Kick(ctx context.Context, database store.Store, origin model.Origin, target
 	if playerInfo != nil {
 		*playerInfo = foundPI
 	}
-	log.WithFields(log.Fields{"origin": origin, "target": target, "author": authorSid64.String()}).
+	log.WithFields(log.Fields{"origin": origin, "target": target, "author": util.SanitizeLog(authorSid64.String())}).
 		Infof("User kicked")
 	return nil
 }

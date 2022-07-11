@@ -4,7 +4,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import QuizIcon from '@mui/icons-material/Quiz';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import React from 'react';
-import { Tooltip } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
 
 interface ReportStatusIconProps {
     reportStatus: ReportStatus;

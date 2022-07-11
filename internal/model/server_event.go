@@ -2,8 +2,10 @@ package model
 
 import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamweb"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"strconv"
 	"time"
 )
@@ -81,7 +83,11 @@ func (serverEvent ServerEvent) GetValueInt64(key string) int64 {
 }
 
 func (serverEvent ServerEvent) GetValueInt(key string) int {
-	return int(serverEvent.GetValueInt64(key))
+	value := serverEvent.GetValueInt64(key)
+	if value > 0 && value <= math.MaxInt32 {
+		return int(value)
+	}
+	return util.DefaultIntAllocate
 }
 
 func (serverEvent ServerEvent) GetValueBool(key string) bool {

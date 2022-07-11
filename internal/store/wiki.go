@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,7 +45,7 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	log.Debugf("Wiki page saved: %s", page.Title)
+	log.Debugf("Wiki page saved: %s", util.SanitizeLog(page.Title))
 	return nil
 }
 
@@ -71,9 +72,9 @@ func (database *pgStore) SaveWikiMedia(ctx context.Context, media *wiki.Media) e
 	log.WithFields(log.Fields{
 		"wiki_media_id": media.WikiMediaId,
 		"author_id":     media.AuthorId,
-		"name":          media.Name,
+		"name":          util.SanitizeLog(media.Name),
 		"size":          media.Size,
-		"mime":          media.MimeType,
+		"mime":          util.SanitizeLog(media.MimeType),
 	}).Infof("Wiki media created")
 	return nil
 }

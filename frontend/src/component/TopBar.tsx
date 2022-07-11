@@ -32,7 +32,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import { useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 interface menuRoute {

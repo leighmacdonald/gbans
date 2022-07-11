@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
@@ -107,8 +108,8 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 		}
 		if upload.ServerName == "" || upload.Body == "" || upload.MapName == "" {
 			log.WithFields(log.Fields{
-				"server_name": upload.ServerName,
-				"map_name":    upload.MapName,
+				"server_name": util.SanitizeLog(upload.ServerName),
+				"map_name":    util.SanitizeLog(upload.MapName),
 				"body_len":    len(upload.Body),
 			}).Debug("Missing demo params")
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -116,7 +117,7 @@ func (web *web) onPostDemo(database store.Store) gin.HandlerFunc {
 		}
 		var server model.Server
 		if errGetServer := database.GetServerByName(ctx, upload.ServerName, &server); errGetServer != nil {
-			log.WithFields(log.Fields{"server": upload.ServerName}).Errorf("Server not found")
+			log.WithFields(log.Fields{"server": util.SanitizeLog(upload.ServerName)}).Errorf("Server not found")
 			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 			return
 		}
@@ -210,18 +211,13 @@ func (web *web) onPostPingMod(database store.Store) gin.HandlerFunc {
 }
 func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		banIDStr := ctx.Param("report_id")
-		if banIDStr == "" {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		reportId, errParseId := strconv.ParseUint(banIDStr, 10, 32)
-		if errParseId != nil {
+		reportId, errId := getIntParam(ctx, "report_id")
+		if errId != nil || reportId <= 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var report model.Report
-		if errReport := database.GetReport(ctx, int(reportId), &report); errReport != nil {
+		if errReport := database.GetReport(ctx, reportId, &report); errReport != nil {
 			if errors.Is(errReport, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -332,7 +328,7 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 		}
 		if server.Password != request.Key {
 			responseErr(ctx, http.StatusForbidden, nil)
-			log.Warnf("Invalid server key used: %s", request.ServerName)
+			log.Warnf("Invalid server key used: %s", util.SanitizeLog(request.ServerName))
 			return
 		}
 		server.Token = golib.RandomString(40)
@@ -351,6 +347,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 		ClientID int         `json:"client_id"`
 		SteamID  steamid.SID `json:"steam_id"`
 		IP       net.IP      `json:"ip"`
+		Name     string      `json:"name,omitempty"`
 	}
 	type checkResponse struct {
 		ClientID int           `json:"client_id"`
@@ -389,6 +386,15 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 				Msg:     "Error updating profile state",
 			})
 			return
+		}
+		if errAddHist := database.AddConnectionHistory(ctx, &model.PersonConnection{
+			IPAddr:      request.IP,
+			SteamId:     steamid.SIDToSID64(request.SteamID),
+			PersonaName: request.Name,
+			CreatedOn:   config.Now(),
+			IPInfo:      model.PersonIPRecord{},
+		}); errAddHist != nil {
+			log.Errorf("Failed to add conn history: %v", errAddHist)
 		}
 		// Check IP first
 		banNet, errGetBanNet := database.GetBanNet(responseCtx, request.IP)
@@ -703,13 +709,8 @@ func loadBanMeta(_ *model.BannedPerson) {
 
 func (web *web) onAPIGetBanByID(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		banIDStr := ctx.Param("ban_id")
-		if banIDStr == "" {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		banId, errParseUint := strconv.ParseUint(banIDStr, 10, 64)
-		if errParseUint != nil {
+		banId, errId := getInt64Param(ctx, "ban_id")
+		if errId != nil || banId == 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
@@ -796,13 +797,8 @@ func (web *web) onAPIGetAppeal(database store.Store) gin.HandlerFunc {
 	//	Appeal model.Appeal       `json:"appeal"`
 	//}
 	return func(ctx *gin.Context) {
-		banIdStr := ctx.Param("ban_id")
-		if banIdStr == "" {
-			responseErr(ctx, http.StatusNotFound, nil)
-			return
-		}
-		banId, errBanId := strconv.ParseUint(banIdStr, 10, 64)
-		if errBanId != nil {
+		banId, errId := getInt64Param(ctx, "ban_id")
+		if errId != nil || banId == 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
@@ -911,15 +907,23 @@ func getInt64Param(ctx *gin.Context, key string) (int64, error) {
 	return value, nil
 }
 
+func getIntParam(ctx *gin.Context, key string) (int, error) {
+	valueStr := ctx.Param(key)
+	if valueStr == "" {
+		return 0, errors.Errorf("Failed to get %s", key)
+	}
+	return util.StringToInt(valueStr), nil
+}
+
 func (web *web) onAPIGetReportMedia(database store.ReportStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		mediaId, errParam := getInt64Param(ctx, "report_media_id")
+		mediaId, errParam := getIntParam(ctx, "report_media_id")
 		if errParam != nil {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var reportMedia model.ReportMedia
-		if errMedia := database.GetReportMediaById(ctx, int(mediaId), &reportMedia); errMedia != nil {
+		if errMedia := database.GetReportMediaById(ctx, mediaId, &reportMedia); errMedia != nil {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
@@ -932,9 +936,9 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 		Message string `json:"message"`
 	}
 	return func(ctx *gin.Context) {
-		reportId, errParam := getInt64Param(ctx, "report_id")
-		if errParam != nil {
-			responseErr(ctx, http.StatusNotFound, nil)
+		reportId, errId := getIntParam(ctx, "report_id")
+		if errId != nil || reportId == 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var request req
@@ -947,7 +951,7 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 			return
 		}
 		var report model.Report
-		if errReport := database.GetReport(ctx, int(reportId), &report); errReport != nil {
+		if errReport := database.GetReport(ctx, reportId, &report); errReport != nil {
 			if store.Err(errReport) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -957,8 +961,8 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 			return
 		}
 		person := currentUserProfile(ctx)
-		msg := model.NewReportMessage(int(reportId), person.SteamID, request.Message)
-		if errSave := database.SaveReportMessage(ctx, int(reportId), &msg); errSave != nil {
+		msg := model.NewReportMessage(reportId, person.SteamID, request.Message)
+		if errSave := database.SaveReportMessage(ctx, reportId, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save report message: %v", errSave)
 			return
@@ -986,7 +990,7 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 		Status model.ReportStatus `json:"status"`
 	}
 	return func(c *gin.Context) {
-		reportId, errParam := getInt64Param(c, "report_id")
+		reportId, errParam := getIntParam(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
@@ -997,7 +1001,7 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 			return
 		}
 		var report model.Report
-		if errGet := database.GetReport(c, int(reportId), &report); errGet != nil {
+		if errGet := database.GetReport(c, reportId, &report); errGet != nil {
 			responseErr(c, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to get report to set state: %v", errGet)
 			return
@@ -1019,12 +1023,12 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 
 func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		reportId, errParam := getInt64Param(c, "report_id")
+		reportId, errParam := getIntParam(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
 		}
-		reportMessages, errGetReportMessages := database.GetReportMessages(c, int(reportId))
+		reportMessages, errGetReportMessages := database.GetReportMessages(c, reportId)
 		if errGetReportMessages != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
@@ -1103,13 +1107,13 @@ func (web *web) onAPIGetReports(database store.Store) gin.HandlerFunc {
 
 func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportId, errParam := getInt64Param(ctx, "report_id")
+		reportId, errParam := getIntParam(ctx, "report_id")
 		if errParam != nil {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var report reportWithAuthor
-		if errReport := database.GetReport(ctx, int(reportId), &report.Report); errReport != nil {
+		if errReport := database.GetReport(ctx, reportId, &report.Report); errReport != nil {
 			if store.Err(errReport) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -1212,13 +1216,13 @@ func (web *web) onAPIPostNewsCreate(database store.NewsStore) gin.HandlerFunc {
 
 func (web *web) onAPIPostNewsUpdate(database store.NewsStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsId, errId := getInt64Param(ctx, "news_id")
+		newsId, errId := getIntParam(ctx, "news_id")
 		if errId != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
 		var entry model.NewsEntry
-		if errGet := database.GetNewsById(ctx, int(newsId), &entry); errGet != nil {
+		if errGet := database.GetNewsById(ctx, newsId, &entry); errGet != nil {
 			if errors.Is(store.Err(errGet), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -1373,17 +1377,13 @@ func (web *web) onAPIGetMatches(database store.Store) gin.HandlerFunc {
 
 func (web *web) onAPIGetMatch(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		matchIdStr := ctx.Param("match_id")
-		if matchIdStr[0] == '/' {
-			matchIdStr = matchIdStr[1:]
-		}
-		matchId, matchIdErr := strconv.ParseInt(matchIdStr, 10, 32)
-		if matchIdErr != nil {
+		matchId, errId := getIntParam(ctx, "match_id")
+		if errId != nil {
 			log.Errorf("Invalid match_id value")
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		match, errMatch := database.MatchGetById(ctx, int(matchId))
+		match, errMatch := database.MatchGetById(ctx, matchId)
 		if errMatch != nil {
 			if errors.Is(errMatch, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)

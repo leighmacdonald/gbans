@@ -72,11 +72,11 @@ func (database *pgStore) GetBanBySteamID(ctx context.Context, sid64 steamid.SID6
 	return database.getBanByColumn(ctx, "steam_id", sid64, full, bannedPerson)
 }
 
-func (database *pgStore) GetBanByBanID(ctx context.Context, banID uint64, full bool, bannedPerson *model.BannedPerson) error {
+func (database *pgStore) GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error {
 	return database.getBanByColumn(ctx, "ban_id", banID, full, bannedPerson)
 }
 
-func (database *pgStore) GetAppeal(ctx context.Context, banID uint64, appeal *model.Appeal) error {
+func (database *pgStore) GetAppeal(ctx context.Context, banID int64, appeal *model.Appeal) error {
 	query, args, errQueryArgs := sb.Select("appeal_id", "ban_id", "appeal_text", "appeal_state",
 		"email", "created_on", "updated_on").
 		From("ban_appeal").

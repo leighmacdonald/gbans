@@ -3,7 +3,7 @@ import Avatar from '@mui/material/Avatar';
 import React from 'react';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import { useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
 import Grow from '@mui/material/Grow';
 import MenuList from '@mui/material/MenuList';
 import Popper from '@mui/material/Popper';

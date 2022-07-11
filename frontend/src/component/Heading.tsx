@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material';
+import useTheme from '@mui/material/styles/useTheme';
 import { FC } from 'react';
 import React from 'react';
 
