@@ -89,10 +89,11 @@ export const TopBar = () => {
         { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
         { to: '/report', text: 'Report', icon: <ReportIcon /> },
         // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> },
-        { to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> },
         { to: '/wiki', text: 'Wiki', icon: <ArticleIcon /> }
     ];
-
+    if (perms >= PermissionLevel.Admin) {
+        menuItems.push({ to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> });
+    }
     const userItems: menuRoute[] = [
         {
             to: `/profile/${currentUser?.steam_id}`,
@@ -243,47 +244,97 @@ export const TopBar = () => {
                     </Box>
 
                     <Box sx={{ flexGrow: 0 }}>
-                        <Tooltip title="Toggle light/dark mode">
-                            <IconButton onClick={colourMode.toggleColorMode}>
-                                {theme.palette.mode == 'light' ? (
-                                    <DarkModeIcon sx={{ color: '#ada03a' }} />
-                                ) : (
-                                    <LightModeIcon sx={{ color: '#ada03a' }} />
-                                )}
-                            </IconButton>
-                        </Tooltip>
-                        {!currentUser ||
-                            (currentUser.steam_id === '' && (
-                                <Tooltip title="Steam Login">
-                                    <Button onClick={handleOnLogin}>
-                                        <img
-                                            src={steamLogo}
-                                            alt={'Steam Login'}
+                        <>
+                            <Tooltip title="Toggle light/dark mode">
+                                <IconButton
+                                    onClick={colourMode.toggleColorMode}
+                                >
+                                    {theme.palette.mode == 'light' ? (
+                                        <DarkModeIcon
+                                            sx={{ color: '#ada03a' }}
                                         />
-                                    </Button>
-                                </Tooltip>
-                            ))}
-                        {currentUser &&
-                            currentUser?.steam_id &&
-                            adminItems.length > 0 && (
-                                <>
-                                    <Tooltip title="Mod/Admin">
-                                        <IconButton
-                                            sx={{ p: 0, marginRight: '0.5rem' }}
-                                            size="large"
-                                            aria-label="account of current user"
-                                            aria-controls="menu-appbar"
-                                            aria-haspopup="true"
-                                            onClick={handleOpenAdminMenu}
-                                            color="inherit"
+                                    ) : (
+                                        <LightModeIcon
+                                            sx={{ color: '#ada03a' }}
+                                        />
+                                    )}
+                                </IconButton>
+                            </Tooltip>
+                            {!currentUser ||
+                                (currentUser.steam_id == BigInt(0) && (
+                                    <Tooltip title="Steam Login">
+                                        <Button onClick={handleOnLogin}>
+                                            <img
+                                                src={steamLogo}
+                                                alt={'Steam Login'}
+                                            />
+                                        </Button>
+                                    </Tooltip>
+                                ))}
+                            {currentUser &&
+                                currentUser?.steam_id > 0 &&
+                                adminItems.length > 0 && (
+                                    <>
+                                        <Tooltip title="Mod/Admin">
+                                            <IconButton
+                                                sx={{
+                                                    p: 0,
+                                                    marginRight: '0.5rem'
+                                                }}
+                                                size="large"
+                                                aria-label="account of current user"
+                                                aria-controls="menu-appbar"
+                                                aria-haspopup="true"
+                                                onClick={handleOpenAdminMenu}
+                                                color="inherit"
+                                            >
+                                                <SettingsIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Menu
+                                            sx={{ mt: '45px' }}
+                                            id="menu-appbar"
+                                            anchorEl={anchorElAdmin}
+                                            anchorOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            keepMounted
+                                            transformOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            open={Boolean(anchorElAdmin)}
+                                            onClose={handleCloseAdminMenu}
                                         >
-                                            <SettingsIcon />
+                                            {adminItems.map((value) => {
+                                                return renderLinkedMenuItem(
+                                                    value.text,
+                                                    value.to,
+                                                    value.icon
+                                                );
+                                            })}
+                                        </Menu>
+                                    </>
+                                )}
+
+                            {currentUser && currentUser?.steam_id && (
+                                <>
+                                    <Tooltip title="User Settings">
+                                        <IconButton
+                                            onClick={handleOpenUserMenu}
+                                            sx={{ p: 0 }}
+                                        >
+                                            <Avatar
+                                                alt={currentUser.name}
+                                                src={currentUser.avatar}
+                                            />
                                         </IconButton>
                                     </Tooltip>
                                     <Menu
                                         sx={{ mt: '45px' }}
                                         id="menu-appbar"
-                                        anchorEl={anchorElAdmin}
+                                        anchorEl={anchorElUser}
                                         anchorOrigin={{
                                             vertical: 'top',
                                             horizontal: 'right'
@@ -293,10 +344,10 @@ export const TopBar = () => {
                                             vertical: 'top',
                                             horizontal: 'right'
                                         }}
-                                        open={Boolean(anchorElAdmin)}
-                                        onClose={handleCloseAdminMenu}
+                                        open={Boolean(anchorElUser)}
+                                        onClose={handleCloseUserMenu}
                                     >
-                                        {adminItems.map((value) => {
+                                        {userItems.map((value) => {
                                             return renderLinkedMenuItem(
                                                 value.text,
                                                 value.to,
@@ -306,46 +357,7 @@ export const TopBar = () => {
                                     </Menu>
                                 </>
                             )}
-
-                        {currentUser && currentUser?.steam_id && (
-                            <>
-                                <Tooltip title="User Settings">
-                                    <IconButton
-                                        onClick={handleOpenUserMenu}
-                                        sx={{ p: 0 }}
-                                    >
-                                        <Avatar
-                                            alt={currentUser.name}
-                                            src={currentUser.avatar}
-                                        />
-                                    </IconButton>
-                                </Tooltip>
-                                <Menu
-                                    sx={{ mt: '45px' }}
-                                    id="menu-appbar"
-                                    anchorEl={anchorElUser}
-                                    anchorOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right'
-                                    }}
-                                    keepMounted
-                                    transformOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right'
-                                    }}
-                                    open={Boolean(anchorElUser)}
-                                    onClose={handleCloseUserMenu}
-                                >
-                                    {userItems.map((value) => {
-                                        return renderLinkedMenuItem(
-                                            value.text,
-                                            value.to,
-                                            value.icon
-                                        );
-                                    })}
-                                </Menu>
-                            </>
-                        )}
+                        </>
                     </Box>
                 </Toolbar>
             </Container>

@@ -6,9 +6,9 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import { fromByteArray } from 'base64-js';
-import { UserUploadedFile } from '../api';
 import { Nullable } from '../util/types';
 import { logErr } from '../util/errors';
+import { UserUploadedFile } from '../api/media';
 
 const style = {
     position: 'absolute' as const,

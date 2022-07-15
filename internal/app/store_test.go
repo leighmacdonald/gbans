@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -73,35 +72,13 @@ func TestReport(t *testing.T) {
 	report := model.NewReport()
 	report.AuthorId = author.SteamID
 	report.ReportedId = target.SteamID
-	report.Title = golib.RandomString(40)
 	report.Description = golib.RandomString(120)
 	require.NoError(t, testDatabase.SaveReport(context.TODO(), &report))
 
-	media1 := model.NewReportMedia(report.ReportId)
-	val1, errDecode1 := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=")
-	require.NoError(t, errDecode1)
-	media1.Contents = val1
-	media1.MimeType = "image/png"
-	media1.Size = 95
-	media1.AuthorId = author.SteamID
-	require.Equal(t, media1.Size, int64(len(media1.Contents)))
-
-	var2, errDecode2 := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAANSURBVBhXY7D3OPMfAARwAlO7vhiUAAAAAElFTkSuQmCC")
-	require.NoError(t, errDecode2)
-	media2 := model.NewReportMedia(report.ReportId)
-	media2.Contents = var2
-	media2.MimeType = "image/png"
-	media2.Size = 120
-	media2.AuthorId = author.SteamID
-	require.Equal(t, media2.Size, int64(len(media2.Contents)))
-
-	require.NoError(t, testDatabase.SaveReportMedia(context.Background(), report.ReportId, &media1))
-	require.NoError(t, testDatabase.SaveReportMedia(context.Background(), report.ReportId, &media2))
-
 	msg1 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
 	msg2 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
-	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), report.ReportId, &msg1))
-	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), report.ReportId, &msg2))
+	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), &msg1))
+	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), &msg2))
 	msgs, msgsErr := testDatabase.GetReportMessages(context.Background(), report.ReportId)
 	require.NoError(t, msgsErr)
 	require.Equal(t, 2, len(msgs))
@@ -115,7 +92,7 @@ func TestBanNet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	rip := randIP()
-	n1, _ := model.NewBanNet(fmt.Sprintf("%s/32", rip), "testing", time.Hour*100, model.System)
+	n1, _ := model.NewBanNet(fmt.Sprintf("%s/32", rip), model.Custom, time.Hour*100, model.System)
 	require.NoError(t, testDatabase.SaveBanNet(ctx, &n1))
 	require.Less(t, int64(0), n1.NetID)
 	banNet, errGetBanNet := testDatabase.GetBanNet(ctx, net.ParseIP(rip))
@@ -341,7 +318,7 @@ func TestFilters(t *testing.T) {
 func TestBanASN(t *testing.T) {
 	var author model.Person
 	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &author))
-	banASN := model.NewBanASN(1, author.SteamID, "test", time.Minute*10)
+	banASN := model.NewBanASN(1, author.SteamID, model.Custom, time.Minute*10)
 	require.NoError(t, testDatabase.SaveBanASN(context.Background(), &banASN))
 	require.True(t, banASN.BanASNId > 0)
 	var f1 model.BanASN

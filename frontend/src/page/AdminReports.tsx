@@ -1,92 +1,160 @@
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import {
     apiGetReports,
-    Person,
-    renderDate,
-    Report,
-    ReportQueryFilter,
     ReportStatus,
-    ReportWithAuthor,
-    Team
+    reportStatusString,
+    ReportWithAuthor
 } from '../api';
-import Paper from '@mui/material/Paper';
-import { ProfileButton } from '../component/ProfileButton';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import PageviewIcon from '@mui/icons-material/Pageview';
-import IconButton from '@mui/material/IconButton';
-import { useNavigate } from 'react-router-dom';
-import { noop } from 'lodash-es';
 import { logErr } from '../util/errors';
-interface AdminReportRowProps {
-    report: Report;
-    author: Person;
-}
-
-const AdminReportRow = ({
-    report,
-    author
-}: AdminReportRowProps): JSX.Element => {
-    const navigate = useNavigate();
-    return (
-        <Paper elevation={1}>
-            <Stack direction={'row'}>
-                <ButtonGroup>
-                    <IconButton
-                        focusRipple={false}
-                        color={'primary'}
-                        onClick={() => {
-                            navigate(`/report/${report.report_id}`);
-                        }}
-                    >
-                        <PageviewIcon />
-                    </IconButton>
-                </ButtonGroup>
-                <Typography padding={2} variant={'h5'}>
-                    {renderDate(report.created_on)}
-                </Typography>
-                <Typography padding={2} variant={'h5'}>
-                    {report.title}
-                </Typography>
-                <ProfileButton
-                    source={author}
-                    team={Team.SPEC}
-                    setFilter={noop}
-                />
-            </Stack>
-        </Paper>
-    );
-};
+import { UserTable } from '../component/UserTable';
+import Paper from '@mui/material/Paper';
+import format from 'date-fns/format';
+import { parseISO } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { Heading } from '../component/Heading';
+import { Select } from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
+import { SelectChangeEvent } from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 
 export const AdminReports = (): JSX.Element => {
     const [reports, setReports] = useState<ReportWithAuthor[]>([]);
-    const [reportStatus] = useState<ReportStatus>(ReportStatus.Opened);
+    const [filterStatus, setFilterStatus] = useState(ReportStatus.Any);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const opts: ReportQueryFilter = { report_status: reportStatus };
-        apiGetReports(opts)
+        apiGetReports({})
             .then((reports) => {
                 setReports(reports || []);
             })
             .catch(logErr);
-    });
+    }, []);
+
+    const cachedReports = useMemo(() => {
+        if (filterStatus == ReportStatus.Any) {
+            return reports;
+        }
+        return reports.filter((r) => r.report.report_status == filterStatus);
+    }, [filterStatus, reports]);
+
+    const handleReportStateChange = (
+        event: SelectChangeEvent<ReportStatus>
+    ) => {
+        setFilterStatus(event.target.value as ReportStatus);
+    };
 
     return (
-        <Grid container>
-            <Grid item xs={8}>
+        <Grid container spacing={3} paddingTop={3}>
+            <Grid item xs={12}>
                 <Stack spacing={2}>
-                    <Typography variant={'h3'}>Current User Reports</Typography>
-                    {reports.map((r) => {
-                        return (
-                            <AdminReportRow
-                                key={r.report.report_id}
-                                author={r.author}
-                                report={r.report}
-                            />
-                        );
-                    })}
+                    <Paper>
+                        <Heading>Current User Reports</Heading>
+                        <FormControl sx={{ padding: 2 }}>
+                            <InputLabel id="report-status-label">
+                                Report status
+                            </InputLabel>
+                            <Select<ReportStatus>
+                                labelId="report-status-label"
+                                id="report-status-select"
+                                value={filterStatus}
+                                onChange={handleReportStateChange}
+                            >
+                                {[
+                                    ReportStatus.Any,
+                                    ReportStatus.Opened,
+                                    ReportStatus.NeedMoreInfo,
+                                    ReportStatus.ClosedWithoutAction,
+                                    ReportStatus.ClosedWithAction
+                                ].map((status) => (
+                                    <MenuItem key={status} value={status}>
+                                        {reportStatusString(status)}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <UserTable
+                            onRowClick={(report) => {
+                                navigate(`/report/${report.report.report_id}`);
+                            }}
+                            columns={[
+                                {
+                                    label: 'Status',
+                                    tooltip: 'Status',
+                                    sortType: 'string',
+                                    align: 'left',
+                                    width: '200px',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'subtitle1'}>
+                                                {reportStatusString(
+                                                    obj.report.report_status
+                                                )}
+                                            </Typography>
+                                        );
+                                    }
+                                },
+                                {
+                                    label: 'Created',
+                                    tooltip: 'Created On',
+                                    sortType: 'date',
+                                    align: 'left',
+                                    width: '150px',
+                                    virtual: true,
+                                    virtualKey: 'created_on',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                {format(
+                                                    parseISO(
+                                                        obj.report
+                                                            .created_on as any as string
+                                                    ),
+                                                    "yyyy-MM-dd'T'HH:mm"
+                                                )}
+                                            </Typography>
+                                        );
+                                    }
+                                },
+                                {
+                                    label: 'Subject',
+                                    tooltip: 'Subject',
+                                    sortType: 'string',
+                                    align: 'left',
+                                    width: '250px',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                <img src={obj.subject.avatar} />
+                                                {obj.subject.personaname}
+                                            </Typography>
+                                        );
+                                    }
+                                },
+                                {
+                                    label: 'Reporter',
+                                    tooltip: 'Reporter',
+                                    sortType: 'string',
+                                    align: 'left',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                <img src={obj.author.avatar} />
+                                                {obj.author.personaname}
+                                            </Typography>
+                                        );
+                                    }
+                                }
+                            ]}
+                            defaultSortColumn={'report'}
+                            rowsPerPage={100}
+                            rows={cachedReports}
+                        />
+                    </Paper>
                 </Stack>
             </Grid>
         </Grid>

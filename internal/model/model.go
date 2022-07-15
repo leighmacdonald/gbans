@@ -113,10 +113,11 @@ const (
 	Language         Reason = 9
 	Profile          Reason = 10
 	ItemDescriptions Reason = 11
+	BotHost          Reason = 12
 )
 
 var reasonStr = map[Reason]string{
-	Custom:           "",
+	Custom:           "Custom",
 	External:         "3rd party",
 	Cheating:         "Cheating",
 	Racism:           "Racism",
@@ -126,7 +127,8 @@ var reasonStr = map[Reason]string{
 	Spam:             "Spam",
 	Language:         "Language",
 	Profile:          "Profile",
-	ItemDescriptions: "Item Name/Descriptions",
+	ItemDescriptions: "Item Name or Descriptions",
+	BotHost:          "BotHost",
 }
 
 func (r Reason) String() string {
@@ -139,13 +141,13 @@ type BanASN struct {
 	Origin     Origin
 	AuthorID   steamid.SID64
 	TargetID   steamid.SID64
-	Reason     string
+	Reason     Reason
 	ValidUntil time.Time
 	CreatedOn  time.Time
 	UpdatedOn  time.Time
 }
 
-func NewBanASN(asn int64, authorId steamid.SID64, reason string, duration time.Duration) BanASN {
+func NewBanASN(asn int64, authorId steamid.SID64, reason Reason, duration time.Duration) BanASN {
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
@@ -168,7 +170,7 @@ type BanNet struct {
 	AuthorID   steamid.SID64 `db:"author_id"`
 	CIDR       *net.IPNet    `db:"cidr"`
 	Source     Origin        `db:"source"`
-	Reason     string        `db:"reason"`
+	Reason     Reason        `db:"reason"`
 	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
 	ValidUntil time.Time     `db:"valid_until"`
@@ -193,7 +195,7 @@ func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duratio
 	}
 }
 
-func NewBanNet(cidr string, reason string, duration time.Duration, source Origin) (BanNet, error) {
+func NewBanNet(cidr string, reason Reason, duration time.Duration, source Origin) (BanNet, error) {
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
 	if errParseCIDR != nil {
 		return BanNet{}, errParseCIDR
@@ -217,7 +219,7 @@ func (b BanNet) String() string {
 }
 
 type Ban struct {
-	BanID uint64 `db:"ban_id" json:"ban_id"`
+	BanID int64 `db:"ban_id" json:"ban_id"`
 	// SteamID is the steamID of the banned person
 	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
 	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
@@ -469,7 +471,7 @@ type UserProfile struct {
 	Name            string        `json:"name"`
 	Avatar          string        `json:"avatar"`
 	AvatarFull      string        `json:"avatarfull"`
-	BanID           uint64        `json:"ban_id"`
+	BanID           int64         `json:"ban_id"`
 }
 
 // LoggedIn checks for a valid steamID
@@ -750,22 +752,10 @@ const (
 	ClosedWithAction
 )
 
-type ReportMedia struct {
-	ReportMediaId int           `json:"report_media_id"`
-	ReportId      int           `json:"report_id"`
-	AuthorId      steamid.SID64 `json:"author_id"`
-	MimeType      string        `json:"mime_type"`
-	Size          int64         `json:"size"`
-	Contents      []byte        `json:"contents"`
-	Deleted       bool          `json:"deleted"`
-	CreatedOn     time.Time     `json:"created_on"`
-	UpdatedOn     time.Time     `json:"updated_on"`
-}
-
 type ReportMessage struct {
 	ReportMessageId int           `json:"report_message_id"`
 	ReportId        int           `json:"report_id"`
-	AuthorId        steamid.SID64 `json:"author_id"`
+	AuthorId        steamid.SID64 `json:"author_id,string"`
 	Message         string        `json:"contents"`
 	Deleted         bool          `json:"deleted"`
 	CreatedOn       time.Time     `json:"created_on"`
@@ -774,9 +764,8 @@ type ReportMessage struct {
 
 type Report struct {
 	ReportId     int           `json:"report_id"`
-	AuthorId     steamid.SID64 `json:"author_id"`
-	ReportedId   steamid.SID64 `json:"reported_id"`
-	Title        string        `json:"title"`
+	AuthorId     steamid.SID64 `json:"author_id,string"`
+	ReportedId   steamid.SID64 `json:"reported_id,string"`
 	Description  string        `json:"description"`
 	ReportStatus ReportStatus  `json:"report_status"`
 	Deleted      bool          `json:"deleted"`
@@ -789,23 +778,10 @@ func NewReport() Report {
 	return Report{
 		ReportId:     0,
 		AuthorId:     0,
-		Title:        "",
 		Description:  "",
 		ReportStatus: 0,
 		CreatedOn:    config.Now(),
 		UpdatedOn:    config.Now(),
-	}
-}
-
-func NewReportMedia(reportId int) ReportMedia {
-	return ReportMedia{
-		ReportMediaId: 0,
-		ReportId:      reportId,
-		AuthorId:      0,
-		MimeType:      "",
-		Contents:      nil,
-		CreatedOn:     config.Now(),
-		UpdatedOn:     config.Now(),
 	}
 }
 
@@ -837,25 +813,50 @@ type UserUploadedFile struct {
 }
 
 type PersonConnection struct {
-	PersonConnectionId int64
-	IPAddr             net.IP
-	SteamId            steamid.SID64
-	PersonaName        string
-	CreatedOn          time.Time
-	IPInfo             PersonIPRecord
+	PersonConnectionId int64          `json:"person_connection_id"`
+	IPAddr             net.IP         `json:"ip_addr,string"`
+	SteamId            steamid.SID64  `json:"steam_id,string"`
+	PersonaName        string         `json:"persona_name"`
+	CreatedOn          time.Time      `json:"created_on"`
+	IPInfo             PersonIPRecord `json:"ip_info"`
 }
 
 type PersonConnections []PersonConnection
 
 type PersonMessage struct {
-	PersonMessageId int64
-	SteamId         steamid.SID64
-	PersonaName     string
-	ServerName      string
-	ServerId        int
-	Body            string
-	Team            bool
-	CreatedOn       time.Time
+	PersonMessageId int64         `json:"person_message_id"`
+	SteamId         steamid.SID64 `json:"steam_id,string"`
+	PersonaName     string        `json:"persona_name"`
+	ServerName      string        `json:"server_name"`
+	ServerId        int           `json:"server_id"`
+	Body            string        `json:"body"`
+	Team            bool          `json:"team"`
+	CreatedOn       time.Time     `json:"created_on"`
 }
 
 type PersonMessages []PersonMessage
+
+type Media struct {
+	MediaId   int           `json:"media_id"`
+	AuthorId  steamid.SID64 `json:"author_id,string"`
+	MimeType  string        `json:"mime_type"`
+	Contents  []byte        `json:"-"`
+	Name      string        `json:"name"`
+	Size      int64         `json:"size"`
+	Deleted   bool          `json:"deleted"`
+	CreatedOn time.Time     `json:"created_on"`
+	UpdatedOn time.Time     `json:"updated_on"`
+}
+
+func NewMedia(author steamid.SID64, name string, mime string, content []byte) Media {
+	return Media{
+		AuthorId:  author,
+		MimeType:  mime,
+		Name:      name,
+		Size:      int64(len(content)),
+		Contents:  content,
+		Deleted:   false,
+		CreatedOn: config.Now(),
+		UpdatedOn: config.Now(),
+	}
+}

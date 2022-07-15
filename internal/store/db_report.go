@@ -3,21 +3,22 @@ package store
 import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 )
 
-func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
+func (database *pgStore) insertReport(ctx context.Context, report *model.Report) error {
 	const query = `INSERT INTO report (
-		    author_id, reported_id, report_status, title, description, deleted, created_on, updated_on
+		    author_id, reported_id, report_status, description, deleted, created_on, updated_on
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8 )
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING report_id`
 	if errQuery := database.conn.QueryRow(ctx, query,
 		report.AuthorId,
 		report.ReportedId,
 		report.ReportStatus,
-		report.Title,
 		report.Description,
 		report.Deleted,
 		report.CreatedOn,
@@ -30,33 +31,56 @@ func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) e
 	return nil
 }
 
-func (database *pgStore) SaveReportMedia(ctx context.Context, reportId int, media *model.ReportMedia) error {
+func (database *pgStore) updateReport(ctx context.Context, report *model.Report) error {
+	report.UpdatedOn = config.Now()
+	const q = `
+		UPDATE report 
+		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
+            deleted = $5, updated_on = $6
+        WHERE report_id = $7`
+	return Err(database.Exec(ctx, q, report.AuthorId, report.ReportedId, report.ReportStatus, report.Description,
+		report.Deleted, report.UpdatedOn, report.ReportId))
+}
+
+func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
+	if report.ReportId > 0 {
+		return database.updateReport(ctx, report)
+	}
+	return database.insertReport(ctx, report)
+}
+
+func (database *pgStore) SaveReportMessage(ctx context.Context, message *model.ReportMessage) error {
+	if message.ReportMessageId > 0 {
+		return database.updateReportMessage(ctx, message)
+	}
+	return database.insertReportMessage(ctx, message)
+}
+
+func (database *pgStore) updateReportMessage(ctx context.Context, message *model.ReportMessage) error {
+	message.UpdatedOn = config.Now()
 	const query = `
-		INSERT INTO report_media (
-		    report_id, author_id, mime_type, contents, deleted, created_on, updated_on
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING report_media_id
+		UPDATE report_message 
+		SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
+		WHERE report_message_id = $1
 	`
-	if errQuery := database.conn.QueryRow(ctx, query,
-		reportId,
-		media.AuthorId,
-		media.MimeType,
-		media.Contents,
-		media.Deleted,
-		media.CreatedOn,
-		media.UpdatedOn,
-	).Scan(&media.ReportMediaId); errQuery != nil {
+	if errQuery := database.Exec(ctx, query,
+		message.ReportMessageId,
+		message.Deleted,
+		message.AuthorId,
+		message.UpdatedOn,
+		message.Message,
+	); errQuery != nil {
 		return Err(errQuery)
 	}
-	media.ReportId = reportId
 	log.WithFields(log.Fields{
-		"report_id": reportId, "media_id": media.ReportMediaId, "author_id": media.AuthorId,
-	}).Infof("Report media saved")
+		"report_id":  message.ReportId,
+		"message_id": message.ReportMessageId,
+		"author_id":  message.AuthorId,
+	}).Infof("Report message saved")
 	return nil
 }
 
-func (database *pgStore) SaveReportMessage(ctx context.Context, reportId int, message *model.ReportMessage) error {
+func (database *pgStore) insertReportMessage(ctx context.Context, message *model.ReportMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -64,7 +88,6 @@ func (database *pgStore) SaveReportMessage(ctx context.Context, reportId int, me
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING report_message_id
 	`
-	message.ReportId = reportId
 	if errQuery := database.conn.QueryRow(ctx, query,
 		message.ReportId,
 		message.AuthorId,
@@ -76,7 +99,7 @@ func (database *pgStore) SaveReportMessage(ctx context.Context, reportId int, me
 		return Err(errQuery)
 	}
 	log.WithFields(log.Fields{
-		"report_id":  reportId,
+		"report_id":  message.ReportId,
 		"message_id": message.ReportMessageId,
 		"author_id":  message.AuthorId,
 	}).Infof("Report message saved")
@@ -109,22 +132,9 @@ func (database *pgStore) DropReportMessage(ctx context.Context, message *model.R
 	return nil
 }
 
-func (database *pgStore) DropReportMedia(ctx context.Context, media *model.ReportMedia) error {
-	const query = `UPDATE report_media SET deleted = true WHERE report_media_id = $1`
-	if _, errExec := database.conn.Exec(ctx, query, media.ReportMediaId); errExec != nil {
-		return Err(errExec)
-	}
-	log.WithFields(log.Fields{
-		"report_media_id": media.ReportMediaId,
-		"soft":            true,
-	}).Infof("Report deleted")
-	media.Deleted = true
-	return nil
-}
-
 type AuthorQueryFilter struct {
 	QueryFilter
-	AuthorId int64 `json:"author_id,string"`
+	AuthorId steamid.SID64 `json:"author_id"`
 }
 
 type ReportQueryFilter struct {
@@ -140,11 +150,11 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 	}
 	builder := sb.
 		Select("report_id", "author_id", "reported_id", "report_status",
-			"title", "description", "deleted", "created_on", "updated_on").
+			"description", "deleted", "created_on", "updated_on").
 		From("report").
 		Where(conditions)
 	if opts.Limit > 0 {
-		builder = builder.Limit(uint64(opts.Limit))
+		builder = builder.Limit(opts.Limit)
 	}
 	//if opts.OrderBy != "" {
 	//	if opts.SortDesc {
@@ -170,7 +180,6 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 			&report.AuthorId,
 			&report.ReportedId,
 			&report.ReportStatus,
-			&report.Title,
 			&report.Description,
 			&report.Deleted,
 			&report.CreatedOn,
@@ -186,7 +195,7 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 func (database *pgStore) GetReport(ctx context.Context, reportId int, report *model.Report) error {
 	const query = `
 		SELECT 
-		   report_id, author_id, reported_id, report_status, title, description, 
+		   report_id, author_id, reported_id, report_status, description, 
 		   deleted, created_on, updated_on 
 		FROM report
 		WHERE deleted = false AND report_id = $1`
@@ -195,46 +204,10 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 		&report.AuthorId,
 		&report.ReportedId,
 		&report.ReportStatus,
-		&report.Title,
 		&report.Description,
 		&report.Deleted,
 		&report.CreatedOn,
 		&report.UpdatedOn,
-	); errQuery != nil {
-		return Err(errQuery)
-	}
-	const queryMedia = `SELECT report_media_id FROM report_media WHERE deleted = false AND report_id = $1`
-	mediaIds, errQueryMedia := database.conn.Query(ctx, queryMedia, reportId)
-	if errQueryMedia != nil && Err(errQueryMedia) != ErrNoResult {
-		return Err(errQueryMedia)
-	}
-	defer mediaIds.Close()
-	for mediaIds.Next() {
-		var mediaId int
-		if errScanMedia := mediaIds.Scan(&mediaId); errScanMedia != nil {
-			return Err(errScanMedia)
-		}
-		report.MediaIds = append(report.MediaIds, mediaId)
-	}
-
-	return nil
-}
-
-func (database *pgStore) GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error {
-	const query = `
-		SELECT 
-		   report_media_id, report_id, author_id, mime_type, contents, deleted, created_on, updated_on
-		FROM report_media
-		WHERE deleted = false AND report_media_id = $1`
-	if errQuery := database.conn.QueryRow(ctx, query, reportId).Scan(
-		&media.ReportMediaId,
-		&media.ReportId,
-		&media.AuthorId,
-		&media.MimeType,
-		&media.Contents,
-		&media.Deleted,
-		&media.CreatedOn,
-		&media.UpdatedOn,
 	); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -272,4 +245,25 @@ func (database *pgStore) GetReportMessages(ctx context.Context, reportId int) ([
 		messages = append(messages, msg)
 	}
 	return messages, nil
+}
+
+func (database *pgStore) GetReportMessageById(ctx context.Context, reportMessageId int, message *model.ReportMessage) error {
+	const query = `
+		SELECT 
+		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
+		FROM report_message
+		WHERE report_message_id = $1`
+	if errQuery := database.conn.QueryRow(ctx, query, reportMessageId).Scan(
+		&message.ReportMessageId,
+		&message.ReportId,
+		&message.AuthorId,
+		&message.Message,
+		&message.Deleted,
+		&message.CreatedOn,
+		&message.UpdatedOn,
+	); errQuery != nil {
+		return Err(errQuery)
+	}
+
+	return nil
 }

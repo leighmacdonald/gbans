@@ -2,6 +2,8 @@
 package util
 
 import (
+	"fmt"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"strings"
 )
 
@@ -40,4 +42,10 @@ func SanitizeLog(s string) string {
 		s = strings.Replace(s, char, "", -1)
 	}
 	return s
+}
+
+func DiffString(s1, s2 string) string {
+	dmp := diffmatchpatch.New()
+	diffs := dmp.DiffPrettyText(dmp.DiffMain(s1, s2, true))
+	return fmt.Sprintf("```diff\n%s```", diffs)
 }

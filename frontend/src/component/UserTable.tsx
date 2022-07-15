@@ -1,5 +1,4 @@
 import Table from '@mui/material/Table';
-import Paper from '@mui/material/Paper';
 import TableContainer from '@mui/material/TableContainer';
 import React, { ReactNode, useMemo, useState } from 'react';
 import TableHead from '@mui/material/TableHead';
@@ -41,6 +40,7 @@ export interface UserTableProps<T> {
     defaultSortColumn: keyof T;
     rowsPerPage: number;
     rows: T[];
+    onRowClick?: (value: T) => void;
 }
 
 export function defaultRenderer(
@@ -74,7 +74,8 @@ export const UserTable = <T,>({
     columns,
     rows,
     defaultSortColumn,
-    rowsPerPage
+    rowsPerPage,
+    onRowClick
 }: UserTableProps<T>) => {
     const theme = useTheme();
     const [page] = React.useState(0);
@@ -89,7 +90,7 @@ export const UserTable = <T,>({
     }, []);
 
     const sorted = useMemo(() => {
-        return stableSort<T>(rows, compare(order, sortColumn)).slice(
+        return stableSort<T>(rows ?? [], compare(order, sortColumn)).slice(
             page * rowsPerPage,
             page * rowsPerPage + rowsPerPage
         );
@@ -99,7 +100,7 @@ export const UserTable = <T,>({
     //     first(columns.filter((c) => c.sortKey == sortKey));
 
     return (
-        <TableContainer component={Paper}>
+        <TableContainer>
             <Table>
                 <TableHead>
                     <TableRow>
@@ -145,6 +146,9 @@ export const UserTable = <T,>({
                     {sorted.map((row, rowIdx) => {
                         return (
                             <TableRow
+                                onClick={() => {
+                                    onRowClick && onRowClick(row);
+                                }}
                                 key={rowIdx}
                                 sx={{
                                     '&:hover': {
@@ -173,9 +177,7 @@ export const UserTable = <T,>({
                                                 }
                                             }}
                                         >
-                                            <Typography variant={'body1'}>
-                                                {value}
-                                            </Typography>
+                                            {value}
                                         </TableCell>
                                     );
                                 })}

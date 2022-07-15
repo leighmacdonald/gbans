@@ -13,7 +13,7 @@ export enum communityVisibilityState {
 }
 
 export interface UserProfile extends TimeStamped {
-    steam_id: string;
+    steam_id: SteamID;
     permission_level: PermissionLevel;
     discord_id: string;
     name: string;
@@ -24,7 +24,7 @@ export interface UserProfile extends TimeStamped {
 
 export interface Person extends TimeStamped {
     // PlayerSummaries shape
-    steamid: string;
+    steamid: SteamID;
     communityvisibilitystate: communityVisibilityState;
     profilestate: profileState;
     personaname: string;
@@ -59,7 +59,7 @@ export interface Person extends TimeStamped {
 
 export interface PlayerProfile {
     player: Person;
-    friends: Person[];
+    friends?: Person[];
 }
 
 export const apiGetProfile = async (query: SteamID): Promise<PlayerProfile> =>
@@ -83,3 +83,43 @@ export const apiGetResolveProfile = async (
         'POST',
         opts
     );
+
+export interface PersonIPRecord {
+    ip_addr: string;
+    created_on: Date;
+    city_name: string;
+    country_name: string;
+    country_code: string;
+    as_name: string;
+    as_num: number;
+    isp: string;
+    usage_type: string;
+    threat: string;
+    domain: string;
+}
+
+export interface PersonConnection {
+    connection_id: bigint;
+    ipAddr: string;
+    steam_id: SteamID;
+    persona_name: string;
+    created_on: Date;
+    ip_info: PersonIPRecord;
+}
+
+export interface PersonMessage {
+    person_message_id: bigint;
+    steam_id: SteamID;
+    persona_name: string;
+    server_name: string;
+    server_id: number;
+    body: string;
+    team: boolean;
+    created_on: Date;
+}
+
+export const apiGetPersonConnections = async (steam_id: SteamID) =>
+    await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
+
+export const apiGetPersonMessages = async (steam_id: SteamID) =>
+    await apiCall<PersonMessage[]>(`/api/messages/${steam_id}`, 'GET');

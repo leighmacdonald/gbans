@@ -5,7 +5,10 @@ import { CreateDataTable } from './DataTable';
 export const BanList = (): JSX.Element =>
     CreateDataTable<IAPIBanRecord>()({
         connector: async () => {
-            return await apiGetBans();
+            return await apiGetBans({
+                order_by: 'ban_id',
+                desc: true
+            });
         },
         id_field: 'ban_id',
         heading: 'Bans',

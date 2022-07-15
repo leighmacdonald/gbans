@@ -48,28 +48,13 @@ func init() {
 	warnings = map[steamid.SID64][]userWarning{}
 	warningsMu = &sync.RWMutex{}
 	logFileChan = make(chan *LogFilePayload, 10)
-	discordSendMsg = make(chan discordPayload)
+	discordSendMsg = make(chan discordPayload, 5)
 	serverStateA2S = map[string]a2s.ServerInfo{}
 	serverStateStatus = map[string]extra.Status{}
 }
 
-type warnReason int
-
-const (
-	warnLanguage warnReason = iota
-)
-
-func warnReasonString(reason warnReason) string {
-	switch reason {
-	case warnLanguage:
-		return "Language"
-	default:
-		return "Unset"
-	}
-}
-
 type userWarning struct {
-	WarnReason warnReason
+	WarnReason model.Reason
 	CreatedOn  time.Time
 }
 
@@ -418,7 +403,7 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 // restarts will wipe the user's history.
 //
 // Warning are flushed once they reach N age as defined by `config.General.WarningTimeout
-func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, reason warnReason, botSendMessageChan chan discordPayload) {
+func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, reason model.Reason, botSendMessageChan chan discordPayload) {
 	warningsMu.Lock()
 	_, found := warnings[sid64]
 	if !found {
@@ -434,11 +419,12 @@ func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, 
 		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
 		var errBan error
 		options := banOpts{
-			target:   model.Target(sid64.String()),
-			author:   model.Target(config.General.Owner.String()),
-			duration: model.Duration(config.General.WarningExceededDuration.String()),
-			reason:   warnReasonString(reason),
-			origin:   model.System,
+			target:     model.Target(sid64.String()),
+			author:     model.Target(config.General.Owner.String()),
+			duration:   model.Duration(config.General.WarningExceededDuration.String()),
+			reason:     reason,
+			reasonText: reason.String(),
+			origin:     model.System,
 		}
 		switch config.General.WarningExceededAction {
 		case config.Gag:
@@ -450,7 +436,7 @@ func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, 
 		case config.Kick:
 			var playerInfo model.PlayerInfo
 			errBan = Kick(ctx, database, model.System, model.Target(sid64.String()),
-				model.Target(config.General.Owner.String()), warnReasonString(reason), &playerInfo)
+				model.Target(config.General.Owner.String()), reason, &playerInfo)
 		}
 		if errBan != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
@@ -486,20 +472,20 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go warnWorker(ctx)
 	go logReader(ctx, logFileC, database)
 	go filterWorker(ctx, database, botSendMessageChan)
-	//go initLogSrc(ctx, database)
+	go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 	go matchSummarizer(ctx, database)
 	go playerMessageWriter(ctx, database)
 }
 
 // UDP log sink
-//func initLogSrc(ctx context.Context, database store.Store) {
-//	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database, logPayloadChan)
-//	if errLogSrc != nil {
-//		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
-//	}
-//	logSrc.start()
-//}
+func initLogSrc(ctx context.Context, database store.Store) {
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database)
+	if errLogSrc != nil {
+		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
+	}
+	logSrc.start(database)
+}
 
 func initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {

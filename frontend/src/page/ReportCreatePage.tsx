@@ -16,22 +16,11 @@ import Avatar from '@mui/material/Avatar';
 import { logErr } from '../util/errors';
 import { ReportStatusIcon } from '../component/ReportStatusIcon';
 
-type BanState = 'banned' | 'closed';
-
-export interface UserReportHistory {
-    name: string;
-    target: string;
-    target_avatar: string;
-    state: BanState;
-    updated_on: Date;
-    created_on: Date;
-}
-
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     useEffect(() => {
-        if (currentUser.steam_id != '') {
+        if (currentUser.steam_id > 0) {
             apiGetReports({
                 author_id: currentUser.steam_id,
                 limit: 10,
@@ -47,12 +36,12 @@ export const ReportCreatePage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12} xl={8}>
+            <Grid item xs={12} md={8}>
                 <Paper elevation={1}>
                     <ReportForm />
                 </Paper>
             </Grid>
-            <Grid item xs={12} xl={4}>
+            <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
                         <List
@@ -128,7 +117,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                     </ListItemIcon>
                                     <ListItemAvatar>
                                         <Avatar
-                                            src={value.author.avatar}
+                                            src={value.subject.avatar}
                                             variant={'square'}
                                         />
                                     </ListItemAvatar>
@@ -136,8 +125,8 @@ export const ReportCreatePage = (): JSX.Element => {
                                         <Link
                                             href={`/report/${value.report.report_id}`}
                                         >
-                                            {value.author.personaname ??
-                                                value.author.steam_id}
+                                            {value.subject.personaname ??
+                                                value.subject.steam_id}
                                         </Link>
                                     </ListItemText>
                                 </ListItem>

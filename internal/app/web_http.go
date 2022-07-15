@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	ginlogrus "github.com/toorop/gin-logrus"
 	"net/http"
@@ -94,4 +95,11 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 		return model.NewUserProfile(0)
 	}
 	return person
+}
+
+func isAllowed(person model.UserProfile, subject steamid.SID64, minPrivilege model.Privilege) bool {
+	if person.PermissionLevel >= minPrivilege {
+		return true
+	}
+	return person.SteamID == subject
 }

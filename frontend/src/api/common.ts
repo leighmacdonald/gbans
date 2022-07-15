@@ -1,5 +1,6 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
+import { SteamID } from './const';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -83,12 +84,13 @@ const apiErr = (msg: string, resp: Response): ApiException => {
     return new ApiException(msg, resp);
 };
 
-export interface QueryFilterProps {
-    offset: number;
-    limit: number;
-    sort_desc: boolean;
-    query: string;
-    order_by: string;
+export interface QueryFilterProps<T> {
+    offset?: number;
+    limit?: number;
+    sort_desc?: boolean;
+    query?: string;
+    order_by?: keyof T;
+    deleted?: boolean;
 }
 
 export const handleOnLogin = (): void => {
@@ -164,7 +166,7 @@ export interface QueryFilter {
 }
 
 export interface AuthorQueryFilter extends QueryFilter {
-    author_id?: string;
+    author_id?: SteamID;
 }
 
 export interface ReportQueryFilter extends AuthorQueryFilter {

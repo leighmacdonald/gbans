@@ -1,6 +1,5 @@
 import { apiCall } from './common';
 import { marked } from 'marked';
-import { BaseUploadedMedia, UserUploadedFile } from './report';
 
 export interface Page {
     slug: string;
@@ -17,24 +16,9 @@ export const apiGetWikiPage = async (slug: string) =>
 export const apiSaveWikiPage = async (page: Page) =>
     await apiCall<Page>(`/api/wiki/slug`, 'POST', page);
 
-export const renderWiki = (md: string) =>
+export const renderMarkdown = (md: string) =>
     marked(
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
-            .replace(/(media:\/\/)/gi, '/wiki_media/')
-    );
-
-export interface MediaUploadRequest extends UserUploadedFile {
-    wiki_url: string;
-}
-
-export interface MediaUploadResponse extends BaseUploadedMedia {
-    url: string;
-}
-
-export const apiSaveWikiMedia = async (upload: UserUploadedFile) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(
-        `/api/wiki/media`,
-        'POST',
-        upload
+            .replace(/(media:\/\/)/gi, '/media/')
     );

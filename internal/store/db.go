@@ -78,6 +78,7 @@ func NewQueryFilter(query string) *QueryFilter {
 		SortDesc: true,
 		OrderBy:  "created_on",
 		Query:    query,
+		Deleted:  false,
 	}
 }
 

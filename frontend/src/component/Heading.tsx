@@ -5,9 +5,13 @@ import React from 'react';
 
 interface HeadingProps {
     children: JSX.Element | string;
+    bgColor?: string;
 }
 
-export const Heading: FC<HeadingProps> = ({ children }: HeadingProps) => {
+export const Heading: FC<HeadingProps> = ({
+    children,
+    bgColor
+}: HeadingProps) => {
     const theme = useTheme();
     return (
         <Typography
@@ -15,7 +19,7 @@ export const Heading: FC<HeadingProps> = ({ children }: HeadingProps) => {
             align={'center'}
             padding={1}
             sx={{
-                backgroundColor: theme.palette.background.paper
+                backgroundColor: bgColor ?? theme.palette.background.paper
             }}
         >
             {children}

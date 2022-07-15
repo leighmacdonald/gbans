@@ -112,9 +112,12 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interactio
 
 func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, r *botResponse) error {
 	playerID := model.Target(interaction.Data.Options[0].Value.(string))
-	reasonStr := model.Custom.String()
+	var reason model.Reason
 	if len(interaction.Data.Options) > 2 {
-		reasonStr = interaction.Data.Options[2].Value.(string)
+		reasonValue, ok := interaction.Data.Options[2].Value.(model.Reason)
+		if !ok {
+			reason = reasonValue
+		}
 	}
 	author := model.NewPerson(0)
 	if errGetAuthor := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {
@@ -128,7 +131,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 		author:   model.Target(author.SteamID.String()),
 		duration: model.Duration(interaction.Data.Options[1].Value.(string)),
 		banType:  model.NoComm,
-		reason:   reasonStr,
+		reason:   reason,
 		origin:   model.Bot,
 	}
 	var ban model.Ban
@@ -143,7 +146,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 	asNumStr := interaction.Data.Options[0].Options[0].Value.(string)
 	duration := interaction.Data.Options[0].Options[1].Value.(string)
-	reason := interaction.Data.Options[0].Options[2].Value.(string)
+	reason := interaction.Data.Options[0].Options[2].Value.(model.Reason)
 	targetId := steamid.SID64(0)
 	if len(interaction.Data.Options[0].Options) > 3 {
 		targetId = steamid.SID64(interaction.Data.Options[0].Options[3].Value.(int64))
@@ -191,9 +194,13 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interact
 }
 
 func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	reason := model.Custom.String()
+	var reason model.Reason
 	if len(interaction.Data.Options[0].Options) > 3 {
-		reason = interaction.Data.Options[0].Options[3].Value.(string)
+		reasonValue, ok := interaction.Data.Options[0].Options[3].Value.(model.Reason)
+		if !ok {
+			return errors.New("Invalid reason")
+		}
+		reason = reasonValue
 	}
 	author := model.NewPerson(0)
 	if errGetPerson := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
@@ -241,9 +248,13 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session, interacti
 
 // onBanSteam !ban <id> <duration> [reason]
 func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	reason := ""
+	var reason model.Reason
 	if len(interaction.Data.Options[0].Options) > 2 {
-		reason = interaction.Data.Options[0].Options[2].Value.(string)
+		reasonValue := interaction.Data.Options[0].Options[2].IntValue()
+		if reasonValue == 0 {
+			return errors.New("Invalid reason value")
+		}
+		reason = model.Reason(reasonValue)
 	}
 	modNote := ""
 	if len(interaction.Data.Options[0].Options) > 3 {
@@ -609,9 +620,13 @@ func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 	if errPersonBySID := PersonBySID(ctx, bot.database, targetSid64, "", &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
-	reason := ""
+	var reason model.Reason
 	if len(interaction.Data.Options) > 1 {
-		reason = interaction.Data.Options[1].Value.(string)
+		reasonValue, ok := interaction.Data.Options[1].Value.(model.Reason)
+		if !ok {
+			return errors.New("Invalid reason")
+		}
+		reason = reasonValue
 	}
 	var playerInfo model.PlayerInfo
 	errKick := Kick(ctx, bot.database, model.Bot, target, "", reason, &playerInfo)
@@ -707,13 +722,13 @@ func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 				stats[region] = 0
 				stats[region+"total"] = 0
 			}
-			maxPlayers := int(st.MaxPlayers) - st.Reserved
+			maxPlayers := st.MaxPlayers - st.Reserved
 			if maxPlayers <= 0 {
 				maxPlayers = 32 - st.Reserved
 			}
 			stats[region] += float64(st.PlayerCount)
 			stats[region+"total"] += float64(maxPlayers)
-			used += int(st.PlayerCount)
+			used += st.PlayerCount
 			total += maxPlayers
 			counts = append(counts, fmt.Sprintf("%s: %2d/%2d", st.NameShort, st.PlayerCount, maxPlayers))
 		}

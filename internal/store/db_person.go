@@ -271,11 +271,13 @@ func (database *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64
 		    m.person_message_id, m.steam_id, m.server_id, m.body, m.team, m.created_on, m.persona_name,
 		    s.short_name
 		FROM person_messages m
-		LEFT JOIN server s on m.server_id = s.server_id`
+		LEFT OUTER JOIN server s on m.server_id = s.server_id
+		WHERE m.steam_id = $1
+		`
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
-	rows, errQuery := database.conn.Query(ctx, query, sid64.String())
+	rows, errQuery := database.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -283,7 +285,8 @@ func (database *pgStore) GetChatHistory(ctx context.Context, sid64 steamid.SID64
 	var hist model.PersonMessages
 	for rows.Next() {
 		var m model.PersonMessage
-		if errScan := rows.Scan(&m.PersonMessageId, &m.SteamId, &m.ServerId, &m.Body, &m.Team, &m.CreatedOn, &m.PersonaName, &m.ServerName); errScan != nil {
+		if errScan := rows.Scan(&m.PersonMessageId, &m.SteamId, &m.ServerId, &m.Body, &m.Team,
+			&m.CreatedOn, &m.PersonaName, &m.ServerName); errScan != nil {
 			return nil, Err(errScan)
 		}
 		hist = append(hist, m)

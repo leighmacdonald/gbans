@@ -8,7 +8,6 @@ import (
 
 func TestWiki(t *testing.T) {
 	root := Page{Slug: RootSlug}
-	root.Title = "test"
 	root.BodyMD = `
 # Title
 

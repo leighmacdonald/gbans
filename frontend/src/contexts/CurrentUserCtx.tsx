@@ -9,7 +9,7 @@ export const GuestProfile: UserProfile = {
     discord_id: '',
     avatar: '',
     avatarfull: '',
-    steam_id: '',
+    steam_id: BigInt(0),
     ban_id: 0,
     name: 'Guest'
 };

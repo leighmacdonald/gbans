@@ -40,7 +40,7 @@ func filterWorker(ctx context.Context, database store.Store, botSendMessageChan 
 			}
 			matched, _ := ContainsFilteredWord(msg)
 			if matched {
-				addWarning(ctx, database, serverEvent.Source.SteamID, warnLanguage, botSendMessageChan)
+				addWarning(ctx, database, serverEvent.Source.SteamID, model.Language, botSendMessageChan)
 			}
 		case <-ctx.Done():
 			return

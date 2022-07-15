@@ -12,6 +12,7 @@ import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { UserTable } from './UserTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { LinearProgressProps } from '@mui/material/LinearProgress';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -42,7 +43,7 @@ export const ServerList = () => {
     if (selectedServers.length === 0) {
         return (
             <Stack spacing={1}>
-                <Typography variant={'h1'}>No servers :&apos;(</Typography>
+                <LoadingSpinner />
             </Stack>
         );
     }

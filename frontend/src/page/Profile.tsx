@@ -169,7 +169,7 @@ export const Profile = (): JSX.Element => {
                     <Grid item xs={4}>
                         <Stack spacing={3}>
                             <Paper elevation={1}>
-                                <FriendList friends={profile?.friends} />
+                                <FriendList friends={profile?.friends || []} />
                             </Paper>
                         </Stack>
                     </Grid>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -21,7 +22,7 @@ import (
 type srcdsPacket byte
 
 const (
-	// Normal log messages (deprecated)
+	// Normal log messages (unsupported)
 	s2aLogString srcdsPacket = 0x52
 	// Sent when using sv_logsecret
 	s2aLogString2 srcdsPacket = 0x53
@@ -35,12 +36,10 @@ const (
 // instances
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
-	ctx     context.Context
-	udpAddr *net.UDPAddr
-
+	ctx       context.Context
+	udpAddr   *net.UDPAddr
 	database  store.Store
 	secretMap map[int]string
-	dnsMap    map[string]string
 	frequency time.Duration
 }
 
@@ -55,34 +54,9 @@ func newRemoteSrcdsLogSource(ctx context.Context, listenAddr string, database st
 		udpAddr:   udpAddr,
 		database:  database,
 		secretMap: map[int]string{},
-		dnsMap:    map[string]string{},
 		frequency: time.Minute * 5,
 	}, nil
 }
-
-// Updates DNS -> IP mappings
-//func (remoteSrc *remoteSrcdsLogSource) updateDNS() {
-//	newServers := map[string]string{}
-//	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
-//	defer cancelServers()
-//	servers, errServers := remoteSrc.database.GetServers(serversCtx, true)
-//	if errServers != nil {
-//		log.Errorf("Failed to load servers to update DNS: %v", errServers)
-//		return
-//	}
-//	for _, server := range servers {
-//		ipAddr, errLookup := net.LookupIP(server.Address)
-//		if errLookup != nil || len(ipAddr) == 0 {
-//			log.Errorf("Failed to lookup dns for host: %v", errLookup)
-//			continue
-//		}
-//		newServers[fmt.Sprintf("%s:%d", ipAddr[0], server.Port)] = server.ServerNameShort
-//	}
-//	remoteSrc.Lock()
-//	defer remoteSrc.Unlock()
-//	remoteSrc.dnsMap = newServers
-//	log.Debugf("Updated DNS mappings")
-//}
 
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	newServers := map[int]string{}
@@ -99,7 +73,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 	remoteSrc.secretMap = newServers
-	log.Debugf("Updated secret mappings")
+	log.Tracef("Updated secret mappings")
 }
 
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
@@ -133,9 +107,8 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
 // start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) start() {
+func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 	type newMsg struct {
-		secure    bool
 		source    int64
 		sourceDNS string
 		body      string
@@ -157,21 +130,23 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 		remoteSrc.addLogAddress(config.Debug.AddRCONLogAddress)
 		defer remoteSrc.removeLogAddress(config.Debug.AddRCONLogAddress)
 	}
-	//remoteSrc.updateDNS()
+	running := true
+	insecureCount := uint64(0)
 	go func() {
-		for {
+		for running {
 			buffer := make([]byte, 1024)
-			readLen, sourceAddress, errReadUDP := connection.ReadFromUDP(buffer)
+			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
 			if errReadUDP != nil {
 				log.Warnf("UDP log read error: %v", errReadUDP)
 				continue
 			}
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
-				msgIngressChan <- newMsg{
-					secure:    false,
-					sourceDNS: fmt.Sprintf("%s:%d", sourceAddress.IP, sourceAddress.Port),
-					body:      string(buffer[5 : readLen-2])}
+				if insecureCount%10000 == 0 {
+					log.WithFields(log.Fields{"count": insecureCount + 1}).
+						Errorf("Received unsupported log packet type")
+				}
+				insecureCount++
 			case s2aLogString2:
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
@@ -184,49 +159,43 @@ func (remoteSrc *remoteSrcdsLogSource) start() {
 					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
 					continue
 				}
-				msgIngressChan <- newMsg{secure: true, source: secret, body: line[idx : readLen-2]}
+				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
 			}
 		}
 	}()
+	pc := newPlayerCache()
 	ticker := time.NewTicker(remoteSrc.frequency)
 	//errCount := 0
 	for {
 		select {
+		case <-remoteSrc.ctx.Done():
+			running = false
 		case <-ticker.C:
 			remoteSrc.updateSecrets()
 			//remoteSrc.updateDNS()
-		case _ = <-msgIngressChan:
-			//payload := model.LogPayload{Message: logPayload.body}
-			//if logPayload.secure {
-			//	remoteSrc.RLock()
-			//	serverName, found := remoteSrc.secretMap[int(logPayload.source)]
-			//	remoteSrc.RUnlock()
-			//	if !found {
-			//		log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
-			//		continue
-			//	}
-			//	payload.ServerName = serverName
-			//} else {
-			//	remoteSrc.RLock()
-			//	serverName, found := remoteSrc.dnsMap[logPayload.sourceDNS]
-			//	remoteSrc.RUnlock()
-			//	if !found {
-			//		log.Tracef("Rejecting unknown dns log author: %d [%s]", logPayload.source, logPayload.body)
-			//		continue
-			//	}
-			//	payload.ServerName = serverName
-			//}
-			//select {
-			//case remoteSrc.sink <- payload:
-			//default:
-			//	errCount++
-			//	if errCount%1000 == 0 {
-			//		log.WithFields(log.Fields{"size": len(remoteSrc.sink)}).Warnf("Log sink full")
-			//	}
-			//}
-			//log.WithFields(log.Fields{"id": msgId, "server": payload.ServerName, "sec": logPayload.secure, "body": logPayload.body}).
-			//	Tracef("Srcds remote log")
-			//msgId++
+		case logPayload := <-msgIngressChan:
+			var serverName string
+
+			remoteSrc.RLock()
+			serverNameValue, found := remoteSrc.secretMap[int(logPayload.source)]
+			remoteSrc.RUnlock()
+			if !found {
+				log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
+				continue
+			}
+			serverName = serverNameValue
+
+			var server model.Server
+			if errServer := database.GetServerByName(remoteSrc.ctx, serverName, &server); errServer != nil {
+				continue
+			}
+
+			var serverEvent model.ServerEvent
+			if errLogServerEvent := logToServerEvent(remoteSrc.ctx, server, logPayload.body, database, pc, &serverEvent); errLogServerEvent != nil {
+				continue
+			}
+
+			event.Emit(serverEvent)
 		}
 	}
 }

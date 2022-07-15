@@ -60,13 +60,14 @@ func UnbanASN(ctx context.Context, database store.Store, asnNum string) (bool, e
 }
 
 type banOpts struct {
-	target   model.Target
-	author   model.Target
-	duration model.Duration
-	banType  model.BanType
-	reason   string
-	origin   model.Origin
-	modNote  string
+	target     model.Target
+	author     model.Target
+	duration   model.Duration
+	banType    model.BanType
+	reason     model.Reason
+	reasonText string
+	origin     model.Origin
+	modNote    string
 }
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
@@ -99,8 +100,8 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 	ban.SteamID = targetSid64
 	ban.AuthorID = authorSid64
 	ban.BanType = opts.banType
-	ban.Reason = model.Custom
-	ban.ReasonText = opts.reason
+	ban.Reason = opts.reason
+	ban.ReasonText = opts.reasonText
 	ban.Note = opts.modNote
 	ban.ValidUntil = until
 	ban.Source = opts.origin
@@ -117,21 +118,7 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 			Title: fmt.Sprintf("User Banned (#%d)", ban.BanID),
 			Color: 10038562,
 		}
-		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
-			Name:   "STEAM",
-			Value:  string(steamid.SID64ToSID(ban.SteamID)),
-			Inline: true,
-		})
-		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
-			Name:   "STEAM3",
-			Value:  string(steamid.SID64ToSID3(ban.SteamID)),
-			Inline: true,
-		})
-		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
-			Name:   "SID64",
-			Value:  ban.SteamID.String(),
-			Inline: true,
-		})
+		addFieldsSteamID(banNotice, ban.SteamID)
 		expIn := "Permanent"
 		expAt := "Permanent"
 		if ban.ValidUntil.Year()-time.Now().Year() < 5 {
@@ -270,7 +257,8 @@ func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, 
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.Target, author model.Target, reason string, playerInfo *model.PlayerInfo) error {
+func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.Target, author model.Target,
+	reason model.Reason, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
 		return errAid

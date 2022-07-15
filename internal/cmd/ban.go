@@ -97,7 +97,7 @@ var banCIDRCmd = &cobra.Command{
 		if errDur != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Invalid duration: %v", errDur)
 		}
-		cidrBan, errNewBanNet := model.NewBanNet(cidr, reason, dur, model.System)
+		cidrBan, errNewBanNet := model.NewBanNet(cidr, model.Custom, dur, model.System)
 		if errNewBanNet != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanNet instance: %v", errNewBanNet)
 		}
@@ -126,7 +126,7 @@ var banASNCmd = &cobra.Command{
 		if errDur != nil {
 			log.Fatalf("Invalid duration: %v", errDur)
 		}
-		asnBan := model.NewBanASN(asn, config.General.Owner, reason, dur)
+		asnBan := model.NewBanASN(asn, config.General.Owner, model.Custom, dur)
 		if errSave := db.SaveBanASN(ctx, &asnBan); errSave != nil {
 			log.WithFields(log.Fields{"asn": asn}).Fatalf("Failed to save netban: %v", errSave)
 		}

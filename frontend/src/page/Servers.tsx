@@ -49,27 +49,27 @@ export const ServerStats = () => {
     const keys = Object.keys(regions);
     keys.sort();
     return (
-        <Container>
+        <Container component={Paper}>
             <Grid
                 container
                 direction="row"
                 justifyContent="space-evenly"
                 alignItems="flex-start"
                 justifyItems={'left'}
+                spacing={3}
+                padding={3}
             >
-                <Grid item xs={3} xl={4} padding={1}>
-                    <Paper elevation={1} sx={{ padding: 3 }}>
-                        <Typography
-                            style={{ display: 'inline' }}
-                            variant={'subtitle1'}
-                            align={'center'}
-                        >
-                            Global: {use} / {cap}
-                        </Typography>
-                        <LinearProgressWithLabel
-                            value={Math.round((use / cap) * 100)}
-                        />
-                    </Paper>
+                <Grid item xs={3} xl={4}>
+                    <Typography
+                        style={{ display: 'inline' }}
+                        variant={'subtitle1'}
+                        align={'center'}
+                    >
+                        Global: {use} / {cap}
+                    </Typography>
+                    <LinearProgressWithLabel
+                        value={Math.round((use / cap) * 100)}
+                    />
                 </Grid>
 
                 {keys.map((v) => {
@@ -84,19 +84,17 @@ export const ServerStats = () => {
                         )
                     );
                     return (
-                        <Grid item xs={3} xl={4} key={`stat-${v}`} padding={1}>
-                            <Paper elevation={1} sx={{ padding: 3 }}>
-                                <Typography
-                                    style={{ display: 'inline' }}
-                                    variant={'subtitle1'}
-                                    align={'center'}
-                                >
-                                    {v}: {pSum} / {pMax}
-                                </Typography>
-                                <LinearProgressWithLabel
-                                    value={Math.round((pSum / pMax) * 100)}
-                                />
-                            </Paper>
+                        <Grid item xs={3} xl={4} key={`stat-${v}`}>
+                            <Typography
+                                style={{ display: 'inline' }}
+                                variant={'subtitle1'}
+                                align={'center'}
+                            >
+                                {v}: {pSum} / {pMax}
+                            </Typography>
+                            <LinearProgressWithLabel
+                                value={Math.round((pSum / pMax) * 100)}
+                            />
                         </Grid>
                     );
                 })}

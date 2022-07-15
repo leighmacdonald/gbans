@@ -1,6 +1,13 @@
-import { apiCall, apiError, QueryFilterProps } from './common';
+import { apiCall, apiError, QueryFilter } from './common';
 import { communityVisibilityState, Person, profileState } from './profile';
 import { SteamID } from './const';
+
+export enum BanType {
+    Unknown = -1,
+    OK = 0,
+    NoComm = 1,
+    Banned = 2
+}
 
 export interface ChatMessage {
     message: string;
@@ -19,14 +26,15 @@ export interface BannedPerson {
 export interface Ban {
     ban_id: number;
     net_id: number;
-    steam_id: number;
+    steam_id: SteamID;
     cidr: string;
-    author_id: number;
-    ban_type: number;
+    author_id: SteamID;
+    ban_type: BanType;
     reason: number;
     reason_text: string;
     note: string;
     source: number;
+    deleted: boolean;
     valid_until: Date;
     created_on: Date;
     updated_on: Date;
@@ -34,22 +42,8 @@ export interface Ban {
 
 export type IAPIResponseBans = BannedPerson[];
 
-export interface IAPIBanRecord {
-    ban_id: number;
-    net_id: number;
-    steam_id: SteamID;
-    cidr: string;
-    author_id: number;
-    ban_type: number;
-    reason: number;
-    reason_text: string;
-    note: string;
-    source: number;
-    valid_until: Date;
-    created_on: Date;
-    updated_on: Date;
-
-    steamid: string;
+export interface IAPIBanRecord extends Ban {
+    steamid: SteamID;
     communityvisibilitystate: communityVisibilityState;
     profilestate: profileState;
     personaname: string;
@@ -67,19 +61,27 @@ export interface IAPIBanRecord {
     ip_addr: string;
 }
 
+export interface BansQueryFilter extends QueryFilter {
+    steam_id?: SteamID;
+}
+
 export interface BanPayload {
-    steam_id: string;
+    steam_id: SteamID;
     duration: string;
-    ban_type: number;
+    ban_type: BanType;
     reason: number;
     reason_text: string;
+    note: string;
     network: string;
 }
 
-export const apiGetBans = async (): Promise<IAPIBanRecord[]> => {
-    const resp = await apiCall<IAPIResponseBans, QueryFilterProps>(
+export const apiGetBans = async (
+    opts: BansQueryFilter
+): Promise<IAPIBanRecord[]> => {
+    const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans`,
-        'POST'
+        'POST',
+        opts
     );
     return (resp ?? []).map((b): IAPIBanRecord => {
         return {
@@ -109,7 +111,8 @@ export const apiGetBans = async (): Promise<IAPIBanRecord[]> => {
             steamid: b.person.steamid,
             timecreated: b.person.timecreated,
             updated_on: b.ban.updated_on,
-            valid_until: b.ban.valid_until
+            valid_until: b.ban.valid_until,
+            deleted: b.ban.deleted
         };
     });
 };
@@ -119,5 +122,5 @@ export const apiGetBan = async (
 ): Promise<BannedPerson | apiError> =>
     await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
 
-export const apiCreateBan = async (p: BanPayload): Promise<Ban | apiError> =>
+export const apiCreateBan = async (p: BanPayload): Promise<Ban> =>
     await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);

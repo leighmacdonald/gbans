@@ -32,7 +32,7 @@ export const ReportStatusIcon = ({
                     <GavelIcon color={'error'} />
                 </Tooltip>
             );
-        case ReportStatus.Opened:
+        default:
             return (
                 <Tooltip title={'New report'}>
                     <NewReleasesIcon color={'success'} />

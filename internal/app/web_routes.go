@@ -97,7 +97,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
-	engine.GET("/wiki_media/:name", web.onGetWikiMedia(database))
+	engine.GET("/media/:name", web.onGetMedia(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -106,7 +106,6 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	// Game server plugin routes
 	engine.POST("/api/server_auth", web.onSAPIPostServerAuth(database))
 
-	engine.GET("/api/download/report/:report_media_id", web.onAPIGetReportMedia(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
 	// Server Auth Request
@@ -124,6 +123,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	authed.GET("/api/report/:report_id", web.onAPIGetReport(database))
 	authed.POST("/api/reports", web.onAPIGetReports(database))
 	authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage(database))
+	authed.POST("/api/report/message/:report_message_id", web.onAPIEditReportMessage(database))
+	authed.DELETE("/api/report/message/:report_message_id", web.onAPIDeleteReportMessage(database))
 	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
 	authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus(database))
 
@@ -132,10 +133,12 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug(database))
-	modRoute.POST("/api/wiki/media", web.onAPISaveWikiMedia(database))
+	modRoute.POST("/api/media", web.onAPISaveMedia(database))
 	modRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
 	modRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
 	modRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
+	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
+	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))

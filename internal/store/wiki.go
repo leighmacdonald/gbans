@@ -3,18 +3,19 @@ package store
 import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	log "github.com/sirupsen/logrus"
 )
 
 func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
-	query, args, errQueryArgs := sb.Select("slug", "title", "body_md", "revision", "created_on", "updated_on").
+	query, args, errQueryArgs := sb.Select("slug", "body_md", "revision", "created_on", "updated_on").
 		From("wiki").Where(sq.Eq{"slug": slug}).OrderBy("revision desc").Limit(1).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&page.Slug, &page.Title, &page.BodyMD, &page.Revision,
+	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&page.Slug, &page.BodyMD, &page.Revision,
 		&page.CreatedOn, &page.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -35,8 +36,8 @@ func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 
 func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	query, args, errQueryArgs := sb.Insert("wiki").
-		Columns("slug", "title", "body_md", "revision", "created_on", "updated_on").
-		Values(page.Slug, page.Title, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn).
+		Columns("slug", "body_md", "revision", "created_on", "updated_on").
+		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn).
 		ToSql()
 	if errQueryArgs != nil {
 		return errQueryArgs
@@ -45,17 +46,17 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	log.Debugf("Wiki page saved: %s", util.SanitizeLog(page.Title))
+	log.Debugf("Wiki page saved: %s", util.SanitizeLog(page.Slug))
 	return nil
 }
 
-func (database *pgStore) SaveWikiMedia(ctx context.Context, media *wiki.Media) error {
+func (database *pgStore) SaveMedia(ctx context.Context, media *model.Media) error {
 	const query = `
-		INSERT INTO wiki_media (
+		INSERT INTO media (
 		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING wiki_media_id
+		RETURNING media_id
 	`
 	if errQuery := database.conn.QueryRow(ctx, query,
 		media.AuthorId,
@@ -66,11 +67,11 @@ func (database *pgStore) SaveWikiMedia(ctx context.Context, media *wiki.Media) e
 		media.Deleted,
 		media.CreatedOn,
 		media.UpdatedOn,
-	).Scan(&media.WikiMediaId); errQuery != nil {
+	).Scan(&media.MediaId); errQuery != nil {
 		return Err(errQuery)
 	}
 	log.WithFields(log.Fields{
-		"wiki_media_id": media.WikiMediaId,
+		"wiki_media_id": media.MediaId,
 		"author_id":     media.AuthorId,
 		"name":          util.SanitizeLog(media.Name),
 		"size":          media.Size,
@@ -79,14 +80,14 @@ func (database *pgStore) SaveWikiMedia(ctx context.Context, media *wiki.Media) e
 	return nil
 }
 
-func (database *pgStore) GetWikiMediaByName(ctx context.Context, name string, media *wiki.Media) error {
+func (database *pgStore) GetMediaByName(ctx context.Context, name string, media *model.Media) error {
 	const query = `
 		SELECT 
-		   wiki_media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
-		FROM wiki_media
+		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
+		FROM media
 		WHERE deleted = false AND name = $1`
 	if errQuery := database.conn.QueryRow(ctx, query, name).Scan(
-		&media.WikiMediaId,
+		&media.MediaId,
 		&media.AuthorId,
 		&media.Name,
 		&media.Size,

@@ -1,26 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, MouseEvent } from 'react';
 import {
     apiCreateReportMessage,
-    apiGetLogs,
+    apiDeleteReportMessage,
+    apiGetPersonConnections,
+    apiGetPersonMessages,
     apiGetReportMessages,
+    apiUpdateReportMessage,
     PermissionLevel,
+    PersonConnection,
+    PersonMessage,
     Report,
     ReportMessage,
     ReportMessagesResponse,
-    UserMessageLog,
-    UserProfile
+    UserProfile,
+    IAPIBanRecord
 } from '../api';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
-import SendIcon from '@mui/icons-material/Send';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import ImageList from '@mui/material/ImageList';
-import ImageListItem from '@mui/material/ImageListItem';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import { formatDistance, parseJSON } from 'date-fns';
@@ -30,8 +29,15 @@ import Card from '@mui/material/Card';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import { logErr } from '../util/errors';
+import { renderMarkdown } from '../api/wiki';
+import { MDEditor } from './MDEditor';
+import { UserTable } from './UserTable';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import useTheme from '@mui/material/styles/useTheme';
+import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -50,7 +56,7 @@ function TabPanel(props: TabPanelProps) {
             aria-labelledby={`tab-${index}`}
             {...other}
         >
-            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+            {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
         </div>
     );
 }
@@ -58,77 +64,225 @@ function TabPanel(props: TabPanelProps) {
 export interface UserMessageViewProps {
     author: UserProfile;
     message: ReportMessage;
+    onSave: (message: ReportMessage) => void;
+    onDelete: (report_message_id: number) => void;
 }
 
-const UserMessageView = ({ author, message }: UserMessageViewProps) => {
-    return (
-        <Card elevation={1}>
-            <CardHeader
-                avatar={
-                    <Avatar aria-label="Avatar" src={author.avatar}>
-                        ?
-                    </Avatar>
+const UserMessageView = ({
+    author,
+    message,
+    onSave,
+    onDelete
+}: UserMessageViewProps) => {
+    const theme = useTheme();
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const [editing, setEditing] = useState<boolean>(false);
+    const [deleted, setDeleted] = useState<boolean>(false);
+    const handleClick = (event: MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+    if (deleted) {
+        return <></>;
+    }
+    if (editing) {
+        return (
+            <Box component={Paper} padding={1}>
+                <MDEditor
+                    cancelEnabled
+                    onCancel={() => {
+                        setEditing(false);
+                    }}
+                    initialBodyMDValue={message.contents}
+                    onSave={(body_md) => {
+                        const newMsg = { ...message, contents: body_md };
+                        onSave(newMsg);
+                        message = newMsg;
+                        setEditing(false);
+                    }}
+                />
+            </Box>
+        );
+    } else {
+        let d1 = formatDistance(parseJSON(message.created_on), new Date(), {
+            addSuffix: true
+        });
+        if (message.updated_on != message.created_on) {
+            d1 = `${d1} (edited: ${formatDistance(
+                parseJSON(message.updated_on),
+                new Date(),
+                {
+                    addSuffix: true
                 }
-                action={
-                    <IconButton aria-label="Actions">
-                        <MoreVertIcon />
-                    </IconButton>
-                }
-                title={author.name}
-                subheader={formatDistance(
-                    parseJSON(message.created_on),
-                    new Date(),
-                    { addSuffix: true }
-                )}
-            />
-            <CardContent>
-                <Typography variant="body2" color="text.secondary">
-                    {message.contents}
-                </Typography>
-            </CardContent>
-        </Card>
-    );
+            )})`;
+        }
+        return (
+            <Card elevation={1}>
+                <CardHeader
+                    sx={{
+                        backgroundColor: theme.palette.background.paper
+                    }}
+                    avatar={
+                        <Avatar aria-label="Avatar" src={author.avatar}>
+                            ?
+                        </Avatar>
+                    }
+                    action={
+                        <IconButton aria-label="Actions" onClick={handleClick}>
+                            <MoreVertIcon />
+                        </IconButton>
+                    }
+                    title={author.name}
+                    subheader={d1}
+                />
+                <CardContent>
+                    <RenderedMarkdownBox
+                        bodyMd={renderMarkdown(message.contents)}
+                    />
+                </CardContent>
+                <Menu
+                    anchorEl={anchorEl}
+                    id="message-menu"
+                    open={open}
+                    onClose={handleClose}
+                    onClick={handleClose}
+                    PaperProps={{
+                        elevation: 0,
+                        sx: {
+                            overflow: 'visible',
+                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                            mt: 1.5,
+                            '& .MuiAvatar-root': {
+                                width: 32,
+                                height: 32,
+                                ml: -0.5,
+                                mr: 1
+                            },
+                            '&:before': {
+                                content: '""',
+                                display: 'block',
+                                position: 'absolute',
+                                top: 0,
+                                right: 14,
+                                width: 10,
+                                height: 10,
+                                bgcolor: 'background.paper',
+                                transform: 'translateY(-50%) rotate(45deg)',
+                                zIndex: 0
+                            }
+                        }
+                    }}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                    <MenuItem
+                        onClick={() => {
+                            setEditing(true);
+                        }}
+                    >
+                        Edit
+                    </MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            onDelete(message.report_message_id);
+                            setDeleted(true);
+                        }}
+                    >
+                        Delete
+                    </MenuItem>
+                </Menu>
+            </Card>
+        );
+    }
 };
 
 interface ReportComponentProps {
     report: Report;
+    banHistory: IAPIBanRecord[];
 }
 
 export const ReportComponent = ({
-    report
+    report,
+    banHistory
 }: ReportComponentProps): JSX.Element => {
-    const [comment, setComment] = useState<string>('');
+    const theme = useTheme();
     const [messages, setMessages] = useState<ReportMessagesResponse[]>([]);
-    const [logs, setLogs] = useState<UserMessageLog[]>([]);
+    const [connections, setConnections] = useState<PersonConnection[]>([]);
+    const [chatHistory, setChatHistory] = useState<PersonMessage[]>([]);
+
     const [value, setValue] = React.useState<number>(0);
     const { currentUser } = useCurrentUserCtx();
+    const { sendFlash } = useUserFlashCtx();
+
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
-    const onSubmitMessage = useCallback(() => {
-        apiCreateReportMessage(report.report_id, comment)
-            .then((response) => {
-                setMessages([
-                    ...messages,
-                    { author: currentUser, message: response }
-                ]);
-                setComment('');
-            })
-            .catch(logErr);
-    }, [comment, messages, report.report_id, currentUser]);
 
-    useEffect(() => {
+    const loadMessages = useCallback(() => {
         apiGetReportMessages(report.report_id)
             .then((r) => {
-                setMessages(r);
+                setMessages(r || []);
+            })
+            .catch(logErr);
+    }, [report.report_id]);
+
+    const onSave = useCallback(
+        (message: string) => {
+            apiCreateReportMessage(report.report_id, message)
+                .then((response) => {
+                    setMessages([
+                        ...messages,
+                        { author: currentUser, message: response }
+                    ]);
+                })
+                .catch(logErr);
+        },
+        [messages, report.report_id, currentUser]
+    );
+
+    const onEdit = useCallback(
+        (message: ReportMessage) => {
+            apiUpdateReportMessage(message.report_message_id, message.contents)
+                .then(() => {
+                    sendFlash('success', 'Updated message successfully');
+                    loadMessages();
+                })
+                .catch(logErr);
+        },
+        [loadMessages, sendFlash]
+    );
+
+    const onDelete = useCallback(
+        (report_message_id: number) => {
+            apiDeleteReportMessage(report_message_id)
+                .then(() => {
+                    sendFlash('success', 'Deleted message successfully');
+                    loadMessages();
+                })
+                .catch(logErr);
+        },
+        [loadMessages, sendFlash]
+    );
+
+    useEffect(() => {
+        loadMessages();
+    }, [loadMessages, report]);
+
+    useEffect(() => {
+        apiGetPersonConnections(report.reported_id)
+            .then((conns) => {
+                setConnections(conns || []);
             })
             .catch(logErr);
     }, [report]);
 
     useEffect(() => {
-        apiGetLogs(`${report.reported_id}`, 100)
-            .then((r) => {
-                setLogs(r);
+        apiGetPersonMessages(report.reported_id)
+            .then((msgs) => {
+                setChatHistory(msgs || []);
             })
             .catch(logErr);
     }, [report]);
@@ -141,7 +295,8 @@ export const ReportComponent = ({
                         <Box
                             sx={{
                                 borderBottom: 1,
-                                borderColor: 'divider'
+                                borderColor: 'divider',
+                                backgroundColor: theme.palette.background.paper
                             }}
                         >
                             <Tabs
@@ -150,101 +305,163 @@ export const ReportComponent = ({
                                 aria-label="ReportCreatePage detail tabs"
                             >
                                 <Tab label="Description" />
-                                <Tab label="Evidence" />
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab label="Chat Logs" />
+                                    <Tab
+                                        label={`Chat Logs (${chatHistory.length})`}
+                                    />
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab label="Connections" />
+                                    <Tab
+                                        label={`Connections (${connections.length})`}
+                                    />
+                                )}
+                                {currentUser.permission_level >=
+                                    PermissionLevel.Moderator && (
+                                    <Tab
+                                        label={`Ban History (${banHistory.length})`}
+                                    />
                                 )}
                             </Tabs>
                         </Box>
 
                         <TabPanel value={value} index={0}>
                             {report && (
-                                <Typography variant={'body1'}>
-                                    {report.description}
-                                </Typography>
+                                <RenderedMarkdownBox
+                                    bodyMd={renderMarkdown(report.description)}
+                                />
                             )}
                         </TabPanel>
 
-                        <TabPanel index={value} value={1}>
-                            <ImageList
-                                variant="masonry"
-                                cols={3}
-                                gap={8}
-                                rowHeight={164}
-                            >
-                                {(report.media_ids ?? []).map((item_id) => (
-                                    <ImageListItem key={item_id}>
-                                        <img
-                                            style={{
-                                                width: '256px',
-                                                height: '144px'
-                                            }}
-                                            src={`/api/download/report/${item_id}`}
-                                            alt={'Evidence #' + item_id}
-                                            loading="lazy"
-                                        />
-                                    </ImageListItem>
-                                ))}
-                            </ImageList>
+                        <TabPanel value={value} index={1}>
+                            <UserTable
+                                columns={[
+                                    {
+                                        label: 'Created',
+                                        tooltip: 'Created On',
+                                        sortKey: 'created_on',
+                                        sortType: 'date',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'Name',
+                                        tooltip: 'Name',
+                                        sortKey: 'persona_name',
+                                        sortType: 'string',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'Message',
+                                        tooltip: 'Message',
+                                        sortKey: 'body',
+                                        sortType: 'string',
+                                        align: 'left'
+                                    }
+                                ]}
+                                defaultSortColumn={'created_on'}
+                                rowsPerPage={100}
+                                rows={chatHistory}
+                            />
                         </TabPanel>
-
                         <TabPanel value={value} index={2}>
-                            <Stack>
-                                {logs &&
-                                    logs.map((log, index) => {
-                                        return (
-                                            <Box key={index}>
-                                                <Typography variant={'body2'}>
-                                                    {log.message}
-                                                </Typography>
-                                            </Box>
-                                        );
-                                    })}
-                            </Stack>
+                            <UserTable
+                                columns={[
+                                    {
+                                        label: 'Created',
+                                        tooltip: 'Created On',
+                                        sortKey: 'created_on',
+                                        sortType: 'date',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'Name',
+                                        tooltip: 'Name',
+                                        sortKey: 'persona_name',
+                                        sortType: 'string',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'IP Address',
+                                        tooltip: 'IP Address',
+                                        sortKey: 'ipAddr',
+                                        sortType: 'string',
+                                        align: 'left'
+                                    }
+                                ]}
+                                defaultSortColumn={'created_on'}
+                                rowsPerPage={100}
+                                rows={connections}
+                            />
                         </TabPanel>
                         <TabPanel value={value} index={3}>
-                            Connection history
+                            <UserTable
+                                columns={[
+                                    {
+                                        label: 'Created',
+                                        tooltip: 'Created On',
+                                        sortKey: 'created_on',
+                                        sortType: 'date',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'Expires',
+                                        tooltip: 'Expires',
+                                        sortKey: 'valid_until',
+                                        sortType: 'date',
+                                        align: 'left'
+                                    },
+                                    {
+                                        label: 'Ban Author',
+                                        tooltip: 'Ban Author',
+                                        sortKey: 'author_id',
+                                        sortType: 'string',
+                                        align: 'left',
+                                        width: '150px'
+                                    },
+                                    {
+                                        label: 'Reason',
+                                        tooltip: 'Reason',
+                                        sortKey: 'reason',
+                                        sortType: 'string',
+                                        align: 'left'
+                                    },
+                                    {
+                                        label: 'Custom Reason',
+                                        tooltip: 'Custom Reason',
+                                        sortKey: 'reason_text',
+                                        sortType: 'string',
+                                        align: 'left'
+                                    }
+                                ]}
+                                defaultSortColumn={'created_on'}
+                                rowsPerPage={10}
+                                rows={banHistory}
+                            />
                         </TabPanel>
                     </Paper>
 
-                    {messages &&
-                        messages.map((m) => (
-                            <UserMessageView
-                                author={m.author}
-                                message={m.message}
-                                key={m.message.report_message_id}
-                            />
-                        ))}
+                    {messages.map((m) => (
+                        <UserMessageView
+                            onSave={onEdit}
+                            onDelete={onDelete}
+                            author={m.author}
+                            message={m.message}
+                            key={m.message.report_message_id}
+                        />
+                    ))}
                     <Paper elevation={1}>
-                        <Stack spacing={2} padding={1}>
-                            <TextField
-                                label="Comment"
-                                id="comment"
-                                minRows={10}
-                                variant={'outlined'}
-                                margin={'normal'}
-                                multiline
-                                fullWidth
-                                value={comment}
-                                onChange={(v) => {
-                                    setComment(v.target.value);
-                                }}
+                        <Stack spacing={2}>
+                            <MDEditor
+                                initialBodyMDValue={''}
+                                onSave={onSave}
+                                saveLabel={'Send Message'}
                             />
-                            <ButtonGroup>
-                                <Button
-                                    onClick={onSubmitMessage}
-                                    variant={'contained'}
-                                    endIcon={<SendIcon />}
-                                    fullWidth={false}
-                                >
-                                    Send Comment
-                                </Button>
-                            </ButtonGroup>
                         </Stack>
                     </Paper>
                 </Stack>

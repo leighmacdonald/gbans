@@ -54,7 +54,7 @@ type BanStore interface {
 	DropBanNet(ctx context.Context, ban *model.BanNet) error
 	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
 	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
-	GetBans(ctx context.Context, queryFilter *QueryFilter) ([]model.BannedPerson, error)
+	GetBans(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
 	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
@@ -66,15 +66,13 @@ type BanStore interface {
 
 type ReportStore interface {
 	SaveReport(ctx context.Context, report *model.Report) error
-	SaveReportMedia(ctx context.Context, reportId int, media *model.ReportMedia) error
-	SaveReportMessage(ctx context.Context, reportId int, message *model.ReportMessage) error
+	SaveReportMessage(ctx context.Context, message *model.ReportMessage) error
 	DropReport(ctx context.Context, report *model.Report) error
 	DropReportMessage(ctx context.Context, message *model.ReportMessage) error
-	DropReportMedia(ctx context.Context, media *model.ReportMedia) error
 	GetReport(ctx context.Context, reportId int, report *model.Report) error
 	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error)
-	GetReportMediaById(ctx context.Context, reportId int, media *model.ReportMedia) error
 	GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error)
+	GetReportMessageById(ctx context.Context, reportMessageId int, message *model.ReportMessage) error
 }
 
 type PersonStore interface {
@@ -103,12 +101,15 @@ type MigrationStore interface {
 	Migrate(action MigrationAction) error
 }
 
+type MediaStore interface {
+	SaveMedia(ctx context.Context, media *model.Media) error
+	GetMediaByName(ctx context.Context, name string, media *model.Media) error
+}
+
 type WikiStore interface {
 	GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error
 	SaveWikiPage(ctx context.Context, page *wiki.Page) error
-	SaveWikiMedia(ctx context.Context, media *wiki.Media) error
-	GetWikiMediaByName(ctx context.Context, name string, media *wiki.Media) error
 }
 
 type StatStore interface {
@@ -143,5 +144,6 @@ type Store interface {
 	ReportStore
 	NewsStore
 	WikiStore
+	MediaStore
 	io.Closer
 }

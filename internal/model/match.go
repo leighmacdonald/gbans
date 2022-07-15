@@ -472,9 +472,9 @@ func (match *Match) pointCapture(team logparse.Team, sources steamid.Collection)
 	match.getTeamSum(team).Caps++
 }
 
-func (match *Match) midFight(team logparse.Team) {
-	match.getTeamSum(team).MidFights++
-}
+//func (match *Match) midFight(team logparse.Team) {
+//	match.getTeamSum(team).MidFights++
+//}
 
 func (match *Match) killed(source steamid.SID64, target steamid.SID64, team logparse.Team) {
 	if match.inRound {

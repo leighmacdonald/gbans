@@ -71,7 +71,7 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                                         ? theme.palette.error.main
                                         : undefined
                                 }
-                                key={p.steamid}
+                                key={`${p.steamid}`}
                                 onClick={() => {
                                     navigate(`/profile/${p.steamid}`);
                                 }}
@@ -84,7 +84,7 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                                 </ListItemAvatar>
                                 <ListItemText
                                     primary={p.personaname}
-                                    secondary={p.steamid}
+                                    secondary={`${p.steamid}`}
                                 />
                             </ListItemButton>
                         ))}

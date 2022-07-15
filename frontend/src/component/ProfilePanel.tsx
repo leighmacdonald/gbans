@@ -106,7 +106,7 @@ export const ProfilePanel = (args: ProfilePanelProps): JSX.Element => {
                     </TabPanel>
                     <TabPanel value={value} index="two">
                         <Paper elevation={1}>
-                            <FriendList friends={args.profile?.friends} />
+                            <FriendList friends={args.profile?.friends || []} />
                         </Paper>
                     </TabPanel>
                 </Box>

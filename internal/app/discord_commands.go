@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -63,12 +64,12 @@ func (bot *discord) botRegisterSlashCommands() error {
 		Description: "Short server name",
 		Required:    true,
 	}
-	optReason := &discordgo.ApplicationCommandOption{
-		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "reason",
-		Description: "Reason for the ban (shown to users on kick)",
-		Required:    true,
-	}
+	//optReason := &discordgo.ApplicationCommandOption{
+	//	Type:        discordgo.ApplicationCommandOptionString,
+	//	Name:        "reason",
+	//	Description: "Reason for the ban (shown to users on kick)",
+	//	Required:    true,
+	//}
 	optMessage := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        "message",
@@ -99,7 +100,22 @@ func (bot *discord) botRegisterSlashCommands() error {
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
 	}
-
+	var reasons []*discordgo.ApplicationCommandOptionChoice
+	for _, r := range []model.Reason{model.External, model.Cheating, model.Racism, model.Harassment, model.Exploiting,
+		model.WarningsExceeded, model.Spam, model.Language, model.Profile, model.ItemDescriptions, model.BotHost, model.Custom,
+	} {
+		reasons = append(reasons, &discordgo.ApplicationCommandOptionChoice{
+			Name:  r.String(),
+			Value: r,
+		})
+	}
+	optBanReason := &discordgo.ApplicationCommandOption{
+		Type:        discordgo.ApplicationCommandOptionInteger,
+		Name:        "ban_reason",
+		Description: "Reason for the ban/mute",
+		Required:    true,
+		Choices:     reasons,
+	}
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
 			Name:        string(cmdLog),
@@ -121,7 +137,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 				optDuration,
-				optReason,
+				optBanReason,
 			},
 		},
 		{
@@ -145,7 +161,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Description: "Kick a user from any server they are playing on",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
-				optReason,
+				optBanReason,
 			},
 		},
 		{
@@ -239,7 +255,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,
 						optDuration,
-						optReason,
+						optBanReason,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        "note",
@@ -255,7 +271,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 					Options: []*discordgo.ApplicationCommandOption{
 						optAsn,
 						optDuration,
-						optReason,
+						optBanReason,
 						optUserIDOptional,
 					},
 				},
@@ -272,7 +288,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 						},
 						optUserID,
 						optDuration,
-						optReason,
+						optBanReason,
 					},
 				},
 			},
@@ -288,10 +304,9 @@ func (bot *discord) botRegisterSlashCommands() error {
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,
-						optReason,
+						optBanReason,
 					},
-				},
-				// TODO ip
+				}, // TODO ip
 				{
 					Name:        "asn",
 					Description: "Unban a previously banned ASN",
@@ -421,8 +436,7 @@ func registerCommandPermissions(ctx context.Context, perms []permissionRequest) 
 	if errUnmarshal != nil {
 		return errors.Wrapf(errUnmarshal, "Failed to set command permissions")
 	}
-	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions",
-		config.Discord.AppID, config.Discord.GuildID)
+	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions", config.Discord.AppID, config.Discord.GuildID)
 	reqCtx, cancelReq := context.WithTimeout(ctx, time.Second*10)
 	defer cancelReq()
 	req, errNewReq := http.NewRequestWithContext(reqCtx, "PUT", permUrl, bytes.NewReader(body))
@@ -497,7 +511,7 @@ func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction 
 		if sendSendResponse := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
 			log.Errorf("Failed sending success response for interaction: %v", sendSendResponse)
 		} else {
-			log.Debugf("Sent message embed")
+			log.Tracef("Sent message embed")
 		}
 	}
 }
