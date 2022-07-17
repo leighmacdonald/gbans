@@ -14,7 +14,6 @@ for [sourcebans](https://github.com/GameConnect/sourcebansv1) / [sourcebans++](h
 had its scope expanded to include more optional support for general game server management tasks as well
 as future plans for in depth plater stat tracking.
 
-
 ## Stability / Usage Notice
 
 While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the project on a 
@@ -27,17 +26,14 @@ Before we tag a 1.0.0 release, we will write some proper user-facing documentati
 
 ## Primary differences from sourcebans++
 
-- No direct SQL queries across networks. Exposing MySQL to the internet is a very poor security practice. You can 
-of course mitigate this with firewalls and sql accounts with ip restrictions or VPNs, but the majority of 
-server admins will not ever do this.
+- No direct SQL queries across networks.
 - Game servers authenticate with the gbans server upon startup of the plugin. Subsequent requests will use the returned
 authentication token.
 - Communication over HTTPS
 - Discord bot integration for administration & announcements.
-- Built using [Go 1.18beta1+](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in
+- Built using [Go 1.18+](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in
   webserver that is safe to directly expose to the internet. This means it's not necessary to setup MySQL, Nginx/Apache
   and PHP on your server.
-- Non-legacy codebase that is (hopefully) not a nightmare to hack on.
 
 ## Features
 
@@ -45,8 +41,7 @@ authentication token.
   - [x] Multi server support
   - [x] Global bans
   - [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
-  - [ ] ACME ([Lets encrypt](https://letsencrypt.org/) / [Zero SSL](https://zerossl.com/)) protocol support for automatic SSL certificates
-  - [ ] Import/Export of gbans databases
+- [ ] Import/Export of gbans databases
   - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
   - [ ] Multi-tenant support
 - [x] Game support
@@ -62,10 +57,7 @@ authentication token.
   - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
 - [x] Database support
   - [x] Postgresql w/PostGIS
-- [ ] Remote Agent
-  - [x] Install & Update game installations
-  - [ ] Apply custom configs and plugins per server
-  - [ ] Relay game logs to central service
+- [x] Relay game logs to central service
 - [ ] SourceMod Plugin
   - [x] Game server authentication
   - [x] Restrict banned players from connecting
@@ -75,15 +67,10 @@ authentication token.
   - [ ] `/gb_kick` Kick a user
   - [x] `/gb_mod or /mod <message>` Call for a mod on discord
 - [ ] User Interfaces
-  - [x] CLI
+  - [ ] CLI
   - [x] Discord
   - [ ] Web
-  - [ ] Matrix
-- [ ] Game server logs event storage and processing
-  - [x] Remote relay agent `gbans relay -h`
-  - [x] Parsing  
-  - [x] Indexing 
-  - [ ] Querying
+
     
 ## Docker
 
