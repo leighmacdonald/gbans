@@ -8,7 +8,7 @@ import {
     MatchTeamSum
 } from '../api';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { UserTableProps, UserTable } from '../component/UserTable';
+import { UserTableProps, DataTable } from '../component/DataTable';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -340,13 +340,13 @@ export const MatchPage = (): JSX.Element => {
                         {match?.MapName}
                     </Typography>
                     <Paper>
-                        <UserTable {...playerTableDef} />
+                        <DataTable {...playerTableDef} />
                     </Paper>
                     <Paper>
-                        <UserTable {...medicTableDef} />
+                        <DataTable {...medicTableDef} />
                     </Paper>
                     <Paper>
-                        <UserTable {...teamTableDef} />
+                        <DataTable {...teamTableDef} />
                     </Paper>
                 </>
             )}

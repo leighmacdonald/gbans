@@ -816,7 +816,7 @@ type UserUploadedFile struct {
 
 type PersonConnection struct {
 	PersonConnectionId int64          `json:"person_connection_id"`
-	IPAddr             net.IP         `json:"ip_addr,string"`
+	IPAddr             net.IP         `json:"ip_addr"`
 	SteamId            steamid.SID64  `json:"steam_id,string"`
 	PersonaName        string         `json:"persona_name"`
 	CreatedOn          time.Time      `json:"created_on"`

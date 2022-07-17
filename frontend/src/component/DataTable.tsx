@@ -13,6 +13,13 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 
+export enum RowsPerPage {
+    Ten = 10,
+    TwentyFive = 25,
+    Fifty = 50,
+    Hundred = 100
+}
+
 const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number) => {
     const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
     stabilizedThis.sort((a, b) => {
@@ -43,7 +50,7 @@ export interface HeadingCell<T> {
 export interface UserTableProps<T> {
     columns: HeadingCell<T>[];
     defaultSortColumn: keyof T;
-    rowsPerPage: number;
+    rowsPerPage: RowsPerPage;
     rows: T[];
     onRowClick?: (value: T) => void;
     query?: string;
@@ -73,7 +80,7 @@ const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
 
 export type Order = 'asc' | 'desc';
 
-export const UserTable = <T,>({
+export const DataTable = <T,>({
     columns,
     rows,
     defaultSortColumn,
@@ -85,7 +92,9 @@ export const UserTable = <T,>({
     const [order, setOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof T>(defaultSortColumn);
     const [pageCount, setPageCount] = useState(0);
-    const [rowPerPageCount, setRowPerPageCount] = useState(rowsPerPage ?? 25);
+    const [rowPerPageCount, setRowPerPageCount] = useState(
+        rowsPerPage ?? RowsPerPage.TwentyFive
+    );
     const [query, setQuery] = useState('');
 
     const sorted = useMemo(() => {
@@ -133,15 +142,20 @@ export const UserTable = <T,>({
                         setQuery(event.target.value);
                     }}
                 />
-                <Select<number>
+                <Select<RowsPerPage>
                     sx={{ padding: 0 }}
                     variant={'standard'}
                     value={rowPerPageCount}
                     onChange={(event) => {
-                        setRowPerPageCount(event.target.value as number);
+                        setRowPerPageCount(event.target.value as RowsPerPage);
                     }}
                 >
-                    {[10, 25, 50, 100].map((v) => (
+                    {[
+                        RowsPerPage.Ten,
+                        RowsPerPage.TwentyFive,
+                        RowsPerPage.Fifty,
+                        RowsPerPage.Hundred
+                    ].map((v) => (
                         <MenuItem value={v} key={v}>
                             {v}
                         </MenuItem>
@@ -168,9 +182,11 @@ export const UserTable = <T,>({
                                     key={col.label}
                                     sx={{
                                         width: col?.width ?? 'auto',
-                                        '&:hover': {
-                                            cursor: 'pointer'
-                                        },
+                                        '&:hover': col.sortable
+                                            ? {
+                                                  cursor: 'pointer'
+                                              }
+                                            : {},
                                         backgroundColor:
                                             theme.palette.background.paper
                                     }}

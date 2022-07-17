@@ -228,6 +228,8 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 	}
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case evt := <-serverEventChan:
 			switch evt.EventType {
 			case logparse.Say:

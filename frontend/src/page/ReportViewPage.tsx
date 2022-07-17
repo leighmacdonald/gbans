@@ -30,7 +30,6 @@ import Avatar from '@mui/material/Avatar';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { PlayerBanForm } from '../component/PlayerBanForm';
 import { logErr } from '../util/errors';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from '../component/Heading';
@@ -39,7 +38,9 @@ import { SteamIDList } from '../component/SteamIDList';
 import useTheme from '@mui/material/styles/useTheme';
 import Typography from '@mui/material/Typography';
 import { Nullable } from '../util/types';
-
+import { BanModal } from '../component/BanModal';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import GavelIcon from '@mui/icons-material/Gavel';
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
     const theme = useTheme();
@@ -48,6 +49,7 @@ export const ReportViewPage = (): JSX.Element => {
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
     const [banHistory, setBanHistory] = useState<IAPIBanRecord[]>([]);
     const [currentBan, setCurrentBan] = useState<Nullable<IAPIBanRecord>>();
+    const [banModalOpen, setBanModalOpen] = useState<boolean>(false);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -295,33 +297,37 @@ export const ReportViewPage = (): JSX.Element => {
                                                     ))}
                                                 </Select>
                                             </FormControl>
-                                            <Button
-                                                fullWidth
-                                                variant={'contained'}
-                                                color={'primary'}
-                                                endIcon={<SendIcon />}
-                                                onClick={onSetReportState}
-                                            >
-                                                Set Report State
-                                            </Button>
+                                            <ButtonGroup fullWidth>
+                                                <Button
+                                                    variant={'contained'}
+                                                    color={'error'}
+                                                    startIcon={<GavelIcon />}
+                                                    onClick={() => {
+                                                        setBanModalOpen(true);
+                                                    }}
+                                                >
+                                                    Ban Player
+                                                </Button>
+                                                <Button
+                                                    variant={'contained'}
+                                                    color={'warning'}
+                                                    startIcon={<SendIcon />}
+                                                    onClick={onSetReportState}
+                                                >
+                                                    Set State
+                                                </Button>
+                                            </ButtonGroup>
                                         </Stack>
                                     </ListItem>
                                 </List>
                             </Paper>
-                            {report?.subject.steam_id &&
-                                (currentBan?.ban_id ?? 0) == 0 && (
-                                    <Paper elevation={1}>
-                                        <PlayerBanForm
-                                            reportId={id}
-                                            steamId={report?.subject.steam_id}
-                                            onBanSuccess={() => {
-                                                loadBans();
-                                            }}
-                                        />
-                                    </Paper>
-                                )}
                         </>
                     )}
+                    <BanModal
+                        open={banModalOpen}
+                        setOpen={setBanModalOpen}
+                        profile={report?.subject}
+                    />
                 </Stack>
             </Grid>
         </Grid>

@@ -346,7 +346,8 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		muted = ban.Ban.BanType == model.NoComm
 		reason = ban.Ban.ReasonText
 		if len(reason) == 0 {
-			// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure that Discord doesn't shit itself
+			// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure
+			//that Discord doesn't shit itself
 			reason = "none"
 		}
 		expiry = ban.Ban.ValidUntil

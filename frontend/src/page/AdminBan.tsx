@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { apiGetBans, BanReason, IAPIBanRecord } from '../api';
-import { UserTable } from '../component/UserTable';
+import { DataTable } from '../component/DataTable';
 import { PersonCell } from '../component/PersonCell';
 import format from 'date-fns/format';
 import { formatDuration, intervalToDuration, parseISO } from 'date-fns';
@@ -46,7 +46,7 @@ export const AdminBan = (): JSX.Element => {
             <Grid container spacing={3} paddingTop={3}>
                 <Grid item xs={12}>
                     <Paper elevation={1}>
-                        <UserTable
+                        <DataTable
                             columns={[
                                 {
                                     label: '#',

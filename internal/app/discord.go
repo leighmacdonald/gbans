@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	maxEmbedFields      = 25
-	minUsernameChars    = 2
-	maxUsernameChars    = 32
-	maxAuthorChars      = 256
+	maxEmbedFields = 25
+	// TODO ensure these
+	//minUsernameChars    = 2
+	//maxUsernameChars    = 32
+	//maxAuthorChars      = 256
 	maxFieldNameChars   = 256
 	maxFieldValueChars  = 1024
 	maxDescriptionChars = 2048
@@ -88,13 +89,14 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
 		}
 	}()
+
+	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	session.AddHandler(bot.onReady)
+	session.AddHandler(bot.onConnect)
+	session.AddHandler(bot.onDisconnect)
+	session.AddHandler(bot.onInteractionCreate)
+	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 	bot.session = session
-	bot.session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	bot.session.AddHandler(bot.onReady)
-	bot.session.AddHandler(bot.onConnect)
-	bot.session.AddHandler(bot.onDisconnect)
-	bot.session.AddHandler(bot.onInteractionCreate)
-	bot.session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
@@ -274,9 +276,9 @@ func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
 	fieldCount := 0
 	for name, value := range entry.Data {
 		var msg string
-		switch value.(type) {
+		switch typedValue := value.(type) {
 		case string:
-			msg = value.(string)
+			msg = typedValue
 		case int:
 			msg = fmt.Sprintf("%d", value)
 		case int64:

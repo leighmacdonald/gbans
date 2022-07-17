@@ -33,7 +33,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { renderMarkdown } from '../api/wiki';
 import { MDEditor } from './MDEditor';
-import { UserTable } from './UserTable';
+import { DataTable } from './DataTable';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -337,7 +337,7 @@ export const ReportComponent = ({
                         </TabPanel>
 
                         <TabPanel value={value} index={1}>
-                            <UserTable
+                            <DataTable
                                 columns={[
                                     {
                                         label: 'Created',
@@ -369,7 +369,7 @@ export const ReportComponent = ({
                             />
                         </TabPanel>
                         <TabPanel value={value} index={2}>
-                            <UserTable
+                            <DataTable
                                 columns={[
                                     {
                                         label: 'Created',
@@ -401,7 +401,7 @@ export const ReportComponent = ({
                             />
                         </TabPanel>
                         <TabPanel value={value} index={3}>
-                            <UserTable
+                            <DataTable
                                 columns={[
                                     {
                                         label: 'Created',

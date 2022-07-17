@@ -6,9 +6,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import { Dialog } from '@mui/material';
 
-export interface ConfirmationModalProps {
+export interface ConfirmationModalProps<T> {
     children?: JSX.Element;
-    onSuccess?: () => void;
+    onSuccess?: (resp: T) => void;
     onCancel?: () => void;
     onOpen?: () => void;
     open: boolean;
@@ -19,7 +19,7 @@ export const ConfirmationModal = ({
     children,
     open,
     setOpen
-}: ConfirmationModalProps) => {
+}: ConfirmationModalProps<boolean>) => {
     return (
         <Dialog
             open={open}
@@ -27,24 +27,26 @@ export const ConfirmationModal = ({
                 setOpen(false);
             }}
         >
-            <Stack>
+            <Stack padding={2} spacing={2}>
                 {children}
-                <ButtonGroup>
-                    <Button
-                        variant={'contained'}
-                        color={'success'}
-                        startIcon={<CheckIcon />}
-                    >
-                        Accept
-                    </Button>
-                    <Button
-                        variant={'contained'}
-                        color={'error'}
-                        startIcon={<ClearIcon />}
-                    >
-                        Cancel
-                    </Button>
-                </ButtonGroup>
+                <Stack direction={'row-reverse'}>
+                    <ButtonGroup>
+                        <Button
+                            variant={'contained'}
+                            color={'success'}
+                            startIcon={<CheckIcon />}
+                        >
+                            Accept
+                        </Button>
+                        <Button
+                            variant={'contained'}
+                            color={'error'}
+                            startIcon={<ClearIcon />}
+                        >
+                            Cancel
+                        </Button>
+                    </ButtonGroup>
+                </Stack>
             </Stack>
         </Dialog>
     );

@@ -14,23 +14,6 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import Paper from '@mui/material/Paper';
 import { Heading } from './Heading';
 
-// const useStyles = makeStyles((theme) => ({
-//     root: {
-//         display: 'flex',
-//         padding: theme.spacing(2),
-//         marginBottom: theme.spacing(2)
-//     },
-//     item: {
-//         paddingBottom: 0
-//     },
-//     h1: { textAlign: 'left', fontSize: 20, marginBottom: 0 },
-//     h2: { textAlign: 'center', fontSize: 16, marginBottom: 0 },
-//     formControl: {
-//         margin: theme.spacing(1),
-//         minWidth: 120
-//     }
-// }));
-
 export const ServerFilters = () => {
     const {
         setCustomRange,

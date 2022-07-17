@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import { UserTable } from '../component/UserTable';
+import { DataTable } from '../component/DataTable';
 import { apiGetBans, Ban } from '../api';
 
 export const Bans = (): JSX.Element => {
@@ -17,7 +17,7 @@ export const Bans = (): JSX.Element => {
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs>
                 <Paper elevation={1}>
-                    <UserTable
+                    <DataTable
                         rows={bans}
                         rowsPerPage={25}
                         defaultSortColumn={'ban_id'}

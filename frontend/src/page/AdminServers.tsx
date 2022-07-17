@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import { ServerAddForm } from '../component/ServerAddForm';
 import Paper from '@mui/material/Paper';
-import { UserTable } from '../component/UserTable';
+import { DataTable } from '../component/DataTable';
 import { apiGetServers, ServerState } from '../api';
 
 export const AdminServers = (): JSX.Element => {
@@ -23,7 +23,7 @@ export const AdminServers = (): JSX.Element => {
             </Grid>
             <Grid item xs={12}>
                 <Paper elevation={1}>
-                    <UserTable
+                    <DataTable
                         rowsPerPage={100}
                         defaultSortColumn={'name_short'}
                         rows={servers}

@@ -1,6 +1,6 @@
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { UserTable, UserTableProps } from './UserTable';
+import { DataTable, UserTableProps } from './DataTable';
 import { LoadingSpinner } from './LoadingSpinner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
@@ -18,7 +18,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
             .finally(() => {
                 setLoading(false);
             });
-    }, []);
+    }, [opts]);
 
     const matchTableDef: UserTableProps<MatchSummary> = useMemo(() => {
         return {
@@ -103,7 +103,7 @@ export const MatchHistory = (opts: MatchesQueryOpts) => {
             {matches.length == 0 && (
                 <Typography variant={'caption'}>No results</Typography>
             )}
-            {matches.length > 0 && <UserTable {...matchTableDef} />}
+            {matches.length > 0 && <DataTable {...matchTableDef} />}
         </Stack>
     );
 };

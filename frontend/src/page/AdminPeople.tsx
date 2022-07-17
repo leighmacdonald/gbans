@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { apiGetPeople, Person } from '../api';
-import { UserTable } from '../component/UserTable';
+import { DataTable } from '../component/DataTable';
 
 export const AdminPeople = (): JSX.Element => {
     const [people, setPeople] = useState<Person[]>([]);
@@ -21,7 +21,7 @@ export const AdminPeople = (): JSX.Element => {
                 <Paper elevation={1}>
                     <Stack padding={3}>
                         <Typography variant={'h2'}>Known Players</Typography>
-                        <UserTable
+                        <DataTable
                             columns={[
                                 {
                                     label: 'Steam ID',

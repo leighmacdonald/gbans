@@ -9,7 +9,7 @@ import {
     ReportWithAuthor
 } from '../api';
 import { logErr } from '../util/errors';
-import { UserTable } from '../component/UserTable';
+import { DataTable } from '../component/DataTable';
 import Paper from '@mui/material/Paper';
 import format from 'date-fns/format';
 import { parseISO } from 'date-fns';
@@ -81,7 +81,7 @@ export const AdminReports = (): JSX.Element => {
                     <Paper>
                         <Heading>Current User Reports</Heading>
 
-                        <UserTable
+                        <DataTable
                             columns={[
                                 {
                                     label: 'ID',

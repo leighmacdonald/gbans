@@ -1,6 +1,5 @@
 import Stack from '@mui/material/Stack';
 import React from 'react';
-import { ServerState } from '../api';
 import Typography from '@mui/material/Typography';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
@@ -9,10 +8,10 @@ import { Flag } from './Flag';
 import LinearProgress from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
-import { UserTable } from './UserTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { LinearProgressProps } from '@mui/material/LinearProgress';
 import { LoadingSpinner } from './LoadingSpinner';
+import { DataTable } from './DataTable';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -29,14 +28,6 @@ export const LinearProgressWithLabel = (
     </Box>
 );
 
-export interface ServerListProps {
-    servers: ServerState[];
-}
-
-export interface ServerRowProps {
-    server: ServerState;
-}
-
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();
     const { selectedServers } = useMapStateCtx();
@@ -48,7 +39,7 @@ export const ServerList = () => {
         );
     }
     return (
-        <UserTable
+        <DataTable
             rowsPerPage={100}
             columns={[
                 {
