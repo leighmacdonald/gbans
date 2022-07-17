@@ -56,6 +56,7 @@ export const ServerList = () => {
                     tooltip: 'Country Code',
                     sortKey: 'cc',
                     sortType: 'string',
+                    queryValue: (obj) => obj.cc,
                     renderer: (_, value) => (
                         <Flag countryCode={value as string} />
                     )
@@ -67,6 +68,7 @@ export const ServerList = () => {
                     sortType: 'string',
                     align: 'left',
                     width: '100%',
+                    queryValue: (obj) => obj.name + obj.name_short,
                     renderer: (_, value) => (
                         <Typography variant={'button'}>
                             {value as string}
@@ -77,7 +79,8 @@ export const ServerList = () => {
                     label: 'Map',
                     tooltip: 'Map Name',
                     sortKey: 'map',
-                    sortType: 'string'
+                    sortType: 'string',
+                    queryValue: (obj) => obj.map
                 },
                 {
                     label: 'Players',

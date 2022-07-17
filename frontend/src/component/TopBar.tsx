@@ -35,6 +35,8 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import useTheme from '@mui/material/styles/useTheme';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import { Flashes } from './Flashes';
+
 interface menuRoute {
     to: string;
     text: string;
@@ -155,7 +157,15 @@ export const TopBar = () => {
         route: string,
         icon: JSX.Element
     ) => (
-        <MenuItem onClick={() => loadRoute(route)} key={route + text}>
+        <MenuItem
+            onClick={() => {
+                setAnchorElNav(null);
+                setAnchorElUser(null);
+                setAnchorElAdmin(null);
+                loadRoute(route);
+            }}
+            key={route + text}
+        >
             <ListItemIcon>{icon}</ListItemIcon>
             <ListItemText primary={text} />
         </MenuItem>
@@ -361,6 +371,7 @@ export const TopBar = () => {
                     </Box>
                 </Toolbar>
             </Container>
+            <Flashes />
         </AppBar>
     );
 };

@@ -142,26 +142,34 @@ export const MDEditor = ({
                             </Tooltip>
                         </ButtonGroup>
                     </Stack>
-                    <TextField
-                        sx={{ marginTop: '0 important', padding: 0 }}
-                        id="body"
-                        label="Body (Markdown)"
-                        fullWidth
-                        multiline
-                        minRows={15}
-                        value={bodyMD ?? ''}
-                        onChange={(event) => {
-                            const body = event.target.value;
-                            setCursorPos(event.target.selectionEnd ?? 0);
-                            setBodyMD(body);
-                        }}
-                    />
+                    <Box paddingRight={2} paddingLeft={2}>
+                        <TextField
+                            sx={{
+                                padding: 0,
+                                minHeight: 350,
+                                height: '100%'
+                            }}
+                            id="body"
+                            label="Body (Markdown)"
+                            fullWidth
+                            multiline
+                            rows={20}
+                            value={bodyMD ?? ''}
+                            onChange={(event) => {
+                                const body = event.target.value;
+                                setCursorPos(event.target.selectionEnd ?? 0);
+                                setBodyMD(body);
+                            }}
+                        />
+                    </Box>
                 </Stack>
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
                 <Box
+                    padding={2}
                     sx={(theme) => {
                         return {
+                            minHeight: 450,
                             a: {
                                 color: theme.palette.text.primary
                             }

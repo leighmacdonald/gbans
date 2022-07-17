@@ -1,20 +1,84 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import { ServerAddForm } from '../component/ServerAddForm';
-import { TableServerList } from '../component/TableServerList';
 import Paper from '@mui/material/Paper';
+import { UserTable } from '../component/UserTable';
+import { apiGetServers, ServerState } from '../api';
 
 export const AdminServers = (): JSX.Element => {
+    const [servers, setServers] = useState<ServerState[]>([]);
+
+    useEffect(() => {
+        apiGetServers().then((s) => {
+            setServers(s);
+        });
+    }, []);
+
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={8}>
-                <Paper elevation={1}>
-                    <TableServerList />
-                </Paper>
-            </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12}>
                 <Paper elevation={1}>
                     <ServerAddForm />
+                </Paper>
+            </Grid>
+            <Grid item xs={12}>
+                <Paper elevation={1}>
+                    <UserTable
+                        rowsPerPage={100}
+                        defaultSortColumn={'name_short'}
+                        rows={servers}
+                        columns={[
+                            {
+                                tooltip: 'Name',
+                                label: 'Name',
+                                sortKey: 'name_short',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Name Long',
+                                label: 'Name Long',
+                                sortKey: 'name',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Address',
+                                label: 'Address',
+                                sortKey: 'host',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Port',
+                                label: 'Port',
+                                sortKey: 'port',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Password',
+                                label: 'Password',
+                                sortKey: 'password',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Region',
+                                label: 'Region',
+                                sortKey: 'region',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'CC',
+                                label: 'CC',
+                                sortKey: 'cc',
+                                align: 'left'
+                            },
+                            {
+                                tooltip: 'Location',
+                                label: 'Location',
+                                virtual: true,
+                                virtualKey: 'location',
+                                align: 'left'
+                            }
+                        ]}
+                    />
                 </Paper>
             </Grid>
         </Grid>

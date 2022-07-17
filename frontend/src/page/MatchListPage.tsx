@@ -16,7 +16,9 @@ export const MatchListPage = (): JSX.Element => {
                 </Paper>
             </Box>
             <Box>
-                <MatchHistory limit={100} />
+                <Paper>
+                    <MatchHistory limit={100} />
+                </Paper>
             </Box>
         </Stack>
     );

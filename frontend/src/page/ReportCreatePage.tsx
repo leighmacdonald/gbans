@@ -4,7 +4,6 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import ListSubheader from '@mui/material/ListSubheader';
 import Stack from '@mui/material/Stack';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import { ReportForm } from '../component/ReportForm';
@@ -15,6 +14,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import { logErr } from '../util/errors';
 import { ReportStatusIcon } from '../component/ReportStatusIcon';
+import { Heading } from '../component/Heading';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
@@ -44,16 +44,8 @@ export const ReportCreatePage = (): JSX.Element => {
             <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
-                        <List
-                            subheader={
-                                <ListSubheader
-                                    component="div"
-                                    id="nested-list-subheader"
-                                >
-                                    Reporting Guide
-                                </ListSubheader>
-                            }
-                        >
+                        <Heading> Reporting Guide</Heading>
+                        <List>
                             <ListItem>
                                 <ListItemText>
                                     Once your report is posted, it will be
@@ -96,16 +88,8 @@ export const ReportCreatePage = (): JSX.Element => {
                     </Paper>
 
                     <Paper elevation={1}>
-                        <List
-                            subheader={
-                                <ListSubheader
-                                    component="div"
-                                    id="nested-list-subheader"
-                                >
-                                    Your Report History
-                                </ListSubheader>
-                            }
-                        >
+                        <Heading>Your Report History</Heading>
+                        <List>
                             {reportHistory.map((value, idx) => (
                                 <ListItem key={idx}>
                                     <ListItemIcon>

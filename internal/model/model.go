@@ -230,8 +230,9 @@ type Ban struct {
 	// ReasonText is returned to the client when kicked trying to join the server
 	ReasonText string `db:"reason_text" json:"reason_text"`
 	// Note is a supplementary note added by admins that is hidden from normal view
-	Note   string `db:"note" json:"note"`
-	Source Origin `json:"ban_source" db:"ban_source"`
+	Note     string `db:"note" json:"note"`
+	Source   Origin `json:"ban_source" db:"ban_source"`
+	ReportId int    `json:"report_id"`
 	// Deleted is used for soft-deletes
 	Deleted bool `json:"deleted" db:"deleted"`
 	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
@@ -768,10 +769,11 @@ type Report struct {
 	ReportedId   steamid.SID64 `json:"reported_id,string"`
 	Description  string        `json:"description"`
 	ReportStatus ReportStatus  `json:"report_status"`
+	Reason       Reason        `json:"reason"`
+	ReasonText   string        `json:"reason_text"`
 	Deleted      bool          `json:"deleted"`
 	CreatedOn    time.Time     `json:"created_on"`
 	UpdatedOn    time.Time     `json:"updated_on"`
-	MediaIds     []int         `json:"media_ids"`
 }
 
 func NewReport() Report {

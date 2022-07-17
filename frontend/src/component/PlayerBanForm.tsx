@@ -3,6 +3,7 @@ import { ChangeEvent, SyntheticEvent, useCallback, useState } from 'react';
 import IPCIDR from 'ip-cidr';
 import {
     apiCreateBan,
+    Ban,
     BanPayload,
     BanReason,
     BanReasons,
@@ -68,11 +69,18 @@ const Durations = [
 
 export interface PlayerBanFormProps {
     onProfileChanged?: (profile: Nullable<PlayerProfile>) => void;
+    onBanSuccess?: (ban: Ban) => void;
     steamId: SteamID;
+    reportId?: number;
 }
+
 type BanMethod = 'steam' | 'network';
 
-export const PlayerBanForm = ({ steamId }: PlayerBanFormProps): JSX.Element => {
+export const PlayerBanForm = ({
+    steamId,
+    reportId,
+    onBanSuccess
+}: PlayerBanFormProps): JSX.Element => {
     const [duration, setDuration] = useState<Duration>(Duration.dur48h);
     const [customDuration, setCustomDuration] = useState<string>('');
     const [actionType, setActionType] = useState<BanType>(BanType.Banned);
@@ -108,9 +116,13 @@ export const PlayerBanForm = ({ steamId }: PlayerBanFormProps): JSX.Element => {
             reason: banReason,
             note: noteText
         };
+        if (reportId) {
+            opts.report_id = reportId as number;
+        }
         apiCreateBan(opts)
             .then((ban) => {
                 sendFlash('success', `Ban created successfully: ${ban.ban_id}`);
+                onBanSuccess && onBanSuccess(ban);
             })
             .catch((err) => {
                 sendFlash('error', `Failed to create ban: ${err}`);
@@ -125,7 +137,9 @@ export const PlayerBanForm = ({ steamId }: PlayerBanFormProps): JSX.Element => {
         network,
         reasonText,
         noteText,
-        sendFlash
+        reportId,
+        sendFlash,
+        onBanSuccess
     ]);
 
     const handleUpdateNetwork = (evt: SyntheticEvent) => {
@@ -172,7 +186,7 @@ export const PlayerBanForm = ({ steamId }: PlayerBanFormProps): JSX.Element => {
     return (
         <>
             <Heading>Ban A Player</Heading>
-            <Stack spacing={3} padding={3}>
+            <Stack spacing={3} padding={2}>
                 <FormControl fullWidth>
                     <InputLabel id="actionType-label">Action Type</InputLabel>
                     <Select<BanType>

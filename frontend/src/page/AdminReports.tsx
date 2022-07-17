@@ -20,6 +20,8 @@ import MenuItem from '@mui/material/MenuItem';
 import { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
+import Link from '@mui/material/Link';
+import { PersonCell } from '../component/PersonCell';
 
 export const AdminReports = (): JSX.Element => {
     const [reports, setReports] = useState<ReportWithAuthor[]>([]);
@@ -51,8 +53,7 @@ export const AdminReports = (): JSX.Element => {
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={12}>
                 <Stack spacing={2}>
-                    <Paper>
-                        <Heading>Current User Reports</Heading>
+                    <Stack direction={'row'}>
                         <FormControl sx={{ padding: 2 }}>
                             <InputLabel id="report-status-label">
                                 Report status
@@ -76,18 +77,44 @@ export const AdminReports = (): JSX.Element => {
                                 ))}
                             </Select>
                         </FormControl>
+                    </Stack>
+                    <Paper>
+                        <Heading>Current User Reports</Heading>
 
                         <UserTable
-                            onRowClick={(report) => {
-                                navigate(`/report/${report.report.report_id}`);
-                            }}
                             columns={[
+                                {
+                                    label: 'ID',
+                                    tooltip: 'Report ID',
+                                    sortType: 'number',
+                                    align: 'left',
+                                    queryValue: (o) => `${o.report.report_id}`,
+                                    renderer: (obj) => (
+                                        <Typography
+                                            variant={'subtitle1'}
+                                            component={Link}
+                                            onClick={() => {
+                                                navigate(
+                                                    `/report/${obj.report.report_id}`
+                                                );
+                                            }}
+                                        >
+                                            #{obj.report.report_id}
+                                        </Typography>
+                                    )
+                                },
                                 {
                                     label: 'Status',
                                     tooltip: 'Status',
                                     sortType: 'string',
                                     align: 'left',
+                                    virtual: true,
+                                    virtualKey: 'status',
                                     width: '200px',
+                                    queryValue: (o) =>
+                                        reportStatusString(
+                                            o.report.report_status
+                                        ),
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'subtitle1'}>
@@ -126,32 +153,38 @@ export const AdminReports = (): JSX.Element => {
                                     sortType: 'string',
                                     align: 'left',
                                     width: '250px',
-                                    renderer: (obj) => {
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                <img src={obj.subject.avatar} />
-                                                {obj.subject.personaname}
-                                            </Typography>
-                                        );
-                                    }
+                                    queryValue: (o) =>
+                                        o.subject.personaname +
+                                        o.subject.steam_id,
+                                    renderer: (row) => (
+                                        <PersonCell
+                                            steam_id={row.subject.steam_id}
+                                            personaname={
+                                                row.subject.personaname
+                                            }
+                                            avatar={row.subject.avatar}
+                                        ></PersonCell>
+                                    )
                                 },
                                 {
                                     label: 'Reporter',
                                     tooltip: 'Reporter',
                                     sortType: 'string',
                                     align: 'left',
-                                    renderer: (obj) => {
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                <img src={obj.author.avatar} />
-                                                {obj.author.personaname}
-                                            </Typography>
-                                        );
-                                    }
+                                    queryValue: (o) =>
+                                        o.subject.personaname +
+                                        o.subject.steam_id,
+                                    renderer: (row) => (
+                                        <PersonCell
+                                            steam_id={row.author.steam_id}
+                                            personaname={row.author.personaname}
+                                            avatar={row.author.avatar}
+                                        ></PersonCell>
+                                    )
                                 }
                             ]}
                             defaultSortColumn={'report'}
-                            rowsPerPage={100}
+                            rowsPerPage={10}
                             rows={cachedReports}
                         />
                     </Paper>

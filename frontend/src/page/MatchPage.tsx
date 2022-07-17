@@ -14,6 +14,7 @@ import Stack from '@mui/material/Stack';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { first } from 'lodash-es';
 import { LoadingSpinner } from '../component/LoadingSpinner';
+import Paper from '@mui/material/Paper';
 
 export const MatchPage = (): JSX.Element => {
     const navigate = useNavigate();
@@ -95,64 +96,86 @@ export const MatchPage = (): JSX.Element => {
                 {
                     label: 'K',
                     sortKey: 'Kills',
-                    tooltip: 'Kills'
+                    tooltip: 'Kills',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'A',
                     sortKey: 'Assists',
-                    tooltip: 'Assists'
+                    tooltip: 'Assists',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'D',
                     sortKey: 'Deaths',
-                    tooltip: 'Deaths'
+                    tooltip: 'Deaths',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Dmg',
                     sortKey: 'Damage',
-                    tooltip: 'Damage'
+                    tooltip: 'Damage',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'KD',
                     sortKey: 'KDRatio',
                     tooltip: 'Kills:Death ratio',
-                    sortType: 'float'
+                    sortType: 'float',
+                    sortable: true
                 },
                 {
                     label: 'KAD',
                     sortKey: 'KADRatio',
                     tooltip: 'Kills+Assists:Death ratio',
-                    sortType: 'float'
+                    sortType: 'float',
+                    sortable: true
                 },
                 {
                     label: 'DT',
                     sortKey: 'DamageTaken',
-                    tooltip: 'DTaken'
+                    tooltip: 'DTaken',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Healing',
                     sortKey: 'Healing',
-                    tooltip: 'Healing'
+                    tooltip: 'Healing',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'HT',
                     sortKey: 'HealingTaken',
-                    tooltip: 'Healing Taken'
+                    tooltip: 'Healing Taken',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'AS',
                     sortKey: 'Airshots',
-                    tooltip: 'Airshots'
+                    tooltip: 'Airshots',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'HS',
                     sortKey: 'HeadShots',
-                    tooltip: 'Headshots'
+                    tooltip: 'Headshots',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'BS',
                     sortKey: 'BackStabs',
-                    tooltip: 'Backstabs'
+                    tooltip: 'Backstabs',
+                    sortable: true,
+                    sortType: 'number'
                 }
             ],
             rows: match?.PlayerSums || []
@@ -175,6 +198,7 @@ export const MatchPage = (): JSX.Element => {
                     label: 'Profile',
                     sortKey: 'SteamId',
                     tooltip: 'Profile',
+                    sortable: true,
                     align: 'left',
                     renderer: (_, value) => {
                         const p = first(
@@ -196,12 +220,16 @@ export const MatchPage = (): JSX.Element => {
                 {
                     label: 'Healing',
                     sortKey: 'Healing',
-                    tooltip: 'Healing'
+                    tooltip: 'Healing',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Charges',
                     sortKey: 'Charges',
                     tooltip: 'Uber Charges',
+                    sortable: true,
+                    sortType: 'number',
                     renderer: (value: { K: number } | unknown) => {
                         return value
                             ? Object.values(value as { K: number }).reduce(
@@ -214,12 +242,16 @@ export const MatchPage = (): JSX.Element => {
                 {
                     label: 'Drops',
                     sortKey: 'Drops',
-                    tooltip: 'Uber Drops'
+                    tooltip: 'Uber Drops',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Near Full Death',
                     sortKey: 'NearFullChargeDeath',
-                    tooltip: 'Near full uber death'
+                    tooltip: 'Near full uber death',
+                    sortable: true,
+                    sortType: 'number'
                 }
             ],
             rows: match?.MedicSums || []
@@ -244,37 +276,51 @@ export const MatchPage = (): JSX.Element => {
                     label: 'Team',
                     sortKey: 'Team',
                     tooltip: 'Team',
-                    align: 'left'
+                    align: 'left',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Kills',
                     sortKey: 'Kills',
-                    tooltip: 'Total Kills'
+                    tooltip: 'Total Kills',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Damage',
                     sortKey: 'Damage',
-                    tooltip: 'Total Team Damage'
+                    tooltip: 'Total Team Damage',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Caps',
                     sortKey: 'Caps',
-                    tooltip: 'Total Captures'
+                    tooltip: 'Total Captures',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Ubers',
                     sortKey: 'Charges',
-                    tooltip: 'Total uber charges'
+                    tooltip: 'Total uber charges',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Drops',
                     sortKey: 'Drops',
-                    tooltip: 'Total uber drops'
+                    tooltip: 'Total uber drops',
+                    sortable: true,
+                    sortType: 'number'
                 },
                 {
                     label: 'Mid',
                     sortKey: 'MidFights',
-                    tooltip: 'Midfight wins'
+                    tooltip: 'Midfight wins',
+                    sortable: true,
+                    sortType: 'number'
                 }
             ],
             rows: match?.TeamSums || []
@@ -293,9 +339,15 @@ export const MatchPage = (): JSX.Element => {
                         Logs #{match?.MatchID} - {match?.Title} -{' '}
                         {match?.MapName}
                     </Typography>
-                    <UserTable {...playerTableDef} />
-                    <UserTable {...medicTableDef} />
-                    <UserTable {...teamTableDef} />
+                    <Paper>
+                        <UserTable {...playerTableDef} />
+                    </Paper>
+                    <Paper>
+                        <UserTable {...medicTableDef} />
+                    </Paper>
+                    <Paper>
+                        <UserTable {...teamTableDef} />
+                    </Paper>
                 </>
             )}
             {loading && <LoadingSpinner />}

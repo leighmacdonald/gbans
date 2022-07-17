@@ -11,6 +11,7 @@ import {
     apiGetBans,
     apiGetReport,
     apiReportSetState,
+    BanReasons,
     BanType,
     IAPIBanRecord,
     PermissionLevel,
@@ -73,7 +74,7 @@ export const ReportViewPage = (): JSX.Element => {
             });
     }, [report_id, setReport, id, sendFlash, navigate]);
 
-    useEffect(() => {
+    const loadBans = useCallback(() => {
         if (!report?.report.reported_id) {
             return;
         }
@@ -85,9 +86,12 @@ export const ReportViewPage = (): JSX.Element => {
             setBanHistory(history);
             const cur = history.filter((b) => !b.deleted).pop();
             setCurrentBan(cur);
-            console.log(cur);
         });
     }, [report?.report.reported_id]);
+
+    useEffect(() => {
+        loadBans();
+    }, [loadBans, report]);
 
     const onSetReportState = useCallback(() => {
         apiReportSetState(id, stateAction)
@@ -124,7 +128,7 @@ export const ReportViewPage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12} md={9}>
+            <Grid item xs={12} md={8}>
                 {report && (
                     <ReportComponent
                         report={report.report}
@@ -132,7 +136,7 @@ export const ReportViewPage = (): JSX.Element => {
                     />
                 )}
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
                         <Stack>
@@ -183,7 +187,8 @@ export const ReportViewPage = (): JSX.Element => {
                         </Typography>
                     </Paper>
                     <Paper elevation={1} sx={{ width: '100%' }}>
-                        <Heading>Reporter</Heading>
+                        <Heading>Details</Heading>
+
                         <List sx={{ width: '100%' }}>
                             <ListItem
                                 sx={{
@@ -205,10 +210,48 @@ export const ReportViewPage = (): JSX.Element => {
                                     </Avatar>
                                 </ListItemAvatar>
                                 <ListItemText
-                                    primary={report?.author.personaname}
-                                    secondary={'Reports: 12'}
+                                    primary={'Author'}
+                                    secondary={report?.author.personaname}
                                 />
                             </ListItem>
+                            {report?.report.reason && (
+                                <ListItem
+                                    sx={{
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                            backgroundColor:
+                                                theme.palette.background.paper
+                                        }
+                                    }}
+                                >
+                                    <ListItemText
+                                        primary={'Reason'}
+                                        secondary={
+                                            BanReasons[report?.report.reason]
+                                        }
+                                    />
+                                </ListItem>
+                            )}
+                            {report?.report.reason &&
+                                report?.report.reason_text != '' && (
+                                    <ListItem
+                                        sx={{
+                                            '&:hover': {
+                                                cursor: 'pointer',
+                                                backgroundColor:
+                                                    theme.palette.background
+                                                        .paper
+                                            }
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={'Custom Reason'}
+                                            secondary={
+                                                report?.report.reason_text
+                                            }
+                                        />
+                                    </ListItem>
+                                )}
                         </List>
                     </Paper>
                     {currentUser.permission_level >=
@@ -265,13 +308,18 @@ export const ReportViewPage = (): JSX.Element => {
                                     </ListItem>
                                 </List>
                             </Paper>
-                            {report?.subject.steam_id && (
-                                <Paper elevation={1}>
-                                    <PlayerBanForm
-                                        steamId={report?.subject.steam_id}
-                                    />
-                                </Paper>
-                            )}
+                            {report?.subject.steam_id &&
+                                (currentBan?.ban_id ?? 0) == 0 && (
+                                    <Paper elevation={1}>
+                                        <PlayerBanForm
+                                            reportId={id}
+                                            steamId={report?.subject.steam_id}
+                                            onBanSuccess={() => {
+                                                loadBans();
+                                            }}
+                                        />
+                                    </Paper>
+                                )}
                         </>
                     )}
                 </Stack>

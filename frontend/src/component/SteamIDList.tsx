@@ -6,6 +6,7 @@ import ListSubheader from '@mui/material/ListSubheader';
 import useTheme from '@mui/material/styles/useTheme';
 import ListItem from '@mui/material/ListItem';
 import SteamID from 'steamid';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export interface SteamIDListProps {
     steam_id: bigint;
@@ -14,6 +15,7 @@ export interface SteamIDListProps {
 export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     const sid = new SteamID(steam_id);
     const theme = useTheme();
+    const { sendFlash } = useUserFlashCtx();
     return (
         <Stack>
             <List
@@ -33,6 +35,10 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
                         <ListItem
                             onClick={async () => {
                                 await navigator.clipboard.writeText(s[0]);
+                                sendFlash(
+                                    'success',
+                                    `Copied to clipboard: ${s[0]}`
+                                );
                             }}
                             key={s[0]}
                             sx={{

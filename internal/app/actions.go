@@ -68,6 +68,7 @@ type banOpts struct {
 	reasonText string
 	origin     model.Origin
 	modNote    string
+	reportId   int
 }
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
@@ -105,6 +106,7 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 	ban.Note = opts.modNote
 	ban.ValidUntil = until
 	ban.Source = opts.origin
+	ban.ReportId = opts.reportId
 	ban.CreatedOn = config.Now()
 	ban.UpdatedOn = config.Now()
 
@@ -137,7 +139,7 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 		})
 		if config.Discord.PublicLogChannelEnable {
 			select {
-			case discordSendMsg <- discordPayload{channelId: config.Discord.PublicLogChannelId, message: banNotice}:
+			case discordSendMsg <- discordPayload{channelId: config.Discord.PublicLogChannelId, embed: banNotice}:
 			default:
 				log.Warnf("Cannot send discord payload, channel full")
 			}

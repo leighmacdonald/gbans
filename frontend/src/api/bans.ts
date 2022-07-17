@@ -1,6 +1,7 @@
 import { apiCall, apiError, QueryFilter } from './common';
 import { communityVisibilityState, Person, profileState } from './profile';
 import { SteamID } from './const';
+import { BanReason } from './report';
 
 export enum BanType {
     Unknown = -1,
@@ -30,11 +31,12 @@ export interface Ban {
     cidr: string;
     author_id: SteamID;
     ban_type: BanType;
-    reason: number;
+    reason: BanReason;
     reason_text: string;
     note: string;
     source: number;
     deleted: boolean;
+    report_id: number;
     valid_until: Date;
     created_on: Date;
     updated_on: Date;
@@ -73,15 +75,16 @@ export interface BanPayload {
     reason_text: string;
     note: string;
     network: string;
+    report_id?: number;
 }
 
 export const apiGetBans = async (
-    opts: BansQueryFilter
+    opts?: BansQueryFilter
 ): Promise<IAPIBanRecord[]> => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans`,
         'POST',
-        opts
+        opts ?? {}
     );
     return (resp ?? []).map((b): IAPIBanRecord => {
         return {
@@ -112,7 +115,8 @@ export const apiGetBans = async (
             timecreated: b.person.timecreated,
             updated_on: b.ban.updated_on,
             valid_until: b.ban.valid_until,
-            deleted: b.ban.deleted
+            deleted: b.ban.deleted,
+            report_id: b.ban.report_id
         };
     });
 };

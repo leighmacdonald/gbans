@@ -347,10 +347,21 @@ func banSweeper(ctx context.Context, database store.Store) {
 							if expiredBan.BanType == model.NoComm {
 								banType = "Mute"
 							}
+							var person model.Person
+							if errPerson := database.GetOrCreatePersonBySteamID(ctx, expiredBan.SteamID, &person); errPerson != nil {
+								log.Errorf("Failed to get expired person: %v", errPerson)
+								continue
+							}
+							name := person.PersonaName
+							if name == "" {
+								name = person.SteamID.String()
+							}
 							log.WithFields(log.Fields{
 								"sid":    expiredBan.SteamID,
+								"name":   name,
 								"origin": expiredBan.Source.String(),
-								"reason": expiredBan.ReasonText,
+								"reason": expiredBan.Reason.String(),
+								"custom": expiredBan.ReasonText,
 							}).Infof("%s expired", banType)
 						}
 					}

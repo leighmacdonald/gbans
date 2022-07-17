@@ -88,6 +88,8 @@ export interface Report extends TimeStamped {
     description: string;
     report_status: ReportStatus;
     deleted: boolean;
+    reason: BanReason;
+    reason_text: string;
 }
 
 export interface ReportMessagesResponse {
@@ -110,6 +112,8 @@ export interface Appeal extends TimeStamped {
 export interface CreateReportRequest {
     steam_id: SteamID;
     description: string;
+    reason: BanReason;
+    reason_text: string;
 }
 
 export interface ReportWithAuthor {

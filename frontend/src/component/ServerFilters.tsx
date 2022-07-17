@@ -7,12 +7,12 @@ import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import { uniq } from 'lodash-es';
 import { SelectChangeEvent } from '@mui/material/Select';
 import Paper from '@mui/material/Paper';
+import { Heading } from './Heading';
 
 // const useStyles = makeStyles((theme) => ({
 //     root: {
@@ -177,6 +177,7 @@ export const ServerFilters = () => {
         <Paper elevation={1}>
             <Grid
                 container
+                spacing={2}
                 style={{
                     width: '100%',
                     flexWrap: 'nowrap',
@@ -186,9 +187,7 @@ export const ServerFilters = () => {
                 }}
             >
                 <Grid item xs={2}>
-                    <Typography variant={'h4'} align={'center'}>
-                        Filters
-                    </Typography>
+                    <Heading>Filters</Heading>
                 </Grid>
                 <Grid item xs>
                     <FormControlLabel

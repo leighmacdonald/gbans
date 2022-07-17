@@ -131,7 +131,9 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 		defer remoteSrc.removeLogAddress(config.Debug.AddRCONLogAddress)
 	}
 	running := true
+	count := uint64(0)
 	insecureCount := uint64(0)
+	errCount := uint64(0)
 	go func() {
 		for running {
 			buffer := make([]byte, 1024)
@@ -144,22 +146,29 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			case s2aLogString:
 				if insecureCount%10000 == 0 {
 					log.WithFields(log.Fields{"count": insecureCount + 1}).
-						Errorf("Received unsupported log packet type")
+						Errorf("Using unsupported log packet type 0x52")
 				}
 				insecureCount++
+				errCount++
 			case s2aLogString2:
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
 					log.Warnf("Received malformed log message: Failed to find marker")
+					errCount++
 					continue
 				}
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 				if errConv != nil {
 					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
+					errCount++
 					continue
 				}
 				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
+				count++
+				if count%10000 == 0 {
+					log.WithFields(log.Fields{"count": count, "errors": errCount}).Debugf("Log counter")
+				}
 			}
 		}
 	}()
@@ -175,7 +184,6 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			//remoteSrc.updateDNS()
 		case logPayload := <-msgIngressChan:
 			var serverName string
-
 			remoteSrc.RLock()
 			serverNameValue, found := remoteSrc.secretMap[int(logPayload.source)]
 			remoteSrc.RUnlock()
@@ -187,11 +195,13 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 
 			var server model.Server
 			if errServer := database.GetServerByName(remoteSrc.ctx, serverName, &server); errServer != nil {
+				log.Debugf("Failed to get server by name: %v", errServer)
 				continue
 			}
 
 			var serverEvent model.ServerEvent
 			if errLogServerEvent := logToServerEvent(remoteSrc.ctx, server, logPayload.body, database, pc, &serverEvent); errLogServerEvent != nil {
+				log.Debugf("Failed to create serverevent: %v", errLogServerEvent)
 				continue
 			}
 

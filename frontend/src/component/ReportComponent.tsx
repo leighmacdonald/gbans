@@ -13,7 +13,8 @@ import {
     ReportMessage,
     ReportMessagesResponse,
     UserProfile,
-    IAPIBanRecord
+    IAPIBanRecord,
+    BanReasons
 } from '../api';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
@@ -38,6 +39,7 @@ import Menu from '@mui/material/Menu';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import useTheme from '@mui/material/styles/useTheme';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
+import Typography from '@mui/material/Typography';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -406,6 +408,7 @@ export const ReportComponent = ({
                                         tooltip: 'Created On',
                                         sortKey: 'created_on',
                                         sortType: 'date',
+                                        sortable: true,
                                         align: 'left',
                                         width: '150px'
                                     },
@@ -414,6 +417,7 @@ export const ReportComponent = ({
                                         tooltip: 'Expires',
                                         sortKey: 'valid_until',
                                         sortType: 'date',
+                                        sortable: true,
                                         align: 'left'
                                     },
                                     {
@@ -428,8 +432,14 @@ export const ReportComponent = ({
                                         label: 'Reason',
                                         tooltip: 'Reason',
                                         sortKey: 'reason',
+                                        sortable: true,
                                         sortType: 'string',
-                                        align: 'left'
+                                        align: 'left',
+                                        renderer: (row) => (
+                                            <Typography variant={'body1'}>
+                                                {BanReasons[row.reason]}
+                                            </Typography>
+                                        )
                                     },
                                     {
                                         label: 'Custom Reason',

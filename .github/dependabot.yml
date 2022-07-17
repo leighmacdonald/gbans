@@ -5,14 +5,14 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "daily"
+      interval: "monthly"
 
   - package-ecosystem: "gomod"
     directory: "/"
-    schedule:
-      interval: "daily"
+    schedule:a
+      interval: "monthly"
       
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"

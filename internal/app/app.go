@@ -60,7 +60,7 @@ type userWarning struct {
 
 type discordPayload struct {
 	channelId string
-	message   *discordgo.MessageEmbed
+	embed     *discordgo.MessageEmbed
 }
 
 // Start is the main application entry point
@@ -210,7 +210,7 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 	if found == 2 {
 		log.Debugf("Sending discord summary")
 		select {
-		case discordSendMsg <- discordPayload{channelId: config.Discord.LogChannelID, message: embed}:
+		case discordSendMsg <- discordPayload{channelId: config.Discord.LogChannelID, embed: embed}:
 		default:
 			log.Warnf("Cannot send discord payload, channel full")
 		}
@@ -499,7 +499,7 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 				case <-ctx.Done():
 					return
 				case payload := <-botSendMessageChan:
-					if errSend := session.SendEmbed(payload.channelId, payload.message); errSend != nil {
+					if errSend := session.SendEmbed(payload.channelId, payload.embed); errSend != nil {
 						log.Errorf("Failed to send discord payload: %v", errSend)
 					}
 				}

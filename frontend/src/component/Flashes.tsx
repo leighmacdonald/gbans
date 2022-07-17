@@ -17,6 +17,7 @@ export interface FlashesProps {
 
 export const Flashes = (): JSX.Element => {
     const { flashes, setFlashes } = useUserFlashCtx();
+
     return (
         <>
             {flashes.map((f, i) => {

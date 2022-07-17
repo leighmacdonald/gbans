@@ -2,10 +2,9 @@ import React, { ChangeEvent, useState } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
 import { apiCreateServer } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { Heading } from './Heading';
 
 export const ServerAddForm = (): JSX.Element => {
     const [name, setName] = useState<string>('');
@@ -61,10 +60,8 @@ export const ServerAddForm = (): JSX.Element => {
     };
 
     return (
-        <Stack spacing={3} padding={3}>
-            <Box color={'primary'}>
-                <Typography variant={'h4'}>Add a New Server</Typography>
-            </Box>
+        <Stack spacing={3} padding={2}>
+            <Heading>Add a New Server</Heading>
             <TextField
                 id="standard-basic"
                 label="Short Server Name (Example: eg-1)"

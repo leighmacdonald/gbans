@@ -5,6 +5,7 @@ import { SteamID } from './const';
 export enum PermissionLevel {
     Banned = 0,
     User = 1,
+    Editor = 25,
     Moderator = 50,
     Admin = 100
 }

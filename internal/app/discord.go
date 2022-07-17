@@ -301,7 +301,7 @@ func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
 	select {
 	case hook.messageChan <- discordPayload{
 		channelId: config.Discord.LogChannelID,
-		message:   embed,
+		embed:     embed,
 	}:
 	default:
 		// errors.New("Failed to write discord logger msg: chan full")

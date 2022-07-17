@@ -11,9 +11,9 @@ import (
 
 func (database *pgStore) insertReport(ctx context.Context, report *model.Report) error {
 	const query = `INSERT INTO report (
-		    author_id, reported_id, report_status, description, deleted, created_on, updated_on
+		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason, reason_text
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING report_id`
 	if errQuery := database.conn.QueryRow(ctx, query,
 		report.AuthorId,
@@ -23,11 +23,15 @@ func (database *pgStore) insertReport(ctx context.Context, report *model.Report)
 		report.Deleted,
 		report.CreatedOn,
 		report.UpdatedOn,
+		report.Reason,
+		report.ReasonText,
 	).Scan(&report.ReportId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{"report_id": report.ReportId, "author_id": report.AuthorId}).
-		Infof("Report saved")
+	log.WithFields(log.Fields{
+		"report_id": report.ReportId,
+		"author_id": report.AuthorId}).
+		Debugf("Report saved")
 	return nil
 }
 
@@ -36,10 +40,10 @@ func (database *pgStore) updateReport(ctx context.Context, report *model.Report)
 	const q = `
 		UPDATE report 
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
-            deleted = $5, updated_on = $6
-        WHERE report_id = $7`
+            deleted = $5, updated_on = $6, report = $7, report_text = $8
+        WHERE report_id = $9`
 	return Err(database.Exec(ctx, q, report.AuthorId, report.ReportedId, report.ReportStatus, report.Description,
-		report.Deleted, report.UpdatedOn, report.ReportId))
+		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText, report.ReportId))
 }
 
 func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) error {
@@ -150,7 +154,7 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 	}
 	builder := sb.
 		Select("report_id", "author_id", "reported_id", "report_status",
-			"description", "deleted", "created_on", "updated_on").
+			"description", "deleted", "created_on", "updated_on", "reason", "reason_text").
 		From("report").
 		Where(conditions)
 	if opts.Limit > 0 {
@@ -184,6 +188,8 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 			&report.Deleted,
 			&report.CreatedOn,
 			&report.UpdatedOn,
+			&report.Reason,
+			&report.ReasonText,
 		); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -196,7 +202,7 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 	const query = `
 		SELECT 
 		   report_id, author_id, reported_id, report_status, description, 
-		   deleted, created_on, updated_on 
+		   deleted, created_on, updated_on, reason, reason_text
 		FROM report
 		WHERE deleted = false AND report_id = $1`
 	if errQuery := database.conn.QueryRow(ctx, query, reportId).Scan(
@@ -208,6 +214,8 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 		&report.Deleted,
 		&report.CreatedOn,
 		&report.UpdatedOn,
+		&report.Reason,
+		&report.ReasonText,
 	); errQuery != nil {
 		return Err(errQuery)
 	}

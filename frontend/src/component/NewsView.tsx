@@ -5,35 +5,51 @@ import { apiGetNewsLatest, NewsEntry } from '../api/news';
 import Stack from '@mui/material/Stack';
 import { marked } from 'marked';
 import Paper from '@mui/material/Paper';
-
-export const NewsView = () => {
+import { Pagination } from '@mui/material';
+export interface NewsViewProps {
+    itemsPerPage: number;
+}
+export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
     const [articles, setArticles] = useState<NewsEntry[]>();
+    const [page, setPage] = useState<number>(0);
+
     useEffect(() => {
-        const f = async () => {
-            const latest = await apiGetNewsLatest();
-            setArticles((latest as NewsEntry[]) || []);
-        };
-        f();
-    }, []);
+        apiGetNewsLatest().then((latest) => {
+            const art = latest || [];
+            setArticles(art);
+        });
+    }, [itemsPerPage]);
+
     return (
         <Stack spacing={3}>
-            {articles?.map((article) => {
-                return (
-                    <Paper
-                        elevation={1}
-                        key={`news_` + article.news_id}
-                        sx={{ padding: 3 }}
-                    >
-                        <Typography variant={'h4'}>{article.title}</Typography>
-                        <div
-                            className={'content'}
-                            dangerouslySetInnerHTML={{
-                                __html: marked.parse(article.body_md)
-                            }}
-                        />
-                    </Paper>
-                );
-            })}
+            {articles
+                ?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage)
+                .map((article) => {
+                    return (
+                        <Paper
+                            elevation={1}
+                            key={`news_` + article.news_id}
+                            sx={{ padding: 3 }}
+                        >
+                            <Typography variant={'h4'}>
+                                {article.title}
+                            </Typography>
+                            <div
+                                className={'content'}
+                                dangerouslySetInnerHTML={{
+                                    __html: marked.parse(article.body_md)
+                                }}
+                            />
+                        </Paper>
+                    );
+                })}
+            <Pagination
+                count={articles ? Math.ceil(articles.length / itemsPerPage) : 0}
+                defaultValue={1}
+                onChange={(_, newPage) => {
+                    setPage(newPage - 1);
+                }}
+            ></Pagination>
         </Stack>
     );
 };

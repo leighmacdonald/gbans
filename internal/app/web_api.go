@@ -65,6 +65,14 @@ func responseOK(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, apiResponse{Status: true, Data: data})
 }
 
+func resolveUrl(path string, args ...any) string {
+	base := config.General.ExternalUrl
+	if !strings.HasSuffix(base, "/") {
+		base += "/"
+	}
+	return base + fmt.Sprintf(path, args...)
+}
+
 func (web *web) onPostLog(db store.Store, logFileC chan *LogFilePayload) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var upload srcdsup.ServerLogUpload
@@ -197,7 +205,7 @@ func (web *web) onPostPingMod(database store.Store) gin.HandlerFunc {
 		}
 		for _, chanId := range config.Discord.ModChannels {
 			select {
-			case web.botSendMessageChan <- discordPayload{channelId: chanId, message: embed}:
+			case web.botSendMessageChan <- discordPayload{channelId: chanId, embed: embed}:
 			default:
 				log.Warnf("Cannot send discord payload, channel full")
 				responseErr(ctx, http.StatusInternalServerError, nil)
@@ -226,7 +234,7 @@ func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		web.botSendMessageChan <- discordPayload{channelId: "", message: nil}
+		web.botSendMessageChan <- discordPayload{channelId: "", embed: nil}
 	}
 }
 
@@ -239,6 +247,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 		ReasonText string        `json:"reason_text"`
 		Note       string        `json:"note"`
 		Network    string        `json:"network"`
+		ReportId   int           `json:"report_id"`
 	}
 	return func(ctx *gin.Context) {
 		var banRequest apiBanRequest
@@ -266,6 +275,7 @@ func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 			reasonText: banRequest.ReasonText,
 			modNote:    banRequest.Note,
 			origin:     model.Web,
+			reportId:   banRequest.ReportId,
 		}
 		if banRequest.Network != "" {
 			banNetOpts := banNetworkOpts{
@@ -810,8 +820,10 @@ func (web *web) onAPIGetAppeal(database store.Store) gin.HandlerFunc {
 
 func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 	type createReport struct {
-		SteamId     string `json:"steam_id"`
-		Description string `json:"description"`
+		SteamId     string       `json:"steam_id"`
+		Description string       `json:"description"`
+		Reason      model.Reason `json:"reason"`
+		ReasonText  string       `json:"reason_text"`
 	}
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
@@ -839,20 +851,36 @@ func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 		report.ReportStatus = model.Opened
 		report.Description = newReport.Description
 		report.ReportedId = sid
+		report.Reason = newReport.Reason
+		report.ReasonText = newReport.ReasonText
 		if errReportSave := database.SaveReport(ctx, &report); errReportSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save report: %v", errReportSave)
 			return
 		}
 		responseOK(ctx, http.StatusCreated, report)
-		msg := &discordgo.MessageEmbed{
-			Title:       "New report created",
-			Description: fmt.Sprintf("SteamID: %d", sid.Int64()),
+
+		embed := respOk(nil, "New user report created")
+		embed.Description = report.Description
+		embed.URL = resolveUrl("/report/%d", report.ReportId)
+		embed.Author = &discordgo.MessageEmbedAuthor{
+			URL:     resolveUrl("/profile/%d", report.AuthorId.Int64()),
+			Name:    currentUser.Name,
+			IconURL: currentUser.Avatar,
 		}
-		addField(msg, "Author", report.AuthorId.String())
+		name := person.PersonaName
+		if name == "" {
+			name = report.ReportedId.String()
+		}
+		addField(embed, "Subject", name)
+		addField(embed, "Reason", report.Reason.String())
+		if report.ReasonText != "" {
+			addField(embed, "Custom Reason", report.ReasonText)
+		}
+		addFieldsSteamID(embed, report.ReportedId)
 		web.botSendMessageChan <- discordPayload{
 			channelId: config.Discord.ModLogChannelId,
-			message:   msg}
+			embed:     embed}
 	}
 }
 
@@ -936,7 +964,7 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 		addField(embed, "Author", report.AuthorId.String())
 		web.botSendMessageChan <- discordPayload{
 			channelId: config.Discord.ModLogChannelId,
-			message:   embed}
+			embed:     embed}
 	}
 }
 
@@ -992,7 +1020,7 @@ func (web *web) onAPIEditReportMessage(database store.ReportStore) gin.HandlerFu
 		addField(embed, "Author", curUser.SteamID.String())
 		web.botSendMessageChan <- discordPayload{
 			channelId: config.Discord.ModLogChannelId,
-			message:   embed}
+			embed:     embed}
 	}
 }
 
@@ -1032,7 +1060,7 @@ func (web *web) onAPIDeleteReportMessage(database store.ReportStore) gin.Handler
 		addField(embed, "Author", curUser.SteamID.String())
 		web.botSendMessageChan <- discordPayload{
 			channelId: config.Discord.ModLogChannelId,
-			message:   embed}
+			embed:     embed}
 	}
 }
 
@@ -1262,7 +1290,7 @@ func (web *web) onAPIPostNewsCreate(database store.NewsStore) gin.HandlerFunc {
 
 		web.botSendMessageChan <- discordPayload{
 			channelId: "882471332254715915",
-			message: &discordgo.MessageEmbed{
+			embed: &discordgo.MessageEmbed{
 				Title:       "News Created",
 				Description: fmt.Sprintf("News Posted: %s", entry.Title)},
 		}
@@ -1297,7 +1325,7 @@ func (web *web) onAPIPostNewsUpdate(database store.NewsStore) gin.HandlerFunc {
 
 		web.botSendMessageChan <- discordPayload{
 			channelId: "882471332254715915",
-			message: &discordgo.MessageEmbed{
+			embed: &discordgo.MessageEmbed{
 				Title:       "News Updated",
 				Description: fmt.Sprintf("News Updated: %s", entry.Title)},
 		}

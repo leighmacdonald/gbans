@@ -130,6 +130,7 @@ type generalConfig struct {
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
 	DemoRootPath                 string        `mapstructure:"demo_root_path"`
+	ExternalUrl                  string        `mapstructure:"external_url"`
 }
 
 type discordConfig struct {
@@ -275,6 +276,7 @@ var defaultConfig = map[string]any{
 	"general.default_maps":                   []string{"pl_badwater"},
 	"general.map_changer_enabled":            false,
 	"general.demo_root_path":                 "./.demos/",
+	"general.external_url":                   "http://gbans.localhost:6006",
 	"http.host":                              "127.0.0.1",
 	"http.port":                              6006,
 	"http.domain":                            "http://localhost:6006",

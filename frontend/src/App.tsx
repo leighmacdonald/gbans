@@ -1,6 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -15,7 +13,7 @@ import { AdminPeople } from './page/AdminPeople';
 import { Bans } from './page/Bans';
 import { Servers } from './page/Servers';
 import { AdminServers } from './page/AdminServers';
-import { Flash, Flashes } from './component/Flashes';
+import { Flash } from './component/Flashes';
 import { LoginSuccess } from './page/LoginSuccess';
 import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
@@ -23,7 +21,6 @@ import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanView } from './page/BanView';
 import { apiGetCurrentProfile, PermissionLevel, UserProfile } from './api';
 import { AdminBan } from './page/AdminBan';
-import { AdminServerLog } from './page/AdminServerLog';
 import { TopBar } from './component/TopBar';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { Logout } from './page/Logout';
@@ -40,6 +37,8 @@ import { logErr } from './util/errors';
 import { MatchPage } from './page/MatchPage';
 import { AlertColor } from '@mui/material/Alert/Alert';
 import { MatchListPage } from './page/MatchListPage';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -113,8 +112,6 @@ export const App = (): JSX.Element => {
                                         <CssBaseline />
                                         <Container maxWidth={'lg'}>
                                             <TopBar />
-
-                                            <Flashes />
 
                                             <Routes>
                                                 <Route
@@ -208,10 +205,6 @@ export const App = (): JSX.Element => {
                                                 <Route
                                                     path={'/admin/people'}
                                                     element={<AdminPeople />}
-                                                />
-                                                <Route
-                                                    path={'/admin/server_logs'}
-                                                    element={<AdminServerLog />}
                                                 />
                                                 <Route
                                                     path={'/admin/servers'}
