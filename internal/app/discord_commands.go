@@ -45,22 +45,39 @@ const (
 	cmdLog         botCmd = "log"
 )
 
+type optionKey string
+
+const (
+	OptUserIdentifier   = "user_identifier"
+	OptServerIdentifier = "server_identifier"
+	OptMessage          = "message"
+	OptDuration         = "duration"
+	OptASN              = "asn"
+	OptIP               = "ip"
+	OptMatchId          = "match_id"
+	OptBanReason        = "ban_reason"
+	OptBan              = "ban"
+	OptSteam            = "steam"
+	OptNote             = "note"
+	OptCIDR             = "cidr"
+)
+
 func (bot *discord) botRegisterSlashCommands() error {
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "user_identifier",
+		Name:        OptUserIdentifier,
 		Description: "SteamID in any format OR profile url",
 		Required:    true,
 	}
 	optUserIDOptional := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "user_identifier",
+		Name:        OptUserIdentifier,
 		Description: "Optional SteamID in any format OR profile url to attach to a command",
 		Required:    false,
 	}
 	optServerID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "server_identifier",
+		Name:        OptServerIdentifier,
 		Description: "Short server name",
 		Required:    true,
 	}
@@ -72,31 +89,31 @@ func (bot *discord) botRegisterSlashCommands() error {
 	//}
 	optMessage := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "message",
+		Name:        OptMessage,
 		Description: "Message to send",
 		Required:    true,
 	}
 	optDuration := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "duration",
+		Name:        OptDuration,
 		Description: "Duration [s,m,h,d,w,M,y]N|0",
 		Required:    true,
 	}
 	optAsn := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "asn",
+		Name:        OptASN,
 		Description: "An Autonomous System (AS) is a group of one or more IP prefixes run by one or more network operators",
 		Required:    true,
 	}
 	optIpAddr := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        "ip",
+		Name:        OptIP,
 		Description: "IP address to check",
 		Required:    true,
 	}
 	optMatchId := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
-		Name:        "match_id",
+		Name:        OptMatchId,
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
 	}
@@ -109,9 +126,10 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Value: r,
 		})
 	}
+	enabledDefault := true
 	optBanReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
-		Name:        "ban_reason",
+		Name:        OptBanReason,
 		Description: "Reason for the ban/mute",
 		Required:    true,
 		Choices:     reasons,
@@ -185,7 +203,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "server_identifier",
+					Name:        OptServerIdentifier,
 					Description: "Short server name or `*` for all",
 					Required:    true,
 				},
@@ -203,7 +221,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 		{
 			Name:              string(cmdServers),
 			Description:       "Show the high level status of all servers",
-			DefaultPermission: true,
+			DefaultPermission: &enabledDefault,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionBoolean,
@@ -245,11 +263,11 @@ func (bot *discord) botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID: config.Discord.AppID,
-			Name:          "ban",
+			Name:          OptBan,
 			Description:   "Manage steam, ip and ASN bans",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "steam",
+					Name:        OptSteam,
 					Description: "Ban and kick a user from all servers",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
@@ -258,7 +276,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 						optBanReason,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "note",
+							Name:        OptNote,
 							Description: "Mod only notes for the ban reason",
 							Required:    true,
 						},
@@ -282,7 +300,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "cidr",
+							Name:        OptCIDR,
 							Description: "Network range to block eg: 12.34.56.78/32 (1 host) | 12.34.56.0/24 (256 hosts)",
 							Required:    true,
 						},
@@ -299,7 +317,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Description:   "Manage steam, ip and ASN bans",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "steam",
+					Name:        OptSteam,
 					Description: "Unban a previously banned player",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
@@ -308,7 +326,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 					},
 				}, // TODO ip
 				{
-					Name:        "asn",
+					Name:        OptASN,
 					Description: "Unban a previously banned ASN",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
@@ -321,7 +339,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			ApplicationID:     config.Discord.AppID,
 			Name:              string(cmdStats),
 			Description:       "Query stats",
-			DefaultPermission: true,
+			DefaultPermission: &enabledDefault,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        string(cmdStatsPlayer),
@@ -394,9 +412,9 @@ func (bot *discord) botRegisterSlashCommands() error {
 			},
 		},
 	}
-	var modPerms []*discordgo.ApplicationCommandPermission
+	var modPerms []*discordgo.ApplicationCommandPermissions
 	for _, roleId := range config.Discord.ModRoleIDs {
-		modPerms = append(modPerms, &discordgo.ApplicationCommandPermission{
+		modPerms = append(modPerms, &discordgo.ApplicationCommandPermissions{
 			ID:         roleId,
 			Type:       1,
 			Permission: true,
@@ -411,7 +429,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
-		if !command.DefaultPermission && len(modPerms) > 0 {
+		if !*command.DefaultPermission && len(modPerms) > 0 {
 			perms = append(perms, permissionRequest{
 				ID:          command.ID,
 				Permissions: modPerms,
@@ -423,8 +441,8 @@ func (bot *discord) botRegisterSlashCommands() error {
 }
 
 type permissionRequest struct {
-	ID          string                                    `json:"id"`
-	Permissions []*discordgo.ApplicationCommandPermission `json:"permissions"`
+	ID          string                                     `json:"id"`
+	Permissions []*discordgo.ApplicationCommandPermissions `json:"permissions"`
 }
 
 // registerCommandPermissions is used to additionally apply further restrictions to
@@ -479,7 +497,7 @@ const (
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
 func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	command := botCmd(interaction.Data.Name)
+	command := botCmd(interaction.ApplicationCommandData().Name)
 	response := botResponse{MsgType: mtString}
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
@@ -487,7 +505,7 @@ func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction 
 		// very short timeout windows, ~2-3 seconds.
 		if errRespond := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-			Data: &discordgo.InteractionApplicationCommandResponseData{
+			Data: &discordgo.InteractionResponseData{
 				Content: "Calculating numberwang...",
 			},
 		}); errRespond != nil {

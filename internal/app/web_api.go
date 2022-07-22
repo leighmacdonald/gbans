@@ -547,6 +547,7 @@ func (web *web) onAPIGetPrometheusHosts(database store.Store) gin.HandlerFunc {
 // onAPIGetServers returns the current known cached server state
 func (web *web) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		time.Sleep(5 * time.Second)
 		responseOK(ctx, http.StatusOK, ServerState())
 	}
 }

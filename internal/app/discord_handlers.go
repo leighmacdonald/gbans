@@ -85,8 +85,38 @@ func respOk(response *botResponse, title string) *discordgo.MessageEmbed {
 	return embed
 }
 
+type CommandOptions map[optionKey]*discordgo.ApplicationCommandInteractionDataOption
+
+func optionMap(i *discordgo.InteractionCreate) CommandOptions {
+	options := i.ApplicationCommandData().Options
+	optionM := make(CommandOptions, len(options))
+	for _, opt := range options {
+		v, ok := optionM[optionKey(opt.Name)]
+		if !ok {
+			log.Warnf("Received unknown discord option: %s", opt.Name)
+			continue
+		}
+		optionM[optionKey(opt.Name)] = v
+	}
+
+	return optionM
+}
+
+func (opts CommandOptions) String(key optionKey) string {
+	root, found := opts[key]
+	if !found {
+		return ""
+	}
+	val, ok := root.Value.(string)
+	if !ok {
+		return ""
+	}
+	return val
+}
+
 func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, r *botResponse) error {
-	userIdentifier := model.Target(interaction.Data.Options[0].Value.(string))
+	opts := optionMap(interaction)
+	userIdentifier := model.Target(opts[OptUserIdentifier].StringValue())
 	playerInfo := model.NewPlayerInfo()
 	if errFind := Find(ctx, bot.database, userIdentifier, "", &playerInfo); errFind != nil {
 		return errCommandFailed
@@ -111,14 +141,12 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, interactio
 }
 
 func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, r *botResponse) error {
-	playerID := model.Target(interaction.Data.Options[0].Value.(string))
+	opts := optionMap(interaction)
+	playerID := model.Target(opts.String(OptUserIdentifier))
 	var reason model.Reason
-	if len(interaction.Data.Options) > 2 {
-		reasonValue, ok := interaction.Data.Options[2].Value.(model.Reason)
-		if !ok {
-			reason = reasonValue
-		}
-	}
+	reasonValue := opts[OptBanReason].IntValue()
+	reason = model.Reason(reasonValue)
+	duration := model.Duration(opts[OptDuration].StringValue())
 	author := model.NewPerson(0)
 	if errGetAuthor := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {
 		if errGetAuthor == store.ErrNoResult {
@@ -126,16 +154,16 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 		}
 		return errors.New("Error fetching author info")
 	}
-	opts := banOpts{
+	banOptions := banOpts{
 		target:   playerID,
 		author:   model.Target(author.SteamID.String()),
-		duration: model.Duration(interaction.Data.Options[1].Value.(string)),
+		duration: duration,
 		banType:  model.NoComm,
 		reason:   reason,
 		origin:   model.Bot,
 	}
 	var ban model.Ban
-	if errBan := Ban(ctx, bot.database, opts, &ban, bot.botSendMessageChan); errBan != nil {
+	if errBan := Ban(ctx, bot.database, banOptions, &ban, bot.botSendMessageChan); errBan != nil {
 		return errBan
 	}
 	response := respOk(r, "Player muted successfully")
@@ -144,13 +172,11 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 }
 
 func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	asNumStr := interaction.Data.Options[0].Options[0].Value.(string)
-	duration := interaction.Data.Options[0].Options[1].Value.(string)
-	reason := interaction.Data.Options[0].Options[2].Value.(model.Reason)
-	targetId := steamid.SID64(0)
-	if len(interaction.Data.Options[0].Options) > 3 {
-		targetId = steamid.SID64(interaction.Data.Options[0].Options[3].Value.(int64))
-	}
+	opts := optionMap(interaction)
+	asNumStr := opts[OptASN].StringValue()
+	duration := opts[OptDuration].StringValue()
+	reason := model.Reason(opts[OptBanReason].IntValue())
+	targetId := steamid.SID64(model.Reason(opts[OptBanReason].IntValue()))
 	author := model.NewPerson(0)
 	if errGetPersonByDiscordId := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordId != nil {
 		if errGetPersonByDiscordId == store.ErrNoResult {
@@ -169,7 +195,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interact
 		}
 		return errors.New("Error fetching asn asnRecords")
 	}
-	opts := banASNOpts{
+	banOptions := banASNOpts{
 		banOpts: banOpts{
 			target:   model.Target(targetId.String()),
 			author:   model.Target(author.SteamID.String()),
@@ -181,7 +207,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interact
 		asNum: asNum,
 	}
 	var banASN model.BanASN
-	if errBanASN := BanASN(bot.database, opts, &banASN); errBanASN != nil {
+	if errBanASN := BanASN(bot.database, banOptions, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, store.ErrDuplicate) {
 			return errors.New("Duplicate ASN ban")
 		}
@@ -194,14 +220,11 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session, interact
 }
 
 func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-	var reason model.Reason
-	if len(interaction.Data.Options[0].Options) > 3 {
-		reasonValue, ok := interaction.Data.Options[0].Options[3].Value.(model.Reason)
-		if !ok {
-			return errors.New("Invalid reason")
-		}
-		reason = reasonValue
-	}
+	opts := optionMap(interaction)
+	target := opts[OptUserIdentifier].StringValue()
+	reason := model.Reason(opts[OptBanReason].IntValue())
+	cidr := opts[OptCIDR].StringValue()
+	duration := model.Duration(opts[OptDuration].StringValue())
 	author := model.NewPerson(0)
 	if errGetPerson := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errGetPerson == store.ErrNoResult {
@@ -209,17 +232,16 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session, interacti
 		}
 		return errors.New("Error fetching author info")
 	}
-	target := interaction.Data.Options[0].Options[1].Value.(string)
 	banNetOpts := banNetworkOpts{
 		banOpts: banOpts{
 			target:   model.Target(target),
 			author:   model.Target(author.SteamID.String()),
-			duration: model.Duration(interaction.Data.Options[0].Options[2].Value.(string)),
+			duration: duration,
 			banType:  model.Banned,
 			reason:   reason,
 			origin:   model.Bot,
 		},
-		cidr: interaction.Data.Options[0].Options[0].Value.(string),
+		cidr: cidr,
 	}
 	var banNet model.BanNet
 	if errBanNet := BanNetwork(ctx, bot.database, banNetOpts, &banNet); errBanNet != nil {
@@ -804,6 +826,7 @@ func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 }
 
 func (bot *discord) onBan(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+	optionMap(interaction).String(OptBanReason)
 	switch interaction.Data.Options[0].Name {
 	case "steam":
 		return bot.onBanSteam(ctx, session, interaction, response)
@@ -833,11 +856,11 @@ func (bot *discord) onUnban(ctx context.Context, session *discordgo.Session, int
 
 func (bot *discord) onFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 	switch interaction.Data.Options[0].Name {
-	case string(cmdFilterAdd):
+	case "add":
 		return bot.onFilterAdd(ctx, session, interaction, response)
-	case string(cmdFilterDel):
+	case "del":
 		return bot.onFilterDel(ctx, session, interaction, response)
-	case string(cmdFilterCheck):
+	case "check":
 		return bot.onFilterCheck(ctx, session, interaction, response)
 	default:
 		return errCommandFailed

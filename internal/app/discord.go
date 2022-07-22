@@ -192,7 +192,8 @@ func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 	case mtEmbed:
 		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))
 	}
-	return session.InteractionResponseEdit(config.Discord.AppID, interaction, edit)
+	_, errResp := session.InteractionResponseEdit(interaction, edit)
+	return errResp
 }
 
 func (bot *discord) Send(channelId string, message string, wrap bool) error {

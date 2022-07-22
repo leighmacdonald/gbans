@@ -15,7 +15,7 @@ func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) e
 
 func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) (*model.Filter, error) {
 	const query = `INSERT INTO filtered_word (word, created_on) VALUES ($1, $2) RETURNING word_id`
-	if errQuery := database.conn.QueryRow(ctx, query, filter.Pattern.String(), filter.CreatedOn).Scan(&filter.WordID); errQuery != nil {
+	if errQuery := database.QueryRow(ctx, query, filter.Pattern.String(), filter.CreatedOn).Scan(&filter.WordID); errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)
@@ -24,7 +24,7 @@ func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter)
 
 func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
 	const query = `DELETE FROM filtered_word WHERE word_id = $1`
-	if _, errExec := database.conn.Exec(ctx, query, filter.WordID); errExec != nil {
+	if errExec := database.Exec(ctx, query, filter.WordID); errExec != nil {
 		return Err(errExec)
 	}
 	log.Debugf("Deleted filter: %d", filter.WordID)
@@ -34,7 +34,7 @@ func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) e
 func (database *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model.Filter) error {
 	const query = `SELECT word_id, word, created_on from filtered_word WHERE word_id = $1`
 	var word string
-	if errQuery := database.conn.QueryRow(ctx, query, wordId).Scan(&f.WordID, &word, &f.CreatedOn); errQuery != nil {
+	if errQuery := database.QueryRow(ctx, query, wordId).Scan(&f.WordID, &word, &f.CreatedOn); errQuery != nil {
 		return errors.Wrapf(errQuery, "Failed to load filter")
 	}
 	rx, errCompile := regexp.Compile(word)
@@ -46,7 +46,7 @@ func (database *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model
 }
 
 func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error) {
-	rows, errQuery := database.conn.Query(ctx, `SELECT word_id, word, created_on from filtered_word`)
+	rows, errQuery := database.Query(ctx, `SELECT word_id, word, created_on from filtered_word`)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
