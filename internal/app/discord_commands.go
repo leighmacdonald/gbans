@@ -45,6 +45,14 @@ const (
 	cmdLog         botCmd = "log"
 )
 
+type subCommandKey string
+
+const (
+	CmdBan     = "ban"
+	CmdFilter  = "filter"
+	CmdHistory = "history"
+)
+
 type optionKey string
 
 const (
@@ -57,6 +65,7 @@ const (
 	OptMatchId          = "match_id"
 	OptBanReason        = "ban_reason"
 	OptBan              = "ban"
+	OptHistory          = "history"
 	OptSteam            = "steam"
 	OptNote             = "note"
 	OptCIDR             = "cidr"
@@ -486,7 +495,8 @@ type botResponse struct {
 	Value   any
 }
 
-type botCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *botResponse) error
+type botCommandHandler func(ctx context.Context, s *discordgo.Session,
+	m *discordgo.InteractionCreate, r *botResponse) error
 
 const (
 	discordMaxMsgLen  = 2000
@@ -517,6 +527,7 @@ func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction 
 		}
 		commandCtx, cancelCommand := context.WithTimeout(bot.ctx, time.Second*30)
 		defer cancelCommand()
+
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
 			respErr(&response, errHandleCommand.Error())
