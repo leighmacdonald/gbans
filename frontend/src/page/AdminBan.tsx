@@ -16,6 +16,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Tooltip from '@mui/material/Tooltip';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { BanModal } from '../component/BanModal';
+import Box from '@mui/material/Box';
 
 export const AdminBan = (): JSX.Element => {
     const [bans, setBans] = useState<IAPIBanRecord[]>([]);
@@ -29,7 +30,7 @@ export const AdminBan = (): JSX.Element => {
     }, []);
 
     return (
-        <>
+        <Box marginTop={3}>
             <BanModal open={modalOpen} setOpen={setModalOpen} />
             <ButtonGroup>
                 <Button
@@ -226,6 +227,6 @@ export const AdminBan = (): JSX.Element => {
                     </Paper>
                 </Grid>
             </Grid>
-        </>
+        </Box>
     );
 };

@@ -7,10 +7,12 @@ import { apiGetServers, ServerState } from '../api';
 
 export const AdminServers = (): JSX.Element => {
     const [servers, setServers] = useState<ServerState[]>([]);
-
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
+        setIsLoading(true);
         apiGetServers().then((s) => {
             setServers(s);
+            setIsLoading(false);
         });
     }, []);
 
@@ -24,6 +26,7 @@ export const AdminServers = (): JSX.Element => {
             <Grid item xs={12}>
                 <Paper elevation={1}>
                     <DataTable
+                        isLoading={isLoading}
                         rowsPerPage={100}
                         defaultSortColumn={'name_short'}
                         rows={servers}
