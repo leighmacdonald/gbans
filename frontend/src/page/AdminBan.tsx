@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -17,21 +17,50 @@ import Tooltip from '@mui/material/Tooltip';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { BanModal } from '../component/BanModal';
 import Box from '@mui/material/Box';
+import { UnbanModal } from '../component/UnbanModal';
 
 export const AdminBan = (): JSX.Element => {
     const [bans, setBans] = useState<IAPIBanRecord[]>([]);
+    const [currentBan, setCurrentBan] = useState<IAPIBanRecord>();
     const [modalOpen, setModalOpen] = useState(false);
+    const [unbanModalOpen, setUnbanModalOpen] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(() => {
+    const loadBans = useCallback(() => {
         apiGetBans({ desc: true, order_by: 'ban_id' }).then((newBans) => {
             setBans(newBans || []);
         });
     }, []);
 
+    useEffect(() => {
+        loadBans();
+    }, [loadBans]);
+
     return (
         <Box marginTop={3}>
-            <BanModal open={modalOpen} setOpen={setModalOpen} />
+            <BanModal
+                open={modalOpen}
+                setOpen={setModalOpen}
+                onSuccess={() => {
+                    loadBans();
+                    setModalOpen(false);
+                }}
+            />
+            {currentBan && (
+                <UnbanModal
+                    banRecord={currentBan}
+                    open={unbanModalOpen}
+                    setOpen={setUnbanModalOpen}
+                    onSuccess={() => {
+                        setUnbanModalOpen(false);
+                        setBans((bans) => {
+                            return bans.filter(
+                                (b) => b.ban_id != currentBan?.ban_id
+                            );
+                        });
+                    }}
+                />
+            )}
             <ButtonGroup>
                 <Button
                     variant={'contained'}
@@ -204,14 +233,20 @@ export const AdminBan = (): JSX.Element => {
                                     sortKey: 'reason',
                                     sortable: false,
                                     align: 'left',
-                                    renderer: (_) => (
+                                    renderer: (row) => (
                                         <ButtonGroup fullWidth>
                                             <IconButton color={'warning'}>
                                                 <Tooltip title={'Edit Ban'}>
                                                     <EditIcon />
                                                 </Tooltip>
                                             </IconButton>
-                                            <IconButton color={'success'}>
+                                            <IconButton
+                                                color={'success'}
+                                                onClick={() => {
+                                                    setCurrentBan(row);
+                                                    setUnbanModalOpen(true);
+                                                }}
+                                            >
                                                 <Tooltip title={'Remove Ban'}>
                                                     <UndoIcon />
                                                 </Tooltip>

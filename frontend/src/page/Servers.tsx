@@ -48,6 +48,9 @@ export const ServerStats = () => {
     }, {} as Record<string, ServerState[]>);
     const keys = Object.keys(regions);
     keys.sort();
+    if (servers.length === 0) {
+        return <></>;
+    }
     return (
         <Container component={Paper}>
             <Grid

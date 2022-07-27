@@ -10,18 +10,9 @@ export enum BanType {
     Banned = 2
 }
 
-export interface ChatMessage {
-    message: string;
-    created_on: Date;
-}
-
 export interface BannedPerson {
     ban: Ban;
     person: Person;
-    history_chat: ChatMessage[];
-    history_personaname: string[];
-    history_connections: string[];
-    history_ip: string[];
 }
 
 export interface Ban {
@@ -33,6 +24,7 @@ export interface Ban {
     ban_type: BanType;
     reason: BanReason;
     reason_text: string;
+    unban_reason_text: string;
     note: string;
     source: number;
     deleted: boolean;
@@ -65,6 +57,10 @@ export interface IAPIBanRecord extends Ban {
 
 export interface BansQueryFilter extends QueryFilter {
     steam_id?: SteamID;
+}
+
+export interface UnbanPayload {
+    unban_reason_text: string;
 }
 
 export interface BanPayload {
@@ -116,7 +112,8 @@ export const apiGetBans = async (
             updated_on: b.ban.updated_on,
             valid_until: b.ban.valid_until,
             deleted: b.ban.deleted,
-            report_id: b.ban.report_id
+            report_id: b.ban.report_id,
+            unban_reason_text: b.ban.unban_reason_text
         };
     });
 };
@@ -128,3 +125,8 @@ export const apiGetBan = async (
 
 export const apiCreateBan = async (p: BanPayload): Promise<Ban> =>
     await apiCall<Ban, BanPayload>(`/api/ban`, 'POST', p);
+
+export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
+    await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, 'DELETE', {
+        unban_reason_text
+    });

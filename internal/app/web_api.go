@@ -238,6 +238,39 @@ func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPIPostBanDelete(database store.Store) gin.HandlerFunc {
+	type apiUnbanRequest struct {
+		UnbanReasonText string `json:"unban_reason_text"`
+	}
+	return func(ctx *gin.Context) {
+		banId, banIdErr := getInt64Param(ctx, "ban_id")
+		if banIdErr != nil {
+			responseErr(ctx, http.StatusBadRequest, "Invalid ban_id format")
+			return
+		}
+		var req apiUnbanRequest
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, "Invalid request")
+			return
+		}
+		bp := model.NewBannedPerson()
+		if banErr := database.GetBanByBanID(ctx, banId, false, &bp); banErr != nil {
+			responseErr(ctx, http.StatusInternalServerError, "Failed to query")
+			return
+		}
+		changed, errSave := Unban(ctx, database, bp.Person.SteamID, req.UnbanReasonText)
+		if errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, "Failed to unban")
+			return
+		}
+		if !changed {
+			responseErr(ctx, http.StatusConflict, "Failed to save")
+			return
+		}
+		responseOK(ctx, http.StatusAccepted, nil)
+	}
+}
+
 func (web *web) onAPIPostBanCreate(database store.Store) gin.HandlerFunc {
 	type apiBanRequest struct {
 		SteamID    steamid.SID64 `json:"steam_id"`
@@ -413,7 +446,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			resp.BanType = model.Banned
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
 			responseOK(ctx, http.StatusOK, resp)
-			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason}).Infof("Player dropped")
+			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason,
+				"steam_id": steamid.SIDToSID64(request.SteamID)}).Infof("Player dropped")
 			return
 		}
 		var asnRecord ip2location.ASNRecord
@@ -444,7 +478,15 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			return
 		}
 		resp.BanType = bannedPerson.Ban.BanType
-		resp.Msg = bannedPerson.Ban.ReasonText
+		reason := ""
+		if bannedPerson.Ban.Reason == model.Custom && bannedPerson.Ban.ReasonText != "" {
+			reason = bannedPerson.Ban.ReasonText
+		} else if bannedPerson.Ban.Reason == model.Custom && bannedPerson.Ban.ReasonText == "" {
+			reason = "Banned"
+		} else {
+			reason = bannedPerson.Ban.Reason.String()
+		}
+		resp.Msg = reason
 		responseOK(ctx, http.StatusOK, resp)
 	}
 }

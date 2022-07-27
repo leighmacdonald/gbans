@@ -442,9 +442,16 @@ export const ReportComponent = ({
                                         )
                                     },
                                     {
-                                        label: 'Custom Reason',
+                                        label: 'Custom',
                                         tooltip: 'Custom Reason',
                                         sortKey: 'reason_text',
+                                        sortType: 'string',
+                                        align: 'left'
+                                    },
+                                    {
+                                        label: 'Unban Reason',
+                                        tooltip: 'Unban Reason',
+                                        sortKey: 'unban_reason_text',
                                         sortType: 'string',
                                         align: 'left'
                                     }

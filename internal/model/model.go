@@ -142,6 +142,7 @@ type BanASN struct {
 	AuthorID   steamid.SID64
 	TargetID   steamid.SID64
 	Reason     Reason
+	ReasonText string
 	ValidUntil time.Time
 	CreatedOn  time.Time
 	UpdatedOn  time.Time
@@ -171,6 +172,7 @@ type BanNet struct {
 	CIDR       *net.IPNet    `db:"cidr"`
 	Source     Origin        `db:"source"`
 	Reason     Reason        `db:"reason"`
+	ReasonText string        `db:"reason_text"`
 	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
 	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
 	ValidUntil time.Time     `db:"valid_until"`
@@ -221,14 +223,15 @@ func (b BanNet) String() string {
 type Ban struct {
 	BanID int64 `db:"ban_id" json:"ban_id"`
 	// SteamID is the steamID of the banned person
-	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id"`
-	AuthorID steamid.SID64 `db:"author_id" json:"author_id"`
+	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	AuthorID steamid.SID64 `db:"author_id" json:"author_id,string"`
 	// Reason defines the overall ban classification
 	BanType BanType `db:"ban_type" json:"ban_type"`
 	// Reason defines the overall ban classification
 	Reason Reason `db:"reason" json:"reason"`
 	// ReasonText is returned to the client when kicked trying to join the server
-	ReasonText string `db:"reason_text" json:"reason_text"`
+	ReasonText      string `db:"reason_text" json:"reason_text"`
+	UnbanReasonText string `db:"unban_reason_text" json:"unban_reason_text"`
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note     string `db:"note" json:"note"`
 	Source   Origin `json:"ban_source" db:"ban_source"`
@@ -246,12 +249,8 @@ func (b Ban) String() string {
 }
 
 type BannedPerson struct {
-	Ban                Ban               `json:"ban"`
-	Person             Person            `json:"person"`
-	HistoryChat        PersonMessages    `json:"history_chat" db:"-"`
-	HistoryPersonaName []string          `json:"history_personaname" db:"-"`
-	HistoryConnections []string          `json:"history_connections" db:"-"`
-	HistoryIP          PersonConnections `json:"history_ip" db:"-"`
+	Ban    Ban    `json:"ban"`
+	Person Person `json:"person"`
 }
 
 func NewBannedPerson() BannedPerson {
@@ -265,10 +264,6 @@ func NewBannedPerson() BannedPerson {
 			UpdatedOn:     config.Now(),
 			PlayerSummary: &steamweb.PlayerSummary{},
 		},
-		HistoryChat:        nil,
-		HistoryPersonaName: nil,
-		HistoryConnections: nil,
-		HistoryIP:          nil,
 	}
 }
 

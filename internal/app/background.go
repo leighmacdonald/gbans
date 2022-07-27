@@ -377,7 +377,7 @@ func banSweeper(ctx context.Context, database store.Store) {
 						if errDropBanNet := database.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil {
 							log.Errorf("Failed to drop expired network expiredNetBan: %v", errDropBanNet)
 						} else {
-							log.Infof("Network expiredNetBan expired: %v", expiredNetBan)
+							log.Infof("CIDR ban expired: %v", expiredNetBan)
 						}
 					}
 				}

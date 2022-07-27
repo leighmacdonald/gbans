@@ -14,7 +14,6 @@ import {
     BanReasons,
     banReasonsList,
     BanType,
-    Person,
     SteamID
 } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
@@ -75,7 +74,7 @@ type BanMethod = 'steam' | 'network';
 export interface BanModalProps<Ban> extends ConfirmationModalProps<Ban> {
     ban?: Ban;
     reportId?: number;
-    profile?: Person;
+    steamId?: SteamID;
 }
 
 export const BanModal = ({
@@ -83,9 +82,11 @@ export const BanModal = ({
     setOpen,
     reportId,
     onSuccess,
-    profile
+    steamId
 }: BanModalProps<Ban>) => {
-    const [steamId, setSteamId] = useState<SteamID>(BigInt(0));
+    const [targetSteamId, setTargetSteamId] = useState<SteamID>(
+        steamId ?? BigInt(0)
+    );
     const [input, setInput] = useState<SteamID>(BigInt(0));
     const [duration, setDuration] = useState<Duration>(Duration.dur48h);
     const [customDuration, setCustomDuration] = useState<string>('');
@@ -100,7 +101,7 @@ export const BanModal = ({
     const { sendFlash } = useUserFlashCtx();
 
     const handleSubmit = useCallback(() => {
-        if (!steamId) {
+        if (!targetSteamId) {
             sendFlash('error', 'no steamId');
             return;
         }
@@ -114,7 +115,7 @@ export const BanModal = ({
             return;
         }
         const opts: BanPayload = {
-            steam_id: steamId,
+            steam_id: targetSteamId,
             ban_type: actionType,
             duration: dur,
             network: banMethodType === 'steam' ? '' : network,
@@ -134,7 +135,7 @@ export const BanModal = ({
                 sendFlash('error', `Failed to create ban: ${err}`);
             });
     }, [
-        steamId,
+        targetSteamId,
         banReason,
         customDuration,
         duration,
@@ -188,26 +189,35 @@ export const BanModal = ({
     const onChangeType = (evt: ChangeEvent<HTMLInputElement>) => {
         setBanMethodType(evt.target.value as BanMethod);
     };
+
     return (
         <ConfirmationModal
             open={open}
             setOpen={setOpen}
             onSuccess={() => {
+                setOpen(false);
+            }}
+            onCancel={() => {
+                console.log('closed');
+                setOpen(false);
+            }}
+            onAccept={() => {
+                console.log('submit');
                 handleSubmit();
             }}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
         >
             <Stack spacing={2}>
                 <Heading>Ban Player</Heading>
-                {!profile && (
+                {!steamId && (
                     <ProfileSelectionInput
                         fullWidth
                         onProfileSuccess={(profile) => {
                             if (profile) {
-                                setSteamId(profile.player.steam_id);
+                                setTargetSteamId(profile.player.steam_id);
                             } else {
-                                setSteamId(BigInt(0));
+                                setTargetSteamId(BigInt(0));
                             }
                         }}
                         input={input}

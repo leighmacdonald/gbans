@@ -130,7 +130,7 @@ export const ReportViewPage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={9}>
                 {report && (
                     <ReportComponent
                         report={report.report}
@@ -138,7 +138,7 @@ export const ReportViewPage = (): JSX.Element => {
                     />
                 )}
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
                         <Stack>
@@ -323,11 +323,19 @@ export const ReportViewPage = (): JSX.Element => {
                             </Paper>
                         </>
                     )}
-                    <BanModal
-                        open={banModalOpen}
-                        setOpen={setBanModalOpen}
-                        profile={report?.subject}
-                    />
+                    {report?.subject.steam_id ? (
+                        <BanModal
+                            reportId={report.report.report_id}
+                            open={banModalOpen}
+                            setOpen={setBanModalOpen}
+                            onSuccess={() => {
+                                setBanModalOpen(false);
+                            }}
+                            steamId={report?.subject.steam_id}
+                        />
+                    ) : (
+                        <></>
+                    )}
                 </Stack>
             </Grid>
         </Grid>

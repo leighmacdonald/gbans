@@ -412,20 +412,26 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	waitGroup.Add(3)
 	go func() {
 		defer waitGroup.Done()
-		if errASN := bot.database.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
-			log.Warnf("Failed to fetch ASN record: %v", errASN)
+		if player.IPAddr != nil {
+			if errASN := bot.database.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
+				log.Warnf("Failed to fetch ASN record: %v", errASN)
+			}
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
-		if errLoc := bot.database.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
-			log.Warnf("Failed to fetch Location record: %v", errLoc)
+		if player.IPAddr != nil {
+			if errLoc := bot.database.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
+				log.Warnf("Failed to fetch Location record: %v", errLoc)
+			}
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
-		if errProxy := bot.database.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && errProxy != store.ErrNoResult {
-			log.Errorf("Failed to fetch proxy record: %v", errProxy)
+		if player.IPAddr != nil {
+			if errProxy := bot.database.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && errProxy != store.ErrNoResult {
+				log.Errorf("Failed to fetch proxy record: %v", errProxy)
+			}
 		}
 	}()
 	waitGroup.Wait()
@@ -586,11 +592,12 @@ func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	reason := opts[OptBanReason].StringValue()
 	steamId, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	found, errUnban := Unban(ctx, bot.database, steamId)
+	found, errUnban := Unban(ctx, bot.database, steamId, reason)
 	if errUnban != nil {
 		return errUnban
 	}

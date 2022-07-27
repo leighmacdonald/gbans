@@ -40,7 +40,7 @@ func (database *pgStore) updateReport(ctx context.Context, report *model.Report)
 	const q = `
 		UPDATE report 
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
-            deleted = $5, updated_on = $6, report = $7, report_text = $8
+            deleted = $5, updated_on = $6, reason = $7, reason_text = $8
         WHERE report_id = $9`
 	return Err(database.Exec(ctx, q, report.AuthorId, report.ReportedId, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText, report.ReportId))

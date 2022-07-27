@@ -24,7 +24,7 @@ import (
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func Unban(ctx context.Context, database store.Store, target steamid.SID64) (bool, error) {
+func Unban(ctx context.Context, database store.Store, target steamid.SID64, reason string) (bool, error) {
 	bannedPerson := model.NewBannedPerson()
 	errGetBan := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
 	if errGetBan != nil {
@@ -33,11 +33,29 @@ func Unban(ctx context.Context, database store.Store, target steamid.SID64) (boo
 		}
 		return false, errGetBan
 	}
-	bannedPerson.Ban.ValidUntil = config.Now()
+	bannedPerson.Ban.Deleted = true
+	bannedPerson.Ban.UnbanReasonText = reason
 	if errSaveBan := database.SaveBan(ctx, &bannedPerson.Ban); errSaveBan != nil {
 		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
 	log.Infof("Player unbanned: %v", target)
+	go func() {
+		unbanNotice := &discordgo.MessageEmbed{
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.SteamID),
+			Type:  discordgo.EmbedTypeRich,
+			Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
+			Color: int(green),
+		}
+		addFieldsSteamID(unbanNotice, bannedPerson.Person.SteamID)
+		addField(unbanNotice, "Reason", reason)
+		if config.Discord.PublicLogChannelEnable {
+			select {
+			case discordSendMsg <- discordPayload{channelId: config.Discord.PublicLogChannelId, embed: unbanNotice}:
+			default:
+				log.Warnf("Cannot send discord unban notice payload, channel full")
+			}
+		}
+	}()
 	return true, nil
 }
 

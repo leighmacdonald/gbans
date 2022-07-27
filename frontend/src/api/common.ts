@@ -48,7 +48,7 @@ export const apiCall = async <
     if (token != '') {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    if (method === 'POST' && body) {
+    if (method !== 'GET' && body) {
         opts['body'] = JSON.stringify(body);
     }
     opts.headers = headers;

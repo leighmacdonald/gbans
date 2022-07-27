@@ -47,18 +47,6 @@ export const BanView = (): JSX.Element => {
                     <Grid item xs>
                         <Typography variant={'h3'}>Chat Logs</Typography>
                     </Grid>
-                    {ban?.history_chat &&
-                        ban?.history_chat.map((value, i) => {
-                            return (
-                                <Grid
-                                    item
-                                    className={'cell'}
-                                    key={`chat-log-${i}`}
-                                >
-                                    <span>{value.message}</span>
-                                </Grid>
-                            );
-                        })}
                 </Grid>
             )}
         </Grid>

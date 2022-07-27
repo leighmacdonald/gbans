@@ -139,6 +139,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	// Moderator access
 	modRoute := engine.Use(authMiddleware(database, model.PModerator))
 	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
+	modRoute.DELETE("/api/ban/:ban_id", web.onAPIPostBanDelete(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))

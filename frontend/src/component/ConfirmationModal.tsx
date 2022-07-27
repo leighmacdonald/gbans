@@ -10,6 +10,7 @@ export interface ConfirmationModalProps<T> {
     children?: JSX.Element;
     onSuccess?: (resp: T) => void;
     onCancel?: () => void;
+    onAccept?: () => void;
     onOpen?: () => void;
     open: boolean;
     setOpen: (openState: boolean) => void;
@@ -18,7 +19,9 @@ export interface ConfirmationModalProps<T> {
 export const ConfirmationModal = ({
     children,
     open,
-    setOpen
+    setOpen,
+    onAccept,
+    onCancel
 }: ConfirmationModalProps<boolean>) => {
     return (
         <Dialog
@@ -31,20 +34,26 @@ export const ConfirmationModal = ({
                 {children}
                 <Stack direction={'row-reverse'}>
                     <ButtonGroup>
-                        <Button
-                            variant={'contained'}
-                            color={'success'}
-                            startIcon={<CheckIcon />}
-                        >
-                            Accept
-                        </Button>
-                        <Button
-                            variant={'contained'}
-                            color={'error'}
-                            startIcon={<ClearIcon />}
-                        >
-                            Cancel
-                        </Button>
+                        {onAccept && (
+                            <Button
+                                variant={'contained'}
+                                color={'success'}
+                                startIcon={<CheckIcon />}
+                                onClick={onAccept}
+                            >
+                                Accept
+                            </Button>
+                        )}
+                        {onCancel && (
+                            <Button
+                                variant={'contained'}
+                                color={'error'}
+                                startIcon={<ClearIcon />}
+                                onClick={onCancel}
+                            >
+                                Cancel
+                            </Button>
+                        )}
                     </ButtonGroup>
                 </Stack>
             </Stack>
