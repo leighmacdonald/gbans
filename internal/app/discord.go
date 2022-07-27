@@ -176,21 +176,22 @@ func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 	}
 	bot.connectedMu.RUnlock()
 	edit := &discordgo.WebhookEdit{
-		Content:         "",
 		Embeds:          nil,
 		AllowedMentions: nil,
 	}
+	var embeds []*discordgo.MessageEmbed
 	switch response.MsgType {
 	case mtString:
 		val, ok := response.Value.(string)
 		if ok && val != "" {
-			edit.Content = val
-			if len(edit.Content) > discordMaxMsgLen {
+			edit.Content = &val
+			if len(*edit.Content) > discordMaxMsgLen {
 				return errTooLarge
 			}
 		}
 	case mtEmbed:
-		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))
+		embeds = append(embeds, response.Value.(*discordgo.MessageEmbed))
+		edit.Embeds = &embeds
 	}
 	_, errResp := session.InteractionResponseEdit(interaction, edit)
 	return errResp
