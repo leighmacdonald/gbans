@@ -1,4 +1,4 @@
-import { apiCall, apiError, QueryFilter } from './common';
+import { apiCall, QueryFilter } from './common';
 import { communityVisibilityState, Person, profileState } from './profile';
 import { SteamID } from './const';
 import { BanReason } from './report';
@@ -118,9 +118,7 @@ export const apiGetBans = async (
     });
 };
 
-export const apiGetBan = async (
-    ban_id: number
-): Promise<BannedPerson | apiError> =>
+export const apiGetBan = async (ban_id: number): Promise<BannedPerson> =>
     await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
 
 export const apiCreateBan = async (p: BanPayload): Promise<Ban> =>

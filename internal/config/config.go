@@ -141,6 +141,7 @@ type discordConfig struct {
 	GuildID                string   `mapstructure:"guild_id"`
 	Perms                  int      `mapstructure:"perms"`
 	Prefix                 string   `mapstructure:"prefix"`
+	AutoModEnable          bool     `mapstructure:"auto_mod_enable"`
 	ModChannels            []string `mapstructure:"mod_channel_ids"`
 	LogChannelID           string   `mapstructure:"log_channel_id"`
 	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
@@ -298,8 +299,9 @@ var defaultConfig = map[string]any{
 	"discord.token":                          "",
 	"discord.mod_role_ids":                   []string{},
 	"discord.perms":                          125958,
-	"discord.mod_channel_ids":                nil,
+	"discord.mod_channel_ids":                []string{},
 	"discord.guild_id":                       "",
+	"discord.auto_mod_enable":                false,
 	"discord.public_log_channel_enable":      false,
 	"discord.public_log_channel_id":          "",
 	"network_bans.enabled":                   false,

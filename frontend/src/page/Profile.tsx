@@ -3,7 +3,6 @@ import Grid from '@mui/material/Grid';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { logErr } from '../util/errors';
 import Paper from '@mui/material/Paper';
@@ -11,14 +10,13 @@ import { FriendList } from '../component/FriendList';
 import { createExternalLinks } from '../util/history';
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
 import { Masonry } from '@mui/lab';
-import { format, fromUnixTime } from 'date-fns';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MatchHistory } from '../component/MatchHistory';
 import { Heading } from '../component/Heading';
+import { ProfileInfoBox } from '../component/ProfileInfoBox';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -55,38 +53,7 @@ export const Profile = (): JSX.Element => {
                     <Grid item xs={8}>
                         <Stack spacing={3}>
                             <Stack direction={'row'} spacing={3}>
-                                <Paper elevation={1} sx={{ width: '100%' }}>
-                                    <Stack
-                                        direction={'row'}
-                                        spacing={3}
-                                        padding={3}
-                                    >
-                                        <Avatar
-                                            variant={'square'}
-                                            src={profile.player.avatarfull}
-                                            alt={'Profile Avatar'}
-                                            sx={{ width: 184, height: 184 }}
-                                        />
-                                        <Stack spacing={2}>
-                                            <Typography variant={'h3'}>
-                                                {profile.player.personaname}
-                                            </Typography>
-                                            <Typography variant={'subtitle1'}>
-                                                {profile.player.realname}
-                                            </Typography>
-                                            <Typography variant={'body2'}>
-                                                Created:{' '}
-                                                {format(
-                                                    fromUnixTime(
-                                                        profile.player
-                                                            .timecreated
-                                                    ),
-                                                    'yyyy-mm-dd'
-                                                )}
-                                            </Typography>
-                                        </Stack>
-                                    </Stack>
-                                </Paper>
+                                <ProfileInfoBox profile={profile} />
                                 <Paper elevation={1}>
                                     <SteamIDList
                                         steam_id={profile.player.steam_id}

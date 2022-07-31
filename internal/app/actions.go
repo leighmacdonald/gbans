@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -50,7 +49,7 @@ func Unban(ctx context.Context, database store.Store, target steamid.SID64, reas
 		addField(unbanNotice, "Reason", reason)
 		if config.Discord.PublicLogChannelEnable {
 			select {
-			case discordSendMsg <- discordPayload{channelId: config.Discord.PublicLogChannelId, embed: unbanNotice}:
+			case discordSendMsg <- discordPayload{channelId: config.Discord.ModLogChannelId, embed: unbanNotice}:
 			default:
 				log.Warnf("Cannot send discord unban notice payload, channel full")
 			}
@@ -163,9 +162,11 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 			}
 		}
 	}(botSendMessageChan)
-
-	if errKick := Kick(ctx, database, model.System, opts.target, opts.author, opts.reason, nil); errKick != nil {
-		log.Errorf("failed to kick player: %v", errKick)
+	// TODO mute player currently in-game w/o kicking
+	if opts.banType == model.Banned {
+		if errKick := Kick(ctx, database, model.System, opts.target, opts.author, opts.reason, nil); errKick != nil {
+			log.Errorf("failed to kick player: %v", errKick)
+		}
 	}
 
 	return nil
@@ -388,17 +389,27 @@ func PSay(ctx context.Context, database store.Store, author steamid.SID64, targe
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
-func FilterAdd(ctx context.Context, database store.Store, pattern string) (model.Filter, error) {
-	rx, errCompile := regexp.Compile(pattern)
-	if errCompile != nil {
-		return model.Filter{}, errors.Wrapf(errCompile, "Invalid regex format")
+func FilterAdd(ctx context.Context, database store.Store, newPattern string, name string) (model.Filter, error) {
+	var filter model.Filter
+	if errGetFilter := database.GetFilterByName(ctx, name, &filter); errGetFilter != nil {
+		if !errors.Is(errGetFilter, store.ErrNoResult) {
+			return filter, errors.Wrapf(errGetFilter, "Failed to get parent filter")
+		}
+		filter.CreatedOn = config.Now()
+		filter.FilterName = name
 	}
-	filter := model.Filter{Pattern: rx, CreatedOn: config.Now()}
+	existing := filter.Patterns
+	for _, pat := range existing {
+		if pat == newPattern {
+			return filter, store.ErrDuplicate
+		}
+	}
+	filter.Patterns = append(filter.Patterns, newPattern)
 	if errSave := database.SaveFilter(ctx, &filter); errSave != nil {
 		if errSave == store.ErrDuplicate {
 			return filter, store.ErrDuplicate
 		}
-		log.Errorf("Error saving filter word: %v", errCompile)
+		log.Errorf("Error saving filter word: %v", errSave)
 		return filter, consts.ErrInternal
 	}
 	return filter, nil

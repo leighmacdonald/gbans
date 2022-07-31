@@ -18,7 +18,7 @@ import { LoginSuccess } from './page/LoginSuccess';
 import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
-import { BanView } from './page/BanView';
+import { BanPage } from './page/BanPage';
 import { apiGetCurrentProfile, PermissionLevel, UserProfile } from './api';
 import { AdminBan } from './page/AdminBan';
 import { TopBar } from './component/TopBar';
@@ -134,10 +134,10 @@ export const App = (): JSX.Element => {
                                                     path={'/wiki/:slug'}
                                                     element={<WikiPage />}
                                                 />
-                                                {/*<Route*/}
-                                                {/*    path={'/appeal'}*/}
-                                                {/*    element={<Appeal />}*/}
-                                                {/*/>*/}
+                                                <Route
+                                                    path={'/ban/:ban_id'}
+                                                    element={<BanPage />}
+                                                />
                                                 <Route
                                                     path={'/report/:report_id'}
                                                     element={<ReportViewPage />}
@@ -172,7 +172,7 @@ export const App = (): JSX.Element => {
                                                 />
                                                 <Route
                                                     path={'/ban/:ban_id'}
-                                                    element={<BanView />}
+                                                    element={<BanPage />}
                                                 />
                                                 <Route
                                                     path={'/admin/ban'}

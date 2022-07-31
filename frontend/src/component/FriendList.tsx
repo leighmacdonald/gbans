@@ -10,10 +10,10 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import ArrowLeft from '@mui/icons-material/ArrowLeft';
 import ArrowRight from '@mui/icons-material/ArrowRight';
 import Button from '@mui/material/Button';
-import ListSubheader from '@mui/material/ListSubheader';
 import { Person } from '../api';
 import useTheme from '@mui/material/styles/useTheme';
 import { LoadingSpinner } from './LoadingSpinner';
+import { Heading } from './Heading';
 
 export interface FriendListProps {
     friends: Person[];
@@ -53,14 +53,10 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
     const theme = useTheme();
     return (
         <Stack>
-            <List
-                dense={true}
-                subheader={
-                    <ListSubheader component="div" id="nested-list-subheader">
-                        Friends ({friends ? friends.length : 0})
-                    </ListSubheader>
-                }
-            >
+            <Heading>
+                <>Friends ({friends ? friends.length : 0})</>
+            </Heading>
+            <List dense={true}>
                 <Suspense fallback={<LoadingSpinner />}>
                     {(friends || [])
                         .slice(page * limit, page * limit + limit)

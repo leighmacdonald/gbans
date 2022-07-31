@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/stretchr/testify/require"
-	"regexp"
 	"testing"
 	"time"
 )
@@ -16,7 +15,7 @@ func TestNewBanNet(t *testing.T) {
 func TestFilter_Match(t *testing.T) {
 	filter := Filter{
 		WordID:    1,
-		Pattern:   regexp.MustCompile(`(po+p)`),
+		Patterns:  []string{`(po+p)`},
 		CreatedOn: config.Now(),
 	}
 	require.True(t, filter.Match("super pooooooper"))

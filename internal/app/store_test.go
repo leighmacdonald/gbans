@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"net"
-	"regexp"
+	"strings"
 	"testing"
 	"time"
 )
@@ -292,7 +292,7 @@ func TestFilters(t *testing.T) {
 	var savedFilters []model.Filter
 	for _, word := range words {
 		filter := model.Filter{
-			Pattern:   regexp.MustCompile(word),
+			Patterns:  strings.Split(word, "||"),
 			CreatedOn: config.Now(),
 		}
 		require.NoError(t, testDatabase.SaveFilter(context.Background(), &filter), "Failed to insert filter: %s", word)
@@ -307,7 +307,7 @@ func TestFilters(t *testing.T) {
 		var byId model.Filter
 		require.NoError(t, testDatabase.GetFilterByID(context.Background(), savedFilters[1].WordID, &byId))
 		require.Equal(t, savedFilters[1].WordID, byId.WordID)
-		require.Equal(t, savedFilters[1].Pattern.String(), byId.Pattern.String())
+		require.Equal(t, savedFilters[1].Patterns, byId.Patterns)
 	}
 	droppedFilters, errGetDroppedFilters := testDatabase.GetFilters(context.Background())
 	require.NoError(t, errGetDroppedFilters)

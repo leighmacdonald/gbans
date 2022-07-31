@@ -18,6 +18,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import { BanModal } from '../component/BanModal';
 import Box from '@mui/material/Box';
 import { UnbanModal } from '../component/UnbanModal';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 export const AdminBan = (): JSX.Element => {
     const [bans, setBans] = useState<IAPIBanRecord[]>([]);
@@ -235,6 +236,18 @@ export const AdminBan = (): JSX.Element => {
                                     align: 'left',
                                     renderer: (row) => (
                                         <ButtonGroup fullWidth>
+                                            <IconButton
+                                                color={'primary'}
+                                                onClick={() => {
+                                                    navigate(
+                                                        `/ban/${row.ban_id}`
+                                                    );
+                                                }}
+                                            >
+                                                <Tooltip title={'View'}>
+                                                    <VisibilityIcon />
+                                                </Tooltip>
+                                            </IconButton>
                                             <IconButton color={'warning'}>
                                                 <Tooltip title={'Edit Ban'}>
                                                     <EditIcon />

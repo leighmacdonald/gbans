@@ -68,6 +68,7 @@ discord:
   log_channel_id: "33333333333333333333"
   public_log_channel_enable: true
   public_log_channel_id: "444444444444444444"
+  auto_mod_enable: false
 
 logging:
   # Set the debug log level

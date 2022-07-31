@@ -8,12 +8,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"net"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -554,13 +554,21 @@ type Stats struct {
 }
 
 type Filter struct {
-	WordID    int
-	Pattern   *regexp.Regexp
-	CreatedOn time.Time
+	WordID           int       `json:"word_id,omitempty"`
+	Patterns         []string  `json:"patterns,omitempty"`
+	CreatedOn        time.Time `json:"created_on"`
+	DiscordId        string    `json:"discord_id,omitempty"`
+	DiscordCreatedOn time.Time `json:"discord_created_on"`
+	FilterName       string    `json:"filter_name"`
 }
 
 func (f *Filter) Match(value string) bool {
-	return f.Pattern.MatchString(value)
+	for _, pattern := range f.Patterns {
+		if util.GlobString(pattern, value) {
+			return true
+		}
+	}
+	return false
 }
 
 // RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.

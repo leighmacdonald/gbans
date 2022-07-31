@@ -49,3 +49,37 @@ func DiffString(s1, s2 string) string {
 	diffs := dmp.DiffPrettyText(dmp.DiffMain(s1, s2, true))
 	return fmt.Sprintf("```diff\n%s```", diffs)
 }
+
+const GLOB = "*"
+
+func GlobString(pattern, subj string) bool {
+	if pattern == "" {
+		return subj == pattern
+	}
+	if pattern == GLOB {
+		return true
+	}
+	parts := strings.Split(pattern, GLOB)
+	if len(parts) == 1 {
+		return subj == pattern
+	}
+	leadingGlob := strings.HasPrefix(pattern, GLOB)
+	trailingGlob := strings.HasSuffix(pattern, GLOB)
+	end := len(parts) - 1
+	for i := 0; i < end; i++ {
+		idx := strings.Index(subj, parts[i])
+
+		switch i {
+		case 0:
+			if !leadingGlob && idx != 0 {
+				return false
+			}
+		default:
+			if idx < 0 {
+				return false
+			}
+		}
+		subj = subj[idx+len(parts[i]):]
+	}
+	return trailingGlob || strings.HasSuffix(subj, parts[end])
+}

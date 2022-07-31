@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"strings"
 	"sync"
 )
 
@@ -30,6 +31,9 @@ var (
 )
 
 func (bot *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+	if bot.session == nil {
+		return nil
+	}
 	if _, errSend := bot.session.ChannelMessageSendEmbed(channelId, message); errSend != nil {
 		return errSend
 	}
@@ -82,7 +86,6 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
 		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
-
 	}
 	defer func() {
 		if errDisc := bot.session.Close(); errDisc != nil {
@@ -96,6 +99,7 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 	session.AddHandler(bot.onDisconnect)
 	session.AddHandler(bot.onInteractionCreate)
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+
 	bot.session = session
 
 	// Open a websocket connection to discord and begin listening.
@@ -109,8 +113,43 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 	return nil
 }
 
-func (bot *discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
+
+	if config.Discord.AutoModEnable {
+		session.Identify.Intents |= discordgo.IntentAutoModerationExecution
+		session.Identify.Intents |= discordgo.IntentMessageContent
+		session.Identify.Intents |= discordgo.PermissionModerateMembers
+		filters, errFilters := bot.database.GetFilters(bot.ctx)
+		if errFilters != nil {
+			return
+		}
+		for _, filter := range filters {
+			create := &discordgo.AutoModerationRule{
+				Name:        filter.FilterName,
+				EventType:   discordgo.AutoModerationEventMessageSend,
+				TriggerType: discordgo.AutoModerationEventTriggerKeyword,
+				TriggerMetadata: &discordgo.AutoModerationTriggerMetadata{
+					KeywordFilter: []string{"*test*"},
+				},
+				Enabled: &config.Discord.AutoModEnable,
+				Actions: []discordgo.AutoModerationAction{
+					{Type: discordgo.AutoModerationRuleActionBlockMessage},
+				},
+				ExemptChannels: &config.Discord.ModChannels,
+			}
+			rule, errRule := session.AutoModerationRuleCreate(config.Discord.GuildID, create)
+			if errRule != nil {
+				log.Errorf("Failed to register word filter rule: %v", errRule)
+				continue
+			}
+			filter.DiscordId = rule.ID
+			filter.DiscordCreatedOn = config.Now()
+			if errSaveFilter := bot.database.SaveFilter(bot.ctx, &filter); errSaveFilter != nil {
+				log.Errorf("Failed to save discord rule id: %v", errSaveFilter)
+			}
+		}
+	}
 }
 
 func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -235,7 +274,7 @@ func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
 }
 
 func addFieldFilter(embed *discordgo.MessageEmbed, filter model.Filter) {
-	addFieldInline(embed, "Pattern", filter.Pattern.String())
+	addFieldInline(embed, "Patterns", strings.Join(filter.Patterns, ","))
 	addFieldInline(embed, "ID", fmt.Sprintf("%d", filter.WordID))
 }
 

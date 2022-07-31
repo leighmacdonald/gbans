@@ -35,6 +35,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import useTheme from '@mui/material/styles/useTheme';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import SupportIcon from '@mui/icons-material/Support';
 import { Flashes } from './Flashes';
 
 interface menuRoute {
@@ -95,6 +96,13 @@ export const TopBar = () => {
     ];
     if (perms >= PermissionLevel.Admin) {
         menuItems.push({ to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> });
+    }
+    if (currentUser.ban_id > 0) {
+        menuItems.push({
+            to: `/ban/${currentUser.ban_id}`,
+            text: 'Appeal',
+            icon: <SupportIcon />
+        });
     }
     const userItems: menuRoute[] = [
         {
