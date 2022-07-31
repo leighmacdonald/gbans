@@ -5,23 +5,40 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"regexp"
+	"strings"
 )
 
+const filterSeparator = "||"
+
 func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
-	_, errInsert := database.insertFilter(ctx, filter)
-	return errInsert
+	if filter.WordID > 0 {
+		return database.updateFilter(ctx, filter)
+	} else {
+		return database.insertFilter(ctx, filter)
+	}
 }
 
-func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) (*model.Filter, error) {
-	const query = `INSERT INTO filtered_word (word, created_on) VALUES ($1, $2) RETURNING word_id`
-	if errQuery := database.QueryRow(ctx, query, filter.Pattern.String(), filter.CreatedOn).Scan(&filter.WordID); errQuery != nil {
-		return nil, Err(errQuery)
+func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) error {
+	const query = `INSERT INTO filtered_word (word, created_on, filter_name) VALUES ($1, $2) RETURNING word_id`
+	if errQuery := database.QueryRow(ctx, query, strings.Join(filter.Patterns, filterSeparator),
+		filter.CreatedOn, filter.FilterName).Scan(&filter.WordID); errQuery != nil {
+		return Err(errQuery)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)
-	return filter, nil
+	return nil
 }
 
+func (database *pgStore) updateFilter(ctx context.Context, filter *model.Filter) error {
+	const query = `
+		UPDATE filtered_word SET word = $2, created_on = $3, discord_id = $4, discord_created_on = $5, filter_name = $6
+    	WHERE word_id = $1`
+	if errQuery := database.Exec(ctx, query, filter.WordID, strings.Join(filter.Patterns, filterSeparator),
+		filter.CreatedOn, filter.DiscordId, filter.DiscordCreatedOn, filter.FilterName); errQuery != nil {
+		return Err(errQuery)
+	}
+	log.Debugf("Created filter: %d", filter.WordID)
+	return nil
+}
 func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
 	const query = `DELETE FROM filtered_word WHERE word_id = $1`
 	if errExec := database.Exec(ctx, query, filter.WordID); errExec != nil {
@@ -32,21 +49,37 @@ func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) e
 }
 
 func (database *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model.Filter) error {
-	const query = `SELECT word_id, word, created_on from filtered_word WHERE word_id = $1`
+	const query = `SELECT word_id, word, created_on,discord_id, discord_created_on, filter_name 
+		FROM filtered_word 
+		WHERE word_id = $1`
 	var word string
-	if errQuery := database.QueryRow(ctx, query, wordId).Scan(&f.WordID, &word, &f.CreatedOn); errQuery != nil {
+	if errQuery := database.QueryRow(ctx, query, wordId).Scan(&f.WordID, &word, &f.CreatedOn,
+		&f.DiscordId, &f.DiscordCreatedOn, &f.FilterName); errQuery != nil {
 		return errors.Wrapf(errQuery, "Failed to load filter")
 	}
-	rx, errCompile := regexp.Compile(word)
-	if errCompile != nil {
-		return errCompile
+	f.Patterns = strings.Split(word, filterSeparator)
+	return nil
+}
+
+func (database *pgStore) GetFilterByName(ctx context.Context, filterName string, f *model.Filter) error {
+	const query = `
+		SELECT word_id, word, created_on,discord_id, discord_created_on, filter_name 
+		FROM filtered_word 
+		WHERE filter_name = $1`
+	var word string
+	if errQuery := database.QueryRow(ctx, query, filterName).Scan(&f.WordID, &word, &f.CreatedOn,
+		&f.DiscordId, &f.DiscordCreatedOn, &f.FilterName); errQuery != nil {
+		return errors.Wrapf(errQuery, "Failed to load filter")
 	}
-	f.Pattern = rx
+	f.Patterns = strings.Split(word, filterSeparator)
 	return nil
 }
 
 func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error) {
-	rows, errQuery := database.Query(ctx, `SELECT word_id, word, created_on from filtered_word`)
+	const query = `
+		SELECT word_id, word, created_on, discord_id, discord_created_on, filter_name
+		FROM filtered_word`
+	rows, errQuery := database.Query(ctx, query)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -55,14 +88,11 @@ func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error)
 	for rows.Next() {
 		var filter model.Filter
 		var pattern string
-		if errQuery = rows.Scan(&filter.WordID, &pattern, &filter.CreatedOn); errQuery != nil {
+		if errQuery = rows.Scan(&filter.WordID, &pattern, &filter.CreatedOn, &filter.DiscordId,
+			&filter.DiscordCreatedOn, &filter.FilterName); errQuery != nil {
 			return nil, errors.Wrapf(errQuery, "Failed to load filter")
 		}
-		rx, errCompile := regexp.Compile(pattern)
-		if errCompile != nil {
-			return nil, errCompile
-		}
-		filter.Pattern = rx
+		filter.Patterns = strings.Split(pattern, filterSeparator)
 		filters = append(filters, filter)
 	}
 	return filters, nil
