@@ -87,9 +87,9 @@ func respOk(response *botResponse, title string) *discordgo.MessageEmbed {
 
 type CommandOptions map[optionKey]*discordgo.ApplicationCommandInteractionDataOption
 
-// flatOptMap will take the recursive discord slash commands and flatten them into a simple
+// optionMap will take the recursive discord slash commands and flatten them into a simple
 // map.
-func flatOptMap(options []*discordgo.ApplicationCommandInteractionDataOption) CommandOptions {
+func optionMap(options []*discordgo.ApplicationCommandInteractionDataOption) CommandOptions {
 	optionM := make(CommandOptions, len(options))
 	for _, opt := range options {
 		optionM[optionKey(opt.Name)] = opt
@@ -111,7 +111,7 @@ func (opts CommandOptions) String(key optionKey) string {
 
 func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
 	r *botResponse) error {
-	opts := flatOptMap(i.ApplicationCommandData().Options)
+	opts := optionMap(i.ApplicationCommandData().Options)
 	userIdentifier := model.Target(opts[OptUserIdentifier].StringValue())
 	playerInfo := model.NewPlayerInfo()
 	if errFind := Find(ctx, bot.database, userIdentifier, "", &playerInfo); errFind != nil {
@@ -138,7 +138,7 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, i *discord
 
 func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	r *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	playerID := model.Target(opts.String(OptUserIdentifier))
 	var reason model.Reason
 	reasonValue := opts[OptBanReason].IntValue()
@@ -170,7 +170,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 
 func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[OptASN].StringValue()
 	duration := opts[OptDuration].StringValue()
 	reason := model.Reason(opts[OptBanReason].IntValue())
@@ -219,7 +219,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 
 func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	target := opts[OptUserIdentifier].StringValue()
 	reason := model.Reason(opts[OptBanReason].IntValue())
 	cidr := opts[OptCIDR].StringValue()
@@ -270,7 +270,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 // onBanSteam !ban <id> <duration> [reason]
 func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	target := opts[OptUserIdentifier].StringValue()
 	reason := model.Reason(opts[OptBanReason].IntValue())
 	modNote := opts[OptNote].StringValue()
@@ -322,7 +322,7 @@ func createDiscordBanEmbed(ban model.Ban, response *botResponse) *discordgo.Mess
 
 func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	sid, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
@@ -519,7 +519,7 @@ func (bot *discord) onHistory(ctx context.Context, session *discordgo.Session,
 
 func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	steamId, errResolve := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolve != nil {
 		return consts.ErrInvalidSID
@@ -575,7 +575,7 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 
 func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	steamId, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
@@ -591,8 +591,8 @@ func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 
 func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
-	reason := opts[OptBanReason].StringValue()
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
+	reason := opts[OptUnbanReason].StringValue()
 	steamId, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
@@ -611,7 +611,7 @@ func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 
 func (bot *discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[OptASN].StringValue()
 	banExisted, errUnbanASN := UnbanASN(ctx, bot.database, asNumStr)
 	if errUnbanASN != nil {
@@ -642,7 +642,7 @@ func (bot *discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, intera
 
 func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	target := model.Target(opts[OptUserIdentifier].StringValue())
 	reason := model.Reason(opts[OptBanReason].IntValue())
 	targetSid64, errTarget := target.SID64()
@@ -670,7 +670,7 @@ func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 
 func (bot *discord) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
 	if errSay := Say(ctx, bot.database, 0, server, msg); errSay != nil {
@@ -684,7 +684,7 @@ func (bot *discord) onSay(ctx context.Context, _ *discordgo.Session, interaction
 
 func (bot *discord) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
 	if errCSay := CSay(ctx, bot.database, 0, server, msg); errCSay != nil {
@@ -698,7 +698,7 @@ func (bot *discord) onCSay(ctx context.Context, _ *discordgo.Session, interactio
 
 func (bot *discord) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	player := model.Target(opts[OptUserIdentifier].StringValue())
 	msg := opts[OptMessage].StringValue()
 	if errPSay := PSay(ctx, bot.database, 0, player, msg); errPSay != nil {
@@ -784,7 +784,7 @@ func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 
 func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[OptServerIdentifier].StringValue()
 	var server model.Server
 	if errGetServer := bot.database.GetServerByName(ctx, serverName, &server); errGetServer != nil {
@@ -884,8 +884,9 @@ func (bot *discord) onFilter(ctx context.Context, session *discordgo.Session, in
 
 func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
-	filter := opts["filter"].StringValue()
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
+	pattern := opts["pattern"].StringValue()
+	filterName := opts["filter_name"].StringValue()
 	author := model.NewPerson(0)
 	if errPersonByDiscordID := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errPersonByDiscordID == store.ErrNoResult {
@@ -893,7 +894,7 @@ func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 		}
 		return errors.New("Error fetching author info")
 	}
-	newFilter, errFilterAdd := FilterAdd(ctx, bot.database, filter)
+	newFilter, errFilterAdd := FilterAdd(ctx, bot.database, pattern, filterName)
 	if errFilterAdd != nil {
 		return errCommandFailed
 	}
@@ -904,7 +905,7 @@ func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 
 func (bot *discord) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	wordId := opts["filter"].IntValue()
 	if wordId <= 0 {
 		return errors.New("Invalid filter id")
@@ -923,7 +924,7 @@ func (bot *discord) onFilterDel(ctx context.Context, _ *discordgo.Session, inter
 
 func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[OptMessage].StringValue()
 	matches := FilterCheck(message)
 	title := ""
@@ -1043,7 +1044,7 @@ func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, inter
 
 func (bot *discord) onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
-	opts := flatOptMap(interaction.ApplicationCommandData().Options)
+	opts := optionMap(interaction.ApplicationCommandData().Options)
 	matchId := opts[OptMatchId].IntValue()
 	if matchId <= 0 {
 		return errCommandFailed

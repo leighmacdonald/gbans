@@ -64,6 +64,7 @@ const (
 	OptIP               = "ip"
 	OptMatchId          = "match_id"
 	OptBanReason        = "ban_reason"
+	OptUnbanReason      = "unban_reason"
 	OptBan              = "ban"
 	OptHistory          = "history"
 	OptSteam            = "steam"
@@ -331,7 +332,12 @@ func (bot *discord) botRegisterSlashCommands() error {
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,
-						optBanReason,
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        OptUnbanReason,
+							Description: "Reason for unbanning",
+							Required:    true,
+						},
 					},
 				}, // TODO ip
 				{
