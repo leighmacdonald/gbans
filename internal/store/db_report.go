@@ -53,14 +53,14 @@ func (database *pgStore) SaveReport(ctx context.Context, report *model.Report) e
 	return database.insertReport(ctx, report)
 }
 
-func (database *pgStore) SaveReportMessage(ctx context.Context, message *model.ReportMessage) error {
-	if message.ReportMessageId > 0 {
+func (database *pgStore) SaveReportMessage(ctx context.Context, message *model.UserMessage) error {
+	if message.MessageId > 0 {
 		return database.updateReportMessage(ctx, message)
 	}
 	return database.insertReportMessage(ctx, message)
 }
 
-func (database *pgStore) updateReportMessage(ctx context.Context, message *model.ReportMessage) error {
+func (database *pgStore) updateReportMessage(ctx context.Context, message *model.UserMessage) error {
 	message.UpdatedOn = config.Now()
 	const query = `
 		UPDATE report_message 
@@ -68,7 +68,7 @@ func (database *pgStore) updateReportMessage(ctx context.Context, message *model
 		WHERE report_message_id = $1
 	`
 	if errQuery := database.Exec(ctx, query,
-		message.ReportMessageId,
+		message.MessageId,
 		message.Deleted,
 		message.AuthorId,
 		message.UpdatedOn,
@@ -77,14 +77,14 @@ func (database *pgStore) updateReportMessage(ctx context.Context, message *model
 		return Err(errQuery)
 	}
 	log.WithFields(log.Fields{
-		"report_id":  message.ReportId,
-		"message_id": message.ReportMessageId,
+		"report_id":  message.ParentId,
+		"message_id": message.MessageId,
 		"author_id":  message.AuthorId,
 	}).Infof("Report message saved")
 	return nil
 }
 
-func (database *pgStore) insertReportMessage(ctx context.Context, message *model.ReportMessage) error {
+func (database *pgStore) insertReportMessage(ctx context.Context, message *model.UserMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -93,18 +93,18 @@ func (database *pgStore) insertReportMessage(ctx context.Context, message *model
 		RETURNING report_message_id
 	`
 	if errQuery := database.conn.QueryRow(ctx, query,
-		message.ReportId,
+		message.ParentId,
 		message.AuthorId,
 		message.Message,
 		message.Deleted,
 		message.CreatedOn,
 		message.UpdatedOn,
-	).Scan(&message.ReportMessageId); errQuery != nil {
+	).Scan(&message.MessageId); errQuery != nil {
 		return Err(errQuery)
 	}
 	log.WithFields(log.Fields{
-		"report_id":  message.ReportId,
-		"message_id": message.ReportMessageId,
+		"report_id":  message.ParentId,
+		"message_id": message.MessageId,
 		"author_id":  message.AuthorId,
 	}).Infof("Report message saved")
 	return nil
@@ -123,13 +123,13 @@ func (database *pgStore) DropReport(ctx context.Context, report *model.Report) e
 	return nil
 }
 
-func (database *pgStore) DropReportMessage(ctx context.Context, message *model.ReportMessage) error {
+func (database *pgStore) DropReportMessage(ctx context.Context, message *model.UserMessage) error {
 	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = $1`
-	if _, errExec := database.conn.Exec(ctx, q, message.ReportMessageId); errExec != nil {
+	if _, errExec := database.conn.Exec(ctx, q, message.Message); errExec != nil {
 		return Err(errExec)
 	}
 	log.WithFields(log.Fields{
-		"report_message_id": message.ReportMessageId,
+		"report_message_id": message.MessageId,
 		"soft":              true,
 	}).Infof("Report deleted")
 	message.Deleted = true
@@ -198,7 +198,7 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 	return reports, nil
 }
 
-func (database *pgStore) GetReport(ctx context.Context, reportId int, report *model.Report) error {
+func (database *pgStore) GetReport(ctx context.Context, reportId int64, report *model.Report) error {
 	const query = `
 		SELECT 
 		   report_id, author_id, reported_id, report_status, description, 
@@ -222,7 +222,7 @@ func (database *pgStore) GetReport(ctx context.Context, reportId int, report *mo
 	return nil
 }
 
-func (database *pgStore) GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error) {
+func (database *pgStore) GetReportMessages(ctx context.Context, reportId int64) ([]model.UserMessage, error) {
 	const query = `
 		SELECT 
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
@@ -236,12 +236,12 @@ func (database *pgStore) GetReportMessages(ctx context.Context, reportId int) ([
 		}
 	}
 	defer rows.Close()
-	var messages []model.ReportMessage
+	var messages []model.UserMessage
 	for rows.Next() {
-		var msg model.ReportMessage
+		var msg model.UserMessage
 		if errScan := rows.Scan(
-			&msg.ReportMessageId,
-			&msg.ReportId,
+			&msg.MessageId,
+			&msg.ParentId,
 			&msg.AuthorId,
 			&msg.Message,
 			&msg.Deleted,
@@ -255,15 +255,15 @@ func (database *pgStore) GetReportMessages(ctx context.Context, reportId int) ([
 	return messages, nil
 }
 
-func (database *pgStore) GetReportMessageById(ctx context.Context, reportMessageId int, message *model.ReportMessage) error {
+func (database *pgStore) GetReportMessageById(ctx context.Context, reportMessageId int64, message *model.UserMessage) error {
 	const query = `
 		SELECT 
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
 		FROM report_message
 		WHERE report_message_id = $1`
 	if errQuery := database.conn.QueryRow(ctx, query, reportMessageId).Scan(
-		&message.ReportMessageId,
-		&message.ReportId,
+		&message.MessageId,
+		&message.ParentId,
 		&message.AuthorId,
 		&message.Message,
 		&message.Deleted,

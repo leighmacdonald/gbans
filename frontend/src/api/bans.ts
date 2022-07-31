@@ -1,7 +1,56 @@
 import { apiCall, QueryFilter } from './common';
-import { communityVisibilityState, Person, profileState } from './profile';
+import {
+    communityVisibilityState,
+    Person,
+    profileState,
+    UserProfile
+} from './profile';
 import { SteamID } from './const';
-import { BanReason } from './report';
+import { UserMessage } from './report';
+
+export enum BanReason {
+    Custom = 1,
+    External = 2,
+    Cheating = 3,
+    Racism = 4,
+    Harassment = 5,
+    Exploiting = 6,
+    WarningsExceeded = 7,
+    Spam = 8,
+    Language = 9,
+    Profile = 10,
+    ItemDescriptions = 11,
+    BotHost = 12
+}
+
+export const BanReasons: Record<BanReason, string> = {
+    [BanReason.Custom]: 'Custom',
+    [BanReason.External]: '3rd party',
+    [BanReason.Cheating]: 'Cheating',
+    [BanReason.Racism]: 'Racism',
+    [BanReason.Harassment]: 'Person Harassment',
+    [BanReason.Exploiting]: 'Exploiting',
+    [BanReason.WarningsExceeded]: 'Warnings Exceeding',
+    [BanReason.Spam]: 'Spam',
+    [BanReason.Language]: 'Language',
+    [BanReason.Profile]: 'Profile',
+    [BanReason.ItemDescriptions]: 'Item Name/Descriptions',
+    [BanReason.BotHost]: 'Bot Host'
+};
+
+export const banReasonsList = [
+    BanReason.Cheating,
+    BanReason.Racism,
+    BanReason.Harassment,
+    BanReason.Exploiting,
+    BanReason.WarningsExceeded,
+    BanReason.Spam,
+    BanReason.Language,
+    BanReason.Profile,
+    BanReason.ItemDescriptions,
+    BanReason.External,
+    BanReason.Custom
+];
 
 export enum BanType {
     Unknown = -1,
@@ -128,3 +177,33 @@ export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
     await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, 'DELETE', {
         unban_reason_text
     });
+
+export interface AuthorMessage {
+    message: UserMessage;
+    author: UserProfile;
+}
+
+export const apiGetBanMessages = async (ban_id: number) =>
+    await apiCall<AuthorMessage[]>(`/api/ban/${ban_id}/messages`, 'GET');
+
+export interface CreateBanMessage {
+    message: string;
+}
+
+export const apiCreateBanMessage = async (ban_id: number, message: string) =>
+    await apiCall<UserMessage, CreateBanMessage>(
+        `/api/ban/${ban_id}/messages`,
+        'POST',
+        { message }
+    );
+
+export const apiUpdateBanMessage = async (
+    ban_message_id: number,
+    message: string
+) =>
+    await apiCall(`/api/ban/message/${ban_message_id}`, 'POST', {
+        body_md: message
+    });
+
+export const apiDeleteBanMessage = async (ban_message_id: number) =>
+    await apiCall(`/api/ban/message/${ban_message_id}`, 'DELETE', {});

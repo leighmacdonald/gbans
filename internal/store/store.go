@@ -44,35 +44,41 @@ type NewsStore interface {
 }
 
 type BanStore interface {
+	Import(ctx context.Context, root string) error
+
 	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, bannedPerson *model.BannedPerson) error
 	GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error
-	GetAppeal(ctx context.Context, banID int64, appeal *model.Appeal) error
-	SaveAppeal(ctx context.Context, appeal *model.Appeal) error
 	SaveBan(ctx context.Context, ban *model.Ban) error
+	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
+	GetBans(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
+	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
+	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
+
 	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
 	SaveBanNet(ctx context.Context, banNet *model.BanNet) error
 	DropBanNet(ctx context.Context, ban *model.BanNet) error
-	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
-	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
-	GetBans(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
-	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
-	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
-	Import(ctx context.Context, root string) error
+
 	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
 	SaveBanASN(ctx context.Context, banASN *model.BanASN) error
 	DropBanASN(ctx context.Context, ban *model.BanASN) error
+	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
+
+	SaveBanMessage(ctx context.Context, message *model.UserMessage) error
+	DropBanMessage(ctx context.Context, message *model.UserMessage) error
+	GetBanMessages(ctx context.Context, banId int64) ([]model.UserMessage, error)
+	GetBanMessageById(ctx context.Context, banMessageId int, message *model.UserMessage) error
 }
 
 type ReportStore interface {
 	SaveReport(ctx context.Context, report *model.Report) error
-	SaveReportMessage(ctx context.Context, message *model.ReportMessage) error
+	SaveReportMessage(ctx context.Context, message *model.UserMessage) error
 	DropReport(ctx context.Context, report *model.Report) error
-	DropReportMessage(ctx context.Context, message *model.ReportMessage) error
-	GetReport(ctx context.Context, reportId int, report *model.Report) error
+	DropReportMessage(ctx context.Context, message *model.UserMessage) error
+	GetReport(ctx context.Context, reportId int64, report *model.Report) error
 	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error)
-	GetReportMessages(ctx context.Context, reportId int) ([]model.ReportMessage, error)
-	GetReportMessageById(ctx context.Context, reportMessageId int, message *model.ReportMessage) error
+	GetReportMessages(ctx context.Context, reportId int64) ([]model.UserMessage, error)
+	GetReportMessageById(ctx context.Context, reportMessageId int64, message *model.UserMessage) error
 }
 
 type PersonStore interface {

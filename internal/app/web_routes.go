@@ -85,7 +85,6 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/ban/:ban_id", web.onAPIGetBanByID(database))
 	engine.POST("/api/bans", web.onAPIGetBans(database))
 	engine.POST("/api/appeal", web.onAPIPostAppeal(database))
-	engine.POST("/api/appeal/:ban_id", web.onAPIGetAppeal(database))
 	engine.GET("/api/profile", web.onAPIProfile(database))
 	engine.GET("/api/servers", web.onAPIGetServers())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
@@ -122,11 +121,17 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	authed.POST("/api/report", web.onAPIPostReportCreate(database))
 	authed.GET("/api/report/:report_id", web.onAPIGetReport(database))
 	authed.POST("/api/reports", web.onAPIGetReports(database))
+	authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus(database))
+
+	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
 	authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage(database))
 	authed.POST("/api/report/message/:report_message_id", web.onAPIEditReportMessage(database))
 	authed.DELETE("/api/report/message/:report_message_id", web.onAPIDeleteReportMessage(database))
-	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
-	authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus(database))
+
+	authed.GET("/api/ban/:ban_id/messages", web.onAPIGetBanMessages(database))
+	authed.POST("/api/ban/:ban_id/messages", web.onAPIPostBanMessage(database))
+	authed.POST("/api/ban/message/:ban_message_id", web.onAPIEditBanMessage(database))
+	authed.DELETE("/api/ban/message/:ban_message_id", web.onAPIDeleteBanMessage(database))
 
 	// Editor access
 	editorRoute := engine.Use(authMiddleware(database, model.PEditor))

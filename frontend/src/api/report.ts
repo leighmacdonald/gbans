@@ -2,6 +2,7 @@ import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
 import { SteamID } from './const';
 import { Theme } from '@mui/material';
+import { BanReason } from './bans';
 
 export enum ReportStatus {
     Any = -1,
@@ -37,49 +38,6 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
             return theme.palette.info.main;
     }
 };
-export enum BanReason {
-    Custom = 1,
-    External = 2,
-    Cheating = 3,
-    Racism = 4,
-    Harassment = 5,
-    Exploiting = 6,
-    WarningsExceeded = 7,
-    Spam = 8,
-    Language = 9,
-    Profile = 10,
-    ItemDescriptions = 11,
-    BotHost = 12
-}
-
-export const BanReasons: Record<BanReason, string> = {
-    [BanReason.Custom]: 'Custom',
-    [BanReason.External]: '3rd party',
-    [BanReason.Cheating]: 'Cheating',
-    [BanReason.Racism]: 'Racism',
-    [BanReason.Harassment]: 'Person Harassment',
-    [BanReason.Exploiting]: 'Exploiting',
-    [BanReason.WarningsExceeded]: 'Warnings Exceeding',
-    [BanReason.Spam]: 'Spam',
-    [BanReason.Language]: 'Language',
-    [BanReason.Profile]: 'Profile',
-    [BanReason.ItemDescriptions]: 'Item Name/Descriptions',
-    [BanReason.BotHost]: 'Bot Host'
-};
-
-export const banReasonsList = [
-    BanReason.Cheating,
-    BanReason.Racism,
-    BanReason.Harassment,
-    BanReason.Exploiting,
-    BanReason.WarningsExceeded,
-    BanReason.Spam,
-    BanReason.Language,
-    BanReason.Profile,
-    BanReason.ItemDescriptions,
-    BanReason.External,
-    BanReason.Custom
-];
 
 export interface Report extends TimeStamped {
     report_id: number;
@@ -93,20 +51,16 @@ export interface Report extends TimeStamped {
 }
 
 export interface ReportMessagesResponse {
-    message: ReportMessage;
+    message: UserMessage;
     author: UserProfile;
 }
 
-export interface ReportMessage extends TimeStamped {
-    report_message_id: number;
-    report_id: number;
+export interface UserMessage extends TimeStamped {
+    parent_id: number;
+    message_id: number;
     author_id: SteamID;
     contents: string;
     deleted: boolean;
-}
-
-export interface Appeal extends TimeStamped {
-    appeal_id: number;
 }
 
 export interface CreateReportRequest {
@@ -149,7 +103,7 @@ export const apiCreateReportMessage = async (
     report_id: number,
     message: string
 ) =>
-    await apiCall<ReportMessage, CreateReportMessage>(
+    await apiCall<UserMessage, CreateReportMessage>(
         `/api/report/${report_id}/messages`,
         'POST',
         { message }

@@ -220,7 +220,7 @@ func (web *web) onPostPingMod(database store.Store) gin.HandlerFunc {
 }
 func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportId, errId := getIntParam(ctx, "report_id")
+		reportId, errId := getInt64Param(ctx, "report_id")
 		if errId != nil || reportId <= 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -843,26 +843,6 @@ func (web *web) onAPIPostAppeal(_ store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIGetAppeal(database store.Store) gin.HandlerFunc {
-	//type Appeal struct {
-	//	Person model.BannedPerson `json:"person"`
-	//	Appeal model.Appeal       `json:"appeal"`
-	//}
-	return func(ctx *gin.Context) {
-		banId, errId := getInt64Param(ctx, "ban_id")
-		if errId != nil || banId == 0 {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		var appeal model.Appeal
-		if errAppeal := database.GetAppeal(ctx, banId, &appeal); errAppeal != nil {
-			responseErr(ctx, http.StatusInternalServerError, nil)
-			return
-		}
-		responseOK(ctx, http.StatusOK, appeal)
-	}
-}
-
 func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 	type createReport struct {
 		SteamId     string       `json:"steam_id"`
@@ -969,7 +949,7 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 		Message string `json:"message"`
 	}
 	return func(ctx *gin.Context) {
-		reportId, errId := getIntParam(ctx, "report_id")
+		reportId, errId := getInt64Param(ctx, "report_id")
 		if errId != nil || reportId == 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
@@ -994,7 +974,7 @@ func (web *web) onAPIPostReportMessage(database store.ReportStore) gin.HandlerFu
 			return
 		}
 		person := currentUserProfile(ctx)
-		msg := model.NewReportMessage(reportId, person.SteamID, request.Message)
+		msg := model.NewUserMessage(reportId, person.SteamID, request.Message)
 		if errSave := database.SaveReportMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to save report message: %v", errSave)
@@ -1018,12 +998,12 @@ func (web *web) onAPIEditReportMessage(database store.ReportStore) gin.HandlerFu
 		Message string `json:"body_md"`
 	}
 	return func(ctx *gin.Context) {
-		reportMessageId, errId := getIntParam(ctx, "report_message_id")
+		reportMessageId, errId := getInt64Param(ctx, "report_message_id")
 		if errId != nil || reportMessageId == 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		var existing model.ReportMessage
+		var existing model.UserMessage
 		if errExist := database.GetReportMessageById(ctx, reportMessageId, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
@@ -1071,12 +1051,12 @@ func (web *web) onAPIEditReportMessage(database store.ReportStore) gin.HandlerFu
 
 func (web *web) onAPIDeleteReportMessage(database store.ReportStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportMessageId, errId := getIntParam(ctx, "report_message_id")
+		reportMessageId, errId := getInt64Param(ctx, "report_message_id")
 		if errId != nil || reportMessageId == 0 {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		var existing model.ReportMessage
+		var existing model.UserMessage
 		if errExist := database.GetReportMessageById(ctx, reportMessageId, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
@@ -1109,9 +1089,9 @@ func (web *web) onAPIDeleteReportMessage(database store.ReportStore) gin.Handler
 	}
 }
 
-type AuthorReportMessage struct {
-	Author  model.Person        `json:"author"`
-	Message model.ReportMessage `json:"message"`
+type AuthorMessage struct {
+	Author  model.Person      `json:"author"`
+	Message model.UserMessage `json:"message"`
 }
 
 func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc {
@@ -1119,7 +1099,7 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 		Status model.ReportStatus `json:"status"`
 	}
 	return func(c *gin.Context) {
-		reportId, errParam := getIntParam(c, "report_id")
+		reportId, errParam := getInt64Param(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
@@ -1157,7 +1137,7 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 
 func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		reportId, errParam := getIntParam(c, "report_id")
+		reportId, errParam := getInt64Param(c, "report_id")
 		if errParam != nil {
 			responseErr(c, http.StatusNotFound, nil)
 			return
@@ -1177,9 +1157,9 @@ func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 			return
 		}
 		authorsMap := authors.AsMap()
-		var authorMessages []AuthorReportMessage
+		var authorMessages []AuthorMessage
 		for _, message := range reportMessages {
-			authorMessages = append(authorMessages, AuthorReportMessage{
+			authorMessages = append(authorMessages, AuthorMessage{
 				Author:  authorsMap[message.AuthorId],
 				Message: message,
 			})
@@ -1250,7 +1230,7 @@ func (web *web) onAPIGetReports(database store.Store) gin.HandlerFunc {
 
 func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportId, errParam := getIntParam(ctx, "report_id")
+		reportId, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
@@ -1566,5 +1546,188 @@ func (web *web) onAPIGetPersonMessages(database store.Store) gin.HandlerFunc {
 			chat = model.PersonMessages{}
 		}
 		responseOK(ctx, http.StatusOK, chat)
+	}
+}
+
+type AuthorBanMessage struct {
+	Author  model.Person      `json:"author"`
+	Message model.UserMessage `json:"message"`
+}
+
+func (web *web) onAPIGetBanMessages(database store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		banId, errParam := getInt64Param(c, "ban_id")
+		if errParam != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		banMessages, errGetBanMessages := database.GetBanMessages(c, banId)
+		if errGetBanMessages != nil {
+			responseErr(c, http.StatusNotFound, nil)
+			return
+		}
+		var ids steamid.Collection
+		for _, msg := range banMessages {
+			ids = append(ids, msg.AuthorId)
+		}
+		authors, authorsErr := database.GetPeopleBySteamID(c, ids)
+		if authorsErr != nil {
+			responseErr(c, http.StatusInternalServerError, nil)
+			return
+		}
+		authorsMap := authors.AsMap()
+		var authorMessages []AuthorBanMessage
+		for _, message := range banMessages {
+			authorMessages = append(authorMessages, AuthorBanMessage{
+				Author:  authorsMap[message.AuthorId],
+				Message: message,
+			})
+		}
+		responseOK(c, http.StatusOK, authorMessages)
+	}
+}
+
+func (web *web) onAPIDeleteBanMessage(database store.BanStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		banMessageId, errId := getIntParam(ctx, "ban_message_id")
+		if errId != nil || banMessageId == 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var existing model.UserMessage
+		if errExist := database.GetBanMessageById(ctx, banMessageId, &existing); errExist != nil {
+			if errors.Is(errExist, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		curUser := currentUserProfile(ctx)
+		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
+			responseErr(ctx, http.StatusUnauthorized, nil)
+			return
+		}
+		existing.Deleted = true
+		if errSave := database.SaveBanMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save appeal message: %v", errSave)
+			return
+		}
+		responseOK(ctx, http.StatusNoContent, nil)
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "User appeal message deleted",
+			Description: existing.Message,
+		}
+		addField(embed, "Author", curUser.SteamID.String())
+		web.botSendMessageChan <- discordPayload{
+			channelId: config.Discord.ModLogChannelId,
+			embed:     embed}
+	}
+}
+
+func (web *web) onAPIPostBanMessage(database store.BanStore) gin.HandlerFunc {
+	type req struct {
+		Message string `json:"message"`
+	}
+	return func(ctx *gin.Context) {
+		banId, errId := getInt64Param(ctx, "ban_id")
+		if errId != nil || banId == 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var request req
+		if errBind := ctx.BindJSON(&request); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if request.Message == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		bp := model.NewBannedPerson()
+		if errReport := database.GetBanByBanID(ctx, banId, false, &bp); errReport != nil {
+			if store.Err(errReport) == store.ErrNoResult {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Errorf("Failed to load ban: %v", errReport)
+			return
+		}
+		person := currentUserProfile(ctx)
+		msg := model.NewUserMessage(banId, person.SteamID, request.Message)
+		if errSave := database.SaveBanMessage(ctx, &msg); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save ban appeal message: %v", errSave)
+			return
+		}
+		responseOK(ctx, http.StatusCreated, msg)
+
+		embed := &discordgo.MessageEmbed{
+			Title:       "New ban appeal message posted",
+			Description: msg.Message,
+		}
+		addField(embed, "Author", msg.AuthorId.String())
+		web.botSendMessageChan <- discordPayload{
+			channelId: config.Discord.ModLogChannelId,
+			embed:     embed}
+	}
+}
+
+func (web *web) onAPIEditBanMessage(database store.BanStore) gin.HandlerFunc {
+	type editMessage struct {
+		Message string `json:"body_md"`
+	}
+	return func(ctx *gin.Context) {
+		reportMessageId, errId := getIntParam(ctx, "ban_message_id")
+		if errId != nil || reportMessageId == 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var existing model.UserMessage
+		if errExist := database.GetBanMessageById(ctx, reportMessageId, &existing); errExist != nil {
+			if errors.Is(errExist, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		curUser := currentUserProfile(ctx)
+		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
+			responseErr(ctx, http.StatusUnauthorized, nil)
+			return
+		}
+		var message editMessage
+		if errBind := ctx.BindJSON(&message); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if message.Message == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if message.Message == existing.Message {
+			responseErr(ctx, http.StatusConflict, nil)
+			return
+		}
+		embed := &discordgo.MessageEmbed{
+			Title:       "Ban appeal message edited",
+			Description: util.DiffString(existing.Message, message.Message),
+		}
+		existing.Message = message.Message
+		if errSave := database.SaveBanMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to save ban appeal message: %v", errSave)
+			return
+		}
+		responseOK(ctx, http.StatusCreated, message)
+
+		addField(embed, "Author", curUser.SteamID.String())
+		web.botSendMessageChan <- discordPayload{
+			channelId: config.Discord.ModLogChannelId,
+			embed:     embed}
 	}
 }
