@@ -198,11 +198,9 @@ export const BanModal = ({
                 setOpen(false);
             }}
             onCancel={() => {
-                console.log('closed');
                 setOpen(false);
             }}
             onAccept={() => {
-                console.log('submit');
                 handleSubmit();
             }}
             aria-labelledby="modal-title"

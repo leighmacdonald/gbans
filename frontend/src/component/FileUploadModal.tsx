@@ -62,7 +62,6 @@ export const FileUploadModal = ({
         if (url != '') {
             fetch(url)
                 .then((resp) => {
-                    console.log(resp);
                     resp.blob().then((blob) => {
                         blob.arrayBuffer().then((arrBuff) => {
                             onSave({

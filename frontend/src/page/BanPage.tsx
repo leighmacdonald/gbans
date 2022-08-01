@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import { useParams } from 'react-router-dom';
 import {
@@ -33,35 +33,45 @@ export const BanPage = (): JSX.Element => {
     const [messages, setMessages] = useState<AuthorMessage[]>([]);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
-    const { ban_id_str } = useParams();
-    const ban_id = parseInt(ban_id_str || '0');
+    const { ban_id } = useParams();
+    const id = useMemo(() => parseInt(ban_id || '0'), [ban_id]);
 
     useEffect(() => {
-        apiGetBan(ban_id)
+        if (id <= 0) {
+            return;
+        }
+        apiGetBan(id)
             .then((banPerson) => {
                 if (banPerson) {
                     setBan(banPerson);
                 }
                 //setLoading(false);
+                loadMessages();
             })
             .catch((e) => {
                 alert(`Failed to load ban: ${e}`);
             });
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [ban_id]);
 
     const loadMessages = useCallback(() => {
-        apiGetBanMessages(ban_id)
+        if (!id) {
+            return;
+        }
+        apiGetBanMessages(id)
             .then((r) => {
                 setMessages(r || []);
             })
             .catch(logErr);
-    }, [ban_id]);
+    }, [id]);
 
     const onSave = useCallback(
         (message: string) => {
-            apiCreateBanMessage(ban_id, message)
+            if (!ban) {
+                return;
+            }
+            apiCreateBanMessage(ban?.ban.ban_id, message)
                 .then((response) => {
                     setMessages([
                         ...messages,
@@ -70,7 +80,7 @@ export const BanPage = (): JSX.Element => {
                 })
                 .catch(logErr);
         },
-        [messages, ban_id, currentUser]
+        [ban, messages, currentUser]
     );
 
     const onEdit = useCallback(
@@ -99,9 +109,9 @@ export const BanPage = (): JSX.Element => {
 
     return (
         <Grid container paddingTop={3} spacing={3}>
-            <Grid item xs={6}>
-                <Stack>
-                    <Heading>Comments / Appeal</Heading>
+            <Grid item xs={8}>
+                <Stack spacing={2}>
+                    <Heading>{`Ban Appeal #${id}`}</Heading>
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}
@@ -122,7 +132,7 @@ export const BanPage = (): JSX.Element => {
                     </Paper>
                 </Stack>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
                         {ban && (
@@ -131,14 +141,7 @@ export const BanPage = (): JSX.Element => {
                             />
                         )}
                     </Grid>
-                    <Grid item xs={5}>
-                        {ban && (
-                            <Paper elevation={1}>
-                                <SteamIDList steam_id={ban?.ban.steam_id} />
-                            </Paper>
-                        )}
-                    </Grid>
-                    <Grid item xs={7}>
+                    <Grid item xs={12}>
                         {ban && (
                             <Paper elevation={1}>
                                 <Stack>
@@ -164,6 +167,12 @@ export const BanPage = (): JSX.Element => {
                                         )}
                                         <ListItem>
                                             <ListItemText
+                                                primary={'Author'}
+                                                secondary={ban.ban.author_id.toString()}
+                                            />
+                                        </ListItem>
+                                        <ListItem>
+                                            <ListItemText
                                                 primary={'Created On'}
                                                 secondary={
                                                     ban.ban
@@ -182,6 +191,13 @@ export const BanPage = (): JSX.Element => {
                                         </ListItem>
                                     </List>
                                 </Stack>
+                            </Paper>
+                        )}
+                    </Grid>
+                    <Grid item xs={12}>
+                        {ban && (
+                            <Paper elevation={1}>
+                                <SteamIDList steam_id={ban?.ban.steam_id} />
                             </Paper>
                         )}
                     </Grid>

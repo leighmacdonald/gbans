@@ -122,6 +122,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	authed.GET("/api/report/:report_id", web.onAPIGetReport(database))
 	authed.POST("/api/reports", web.onAPIGetReports(database))
 	authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus(database))
+	authed.POST("/api/media", web.onAPISaveMedia(database))
 
 	authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages(database))
 	authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage(database))
@@ -136,7 +137,6 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	// Editor access
 	editorRoute := engine.Use(authMiddleware(database, model.PEditor))
 	editorRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug(database))
-	editorRoute.POST("/api/media", web.onAPISaveMedia(database))
 	editorRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
 	editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
 	editorRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))

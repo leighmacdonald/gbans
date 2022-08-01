@@ -66,7 +66,6 @@ export const ServerFilters = () => {
                 state = JSON.parse(val);
             }
         } catch (e) {
-            console.log(`Tried to load invalid filter state`);
             return;
         }
         setShowOpenOnly(state?.showOpenOnly || defaultState.showOpenOnly);
