@@ -15,6 +15,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TextField from '@mui/material/TextField';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
+import { filterPerson } from '../util/text';
 
 export interface FriendListProps {
     friends: Person[];
@@ -28,15 +29,7 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
     const [query, setQuery] = useState<string>('');
 
     const filtered = useMemo(() => {
-        return friends.filter((friend) => {
-            if (friend.personaname.includes(query)) {
-                return true;
-            } else if (friend.steamid.toString() == query) {
-                return true;
-            }
-            // TODO convert steamids from other formats to query
-            return false;
-        });
+        return filterPerson(friends, query);
     }, [friends, query]);
 
     const pages = useMemo(() => {

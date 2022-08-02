@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import Typography from '@mui/material/Typography';
 import { apiGetNewsLatest, NewsEntry } from '../api/news';
 import Stack from '@mui/material/Stack';
 import { marked } from 'marked';
 import Paper from '@mui/material/Paper';
 import { Pagination } from '@mui/material';
+import { Heading } from './Heading';
 export interface NewsViewProps {
     itemsPerPage: number;
 }
@@ -31,9 +31,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
                             key={`news_` + article.news_id}
                             sx={{ padding: 3 }}
                         >
-                            <Typography variant={'h4'}>
-                                {article.title}
-                            </Typography>
+                            <Heading>{article.title}</Heading>
                             <div
                                 className={'content'}
                                 dangerouslySetInnerHTML={{

@@ -141,8 +141,8 @@ export interface Pos {
 }
 
 export interface TimeStamped {
-    created_on: Date;
-    updated_on: Date;
+    created_on: Date | string;
+    updated_on: Date | string;
 }
 
 export const renderDate = (d: Date | string): string => {

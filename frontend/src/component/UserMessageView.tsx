@@ -15,6 +15,7 @@ import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { renderMarkdown } from '../api/wiki';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { parseDateTime, renderTimeDistance } from '../util/text';
 
 export interface UserMessageViewProps {
     author: UserProfile;
@@ -66,12 +67,9 @@ export const UserMessageView = ({
             addSuffix: true
         });
         if (message.updated_on != message.created_on) {
-            d1 = `${d1} (edited: ${formatDistance(
-                parseJSON(message.updated_on),
-                new Date(),
-                {
-                    addSuffix: true
-                }
+            d1 = `${d1} (edited: ${renderTimeDistance(
+                parseDateTime(message.created_on as string),
+                parseDateTime(message.updated_on as string)
             )})`;
         }
         return (
