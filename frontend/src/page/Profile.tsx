@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Grid from '@mui/material/Grid';
-import { apiGetProfile, PlayerProfile } from '../api';
+import { apiGetProfile, PermissionLevel, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
 import Stack from '@mui/material/Stack';
@@ -17,11 +17,12 @@ import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MatchHistory } from '../component/MatchHistory';
 import { Heading } from '../component/Heading';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
-
+    const { currentUser } = useCurrentUserCtx();
     const { steam_id } = useParams();
 
     useEffect(() => {
@@ -124,13 +125,16 @@ export const Profile = (): JSX.Element => {
                                     })}
                                 </Masonry>
                             </Paper>
-                            <Paper elevation={1}>
-                                <Heading>Match History</Heading>
-                                <MatchHistory
-                                    steam_id={profile.player.steam_id}
-                                    limit={25}
-                                />
-                            </Paper>
+                            {currentUser.permission_level >=
+                                PermissionLevel.Admin && (
+                                <Paper elevation={1}>
+                                    <Heading>Match History</Heading>
+                                    <MatchHistory
+                                        steam_id={profile.player.steam_id}
+                                        limit={25}
+                                    />
+                                </Paper>
+                            )}
                         </Stack>
                     </Grid>
                     <Grid item xs={4}>

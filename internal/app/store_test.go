@@ -75,8 +75,8 @@ func TestReport(t *testing.T) {
 	report.Description = golib.RandomString(120)
 	require.NoError(t, testDatabase.SaveReport(context.TODO(), &report))
 
-	msg1 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
-	msg2 := model.NewReportMessage(report.ReportId, author.SteamID, golib.RandomString(100))
+	msg1 := model.NewUserMessage(report.ReportId, author.SteamID, golib.RandomString(100))
+	msg2 := model.NewUserMessage(report.ReportId, author.SteamID, golib.RandomString(100))
 	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), &msg1))
 	require.NoError(t, testDatabase.SaveReportMessage(context.Background(), &msg2))
 	msgs, msgsErr := testDatabase.GetReportMessages(context.Background(), report.ReportId)
@@ -148,31 +148,6 @@ func TestFilteredWords(t *testing.T) {
 }
 func randSID() steamid.SID64 {
 	return steamid.SID64(76561197960265728 + rand.Int63n(100000000))
-}
-
-func TestAppeal(t *testing.T) {
-	b1 := model.NewBan(randSID(), 76561198003911389, time.Hour*24)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1000)
-	defer cancel()
-	require.NoError(t, testDatabase.SaveBan(ctx, &b1), "Failed to add ban")
-	appeal := model.Appeal{
-		BanID:       b1.BanID,
-		AppealText:  "Im a nerd",
-		AppealState: model.ASNew,
-		Email:       "",
-	}
-	require.NoError(t, testDatabase.SaveAppeal(ctx, &appeal), "failed to save appeal")
-	require.True(t, appeal.AppealID > 0, "No appeal id set")
-	appeal.AppealState = model.ASDenied
-	appeal.Email = "test@test.com"
-	require.NoError(t, testDatabase.SaveAppeal(ctx, &appeal), "failed to update appeal")
-	var fetched model.Appeal
-	require.NoError(t, testDatabase.GetAppeal(ctx, b1.BanID, &fetched), "failed to get appeal")
-	require.Equal(t, appeal.BanID, fetched.BanID)
-	require.Equal(t, appeal.Email, fetched.Email)
-	require.Equal(t, appeal.AppealState, fetched.AppealState)
-	require.Equal(t, appeal.AppealID, fetched.AppealID)
-	require.Equal(t, appeal.AppealText, fetched.AppealText)
 }
 
 func TestPerson(t *testing.T) {

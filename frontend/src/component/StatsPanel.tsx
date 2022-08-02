@@ -91,22 +91,6 @@ export const StatsPanel = (): JSX.Element => {
                     </TableRow>
                     <TableRow>
                         <TableCell component="th" scope="row">
-                            Appeals (Open)
-                        </TableCell>
-                        <TableCell align="right">
-                            {stats.appeals_open}
-                        </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell component="th" scope="row">
-                            Appeals (Closed)
-                        </TableCell>
-                        <TableCell align="right">
-                            {stats.appeals_closed}
-                        </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell component="th" scope="row">
                             Servers (Alive)
                         </TableCell>
                         <TableCell align="right">

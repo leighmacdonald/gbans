@@ -131,7 +131,7 @@ export const Servers = (): JSX.Element => {
         onExpire: () => {
             apiGetServers()
                 .then((servers) => {
-                    setServers(servers || []);
+                    setServers((servers || []).filter((s) => s.enabled));
                     restart(nextExpiry());
                 })
                 .catch((e) => {
