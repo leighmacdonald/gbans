@@ -32,15 +32,15 @@
     "test:coverage": "jest --coverage --colors"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.9",
-    "@babel/preset-env": "^7.18.9",
+    "@babel/core": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
     "@date-io/date-fns": "^2.14.0",
-    "@emotion/react": "^11.9.3",
-    "@emotion/styled": "^11.9.3",
+    "@emotion/react": "^11.10.0",
+    "@emotion/styled": "^11.10.0",
     "@mui/icons-material": "^5.8.4",
-    "@mui/lab": "^5.0.0-alpha.91",
-    "@mui/material": "^5.9.1",
-    "@mui/x-date-pickers": "^5.0.0-beta.2",
+    "@mui/lab": "^5.0.0-alpha.93",
+    "@mui/material": "^5.9.3",
+    "@mui/x-date-pickers": "^5.0.0-beta.3",
     "@types/chai": "^4.3.1",
     "@types/copy-webpack-plugin": "^10.1.0",
     "@types/es6-promise": "^3.3.0",
@@ -50,15 +50,15 @@
     "@types/lodash": "^4.14.182",
     "@types/lodash-es": "^4.17.6",
     "@types/marked": "^4.0.3",
-    "@types/node": "^18.0.6",
+    "@types/node": "^18.6.3",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "@types/react-leaflet": "^2.8.2",
     "@types/steamid": "^2.0.1",
     "@types/webpack": "^5.28.0",
     "@types/webpack-dev-server": "^4.7.2",
-    "@typescript-eslint/eslint-plugin": "^5.30.7",
-    "@typescript-eslint/parser": "^5.30.7",
+    "@typescript-eslint/eslint-plugin": "^5.32.0",
+    "@typescript-eslint/parser": "^5.32.0",
     "base64-js": "^1.5.1",
     "chai": "^4.3.6",
     "cidr-js": "^2.3.1",
@@ -66,9 +66,9 @@
     "cross-env": "^7.0.2",
     "css-loader": "^6.7.1",
     "date-fns": "^2.29.1",
-    "eslint": "^8.20.0",
+    "eslint": "^8.21.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-jest": "^26.6.0",
+    "eslint-plugin-jest": "^26.7.0",
     "eslint-plugin-no-loops": "^0.3.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.30.1",
@@ -101,7 +101,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^4.7.4",
     "url-loader": "^4.1.1",
-    "webpack": "^5.73.0",
+    "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.9.3"
   },
@@ -119,5 +119,7 @@
       "ie 11"
     ]
   },
-  "dependencies": {}
+  "dependencies": {
+    "@mui/system": "^5.4.1"
+  }
 }
