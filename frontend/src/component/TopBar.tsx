@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { handleOnLogin, PermissionLevel } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
@@ -30,10 +30,6 @@ import Menu from '@mui/material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import useTheme from '@mui/material/styles/useTheme';
-import { useColourModeCtx } from '../contexts/ColourModeContext';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
 import { Flashes } from './Flashes';
@@ -47,7 +43,10 @@ interface menuRoute {
 export const TopBar = () => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
-    const perms = parseInt(localStorage.getItem('permission_level') || '1');
+    const perms = useMemo(
+        () => parseInt(localStorage.getItem('permission_level') || '1'),
+        []
+    );
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
     );
@@ -57,8 +56,8 @@ export const TopBar = () => {
     const [anchorElAdmin, setAnchorElAdmin] =
         React.useState<null | HTMLElement>(null);
 
-    const theme = useTheme();
-    const colourMode = useColourModeCtx();
+    // const theme = useTheme();
+    // const colourMode = useColourModeCtx();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
@@ -81,84 +80,96 @@ export const TopBar = () => {
     const handleCloseAdminMenu = () => {
         setAnchorElAdmin(null);
     };
-    const loadRoute = (route: string) => {
-        navigate(route);
-    };
-
-    const menuItems: menuRoute[] = [
-        { to: '/', text: 'Dashboard', icon: <DashboardIcon /> },
-        // { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
-        // { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
-        { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
-        { to: '/report', text: 'Report', icon: <ReportIcon /> },
-        // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> },
-        { to: '/wiki', text: 'Wiki', icon: <ArticleIcon /> }
-    ];
-    if (perms >= PermissionLevel.Admin) {
-        menuItems.push({ to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> });
-    }
-    if (currentUser.ban_id > 0) {
-        menuItems.push({
-            to: `/ban/${currentUser.ban_id}`,
-            text: 'Appeal',
-            icon: <SupportIcon />
-        });
-    }
-    const userItems: menuRoute[] = [
-        {
-            to: `/profile/${currentUser?.steam_id}`,
-            text: 'Profile',
-            icon: <AccountCircleIcon />
+    const loadRoute = useCallback(
+        (route: string) => {
+            navigate(route);
         },
-        // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
-        { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
-    ];
+        [navigate]
+    );
 
-    const adminItems: menuRoute[] = [];
-    if (perms >= PermissionLevel.Moderator) {
-        adminItems.push({
-            to: '/admin/ban',
-            text: 'Ban Player/Net',
-            icon: <BlockIcon />
-        });
-        adminItems.push({
-            to: '/admin/reports',
-            text: 'Reports',
-            icon: <ReportIcon />
-        });
-        adminItems.push({
-            to: '/admin/filters',
-            text: 'Filtered Words',
-            icon: <SubjectIcon />
-        });
-        adminItems.push({
-            to: '/admin/news',
-            text: 'News',
-            icon: <NewspaperIcon />
-        });
-    }
-    if (perms >= PermissionLevel.Admin) {
-        adminItems.push({
-            to: '/admin/people',
-            text: 'People',
-            icon: <PregnantWomanIcon />
-        });
-        adminItems.push({
-            to: '/admin/import',
-            text: 'Import',
-            icon: <ImportExportIcon />
-        });
-        adminItems.push({
-            to: '/admin/servers',
-            text: 'Servers',
-            icon: <DnsIcon />
-        });
-        adminItems.push({
-            to: '/admin/server_logs',
-            text: 'Server Logs',
-            icon: <SubjectIcon />
-        });
-    }
+    const menuItems: menuRoute[] = useMemo(() => {
+        const items: menuRoute[] = [
+            { to: '/', text: 'Dashboard', icon: <DashboardIcon /> },
+            // { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
+            // { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
+            { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
+            { to: '/report', text: 'Report', icon: <ReportIcon /> },
+            // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> },
+            { to: '/wiki', text: 'Wiki', icon: <ArticleIcon /> }
+        ];
+        if (perms >= PermissionLevel.Admin) {
+            items.push({ to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> });
+        }
+        if (currentUser.ban_id > 0) {
+            items.push({
+                to: `/ban/${currentUser.ban_id}`,
+                text: 'Appeal',
+                icon: <SupportIcon />
+            });
+        }
+        return items;
+    }, [currentUser.ban_id, perms]);
+
+    const userItems: menuRoute[] = useMemo(
+        () => [
+            {
+                to: `/profile/${currentUser?.steam_id}`,
+                text: 'Profile',
+                icon: <AccountCircleIcon />
+            },
+            // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
+            { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
+        ],
+        [currentUser?.steam_id]
+    );
+    const adminItems: menuRoute[] = useMemo(() => {
+        const items: menuRoute[] = [];
+        if (perms >= PermissionLevel.Moderator) {
+            items.push({
+                to: '/admin/ban',
+                text: 'Ban Player/Net',
+                icon: <BlockIcon />
+            });
+            items.push({
+                to: '/admin/reports',
+                text: 'Reports',
+                icon: <ReportIcon />
+            });
+            items.push({
+                to: '/admin/filters',
+                text: 'Filtered Words',
+                icon: <SubjectIcon />
+            });
+            items.push({
+                to: '/admin/news',
+                text: 'News',
+                icon: <NewspaperIcon />
+            });
+        }
+        if (perms >= PermissionLevel.Admin) {
+            items.push({
+                to: '/admin/people',
+                text: 'People',
+                icon: <PregnantWomanIcon />
+            });
+            items.push({
+                to: '/admin/import',
+                text: 'Import',
+                icon: <ImportExportIcon />
+            });
+            items.push({
+                to: '/admin/servers',
+                text: 'Servers',
+                icon: <DnsIcon />
+            });
+            items.push({
+                to: '/admin/server_logs',
+                text: 'Server Logs',
+                icon: <SubjectIcon />
+            });
+        }
+        return items;
+    }, [perms]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -263,21 +274,21 @@ export const TopBar = () => {
 
                     <Box sx={{ flexGrow: 0 }}>
                         <>
-                            <Tooltip title="Toggle light/dark mode">
-                                <IconButton
-                                    onClick={colourMode.toggleColorMode}
-                                >
-                                    {theme.palette.mode == 'light' ? (
-                                        <DarkModeIcon
-                                            sx={{ color: '#ada03a' }}
-                                        />
-                                    ) : (
-                                        <LightModeIcon
-                                            sx={{ color: '#ada03a' }}
-                                        />
-                                    )}
-                                </IconButton>
-                            </Tooltip>
+                            {/*<Tooltip title="Toggle light/dark mode">*/}
+                            {/*    <IconButton*/}
+                            {/*        onClick={colourMode.toggleColorMode}*/}
+                            {/*    >*/}
+                            {/*        {theme.palette.mode == 'light' ? (*/}
+                            {/*            <DarkModeIcon*/}
+                            {/*                sx={{ color: '#ada03a' }}*/}
+                            {/*            />*/}
+                            {/*        ) : (*/}
+                            {/*            <LightModeIcon*/}
+                            {/*                sx={{ color: '#ada03a' }}*/}
+                            {/*            />*/}
+                            {/*        )}*/}
+                            {/*    </IconButton>*/}
+                            {/*</Tooltip>*/}
                             {!currentUser ||
                                 (currentUser.steam_id == BigInt(0) && (
                                     <Tooltip title="Steam Login">
