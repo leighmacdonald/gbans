@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func IsGroupBanned(steamId steamid.SID64) bool {
+func IsSteamGroupBanned(steamId steamid.SID64) bool {
 	bannedGroupMembersMu.RLock()
 	defer bannedGroupMembersMu.RUnlock()
 	for _, groupMembers := range bannedGroupMembers {
@@ -27,7 +27,7 @@ func IsGroupBanned(steamId steamid.SID64) bool {
 			}
 		}
 	}
-	return true
+	return false
 }
 
 func steamGroupMembershipUpdater(ctx context.Context, database store.PersonStore) {

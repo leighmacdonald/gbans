@@ -416,7 +416,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			return
 		}
 
-		if IsGroupBanned(steamID) {
+		if IsSteamGroupBanned(steamID) {
 			resp.BanType = model.Banned
 			resp.Msg = "Group Banned"
 			responseErr(ctx, http.StatusOK, resp)
