@@ -37,6 +37,9 @@ var (
 	discordSendMsg   chan discordPayload
 	serverStateMu    *sync.RWMutex
 	serverState      model.ServerStateCollection
+
+	bannedGroupMembers   map[steamid.GID]steamid.Collection
+	bannedGroupMembersMu *sync.RWMutex
 )
 
 func init() {
@@ -51,6 +54,9 @@ func init() {
 	discordSendMsg = make(chan discordPayload, 5)
 	serverStateA2S = map[string]a2s.ServerInfo{}
 	serverStateStatus = map[string]extra.Status{}
+
+	bannedGroupMembers = map[steamid.GID]steamid.Collection{}
+	bannedGroupMembersMu = &sync.RWMutex{}
 }
 
 type userWarning struct {
@@ -478,6 +484,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go logMetricsConsumer(ctx)
 	go matchSummarizer(ctx, database)
 	go playerMessageWriter(ctx, database)
+	go steamGroupMembershipUpdater(ctx, database)
 }
 
 // UDP log sink

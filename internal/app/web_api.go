@@ -415,6 +415,15 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, resp)
 			return
 		}
+
+		if IsGroupBanned(steamID) {
+			resp.BanType = model.Banned
+			resp.Msg = "Group Banned"
+			responseErr(ctx, http.StatusOK, resp)
+			log.WithFields(log.Fields{"type": "group", "reason": "Group Ban"}).Infof("Player dropped")
+			return
+		}
+
 		var person model.Person
 		if errPerson := getOrCreateProfileBySteamID(responseCtx, database, steamID, request.IP.String(), &person); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, checkResponse{
@@ -488,6 +497,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 		}
 		resp.Msg = reason
 		responseOK(ctx, http.StatusOK, resp)
+		log.WithFields(log.Fields{"type": "steam", "reason": reason}).Infof("Player dropped")
 	}
 }
 

@@ -20,7 +20,7 @@ require (
 	github.com/leighmacdonald/rcon v1.0.7
 	github.com/leighmacdonald/srcdsup v0.0.0-20220701072959-6e87de2e8427
 	github.com/leighmacdonald/steamid/v2 v2.2.0
-	github.com/leighmacdonald/steamweb v0.0.0-20210803010711-64b0e363d418
+	github.com/leighmacdonald/steamweb v0.0.3
 	github.com/microcosm-cc/bluemonday v1.0.19
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -95,8 +95,8 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462 // indirect
-	golang.org/x/sys v0.0.0-20220731174439-a90be440212d // indirect
+	golang.org/x/net v0.0.0-20220802222814-0bcc04d9c69b // indirect
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect

@@ -17,6 +17,53 @@ import (
 	"time"
 )
 
+func IsGroupBanned(steamId steamid.SID64) bool {
+	bannedGroupMembersMu.RLock()
+	defer bannedGroupMembersMu.RUnlock()
+	for _, groupMembers := range bannedGroupMembers {
+		for _, member := range groupMembers {
+			if steamId == member {
+				return true
+			}
+		}
+	}
+	return true
+}
+
+func steamGroupMembershipUpdater(ctx context.Context, database store.PersonStore) {
+	var update = func() {
+		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
+		newMap := map[steamid.GID]steamid.Collection{}
+		total := 0
+		for _, gid := range config.General.BannedSteamGroupIds {
+			members, errMembers := steamweb.GetGroupMembers(localCtx, gid)
+			if errMembers != nil {
+				log.Warnf("Failed to fetch group members")
+				cancel()
+				continue
+			}
+			newMap[gid] = members
+			total += len(members)
+		}
+		bannedGroupMembersMu.Lock()
+		bannedGroupMembers = newMap
+		bannedGroupMembersMu.Unlock()
+		cancel()
+		log.WithFields(log.Fields{"count": total}).Debugf("Updated group member ban list")
+	}
+	update()
+	ticker := time.NewTicker(time.Hour)
+	for {
+		select {
+		case <-ticker.C:
+			update()
+		case <-ctx.Done():
+			log.Debugf("steamGroupMembershipUpdater shutting down")
+			return
+		}
+	}
+}
+
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
 func profileUpdater(ctx context.Context, database store.PersonStore) {

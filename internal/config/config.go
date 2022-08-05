@@ -131,6 +131,7 @@ type generalConfig struct {
 	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
 	DemoRootPath                 string        `mapstructure:"demo_root_path"`
 	ExternalUrl                  string        `mapstructure:"external_url"`
+	BannedSteamGroupIds          []steamid.GID `mapstructure:"banned_steam_group_ids"`
 }
 
 type discordConfig struct {
@@ -278,6 +279,7 @@ var defaultConfig = map[string]any{
 	"general.map_changer_enabled":            false,
 	"general.demo_root_path":                 "./.demos/",
 	"general.external_url":                   "http://gbans.localhost:6006",
+	"general.banned_steam_group_ids":         []steamid.GID{},
 	"http.host":                              "127.0.0.1",
 	"http.port":                              6006,
 	"http.domain":                            "http://localhost:6006",
