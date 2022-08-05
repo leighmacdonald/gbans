@@ -32,46 +32,52 @@ export const readableFonts = {
     ].join(',')
 };
 
-export const createThemeByMode = (mode: PaletteMode) => {
-    let opts: PaletteOptions = {};
-    if (mode == 'light') {
-        opts = {
-            mode: 'light',
-            primary: {
-                main: '#c1a18a'
-            },
-            secondary: {
-                main: '#836312'
-            },
-            error: {
-                main: '#bd3b3b'
-            },
-            background: {
-                paper: '#f5e7de',
-                default: '#dabdab'
-            },
-            success: {
-                main: '#5b7a8c'
-            }
-        };
-    } else {
-        opts = {
-            mode: 'dark',
-            primary: {
-                main: '#f5e7de'
-            },
-            secondary: {
-                main: '#836312'
-            },
-            error: {
-                main: '#8d0101'
-            },
-            background: {
-                paper: '#462d26',
-                default: '#6a4535'
-            }
-        };
-    }
+export const createThemeByMode = (_: PaletteMode) => {
+    const opts: PaletteOptions = {
+        mode: 'light',
+        primary: {
+            main: '#9d312f'
+        },
+        secondary: {
+            main: '#395c78'
+        },
+        background: {
+            default: '#dabdab',
+            paper: '#f5e7de'
+        }
+    };
+    // if (mode == 'light') {
+    //     opts = {
+    //         mode: 'light',
+    //         primary: {
+    //             main: '#9d312f'
+    //         },
+    //         secondary: {
+    //             main: '#395c78'
+    //         },
+    //         background: {
+    //             default: '#dabdab',
+    //             paper: '#f5e7de'
+    //         }
+    //     };
+    // } else {
+    //     opts = {
+    //         mode: 'dark',
+    //         primary: {
+    //             main: '#f5e7de'
+    //         },
+    //         secondary: {
+    //             main: '#836312'
+    //         },
+    //         error: {
+    //             main: '#8d0101'
+    //         },
+    //         background: {
+    //             paper: '#462d26',
+    //             default: '#6a4535'
+    //         }
+    //     };
+    // }
     return createTheme({
         components: {
             MuiCssBaseline: {
@@ -89,9 +95,9 @@ export const createThemeByMode = (mode: PaletteMode) => {
                 'Arial',
                 'sans-serif'
             ].join(','),
-            allVariants: {
-                color: mode === 'light' ? '#34302d' : '#f5e7de'
-            },
+            // allVariants: {
+            //     color: mode === 'light' ? '#34302d' : '#f5e7de'
+            // },
             body1: {
                 ...readableFonts
             },

@@ -1,25 +1,33 @@
-import Link from '@mui/material/Link';
 import React from 'react';
-import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
 export const Footer = (): JSX.Element => {
     return (
-        <Container
+        <Box
             sx={{
                 textAlign: 'center',
                 marginTop: '1rem',
-                marginBottom: '1rem'
+                padding: '1rem',
+                marginBottom: '0',
+                height: '100%'
             }}
         >
-            <Link
-                sx={{
-                    color: '#525252',
-                    textDecoration: 'none'
-                }}
-                href={'https://github.com/leighmacdonald/gbans'}
-            >
-                gbans
-            </Link>
-        </Container>
+            <Stack>
+                <Typography variant={'subtitle2'} color={'textSecondary'}>
+                    Copyright &copy; Uncletopia 2022
+                </Typography>
+                {/*<Link*/}
+                {/*    sx={{*/}
+                {/*        color: '#525252',*/}
+                {/*        textDecoration: 'none'*/}
+                {/*    }}*/}
+                {/*    href={'https://github.com/leighmacdonald/gbans'}*/}
+                {/*>*/}
+                {/*    gbans*/}
+                {/*</Link>*/}
+            </Stack>
+        </Box>
     );
 };

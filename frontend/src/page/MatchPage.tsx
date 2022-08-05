@@ -15,6 +15,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { first } from 'lodash-es';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import Paper from '@mui/material/Paper';
+import { Heading } from '../component/Heading';
 
 export const MatchPage = (): JSX.Element => {
     const navigate = useNavigate();
@@ -329,16 +330,11 @@ export const MatchPage = (): JSX.Element => {
 
     return (
         <Stack spacing={3} marginTop={3}>
+            <Heading>
+                {`Logs #${match?.MatchID} - ${match?.Title} - ${match?.MapName}`}
+            </Heading>
             {!loading && match?.MatchID && (
                 <>
-                    <Typography
-                        variant={'h1'}
-                        textAlign={'center'}
-                        marginBottom={2}
-                    >
-                        Logs #{match?.MatchID} - {match?.Title} -{' '}
-                        {match?.MapName}
-                    </Typography>
                     <Paper>
                         <DataTable {...playerTableDef} />
                     </Paper>

@@ -20,6 +20,7 @@ import Paper from '@mui/material/Paper';
 import EditIcon from '@mui/icons-material/Edit';
 import { MDEditor } from '../component/MDEditor';
 import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
+import { Heading } from '../component/Heading';
 
 const defaultPage: Page = {
     slug: '',
@@ -95,7 +96,7 @@ export const WikiPage = (): JSX.Element => {
                 <Grid item xs={12}>
                     <Paper elevation={1}>
                         <Stack padding={3}>
-                            <Typography variant={'h1'}>{page.title}</Typography>
+                            <Heading>{page.slug}</Heading>
                             <RenderedMarkdownBox bodyMd={bodyHTML} />
                             {currentUser.permission_level >=
                                 PermissionLevel.Moderator && (
@@ -120,9 +121,7 @@ export const WikiPage = (): JSX.Element => {
                 <Grid item xs={12}>
                     <Paper elevation={1}>
                         <Stack spacing={3} padding={3}>
-                            <Typography variant={'h1'}>
-                                Wiki Entry Not Found
-                            </Typography>
+                            <Heading>Wiki Entry Not Found</Heading>
                             <Typography variant={'h3'}>
                                 slug: {slug || 'home'}
                             </Typography>

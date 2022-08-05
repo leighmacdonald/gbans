@@ -29,7 +29,7 @@ import { PrivateRoute } from './component/PrivateRoute';
 import { createThemeByMode } from './theme';
 import { ReportViewPage } from './page/ReportViewPage';
 import { PaletteMode } from '@mui/material';
-import useMediaQuery from '@mui/material/useMediaQuery';
+//import useMediaQuery from '@mui/material/useMediaQuery';
 import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
@@ -45,12 +45,12 @@ export const App = (): JSX.Element => {
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
-    let currentTheme = localStorage.getItem('theme') as PaletteMode;
-    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    if (!currentTheme) {
-        currentTheme = prefersDarkMode ? 'dark' : 'light';
-    }
-    const [mode, setMode] = useState<'light' | 'dark'>(currentTheme);
+    // let currentTheme = localStorage.getItem('theme') as PaletteMode;
+    // const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+    // if (!currentTheme) {
+    //     currentTheme = prefersDarkMode ? 'dark' : 'light';
+    // }
+    const [mode, setMode] = useState<'light' | 'dark'>('light');
 
     const updateMode = (prevMode: PaletteMode): PaletteMode => {
         const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);

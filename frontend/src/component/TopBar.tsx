@@ -33,6 +33,7 @@ import Typography from '@mui/material/Typography';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
 import { Flashes } from './Flashes';
+import useTheme from '@mui/material/styles/useTheme';
 
 interface menuRoute {
     to: string;
@@ -56,7 +57,7 @@ export const TopBar = () => {
     const [anchorElAdmin, setAnchorElAdmin] =
         React.useState<null | HTMLElement>(null);
 
-    // const theme = useTheme();
+    const theme = useTheme();
     // const colourMode = useColourModeCtx();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -89,22 +90,66 @@ export const TopBar = () => {
 
     const menuItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [
-            { to: '/', text: 'Dashboard', icon: <DashboardIcon /> },
-            // { to: '/bans', text: 'Bans', icon: <BlockIcon /> },
-            // { to: '/stats', text: 'Stats', icon: <BarChartIcon /> },
-            { to: '/servers', text: 'Servers', icon: <StorageIcon /> },
-            { to: '/report', text: 'Report', icon: <ReportIcon /> },
-            // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon /> },
-            { to: '/wiki', text: 'Wiki', icon: <ArticleIcon /> }
+            {
+                to: '/',
+                text: 'Dashboard',
+                icon: (
+                    <DashboardIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            },
+            // { to: '/bans', text: 'Bans', icon: <BlockIcon sx={{ color: '#fff' }} /> },
+            // { to: '/stats', text: 'Stats', icon: <BarChartIcon sx={{ color: '#fff' }} /> },
+            {
+                to: '/servers',
+                text: 'Servers',
+                icon: (
+                    <StorageIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            },
+            {
+                to: '/report',
+                text: 'Report',
+                icon: (
+                    <ReportIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            },
+            // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon sx={{ color: '#fff' }} /> },
+            {
+                to: '/wiki',
+                text: 'Wiki',
+                icon: (
+                    <ArticleIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            }
         ];
         if (perms >= PermissionLevel.Admin) {
-            items.push({ to: '/logs', text: 'Logs', icon: <QueryStatsIcon /> });
+            items.push({
+                to: '/logs',
+                text: 'Logs',
+                icon: (
+                    <QueryStatsIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            });
         }
         if (currentUser.ban_id > 0) {
             items.push({
                 to: `/ban/${currentUser.ban_id}`,
                 text: 'Appeal',
-                icon: <SupportIcon />
+                icon: (
+                    <SupportIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
         }
         return items;
@@ -115,10 +160,22 @@ export const TopBar = () => {
             {
                 to: `/profile/${currentUser?.steam_id}`,
                 text: 'Profile',
-                icon: <AccountCircleIcon />
+                icon: (
+                    <AccountCircleIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             },
             // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
-            { to: '/logout', text: 'Logout', icon: <ExitToAppIcon /> }
+            {
+                to: '/logout',
+                text: 'Logout',
+                icon: (
+                    <ExitToAppIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
+            }
         ],
         [currentUser?.steam_id]
     );
@@ -128,48 +185,78 @@ export const TopBar = () => {
             items.push({
                 to: '/admin/ban',
                 text: 'Ban Player/Net',
-                icon: <BlockIcon />
+                icon: (
+                    <BlockIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
             items.push({
                 to: '/admin/reports',
                 text: 'Reports',
-                icon: <ReportIcon />
+                icon: (
+                    <ReportIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
             items.push({
                 to: '/admin/filters',
                 text: 'Filtered Words',
-                icon: <SubjectIcon />
+                icon: (
+                    <SubjectIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
             items.push({
                 to: '/admin/news',
                 text: 'News',
-                icon: <NewspaperIcon />
+                icon: (
+                    <NewspaperIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
         }
         if (perms >= PermissionLevel.Admin) {
             items.push({
                 to: '/admin/people',
                 text: 'People',
-                icon: <PregnantWomanIcon />
+                icon: (
+                    <PregnantWomanIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
             items.push({
                 to: '/admin/import',
                 text: 'Import',
-                icon: <ImportExportIcon />
+                icon: (
+                    <ImportExportIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
             items.push({
                 to: '/admin/servers',
                 text: 'Servers',
-                icon: <DnsIcon />
+                icon: (
+                    <DnsIcon sx={{ color: theme.palette.background.default }} />
+                )
             });
             items.push({
                 to: '/admin/server_logs',
                 text: 'Server Logs',
-                icon: <SubjectIcon />
+                icon: (
+                    <SubjectIcon
+                        sx={{ color: theme.palette.background.default }}
+                    />
+                )
             });
         }
         return items;
-    }, [perms]);
+    }, [perms, theme.palette.background.default]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -198,6 +285,7 @@ export const TopBar = () => {
                         variant="h6"
                         noWrap
                         component="div"
+                        color={theme.palette.background.paper}
                         sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
                     >
                         Uncletopia
@@ -215,9 +303,10 @@ export const TopBar = () => {
                             aria-controls="menu-appbar"
                             aria-haspopup="true"
                             onClick={handleOpenNavMenu}
-                            color="inherit"
                         >
-                            <MenuIcon />
+                            <MenuIcon
+                                sx={{ color: theme.palette.background.default }}
+                            />
                         </IconButton>
                         <Menu
                             id="menu-appbar"

@@ -37,7 +37,7 @@ export const Home = (): JSX.Element => {
                         <Button
                             startIcon={<GavelIcon />}
                             fullWidth
-                            color={'info'}
+                            color={'secondary'}
                             variant={'contained'}
                             onClick={() => {
                                 navigate('/wiki/Rules');
@@ -50,7 +50,7 @@ export const Home = (): JSX.Element => {
                         <Button
                             startIcon={<EventIcon />}
                             fullWidth
-                            color={'info'}
+                            color={'secondary'}
                             variant={'contained'}
                             onClick={() => {
                                 navigate('/wiki/Events');
@@ -63,7 +63,7 @@ export const Home = (): JSX.Element => {
                         <Button
                             startIcon={<MarkUnreadChatAltIcon />}
                             fullWidth
-                            color={'info'}
+                            color={'secondary'}
                             variant={'contained'}
                             onClick={() => {
                                 window.open('https://discord.gg/uncletopia');

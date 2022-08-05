@@ -9,16 +9,18 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import { ReportForm } from '../component/ReportForm';
 import { apiGetReports, ReportWithAuthor } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import Link from '@mui/material/Link';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import { logErr } from '../util/errors';
 import { ReportStatusIcon } from '../component/ReportStatusIcon';
 import { Heading } from '../component/Heading';
+import { useNavigate } from 'react-router-dom';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
+    const navigate = useNavigate();
+
     useEffect(() => {
         if (currentUser.steam_id > 0) {
             apiGetReports({
@@ -105,13 +107,15 @@ export const ReportCreatePage = (): JSX.Element => {
                                             variant={'square'}
                                         />
                                     </ListItemAvatar>
-                                    <ListItemText>
-                                        <Link
-                                            href={`/report/${value.report.report_id}`}
-                                        >
-                                            {value.subject.personaname ??
-                                                value.subject.steam_id}
-                                        </Link>
+                                    <ListItemText
+                                        onClick={() => {
+                                            navigate(
+                                                `/report/${value.report.report_id}`
+                                            );
+                                        }}
+                                    >
+                                        {value.subject.personaname ??
+                                            value.subject.steam_id}
                                     </ListItemText>
                                 </ListItem>
                             ))}

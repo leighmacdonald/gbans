@@ -1,5 +1,5 @@
 import { apiCall } from './common';
-import { marked } from 'marked';
+import { marked, Renderer } from 'marked';
 
 export interface Page {
     slug: string;
@@ -16,9 +16,27 @@ export const apiGetWikiPage = async (slug: string) =>
 export const apiSaveWikiPage = async (page: Page) =>
     await apiCall<Page>(`/api/wiki/slug`, 'POST', page);
 
-export const renderMarkdown = (md: string) =>
-    marked(
+class WikiRenderer extends Renderer {
+    link(href: string, title: string, text: string) {
+        // href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
+        if (href === null) {
+            return text;
+        }
+        let out = '<a href="' + escape(href) + '"';
+        if (title) {
+            out += ' title="' + title + '"';
+        }
+        out += '>' + text + '</a>';
+        return out;
+    }
+}
+
+export const renderMarkdown = (md: string) => {
+    const r = marked(
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
-            .replace(/(media:\/\/)/gi, '/media/')
+            .replace(/(media:\/\/)/gi, '/media/'),
+        { renderer: new WikiRenderer() }
     );
+    return r;
+};

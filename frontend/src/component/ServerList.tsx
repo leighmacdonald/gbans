@@ -12,6 +12,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { LinearProgressProps } from '@mui/material/LinearProgress';
 import { LoadingSpinner } from './LoadingSpinner';
 import { DataTable } from './DataTable';
+import { Heading } from './Heading';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -34,115 +35,121 @@ export const ServerList = () => {
     if (selectedServers.length === 0) {
         return (
             <Stack spacing={1}>
+                <Heading>Servers</Heading>
                 <LoadingSpinner />
             </Stack>
         );
     }
     return (
-        <DataTable
-            rowsPerPage={100}
-            columns={[
-                {
-                    label: 'CC',
-                    tooltip: 'Country Code',
-                    sortKey: 'cc',
-                    sortType: 'string',
-                    queryValue: (obj) => obj.cc,
-                    renderer: (_, value) => (
-                        <Flag countryCode={value as string} />
-                    )
-                },
-                {
-                    label: 'Server',
-                    tooltip: 'Server Name',
-                    sortKey: 'name',
-                    sortType: 'string',
-                    align: 'left',
-                    width: '100%',
-                    queryValue: (obj) => obj.name + obj.name_short,
-                    renderer: (_, value) => (
-                        <Typography variant={'button'}>
-                            {value as string}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'Map',
-                    tooltip: 'Map Name',
-                    sortKey: 'map',
-                    sortType: 'string',
-                    queryValue: (obj) => obj.map
-                },
-                {
-                    label: 'Players',
-                    tooltip: 'Current Players',
-                    sortKey: 'player_count',
-                    renderer: (obj, value) => {
-                        return (
-                            <Typography variant={'body2'}>
-                                {`${value}/${obj.max_players}`}
+        <Stack spacing={1}>
+            <Heading>Servers</Heading>
+            <DataTable
+                rowsPerPage={100}
+                columns={[
+                    {
+                        label: 'CC',
+                        tooltip: 'Country Code',
+                        sortKey: 'cc',
+                        sortType: 'string',
+                        queryValue: (obj) => obj.cc,
+                        renderer: (_, value) => (
+                            <Flag countryCode={value as string} />
+                        )
+                    },
+                    {
+                        label: 'Server',
+                        tooltip: 'Server Name',
+                        sortKey: 'name',
+                        sortType: 'string',
+                        align: 'left',
+                        width: '100%',
+                        queryValue: (obj) => obj.name + obj.name_short,
+                        renderer: (_, value) => (
+                            <Typography variant={'button'}>
+                                {value as string}
                             </Typography>
-                        );
+                        )
+                    },
+                    {
+                        label: 'Map',
+                        tooltip: 'Map Name',
+                        sortKey: 'map',
+                        sortType: 'string',
+                        queryValue: (obj) => obj.map
+                    },
+                    {
+                        label: 'Players',
+                        tooltip: 'Current Players',
+                        sortKey: 'player_count',
+                        renderer: (obj, value) => {
+                            return (
+                                <Typography variant={'body2'}>
+                                    {`${value}/${obj.max_players}`}
+                                </Typography>
+                            );
+                        }
+                    },
+                    {
+                        label: 'Cp',
+                        virtual: true,
+                        virtualKey: 'copy',
+                        tooltip: 'Copy server address to clipboard',
+                        renderer: (obj) => {
+                            return (
+                                <IconButton
+                                    color={'primary'}
+                                    aria-label={
+                                        'Copy connect string to clipboard'
+                                    }
+                                    onClick={() => {
+                                        navigator.clipboard
+                                            .writeText(
+                                                `connect ${obj.host}:${obj.port}`
+                                            )
+                                            .then(() => {
+                                                sendFlash(
+                                                    'success',
+                                                    'Copied address to clipboard'
+                                                );
+                                            })
+                                            .catch(() => {
+                                                sendFlash(
+                                                    'error',
+                                                    'Failed to copy address'
+                                                );
+                                            });
+                                    }}
+                                >
+                                    <ContentCopyIcon />
+                                </IconButton>
+                            );
+                        }
+                    },
+                    {
+                        label: 'Connect',
+                        virtual: true,
+                        virtualKey: 'connect',
+                        tooltip: 'Connect to a server',
+                        renderer: (obj) => {
+                            return (
+                                <Button
+                                    onClick={() => {
+                                        window.open(
+                                            `steam://connect/${obj.host}:${obj.port}`
+                                        );
+                                    }}
+                                    variant={'contained'}
+                                    sx={{ minWidth: 100 }}
+                                >
+                                    Join
+                                </Button>
+                            );
+                        }
                     }
-                },
-                {
-                    label: 'Cp',
-                    virtual: true,
-                    virtualKey: 'copy',
-                    tooltip: 'Copy server address to clipboard',
-                    renderer: (obj) => {
-                        return (
-                            <IconButton
-                                color={'primary'}
-                                aria-label={'Copy connect string to clipboard'}
-                                onClick={() => {
-                                    navigator.clipboard
-                                        .writeText(
-                                            `connect ${obj.host}:${obj.port}`
-                                        )
-                                        .then(() => {
-                                            sendFlash(
-                                                'success',
-                                                'Copied address to clipboard'
-                                            );
-                                        })
-                                        .catch(() => {
-                                            sendFlash(
-                                                'error',
-                                                'Failed to copy address'
-                                            );
-                                        });
-                                }}
-                            >
-                                <ContentCopyIcon />
-                            </IconButton>
-                        );
-                    }
-                },
-                {
-                    label: 'Connect',
-                    virtual: true,
-                    virtualKey: 'connect',
-                    tooltip: 'Connect to a server',
-                    renderer: (obj) => {
-                        return (
-                            <Button
-                                onClick={() => {
-                                    window.open(
-                                        `steam://connect/${obj.host}:${obj.port}`
-                                    );
-                                }}
-                                variant={'contained'}
-                                sx={{ minWidth: 100 }}
-                            >
-                                Join
-                            </Button>
-                        );
-                    }
-                }
-            ]}
-            defaultSortColumn={'name'}
-            rows={selectedServers}
-        />
+                ]}
+                defaultSortColumn={'name'}
+                rows={selectedServers}
+            />
+        </Stack>
     );
 };
