@@ -140,7 +140,7 @@ export const AdminBan = (): JSX.Element => {
                                             <Typography variant={'body1'}>
                                                 {format(
                                                     parseISO(
-                                                        obj.created_on as any as string
+                                                        obj.created_on as never as string
                                                     ),
                                                     'yyyy-MM-dd'
                                                 )}
@@ -162,7 +162,7 @@ export const AdminBan = (): JSX.Element => {
                                             <Typography variant={'body1'}>
                                                 {format(
                                                     parseISO(
-                                                        obj.valid_until as any as string
+                                                        obj.valid_until as never as string
                                                     ),
                                                     'yyyy-MM-dd'
                                                 )}
@@ -180,10 +180,10 @@ export const AdminBan = (): JSX.Element => {
                                     virtualKey: 'duration',
                                     renderer: (row) => {
                                         const t0 = parseISO(
-                                            row.created_on as any as string
+                                            row.created_on as never as string
                                         );
                                         const t1 = parseISO(
-                                            row.valid_until as any as string
+                                            row.valid_until as never as string
                                         );
                                         const dur = intervalToDuration({
                                             start: t0,

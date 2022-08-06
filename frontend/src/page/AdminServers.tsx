@@ -3,14 +3,14 @@ import Grid from '@mui/material/Grid';
 import { ServerAddForm } from '../component/ServerAddForm';
 import Paper from '@mui/material/Paper';
 import { DataTable } from '../component/DataTable';
-import { apiGetServers, ServerState } from '../api';
+import { apiGetServerStates, ServerState } from '../api';
 
 export const AdminServers = (): JSX.Element => {
     const [servers, setServers] = useState<ServerState[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         setIsLoading(true);
-        apiGetServers().then((s) => {
+        apiGetServerStates().then((s) => {
             setServers(s);
             setIsLoading(false);
         });

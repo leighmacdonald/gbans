@@ -2,6 +2,7 @@ version: "3.3"
 
 services:
   gbans-test:
+    tty: true
     build:
       context: "../"
       dockerfile: ./docker/test.Dockerfile

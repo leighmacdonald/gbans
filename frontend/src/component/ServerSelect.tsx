@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGetServers, ServerState } from '../api';
+import { apiGetServerStates, ServerState } from '../api';
 import { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
@@ -17,7 +17,7 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
     const [selectedServers, setSelectedServers] = useState<number[]>([0]);
 
     useEffect(() => {
-        apiGetServers()
+        apiGetServerStates()
             .then((servers) => {
                 setServers(servers || []);
             })

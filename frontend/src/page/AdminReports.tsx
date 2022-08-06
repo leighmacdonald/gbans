@@ -139,7 +139,7 @@ export const AdminReports = (): JSX.Element => {
                                                 {format(
                                                     parseISO(
                                                         obj.report
-                                                            .created_on as any as string
+                                                            .created_on as never as string
                                                     ),
                                                     "yyyy-MM-dd'T'HH:mm"
                                                 )}

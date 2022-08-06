@@ -17,6 +17,10 @@ import (
 	"time"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 func TestServer(t *testing.T) {
 	serverA := model.Server{
 		ServerNameShort: fmt.Sprintf("test-%s", golib.RandomString(10)),
@@ -68,7 +72,8 @@ func TestReport(t *testing.T) {
 	var author model.Person
 	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198003911389), &author))
 	var target model.Person
-	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &target))
+	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(),
+		steamid.SID64(steamid.RandSID64().Int64()+int64(rand.Int())), &target))
 	report := model.NewReport()
 	report.AuthorId = author.SteamID
 	report.ReportedId = target.SteamID
@@ -263,12 +268,13 @@ func TestFindLogEvents(t *testing.T) {
 func TestFilters(t *testing.T) {
 	existingFilters, errGetFilters := testDatabase.GetFilters(context.Background())
 	require.NoError(t, errGetFilters)
-	words := []string{golib.RandomString(10), golib.RandomString(10)}
+	words := []string{golib.RandomString(10), golib.RandomString(20)}
 	var savedFilters []model.Filter
-	for _, word := range words {
+	for wordIdx, word := range words {
 		filter := model.Filter{
-			Patterns:  strings.Split(word, "||"),
-			CreatedOn: config.Now(),
+			FilterName: fmt.Sprintf("%d-%s", wordIdx, word),
+			Patterns:   strings.Split(word, "||"),
+			CreatedOn:  config.Now(),
 		}
 		require.NoError(t, testDatabase.SaveFilter(context.Background(), &filter), "Failed to insert filter: %s", word)
 		require.True(t, filter.WordID > 0)

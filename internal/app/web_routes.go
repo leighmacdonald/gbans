@@ -27,8 +27,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
-	corsConfig.AllowWildcard = true
-	corsConfig.AllowCredentials = true
+	corsConfig.AllowWildcard = false
+	corsConfig.AllowCredentials = false
 	corsConfig.AddAllowMethods("OPTIONS")
 	if config.General.Mode != config.TestMode {
 		engine.Use(cors.New(corsConfig))
@@ -83,20 +83,19 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/metrics", prometheusHandler())
 	engine.GET("/auth/callback", web.onOpenIDCallback(database))
 	engine.GET("/api/ban/:ban_id", web.onAPIGetBanByID(database))
-	engine.POST("/api/bans", web.onAPIGetBans(database))
-	engine.POST("/api/appeal", web.onAPIPostAppeal(database))
 	engine.GET("/api/profile", web.onAPIProfile(database))
-	engine.GET("/api/servers", web.onAPIGetServers())
+	engine.GET("/api/servers/state", web.onAPIGetServerStates())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
 	engine.GET("/api/competitive", web.onAPIGetCompHist())
 	engine.GET("/api/filtered_words", web.onAPIGetFilteredWords(database))
 	engine.GET("/api/players", web.onAPIGetPlayers(database))
 	engine.GET("/api/auth/logout", web.onGetLogout())
-	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
 	engine.GET("/media/:name", web.onGetMedia(database))
+
+	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -104,7 +103,6 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 
 	// Game server plugin routes
 	engine.POST("/api/server_auth", web.onSAPIPostServerAuth(database))
-
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
 	// Server Auth Request
@@ -148,9 +146,10 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
+	modRoute.POST("/api/bans", web.onAPIGetBans(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))
-	adminRoute.POST("/api/server", web.onAPIPostServer(database))
-
+	adminRoute.POST("/api/servers", web.onAPIPostServer(database))
+	adminRoute.GET("/api/servers", web.onAPIGetServers(database))
 }

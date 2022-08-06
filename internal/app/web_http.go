@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -97,9 +98,18 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	return person
 }
 
-func isAllowed(person model.UserProfile, subject steamid.SID64, minPrivilege model.Privilege) bool {
+// checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
+// if the user has appropriate privilege levels.
+// Error responses are handled by this function, no further action needs to take place in the handlers
+func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege model.Privilege) bool {
+	for _, steamId := range allowedSteamIds {
+		if steamId == person.SteamID {
+			return true
+		}
+	}
 	if person.PermissionLevel >= minPrivilege {
 		return true
 	}
-	return person.SteamID == subject
+	responseErrUser(ctx, http.StatusUnauthorized, nil, consts.ErrPermissionDenied.Error())
+	return false
 }

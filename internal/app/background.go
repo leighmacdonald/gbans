@@ -30,7 +30,7 @@ func IsSteamGroupBanned(steamId steamid.SID64) bool {
 	return false
 }
 
-func steamGroupMembershipUpdater(ctx context.Context, database store.PersonStore) {
+func steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
 	var update = func() {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
@@ -52,7 +52,7 @@ func steamGroupMembershipUpdater(ctx context.Context, database store.PersonStore
 		log.WithFields(log.Fields{"count": total}).Debugf("Updated group member ban list")
 	}
 	update()
-	ticker := time.NewTicker(time.Hour)
+	ticker := time.NewTicker(time.Minute * 15)
 	for {
 		select {
 		case <-ticker.C:

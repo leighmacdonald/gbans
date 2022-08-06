@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import { ServerMap } from '../component/ServerMap';
-import { apiGetServers, ServerState } from '../api';
+import { apiGetServerStates, ServerState } from '../api';
 import { LatLngLiteral } from 'leaflet';
 import { MapStateCtx, useMapStateCtx } from '../contexts/MapStateCtx';
 import Stack from '@mui/material/Stack';
@@ -129,7 +129,7 @@ export const Servers = (): JSX.Element => {
         autoStart: true,
         expiryTimestamp: new Date(),
         onExpire: () => {
-            apiGetServers()
+            apiGetServerStates()
                 .then((servers) => {
                     setServers((servers || []).filter((s) => s.enabled));
                     restart(nextExpiry());

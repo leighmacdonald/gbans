@@ -420,7 +420,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			resp.BanType = model.Banned
 			resp.Msg = "Group Banned"
 			responseErr(ctx, http.StatusOK, resp)
-			log.WithFields(log.Fields{"type": "group", "reason": "Group Ban"}).Infof("Player dropped")
+			log.WithFields(log.Fields{"type": "group", "reason": "Group Ban", "sid64": steamID.String()}).
+				Infof("Player dropped")
 			return
 		}
 
@@ -456,7 +457,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
 			responseOK(ctx, http.StatusOK, resp)
 			log.WithFields(log.Fields{"type": "cidr", "reason": banNet[0].Reason,
-				"steam_id": steamid.SIDToSID64(request.SteamID)}).Infof("Player dropped")
+				"sid64": steamid.SIDToSID64(request.SteamID)}).Infof("Player dropped")
 			return
 		}
 		var asnRecord ip2location.ASNRecord
@@ -471,7 +472,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 				resp.BanType = model.Banned
 				resp.Msg = asnBan.Reason.String()
 				responseOK(ctx, http.StatusOK, resp)
-				log.WithFields(log.Fields{"type": "asn", "reason": asnBan.Reason}).Infof("Player dropped")
+				log.WithFields(log.Fields{"type": "asn", "reason": asnBan.Reason, "sid64": steamID.String()}).
+					Infof("Player dropped")
 				return
 			}
 		}
@@ -497,7 +499,8 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 		}
 		resp.Msg = reason
 		responseOK(ctx, http.StatusOK, resp)
-		log.WithFields(log.Fields{"type": "steam", "reason": reason}).Infof("Player dropped")
+		log.WithFields(log.Fields{"type": "steam", "reason": reason, "sid64": steamID.String()}).
+			Infof("Player dropped")
 	}
 }
 
@@ -596,10 +599,9 @@ func (web *web) onAPIGetPrometheusHosts(database store.Store) gin.HandlerFunc {
 	}
 }
 
-// onAPIGetServers returns the current known cached server state
-func (web *web) onAPIGetServers() gin.HandlerFunc {
+// onAPIGetServerStates returns the current known cached server state
+func (web *web) onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		time.Sleep(5 * time.Second)
 		responseOK(ctx, http.StatusOK, ServerState())
 	}
 }
@@ -720,9 +722,7 @@ func (web *web) onAPIGetFilteredWords(database store.Store) gin.HandlerFunc {
 		}
 		var fWords []string
 		for _, word := range words {
-			for _, pattern := range word.Patterns {
-				fWords = append(fWords, pattern)
-			}
+			fWords = append(fWords, word.Patterns...)
 		}
 		responseOK(ctx, http.StatusOK, resp{Count: len(fWords), Words: fWords})
 	}
@@ -799,6 +799,16 @@ func (web *web) onAPIGetBans(database store.Store) gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, bans)
 	}
 }
+func (web *web) onAPIGetServers(database store.ServerStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		servers, errServers := database.GetServers(ctx, true)
+		if errServers != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, servers)
+	}
+}
 
 func (web *web) onAPIPostServer(database store.ServerStore) gin.HandlerFunc {
 	type newServerReq struct {
@@ -835,21 +845,6 @@ func (web *web) onAPIPostServer(database store.ServerStore) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusOK, server)
-	}
-}
-
-func (web *web) onAPIPostAppeal(_ store.Store) gin.HandlerFunc {
-	type newAppeal struct {
-		BanId  int    `json:"ban_id"`
-		Reason string `json:"reason"`
-	}
-	return func(ctx *gin.Context) {
-		var appeal newAppeal
-		if errBind := ctx.BindJSON(&appeal); errBind != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-			return
-		}
-		responseErr(ctx, http.StatusServiceUnavailable, nil)
 	}
 }
 
@@ -1023,8 +1018,7 @@ func (web *web) onAPIEditReportMessage(database store.ReportStore) gin.HandlerFu
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, nil)
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, model.PModerator) {
 			return
 		}
 		var message editMessage
@@ -1076,8 +1070,7 @@ func (web *web) onAPIDeleteReportMessage(database store.ReportStore) gin.Handler
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, nil)
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, model.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -1146,24 +1139,35 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 }
 
 func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		reportId, errParam := getInt64Param(c, "report_id")
+	return func(ctx *gin.Context) {
+		reportId, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		reportMessages, errGetReportMessages := database.GetReportMessages(c, reportId)
+		var report model.Report
+		if errGetReport := database.GetReport(ctx, reportId, &report); errGetReport != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
+			return
+		}
+
+		if !checkPrivilege(ctx, currentUserProfile(ctx),
+			steamid.Collection{report.AuthorId, report.ReportedId}, model.PModerator) {
+			return
+		}
+
+		reportMessages, errGetReportMessages := database.GetReportMessages(ctx, reportId)
 		if errGetReportMessages != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var ids steamid.Collection
 		for _, msg := range reportMessages {
 			ids = append(ids, msg.AuthorId)
 		}
-		authors, authorsErr := database.GetPeopleBySteamID(c, ids)
+		authors, authorsErr := database.GetPeopleBySteamID(ctx, ids)
 		if authorsErr != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		authorsMap := authors.AsMap()
@@ -1174,7 +1178,7 @@ func (web *web) onAPIGetReportMessages(database store.Store) gin.HandlerFunc {
 				Message: message,
 			})
 		}
-		responseOK(c, http.StatusOK, authorMessages)
+		responseOK(ctx, http.StatusOK, authorMessages)
 	}
 }
 
@@ -1255,6 +1259,11 @@ func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 			log.Errorf("Failed to load report: %v", errReport)
 			return
 		}
+
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Author.SteamID, report.Subject.SteamID}, model.PModerator) {
+			return
+		}
+
 		if errAuthor := database.GetOrCreatePersonBySteamID(ctx, report.Report.AuthorId, &report.Author); errAuthor != nil {
 			if store.Err(errAuthor) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
@@ -1264,7 +1273,6 @@ func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 			log.Errorf("Failed to load report author: %v", errAuthor)
 			return
 		}
-
 		if errSubject := database.GetOrCreatePersonBySteamID(ctx, report.Report.ReportedId, &report.Subject); errSubject != nil {
 			if store.Err(errSubject) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
@@ -1272,15 +1280,6 @@ func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 			}
 			responseErr(ctx, http.StatusBadRequest, nil)
 			log.Errorf("Failed to load report subject: %v", errSubject)
-			return
-		}
-		curUser := currentUserProfile(ctx)
-
-		// Only allow report authors and subjects to view reports made, or mods+.
-		if curUser.PermissionLevel == model.PUser &&
-			!(report.Subject.SteamID == curUser.SteamID ||
-				report.Author.SteamID == curUser.SteamID) {
-			responseErrUser(ctx, http.StatusUnauthorized, nil, "Permission denied")
 			return
 		}
 
@@ -1565,24 +1564,32 @@ type AuthorBanMessage struct {
 }
 
 func (web *web) onAPIGetBanMessages(database store.Store) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		banId, errParam := getInt64Param(c, "ban_id")
+	return func(ctx *gin.Context) {
+		banId, errParam := getInt64Param(ctx, "ban_id")
 		if errParam != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		banMessages, errGetBanMessages := database.GetBanMessages(c, banId)
+		banPerson := model.NewBannedPerson()
+		if errGetBan := database.GetBanByBanID(ctx, banId, false, &banPerson); errGetBan != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
+			return
+		}
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.SteamID, banPerson.Ban.AuthorID}, model.PModerator) {
+			return
+		}
+		banMessages, errGetBanMessages := database.GetBanMessages(ctx, banId)
 		if errGetBanMessages != nil {
-			responseErr(c, http.StatusNotFound, nil)
+			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
 		var ids steamid.Collection
 		for _, msg := range banMessages {
 			ids = append(ids, msg.AuthorId)
 		}
-		authors, authorsErr := database.GetPeopleBySteamID(c, ids)
+		authors, authorsErr := database.GetPeopleBySteamID(ctx, ids)
 		if authorsErr != nil {
-			responseErr(c, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		authorsMap := authors.AsMap()
@@ -1593,7 +1600,7 @@ func (web *web) onAPIGetBanMessages(database store.Store) gin.HandlerFunc {
 				Message: message,
 			})
 		}
-		responseOK(c, http.StatusOK, authorMessages)
+		responseOK(ctx, http.StatusOK, authorMessages)
 	}
 }
 
@@ -1614,8 +1621,7 @@ func (web *web) onAPIDeleteBanMessage(database store.BanStore) gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, nil)
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, model.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -1706,8 +1712,7 @@ func (web *web) onAPIEditBanMessage(database store.BanStore) gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !isAllowed(curUser, existing.AuthorId, model.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, nil)
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, model.PModerator) {
 			return
 		}
 		var message editMessage

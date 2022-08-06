@@ -176,7 +176,7 @@ export const BanPage = (): JSX.Element => {
                                                 primary={'Created On'}
                                                 secondary={
                                                     ban.ban
-                                                        .created_on as any as string
+                                                        .created_on as never as string
                                                 }
                                             />
                                         </ListItem>
@@ -185,7 +185,7 @@ export const BanPage = (): JSX.Element => {
                                                 primary={'Expires'}
                                                 secondary={
                                                     ban.ban
-                                                        .valid_until as any as string
+                                                        .valid_until as never as string
                                                 }
                                             />
                                         </ListItem>

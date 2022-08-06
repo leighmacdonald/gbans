@@ -9,7 +9,9 @@ export const ServerEditModal = ({
     open,
     setOpen
 }: ConfirmationModalProps<Server>) => {
-    const handleSubmit = useCallback(() => {}, []);
+    const handleSubmit = useCallback(() => {
+        alert('submit');
+    }, []);
     return (
         <ConfirmationModal
             open={open}

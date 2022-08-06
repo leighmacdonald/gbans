@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const filterSeparator = "||"
+const filterSeparator = "---"
 
 func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
 	if filter.WordID > 0 {
@@ -19,9 +19,12 @@ func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) e
 }
 
 func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) error {
-	const query = `INSERT INTO filtered_word (word, created_on, filter_name) VALUES ($1, $2) RETURNING word_id`
-	if errQuery := database.QueryRow(ctx, query, strings.Join(filter.Patterns, filterSeparator),
-		filter.CreatedOn, filter.FilterName).Scan(&filter.WordID); errQuery != nil {
+	const query = `
+		INSERT INTO filtered_word (word, filter_name, created_on, discord_created_on, discord_id) 
+		VALUES ($1, $2, $3, $4, $5) 
+		RETURNING word_id`
+	if errQuery := database.QueryRow(ctx, query, strings.Join(filter.Patterns, filterSeparator), filter.FilterName,
+		filter.CreatedOn, filter.DiscordCreatedOn, filter.DiscordId).Scan(&filter.WordID); errQuery != nil {
 		return Err(errQuery)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)

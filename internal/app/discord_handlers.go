@@ -141,8 +141,12 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	playerID := model.Target(opts.String(OptUserIdentifier))
 	var reason model.Reason
-	reasonValue := opts[OptBanReason].IntValue()
-	reason = model.Reason(reasonValue)
+
+	reasonValueOpt, ok := opts[OptBanReason]
+	if !ok {
+		return errors.New("Invalid mute reason")
+	}
+	reason = model.Reason(reasonValueOpt.IntValue())
 	duration := model.Duration(opts[OptDuration].StringValue())
 	author := model.NewPerson(0)
 	if errGetAuthor := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {

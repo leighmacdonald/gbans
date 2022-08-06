@@ -32,9 +32,9 @@ export const readableFonts = {
     ].join(',')
 };
 
-export const createThemeByMode = (_: PaletteMode) => {
+export const createThemeByMode = (m: PaletteMode) => {
     const opts: PaletteOptions = {
-        mode: 'light',
+        mode: m,
         primary: {
             main: '#9d312f'
         },

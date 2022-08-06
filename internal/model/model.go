@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
-	"github.com/pkg/errors"
 	"net"
 	"strings"
 	"time"
@@ -53,7 +52,7 @@ type Server struct {
 	// Port is the port of the server
 	Port int `db:"port" json:"port"`
 	// RCON is the RCON password for the server
-	RCON          string `db:"rcon" json:"-"`
+	RCON          string `db:"rcon" json:"rcon"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
 	Password   string              `db:"password" json:"password"`
@@ -401,20 +400,20 @@ type DemoFile struct {
 	Downloads int64     `json:"downloads"`
 }
 
-func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
-	size := int64(len(rawData))
-	if size == 0 {
-		return DemoFile{}, errors.New("Empty demo")
-	}
-	return DemoFile{
-		ServerID:  serverId,
-		Title:     title,
-		Data:      rawData,
-		CreatedOn: config.Now(),
-		Size:      size,
-		Downloads: 0,
-	}, nil
-}
+//func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
+//	size := int64(len(rawData))
+//	if size == 0 {
+//		return DemoFile{}, errors.New("Empty demo")
+//	}
+//	return DemoFile{
+//		ServerID:  serverId,
+//		Title:     title,
+//		Data:      rawData,
+//		CreatedOn: config.Now(),
+//		Size:      size,
+//		Downloads: 0,
+//	}, nil
+//}
 
 // CommonStats contains shared stats that are used across all models
 type CommonStats struct {

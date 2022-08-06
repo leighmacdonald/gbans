@@ -116,8 +116,8 @@ export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
     );
 };
 
-export const apiGetServers = async () =>
-    await apiCall<ServerState[]>(`/api/servers`, 'GET');
+export const apiGetServerStates = async () =>
+    await apiCall<ServerState[]>(`/api/servers/state`, 'GET');
 
 export interface CreateServerOpts {
     name_short: string;
@@ -133,4 +133,7 @@ export interface CreateServerOpts {
 }
 
 export const apiCreateServer = async (opts: CreateServerOpts) =>
-    await apiCall<Server, CreateServerOpts>(`/api/server`, 'POST', opts);
+    await apiCall<Server, CreateServerOpts>(`/api/servers`, 'POST', opts);
+
+export const apiGetServers = async () =>
+    await apiCall<Server[]>(`/api/servers`, 'POST');

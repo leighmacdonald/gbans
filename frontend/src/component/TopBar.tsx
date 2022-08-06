@@ -153,7 +153,7 @@ export const TopBar = () => {
             });
         }
         return items;
-    }, [currentUser.ban_id, perms]);
+    }, [currentUser.ban_id, perms, theme.palette.background.default]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
@@ -177,7 +177,7 @@ export const TopBar = () => {
                 )
             }
         ],
-        [currentUser?.steam_id]
+        [currentUser?.steam_id, theme.palette.background.default]
     );
     const adminItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [];

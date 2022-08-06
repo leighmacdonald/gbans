@@ -39,19 +39,16 @@ const (
 	cmdHistoryIP   botCmd = "ip"
 	cmdHistoryChat botCmd = "chat"
 	cmdFilter      botCmd = "filter"
-	cmdFilterAdd   botCmd = "filter_add"
-	cmdFilterDel   botCmd = "filter_del"
-	cmdFilterCheck botCmd = "filter_check"
 	cmdLog         botCmd = "log"
 )
 
-type subCommandKey string
-
-const (
-	CmdBan     = "ban"
-	CmdFilter  = "filter"
-	CmdHistory = "history"
-)
+//type subCommandKey string
+//
+//const (
+//	CmdBan     = "ban"
+//	CmdFilter  = "filter"
+//	CmdHistory = "history"
+//)
 
 type optionKey string
 
@@ -66,7 +63,6 @@ const (
 	OptBanReason        = "ban_reason"
 	OptUnbanReason      = "unban_reason"
 	OptBan              = "ban"
-	OptHistory          = "history"
 	OptSteam            = "steam"
 	OptNote             = "note"
 	OptCIDR             = "cidr"

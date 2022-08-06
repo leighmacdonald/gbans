@@ -15,7 +15,7 @@ func TestNewBanNet(t *testing.T) {
 func TestFilter_Match(t *testing.T) {
 	filter := Filter{
 		WordID:    1,
-		Patterns:  []string{`(po+p)`},
+		Patterns:  []string{`*poo*oop*`},
 		CreatedOn: config.Now(),
 	}
 	require.True(t, filter.Match("super pooooooper"))
