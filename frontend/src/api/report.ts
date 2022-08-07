@@ -82,8 +82,8 @@ export const apiCreateReport = async (opts: CreateReportRequest) =>
 export const apiGetReport = async (report_id: number) =>
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET');
 
-export const apiGetReports = async (opts?: AuthorQueryFilter) =>
-    await apiCall<ReportWithAuthor[], AuthorQueryFilter>(
+export const apiGetReports = async (opts?: AuthorQueryFilter<Report>) =>
+    await apiCall<ReportWithAuthor[], AuthorQueryFilter<Report>>(
         `/api/reports`,
         'POST',
         opts

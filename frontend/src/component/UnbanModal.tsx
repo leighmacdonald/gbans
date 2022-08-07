@@ -57,7 +57,7 @@ export const UnbanModal = ({
                 <Heading>
                     <>
                         Unban Player:
-                        {bp.personaname || `${bp.steam_id}`}
+                        {bp.personaname || `${bp.target_id}`}
                     </>
                 </Heading>
                 <Stack spacing={3} alignItems={'center'}>

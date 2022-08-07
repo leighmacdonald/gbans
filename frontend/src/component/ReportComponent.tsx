@@ -264,7 +264,7 @@ export const ReportComponent = ({
                                     {
                                         label: 'Ban Author',
                                         tooltip: 'Ban Author',
-                                        sortKey: 'author_id',
+                                        sortKey: 'source_id',
                                         sortType: 'string',
                                         align: 'left',
                                         width: '150px'

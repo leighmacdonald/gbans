@@ -94,6 +94,8 @@ export const UserMessageView = ({
                 <CardContent>
                     <RenderedMarkdownBox
                         bodyHTML={renderMarkdown(message.contents)}
+                        readonly={true}
+                        setEditMode={setEditing}
                     />
                 </CardContent>
                 <Menu

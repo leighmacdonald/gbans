@@ -196,7 +196,7 @@ export interface Match extends BaseMatch {
 export const apiGetMatch = async (match_id: number): Promise<Match> =>
     await apiCall<Match>(`/api/log/${match_id}`, 'GET');
 
-export interface MatchesQueryOpts extends QueryFilter {
+export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     steam_id?: SteamID;
     server_id?: number;
     map?: string;

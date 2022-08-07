@@ -168,7 +168,7 @@ export const BanPage = (): JSX.Element => {
                                         <ListItem>
                                             <ListItemText
                                                 primary={'Author'}
-                                                secondary={ban.ban.author_id.toString()}
+                                                secondary={ban.ban.target_id.toString()}
                                             />
                                         </ListItem>
                                         <ListItem>
@@ -197,7 +197,7 @@ export const BanPage = (): JSX.Element => {
                     <Grid item xs={12}>
                         {ban && (
                             <Paper elevation={1}>
-                                <SteamIDList steam_id={ban?.ban.steam_id} />
+                                <SteamIDList steam_id={ban?.ban.target_id} />
                             </Paper>
                         )}
                     </Grid>

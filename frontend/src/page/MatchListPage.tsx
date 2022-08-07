@@ -17,7 +17,7 @@ export const MatchListPage = (): JSX.Element => {
             </Box>
             <Box>
                 <Paper>
-                    <MatchHistory limit={100} />
+                    <MatchHistory opts={{ limit: 100 }} />
                 </Paper>
             </Box>
         </Stack>

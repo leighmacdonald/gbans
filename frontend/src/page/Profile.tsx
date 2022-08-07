@@ -130,8 +130,10 @@ export const Profile = (): JSX.Element => {
                                 <Paper elevation={1}>
                                     <Heading>Match History</Heading>
                                     <MatchHistory
-                                        steam_id={profile.player.steam_id}
-                                        limit={25}
+                                        opts={{
+                                            steam_id: profile.player.steam_id,
+                                            limit: 25
+                                        }}
                                     />
                                 </Paper>
                             )}

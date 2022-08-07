@@ -6,7 +6,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
 import { Link } from 'react-router-dom';
 
-export const MatchHistory = (opts: MatchesQueryOpts) => {
+export interface MatchHistoryProps {
+    opts: MatchesQueryOpts;
+}
+
+export const MatchHistory = ({ opts }: MatchHistoryProps) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [matches, setMatches] = useState<MatchSummary[]>([]);
 
