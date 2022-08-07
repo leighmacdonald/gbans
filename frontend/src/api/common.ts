@@ -157,19 +157,19 @@ export const renderDate = (d: Date | string): string => {
     }
 };
 
-export interface QueryFilter {
+export interface QueryFilter<T> {
     offset?: number;
     limit?: number;
     desc?: boolean;
     query?: string;
-    order_by?: string;
+    order_by?: keyof T;
     deleted?: boolean;
 }
 
-export interface AuthorQueryFilter extends QueryFilter {
+export interface AuthorQueryFilter<T> extends QueryFilter<T> {
     author_id?: SteamID;
 }
 
-export interface ReportQueryFilter extends AuthorQueryFilter {
+export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {
     report_status?: ReportStatus;
 }

@@ -6,13 +6,13 @@ import {
     apiGetPersonMessages,
     apiGetReportMessages,
     apiUpdateReportMessage,
+    BanReasons,
+    IAPIBanRecordProfile,
     PermissionLevel,
     PersonConnection,
     PersonMessage,
     Report,
     ReportMessagesResponse,
-    IAPIBanRecord,
-    BanReasons,
     UserMessage
 } from '../api';
 import Grid from '@mui/material/Grid';
@@ -35,7 +35,7 @@ import { TabPanel } from './TabPanel';
 
 interface ReportComponentProps {
     report: Report;
-    banHistory: IAPIBanRecord[];
+    banHistory: IAPIBanRecordProfile[];
 }
 
 export const ReportComponent = ({
@@ -163,7 +163,16 @@ export const ReportComponent = ({
                         <TabPanel value={value} index={0}>
                             {report && (
                                 <RenderedMarkdownBox
-                                    bodyMd={renderMarkdown(report.description)}
+                                    bodyHTML={renderMarkdown(
+                                        report.description
+                                    )}
+                                    readonly={
+                                        currentUser.permission_level <
+                                        PermissionLevel.Moderator
+                                    }
+                                    setEditMode={() => {
+                                        return false;
+                                    }}
                                 />
                             )}
                         </TabPanel>

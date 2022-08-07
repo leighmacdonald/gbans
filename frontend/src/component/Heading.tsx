@@ -19,7 +19,7 @@ export const Heading: FC<HeadingProps> = ({
             align={'center'}
             padding={1}
             sx={{
-                backgroundColor: bgColor ?? theme.palette.secondary.main,
+                backgroundColor: bgColor ?? theme.palette.primary.main,
                 color: theme.palette.background.paper
             }}
         >

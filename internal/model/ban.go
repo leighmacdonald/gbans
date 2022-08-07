@@ -128,17 +128,51 @@ func (r Reason) String() string {
 	return reasonStr[r]
 }
 
+// BanGroup represents a steam group whose members are banned from connecting
+type BanGroup struct {
+	BanGroupId      int64         `json:"ban_group_id"`
+	SourceId        steamid.SID64 `json:"source_id"`
+	TargetId        steamid.GID   `json:"target_id"`
+	GroupName       string        `json:"group_name"`
+	IsEnabled       bool          `json:"is_enabled"`
+	Reason          Reason        `json:"reason"`
+	Deleted         bool          `json:"deleted"`
+	ReasonText      string        `json:"reason_text"`
+	Origin          Origin        `json:"origin"`
+	Note            string        `json:"note"`
+	UnbanReasonText string        `json:"unban_reason_text"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+}
+
+func NewBanGroup(sourceId steamid.SID64, groupId steamid.GID, name string) BanGroup {
+	t0 := config.Now()
+	return BanGroup{
+		SourceId:  sourceId,
+		TargetId:  groupId,
+		GroupName: name,
+		IsEnabled: true,
+		Deleted:   false,
+		CreatedOn: t0,
+		UpdatedOn: t0,
+	}
+}
+
 type BanASN struct {
-	BanASNId   int64
-	ASNum      int64
-	Origin     Origin
-	AuthorID   steamid.SID64
-	TargetID   steamid.SID64
-	Reason     Reason
-	ReasonText string
-	ValidUntil time.Time
-	CreatedOn  time.Time
-	UpdatedOn  time.Time
+	BanASNId        int64         `json:"ban_asn_id"`
+	ASNum           int64         `json:"as_num"`
+	Origin          Origin        `json:"origin"`
+	SourceId        steamid.SID64 `json:"source_id"`
+	TargetID        steamid.SID64 `json:"target_id"`
+	Reason          Reason        `json:"reason"`
+	Deleted         bool          `json:"deleted"`
+	ReasonText      string        `json:"reason_text"`
+	Note            string        `json:"note"`
+	UnbanReasonText string        `json:"unban_reason_text"`
+	IsEnabled       bool          `json:"is_enabled"`
+	ValidUntil      time.Time     `json:"valid_until"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
 }
 
 func NewBanASN(asn int64, authorId steamid.SID64, reason Reason, duration time.Duration) BanASN {
@@ -149,9 +183,10 @@ func NewBanASN(asn int64, authorId steamid.SID64, reason Reason, duration time.D
 	return BanASN{
 		ASNum:      asn,
 		Origin:     System,
-		AuthorID:   authorId,
+		SourceId:   authorId,
 		TargetID:   0,
 		Reason:     reason,
+		IsEnabled:  true,
 		ValidUntil: config.Now().Add(duration),
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
@@ -159,31 +194,35 @@ func NewBanASN(asn int64, authorId steamid.SID64, reason Reason, duration time.D
 }
 
 type BanNet struct {
-	NetID      int64         `db:"net_id"`
-	SteamID    steamid.SID64 `db:"steam_id"`
-	AuthorID   steamid.SID64 `db:"author_id"`
-	CIDR       *net.IPNet    `db:"cidr"`
-	Source     Origin        `db:"source"`
-	Reason     Reason        `db:"reason"`
-	ReasonText string        `db:"reason_text"`
-	CreatedOn  time.Time     `db:"created_on" json:"created_on"`
-	UpdatedOn  time.Time     `db:"updated_on" json:"updated_on"`
-	ValidUntil time.Time     `db:"valid_until"`
+	NetID           int64         `json:"net_id"`
+	CIDR            *net.IPNet    `json:"cidr"`
+	Origin          Origin        `json:"origin"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+	ReasonText      string        `json:"reason_text"`
+	ValidUntil      time.Time     `json:"valid_until"`
+	Deleted         bool          `json:"deleted"`
+	Reason          Reason        `json:"reason"`
+	Note            string        `json:"note"`
+	UnbanReasonText string        `json:"unban_reason_text"`
+	IsEnabled       bool          `json:"is_enabled"`
+	TargetId        steamid.SID64 `json:"target_id"`
+	SourceID        steamid.SID64 `json:"source_id"`
 }
 
-func NewBan(steamID steamid.SID64, authorID steamid.SID64, duration time.Duration) Ban {
+func NewBan(steamID steamid.SID64, sourceId steamid.SID64, duration time.Duration) Ban {
 	if duration.Seconds() == 0 {
 		// 100 Years
 		duration = time.Hour * 8760 * 100
 	}
 	return Ban{
-		SteamID:    steamID,
-		AuthorID:   authorID,
+		TargetId:   steamID,
+		SourceId:   sourceId,
 		BanType:    Banned,
 		Reason:     Custom,
 		ReasonText: "Unspecified",
 		Note:       "",
-		Source:     System,
+		Origin:     System,
 		ValidUntil: config.Now().Add(duration),
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
@@ -201,7 +240,7 @@ func NewBanNet(cidr string, reason Reason, duration time.Duration, source Origin
 	}
 	return BanNet{
 		CIDR:       network,
-		Source:     source,
+		Origin:     source,
 		Reason:     reason,
 		CreatedOn:  config.Now(),
 		UpdatedOn:  config.Now(),
@@ -210,35 +249,36 @@ func NewBanNet(cidr string, reason Reason, duration time.Duration, source Origin
 }
 
 func (b BanNet) String() string {
-	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", b.CIDR, b.Source, b.Reason)
+	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", b.CIDR, b.Origin, b.Reason)
 }
 
 type Ban struct {
 	BanID int64 `db:"ban_id" json:"ban_id"`
 	// SteamID is the steamID of the banned person
-	SteamID  steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	AuthorID steamid.SID64 `db:"author_id" json:"author_id,string"`
+	TargetId steamid.SID64 `json:"target_id,string"`
+	SourceId steamid.SID64 `json:"source_id,string"`
 	// Reason defines the overall ban classification
-	BanType BanType `db:"ban_type" json:"ban_type"`
+	BanType BanType `json:"ban_type"`
 	// Reason defines the overall ban classification
-	Reason Reason `db:"reason" json:"reason"`
+	Reason Reason `json:"reason"`
 	// ReasonText is returned to the client when kicked trying to join the server
-	ReasonText      string `db:"reason_text" json:"reason_text"`
-	UnbanReasonText string `db:"unban_reason_text" json:"unban_reason_text"`
+	ReasonText      string `json:"reason_text"`
+	UnbanReasonText string `json:"unban_reason_text"`
 	// Note is a supplementary note added by admins that is hidden from normal view
-	Note     string `db:"note" json:"note"`
-	Source   Origin `json:"ban_source" db:"ban_source"`
+	Note     string `json:"note"`
+	Origin   Origin `json:"origin"`
 	ReportId int    `json:"report_id"`
 	// Deleted is used for soft-deletes
-	Deleted bool `json:"deleted" db:"deleted"`
+	Deleted   bool `json:"deleted"`
+	IsEnabled bool `json:"is_enabled"`
 	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
-	ValidUntil time.Time `json:"valid_until" db:"valid_until"`
-	CreatedOn  time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn  time.Time `db:"updated_on" json:"updated_on"`
+	ValidUntil time.Time `json:"valid_until" `
+	CreatedOn  time.Time `json:"created_on"`
+	UpdatedOn  time.Time `json:"updated_on"`
 }
 
 func (b Ban) String() string {
-	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", b.SteamID.Int64(), b.Source, b.ReasonText, b.BanType)
+	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", b.TargetId.Int64(), b.Origin, b.ReasonText, b.BanType)
 }
 
 type BannedPerson struct {

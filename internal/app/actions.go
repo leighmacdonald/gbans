@@ -40,7 +40,7 @@ func Unban(ctx context.Context, database store.Store, target steamid.SID64, reas
 	log.Infof("Player unbanned: %v", target)
 	go func() {
 		unbanNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.SteamID),
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.TargetId),
 			Type:  discordgo.EmbedTypeRich,
 			Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
 			Color: int(green),
@@ -115,14 +115,14 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 	if duration.Seconds() != 0 {
 		until = config.Now().Add(duration)
 	}
-	ban.SteamID = targetSid64
-	ban.AuthorID = authorSid64
+	ban.TargetId = targetSid64
+	ban.SourceId = authorSid64
 	ban.BanType = opts.banType
 	ban.Reason = opts.reason
 	ban.ReasonText = opts.reasonText
 	ban.Note = opts.modNote
 	ban.ValidUntil = until
-	ban.Source = opts.origin
+	ban.Origin = opts.origin
 	ban.ReportId = opts.reportId
 	ban.CreatedOn = config.Now()
 	ban.UpdatedOn = config.Now()
@@ -132,12 +132,12 @@ func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban
 	}
 	go func(payload chan discordPayload) {
 		banNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", ban.SteamID),
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", ban.TargetId),
 			Type:  discordgo.EmbedTypeRich,
 			Title: fmt.Sprintf("User Banned (#%d)", ban.BanID),
 			Color: 10038562,
 		}
-		addFieldsSteamID(banNotice, ban.SteamID)
+		addFieldsSteamID(banNotice, ban.TargetId)
 		expIn := "Permanent"
 		expAt := "Permanent"
 		if ban.ValidUntil.Year()-time.Now().Year() < 5 {
@@ -197,7 +197,7 @@ func BanASN(database store.Store, opts banASNOpts, banASN *model.BanASN) error {
 	}
 	banASN.Origin = opts.origin
 	banASN.TargetID = targetSid64
-	banASN.AuthorID = authorSid64
+	banASN.SourceId = authorSid64
 	banASN.ValidUntil = until
 	banASN.Reason = opts.reason
 	banASN.ASNum = opts.asNum
@@ -239,7 +239,7 @@ func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, 
 		return errors.Wrapf(errParseCIDR, "Failed to parse CIDR address")
 	}
 	// TODO
-	//_, err2 := store.GetBanNet(ctx, net.ParseIP(cidrStr))
+	//_, err2 := store.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
 	//if err2 != nil && err2 != store.ErrNoResult {
 	//	return "", errCommandFailed
 	//}
@@ -247,10 +247,10 @@ func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, 
 	//	return "", consts.ErrDuplicateBan
 	//}
 
-	banNet.SteamID = targetSid64
-	banNet.AuthorID = authorSid64
+	banNet.TargetId = targetSid64
+	banNet.SourceID = authorSid64
 	banNet.CIDR = network
-	banNet.Source = model.System
+	banNet.Origin = model.System
 	banNet.Reason = opts.reason
 	banNet.CreatedOn = config.Now()
 	banNet.UpdatedOn = config.Now()

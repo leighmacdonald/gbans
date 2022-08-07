@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { DataTable } from '../component/DataTable';
-import { apiGetBans, Ban } from '../api';
+import { apiGetBansSteam, IAPIBanRecord } from '../api';
 
 export const Bans = (): JSX.Element => {
-    const [bans, setBans] = useState<Ban[]>([]);
+    const [bans, setBans] = useState<IAPIBanRecord[]>([]);
 
     useEffect(() => {
-        apiGetBans().then((b) => {
+        apiGetBansSteam().then((b) => {
             setBans(b);
         });
     }, []);

@@ -443,7 +443,7 @@ func (web *web) onPostServerCheck(database store.Store) gin.HandlerFunc {
 			log.Errorf("Failed to add conn history: %v", errAddHist)
 		}
 		// Check IP first
-		banNet, errGetBanNet := database.GetBanNet(responseCtx, request.IP)
+		banNet, errGetBanNet := database.GetBanNetByAddress(responseCtx, request.IP)
 		if errGetBanNet != nil {
 			responseErr(ctx, http.StatusInternalServerError, checkResponse{
 				BanType: model.Unknown,
@@ -783,20 +783,74 @@ func (web *web) onAPIGetBanByID(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIGetBans(database store.Store) gin.HandlerFunc {
+func (web *web) onAPIGetBansSteam(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var queryFilter store.BansQueryFilter
 		if errBind := ctx.BindJSON(&queryFilter); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		bans, errBans := database.GetBans(ctx, &queryFilter)
+		bans, errBans := database.GetBansSteam(ctx, &queryFilter)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans: %v", errBans)
 			return
 		}
 		responseOK(ctx, http.StatusOK, bans)
+	}
+}
+
+func (web *web) onAPIGetBansCIDR(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var queryFilter store.BansQueryFilter
+		if errBind := ctx.BindJSON(&queryFilter); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		// TODO filters
+		bans, errBans := database.GetBansNet(ctx)
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch bans: %v", errBans)
+			return
+		}
+		responseOK(ctx, http.StatusOK, bans)
+	}
+}
+
+func (web *web) onAPIGetBansGroup(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var queryFilter store.BansQueryFilter
+		if errBind := ctx.BindJSON(&queryFilter); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		// TODO filters
+		banGroups, errBans := database.GetBanGroups(ctx)
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch banGroups: %v", errBans)
+			return
+		}
+		responseOK(ctx, http.StatusOK, banGroups)
+	}
+}
+
+func (web *web) onAPIGetBansASN(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var queryFilter store.BansQueryFilter
+		if errBind := ctx.BindJSON(&queryFilter); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		// TODO filters
+		banASN, errBans := database.GetBansASN(ctx)
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch banASN: %v", errBans)
+			return
+		}
+		responseOK(ctx, http.StatusOK, banASN)
 	}
 }
 func (web *web) onAPIGetServers(database store.ServerStore) gin.HandlerFunc {
@@ -1575,7 +1629,7 @@ func (web *web) onAPIGetBanMessages(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.SteamID, banPerson.Ban.AuthorID}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetId, banPerson.Ban.SourceId}, model.PModerator) {
 			return
 		}
 		banMessages, errGetBanMessages := database.GetBanMessages(ctx, banId)

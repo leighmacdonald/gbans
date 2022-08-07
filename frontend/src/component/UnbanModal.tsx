@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteBan, IAPIBanRecord } from '../api';
+import { apiDeleteBan, IAPIBanRecordProfile } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
@@ -8,7 +8,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 
 export interface UnbanModalProps<Ban> extends ConfirmationModalProps<Ban> {
-    banRecord: IAPIBanRecord;
+    banRecord: IAPIBanRecordProfile;
 }
 
 export const UnbanModal = ({
@@ -17,7 +17,7 @@ export const UnbanModal = ({
     onSuccess,
     banRecord
 }: UnbanModalProps<null>) => {
-    const [bp] = useState<IAPIBanRecord>(banRecord);
+    const [bp] = useState<IAPIBanRecordProfile>(banRecord);
     const [reasonText, setReasonText] = useState<string>('');
 
     const { sendFlash } = useUserFlashCtx();

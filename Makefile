@@ -50,7 +50,6 @@ run:
 sourcemod:
 	@./sourcemod/build/package/addons/sourcemod/scripting/spcomp -i./sourcemod/include sourcemod/gbans.sp -ogbans.smx
 
-
 install:
 	@go install $(GO_FLAGS) ./...
 
@@ -78,10 +77,14 @@ clean:
 	@go clean $(GO_FLAGS) -i
 
 docker_test_postgres:
-	@docker-compose -f docker/docker-compose-test.yml up --exit-code-from postgres --remove-orphans postgres-test
+	@docker-compose -f docker/docker-compose-test.yml down
+	@docker-compose -f docker/docker-compose-test.yml up --exit-code-from postgres-test --remove-orphans postgres-test
 
 docker_test:
-	@docker-compose -f docker/docker-compose-test.yml up --renew-anon-volumes --exit-code-from gbans-test --remove-orphans --build gbans-test
+	@docker-compose -f docker/docker-compose-test.yml pull
+	@docker-compose -f docker/docker-compose-test.yml down
+	@docker-compose -f docker/docker-compose-test.yml build --no-cache
+	@docker-compose -f docker/docker-compose-test.yml up --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
@@ -94,6 +97,9 @@ image_tag:
 
 docker_run:
 	docker run -it --rm -v "$(pwd)"/gbans.yml:/app/gbans.yml:ro leighmacdonald/gbans:latest
+
+up_postgres:
+	docker-compose -f docker/docker-compose.yml up -d postgres
 
 up:
 	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans

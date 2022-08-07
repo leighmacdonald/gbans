@@ -8,7 +8,7 @@ import { ProfileSelectionInput } from './ProfileSelectionInput';
 import Stack from '@mui/material/Stack';
 import {
     apiCreateBan,
-    Ban,
+    IAPIBanRecord,
     BanPayload,
     BanReason,
     BanReasons,
@@ -83,7 +83,7 @@ export const BanModal = ({
     reportId,
     onSuccess,
     steamId
-}: BanModalProps<Ban>) => {
+}: BanModalProps<IAPIBanRecord>) => {
     const [targetSteamId, setTargetSteamId] = useState<SteamID>(
         steamId ?? BigInt(0)
     );

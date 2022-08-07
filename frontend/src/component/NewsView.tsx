@@ -6,6 +6,7 @@ import { marked } from 'marked';
 import Paper from '@mui/material/Paper';
 import { Pagination } from '@mui/material';
 import { Heading } from './Heading';
+import Box from '@mui/material/Box';
 export interface NewsViewProps {
     itemsPerPage: number;
 }
@@ -26,13 +27,10 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
                 ?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage)
                 .map((article) => {
                     return (
-                        <Paper
-                            elevation={1}
-                            key={`news_` + article.news_id}
-                            sx={{ padding: 3 }}
-                        >
+                        <Paper elevation={1} key={`news_` + article.news_id}>
                             <Heading>{article.title}</Heading>
-                            <div
+                            <Box
+                                padding={2}
                                 className={'content'}
                                 dangerouslySetInnerHTML={{
                                     __html: marked.parse(article.body_md)

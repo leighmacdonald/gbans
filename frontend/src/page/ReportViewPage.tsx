@@ -8,12 +8,12 @@ import { ReportComponent } from '../component/ReportComponent';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ApiException,
-    apiGetBans,
+    apiGetBansSteam,
     apiGetReport,
     apiReportSetState,
     BanReasons,
     BanType,
-    IAPIBanRecord,
+    IAPIBanRecordProfile,
     PermissionLevel,
     ReportStatus,
     reportStatusColour,
@@ -41,14 +41,16 @@ import { Nullable } from '../util/types';
 import { BanModal } from '../component/BanModal';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import GavelIcon from '@mui/icons-material/Gavel';
+
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
     const theme = useTheme();
     const id = parseInt(report_id || '');
     const [report, setReport] = useState<ReportWithAuthor>();
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
-    const [banHistory, setBanHistory] = useState<IAPIBanRecord[]>([]);
-    const [currentBan, setCurrentBan] = useState<Nullable<IAPIBanRecord>>();
+    const [banHistory, setBanHistory] = useState<IAPIBanRecordProfile[]>([]);
+    const [currentBan, setCurrentBan] =
+        useState<Nullable<IAPIBanRecordProfile>>();
     const [banModalOpen, setBanModalOpen] = useState<boolean>(false);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
@@ -80,7 +82,7 @@ export const ReportViewPage = (): JSX.Element => {
         if (!report?.report.reported_id) {
             return;
         }
-        apiGetBans({
+        apiGetBansSteam({
             limit: 100,
             deleted: true,
             steam_id: report?.report.reported_id
@@ -113,7 +115,7 @@ export const ReportViewPage = (): JSX.Element => {
             });
     }, [id, report?.report.report_status, sendFlash, stateAction]);
 
-    const renderBan = (ban: IAPIBanRecord) => {
+    const renderBan = (ban: IAPIBanRecordProfile) => {
         switch (ban.ban_type) {
             case BanType.Banned:
                 return (

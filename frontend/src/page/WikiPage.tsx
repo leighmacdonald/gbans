@@ -12,15 +12,14 @@ import {
     renderMarkdown
 } from '../api/wiki';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { PermissionLevel } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import Paper from '@mui/material/Paper';
-import EditIcon from '@mui/icons-material/Edit';
 import { MDEditor } from '../component/MDEditor';
 import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
 import { Heading } from '../component/Heading';
+import Box from '@mui/material/Box';
 
 const defaultPage: Page = {
     slug: '',
@@ -95,24 +94,18 @@ export const WikiPage = (): JSX.Element => {
             {!loading && !editMode && page.revision > 0 && (
                 <Grid item xs={12}>
                     <Paper elevation={1}>
-                        <Stack padding={3}>
+                        <Stack>
                             <Heading>{page.slug}</Heading>
-                            <RenderedMarkdownBox bodyMd={bodyHTML} />
-                            {currentUser.permission_level >=
-                                PermissionLevel.Moderator && (
-                                <ButtonGroup>
-                                    <Button
-                                        variant={'contained'}
-                                        color={'primary'}
-                                        onClick={() => {
-                                            setEditMode(true);
-                                        }}
-                                        startIcon={<EditIcon />}
-                                    >
-                                        Edit Page
-                                    </Button>
-                                </ButtonGroup>
-                            )}
+                            <Box padding={2}>
+                                <RenderedMarkdownBox
+                                    bodyHTML={bodyHTML}
+                                    readonly={
+                                        currentUser.permission_level <
+                                        PermissionLevel.Moderator
+                                    }
+                                    setEditMode={setEditMode}
+                                />
+                            </Box>
                         </Stack>
                     </Paper>
                 </Grid>

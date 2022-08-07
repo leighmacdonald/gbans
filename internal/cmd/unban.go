@@ -72,7 +72,7 @@ var unbanCIDRCmd = &cobra.Command{
 		if errParse != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to parse cidr: %v", errParse)
 		}
-		banNets, errGetBanNet := database.GetBanNet(ctx, ip)
+		banNets, errGetBanNet := database.GetBanNetByAddress(ctx, ip)
 		if errGetBanNet != nil {
 			if errors.Is(errGetBanNet, store.ErrNoResult) {
 				log.WithFields(log.Fields{"cidr": cidr}).Fatalf("No intersecting cidr found")

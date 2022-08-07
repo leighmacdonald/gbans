@@ -93,7 +93,7 @@ export const UserMessageView = ({
                 />
                 <CardContent>
                     <RenderedMarkdownBox
-                        bodyMd={renderMarkdown(message.contents)}
+                        bodyHTML={renderMarkdown(message.contents)}
                     />
                 </CardContent>
                 <Menu

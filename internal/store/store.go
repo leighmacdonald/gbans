@@ -50,19 +50,26 @@ type BanStore interface {
 	GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error
 	SaveBan(ctx context.Context, ban *model.Ban) error
 	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
-	GetBans(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
+	GetBansSteam(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
 	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
 
-	GetBanNet(ctx context.Context, ip net.IP) ([]model.BanNet, error)
+	GetBansNet(ctx context.Context) ([]model.BanNet, error)
+	GetBanNetByAddress(ctx context.Context, ip net.IP) ([]model.BanNet, error)
 	SaveBanNet(ctx context.Context, banNet *model.BanNet) error
 	DropBanNet(ctx context.Context, ban *model.BanNet) error
 	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
 
+	GetBansASN(ctx context.Context) ([]model.BanASN, error)
 	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
 	SaveBanASN(ctx context.Context, banASN *model.BanASN) error
 	DropBanASN(ctx context.Context, ban *model.BanASN) error
 	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
+
+	GetBanGroups(ctx context.Context) ([]model.BanGroup, error)
+	GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *model.BanGroup) error
+	SaveBanGroup(ctx context.Context, banGroup *model.BanGroup) error
+	DropBanGroup(ctx context.Context, banGroup *model.BanGroup) error
 
 	SaveBanMessage(ctx context.Context, message *model.UserMessage) error
 	DropBanMessage(ctx context.Context, message *model.UserMessage) error

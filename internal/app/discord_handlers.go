@@ -168,7 +168,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 		return errBan
 	}
 	response := respOk(r, "Player muted successfully")
-	addFieldsSteamID(response, ban.SteamID)
+	addFieldsSteamID(response, ban.TargetId)
 	return nil
 }
 
@@ -313,7 +313,7 @@ func createDiscordBanEmbed(ban model.Ban, response *botResponse) *discordgo.Mess
 	if ban.ReasonText != "" {
 		addField(embed, "Reason", ban.ReasonText)
 	}
-	addFieldsSteamID(embed, ban.SteamID)
+	addFieldsSteamID(embed, ban.TargetId)
 	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
 		addField(embed, "Expires In", "Permanent")
 		addField(embed, "Expires At", "Permanent")
@@ -342,7 +342,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 			return errCommandFailed
 		}
 	}
-	bannedNets, errGetBanNet := bot.database.GetBanNet(ctx, player.IPAddr)
+	bannedNets, errGetBanNet := bot.database.GetBanNetByAddress(ctx, player.IPAddr)
 	if errGetBanNet != nil {
 		if !errors.Is(errGetBanNet, store.ErrNoResult) {
 			log.Errorf("Failed to get bannets by addr: %v", errGetBanNet)
@@ -372,8 +372,8 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		}
 		expiry = ban.Ban.ValidUntil
 		createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
-		if ban.Ban.AuthorID > 0 {
-			if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.database, ban.Ban.AuthorID, "", &authorProfile); errGetProfile != nil {
+		if ban.Ban.SourceId > 0 {
+			if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.database, ban.Ban.SourceId, "", &authorProfile); errGetProfile != nil {
 				log.Errorf("Failed to load author for ban: %v", errGetProfile)
 			} else {
 				author = &discordgo.MessageEmbedAuthor{

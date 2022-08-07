@@ -146,7 +146,10 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
-	modRoute.POST("/api/bans", web.onAPIGetBans(database))
+	modRoute.POST("/api/bans_steam", web.onAPIGetBansSteam(database))
+	modRoute.POST("/api/bans_cidr", web.onAPIGetBansCIDR(database))
+	modRoute.POST("/api/bans_asn", web.onAPIGetBansASN(database))
+	modRoute.POST("/api/bans_group", web.onAPIGetBansGroup(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))

@@ -100,7 +100,7 @@ func TestBanNet(t *testing.T) {
 	n1, _ := model.NewBanNet(fmt.Sprintf("%s/32", rip), model.Custom, time.Hour*100, model.System)
 	require.NoError(t, testDatabase.SaveBanNet(ctx, &n1))
 	require.Less(t, int64(0), n1.NetID)
-	banNet, errGetBanNet := testDatabase.GetBanNet(ctx, net.ParseIP(rip))
+	banNet, errGetBanNet := testDatabase.GetBanNetByAddress(ctx, net.ParseIP(rip))
 	require.NoError(t, errGetBanNet)
 	banNetEqual(banNet[0], n1)
 	require.Equal(t, banNet[0].Reason, n1.Reason)
@@ -109,11 +109,11 @@ func TestBanNet(t *testing.T) {
 func TestBan(t *testing.T) {
 	banEqual := func(ban1, ban2 *model.Ban) {
 		require.Equal(t, ban1.BanID, ban2.BanID)
-		require.Equal(t, ban1.AuthorID, ban2.AuthorID)
+		require.Equal(t, ban1.SourceId, ban2.SourceId)
 		require.Equal(t, ban1.Reason, ban2.Reason)
 		require.Equal(t, ban1.ReasonText, ban2.ReasonText)
 		require.Equal(t, ban1.BanType, ban2.BanType)
-		require.Equal(t, ban1.Source, ban2.Source)
+		require.Equal(t, ban1.Origin, ban2.Origin)
 		require.Equal(t, ban1.Note, ban2.Note)
 		require.True(t, ban2.ValidUntil.Unix() > 0)
 		require.Equal(t, ban1.ValidUntil.Unix(), ban2.ValidUntil.Unix())
@@ -131,11 +131,11 @@ func TestBan(t *testing.T) {
 	b1duplicate := model.NewBan(76561198044052046, 76561198003911389, time.Hour*24)
 	require.True(t, errors.Is(testDatabase.SaveBan(ctx, &b1duplicate), store.ErrDuplicate), "Was able to add duplicate ban")
 
-	b1Fetched.Ban.AuthorID = 76561198057999536
+	b1Fetched.Ban.SourceId = 76561198057999536
 	b1Fetched.Ban.ReasonText = "test reason"
 	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
 	b1Fetched.Ban.Note = "test note"
-	b1Fetched.Ban.Source = model.Web
+	b1Fetched.Ban.Origin = model.Web
 	require.NoError(t, testDatabase.SaveBan(ctx, &b1Fetched.Ban), "Failed to edit ban")
 	b1FetchedUpdated := model.NewBannedPerson()
 	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, false, &b1FetchedUpdated))
@@ -143,7 +143,7 @@ func TestBan(t *testing.T) {
 
 	require.NoError(t, testDatabase.DropBan(ctx, &b1, false), "Failed to drop ban")
 	vb := model.NewBannedPerson()
-	errMissing := testDatabase.GetBanBySteamID(ctx, b1.SteamID, false, &vb)
+	errMissing := testDatabase.GetBanBySteamID(ctx, b1.TargetId, false, &vb)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, store.ErrNoResult))
 }
@@ -307,4 +307,17 @@ func TestBanASN(t *testing.T) {
 	require.NoError(t, testDatabase.DropBanASN(context.TODO(), &f1))
 	var d1 model.BanASN
 	require.Error(t, testDatabase.GetBanASN(context.TODO(), banASN.ASNum, &d1))
+}
+
+func TestBanGroup(t *testing.T) {
+	bgA := model.NewBanGroup(steamid.SID64(76561198083950960),
+		steamid.GID(int64(103000000000000000)+int64(rand.Int())), golib.RandomString(10))
+	require.NoError(t, testDatabase.SaveBanGroup(context.TODO(), &bgA))
+	require.True(t, bgA.BanGroupId > 0)
+	var bgB model.BanGroup
+	require.NoError(t, testDatabase.GetBanGroup(context.TODO(), bgA.TargetId, &bgB))
+	require.EqualValues(t, bgA.BanGroupId, bgB.BanGroupId)
+	require.NoError(t, testDatabase.DropBanGroup(context.TODO(), &bgA))
+	var bgDeleted model.BanGroup
+	require.EqualError(t, store.ErrNoResult, testDatabase.GetBanGroup(context.TODO(), bgA.TargetId, &bgDeleted).Error())
 }

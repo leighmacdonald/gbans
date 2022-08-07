@@ -257,7 +257,7 @@ func (database *pgStore) Import(ctx context.Context, root string) error {
 		Until      int    `json:"until"`
 		CreatedOn  int    `json:"created_on"`
 		UpdatedOn  int    `json:"updated_on"`
-		BanSource  int    `json:"ban_source"`
+		BanSource  int    `json:"source"`
 	}
 
 	return filepath.WalkDir(root, func(p string, d fs.DirEntry, e error) error {
@@ -302,7 +302,7 @@ func (database *pgStore) Import(ctx context.Context, root string) error {
 				newBan.ReasonText = imported.ReasonText
 				newBan.CreatedOn = time.Unix(int64(imported.CreatedOn), 0)
 				newBan.UpdatedOn = time.Unix(int64(imported.UpdatedOn), 0)
-				newBan.Source = model.System
+				newBan.Origin = model.System
 				if errSaveBan := database.SaveBan(ctx, &newBan); errSaveBan != nil {
 					return errSaveBan
 				}
