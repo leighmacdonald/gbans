@@ -30,6 +30,43 @@ export enum BanReason {
     BotHost = 12
 }
 
+export const ip2int = (ip: string): number =>
+    ip
+        .split('.')
+        .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
+
+export enum Duration {
+    dur15m = '15m',
+    dur6h = '6h',
+    dur12h = '12h',
+    dur24h = '24h',
+    dur48h = '48h',
+    dur72h = '72h',
+    dur1w = '1w',
+    dur2w = '2w',
+    dur1M = '1M',
+    dur6M = '6M',
+    dur1y = '1y',
+    durInf = '0',
+    durCustom = 'custom'
+}
+
+export const Durations = [
+    Duration.dur15m,
+    Duration.dur6h,
+    Duration.dur12h,
+    Duration.dur24h,
+    Duration.dur48h,
+    Duration.dur72h,
+    Duration.dur1w,
+    Duration.dur2w,
+    Duration.dur1M,
+    Duration.dur6M,
+    Duration.dur1y,
+    Duration.durInf,
+    Duration.durCustom
+];
+
 export const BanReasons: Record<BanReason, string> = {
     [BanReason.Custom]: 'Custom',
     [BanReason.External]: '3rd party',
@@ -131,23 +168,38 @@ export interface BansQueryFilter extends QueryFilter<IAPIBanRecordProfile> {
 export interface UnbanPayload {
     unban_reason_text: string;
 }
-
-export interface BanPayload {
-    steam_id: SteamID;
+export interface BanBasePayload {
     duration: string;
     ban_type: BanType;
     reason: number;
     reason_text: string;
     note: string;
-    network: string;
+}
+
+export interface BanPayloadSteam extends BanBasePayload {
+    target_id: SteamID;
     report_id?: number;
+}
+
+export interface BanPayloadCIDR extends BanBasePayload {
+    target_id: SteamID;
+    network: string;
+}
+
+export interface BanPayloadASN extends BanBasePayload {
+    as_num: number;
+}
+
+export interface BanPayloadGroup extends BanBasePayload {
+    target_id?: SteamID;
+    group_id: bigint;
 }
 
 export const apiGetBansSteam = async (
     opts?: BansQueryFilter
 ): Promise<IAPIBanRecordProfile[]> => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
-        `/api/bans_steam`,
+        `/api/bans/steam`,
         'POST',
         opts ?? {}
     );
@@ -184,11 +236,36 @@ export const apiGetBansSteam = async (
     });
 };
 
-export const apiGetBan = async (ban_id: number): Promise<BannedPerson> =>
-    await apiCall<BannedPerson>(`/api/ban/${ban_id}`, 'GET');
+export const apiGetBanSteam = async (ban_id: number): Promise<BannedPerson> =>
+    await apiCall<BannedPerson>(`/api/bans/steam/${ban_id}`, 'GET');
 
-export const apiCreateBan = async (p: BanPayload): Promise<IAPIBanRecord> =>
-    await apiCall<IAPIBanRecord, BanPayload>(`/api/ban`, 'POST', p);
+export const apiCreateBanSteam = async (
+    p: BanPayloadSteam
+): Promise<IAPIBanRecord> =>
+    await apiCall<IAPIBanRecord, BanPayloadSteam>(`/api/bans/steam`, 'POST', p);
+
+export const apiCreateBanCIDR = async (
+    p: BanPayloadCIDR
+): Promise<IAPIBanCIDRRecord> =>
+    await apiCall<IAPIBanCIDRRecord, BanPayloadCIDR>(
+        `/api/bans/cidr`,
+        'POST',
+        p
+    );
+
+export const apiCreateBanASN = async (
+    p: BanPayloadASN
+): Promise<IAPIBanASNRecord> =>
+    await apiCall<IAPIBanASNRecord, BanPayloadASN>(`/api/bans/asn`, 'POST', p);
+
+export const apiCreateBanGroup = async (
+    p: BanPayloadGroup
+): Promise<IAPIBanGroupRecord> =>
+    await apiCall<IAPIBanGroupRecord, BanPayloadGroup>(
+        `/api/bans/group`,
+        'POST',
+        p
+    );
 
 export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
     await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, 'DELETE', {

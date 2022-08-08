@@ -24,7 +24,7 @@ import UndoIcon from '@mui/icons-material/Undo';
 import EditIcon from '@mui/icons-material/Edit';
 import Tooltip from '@mui/material/Tooltip';
 import GavelIcon from '@mui/icons-material/Gavel';
-import { BanModal } from '../component/BanModal';
+import { BanSteamModal } from '../component/BanSteamModal';
 import Box from '@mui/material/Box';
 import { UnbanModal } from '../component/UnbanModal';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -33,6 +33,9 @@ import Tab from '@mui/material/Tab';
 import useTheme from '@mui/material/styles/useTheme';
 import { TabPanel } from '../component/TabPanel';
 import Paper from '@mui/material/Paper';
+import { BanCIDRModal } from '../component/BanCIDRModal';
+import { BanASNModal } from '../component/BanASNModal';
+import { BanGroupModal } from '../component/BanGroupModal';
 
 export const AdminBan = (): JSX.Element => {
     const theme = useTheme();
@@ -42,6 +45,9 @@ export const AdminBan = (): JSX.Element => {
     const [banASNs, setBanASNs] = useState<IAPIBanASNRecord[]>([]);
     const [currentBan, setCurrentBan] = useState<IAPIBanRecordProfile>();
     const [banSteamModalOpen, setBanSteamModalOpen] = useState(false);
+    const [banCIDRModalOpen, setBanCIDRModalOpen] = useState(false);
+    const [banASNModalOpen, setBanASNModalOpen] = useState(false);
+    const [banGroupModalOpen, setBanGroupModalOpen] = useState(false);
     const [unbanModalOpen, setUnbanModalOpen] = useState(false);
     const [value, setValue] = React.useState<number>(0);
     const navigate = useNavigate();
@@ -85,12 +91,36 @@ export const AdminBan = (): JSX.Element => {
 
     return (
         <Box marginTop={2}>
-            <BanModal
+            <BanSteamModal
                 open={banSteamModalOpen}
                 setOpen={setBanSteamModalOpen}
                 onSuccess={() => {
                     loadBansSteam();
                     setBanSteamModalOpen(false);
+                }}
+            />
+            <BanCIDRModal
+                open={banCIDRModalOpen}
+                setOpen={setBanCIDRModalOpen}
+                onSuccess={() => {
+                    loadBansCIDR();
+                    setBanCIDRModalOpen(false);
+                }}
+            />
+            <BanASNModal
+                open={banASNModalOpen}
+                setOpen={setBanASNModalOpen}
+                onSuccess={() => {
+                    loadBansASN();
+                    setBanASNModalOpen(false);
+                }}
+            />
+            <BanGroupModal
+                open={banGroupModalOpen}
+                setOpen={setBanGroupModalOpen}
+                onSuccess={() => {
+                    loadBansGroup();
+                    setBanGroupModalOpen(false);
                 }}
             />
             {currentBan && (
@@ -111,13 +141,47 @@ export const AdminBan = (): JSX.Element => {
             <ButtonGroup>
                 <Button
                     variant={'contained'}
-                    color={'error'}
+                    color={'primary'}
                     startIcon={<GavelIcon />}
+                    sx={{ marginRight: 2 }}
                     onClick={() => {
                         setBanSteamModalOpen(true);
                     }}
                 >
-                    Ban Player
+                    Steam
+                </Button>
+                <Button
+                    variant={'contained'}
+                    color={'primary'}
+                    startIcon={<GavelIcon />}
+                    sx={{ marginRight: 2 }}
+                    onClick={() => {
+                        setBanCIDRModalOpen(true);
+                    }}
+                >
+                    CIDR
+                </Button>
+                <Button
+                    variant={'contained'}
+                    color={'primary'}
+                    startIcon={<GavelIcon />}
+                    sx={{ marginRight: 2 }}
+                    onClick={() => {
+                        setBanASNModalOpen(true);
+                    }}
+                >
+                    ASN
+                </Button>
+                <Button
+                    variant={'contained'}
+                    color={'primary'}
+                    startIcon={<GavelIcon />}
+                    sx={{ marginRight: 2 }}
+                    onClick={() => {
+                        setBanASNModalOpen(true);
+                    }}
+                >
+                    Group
                 </Button>
             </ButtonGroup>
             <Paper>

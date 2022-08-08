@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import {
     apiCreateBanMessage,
     apiDeleteBanMessage,
-    apiGetBan,
+    apiGetBanSteam,
     apiGetBanMessages,
     apiUpdateBanMessage,
     AuthorMessage,
@@ -40,7 +40,7 @@ export const BanPage = (): JSX.Element => {
         if (id <= 0) {
             return;
         }
-        apiGetBan(id)
+        apiGetBanSteam(id)
             .then((banPerson) => {
                 if (banPerson) {
                     setBan(banPerson);

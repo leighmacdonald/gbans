@@ -7,6 +7,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { Dialog } from '@mui/material';
 
 export interface ConfirmationModalProps<T> {
+    initialValue?: T;
     children?: JSX.Element;
     onSuccess?: (resp: T) => void;
     onCancel?: () => void;

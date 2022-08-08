@@ -38,7 +38,7 @@ import { SteamIDList } from '../component/SteamIDList';
 import useTheme from '@mui/material/styles/useTheme';
 import Typography from '@mui/material/Typography';
 import { Nullable } from '../util/types';
-import { BanModal } from '../component/BanModal';
+import { BanSteamModal } from '../component/BanSteamModal';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import GavelIcon from '@mui/icons-material/Gavel';
 
@@ -326,7 +326,7 @@ export const ReportViewPage = (): JSX.Element => {
                         </>
                     )}
                     {report?.subject.steam_id ? (
-                        <BanModal
+                        <BanSteamModal
                             reportId={report.report.report_id}
                             open={banModalOpen}
                             setOpen={setBanModalOpen}

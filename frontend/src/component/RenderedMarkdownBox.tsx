@@ -16,7 +16,7 @@ export const RenderedMarkdownBox = ({
     setEditMode
 }: MarkdownBoxProps) => {
     return (
-        <Box>
+        <Box padding={2}>
             <Box
                 sx={(theme) => {
                     return {

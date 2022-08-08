@@ -329,22 +329,24 @@ export const MatchPage = (): JSX.Element => {
     }, [match?.TeamSums]);
 
     return (
-        <Stack spacing={3} marginTop={3}>
-            <Heading>
-                {`Logs #${match?.MatchID} - ${match?.Title} - ${match?.MapName}`}
-            </Heading>
+        <Stack marginTop={3}>
             {!loading && match?.MatchID && (
-                <>
+                <Stack spacing={2}>
                     <Paper>
+                        <Heading>
+                            {`Logs #${match?.MatchID} - ${match?.Title} - ${match?.MapName}`}
+                        </Heading>
                         <DataTable {...playerTableDef} />
                     </Paper>
                     <Paper>
+                        <Heading>Healing</Heading>
                         <DataTable {...medicTableDef} />
                     </Paper>
                     <Paper>
+                        <Heading>Team Scores</Heading>
                         <DataTable {...teamTableDef} />
                     </Paper>
-                </>
+                </Stack>
             )}
             {loading && <LoadingSpinner />}
         </Stack>
