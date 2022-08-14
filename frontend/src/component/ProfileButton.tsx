@@ -1,4 +1,4 @@
-import { Person, SteamID, Team } from '../api';
+import { Person, Team } from '../api';
 import Avatar from '@mui/material/Avatar';
 import React from 'react';
 import Typography from '@mui/material/Typography';
@@ -13,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import { createExternalLinks, to } from '../util/history';
 import Box from '@mui/material/Box';
+import SteamID from 'steamid';
 
 export const teamColour = (team: Team): string => {
     switch (team) {

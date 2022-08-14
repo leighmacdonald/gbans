@@ -9,11 +9,10 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 
 export interface SteamIDListProps {
-    steam_id: bigint;
+    steam_id: SteamID;
 }
 
 export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
-    const sid = new SteamID(steam_id);
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
     return (
@@ -21,9 +20,9 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
             <Heading>Steam ID</Heading>
             <List dense={true}>
                 {[
-                    [sid.getSteamID64(), 'steam64'],
-                    [sid.getSteam3RenderedID(), 'steam3'],
-                    [sid.getSteam2RenderedID(true), 'steam2']
+                    [steam_id.getSteamID64(), 'steam64'],
+                    [steam_id.getSteam3RenderedID(), 'steam3'],
+                    [steam_id.getSteam2RenderedID(true), 'steam2']
                 ].map((s) => {
                     return (
                         <ListItem

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -9,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"net"
 	"time"
 )
 
@@ -40,7 +40,7 @@ var banSteamCmd = &cobra.Command{
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
-			log.Fatal("Ban reason cannot be empty")
+			log.Fatal("BanSteam reason cannot be empty")
 		}
 		if duration == "" {
 			log.Fatal("Duration cannot be empty")
@@ -55,15 +55,17 @@ var banSteamCmd = &cobra.Command{
 		if !sid.Valid() {
 			log.Fatalf("Invalid steam id")
 		}
-		dur, errDur := config.ParseDuration(duration)
-		if errDur != nil {
-			log.Fatalf("Invalid duration: %v", errDur)
+		var banSteam model.BanSteam
+		if errOpts := app.NewBanSteam(
+			model.StringSID("0"), model.StringSID(sid.String()),
+			model.Duration(duration), model.Cheating, "", "",
+			model.System, 0, &banSteam); errOpts != nil {
+			log.Fatalf("Invalid option: %v", errOpts)
 		}
-		ban := model.NewBan(sid, config.General.Owner, dur)
-		if errSaveBan := db.SaveBan(ctx, &ban); errSaveBan != nil {
+		if errSaveBan := db.SaveBan(ctx, &banSteam); errSaveBan != nil {
 			log.WithFields(log.Fields{"sid": sid.String()}).Fatalf("Could not create create ban: %v", errSaveBan)
 		}
-		log.WithFields(log.Fields{"reason": reason, "until": ban.ValidUntil.String()}).
+		log.WithFields(log.Fields{"reason": reason, "until": banSteam.ValidUntil.String()}).
 			Info("Added ban successfully")
 	},
 }
@@ -81,7 +83,7 @@ var banCIDRCmd = &cobra.Command{
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
-			log.Fatal("Ban reason cannot be empty")
+			log.Fatal("BanSteam reason cannot be empty")
 		}
 		if duration == "" {
 			log.Fatal("Duration cannot be empty")
@@ -89,19 +91,17 @@ var banCIDRCmd = &cobra.Command{
 		if cidr == "" {
 			log.Fatal("CIDR cannot be empty")
 		}
-		_, _, errParse := net.ParseCIDR(cidr)
-		if errParse != nil {
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to parse cidr: %v", errParse)
+		var banCIDR model.BanCIDR
+		if errNewBanNet := app.NewBanCIDR(
+			model.StringSID(config.General.Owner.String()),
+			model.StringSID("0"),
+			model.Duration(duration),
+			model.Cheating,
+			"",
+			"", model.System, cidr, &banCIDR); errNewBanNet != nil {
+			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanCIDR instance: %v", errNewBanNet)
 		}
-		dur, errDur := config.ParseDuration(duration)
-		if errDur != nil {
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Invalid duration: %v", errDur)
-		}
-		cidrBan, errNewBanNet := model.NewBanNet(cidr, model.Custom, dur, model.System)
-		if errNewBanNet != nil {
-			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanNet instance: %v", errNewBanNet)
-		}
-		if errSaveBanNet := db.SaveBanNet(ctx, &cidrBan); errSaveBanNet != nil {
+		if errSaveBanNet := db.SaveBanNet(ctx, &banCIDR); errSaveBanNet != nil {
 			if errors.Is(errSaveBanNet, store.ErrNoResult) {
 				log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Duplicate cidr ban found: %s", serverId)
 			}
@@ -122,12 +122,12 @@ var banASNCmd = &cobra.Command{
 		if errNewStore != nil {
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
-		dur, errDur := config.ParseDuration(duration)
-		if errDur != nil {
-			log.Fatalf("Invalid duration: %v", errDur)
+		var banASN model.BanASN
+		if errBanASN := app.NewBanASN(model.StringSID(config.General.Owner.String()), model.StringSID("0"), model.Duration(duration),
+			model.Cheating, "", "", model.System, asn, &banASN); errBanASN != nil {
+			log.Fatalf("Error: %v", errBanASN)
 		}
-		asnBan := model.NewBanASN(asn, config.General.Owner, model.Custom, dur)
-		if errSave := db.SaveBanASN(ctx, &asnBan); errSave != nil {
+		if errSave := db.SaveBanASN(ctx, &banASN); errSave != nil {
 			log.WithFields(log.Fields{"asn": asn}).Fatalf("Failed to save netban: %v", errSave)
 		}
 		log.WithFields(log.Fields{"asn": asn}).Infof("ASN ban create successfully")
@@ -136,16 +136,16 @@ var banASNCmd = &cobra.Command{
 
 func init() {
 	banSteamCmd.Flags().StringVarP(&steamProfile, "sid", "s", "", "SteamID or profile to ban")
-	banSteamCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
+	banSteamCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
 	banSteamCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 
 	banCIDRCmd.Flags().StringVarP(&steamProfile, "sid", "s", "", "SteamID or profile to ban")
-	banCIDRCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
+	banCIDRCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
 	banCIDRCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 	banCIDRCmd.Flags().StringVarP(&cidr, "cidr", "n", "", "Network CIDR: 1.2.3.0/24, 1.2.3.4/32")
 
 	banASNCmd.Flags().Int64VarP(&asn, "asn", "a", 0, "Autonomous Systems Number to ban eg: 10551")
-	banASNCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
+	banASNCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
 	banASNCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 
 	banCmd.AddCommand(banSteamCmd)

@@ -2,7 +2,6 @@ begin;
 
 drop table if exists ban_group;
 
-
 alter table if exists ban
     rename column target_id to steam_id;
 alter table if exists ban
@@ -35,4 +34,5 @@ alter table if exists ban_asn
 
 alter table if exists ban_asn
     drop column if exists unban_reason_text;
+
 commit;

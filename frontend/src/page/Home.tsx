@@ -16,7 +16,7 @@ export const Home = (): JSX.Element => {
     return (
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={9}>
-                <NewsView itemsPerPage={2} />
+                <NewsView itemsPerPage={3} />
             </Grid>
             <Grid item xs={3}>
                 <Stack spacing={3}>

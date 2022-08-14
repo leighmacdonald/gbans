@@ -44,21 +44,20 @@ type NewsStore interface {
 }
 
 type BanStore interface {
-	Import(ctx context.Context, root string) error
-
 	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, bannedPerson *model.BannedPerson) error
 	GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error
-	SaveBan(ctx context.Context, ban *model.Ban) error
-	DropBan(ctx context.Context, ban *model.Ban, hardDelete bool) error
+	SaveBan(ctx context.Context, ban *model.BanSteam) error
+	DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error
 	GetBansSteam(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
-	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.Ban, error)
-	GetExpiredBans(ctx context.Context) ([]model.Ban, error)
+	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.BanSteam, error)
+	GetExpiredBans(ctx context.Context) ([]model.BanSteam, error)
 
-	GetBansNet(ctx context.Context) ([]model.BanNet, error)
-	GetBanNetByAddress(ctx context.Context, ip net.IP) ([]model.BanNet, error)
-	SaveBanNet(ctx context.Context, banNet *model.BanNet) error
-	DropBanNet(ctx context.Context, ban *model.BanNet) error
-	GetExpiredNetBans(ctx context.Context) ([]model.BanNet, error)
+	GetBansNet(ctx context.Context) ([]model.BanCIDR, error)
+	GetBanNetById(ctx context.Context, netId int64, banCidr *model.BanCIDR) error
+	GetBanNetByAddress(ctx context.Context, ip net.IP) ([]model.BanCIDR, error)
+	SaveBanNet(ctx context.Context, banNet *model.BanCIDR) error
+	DropBanNet(ctx context.Context, ban *model.BanCIDR) error
+	GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error)
 
 	GetBansASN(ctx context.Context) ([]model.BanASN, error)
 	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
@@ -68,6 +67,7 @@ type BanStore interface {
 
 	GetBanGroups(ctx context.Context) ([]model.BanGroup, error)
 	GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *model.BanGroup) error
+	GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *model.BanGroup) error
 	SaveBanGroup(ctx context.Context, banGroup *model.BanGroup) error
 	DropBanGroup(ctx context.Context, banGroup *model.BanGroup) error
 

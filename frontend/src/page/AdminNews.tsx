@@ -21,7 +21,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const AdminNews = (): JSX.Element => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
-    const { flashes, setFlashes } = useUserFlashCtx();
+    const { sendFlash } = useUserFlashCtx();
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setTabSetTabValue(newValue);
     };
@@ -31,34 +31,26 @@ export const AdminNews = (): JSX.Element => {
         body_md: '',
         is_published: false,
         title: '',
-        created_on: new Date(),
-        updated_on: new Date()
+        created_on: '',
+        updated_on: ''
     });
     const onSave = useCallback(() => {
-        const fn = async () => {
-            try {
-                const response = await apiNewsSave(selectedNewsEntry);
+        apiNewsSave(selectedNewsEntry)
+            .then((response) => {
                 setSelectedNewsEntry(response);
-            } catch (exception: unknown) {
+                sendFlash(
+                    'success',
+                    `News published successfully: ${selectedNewsEntry.title}`
+                );
+            })
+            .catch((exception) => {
                 if (exception instanceof ApiException) {
                     alert(exception.message + exception.resp.statusText);
                 } else {
                     alert((exception as ValidationException).message);
                 }
-                return;
-            }
-            setFlashes([
-                ...flashes,
-                {
-                    closable: true,
-                    heading: 'header',
-                    level: 'success',
-                    message: `News published successfully: ${selectedNewsEntry.title}`
-                }
-            ]);
-        };
-        fn();
-    }, [flashes, selectedNewsEntry, setFlashes]);
+            });
+    }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {
         setBodyHTML(marked(selectedNewsEntry.body_md));

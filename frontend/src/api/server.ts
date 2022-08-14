@@ -1,7 +1,8 @@
-import { PickupItem, PlayerClass, SteamID, Team, Weapon } from './const';
+import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos } from './common';
 import { LatLngLiteral } from 'leaflet';
+import SteamID from 'steamid';
 
 export interface ServerState {
     server_id: number;
@@ -53,6 +54,7 @@ export interface Server {
     address: string;
     port: number;
     password: string;
+    rcon: string;
     region: string;
     cc: string;
     latitude: number;
@@ -60,6 +62,7 @@ export interface Server {
     default_map: string;
     reserved_slots: number;
     players_max: number;
+    is_enabled: boolean;
     created_on: Date;
     updated_on: Date;
 }
@@ -119,8 +122,9 @@ export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
 export const apiGetServerStates = async () =>
     await apiCall<ServerState[]>(`/api/servers/state`, 'GET');
 
-export interface CreateServerOpts {
-    name_short: string;
+export interface SaveServerOpts {
+    server_name_short: string;
+    server_name: string;
     host: string;
     port: number;
     rcon: string;
@@ -129,11 +133,21 @@ export interface CreateServerOpts {
     cc: string;
     lat: number;
     lon: number;
-    default_map: string;
+    is_enabled: boolean;
 }
 
-export const apiCreateServer = async (opts: CreateServerOpts) =>
-    await apiCall<Server, CreateServerOpts>(`/api/servers`, 'POST', opts);
+export const apiCreateServer = async (opts: SaveServerOpts) =>
+    await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts);
+
+export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
+    await apiCall<Server, SaveServerOpts>(
+        `/api/servers/${server_id}`,
+        'POST',
+        opts
+    );
 
 export const apiGetServers = async () =>
-    await apiCall<Server[]>(`/api/servers`, 'POST');
+    await apiCall<Server[]>(`/api/servers`, 'GET');
+
+export const apiDeleteServer = async (server_id: number) =>
+    await apiCall(`/api/servers/${server_id}`, 'DELETE');

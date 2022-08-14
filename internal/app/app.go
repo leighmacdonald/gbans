@@ -4,6 +4,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/event"
@@ -16,10 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
-	"os"
-	"sync"
-	"time"
 )
 
 var (
@@ -423,28 +424,33 @@ func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, 
 	})
 	warningsMu.Unlock()
 	if len(warnings[sid64]) >= config.General.WarningLimit {
-		var ban model.Ban
 		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
 		var errBan error
-		options := banOpts{
-			target:     model.Target(sid64.String()),
-			author:     model.Target(config.General.Owner.String()),
-			duration:   model.Duration(config.General.WarningExceededDuration.String()),
-			reason:     reason,
-			reasonText: reason.String(),
-			origin:     model.System,
+		var banSteam model.BanSteam
+		if errOpts := NewBanSteam(
+			model.StringSID(config.General.Owner.String()),
+			model.StringSID(sid64.String()),
+			model.Duration(config.General.WarningExceededDuration.String()),
+			reason,
+			reason.String(),
+			"Automatic warning ban",
+			model.System,
+			0,
+			&banSteam); errOpts != nil {
+			log.Errorf("Failed to create warning ban banSteam: %v", errOpts)
+			return
 		}
 		switch config.General.WarningExceededAction {
 		case config.Gag:
-			options.banType = model.NoComm
-			errBan = Ban(ctx, database, options, &ban, botSendMessageChan)
+			banSteam.BanType = model.NoComm
+			errBan = BanSteam(ctx, database, &banSteam, botSendMessageChan)
 		case config.Ban:
-			options.banType = model.Banned
-			errBan = Ban(ctx, database, options, &ban, botSendMessageChan)
+			banSteam.BanType = model.Banned
+			errBan = BanSteam(ctx, database, &banSteam, botSendMessageChan)
 		case config.Kick:
 			var playerInfo model.PlayerInfo
-			errBan = Kick(ctx, database, model.System, model.Target(sid64.String()),
-				model.Target(config.General.Owner.String()), reason, &playerInfo)
+			errBan = Kick(ctx, database, model.System, model.StringSID(sid64.String()),
+				model.StringSID(config.General.Owner.String()), reason, &playerInfo)
 		}
 		if errBan != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).

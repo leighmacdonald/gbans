@@ -5,8 +5,8 @@ import {
     profileState,
     UserProfile
 } from './profile';
-import { SteamID } from './const';
 import { UserMessage } from './report';
+import SteamID from 'steamid';
 
 export enum Origin {
     System = 0,
@@ -72,12 +72,12 @@ export const BanReasons: Record<BanReason, string> = {
     [BanReason.External]: '3rd party',
     [BanReason.Cheating]: 'Cheating',
     [BanReason.Racism]: 'Racism',
-    [BanReason.Harassment]: 'Person Harassment',
+    [BanReason.Harassment]: 'Personal Harassment',
     [BanReason.Exploiting]: 'Exploiting',
-    [BanReason.WarningsExceeded]: 'Warnings Exceeding',
+    [BanReason.WarningsExceeded]: 'Warnings Exceeded',
     [BanReason.Spam]: 'Spam',
     [BanReason.Language]: 'Language',
-    [BanReason.Profile]: 'Profile',
+    [BanReason.Profile]: 'Inappropriate Steam Profile',
     [BanReason.ItemDescriptions]: 'Item Name/Descriptions',
     [BanReason.BotHost]: 'Bot Host'
 };
@@ -93,7 +93,9 @@ export const banReasonsList = [
     BanReason.Profile,
     BanReason.ItemDescriptions,
     BanReason.External,
-    BanReason.Custom
+    BanReason.Custom,
+    BanReason.External,
+    BanReason.BotHost
 ];
 
 export enum BanType {
@@ -127,18 +129,19 @@ export interface IAPIBanRecord extends BanBase {
 }
 
 export interface IAPIBanGroupRecord extends BanBase {
-    ban_group_id: bigint;
+    ban_group_id: number;
+    group_id: SteamID;
     group_name: string;
 }
 
 export interface IAPIBanCIDRRecord extends BanBase {
-    net_id: bigint;
+    net_id: number;
     cidr: string;
 }
 
 export interface IAPIBanASNRecord extends BanBase {
     ban_asn_id: bigint;
-    as_num: string;
+    as_num: number;
 }
 
 export type IAPIResponseBans = BannedPerson[];
@@ -168,7 +171,9 @@ export interface BansQueryFilter extends QueryFilter<IAPIBanRecordProfile> {
 export interface UnbanPayload {
     unban_reason_text: string;
 }
+
 export interface BanBasePayload {
+    target_id: string;
     duration: string;
     ban_type: BanType;
     reason: number;
@@ -177,13 +182,11 @@ export interface BanBasePayload {
 }
 
 export interface BanPayloadSteam extends BanBasePayload {
-    target_id: SteamID;
     report_id?: number;
 }
 
 export interface BanPayloadCIDR extends BanBasePayload {
-    target_id: SteamID;
-    network: string;
+    cidr: string;
 }
 
 export interface BanPayloadASN extends BanBasePayload {
@@ -191,8 +194,7 @@ export interface BanPayloadASN extends BanBasePayload {
 }
 
 export interface BanPayloadGroup extends BanBasePayload {
-    target_id?: SteamID;
-    group_id: bigint;
+    group_id: string;
 }
 
 export const apiGetBansSteam = async (
@@ -242,13 +244,17 @@ export const apiGetBanSteam = async (ban_id: number): Promise<BannedPerson> =>
 export const apiCreateBanSteam = async (
     p: BanPayloadSteam
 ): Promise<IAPIBanRecord> =>
-    await apiCall<IAPIBanRecord, BanPayloadSteam>(`/api/bans/steam`, 'POST', p);
+    await apiCall<IAPIBanRecord, BanPayloadSteam>(
+        `/api/bans/steam/create`,
+        'POST',
+        p
+    );
 
 export const apiCreateBanCIDR = async (
     p: BanPayloadCIDR
 ): Promise<IAPIBanCIDRRecord> =>
     await apiCall<IAPIBanCIDRRecord, BanPayloadCIDR>(
-        `/api/bans/cidr`,
+        `/api/bans/cidr/create`,
         'POST',
         p
     );
@@ -256,19 +262,23 @@ export const apiCreateBanCIDR = async (
 export const apiCreateBanASN = async (
     p: BanPayloadASN
 ): Promise<IAPIBanASNRecord> =>
-    await apiCall<IAPIBanASNRecord, BanPayloadASN>(`/api/bans/asn`, 'POST', p);
+    await apiCall<IAPIBanASNRecord, BanPayloadASN>(
+        `/api/bans/asn/create`,
+        'POST',
+        p
+    );
 
 export const apiCreateBanGroup = async (
     p: BanPayloadGroup
 ): Promise<IAPIBanGroupRecord> =>
     await apiCall<IAPIBanGroupRecord, BanPayloadGroup>(
-        `/api/bans/group`,
+        `/api/bans/group/create`,
         'POST',
         p
     );
 
 export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
-    await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, 'DELETE', {
+    await apiCall<null, UnbanPayload>(`/api/bans/steam/${ban_id}`, 'DELETE', {
         unban_reason_text
     });
 
@@ -278,7 +288,7 @@ export interface AuthorMessage {
 }
 
 export const apiGetBanMessages = async (ban_id: number) =>
-    await apiCall<AuthorMessage[]>(`/api/ban/${ban_id}/messages`, 'GET');
+    await apiCall<AuthorMessage[]>(`/api/bans/${ban_id}/messages`, 'GET');
 
 export interface CreateBanMessage {
     message: string;
@@ -286,7 +296,7 @@ export interface CreateBanMessage {
 
 export const apiCreateBanMessage = async (ban_id: number, message: string) =>
     await apiCall<UserMessage, CreateBanMessage>(
-        `/api/ban/${ban_id}/messages`,
+        `/api/bans/${ban_id}/messages`,
         'POST',
         { message }
     );
@@ -295,18 +305,46 @@ export const apiUpdateBanMessage = async (
     ban_message_id: number,
     message: string
 ) =>
-    await apiCall(`/api/ban/message/${ban_message_id}`, 'POST', {
+    await apiCall(`/api/bans/message/${ban_message_id}`, 'POST', {
         body_md: message
     });
 
 export const apiDeleteBanMessage = async (ban_message_id: number) =>
-    await apiCall(`/api/ban/message/${ban_message_id}`, 'DELETE', {});
+    await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
 export const apiGetBansCIDR = async (opts: QueryFilter<IAPIBanCIDRRecord>) =>
-    await apiCall<IAPIBanCIDRRecord[]>('/api/bans_cidr', 'POST', opts);
+    await apiCall<IAPIBanCIDRRecord[]>('/api/bans/cidr', 'POST', opts);
 
 export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) =>
-    await apiCall<IAPIBanASNRecord[]>('/api/bans_asn', 'POST', opts);
+    await apiCall<IAPIBanASNRecord[]>('/api/bans/asn', 'POST', opts);
 
 export const apiGetBansGroups = async (opts: QueryFilter<IAPIBanGroupRecord>) =>
-    await apiCall<IAPIBanGroupRecord[]>('/api/bans_group', 'POST', opts);
+    await apiCall<IAPIBanGroupRecord[]>('/api/bans/group', 'POST', opts);
+
+export const apiDeleteCIDRBan = async (
+    cidr_id: number,
+    unban_reason_text: string
+) =>
+    await apiCall<null, UnbanPayload>(`/api/bans/cidr/${cidr_id}`, 'DELETE', {
+        unban_reason_text
+    });
+
+export const apiDeleteASNBan = async (
+    as_num: number,
+    unban_reason_text: string
+) =>
+    await apiCall<null, UnbanPayload>(`/api/bans/asn/${as_num}`, 'DELETE', {
+        unban_reason_text
+    });
+
+export const apiDeleteGroupBan = async (
+    ban_group_id: number,
+    unban_reason_text: string
+) =>
+    await apiCall<null, UnbanPayload>(
+        `/api/bans/group/${ban_group_id}`,
+        'DELETE',
+        {
+            unban_reason_text
+        }
+    );

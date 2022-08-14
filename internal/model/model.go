@@ -224,8 +224,8 @@ func (p *Person) LoggedIn() bool {
 }
 
 // AsTarget checks for a valid steamID
-func (p *Person) AsTarget() Target {
-	return Target(p.SteamID.String())
+func (p *Person) AsTarget() StringSID {
+	return StringSID(p.SteamID.String())
 }
 
 // NewPerson allocates a new default person instance

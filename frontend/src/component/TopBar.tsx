@@ -379,7 +379,7 @@ export const TopBar = () => {
                             {/*    </IconButton>*/}
                             {/*</Tooltip>*/}
                             {!currentUser ||
-                                (currentUser.steam_id == BigInt(0) && (
+                                (!currentUser.steam_id.isValidIndividual() && (
                                     <Tooltip title="Steam Login">
                                         <Button onClick={handleOnLogin}>
                                             <img
@@ -390,7 +390,7 @@ export const TopBar = () => {
                                     </Tooltip>
                                 ))}
                             {currentUser &&
-                                currentUser?.steam_id > 0 &&
+                                currentUser?.steam_id.isValidIndividual() &&
                                 adminItems.length > 0 && (
                                     <>
                                         <Tooltip title="Mod/Admin">

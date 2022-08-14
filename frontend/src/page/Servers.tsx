@@ -125,6 +125,7 @@ export const Servers = (): JSX.Element => {
         t0.setSeconds(t0.getSeconds() + interval);
         return t0;
     };
+
     const { restart } = useTimer({
         autoStart: true,
         expiryTimestamp: new Date(),

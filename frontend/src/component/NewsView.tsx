@@ -5,8 +5,9 @@ import Stack from '@mui/material/Stack';
 import { marked } from 'marked';
 import Paper from '@mui/material/Paper';
 import { Pagination } from '@mui/material';
-import { Heading } from './Heading';
 import Box from '@mui/material/Box';
+import { SplitHeading } from './SplitHeading';
+import { parseDateTime, renderTime } from '../util/text';
 export interface NewsViewProps {
     itemsPerPage: number;
 }
@@ -28,7 +29,12 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
                 .map((article) => {
                     return (
                         <Paper elevation={1} key={`news_` + article.news_id}>
-                            <Heading>{article.title}</Heading>
+                            <SplitHeading
+                                left={article.title}
+                                right={renderTime(
+                                    parseDateTime(article.created_on)
+                                )}
+                            />
                             <Box
                                 padding={2}
                                 className={'content'}

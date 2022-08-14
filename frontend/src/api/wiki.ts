@@ -22,7 +22,16 @@ class WikiRenderer extends Renderer {
         if (href === null) {
             return text;
         }
-        let out = '<a href="' + escape(href) + '"';
+        if (
+            !(
+                href.toLowerCase().startsWith('http://') ||
+                href.toLowerCase().startsWith('https://')
+            )
+        ) {
+            // noinspection JSDeprecatedSymbols
+            href = escape(href);
+        }
+        let out = '<a href="' + href + '"';
         if (title) {
             out += ' title="' + title + '"';
         }
@@ -31,12 +40,10 @@ class WikiRenderer extends Renderer {
     }
 }
 
-export const renderMarkdown = (md: string) => {
-    const r = marked(
+export const renderMarkdown = (md: string) =>
+    marked(
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
             .replace(/(media:\/\/)/gi, '/media/'),
         { renderer: new WikiRenderer() }
     );
-    return r;
-};

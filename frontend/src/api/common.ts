@@ -1,6 +1,7 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
-import { SteamID } from './const';
+import SteamID from 'steamid';
+import { applySteamId } from './profile';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -60,7 +61,8 @@ export const apiCall = async <
         throw apiErr('Invalid response code', resp);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const json = await resp.json();
+    const jsonText = await resp.text();
+    const json = JSON.parse(jsonText, applySteamId);
     if (!json.status) {
         throw apiErr('Invalid status code', resp);
     }
@@ -148,10 +150,10 @@ export interface TimeStamped {
 export const renderDate = (d: Date | string): string => {
     switch (typeof d) {
         case 'object': {
-            return format(d, 'yyyy-mm-dd');
+            return format(d, 'yyyy-MM-dd');
         }
         case 'string':
-            return format(parseISO(d), 'yyyy-mm-dd');
+            return format(parseISO(d), 'yyyy-MM-dd');
         default:
             return `${d}`;
     }

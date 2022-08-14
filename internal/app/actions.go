@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -14,271 +13,22 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"net"
-	"strconv"
 	"strings"
 	"time"
 )
 
-// Unban will set the current ban to now, making it expired.
-// Returns true, nil if the ban exists, and was successfully banned.
-// Returns false, nil if the ban does not exist.
-func Unban(ctx context.Context, database store.Store, target steamid.SID64, reason string) (bool, error) {
-	bannedPerson := model.NewBannedPerson()
-	errGetBan := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
-	if errGetBan != nil {
-		if errGetBan == store.ErrNoResult {
-			return false, nil
-		}
-		return false, errGetBan
-	}
-	bannedPerson.Ban.Deleted = true
-	bannedPerson.Ban.UnbanReasonText = reason
-	if errSaveBan := database.SaveBan(ctx, &bannedPerson.Ban); errSaveBan != nil {
-		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
-	}
-	log.Infof("Player unbanned: %v", target)
-	go func() {
-		unbanNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.TargetId),
-			Type:  discordgo.EmbedTypeRich,
-			Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
-			Color: int(green),
-		}
-		addFieldsSteamID(unbanNotice, bannedPerson.Person.SteamID)
-		addField(unbanNotice, "Reason", reason)
-		if config.Discord.PublicLogChannelEnable {
-			select {
-			case discordSendMsg <- discordPayload{channelId: config.Discord.ModLogChannelId, embed: unbanNotice}:
-			default:
-				log.Warnf("Cannot send discord unban notice payload, channel full")
-			}
-		}
-	}()
-	return true, nil
-}
-
-// UnbanASN will remove an existing ASN ban
-func UnbanASN(ctx context.Context, database store.Store, asnNum string) (bool, error) {
-	asNum, errConv := strconv.ParseInt(asnNum, 10, 64)
-	if errConv != nil {
-		return false, errConv
-	}
-	var banASN model.BanASN
-	if errGetBanASN := database.GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
-		return false, errGetBanASN
-	}
-	if errDrop := database.DropBanASN(ctx, &banASN); errDrop != nil {
-		log.Errorf("Failed to drop ASN ban: %v", errDrop)
-		return false, errDrop
-	}
-	log.Infof("ASN unbanned: %d", asNum)
-	return true, nil
-}
-
-type banOpts struct {
-	target     model.Target
-	author     model.Target
-	duration   model.Duration
-	banType    model.BanType
-	reason     model.Reason
-	reasonText string
-	origin     model.Origin
-	modNote    string
-	reportId   int
-}
-
-// Ban will ban the steam id from all servers. Players are immediately kicked from servers
-// once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func Ban(ctx context.Context, database store.Store, opts banOpts, ban *model.Ban, botSendMessageChan chan discordPayload) error {
-	existing := model.NewBannedPerson()
-	targetSid64, errSid := opts.target.SID64()
-	if errSid != nil {
-		return errSid
-	}
-	authorSid64, errAid := opts.author.SID64()
-	if errAid != nil {
-		return errAid
-	}
-	errGetExistingBan := database.GetBanBySteamID(ctx, targetSid64, false, &existing)
-	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
-		return store.ErrDuplicate
-	}
-	if errGetExistingBan != nil && errGetExistingBan != store.ErrNoResult {
-		return errors.Wrapf(errGetExistingBan, "Failed to get ban")
-	}
-	until := config.DefaultExpiration()
-	duration, errDuration := opts.duration.Value()
-	if errDuration != nil {
-		return errDuration
-	}
-	if duration.Seconds() != 0 {
-		until = config.Now().Add(duration)
-	}
-	ban.TargetId = targetSid64
-	ban.SourceId = authorSid64
-	ban.BanType = opts.banType
-	ban.Reason = opts.reason
-	ban.ReasonText = opts.reasonText
-	ban.Note = opts.modNote
-	ban.ValidUntil = until
-	ban.Origin = opts.origin
-	ban.ReportId = opts.reportId
-	ban.CreatedOn = config.Now()
-	ban.UpdatedOn = config.Now()
-
-	if errSave := database.SaveBan(ctx, ban); errSave != nil {
-		return errSave
-	}
-	go func(payload chan discordPayload) {
-		banNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", ban.TargetId),
-			Type:  discordgo.EmbedTypeRich,
-			Title: fmt.Sprintf("User Banned (#%d)", ban.BanID),
-			Color: 10038562,
-		}
-		addFieldsSteamID(banNotice, ban.TargetId)
-		expIn := "Permanent"
-		expAt := "Permanent"
-		if ban.ValidUntil.Year()-time.Now().Year() < 5 {
-			expIn = config.FmtDuration(ban.ValidUntil)
-			expAt = config.FmtTimeShort(ban.ValidUntil)
-		}
-		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
-			Name:   "Expires In",
-			Value:  expIn,
-			Inline: false,
-		})
-		banNotice.Fields = append(banNotice.Fields, &discordgo.MessageEmbedField{
-			Name:   "Expires At",
-			Value:  expAt,
-			Inline: false,
-		})
-		if config.Discord.PublicLogChannelEnable {
-			select {
-			case discordSendMsg <- discordPayload{channelId: config.Discord.PublicLogChannelId, embed: banNotice}:
-			default:
-				log.Warnf("Cannot send discord payload, channel full")
-			}
-		}
-	}(botSendMessageChan)
-	// TODO mute player currently in-game w/o kicking
-	if opts.banType == model.Banned {
-		if errKick := Kick(ctx, database, model.System, opts.target, opts.author, opts.reason, nil); errKick != nil {
-			log.Errorf("failed to kick player: %v", errKick)
+func sendDiscordPayload(outChannel chan discordPayload, payload discordPayload) {
+	if config.Discord.PublicLogChannelEnable {
+		select {
+		case discordSendMsg <- payload:
+		default:
+			log.Warnf("Cannot send discord payload, channel full")
 		}
 	}
-
-	return nil
-}
-
-type banASNOpts struct {
-	banOpts
-	asNum int64
-}
-
-// BanASN will ban all network ranges associated with the requested ASN
-func BanASN(database store.Store, opts banASNOpts, banASN *model.BanASN) error {
-	until := config.DefaultExpiration()
-	targetSid64, errSid := opts.target.SID64()
-	if errSid != nil {
-		return errSid
-	}
-	authorSid64, errAid := opts.author.SID64()
-	if errAid != nil {
-		return errAid
-	}
-	duration, errDur := opts.duration.Value()
-	if errDur != nil {
-		return errDur
-	}
-	if duration != 0 {
-		until = config.Now().Add(duration)
-	}
-	banASN.Origin = opts.origin
-	banASN.TargetID = targetSid64
-	banASN.SourceId = authorSid64
-	banASN.ValidUntil = until
-	banASN.Reason = opts.reason
-	banASN.ASNum = opts.asNum
-	if errSave := database.SaveBanASN(context.TODO(), banASN); errSave != nil {
-		return errSave
-	}
-	// TODO Kick all current players matching
-	return nil
-}
-
-type banNetworkOpts struct {
-	banOpts
-	cidr string
-}
-
-// BanNetwork adds a new network to the banned network list. It will accept any Valid CIDR format.
-// It accepts an optional steamid to associate a particular user with the network ban. Any active players
-// that fall within the range will be kicked immediately.
-// If duration is 0, the value of config.DefaultExpiration() will be used.
-func BanNetwork(ctx context.Context, database store.Store, opts banNetworkOpts, banNet *model.BanNet) error {
-	until := config.DefaultExpiration()
-	targetSid64, errSid := opts.target.SID64()
-	if errSid != nil {
-		return errSid
-	}
-	authorSid64, errAid := opts.author.SID64()
-	if errAid != nil {
-		return errAid
-	}
-	duration, errDur := opts.duration.Value()
-	if errDur != nil {
-		return errDur
-	}
-	if duration.Seconds() != 0 {
-		until = config.Now().Add(duration)
-	}
-	_, network, errParseCIDR := net.ParseCIDR(opts.cidr)
-	if errParseCIDR != nil {
-		return errors.Wrapf(errParseCIDR, "Failed to parse CIDR address")
-	}
-	// TODO
-	//_, err2 := store.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
-	//if err2 != nil && err2 != store.ErrNoResult {
-	//	return "", errCommandFailed
-	//}
-	//if err2 == nil {
-	//	return "", consts.ErrDuplicateBan
-	//}
-
-	banNet.TargetId = targetSid64
-	banNet.SourceID = authorSid64
-	banNet.CIDR = network
-	banNet.Origin = model.System
-	banNet.Reason = opts.reason
-	banNet.CreatedOn = config.Now()
-	banNet.UpdatedOn = config.Now()
-	banNet.ValidUntil = until
-
-	if errSaveBanNet := database.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
-		return errSaveBanNet
-	}
-	go func() {
-		var playerInfo model.PlayerInfo
-		if errFindPI := FindPlayerByCIDR(ctx, database, network, &playerInfo); errFindPI != nil {
-			return
-		}
-		if playerInfo.Player != nil && playerInfo.Server != nil {
-			_, errExecRCON := query.ExecRCON(ctx, *playerInfo.Server,
-				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(playerInfo.Player.SID)), banNet.Reason))
-			if errExecRCON != nil {
-				log.Errorf("Failed to query for ban request: %v", errExecRCON)
-				return
-			}
-		}
-	}()
-
-	return nil
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.Target, author model.Target,
+func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
 	reason model.Reason, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
@@ -371,7 +121,7 @@ func CSay(ctx context.Context, database store.Store, author steamid.SID64, serve
 }
 
 // PSay is used to send a private message to a player
-func PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.Target, message string) error {
+func PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.StringSID, message string) error {
 	var playerInfo model.PlayerInfo
 	// TODO check resp
 	_ = Find(ctx, database, target, "", &playerInfo)

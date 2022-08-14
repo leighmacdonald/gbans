@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -102,8 +103,14 @@ var seedCmd = &cobra.Command{
 			if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, friend.Steamid, &person); errGetPerson != nil {
 				log.Errorf("Failed to create person: %v", errGetPerson)
 			}
-			newBan := model.NewBan(person.SteamID, seed.Players[0], time.Hour*500)
-			if errSaveBan := database.SaveBan(ctx, &newBan); errSaveBan != nil {
+			var banSteam model.BanSteam
+			if errNewBan := app.NewBanSteam(
+				model.StringSID(config.General.Owner.String()),
+				model.StringSID(seed.Players[0].String()), model.Duration("500h"), model.External,
+				"", "imported", model.System, 0, &banSteam); errNewBan != nil {
+				log.Errorf("Failed to create ban: %v", errNewBan)
+			}
+			if errSaveBan := database.SaveBan(ctx, &banSteam); errSaveBan != nil {
 				log.Errorf("Failed to make ban: %v", errSaveBan)
 			}
 		}

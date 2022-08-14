@@ -18,6 +18,7 @@ import { MatchHistory } from '../component/MatchHistory';
 import { Heading } from '../component/Heading';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import SteamID from 'steamid';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -29,8 +30,12 @@ export const Profile = (): JSX.Element => {
         if (!steam_id) {
             return;
         }
+        const id = new SteamID(steam_id);
+        if (!id.isValidIndividual()) {
+            return;
+        }
         setLoading(true);
-        apiGetProfile(steam_id as unknown as bigint)
+        apiGetProfile(id.toString())
             .then((profile) => {
                 profile && setProfile(profile);
             })
@@ -49,105 +54,111 @@ export const Profile = (): JSX.Element => {
                     <LoadingSpinner />
                 </Grid>
             )}
-            {!loading && profile && profile.player.steam_id > 0 && (
-                <>
-                    <Grid item xs={8}>
-                        <Stack spacing={3}>
-                            <Stack direction={'row'} spacing={3}>
-                                <ProfileInfoBox profile={profile} />
+            {!loading &&
+                profile &&
+                profile.player.steam_id.isValidIndividual() && (
+                    <>
+                        <Grid item xs={8}>
+                            <Stack spacing={3}>
+                                <Stack direction={'row'} spacing={3}>
+                                    <ProfileInfoBox profile={profile} />
+                                    <Paper elevation={1}>
+                                        <SteamIDList
+                                            steam_id={profile.player.steam_id}
+                                        />
+                                    </Paper>
+                                </Stack>
+
                                 <Paper elevation={1}>
-                                    <SteamIDList
-                                        steam_id={profile.player.steam_id}
+                                    <Heading>Steam Community Status</Heading>
+                                    <Stack
+                                        direction="row"
+                                        spacing={2}
+                                        padding={2}
+                                        justifyContent={'space-evenly'}
+                                    >
+                                        <Chip
+                                            color={
+                                                profile.player.vac_bans > 0
+                                                    ? 'error'
+                                                    : 'success'
+                                            }
+                                            label={'VAC'}
+                                        />
+                                        <Chip
+                                            color={
+                                                profile.player.game_bans > 0
+                                                    ? 'error'
+                                                    : 'success'
+                                            }
+                                            label={'Game Ban'}
+                                        />
+                                        <Chip
+                                            color={
+                                                profile.player.economy_ban !=
+                                                'none'
+                                                    ? 'error'
+                                                    : 'success'
+                                            }
+                                            label={'Economy Ban'}
+                                        />
+                                        <Chip
+                                            color={
+                                                profile.player.community_banned
+                                                    ? 'error'
+                                                    : 'success'
+                                            }
+                                            label={'Community Ban'}
+                                        />
+                                    </Stack>
+                                </Paper>
+
+                                <Paper elevation={1}>
+                                    <Heading>External Links</Heading>
+                                    <Masonry columns={3} spacing={1}>
+                                        {createExternalLinks(
+                                            profile.player.steam_id
+                                        ).map((l) => {
+                                            return (
+                                                <Link
+                                                    sx={{ width: '100%' }}
+                                                    component={Button}
+                                                    href={l.url}
+                                                    key={l.url}
+                                                    underline="none"
+                                                >
+                                                    {l.title}
+                                                </Link>
+                                            );
+                                        })}
+                                    </Masonry>
+                                </Paper>
+                                {currentUser.permission_level >=
+                                    PermissionLevel.Admin && (
+                                    <Paper elevation={1}>
+                                        <Heading>Match History</Heading>
+                                        <MatchHistory
+                                            opts={{
+                                                steam_id:
+                                                    profile.player.steam_id,
+                                                limit: 25
+                                            }}
+                                        />
+                                    </Paper>
+                                )}
+                            </Stack>
+                        </Grid>
+                        <Grid item xs={4}>
+                            <Stack spacing={3}>
+                                <Paper elevation={1}>
+                                    <FriendList
+                                        friends={profile?.friends || []}
                                     />
                                 </Paper>
                             </Stack>
-
-                            <Paper elevation={1}>
-                                <Heading>Steam Community Status</Heading>
-                                <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    padding={2}
-                                    justifyContent={'space-evenly'}
-                                >
-                                    <Chip
-                                        color={
-                                            profile.player.vac_bans > 0
-                                                ? 'error'
-                                                : 'success'
-                                        }
-                                        label={'VAC'}
-                                    />
-                                    <Chip
-                                        color={
-                                            profile.player.game_bans > 0
-                                                ? 'error'
-                                                : 'success'
-                                        }
-                                        label={'Game Ban'}
-                                    />
-                                    <Chip
-                                        color={
-                                            profile.player.economy_ban != 'none'
-                                                ? 'error'
-                                                : 'success'
-                                        }
-                                        label={'Economy Ban'}
-                                    />
-                                    <Chip
-                                        color={
-                                            profile.player.community_banned
-                                                ? 'error'
-                                                : 'success'
-                                        }
-                                        label={'Community Ban'}
-                                    />
-                                </Stack>
-                            </Paper>
-
-                            <Paper elevation={1}>
-                                <Heading>External Links</Heading>
-                                <Masonry columns={3} spacing={1}>
-                                    {createExternalLinks(
-                                        profile.player.steam_id
-                                    ).map((l) => {
-                                        return (
-                                            <Link
-                                                sx={{ width: '100%' }}
-                                                component={Button}
-                                                href={l.url}
-                                                key={l.url}
-                                                underline="none"
-                                            >
-                                                {l.title}
-                                            </Link>
-                                        );
-                                    })}
-                                </Masonry>
-                            </Paper>
-                            {currentUser.permission_level >=
-                                PermissionLevel.Admin && (
-                                <Paper elevation={1}>
-                                    <Heading>Match History</Heading>
-                                    <MatchHistory
-                                        opts={{
-                                            steam_id: profile.player.steam_id,
-                                            limit: 25
-                                        }}
-                                    />
-                                </Paper>
-                            )}
-                        </Stack>
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Stack spacing={3}>
-                            <Paper elevation={1}>
-                                <FriendList friends={profile?.friends || []} />
-                            </Paper>
-                        </Stack>
-                    </Grid>
-                </>
-            )}
+                        </Grid>
+                    </>
+                )}
         </Grid>
     );
 };

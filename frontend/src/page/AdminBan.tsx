@@ -26,7 +26,7 @@ import Tooltip from '@mui/material/Tooltip';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { BanSteamModal } from '../component/BanSteamModal';
 import Box from '@mui/material/Box';
-import { UnbanModal } from '../component/UnbanModal';
+import { UnbanSteamModal } from '../component/UnbanSteamModal';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -36,6 +36,9 @@ import Paper from '@mui/material/Paper';
 import { BanCIDRModal } from '../component/BanCIDRModal';
 import { BanASNModal } from '../component/BanASNModal';
 import { BanGroupModal } from '../component/BanGroupModal';
+import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
+import { UnbanASNModal } from '../component/UnbanASNModal';
+import { UnbanGroupModal } from '../component/UnbanGroupModal';
 
 export const AdminBan = (): JSX.Element => {
     const theme = useTheme();
@@ -44,11 +47,18 @@ export const AdminBan = (): JSX.Element => {
     const [banCIDRs, setBanCIDRs] = useState<IAPIBanCIDRRecord[]>([]);
     const [banASNs, setBanASNs] = useState<IAPIBanASNRecord[]>([]);
     const [currentBan, setCurrentBan] = useState<IAPIBanRecordProfile>();
+    const [currentBanCIDR, setCurrentBanCIDR] = useState<IAPIBanCIDRRecord>();
+    const [currentBanASN, setCurrentBanASN] = useState<IAPIBanASNRecord>();
+    const [currentBanGroup, setCurrentBanGroup] =
+        useState<IAPIBanGroupRecord>();
     const [banSteamModalOpen, setBanSteamModalOpen] = useState(false);
     const [banCIDRModalOpen, setBanCIDRModalOpen] = useState(false);
     const [banASNModalOpen, setBanASNModalOpen] = useState(false);
     const [banGroupModalOpen, setBanGroupModalOpen] = useState(false);
-    const [unbanModalOpen, setUnbanModalOpen] = useState(false);
+    const [unbanSteamModalOpen, setUnbanSteamModalOpen] = useState(false);
+    const [unbanCIDRModalOpen, setUnbanCIDRModalOpen] = useState(false);
+    const [unbanASNModalOpen, setUnbanASNModalOpen] = useState(false);
+    const [unbanGroupModalOpen, setUnbanGroupModalOpen] = useState(false);
     const [value, setValue] = React.useState<number>(0);
     const navigate = useNavigate();
 
@@ -118,18 +128,20 @@ export const AdminBan = (): JSX.Element => {
             <BanGroupModal
                 open={banGroupModalOpen}
                 setOpen={setBanGroupModalOpen}
-                onSuccess={() => {
-                    loadBansGroup();
+                onSuccess={(t) => {
+                    setBanGroups((bans) => {
+                        return [...bans, t];
+                    });
                     setBanGroupModalOpen(false);
                 }}
             />
             {currentBan && (
-                <UnbanModal
-                    banRecord={currentBan}
-                    open={unbanModalOpen}
-                    setOpen={setUnbanModalOpen}
+                <UnbanSteamModal
+                    record={currentBan}
+                    open={unbanSteamModalOpen}
+                    setOpen={setUnbanSteamModalOpen}
                     onSuccess={() => {
-                        setUnbanModalOpen(false);
+                        setUnbanSteamModalOpen(false);
                         setBans((bans) => {
                             return bans.filter(
                                 (b) => b.ban_id != currentBan?.ban_id
@@ -138,10 +150,57 @@ export const AdminBan = (): JSX.Element => {
                     }}
                 />
             )}
+            {currentBanCIDR && (
+                <UnbanCIDRModal
+                    record={currentBanCIDR}
+                    open={unbanCIDRModalOpen}
+                    setOpen={setUnbanCIDRModalOpen}
+                    onSuccess={() => {
+                        setUnbanCIDRModalOpen(false);
+                        setBanCIDRs((bans) => {
+                            return bans.filter(
+                                (b) => b.net_id != currentBanCIDR?.net_id
+                            );
+                        });
+                    }}
+                />
+            )}
+            {currentBanASN && (
+                <UnbanASNModal
+                    record={currentBanASN}
+                    open={unbanASNModalOpen}
+                    setOpen={setUnbanASNModalOpen}
+                    onSuccess={() => {
+                        setUnbanASNModalOpen(false);
+                        setBanASNs((bans) => {
+                            return bans.filter(
+                                (b) => b.ban_asn_id != currentBanASN?.ban_asn_id
+                            );
+                        });
+                    }}
+                />
+            )}
+            {currentBanGroup && (
+                <UnbanGroupModal
+                    record={currentBanGroup}
+                    open={unbanGroupModalOpen}
+                    setOpen={setUnbanGroupModalOpen}
+                    onSuccess={() => {
+                        setUnbanGroupModalOpen(false);
+                        setBanGroups((bans) => {
+                            return bans.filter(
+                                (b) =>
+                                    b.ban_group_id !=
+                                    currentBanGroup?.ban_group_id
+                            );
+                        });
+                    }}
+                />
+            )}
             <ButtonGroup>
                 <Button
                     variant={'contained'}
-                    color={'primary'}
+                    color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
                     onClick={() => {
@@ -152,7 +211,7 @@ export const AdminBan = (): JSX.Element => {
                 </Button>
                 <Button
                     variant={'contained'}
-                    color={'primary'}
+                    color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
                     onClick={() => {
@@ -163,7 +222,7 @@ export const AdminBan = (): JSX.Element => {
                 </Button>
                 <Button
                     variant={'contained'}
-                    color={'primary'}
+                    color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
                     onClick={() => {
@@ -174,11 +233,11 @@ export const AdminBan = (): JSX.Element => {
                 </Button>
                 <Button
                     variant={'contained'}
-                    color={'primary'}
+                    color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
                     onClick={() => {
-                        setBanASNModalOpen(true);
+                        setBanGroupModalOpen(true);
                     }}
                 >
                     Group
@@ -392,7 +451,9 @@ export const AdminBan = (): JSX.Element => {
                                                     color={'success'}
                                                     onClick={() => {
                                                         setCurrentBan(row);
-                                                        setUnbanModalOpen(true);
+                                                        setUnbanSteamModalOpen(
+                                                            true
+                                                        );
                                                     }}
                                                 >
                                                     <Tooltip
@@ -424,7 +485,7 @@ export const AdminBan = (): JSX.Element => {
                                 queryValue: (o) => `${o.net_id}`,
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
-                                        {`#${obj.net_id.toString()}`}
+                                        #{obj.net_id.toString()}
                                     </Typography>
                                 )
                             },
@@ -569,6 +630,33 @@ export const AdminBan = (): JSX.Element => {
                                         </Typography>
                                     );
                                 }
+                            },
+                            {
+                                label: 'Act.',
+                                tooltip: 'Actions',
+                                sortKey: 'reason',
+                                sortable: false,
+                                align: 'left',
+                                renderer: (row) => (
+                                    <ButtonGroup fullWidth>
+                                        <IconButton color={'warning'}>
+                                            <Tooltip title={'Edit CIDR Ban'}>
+                                                <EditIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                        <IconButton
+                                            color={'success'}
+                                            onClick={() => {
+                                                setCurrentBanCIDR(row);
+                                                setUnbanCIDRModalOpen(true);
+                                            }}
+                                        >
+                                            <Tooltip title={'Remove CIDR Ban'}>
+                                                <UndoIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                    </ButtonGroup>
+                                )
                             }
                         ]}
                         defaultSortColumn={'net_id'}
@@ -588,7 +676,7 @@ export const AdminBan = (): JSX.Element => {
                                 queryValue: (o) => `${o.ban_asn_id}`,
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
-                                        `#${obj.ban_asn_id.toString()}`
+                                        #{obj.ban_asn_id.toString()}
                                     </Typography>
                                 )
                             },
@@ -701,6 +789,33 @@ export const AdminBan = (): JSX.Element => {
                                         </Typography>
                                     );
                                 }
+                            },
+                            {
+                                label: 'Act.',
+                                tooltip: 'Actions',
+                                sortKey: 'reason',
+                                sortable: false,
+                                align: 'left',
+                                renderer: (row) => (
+                                    <ButtonGroup fullWidth>
+                                        <IconButton color={'warning'}>
+                                            <Tooltip title={'Edit CIDR Ban'}>
+                                                <EditIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                        <IconButton
+                                            color={'success'}
+                                            onClick={() => {
+                                                setCurrentBanASN(row);
+                                                setUnbanASNModalOpen(true);
+                                            }}
+                                        >
+                                            <Tooltip title={'Remove CIDR Ban'}>
+                                                <UndoIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                    </ButtonGroup>
+                                )
                             }
                         ]}
                         defaultSortColumn={'ban_asn_id'}
@@ -721,7 +836,7 @@ export const AdminBan = (): JSX.Element => {
                                 queryValue: (o) => `${o.ban_group_id}`,
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
-                                        `#${obj.ban_group_id.toString()}`
+                                        #{obj.ban_group_id.toString()}
                                     </Typography>
                                 )
                             },
@@ -834,6 +949,33 @@ export const AdminBan = (): JSX.Element => {
                                         </Typography>
                                     );
                                 }
+                            },
+                            {
+                                label: 'Act.',
+                                tooltip: 'Actions',
+                                sortKey: 'reason',
+                                sortable: false,
+                                align: 'left',
+                                renderer: (row) => (
+                                    <ButtonGroup fullWidth>
+                                        <IconButton color={'warning'}>
+                                            <Tooltip title={'Edit Ban'}>
+                                                <EditIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                        <IconButton
+                                            color={'success'}
+                                            onClick={() => {
+                                                setCurrentBanGroup(row);
+                                                setUnbanGroupModalOpen(true);
+                                            }}
+                                        >
+                                            <Tooltip title={'Remove Ban'}>
+                                                <UndoIcon />
+                                            </Tooltip>
+                                        </IconButton>
+                                    </ButtonGroup>
+                                )
                             }
                         ]}
                         defaultSortColumn={'ban_group_id'}

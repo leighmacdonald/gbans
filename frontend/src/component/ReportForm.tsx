@@ -4,13 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
-import {
-    apiCreateReport,
-    BanReason,
-    BanReasons,
-    PlayerProfile,
-    SteamID
-} from '../api';
+import { apiCreateReport, BanReason, BanReasons, PlayerProfile } from '../api';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import { logErr } from '../util/errors';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +18,7 @@ export const ReportForm = (): JSX.Element => {
     const [body, setBody] = useState<string>('');
     const [reasonText, setReasonText] = useState<string>('');
     const [profile, setProfile] = useState<PlayerProfile | null>();
-    const [steamID, setSteamID] = useState<SteamID>(BigInt(0));
+    const [inputSteamID, setInputSteamID] = useState<string>('');
     const navigate = useNavigate();
 
     const onSave = useCallback(
@@ -32,7 +26,7 @@ export const ReportForm = (): JSX.Element => {
             setBody(body_md);
             if (profile && body_md) {
                 apiCreateReport({
-                    steam_id: profile?.player.steam_id,
+                    steam_id: profile?.player.steam_id.toString(),
                     description: body_md,
                     reason: reason,
                     reason_text: reasonText
@@ -52,8 +46,8 @@ export const ReportForm = (): JSX.Element => {
             <Box paddingLeft={2} paddingRight={2} width={'100%'}>
                 <ProfileSelectionInput
                     fullWidth
-                    input={steamID}
-                    setInput={setSteamID}
+                    input={inputSteamID}
+                    setInput={setInputSteamID}
                     onProfileSuccess={(profile1) => {
                         setProfile(profile1);
                     }}

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { UserProfile } from '../api';
 import { noop } from 'lodash-es';
+import SteamID from 'steamid';
 
 export const GuestProfile: UserProfile = {
     updated_on: new Date(),
@@ -9,7 +10,7 @@ export const GuestProfile: UserProfile = {
     discord_id: '',
     avatar: '',
     avatarfull: '',
-    steam_id: BigInt(0),
+    steam_id: new SteamID(''),
     ban_id: 0,
     name: 'Guest'
 };

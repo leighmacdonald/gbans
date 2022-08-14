@@ -5,8 +5,8 @@ export interface NewsEntry {
     title: string;
     body_md: string;
     is_published: boolean;
-    created_on: Date;
-    updated_on: Date;
+    created_on: string;
+    updated_on: string;
 }
 
 export const apiGetNewsLatest = async (): Promise<NewsEntry[]> =>

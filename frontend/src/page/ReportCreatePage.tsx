@@ -22,7 +22,7 @@ export const ReportCreatePage = (): JSX.Element => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (currentUser.steam_id > 0) {
+        if (currentUser.steam_id.isValidIndividual()) {
             apiGetReports({
                 author_id: currentUser.steam_id,
                 limit: 10,

@@ -2,7 +2,6 @@ import React, { ChangeEvent, useCallback, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import {
     apiCreateBanASN,
-    BanPayloadASN,
     BanReason,
     BanReasons,
     banReasonsList,
@@ -20,6 +19,8 @@ import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
+import { ProfileSelectionInput } from './ProfileSelectionInput';
+import SteamID from 'steamid';
 
 export interface BanASNModalProps
     extends ConfirmationModalProps<IAPIBanASNRecord> {
@@ -27,6 +28,7 @@ export interface BanASNModalProps
 }
 
 export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
+    const [targetSteamId, setTargetSteamId] = useState<string>('');
     const [duration, setDuration] = useState<Duration>(Duration.dur48h);
     const [customDuration, setCustomDuration] = useState<string>('');
     const [banReason, setBanReason] = useState<BanReason>(BanReason.Cheating);
@@ -46,16 +48,29 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
             sendFlash('error', 'Custom duration invalid');
             return;
         }
-        const opts: BanPayloadASN = {
+        let targetId = new SteamID('');
+        if (targetSteamId != '') {
+            try {
+                const id = new SteamID(targetSteamId);
+                if (!id.isValidIndividual()) {
+                    sendFlash('error', 'Target steam id invalid');
+                    return;
+                }
+                targetId = id;
+            } catch (e) {
+                sendFlash('error', 'Target steam id invalid');
+                return;
+            }
+        }
+        apiCreateBanASN({
+            target_id: targetId.toString(),
             duration: dur,
             as_num: asNum,
             reason_text: reasonText,
             reason: banReason,
             note: noteText,
             ban_type: BanType.Banned
-        };
-
-        apiCreateBanASN(opts)
+        })
             .then((ban) => {
                 sendFlash(
                     'success',
@@ -64,9 +79,10 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
                 onSuccess && onSuccess(ban);
             })
             .catch((err) => {
-                sendFlash('error', `Failed to create ban: ${err}`);
+                sendFlash('error', `Failed to create asn ban: ${err}`);
             });
     }, [
+        targetSteamId,
         banReason,
         customDuration,
         duration,
@@ -96,8 +112,23 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
             <Stack spacing={2}>
                 <Heading>Ban AS Number</Heading>
                 <Stack spacing={3} alignItems={'center'}>
+                    <ProfileSelectionInput
+                        fullWidth
+                        onProfileSuccess={(profile) => {
+                            if (profile) {
+                                setTargetSteamId(
+                                    profile.player.steam_id.toString
+                                );
+                            } else {
+                                setTargetSteamId('');
+                            }
+                        }}
+                        input={targetSteamId}
+                        setInput={setTargetSteamId}
+                    />
+
                     <TextField
-                        fullWidth={true}
+                        fullWidth
                         id={'as_num'}
                         label={'Autonomous System Number'}
                         onChange={(evt) => {
@@ -105,42 +136,44 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
                         }}
                     />
 
-                    <Select<BanReason>
-                        fullWidth
-                        labelId="reason-label"
-                        id="reason-helper"
-                        value={banReason}
-                        onChange={(evt: SelectChangeEvent<BanReason>) => {
-                            setBanReason(evt.target.value as BanReason);
-                        }}
-                    >
-                        {banReasonsList.map((v) => (
-                            <MenuItem key={`time-${v}`} value={v}>
-                                {BanReasons[v]}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                    <FormControl fullWidth>
+                        <InputLabel id="asn-reason-label">
+                            Ban Duration
+                        </InputLabel>
+                        <Select<BanReason>
+                            labelId="asn-reason-label"
+                            id="asn-reason"
+                            value={banReason}
+                            onChange={(evt: SelectChangeEvent<BanReason>) => {
+                                setBanReason(evt.target.value as BanReason);
+                            }}
+                        >
+                            {banReasonsList.map((v) => (
+                                <MenuItem key={`time-${v}`} value={v}>
+                                    {BanReasons[v]}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
                     {banReason == BanReason.Custom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="reasonText-label">
-                                Reason
-                            </InputLabel>
-                            <TextField
-                                id={'reasonText'}
-                                value={reasonText}
-                                onChange={(evt) => {
-                                    setReasonText(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label={'Custom Reason'}
+                            id={'reasonText'}
+                            value={reasonText}
+                            onChange={(evt) => {
+                                setReasonText(evt.target.value);
+                            }}
+                        />
                     )}
                     <FormControl fullWidth>
-                        <InputLabel id="duration-label">
+                        <InputLabel id="asn-duration-label">
                             Ban Duration
                         </InputLabel>
                         <Select<Duration>
                             fullWidth
-                            labelId="duration-label"
+                            labelId="asn-duration-label"
                             id="duration-helper"
                             value={duration}
                             onChange={(evt: SelectChangeEvent<Duration>) => {
@@ -160,35 +193,29 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
                     </FormControl>
 
                     {duration == Duration.durCustom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="customDuration-label">
-                                Custom Duration
-                            </InputLabel>
-                            <TextField
-                                id={'customDuration'}
-                                value={customDuration}
-                                onChange={(evt) => {
-                                    setCustomDuration(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label={'Custom Duration'}
+                            id={'customASNDuration'}
+                            value={customDuration}
+                            onChange={(evt) => {
+                                setCustomDuration(evt.target.value);
+                            }}
+                        />
                     )}
 
-                    <FormControl fullWidth>
-                        <TextField
-                            id="note-field"
-                            label="Moderator Notes (hidden from public)"
-                            multiline
-                            value={noteText}
-                            onChange={(evt: ChangeEvent<HTMLInputElement>) => {
-                                setNoteText(
-                                    (evt.target as HTMLInputElement).value
-                                );
-                            }}
-                            rows={10}
-                            variant="outlined"
-                        />
-                    </FormControl>
+                    <TextField
+                        fullWidth
+                        id="note-field"
+                        label="Moderator Notes (hidden from public)"
+                        multiline
+                        value={noteText}
+                        onChange={(evt: ChangeEvent<HTMLInputElement>) => {
+                            setNoteText((evt.target as HTMLInputElement).value);
+                        }}
+                        rows={10}
+                        variant="outlined"
+                    />
                 </Stack>
             </Stack>
         </ConfirmationModal>

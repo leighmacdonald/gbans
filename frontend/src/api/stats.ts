@@ -1,6 +1,6 @@
 import { apiCall, QueryFilter } from './common';
 import { Person } from './profile';
-import { SteamID } from './const';
+import SteamID from 'steamid';
 
 export interface CommonStats {
     kills: number;

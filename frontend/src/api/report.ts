@@ -1,8 +1,8 @@
 import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
-import { SteamID } from './const';
 import { Theme } from '@mui/material';
 import { BanReason } from './bans';
+import SteamID from 'steamid';
 
 export enum ReportStatus {
     Any = -1,
@@ -64,7 +64,7 @@ export interface UserMessage extends TimeStamped {
 }
 
 export interface CreateReportRequest {
-    steam_id: SteamID;
+    steam_id: string;
     description: string;
     reason: BanReason;
     reason_text: string;

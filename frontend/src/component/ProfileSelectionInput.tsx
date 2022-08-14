@@ -1,6 +1,6 @@
 import TextField from '@mui/material/TextField';
 import * as React from 'react';
-import { apiGetProfile, PlayerProfile, SteamID } from '../api';
+import { apiGetProfile, PlayerProfile } from '../api';
 import { log } from '../util/errors';
 import { ChangeEvent, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
@@ -16,8 +16,8 @@ export interface ProfileSelectionInputProps {
     initialValue?: string;
     fullWidth: boolean;
     onProfileSuccess: (profile: Nullable<PlayerProfile>) => void;
-    input: SteamID;
-    setInput: (input: SteamID) => void;
+    input: string;
+    setInput: (input: string) => void;
 }
 
 export const ProfileSelectionInput = ({
@@ -30,7 +30,6 @@ export const ProfileSelectionInput = ({
 }: ProfileSelectionInputProps) => {
     const debounceRate = 1;
     const [loading, setLoading] = useState<boolean>(false);
-    //const [input, setInput] = useState<string>(initialValue ?? '');
     const [lProfile, setLProfile] = useState<Nullable<PlayerProfile>>();
 
     const loadProfile = () => {
@@ -57,7 +56,7 @@ export const ProfileSelectionInput = ({
 
     const onChangeInput = (evt: ChangeEvent<HTMLInputElement>) => {
         const { value: nextValue } = evt.target;
-        setInput(nextValue as unknown as SteamID);
+        setInput(nextValue);
         if (nextValue == '') {
             onProfileSuccess(null);
             setLoading(false);
@@ -72,7 +71,7 @@ export const ProfileSelectionInput = ({
     };
 
     const isError =
-        input > 0 && !loading && (!lProfile || !lProfile?.player.steam_id);
+        input != '' && !loading && (!lProfile || !lProfile?.player.steam_id);
     return (
         <>
             <TextField

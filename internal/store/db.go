@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"encoding/json"
 	"fmt"
 	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
@@ -20,14 +19,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io/fs"
-	"io/ioutil"
 	"net/http"
-	"path"
-	"path/filepath"
 	"time"
 )
 
@@ -240,74 +234,4 @@ func (database *pgStore) Migrate(action MigrationAction) error {
 	default:
 		return migrator.Up()
 	}
-}
-
-// Import will import bans from a root folder.
-// The formatting is JSON with the importedBan schema defined inline
-// Valid filenames are: main_ban.json
-func (database *pgStore) Import(ctx context.Context, root string) error {
-	type importedBan struct {
-		BanID      int    `json:"ban_id"`
-		SteamID    uint64 `json:"steam_id"`
-		AuthorID   uint64 `json:"author_id"`
-		BanType    int    `json:"ban_type"`
-		Reason     int    `json:"reason"`
-		ReasonText string `json:"reason_text"`
-		Note       string `json:"note"`
-		Until      int    `json:"until"`
-		CreatedOn  int    `json:"created_on"`
-		UpdatedOn  int    `json:"updated_on"`
-		BanSource  int    `json:"source"`
-	}
-
-	return filepath.WalkDir(root, func(p string, d fs.DirEntry, e error) error {
-		switch d.Name() {
-		case "main_ban.json":
-			body, errRead := ioutil.ReadFile(path.Join(root, d.Name()))
-			if errRead != nil {
-				return errRead
-			}
-			var importedBans []importedBan
-			if errUnmarshal := json.Unmarshal(body, &importedBans); errUnmarshal != nil {
-				return errUnmarshal
-			}
-			for _, imported := range importedBans {
-				banTarget := model.NewPerson(steamid.SID64(imported.SteamID))
-				author := model.NewPerson(steamid.SID64(imported.AuthorID))
-				if errGetPersonA := database.GetOrCreatePersonBySteamID(ctx, steamid.SID64(imported.SteamID), &banTarget); errGetPersonA != nil {
-					return errGetPersonA
-				}
-				if errGetPersonB := database.GetOrCreatePersonBySteamID(ctx, steamid.SID64(imported.AuthorID), &author); errGetPersonB != nil {
-					return errGetPersonB
-				}
-				sum, errPlayerSummary := steamweb.PlayerSummaries(steamid.Collection{banTarget.SteamID, author.SteamID})
-				if errPlayerSummary != nil {
-					log.Errorf("Failed to get player summary: %v", errPlayerSummary)
-					return errPlayerSummary
-				}
-				if len(sum) > 0 {
-					banTarget.PlayerSummary = &sum[0]
-					if errSavePerson := database.SavePerson(ctx, &banTarget); errSavePerson != nil {
-						return errSavePerson
-					}
-					if author.SteamID.Valid() && len(sum) > 1 {
-						author.PlayerSummary = &sum[1]
-						if errSavePerson := database.SavePerson(ctx, &author); errSavePerson != nil {
-							return errSavePerson
-						}
-					}
-				}
-				newBan := model.NewBan(banTarget.SteamID, author.SteamID, 0)
-				newBan.ValidUntil = time.Unix(int64(imported.Until), 0)
-				newBan.ReasonText = imported.ReasonText
-				newBan.CreatedOn = time.Unix(int64(imported.CreatedOn), 0)
-				newBan.UpdatedOn = time.Unix(int64(imported.UpdatedOn), 0)
-				newBan.Origin = model.System
-				if errSaveBan := database.SaveBan(ctx, &newBan); errSaveBan != nil {
-					return errSaveBan
-				}
-			}
-		}
-		return nil
-	})
 }

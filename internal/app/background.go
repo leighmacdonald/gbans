@@ -204,7 +204,7 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 	var refreshState = func() error {
 		var newState model.ServerStateCollection
-		servers, errServers := database.GetServers(ctx, true)
+		servers, errServers := database.GetServers(ctx, false)
 		if errServers != nil {
 			return errors.Errorf("Failed to fetch servers: %v", errServers)
 		}
@@ -282,7 +282,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 		serverStateMu.Unlock()
 		return nil
 	}
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Second * 20)
 	for {
 		select {
 		case <-ctx.Done():
@@ -390,7 +390,7 @@ func banSweeper(ctx context.Context, database store.Store) {
 						if errDrop := database.DropBan(ctx, &expiredBan, false); errDrop != nil {
 							log.Errorf("Failed to drop expired expiredBan: %v", errDrop)
 						} else {
-							banType := "Ban"
+							banType := "BanSteam"
 							if expiredBan.BanType == model.NoComm {
 								banType = "Mute"
 							}

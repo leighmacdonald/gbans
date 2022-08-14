@@ -82,7 +82,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 
 	engine.GET("/metrics", prometheusHandler())
 	engine.GET("/auth/callback", web.onOpenIDCallback(database))
-	engine.GET("/api/ban/:ban_id", web.onAPIGetBanByID(database))
+	engine.GET("/api/bans/steam/:ban_id", web.onAPIGetBanByID(database))
 	engine.GET("/api/profile", web.onAPIProfile(database))
 	engine.GET("/api/servers/state", web.onAPIGetServerStates())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
@@ -127,10 +127,10 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	authed.POST("/api/report/message/:report_message_id", web.onAPIEditReportMessage(database))
 	authed.DELETE("/api/report/message/:report_message_id", web.onAPIDeleteReportMessage(database))
 
-	authed.GET("/api/ban/:ban_id/messages", web.onAPIGetBanMessages(database))
-	authed.POST("/api/ban/:ban_id/messages", web.onAPIPostBanMessage(database))
-	authed.POST("/api/ban/message/:ban_message_id", web.onAPIEditBanMessage(database))
-	authed.DELETE("/api/ban/message/:ban_message_id", web.onAPIDeleteBanMessage(database))
+	authed.GET("/api/bans/:ban_id/messages", web.onAPIGetBanMessages(database))
+	authed.POST("/api/bans/:ban_id/messages", web.onAPIPostBanMessage(database))
+	authed.POST("/api/bans/message/:ban_message_id", web.onAPIEditBanMessage(database))
+	authed.DELETE("/api/bans/message/:ban_message_id", web.onAPIDeleteBanMessage(database))
 
 	// Editor access
 	editorRoute := engine.Use(authMiddleware(database, model.PEditor))
@@ -141,18 +141,30 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 
 	// Moderator access
 	modRoute := engine.Use(authMiddleware(database, model.PModerator))
-	modRoute.POST("/api/ban", web.onAPIPostBanCreate(database))
-	modRoute.DELETE("/api/ban/:ban_id", web.onAPIPostBanDelete(database))
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
-	modRoute.POST("/api/bans_steam", web.onAPIGetBansSteam(database))
-	modRoute.POST("/api/bans_cidr", web.onAPIGetBansCIDR(database))
-	modRoute.POST("/api/bans_asn", web.onAPIGetBansASN(database))
-	modRoute.POST("/api/bans_group", web.onAPIGetBansGroup(database))
+
+	modRoute.POST("/api/bans/steam", web.onAPIGetBansSteam(database))
+	modRoute.POST("/api/bans/steam/create", web.onAPIPostBanSteamCreate(database))
+	modRoute.DELETE("/api/bans/steam/:ban_id", web.onAPIPostBanDelete(database))
+
+	modRoute.POST("/api/bans/cidr/create", web.onAPIPostBansCIDRCreate(database))
+	modRoute.POST("/api/bans/cidr", web.onAPIGetBansCIDR(database))
+	modRoute.DELETE("/api/bans/cidr/:net_id", web.onAPIDeleteBansCIDR(database))
+
+	modRoute.POST("/api/bans/asn/create", web.onAPIPostBansASNCreate(database))
+	modRoute.POST("/api/bans/asn", web.onAPIGetBansASN(database))
+	modRoute.DELETE("/api/bans/asn/:asn_id", web.onAPIDeleteBansASN(database))
+
+	modRoute.POST("/api/bans/group/create", web.onAPIPostBansGroupCreate(database))
+	modRoute.POST("/api/bans/group", web.onAPIGetBansGroup(database))
+	modRoute.DELETE("/api/bans/group/:ban_group_id", web.onAPIDeleteBansGroup(database))
 
 	// Admin access
 	adminRoute := engine.Use(authMiddleware(database, model.PAdmin))
 	adminRoute.POST("/api/servers", web.onAPIPostServer(database))
+	adminRoute.POST("/api/servers/:server_id", web.onAPIPostServerUpdate(database))
+	adminRoute.DELETE("/api/servers/:server_id", web.onAPIPostServerDelete(database))
 	adminRoute.GET("/api/servers", web.onAPIGetServers(database))
 }

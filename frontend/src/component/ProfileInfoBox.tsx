@@ -27,14 +27,18 @@ export const ProfileInfoBox = ({ profile }: ProfileInfoBoxProps) => {
                         {profile.player.realname}
                     </Typography>
                     <Typography variant={'body1'}>
-                        {profile.player.locstatecode},{' '}
-                        {profile.player.loccountrycode}
+                        {[
+                            profile.player.locstatecode,
+                            profile.player.loccountrycode
+                        ]
+                            .filter((x) => x)
+                            .join(',')}
                     </Typography>
                     <Typography variant={'body1'}>
                         Created:{' '}
                         {format(
                             fromUnixTime(profile.player.timecreated),
-                            'yyyy-mm-dd'
+                            'yyyy-MM-dd'
                         )}
                     </Typography>
                 </Stack>

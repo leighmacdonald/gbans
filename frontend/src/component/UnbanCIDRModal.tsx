@@ -1,41 +1,44 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteBan, IAPIBanRecordProfile } from '../api';
+import { apiDeleteCIDRBan, IAPIBanCIDRRecord } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 
-export interface UnbanModalProps<Ban> extends ConfirmationModalProps<Ban> {
-    banRecord: IAPIBanRecordProfile;
+export interface UnbanCIDRModalProps
+    extends ConfirmationModalProps<IAPIBanCIDRRecord> {
+    record: IAPIBanCIDRRecord;
 }
 
-export const UnbanModal = ({
+export const UnbanCIDRModal = ({
     open,
     setOpen,
     onSuccess,
-    banRecord
-}: UnbanModalProps<null>) => {
-    const [bp] = useState<IAPIBanRecordProfile>(banRecord);
+    record
+}: UnbanCIDRModalProps) => {
     const [reasonText, setReasonText] = useState<string>('');
-
     const { sendFlash } = useUserFlashCtx();
+
+    useEffect(() => {
+        setReasonText('');
+    }, [record]);
 
     const handleSubmit = useCallback(() => {
         if (reasonText == '') {
             sendFlash('error', 'Reason cannot be empty');
             return;
         }
-        apiDeleteBan(bp.ban_id, reasonText)
-            .then((resp) => {
+        apiDeleteCIDRBan(record.net_id, reasonText)
+            .then(() => {
                 sendFlash('success', `Unbanned successfully`);
-                onSuccess && onSuccess(resp);
+                onSuccess && onSuccess(record);
             })
             .catch((err) => {
                 sendFlash('error', `Failed to unban: ${err}`);
             });
-    }, [reasonText, bp.ban_id, sendFlash, onSuccess]);
+    }, [reasonText, record, sendFlash, onSuccess]);
 
     return (
         <ConfirmationModal
@@ -56,8 +59,8 @@ export const UnbanModal = ({
             <Stack spacing={2}>
                 <Heading>
                     <>
-                        Unban Player:
-                        {bp.personaname || `${bp.target_id}`}
+                        Unban CIDR (#{record.net_id}):
+                        {(record.cidr as any).IP}
                     </>
                 </Heading>
                 <Stack spacing={3} alignItems={'center'}>

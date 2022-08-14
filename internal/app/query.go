@@ -33,7 +33,7 @@ func ServerState() model.ServerStateCollection {
 // actively connected
 //
 // TODO cleanup this mess
-func Find(ctx context.Context, database store.Store, playerStr model.Target, ip string, playerInfo *model.PlayerInfo) error {
+func Find(ctx context.Context, database store.Store, playerStr model.StringSID, ip string, playerInfo *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &model.ServerStatePlayer{},

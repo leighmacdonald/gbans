@@ -1,10 +1,10 @@
-import { SteamID } from '../api';
 import Stack from '@mui/material/Stack';
 import Link from '@mui/material/Link';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import SteamID from 'steamid';
 
 export interface PersonCellProps {
     steam_id: SteamID;

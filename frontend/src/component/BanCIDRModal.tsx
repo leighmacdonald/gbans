@@ -16,8 +16,7 @@ import {
     Duration,
     Durations,
     IAPIBanCIDRRecord,
-    ip2int,
-    SteamID
+    ip2int
 } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
@@ -30,6 +29,7 @@ import Typography from '@mui/material/Typography';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import IPCIDR from 'ip-cidr';
 import { Heading } from './Heading';
+import SteamID from 'steamid';
 
 export interface BanCIDRModalProps
     extends ConfirmationModalProps<IAPIBanCIDRRecord> {
@@ -44,9 +44,9 @@ export const BanCIDRModal = ({
     targetId
 }: BanCIDRModalProps) => {
     const [targetSteamId, setTargetSteamId] = useState<SteamID>(
-        targetId ?? BigInt(0)
+        targetId ?? new SteamID('')
     );
-    const [input, setInput] = useState<SteamID>(BigInt(0));
+    const [input, setInput] = useState<string>('');
     const [duration, setDuration] = useState<Duration>(Duration.dur48h);
     const [customDuration, setCustomDuration] = useState<string>('');
     const [banReason, setBanReason] = useState<BanReason>(BanReason.Cheating);
@@ -57,10 +57,6 @@ export const BanCIDRModal = ({
     const { sendFlash } = useUserFlashCtx();
 
     const handleSubmit = useCallback(() => {
-        if (!targetSteamId) {
-            sendFlash('error', 'no steamId');
-            return;
-        }
         if (banReason == BanReason.Custom && customDuration == '') {
             sendFlash('error', 'Custom duration cannot be empty');
             return;
@@ -71,15 +67,15 @@ export const BanCIDRModal = ({
             return;
         }
         const opts: BanPayloadCIDR = {
-            target_id: targetSteamId,
+            target_id: targetSteamId.toString(),
             duration: dur,
-            network: network,
+            cidr: network,
             reason_text: reasonText,
             reason: banReason,
             note: noteText,
             ban_type: BanType.Banned
         };
-
+        console.log(opts);
         apiCreateBanCIDR(opts)
             .then((ban) => {
                 sendFlash(
@@ -115,11 +111,7 @@ export const BanCIDRModal = ({
                     );
                 }
             } catch (e) {
-                if (e instanceof TypeError) {
-                    // TypeError on invalid input we can ignore
-                } else {
-                    throw e;
-                }
+                return;
             }
         }
     };
@@ -161,7 +153,7 @@ export const BanCIDRModal = ({
                             if (profile) {
                                 setTargetSteamId(profile.player.steam_id);
                             } else {
-                                setTargetSteamId(BigInt(0));
+                                setTargetSteamId(new SteamID(''));
                             }
                         }}
                         input={input}
@@ -178,33 +170,32 @@ export const BanCIDRModal = ({
                     <Typography variant={'body1'}>
                         Current number of hosts in range: {networkSize}
                     </Typography>
-
-                    <Select<BanReason>
-                        fullWidth
-                        labelId="reason-label"
-                        id="reason-helper"
-                        value={banReason}
-                        onChange={handleUpdateReason}
-                    >
-                        {banReasonsList.map((v) => (
-                            <MenuItem key={`time-${v}`} value={v}>
-                                {BanReasons[v]}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                    <FormControl fullWidth>
+                        <InputLabel id="cidr-reason-label">Reason</InputLabel>
+                        <Select<BanReason>
+                            fullWidth
+                            labelId="cidr-reason-label"
+                            id="reason-helper"
+                            value={banReason}
+                            onChange={handleUpdateReason}
+                        >
+                            {banReasonsList.map((v) => (
+                                <MenuItem key={`time-${v}`} value={v}>
+                                    {BanReasons[v]}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     {banReason == BanReason.Custom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="reasonText-label">
-                                Reason
-                            </InputLabel>
-                            <TextField
-                                id={'reasonText'}
-                                value={reasonText}
-                                onChange={(evt) => {
-                                    setReasonText(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label={'Reason'}
+                            id={'reasonText'}
+                            value={reasonText}
+                            onChange={(evt) => {
+                                setReasonText(evt.target.value);
+                            }}
+                        />
                     )}
                     <FormControl fullWidth>
                         <InputLabel id="duration-label">
@@ -230,31 +221,26 @@ export const BanCIDRModal = ({
                     </FormControl>
 
                     {duration == Duration.durCustom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="customDuration-label">
-                                Custom Duration
-                            </InputLabel>
-                            <TextField
-                                id={'customDuration'}
-                                value={customDuration}
-                                onChange={(evt) => {
-                                    setCustomDuration(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
-                    )}
-
-                    <FormControl fullWidth>
                         <TextField
-                            id="note-field"
-                            label="Moderator Notes (hidden from public)"
-                            multiline
-                            value={noteText}
-                            onChange={handleUpdateNote}
-                            rows={10}
-                            variant="outlined"
+                            fullWidth
+                            label={'Custom Duration'}
+                            id={'customDuration'}
+                            value={customDuration}
+                            onChange={(evt) => {
+                                setCustomDuration(evt.target.value);
+                            }}
                         />
-                    </FormControl>
+                    )}
+                    <TextField
+                        fullWidth
+                        id="note-field"
+                        label="Moderator Notes (hidden from public)"
+                        multiline
+                        value={noteText}
+                        onChange={handleUpdateNote}
+                        rows={10}
+                        variant="outlined"
+                    />
                 </Stack>
             </Stack>
         </ConfirmationModal>

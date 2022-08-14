@@ -9,7 +9,6 @@ import {
     BanReasons,
     banReasonsList,
     BanType,
-    SteamID,
     Duration,
     Durations
 } from '../api';
@@ -22,6 +21,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
+import SteamID from 'steamid';
 
 export interface BanModalProps<Ban> extends ConfirmationModalProps<Ban> {
     ban?: Ban;
@@ -37,9 +37,9 @@ export const BanSteamModal = ({
     steamId
 }: BanModalProps<IAPIBanRecord>) => {
     const [targetSteamId, setTargetSteamId] = useState<SteamID>(
-        steamId ?? BigInt(0)
+        steamId ?? new SteamID('')
     );
-    const [input, setInput] = useState<SteamID>(BigInt(0));
+    const [steamIdInput, setSteamIdInput] = useState<string>('');
     const [duration, setDuration] = useState<Duration>(Duration.dur48h);
     const [customDuration, setCustomDuration] = useState<string>('');
     const [actionType, setActionType] = useState<BanType>(BanType.Banned);
@@ -64,7 +64,7 @@ export const BanSteamModal = ({
             return;
         }
         const opts: BanPayloadSteam = {
-            target_id: targetSteamId,
+            target_id: targetSteamId.toString(),
             ban_type: actionType,
             duration: dur,
             reason_text: reasonText,
@@ -128,11 +128,11 @@ export const BanSteamModal = ({
                             if (profile) {
                                 setTargetSteamId(profile.player.steam_id);
                             } else {
-                                setTargetSteamId(BigInt(0));
+                                setTargetSteamId(new SteamID(''));
                             }
                         }}
-                        input={input}
-                        setInput={setInput}
+                        input={steamIdInput}
+                        setInput={setSteamIdInput}
                     />
                 )}
                 <Stack spacing={3} alignItems={'center'}>
@@ -142,6 +142,7 @@ export const BanSteamModal = ({
                         </InputLabel>
                         <Select<BanType>
                             fullWidth
+                            label={'Action Type'}
                             labelId="actionType-label"
                             id="actionType-helper"
                             value={actionType}
@@ -159,44 +160,42 @@ export const BanSteamModal = ({
                             duration
                         </FormHelperText>
                     </FormControl>
-
-                    <Select<BanReason>
-                        fullWidth
-                        labelId="reason-label"
-                        id="reason-helper"
-                        value={banReason}
-                        onChange={(evt: SelectChangeEvent<BanReason>) => {
-                            setBanReason(evt.target.value as BanReason);
-                        }}
-                    >
-                        {banReasonsList.map((v) => (
-                            <MenuItem key={`time-${v}`} value={v}>
-                                {BanReasons[v]}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                    <FormControl fullWidth>
+                        <InputLabel id="steam-reason-label">Reason</InputLabel>
+                        <Select<BanReason>
+                            labelId="steam-reason-label"
+                            id="steam-reason"
+                            value={banReason}
+                            onChange={(evt: SelectChangeEvent<BanReason>) => {
+                                setBanReason(evt.target.value as BanReason);
+                            }}
+                        >
+                            {banReasonsList.map((v) => (
+                                <MenuItem key={`time-${v}`} value={v}>
+                                    {BanReasons[v]}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     {banReason == BanReason.Custom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="reasonText-label">
-                                Reason
-                            </InputLabel>
-                            <TextField
-                                id={'reasonText'}
-                                value={reasonText}
-                                onChange={(evt) => {
-                                    setReasonText(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label={'Custom Reason'}
+                            value={reasonText}
+                            onChange={(evt) => {
+                                setReasonText(evt.target.value);
+                            }}
+                        />
                     )}
                     <FormControl fullWidth>
-                        <InputLabel id="duration-label">
-                            Ban Duration
+                        <InputLabel id="steam-duration-label">
+                            Duration
                         </InputLabel>
                         <Select<Duration>
                             fullWidth
-                            labelId="duration-label"
-                            id="duration-helper"
+                            label={'Ban Duration'}
+                            labelId="steam-duration-label"
+                            id="steam-duration"
                             value={duration}
                             onChange={(evt: SelectChangeEvent<Duration>) => {
                                 setDuration(evt.target.value as Duration);
@@ -215,31 +214,27 @@ export const BanSteamModal = ({
                     </FormControl>
 
                     {duration == Duration.durCustom && (
-                        <FormControl fullWidth>
-                            <InputLabel id="customDuration-label">
-                                Custom Duration
-                            </InputLabel>
-                            <TextField
-                                id={'customDuration'}
-                                value={customDuration}
-                                onChange={(evt) => {
-                                    setCustomDuration(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label={'Custom Duration'}
+                            id={'customDuration'}
+                            value={customDuration}
+                            onChange={(evt) => {
+                                setCustomDuration(evt.target.value);
+                            }}
+                        />
                     )}
 
-                    <FormControl fullWidth>
-                        <TextField
-                            id="note-field"
-                            label="Moderator Notes (hidden from public)"
-                            multiline
-                            value={noteText}
-                            onChange={handleUpdateNote}
-                            rows={10}
-                            variant="outlined"
-                        />
-                    </FormControl>
+                    <TextField
+                        fullWidth
+                        id="note-field"
+                        label="Moderator Notes (hidden from public)"
+                        multiline
+                        value={noteText}
+                        onChange={handleUpdateNote}
+                        rows={10}
+                        variant="outlined"
+                    />
                 </Stack>
             </Stack>
         </ConfirmationModal>

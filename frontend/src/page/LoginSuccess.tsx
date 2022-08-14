@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router';
-import { apiGetCurrentProfile, PermissionLevel, UserProfile } from '../api';
+import { apiGetCurrentProfile, PermissionLevel } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
@@ -21,7 +21,7 @@ export const LoginSuccess = (): JSX.Element => {
     }
 
     apiGetCurrentProfile().then((value) => {
-        setCurrentUser(value as UserProfile);
+        setCurrentUser(value);
     });
     const { flashes, setFlashes } = useUserFlashCtx();
     setFlashes([

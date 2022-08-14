@@ -1,5 +1,5 @@
 import { apiCall, PermissionLevel, TimeStamped } from './common';
-import { SteamID } from './const';
+import SteamID from 'steamid';
 
 export enum profileState {
     Incomplete = 0,
@@ -61,8 +61,20 @@ export interface PlayerProfile {
     player: Person;
     friends?: Person[];
 }
+const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
 
-export const apiGetProfile = async (query: SteamID): Promise<PlayerProfile> =>
+export const applySteamId = (key: string, value: any) => {
+    if (validSteamIdKeys.includes(key)) {
+        try {
+            return new SteamID(`${value}`);
+        } catch (e) {
+            return new SteamID('');
+        }
+    }
+    return value;
+};
+
+export const apiGetProfile = async (query: string): Promise<PlayerProfile> =>
     await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 
 export const apiGetCurrentProfile = async (): Promise<UserProfile> =>
