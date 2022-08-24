@@ -30,7 +30,6 @@ http:
   host: 0.0.0.0
   # Listen on this port
   port: 6006
-  domain: https://gbans.localhost
   static_path: ./dist/
   client_timeout: 20s
   # Encryption key for cookies

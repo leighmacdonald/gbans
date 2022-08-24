@@ -1,10 +1,10 @@
 import Stack from '@mui/material/Stack';
-import Link from '@mui/material/Link';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import SteamID from 'steamid';
+import { useNavigate } from 'react-router-dom';
 
 export interface PersonCellProps {
     steam_id: SteamID;
@@ -17,13 +17,9 @@ export const PersonCell = ({
     avatar,
     personaname
 }: PersonCellProps) => {
+    const navigate = useNavigate();
     return (
-        <Stack
-            direction={'row'}
-            alignItems={'center'}
-            component={Link}
-            href={`/profile/${steam_id}`}
-        >
+        <Stack direction={'row'} alignItems={'center'}>
             <Avatar alt={personaname} src={avatar} variant={'square'} />
             <Box
                 height={'100%'}
@@ -31,6 +27,9 @@ export const PersonCell = ({
                 alignItems={'center'}
                 display={'inline-block'}
                 marginLeft={2}
+                onClick={() => {
+                    navigate(`/profile/${steam_id}`);
+                }}
             >
                 <Typography variant={'body1'}>{personaname}</Typography>
             </Box>

@@ -3,4 +3,4 @@ frontend/node_modules
 frontend/dist
 .idea
 tf2server
-uncletopia-prod
+uncletopia-prod/tf2server/

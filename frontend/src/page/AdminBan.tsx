@@ -39,6 +39,7 @@ import { BanGroupModal } from '../component/BanGroupModal';
 import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
 import { UnbanASNModal } from '../component/UnbanASNModal';
 import { UnbanGroupModal } from '../component/UnbanGroupModal';
+import { steamIdQueryValue } from '../util/text';
 
 export const AdminBan = (): JSX.Element => {
     const theme = useTheme();
@@ -65,7 +66,7 @@ export const AdminBan = (): JSX.Element => {
     const loadBansGroup = useCallback(() => {
         apiGetBansGroups({ desc: true, order_by: 'ban_group_id' }).then(
             (newGroupBans) => {
-                setBanGroups(newGroupBans || []);
+                setBanGroups(newGroupBans.result || []);
             }
         );
     }, []);
@@ -73,7 +74,7 @@ export const AdminBan = (): JSX.Element => {
     const loadBansCIDR = useCallback(() => {
         apiGetBansCIDR({ desc: true, order_by: 'net_id' }).then(
             (newBansCIDR) => {
-                setBanCIDRs(newBansCIDR || []);
+                setBanCIDRs(newBansCIDR.result || []);
             }
         );
     }, []);
@@ -81,7 +82,7 @@ export const AdminBan = (): JSX.Element => {
     const loadBansASN = useCallback(() => {
         apiGetBansASN({ desc: true, order_by: 'ban_asn_id' }).then(
             (newBansASN) => {
-                setBanASNs(newBansASN || []);
+                setBanASNs(newBansASN.result || []);
             }
         );
     }, []);
@@ -137,7 +138,8 @@ export const AdminBan = (): JSX.Element => {
             />
             {currentBan && (
                 <UnbanSteamModal
-                    record={currentBan}
+                    banId={currentBan.ban_id}
+                    personaName={currentBan.personaname}
                     open={unbanSteamModalOpen}
                     setOpen={setUnbanSteamModalOpen}
                     onSuccess={() => {
@@ -262,7 +264,7 @@ export const AdminBan = (): JSX.Element => {
                         }}
                         aria-label="ReportCreatePage detail tabs"
                     >
-                        <Tab label={'Steam Bans'} />
+                        <Tab label={'Steam Bans'} color={'text'} />
                         <Tab label={`CIDR Bans`} />
                         <Tab label={`ASN Bans`} />
                         <Tab label={`Group Bans`} />
@@ -292,10 +294,12 @@ export const AdminBan = (): JSX.Element => {
                                         sortKey: 'personaname',
                                         sortable: true,
                                         align: 'left',
-                                        queryValue: (o) => `${o.personaname}`,
+                                        queryValue: (o) =>
+                                            `${o.personaname}-` +
+                                            steamIdQueryValue(o.target_id),
                                         renderer: (row) => (
                                             <PersonCell
-                                                steam_id={row.source_id}
+                                                steam_id={row.target_id}
                                                 personaname={row.personaname}
                                                 avatar={row.avatar}
                                             />
@@ -495,7 +499,8 @@ export const AdminBan = (): JSX.Element => {
                                 sortKey: 'source_id',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.source_id}`,
+                                queryValue: (o) =>
+                                    steamIdQueryValue(o.source_id),
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
                                         {obj.source_id.toString()}
@@ -508,7 +513,8 @@ export const AdminBan = (): JSX.Element => {
                                 sortKey: 'target_id',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.target_id}`,
+                                queryValue: (o) =>
+                                    steamIdQueryValue(o.target_id),
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
                                         {obj.target_id.toString()}

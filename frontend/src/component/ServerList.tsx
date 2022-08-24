@@ -13,6 +13,8 @@ import { LinearProgressProps } from '@mui/material/LinearProgress';
 import { LoadingSpinner } from './LoadingSpinner';
 import { DataTable } from './DataTable';
 import { Heading } from './Heading';
+import { cleanMapName } from '../api';
+import Tooltip from '@mui/material/Tooltip';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -44,6 +46,7 @@ export const ServerList = () => {
         <Stack spacing={1}>
             <Heading>Servers</Heading>
             <DataTable
+                defaultSortOrder={'asc'}
                 rowsPerPage={100}
                 columns={[
                     {
@@ -51,6 +54,7 @@ export const ServerList = () => {
                         tooltip: 'Country Code',
                         sortKey: 'cc',
                         sortType: 'string',
+                        sortable: true,
                         queryValue: (obj) => obj.cc,
                         renderer: (_, value) => (
                             <Flag countryCode={value as string} />
@@ -61,6 +65,7 @@ export const ServerList = () => {
                         tooltip: 'Server Name',
                         sortKey: 'name',
                         sortType: 'string',
+                        sortable: true,
                         align: 'left',
                         width: '100%',
                         queryValue: (obj) => obj.name + obj.name_short,
@@ -75,17 +80,45 @@ export const ServerList = () => {
                         tooltip: 'Map Name',
                         sortKey: 'map',
                         sortType: 'string',
-                        queryValue: (obj) => obj.map
+                        sortable: true,
+                        queryValue: (obj) => obj.map,
+                        renderer: (obj) => {
+                            return (
+                                <Typography variant={'body2'}>
+                                    {cleanMapName(obj.map)}
+                                </Typography>
+                            );
+                        }
                     },
                     {
                         label: 'Players',
                         tooltip: 'Current Players',
                         sortKey: 'player_count',
+                        sortable: true,
                         renderer: (obj, value) => {
                             return (
                                 <Typography variant={'body2'}>
                                     {`${value}/${obj.max_players}`}
                                 </Typography>
+                            );
+                        }
+                    },
+                    {
+                        label: 'Dist',
+                        tooltip: () => `Distance to the server`,
+                        sortKey: 'distance',
+                        sortable: true,
+                        renderer: (obj) => {
+                            return (
+                                <Tooltip
+                                    title={`Distance in hammer units: ${Math.round(
+                                        (obj.distance ?? 1) * 52.49
+                                    )} khu`}
+                                >
+                                    <Typography variant={'body2'}>
+                                        {`${obj.distance}km`}
+                                    </Typography>
+                                </Tooltip>
                             );
                         }
                     },
@@ -147,7 +180,7 @@ export const ServerList = () => {
                         }
                     }
                 ]}
-                defaultSortColumn={'name'}
+                defaultSortColumn={'distance'}
                 rows={selectedServers}
             />
         </Stack>

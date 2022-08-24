@@ -61,6 +61,7 @@ export interface PlayerProfile {
     player: Person;
     friends?: Person[];
 }
+
 const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
 
 export const applySteamId = (key: string, value: any) => {
@@ -74,22 +75,20 @@ export const applySteamId = (key: string, value: any) => {
     return value;
 };
 
-export const apiGetProfile = async (query: string): Promise<PlayerProfile> =>
+export const apiGetProfile = async (query: string) =>
     await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
 
-export const apiGetCurrentProfile = async (): Promise<UserProfile> =>
+export const apiGetCurrentProfile = async () =>
     await apiCall<UserProfile>(`/api/current_profile`, 'GET');
 
-export const apiGetPeople = async (): Promise<Person[]> =>
+export const apiGetPeople = async () =>
     await apiCall<Person[]>(`/api/players`, 'GET');
 
 export interface FindProfileProps {
     query: string;
 }
 
-export const apiGetResolveProfile = async (
-    opts: FindProfileProps
-): Promise<Person> =>
+export const apiGetResolveProfile = async (opts: FindProfileProps) =>
     await apiCall<Person, FindProfileProps>(
         '/api/resolve_profile',
         'POST',

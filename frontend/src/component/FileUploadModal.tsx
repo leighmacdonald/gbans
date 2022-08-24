@@ -93,8 +93,8 @@ export const FileUploadModal = ({
                     Upload An Image
                 </Typography>
                 <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                    You can upload via pasting remote url, uploading a file or
-                    pasting a file.
+                    You can upload via pasting remote url or uploading a file
+                    from your local system.
                 </Typography>
                 <Stack spacing={3}>
                     <label htmlFor="contained-button-file">

@@ -16,6 +16,8 @@ import TextField from '@mui/material/TextField';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
 import { filterPerson } from '../util/text';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
 export interface FriendListProps {
     friends: Person[];
@@ -73,42 +75,53 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
             </Heading>
             <List dense={true}>
                 <Suspense fallback={<LoadingSpinner />}>
-                    {filtered
-                        .slice(page * limit, page * limit + limit)
-                        .map((p) => (
-                            <ListItemButton
-                                color={
-                                    p.vac_bans > 0
-                                        ? theme.palette.error.main
-                                        : undefined
-                                }
-                                key={`${p.steamid}`}
-                                onClick={() => {
-                                    navigate(`/profile/${p.steamid}`);
-                                }}
-                            >
-                                <ListItemAvatar>
-                                    <Avatar
-                                        alt={'Profile Picture'}
-                                        src={p.avatar}
+                    {friends.length == 0 && (
+                        <Container>
+                            <Typography textAlign={'center'} variant={'body2'}>
+                                😢
+                            </Typography>
+                        </Container>
+                    )}
+                    {friends.length > 0 &&
+                        filtered
+                            .slice(page * limit, page * limit + limit)
+                            .map((p) => (
+                                <ListItemButton
+                                    color={
+                                        p.vac_bans > 0
+                                            ? theme.palette.error.main
+                                            : undefined
+                                    }
+                                    key={`${p.steamid}`}
+                                    onClick={() => {
+                                        navigate(`/profile/${p.steamid}`);
+                                    }}
+                                >
+                                    <ListItemAvatar>
+                                        <Avatar
+                                            alt={'Profile Picture'}
+                                            src={p.avatar}
+                                        />
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={p.personaname}
+                                        secondary={`${p.steamid}`}
                                     />
-                                </ListItemAvatar>
-                                <ListItemText
-                                    primary={p.personaname}
-                                    secondary={`${p.steamid}`}
-                                />
-                            </ListItemButton>
-                        ))}
+                                </ListItemButton>
+                            ))}
                 </Suspense>
             </List>
-            <Pagination
-                sx={{ width: '100%' }}
-                variant={'text'}
-                count={pages}
-                onChange={(_, newPage) => {
-                    setPage(newPage - 1);
-                }}
-            />
+            {friends.length > 0 && (
+                <Pagination
+                    disabled={friends.length == 0}
+                    sx={{ width: '100%' }}
+                    variant={'text'}
+                    count={pages}
+                    onChange={(_, newPage) => {
+                        setPage(newPage - 1);
+                    }}
+                />
+            )}
         </Stack>
     );
 };

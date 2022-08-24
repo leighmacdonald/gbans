@@ -30,8 +30,8 @@ export const AdminReports = (): JSX.Element => {
 
     useEffect(() => {
         apiGetReports({})
-            .then((reports) => {
-                setReports(reports || []);
+            .then((response) => {
+                setReports(response.result || []);
             })
             .catch(logErr);
     }, []);

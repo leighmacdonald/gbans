@@ -10,7 +10,6 @@ import CardHeader from '@mui/material/CardHeader';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CardContent from '@mui/material/CardContent';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { renderMarkdown } from '../api/wiki';
 import Menu from '@mui/material/Menu';
@@ -91,13 +90,13 @@ export const UserMessageView = ({
                     title={author.name}
                     subheader={d1}
                 />
-                <CardContent>
-                    <RenderedMarkdownBox
-                        bodyHTML={renderMarkdown(message.contents)}
-                        readonly={true}
-                        setEditMode={setEditing}
-                    />
-                </CardContent>
+
+                <RenderedMarkdownBox
+                    bodyHTML={renderMarkdown(message.contents)}
+                    readonly={true}
+                    setEditMode={setEditing}
+                />
+
                 <Menu
                     anchorEl={anchorEl}
                     id="message-menu"

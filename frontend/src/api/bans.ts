@@ -105,13 +105,24 @@ export enum BanType {
     Banned = 2
 }
 
+export const banTypeString = (bt: BanType) => {
+    switch (bt) {
+        case BanType.Banned:
+            return 'Banned';
+        case BanType.NoComm:
+            return 'Muted';
+        default:
+            return 'Not Banned';
+    }
+};
+
 export interface BannedPerson {
     ban: IAPIBanRecord;
     person: Person;
 }
 
 export interface BanBase extends TimeStamped {
-    valid_until: Date;
+    valid_until: Date | string;
     reason: BanReason;
     reason_text: string;
     source_id: SteamID;
@@ -197,15 +208,13 @@ export interface BanPayloadGroup extends BanBasePayload {
     group_id: string;
 }
 
-export const apiGetBansSteam = async (
-    opts?: BansQueryFilter
-): Promise<IAPIBanRecordProfile[]> => {
+export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans/steam`,
         'POST',
         opts ?? {}
     );
-    return (resp ?? []).map((b): IAPIBanRecordProfile => {
+    return (resp.result ?? []).map((b): IAPIBanRecordProfile => {
         return {
             source_id: b.ban.source_id,
             avatar: b.person.avatar,
@@ -238,39 +247,34 @@ export const apiGetBansSteam = async (
     });
 };
 
-export const apiGetBanSteam = async (ban_id: number): Promise<BannedPerson> =>
-    await apiCall<BannedPerson>(`/api/bans/steam/${ban_id}`, 'GET');
+export const apiGetBanSteam = async (ban_id: number, deleted = false) =>
+    await apiCall<BannedPerson>(
+        `/api/bans/steam/${ban_id}?deleted=${deleted}`,
+        'GET'
+    );
 
-export const apiCreateBanSteam = async (
-    p: BanPayloadSteam
-): Promise<IAPIBanRecord> =>
+export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
     await apiCall<IAPIBanRecord, BanPayloadSteam>(
         `/api/bans/steam/create`,
         'POST',
         p
     );
 
-export const apiCreateBanCIDR = async (
-    p: BanPayloadCIDR
-): Promise<IAPIBanCIDRRecord> =>
+export const apiCreateBanCIDR = async (p: BanPayloadCIDR) =>
     await apiCall<IAPIBanCIDRRecord, BanPayloadCIDR>(
         `/api/bans/cidr/create`,
         'POST',
         p
     );
 
-export const apiCreateBanASN = async (
-    p: BanPayloadASN
-): Promise<IAPIBanASNRecord> =>
+export const apiCreateBanASN = async (p: BanPayloadASN) =>
     await apiCall<IAPIBanASNRecord, BanPayloadASN>(
         `/api/bans/asn/create`,
         'POST',
         p
     );
 
-export const apiCreateBanGroup = async (
-    p: BanPayloadGroup
-): Promise<IAPIBanGroupRecord> =>
+export const apiCreateBanGroup = async (p: BanPayloadGroup) =>
     await apiCall<IAPIBanGroupRecord, BanPayloadGroup>(
         `/api/bans/group/create`,
         'POST',

@@ -26,25 +26,36 @@ func (database *pgStore) DropBan(ctx context.Context, ban *model.BanSteam, hardD
 	}
 }
 
-func (database *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, full bool, person *model.BannedPerson) error {
-	var query = fmt.Sprintf(`
-	SELECT
-		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason,
-		b.reason_text, b.note, b.origin, b.valid_until, b.created_on, b.updated_on,
-		p.steam_id as sid2, p.created_on as created_on2, p.updated_on as updated_on2, p.communityvisibilitystate,
-		p.profilestate,
-		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
-		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
-		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
-		p.days_since_last_ban, b.deleted, case WHEN b.report_id is null THEN 0 ELSE b.report_id END,
-		b.unban_reason_text, b.is_enabled
-	FROM ban b
-	LEFT OUTER JOIN person p on p.steam_id = b.target_id
-	WHERE b.%s = $1 AND b.valid_until > $2 AND b.deleted = false
-	GROUP BY b.ban_id, p.steam_id
-	ORDER BY b.created_on DESC
-	LIMIT 1`, column)
-	if errQuery := database.QueryRow(ctx, query, identifier, config.Now()).
+func (database *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, person *model.BannedPerson, deletedOk bool) error {
+	whereClauses := sq.And{
+		sq.Eq{fmt.Sprintf("b.%s", column): identifier},
+	}
+	if !deletedOk {
+		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
+	} else {
+		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": config.Now()})
+	}
+	qb := sb.Select(
+		"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+		"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "p.steam_id as sid2",
+		"p.created_on as created_on2", "p.updated_on as updated_on2", "p.communityvisibilitystate",
+		"p.profilestate", "p.personaname", "p.profileurl", "p.avatar", "p.avatarmedium", "p.avatarfull",
+		"p.avatarhash", "p.personastate", "p.realname", "p.timecreated", "p.loccountrycode", "p.locstatecode",
+		"p.loccityid", "p.permission_level", "p.discord_id", "p.community_banned", "p.vac_bans", "p.game_bans",
+		"p.economy_ban", "p.days_since_last_ban", "b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
+		"b.unban_reason_text", "b.is_enabled").
+		From("ban b").
+		JoinClause("LEFT OUTER JOIN person p on p.steam_id = b.target_id").
+		Where(whereClauses).
+		GroupBy("b.ban_id, p.steam_id").
+		OrderBy("b.created_on DESC").
+		Limit(1)
+
+	query, args, queryErr := qb.ToSql()
+	if queryErr != nil {
+		return errors.Wrap(queryErr, "Failed to create query")
+	}
+	if errQuery := database.QueryRow(ctx, query, args...).
 		Scan(&person.Ban.BanID, &person.Ban.TargetId, &person.Ban.SourceId, &person.Ban.BanType, &person.Ban.Reason, &person.Ban.ReasonText,
 			&person.Ban.Note, &person.Ban.Origin, &person.Ban.ValidUntil, &person.Ban.CreatedOn, &person.Ban.UpdatedOn,
 			&person.Person.SteamID, &person.Person.CreatedOn, &person.Person.UpdatedOn,
@@ -59,12 +70,12 @@ func (database *pgStore) getBanByColumn(ctx context.Context, column string, iden
 	return nil
 }
 
-func (database *pgStore) GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, full bool, bannedPerson *model.BannedPerson) error {
-	return database.getBanByColumn(ctx, "target_id", sid64, full, bannedPerson)
+func (database *pgStore) GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *model.BannedPerson, deletedOk bool) error {
+	return database.getBanByColumn(ctx, "target_id", sid64, bannedPerson, deletedOk)
 }
 
-func (database *pgStore) GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error {
-	return database.getBanByColumn(ctx, "ban_id", banID, full, bannedPerson)
+func (database *pgStore) GetBanByBanID(ctx context.Context, banID int64, bannedPerson *model.BannedPerson, deletedOk bool) error {
+	return database.getBanByColumn(ctx, "ban_id", banID, bannedPerson, deletedOk)
 }
 
 // SaveBan will insert or update the ban record
@@ -85,9 +96,9 @@ func (database *pgStore) SaveBan(ctx context.Context, ban *model.BanSteam) error
 	if ban.BanID > 0 {
 		return database.updateBan(ctx, ban)
 	}
-	ban.CreatedOn = config.Now()
+	ban.CreatedOn = ban.UpdatedOn
 	existing := model.NewBannedPerson()
-	errGetBan := database.GetBanBySteamID(ctx, ban.TargetId, false, &existing)
+	errGetBan := database.GetBanBySteamID(ctx, ban.TargetId, &existing, false)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, ErrNoResult) {
 			return errors.Wrapf(errGetPerson, "Failed to check existing ban state")
@@ -161,19 +172,6 @@ type BansQueryFilter struct {
 
 // GetBans returns all bans that fit the filter criteria passed in
 func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilter) ([]model.BannedPerson, error) {
-	// 	query := fmt.Sprintf(`SELECT
-	//		b.ban_id, b.steam_id, b.author_id, b.ban_type, b.reason,
-	//		b.reason_text, b.note, b.ban_source, b.valid_until, b.created_on, b.updated_on,
-	//		p.steam_id as sid2, p.created_on as created_on2, p.updated_on as updated_on2, p.communityvisibilitystate,
-	//		p.profilestate,
-	//		p.personaname, p.profileurl, p.avatar, p.avatarmedium, p.avatarfull, p.avatarhash,
-	//		p.personastate, p.realname, p.timecreated, p.loccountrycode, p.locstatecode, p.loccityid,
-	//		p.permission_level, p.discord_id, p.community_banned, p.vac_bans, p.game_bans, p.economy_ban,
-	//		p.days_since_last_ban, b.deleted
-	//	FROM ban b
-	//	LEFT OUTER JOIN person p on p.steam_id = b.steam_id
-	//	WHERE b.deleted = false
-	//	ORDER BY b.%s LIMIT %d OFFSET %d`, filter.OrderBy, filter.Limit, filter.Offset)
 	qb := sb.Select("b.ban_id as ban_id", "b.target_id as target_id", "b.source_id as source_id",
 		"b.ban_type as ban_type", "b.reason as reason", "b.reason_text as reason_text",
 		"b.note as note", "b.origin as origin", "b.valid_until as valid_until", "b.created_on as created_on",
@@ -441,7 +439,6 @@ func (database *pgStore) GetBanGroups(ctx context.Context) ([]model.BanGroup, er
 		       note, unban_reason_text, origin, created_on, updated_on, valid_until
 		FROM ban_group 
 		WHERE deleted = false`
-
 	rows, errRows := database.Query(ctx, q)
 	if errRows != nil {
 		return nil, Err(errRows)

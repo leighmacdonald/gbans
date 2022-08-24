@@ -168,7 +168,7 @@ func (database *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN,
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text
 		FROM ban_asn
-		WHERE valid_until < $1`
+		WHERE valid_until < $1 AND deleted = false`
 	var bans []model.BanASN
 	rows, errQuery := database.conn.Query(ctx, query, config.Now())
 	if errQuery != nil {

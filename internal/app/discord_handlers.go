@@ -353,7 +353,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		return errCommandFailed
 	}
 	ban := model.NewBannedPerson()
-	if errGetBanBySID := bot.database.GetBanBySteamID(ctx, sid, true, &ban); errGetBanBySID != nil {
+	if errGetBanBySID := bot.database.GetBanBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
 		if !errors.Is(errGetBanBySID, store.ErrNoResult) {
 			log.Errorf("Failed to get ban by steamid: %v", errGetBanBySID)
 			return errCommandFailed
@@ -400,6 +400,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 				}
 			}
 		}
+		addLink(embed, ban.Ban)
 	}
 	banStateStr := "no"
 	if banned {

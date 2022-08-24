@@ -32,8 +32,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import { Flashes } from './Flashes';
 import useTheme from '@mui/material/styles/useTheme';
+import { useColourModeCtx } from '../contexts/ColourModeContext';
 
 interface menuRoute {
     to: string;
@@ -44,10 +47,7 @@ interface menuRoute {
 export const TopBar = () => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
-    const perms = useMemo(
-        () => parseInt(localStorage.getItem('permission_level') || '1'),
-        []
-    );
+
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
     );
@@ -58,7 +58,7 @@ export const TopBar = () => {
         React.useState<null | HTMLElement>(null);
 
     const theme = useTheme();
-    // const colourMode = useColourModeCtx();
+    const colourMode = useColourModeCtx();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
@@ -88,175 +88,124 @@ export const TopBar = () => {
         [navigate]
     );
 
+    const colourOpts = useMemo(() => {
+        return { color: theme.palette.primary.dark };
+    }, [theme.palette.primary.dark]);
+
+    const topColourOpts = useMemo(() => {
+        return { color: theme.palette.common.white };
+    }, [theme.palette.common.white]);
+
     const menuItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [
             {
                 to: '/',
                 text: 'Dashboard',
-                icon: (
-                    <DashboardIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
-            },
-            // { to: '/bans', text: 'Bans', icon: <BlockIcon sx={{ color: '#fff' }} /> },
+                icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
+            }
             // { to: '/stats', text: 'Stats', icon: <BarChartIcon sx={{ color: '#fff' }} /> },
-            {
+        ];
+        if (currentUser.ban_id <= 0) {
+            items.push({
                 to: '/servers',
                 text: 'Servers',
-                icon: (
-                    <StorageIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
-            },
-            {
+                icon: <StorageIcon sx={topColourOpts} />
+            });
+        }
+        items.push({
+            to: '/wiki',
+            text: 'Wiki',
+            icon: <ArticleIcon sx={topColourOpts} />
+        });
+        if (currentUser.ban_id <= 0) {
+            items.push({
                 to: '/report',
                 text: 'Report',
-                icon: (
-                    <ReportIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
-            },
-            // { to: '/appeal', text: 'Appeal', icon: <HistoryIcon sx={{ color: '#fff' }} /> },
-            {
-                to: '/wiki',
-                text: 'Wiki',
-                icon: (
-                    <ArticleIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
-            }
-        ];
-        if (perms >= PermissionLevel.Admin) {
+                icon: <ReportIcon sx={topColourOpts} />
+            });
+        }
+        if (currentUser.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/logs',
                 text: 'Logs',
-                icon: (
-                    <QueryStatsIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <QueryStatsIcon sx={topColourOpts} />
             });
         }
         if (currentUser.ban_id > 0) {
             items.push({
                 to: `/ban/${currentUser.ban_id}`,
                 text: 'Appeal',
-                icon: (
-                    <SupportIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <SupportIcon sx={topColourOpts} />
             });
         }
         return items;
-    }, [currentUser.ban_id, perms, theme.palette.background.default]);
+    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
             {
                 to: `/profile/${currentUser?.steam_id}`,
                 text: 'Profile',
-                icon: (
-                    <AccountCircleIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <AccountCircleIcon sx={colourOpts} />
             },
             // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
             {
                 to: '/logout',
                 text: 'Logout',
-                icon: (
-                    <ExitToAppIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <ExitToAppIcon sx={colourOpts} />
             }
         ],
-        [currentUser?.steam_id, theme.palette.background.default]
+        [colourOpts, currentUser?.steam_id]
     );
+
     const adminItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [];
-        if (perms >= PermissionLevel.Moderator) {
+        if (currentUser.permission_level >= PermissionLevel.Moderator) {
             items.push({
                 to: '/admin/ban',
                 text: 'Ban Player/Net',
-                icon: (
-                    <BlockIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <BlockIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/reports',
                 text: 'Reports',
-                icon: (
-                    <ReportIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <ReportIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/filters',
                 text: 'Filtered Words',
-                icon: (
-                    <SubjectIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <SubjectIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/news',
                 text: 'News',
-                icon: (
-                    <NewspaperIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <NewspaperIcon sx={colourOpts} />
             });
         }
-        if (perms >= PermissionLevel.Admin) {
+        if (currentUser.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/admin/people',
                 text: 'People',
-                icon: (
-                    <PregnantWomanIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <PregnantWomanIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/import',
                 text: 'Import',
-                icon: (
-                    <ImportExportIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <ImportExportIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/servers',
                 text: 'Servers',
-                icon: (
-                    <DnsIcon sx={{ color: theme.palette.background.default }} />
-                )
+                icon: <DnsIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/server_logs',
                 text: 'Server Logs',
-                icon: (
-                    <SubjectIcon
-                        sx={{ color: theme.palette.background.default }}
-                    />
-                )
+                icon: <SubjectIcon sx={colourOpts} />
             });
         }
         return items;
-    }, [perms, theme.palette.background.default]);
+    }, [colourOpts, currentUser.permission_level]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -277,6 +226,14 @@ export const TopBar = () => {
         </MenuItem>
     );
 
+    const themeIcon = useMemo(() => {
+        return theme.palette.mode == 'light' ? (
+            <DarkModeIcon sx={{ color: '#ada03a' }} />
+        ) : (
+            <LightModeIcon sx={{ color: '#ada03a' }} />
+        );
+    }, [theme.palette.mode]);
+
     return (
         <AppBar position="sticky">
             <Container maxWidth="xl">
@@ -285,7 +242,6 @@ export const TopBar = () => {
                         variant="h6"
                         noWrap
                         component="div"
-                        color={theme.palette.background.paper}
                         sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
                     >
                         Uncletopia
@@ -304,9 +260,7 @@ export const TopBar = () => {
                             aria-haspopup="true"
                             onClick={handleOpenNavMenu}
                         >
-                            <MenuIcon
-                                sx={{ color: theme.palette.background.default }}
-                            />
+                            <MenuIcon />
                         </IconButton>
                         <Menu
                             id="menu-appbar"
@@ -363,21 +317,13 @@ export const TopBar = () => {
 
                     <Box sx={{ flexGrow: 0 }}>
                         <>
-                            {/*<Tooltip title="Toggle light/dark mode">*/}
-                            {/*    <IconButton*/}
-                            {/*        onClick={colourMode.toggleColorMode}*/}
-                            {/*    >*/}
-                            {/*        {theme.palette.mode == 'light' ? (*/}
-                            {/*            <DarkModeIcon*/}
-                            {/*                sx={{ color: '#ada03a' }}*/}
-                            {/*            />*/}
-                            {/*        ) : (*/}
-                            {/*            <LightModeIcon*/}
-                            {/*                sx={{ color: '#ada03a' }}*/}
-                            {/*            />*/}
-                            {/*        )}*/}
-                            {/*    </IconButton>*/}
-                            {/*</Tooltip>*/}
+                            <Tooltip title="Toggle BLU/RED mode">
+                                <IconButton
+                                    onClick={colourMode.toggleColorMode}
+                                >
+                                    {themeIcon}
+                                </IconButton>
+                            </Tooltip>
                             {!currentUser ||
                                 (!currentUser.steam_id.isValidIndividual() && (
                                     <Tooltip title="Steam Login">
@@ -436,45 +382,46 @@ export const TopBar = () => {
                                     </>
                                 )}
 
-                            {currentUser && currentUser?.steam_id && (
-                                <>
-                                    <Tooltip title="User Settings">
-                                        <IconButton
-                                            onClick={handleOpenUserMenu}
-                                            sx={{ p: 0 }}
+                            {currentUser &&
+                                currentUser?.steam_id.isValidIndividual() && (
+                                    <>
+                                        <Tooltip title="User Settings">
+                                            <IconButton
+                                                onClick={handleOpenUserMenu}
+                                                sx={{ p: 0 }}
+                                            >
+                                                <Avatar
+                                                    alt={currentUser.name}
+                                                    src={currentUser.avatar}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Menu
+                                            sx={{ mt: '45px' }}
+                                            id="menu-appbar"
+                                            anchorEl={anchorElUser}
+                                            anchorOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            keepMounted
+                                            transformOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            open={Boolean(anchorElUser)}
+                                            onClose={handleCloseUserMenu}
                                         >
-                                            <Avatar
-                                                alt={currentUser.name}
-                                                src={currentUser.avatar}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Menu
-                                        sx={{ mt: '45px' }}
-                                        id="menu-appbar"
-                                        anchorEl={anchorElUser}
-                                        anchorOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        keepMounted
-                                        transformOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        open={Boolean(anchorElUser)}
-                                        onClose={handleCloseUserMenu}
-                                    >
-                                        {userItems.map((value) => {
-                                            return renderLinkedMenuItem(
-                                                value.text,
-                                                value.to,
-                                                value.icon
-                                            );
-                                        })}
-                                    </Menu>
-                                </>
-                            )}
+                                            {userItems.map((value) => {
+                                                return renderLinkedMenuItem(
+                                                    value.text,
+                                                    value.to,
+                                                    value.icon
+                                                );
+                                            })}
+                                        </Menu>
+                                    </>
+                                )}
                         </>
                     </Box>
                 </Toolbar>

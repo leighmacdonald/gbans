@@ -19,5 +19,5 @@ export const getDistance = (
             Math.cos(lat2) *
             Math.pow(Math.sin((lon2 - lon1) / 2), 2);
     const c = 2 * Math.asin(Math.sqrt(a));
-    return c * EARTH_RADIUS * 1000;
+    return Math.round((c * EARTH_RADIUS * 1000) / 1000);
 };

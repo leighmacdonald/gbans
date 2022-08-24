@@ -25,7 +25,7 @@ export const AdminServers = (): JSX.Element => {
     const reload = useCallback(() => {
         setIsLoading(true);
         apiGetServers().then((s) => {
-            setServers(s);
+            setServers(s.result || []);
             setIsLoading(false);
         });
     }, []);

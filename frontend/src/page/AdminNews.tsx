@@ -16,8 +16,8 @@ import TextField from '@mui/material/TextField';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { TabPanel } from '../component/TabPanel';
-import { ApiException, ValidationException } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
 
 export const AdminNews = (): JSX.Element => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
@@ -37,19 +37,17 @@ export const AdminNews = (): JSX.Element => {
     const onSave = useCallback(() => {
         apiNewsSave(selectedNewsEntry)
             .then((response) => {
-                setSelectedNewsEntry(response);
+                if (!response.status || !response.result) {
+                    sendFlash('error', 'Failed to save news');
+                    return;
+                }
+                setSelectedNewsEntry(response.result);
                 sendFlash(
                     'success',
                     `News published successfully: ${selectedNewsEntry.title}`
                 );
             })
-            .catch((exception) => {
-                if (exception instanceof ApiException) {
-                    alert(exception.message + exception.resp.statusText);
-                } else {
-                    alert((exception as ValidationException).message);
-                }
-            });
+            .catch(logErr);
     }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {
@@ -135,7 +133,7 @@ export const AdminNews = (): JSX.Element => {
                                 });
                             }}
                         >
-                            Unpublish
+                            UnPublish
                         </Button>
                         <Button
                             variant="contained"

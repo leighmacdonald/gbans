@@ -2,26 +2,6 @@ import createTheme from '@mui/material/styles/createTheme';
 import darkScrollbar from '@mui/material/darkScrollbar';
 import { PaletteMode, PaletteOptions } from '@mui/material';
 
-// const colors = {
-//     a: '#395c78',
-//     b: '#5b7a8c',
-//     c: '#768a88',
-//     d: '#6b6a65',
-//     e: '#34302d',
-//     f: '#462d26',
-//     g: '#6a4535',
-//     h: '#913a1e',
-//     i: '#bd3b3b',
-//     j: '#9d312f',
-//     k: '#f08149',
-//     l: '#ef9849',
-//     m: '#f5ad87',
-//     n: '#f6b98a',
-//     o: '#f5e7de',
-//     p: '#c1a18a',
-//     q: '#dabdab'
-// };
-
 export const readableFonts = {
     fontFamily: [
         '"Helvetica Neue"',
@@ -32,52 +12,48 @@ export const readableFonts = {
     ].join(',')
 };
 
-export const createThemeByMode = (m: PaletteMode) => {
-    const opts: PaletteOptions = {
-        mode: m,
-        primary: {
-            main: '#9d312f'
-        },
-        secondary: {
-            main: '#395c78'
-        },
-        background: {
-            default: '#dabdab',
-            paper: '#f5e7de'
-        }
-    };
-    // if (mode == 'light') {
-    //     opts = {
-    //         mode: 'light',
-    //         primary: {
-    //             main: '#9d312f'
-    //         },
-    //         secondary: {
-    //             main: '#395c78'
-    //         },
-    //         background: {
-    //             default: '#dabdab',
-    //             paper: '#f5e7de'
-    //         }
-    //     };
-    // } else {
-    //     opts = {
-    //         mode: 'dark',
-    //         primary: {
-    //             main: '#f5e7de'
-    //         },
-    //         secondary: {
-    //             main: '#836312'
-    //         },
-    //         error: {
-    //             main: '#8d0101'
-    //         },
-    //         background: {
-    //             paper: '#462d26',
-    //             default: '#6a4535'
-    //         }
-    //     };
-    // }
+export const createThemeByMode = (mode: PaletteMode) => {
+    const opts: PaletteOptions =
+        mode == 'light'
+            ? {
+                  primary: {
+                      main: '#395c78'
+                  },
+                  secondary: {
+                      main: '#9d312f'
+                  },
+                  background: {
+                      default: '#dabdab',
+                      paper: '#f5e7de'
+                  },
+                  common: {
+                      white: '#f5e7de',
+                      black: '#34302d'
+                  }
+              }
+            : {
+                  primary: {
+                      main: '#9d312f',
+                      dark: '#d14441'
+                  },
+                  secondary: {
+                      main: '#395c78'
+                  },
+                  background: {
+                      default: '#6a4535',
+                      paper: '#3e281f'
+                  },
+                  common: {
+                      white: '#f5e7de',
+                      black: '#34302d'
+                  },
+                  text: {
+                      primary: '#f5e7de',
+                      secondary: '#e3d6ce'
+                  },
+                  divider: '#452c22'
+              };
+
     return createTheme({
         components: {
             MuiCssBaseline: {
@@ -96,7 +72,7 @@ export const createThemeByMode = (m: PaletteMode) => {
                 'sans-serif'
             ].join(','),
             // allVariants: {
-            //     color: mode === 'light' ? '#34302d' : '#f5e7de'
+            //     color: mode === 'dark' ? '#34302d' : '#f5e7de'
             // },
             body1: {
                 ...readableFonts

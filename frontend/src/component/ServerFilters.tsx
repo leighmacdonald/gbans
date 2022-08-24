@@ -13,6 +13,7 @@ import { uniq } from 'lodash-es';
 import { SelectChangeEvent } from '@mui/material/Select';
 import Paper from '@mui/material/Paper';
 import { Heading } from './Heading';
+import { styled } from '@mui/system';
 
 export const ServerFilters = () => {
     const {
@@ -29,7 +30,6 @@ export const ServerFilters = () => {
         setShowOpenOnly,
         showOpenOnly
     } = useMapStateCtx();
-
     const regions = uniq([
         'any',
         ...(servers || []).map((value) => value.region)
@@ -93,7 +93,13 @@ export const ServerFilters = () => {
     useEffect(() => {
         let s = servers
             .map((srv) => {
-                return { ...srv, distance: getDistance(pos, srv.location) };
+                return {
+                    ...srv,
+                    distance: getDistance(pos, {
+                        lat: srv.latitude,
+                        lng: srv.longitude
+                    })
+                };
             })
             .sort((a, b) => {
                 // Sort by position if we have a non-default position.
@@ -117,9 +123,13 @@ export const ServerFilters = () => {
                 (srv) => (srv?.players?.length || 0) < (srv?.max_players || 32)
             );
         }
-        if (filterByRegion && customRange) {
+        if (filterByRegion && customRange && customRange > 0) {
             s = s.filter(
-                (srv) => getDistance(pos, srv.location) < customRange * 1000
+                (srv) =>
+                    getDistance(pos, {
+                        lat: srv.latitude,
+                        lng: srv.longitude
+                    }) < customRange
             );
         }
         setSelectedServers(s);
@@ -218,14 +228,16 @@ export const ServerFilters = () => {
                     />
                 </Grid>
                 <Grid item xs style={{ paddingRight: '2rem' }}>
-                    <Slider
-                        style={{ zIndex: 1000 }}
+                    <RangeSlider
+                        style={{
+                            zIndex: 1000
+                        }}
                         disabled={!filterByRegion}
                         defaultValue={1000}
                         aria-labelledby="custom-range"
                         step={100}
                         max={5000}
-                        valueLabelDisplay="auto"
+                        valueLabelDisplay="off"
                         value={customRange}
                         marks={marks}
                         onChange={(_: Event, value: number | number[]) => {
@@ -237,3 +249,38 @@ export const ServerFilters = () => {
         </Paper>
     );
 };
+
+const RangeSlider = styled(Slider)(({ theme }) => ({
+    color: theme.palette.common.white,
+    height: 2,
+    padding: '15px 0',
+    '& .MuiSlider-thumb': {
+        backgroundColor: theme.palette.common.white
+    },
+    '& .MuiSlider-valueLabel': {
+        color: theme.palette.common.white,
+        '&:before': {
+            display: 'none'
+        },
+        '& *': {
+            background: 'transparent',
+            color: theme.palette.common.white
+        }
+    },
+    '& .MuiSlider-track': {
+        border: 'none'
+    },
+    '& .MuiSlider-rail': {
+        opacity: 0.5,
+        backgroundColor: '#bfbfbf'
+    },
+    '& .MuiSlider-mark': {
+        backgroundColor: '#bfbfbf',
+        height: 8,
+        width: 1,
+        '&.MuiSlider-markActive': {
+            opacity: 1,
+            backgroundColor: 'currentColor'
+        }
+    }
+}));

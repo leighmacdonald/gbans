@@ -15,7 +15,7 @@ import (
 
 var columnsServer = []string{"server_id", "short_name", "name", "token", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-	"ST_X(location::geometry)", "ST_Y(location::geometry)", "default_map", "deleted", "log_secret"}
+	"latitude", "longitude", "default_map", "deleted", "log_secret"}
 
 func (database *pgStore) GetServer(ctx context.Context, serverID int, server *model.Server) error {
 	query, args, errQuery := sb.Select(columnsServer...).
@@ -29,7 +29,7 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int, server *mo
 		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
-			&server.Location.Longitude, &server.Location.Latitude,
+			&server.Latitude, &server.Longitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errRow != nil {
 		return Err(errRow)
 	}
@@ -57,7 +57,7 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 		var server model.Server
 		if errScan := rows.Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
-			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
+			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errScan != nil {
 			return nil, errScan
 		}
@@ -85,7 +85,7 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 	if errQuery := database.conn.QueryRow(ctx, query, args...).
 		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
-			&server.IsEnabled, &server.Region, &server.CC, &server.Location.Longitude, &server.Location.Latitude,
+			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -108,14 +108,14 @@ func (database *pgStore) insertServer(ctx context.Context, server *model.Server)
 	const query = `
 		INSERT INTO server (
 		    short_name, name, token, address, port, rcon, token_created_on, 
-		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, location, 
+		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude, 
 			default_map, deleted, log_secret) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
 		RETURNING server_id;`
 	err := database.conn.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Token, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
-		server.Location.String(), server.DefaultMap, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
+		server.Latitude, server.Longitude, server.DefaultMap, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
 	if err != nil {
 		return Err(err)
 	}
@@ -139,7 +139,8 @@ func (database *pgStore) updateServer(ctx context.Context, server *model.Server)
 		Set("deleted", server.Deleted).
 		Set("region", server.Region).
 		Set("cc", server.CC).
-		Set("location", server.Location.String()).
+		Set("latitude", server.Latitude).
+		Set("longitude", server.Longitude).
 		Set("default_map", server.DefaultMap).
 		Set("log_secret", server.LogSecret).
 		Where(sq.Eq{"server_id": server.ServerID}).

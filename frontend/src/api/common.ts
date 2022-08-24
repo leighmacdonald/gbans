@@ -1,9 +1,9 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
-import SteamID from 'steamid';
 import { applySteamId } from './profile';
 
 export enum PermissionLevel {
+    Unknown = -1,
     Banned = 0,
     User = 1,
     Editor = 25,
@@ -11,17 +11,16 @@ export enum PermissionLevel {
     Admin = 100
 }
 
-export interface apiResponse<T> {
-    status: boolean;
-    resp: Response;
-    json: T;
-}
-
 export interface apiError {
-    status: number;
     error?: string;
 }
 
+export interface apiResponse<T> {
+    status: boolean;
+    message?: string;
+    resp: Response;
+    result?: T;
+}
 /**
  * All api requests are handled through this interface.
  *
@@ -36,7 +35,7 @@ export const apiCall = async <
     url: string,
     method: string,
     body?: TRequestBody
-): Promise<TResponse> => {
+): Promise<apiResponse<TResponse> & apiError> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
     };
@@ -55,37 +54,22 @@ export const apiCall = async <
     opts.headers = headers;
     const resp = await fetch(url, opts);
     if (resp.status === 403 && token != '') {
-        throw apiErr('Invalid auth token', resp);
-    }
-    if (!resp.status) {
-        throw apiErr('Invalid response code', resp);
+        return { status: resp.ok, resp: resp, error: 'Unauthorized' };
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jsonText = await resp.text();
-    const json = JSON.parse(jsonText, applySteamId);
-    if (!json.status) {
-        throw apiErr('Invalid status code', resp);
-    }
+    const json: apiResponse<TResponse> = JSON.parse(jsonText, applySteamId);
     if (!resp.ok) {
-        throw apiErr(`Error received: ${json.error}`, resp);
+        return {
+            status: resp.ok && json.status,
+            resp: resp,
+            error: (json as any).error || ''
+        };
     }
-    return json.data;
+    return { result: json.result, resp, status: resp.ok && json.status };
 };
 
 export class ValidationException extends Error {}
-
-export class ApiException extends Error {
-    public resp: Response;
-
-    constructor(msg: string, response: Response) {
-        super(msg);
-        this.resp = response;
-    }
-}
-
-const apiErr = (msg: string, resp: Response): ApiException => {
-    return new ApiException(msg, resp);
-};
 
 export interface QueryFilterProps<T> {
     offset?: number;
@@ -127,12 +111,6 @@ export const handleOnLogin = (): void => {
     window.open(oid, '_self');
 };
 
-export const handleOnLogout = (): void => {
-    localStorage.removeItem('token');
-    localStorage.setItem('permission_level', `${PermissionLevel.User}`);
-    location.reload();
-};
-
 // Helper
 export const StringIsNumber = (value: unknown) => !isNaN(Number(value));
 
@@ -169,7 +147,7 @@ export interface QueryFilter<T> {
 }
 
 export interface AuthorQueryFilter<T> extends QueryFilter<T> {
-    author_id?: SteamID;
+    author_id?: string;
 }
 
 export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {

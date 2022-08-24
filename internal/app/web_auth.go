@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/yohcop/openid-go"
 	"net/http"
@@ -45,7 +46,7 @@ func (web *web) authMiddleWare(database store.Store) gin.HandlerFunc {
 				loggedInPerson := model.NewPerson(config.General.Owner)
 				if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); errGetPerson != nil {
 					log.Errorf("Failed to load persons session user: %v", errGetPerson)
-					ctx.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusUnauthorized)
 					return
 				}
 				person = loggedInPerson
@@ -54,26 +55,28 @@ func (web *web) authMiddleWare(database store.Store) gin.HandlerFunc {
 				parsedToken, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
 				if errParseClaims != nil {
 					if errParseClaims == jwt.ErrSignatureInvalid {
-						ctx.AbortWithStatus(http.StatusForbidden)
+						log.Error("jwt signature invalid!")
+						ctx.AbortWithStatus(http.StatusUnauthorized)
 						return
 					}
-					ctx.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusUnauthorized)
+					//log.WithFields(log.Fields{"claim": token}).Errorf("Failed to parse jwt claims: %s", errParseClaims)
 					return
 				}
 				if !parsedToken.Valid {
-					ctx.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusUnauthorized)
+					log.Error("Invalid jwt token parsed")
 					return
 				}
 				if !steamid.SID64(claims.SteamID).Valid() {
-					ctx.AbortWithStatus(http.StatusForbidden)
-					log.Warnf("Invalid steamID")
+					ctx.AbortWithStatus(http.StatusUnauthorized)
+					log.Errorf("Invalid jwt claim steamID!")
 					return
 				}
-
 				loggedInPerson := model.NewPerson(steamid.SID64(claims.SteamID))
 				if errGetPerson := database.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); errGetPerson != nil {
 					log.Errorf("Failed to load persons session user: %v", errGetPerson)
-					ctx.AbortWithStatus(http.StatusForbidden)
+					ctx.AbortWithStatus(http.StatusUnauthorized)
 					return
 				}
 				person = loggedInPerson
@@ -100,7 +103,7 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			referralUrl = "/"
 		}
 		var idStr string
-		fullURL := config.HTTP.Domain + ctx.Request.URL.String()
+		fullURL := config.General.ExternalUrl + ctx.Request.URL.String()
 		if config.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
@@ -191,39 +194,46 @@ func (web *web) onTokenRefresh() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if time.Until(time.Unix(claims.ExpiresAt, 0)) > 30*time.Second {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+		// Don't reissue too often
+		if time.Since(time.Unix(claims.IssuedAt, 0)) < 30*time.Second {
+			ctx.AbortWithStatus(http.StatusTooEarly)
 			return
 		}
 		// Now, create a new token for the current user, with a renewed expiration time
-		expirationTime := config.Now().Add(24 * time.Hour)
-		claims.ExpiresAt = expirationTime.Unix()
-		outToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokenString, errSign := outToken.SignedString(config.HTTP.CookieKey)
-		if errSign != nil {
-			ctx.AbortWithStatus(http.StatusInternalServerError)
+		newToken, errJWT := newJWT(steamid.SID64(claims.SteamID))
+		if errJWT != nil || newToken == token {
+			log.Errorf("Failed to renew JWT: %q", errJWT)
+			responseErr(ctx, http.StatusUnauthorized, nil)
 			return
 		}
-		ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
+		responseOK(ctx, http.StatusOK, userToken{Token: newToken})
 	}
+}
+
+type userToken struct {
+	Token string `json:"token"`
 }
 
 type authClaims struct {
 	SteamID int64 `json:"steam_id"`
-	Exp     int64 `json:"exp"`
 	jwt.StandardClaims
 }
 
+const authTokenLifetimeDuration = time.Hour * 24
+
 func newJWT(steamID steamid.SID64) (string, error) {
+	t0 := config.Now()
 	claims := &authClaims{
-		SteamID:        steamID.Int64(),
-		Exp:            config.Now().Add(time.Hour * 24).Unix(),
-		StandardClaims: jwt.StandardClaims{},
+		SteamID: steamID.Int64(),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
+			IssuedAt:  t0.Unix(),
+		},
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(config.HTTP.CookieKey))
 	if errSigned != nil {
-		return "", errSigned
+		return "", errors.Wrap(errSigned, "Failed create signed string")
 	}
 	return signedToken, nil
 }
@@ -260,6 +270,12 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
+			bp := model.NewBannedPerson()
+			if errBan := database.GetBanBySteamID(ctx, sid, &bp, false); errBan != nil {
+				if !errors.Is(errBan, store.ErrNoResult) {
+					log.Errorf("Failed to fetch authed user ban: %v", errBan)
+				}
+			}
 			profile := model.UserProfile{
 				SteamID:         loggedInPerson.SteamID,
 				CreatedOn:       loggedInPerson.CreatedOn,
@@ -269,10 +285,7 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 				Name:            loggedInPerson.PersonaName,
 				Avatar:          loggedInPerson.Avatar,
 				AvatarFull:      loggedInPerson.AvatarFull,
-			}
-			bp := model.NewBannedPerson()
-			if banErr := database.GetBanBySteamID(ctx, profile.SteamID, false, &bp); banErr == nil {
-				profile.BanID = bp.Ban.BanID
+				BanID:           bp.Ban.BanID,
 			}
 			ctx.Set(ctxKeyUserProfile, profile)
 		}

@@ -1,9 +1,19 @@
 import React from 'react';
 import { LoadingButton } from '@mui/lab';
+import useTheme from '@mui/material/styles/useTheme';
+import { CircularProgress } from '@mui/material';
 
 export const LoadingSpinner = () => {
+    const theme = useTheme();
     return (
-        <LoadingButton loading variant={'text'}>
+        <LoadingButton
+            title={'Loading...'}
+            loading
+            loadingIndicator={<CircularProgress color="primary" size={24} />}
+            variant={'text'}
+            color={'secondary'}
+            sx={{ color: theme.palette.text.primary }}
+        >
             Loading...
         </LoadingButton>
     );

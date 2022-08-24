@@ -30,6 +30,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import IPCIDR from 'ip-cidr';
 import { Heading } from './Heading';
 import SteamID from 'steamid';
+import { logErr } from '../util/errors';
 
 export interface BanCIDRModalProps
     extends ConfirmationModalProps<IAPIBanCIDRRecord> {
@@ -77,16 +78,18 @@ export const BanCIDRModal = ({
         };
         console.log(opts);
         apiCreateBanCIDR(opts)
-            .then((ban) => {
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', `Failed to create ban`);
+                    return;
+                }
                 sendFlash(
                     'success',
-                    `CIDR ban created successfully: ${ban.net_id}`
+                    `CIDR ban created successfully: ${response.result.net_id}`
                 );
-                onSuccess && onSuccess(ban);
+                onSuccess && onSuccess(response.result);
             })
-            .catch((err) => {
-                sendFlash('error', `Failed to create ban: ${err}`);
-            });
+            .catch(logErr);
     }, [
         targetSteamId,
         banReason,

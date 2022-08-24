@@ -1,13 +1,18 @@
 import format from 'date-fns/format';
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import { Person } from '../api';
+import SteamID from 'steamid';
 
 export const parseDateTime = (t: string): Date => {
     return parseISO(t);
 };
 
-export const renderTime = (t: Date): string => {
+export const renderDateTime = (t: Date): string => {
     return format(t, 'Y-M-d HH:mm');
+};
+
+export const renderDate = (t: Date): string => {
+    return format(t, 'Y-M-d');
 };
 
 export const renderTimeDistance = (
@@ -39,3 +44,6 @@ export const filterPerson = (people: Person[], query: string): Person[] => {
         return false;
     });
 };
+
+export const steamIdQueryValue = (sid: SteamID): string =>
+    `${sid.getSteamID64()}-${sid.getSteam2RenderedID()}-${sid.getSteam3RenderedID()}`;

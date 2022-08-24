@@ -198,6 +198,30 @@ func (database *pgStore) GetReports(ctx context.Context, opts AuthorQueryFilter)
 	return reports, nil
 }
 
+// GetReportBySteamId returns any open report for the user by the author
+func (database *pgStore) GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId steamid.SID64, report *model.Report) error {
+	const query = `
+		SELECT 
+		   report_id, author_id, reported_id, report_status, description, 
+		   deleted, created_on, updated_on, reason, reason_text
+		FROM report
+		WHERE deleted = false AND reported_id = $1 AND report_status <= $2 AND author_id = $3`
+	if errQuery := database.conn.QueryRow(ctx, query, steamId, model.NeedMoreInfo, authorId).Scan(
+		&report.ReportId,
+		&report.AuthorId,
+		&report.ReportedId,
+		&report.ReportStatus,
+		&report.Description,
+		&report.Deleted,
+		&report.CreatedOn,
+		&report.UpdatedOn,
+		&report.Reason,
+		&report.ReasonText,
+	); errQuery != nil {
+		return Err(errQuery)
+	}
+	return nil
+}
 func (database *pgStore) GetReport(ctx context.Context, reportId int64, report *model.Report) error {
 	const query = `
 		SELECT 

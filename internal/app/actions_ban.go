@@ -76,7 +76,7 @@ func BanSteam(ctx context.Context, database store.Store, banSteam *model.BanStea
 		return errors.Wrap(consts.ErrInvalidSID, "Invalid target steam id")
 	}
 	existing := model.NewBannedPerson()
-	errGetExistingBan := database.GetBanBySteamID(ctx, banSteam.TargetId, false, &existing)
+	errGetExistingBan := database.GetBanBySteamID(ctx, banSteam.TargetId, &existing, false)
 	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
 		return store.ErrDuplicate
 	}
@@ -257,7 +257,7 @@ func BanSteamGroup(ctx context.Context, database store.Store, banGroup *model.Ba
 // Returns false, nil if the ban does not exist.
 func Unban(ctx context.Context, database store.Store, target steamid.SID64, reason string) (bool, error) {
 	bannedPerson := model.NewBannedPerson()
-	errGetBan := database.GetBanBySteamID(ctx, target, false, &bannedPerson)
+	errGetBan := database.GetBanBySteamID(ctx, target, &bannedPerson, false)
 	if errGetBan != nil {
 		if errGetBan == store.ErrNoResult {
 			return false, nil

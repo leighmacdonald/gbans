@@ -15,7 +15,7 @@ export const Footer = (): JSX.Element => {
             }}
         >
             <Stack>
-                <Typography variant={'subtitle2'} color={'textSecondary'}>
+                <Typography variant={'subtitle2'} color={'text'}>
                     Copyright &copy; Uncletopia 2022
                 </Typography>
                 {/*<Link*/}

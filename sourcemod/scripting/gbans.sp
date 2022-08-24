@@ -103,7 +103,8 @@ System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
 }
 
 void CheckPlayer(int clientId, const char[] auth, const char[] ip, const char[] name) {
-    if (!IsClientInGame(clientId) || IsFakeClient(clientId)) {
+    if (!IsClientConnected(clientId) || IsFakeClient(clientId)) {
+        PrintToServer("[GB] Skipping check on invalid player");
         return;
     }
     char encoded[1024];
@@ -113,12 +114,11 @@ void CheckPlayer(int clientId, const char[] auth, const char[] ip, const char[] 
     obj.SetString("ip", ip);
     obj.SetString("name", name);
     obj.Encode(encoded, sizeof(encoded));
-    obj.Cleanup();
+    json_cleanup_and_delete(obj);
 
     System2HTTPRequest req = newReq(OnCheckResp, "/api/check");
     req.SetData(encoded);
     req.POST();
-    delete obj;
     delete req;
 }
 
@@ -140,7 +140,7 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             return;
         }
         JSON_Object resp = json_decode(content);
-        JSON_Object data = resp.GetObject("data");
+        JSON_Object data = resp.GetObject("result");
         int client_id = data.GetInt("client_id");
         int ban_type = data.GetInt("ban_type");
         char msg[256];
@@ -165,9 +165,7 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
                 }
             }
         }
-
-        resp.Cleanup();
-        delete resp;
+        json_cleanup_and_delete(resp);
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
@@ -201,8 +199,8 @@ void AuthenticateServer() {
     obj.SetString("key", g_server_key);
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
-    obj.Cleanup();
-    delete obj;
+    json_cleanup_and_delete(obj);
+
     System2HTTPRequest req = newReq(OnAuthReqReceived, "/api/server_auth");
     req.SetData(encoded);
     req.POST();
@@ -214,7 +212,6 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
     if (success) {
         char lastURL[128];
         response.GetLastURL(lastURL, sizeof(lastURL));
-
         int statusCode = response.StatusCode;
         float totalTime = response.TotalTime;
 #if defined DEBUG
@@ -233,7 +230,7 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
             PrintToServer("[GB] Invalid response status, cannot authenticate");
             return;
         }
-        JSON_Object data = resp.GetObject("data");
+        JSON_Object data = resp.GetObject("result");
         char token[41];
         data.GetString("token", token, sizeof(token));
         if (strlen(token) != 40) {
@@ -242,9 +239,7 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
         }
         g_token = token;
         PrintToServer("[GB] Successfully authenticated with gbans server");
-
-        resp.Cleanup();
-        delete resp;
+        json_cleanup_and_delete(resp);
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
@@ -325,8 +320,7 @@ Action CmdMod(int clientId, int argc) {
     obj.SetInt("client", clientId);
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
-    obj.Cleanup();
-    delete obj;
+    json_cleanup_and_delete(obj);
     System2HTTPRequest req = newReq(OnPingModRespReceived, "/api/ping_mod");
     req.SetData(encoded);
     req.POST();
@@ -354,8 +348,7 @@ void OnPingModRespReceived(bool success, const char[] error, System2HTTPRequest 
     resp.GetString("message", message, sizeof(message));
     resp.GetInt("client");
     ReplyToCommand(client, message);
-    resp.Cleanup();
-    delete resp;
+    json_cleanup_and_delete(resp);
 }
 
 public
@@ -453,7 +446,7 @@ Action AdminCmdBan(int clientId, int argc) {
         ReplyToCommand(clientId, usage, command);
         return Plugin_Handled;
     }
-
+    
     GetCmdArg(1, target, sizeof(target));
     GetCmdArg(2, reasonStr, sizeof(reasonStr));
     GetCmdArg(3, timeStr, sizeof(timeStr));
@@ -465,7 +458,6 @@ Action AdminCmdBan(int clientId, int argc) {
         ReplyToCommand(clientId, "Failed to locate user: %s", target);
         return Plugin_Handled;
     }
-
     if (!GetClientAuthId(targetId, AuthId_Steam3, auth_id, sizeof(auth_id), true)) {
         ReplyToCommand(clientId, "Failed to get auth_id of user: %s", target);
         return Plugin_Handled;

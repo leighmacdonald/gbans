@@ -7,7 +7,6 @@ import Stack from '@mui/material/Stack';
 import { ReportComponent } from '../component/ReportComponent';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-    ApiException,
     apiGetBansSteam,
     apiGetReport,
     apiReportSetState,
@@ -62,20 +61,22 @@ export const ReportViewPage = (): JSX.Element => {
 
     useEffect(() => {
         apiGetReport(id)
-            .then((reportAuthor) => {
-                if (reportAuthor) {
-                    setReport(reportAuthor);
-                    setStateAction(reportAuthor.report.report_status);
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash(
+                        'error',
+                        'Permission denied. Only report authors, subjects and mods can view reports'
+                    );
+                    navigate(`/report`);
+                    return;
                 }
+                if (!response.status || !response.result) {
+                    sendFlash('error', 'Failed to load report');
+                }
+                setReport(response.result);
+                setStateAction(response.result.report.report_status);
             })
-            .catch((error: ApiException) => {
-                sendFlash(
-                    'error',
-                    'Permission denied. Only report authors, subjects and mods can view reports'
-                );
-                logErr(error);
-                navigate(`/report`);
-            });
+            .catch(logErr);
     }, [report_id, setReport, id, sendFlash, navigate]);
 
     const loadBans = useCallback(() => {
@@ -99,7 +100,14 @@ export const ReportViewPage = (): JSX.Element => {
 
     const onSetReportState = useCallback(() => {
         apiReportSetState(id, stateAction)
-            .then(() => {
+            .then((response) => {
+                if (!response.status) {
+                    sendFlash(
+                        'error',
+                        `Failed to set report state: ${response.error}`
+                    );
+                    return;
+                }
                 sendFlash(
                     'success',
                     `State changed from ${reportStatusString(
@@ -107,12 +115,7 @@ export const ReportViewPage = (): JSX.Element => {
                     )} => ${reportStatusString(stateAction)}`
                 );
             })
-            .catch((error: ApiException) => {
-                sendFlash(
-                    'error',
-                    `Failed to set report state: ${error.message}`
-                );
-            });
+            .catch(logErr);
     }, [id, report?.report.report_status, sendFlash, stateAction]);
 
     const renderBan = (ban: IAPIBanRecordProfile) => {
@@ -131,8 +134,8 @@ export const ReportViewPage = (): JSX.Element => {
     };
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12} md={9}>
+        <Grid container spacing={2} paddingTop={3}>
+            <Grid item xs={12} md={8}>
                 {report && (
                     <ReportComponent
                         report={report.report}
@@ -140,7 +143,7 @@ export const ReportViewPage = (): JSX.Element => {
                     />
                 )}
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
                         <Stack>

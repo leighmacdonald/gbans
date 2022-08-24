@@ -22,6 +22,7 @@ import TextField from '@mui/material/TextField';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 import SteamID from 'steamid';
+import { logErr } from '../util/errors';
 
 export interface BanModalProps<Ban> extends ConfirmationModalProps<Ban> {
     ban?: Ban;
@@ -75,13 +76,18 @@ export const BanSteamModal = ({
             opts.report_id = reportId as number;
         }
         apiCreateBanSteam(opts)
-            .then((ban) => {
-                sendFlash('success', `Ban created successfully: ${ban.ban_id}`);
-                onSuccess && onSuccess(ban);
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', `Failed to create ban`);
+                    return;
+                }
+                sendFlash(
+                    'success',
+                    `Ban created successfully: ${response.result.ban_id}`
+                );
+                onSuccess && onSuccess(response.result);
             })
-            .catch((err) => {
-                sendFlash('error', `Failed to create ban: ${err}`);
-            });
+            .catch(logErr);
     }, [
         targetSteamId,
         banReason,

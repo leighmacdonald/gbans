@@ -99,7 +99,7 @@ func TestBanNet(t *testing.T) {
 	rip := randIP()
 	var banCidr model.BanCIDR
 	require.NoError(t, NewBanCIDR(model.StringSID("76561198003911389"),
-		model.StringSID("76561198044052046"), "10m", model.Custom,
+		"76561198044052046", "10m", model.Custom,
 		"", "", model.System, fmt.Sprintf("%s/32", rip), &banCidr))
 	require.NoError(t, testDatabase.SaveBanNet(ctx, &banCidr))
 	require.Less(t, int64(0), banCidr.NetID)
@@ -129,7 +129,7 @@ func TestBan(t *testing.T) {
 	var banSteam model.BanSteam
 	require.NoError(t, NewBanSteam(
 		model.StringSID("76561198003911389"),
-		model.StringSID("76561198044052046"),
+		"76561198044052046",
 		"",
 		model.Cheating,
 		model.Cheating.String(),
@@ -138,7 +138,7 @@ func TestBan(t *testing.T) {
 
 	require.NoError(t, testDatabase.SaveBan(ctx, &banSteam), "Failed to add ban")
 	b1Fetched := model.NewBannedPerson()
-	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, false, &b1Fetched))
+	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, &b1Fetched, false))
 	banEqual(&banSteam, &b1Fetched.Ban)
 
 	b1duplicate := banSteam
@@ -152,12 +152,12 @@ func TestBan(t *testing.T) {
 	b1Fetched.Ban.Origin = model.Web
 	require.NoError(t, testDatabase.SaveBan(ctx, &b1Fetched.Ban), "Failed to edit ban")
 	b1FetchedUpdated := model.NewBannedPerson()
-	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, false, &b1FetchedUpdated))
+	require.NoError(t, testDatabase.GetBanBySteamID(ctx, 76561198044052046, &b1FetchedUpdated, false))
 	banEqual(&b1Fetched.Ban, &b1FetchedUpdated.Ban)
 
 	require.NoError(t, testDatabase.DropBan(ctx, &banSteam, false), "Failed to drop ban")
 	vb := model.NewBannedPerson()
-	errMissing := testDatabase.GetBanBySteamID(ctx, banSteam.TargetId, false, &vb)
+	errMissing := testDatabase.GetBanBySteamID(ctx, banSteam.TargetId, &vb, false)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, store.ErrNoResult))
 }
@@ -315,7 +315,7 @@ func TestBanASN(t *testing.T) {
 	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &author))
 	var banASN model.BanASN
 	require.NoError(t, NewBanASN(
-		model.StringSID(author.SteamID.String()), model.StringSID("0"),
+		model.StringSID(author.SteamID.String()), "0",
 		"10m", model.Cheating, "", "", model.System, 200, &banASN))
 
 	require.NoError(t, testDatabase.SaveBanASN(context.Background(), &banASN))
@@ -332,7 +332,7 @@ func TestBanGroup(t *testing.T) {
 	var banGroup model.BanGroup
 	require.NoError(t, NewBanSteamGroup(
 		model.StringSID("76561198083950960"),
-		model.StringSID(""),
+		"",
 		"10m",
 		model.Cheating,
 		"",

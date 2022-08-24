@@ -79,17 +79,18 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 			c.Data(200, "text/html", idx)
 		})
 	}
-
-	engine.GET("/metrics", prometheusHandler())
 	engine.GET("/auth/callback", web.onOpenIDCallback(database))
-	engine.GET("/api/bans/steam/:ban_id", web.onAPIGetBanByID(database))
+	engine.GET("/api/auth/logout", web.onGetLogout())
+
+	engine.GET("/export/bans/tf2bd", web.onAPIExportBansTF2BD(database))
+	engine.GET("/metrics", prometheusHandler())
+
 	engine.GET("/api/profile", web.onAPIProfile(database))
 	engine.GET("/api/servers/state", web.onAPIGetServerStates())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
 	engine.GET("/api/competitive", web.onAPIGetCompHist())
 	engine.GET("/api/filtered_words", web.onAPIGetFilteredWords(database))
 	engine.GET("/api/players", web.onAPIGetPlayers(database))
-	engine.GET("/api/auth/logout", web.onGetLogout())
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
@@ -107,15 +108,16 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 
 	// Server Auth Request
 	serverAuth := engine.Use(web.authMiddleWare(database))
-	serverAuth.POST("/api/ping_mod", web.onPostPingMod(database))
-	serverAuth.POST("/api/check", web.onPostServerCheck(database))
-	serverAuth.POST("/api/demo", web.onPostDemo(database))
-	serverAuth.POST("/api/log", web.onPostLog(database, logFileC))
+	serverAuth.POST("/api/ping_mod", web.onAPIPostPingMod(database))
+	serverAuth.POST("/api/check", web.onAPIPostServerCheck(database))
+	serverAuth.POST("/api/demo", web.onAPIPostDemo(database))
+	serverAuth.POST("/api/log", web.onAPIPostLog(database, logFileC))
 
 	// Basic logged-in user
 	authed := engine.Use(authMiddleware(database, model.PUser))
-	authed.GET("/api/current_profile", web.onAPICurrentProfile())
 	authed.GET("/api/auth/refresh", web.onTokenRefresh())
+
+	authed.GET("/api/current_profile", web.onAPICurrentProfile())
 	authed.POST("/api/report", web.onAPIPostReportCreate(database))
 	authed.GET("/api/report/:report_id", web.onAPIGetReport(database))
 	authed.POST("/api/reports", web.onAPIGetReports(database))
@@ -127,6 +129,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	authed.POST("/api/report/message/:report_message_id", web.onAPIEditReportMessage(database))
 	authed.DELETE("/api/report/message/:report_message_id", web.onAPIDeleteReportMessage(database))
 
+	authed.GET("/api/bans/steam/:ban_id", web.onAPIGetBanByID(database))
 	authed.GET("/api/bans/:ban_id/messages", web.onAPIGetBanMessages(database))
 	authed.POST("/api/bans/:ban_id/messages", web.onAPIPostBanMessage(database))
 	authed.POST("/api/bans/message/:ban_message_id", web.onAPIEditBanMessage(database))

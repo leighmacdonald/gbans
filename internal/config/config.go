@@ -76,7 +76,6 @@ type dbConfig struct {
 type httpConfig struct {
 	Host                  string `mapstructure:"host"`
 	Port                  int    `mapstructure:"port"`
-	Domain                string `mapstructure:"domain"`
 	TLS                   bool   `mapstructure:"tls"`
 	TLSAuto               bool   `mapstructure:"tls_auto"`
 	StaticPath            string `mapstructure:"static_path"`
@@ -149,6 +148,7 @@ type discordConfig struct {
 	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
 	PublicLogChannelId     string   `mapstructure:"public_log_channel_id"`
 	ModLogChannelId        string   `mapstructure:"mod_log_channel_id"`
+	ReportLogChannelId     string   `mapstructure:"report_log_channel_id"`
 }
 
 type logConfig struct {
@@ -284,7 +284,6 @@ var defaultConfig = map[string]any{
 	"general.banned_server_addresses":        []string{},
 	"http.host":                              "127.0.0.1",
 	"http.port":                              6006,
-	"http.domain":                            "http://localhost:6006",
 	"http.tls":                               false,
 	"http.tls_auto":                          false,
 	"http.static_path":                       "frontend/dist",
@@ -308,6 +307,7 @@ var defaultConfig = map[string]any{
 	"discord.auto_mod_enable":                false,
 	"discord.public_log_channel_enable":      false,
 	"discord.public_log_channel_id":          "",
+	"discord.report_log_channel_id":          "",
 	"network_bans.enabled":                   false,
 	"network_bans.max_age":                   "1d",
 	"network_bans.cache_path":                ".cache",
@@ -349,4 +349,8 @@ func configureLogger(logger *log.Logger) {
 		FullTimestamp: Log.FullTimestamp,
 	})
 	logger.SetReportCaller(Log.ReportCaller)
+}
+
+func ExtURL(path string, args ...any) string {
+	return strings.TrimRight(General.ExternalUrl, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }

@@ -19,7 +19,7 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     useEffect(() => {
         apiGetNewsAll()
             .then((r) => {
-                setNews(r || []);
+                setNews(r.result || []);
             })
             .catch(logErr);
     }, []);

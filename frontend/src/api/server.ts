@@ -1,7 +1,6 @@
 import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos } from './common';
-import { LatLngLiteral } from 'leaflet';
 import SteamID from 'steamid';
 
 export interface ServerState {
@@ -13,7 +12,8 @@ export interface ServerState {
     enabled: boolean;
     region: string;
     cc: string;
-    location: LatLngLiteral;
+    latitude: number;
+    longitude: number;
     reserved: number;
     last_update: string;
     name_a2s: string;
@@ -36,6 +36,7 @@ export interface ServerState {
     stv_port: number;
     stv_name: string;
     players: ServerStatePlayer[];
+    distance?: number;
 }
 
 export interface ServerStatePlayer {
@@ -46,6 +47,21 @@ export interface ServerStatePlayer {
     state: string;
     ping: number;
 }
+
+export const cleanMapName = (name: string): string => {
+    if (!name.startsWith('workshop/')) {
+        return name;
+    }
+    const a = name.split('/');
+    if (a.length != 2) {
+        return name;
+    }
+    const b = a[1].split('.ugc');
+    if (a.length != 2) {
+        return name;
+    }
+    return b[0];
+};
 
 export interface Server {
     server_id: number;
@@ -107,7 +123,7 @@ export interface LogQueryOpts {
     network?: string;
 }
 
-export const findLogs = async (opts: LogQueryOpts): Promise<ServerEvent[]> => {
+export const findLogs = async (opts: LogQueryOpts) => {
     if (opts.servers?.length == 1 && opts.servers[0] == 0) {
         // 0 is equivalent to all servers.
         opts.servers = [];

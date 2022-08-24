@@ -10,7 +10,6 @@ import { AdminReports } from './page/AdminReports';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminImport } from './page/AdminImport';
 import { AdminPeople } from './page/AdminPeople';
-import { Bans } from './page/Bans';
 import { Servers } from './page/Servers';
 import { AdminServers } from './page/AdminServers';
 import { Flash } from './component/Flashes';
@@ -29,7 +28,7 @@ import { PrivateRoute } from './component/PrivateRoute';
 import { createThemeByMode } from './theme';
 import { ReportViewPage } from './page/ReportViewPage';
 import { PaletteMode } from '@mui/material';
-//import useMediaQuery from '@mui/material/useMediaQuery';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
@@ -39,18 +38,19 @@ import { AlertColor } from '@mui/material/Alert/Alert';
 import { MatchListPage } from './page/MatchListPage';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { useStopwatch } from 'react-timer-hook';
 
 export const App = (): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
-    // let currentTheme = localStorage.getItem('theme') as PaletteMode;
-    // const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    // if (!currentTheme) {
-    //     currentTheme = prefersDarkMode ? 'dark' : 'light';
-    // }
-    const [mode, setMode] = useState<'light' | 'dark'>('light');
+    let currentTheme = localStorage.getItem('theme') as PaletteMode;
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+    if (!currentTheme) {
+        currentTheme = prefersDarkMode ? 'dark' : 'light';
+    }
+    const [mode, setMode] = useState<'light' | 'dark'>(currentTheme);
 
     const updateMode = (prevMode: PaletteMode): PaletteMode => {
         const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);
@@ -71,8 +71,11 @@ export const App = (): JSX.Element => {
         const token = localStorage.getItem('token');
         if (token != null && token != '') {
             apiGetCurrentProfile()
-                .then((profile) => {
-                    setCurrentUser(profile);
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        return;
+                    }
+                    setCurrentUser(response.result);
                 })
                 .catch(logErr);
         }
@@ -99,6 +102,25 @@ export const App = (): JSX.Element => {
         },
         [flashes, setFlashes]
     );
+    const startTime = new Date();
+    startTime.setTime(startTime.getTime() + 1000);
+
+    const { minutes } = useStopwatch({
+        autoStart: true
+    });
+
+    useEffect(() => {
+        if (minutes % 2 != 0) {
+            return;
+        }
+        // refreshToken().then((resp) => {
+        //     if (!resp?.status && !resp?.resp && resp?.resp.status != 425) {
+        //         logErr('error refreshing');
+        //     } else {
+        //         console.log('Token refreshed');
+        //     }
+        // });
+    }, [minutes]);
 
     return (
         <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
@@ -121,10 +143,6 @@ export const App = (): JSX.Element => {
                                                 <Route
                                                     path={'/servers'}
                                                     element={<Servers />}
-                                                />
-                                                <Route
-                                                    path={'/bans'}
-                                                    element={<Bans />}
                                                 />
                                                 <Route
                                                     path={'/wiki'}
@@ -171,8 +189,23 @@ export const App = (): JSX.Element => {
                                                     element={<Profile />}
                                                 />
                                                 <Route
-                                                    path={'/ban/:ban_id'}
-                                                    element={<BanPage />}
+                                                    path={'/report'}
+                                                    element={
+                                                        <PrivateRoute
+                                                            permission={
+                                                                PermissionLevel.User
+                                                            }
+                                                        >
+                                                            <Route
+                                                                path={
+                                                                    '/ban/:ban_id'
+                                                                }
+                                                                element={
+                                                                    <BanPage />
+                                                                }
+                                                            />
+                                                        </PrivateRoute>
+                                                    }
                                                 />
                                                 <Route
                                                     path={'/admin/ban'}

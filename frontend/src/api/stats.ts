@@ -65,7 +65,7 @@ export interface DatabaseStats {
     servers_total: number;
 }
 
-export const apiGetStats = async (): Promise<DatabaseStats> =>
+export const apiGetStats = async () =>
     await apiCall<DatabaseStats>(`/api/stats`, 'GET');
 
 export interface MatchPlayerSum {
@@ -193,7 +193,7 @@ export interface Match extends BaseMatch {
     Players: Person[];
 }
 
-export const apiGetMatch = async (match_id: number): Promise<Match> =>
+export const apiGetMatch = async (match_id: number) =>
     await apiCall<Match>(`/api/log/${match_id}`, 'GET');
 
 export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
@@ -204,7 +204,5 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     time_end?: Date;
 }
 
-export const apiGetMatches = async (
-    opts: MatchesQueryOpts
-): Promise<MatchSummary[]> =>
+export const apiGetMatches = async (opts: MatchesQueryOpts) =>
     await apiCall<MatchSummary[], MatchesQueryOpts>(`/api/logs`, 'POST', opts);

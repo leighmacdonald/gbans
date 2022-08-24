@@ -21,6 +21,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import SteamID from 'steamid';
+import { logErr } from '../util/errors';
 
 export interface BanASNModalProps
     extends ConfirmationModalProps<IAPIBanASNRecord> {
@@ -71,16 +72,18 @@ export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
             note: noteText,
             ban_type: BanType.Banned
         })
-            .then((ban) => {
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', `Failed to create asn ban`);
+                    return;
+                }
                 sendFlash(
                     'success',
-                    `ASN ban created successfully: ${ban.ban_asn_id}`
+                    `ASN ban created successfully: ${response.result.ban_asn_id}`
                 );
-                onSuccess && onSuccess(ban);
+                onSuccess && onSuccess(response.result);
             })
-            .catch((err) => {
-                sendFlash('error', `Failed to create asn ban: ${err}`);
-            });
+            .catch(logErr);
     }, [
         targetSteamId,
         banReason,

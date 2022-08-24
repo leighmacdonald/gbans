@@ -50,11 +50,12 @@ export const ServerEditorModal = ({
         setRcon(server?.rcon ?? '');
         setRegion(server?.region ?? '');
         setCountryCode(server?.cc ?? '');
-        setLatitude(server?.latitude ?? 0.0);
-        setLongitude(server?.longitude ?? 0.0);
+
         setReservedSlots(server?.reserved_slots ?? 0);
         setPlayersMax(server?.players_max ?? 24);
         if (server) {
+            setLatitude(server?.latitude);
+            setLongitude(server?.longitude);
             setIsEnabled(server?.is_enabled);
         }
     }, [server]);
@@ -79,8 +80,8 @@ export const ServerEditorModal = ({
             cc: countryCode,
             host: address,
             rcon: rcon,
-            lon: longitude,
             lat: latitude,
+            lon: longitude,
             server_name: serverNameLong,
             server_name_short: serverName,
             region: region,
@@ -89,12 +90,16 @@ export const ServerEditorModal = ({
         };
         if (serverId > 0) {
             apiSaveServer(serverId, opts)
-                .then((server) => {
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        sendFlash('error', `Failed to save server`);
+                        return;
+                    }
                     sendFlash(
                         'success',
-                        `Server saved successfully: ${server.server_name}`
+                        `Server saved successfully: ${response.result.server_name}`
                     );
-                    onSuccess && onSuccess(server);
+                    onSuccess && onSuccess(response.result);
                     setOpen(false);
                 })
                 .catch((err) => {
@@ -102,12 +107,16 @@ export const ServerEditorModal = ({
                 });
         } else {
             apiCreateServer(opts)
-                .then((server) => {
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        sendFlash('error', `Failed to create server`);
+                        return;
+                    }
                     sendFlash(
                         'success',
-                        `Server created successfully: ${server.server_name}`
+                        `Server created successfully: ${response.result.server_name}`
                     );
-                    onSuccess && onSuccess(server);
+                    onSuccess && onSuccess(response.result);
                     setOpen(false);
                 })
                 .catch((err) => {
@@ -244,32 +253,34 @@ export const ServerEditorModal = ({
                             setCountryCode(evt.target.value);
                         }}
                     />
-                    <TextField
-                        fullWidth
-                        id={'latitude'}
-                        label={'Latitude'}
-                        value={longitude}
-                        onChange={(evt: ChangeEvent<HTMLInputElement>) => {
-                            try {
-                                setLatitude(parseFloat(evt.target.value));
-                            } catch (e) {
-                                logErr(e);
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        id={'longitude'}
-                        label={'Longitude'}
-                        value={latitude}
-                        onChange={(evt: ChangeEvent<HTMLInputElement>) => {
-                            try {
-                                setLongitude(parseFloat(evt.target.value));
-                            } catch (e) {
-                                logErr(e);
-                            }
-                        }}
-                    />
+                    <Stack direction={'row'}>
+                        <TextField
+                            fullWidth
+                            id={'latitude'}
+                            label={'Latitude'}
+                            value={latitude}
+                            onChange={(evt: ChangeEvent<HTMLInputElement>) => {
+                                try {
+                                    setLatitude(parseFloat(evt.target.value));
+                                } catch (e) {
+                                    logErr(e);
+                                }
+                            }}
+                        />
+                        <TextField
+                            fullWidth
+                            id={'longitude'}
+                            label={'Longitude'}
+                            value={longitude}
+                            onChange={(evt: ChangeEvent<HTMLInputElement>) => {
+                                try {
+                                    setLongitude(parseFloat(evt.target.value));
+                                } catch (e) {
+                                    logErr(e);
+                                }
+                            }}
+                        />
+                    </Stack>
 
                     <TextField
                         fullWidth

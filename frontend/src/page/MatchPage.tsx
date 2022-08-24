@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ApiException,
     apiGetMatch,
     Match,
     MatchMedicSum,
@@ -16,6 +15,7 @@ import { first } from 'lodash-es';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import Paper from '@mui/material/Paper';
 import { Heading } from '../component/Heading';
+import { logErr } from '../util/errors';
 
 export const MatchPage = (): JSX.Element => {
     const navigate = useNavigate();
@@ -34,18 +34,19 @@ export const MatchPage = (): JSX.Element => {
         if (match_id_num > 0) {
             apiGetMatch(match_id_num)
                 .then((resp) => {
-                    setMatch(resp);
+                    if (!resp.status || !resp.result) {
+                        sendFlash(
+                            'error',
+                            resp.resp.status == 404
+                                ? 'Unknown match id'
+                                : 'Internal error'
+                        );
+                        navigate('/404');
+                        return;
+                    }
+                    setMatch(resp.result);
                 })
-                .catch((r: ApiException) => {
-                    sendFlash(
-                        'error',
-                        r.resp.status == 404
-                            ? 'Unknown match id'
-                            : 'Internal error'
-                    );
-                    navigate('/404');
-                    return;
-                })
+                .catch(logErr)
                 .finally(() => {
                     setLoading(false);
                 });

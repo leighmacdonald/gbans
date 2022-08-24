@@ -201,7 +201,7 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 
 // serverStateRefresher periodically compiles and caches the current known db, rcon & a2s server state
 // into a ServerState instance
-func serverStateRefresher(ctx context.Context, database store.ServerStore) {
+func serverStateRefresher(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
 	var refreshState = func() error {
 		var newState model.ServerStateCollection
 		servers, errServers := database.GetServers(ctx, false)
@@ -223,10 +223,11 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 			state.Enabled = server.IsEnabled
 			state.Region = server.Region
 			state.CountryCode = server.CC
-			state.Location = server.Location
+			state.Latitude = server.Latitude
+			state.Longitude = server.Longitude
 			a2sInfo, a2sFound := serverStateA2S[server.ServerNameShort]
 			if a2sFound {
-				if a2sInfo.Name != "" && state.Name != a2sInfo.Name {
+				if a2sInfo.Name != "" {
 					state.Name = a2sInfo.Name
 				}
 				state.NameA2S = a2sInfo.Name
@@ -255,7 +256,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 			}
 			statusInfo, statusFound := serverStateStatus[server.ServerNameShort]
 			if statusFound {
-				if state.Name != statusInfo.ServerName && statusInfo.ServerName == "" {
+				if state.Name != "" {
 					state.Name = statusInfo.ServerName
 				}
 
@@ -282,7 +283,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore) {
 		serverStateMu.Unlock()
 		return nil
 	}
-	ticker := time.NewTicker(time.Second * 20)
+	ticker := time.NewTicker(updateFreq)
 	for {
 		select {
 		case <-ctx.Done():

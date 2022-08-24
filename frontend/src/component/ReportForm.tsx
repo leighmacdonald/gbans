@@ -6,12 +6,13 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import { apiCreateReport, BanReason, BanReasons, PlayerProfile } from '../api';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
-import { logErr } from '../util/errors';
 import { useNavigate } from 'react-router-dom';
 import { MDEditor } from './MDEditor';
 import TextField from '@mui/material/TextField';
 import { Heading } from './Heading';
 import Box from '@mui/material/Box';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
 
 export const ReportForm = (): JSX.Element => {
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
@@ -19,25 +20,43 @@ export const ReportForm = (): JSX.Element => {
     const [reasonText, setReasonText] = useState<string>('');
     const [profile, setProfile] = useState<PlayerProfile | null>();
     const [inputSteamID, setInputSteamID] = useState<string>('');
+    const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
 
     const onSave = useCallback(
         (body_md: string) => {
             setBody(body_md);
+            if (!profile || !profile.player.steam_id.isValidIndividual()) {
+                sendFlash('error', 'Invalid steam profile');
+                return;
+            }
             if (profile && body_md) {
+                if (reason == BanReason.Custom && reasonText == '') {
+                    sendFlash('error', 'Custom reason cannot be empty');
+                    return;
+                }
                 apiCreateReport({
                     steam_id: profile?.player.steam_id.toString(),
                     description: body_md,
                     reason: reason,
                     reason_text: reasonText
                 })
-                    .then((report) => {
-                        navigate(`/report/${report.report_id}`);
+                    .then((response) => {
+                        if (!response.status) {
+                            sendFlash(
+                                'error',
+                                `Failed to create report: ${response.error}`
+                            );
+                            return;
+                        }
+                        if (response.result) {
+                            navigate(`/report/${response.result.report_id}`);
+                        }
                     })
                     .catch(logErr);
             }
         },
-        [navigate, profile, reason, reasonText]
+        [navigate, profile, reason, reasonText, sendFlash]
     );
 
     return (

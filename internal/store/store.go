@@ -44,8 +44,8 @@ type NewsStore interface {
 }
 
 type BanStore interface {
-	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, full bool, bannedPerson *model.BannedPerson) error
-	GetBanByBanID(ctx context.Context, banID int64, full bool, bannedPerson *model.BannedPerson) error
+	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, bannedPerson *model.BannedPerson, deletedOk bool) error
+	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *model.BannedPerson, deletedOk bool) error
 	SaveBan(ctx context.Context, ban *model.BanSteam) error
 	DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error
 	GetBansSteam(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
@@ -83,6 +83,7 @@ type ReportStore interface {
 	DropReport(ctx context.Context, report *model.Report) error
 	DropReportMessage(ctx context.Context, message *model.UserMessage) error
 	GetReport(ctx context.Context, reportId int64, report *model.Report) error
+	GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId steamid.SID64, report *model.Report) error
 	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error)
 	GetReportMessages(ctx context.Context, reportId int64) ([]model.UserMessage, error)
 	GetReportMessageById(ctx context.Context, reportMessageId int64, message *model.UserMessage) error

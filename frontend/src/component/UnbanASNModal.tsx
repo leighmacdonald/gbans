@@ -34,7 +34,6 @@ export const UnbanASNModal = ({
                 sendFlash('error', `Failed to unban: ${err}`);
             });
     }, [reasonText, record, sendFlash, onSuccess]);
-
     return (
         <ConfirmationModal
             open={open}

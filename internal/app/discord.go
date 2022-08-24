@@ -159,7 +159,7 @@ func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      "https://" + config.HTTP.Addr(),
+				URL:      config.General.ExternalUrl,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,
@@ -248,9 +248,40 @@ func addField(embed *discordgo.MessageEmbed, title string, value string) {
 	addFieldRaw(embed, title, value, false)
 }
 
+func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
+	name := person.PersonaName
+	if name == "" {
+		name = person.SteamID.String()
+	}
+	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
+}
+
+func addAuthorProfile(embed *discordgo.MessageEmbed, person model.UserProfile) {
+	name := person.Name
+	if name == "" {
+		name = person.SteamID.String()
+	}
+	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
+}
+
+func addLink(embed *discordgo.MessageEmbed, value model.Linkable) {
+	url := value.ToURL()
+	if len(url) > 0 {
+		addFieldRaw(embed, "Link", url, false)
+	}
+}
+
 func addFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
 	if len(embed.Fields) >= maxEmbedFields {
 		log.Warnf("Dropping embed fields. Already at max count: %d", maxEmbedFields)
+		return
+	}
+	if len(title) == 0 {
+		log.Warnf("Title cannot be empty, dropping field")
+		return
+	}
+	if len(value) == 0 {
+		log.Warnf("Value cannot be empty, dropping field: %s", title)
 		return
 	}
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{

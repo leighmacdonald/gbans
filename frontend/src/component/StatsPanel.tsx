@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { apiGetStats, DatabaseStats } from '../api';
-import { log } from '../util/errors';
+import { logErr } from '../util/errors';
 
 export const StatsPanel = (): JSX.Element => {
     const [stats, setStats] = React.useState<DatabaseStats>({
@@ -27,16 +27,15 @@ export const StatsPanel = (): JSX.Element => {
     });
 
     useEffect(() => {
-        const loadStats = async () => {
-            try {
-                const resp = await apiGetStats();
-                setStats(resp);
-            } catch (e) {
-                log(`"Failed to get stats: ${e}`);
-            }
-        };
-        loadStats();
+        apiGetStats()
+            .then((response) => {
+                if (response.status && response.result) {
+                    setStats(response.result);
+                }
+            })
+            .catch(logErr);
     }, []);
+
     return (
         <TableContainer component={Paper}>
             <Table aria-label="customized table">

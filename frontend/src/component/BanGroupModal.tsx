@@ -22,6 +22,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import SteamID from 'steamid';
+import { logErr } from '../util/errors';
 
 export interface BanGroupModalProps
     extends ConfirmationModalProps<IAPIBanGroupRecord> {
@@ -67,20 +68,23 @@ export const BanGroupModal = ({
         };
 
         apiCreateBanGroup(opts)
-            .then((ban) => {
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', `Fialed to create group ban`);
+                    return;
+                }
                 sendFlash(
                     'success',
-                    `Steam group ban created successfully: ${ban.ban_group_id}`
+                    `Steam group ban created successfully: ${response.result.ban_group_id}`
                 );
-                onSuccess && onSuccess(ban);
+                onSuccess && onSuccess(response.result);
             })
-            .catch((err) => {
-                sendFlash('error', `Failed to create group ban: ${err}`);
-            });
+            .catch(logErr);
     }, [
         banReason,
         customDuration,
         duration,
+        targetSteamId,
         groupId,
         reasonText,
         noteText,

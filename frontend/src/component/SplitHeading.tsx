@@ -26,7 +26,7 @@ export const SplitHeading: FC<SplitHeadingProps> = ({
                 paddingLeft={2}
                 sx={{
                     backgroundColor: bgColor ?? theme.palette.primary.main,
-                    color: theme.palette.background.paper,
+                    color: theme.palette.common.white,
                     width: '100%'
                 }}
             >
@@ -40,7 +40,7 @@ export const SplitHeading: FC<SplitHeadingProps> = ({
                 paddingRight={2}
                 sx={{
                     backgroundColor: bgColor ?? theme.palette.primary.main,
-                    color: theme.palette.background.paper,
+                    color: theme.palette.common.white,
                     width: 200
                 }}
             >

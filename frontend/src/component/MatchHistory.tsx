@@ -17,7 +17,10 @@ export const MatchHistory = ({ opts }: MatchHistoryProps) => {
     useEffect(() => {
         apiGetMatches(opts)
             .then((matches) => {
-                setMatches(matches || []);
+                if (!matches.status) {
+                    return;
+                }
+                setMatches(matches.result || []);
             })
             .finally(() => {
                 setLoading(false);

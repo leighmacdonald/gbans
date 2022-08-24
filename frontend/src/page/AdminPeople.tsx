@@ -5,13 +5,14 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { apiGetPeople, Person } from '../api';
 import { DataTable } from '../component/DataTable';
+import { PersonCell } from '../component/PersonCell';
 
 export const AdminPeople = (): JSX.Element => {
     const [people, setPeople] = useState<Person[]>([]);
 
     useEffect(() => {
-        apiGetPeople().then((p) => {
-            setPeople(p);
+        apiGetPeople().then((response) => {
+            setPeople(response.result || []);
         });
     }, []);
 
@@ -26,7 +27,15 @@ export const AdminPeople = (): JSX.Element => {
                                 {
                                     label: 'Steam ID',
                                     tooltip: 'Steam ID',
-                                    sortKey: 'steam_id'
+                                    sortKey: 'steam_id',
+                                    queryValue: (o) => `${o.personaname}`,
+                                    renderer: (row) => (
+                                        <PersonCell
+                                            steam_id={row.steam_id}
+                                            personaname={row.personaname}
+                                            avatar={row.avatar}
+                                        />
+                                    )
                                 }
                             ]}
                             defaultSortColumn={'updated_on'}

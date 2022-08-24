@@ -7,11 +7,17 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
-	query, args, errQueryArgs := sb.Select("slug", "body_md", "revision", "created_on", "updated_on").
-		From("wiki").Where(sq.Eq{"slug": slug}).OrderBy("revision desc").Limit(1).ToSql()
+	query, args, errQueryArgs := sb.
+		Select("slug", "body_md", "revision", "created_on", "updated_on").
+		From("wiki").
+		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)}).
+		OrderBy("revision desc").
+		Limit(1).
+		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
@@ -23,7 +29,10 @@ func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, pag
 }
 
 func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	query, args, errQueryArgs := sb.Delete("wiki").Where(sq.Eq{"slug": slug}).ToSql()
+	query, args, errQueryArgs := sb.
+		Delete("wiki").
+		Where(sq.Eq{"slug": slug}).
+		ToSql()
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
@@ -35,7 +44,8 @@ func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 }
 
 func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
-	query, args, errQueryArgs := sb.Insert("wiki").
+	query, args, errQueryArgs := sb.
+		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on").
 		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn).
 		ToSql()
@@ -86,7 +96,7 @@ func (database *pgStore) GetMediaByName(ctx context.Context, name string, media 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND name = $1`
-	if errQuery := database.conn.QueryRow(ctx, query, name).Scan(
+	return Err(database.conn.QueryRow(ctx, query, name).Scan(
 		&media.MediaId,
 		&media.AuthorId,
 		&media.Name,
@@ -96,8 +106,5 @@ func (database *pgStore) GetMediaByName(ctx context.Context, name string, media 
 		&media.Deleted,
 		&media.CreatedOn,
 		&media.UpdatedOn,
-	); errQuery != nil {
-		return Err(errQuery)
-	}
-	return nil
+	))
 }

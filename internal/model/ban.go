@@ -268,6 +268,10 @@ func (banSteam *BanSteam) Apply(opts BanSteamOpts) {
 	banSteam.ReportId = opts.ReportId
 }
 
+func (banSteam BanSteam) ToURL() string {
+	return config.ExtURL("/ban/%d", banSteam.BanID)
+}
+
 func (banSteam *BanSteam) String() string {
 	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", banSteam.TargetId.Int64(), banSteam.Origin, banSteam.ReasonText, banSteam.BanType)
 }

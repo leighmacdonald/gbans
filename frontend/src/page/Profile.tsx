@@ -19,12 +19,14 @@ import { Heading } from '../component/Heading';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import SteamID from 'steamid';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const { currentUser } = useCurrentUserCtx();
     const { steam_id } = useParams();
+    const { sendFlash } = useUserFlashCtx();
 
     useEffect(() => {
         if (!steam_id) {
@@ -36,16 +38,18 @@ export const Profile = (): JSX.Element => {
         }
         setLoading(true);
         apiGetProfile(id.toString())
-            .then((profile) => {
-                profile && setProfile(profile);
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', 'Failed to load profile');
+                    return;
+                }
+                response && setProfile(response.result);
             })
-            .catch((err) => {
-                logErr(err);
-            })
+            .catch(logErr)
             .finally(() => {
                 setLoading(false);
             });
-    }, [steam_id]);
+    }, [sendFlash, steam_id]);
 
     return (
         <Grid container paddingTop={3} spacing={3}>

@@ -17,11 +17,11 @@ import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import Button from '@mui/material/Button';
 import { apiSaveMedia } from '../api/media';
-import useTheme from '@mui/material/styles/useTheme';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 interface MDEditorProps {
     initialBodyMDValue: string;
-    onSave: (body_md: string) => void;
+    onSave: (body_md: string, onSuccess?: () => void) => void;
     cancelEnabled?: boolean;
     onCancel?: () => void;
     saveLabel?: string;
@@ -36,13 +36,13 @@ export const MDEditor = ({
     saveLabel,
     cancelLabel
 }: MDEditorProps): JSX.Element => {
-    const theme = useTheme();
     const [setTabValue, setTabSetTabValue] = useState(0);
     const [bodyHTML, setBodyHTML] = useState('');
     const [bodyMD, setBodyMD] = useState(initialBodyMDValue);
     const [open, setOpen] = useState(false);
     const [cursorPos, setCursorPos] = useState(0);
-
+    const { sendFlash } = useUserFlashCtx();
+    const extraButtons = false;
     const handleChange = (_: React.SyntheticEvent, newValue: number) =>
         setTabSetTabValue(newValue);
 
@@ -57,13 +57,17 @@ export const MDEditor = ({
                 setOpen={setOpen}
                 onSave={(v) => {
                     apiSaveMedia(v).then((resp) => {
-                        if (!resp.author_id) {
+                        if (!resp || !resp.status || !resp.result) {
+                            sendFlash('error', 'Failed to save media');
+                            return;
+                        }
+                        if (!resp.result.author_id) {
                             return;
                         }
                         setOpen(false);
                         const newBody =
                             bodyMD.slice(0, cursorPos) +
-                            `![${resp.name}](media://${resp.name})` +
+                            `![${resp.result.name}](media://${resp.result.name})` +
                             bodyMD.slice(cursorPos);
                         setBodyMD(newBody);
                     });
@@ -72,8 +76,7 @@ export const MDEditor = ({
             <Box
                 sx={{
                     borderBottom: 1,
-                    borderColor: 'divider',
-                    backgroundColor: theme.palette.background.paper
+                    borderColor: 'divider'
                 }}
             >
                 <Tabs
@@ -83,64 +86,70 @@ export const MDEditor = ({
                     aria-label="Markdown & HTML Preview"
                 >
                     <Tab label="Edit" />
-                    <Tab label="Preview" />
+                    <Tab label="Preview" color={'warning'} />
                 </Tabs>
             </Box>
             <TabPanel value={setTabValue} index={0}>
                 <Stack>
-                    <Stack direction={'row'} alignItems={'center'} padding={1}>
+                    <Stack direction={'row'} alignItems={'center'} padding={2}>
                         <ButtonGroup>
-                            <Tooltip title={'Insert Image'}>
-                                <IconButton
+                            <Tooltip title={'Insert image at current location'}>
+                                <Button
                                     color="primary"
-                                    aria-label="Insert Image Button"
+                                    aria-label="Upload Image Button"
                                     component="span"
+                                    variant={'text'}
                                     onClick={() => setOpen(true)}
+                                    startIcon={<ImageIcon />}
                                 >
-                                    <ImageIcon />
-                                </IconButton>
+                                    Insert Image
+                                </Button>
                             </Tooltip>
                         </ButtonGroup>
-                        <ButtonGroup>
-                            <Tooltip title={'Embolden selected text'}>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Bold"
-                                    component="span"
+                        {extraButtons && (
+                            <ButtonGroup>
+                                <Tooltip title={'Embolden selected text'}>
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="Bold"
+                                        component="span"
+                                    >
+                                        <FormatBoldIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title={'Underline selected text'}>
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="Underline"
+                                        component="span"
+                                    >
+                                        <FormatUnderlinedIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip
+                                    title={'Decrease indent of selected text'}
                                 >
-                                    <FormatBoldIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title={'Underline selected text'}>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Underline"
-                                    component="span"
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="Decrease indent"
+                                        component="span"
+                                    >
+                                        <FormatIndentDecreaseIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip
+                                    title={'Increase indent of  selected text'}
                                 >
-                                    <FormatUnderlinedIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title={'Decrease indent of selected text'}>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Decrease indent"
-                                    component="span"
-                                >
-                                    <FormatIndentDecreaseIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip
-                                title={'Increase indent of  selected text'}
-                            >
-                                <IconButton
-                                    color="primary"
-                                    aria-label="Increase indent"
-                                    component="span"
-                                >
-                                    <FormatIndentIncreaseIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </ButtonGroup>
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="Increase indent"
+                                        component="span"
+                                    >
+                                        <FormatIndentIncreaseIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </ButtonGroup>
+                        )}
                     </Stack>
                     <Box paddingRight={2} paddingLeft={2}>
                         <TextField
@@ -186,9 +195,11 @@ export const MDEditor = ({
                         color={'primary'}
                         onClick={() => {
                             if (bodyMD === '') {
-                                alert('Title and Body cannot be empty');
+                                sendFlash('error', 'Body cannot be empty');
                             } else {
-                                onSave(bodyMD);
+                                onSave(bodyMD, () => {
+                                    setBodyMD('');
+                                });
                             }
                         }}
                     >

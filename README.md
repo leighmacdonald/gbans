@@ -9,10 +9,9 @@
 ![Lines of Code](https://tokei.rs/b1/github/leighmacdonald/gbans)
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
-gbans was initially intended to be a more modern & secure replacement 
-for [sourcebans](https://github.com/GameConnect/sourcebansv1) / [sourcebans++](https://sbpp.dev). It has since
-had its scope expanded to include more optional support for general game server management tasks as well
-as future plans for in depth plater stat tracking.
+gbans is a game management system for Team Fortress 2 that incorporates a global ban system similar to
+[sourcebans++](https://sbpp.dev) as well as some additional basic community tools like news & wikis.
+gbans was initially intended to be a more modern & secure replacement
 
 ## Stability / Usage Notice
 
@@ -24,7 +23,7 @@ best current way to interact with the system.
 
 Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
 
-## Primary differences from sourcebans++
+## Primary differences from sourcebans++ ban functionality
 
 - No direct SQL queries across networks.
 - Game servers authenticate with the gbans server upon startup of the plugin. Subsequent requests will use the returned

@@ -41,7 +41,7 @@ var unbanSteamCmd = &cobra.Command{
 			log.Fatalf("Invalid steam id")
 		}
 		ban := model.NewBannedPerson()
-		if errGetBan := database.GetBanBySteamID(ctx, sid64, false, &ban); errGetBan != nil {
+		if errGetBan := database.GetBanBySteamID(ctx, sid64, &ban, false); errGetBan != nil {
 			if errors.Is(errGetBan, store.ErrNoResult) {
 				log.WithFields(log.Fields{"sid64": sid64.String()}).Fatalf("No ban found for steamid")
 			}

@@ -57,24 +57,29 @@ export const ReportComponent = ({
 
     const loadMessages = useCallback(() => {
         apiGetReportMessages(report.report_id)
-            .then((r) => {
-                setMessages(r || []);
+            .then((response) => {
+                setMessages(response.result || []);
             })
             .catch(logErr);
     }, [report.report_id]);
 
     const onSave = useCallback(
-        (message: string) => {
+        (message: string, onSuccess?: () => void) => {
             apiCreateReportMessage(report.report_id, message)
                 .then((response) => {
+                    if (!response.status || !response.result) {
+                        sendFlash('error', 'Failed to save resport message');
+                        return;
+                    }
                     setMessages([
                         ...messages,
-                        { author: currentUser, message: response }
+                        { author: currentUser, message: response.result }
                     ]);
+                    onSuccess && onSuccess();
                 })
                 .catch(logErr);
         },
-        [messages, report.report_id, currentUser]
+        [report.report_id, messages, currentUser, sendFlash]
     );
 
     const onEdit = useCallback(
@@ -92,7 +97,11 @@ export const ReportComponent = ({
     const onDelete = useCallback(
         (message_id: number) => {
             apiDeleteReportMessage(message_id)
-                .then(() => {
+                .then((response) => {
+                    if (!response.status) {
+                        sendFlash('error', 'Failed to delete message');
+                        return;
+                    }
                     sendFlash('success', 'Deleted message successfully');
                     loadMessages();
                 })
@@ -107,16 +116,16 @@ export const ReportComponent = ({
 
     useEffect(() => {
         apiGetPersonConnections(report.reported_id)
-            .then((conns) => {
-                setConnections(conns || []);
+            .then((response) => {
+                setConnections(response.result || []);
             })
             .catch(logErr);
     }, [report]);
 
     useEffect(() => {
         apiGetPersonMessages(report.reported_id)
-            .then((msgs) => {
-                setChatHistory(msgs || []);
+            .then((response) => {
+                setChatHistory(response.result || []);
             })
             .catch(logErr);
     }, [report]);
@@ -166,10 +175,7 @@ export const ReportComponent = ({
                                     bodyHTML={renderMarkdown(
                                         report.description
                                     )}
-                                    readonly={
-                                        currentUser.permission_level <
-                                        PermissionLevel.Moderator
-                                    }
+                                    readonly={true}
                                     setEditMode={() => {
                                         return false;
                                     }}
@@ -267,7 +273,12 @@ export const ReportComponent = ({
                                         sortKey: 'source_id',
                                         sortType: 'string',
                                         align: 'left',
-                                        width: '150px'
+                                        width: '150px',
+                                        renderer: (row) => (
+                                            <Typography variant={'body1'}>
+                                                {row.source_id.getSteamID64()}
+                                            </Typography>
+                                        )
                                     },
                                     {
                                         label: 'Reason',

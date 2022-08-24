@@ -4,7 +4,6 @@ package model
 import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
@@ -14,6 +13,10 @@ import (
 	"strings"
 	"time"
 )
+
+type Linkable interface {
+	ToURL() string
+}
 
 type PersonChat struct {
 	PersonChatId int64
@@ -55,14 +58,15 @@ type Server struct {
 	RCON          string `db:"rcon" json:"rcon"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls
-	Password   string              `db:"password" json:"password"`
-	IsEnabled  bool                `json:"is_enabled"`
-	Deleted    bool                `json:"deleted"`
-	Region     string              `json:"region"`
-	CC         string              `json:"cc"`
-	Location   ip2location.LatLong `json:"location"`
-	DefaultMap string              `json:"default_map"`
-	LogSecret  int                 `json:"log_secret"`
+	Password   string  `db:"password" json:"password"`
+	IsEnabled  bool    `json:"is_enabled"`
+	Deleted    bool    `json:"deleted"`
+	Region     string  `json:"region"`
+	CC         string  `json:"cc"`
+	Latitude   float32 `json:"latitude"`
+	Longitude  float32 `json:"longitude"`
+	DefaultMap string  `json:"default_map"`
+	LogSecret  int     `json:"log_secret"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`
@@ -123,17 +127,18 @@ func NewServer(name string, address string, port int) Server {
 // by admins.
 type ServerState struct {
 	// Database
-	ServerId    int                 `json:"server_id"`
-	Name        string              `json:"name"`
-	NameShort   string              `json:"name_short"`
-	Host        string              `json:"host"`
-	Port        int                 `json:"port"`
-	Enabled     bool                `json:"enabled"`
-	Region      string              `json:"region"`
-	CountryCode string              `json:"cc"`
-	Location    ip2location.LatLong `json:"location"`
-	Reserved    int                 `json:"reserved"`
-	LastUpdate  time.Time           `json:"last_update"`
+	ServerId    int       `json:"server_id"`
+	Name        string    `json:"name"`
+	NameShort   string    `json:"name_short"`
+	Host        string    `json:"host"`
+	Port        int       `json:"port"`
+	Enabled     bool      `json:"enabled"`
+	Region      string    `json:"region"`
+	CountryCode string    `json:"cc"`
+	Latitude    float32   `json:"latitude"`
+	Longitude   float32   `json:"longitude"`
+	Reserved    int       `json:"reserved"`
+	LastUpdate  time.Time `json:"last_update"`
 	// A2S
 	NameA2S  string `json:"name_a2s"` // The live name can differ from default
 	Protocol uint8  `json:"protocol"`
@@ -206,6 +211,10 @@ type Person struct {
 	*steamweb.PlayerSummary
 }
 
+func (p Person) ToURL() string {
+	return config.ExtURL("/profile/%d", p.SteamID.Int64())
+}
+
 type UserProfile struct {
 	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
 	CreatedOn       time.Time     `json:"created_on"`
@@ -216,6 +225,10 @@ type UserProfile struct {
 	Avatar          string        `json:"avatar"`
 	AvatarFull      string        `json:"avatarfull"`
 	BanID           int64         `json:"ban_id"`
+}
+
+func (p UserProfile) ToURL() string {
+	return config.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
 // LoggedIn checks for a valid steamID
@@ -505,6 +518,10 @@ type Report struct {
 	Deleted      bool          `json:"deleted"`
 	CreatedOn    time.Time     `json:"created_on"`
 	UpdatedOn    time.Time     `json:"updated_on"`
+}
+
+func (report Report) ToURL() string {
+	return config.ExtURL("/report/%d", report.ReportId)
 }
 
 func NewReport() Report {

@@ -57,7 +57,7 @@ var serverListCmd = &cobra.Command{
 				server.Addr(),
 				server.Region,
 				server.CC,
-				fmt.Sprintf("%.4f %.4f", server.Location.Latitude, server.Location.Longitude),
+				fmt.Sprintf("%.4f %.4f", server.Latitude, server.Longitude),
 			})
 		}
 		opts := golib.DefaultTableOpts()

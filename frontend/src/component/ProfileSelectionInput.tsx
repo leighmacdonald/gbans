@@ -1,7 +1,7 @@
 import TextField from '@mui/material/TextField';
 import * as React from 'react';
 import { apiGetProfile, PlayerProfile } from '../api';
-import { log } from '../util/errors';
+import { logErr } from '../util/errors';
 import { ChangeEvent, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -36,14 +36,18 @@ export const ProfileSelectionInput = ({
         if (input) {
             setLoading(true);
             apiGetProfile(input)
-                .then((profile) => {
-                    onProfileSuccess(profile);
-                    setLProfile(profile);
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        setLProfile(undefined);
+                        return;
+                    }
+                    onProfileSuccess(response.result);
+                    setLProfile(response.result);
                     setLoading(false);
                 })
                 .catch((e) => {
-                    log(e);
                     setLProfile(undefined);
+                    logErr(e);
                 });
         }
     };

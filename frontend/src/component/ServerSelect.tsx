@@ -19,7 +19,7 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
     useEffect(() => {
         apiGetServerStates()
             .then((servers) => {
-                setServers(servers || []);
+                setServers(servers.result || []);
             })
             .catch(logErr);
     }, []);

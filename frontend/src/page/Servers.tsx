@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography';
 import { sum } from 'lodash-es';
 import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
+import { getDistance } from '../util/gis';
 
 function LinearProgressWithLabel(
     props: LinearProgressProps & { value: number }
@@ -131,8 +132,23 @@ export const Servers = (): JSX.Element => {
         expiryTimestamp: new Date(),
         onExpire: () => {
             apiGetServerStates()
-                .then((servers) => {
-                    setServers((servers || []).filter((s) => s.enabled));
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        return;
+                    }
+                    setServers(
+                        (response.result || [])
+                            .filter((s) => s.enabled) // Shouldn't actually happen
+                            .map((srv) => {
+                                return {
+                                    ...srv,
+                                    distance: getDistance(pos, {
+                                        lat: srv.latitude,
+                                        lng: srv.longitude
+                                    })
+                                };
+                            })
+                    );
                     restart(nextExpiry());
                 })
                 .catch((e) => {

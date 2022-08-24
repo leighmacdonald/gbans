@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -24,14 +23,15 @@ type seedData struct {
 	Admins  steamid.Collection `json:"admins"`
 	Players steamid.Collection `json:"players"`
 	Servers []struct {
-		ShortName string    `json:"short_name"`
-		Host      string    `json:"host"`
-		Port      int       `json:"port,omitempty"`
-		Password  string    `json:"password"`
-		Location  []float64 `json:"location"`
-		Enabled   bool      `json:"enabled"`
-		Region    string    `json:"region"`
-		CC        string    `json:"cc"`
+		ShortName string  `json:"short_name"`
+		Host      string  `json:"host"`
+		Port      int     `json:"port,omitempty"`
+		Password  string  `json:"password"`
+		Latitude  float32 `json:"latitude"`
+		Longitude float32 `json:"longitude"`
+		Enabled   bool    `json:"enabled"`
+		Region    string  `json:"region"`
+		CC        string  `json:"cc"`
 	} `json:"servers"`
 	Settings struct {
 		Rcon string `json:"rcon"`
@@ -106,7 +106,7 @@ var seedCmd = &cobra.Command{
 			var banSteam model.BanSteam
 			if errNewBan := app.NewBanSteam(
 				model.StringSID(config.General.Owner.String()),
-				model.StringSID(seed.Players[0].String()), model.Duration("500h"), model.External,
+				model.StringSID(seed.Players[0].String()), "500h", model.External,
 				"", "imported", model.System, 0, &banSteam); errNewBan != nil {
 				log.Errorf("Failed to create ban: %v", errNewBan)
 			}
@@ -138,13 +138,11 @@ var seedCmd = &cobra.Command{
 				IsEnabled:       server.Enabled,
 				Region:          server.Region,
 				CC:              server.CC,
-				Location: ip2location.LatLong{
-					Latitude:  server.Location[0],
-					Longitude: server.Location[1],
-				},
-				TokenCreatedOn: config.Now(),
-				CreatedOn:      config.Now(),
-				UpdatedOn:      config.Now(),
+				Latitude:        server.Latitude,
+				Longitude:       server.Longitude,
+				TokenCreatedOn:  config.Now(),
+				CreatedOn:       config.Now(),
+				UpdatedOn:       config.Now(),
 			}
 			if errSaveServer := database.SaveServer(ctx, &s); errSaveServer != nil {
 				log.Errorf("Failed to add server: %v", errSaveServer)

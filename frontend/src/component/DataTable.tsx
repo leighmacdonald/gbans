@@ -3,7 +3,7 @@ import Table from '@mui/material/Table';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -37,7 +37,7 @@ const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number) => {
 export interface HeadingCell<T> {
     label: string;
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-    tooltip: string;
+    tooltip: string | (() => string);
     sortKey?: keyof T;
     width?: number | string;
     sortType?: 'number' | 'string' | 'date' | 'float';
@@ -52,6 +52,7 @@ export interface HeadingCell<T> {
 export interface UserTableProps<T> {
     columns: HeadingCell<T>[];
     defaultSortColumn: keyof T;
+    defaultSortOrder?: Order;
     rowsPerPage: RowsPerPage;
     rows: T[];
     onRowClick?: (value: T) => void;
@@ -89,11 +90,12 @@ export const DataTable = <T,>({
     defaultSortColumn,
     rowsPerPage,
     onRowClick,
-    isLoading
+    isLoading,
+    defaultSortOrder = 'desc'
 }: UserTableProps<T>) => {
     const theme = useTheme();
     const [page, setPage] = useState(0);
-    const [order, setOrder] = useState<Order>('desc');
+    const [order, setOrder] = useState<Order>(defaultSortOrder);
     const [sortColumn, setSortColumn] = useState<keyof T>(defaultSortColumn);
     const [pageCount, setPageCount] = useState(0);
     const [rowPerPageCount, setRowPerPageCount] = useState(
@@ -176,7 +178,16 @@ export const DataTable = <T,>({
                 />
             </Stack>
 
-            <Table size={'small'} padding={'normal'} stickyHeader={true}>
+            <Table
+                size={'small'}
+                padding={'normal'}
+                stickyHeader={true}
+                sx={{
+                    [`& .${tableCellClasses.root}`]: {
+                        borderBottomColor: theme.palette.text.disabled
+                    }
+                }}
+            >
                 <TableHead>
                     <TableRow>
                         {columns.map((col) => {
@@ -190,7 +201,7 @@ export const DataTable = <T,>({
                                             ? {
                                                   cursor: 'pointer'
                                               }
-                                            : {},
+                                            : { cursor: 'default' },
                                         backgroundColor:
                                             theme.palette.background.paper
                                     }}
@@ -209,7 +220,11 @@ export const DataTable = <T,>({
                                     }}
                                 >
                                     <Tooltip
-                                        title={col.tooltip}
+                                        title={
+                                            col.tooltip instanceof Function
+                                                ? col.tooltip()
+                                                : col.tooltip
+                                        }
                                         placement={'top'}
                                     >
                                         <Typography
@@ -222,7 +237,7 @@ export const DataTable = <T,>({
                                                         ? 'underline'
                                                         : 'overline'
                                             }}
-                                            variant={'subtitle1'}
+                                            variant={'subtitle2'}
                                         >
                                             {col.label}
                                         </Typography>
@@ -258,7 +273,7 @@ export const DataTable = <T,>({
                                             '&:hover': {
                                                 backgroundColor:
                                                     theme.palette.background
-                                                        .paper
+                                                        .default
                                             }
                                         }}
                                     >

@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import { log } from '../util/errors';
+import { log, logErr } from '../util/errors';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import {
     apiGetWikiPage,
@@ -36,19 +36,23 @@ export const WikiPage = (): JSX.Element => {
     const [editMode, setEditMode] = React.useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
-    const { flashes, setFlashes } = useUserFlashCtx();
+    const { sendFlash } = useUserFlashCtx();
 
     useEffect(() => {
         setLoading(true);
         apiGetWikiPage(slug || 'home')
-            .then((page) => {
-                setPage(page);
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', 'Failed to load wiki page');
+                    return;
+                }
+                setPage(response.result);
             })
             .catch((e) => {
                 log(e);
             });
         setLoading(false);
-    }, [slug]);
+    }, [sendFlash, slug]);
 
     const onSave = useCallback(
         (new_body_md: string) => {
@@ -56,24 +60,21 @@ export const WikiPage = (): JSX.Element => {
             newPage.slug = slug || 'home';
             newPage.body_md = new_body_md;
             apiSaveWikiPage(newPage)
-                .then((p) => {
-                    setPage(p);
-                    setFlashes([
-                        ...flashes,
-                        {
-                            heading: 'Saved wiki page',
-                            level: 'success',
-                            message: `Slug ${p.slug} updated`,
-                            closable: true
-                        }
-                    ]);
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        sendFlash('error', 'Failed to save wiki page');
+                        return;
+                    }
+                    setPage(response.result);
+                    sendFlash(
+                        'success',
+                        `Slug ${response.result.slug} updated`
+                    );
                     setEditMode(false);
                 })
-                .catch((e) => {
-                    log(e);
-                });
+                .catch(logErr);
         },
-        [page, slug, setFlashes, flashes]
+        [page, sendFlash, slug]
     );
 
     const bodyHTML = useMemo(() => {

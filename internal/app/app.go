@@ -261,7 +261,7 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 					log.Errorf("Failed to add chat history: %v", errChat)
 				}
 				cancel()
-				log.WithFields(log.Fields{"msg": msg}).Debugf("Saved mesasge")
+				log.WithFields(log.Fields{"msg": msg}).Debugf("Saved message")
 			}
 		}
 	}
@@ -481,7 +481,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	}
 	go serverA2SStatusUpdater(ctx, database, freq)
 	go serverRCONStatusUpdater(ctx, database, freq)
-	go serverStateRefresher(ctx, database)
+	go serverStateRefresher(ctx, database, freq)
 	go profileUpdater(ctx, database)
 	go warnWorker(ctx)
 	go logReader(ctx, logFileC, database)

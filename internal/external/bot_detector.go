@@ -5,27 +5,31 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 )
 
-type tf2bdSchema struct {
-	Schema   string `json:"$schema"`
-	FileInfo struct {
-		Authors     []string `json:"authors"`
-		Description string   `json:"description"`
-		Title       string   `json:"title"`
-		UpdateURL   string   `json:"update_url"`
-	} `json:"file_info"`
-	Players []struct {
-		Attributes []string `json:"attributes"`
-		LastSeen   struct {
-			PlayerName string `json:"player_name,omitempty"`
-			Time       int    `json:"time,omitempty"`
-		} `json:"last_seen,omitempty"`
-		Steamid any      `json:"steamid"`
-		Proof   []string `json:"proof,omitempty"`
-	} `json:"players"`
+type FileInfo struct {
+	Authors     []string `json:"authors"`
+	Description string   `json:"description"`
+	Title       string   `json:"title"`
+	UpdateURL   string   `json:"update_url"`
+}
+type LastSeen struct {
+	PlayerName string `json:"player_name,omitempty"`
+	Time       int    `json:"time,omitempty"`
+}
+type Players struct {
+	Attributes []string `json:"attributes"`
+	LastSeen   LastSeen `json:"last_seen,omitempty"`
+	Steamid    any      `json:"steamid"`
+	Proof      []string `json:"proof,omitempty"`
+}
+
+type TF2BDSchema struct {
+	Schema   string    `json:"$schema"`
+	FileInfo FileInfo  `json:"file_info"`
+	Players  []Players `json:"players"`
 }
 
 func parseTF2BD(data []byte) ([]steamid.SID64, error) {
-	var bdSchema tf2bdSchema
+	var bdSchema TF2BDSchema
 	if errUnmarshal := json.Unmarshal(data, &bdSchema); errUnmarshal != nil {
 		return nil, errUnmarshal
 	}

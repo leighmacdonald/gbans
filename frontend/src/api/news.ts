@@ -9,13 +9,13 @@ export interface NewsEntry {
     updated_on: string;
 }
 
-export const apiGetNewsLatest = async (): Promise<NewsEntry[]> =>
+export const apiGetNewsLatest = async () =>
     await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST');
 
-export const apiGetNewsAll = async (): Promise<NewsEntry[]> =>
+export const apiGetNewsAll = async () =>
     await apiCall<NewsEntry[]>(`/api/news_all`, 'POST');
 
-export const apiNewsSave = async (entry: NewsEntry): Promise<NewsEntry> => {
+export const apiNewsSave = async (entry: NewsEntry) => {
     if (entry.body_md === '') {
         throw new ValidationException(`body_md cannot be empty`);
     }

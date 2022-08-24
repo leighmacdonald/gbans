@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteBan, IAPIBanRecordProfile } from '../api';
+import { apiDeleteBan } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
@@ -8,16 +8,17 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 
 export interface UnbanModalProps<Ban> extends ConfirmationModalProps<Ban> {
-    record: IAPIBanRecordProfile;
+    banId: number;
+    personaName: string;
 }
 
 export const UnbanSteamModal = ({
     open,
     setOpen,
     onSuccess,
-    record
+    banId,
+    personaName
 }: UnbanModalProps<null>) => {
-    const [bp] = useState<IAPIBanRecordProfile>(record);
     const [reasonText, setReasonText] = useState<string>('');
 
     const { sendFlash } = useUserFlashCtx();
@@ -27,15 +28,19 @@ export const UnbanSteamModal = ({
             sendFlash('error', 'Reason cannot be empty');
             return;
         }
-        apiDeleteBan(bp.ban_id, reasonText)
+        apiDeleteBan(banId, reasonText)
             .then((resp) => {
+                if (!resp.status) {
+                    sendFlash('error', `Failed to unban`);
+                    return;
+                }
                 sendFlash('success', `Unbanned successfully`);
-                onSuccess && onSuccess(resp);
+                onSuccess && onSuccess(null);
             })
             .catch((err) => {
                 sendFlash('error', `Failed to unban: ${err}`);
             });
-    }, [reasonText, bp.ban_id, sendFlash, onSuccess]);
+    }, [reasonText, banId, sendFlash, onSuccess]);
 
     return (
         <ConfirmationModal
@@ -55,10 +60,7 @@ export const UnbanSteamModal = ({
         >
             <Stack spacing={2}>
                 <Heading>
-                    <>
-                        Unban Player:
-                        {bp.personaname || `${bp.target_id}`}
-                    </>
+                    <>Unban Player: {personaName}</>
                 </Heading>
                 <Stack spacing={3} alignItems={'center'}>
                     <FormControl fullWidth>
