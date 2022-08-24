@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 )
 
 type LogsTFResult struct {
@@ -39,7 +39,7 @@ func LogsTFOverview(sid steamid.SID64) (*LogsTFResult, error) {
 	if errGet != nil {
 		return nil, errors.Wrapf(errGet, "Failed to query logstf")
 	}
-	body, errReadBody := ioutil.ReadAll(response.Body)
+	body, errReadBody := io.ReadAll(response.Body)
 	if errReadBody != nil {
 		return nil, errors.Wrapf(errGet, "Failed to read logstf body")
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"net"
 	"net/http"
@@ -229,7 +228,7 @@ func Update(outputPath string, apiKey string) error {
 		if errGet != nil {
 			return errors.Wrap(errGet, "Failed to downloaded geoip db")
 		}
-		body, errReadAll := ioutil.ReadAll(resp.Body)
+		body, errReadAll := io.ReadAll(resp.Body)
 		if errReadAll != nil {
 			return errReadAll
 		}

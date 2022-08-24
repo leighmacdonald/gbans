@@ -248,13 +248,13 @@ func addField(embed *discordgo.MessageEmbed, title string, value string) {
 	addFieldRaw(embed, title, value, false)
 }
 
-func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
-	name := person.PersonaName
-	if name == "" {
-		name = person.SteamID.String()
-	}
-	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
-}
+//func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
+//	name := person.PersonaName
+//	if name == "" {
+//		name = person.SteamID.String()
+//	}
+//	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
+//}
 
 func addAuthorProfile(embed *discordgo.MessageEmbed, person model.UserProfile) {
 	name := person.Name

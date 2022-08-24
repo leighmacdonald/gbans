@@ -28,7 +28,7 @@ func newBaseBanOpts(source model.SteamIDProvider, target model.StringSID, durati
 	if string(target) != "0" {
 		newTargetSid, errTargetSid := target.SID64()
 		if errTargetSid != nil {
-			targetSid = 0
+			return errors.New("Invalid target id")
 		}
 		targetSid = newTargetSid
 	}

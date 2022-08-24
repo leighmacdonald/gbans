@@ -731,9 +731,9 @@ func (web *web) onAPIExportBansTF2BD(database store.Store) gin.HandlerFunc {
 		var filtered []model.BannedPerson
 		for _, ban := range bans {
 			if ban.Ban.Reason != model.Cheating ||
-				ban.Ban.Deleted == true ||
-				ban.Ban.IsEnabled == false ||
-				ban.Ban.ValidUntil.Sub(time.Now()) < time.Hour*24*365*5 {
+				ban.Ban.Deleted ||
+				!ban.Ban.IsEnabled ||
+				time.Until(ban.Ban.ValidUntil) < time.Hour*24*365*5 {
 				continue
 			}
 			filtered = append(filtered, ban)

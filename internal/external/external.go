@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -68,7 +67,7 @@ func Import(list config.BanList) error {
 			return errors.Wrapf(errDownload, "Failed to download net ban list")
 		}
 	}
-	body, errReadFile := ioutil.ReadFile(filePath)
+	body, errReadFile := os.ReadFile(filePath)
 	if errReadFile != nil {
 		return errReadFile
 	}

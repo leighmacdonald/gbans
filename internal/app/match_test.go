@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -31,7 +31,7 @@ func TestMatch_Apply(t *testing.T) {
 		t.Skipf("Cant find test file: log_3124689.log")
 		return
 	}
-	body, errRead := ioutil.ReadFile(p)
+	body, errRead := os.ReadFile(p)
 	require.NoError(t, errRead)
 	playerStateCache := newPlayerCache()
 	m := model.NewMatch()

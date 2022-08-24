@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -52,7 +52,7 @@ var seedCmd = &cobra.Command{
 		if !golib.Exists(seedFile) {
 			log.Fatalf("Seedfile does not exist: %s", seedFile)
 		}
-		rawSeedData, errReadFile := ioutil.ReadFile(seedFile)
+		rawSeedData, errReadFile := os.ReadFile(seedFile)
 		if errReadFile != nil {
 			log.Fatalf("Failed to read seed file: %v", errReadFile)
 		}

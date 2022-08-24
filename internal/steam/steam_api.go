@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -44,7 +44,7 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 	if errDo != nil {
 		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
 	}
-	body, errRead := ioutil.ReadAll(resp.Body)
+	body, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
 		return nil, errors.Wrap(errRead, "Failed to read response body")
 	}

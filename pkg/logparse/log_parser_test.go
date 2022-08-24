@@ -4,7 +4,7 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -19,7 +19,7 @@ func TestParseTime(t *testing.T) {
 
 func TestParseAlt(t *testing.T) {
 	p := golib.FindFile(path.Join("test_data", "log_1.log"), "gbans")
-	f, e := ioutil.ReadFile(p)
+	f, e := os.ReadFile(p)
 	if e != nil {
 		t.Fatalf("Failed to open test file: %s", p)
 	}
