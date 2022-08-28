@@ -138,22 +138,23 @@ func (r Reason) String() string {
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it
 type BaseBanOpts struct {
-	TargetId   steamid.SID64
-	SourceId   steamid.SID64
-	Duration   time.Duration
-	BanType    BanType
-	Reason     Reason
-	ReasonText string
-	Origin     Origin
-	ModNote    string
-	IsEnabled  bool
-	Deleted    bool
+	TargetId    steamid.SID64 `json:"target_id"`
+	SourceId    steamid.SID64 `json:"source_id"`
+	Duration    time.Duration `json:"duration"`
+	BanType     BanType       `json:"ban_type"`
+	Reason      Reason        `json:"reason"`
+	ReasonText  string        `json:"reason_text"`
+	Origin      Origin        `json:"origin"`
+	ModNote     string        `json:"mod_note"`
+	IsEnabled   bool          `json:"is_enabled"`
+	Deleted     bool          `json:"deleted"`
+	AppealState AppealState   `json:"appeal_state"`
 }
 
 type BanSteamOpts struct {
-	BaseBanOpts
-	BanId    int64
-	ReportId int
+	BaseBanOpts `json:"base_ban_opts"`
+	BanId       int64 `json:"ban_id"`
+	ReportId    int   `json:"report_id"`
 }
 
 type BanSteamGroupOpts struct {
@@ -215,6 +216,14 @@ func (banCIDR *BanCIDR) String() string {
 	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", banCIDR.CIDR, banCIDR.Origin, banCIDR.Reason)
 }
 
+type AppealState int
+
+const (
+	Open AppealState = iota
+	Denied
+	Accepted
+)
+
 // BanBase provides a common struct shared between all ban types, it should not be used
 // directly
 type BanBase struct {
@@ -231,6 +240,8 @@ type BanBase struct {
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note   string `json:"note"`
 	Origin Origin `json:"origin"`
+
+	AppealState AppealState `json:"appeal_state"`
 
 	// Deleted is used for soft-deletes
 	Deleted   bool `json:"deleted"`
@@ -252,6 +263,7 @@ func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
 	banBase.Origin = opts.Origin
 	banBase.Deleted = opts.Deleted
 	banBase.IsEnabled = opts.IsEnabled
+	banBase.AppealState = opts.AppealState
 	banBase.CreatedOn = banTime
 	banBase.UpdatedOn = banTime
 	banBase.ValidUntil = banTime.Add(opts.Duration)

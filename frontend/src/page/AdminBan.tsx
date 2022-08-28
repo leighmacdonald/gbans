@@ -1,6 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import UndoIcon from '@mui/icons-material/Undo';
+import EditIcon from '@mui/icons-material/Edit';
+import Tooltip from '@mui/material/Tooltip';
+import GavelIcon from '@mui/icons-material/Gavel';
+import Box from '@mui/material/Box';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import useTheme from '@mui/material/styles/useTheme';
+import { useNavigate } from 'react-router-dom';
+import format from 'date-fns/format';
+import { formatDuration, intervalToDuration, parseISO } from 'date-fns';
+import { TabPanel } from '../component/TabPanel';
+import { DataTable, RowsPerPage } from '../component/DataTable';
+import { PersonCell } from '../component/PersonCell';
+import { BanCIDRModal } from '../component/BanCIDRModal';
+import { BanASNModal } from '../component/BanASNModal';
+import { BanGroupModal } from '../component/BanGroupModal';
+import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
+import { UnbanASNModal } from '../component/UnbanASNModal';
+import { UnbanGroupModal } from '../component/UnbanGroupModal';
+import { UnbanSteamModal } from '../component/UnbanSteamModal';
+import { BanSteamModal } from '../component/BanSteamModal';
+import { steamIdQueryValue } from '../util/text';
 import {
     apiGetBansSteam,
     apiGetBansASN,
@@ -12,34 +40,6 @@ import {
     IAPIBanGroupRecord,
     IAPIBanRecordProfile
 } from '../api';
-import { DataTable } from '../component/DataTable';
-import { PersonCell } from '../component/PersonCell';
-import format from 'date-fns/format';
-import { formatDuration, intervalToDuration, parseISO } from 'date-fns';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Button from '@mui/material/Button';
-import { useNavigate } from 'react-router-dom';
-import IconButton from '@mui/material/IconButton';
-import UndoIcon from '@mui/icons-material/Undo';
-import EditIcon from '@mui/icons-material/Edit';
-import Tooltip from '@mui/material/Tooltip';
-import GavelIcon from '@mui/icons-material/Gavel';
-import { BanSteamModal } from '../component/BanSteamModal';
-import Box from '@mui/material/Box';
-import { UnbanSteamModal } from '../component/UnbanSteamModal';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import useTheme from '@mui/material/styles/useTheme';
-import { TabPanel } from '../component/TabPanel';
-import Paper from '@mui/material/Paper';
-import { BanCIDRModal } from '../component/BanCIDRModal';
-import { BanASNModal } from '../component/BanASNModal';
-import { BanGroupModal } from '../component/BanGroupModal';
-import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
-import { UnbanASNModal } from '../component/UnbanASNModal';
-import { UnbanGroupModal } from '../component/UnbanGroupModal';
-import { steamIdQueryValue } from '../util/text';
 
 export const AdminBan = (): JSX.Element => {
     const theme = useTheme();
@@ -471,7 +471,7 @@ export const AdminBan = (): JSX.Element => {
                                     }
                                 ]}
                                 defaultSortColumn={'ban_id'}
-                                rowsPerPage={100}
+                                rowsPerPage={RowsPerPage.TwentyFive}
                                 rows={bans}
                             />
                         </Grid>
@@ -666,7 +666,7 @@ export const AdminBan = (): JSX.Element => {
                             }
                         ]}
                         defaultSortColumn={'net_id'}
-                        rowsPerPage={100}
+                        rowsPerPage={RowsPerPage.TwentyFive}
                         rows={banCIDRs}
                     />
                 </TabPanel>
@@ -825,7 +825,7 @@ export const AdminBan = (): JSX.Element => {
                             }
                         ]}
                         defaultSortColumn={'ban_asn_id'}
-                        rowsPerPage={100}
+                        rowsPerPage={RowsPerPage.TwentyFive}
                         rows={banASNs}
                     />
                 </TabPanel>
@@ -985,7 +985,7 @@ export const AdminBan = (): JSX.Element => {
                             }
                         ]}
                         defaultSortColumn={'ban_group_id'}
-                        rowsPerPage={100}
+                        rowsPerPage={RowsPerPage.TwentyFive}
                         rows={banGroups}
                     />
                 </TabPanel>

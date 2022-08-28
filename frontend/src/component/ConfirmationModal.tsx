@@ -1,10 +1,14 @@
 import React from 'react';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
-import { Dialog } from '@mui/material';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
+import { Breakpoint } from '@mui/system';
 
 export interface ConfirmationModalProps<T> {
     initialValue?: T;
@@ -15,6 +19,9 @@ export interface ConfirmationModalProps<T> {
     onOpen?: () => void;
     open: boolean;
     setOpen: (openState: boolean) => void;
+    title?: string;
+    size?: Breakpoint;
+    fullWidth?: boolean;
 }
 
 export const ConfirmationModal = ({
@@ -22,42 +29,45 @@ export const ConfirmationModal = ({
     open,
     setOpen,
     onAccept,
-    onCancel
+    onCancel,
+    title,
+    size,
+    fullWidth
 }: ConfirmationModalProps<boolean>) => {
     return (
         <Dialog
+            fullWidth={fullWidth}
+            maxWidth={size ?? 'xl'}
             open={open}
             onClose={() => {
                 setOpen(false);
             }}
         >
-            <Stack padding={2} spacing={2}>
-                {children}
-                <Stack direction={'row-reverse'}>
-                    <ButtonGroup>
-                        {onAccept && (
-                            <Button
-                                variant={'contained'}
-                                color={'success'}
-                                startIcon={<CheckIcon />}
-                                onClick={onAccept}
-                            >
-                                Accept
-                            </Button>
-                        )}
-                        {onCancel && (
-                            <Button
-                                variant={'contained'}
-                                color={'error'}
-                                startIcon={<ClearIcon />}
-                                onClick={onCancel}
-                            >
-                                Cancel
-                            </Button>
-                        )}
-                    </ButtonGroup>
-                </Stack>
-            </Stack>
+            {title && <DialogTitle>{title}</DialogTitle>}
+
+            <DialogContent>{children}</DialogContent>
+            <DialogActions>
+                {onAccept && (
+                    <Button
+                        variant={'contained'}
+                        color={'success'}
+                        startIcon={<CheckIcon />}
+                        onClick={onAccept}
+                    >
+                        Accept
+                    </Button>
+                )}
+                {onCancel && (
+                    <Button
+                        variant={'contained'}
+                        color={'error'}
+                        startIcon={<ClearIcon />}
+                        onClick={onCancel}
+                    >
+                        Cancel
+                    </Button>
+                )}
+            </DialogActions>
         </Dialog>
     );
 };

@@ -22,7 +22,7 @@ import (
 func (database *pgStore) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]model.BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
-		       note, unban_reason_text, is_enabled, target_id, source_id 
+		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE $1 <<= cidr AND deleted = false AND is_enabled = true`
 	var nets []model.BanCIDR
@@ -36,7 +36,7 @@ func (database *pgStore) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]m
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId); errScan != nil {
+			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		nets = append(nets, banNet)
@@ -46,20 +46,20 @@ func (database *pgStore) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]m
 func (database *pgStore) GetBanNetById(ctx context.Context, netId int64, banNet *model.BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
-		       note, unban_reason_text, is_enabled, target_id, source_id 
+		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE deleted = false AND net_id = $1`
 	return Err(database.QueryRow(ctx, query, netId).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 		&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 		&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-		&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId))
+		&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState))
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
 func (database *pgStore) GetBansNet(ctx context.Context) ([]model.BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
-		       note, unban_reason_text, is_enabled, target_id, source_id 
+		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state 
 		FROM ban_net
 		WHERE deleted = false`
 	var nets []model.BanCIDR
@@ -73,7 +73,7 @@ func (database *pgStore) GetBansNet(ctx context.Context) ([]model.BanCIDR, error
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId); errScan != nil {
+			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		nets = append(nets, banNet)
@@ -83,7 +83,8 @@ func (database *pgStore) GetBansNet(ctx context.Context) ([]model.BanCIDR, error
 
 func (database *pgStore) updateBanNet(ctx context.Context, banNet *model.BanCIDR) error {
 	banNet.UpdatedOn = config.Now()
-	query, args, errQueryArgs := sb.Update("ban_net").
+	query, args, errQueryArgs := sb.
+		Update("ban_net").
 		Set("cidr", banNet.CIDR).
 		Set("origin", banNet.Origin).
 		Set("updated_on", banNet.UpdatedOn).
@@ -96,6 +97,7 @@ func (database *pgStore) updateBanNet(ctx context.Context, banNet *model.BanCIDR
 		Set("is_enabled", banNet.IsEnabled).
 		Set("target_id", banNet.TargetId).
 		Set("source_id", banNet.SourceId).
+		Set("appeal_state", banNet.AppealState).
 		Where(sq.Eq{"net_id": banNet.NetID}).
 		ToSql()
 	if errQueryArgs != nil {
@@ -105,12 +107,13 @@ func (database *pgStore) updateBanNet(ctx context.Context, banNet *model.BanCIDR
 }
 
 func (database *pgStore) insertBanNet(ctx context.Context, banNet *model.BanCIDR) error {
-	query, args, errQueryArgs := sb.Insert("ban_net").
+	query, args, errQueryArgs := sb.
+		Insert("ban_net").
 		Columns("cidr", "origin", "created_on", "updated_on", "reason", "reason_text", "valid_until",
-			"deleted", "note", "unban_reason_text", "is_enabled", "target_id", "source_id").
+			"deleted", "note", "unban_reason_text", "is_enabled", "target_id", "source_id", "appeal_state").
 		Values(banNet.CIDR, banNet.Origin, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ReasonText,
 			banNet.ValidUntil, banNet.Deleted, banNet.Note, banNet.UnbanReasonText, banNet.IsEnabled,
-			banNet.TargetId, banNet.SourceId).
+			banNet.TargetId, banNet.SourceId, banNet.AppealState).
 		Suffix("RETURNING net_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -141,7 +144,7 @@ func (database *pgStore) DropBanNet(ctx context.Context, banNet *model.BanCIDR) 
 func (database *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason_text, valid_until, deleted, note, 
-		       unban_reason_text, is_enabled, target_id, source_id, reason
+		       unban_reason_text, is_enabled, target_id, source_id, reason, appeal_state
 		FROM ban_net
 		WHERE valid_until < $1`
 	var bans []model.BanCIDR
@@ -155,7 +158,7 @@ func (database *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin, &banNet.CreatedOn,
 			&banNet.UpdatedOn, &banNet.ReasonText, &banNet.ValidUntil, &banNet.Deleted, &banNet.Note,
 			&banNet.UnbanReasonText, &banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId,
-			&banNet.Reason); errScan != nil {
+			&banNet.Reason, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		bans = append(bans, banNet)
@@ -166,7 +169,7 @@ func (database *pgStore) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR
 func (database *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
-		       deleted, reason, is_enabled, unban_reason_text
+		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn
 		WHERE valid_until < $1 AND deleted = false`
 	var bans []model.BanASN
@@ -179,7 +182,7 @@ func (database *pgStore) GetExpiredASNBans(ctx context.Context) ([]model.BanASN,
 		var banASN model.BanASN
 		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.SourceId, &banASN.TargetId,
 			&banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn, &banASN.Deleted,
-			&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText); errScan != nil {
+			&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText, &banASN.AppealState); errScan != nil {
 			return nil, errScan
 		}
 		bans = append(bans, banASN)
@@ -362,12 +365,13 @@ func (database *pgStore) InsertBlockListData(ctx context.Context, blockListData 
 func (database *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
-		       deleted, reason, is_enabled, unban_reason_text
+		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
 		WHERE as_num = $1`
 	if errQuery := database.conn.QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
 		&banASN.SourceId, &banASN.TargetId, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
-		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText); errQuery != nil {
+		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
+		&banASN.AppealState); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
@@ -376,7 +380,7 @@ func (database *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *mod
 func (database *pgStore) GetBansASN(ctx context.Context) ([]model.BanASN, error) {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
-		       deleted, reason, is_enabled, unban_reason_text
+		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
 		WHERE deleted = false`
 	rows, errRows := database.Query(ctx, query)
@@ -389,7 +393,8 @@ func (database *pgStore) GetBansASN(ctx context.Context) ([]model.BanASN, error)
 		var r model.BanASN
 		if errQuery := rows.Scan(&r.BanASNId, &r.ASNum, &r.Origin,
 			&r.SourceId, &r.TargetId, &r.ReasonText, &r.ValidUntil, &r.CreatedOn,
-			&r.UpdatedOn, &r.Deleted, &r.Reason, &r.IsEnabled, &r.UnbanReasonText); errQuery != nil {
+			&r.UpdatedOn, &r.Deleted, &r.Reason, &r.IsEnabled, &r.UnbanReasonText,
+			&r.AppealState); errQuery != nil {
 			return nil, Err(errQuery)
 		}
 		records = append(records, r)
@@ -403,20 +408,21 @@ func (database *pgStore) SaveBanASN(ctx context.Context, banASN *model.BanASN) e
 		const queryUpdate = `
 			UPDATE ban_asn 
 			SET as_num = $2, origin = $3, source_id = $4, target_id = $5, reason = $6,
-				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, unban_reason_text = $12
+				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, 
+				unban_reason_text = $12, appeal_state = $13
 			WHERE ban_asn_id = $1`
 		return Err(database.Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceId,
 			banASN.TargetId, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
-			banASN.Deleted, banASN.UnbanReasonText))
+			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
 	}
 	const queryInsert = `
 		INSERT INTO ban_asn (as_num, origin, source_id, target_id, reason, valid_until, updated_on, created_on, 
-		                     reason_text, is_enabled, deleted, unban_reason_text)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		                     reason_text, is_enabled, deleted, unban_reason_text, appeal_state)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING ban_asn_id`
 	return Err(database.QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceId, banASN.TargetId,
 		banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
-		banASN.Deleted, banASN.UnbanReasonText).Scan(&banASN.BanASNId))
+		banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState).Scan(&banASN.BanASNId))
 }
 
 func (database *pgStore) DropBanASN(ctx context.Context, banASN *model.BanASN) error {

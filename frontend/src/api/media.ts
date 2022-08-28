@@ -1,6 +1,7 @@
 import { apiCall, TimeStamped } from './common';
 
 export interface BaseUploadedMedia extends TimeStamped {
+    media_id: number;
     author_id: number;
     mime_type: string;
     size: number;

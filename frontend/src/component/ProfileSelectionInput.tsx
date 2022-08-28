@@ -1,13 +1,12 @@
-import TextField from '@mui/material/TextField';
-import * as React from 'react';
-import { apiGetProfile, PlayerProfile } from '../api';
-import { logErr } from '../util/errors';
-import { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
-import { useTimer } from 'react-timer-hook';
+import TextField from '@mui/material/TextField';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useTimer } from 'react-timer-hook';
+import { apiGetProfile, PlayerProfile } from '../api';
+import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
 
 export interface ProfileSelectionInputProps {

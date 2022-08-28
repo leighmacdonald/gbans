@@ -12,6 +12,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import Link from '@mui/material/Link';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -91,16 +92,12 @@ export const Home = (): JSX.Element => {
                     </Paper>
                     <Paper elevation={1}>
                         <Button
+                            component={Link}
                             startIcon={<MarkUnreadChatAltIcon />}
                             fullWidth
                             color={'primary'}
                             variant={'contained'}
-                            onClick={() => {
-                                window.open(
-                                    'https://discord.gg/uncletopia',
-                                    '_blank'
-                                );
-                            }}
+                            href={'https://discord.gg/uncletopia'}
                         >
                             Join Discord
                         </Button>

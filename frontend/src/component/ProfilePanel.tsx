@@ -1,15 +1,15 @@
+import React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Chip from '@mui/material/Chip';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import React from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
-import { PlayerProfile } from '../api';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import { PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { FriendList } from './FriendList';
 

@@ -9,9 +9,11 @@ import { parseDateTime, renderDate } from '../util/text';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { renderMarkdown } from '../api/wiki';
+
 export interface NewsViewProps {
     itemsPerPage: number;
 }
+
 export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
     const { sendFlash } = useUserFlashCtx();
     const [articles, setArticles] = useState<NewsEntry[]>([]);

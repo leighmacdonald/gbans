@@ -47,3 +47,21 @@ export const filterPerson = (people: Person[], query: string): Person[] => {
 
 export const steamIdQueryValue = (sid: SteamID): string =>
     `${sid.getSteamID64()}-${sid.getSteam2RenderedID()}-${sid.getSteam3RenderedID()}`;
+
+export const stringHexNumber = (input: string) =>
+    (
+        '#' +
+        (
+            (('000000' as any) +
+                parseInt(
+                    // 2
+                    parseInt(input, 36) // 3
+                        .toExponential() // 4
+                        .slice(2, -5), // 5
+                    10
+                )) &
+            0xffffff
+        ) // 6
+            .toString(16)
+            .toUpperCase()
+    ).slice(-6); // "32EF01"     // 7

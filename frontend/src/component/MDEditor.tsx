@@ -21,6 +21,9 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 interface MDEditorProps {
     initialBodyMDValue: string;
+    // onSave is called when the save / accept button is hit. The onSuccess
+    // function should be called if the save succeeded to clean up the message state
+    // of the editor
     onSave: (body_md: string, onSuccess?: () => void) => void;
     cancelEnabled?: boolean;
     onCancel?: () => void;
@@ -67,7 +70,7 @@ export const MDEditor = ({
                         setOpen(false);
                         const newBody =
                             bodyMD.slice(0, cursorPos) +
-                            `![${resp.result.name}](media://${resp.result.name})` +
+                            `![${resp.result.name}](media://${resp.result.media_id})` +
                             bodyMD.slice(cursorPos);
                         setBodyMD(newBody);
                     });

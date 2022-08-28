@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -64,14 +65,6 @@ func responseOKUser(ctx *gin.Context, status int, data any, userMsg string, args
 
 func responseOK(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, apiResponse{Status: true, Result: data})
-}
-
-func resolveUrl(path string, args ...any) string {
-	base := config.General.ExternalUrl
-	if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
-	return base + fmt.Sprintf(path, args...)
 }
 
 func (web *web) onAPIPostLog(db store.Store, logFileC chan *LogFilePayload) gin.HandlerFunc {
@@ -1241,12 +1234,8 @@ func (web *web) onAPIPostReportCreate(database store.Store) gin.HandlerFunc {
 
 		embed := respOk(nil, "New user report created")
 		embed.Description = report.Description
-		embed.URL = resolveUrl("/report/%d", report.ReportId)
-		embed.Author = &discordgo.MessageEmbedAuthor{
-			URL:     resolveUrl("/profile/%d", report.AuthorId.Int64()),
-			Name:    currentUser.Name,
-			IconURL: currentUser.Avatar,
-		}
+		embed.URL = config.ExtURL("/report/%d", report.ReportId)
+		addAuthorProfile(embed, currentUser)
 		name := person.PersonaName
 		if name == "" {
 			name = report.ReportedId.String()
@@ -1591,7 +1580,9 @@ func (web *web) onAPIGetReports(database store.Store) gin.HandlerFunc {
 				Subject: subjectMap[report.ReportedId],
 			})
 		}
-
+		sort.SliceStable(userReports, func(i, j int) bool {
+			return userReports[i].Report.ReportId > userReports[j].Report.ReportId
+		})
 		responseOK(ctx, http.StatusOK, userReports)
 	}
 }
@@ -1615,6 +1606,7 @@ func (web *web) onAPIGetReport(database store.Store) gin.HandlerFunc {
 		}
 
 		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.AuthorId}, model.PModerator) {
+			responseErr(ctx, http.StatusUnauthorized, nil)
 			return
 		}
 
@@ -1675,7 +1667,6 @@ func (web *web) onAPIPostNewsCreate(database store.NewsStore) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusCreated, entry)
-
 		web.botSendMessageChan <- discordPayload{
 			channelId: "882471332254715915",
 			embed: &discordgo.MessageEmbed{
@@ -1736,16 +1727,7 @@ func (web *web) onAPISaveMedia(database store.MediaStore) gin.HandlerFunc {
 			responseErr(ctx, http.StatusUnprocessableEntity, nil)
 			return
 		}
-		media := model.Media{
-			AuthorId:  currentUserProfile(ctx).SteamID,
-			MimeType:  upload.Mime,
-			Size:      upload.Size,
-			Contents:  content,
-			Name:      upload.Name,
-			Deleted:   false,
-			CreatedOn: config.Now(),
-			UpdatedOn: config.Now(),
-		}
+		media := model.NewMedia(currentUserProfile(ctx).SteamID, upload.Name, upload.Mime, content)
 		if errSave := database.SaveMedia(ctx, &media); errSave != nil {
 			log.Errorf("Failed to save wiki media: %v", errSave)
 			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
@@ -1778,14 +1760,15 @@ func (web *web) onAPIGetWikiSlug(database store.WikiStore) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onGetMedia(database store.MediaStore) gin.HandlerFunc {
+func (web *web) onGetMediaById(database store.MediaStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		name := ctx.Param("name")
-		if name[0] == '/' {
-			name = name[1:]
+		mediaId, idErr := getIntParam(ctx, "media_id")
+		if idErr != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
 		}
 		var media model.Media
-		if errMedia := database.GetMediaByName(ctx, name, &media); errMedia != nil {
+		if errMedia := database.GetMediaById(ctx, mediaId, &media); errMedia != nil {
 			if errors.Is(store.Err(errMedia), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
 			} else {
@@ -1891,6 +1874,70 @@ func (web *web) onAPIGetPersonConnections(database store.Store) gin.HandlerFunc 
 	}
 }
 
+func (web *web) onAPIQueryMessages(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var query store.ChatHistoryQueryFilter
+		if errBind := ctx.BindJSON(&query); errBind != nil {
+			log.Errorf("Invalid query: %v", errBind)
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		if query.Limit <= 0 || query.Limit > 1000 {
+			query.Limit = 1000
+		}
+		// TODO paging
+		chat, errChat := database.QueryChatHistory(ctx, query)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.WithFields(log.Fields{"sid": query.SteamId}).
+				Errorf("Failed to query chat history: %v", errChat)
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		if chat == nil {
+			chat = model.PersonMessages{}
+		}
+		responseOK(ctx, http.StatusOK, chat)
+	}
+}
+
+func (web *web) onAPIGetMessageContext(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		messageId, errId := getInt64Param(ctx, "person_message_id")
+		if errId != nil {
+			log.Errorf("Invalid steam_id value")
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var message model.PersonMessage
+		if errMsg := database.GetPersonMessageById(ctx, messageId, &message); errMsg != nil {
+			if errors.Is(errMsg, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		after := message.CreatedOn.Add(-time.Hour)
+		before := message.CreatedOn.Add(time.Hour)
+		// TODO paging
+		chat, errChat := database.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
+			ServerId:    message.ServerId,
+			SentAfter:   &after,
+			SentBefore:  &before,
+			QueryFilter: store.QueryFilter{}})
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.WithFields(log.Fields{"person_message_id": messageId}).
+				Errorf("Failed to query chat history: %v", errChat)
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		if chat == nil {
+			chat = model.PersonMessages{}
+		}
+		responseOK(ctx, http.StatusOK, chat)
+	}
+}
+
 func (web *web) onAPIGetPersonMessages(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamId, errId := getSID64Param(ctx, "steam_id")
@@ -1900,7 +1947,11 @@ func (web *web) onAPIGetPersonMessages(database store.Store) gin.HandlerFunc {
 			return
 		}
 		// TODO paging
-		chat, errChat := database.GetChatHistory(ctx, steamId, 1000)
+		chat, errChat := database.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
+			SteamId: steamId.String(),
+			QueryFilter: store.QueryFilter{
+				Limit: 1000,
+			}})
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.WithFields(log.Fields{"sid": steamId}).Errorf("Failed to query chat history: %v", errChat)
 			responseErr(ctx, http.StatusInternalServerError, nil)

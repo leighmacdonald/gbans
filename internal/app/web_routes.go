@@ -67,7 +67,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id"}
+		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/login"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -94,7 +94,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
-	engine.GET("/media/:name", web.onGetMedia(database))
+	engine.GET("/media/:media_id", web.onGetMediaById(database))
 
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 
@@ -147,6 +147,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState(database))
 	modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections(database))
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
+	modRoute.GET("/api/message/:person_message_id/context", web.onAPIGetMessageContext(database))
+	modRoute.POST("/api/messages", web.onAPIQueryMessages(database))
 
 	modRoute.POST("/api/bans/steam", web.onAPIGetBansSteam(database))
 	modRoute.POST("/api/bans/steam/create", web.onAPIPostBanSteamCreate(database))

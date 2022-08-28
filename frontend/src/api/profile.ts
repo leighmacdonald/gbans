@@ -1,5 +1,6 @@
-import { apiCall, PermissionLevel, TimeStamped } from './common';
+import { apiCall, PermissionLevel, QueryFilter, TimeStamped } from './common';
 import SteamID from 'steamid';
+import { parseDateTime } from '../util/text';
 
 export enum profileState {
     Incomplete = 0,
@@ -20,18 +21,17 @@ export interface UserProfile extends TimeStamped {
     avatar: string;
     avatarfull: string;
     ban_id: number;
+    muted: boolean;
 }
 
-export interface Person extends TimeStamped {
+export interface Person extends UserProfile {
     // PlayerSummaries shape
     steamid: SteamID;
     communityvisibilitystate: communityVisibilityState;
     profilestate: profileState;
     personaname: string;
     profileurl: string;
-    avatar: string;
     avatarmedium: string;
-    avatarfull: string;
     avatarhash: string;
     personastate: number;
     realname: string;
@@ -49,11 +49,6 @@ export interface Person extends TimeStamped {
     economy_ban: string;
     days_since_last_ban: number;
     updated_on_steam: Date;
-
-    // Custom attributes
-    steam_id: SteamID;
-    permission_level: PermissionLevel;
-    discord_id: string;
     ip_addr: string;
 }
 
@@ -64,7 +59,7 @@ export interface PlayerProfile {
 
 const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
 
-export const applySteamId = (key: string, value: any) => {
+export const applySteamId = (key: string, value: unknown) => {
     if (validSteamIdKeys.includes(key)) {
         try {
             return new SteamID(`${value}`);
@@ -111,7 +106,7 @@ export interface PersonIPRecord {
 
 export interface PersonConnection {
     connection_id: bigint;
-    ipAddr: string;
+    ip_addr: string;
     steam_id: SteamID;
     persona_name: string;
     created_on: Date;
@@ -119,7 +114,7 @@ export interface PersonConnection {
 }
 
 export interface PersonMessage {
-    person_message_id: bigint;
+    person_message_id: number;
     steam_id: SteamID;
     persona_name: string;
     server_name: string;
@@ -132,5 +127,50 @@ export interface PersonMessage {
 export const apiGetPersonConnections = async (steam_id: SteamID) =>
     await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
 
-export const apiGetPersonMessages = async (steam_id: SteamID) =>
-    await apiCall<PersonMessage[]>(`/api/messages/${steam_id}`, 'GET');
+export const apiGetPersonMessages = async (steam_id: SteamID) => {
+    const resp = await apiCall<PersonMessage[]>(
+        `/api/messages/${steam_id}`,
+        'GET'
+    );
+    resp.result = resp.result?.map((msg) => {
+        return {
+            ...msg,
+            created_on: parseDateTime(msg.created_on as unknown as string)
+        };
+    });
+    return resp;
+};
+
+export const apiGetMessageContext = async (message_id: number) => {
+    const resp = await apiCall<PersonMessage[]>(
+        `/api/message/${message_id}/context`,
+        'GET'
+    );
+    resp.result = resp.result?.map((msg) => {
+        return {
+            ...msg,
+            created_on: parseDateTime(msg.created_on as unknown as string)
+        };
+    });
+    return resp;
+};
+
+export interface MessageQuery extends QueryFilter<PersonMessage> {
+    persona_name?: string;
+    steam_id?: string;
+    query?: string;
+    server_id?: number;
+    sent_after?: Date;
+    sent_before?: Date;
+}
+
+export const apiGetMessages = async (opts: MessageQuery) => {
+    const resp = await apiCall<PersonMessage[]>(`/api/messages`, 'POST', opts);
+    resp.result = resp.result?.map((msg) => {
+        return {
+            ...msg,
+            created_on: parseDateTime(msg.created_on as unknown as string)
+        };
+    });
+    return resp;
+};

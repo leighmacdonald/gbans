@@ -1,20 +1,22 @@
-import Stack from '@mui/material/Stack';
 import React from 'react';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
-import { Flag } from './Flag';
-import LinearProgress from '@mui/material/LinearProgress';
+import Link from '@mui/material/Link';
+import Tooltip from '@mui/material/Tooltip';
+import LinearProgress, {
+    LinearProgressProps
+} from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
+import { Flag } from './Flag';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { LinearProgressProps } from '@mui/material/LinearProgress';
 import { LoadingSpinner } from './LoadingSpinner';
-import { DataTable } from './DataTable';
+import { DataTable, RowsPerPage } from './DataTable';
 import { Heading } from './Heading';
 import { cleanMapName } from '../api';
-import Tooltip from '@mui/material/Tooltip';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -47,7 +49,7 @@ export const ServerList = () => {
             <Heading>Servers</Heading>
             <DataTable
                 defaultSortOrder={'asc'}
-                rowsPerPage={100}
+                rowsPerPage={RowsPerPage.Hundred}
                 columns={[
                     {
                         label: 'CC',
@@ -115,7 +117,7 @@ export const ServerList = () => {
                                         (obj.distance ?? 1) * 52.49
                                     )} khu`}
                                 >
-                                    <Typography variant={'body2'}>
+                                    <Typography variant={'caption'}>
                                         {`${obj.distance}km`}
                                     </Typography>
                                 </Tooltip>
@@ -163,14 +165,11 @@ export const ServerList = () => {
                         virtual: true,
                         virtualKey: 'connect',
                         tooltip: 'Connect to a server',
-                        renderer: (obj) => {
+                        renderer: (serverState) => {
                             return (
                                 <Button
-                                    onClick={() => {
-                                        window.open(
-                                            `steam://connect/${obj.host}:${obj.port}`
-                                        );
-                                    }}
+                                    component={Link}
+                                    href={`steam://connect/${serverState.host}:${serverState.port}`}
                                     variant={'contained'}
                                     sx={{ minWidth: 100 }}
                                 >

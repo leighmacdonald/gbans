@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
 import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
-import { useMapStateCtx } from '../contexts/MapStateCtx';
 import 'leaflet/dist/leaflet.css';
 import * as markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import * as markerIcon from 'leaflet/dist/images/marker-icon.png';
 import * as markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import L from 'leaflet';
+import { useMapStateCtx } from '../contexts/MapStateCtx';
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

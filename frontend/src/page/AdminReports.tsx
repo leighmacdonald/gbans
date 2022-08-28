@@ -25,7 +25,7 @@ import { PersonCell } from '../component/PersonCell';
 
 export const AdminReports = (): JSX.Element => {
     const [reports, setReports] = useState<ReportWithAuthor[]>([]);
-    const [filterStatus, setFilterStatus] = useState(ReportStatus.Any);
+    const [filterStatus, setFilterStatus] = useState(ReportStatus.Opened);
     const navigate = useNavigate();
 
     useEffect(() => {

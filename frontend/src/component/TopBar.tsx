@@ -1,8 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { handleOnLogin, PermissionLevel } from '../api';
-import steamLogo from '../icons/steam_login_sm.png';
-import { useNavigate } from 'react-router-dom';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -19,6 +15,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import StorageIcon from '@mui/icons-material/Storage';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
+import ChatIcon from '@mui/icons-material/Chat';
 import ArticleIcon from '@mui/icons-material/Article';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -34,9 +31,13 @@ import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import { Flashes } from './Flashes';
 import useTheme from '@mui/material/styles/useTheme';
+import { useNavigate } from 'react-router-dom';
+import { Flashes } from './Flashes';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { PermissionLevel } from '../api';
+import steamLogo from '../icons/steam_login_sm.png';
 
 interface menuRoute {
     to: string;
@@ -47,6 +48,7 @@ interface menuRoute {
 export const TopBar = () => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
+    const user = currentUser;
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
@@ -105,7 +107,7 @@ export const TopBar = () => {
             }
             // { to: '/stats', text: 'Stats', icon: <BarChartIcon sx={{ color: '#fff' }} /> },
         ];
-        if (currentUser.ban_id <= 0) {
+        if (user.ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
@@ -117,34 +119,34 @@ export const TopBar = () => {
             text: 'Wiki',
             icon: <ArticleIcon sx={topColourOpts} />
         });
-        if (currentUser.ban_id <= 0) {
+        if (user.ban_id <= 0) {
             items.push({
                 to: '/report',
                 text: 'Report',
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (currentUser.permission_level >= PermissionLevel.Admin) {
+        if (user.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/logs',
                 text: 'Logs',
                 icon: <QueryStatsIcon sx={topColourOpts} />
             });
         }
-        if (currentUser.ban_id > 0) {
+        if (user.ban_id > 0) {
             items.push({
-                to: `/ban/${currentUser.ban_id}`,
+                to: `/ban/${user.ban_id}`,
                 text: 'Appeal',
                 icon: <SupportIcon sx={topColourOpts} />
             });
         }
         return items;
-    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
+    }, [user.ban_id, user.permission_level, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
             {
-                to: `/profile/${currentUser?.steam_id}`,
+                to: `/profile/${user?.steam_id}`,
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
@@ -155,12 +157,12 @@ export const TopBar = () => {
                 icon: <ExitToAppIcon sx={colourOpts} />
             }
         ],
-        [colourOpts, currentUser?.steam_id]
+        [colourOpts, user?.steam_id]
     );
 
     const adminItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [];
-        if (currentUser.permission_level >= PermissionLevel.Moderator) {
+        if (user.permission_level >= PermissionLevel.Moderator) {
             items.push({
                 to: '/admin/ban',
                 text: 'Ban Player/Net',
@@ -170,6 +172,11 @@ export const TopBar = () => {
                 to: '/admin/reports',
                 text: 'Reports',
                 icon: <ReportIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/chat',
+                text: 'Chat History',
+                icon: <ChatIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/filters',
@@ -182,7 +189,7 @@ export const TopBar = () => {
                 icon: <NewspaperIcon sx={colourOpts} />
             });
         }
-        if (currentUser.permission_level >= PermissionLevel.Admin) {
+        if (user.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/admin/people',
                 text: 'People',
@@ -205,7 +212,7 @@ export const TopBar = () => {
             });
         }
         return items;
-    }, [colourOpts, currentUser.permission_level]);
+    }, [colourOpts, user.permission_level]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -325,9 +332,13 @@ export const TopBar = () => {
                                 </IconButton>
                             </Tooltip>
                             {!currentUser ||
-                                (!currentUser.steam_id.isValidIndividual() && (
+                                (!user.steam_id.isValidIndividual() && (
                                     <Tooltip title="Steam Login">
-                                        <Button onClick={handleOnLogin}>
+                                        <Button
+                                            onClick={() => {
+                                                navigate('/login');
+                                            }}
+                                        >
                                             <img
                                                 src={steamLogo}
                                                 alt={'Steam Login'}
@@ -335,8 +346,8 @@ export const TopBar = () => {
                                         </Button>
                                     </Tooltip>
                                 ))}
-                            {currentUser &&
-                                currentUser?.steam_id.isValidIndividual() &&
+                            {user &&
+                                user?.steam_id.isValidIndividual() &&
                                 adminItems.length > 0 && (
                                     <>
                                         <Tooltip title="Mod/Admin">
@@ -382,46 +393,45 @@ export const TopBar = () => {
                                     </>
                                 )}
 
-                            {currentUser &&
-                                currentUser?.steam_id.isValidIndividual() && (
-                                    <>
-                                        <Tooltip title="User Settings">
-                                            <IconButton
-                                                onClick={handleOpenUserMenu}
-                                                sx={{ p: 0 }}
-                                            >
-                                                <Avatar
-                                                    alt={currentUser.name}
-                                                    src={currentUser.avatar}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Menu
-                                            sx={{ mt: '45px' }}
-                                            id="menu-appbar"
-                                            anchorEl={anchorElUser}
-                                            anchorOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
-                                            }}
-                                            keepMounted
-                                            transformOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
-                                            }}
-                                            open={Boolean(anchorElUser)}
-                                            onClose={handleCloseUserMenu}
+                            {user && user?.steam_id.isValidIndividual() && (
+                                <>
+                                    <Tooltip title="User Settings">
+                                        <IconButton
+                                            onClick={handleOpenUserMenu}
+                                            sx={{ p: 0 }}
                                         >
-                                            {userItems.map((value) => {
-                                                return renderLinkedMenuItem(
-                                                    value.text,
-                                                    value.to,
-                                                    value.icon
-                                                );
-                                            })}
-                                        </Menu>
-                                    </>
-                                )}
+                                            <Avatar
+                                                alt={user.name}
+                                                src={user.avatar}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Menu
+                                        sx={{ mt: '45px' }}
+                                        id="menu-appbar"
+                                        anchorEl={anchorElUser}
+                                        anchorOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        keepMounted
+                                        transformOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        open={Boolean(anchorElUser)}
+                                        onClose={handleCloseUserMenu}
+                                    >
+                                        {userItems.map((value) => {
+                                            return renderLinkedMenuItem(
+                                                value.text,
+                                                value.to,
+                                                value.icon
+                                            );
+                                        })}
+                                    </Menu>
+                                </>
+                            )}
                         </>
                     </Box>
                 </Toolbar>

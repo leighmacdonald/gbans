@@ -1,16 +1,16 @@
-import React, { ChangeEvent, useCallback, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import Stack from '@mui/material/Stack';
 import {
     apiCreateBanSteam,
-    IAPIBanRecord,
     BanPayloadSteam,
     BanReason,
     BanReasons,
     banReasonsList,
     BanType,
     Duration,
-    Durations
+    Durations,
+    IAPIBanRecord
 } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
@@ -35,7 +35,8 @@ export const BanSteamModal = ({
     setOpen,
     reportId,
     onSuccess,
-    steamId
+    steamId,
+    ban
 }: BanModalProps<IAPIBanRecord>) => {
     const [targetSteamId, setTargetSteamId] = useState<SteamID>(
         steamId ?? new SteamID('')
@@ -49,6 +50,15 @@ export const BanSteamModal = ({
     const [reasonText, setReasonText] = useState<string>('');
 
     const { sendFlash } = useUserFlashCtx();
+
+    useEffect(() => {
+        // How to?
+        // setDuration(ban?.valid_until ?? Duration.dur2w);
+        setActionType(ban?.ban_type ?? BanType.Banned);
+        setBanReason(ban?.reason ?? BanReason.Cheating);
+        setNoteText(ban?.note ?? '');
+        setReasonText(ban?.reason_text ?? '');
+    }, [ban]);
 
     const handleSubmit = useCallback(() => {
         if (!targetSteamId) {

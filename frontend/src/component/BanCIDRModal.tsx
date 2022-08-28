@@ -76,7 +76,6 @@ export const BanCIDRModal = ({
             note: noteText,
             ban_type: BanType.Banned
         };
-        console.log(opts);
         apiCreateBanCIDR(opts)
             .then((response) => {
                 if (!response.status || !response.result) {

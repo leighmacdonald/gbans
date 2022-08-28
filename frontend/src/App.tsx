@@ -7,7 +7,6 @@ import { Home } from './page/Home';
 import { Settings } from './page/Settings';
 import { ReportCreatePage } from './page/ReportCreatePage';
 import { AdminReports } from './page/AdminReports';
-import { AdminFilters } from './page/AdminFilters';
 import { AdminImport } from './page/AdminImport';
 import { AdminPeople } from './page/AdminPeople';
 import { Servers } from './page/Servers';
@@ -18,7 +17,12 @@ import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanPage } from './page/BanPage';
-import { apiGetCurrentProfile, PermissionLevel, UserProfile } from './api';
+import {
+    apiGetCurrentProfile,
+    PermissionLevel,
+    readToken,
+    UserProfile
+} from './api';
 import { AdminBan } from './page/AdminBan';
 import { TopBar } from './component/TopBar';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
@@ -39,18 +43,39 @@ import { MatchListPage } from './page/MatchListPage';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useStopwatch } from 'react-timer-hook';
+import { AdminChat } from './page/AdminChat';
+import { Login } from './page/Login';
+import { Nullable } from './util/types';
+import { ErrorBoundary } from './component/ErrorBoundary';
 
-export const App = (): JSX.Element => {
+export interface AppProps {
+    initialToken?: string;
+    initialTheme: PaletteMode;
+}
+
+export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
+    const [token, setToken] = useState<Nullable<string>>(initialToken);
 
-    let currentTheme = localStorage.getItem('theme') as PaletteMode;
+    const getToken = () => {
+        return readToken();
+    };
+
+    const saveToken = (userToken: string) => {
+        localStorage.setItem('token', userToken);
+        setToken(userToken);
+    };
+
+    const saveUser = (profile: UserProfile) => {
+        setCurrentUser(profile);
+    };
+
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    if (!currentTheme) {
-        currentTheme = prefersDarkMode ? 'dark' : 'light';
-    }
-    const [mode, setMode] = useState<'light' | 'dark'>(currentTheme);
+    const [mode, setMode] = useState<'light' | 'dark'>(
+        initialTheme ? initialTheme : prefersDarkMode ? 'dark' : 'light'
+    );
 
     const updateMode = (prevMode: PaletteMode): PaletteMode => {
         const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);
@@ -68,8 +93,7 @@ export const App = (): JSX.Element => {
     );
     //NonNullable<UserProfile>
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token != null && token != '') {
+        if (token) {
             apiGetCurrentProfile()
                 .then((response) => {
                     if (!response.status || !response.result) {
@@ -78,8 +102,10 @@ export const App = (): JSX.Element => {
                     setCurrentUser(response.result);
                 })
                 .catch(logErr);
+        } else {
+            setCurrentUser(GuestProfile);
         }
-    }, [setCurrentUser]);
+    }, [token, setCurrentUser]);
 
     const theme = useMemo(() => createThemeByMode(mode), [mode]);
 
@@ -90,6 +116,13 @@ export const App = (): JSX.Element => {
             heading = 'header',
             closable = true
         ) => {
+            if (
+                flashes.length &&
+                flashes[flashes.length - 1]?.message == message
+            ) {
+                // Skip duplicates
+                return;
+            }
             setFlashes([
                 ...flashes,
                 {
@@ -123,7 +156,15 @@ export const App = (): JSX.Element => {
     }, [minutes]);
 
     return (
-        <CurrentUserCtx.Provider value={{ currentUser, setCurrentUser }}>
+        <CurrentUserCtx.Provider
+            value={{
+                currentUser,
+                token,
+                getToken,
+                setCurrentUser: saveUser,
+                setToken: saveToken
+            }}
+        >
             <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Router>
@@ -134,128 +175,310 @@ export const App = (): JSX.Element => {
                                         <CssBaseline />
                                         <Container maxWidth={'lg'}>
                                             <TopBar />
-
-                                            <Routes>
-                                                <Route
-                                                    path={'/'}
-                                                    element={<Home />}
-                                                />
-                                                <Route
-                                                    path={'/servers'}
-                                                    element={<Servers />}
-                                                />
-                                                <Route
-                                                    path={'/wiki'}
-                                                    element={<WikiPage />}
-                                                />
-                                                <Route
-                                                    path={'/wiki/:slug'}
-                                                    element={<WikiPage />}
-                                                />
-                                                <Route
-                                                    path={'/ban/:ban_id'}
-                                                    element={<BanPage />}
-                                                />
-                                                <Route
-                                                    path={'/report/:report_id'}
-                                                    element={<ReportViewPage />}
-                                                />
-                                                <Route
-                                                    path={'/log/:match_id'}
-                                                    element={<MatchPage />}
-                                                />
-                                                <Route
-                                                    path={'/logs'}
-                                                    element={<MatchListPage />}
-                                                />
-                                                <Route
-                                                    path={'/report'}
-                                                    element={
-                                                        <PrivateRoute
-                                                            permission={
-                                                                PermissionLevel.User
-                                                            }
-                                                        >
-                                                            <ReportCreatePage />
-                                                        </PrivateRoute>
-                                                    }
-                                                />
-                                                <Route
-                                                    path={'/settings'}
-                                                    element={<Settings />}
-                                                />
-                                                <Route
-                                                    path={'/profile/:steam_id'}
-                                                    element={<Profile />}
-                                                />
-                                                <Route
-                                                    path={'/report'}
-                                                    element={
-                                                        <PrivateRoute
-                                                            permission={
-                                                                PermissionLevel.User
-                                                            }
-                                                        >
-                                                            <Route
-                                                                path={
-                                                                    '/ban/:ban_id'
-                                                                }
-                                                                element={
-                                                                    <BanPage />
-                                                                }
-                                                            />
-                                                        </PrivateRoute>
-                                                    }
-                                                />
-                                                <Route
-                                                    path={'/admin/ban'}
-                                                    element={<AdminBan />}
-                                                />
-                                                <Route
-                                                    path={'/admin/filters'}
-                                                    element={<AdminFilters />}
-                                                />
-                                                <Route
-                                                    path={'/admin/reports'}
-                                                    element={<AdminReports />}
-                                                />
-                                                <Route
-                                                    path={'/admin/import'}
-                                                    element={
-                                                        <PrivateRoute
-                                                            permission={
-                                                                PermissionLevel.Admin
-                                                            }
-                                                        >
-                                                            <AdminImport />
-                                                        </PrivateRoute>
-                                                    }
-                                                />
-                                                <Route
-                                                    path={'/admin/news'}
-                                                    element={<AdminNews />}
-                                                />
-                                                <Route
-                                                    path={'/admin/people'}
-                                                    element={<AdminPeople />}
-                                                />
-                                                <Route
-                                                    path={'/admin/servers'}
-                                                    element={<AdminServers />}
-                                                />
-                                                <Route
-                                                    path={'/login/success'}
-                                                    element={<LoginSuccess />}
-                                                />
-                                                <Route
-                                                    path={'/logout'}
-                                                    element={<Logout />}
-                                                />
-                                                <Route
-                                                    path="/404"
-                                                    element={<PageNotFound />}
-                                                />
-                                            </Routes>
+                                            <ErrorBoundary>
+                                                <Routes>
+                                                    <Route
+                                                        path={'/'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <Home />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/servers'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <Servers />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/wiki'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <WikiPage />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/wiki/:slug'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <WikiPage />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/ban/:ban_id'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <BanPage />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={
+                                                            '/report/:report_id'
+                                                        }
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <ReportViewPage />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/log/:match_id'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <MatchPage />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/logs'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                {' '}
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <MatchListPage />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/report'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.User
+                                                                    }
+                                                                >
+                                                                    <ReportCreatePage />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/settings'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.User
+                                                                    }
+                                                                >
+                                                                    <Settings />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={
+                                                            '/profile/:steam_id'
+                                                        }
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <Profile />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/report'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                {' '}
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.User
+                                                                    }
+                                                                >
+                                                                    <Route
+                                                                        path={
+                                                                            '/ban/:ban_id'
+                                                                        }
+                                                                        element={
+                                                                            <BanPage />
+                                                                        }
+                                                                    />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/ban'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                {' '}
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Moderator
+                                                                    }
+                                                                >
+                                                                    <AdminBan />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/filters'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Moderator
+                                                                    }
+                                                                >
+                                                                    <AdminNews />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/reports'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                {' '}
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Moderator
+                                                                    }
+                                                                >
+                                                                    <AdminReports />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/import'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <AdminImport />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/news'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Editor
+                                                                    }
+                                                                >
+                                                                    <AdminNews />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/chat'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                {' '}
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Moderator
+                                                                    }
+                                                                >
+                                                                    <AdminChat />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/people'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <AdminPeople />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/people'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <AdminPeople />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/servers'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <AdminServers />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/login'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <Login />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/login/success'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <LoginSuccess />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/logout'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <Logout />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path="/404"
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PageNotFound />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                </Routes>
+                                            </ErrorBoundary>
                                             <Footer />
                                         </Container>
                                     </React.StrictMode>

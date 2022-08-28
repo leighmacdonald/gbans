@@ -1,8 +1,7 @@
+import React, { FC } from 'react';
 import Typography from '@mui/material/Typography';
-import useTheme from '@mui/material/styles/useTheme';
-import { FC } from 'react';
-import React from 'react';
 import Stack from '@mui/material/Stack';
+import useTheme from '@mui/material/styles/useTheme';
 
 interface SplitHeadingProps {
     left: string;

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Grid from '@mui/material/Grid';
 import { apiGetProfile, PermissionLevel, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
@@ -27,6 +27,10 @@ export const Profile = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const { steam_id } = useParams();
     const { sendFlash } = useUserFlashCtx();
+
+    const matchOpts = useMemo(() => {
+        return { steam_id: profile?.player.steam_id, limit: 25 };
+    }, [profile?.player.steam_id]);
 
     useEffect(() => {
         if (!steam_id) {
@@ -119,20 +123,27 @@ export const Profile = (): JSX.Element => {
 
                                 <Paper elevation={1}>
                                     <Heading>External Links</Heading>
-                                    <Masonry columns={3} spacing={1}>
+                                    <Masonry
+                                        columns={3}
+                                        spacing={1}
+                                        sx={{ padding: 0, margin: 0 }}
+                                    >
                                         {createExternalLinks(
                                             profile.player.steam_id
                                         ).map((l) => {
                                             return (
-                                                <Link
-                                                    sx={{ width: '100%' }}
-                                                    component={Button}
+                                                <Button
+                                                    sx={{
+                                                        padding: 1
+                                                    }}
+                                                    color={'secondary'}
+                                                    variant={'contained'}
+                                                    component={Link}
                                                     href={l.url}
                                                     key={l.url}
-                                                    underline="none"
                                                 >
                                                     {l.title}
-                                                </Link>
+                                                </Button>
                                             );
                                         })}
                                     </Masonry>
@@ -141,13 +152,7 @@ export const Profile = (): JSX.Element => {
                                     PermissionLevel.Admin && (
                                     <Paper elevation={1}>
                                         <Heading>Match History</Heading>
-                                        <MatchHistory
-                                            opts={{
-                                                steam_id:
-                                                    profile.player.steam_id,
-                                                limit: 25
-                                            }}
-                                        />
+                                        <MatchHistory opts={matchOpts} />
                                     </Paper>
                                 )}
                             </Stack>

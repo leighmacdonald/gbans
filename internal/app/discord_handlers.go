@@ -1081,7 +1081,7 @@ func (bot *discord) onLog(ctx context.Context, _ *discordgo.Session, interaction
 	}
 	embed := respOk(response, fmt.Sprintf("%s - %s", server.ServerNameShort, match.MapName))
 	embed.Color = int(green)
-	embed.URL = fmt.Sprintf("https://gbans.uncletopia.com/match/%d", match.MatchID)
+	embed.URL = config.ExtURL("/match/%d", match.MatchID)
 
 	redScore := 0
 	bluScore := 0

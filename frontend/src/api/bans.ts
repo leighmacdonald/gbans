@@ -7,6 +7,7 @@ import {
 } from './profile';
 import { UserMessage } from './report';
 import SteamID from 'steamid';
+import { parseDateTime } from '../util/text';
 
 export enum Origin {
     System = 0,
@@ -122,7 +123,7 @@ export interface BannedPerson {
 }
 
 export interface BanBase extends TimeStamped {
-    valid_until: Date | string;
+    valid_until: Date;
     reason: BanReason;
     reason_text: string;
     source_id: SteamID;
@@ -214,44 +215,65 @@ export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
         'POST',
         opts ?? {}
     );
-    return (resp.result ?? []).map((b): IAPIBanRecordProfile => {
-        return {
-            source_id: b.ban.source_id,
-            avatar: b.person.avatar,
-            avatarfull: b.person.avatarfull,
-            avatarmedium: b.person.avatarmedium,
-            ban_id: b.ban.ban_id,
-            ban_type: b.ban.ban_type,
-            communityvisibilitystate: b.person.communityvisibilitystate,
-            created_on: b.ban.created_on,
-            ip_addr: b.person.ip_addr,
-            loccountrycode: b.person.loccountrycode,
-            note: b.ban.note,
-            personaname: b.person.personaname,
-            personastate: b.person.personastate,
-            personastateflags: b.person.personastateflags,
-            profilestate: b.person.profilestate,
-            profileurl: b.person.profileurl,
-            realname: b.person.realname,
-            reason: b.ban.reason,
-            reason_text: b.ban.reason_text,
-            origin: b.ban.origin,
-            target_id: b.ban.target_id,
-            timecreated: b.person.timecreated,
-            updated_on: b.ban.updated_on,
-            valid_until: b.ban.valid_until,
-            deleted: b.ban.deleted,
-            report_id: b.ban.report_id,
-            unban_reason_text: b.ban.unban_reason_text
-        };
-    });
+    return (resp.result ?? [])
+        .map((b): IAPIBanRecordProfile => {
+            return {
+                source_id: b.ban.source_id,
+                avatar: b.person.avatar,
+                avatarfull: b.person.avatarfull,
+                avatarmedium: b.person.avatarmedium,
+                ban_id: b.ban.ban_id,
+                ban_type: b.ban.ban_type,
+                communityvisibilitystate: b.person.communityvisibilitystate,
+                ip_addr: b.person.ip_addr,
+                loccountrycode: b.person.loccountrycode,
+                note: b.ban.note,
+                personaname: b.person.personaname,
+                personastate: b.person.personastate,
+                personastateflags: b.person.personastateflags,
+                profilestate: b.person.profilestate,
+                profileurl: b.person.profileurl,
+                realname: b.person.realname,
+                reason: b.ban.reason,
+                reason_text: b.ban.reason_text,
+                origin: b.ban.origin,
+                target_id: b.ban.target_id,
+                timecreated: b.person.timecreated,
+                deleted: b.ban.deleted,
+                report_id: b.ban.report_id,
+                unban_reason_text: b.ban.unban_reason_text,
+                created_on: b.ban.created_on,
+                updated_on: b.ban.updated_on,
+                valid_until: parseDateTime(
+                    b.ban.valid_until as unknown as string
+                )
+            };
+        })
+        .map(applyDateTime);
 };
 
-export const apiGetBanSteam = async (ban_id: number, deleted = false) =>
-    await apiCall<BannedPerson>(
+export function applyDateTime<T>(row: T & TimeStamped) {
+    return {
+        ...row,
+        created_on: parseDateTime(row.created_on as unknown as string),
+        updated_on: parseDateTime(row.updated_on as unknown as string)
+    };
+}
+
+export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
+    const resp = await apiCall<BannedPerson>(
         `/api/bans/steam/${ban_id}?deleted=${deleted}`,
         'GET'
     );
+    if (resp.result?.ban && resp.result?.person) {
+        resp.result.ban.valid_until = parseDateTime(
+            resp.result.ban.valid_until as unknown as string
+        );
+        resp.result.ban = applyDateTime(resp.result?.ban);
+        resp.result.person = applyDateTime(resp.result?.person);
+    }
+    return resp;
+};
 
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
     await apiCall<IAPIBanRecord, BanPayloadSteam>(
@@ -291,8 +313,21 @@ export interface AuthorMessage {
     author: UserProfile;
 }
 
-export const apiGetBanMessages = async (ban_id: number) =>
-    await apiCall<AuthorMessage[]>(`/api/bans/${ban_id}/messages`, 'GET');
+export const apiGetBanMessages = async (ban_id: number) => {
+    const resp = await apiCall<AuthorMessage[]>(
+        `/api/bans/${ban_id}/messages`,
+        'GET'
+    );
+    if (resp.result) {
+        resp.result = resp.result.map((r) => {
+            return {
+                message: applyDateTime(r.message),
+                author: applyDateTime(r.author)
+            };
+        });
+    }
+    return resp;
+};
 
 export interface CreateBanMessage {
     message: string;

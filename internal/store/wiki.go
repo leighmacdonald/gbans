@@ -108,3 +108,22 @@ func (database *pgStore) GetMediaByName(ctx context.Context, name string, media 
 		&media.UpdatedOn,
 	))
 }
+
+func (database *pgStore) GetMediaById(ctx context.Context, mediaId int, media *model.Media) error {
+	const query = `
+		SELECT 
+		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
+		FROM media
+		WHERE deleted = false AND media_id = $1`
+	return Err(database.conn.QueryRow(ctx, query, mediaId).Scan(
+		&media.MediaId,
+		&media.AuthorId,
+		&media.Name,
+		&media.Size,
+		&media.MimeType,
+		&media.Contents,
+		&media.Deleted,
+		&media.CreatedOn,
+		&media.UpdatedOn,
+	))
+}

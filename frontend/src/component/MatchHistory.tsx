@@ -1,6 +1,6 @@
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { DataTable, UserTableProps } from './DataTable';
+import { DataTable, RowsPerPage, UserTableProps } from './DataTable';
 import { LoadingSpinner } from './LoadingSpinner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
@@ -29,7 +29,7 @@ export const MatchHistory = ({ opts }: MatchHistoryProps) => {
 
     const matchTableDef: UserTableProps<MatchSummary> = useMemo(() => {
         return {
-            rowsPerPage: 25,
+            rowsPerPage: RowsPerPage.TwentyFive,
             columnOrder: [
                 'match_id',
                 'server_id',

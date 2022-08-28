@@ -1,6 +1,7 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
 import { applySteamId } from './profile';
+import { readToken } from './auth';
 
 export enum PermissionLevel {
     Unknown = -1,
@@ -44,7 +45,7 @@ export const apiCall = async <
         credentials: 'include',
         method: method.toUpperCase()
     };
-    const token = localStorage.getItem('token');
+    const token = readToken();
     if (token != '') {
         headers['Authorization'] = `Bearer ${token}`;
     }
@@ -80,37 +81,6 @@ export interface QueryFilterProps<T> {
     deleted?: boolean;
 }
 
-export const handleOnLogin = (): void => {
-    let returnUrl = window.location.hostname;
-    if (window.location.port !== '') {
-        returnUrl = `${returnUrl}:${window.location.port}`;
-    }
-    const r = `${window.location.protocol}//${returnUrl}/auth/callback?return_url=${window.location.pathname}`;
-    console.log(r);
-    const oid =
-        'https://steamcommunity.com/openid/login' +
-        '?openid.ns=' +
-        encodeURIComponent('http://specs.openid.net/auth/2.0') +
-        '&openid.mode=checkid_setup' +
-        '&openid.return_to=' +
-        encodeURIComponent(r) +
-        `&openid.realm=` +
-        encodeURIComponent(
-            `${window.location.protocol}//${window.location.hostname}`
-        ) +
-        '&openid.ns.sreg=' +
-        encodeURIComponent('http://openid.net/extensions/sreg/1.1') +
-        '&openid.claimed_id=' +
-        encodeURIComponent(
-            'http://specs.openid.net/auth/2.0/identifier_select'
-        ) +
-        '&openid.identity=' +
-        encodeURIComponent(
-            'http://specs.openid.net/auth/2.0/identifier_select'
-        );
-    window.open(oid, '_self');
-};
-
 // Helper
 export const StringIsNumber = (value: unknown) => !isNaN(Number(value));
 
@@ -121,8 +91,8 @@ export interface Pos {
 }
 
 export interface TimeStamped {
-    created_on: Date | string;
-    updated_on: Date | string;
+    created_on: Date;
+    updated_on: Date;
 }
 
 export const renderDate = (d: Date | string): string => {

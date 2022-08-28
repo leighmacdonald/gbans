@@ -31,11 +31,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 import { UnbanSteamModal } from '../component/UnbanSteamModal';
-import {
-    parseDateTime,
-    renderDateTime,
-    renderTimeDistance
-} from '../util/text';
+import { renderDateTime, renderTimeDistance } from '../util/text';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 
@@ -87,7 +83,7 @@ export const BanPage = (): JSX.Element => {
     }, [id]);
 
     const onSave = useCallback(
-        (message: string) => {
+        (message: string, onSuccess?: () => void) => {
             if (!ban) {
                 return;
             }
@@ -101,6 +97,7 @@ export const BanPage = (): JSX.Element => {
                         ...messages,
                         { author: currentUser, message: response.result }
                     ]);
+                    onSuccess && onSuccess();
                 })
                 .catch(logErr);
         },
@@ -136,6 +133,20 @@ export const BanPage = (): JSX.Element => {
             <Grid item xs={8}>
                 <Stack spacing={2}>
                     <Heading>{`Ban Appeal #${id}`}</Heading>
+
+                    {messages.length == 0 && (
+                        <Paper elevation={1}>
+                            <Typography
+                                variant={'body2'}
+                                padding={2}
+                                textAlign={'center'}
+                            >
+                                You can start the appeal process by replying on
+                                this form.
+                            </Typography>
+                        </Paper>
+                    )}
+
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}
@@ -192,19 +203,12 @@ export const BanPage = (): JSX.Element => {
                                             />
                                         </ListItem>
                                     )}
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={'Author'}
-                                            secondary={ban.ban.target_id.toString()}
-                                        />
-                                    </ListItem>
+
                                     <ListItem>
                                         <ListItemText
                                             primary={'Created At'}
                                             secondary={renderDateTime(
-                                                parseDateTime(
-                                                    ban.ban.created_on as string
-                                                )
+                                                ban.ban.created_on
                                             )}
                                         />
                                     </ListItem>
@@ -212,10 +216,7 @@ export const BanPage = (): JSX.Element => {
                                         <ListItemText
                                             primary={'Expires At'}
                                             secondary={renderDateTime(
-                                                parseDateTime(
-                                                    ban.ban
-                                                        .valid_until as string
-                                                )
+                                                ban.ban.valid_until
                                             )}
                                         />
                                     </ListItem>
@@ -227,6 +228,16 @@ export const BanPage = (): JSX.Element => {
                                             )}
                                         />
                                     </ListItem>
+                                    {ban &&
+                                        currentUser.permission_level >=
+                                            PermissionLevel.Moderator && (
+                                            <ListItem>
+                                                <ListItemText
+                                                    primary={'Author'}
+                                                    secondary={ban.ban.target_id.toString()}
+                                                />
+                                            </ListItem>
+                                        )}
                                 </List>
                             </Stack>
                         </Paper>

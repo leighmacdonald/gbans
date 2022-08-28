@@ -1,6 +1,6 @@
 import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
-import { apiCall, Pos } from './common';
+import { apiCall, Pos, TimeStamped } from './common';
 import SteamID from 'steamid';
 
 export interface ServerState {
@@ -63,7 +63,7 @@ export const cleanMapName = (name: string): string => {
     return b[0];
 };
 
-export interface Server {
+export interface Server extends TimeStamped {
     server_id: number;
     server_name: string;
     server_name_long: string;
@@ -79,8 +79,6 @@ export interface Server {
     reserved_slots: number;
     players_max: number;
     is_enabled: boolean;
-    created_on: Date;
-    updated_on: Date;
 }
 
 export interface PlayerInfo {

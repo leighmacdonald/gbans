@@ -58,6 +58,7 @@ export interface UserTableProps<T> {
     onRowClick?: (value: T) => void;
     query?: string;
     isLoading?: boolean;
+    preSelectIndex?: number;
 }
 
 export const defaultRenderer = (
@@ -91,7 +92,8 @@ export const DataTable = <T,>({
     rowsPerPage,
     onRowClick,
     isLoading,
-    defaultSortOrder = 'desc'
+    defaultSortOrder = 'desc',
+    preSelectIndex
 }: UserTableProps<T>) => {
     const theme = useTheme();
     const [page, setPage] = useState(0);
@@ -102,6 +104,14 @@ export const DataTable = <T,>({
         rowsPerPage ?? RowsPerPage.TwentyFive
     );
     const [query, setQuery] = useState('');
+
+    useEffect(() => {
+        if (!preSelectIndex || preSelectIndex <= 0) {
+            return;
+        }
+        const newVal = Math.ceil(preSelectIndex / rowPerPageCount);
+        setPage(newVal);
+    }, [preSelectIndex, rowPerPageCount]);
 
     const sorted = useMemo(() => {
         const compare = (
@@ -134,6 +144,60 @@ export const DataTable = <T,>({
     useEffect(() => {
         setPageCount(Math.ceil(sorted.length / rowPerPageCount));
     }, [rowPerPageCount, sorted]);
+
+    const renderedRows = useMemo(() => {
+        return sorted
+            .slice(
+                page * rowPerPageCount,
+                page * rowPerPageCount + rowPerPageCount
+            )
+            .map((row, rowIdx) => {
+                return (
+                    <TableRow
+                        onClick={() => {
+                            onRowClick && onRowClick(row);
+                        }}
+                        key={rowIdx}
+                        sx={{
+                            '&:hover': {
+                                backgroundColor:
+                                    theme.palette.background.default
+                            }
+                        }}
+                    >
+                        {columns.map((col, colIdx) => {
+                            const value = (col?.renderer ?? defaultRenderer)(
+                                row,
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (row as any)[col.sortKey],
+                                col?.sortType || 'string'
+                            );
+                            return (
+                                <TableCell
+                                    key={`col-${colIdx}`}
+                                    align={col?.align ?? 'right'}
+                                    sx={{
+                                        width: col?.width ?? 'auto',
+                                        '&:hover': {
+                                            cursor: 'pointer'
+                                        }
+                                    }}
+                                >
+                                    {value}
+                                </TableCell>
+                            );
+                        })}
+                    </TableRow>
+                );
+            });
+    }, [
+        columns,
+        onRowClick,
+        page,
+        rowPerPageCount,
+        sorted,
+        theme.palette.background.default
+    ]);
 
     return (
         <TableContainer>
@@ -256,59 +320,7 @@ export const DataTable = <T,>({
                         </TableRow>
                     </TableBody>
                 ) : (
-                    <TableBody>
-                        {sorted
-                            .slice(
-                                page * rowPerPageCount,
-                                page * rowPerPageCount + rowPerPageCount
-                            )
-                            .map((row, rowIdx) => {
-                                return (
-                                    <TableRow
-                                        onClick={() => {
-                                            onRowClick && onRowClick(row);
-                                        }}
-                                        key={rowIdx}
-                                        sx={{
-                                            '&:hover': {
-                                                backgroundColor:
-                                                    theme.palette.background
-                                                        .default
-                                            }
-                                        }}
-                                    >
-                                        {columns.map((col, colIdx) => {
-                                            const value = (
-                                                col?.renderer ?? defaultRenderer
-                                            )(
-                                                row,
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                (row as any)[col.sortKey],
-                                                col?.sortType || 'string'
-                                            );
-                                            return (
-                                                <TableCell
-                                                    key={`col-${colIdx}`}
-                                                    align={
-                                                        col?.align ?? 'right'
-                                                    }
-                                                    sx={{
-                                                        width:
-                                                            col?.width ??
-                                                            'auto',
-                                                        '&:hover': {
-                                                            cursor: 'pointer'
-                                                        }
-                                                    }}
-                                                >
-                                                    {value}
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                );
-                            })}
-                    </TableBody>
+                    <TableBody>{renderedRows}</TableBody>
                 )}
             </Table>
         </TableContainer>

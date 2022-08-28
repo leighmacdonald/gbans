@@ -5,3 +5,4 @@ export * from './profile';
 export * from './server';
 export * from './report';
 export * from './stats';
+export * from './auth';

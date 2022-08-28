@@ -52,22 +52,24 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                                 setQuery(event.target.value);
                             }}
                         />
-                        <IconButton size={'small'}>
-                            <CloseIcon
-                                onClick={() => {
-                                    setSearchOpen(false);
-                                }}
-                            />
+                        <IconButton
+                            size={'small'}
+                            onClick={() => {
+                                setSearchOpen(false);
+                            }}
+                        >
+                            <CloseIcon />
                         </IconButton>
                     </Stack>
                 ) : (
                     <Stack direction={'row'} justifyContent={'center'}>
-                        <IconButton size={'small'}>
-                            <SearchIcon
-                                onClick={() => {
-                                    setSearchOpen(true);
-                                }}
-                            />
+                        <IconButton
+                            size={'small'}
+                            onClick={() => {
+                                setSearchOpen(true);
+                            }}
+                        >
+                            <SearchIcon />
                         </IconButton>
                         Friends ({friends ? friends.length : 0})
                     </Stack>

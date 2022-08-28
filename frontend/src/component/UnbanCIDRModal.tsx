@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteCIDRBan, IAPIBanCIDRRecord } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
+import { apiDeleteCIDRBan, IAPIBanCIDRRecord } from '../api';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 

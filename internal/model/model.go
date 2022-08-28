@@ -199,6 +199,7 @@ type Person struct {
 	CreatedOn        time.Time     `json:"created_on"`
 	UpdatedOn        time.Time     `json:"updated_on"`
 	PermissionLevel  Privilege     `json:"permission_level"`
+	Muted            bool          `json:"muted"`
 	IsNew            bool          `json:"-"`
 	DiscordID        string        `json:"discord_id"`
 	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
@@ -215,6 +216,7 @@ func (p Person) ToURL() string {
 	return config.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
+// UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
 	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
 	CreatedOn       time.Time     `json:"created_on"`
@@ -225,6 +227,7 @@ type UserProfile struct {
 	Avatar          string        `json:"avatar"`
 	AvatarFull      string        `json:"avatarfull"`
 	BanID           int64         `json:"ban_id"`
+	Muted           bool          `json:"muted"`
 }
 
 func (p UserProfile) ToURL() string {
@@ -275,18 +278,6 @@ func (p People) AsMap() map[steamid.SID64]Person {
 	}
 	return m
 }
-
-// AppealState is the current state of a users ban appeal, if any.
-type AppealState int
-
-const (
-	// ASNew is a user has initiated an appeal
-	ASNew AppealState = 0
-	// ASDenied the appeal was denied
-	ASDenied AppealState = 1
-	// The appeal was granted
-	//ASGranted AppealState = 2
-)
 
 type Stats struct {
 	BansTotal     int `json:"bans"`
@@ -588,14 +579,15 @@ type Media struct {
 }
 
 func NewMedia(author steamid.SID64, name string, mime string, content []byte) Media {
+	t0 := config.Now()
 	return Media{
 		AuthorId:  author,
 		MimeType:  mime,
-		Name:      name,
+		Name:      strings.Replace(name, " ", "_", -1),
 		Size:      int64(len(content)),
 		Contents:  content,
 		Deleted:   false,
-		CreatedOn: config.Now(),
-		UpdatedOn: config.Now(),
+		CreatedOn: t0,
+		UpdatedOn: t0,
 	}
 }

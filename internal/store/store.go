@@ -99,7 +99,8 @@ type PersonStore interface {
 	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
 	GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error)
 	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) (model.PersonConnections, error)
-	GetChatHistory(ctx context.Context, sid64 steamid.SID64, limit int) (model.PersonMessages, error)
+	QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (model.PersonMessages, error)
+	GetPersonMessageById(ctx context.Context, query int64, msg *model.PersonMessage) error
 	AddChatHistory(ctx context.Context, message *model.PersonMessage) error
 	AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error
 }
@@ -119,6 +120,7 @@ type MigrationStore interface {
 type MediaStore interface {
 	SaveMedia(ctx context.Context, media *model.Media) error
 	GetMediaByName(ctx context.Context, name string, media *model.Media) error
+	GetMediaById(ctx context.Context, mediaId int, media *model.Media) error
 }
 
 type WikiStore interface {

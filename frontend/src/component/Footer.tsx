@@ -18,15 +18,6 @@ export const Footer = (): JSX.Element => {
                 <Typography variant={'subtitle2'} color={'text'}>
                     Copyright &copy; Uncletopia 2022
                 </Typography>
-                {/*<Link*/}
-                {/*    sx={{*/}
-                {/*        color: '#525252',*/}
-                {/*        textDecoration: 'none'*/}
-                {/*    }}*/}
-                {/*    href={'https://github.com/leighmacdonald/gbans'}*/}
-                {/*>*/}
-                {/*    gbans*/}
-                {/*</Link>*/}
             </Stack>
         </Box>
     );

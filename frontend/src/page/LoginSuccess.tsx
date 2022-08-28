@@ -1,31 +1,43 @@
-import React from 'react';
-import { Navigate } from 'react-router';
-import { apiGetCurrentProfile } from '../api';
+import React, { useEffect } from 'react';
+import { apiGetCurrentProfile, tokenKey } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useNavigate } from 'react-router-dom';
 
-export const LoginSuccess = (): JSX.Element => {
+const defaultLocation = '/';
+
+export const LoginSuccess = () => {
     const { sendFlash } = useUserFlashCtx();
-    const { setCurrentUser } = useCurrentUserCtx();
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const perms = urlParams.get('permission_level');
-    if (token != null && token.length > 0) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('permission_level', `${perms}`);
-    }
-    let next_url = urlParams.get('next_url');
-    if (next_url == null || next_url == '') {
-        next_url = '/';
-    }
+    const { setCurrentUser, setToken } = useCurrentUserCtx();
+    const navigate = useNavigate();
 
-    apiGetCurrentProfile().then((response) => {
-        if (!response.status || !response.result) {
-            sendFlash('error', 'Failed to load profile');
-            alert('bye');
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get(tokenKey);
+        if (!token) {
             return;
         }
-        setCurrentUser(response.result);
-    });
-    return <Navigate to={next_url} />;
+        const permissionLevel = urlParams.get('permission_level');
+        if (permissionLevel) {
+            localStorage.setItem('permission_level', permissionLevel);
+        }
+        const next_url = urlParams.get('next_url') ?? defaultLocation;
+        setToken(token);
+
+        apiGetCurrentProfile()
+            .then((response) => {
+                if (!response.status || !response.result) {
+                    sendFlash('error', 'Failed to load profile :(');
+                    navigate(defaultLocation);
+                    return;
+                }
+                setCurrentUser(response.result);
+                navigate(next_url);
+            })
+            .catch(() => {
+                navigate(defaultLocation);
+            });
+    }, [navigate, sendFlash, setCurrentUser, setToken]);
+
+    return <></>;
 };

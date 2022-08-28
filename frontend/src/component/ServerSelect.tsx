@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
-import { apiGetServerStates, ServerState } from '../api';
+import React, { useEffect, useState } from 'react';
 import { SelectChangeEvent } from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
-import * as React from 'react';
+import { apiGetServerStates, ServerState } from '../api';
 import { logErr } from '../util/errors';
 
 export interface ServerSelectProps {

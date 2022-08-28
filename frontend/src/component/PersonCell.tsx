@@ -20,7 +20,12 @@ export const PersonCell = ({
     const navigate = useNavigate();
     return (
         <Stack direction={'row'} alignItems={'center'}>
-            <Avatar alt={personaname} src={avatar} variant={'square'} />
+            <Avatar
+                alt={personaname}
+                src={avatar}
+                variant={'square'}
+                sx={{ height: '32px', width: '32px' }}
+            />
             <Box
                 height={'100%'}
                 alignContent={'center'}

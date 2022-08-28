@@ -1,20 +1,20 @@
-import { UserMessage, UserProfile } from '../api';
-import useTheme from '@mui/material/styles/useTheme';
 import React, { MouseEvent, useState } from 'react';
+import useTheme from '@mui/material/styles/useTheme';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { MDEditor } from './MDEditor';
-import { formatDistance, parseJSON } from 'date-fns';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { RenderedMarkdownBox } from './RenderedMarkdownBox';
-import { renderMarkdown } from '../api/wiki';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { parseDateTime, renderTimeDistance } from '../util/text';
+import { formatDistance, parseJSON } from 'date-fns';
+import { UserMessage, UserProfile } from '../api';
+import { renderMarkdown } from '../api/wiki';
+import { MDEditor } from './MDEditor';
+import { renderTimeDistance } from '../util/text';
+import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 
 export interface UserMessageViewProps {
     author: UserProfile;
@@ -67,8 +67,8 @@ export const UserMessageView = ({
         });
         if (message.updated_on != message.created_on) {
             d1 = `${d1} (edited: ${renderTimeDistance(
-                parseDateTime(message.created_on as string),
-                parseDateTime(message.updated_on as string)
+                message.created_on,
+                message.updated_on
             )})`;
         }
         return (

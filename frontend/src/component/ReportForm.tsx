@@ -4,13 +4,13 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import { useNavigate } from 'react-router-dom';
 import { apiCreateReport, BanReason, BanReasons, PlayerProfile } from '../api';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
-import { useNavigate } from 'react-router-dom';
 import { MDEditor } from './MDEditor';
-import TextField from '@mui/material/TextField';
 import { Heading } from './Heading';
-import Box from '@mui/material/Box';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
@@ -116,7 +116,6 @@ export const ReportForm = (): JSX.Element => {
                             fullWidth
                             onChange={(event) => {
                                 setReasonText(event.target.value);
-                                console.log(event.target.value);
                             }}
                         />
                     </FormControl>

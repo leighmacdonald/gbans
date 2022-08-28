@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import { apiDeleteGroupBan, IAPIBanGroupRecord } from '../api';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import TextField from '@mui/material/TextField';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 

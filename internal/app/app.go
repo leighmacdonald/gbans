@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"sync"
 	"time"
@@ -196,7 +197,7 @@ func sendDiscordNotif(server model.Server, match *model.Match) {
 		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
 		Description: "Match results",
 		Color:       int(green),
-		URL:         fmt.Sprintf("https://gbans.uncletopia.com/log/%d", match.MatchID),
+		URL:         config.ExtURL("/log/%d", match.MatchID),
 	}
 	redScore := 0
 	bluScore := 0
@@ -261,8 +262,44 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 					log.Errorf("Failed to add chat history: %v", errChat)
 				}
 				cancel()
-				log.WithFields(log.Fields{"msg": msg}).Debugf("Saved message")
+				log.WithFields(log.Fields{"msg": msg}).Tracef("Saved message")
 			}
+		}
+	}
+}
+
+func playerConnectionWriter(ctx context.Context, database store.Store) {
+	serverEventChan := make(chan model.ServerEvent)
+	if errRegister := event.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
+		log.Warnf("logWriter Tried to register duplicate reader channel")
+		return
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case evt := <-serverEventChan:
+			addr := evt.GetValueString("address")
+			if addr == "" {
+				log.Warnf("Empty person message body, skipping")
+				continue
+			}
+			parsedAddr := net.ParseIP(addr)
+			if parsedAddr == nil {
+				log.Warnf("Received invalid address: %s", addr)
+				continue
+			}
+			msg := model.PersonConnection{
+				IPAddr:      parsedAddr,
+				SteamId:     evt.Source.SteamID,
+				PersonaName: evt.Source.PersonaName,
+				CreatedOn:   evt.CreatedOn,
+			}
+			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+			if errChat := database.AddConnectionHistory(lCtx, &msg); errChat != nil {
+				log.Errorf("Failed to add connection history: %v", errChat)
+			}
+			cancel()
 		}
 	}
 }
@@ -427,16 +464,7 @@ func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, 
 		log.Errorf("Warn limit exceeded (%d): %d", sid64, len(warnings[sid64]))
 		var errBan error
 		var banSteam model.BanSteam
-		if errOpts := NewBanSteam(
-			model.StringSID(config.General.Owner.String()),
-			model.StringSID(sid64.String()),
-			model.Duration(config.General.WarningExceededDuration.String()),
-			reason,
-			reason.String(),
-			"Automatic warning ban",
-			model.System,
-			0,
-			&banSteam); errOpts != nil {
+		if errOpts := NewBanSteam(model.StringSID(config.General.Owner.String()), model.StringSID(sid64.String()), model.Duration(config.General.WarningExceededDuration.String()), reason, reason.String(), "Automatic warning ban", model.System, 0, &banSteam); errOpts != nil {
 			log.Errorf("Failed to create warning ban banSteam: %v", errOpts)
 			return
 		}
@@ -449,8 +477,7 @@ func addWarning(ctx context.Context, database store.Store, sid64 steamid.SID64, 
 			errBan = BanSteam(ctx, database, &banSteam, botSendMessageChan)
 		case config.Kick:
 			var playerInfo model.PlayerInfo
-			errBan = Kick(ctx, database, model.System, model.StringSID(sid64.String()),
-				model.StringSID(config.General.Owner.String()), reason, &playerInfo)
+			errBan = Kick(ctx, database, model.System, model.StringSID(sid64.String()), model.StringSID(config.General.Owner.String()), reason, &playerInfo)
 		}
 		if errBan != nil {
 			log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
@@ -488,8 +515,9 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go filterWorker(ctx, database, botSendMessageChan)
 	go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
-	go matchSummarizer(ctx, database)
+	//go matchSummarizer(ctx, database)
 	go playerMessageWriter(ctx, database)
+	go playerConnectionWriter(ctx, database)
 	go steamGroupMembershipUpdater(ctx, database)
 }
 

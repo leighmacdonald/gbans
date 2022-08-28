@@ -1,19 +1,19 @@
 import React, { ChangeEvent, useCallback, useEffect } from 'react';
-import { getDistance } from '../util/gis';
-import { useMapStateCtx } from '../contexts/MapStateCtx';
+import { SelectChangeEvent } from '@mui/material/Select';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
+import Switch from '@mui/material/Switch';
+import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
-import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Grid';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
+import styled from '@mui/system/styled';
 import { uniq } from 'lodash-es';
-import { SelectChangeEvent } from '@mui/material/Select';
-import Paper from '@mui/material/Paper';
+import { getDistance } from '../util/gis';
+import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { Heading } from './Heading';
-import { styled } from '@mui/system';
 
 export const ServerFilters = () => {
     const {

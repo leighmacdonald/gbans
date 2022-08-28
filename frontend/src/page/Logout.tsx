@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { handleOnLogout } from '../api/auth';
+import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { PermissionLevel } from '../api';
 
 export const Logout = (): JSX.Element => {
-    handleOnLogout();
+    const { setCurrentUser, setToken } = useCurrentUserCtx();
+
+    useEffect(() => {
+        setToken('');
+        setCurrentUser(GuestProfile);
+        localStorage.setItem('permission_level', `${PermissionLevel.Unknown}`);
+    }, [setCurrentUser, setToken]);
+
     return <Navigate to={'/'} />;
 };

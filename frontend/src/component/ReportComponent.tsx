@@ -1,4 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import useTheme from '@mui/material/styles/useTheme';
 import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
@@ -15,23 +23,16 @@ import {
     ReportMessagesResponse,
     UserMessage
 } from '../api';
-import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Stack from '@mui/material/Stack';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { renderMarkdown } from '../api/wiki';
 import { MDEditor } from './MDEditor';
-import { DataTable } from './DataTable';
+import { DataTable, RowsPerPage } from './DataTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import useTheme from '@mui/material/styles/useTheme';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
-import Typography from '@mui/material/Typography';
 import { UserMessageView } from './UserMessageView';
 import { TabPanel } from './TabPanel';
+import { PersonMessageTable } from './PersonMessageTable';
 
 interface ReportComponentProps {
     report: Report;
@@ -184,36 +185,7 @@ export const ReportComponent = ({
                         </TabPanel>
 
                         <TabPanel value={value} index={1}>
-                            <DataTable
-                                columns={[
-                                    {
-                                        label: 'Created',
-                                        tooltip: 'Created On',
-                                        sortKey: 'created_on',
-                                        sortType: 'date',
-                                        align: 'left',
-                                        width: '150px'
-                                    },
-                                    {
-                                        label: 'Name',
-                                        tooltip: 'Name',
-                                        sortKey: 'persona_name',
-                                        sortType: 'string',
-                                        align: 'left',
-                                        width: '150px'
-                                    },
-                                    {
-                                        label: 'Message',
-                                        tooltip: 'Message',
-                                        sortKey: 'body',
-                                        sortType: 'string',
-                                        align: 'left'
-                                    }
-                                ]}
-                                defaultSortColumn={'created_on'}
-                                rowsPerPage={100}
-                                rows={chatHistory}
-                            />
+                            <PersonMessageTable messages={chatHistory} />
                         </TabPanel>
                         <TabPanel value={value} index={2}>
                             <DataTable
@@ -232,18 +204,20 @@ export const ReportComponent = ({
                                         sortKey: 'persona_name',
                                         sortType: 'string',
                                         align: 'left',
-                                        width: '150px'
+                                        width: '150px',
+                                        queryValue: (row) => row.persona_name
                                     },
                                     {
                                         label: 'IP Address',
                                         tooltip: 'IP Address',
-                                        sortKey: 'ipAddr',
+                                        sortKey: 'ip_addr',
                                         sortType: 'string',
-                                        align: 'left'
+                                        align: 'left',
+                                        queryValue: (row) => row.ip_addr
                                     }
                                 ]}
                                 defaultSortColumn={'created_on'}
-                                rowsPerPage={100}
+                                rowsPerPage={RowsPerPage.TwentyFive}
                                 rows={connections}
                             />
                         </TabPanel>
@@ -309,7 +283,7 @@ export const ReportComponent = ({
                                     }
                                 ]}
                                 defaultSortColumn={'created_on'}
-                                rowsPerPage={10}
+                                rowsPerPage={RowsPerPage.TwentyFive}
                                 rows={banHistory}
                             />
                         </TabPanel>

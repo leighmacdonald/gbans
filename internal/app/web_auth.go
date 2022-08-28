@@ -285,6 +285,7 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 				Name:            loggedInPerson.PersonaName,
 				Avatar:          loggedInPerson.Avatar,
 				AvatarFull:      loggedInPerson.AvatarFull,
+				Muted:           loggedInPerson.Muted,
 				BanID:           bp.Ban.BanID,
 			}
 			ctx.Set(ctxKeyUserProfile, profile)
