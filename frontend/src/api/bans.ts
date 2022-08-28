@@ -244,20 +244,24 @@ export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
                 unban_reason_text: b.ban.unban_reason_text,
                 created_on: b.ban.created_on,
                 updated_on: b.ban.updated_on,
-                valid_until: parseDateTime(
-                    b.ban.valid_until as unknown as string
-                )
+                valid_until: b.ban.valid_until
             };
         })
         .map(applyDateTime);
 };
 
 export function applyDateTime<T>(row: T & TimeStamped) {
-    return {
+    const record = {
         ...row,
         created_on: parseDateTime(row.created_on as unknown as string),
         updated_on: parseDateTime(row.updated_on as unknown as string)
     };
+    if (record?.valid_until) {
+        record.valid_until = parseDateTime(
+            record.valid_until as unknown as string
+        );
+    }
+    return record;
 }
 
 export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
@@ -266,9 +270,6 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
         'GET'
     );
     if (resp.result?.ban && resp.result?.person) {
-        resp.result.ban.valid_until = parseDateTime(
-            resp.result.ban.valid_until as unknown as string
-        );
         resp.result.ban = applyDateTime(resp.result?.ban);
         resp.result.person = applyDateTime(resp.result?.person);
     }
@@ -351,14 +352,43 @@ export const apiUpdateBanMessage = async (
 export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
-export const apiGetBansCIDR = async (opts: QueryFilter<IAPIBanCIDRRecord>) =>
-    await apiCall<IAPIBanCIDRRecord[]>('/api/bans/cidr', 'POST', opts);
+export const apiGetBansCIDR = async (opts: QueryFilter<IAPIBanCIDRRecord>) => {
+    const resp = await apiCall<IAPIBanCIDRRecord[]>(
+        '/api/bans/cidr',
+        'POST',
+        opts
+    );
+    if (resp.status && resp.result) {
+        resp.result = resp.result.map((record) => applyDateTime(record));
+    }
+    return resp;
+};
 
-export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) =>
-    await apiCall<IAPIBanASNRecord[]>('/api/bans/asn', 'POST', opts);
+export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) => {
+    const resp = await apiCall<IAPIBanASNRecord[]>(
+        '/api/bans/asn',
+        'POST',
+        opts
+    );
+    if (resp.status && resp.result) {
+        resp.result = resp.result.map((record) => applyDateTime(record));
+    }
+    return resp;
+};
 
-export const apiGetBansGroups = async (opts: QueryFilter<IAPIBanGroupRecord>) =>
-    await apiCall<IAPIBanGroupRecord[]>('/api/bans/group', 'POST', opts);
+export const apiGetBansGroups = async (
+    opts: QueryFilter<IAPIBanGroupRecord>
+) => {
+    const resp = await apiCall<IAPIBanGroupRecord[]>(
+        '/api/bans/group',
+        'POST',
+        opts
+    );
+    if (resp.status && resp.result) {
+        resp.result = resp.result.map((record) => applyDateTime(record));
+    }
+    return resp;
+};
 
 export const apiDeleteCIDRBan = async (
     cidr_id: number,

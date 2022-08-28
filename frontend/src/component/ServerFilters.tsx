@@ -251,7 +251,6 @@ export const ServerFilters = () => {
 };
 
 const RangeSlider = styled(Slider)(({ theme }) => ({
-    color: theme.palette.common.white,
     height: 2,
     padding: '15px 0',
     '& .MuiSlider-thumb': {

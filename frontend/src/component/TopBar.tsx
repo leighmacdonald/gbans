@@ -38,6 +38,7 @@ import { useColourModeCtx } from '../contexts/ColourModeContext';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { PermissionLevel } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
+import { tf2Fonts } from '../theme';
 
 interface menuRoute {
     to: string;
@@ -229,7 +230,7 @@ export const TopBar = () => {
             key={route + text}
         >
             <ListItemIcon>{icon}</ListItemIcon>
-            <ListItemText primary={text} />
+            <ListItemText disableTypography primary={text} sx={tf2Fonts} />
         </MenuItem>
     );
 
@@ -249,7 +250,11 @@ export const TopBar = () => {
                         variant="h6"
                         noWrap
                         component="div"
-                        sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
+                        sx={{
+                            mr: 2,
+                            display: { xs: 'none', md: 'flex' },
+                            ...tf2Fonts
+                        }}
                     >
                         Uncletopia
                     </Typography>

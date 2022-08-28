@@ -2,14 +2,20 @@ import createTheme from '@mui/material/styles/createTheme';
 import darkScrollbar from '@mui/material/darkScrollbar';
 import { PaletteMode, PaletteOptions } from '@mui/material';
 
+const baseFontSet = [
+    '"Helvetica Neue"',
+    'Helvetica',
+    'Roboto',
+    'Arial',
+    'sans-serif'
+];
+
 export const readableFonts = {
-    fontFamily: [
-        '"Helvetica Neue"',
-        'Helvetica',
-        'Roboto',
-        'Arial',
-        'sans-serif'
-    ].join(',')
+    fontFamily: baseFontSet.join(',')
+};
+
+export const tf2Fonts = {
+    fontFamily: ['"TF2 Build"', ...baseFontSet].join(',')
 };
 
 export const createThemeByMode = (mode: PaletteMode) => {
@@ -60,11 +66,18 @@ export const createThemeByMode = (mode: PaletteMode) => {
                 styleOverrides: {
                     body: darkScrollbar()
                 }
+            },
+            MuiButton: {
+                variants: [
+                    {
+                        props: { variant: 'contained' },
+                        style: tf2Fonts
+                    }
+                ]
             }
         },
         typography: {
             fontFamily: [
-                '"TF2 Build"',
                 '"Helvetica Neue"',
                 'Helvetica',
                 'Roboto',

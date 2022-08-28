@@ -93,6 +93,7 @@ export interface Pos {
 export interface TimeStamped {
     created_on: Date;
     updated_on: Date;
+    valid_until?: Date;
 }
 
 export const renderDate = (d: Date | string): string => {

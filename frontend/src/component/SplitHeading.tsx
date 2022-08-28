@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import useTheme from '@mui/material/styles/useTheme';
+import { tf2Fonts } from '../theme';
 
 interface SplitHeadingProps {
     left: string;
@@ -26,13 +27,14 @@ export const SplitHeading: FC<SplitHeadingProps> = ({
                 sx={{
                     backgroundColor: bgColor ?? theme.palette.primary.main,
                     color: theme.palette.common.white,
-                    width: '100%'
+                    width: '100%',
+                    ...tf2Fonts
                 }}
             >
                 {left}
             </Typography>
             <Typography
-                variant={'h6'}
+                variant={'subtitle1'}
                 align={'right'}
                 paddingTop={1}
                 paddingBottom={1}

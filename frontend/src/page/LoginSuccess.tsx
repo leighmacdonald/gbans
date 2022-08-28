@@ -21,21 +21,22 @@ export const LoginSuccess = () => {
         if (permissionLevel) {
             localStorage.setItem('permission_level', permissionLevel);
         }
-        const next_url = urlParams.get('next_url') ?? defaultLocation;
+        let next_url = urlParams.get('next_url') ?? defaultLocation;
         setToken(token);
 
         apiGetCurrentProfile()
             .then((response) => {
                 if (!response.status || !response.result) {
                     sendFlash('error', 'Failed to load profile :(');
-                    navigate(defaultLocation);
                     return;
                 }
                 setCurrentUser(response.result);
-                navigate(next_url);
             })
             .catch(() => {
-                navigate(defaultLocation);
+                next_url = defaultLocation;
+            })
+            .finally(() => {
+                navigate(next_url);
             });
     }, [navigate, sendFlash, setCurrentUser, setToken]);
 

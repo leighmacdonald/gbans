@@ -73,6 +73,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.31.1",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "file-type": "^18.0.0",
     "history": "^5.3.0",
     "html-webpack-plugin": "^5.5.0",
     "ip-cidr": "^3.0.10",

@@ -16,7 +16,7 @@ import Tab from '@mui/material/Tab';
 import useTheme from '@mui/material/styles/useTheme';
 import { useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
-import { formatDuration, intervalToDuration, parseISO } from 'date-fns';
+import { formatDuration, intervalToDuration } from 'date-fns';
 import { TabPanel } from '../component/TabPanel';
 import { DataTable, RowsPerPage } from '../component/DataTable';
 import { PersonCell } from '../component/PersonCell';
@@ -337,9 +337,7 @@ export const AdminBan = (): JSX.Element => {
                                             return (
                                                 <Typography variant={'body1'}>
                                                     {format(
-                                                        parseISO(
-                                                            obj.created_on as never as string
-                                                        ),
+                                                        obj.created_on,
                                                         'yyyy-MM-dd'
                                                     )}
                                                 </Typography>
@@ -359,9 +357,7 @@ export const AdminBan = (): JSX.Element => {
                                             return (
                                                 <Typography variant={'body1'}>
                                                     {format(
-                                                        parseISO(
-                                                            obj.valid_until as never as string
-                                                        ),
+                                                        obj.valid_until,
                                                         'yyyy-MM-dd'
                                                     )}
                                                 </Typography>
@@ -377,15 +373,9 @@ export const AdminBan = (): JSX.Element => {
                                         virtual: true,
                                         virtualKey: 'duration',
                                         renderer: (row) => {
-                                            const t0 = parseISO(
-                                                row.created_on as never as string
-                                            );
-                                            const t1 = parseISO(
-                                                row.valid_until as never as string
-                                            );
                                             const dur = intervalToDuration({
-                                                start: t0,
-                                                end: t1
+                                                start: row.created_on,
+                                                end: row.valid_until
                                             });
                                             const durationText =
                                                 dur.years && dur.years > 5
@@ -573,9 +563,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.created_on as never as string
-                                                ),
+                                                obj.created_on,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -595,9 +583,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.valid_until as never as string
-                                                ),
+                                                obj.valid_until,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -613,15 +599,9 @@ export const AdminBan = (): JSX.Element => {
                                 virtual: true,
                                 virtualKey: 'duration',
                                 renderer: (row) => {
-                                    const t0 = parseISO(
-                                        row.created_on as never as string
-                                    );
-                                    const t1 = parseISO(
-                                        row.valid_until as never as string
-                                    );
                                     const dur = intervalToDuration({
-                                        start: t0,
-                                        end: t1
+                                        start: row.created_on,
+                                        end: row.valid_until
                                     });
                                     const durationText =
                                         dur.years && dur.years > 5
@@ -732,9 +712,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.created_on as never as string
-                                                ),
+                                                obj.created_on,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -754,9 +732,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.valid_until as never as string
-                                                ),
+                                                obj.valid_until,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -772,15 +748,9 @@ export const AdminBan = (): JSX.Element => {
                                 virtual: true,
                                 virtualKey: 'duration',
                                 renderer: (row) => {
-                                    const t0 = parseISO(
-                                        row.created_on as never as string
-                                    );
-                                    const t1 = parseISO(
-                                        row.valid_until as never as string
-                                    );
                                     const dur = intervalToDuration({
-                                        start: t0,
-                                        end: t1
+                                        start: row.created_on,
+                                        end: row.valid_until
                                     });
                                     const durationText =
                                         dur.years && dur.years > 5
@@ -892,9 +862,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.created_on as never as string
-                                                ),
+                                                obj.created_on,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -914,9 +882,7 @@ export const AdminBan = (): JSX.Element => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                parseISO(
-                                                    obj.valid_until as never as string
-                                                ),
+                                                obj.valid_until,
                                                 'yyyy-MM-dd'
                                             )}
                                         </Typography>
@@ -932,15 +898,9 @@ export const AdminBan = (): JSX.Element => {
                                 virtual: true,
                                 virtualKey: 'duration',
                                 renderer: (row) => {
-                                    const t0 = parseISO(
-                                        row.created_on as never as string
-                                    );
-                                    const t1 = parseISO(
-                                        row.valid_until as never as string
-                                    );
                                     const dur = intervalToDuration({
-                                        start: t0,
-                                        end: t1
+                                        start: row.created_on,
+                                        end: row.valid_until
                                     });
                                     const durationText =
                                         dur.years && dur.years > 5

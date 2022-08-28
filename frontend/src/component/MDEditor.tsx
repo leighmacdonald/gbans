@@ -58,7 +58,7 @@ export const MDEditor = ({
             <FileUploadModal
                 open={open}
                 setOpen={setOpen}
-                onSave={(v) => {
+                onSave={(v, onSuccess) => {
                     apiSaveMedia(v).then((resp) => {
                         if (!resp || !resp.status || !resp.result) {
                             sendFlash('error', 'Failed to save media');
@@ -73,6 +73,7 @@ export const MDEditor = ({
                             `![${resp.result.name}](media://${resp.result.media_id})` +
                             bodyMD.slice(cursorPos);
                         setBodyMD(newBody);
+                        onSuccess && onSuccess();
                     });
                 }}
             />

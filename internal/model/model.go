@@ -3,12 +3,14 @@ package model
 
 import (
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"strings"
 	"time"
@@ -578,11 +580,26 @@ type Media struct {
 	UpdatedOn time.Time     `json:"updated_on"`
 }
 
+const unknownMediaTag = "__unknown__"
+
+var MediaSafeMimeTypesImages = []string{
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+}
+
 func NewMedia(author steamid.SID64, name string, mime string, content []byte) Media {
+	mtype := mimetype.Detect(content)
+	if !mtype.Is(mime) && mime != unknownMediaTag {
+		// Should never actually happen unless user is trying nefarious stuff.
+		log.WithFields(log.Fields{"mime": mime, "detected": mtype.String()}).
+			Warnf("Detected mimetype different than provided")
+	}
 	t0 := config.Now()
 	return Media{
 		AuthorId:  author,
-		MimeType:  mime,
+		MimeType:  mtype.String(),
 		Name:      strings.Replace(name, " ", "_", -1),
 		Size:      int64(len(content)),
 		Contents:  content,

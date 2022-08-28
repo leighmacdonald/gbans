@@ -12,7 +12,7 @@ export const renderDateTime = (t: Date): string => {
 };
 
 export const renderDate = (t: Date): string => {
-    return format(t, 'Y-M-d');
+    return format(t, 'Y-MM-dd');
 };
 
 export const renderTimeDistance = (

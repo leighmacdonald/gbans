@@ -173,7 +173,7 @@ type BansQueryFilter struct {
 	SteamId steamid.SID64 `json:"steam_id,omitempty"`
 }
 
-// GetBans returns all bans that fit the filter criteria passed in
+// GetBansSteam returns all bans that fit the filter criteria passed in
 func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilter) ([]model.BannedPerson, error) {
 	qb := sb.Select("b.ban_id as ban_id", "b.target_id as target_id", "b.source_id as source_id",
 		"b.ban_type as ban_type", "b.reason as reason", "b.reason_text as reason_text",
@@ -185,7 +185,7 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilt
 		"p.loccityid", "p.permission_level", "p.discord_id as discord_id", "p.community_banned", "p.vac_bans", "p.game_bans",
 		"p.economy_ban", "p.days_since_last_ban", "b.deleted as deleted",
 		"case WHEN b.report_id is null THEN 0 ELSE b.report_id END", "b.unban_reason_text", "b.is_enabled",
-		"b.appeal_state").
+		"b.appeal_state as appeal_state").
 		From("ban b").
 		JoinClause("LEFT OUTER JOIN person p on p.steam_id = b.target_id")
 	if !filter.Deleted {
@@ -233,7 +233,7 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilt
 			&bannedPerson.Person.PermissionLevel, &bannedPerson.Person.DiscordID, &bannedPerson.Person.CommunityBanned,
 			&bannedPerson.Person.VACBans, &bannedPerson.Person.GameBans, &bannedPerson.Person.EconomyBan,
 			&bannedPerson.Person.DaysSinceLastBan, &bannedPerson.Ban.Deleted, &bannedPerson.Ban.ReportId,
-			&bannedPerson.Ban.UnbanReasonText, &bannedPerson.Ban.IsEnabled, bannedPerson.Ban.AppealState); errScan != nil {
+			&bannedPerson.Ban.UnbanReasonText, &bannedPerson.Ban.IsEnabled, &bannedPerson.Ban.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		bans = append(bans, bannedPerson)

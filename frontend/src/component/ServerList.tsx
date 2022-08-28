@@ -17,6 +17,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { DataTable, RowsPerPage } from './DataTable';
 import { Heading } from './Heading';
 import { cleanMapName } from '../api';
+import { tf2Fonts } from '../theme';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -26,9 +27,10 @@ export const LinearProgressWithLabel = (
             <LinearProgress variant="determinate" {...props} />
         </Box>
         <Box minWidth={35}>
-            <Typography variant="body2" color="textSecondary">{`${Math.round(
-                props.value
-            )}%`}</Typography>
+            <Typography
+                variant="subtitle2"
+                color="textSecondary"
+            >{`${Math.round(props.value)}%`}</Typography>
         </Box>
     </Box>
 );
@@ -72,7 +74,10 @@ export const ServerList = () => {
                         width: '100%',
                         queryValue: (obj) => obj.name + obj.name_short,
                         renderer: (_, value) => (
-                            <Typography variant={'button'}>
+                            <Typography
+                                variant={'button'}
+                                fontFamily={tf2Fonts}
+                            >
                                 {value as string}
                             </Typography>
                         )

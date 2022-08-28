@@ -1723,11 +1723,13 @@ func (web *web) onAPISaveMedia(database store.MediaStore) gin.HandlerFunc {
 			responseErr(ctx, http.StatusUnprocessableEntity, nil)
 			return
 		}
-		if int64(len(content)) != upload.Size {
-			responseErr(ctx, http.StatusUnprocessableEntity, nil)
+		media := model.NewMedia(currentUserProfile(ctx).SteamID, upload.Name, upload.Mime, content)
+		if !fp.Contains(model.MediaSafeMimeTypesImages, media.MimeType) {
+			responseErrUser(ctx, http.StatusBadRequest, nil, "Invalid image format")
+			log.WithFields(log.Fields{"mime": media.MimeType, "name": media.Name}).
+				Errorf("User tried uploading image with forbidden mimetype")
 			return
 		}
-		media := model.NewMedia(currentUserProfile(ctx).SteamID, upload.Name, upload.Mime, content)
 		if errSave := database.SaveMedia(ctx, &media); errSave != nil {
 			log.Errorf("Failed to save wiki media: %v", errSave)
 			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
