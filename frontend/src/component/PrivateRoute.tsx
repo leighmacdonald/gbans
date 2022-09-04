@@ -26,9 +26,9 @@ export const PrivateRoute = ({ children, permission }: PrivateRouteProps) => {
     if (
         parseInt(
             localStorage.getItem('permission_level') ||
-                `${PermissionLevel.Unknown}`
+                `${PermissionLevel.Guest}`
         ) ||
-        (PermissionLevel.Unknown >= permission &&
+        (PermissionLevel.User >= permission &&
             !currentUser.steam_id.isValidIndividual())
     ) {
         return children;
