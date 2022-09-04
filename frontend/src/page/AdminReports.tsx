@@ -50,7 +50,7 @@ export const AdminReports = (): JSX.Element => {
     };
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={2} paddingTop={3}>
             <Grid item xs={12}>
                 <Stack spacing={2}>
                     <Stack direction={'row'}>

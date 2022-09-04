@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
@@ -17,8 +16,6 @@ import (
 	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -114,17 +111,13 @@ func New(ctx context.Context, dsn string) (Store, error) {
 		log.Fatalf("Failed to connect to database: %v", errConnectConfig)
 	}
 	return &pgStore{
-		conn:        dbConn,
-		playerCache: cache.New[steamid.SID64, model.Person](),
-		serverCache: cache.New[string, model.Server](),
+		conn: dbConn,
 	}, nil
 }
 
 // pgStore implements Store against a postgresql database
 type pgStore struct {
-	conn        *pgxpool.Pool
-	playerCache *cache.Cache[steamid.SID64, model.Person]
-	serverCache *cache.Cache[string, model.Server]
+	conn *pgxpool.Pool
 }
 
 func (database *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {

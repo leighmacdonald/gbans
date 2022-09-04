@@ -4,9 +4,9 @@ import { applySteamId } from './profile';
 import { readToken } from './auth';
 
 export enum PermissionLevel {
-    Unknown = -1,
     Banned = 0,
-    User = 1,
+    Guest = 1,
+    User = 10,
     Editor = 25,
     Moderator = 50,
     Admin = 100

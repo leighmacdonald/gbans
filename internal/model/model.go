@@ -250,12 +250,21 @@ func (p *Person) AsTarget() StringSID {
 func NewPerson(sid64 steamid.SID64) Person {
 	t0 := config.Now()
 	return Person{
-		SteamID:         sid64,
-		IsNew:           true,
-		CreatedOn:       t0,
-		UpdatedOn:       t0,
-		PlayerSummary:   &steamweb.PlayerSummary{},
-		PermissionLevel: PUser,
+		SteamID:          sid64,
+		CreatedOn:        t0,
+		UpdatedOn:        t0,
+		PermissionLevel:  PUser,
+		Muted:            false,
+		IsNew:            true,
+		DiscordID:        "",
+		IPAddr:           nil,
+		CommunityBanned:  false,
+		VACBans:          0,
+		GameBans:         0,
+		EconomyBan:       "none",
+		DaysSinceLastBan: 0,
+		UpdatedOnSteam:   t0,
+		PlayerSummary:    &steamweb.PlayerSummary{},
 	}
 }
 

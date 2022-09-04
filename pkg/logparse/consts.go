@@ -102,9 +102,9 @@ const (
 type Team int
 
 const (
-	SPEC Team = 0
-	RED  Team = 1
-	BLU  Team = 2
+	SPEC Team = iota
+	RED
+	BLU
 )
 
 func (t Team) String() string {

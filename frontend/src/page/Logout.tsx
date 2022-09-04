@@ -9,7 +9,8 @@ export const Logout = (): JSX.Element => {
     useEffect(() => {
         setToken('');
         setCurrentUser(GuestProfile);
-        localStorage.setItem('permission_level', `${PermissionLevel.Unknown}`);
+        localStorage.setItem('permission_level', `${PermissionLevel.Guest}`);
+        localStorage.removeItem('token');
     }, [setCurrentUser, setToken]);
 
     return <Navigate to={'/'} />;

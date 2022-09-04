@@ -29,3 +29,14 @@ func Contains[T comparable](input []T, value T) bool {
 	}
 	return false
 }
+
+func Remove[T comparable](input []T, value T) []T {
+	var newValues []T
+	for _, existingValue := range input {
+		if value == existingValue {
+			continue
+		}
+		newValues = append(newValues, existingValue)
+	}
+	return newValues
+}

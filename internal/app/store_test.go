@@ -100,7 +100,7 @@ func TestBanNet(t *testing.T) {
 	var banCidr model.BanCIDR
 	require.NoError(t, NewBanCIDR(model.StringSID("76561198003911389"),
 		"76561198044052046", "10m", model.Custom,
-		"", "", model.System, fmt.Sprintf("%s/32", rip), &banCidr))
+		"", "", model.System, fmt.Sprintf("%s/32", rip), model.Banned, &banCidr))
 	require.NoError(t, testDatabase.SaveBanNet(ctx, &banCidr))
 	require.Less(t, int64(0), banCidr.NetID)
 	banNet, errGetBanNet := testDatabase.GetBanNetByAddress(ctx, net.ParseIP(rip))
@@ -134,7 +134,7 @@ func TestBan(t *testing.T) {
 		model.Cheating,
 		model.Cheating.String(),
 		"Mod Note",
-		model.System, 0, &banSteam), "Failed to create ban opts")
+		model.System, 0, model.Banned, &banSteam), "Failed to create ban opts")
 
 	require.NoError(t, testDatabase.SaveBan(ctx, &banSteam), "Failed to add ban")
 	b1Fetched := model.NewBannedPerson()
@@ -316,7 +316,7 @@ func TestBanASN(t *testing.T) {
 	var banASN model.BanASN
 	require.NoError(t, NewBanASN(
 		model.StringSID(author.SteamID.String()), "0",
-		"10m", model.Cheating, "", "", model.System, 200, &banASN))
+		"10m", model.Cheating, "", "", model.System, 200, model.Banned, &banASN))
 
 	require.NoError(t, testDatabase.SaveBanASN(context.Background(), &banASN))
 	require.True(t, banASN.BanASNId > 0)
@@ -340,6 +340,7 @@ func TestBanGroup(t *testing.T) {
 		model.System,
 		steamid.GID(int64(103000000000000000)+int64(rand.Int())),
 		golib.RandomString(10),
+		model.Banned,
 		&banGroup))
 	require.NoError(t, testDatabase.SaveBanGroup(context.TODO(), &banGroup))
 	require.True(t, banGroup.BanGroupId > 0)

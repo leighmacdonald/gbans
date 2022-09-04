@@ -157,7 +157,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                 <ListItemText>
                                     Its only possible to open a single report
                                     against a particular player. If you wish to
-                                    add more evidence or discus further an
+                                    add more evidence or discuss further an
                                     existing report, please open the existing
                                     report and add it by creating a new message
                                     there. You can see your current report

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { apiGetCurrentProfile, tokenKey } from '../api';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,20 +17,18 @@ export const LoginSuccess = () => {
         if (!token) {
             return;
         }
-        const permissionLevel = urlParams.get('permission_level');
-        if (permissionLevel) {
-            localStorage.setItem('permission_level', permissionLevel);
-        }
+        const permissionLevel = urlParams.get('permission_level') || '';
+        localStorage.setItem('permission_level', permissionLevel);
         let next_url = urlParams.get('next_url') ?? defaultLocation;
         setToken(token);
 
         apiGetCurrentProfile()
             .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', 'Failed to load profile :(');
-                    return;
-                }
-                setCurrentUser(response.result);
+                // if (!response.status || !response.result) {
+                //     sendFlash('error', 'Failed to load profile :(');
+                //     return;
+                // }
+                setCurrentUser(response?.result || GuestProfile);
             })
             .catch(() => {
                 next_url = defaultLocation;

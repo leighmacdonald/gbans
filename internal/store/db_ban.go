@@ -168,6 +168,42 @@ func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.BanSteam, 
 	return bans, nil
 }
 
+func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter *QueryFilter) ([]model.BanSteam, error) {
+	const query = `
+		SELECT ban_id, target_id, source_id, ban_type, reason, reason_text, note, valid_until, origin, 
+		       created_on, updated_on, deleted, CASE WHEN report_id IS NULL THEN 0 ELSE report_id END, 
+		       unban_reason_text, is_enabled, appeal_state
+		FROM ban
+		WHERE ban_id IN (WITH RECURSIVE appeals AS (
+			SELECT ban_id, ban_id as root_id
+			FROM ban_appeal
+			UNION ALL 
+			SELECT ba.ban_id as ban_id, ba.ban_message_id as root_id
+			FROM ban_appeal ba JOIN appeals b ON ba.ban_message_id = b.ban_id
+			WHERE ba.deleted = false
+		)
+		SELECT ban_id
+		FROM appeals
+		GROUP BY ban_id) AND deleted = false`
+
+	var bans []model.BanSteam
+	rows, errQuery := database.Query(ctx, query)
+	if errQuery != nil {
+		return nil, errQuery
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var ban model.BanSteam
+		if errScan := rows.Scan(&ban.BanID, &ban.TargetId, &ban.SourceId, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
+			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportId, &ban.UnbanReasonText,
+			&ban.IsEnabled, &ban.AppealState); errScan != nil {
+			return nil, errScan
+		}
+		bans = append(bans, ban)
+	}
+	return bans, nil
+}
+
 type BansQueryFilter struct {
 	QueryFilter
 	SteamId steamid.SID64 `json:"steam_id,omitempty"`

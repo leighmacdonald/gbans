@@ -164,11 +164,11 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 		modNote,
 		model.Bot,
 		0,
+		model.NoComm,
 		&banSteam,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	banSteam.BanType = model.NoComm
 	if errBan := BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
 		return errBan
 	}
@@ -213,6 +213,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 		modNote,
 		model.Bot,
 		asNum,
+		model.Banned,
 		&banASN,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
@@ -255,6 +256,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 		modNote,
 		model.Bot,
 		cidr,
+		model.Banned,
 		&banCIDR,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
@@ -308,6 +310,7 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		modNote,
 		model.Bot,
 		0,
+		model.Banned,
 		&banSteam,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")

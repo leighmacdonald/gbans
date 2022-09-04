@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -40,7 +41,13 @@ func filterWorker(ctx context.Context, database store.Store, botSendMessageChan 
 			}
 			matched, _ := ContainsFilteredWord(msg)
 			if matched {
-				addWarning(ctx, database, serverEvent.Source.SteamID, model.Language, botSendMessageChan)
+				warningChan <- newUserWarning{
+					SteamId: serverEvent.Source.SteamID,
+					userWarning: userWarning{
+						WarnReason: model.Language,
+						CreatedOn:  config.Now(),
+					},
+				}
 			}
 		case <-ctx.Done():
 			return

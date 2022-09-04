@@ -107,7 +107,7 @@ var seedCmd = &cobra.Command{
 			if errNewBan := app.NewBanSteam(
 				model.StringSID(config.General.Owner.String()),
 				model.StringSID(seed.Players[0].String()), "500h", model.External,
-				"", "imported", model.System, 0, &banSteam); errNewBan != nil {
+				"", "imported", model.System, 0, model.Banned, &banSteam); errNewBan != nil {
 				log.Errorf("Failed to create ban: %v", errNewBan)
 			}
 			if errSaveBan := database.SaveBan(ctx, &banSteam); errSaveBan != nil {

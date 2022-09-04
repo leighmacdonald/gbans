@@ -51,6 +51,7 @@ type BanStore interface {
 	GetBansSteam(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.BanSteam, error)
 	GetExpiredBans(ctx context.Context) ([]model.BanSteam, error)
+	GetAppealsByActivity(ctx context.Context, queryFilter *QueryFilter) ([]model.BanSteam, error)
 
 	GetBansNet(ctx context.Context) ([]model.BanCIDR, error)
 	GetBanNetById(ctx context.Context, netId int64, banCidr *model.BanCIDR) error

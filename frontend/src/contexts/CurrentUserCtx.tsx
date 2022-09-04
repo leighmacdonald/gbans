@@ -1,12 +1,12 @@
 import { createContext, useContext } from 'react';
-import { tokenKey, userKey, UserProfile } from '../api';
+import { PermissionLevel, tokenKey, userKey, UserProfile } from '../api';
 import SteamID from 'steamid';
 import { Nullable } from '../util/types';
 
 export const GuestProfile: UserProfile = {
     updated_on: new Date(),
     created_on: new Date(),
-    permission_level: 0,
+    permission_level: PermissionLevel.Guest,
     discord_id: '',
     avatar: '',
     avatarfull: '',

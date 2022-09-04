@@ -276,6 +276,18 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
     return resp;
 };
 
+export const apiGetAppeals = async (opts?: BansQueryFilter) => {
+    const resp = await apiCall<IAPIBanRecord[]>(
+        `/api/appeals`,
+        'POST',
+        opts ?? {}
+    );
+    if (resp.status && resp.result) {
+        resp.result = resp.result.map((r) => applyDateTime(r));
+    }
+    return resp;
+};
+
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
     await apiCall<IAPIBanRecord, BanPayloadSteam>(
         `/api/bans/steam/create`,

@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -24,7 +23,6 @@ func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) 
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	database.playerCache.Delete(steamID)
 	return nil
 }
 
@@ -59,7 +57,6 @@ func (database *pgStore) updatePerson(ctx context.Context, person *model.Person)
 		person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam, person.Muted); errExec != nil {
 		return Err(errExec)
 	}
-	database.playerCache.Delete(person.SteamID)
 	return nil
 }
 
@@ -88,7 +85,6 @@ func (database *pgStore) insertPerson(ctx context.Context, person *model.Person)
 		return Err(errExec)
 	}
 	person.IsNew = false
-	database.playerCache.Delete(person.SteamID)
 	return nil
 }
 
@@ -143,11 +139,6 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	if !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
-	cachedPerson, ok := database.playerCache.Get(sid64)
-	if ok && cachedPerson.SteamID.Valid() {
-		*person = cachedPerson
-		return nil
-	}
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 	errQuery := database.conn.QueryRow(ctx, query, sid64.Int64()).Scan(&person.SteamID, &person.CreatedOn,
@@ -160,7 +151,6 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	database.playerCache.Set(sid64, *person, cache.WithExpiration(time.Hour))
 	return nil
 }
 
@@ -241,9 +231,8 @@ func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 s
 	errGetPerson := database.GetPersonBySteamID(ctx, sid64, person)
 	if errGetPerson != nil && Err(errGetPerson) == ErrNoResult {
 		// FIXME
-		//person = model.NewPerson(sid64)
-		person.SteamID = sid64
-		person.IsNew = true
+		newPerson := model.NewPerson(sid64)
+		person = &newPerson
 		return database.SavePerson(ctx, person)
 	}
 	return errGetPerson

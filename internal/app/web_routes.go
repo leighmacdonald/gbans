@@ -67,7 +67,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/login"}
+		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login", "/pug"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -89,7 +89,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/servers/state", web.onAPIGetServerStates())
 	engine.GET("/api/stats", web.onAPIGetStats(database))
 	engine.GET("/api/competitive", web.onAPIGetCompHist())
-	engine.GET("/api/filtered_words", web.onAPIGetFilteredWords(database))
+
 	engine.GET("/api/players", web.onAPIGetPlayers(database))
 	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug(database))
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
@@ -141,6 +141,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	editorRoute.POST("/api/news", web.onAPIPostNewsCreate(database))
 	editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
 	editorRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
+	editorRoute.GET("/api/filters", web.onAPIGetWordFilters(database))
 
 	// Moderator access
 	modRoute := engine.Use(authMiddleware(database, model.PModerator))
@@ -149,6 +150,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages(database))
 	modRoute.GET("/api/message/:person_message_id/context", web.onAPIGetMessageContext(database))
 	modRoute.POST("/api/messages", web.onAPIQueryMessages(database))
+
+	modRoute.POST("/api/appeals", web.onAPIGetAppeals(database))
 
 	modRoute.POST("/api/bans/steam", web.onAPIGetBansSteam(database))
 	modRoute.POST("/api/bans/steam/create", web.onAPIPostBanSteamCreate(database))

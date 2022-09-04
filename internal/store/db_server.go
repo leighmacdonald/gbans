@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	cache "github.com/Code-Hex/go-generics-cache"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -70,11 +69,6 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 }
 
 func (database *pgStore) GetServerByName(ctx context.Context, serverName string, server *model.Server) error {
-	cachedServer, ok := database.serverCache.Get(serverName)
-	if ok && cachedServer.ServerID > 0 {
-		*server = cachedServer
-		return nil
-	}
 	query, args, errQueryArgs := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
@@ -82,16 +76,18 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := database.conn.QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
+	return Err(database.conn.QueryRow(ctx, query, args...).
+		Scan(
+			&server.ServerID,
+			&server.ServerNameShort,
+			&server.ServerNameLong,
+			&server.Token,
+			&server.Address,
+			&server.Port,
+			&server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-			&server.DefaultMap, &server.Deleted, &server.LogSecret); errQuery != nil {
-		return Err(errQuery)
-	}
-	s := *server
-	database.serverCache.Set(serverName, s, cache.WithExpiration(time.Hour))
-	return nil
+			&server.DefaultMap, &server.Deleted, &server.LogSecret))
 }
 
 // SaveServer updates or creates the server data in the database

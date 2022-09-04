@@ -57,9 +57,17 @@ var banSteamCmd = &cobra.Command{
 		}
 		var banSteam model.BanSteam
 		if errOpts := app.NewBanSteam(
-			model.StringSID("0"), model.StringSID(sid.String()),
-			model.Duration(duration), model.Cheating, "", "",
-			model.System, 0, &banSteam); errOpts != nil {
+			model.StringSID("0"),
+			model.StringSID(sid.String()),
+			model.Duration(duration),
+			model.Cheating,
+			"",
+			"",
+			model.System,
+			0,
+			model.Banned,
+			&banSteam,
+		); errOpts != nil {
 			log.Fatalf("Invalid option: %v", errOpts)
 		}
 		if errSaveBan := db.SaveBan(ctx, &banSteam); errSaveBan != nil {
@@ -98,7 +106,12 @@ var banCIDRCmd = &cobra.Command{
 			model.Duration(duration),
 			model.Cheating,
 			"",
-			"", model.System, cidr, &banCIDR); errNewBanNet != nil {
+			"",
+			model.System,
+			cidr,
+			model.Banned,
+			&banCIDR,
+		); errNewBanNet != nil {
 			log.WithFields(log.Fields{"cidr": cidr}).Fatalf("Failed to create BanCIDR instance: %v", errNewBanNet)
 		}
 		if errSaveBanNet := db.SaveBanNet(ctx, &banCIDR); errSaveBanNet != nil {
@@ -123,8 +136,18 @@ var banASNCmd = &cobra.Command{
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		var banASN model.BanASN
-		if errBanASN := app.NewBanASN(model.StringSID(config.General.Owner.String()), model.StringSID("0"), model.Duration(duration),
-			model.Cheating, "", "", model.System, asn, &banASN); errBanASN != nil {
+		if errBanASN := app.NewBanASN(
+			model.StringSID(config.General.Owner.String()),
+			"0",
+			model.Duration(duration),
+			model.Cheating,
+			"",
+			"",
+			model.System,
+			asn,
+			model.Banned,
+			&banASN,
+		); errBanASN != nil {
 			log.Fatalf("Error: %v", errBanASN)
 		}
 		if errSave := db.SaveBanASN(ctx, &banASN); errSave != nil {

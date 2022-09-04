@@ -234,7 +234,7 @@ export const BanPage = (): JSX.Element => {
                                             <ListItem>
                                                 <ListItemText
                                                     primary={'Author'}
-                                                    secondary={ban.ban.target_id.toString()}
+                                                    secondary={ban.ban.source_id.toString()}
                                                 />
                                             </ListItem>
                                         )}

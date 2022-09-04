@@ -31,6 +31,8 @@ import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
+import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import useTheme from '@mui/material/styles/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { Flashes } from './Flashes';
@@ -129,6 +131,11 @@ export const TopBar = () => {
         }
         if (user.permission_level >= PermissionLevel.Admin) {
             items.push({
+                to: '/pug',
+                text: 'PUGs',
+                icon: <SportsKabaddiIcon sx={topColourOpts} />
+            });
+            items.push({
                 to: '/logs',
                 text: 'Logs',
                 icon: <QueryStatsIcon sx={topColourOpts} />
@@ -173,6 +180,11 @@ export const TopBar = () => {
                 to: '/admin/reports',
                 text: 'Reports',
                 icon: <ReportIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/appeals',
+                text: 'Ban Appeals',
+                icon: <LiveHelpIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/chat',

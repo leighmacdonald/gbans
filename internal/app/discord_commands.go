@@ -162,6 +162,12 @@ func (bot *discord) botRegisterSlashCommands() error {
 				optUserID,
 				optDuration,
 				optBanReason,
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        OptNote,
+					Description: "Mod only notes for the mute reason",
+					Required:    true,
+				},
 			},
 		},
 		{

@@ -284,7 +284,19 @@ func (web *web) onAPIPostBansGroupCreate(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var banSteamGroup model.BanGroup
-		if errBanSteamGroup := NewBanSteamGroup(model.StringSID(currentUserProfile(ctx).SteamID.String()), banRequest.TargetId, model.Duration(banRequest.Duration), banRequest.Reason, banRequest.ReasonText, "", model.Web, banRequest.GroupId, "", &banSteamGroup); errBanSteamGroup != nil {
+		if errBanSteamGroup := NewBanSteamGroup(
+			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			banRequest.TargetId,
+			model.Duration(banRequest.Duration),
+			banRequest.Reason,
+			banRequest.ReasonText,
+			"",
+			model.Web,
+			banRequest.GroupId,
+			"",
+			banRequest.BanType,
+			&banSteamGroup,
+		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
@@ -317,9 +329,18 @@ func (web *web) onAPIPostBansASNCreate(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var banASN model.BanASN
-		if errBanSteamGroup := NewBanASN(model.StringSID(currentUserProfile(ctx).SteamID.String()), banRequest.TargetId,
-			model.Duration(banRequest.Duration), banRequest.Reason, banRequest.ReasonText, banRequest.Note,
-			model.Web, banRequest.ASNum, &banASN); errBanSteamGroup != nil {
+		if errBanSteamGroup := NewBanASN(
+			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			banRequest.TargetId,
+			model.Duration(banRequest.Duration),
+			banRequest.Reason,
+			banRequest.ReasonText,
+			banRequest.Note,
+			model.Web,
+			banRequest.ASNum,
+			banRequest.BanType,
+			&banASN,
+		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
@@ -351,13 +372,22 @@ func (web *web) onAPIPostBansCIDRCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
-
 		var banCIDR model.BanCIDR
-		if errBanCIDR := NewBanCIDR(model.StringSID(currentUserProfile(ctx).SteamID.String()), banRequest.TargetId, model.Duration(banRequest.Duration), banRequest.Reason, banRequest.ReasonText, banRequest.Note, model.Web, banRequest.CIDR, &banCIDR); errBanCIDR != nil {
+		if errBanCIDR := NewBanCIDR(
+			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			banRequest.TargetId,
+			model.Duration(banRequest.Duration),
+			banRequest.Reason,
+			banRequest.ReasonText,
+			banRequest.Note,
+			model.Web,
+			banRequest.CIDR,
+			banRequest.BanType,
+			&banCIDR,
+		); errBanCIDR != nil {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-
 		if errBan := BanCIDR(ctx, database, &banCIDR); errBan != nil {
 			if errors.Is(errBan, store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, "Duplicate cidr ban")
@@ -386,7 +416,18 @@ func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var banSteam model.BanSteam
-		if errBanSteam := NewBanSteam(model.StringSID(currentUserProfile(ctx).SteamID.String()), banRequest.TargetId, model.Duration(banRequest.Duration), banRequest.Reason, banRequest.ReasonText, banRequest.Note, model.Web, banRequest.ReportId, &banSteam); errBanSteam != nil {
+		if errBanSteam := NewBanSteam(
+			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			banRequest.TargetId,
+			model.Duration(banRequest.Duration),
+			banRequest.Reason,
+			banRequest.ReasonText,
+			banRequest.Note,
+			model.Web,
+			banRequest.ReportId,
+			banRequest.BanType,
+			&banSteam,
+		); errBanSteam != nil {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
@@ -400,6 +441,7 @@ func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
+
 		responseOK(ctx, http.StatusCreated, banSteam)
 
 	}
@@ -703,6 +745,11 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userProfile := currentUserProfile(ctx)
 		if !userProfile.SteamID.Valid() {
+			log.WithFields(log.Fields{
+				"sid":   userProfile.SteamID,
+				"name":  userProfile.Name,
+				"perms": userProfile.PermissionLevel,
+			}).Errorf("Failed tp load user profile")
 			responseErr(ctx, http.StatusForbidden, nil)
 			return
 		}
@@ -799,22 +846,14 @@ func (web *web) onAPIProfile(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIGetFilteredWords(database store.Store) gin.HandlerFunc {
-	type resp struct {
-		Count int      `json:"count"`
-		Words []string `json:"words"`
-	}
+func (web *web) onAPIGetWordFilters(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		words, errGetFilters := database.GetFilters(ctx)
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		var fWords []string
-		for _, word := range words {
-			fWords = append(fWords, word.Patterns...)
-		}
-		responseOK(ctx, http.StatusOK, resp{Count: len(fWords), Words: fWords})
+		responseOK(ctx, http.StatusOK, words)
 	}
 }
 
@@ -886,6 +925,23 @@ func (web *web) onAPIGetBanByID(database store.Store) gin.HandlerFunc {
 		}
 		loadBanMeta(&bannedPerson)
 		responseOK(ctx, http.StatusOK, bannedPerson)
+	}
+}
+
+func (web *web) onAPIGetAppeals(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var queryFilter store.QueryFilter
+		if errBind := ctx.BindJSON(&queryFilter); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		bans, errBans := database.GetAppealsByActivity(ctx, &queryFilter)
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Errorf("Failed to fetch bans: %v", errBans)
+			return
+		}
+		responseOK(ctx, http.StatusOK, bans)
 	}
 }
 

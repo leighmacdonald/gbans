@@ -154,7 +154,7 @@ type BaseBanOpts struct {
 type BanSteamOpts struct {
 	BaseBanOpts `json:"base_ban_opts"`
 	BanId       int64 `json:"ban_id"`
-	ReportId    int   `json:"report_id"`
+	ReportId    int64 `json:"report_id"`
 }
 
 type BanSteamGroupOpts struct {
@@ -272,7 +272,7 @@ func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
 type BanSteam struct {
 	BanBase
 	BanID    int64 `db:"ban_id" json:"ban_id"`
-	ReportId int   `json:"report_id"`
+	ReportId int64 `json:"report_id"`
 }
 
 func (banSteam *BanSteam) Apply(opts BanSteamOpts) {

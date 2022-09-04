@@ -19,7 +19,8 @@ import (
 )
 
 func newBaseBanOpts(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
-	reason model.Reason, reasonText string, modNote string, origin model.Origin, opts *model.BaseBanOpts) error {
+	reason model.Reason, reasonText string, modNote string, origin model.Origin,
+	banType model.BanType, opts *model.BaseBanOpts) error {
 	sourceSid, errSource := source.SID64()
 	if errSource != nil {
 		return errors.Wrapf(errSource, "Failed to parse source id")
@@ -31,6 +32,9 @@ func newBaseBanOpts(source model.SteamIDProvider, target model.StringSID, durati
 			return errors.New("Invalid target id")
 		}
 		targetSid = newTargetSid
+	}
+	if !(banType == model.Banned || banType == model.NoComm) {
+		return errors.New("New ban must be ban or nocomm")
 	}
 	durationActual, errDuration := duration.Value()
 	if errDuration != nil {
@@ -47,22 +51,23 @@ func newBaseBanOpts(source model.SteamIDProvider, target model.StringSID, durati
 	opts.ReasonText = reasonText
 	opts.Origin = origin
 	opts.Deleted = false
-	opts.BanType = model.Banned
+	opts.BanType = banType
 	opts.IsEnabled = true
 	return nil
 }
 
 func NewBanSteam(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
-	reason model.Reason, reasonText string, modNote string, origin model.Origin, reportId int64, banSteam *model.BanSteam) error {
+	reason model.Reason, reasonText string, modNote string, origin model.Origin, reportId int64, banType model.BanType,
+	banSteam *model.BanSteam) error {
 	var opts model.BanSteamOpts
-	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
 	if reportId < 0 {
 		return errors.New("Invalid report ID")
 	}
-	opts.ReportId = int(reportId)
+	opts.ReportId = reportId
 	banSteam.Apply(opts)
 	banSteam.ReportId = opts.ReportId
 	banSteam.BanID = opts.BanId
@@ -77,7 +82,7 @@ func BanSteam(ctx context.Context, database store.Store, banSteam *model.BanStea
 	}
 	existing := model.NewBannedPerson()
 	errGetExistingBan := database.GetBanBySteamID(ctx, banSteam.TargetId, &existing, false)
-	if existing.Ban.BanID > 0 && existing.Ban.BanType == model.Banned {
+	if existing.Ban.BanID > 0 {
 		return store.ErrDuplicate
 	}
 	if errGetExistingBan != nil && errGetExistingBan != store.ErrNoResult {
@@ -87,6 +92,33 @@ func BanSteam(ctx context.Context, database store.Store, banSteam *model.BanStea
 	if errSave := database.SaveBan(ctx, banSteam); errSave != nil {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
+	var updateAppealState = func(reportId int64) error {
+		var report model.Report
+		if errReport := database.GetReport(ctx, reportId, &report); errReport != nil {
+			log.WithFields(log.Fields{
+				"report_id": reportId,
+			}).Errorf("Failed to get associated report for ban")
+			return errors.New("Failed to get report")
+		}
+		report.ReportStatus = model.ClosedWithAction
+		if errSaveReport := database.SaveReport(ctx, &report); errSaveReport != nil {
+			log.WithFields(log.Fields{
+				"report_id": reportId,
+			}).Errorf("Failed to set appeal state for ban")
+			return errors.New("Failed to update report state")
+		}
+		return nil
+	}
+	// Close the report if the ban was attached to one
+	if banSteam.ReportId > 0 {
+		if errRep := updateAppealState(banSteam.ReportId); errRep != nil {
+			return errRep
+		}
+		log.WithFields(log.Fields{
+			"report_id": banSteam.ReportId,
+		}).Infof("Report state set to closed")
+	}
+
 	go func(payloadChan chan discordPayload) {
 		banNotice := &discordgo.MessageEmbed{
 			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", banSteam.TargetId),
@@ -127,9 +159,9 @@ func BanSteam(ctx context.Context, database store.Store, banSteam *model.BanStea
 }
 
 func NewBanASN(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
-	reason model.Reason, reasonText string, modNote string, origin model.Origin, ASNum int64, banASN *model.BanASN) error {
+	reason model.Reason, reasonText string, modNote string, origin model.Origin, ASNum int64, banType model.BanType, banASN *model.BanASN) error {
 	var opts model.BanASNOpts
-	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -173,9 +205,11 @@ func BanASN(ctx context.Context, database store.Store, banASN *model.BanASN) err
 }
 
 func NewBanCIDR(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
-	reason model.Reason, reasonText string, modNote string, origin model.Origin, cidr string, banCIDR *model.BanCIDR) error {
+	reason model.Reason, reasonText string, modNote string, origin model.Origin, cidr string,
+	banType model.BanType, banCIDR *model.BanCIDR) error {
 	var opts model.BanCIDROpts
-	if errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, &opts.BaseBanOpts); errBaseOpts != nil {
+	if errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin,
+		banType, &opts.BaseBanOpts); errBaseOpts != nil {
 		return errBaseOpts
 	}
 	_, parsedNetwork, errParse := net.ParseCIDR(cidr)
@@ -225,9 +259,9 @@ func BanCIDR(ctx context.Context, database store.Store, banNet *model.BanCIDR) e
 
 func NewBanSteamGroup(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
 	reason model.Reason, reasonText string, modNote string, origin model.Origin, groupId steamid.GID, groupName string,
-	banGroup *model.BanGroup) error {
+	banType model.BanType, banGroup *model.BanGroup) error {
 	var opts model.BanSteamGroupOpts
-	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}

@@ -92,7 +92,8 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	}
 	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
-		log.Errorf("Count not cast store.Person from session")
+		log.Errorf("Could not cast store.Person from session")
+		//ctx.Set(ctxKeyUserProfile, nil)
 		return model.NewUserProfile(0)
 	}
 	return person

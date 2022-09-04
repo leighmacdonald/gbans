@@ -47,6 +47,9 @@ import { AdminChat } from './page/AdminChat';
 import { Login } from './page/Login';
 import { Nullable } from './util/types';
 import { ErrorBoundary } from './component/ErrorBoundary';
+import { AdminFilters } from './page/AdminFilters';
+import { AdminAppeals } from './page/AdminAppeals';
+import { Pug } from './page/Pug';
 
 export interface AppProps {
     initialToken?: string;
@@ -245,13 +248,26 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/logs'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                {' '}
                                                                 <PrivateRoute
                                                                     permission={
                                                                         PermissionLevel.Admin
                                                                     }
                                                                 >
                                                                     <MatchListPage />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/pug'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <Pug />
                                                                 </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }
@@ -298,7 +314,6 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/report'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                {' '}
                                                                 <PrivateRoute
                                                                     permission={
                                                                         PermissionLevel.User
@@ -320,7 +335,6 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/admin/ban'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                {' '}
                                                                 <PrivateRoute
                                                                     permission={
                                                                         PermissionLevel.Moderator
@@ -340,7 +354,7 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                                         PermissionLevel.Moderator
                                                                     }
                                                                 >
-                                                                    <AdminNews />
+                                                                    <AdminFilters />
                                                                 </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }
@@ -349,13 +363,26 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/admin/reports'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                {' '}
                                                                 <PrivateRoute
                                                                     permission={
                                                                         PermissionLevel.Moderator
                                                                     }
                                                                 >
                                                                     <AdminReports />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/admin/appeals'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Moderator
+                                                                    }
+                                                                >
+                                                                    <AdminAppeals />
                                                                 </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }
