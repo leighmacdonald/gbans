@@ -693,12 +693,12 @@ func (web *web) onAPIGetServerStates() gin.HandlerFunc {
 	}
 }
 
-func (web *web) queryFilterFromContext(ctx *gin.Context) (*store.QueryFilter, error) {
+func (web *web) queryFilterFromContext(ctx *gin.Context) (store.QueryFilter, error) {
 	var queryFilter store.QueryFilter
 	if errBind := ctx.BindUri(&queryFilter); errBind != nil {
-		return nil, errBind
+		return queryFilter, errBind
 	}
-	return &queryFilter, nil
+	return queryFilter, nil
 }
 
 func (web *web) onAPIGetPlayers(database store.Store) gin.HandlerFunc {
@@ -760,7 +760,7 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 func (web *web) onAPIExportBansTF2BD(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
-		bans, errBans := database.GetBansSteam(ctx, &store.BansQueryFilter{
+		bans, errBans := database.GetBansSteam(ctx, store.BansQueryFilter{
 			QueryFilter: store.QueryFilter{Limit: 10000},
 			SteamId:     0,
 		})
@@ -857,6 +857,109 @@ func (web *web) onAPIGetWordFilters(database store.Store) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPIPostWordMatch(database store.Store) gin.HandlerFunc {
+	type matchRequest struct {
+		Query string
+	}
+	return func(ctx *gin.Context) {
+		var req matchRequest
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.WithFields(log.Fields{"fn": "onAPIPostWordMatch", "err": errBind.Error()}).
+				Errorf("Failed to parse request")
+			return
+		}
+		words, errGetFilters := database.GetFilters(ctx)
+		if errGetFilters != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		var matches []model.Filter
+		for _, filter := range words {
+			if filter.Match(req.Query) {
+				matches = append(matches, filter)
+			}
+		}
+		responseOK(ctx, http.StatusOK, matches)
+	}
+}
+
+func (web *web) onAPIDeleteWordFilter(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		wordId, wordIdErr := getInt64Param(ctx, "word_id")
+		if wordIdErr != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		var filter model.Filter
+		if errGet := database.GetFilterByID(ctx, wordId, &filter); errGet != nil {
+			if errors.Is(errGet, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		if errDrop := database.DropFilter(ctx, &filter); errDrop != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, nil)
+	}
+}
+
+func (web *web) onAPIPostWordFilter(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var filter model.Filter
+		if errBind := ctx.BindJSON(&filter); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.WithFields(log.Fields{"fn": "onAPIPostWordFilter", "err": errBind.Error()}).
+				Errorf("Failed to parse request")
+			return
+		}
+		if filter.FilterName == "" || len(filter.Patterns) == 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		now := config.Now()
+		if filter.WordID > 0 {
+			var existingFilter model.Filter
+			if errGet := database.GetFilterByID(ctx, filter.WordID, &existingFilter); errGet != nil {
+				if errors.Is(errGet, store.ErrNoResult) {
+					responseErr(ctx, http.StatusNotFound, nil)
+					return
+				}
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+			existingFilter.UpdatedOn = now
+			existingFilter.FilterName = filter.FilterName
+			existingFilter.Patterns = filter.Patterns
+			if errSave := database.SaveFilter(ctx, &existingFilter); errSave != nil {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+			filter = existingFilter
+		} else {
+			newFilter := model.Filter{
+				WordID:           0,
+				Patterns:         filter.Patterns,
+				CreatedOn:        now,
+				UpdatedOn:        now,
+				DiscordId:        "",
+				DiscordCreatedOn: nil,
+				FilterName:       filter.FilterName,
+			}
+			if errSave := database.SaveFilter(ctx, &newFilter); errSave != nil {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+			filter = newFilter
+		}
+		responseOK(ctx, http.StatusOK, filter)
+	}
+}
+
 func (web *web) onAPIGetCompHist() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		sidStr := ctx.DefaultQuery("sid", "")
@@ -935,7 +1038,7 @@ func (web *web) onAPIGetAppeals(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		bans, errBans := database.GetAppealsByActivity(ctx, &queryFilter)
+		bans, errBans := database.GetAppealsByActivity(ctx, queryFilter)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans: %v", errBans)
@@ -952,7 +1055,7 @@ func (web *web) onAPIGetBansSteam(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		bans, errBans := database.GetBansSteam(ctx, &queryFilter)
+		bans, errBans := database.GetBansSteam(ctx, queryFilter)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Errorf("Failed to fetch bans: %v", errBans)
@@ -1532,8 +1635,8 @@ func (web *web) onAPISetReportStatus(database store.ReportStore) gin.HandlerFunc
 		responseOK(c, http.StatusAccepted, nil)
 		log.WithFields(log.Fields{
 			"report_id": report.ReportId,
-			"from":      original,
-			"to":        report.ReportStatus,
+			"from":      original.String(),
+			"to":        report.ReportStatus.String(),
 		}).Infof("Report status changed")
 	}
 }

@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net"
 	"os"
@@ -49,6 +50,7 @@ func init() {
 	serverStateStatusMu = &sync.RWMutex{}
 	logFileChan = make(chan *LogFilePayload, 10)
 	discordSendMsg = make(chan discordPayload, 5)
+	warningChan = make(chan newUserWarning)
 	serverStateA2S = map[string]a2s.ServerInfo{}
 	serverStateStatus = map[string]extra.Status{}
 
@@ -117,10 +119,14 @@ type newUserWarning struct {
 	userWarning
 }
 
-// warnWorker handles incoming warnings
+// warnWorker handles tracking and applying warnings based on incoming events
 func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 	botSendMessageChan chan discordPayload, database store.Store) {
 	warnings := map[steamid.SID64][]userWarning{}
+	eventChan := make(chan model.ServerEvent)
+	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
+		log.Fatalf("Failed to register event reader: %v", errRegister)
+	}
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
@@ -148,7 +154,7 @@ func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					0,
 					model.Banned,
 					&banSteam); errOpts != nil {
-					log.Errorf("Failed to create warning ban banSteam: %v", errOpts)
+					log.Errorf("Failed to create warning ban: %v", errOpts)
 					return
 				}
 
@@ -169,6 +175,27 @@ func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
 						Errorf("Failed to apply warning action: %v", errBan)
 				}
+			}
+		case serverEvent := <-eventChan:
+			msg, found := serverEvent.MetaData["msg"].(string)
+			if !found {
+				continue
+			}
+			matchedWord, matchedFilter := findFilteredWordMatch(msg)
+			if matchedFilter != nil {
+				warningChan <- newUserWarning{
+					SteamId: serverEvent.Source.SteamID,
+					userWarning: userWarning{
+						WarnReason: model.Language,
+						CreatedOn:  config.Now(),
+					},
+				}
+				log.WithFields(log.Fields{
+					"word":        fmt.Sprintf("||%s||", matchedWord),
+					"msg":         msg,
+					"filter_id":   matchedFilter.WordID,
+					"filter_name": matchedFilter.FilterName,
+				}).Infof("User triggered word filter")
 			}
 		case <-ticker.C:
 			now := config.Now()
@@ -519,7 +546,6 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go profileUpdater(ctx, database)
 	go warnWorker(ctx, warningChan, botSendMessageChan, database)
 	go logReader(ctx, logFileC, database)
-	go filterWorker(ctx, database, botSendMessageChan)
 	go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 	//go matchSummarizer(ctx, database)

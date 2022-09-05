@@ -51,7 +51,7 @@ func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) e
 	return nil
 }
 
-func (database *pgStore) GetFilterByID(ctx context.Context, wordId int, f *model.Filter) error {
+func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *model.Filter) error {
 	const query = `SELECT word_id, word, created_on,discord_id, discord_created_on, filter_name 
 		FROM filtered_word 
 		WHERE word_id = $1`

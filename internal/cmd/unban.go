@@ -86,7 +86,7 @@ var unbanCIDRCmd = &cobra.Command{
 			if errDropBanNet := database.DropBanNet(ctx, &banNet); errDropBanNet != nil {
 				log.Fatalf("Failed to drop ban net: %v", errDropBanNet)
 			}
-			log.WithFields(log.Fields{"cidr": banNet.CIDR.String()}).Infof("BanSteam net dropped")
+			log.WithFields(log.Fields{"cidr": banNet.CIDR.String()}).Infof("Ban net dropped")
 		}
 	},
 }

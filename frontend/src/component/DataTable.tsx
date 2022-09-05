@@ -59,6 +59,7 @@ export interface UserTableProps<T> {
     query?: string;
     isLoading?: boolean;
     preSelectIndex?: number;
+    filterFn?: (query: string, rows: T[]) => T[];
 }
 
 export const defaultRenderer = (
@@ -93,7 +94,8 @@ export const DataTable = <T,>({
     onRowClick,
     isLoading,
     defaultSortOrder = 'desc',
-    preSelectIndex
+    preSelectIndex,
+    filterFn
 }: UserTableProps<T>) => {
     const theme = useTheme();
     const [page, setPage] = useState(0);
@@ -135,10 +137,17 @@ export const DataTable = <T,>({
                 ).length > 0
             );
         };
-        return stableSort<T>(
-            (rows ?? []).filter(filterText),
-            compare(order, sortColumn)
-        );
+        if (filterFn instanceof Function) {
+            return stableSort<T>(
+                filterFn(query, rows) ?? [],
+                compare(order, sortColumn)
+            );
+        } else {
+            return stableSort<T>(
+                (rows ?? []).filter(filterText),
+                compare(order, sortColumn)
+            );
+        }
     }, [rows, order, sortColumn, query, columns]);
 
     useEffect(() => {

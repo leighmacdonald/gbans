@@ -48,10 +48,10 @@ type BanStore interface {
 	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *model.BannedPerson, deletedOk bool) error
 	SaveBan(ctx context.Context, ban *model.BanSteam) error
 	DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error
-	GetBansSteam(ctx context.Context, queryFilter *BansQueryFilter) ([]model.BannedPerson, error)
-	GetBansOlderThan(ctx context.Context, queryFilter *QueryFilter, time time.Time) ([]model.BanSteam, error)
+	GetBansSteam(ctx context.Context, queryFilter BansQueryFilter) ([]model.BannedPerson, error)
+	GetBansOlderThan(ctx context.Context, queryFilter QueryFilter, time time.Time) ([]model.BanSteam, error)
 	GetExpiredBans(ctx context.Context) ([]model.BanSteam, error)
-	GetAppealsByActivity(ctx context.Context, queryFilter *QueryFilter) ([]model.BanSteam, error)
+	GetAppealsByActivity(ctx context.Context, queryFilter QueryFilter) ([]model.BanSteam, error)
 
 	GetBansNet(ctx context.Context) ([]model.BanCIDR, error)
 	GetBanNetById(ctx context.Context, netId int64, banCidr *model.BanCIDR) error
@@ -94,7 +94,7 @@ type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *model.Person) error
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
-	GetPeople(ctx context.Context, qf *QueryFilter) (model.People, error)
+	GetPeople(ctx context.Context, qf QueryFilter) (model.People, error)
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *model.Person) error
 	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
@@ -109,7 +109,7 @@ type PersonStore interface {
 type FilterStore interface {
 	SaveFilter(ctx context.Context, filter *model.Filter) error
 	DropFilter(ctx context.Context, filter *model.Filter) error
-	GetFilterByID(ctx context.Context, wordId int, filter *model.Filter) error
+	GetFilterByID(ctx context.Context, wordId int64, filter *model.Filter) error
 	GetFilterByName(ctx context.Context, filterName string, filter *model.Filter) error
 	GetFilters(ctx context.Context) ([]model.Filter, error)
 }

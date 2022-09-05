@@ -391,7 +391,7 @@ func banSweeper(ctx context.Context, database store.Store) {
 						if errDrop := database.DropBan(ctx, &expiredBan, false); errDrop != nil {
 							log.Errorf("Failed to drop expired expiredBan: %v", errDrop)
 						} else {
-							banType := "BanSteam"
+							banType := "Ban"
 							if expiredBan.BanType == model.NoComm {
 								banType = "Mute"
 							}

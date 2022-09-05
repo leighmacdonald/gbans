@@ -307,12 +307,13 @@ type Stats struct {
 }
 
 type Filter struct {
-	WordID           int       `json:"word_id,omitempty"`
-	Patterns         []string  `json:"patterns,omitempty"`
-	CreatedOn        time.Time `json:"created_on"`
-	DiscordId        string    `json:"discord_id,omitempty"`
-	DiscordCreatedOn time.Time `json:"discord_created_on"`
-	FilterName       string    `json:"filter_name"`
+	WordID           int64      `json:"word_id,omitempty"`
+	Patterns         []string   `json:"patterns,omitempty"`
+	CreatedOn        time.Time  `json:"created_on"`
+	UpdatedOn        time.Time  `json:"updated_on"`
+	DiscordId        string     `json:"discord_id,omitempty"`
+	DiscordCreatedOn *time.Time `json:"discord_created_on"`
+	FilterName       string     `json:"filter_name"`
 }
 
 func (f *Filter) Match(value string) bool {
@@ -508,6 +509,19 @@ const (
 	ClosedWithoutAction
 	ClosedWithAction
 )
+
+func (status ReportStatus) String() string {
+	switch status {
+	case ClosedWithoutAction:
+		return "Closed without action"
+	case ClosedWithAction:
+		return "Closed with action"
+	case Opened:
+		return "Opened"
+	default:
+		return "Need more information"
+	}
+}
 
 type Report struct {
 	ReportId     int64         `json:"report_id"`

@@ -144,7 +144,8 @@ func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 				continue
 			}
 			filter.DiscordId = rule.ID
-			filter.DiscordCreatedOn = config.Now()
+			now := config.Now()
+			filter.DiscordCreatedOn = &now
 			if errSaveFilter := bot.database.SaveFilter(bot.ctx, &filter); errSaveFilter != nil {
 				log.Errorf("Failed to save discord rule id: %v", errSaveFilter)
 			}

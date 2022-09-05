@@ -40,7 +40,7 @@ var banSteamCmd = &cobra.Command{
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
-			log.Fatal("BanSteam reason cannot be empty")
+			log.Fatal("Ban reason cannot be empty")
 		}
 		if duration == "" {
 			log.Fatal("Duration cannot be empty")
@@ -91,7 +91,7 @@ var banCIDRCmd = &cobra.Command{
 			log.Fatalf("Failed to setup db connection: %v", errNewStore)
 		}
 		if reason == "" {
-			log.Fatal("BanSteam reason cannot be empty")
+			log.Fatal("Ban reason cannot be empty")
 		}
 		if duration == "" {
 			log.Fatal("Duration cannot be empty")
@@ -159,16 +159,16 @@ var banASNCmd = &cobra.Command{
 
 func init() {
 	banSteamCmd.Flags().StringVarP(&steamProfile, "sid", "s", "", "SteamID or profile to ban")
-	banSteamCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
+	banSteamCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
 	banSteamCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 
 	banCIDRCmd.Flags().StringVarP(&steamProfile, "sid", "s", "", "SteamID or profile to ban")
-	banCIDRCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
+	banCIDRCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
 	banCIDRCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 	banCIDRCmd.Flags().StringVarP(&cidr, "cidr", "n", "", "Network CIDR: 1.2.3.0/24, 1.2.3.4/32")
 
 	banASNCmd.Flags().Int64VarP(&asn, "asn", "a", 0, "Autonomous Systems Number to ban eg: 10551")
-	banASNCmd.Flags().StringVarP(&reason, "reason", "r", "", "BanSteam reason")
+	banASNCmd.Flags().StringVarP(&reason, "reason", "r", "", "Ban reason")
 	banASNCmd.Flags().StringVarP(&duration, "duration", "d", "0", "Duration of ban")
 
 	banCmd.AddCommand(banSteamCmd)

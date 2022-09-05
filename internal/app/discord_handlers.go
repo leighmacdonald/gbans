@@ -362,6 +362,16 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 			return errCommandFailed
 		}
 	}
+	q := store.NewBansQueryFilter(sid)
+	q.Deleted = true
+	// TODO Get count of old bans
+	oldBans, errOld := bot.database.GetBansSteam(ctx, q)
+	if errOld != nil {
+		if !errors.Is(errOld, store.ErrNoResult) {
+			log.Errorf("Failed to fetch old bans")
+		}
+	}
+
 	bannedNets, errGetBanNet := bot.database.GetBanNetByAddress(ctx, player.IPAddr)
 	if errGetBanNet != nil {
 		if !errors.Is(errGetBanNet, store.ErrNoResult) {
@@ -483,10 +493,22 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		addFieldInline(embed, "Game Bans", fmt.Sprintf("count: %d", player.GameBans))
 	}
 	if player.CommunityBanned {
-		addFieldInline(embed, "Com. BanSteam", "true")
+		addFieldInline(embed, "Com. Ban", "true")
 	}
 	if player.EconomyBan != "" {
-		addFieldInline(embed, "Econ BanSteam", player.EconomyBan)
+		addFieldInline(embed, "Econ Ban", player.EconomyBan)
+	}
+	if len(oldBans) > 0 {
+		numMutes, numBans := 0, 0
+		for _, ob := range oldBans {
+			if ob.Ban.BanType == model.Banned {
+				numBans++
+			} else {
+				numMutes++
+			}
+		}
+		addFieldInline(embed, "Total Mutes", fmt.Sprintf("%d", numMutes))
+		addFieldInline(embed, "Total Bans", fmt.Sprintf("%d", numBans))
 	}
 	if ban.Ban.BanID > 0 {
 		addFieldInline(embed, "Reason", reason)
@@ -550,7 +572,7 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(steamId)
-	if errPersonBySID := PersonBySID(ctx, bot.database, steamId, "", &person); errPersonBySID != nil {
+	if errPersonBySID := PersonBySID(ctx, bot.database, steamId, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	ipRecords, errGetPersonIPHist := bot.database.GetPersonIPHistory(ctx, steamId, 20)
@@ -675,7 +697,7 @@ func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(targetSid64)
-	if errPersonBySID := PersonBySID(ctx, bot.database, targetSid64, "", &person); errPersonBySID != nil {
+	if errPersonBySID := PersonBySID(ctx, bot.database, targetSid64, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	var playerInfo model.PlayerInfo
@@ -936,7 +958,7 @@ func (bot *discord) onFilterDel(ctx context.Context, _ *discordgo.Session, inter
 		return errors.New("Invalid filter id")
 	}
 	var filter model.Filter
-	if errGetFilter := bot.database.GetFilterByID(ctx, int(wordId), &filter); errGetFilter != nil {
+	if errGetFilter := bot.database.GetFilterByID(ctx, wordId, &filter); errGetFilter != nil {
 		return errCommandFailed
 	}
 	if errDropFilter := bot.database.DropFilter(ctx, &filter); errDropFilter != nil {

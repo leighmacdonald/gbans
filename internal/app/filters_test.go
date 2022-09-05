@@ -11,7 +11,7 @@ func TestIsFilteredWord(t *testing.T) {
 	l1 := len(wordFilters)
 	importFilteredWords([]model.Filter{{WordID: 1, Patterns: []string{"*word"}, CreatedOn: config.Now()}})
 	require.Equal(t, l1+1, len(wordFilters))
-	matched, matchedFilter := ContainsFilteredWord("This is a badword")
-	require.True(t, matched)
+	matched, matchedFilter := findFilteredWordMatch("This is a badword")
+	require.Equal(t, "badword", matched)
 	require.Equal(t, 1, matchedFilter.WordID)
 }

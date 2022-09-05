@@ -170,6 +170,13 @@ export const TopBar = () => {
 
     const adminItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [];
+        if (user.permission_level >= PermissionLevel.Editor) {
+            items.push({
+                to: '/admin/filters',
+                text: 'Filtered Words',
+                icon: <SubjectIcon sx={colourOpts} />
+            });
+        }
         if (user.permission_level >= PermissionLevel.Moderator) {
             items.push({
                 to: '/admin/ban',
@@ -190,11 +197,6 @@ export const TopBar = () => {
                 to: '/admin/chat',
                 text: 'Chat History',
                 icon: <ChatIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/filters',
-                text: 'Filtered Words',
-                icon: <SubjectIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/news',

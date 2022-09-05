@@ -62,8 +62,8 @@ func (queryFilter *QueryFilter) orderString() string {
 	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
-func NewQueryFilter(query string) *QueryFilter {
-	return &QueryFilter{
+func NewQueryFilter(query string) QueryFilter {
+	return QueryFilter{
 		Limit:    1000,
 		Offset:   0,
 		SortDesc: true,

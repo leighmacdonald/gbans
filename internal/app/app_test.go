@@ -62,7 +62,7 @@ func TestMain(testMain *testing.M) {
 	}
 
 	// Start the background goroutine workers
-	initWorkers(testCtx, dbStore, discordSendMsg, logFileChan)
+	initWorkers(testCtx, dbStore, discordSendMsg, logFileChan, warningChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {

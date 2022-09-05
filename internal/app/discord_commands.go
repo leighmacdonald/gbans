@@ -280,7 +280,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        OptSteam,
-					Description: "BanSteam and kick a user from all servers",
+					Description: "Ban and kick a user from all servers",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,
@@ -296,7 +296,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 				},
 				{
 					Name:        "asn",
-					Description: "BanSteam network(s) via their parent ASN (Autonomous System Number) from connecting to all servers",
+					Description: "Ban network(s) via their parent ASN (Autonomous System Number) from connecting to all servers",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						optAsn,
@@ -307,7 +307,7 @@ func (bot *discord) botRegisterSlashCommands() error {
 				},
 				{
 					Name:        "ip",
-					Description: "BanSteam and kick a network from connecting to all servers",
+					Description: "Ban and kick a network from connecting to all servers",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						{

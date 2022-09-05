@@ -166,7 +166,7 @@ func FilterAdd(ctx context.Context, database store.Store, newPattern string, nam
 }
 
 // FilterDel removed and existing chat filter
-func FilterDel(ctx context.Context, database store.Store, filterId int) (bool, error) {
+func FilterDel(ctx context.Context, database store.Store, filterId int64) (bool, error) {
 	var filter model.Filter
 	if errGetFilter := database.GetFilterByID(ctx, filterId, &filter); errGetFilter != nil {
 		return false, errGetFilter
@@ -196,11 +196,11 @@ func FilterCheck(message string) []model.Filter {
 	return found
 }
 
-// ContainsFilteredWord checks to see if the body of text contains a known filtered word
+// findFilteredWordMatch checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func ContainsFilteredWord(body string) (bool, model.Filter) {
+func findFilteredWordMatch(body string) (string, *model.Filter) {
 	if body == "" {
-		return false, model.Filter{}
+		return "", nil
 	}
 	words := strings.Split(strings.ToLower(body), " ")
 	wordFiltersMu.RLock()
@@ -208,15 +208,15 @@ func ContainsFilteredWord(body string) (bool, model.Filter) {
 	for _, filter := range wordFilters {
 		for _, word := range words {
 			if filter.Match(word) {
-				return true, filter
+				return word, &filter
 			}
 		}
 	}
-	return false, model.Filter{}
+	return "", nil
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, ipAddr string, person *model.Person) error {
+func PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, person *model.Person) error {
 	if errGetPerson := database.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
 		return errGetPerson
 	}

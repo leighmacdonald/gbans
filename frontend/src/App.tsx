@@ -351,7 +351,7 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                             <ErrorBoundary>
                                                                 <PrivateRoute
                                                                     permission={
-                                                                        PermissionLevel.Moderator
+                                                                        PermissionLevel.Editor
                                                                     }
                                                                 >
                                                                     <AdminFilters />

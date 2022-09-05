@@ -182,7 +182,7 @@ func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steami
 	return people, nil
 }
 
-func (database *pgStore) GetPeople(ctx context.Context, queryFilter *QueryFilter) (model.People, error) {
+func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter) (model.People, error) {
 	queryBuilder := sb.Select(profileColumns...).From("person")
 	if queryFilter.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan

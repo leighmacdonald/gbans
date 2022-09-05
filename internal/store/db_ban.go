@@ -168,7 +168,7 @@ func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.BanSteam, 
 	return bans, nil
 }
 
-func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter *QueryFilter) ([]model.BanSteam, error) {
+func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]model.BanSteam, error) {
 	const query = `
 		SELECT ban_id, target_id, source_id, ban_type, reason, reason_text, note, valid_until, origin, 
 		       created_on, updated_on, deleted, CASE WHEN report_id IS NULL THEN 0 ELSE report_id END, 
@@ -209,8 +209,15 @@ type BansQueryFilter struct {
 	SteamId steamid.SID64 `json:"steam_id,omitempty"`
 }
 
+func NewBansQueryFilter(steamId steamid.SID64) BansQueryFilter {
+	return BansQueryFilter{
+		SteamId:     steamId,
+		QueryFilter: NewQueryFilter(""),
+	}
+}
+
 // GetBansSteam returns all bans that fit the filter criteria passed in
-func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilter) ([]model.BannedPerson, error) {
+func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]model.BannedPerson, error) {
 	qb := sb.Select("b.ban_id as ban_id", "b.target_id as target_id", "b.source_id as source_id",
 		"b.ban_type as ban_type", "b.reason as reason", "b.reason_text as reason_text",
 		"b.note as note", "b.origin as origin", "b.valid_until as valid_until", "b.created_on as created_on",
@@ -277,7 +284,7 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter *BansQueryFilt
 	return bans, nil
 }
 
-func (database *pgStore) GetBansOlderThan(ctx context.Context, filter *QueryFilter, since time.Time) ([]model.BanSteam, error) {
+func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]model.BanSteam, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, 

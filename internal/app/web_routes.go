@@ -142,6 +142,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate(database))
 	editorRoute.POST("/api/news_all", web.onAPIGetNewsAll(database))
 	editorRoute.GET("/api/filters", web.onAPIGetWordFilters(database))
+	editorRoute.POST("/api/filters", web.onAPIPostWordFilter(database))
+	editorRoute.DELETE("/api/filters/:word_id", web.onAPIDeleteWordFilter(database))
+	editorRoute.POST("/api/filter_match", web.onAPIPostWordMatch(database))
 
 	// Moderator access
 	modRoute := engine.Use(authMiddleware(database, model.PModerator))
