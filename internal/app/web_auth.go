@@ -35,7 +35,7 @@ var discoveryCache = &noOpDiscoveryCache{}
 
 const testToken = "test-token"
 
-func (web *web) authMiddleWare(database store.Store) gin.HandlerFunc {
+func (web *web) authServerMiddleWare(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		person := model.NewPerson(0)
 		authHeader := ctx.GetHeader("Authorization")
@@ -243,18 +243,24 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 		Authorization string `header:"Authorization"`
 	}
 	return func(ctx *gin.Context) {
-		hdr := header{}
-		if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
-			ctx.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-		pcs := strings.Split(hdr.Authorization, " ")
-		if len(pcs) != 2 && level >= model.PUser {
-			ctx.AbortWithStatus(http.StatusForbidden)
-			return
+		var token string
+		if ctx.FullPath() == "/ws/quickplay" {
+			token = ctx.Query("token")
+		} else {
+			hdr := header{}
+			if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
+				ctx.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			pcs := strings.Split(hdr.Authorization, " ")
+			if len(pcs) != 2 && level >= model.PUser {
+				ctx.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			token = pcs[1]
 		}
 		if level >= model.PUser {
-			sid, errFromToken := sid64FromJWTToken(pcs[1])
+			sid, errFromToken := sid64FromJWTToken(token)
 			if errFromToken != nil {
 				log.Errorf("Failed to load persons session user: %v", errFromToken)
 				ctx.AbortWithStatus(http.StatusForbidden)

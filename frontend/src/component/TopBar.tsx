@@ -32,6 +32,7 @@ import SupportIcon from '@mui/icons-material/Support';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
+import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import useTheme from '@mui/material/styles/useTheme';
 import { useNavigate } from 'react-router-dom';
@@ -224,6 +225,11 @@ export const TopBar = () => {
                 to: '/admin/server_logs',
                 text: 'Server Logs',
                 icon: <SubjectIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/quickplay',
+                text: 'Quickplay',
+                icon: <VideogameAssetIcon sx={colourOpts} />
             });
         }
         return items;

@@ -148,7 +148,7 @@ export const DataTable = <T,>({
                 compare(order, sortColumn)
             );
         }
-    }, [rows, order, sortColumn, query, columns]);
+    }, [filterFn, query, columns, rows, order, sortColumn]);
 
     useEffect(() => {
         setPageCount(Math.ceil(sorted.length / rowPerPageCount));

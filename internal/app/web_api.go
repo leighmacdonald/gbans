@@ -2316,3 +2316,110 @@ func (web *web) onAPIEditBanMessage(database store.BanStore) gin.HandlerFunc {
 			embed:     embed}
 	}
 }
+
+func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
+	type masterQueryRequest struct {
+		// ctf,payload,cp,mvm,pd,passtime,mannpower,koth
+		GameTypes  []string  `json:"game_types,omitempty"`
+		AppId      int64     `json:"app_id,omitempty"`
+		Maps       []string  `json:"maps,omitempty"`
+		PlayersMin int       `json:"players_min,omitempty"`
+		PlayersMax int       `json:"players_max,omitempty"`
+		NotFull    bool      `json:"not_full,omitempty"`
+		Location   []float64 `json:"location,omitempty"`
+		Name       string    `json:"name,omitempty"`
+		HasBots    bool      `json:"has_bots,omitempty"`
+	}
+	type slimServer struct {
+		Addr       string   `json:"addr"`
+		Name       string   `json:"name"`
+		Region     int      `json:"region"`
+		Players    int      `json:"players"`
+		MaxPlayers int      `json:"max_players"`
+		Bots       int      `json:"bots"`
+		Map        string   `json:"map"`
+		GameTypes  []string `json:"game_types"`
+	}
+	return func(ctx *gin.Context) {
+		var req masterQueryRequest
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			return
+		}
+		masterServerListMu.RLock()
+		filtered := masterServerList
+		masterServerListMu.RUnlock()
+
+		var filterGameTypes = func(servers []steamweb.Server, gameTypes []string) []steamweb.Server {
+			var valid []steamweb.Server
+			for _, server := range servers {
+				serverTypes := strings.Split(server.Gametype, ",")
+				for _, gt := range gameTypes {
+					if fp.Contains(serverTypes, gt) {
+						valid = append(valid, server)
+						break
+					}
+				}
+			}
+			return valid
+		}
+		var filterMaps = func(servers []steamweb.Server, mapNames []string) []steamweb.Server {
+			var valid []steamweb.Server
+			for _, server := range servers {
+				for _, mapName := range mapNames {
+					if util.GlobString(mapName, server.Map) {
+						valid = append(valid, server)
+						break
+					}
+				}
+			}
+			return valid
+		}
+		var filterPlayersMin = func(servers []steamweb.Server, minimum int) []steamweb.Server {
+			var valid []steamweb.Server
+			for _, server := range servers {
+				if server.Players >= minimum {
+					valid = append(valid, server)
+					break
+				}
+			}
+			return valid
+		}
+		var filterPlayersMax = func(servers []steamweb.Server, maximum int) []steamweb.Server {
+			var valid []steamweb.Server
+			for _, server := range servers {
+				if server.Players <= maximum {
+					valid = append(valid, server)
+					break
+				}
+			}
+			return valid
+		}
+		if len(req.GameTypes) > 0 {
+			filtered = filterGameTypes(filtered, req.GameTypes)
+		}
+		if len(req.Maps) > 0 {
+			filtered = filterMaps(filtered, req.GameTypes)
+		}
+		if req.PlayersMin > 0 {
+			filtered = filterPlayersMin(filtered, req.PlayersMin)
+		}
+		if req.PlayersMax > 0 {
+			filtered = filterPlayersMax(filtered, req.PlayersMax)
+		}
+		var slim []slimServer
+		for _, server := range filtered {
+			slim = append(slim, slimServer{
+				Addr:       fmt.Sprintf("%s:%d", server.Addr, server.Gameport),
+				Name:       server.Name,
+				Region:     server.Region,
+				Players:    server.Players,
+				MaxPlayers: server.MaxPlayers,
+				Bots:       server.Bots,
+				Map:        server.Map,
+				GameTypes:  strings.Split(server.Gametype, ","),
+			})
+		}
+		responseOK(ctx, http.StatusOK, filtered)
+	}
+}

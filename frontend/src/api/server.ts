@@ -165,3 +165,33 @@ export const apiGetServers = async () =>
 
 export const apiDeleteServer = async (server_id: number) =>
     await apiCall(`/api/servers/${server_id}`, 'DELETE');
+
+export interface ServerQueryOpts {
+    gameTypes: string[];
+    appId?: number;
+    maps?: string[];
+    playersMax?: number;
+    playersMin?: number;
+    notFull?: boolean;
+    location?: number[];
+    name?: string;
+    hasBots?: boolean;
+}
+
+export interface SlimServer {
+    addr: string;
+    name: string;
+    region: number;
+    players: number;
+    max_players: number;
+    bots: number;
+    map: string;
+    game_types: string[];
+}
+
+export const apiServerQuery = async (opts: ServerQueryOpts) =>
+    await apiCall<SlimServer[], ServerQueryOpts>(
+        `/api/server_query`,
+        'POST',
+        opts
+    );

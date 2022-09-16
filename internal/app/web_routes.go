@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -67,7 +68,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login", "/pug"}
+		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
+		"/pug", "/quickplay"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -95,8 +97,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/log/:match_id", web.onAPIGetMatch(database))
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
 	engine.GET("/media/:media_id", web.onGetMediaById(database))
-
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
+	engine.POST("/api/server_query", web.onAPIPostServerQuery())
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -106,8 +108,14 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.POST("/api/server_auth", web.onSAPIPostServerAuth(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
+	qpConnections := qpConnectionManager{
+		RWMutex:     &sync.RWMutex{},
+		lobbies:     map[string]*qpLobby{},
+		connections: nil,
+	}
+
 	// Server Auth Request
-	serverAuth := engine.Use(web.authMiddleWare(database))
+	serverAuth := engine.Use(web.authServerMiddleWare(database))
 	serverAuth.POST("/api/ping_mod", web.onAPIPostPingMod(database))
 	serverAuth.POST("/api/check", web.onAPIPostServerCheck(database))
 	serverAuth.POST("/api/demo", web.onAPIPostDemo(database))
@@ -116,6 +124,10 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	// Basic logged-in user
 	authed := engine.Use(authMiddleware(database, model.PUser))
 	authed.GET("/api/auth/refresh", web.onTokenRefresh())
+	authed.GET("/ws/quickplay", func(c *gin.Context) {
+		currentUser := currentUserProfile(c)
+		qpWSHandler(c.Writer, c.Request, &qpConnections, currentUser)
+	})
 
 	authed.GET("/api/current_profile", web.onAPICurrentProfile())
 	authed.POST("/api/report", web.onAPIPostReportCreate(database))

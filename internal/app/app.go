@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/steamweb"
 	"math/rand"
 	"net"
 	"os"
@@ -32,12 +33,14 @@ var (
 	serverStateStatus   map[string]extra.Status
 	serverStateStatusMu *sync.RWMutex
 	// Current known state of the servers a2s server info query
-	serverStateA2S   map[string]a2s.ServerInfo
-	serverStateA2SMu *sync.RWMutex
-	discordSendMsg   chan discordPayload
-	warningChan      chan newUserWarning
-	serverStateMu    *sync.RWMutex
-	serverState      model.ServerStateCollection
+	serverStateA2S     map[string]a2s.ServerInfo
+	serverStateA2SMu   *sync.RWMutex
+	masterServerList   []steamweb.Server
+	masterServerListMu *sync.RWMutex
+	discordSendMsg     chan discordPayload
+	warningChan        chan newUserWarning
+	serverStateMu      *sync.RWMutex
+	serverState        model.ServerStateCollection
 
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
@@ -48,6 +51,7 @@ func init() {
 	serverStateMu = &sync.RWMutex{}
 	serverStateA2SMu = &sync.RWMutex{}
 	serverStateStatusMu = &sync.RWMutex{}
+	masterServerListMu = &sync.RWMutex{}
 	logFileChan = make(chan *LogFilePayload, 10)
 	discordSendMsg = make(chan discordPayload, 5)
 	warningChan = make(chan newUserWarning)
@@ -533,13 +537,19 @@ func initFilters(ctx context.Context, database store.FilterStore) {
 
 func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload,
 	logFileC chan *LogFilePayload, warningChan chan newUserWarning) {
-	go banSweeper(ctx, database)
-	go mapChanger(ctx, database, time.Second*5)
 
 	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errDuration != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
 	}
+
+	masterUpdateFreq, errParseMasterUpdateFreq := time.ParseDuration(config.General.ServerStatusUpdateFreq)
+	if errParseMasterUpdateFreq != nil {
+		log.Fatalf("Failed to parse master_server_status_update_freq: %v", errParseMasterUpdateFreq)
+	}
+
+	go banSweeper(ctx, database)
+	go mapChanger(ctx, database, time.Second*300)
 	go serverA2SStatusUpdater(ctx, database, freq)
 	go serverRCONStatusUpdater(ctx, database, freq)
 	go serverStateRefresher(ctx, database, freq)
@@ -552,6 +562,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go playerMessageWriter(ctx, database)
 	go playerConnectionWriter(ctx, database)
 	go steamGroupMembershipUpdater(ctx, database)
+	go masterServerListUpdater(ctx, masterUpdateFreq)
 }
 
 // UDP log sink

@@ -50,6 +50,7 @@ import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { Pug } from './page/Pug';
+import { QuickPlayPage } from './page/QuickPlayPage';
 
 export interface AppProps {
     initialToken?: string;
@@ -268,6 +269,20 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                 >
                                                                     <Pug />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/quickplay'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Admin
+                                                                    }
+                                                                >
+                                                                    <QuickPlayPage />
                                                                 </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }

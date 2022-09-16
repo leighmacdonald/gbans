@@ -5,7 +5,7 @@ import React from 'react';
 import { tf2Fonts } from '../theme';
 
 interface HeadingProps {
-    children: JSX.Element | string;
+    children: JSX.Element[] | JSX.Element | string;
     bgColor?: string;
 }
 

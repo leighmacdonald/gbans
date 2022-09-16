@@ -21,14 +21,14 @@ type Region uint8
 const (
 	// USEastCoast : United States - East Coast
 	USEastCoast  Region = 0x00
-	USWestCoast         = 0x01
-	SouthAmerica        = 0x02
-	Europe              = 0x03
-	Asia                = 0x04
-	Australia           = 0x05
-	MiddleEast          = 0x06
-	Africa              = 0x07
-	AllRegions          = 0xFF
+	USWestCoast  Region = 0x01
+	SouthAmerica Region = 0x02
+	Europe       Region = 0x03
+	Asia         Region = 0x04
+	Australia    Region = 0x05
+	MiddleEast   Region = 0x06
+	Africa       Region = 0x07
+	AllRegions   Region = 0xFF
 )
 
 type ServerEndpoint struct {
@@ -82,13 +82,11 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 
 func sendListRequest(c *net.UDPConn, ipStart string, filter string, regionCode Region) ([]*ServerEndpoint, error) {
 	const queryHeader byte = 0x31
-	//var regionCode byte = 0xFF
 	var b bytes.Buffer
 	b.WriteByte(queryHeader)
 	b.WriteByte(byte(regionCode))
 	b.WriteString(ipStart)
 	b.WriteString(filter)
-
 	_, errWrite := c.Write(b.Bytes())
 	if errWrite != nil {
 		return nil, errors.Wrap(errWrite, "Failed to write udp bytes")
@@ -106,7 +104,7 @@ func sendListRequest(c *net.UDPConn, ipStart string, filter string, regionCode R
 		return nil, errors.New("Query list response has a length which is not multiple of 6")
 	}
 	var endpoints []*ServerEndpoint
-	var replyHeader []byte = []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x66, 0x0A}
+	var replyHeader = []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x66, 0x0A}
 	if !bytes.Equal(replyHeader, buffer[0:structSize]) {
 		return nil, errors.New("Query list response header is malformed")
 	}

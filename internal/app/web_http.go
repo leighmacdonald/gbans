@@ -27,7 +27,7 @@ type web struct {
 	botSendMessageChan chan discordPayload
 }
 
-func (web web) ListenAndServe(ctx context.Context) error {
+func (web *web) ListenAndServe(ctx context.Context) error {
 	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
 	defer log.WithFields(log.Fields{"service": "web", "status": "stopped"}).Infof("Service status changed")
 	go func() {
@@ -82,7 +82,7 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload, logFil
 	}
 	webHandler := web{httpServer: httpServer, botSendMessageChan: botSendMessageChan}
 	webHandler.setupRouter(database, router, logFileC)
-	return webHandler, nil
+	return &webHandler, nil
 }
 
 func currentUserProfile(ctx *gin.Context) model.UserProfile {

@@ -452,3 +452,40 @@ func banSweeper(ctx context.Context, database store.Store) {
 		}
 	}
 }
+func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
+	var update = func() {
+		allServers, errServers := steamweb.GetServerList(map[string]string{
+			"appid":     "440",
+			"dedicated": "1",
+			"secure":    "1",
+		})
+		if errServers != nil {
+			log.Errorf("Failed to fetch server list: %s", errServers)
+			return
+		}
+		var communityServers []steamweb.Server
+		for _, server := range allServers {
+			if strings.Contains(server.Gametype, "valve") ||
+				!server.Dedicated ||
+				!server.Secure {
+				continue
+			}
+			communityServers = append(communityServers, server)
+		}
+		masterServerListMu.Lock()
+		masterServerList = communityServers
+		masterServerListMu.Unlock()
+		log.WithFields(log.Fields{"community": len(communityServers), "total": len(allServers)}).
+			Debugf("Updated master server list")
+	}
+	update()
+	ticker := time.NewTicker(updateFreq)
+	for {
+		select {
+		case <-ticker.C:
+			update()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
