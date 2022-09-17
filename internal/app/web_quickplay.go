@@ -15,16 +15,20 @@ import (
 type qpMsgType int
 
 const (
-	qpMsgTypeJoin = iota
-	qpMsgTypeLeave
-	qpMsgTypeJoinLobby
-	qpMsgTypeSendMsg
+	qpMsgTypeJoinLobbyRequest = iota
+	qpMsgTypeLeaveLobbyRequest
+	qpMsgTypeJoinLobbySuccess
+	qpMsgTypeSendMsgRequest
 )
 
 var webSocketUpgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
+var (
+	ErrInvalidLobbyId  = errors.New("Invalid lobby id")
+	ErrDuplicateClient = errors.New("Duplicate client")
+)
 
 type qpClient struct {
 	Leader     bool `json:"leader"`
@@ -55,47 +59,54 @@ func (clients qpClients) broadcast(value any) {
 }
 
 type qpLobby struct {
+	*sync.RWMutex
 	LobbyId  string          `json:"lobby_id"`
 	Clients  qpClients       `json:"clients"`
 	Messages []qpUserMessage `json:"messages"`
 }
 
-func (clients qpLobby) SendUserMessage(msg qpUserMessage) {
-	clients.Messages = append(clients.Messages, msg)
-	clients.Clients.broadcast(qpBaseResponse{
-		MsgType: qpMsgTypeSendMsg,
+func newLobby(lobbyId string) *qpLobby {
+	return &qpLobby{
+		RWMutex:  &sync.RWMutex{},
+		LobbyId:  lobbyId,
+		Clients:  qpClients{},
+		Messages: []qpUserMessage{},
+	}
+}
+
+func (lobby *qpLobby) join(client *qpClient) error {
+	if fp.Contains(lobby.Clients, client) {
+		return ErrDuplicateClient
+	}
+	lobby.Clients = append(lobby.Clients, client)
+	if len(lobby.Clients) == 1 {
+		return lobby.promote(client)
+	}
+	return nil
+}
+
+func (lobby *qpLobby) promote(client *qpClient) error {
+	for _, lobbyClient := range lobby.Clients {
+		client.Leader = lobbyClient == client
+	}
+	return nil
+}
+
+func (lobby *qpLobby) SendUserMessage(msg qpUserMessage) {
+	lobby.Messages = append(lobby.Messages, msg)
+	// TODO do at ws layer
+	lobby.Clients.broadcast(qpBaseResponse{
+		MsgType: qpMsgTypeSendMsgRequest,
 		Payload: msg,
 	})
 }
 
-type qpBaseResponse struct {
-	MsgType qpMsgType `json:"msg_type"`
-	Payload any       `json:"payload"`
-}
-
-type qpBasePayload struct {
-	MsgType qpMsgType       `json:"msg_type"`
-	Payload json.RawMessage `json:"payload"`
-}
-
-type qpConnectionManager struct {
-	*sync.RWMutex
-	connections qpClients
-	lobbies     map[string]*qpLobby
-}
-
-type qpJoinRequest struct {
-	LobbyId string `json:"lobby_id"`
-}
-
-type qpUserMessage struct {
-	SteamId   string `json:"steam_id"`
-	Message   string `json:"message"`
-	CreatedAt string `json:"created_at"`
-}
-
-type qpJoinLobbyRequest struct {
-	Lobby *qpLobby `json:"lobby"`
+func (cm *qpConnectionManager) findLobby(lobbyId string) (*qpLobby, error) {
+	lobby, found := cm.lobbies[lobbyId]
+	if !found {
+		return nil, ErrInvalidLobbyId
+	}
+	return lobby, nil
 }
 
 func (cm *qpConnectionManager) createLobby(client *qpClient) (*qpLobby, error) {
@@ -104,30 +115,14 @@ func (cm *qpConnectionManager) createLobby(client *qpClient) (*qpLobby, error) {
 	if found {
 		return nil, errors.New("Failed to create unique lobby")
 	}
-	lobby := qpLobby{
-		LobbyId:  lobbyId,
-		Clients:  qpClients{client},
-		Messages: []qpUserMessage{},
-	}
-	cm.lobbies[lobbyId] = &lobby
-	return &lobby, nil
+	lobby := newLobby(lobbyId)
+	cm.lobbies[lobbyId] = lobby
+	return lobby, nil
 }
 
 func (cm *qpConnectionManager) join(client *qpClient) error {
 	cm.connections = append(cm.connections, client)
-	lobby, lobbyErr := cm.createLobby(client)
-	if lobbyErr != nil {
-		return lobbyErr
-	}
-	client.Lobby = lobby
-	body, errBody := json.Marshal(qpJoinLobbyRequest{Lobby: lobby})
-	if errBody != nil {
-		return errBody
-	}
-	return client.send(qpBasePayload{
-		MsgType: qpMsgTypeJoinLobby,
-		Payload: body,
-	})
+	return nil
 }
 
 func (cm *qpConnectionManager) leave(client *qpClient) error {
@@ -137,18 +132,24 @@ func (cm *qpConnectionManager) leave(client *qpClient) error {
 
 func qpHandleWSMessage(cm *qpConnectionManager, client *qpClient, payload qpBasePayload) error {
 	switch payload.MsgType {
-	case qpMsgTypeJoin:
+	case qpMsgTypeJoinLobbyRequest:
 		{
-			var req qpJoinRequest
+			var req qpJoinLobbyRequestPayload
 			if errUnmarshal := json.Unmarshal(payload.Payload, &req); errUnmarshal != nil {
 				log.WithError(errUnmarshal).Error("Failed to unmarshal join request")
 			}
+			lobby, lobbyErr := cm.findLobby(req.LobbyId)
+			if lobbyErr != nil {
+				return lobbyErr
+			}
+			lobby.join(client)
 			if errJoin := cm.join(client); errJoin != nil {
 				return errJoin
 			}
 			return nil
 		}
-	case qpMsgTypeSendMsg:
+
+	case qpMsgTypeSendMsgRequest:
 		{
 			var userMessage qpUserMessage
 			if errUnmarshal := json.Unmarshal(payload.Payload, &userMessage); errUnmarshal != nil {
@@ -161,6 +162,13 @@ func qpHandleWSMessage(cm *qpConnectionManager, client *qpClient, payload qpBase
 	}
 
 	return errors.New("Unknown message type")
+}
+
+func sendJoinLobbySuccess(client *qpClient, lobby *qpLobby) error {
+	return client.send(qpBaseResponse{
+		qpMsgTypeJoinLobbySuccess,
+		qpMsgJoinedLobbySuccess{Lobby: lobby},
+	})
 }
 
 func qpWSHandler(w http.ResponseWriter, r *http.Request, cm *qpConnectionManager, user model.UserProfile) {
@@ -179,18 +187,46 @@ func qpWSHandler(w http.ResponseWriter, r *http.Request, cm *qpConnectionManager
 	}
 	log.WithFields(log.Fields{"conn": conn.LocalAddr().String()}).
 		Debugf("New connection")
+	// New user connection
+	// TODO track between connections so they can resume their session upon dc
 	client := newQpClient(conn, user)
 	if errJoin := cm.join(client); errJoin != nil {
 		log.WithError(errJoin).Error("Failed to join client pool")
 	}
+	// Create and join a lobby for the user
+	lobby, lobbyErr := cm.createLobby(client)
+	if lobbyErr != nil {
+		log.WithError(lobbyErr).Error("Failed to create lobby")
+		return
+	}
+	if errJoin := lobby.join(client); errJoin != nil {
+		log.WithError(lobbyErr).Error("Failed to join lobby")
+		return
+	}
+
+	if errSend := sendJoinLobbySuccess(client, lobby); errSend != nil {
+		log.WithError(errSend).Error("Failed to send join lobby payload")
+		return
+	}
+
+	defer func() {
+		if errLeave := cm.leave(client); errLeave != nil {
+			log.WithError(errLeave).Errorf("Error dropping client")
+		}
+		log.WithFields(log.Fields{"steam_id": client.User.SteamID.String()}).
+			Debugf("Client disconnected")
+	}()
 	for {
 		var basePayload qpBasePayload
 		if errRead := conn.ReadJSON(&basePayload); errRead != nil {
 			log.WithError(errRead).Error("Failed to read json payload")
-			continue
+			return
 		}
 		if errHandle := qpHandleWSMessage(cm, client, basePayload); errHandle != nil {
 			log.WithError(errHandle).Error("Failed to handle message")
+			if errError := client.send(qpMsgErrorResponse{Error: errHandle.Error()}); errError != nil {
+				log.WithError(errError).Error("Failed to send error response to client")
+			}
 		}
 	}
 }

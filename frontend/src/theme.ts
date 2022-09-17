@@ -15,7 +15,8 @@ export const readableFonts = {
 };
 
 export const tf2Fonts = {
-    fontFamily: ['"TF2 Build"', ...baseFontSet].join(',')
+    fontFamily: ['"TF2 Build"', ...baseFontSet].join(','),
+    letterSpacing: '1px'
 };
 
 export const createThemeByMode = (mode: PaletteMode) => {

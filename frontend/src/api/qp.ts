@@ -1,18 +1,18 @@
 import { JsonObject } from 'react-use-websocket/dist/lib/types';
 
 export enum qpMsgType {
-    qpMsgTypeJoin = 0,
-    qpMsgTypeLeave,
-    qpMsgTypeJoinLobby,
-    qpMsgTypeSendMsg
+    qpMsgTypeJoinLobbyRequest = 0,
+    qpMsgTypeLeaveLobbyRequest,
+    qpMsgTypeJoinLobbySuccess,
+    qpMsgTypeSendMsgRequest
 }
 
-export interface qpBaseQuery extends JsonObject {
+interface qpBaseMessage<T extends JsonObject> extends JsonObject {
     msg_type: qpMsgType;
-    payload: JsonObject;
+    payload: T;
 }
 
-export interface qpUserMessage extends JsonObject {
+export interface qpUserMessageI extends JsonObject {
     steam_id?: string;
     message: string;
     created_at: string;
@@ -28,6 +28,19 @@ export interface qpLobby extends JsonObject {
     clients: qpClient[];
 }
 
-export interface qpMsgJoinLobby extends JsonObject {
+export interface qpMsgJoinedLobbySuccessI extends JsonObject {
     lobby: qpLobby;
 }
+
+export interface qpMsgJoinLobbyRequestI extends JsonObject {
+    lobby_id: string;
+}
+
+export type qpUserMessage = qpBaseMessage<qpUserMessageI>;
+export type qpMsgJoinLobbyRequest = qpBaseMessage<qpMsgJoinLobbyRequestI>;
+export type qpMsgJoinedLobbySuccess = qpBaseMessage<qpMsgJoinedLobbySuccessI>;
+
+export type qpRequestTypes =
+    | qpMsgJoinLobbyRequest
+    | qpUserMessage
+    | qpMsgJoinedLobbySuccess;
