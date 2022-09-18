@@ -5,9 +5,13 @@ import Grid from '@mui/material/Grid';
 import { DataTable, RowsPerPage } from '../component/DataTable';
 import {
     apiServerQuery,
+    filterServerGameTypes,
+    qpAutoQueueMode,
+    qpGameType,
     qpLobby,
     qpMsgJoinedLobbySuccess,
     qpMsgJoinLobbyRequest,
+    qpMsgLeaveLobbyRequest,
     qpMsgType,
     qpRequestTypes,
     qpUserMessage,
@@ -36,11 +40,15 @@ import {
     ConfirmationModalProps
 } from '../component/ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { ListItem } from '@mui/material';
+import { ListItem, Select } from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import { GameModeSelect } from '../component/GameModeSelect';
 
 export type JoinLobbyModalProps = ConfirmationModalProps<string>;
 
@@ -101,6 +109,9 @@ export const QuickPlayPage = (): JSX.Element => {
     const [minPlayers, setMinPlayers] = useState<number>(0);
     const [maxPlayers, setMaxPlayers] = useState<number>(0);
     const [notFull, setNotFull] = useState<boolean>(true);
+    const [enableAutoQueue, setEnableAutoQueue] = useState<boolean>(false);
+    const [enableGameTypes, setEnableGameTypes] = useState<qpGameType[]>([]);
+    const [queueMode, setQueueMode] = useState<qpAutoQueueMode>('eager');
     const [chatInput, setChatInput] = useState<string>('');
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const [lobby, setLobby] = useState<qpLobby>({ lobby_id: '', clients: [] });
@@ -176,7 +187,7 @@ export const QuickPlayPage = (): JSX.Element => {
                 return;
             }
             const request: qpMsgJoinLobbyRequest = {
-                msg_type: qpMsgType.qpMsgTypeJoinLobbySuccess,
+                msg_type: qpMsgType.qpMsgTypeJoinLobbyRequest,
                 payload: {
                     lobby_id: lobbyId
                 }
@@ -185,6 +196,19 @@ export const QuickPlayPage = (): JSX.Element => {
         },
         [sendJsonMessage]
     );
+
+    const sendLeaveLobbyRequest = useCallback(() => {
+        if (!lobby) {
+            return;
+        }
+        const request: qpMsgLeaveLobbyRequest = {
+            msg_type: qpMsgType.qpMsgTypeLeaveLobbyRequest,
+            payload: {
+                lobby_id: lobby.lobby_id
+            }
+        };
+        sendJsonMessage(request);
+    }, [lobby, sendJsonMessage]);
 
     useEffect(() => {
         if (lastJsonMessage != null) {
@@ -243,8 +267,12 @@ export const QuickPlayPage = (): JSX.Element => {
         if (maxPlayers > 0) {
             servers = servers.filter((s) => s.players <= maxPlayers);
         }
+        if (enableGameTypes) {
+            servers = filterServerGameTypes(enableGameTypes, servers);
+        }
+
         return servers;
-    }, [maxPlayers, minPlayers, allServers, notFull]);
+    }, [allServers, notFull, minPlayers, maxPlayers, enableGameTypes]);
 
     const dataTable = useMemo(() => {
         return (
@@ -387,6 +415,7 @@ export const QuickPlayPage = (): JSX.Element => {
                                         <span>
                                             <IconButton
                                                 color={'error'}
+                                                onClick={sendLeaveLobbyRequest}
                                                 disabled={
                                                     !isReady ||
                                                     lobby.clients.length < 2
@@ -486,6 +515,43 @@ export const QuickPlayPage = (): JSX.Element => {
                                         />
                                     }
                                     label="Hide Full"
+                                />
+                            </FormGroup>
+                            <GameModeSelect
+                                onChange={(values) => {
+                                    setEnableGameTypes(values);
+                                }}
+                            />
+                            <FormControl>
+                                <InputLabel id="queue-mode-label">
+                                    Queue Mode
+                                </InputLabel>
+                                <Select<qpAutoQueueMode>
+                                    labelId="queue-mode-label"
+                                    id="queue-mode-select"
+                                    value={queueMode}
+                                    label="Auto Queue Mode"
+                                    onChange={(evt) => {
+                                        setQueueMode(
+                                            evt.target.value as qpAutoQueueMode
+                                        );
+                                    }}
+                                >
+                                    <MenuItem value={'eager'}>Eager</MenuItem>
+                                    <MenuItem value={'full'}>Full</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormGroup>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            value={enableAutoQueue}
+                                            onChange={(_, value) => {
+                                                setEnableAutoQueue(value);
+                                            }}
+                                        />
+                                    }
+                                    label="Enable Auto Queue"
                                 />
                             </FormGroup>
                         </Stack>
