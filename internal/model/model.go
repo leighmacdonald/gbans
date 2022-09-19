@@ -631,3 +631,23 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) Me
 		UpdatedOn: t0,
 	}
 }
+
+type GlobalTF2StatsSnapshot struct {
+	Players          int
+	Bots             int
+	Secure           int
+	ServersCommunity int
+	ServersTotal     int
+	Full             int
+	Empty            int
+	Partial          int
+	MapTypes         map[string]int
+	CreatedOn        time.Time
+}
+
+func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
+	return GlobalTF2StatsSnapshot{
+		MapTypes:  map[string]int{},
+		CreatedOn: config.Now(),
+	}
+}

@@ -130,12 +130,14 @@ export const filterServerGameTypes = (
         for (let gti = 0; gti < allowedTypes.length; gti++) {
             if (found) break;
             const allowedType = allowedTypes[gti];
+            // eslint-disable-next-line no-loops/no-loops
             for (let mfi = 0; mfi < allowedType.map_filters.length; mfi++) {
                 if (found) break;
                 const at = allowedType.map_filters[mfi];
                 if (at.test(server.map)) {
                     matched.push(server);
                     found = true;
+                    break;
                 }
             }
         }

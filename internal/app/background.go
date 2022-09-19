@@ -452,6 +452,15 @@ func banSweeper(ctx context.Context, database store.Store) {
 		}
 	}
 }
+func guessMapType(mapName string) string {
+	pieces := strings.SplitN(mapName, "_", 1)
+	if len(pieces) == 1 {
+		return "unknown"
+	} else {
+		return strings.ToLower(pieces[0])
+	}
+}
+
 func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
 	var update = func() {
 		allServers, errServers := steamweb.GetServerList(map[string]string{
@@ -464,10 +473,31 @@ func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
 			return
 		}
 		var communityServers []steamweb.Server
+		stats := model.NewGlobalTF2Stats()
 		for _, server := range allServers {
+			stats.ServersTotal++
+			stats.Players += server.Players
+			stats.Bots += server.Bots
+			if server.Players == server.MaxPlayers {
+				stats.Full++
+			} else if server.Players == 0 {
+				stats.Empty++
+			} else {
+				stats.Partial++
+			}
+			if server.Secure {
+				stats.Secure++
+			}
+			mapType := guessMapType(server.Map)
+			_, found := stats.MapTypes[mapType]
+			if !found {
+				stats.MapTypes[mapType] = 0
+			}
+			stats.MapTypes[mapType]++
 			if strings.Contains(server.Gametype, "valve") ||
 				!server.Dedicated ||
 				!server.Secure {
+				stats.ServersCommunity++
 				continue
 			}
 			communityServers = append(communityServers, server)
@@ -475,8 +505,12 @@ func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
 		masterServerListMu.Lock()
 		masterServerList = communityServers
 		masterServerListMu.Unlock()
-		log.WithFields(log.Fields{"community": len(communityServers), "total": len(allServers)}).
-			Debugf("Updated master server list")
+		log.WithFields(log.Fields{
+			"community": fmt.Sprintf("%d/%d", stats.ServersCommunity, stats.ServersTotal),
+			"players":   stats.Players,
+			"bots":      stats.Bots,
+			"servers":   fmt.Sprintf("%d/%d/%d", stats.Empty, stats.Partial, stats.Full),
+		}).Debugf("Updated master server list")
 	}
 	update()
 	ticker := time.NewTicker(updateFreq)

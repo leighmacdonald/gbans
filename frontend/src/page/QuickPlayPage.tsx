@@ -274,6 +274,13 @@ export const QuickPlayPage = (): JSX.Element => {
         return servers;
     }, [allServers, notFull, minPlayers, maxPlayers, enableGameTypes]);
 
+    const onGameModesChange = useCallback(
+        (values: qpGameType[]) => {
+            setEnableGameTypes(values);
+        },
+        [setEnableGameTypes]
+    );
+
     const dataTable = useMemo(() => {
         return (
             <DataTable
@@ -517,11 +524,7 @@ export const QuickPlayPage = (): JSX.Element => {
                                     label="Hide Full"
                                 />
                             </FormGroup>
-                            <GameModeSelect
-                                onChange={(values) => {
-                                    setEnableGameTypes(values);
-                                }}
-                            />
+                            <GameModeSelect onChange={onGameModesChange} />
                             <FormControl>
                                 <InputLabel id="queue-mode-label">
                                     Queue Mode
