@@ -69,7 +69,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
-		"/pug", "/quickplay"}
+		"/pug", "/quickplay", "/global_stats"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			idx, errRead := os.ReadFile(idxPath)
@@ -99,6 +99,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/media/:media_id", web.onGetMediaById(database))
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 	engine.POST("/api/server_query", web.onAPIPostServerQuery())
+
+	engine.GET("/api/global_stats", web.onAPIGetGlobalTF2Stats(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))
@@ -171,6 +173,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	modRoute.POST("/api/bans/steam", web.onAPIGetBansSteam(database))
 	modRoute.POST("/api/bans/steam/create", web.onAPIPostBanSteamCreate(database))
 	modRoute.DELETE("/api/bans/steam/:ban_id", web.onAPIPostBanDelete(database))
+	modRoute.POST("/api/bans/steam/:ban_id/status", web.onAPIPostSetBanAppealStatus(database))
 
 	modRoute.POST("/api/bans/cidr/create", web.onAPIPostBansCIDRCreate(database))
 	modRoute.POST("/api/bans/cidr", web.onAPIGetBansCIDR(database))

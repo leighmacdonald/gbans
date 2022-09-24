@@ -51,6 +51,7 @@ import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { Pug } from './page/Pug';
 import { QuickPlayPage } from './page/QuickPlayPage';
+import { GlobalTF2StatsPage } from './page/GlobalTF2StatsPage';
 
 export interface AppProps {
     initialToken?: string;
@@ -473,6 +474,22 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                             </ErrorBoundary>
                                                         }
                                                     />
+
+                                                    <Route
+                                                        path={'/global_stats'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.Editor
+                                                                    }
+                                                                >
+                                                                    <GlobalTF2StatsPage />
+                                                                </PrivateRoute>
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+
                                                     <Route
                                                         path={'/admin/servers'}
                                                         element={

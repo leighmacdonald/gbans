@@ -64,6 +64,7 @@ type rootConfig struct {
 	Log     logConfig     `mapstructure:"logging"`
 	NetBans netBans       `mapstructure:"network_bans"`
 	Debug   debugConfig   `mapstructure:"debug"`
+	Patreon patreonConfig `mapstructure:"patreon"`
 }
 
 type dbConfig struct {
@@ -71,6 +72,14 @@ type dbConfig struct {
 	AutoMigrate  bool          `mapstructure:"auto_migrate"`
 	LogQueries   bool          `mapstructure:"log_queries"`
 	LogWriteFreq time.Duration `mapstructure:"log_write_freq"`
+}
+
+type patreonConfig struct {
+	Enabled             bool   `mapstructure:"enabled"`
+	ClientId            string `mapstructure:"client_id"`
+	ClientSecret        string `mapstructure:"client_secret"`
+	CreatorAccessToken  string `mapstructure:"creator_access_token"`
+	CreatorRefreshToken string `mapstructure:"creator_refresh_token"`
 }
 
 type httpConfig struct {
@@ -195,6 +204,7 @@ var (
 	Log     logConfig
 	Net     netBans
 	Debug   debugConfig
+	Patreon patreonConfig
 )
 
 // Read reads in config file and ENV variables if set.
@@ -246,7 +256,7 @@ func Read(cfgFiles ...string) {
 	Log = root.Log
 	Net = root.NetBans
 	Debug = root.Debug
-
+	Patreon = root.Patreon
 	configureLogger(log.StandardLogger())
 	gin.SetMode(General.Mode.String())
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
@@ -288,6 +298,11 @@ var defaultConfig = map[string]any{
 	"general.external_url":                     "http://gbans.localhost:6006",
 	"general.banned_steam_group_ids":           []steamid.GID{},
 	"general.banned_server_addresses":          []string{},
+	"patreon.enabled":                          false,
+	"patreon.client_id":                        "",
+	"patreon.client_secret":                    "",
+	"patreon.creator_access_token":             "",
+	"patreon.creator_refresh_token":            "",
 	"http.host":                                "127.0.0.1",
 	"http.port":                                6006,
 	"http.tls":                                 false,

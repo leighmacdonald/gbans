@@ -6,7 +6,11 @@ import {
     apiDeleteBanMessage,
     apiGetBanMessages,
     apiGetBanSteam,
+    apiSetBanAppealState,
     apiUpdateBanMessage,
+    AppealState,
+    AppealStateCollection,
+    appealStateString,
     AuthorMessage,
     BannedPerson,
     BanReasons,
@@ -34,16 +38,30 @@ import { UnbanSteamModal } from '../component/UnbanSteamModal';
 import { renderDateTime, renderTimeDistance } from '../util/text';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
+import { FormControl, Select } from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
 
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
     const [messages, setMessages] = useState<AuthorMessage[]>([]);
     const [unbanOpen, setUnbanOpen] = useState<boolean>(false);
+    const [appealState, setAppealState] = useState<AppealState>(
+        AppealState.Open
+    );
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const { ban_id } = useParams();
     const navigate = useNavigate();
     const id = useMemo(() => parseInt(ban_id || '0'), [ban_id]);
+
+    const canPost = useMemo(() => {
+        return (
+            currentUser.permission_level >= PermissionLevel.Moderator ||
+            (ban?.ban.appeal_state != AppealState.Open &&
+                ban?.person.steam_id == currentUser.steam_id)
+        );
+    }, [ban, currentUser]);
 
     useEffect(() => {
         if (id <= 0) {
@@ -57,6 +75,7 @@ export const BanPage = (): JSX.Element => {
                     navigate('/');
                     return;
                 }
+                setAppealState(banPerson.result.ban.appeal_state);
                 setBan(banPerson.result);
                 loadMessages();
             })
@@ -127,6 +146,15 @@ export const BanPage = (): JSX.Element => {
         },
         [loadMessages, sendFlash]
     );
+    const onSaveAppealState = useCallback(() => {
+        apiSetBanAppealState(id, appealState).then((resp) => {
+            if (!resp.status) {
+                sendFlash('error', 'Could not set appeal state');
+                return;
+            }
+            sendFlash('success', 'Appeal state updated');
+        });
+    }, [appealState, id, sendFlash]);
 
     return (
         <Grid container paddingTop={3} spacing={2}>
@@ -134,7 +162,7 @@ export const BanPage = (): JSX.Element => {
                 <Stack spacing={2}>
                     <Heading>{`Ban Appeal #${id}`}</Heading>
 
-                    {messages.length == 0 && (
+                    {canPost && messages.length == 0 && (
                         <Paper elevation={1}>
                             <Typography
                                 variant={'body2'}
@@ -156,15 +184,29 @@ export const BanPage = (): JSX.Element => {
                             key={m.message.message_id}
                         />
                     ))}
-                    <Paper elevation={1}>
-                        <Stack spacing={2}>
-                            <MDEditor
-                                initialBodyMDValue={''}
-                                onSave={onSave}
-                                saveLabel={'Send Message'}
-                            />
-                        </Stack>
-                    </Paper>
+                    {canPost && (
+                        <Paper elevation={1}>
+                            <Stack spacing={2}>
+                                <MDEditor
+                                    initialBodyMDValue={''}
+                                    onSave={onSave}
+                                    saveLabel={'Send Message'}
+                                />
+                            </Stack>
+                        </Paper>
+                    )}
+                    {!canPost && ban && (
+                        <Paper elevation={1}>
+                            <Typography
+                                variant={'body2'}
+                                padding={2}
+                                textAlign={'center'}
+                            >
+                                The ban appeal is closed:{' '}
+                                {appealStateString(ban.ban.appeal_state)}
+                            </Typography>
+                        </Paper>
+                    )}
                 </Stack>
             </Grid>
             <Grid item xs={4}>
@@ -266,6 +308,43 @@ export const BanPage = (): JSX.Element => {
                         <Paper>
                             <Heading>Moderation Tools</Heading>
                             <Stack spacing={2} padding={2}>
+                                <Stack direction={'row'} spacing={2}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="appeal-status-label">
+                                            Appeal Status
+                                        </InputLabel>
+                                        <Select<AppealState>
+                                            value={appealState}
+                                            labelId={'appeal-status-label'}
+                                            id={'appeal-status'}
+                                            label={'Appeal Status'}
+                                            onChange={(evt) => {
+                                                setAppealState(
+                                                    evt.target
+                                                        .value as AppealState
+                                                );
+                                            }}
+                                        >
+                                            {AppealStateCollection.map((as) => {
+                                                return (
+                                                    <MenuItem
+                                                        value={as}
+                                                        key={as}
+                                                    >
+                                                        {appealStateString(as)}
+                                                    </MenuItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    </FormControl>
+                                    <Button
+                                        variant={'contained'}
+                                        onClick={onSaveAppealState}
+                                    >
+                                        Apply Status
+                                    </Button>
+                                </Stack>
+
                                 {ban && ban?.ban.report_id > 0 && (
                                     <Button
                                         fullWidth

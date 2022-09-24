@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamweb"
 	"math/rand"
 	"net"
@@ -14,7 +15,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/event"
-	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -562,7 +562,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go playerMessageWriter(ctx, database)
 	go playerConnectionWriter(ctx, database)
 	go steamGroupMembershipUpdater(ctx, database)
-	go masterServerListUpdater(ctx, masterUpdateFreq)
+	go masterServerListUpdater(ctx, database, masterUpdateFreq)
 }
 
 // UDP log sink
@@ -604,7 +604,7 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 
 func initNetBans() {
 	for _, banList := range config.Net.Sources {
-		if errImport := external.Import(banList); errImport != nil {
+		if errImport := thirdparty.Import(banList); errImport != nil {
 			log.Errorf("Failed to import banList: %v", errImport)
 		}
 	}

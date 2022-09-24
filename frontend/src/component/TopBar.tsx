@@ -33,6 +33,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import useTheme from '@mui/material/styles/useTheme';
 import { useNavigate } from 'react-router-dom';
@@ -176,6 +177,11 @@ export const TopBar = () => {
                 to: '/admin/filters',
                 text: 'Filtered Words',
                 icon: <SubjectIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/global_stats',
+                text: 'Global Stats',
+                icon: <BarChartIcon sx={colourOpts} />
             });
         }
         if (user.permission_level >= PermissionLevel.Moderator) {

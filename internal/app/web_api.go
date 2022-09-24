@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -235,6 +235,45 @@ func (web *web) onAPIPostBanState(database store.Store) gin.HandlerFunc {
 
 type apiUnbanRequest struct {
 	UnbanReasonText string `json:"unban_reason_text"`
+}
+
+func (web *web) onAPIPostSetBanAppealStatus(database store.Store) gin.HandlerFunc {
+	type setStatusReq struct {
+		AppealState model.AppealState `json:"appeal_state"`
+	}
+	return func(ctx *gin.Context) {
+		banId, banIdErr := getInt64Param(ctx, "ban_id")
+		if banIdErr != nil {
+			responseErr(ctx, http.StatusBadRequest, "Invalid ban_id format")
+			return
+		}
+		var req setStatusReq
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, "Invalid request")
+			return
+		}
+		bp := model.NewBannedPerson()
+		if banErr := database.GetBanByBanID(ctx, banId, &bp, false); banErr != nil {
+			responseErr(ctx, http.StatusInternalServerError, "Failed to query")
+			return
+		}
+		if bp.Ban.AppealState == req.AppealState {
+			responseErr(ctx, http.StatusConflict, "State must be different than previous")
+			return
+		}
+		original := bp.Ban.AppealState
+		bp.Ban.AppealState = req.AppealState
+		if errSave := database.SaveBan(ctx, &bp.Ban); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, "Failed to save appeal state changes")
+			return
+		}
+		responseOK(ctx, http.StatusAccepted, nil)
+		log.WithFields(log.Fields{
+			"ban_id": banId,
+			"from":   original,
+			"to":     req.AppealState,
+		}).Info("Updated ban appeal state")
+	}
 }
 
 func (web *web) onAPIPostBanDelete(database store.Store) gin.HandlerFunc {
@@ -778,21 +817,21 @@ func (web *web) onAPIExportBansTF2BD(database store.Store) gin.HandlerFunc {
 			}
 			filtered = append(filtered, ban)
 		}
-		out := external.TF2BDSchema{
+		out := thirdparty.TF2BDSchema{
 			Schema: "https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json",
-			FileInfo: external.FileInfo{
+			FileInfo: thirdparty.FileInfo{
 				Authors:     []string{"Uncletopia"},
 				Description: "Players permanently banned for cheating",
 				Title:       "Uncletopia Cheater List",
 				UpdateURL:   "https://uncletopia.com/export/bans/tf2bd",
 			},
-			Players: []external.Players{},
+			Players: []thirdparty.Players{},
 		}
 		for _, ban := range filtered {
-			out.Players = append(out.Players, external.Players{
+			out.Players = append(out.Players, thirdparty.Players{
 				Attributes: []string{"cheater"},
 				Steamid:    ban.Ban.TargetId.Int64(),
-				LastSeen: external.LastSeen{
+				LastSeen: thirdparty.LastSeen{
 					PlayerName: ban.Person.PersonaName,
 					Time:       int(ban.Ban.UpdatedOn.Unix()),
 				},
@@ -972,8 +1011,8 @@ func (web *web) onAPIGetCompHist() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "invalid sid")
 			return
 		}
-		var hist external.CompHist
-		if errFetch := external.FetchCompHist(ctx, sid, &hist); errFetch != nil {
+		var hist thirdparty.CompHist
+		if errFetch := thirdparty.FetchCompHist(ctx, sid, &hist); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, "query failed")
 			return
 		}
@@ -2240,6 +2279,14 @@ func (web *web) onAPIPostBanMessage(database store.BanStore) gin.HandlerFunc {
 			return
 		}
 		userProfile := currentUserProfile(ctx)
+		if bp.Ban.AppealState != model.Open && userProfile.PermissionLevel < model.PModerator {
+			responseErr(ctx, http.StatusForbidden, nil)
+			log.WithFields(log.Fields{
+				"steam_id": bp.Person.SteamID.String(),
+				"ban_id":   bp.Ban.BanID,
+			}).Warnf("User tried to bypass posting restriction")
+			return
+		}
 		msg := model.NewUserMessage(banId, userProfile.SteamID, request.Message)
 		if errSave := database.SaveBanMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
@@ -2421,5 +2468,16 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 			})
 		}
 		responseOK(ctx, http.StatusOK, filtered)
+	}
+}
+
+func (web *web) onAPIGetGlobalTF2Stats(database store.StatStore) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		gStats, errGetStats := database.GetGlobalTF2Stats(ctx)
+		if errGetStats != nil {
+			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			return
+		}
+		responseOK(ctx, http.StatusOK, gStats)
 	}
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
@@ -453,7 +454,8 @@ func banSweeper(ctx context.Context, database store.Store) {
 	}
 }
 func guessMapType(mapName string) string {
-	pieces := strings.SplitN(mapName, "_", 1)
+	mapName = strings.TrimPrefix(mapName, "workshop/")
+	pieces := strings.SplitN(mapName, "_", 2)
 	if len(pieces) == 1 {
 		return "unknown"
 	} else {
@@ -461,16 +463,15 @@ func guessMapType(mapName string) string {
 	}
 }
 
-func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
-	var update = func() {
+func masterServerListUpdater(ctx context.Context, database store.StatStore, updateFreq time.Duration) {
+	prevStats := model.NewGlobalTF2Stats()
+	var update = func() error {
 		allServers, errServers := steamweb.GetServerList(map[string]string{
 			"appid":     "440",
 			"dedicated": "1",
-			"secure":    "1",
 		})
 		if errServers != nil {
-			log.Errorf("Failed to fetch server list: %s", errServers)
-			return
+			return errors.Wrap(errServers, "Failed to fetch server list")
 		}
 		var communityServers []steamweb.Server
 		stats := model.NewGlobalTF2Stats()
@@ -479,11 +480,11 @@ func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
 			stats.Players += server.Players
 			stats.Bots += server.Bots
 			if server.Players == server.MaxPlayers {
-				stats.Full++
+				stats.CapacityFull++
 			} else if server.Players == 0 {
-				stats.Empty++
+				stats.CapacityEmpty++
 			} else {
-				stats.Partial++
+				stats.CapacityPartial++
 			}
 			if server.Secure {
 				stats.Secure++
@@ -505,19 +506,34 @@ func masterServerListUpdater(ctx context.Context, updateFreq time.Duration) {
 		masterServerListMu.Lock()
 		masterServerList = communityServers
 		masterServerListMu.Unlock()
+		prevStats = stats
 		log.WithFields(log.Fields{
 			"community": fmt.Sprintf("%d/%d", stats.ServersCommunity, stats.ServersTotal),
 			"players":   stats.Players,
 			"bots":      stats.Bots,
-			"servers":   fmt.Sprintf("%d/%d/%d", stats.Empty, stats.Partial, stats.Full),
+			"servers":   fmt.Sprintf("%d/%d/%d", stats.CapacityEmpty, stats.CapacityPartial, stats.CapacityFull),
 		}).Debugf("Updated master server list")
+		return nil
 	}
-	update()
-	ticker := time.NewTicker(updateFreq)
+	_ = update()
+	updateTicker := time.NewTicker(updateFreq)
+	saveTicker, errTicker := cronticker.NewTicker("0 */5 * * * *")
+	if errTicker != nil {
+		log.WithError(errTicker).Panicf("Invalid cron format")
+		return
+	}
 	for {
 		select {
-		case <-ticker.C:
-			update()
+		case <-updateTicker.C:
+			if errUpdate := update(); errUpdate != nil {
+				log.WithError(errUpdate).Error("Failed to update master server state")
+			}
+		case saveTime := <-saveTicker.C:
+			prevStats.CreatedOn = saveTime
+			if errSave := database.SaveGlobalTF2Stats(ctx, prevStats); errSave != nil {
+				log.WithError(errSave).Error("Failed to save global stats state")
+				continue
+			}
 		case <-ctx.Done():
 			return
 		}

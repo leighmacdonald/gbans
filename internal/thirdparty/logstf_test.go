@@ -1,4 +1,4 @@
-package external
+package thirdparty
 
 import (
 	"github.com/stretchr/testify/require"

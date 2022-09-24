@@ -9,6 +9,36 @@ import { UserMessage } from './report';
 import SteamID from 'steamid';
 import { parseDateTime } from '../util/text';
 
+export enum AppealState {
+    Open,
+    Denied,
+    Accepted,
+    Reduced,
+    NoAppeal
+}
+export const AppealStateCollection = [
+    AppealState.Open,
+    AppealState.Denied,
+    AppealState.Accepted,
+    AppealState.Reduced,
+    AppealState.NoAppeal
+];
+
+export const appealStateString = (as: AppealState): string => {
+    switch (as) {
+        case AppealState.Open:
+            return 'Open';
+        case AppealState.Denied:
+            return 'Denied';
+        case AppealState.Accepted:
+            return 'Accepted';
+        case AppealState.Reduced:
+            return 'Reduced';
+        default:
+            return 'No Appeal';
+    }
+};
+
 export enum Origin {
     System = 0,
     Bot = 1,
@@ -132,6 +162,7 @@ export interface BanBase extends TimeStamped {
     unban_reason_text: string;
     note: string;
     origin: Origin;
+    appeal_state: AppealState;
 }
 
 export interface IAPIBanRecord extends BanBase {
@@ -242,6 +273,7 @@ export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
                 deleted: b.ban.deleted,
                 report_id: b.ban.report_id,
                 unban_reason_text: b.ban.unban_reason_text,
+                appeal_state: b.ban.appeal_state,
                 created_on: b.ban.created_on,
                 updated_on: b.ban.updated_on,
                 valid_until: b.ban.valid_until
@@ -429,3 +461,11 @@ export const apiDeleteGroupBan = async (
             unban_reason_text
         }
     );
+
+export const apiSetBanAppealState = async (
+    ban_id: number,
+    appeal_state: AppealState
+) =>
+    await apiCall(`/api/bans/steam/${ban_id}/status`, 'POST', {
+        appeal_state
+    });

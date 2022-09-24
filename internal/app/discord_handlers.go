@@ -6,10 +6,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/external"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -428,7 +428,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	}
 	addFieldInline(embed, "BanSteam/Muted", banStateStr)
 	// TODO move elsewhere
-	logData, errLogs := external.LogsTFOverview(sid)
+	logData, errLogs := thirdparty.LogsTFOverview(sid)
 	if errLogs != nil {
 		log.Warnf("Failed to fetch logTF data: %v", errLogs)
 	}

@@ -1,4 +1,4 @@
-package external
+package thirdparty
 
 import (
 	"github.com/leighmacdonald/steamid/v2/steamid"

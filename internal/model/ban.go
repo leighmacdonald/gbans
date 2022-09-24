@@ -222,6 +222,8 @@ const (
 	Open AppealState = iota
 	Denied
 	Accepted
+	Reduced
+	NoAppeal
 )
 
 // BanBase provides a common struct shared between all ban types, it should not be used

@@ -40,3 +40,7 @@ func Remove[T comparable](input []T, value T) []T {
 	}
 	return newValues
 }
+
+func PrependValue[T comparable](input []T, value T) []T {
+	return append([]T{value}, input...)
+}

@@ -214,7 +214,7 @@ type Person struct {
 	*steamweb.PlayerSummary
 }
 
-func (p Person) ToURL() string {
+func (p *Person) ToURL() string {
 	return config.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
@@ -325,7 +325,7 @@ func (f *Filter) Match(value string) bool {
 	return false
 }
 
-// RawLogEvent represents a full representation of a server log entry including all meta data attached to the log.
+// RawLogEvent represents a full representation of a server log entry including all metadata attached to the log.
 type RawLogEvent struct {
 	LogID     int64              `json:"log_id"`
 	Type      logparse.EventType `json:"event_type"`
@@ -633,16 +633,30 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) Me
 }
 
 type GlobalTF2StatsSnapshot struct {
-	Players          int
-	Bots             int
-	Secure           int
-	ServersCommunity int
-	ServersTotal     int
-	Full             int
-	Empty            int
-	Partial          int
-	MapTypes         map[string]int
-	CreatedOn        time.Time
+	StatId           int64          `json:"stat_id"`
+	Players          int            `json:"players"`
+	Bots             int            `json:"bots"`
+	Secure           int            `json:"secure"`
+	ServersCommunity int            `json:"servers_community"`
+	ServersTotal     int            `json:"servers_total"`
+	CapacityFull     int            `json:"capacity_full"`
+	CapacityEmpty    int            `json:"capacity_empty"`
+	CapacityPartial  int            `json:"capacity_partial"`
+	MapTypes         map[string]int `json:"map_types"`
+	CreatedOn        time.Time      `json:"created_on"`
+}
+
+func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
+	const minSize = 5
+	out := map[string]int{}
+	for k, v := range stats.MapTypes {
+		mapKey := k
+		if v < minSize {
+			mapKey = "unknown"
+		}
+		out[mapKey] = v
+	}
+	return out
 }
 
 func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
