@@ -4,6 +4,7 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -256,4 +257,54 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 		return Err(errQuery)
 	}
 	return nil
+}
+
+var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
+	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on"}
+
+func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, stats model.GlobalTF2StatsSnapshot) error {
+	query, args, errQuery := sb.Insert("global_stats_players").
+		Columns(globalStatColumns...).
+		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull,
+			stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn).
+		ToSql()
+	if errQuery != nil {
+		return errQuery
+	}
+	return Err(database.Exec(ctx, query, args...))
+}
+
+func (database *pgStore) GetGlobalTF2Stats(ctx context.Context) ([]model.GlobalTF2StatsSnapshot, error) {
+	query, args, errQuery := sb.Select(fp.PrependValue(globalStatColumns, "stat_id")...).
+		From("global_stats_players").
+		ToSql()
+	if errQuery != nil {
+		return nil, errQuery
+	}
+	rows, errExec := database.Query(ctx, query, args...)
+	if errExec != nil {
+		return nil, errExec
+	}
+	defer rows.Close()
+	var stats []model.GlobalTF2StatsSnapshot
+	for rows.Next() {
+		var stat model.GlobalTF2StatsSnapshot
+		if errScan := rows.Scan(
+			&stat.StatId,
+			&stat.Players,
+			&stat.Bots,
+			&stat.Secure,
+			&stat.ServersCommunity,
+			&stat.ServersTotal,
+			&stat.CapacityFull,
+			&stat.CapacityEmpty,
+			&stat.CapacityPartial,
+			&stat.MapTypes,
+			&stat.CreatedOn,
+		); errScan != nil {
+			return nil, errScan
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
 }

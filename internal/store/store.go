@@ -135,6 +135,8 @@ type StatStore interface {
 	MatchSave(ctx context.Context, match *model.Match) error
 	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
 	Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error)
+	SaveGlobalTF2Stats(ctx context.Context, stats model.GlobalTF2StatsSnapshot) error
+	GetGlobalTF2Stats(ctx context.Context) ([]model.GlobalTF2StatsSnapshot, error)
 }
 
 type NetworkStore interface {
@@ -143,9 +145,6 @@ type NetworkStore interface {
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetLocationRecord(ctx context.Context, ip net.IP, locationRecord *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.ProxyRecord) error
-}
-
-type CacheStore interface {
 }
 
 // Store defines our composite store interface encapsulating all store interfaces

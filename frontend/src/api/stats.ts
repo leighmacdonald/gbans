@@ -1,6 +1,7 @@
 import { apiCall, QueryFilter } from './common';
 import { Person } from './profile';
 import SteamID from 'steamid';
+import { parseDateTime } from '../util/text';
 
 export interface CommonStats {
     kills: number;
@@ -206,3 +207,33 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
 
 export const apiGetMatches = async (opts: MatchesQueryOpts) =>
     await apiCall<MatchSummary[], MatchesQueryOpts>(`/api/logs`, 'POST', opts);
+
+export interface GlobalTF2StatSnapshot {
+    stat_id: number;
+    players: number;
+    bots: number;
+    secure: number;
+    servers_community: number;
+    servers_total: number;
+    capacity_full: number;
+    capacity_empty: number;
+    capacity_partial: number;
+    map_types: Record<string, number>;
+    created_on: Date;
+}
+
+export const apiGetGlobalTF2Stats = async () =>
+    await apiCall<GlobalTF2StatSnapshot[]>(`/api/global_stats`, 'GET').then(
+        (resp) => {
+            if (!resp.result) {
+                return resp;
+            }
+            resp.result = resp.result?.map((r) => {
+                return {
+                    ...r,
+                    created_on: parseDateTime(r.created_on as unknown as string)
+                };
+            });
+            return resp;
+        }
+    );
