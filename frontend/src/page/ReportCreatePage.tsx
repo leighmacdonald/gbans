@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -19,14 +19,21 @@ import Tooltip from '@mui/material/Tooltip';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     const navigate = useNavigate();
 
+    const canReport = useMemo(() => {
+        return (
+            currentUser.steam_id.isValidIndividual() && currentUser.ban_id == 0
+        );
+    }, [currentUser.ban_id, currentUser.steam_id]);
+
     useEffect(() => {
-        if (currentUser.steam_id.isValidIndividual()) {
+        if (canReport) {
             apiGetReports({
                 author_id: currentUser.steam_id.toString(),
                 limit: 1000,
@@ -41,15 +48,40 @@ export const ReportCreatePage = (): JSX.Element => {
                 })
                 .catch(logErr);
         }
-    }, [currentUser]);
+    }, [canReport, currentUser]);
 
     return (
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={12} md={8}>
                 <Stack spacing={2}>
-                    <Paper elevation={1}>
-                        <ReportForm />
-                    </Paper>
+                    {canReport && (
+                        <Paper elevation={1}>
+                            <ReportForm />
+                        </Paper>
+                    )}
+                    {!canReport && (
+                        <Paper elevation={1}>
+                            <Stack spacing={2}>
+                                <Heading>Permission Denied</Heading>
+                                <Typography variant={'body1'} padding={2}>
+                                    Cannot report players while current banned
+                                </Typography>
+                                <ButtonGroup sx={{ padding: 2 }}>
+                                    <Button
+                                        variant={'contained'}
+                                        color={'primary'}
+                                        onClick={() => {
+                                            navigate(
+                                                `/ban/${currentUser.ban_id}`
+                                            );
+                                        }}
+                                    >
+                                        Appeal Ban
+                                    </Button>
+                                </ButtonGroup>
+                            </Stack>
+                        </Paper>
+                    )}
                     <Paper elevation={1}>
                         <Heading>Your Report History</Heading>
                         <DataTable

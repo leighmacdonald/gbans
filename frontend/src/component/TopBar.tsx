@@ -40,9 +40,10 @@ import { useNavigate } from 'react-router-dom';
 import { Flashes } from './Flashes';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { PermissionLevel } from '../api';
+import { handleOnLogin, PermissionLevel } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
+import Link from '@mui/material/Link';
 
 interface menuRoute {
     to: string;
@@ -370,9 +371,10 @@ export const TopBar = () => {
                                 (!validSteamId && (
                                     <Tooltip title="Steam Login">
                                         <Button
-                                            onClick={() => {
-                                                navigate('/login');
-                                            }}
+                                            component={Link}
+                                            href={handleOnLogin(
+                                                window.location.pathname
+                                            )}
                                         >
                                             <img
                                                 src={steamLogo}

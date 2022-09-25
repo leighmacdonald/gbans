@@ -41,7 +41,7 @@ export const parseJwt = (token: string) => {
     return JSON.parse(payload.toString());
 };
 
-export const handleOnLogin = (returnPath: string) => {
+export const handleOnLogin = (returnPath: string): string => {
     let returnUrl = window.location.hostname;
     if (window.location.port !== '') {
         returnUrl = `${returnUrl}:${window.location.port}`;
@@ -52,7 +52,7 @@ export const handleOnLogin = (returnPath: string) => {
     }//${returnUrl}/auth/callback?return_url=${
         returnPath !== '/login' ? returnPath : '/'
     }`;
-    const oid =
+    return (
         'https://steamcommunity.com/openid/login' +
         '?openid.ns=' +
         encodeURIComponent('http://specs.openid.net/auth/2.0') +
@@ -70,8 +70,6 @@ export const handleOnLogin = (returnPath: string) => {
             'http://specs.openid.net/auth/2.0/identifier_select'
         ) +
         '&openid.identity=' +
-        encodeURIComponent(
-            'http://specs.openid.net/auth/2.0/identifier_select'
-        );
-    window.open(oid, '_self');
+        encodeURIComponent('http://specs.openid.net/auth/2.0/identifier_select')
+    );
 };
