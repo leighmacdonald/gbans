@@ -15,7 +15,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net"
 	"strconv"
-	"time"
 )
 
 func newBaseBanOpts(source model.SteamIDProvider, target model.StringSID, duration model.Duration,
@@ -129,7 +128,7 @@ func BanSteam(ctx context.Context, database store.Store, banSteam *model.BanStea
 		addFieldsSteamID(banNotice, banSteam.TargetId)
 		expIn := "Permanent"
 		expAt := "Permanent"
-		if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+		if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
 			expIn = config.FmtDuration(banSteam.ValidUntil)
 			expAt = config.FmtTimeShort(banSteam.ValidUntil)
 		}

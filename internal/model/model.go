@@ -643,6 +643,7 @@ type GlobalTF2StatsSnapshot struct {
 	CapacityEmpty    int            `json:"capacity_empty"`
 	CapacityPartial  int            `json:"capacity_partial"`
 	MapTypes         map[string]int `json:"map_types"`
+	Regions          map[string]int `json:"regions"`
 	CreatedOn        time.Time      `json:"created_on"`
 }
 
@@ -662,6 +663,7 @@ func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
 func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
 	return GlobalTF2StatsSnapshot{
 		MapTypes:  map[string]int{},
+		Regions:   map[string]int{},
 		CreatedOn: config.Now(),
 	}
 }

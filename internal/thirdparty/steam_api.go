@@ -1,5 +1,5 @@
 // Package steam is used for communicating with the steam api using the steamweb package.
-package steam
+package thirdparty
 
 import (
 	"context"

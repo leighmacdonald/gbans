@@ -5,8 +5,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -175,7 +175,7 @@ func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore
 		} else {
 			return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
-		vac, errBans := steam.FetchPlayerBans(steamid.Collection{sid})
+		vac, errBans := thirdparty.FetchPlayerBans(steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
 			return errors.Wrapf(errSummaries, "Failed to get Player ban state: %v", errSummaries)
 		} else {

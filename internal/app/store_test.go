@@ -17,10 +17,6 @@ import (
 	"time"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func TestServer(t *testing.T) {
 	serverA := model.Server{
 		ServerNameShort: fmt.Sprintf("test-%s", golib.RandomString(10)),

@@ -586,6 +586,9 @@ func initDiscord(ctx context.Context, database store.Store, botSendMessageChan c
 				case <-ctx.Done():
 					return
 				case payload := <-botSendMessageChan:
+					if !session.Ready {
+						continue
+					}
 					if errSend := session.SendEmbed(payload.channelId, payload.embed); errSend != nil {
 						log.Errorf("Failed to send discord payload: %v", errSend)
 					}

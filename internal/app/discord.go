@@ -49,6 +49,8 @@ type discord struct {
 	connected          bool
 	commandHandlers    map[botCmd]botCommandHandler
 	botSendMessageChan chan discordPayload
+	initReadySent      bool
+	Ready              bool
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
@@ -59,6 +61,9 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 		database:    database,
 		connectedMu: &sync.RWMutex{},
 		connected:   false,
+		// Only update the automod on first connect
+		initReadySent: false,
+		Ready:         false,
 	}
 	bot.commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      bot.onBan,
@@ -115,8 +120,13 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 
 func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
-
-	if config.Discord.AutoModEnable {
+	bot.connectedMu.RLock()
+	ready := bot.initReadySent
+	bot.connectedMu.RUnlock()
+	if !ready && config.Discord.AutoModEnable {
+		bot.connectedMu.Lock()
+		bot.initReadySent = true
+		bot.connectedMu.Unlock()
 		session.Identify.Intents |= discordgo.IntentAutoModerationExecution
 		session.Identify.Intents |= discordgo.IntentMessageContent
 		session.Identify.Intents |= discordgo.PermissionModerateMembers
@@ -151,6 +161,9 @@ func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 			}
 		}
 	}
+	bot.connectedMu.Lock()
+	bot.Ready = true
+	bot.connectedMu.Unlock()
 }
 
 func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -182,6 +195,7 @@ func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 func (bot *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.connectedMu.Lock()
 	bot.connected = false
+	bot.Ready = false
 	bot.connectedMu.Unlock()
 	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
 }

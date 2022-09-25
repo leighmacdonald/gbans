@@ -328,13 +328,13 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 
 func createDiscordBanEmbed(ban model.BanSteam, response *botResponse) *discordgo.MessageEmbed {
 	embed := respOk(response, "User Banned")
-	embed.Title = fmt.Sprintf("BanSteam created successfully (#%d)", ban.BanID)
+	embed.Title = fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)
 	embed.Description = ban.Note
 	if ban.ReasonText != "" {
 		addField(embed, "Reason", ban.ReasonText)
 	}
 	addFieldsSteamID(embed, ban.TargetId)
-	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
+	if ban.ValidUntil.Year()-config.Now().Year() > 5 {
 		addField(embed, "Expires In", "Permanent")
 		addField(embed, "Expires At", "Permanent")
 	} else {

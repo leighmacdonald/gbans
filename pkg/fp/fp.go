@@ -1,5 +1,7 @@
 package fp
 
+import "golang.org/x/exp/constraints"
+
 // Uniq will return a unique list of value from the input list
 func Uniq[T comparable](input []T) (output []T) {
 	if len(input) == 0 {
@@ -43,4 +45,28 @@ func Remove[T comparable](input []T, value T) []T {
 
 func PrependValue[T comparable](input []T, value T) []T {
 	return append([]T{value}, input...)
+}
+
+type Number interface {
+	constraints.Integer | constraints.Float
+}
+
+func Max[T Number](numbers []T) T {
+	var max T
+	for _, curValue := range numbers {
+		if curValue > max {
+			max = curValue
+		}
+	}
+	return max
+}
+
+func Avg[T Number](numbers []T) T {
+	var sum T
+	var count T
+	for _, curValue := range numbers {
+		sum += curValue
+		count++
+	}
+	return sum / count
 }

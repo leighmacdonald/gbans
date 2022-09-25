@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -566,7 +565,7 @@ func (web *web) onAPIPostServerCheck(database store.Store) gin.HandlerFunc {
 			resp.BanType = model.Banned
 			resp.Msg = "Group Banned"
 			responseErr(ctx, http.StatusOK, resp)
-			log.WithFields(log.Fields{"type": "group", "reason": "Group BanSteam", "sid64": steamID.String()}).
+			log.WithFields(log.Fields{"type": "group", "reason": "Group Ban", "sid64": steamID.String()}).
 				Infof("Player dropped")
 			return
 		}
@@ -644,10 +643,17 @@ func (web *web) onAPIPostServerCheck(database store.Store) gin.HandlerFunc {
 		} else {
 			reason = bannedPerson.Ban.Reason.String()
 		}
-		resp.Msg = fmt.Sprintf("%s - %s", bannedPerson.Ban.ToURL(), reason)
+		resp.Msg = fmt.Sprintf("%s - %s [Remain: %s]", bannedPerson.Ban.ToURL(), reason,
+			bannedPerson.Ban.ValidUntil.Sub(config.Now()).String())
 		responseOK(ctx, http.StatusOK, resp)
-		if resp.BanType != model.OK {
-			log.WithFields(log.Fields{"type": "steam", "reason": reason, "sid64": steamID.String(), "banType": resp.BanType}).
+		if resp.BanType == model.NoComm {
+			log.WithFields(log.Fields{"type": "steam", "reason": reason, "profile": bannedPerson.Person.ToURL(), "banType": "mute"}).
+				Infof("Player muted")
+		} else if resp.BanType == model.Banned {
+			log.WithFields(log.Fields{
+				"type":    "steam",
+				"profile": bannedPerson.Person.ToURL(),
+				"reason":  reason}).
 				Infof("Player dropped")
 		}
 	}
@@ -867,13 +873,13 @@ func (web *web) onAPIProfile(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		friendIDs, errFetchFriends := steam.FetchFriends(requestCtx, person.SteamID)
+		friendIDs, errFetchFriends := thirdparty.FetchFriends(requestCtx, person.SteamID)
 		if errFetchFriends != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
 			return
 		}
 		// TODO add ctx to steamweb lib
-		friends, errFetchSummaries := steam.FetchSummaries(friendIDs)
+		friends, errFetchSummaries := thirdparty.FetchSummaries(friendIDs)
 		if errFetchSummaries != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
@@ -1994,7 +2000,7 @@ func (web *web) onAPISaveWikiSlug(database store.WikiStore) gin.HandlerFunc {
 		var page wiki.Page
 		if errGetWikiSlug := database.GetWikiPageBySlug(ctx, request.Slug, &page); errGetWikiSlug != nil {
 			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
-				page.CreatedOn = time.Now()
+				page.CreatedOn = config.Now()
 				page.Revision += 1
 				page.Slug = request.Slug
 			} else {
@@ -2473,7 +2479,7 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 
 func (web *web) onAPIGetGlobalTF2Stats(database store.StatStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		gStats, errGetStats := database.GetGlobalTF2Stats(ctx)
+		gStats, errGetStats := database.GetGlobalTF2Stats(ctx, store.Hourly)
 		if errGetStats != nil {
 			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
 			return

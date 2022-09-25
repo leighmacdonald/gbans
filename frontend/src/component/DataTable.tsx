@@ -174,12 +174,11 @@ export const DataTable = <T,>({
                             }
                         }}
                     >
-                        {columns.map((col, colIdx) => {
+                        {columns.map((col: HeadingCell<T>, colIdx) => {
                             const value = (col?.renderer ?? defaultRenderer)(
                                 row,
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                (row as any)[col.sortKey],
-                                col?.sortType || 'string'
+                                row[col.sortKey as keyof T],
+                                col?.sortType ?? 'string'
                             );
                             return (
                                 <TableCell
@@ -207,6 +206,70 @@ export const DataTable = <T,>({
         sorted,
         theme.palette.background.default
     ]);
+
+    const tableHead = useMemo(() => {
+        return (
+            <TableHead>
+                <TableRow>
+                    {columns.map((col) => {
+                        return (
+                            <TableCell
+                                align={col.align ?? 'right'}
+                                key={col.label}
+                                sx={{
+                                    width: col?.width ?? 'auto',
+                                    '&:hover': col.sortable
+                                        ? {
+                                              cursor: 'pointer'
+                                          }
+                                        : { cursor: 'default' },
+                                    backgroundColor:
+                                        theme.palette.background.paper
+                                }}
+                                onClick={() => {
+                                    if (!col.sortable || col.virtual) {
+                                        return;
+                                    }
+                                    if (col.sortKey === sortColumn) {
+                                        setOrder(
+                                            order === 'asc' ? 'desc' : 'asc'
+                                        );
+                                    } else {
+                                        setSortColumn(col.sortKey as never);
+                                        setOrder('desc');
+                                    }
+                                }}
+                            >
+                                <Tooltip
+                                    title={
+                                        col.tooltip instanceof Function
+                                            ? col.tooltip()
+                                            : col.tooltip
+                                    }
+                                    placement={'top'}
+                                >
+                                    <Typography
+                                        padding={0}
+                                        sx={{
+                                            textDecoration:
+                                                col.sortKey != sortColumn
+                                                    ? 'none'
+                                                    : order == 'asc'
+                                                    ? 'underline'
+                                                    : 'overline'
+                                        }}
+                                        variant={'subtitle2'}
+                                    >
+                                        {col.label}
+                                    </Typography>
+                                </Tooltip>
+                            </TableCell>
+                        );
+                    })}
+                </TableRow>
+            </TableHead>
+        );
+    }, [columns, order, sortColumn, theme.palette.background.paper]);
 
     return (
         <TableContainer>
@@ -261,65 +324,7 @@ export const DataTable = <T,>({
                     }
                 }}
             >
-                <TableHead>
-                    <TableRow>
-                        {columns.map((col) => {
-                            return (
-                                <TableCell
-                                    align={col.align ?? 'right'}
-                                    key={col.label}
-                                    sx={{
-                                        width: col?.width ?? 'auto',
-                                        '&:hover': col.sortable
-                                            ? {
-                                                  cursor: 'pointer'
-                                              }
-                                            : { cursor: 'default' },
-                                        backgroundColor:
-                                            theme.palette.background.paper
-                                    }}
-                                    onClick={() => {
-                                        if (!col.sortable || col.virtual) {
-                                            return;
-                                        }
-                                        if (col.sortKey === sortColumn) {
-                                            setOrder(
-                                                order === 'asc' ? 'desc' : 'asc'
-                                            );
-                                        } else {
-                                            setSortColumn(col.sortKey as never);
-                                            setOrder('desc');
-                                        }
-                                    }}
-                                >
-                                    <Tooltip
-                                        title={
-                                            col.tooltip instanceof Function
-                                                ? col.tooltip()
-                                                : col.tooltip
-                                        }
-                                        placement={'top'}
-                                    >
-                                        <Typography
-                                            padding={0}
-                                            sx={{
-                                                textDecoration:
-                                                    col.sortKey != sortColumn
-                                                        ? 'none'
-                                                        : order == 'asc'
-                                                        ? 'underline'
-                                                        : 'overline'
-                                            }}
-                                            variant={'subtitle2'}
-                                        >
-                                            {col.label}
-                                        </Typography>
-                                    </Tooltip>
-                                </TableCell>
-                            );
-                        })}
-                    </TableRow>
-                </TableHead>
+                {!isLoading && tableHead}
                 {isLoading ? (
                     <TableBody>
                         <TableRow>

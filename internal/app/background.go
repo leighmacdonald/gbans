@@ -453,6 +453,7 @@ func banSweeper(ctx context.Context, database store.Store) {
 		}
 	}
 }
+
 func guessMapType(mapName string) string {
 	mapName = strings.TrimPrefix(mapName, "workshop/")
 	pieces := strings.SplitN(mapName, "_", 2)
@@ -463,8 +464,56 @@ func guessMapType(mapName string) string {
 	}
 }
 
+type SvRegion int
+
+const (
+	RegionNaEast SvRegion = iota
+	RegionNAWest
+	RegionSouthAmerica
+	RegionEurope
+	RegionAsia
+	RegionAustralia
+	RegionMiddleEast
+	RegionAfrica
+	RegionWorld SvRegion = 255
+)
+
+func SteamRegionIdString(region SvRegion) string {
+	switch region {
+	case RegionNaEast:
+		return "ne"
+	case RegionNAWest:
+		return "nw"
+	case RegionSouthAmerica:
+		return "sa"
+	case RegionEurope:
+		return "eu"
+	case RegionAsia:
+		return "as"
+	case RegionAustralia:
+		return "au"
+	case RegionMiddleEast:
+		return "me"
+	case RegionAfrica:
+		return "af"
+	case RegionWorld:
+		fallthrough
+	default:
+		return "wd"
+	}
+}
+
 func masterServerListUpdater(ctx context.Context, database store.StatStore, updateFreq time.Duration) {
 	prevStats := model.NewGlobalTF2Stats()
+
+	var build = func() {
+		if errBuild := database.BuildGlobalTF2Stats(ctx, store.HourlyIndex, store.Hourly); errBuild != nil {
+			log.WithError(errBuild).Error("Error building stats")
+			return
+		}
+		log.Infof("Build stat table successfully")
+	}
+
 	var update = func() error {
 		allServers, errServers := steamweb.GetServerList(map[string]string{
 			"appid":     "440",
@@ -489,9 +538,15 @@ func masterServerListUpdater(ctx context.Context, database store.StatStore, upda
 			if server.Secure {
 				stats.Secure++
 			}
+			region := SteamRegionIdString(SvRegion(server.Region))
+			_, regionFound := stats.Regions[region]
+			if !regionFound {
+				stats.Regions[region] = 0
+			}
+			stats.Regions[region] += server.Players
 			mapType := guessMapType(server.Map)
-			_, found := stats.MapTypes[mapType]
-			if !found {
+			_, mapTypeFound := stats.MapTypes[mapType]
+			if !mapTypeFound {
 				stats.MapTypes[mapType] = 0
 			}
 			stats.MapTypes[mapType]++
@@ -515,11 +570,19 @@ func masterServerListUpdater(ctx context.Context, database store.StatStore, upda
 		}).Debugf("Updated master server list")
 		return nil
 	}
+	build()
 	_ = update()
 	updateTicker := time.NewTicker(updateFreq)
-	saveTicker, errTicker := cronticker.NewTicker("0 */5 * * * *")
-	if errTicker != nil {
-		log.WithError(errTicker).Panicf("Invalid cron format")
+	// Fetch new stats every 5 minutes
+	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
+	if errSaveTicker != nil {
+		log.WithError(errSaveTicker).Panicf("Invalid save ticker cron format")
+		return
+	}
+	// Rebuild stats every hour
+	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
+	if errBuildTicker != nil {
+		log.WithError(errBuildTicker).Panicf("Invalid build ticker cron format")
 		return
 	}
 	for {
@@ -528,9 +591,11 @@ func masterServerListUpdater(ctx context.Context, database store.StatStore, upda
 			if errUpdate := update(); errUpdate != nil {
 				log.WithError(errUpdate).Error("Failed to update master server state")
 			}
+		case <-buildTicker.C:
+			build()
 		case saveTime := <-saveTicker.C:
 			prevStats.CreatedOn = saveTime
-			if errSave := database.SaveGlobalTF2Stats(ctx, prevStats); errSave != nil {
+			if errSave := database.SaveGlobalTF2Stats(ctx, store.Live, prevStats); errSave != nil {
 				log.WithError(errSave).Error("Failed to save global stats state")
 				continue
 			}

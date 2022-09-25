@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -88,10 +88,10 @@ func TestSteamWebAPI(t *testing.T) {
 		t.Skip("No steamkey set")
 		return
 	}
-	friends, errFetch := steam.FetchFriends(context.Background(), 76561197961279983)
+	friends, errFetch := thirdparty.FetchFriends(context.Background(), 76561197961279983)
 	assert.NoError(t, errFetch)
 	assert.True(t, len(friends) > 100)
-	summaries, errFetchSummaries := steam.FetchSummaries(friends)
+	summaries, errFetchSummaries := thirdparty.FetchSummaries(friends)
 	assert.NoError(t, errFetchSummaries)
 	assert.Equal(t, len(friends), len(summaries))
 }

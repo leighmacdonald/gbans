@@ -135,8 +135,9 @@ type StatStore interface {
 	MatchSave(ctx context.Context, match *model.Match) error
 	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
 	Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error)
-	SaveGlobalTF2Stats(ctx context.Context, stats model.GlobalTF2StatsSnapshot) error
-	GetGlobalTF2Stats(ctx context.Context) ([]model.GlobalTF2StatsSnapshot, error)
+	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error
+	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error)
+	BuildGlobalTF2Stats(ctx context.Context, indexFunc func(t time.Time) (time.Time, int), duration StatDuration) error
 }
 
 type NetworkStore interface {

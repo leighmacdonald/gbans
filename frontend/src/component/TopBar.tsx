@@ -268,6 +268,10 @@ export const TopBar = () => {
         );
     }, [theme.palette.mode]);
 
+    const validSteamId = useMemo(() => {
+        return user?.steam_id.isValidIndividual();
+    }, [user?.steam_id]);
+
     return (
         <AppBar position="sticky">
             <Container maxWidth="xl">
@@ -363,7 +367,7 @@ export const TopBar = () => {
                                 </IconButton>
                             </Tooltip>
                             {!currentUser ||
-                                (!user.steam_id.isValidIndividual() && (
+                                (!validSteamId && (
                                     <Tooltip title="Steam Login">
                                         <Button
                                             onClick={() => {
@@ -377,54 +381,52 @@ export const TopBar = () => {
                                         </Button>
                                     </Tooltip>
                                 ))}
-                            {user &&
-                                user?.steam_id.isValidIndividual() &&
-                                adminItems.length > 0 && (
-                                    <>
-                                        <Tooltip title="Mod/Admin">
-                                            <IconButton
-                                                sx={{
-                                                    p: 0,
-                                                    marginRight: '0.5rem'
-                                                }}
-                                                size="large"
-                                                aria-label="account of current user"
-                                                aria-controls="menu-appbar"
-                                                aria-haspopup="true"
-                                                onClick={handleOpenAdminMenu}
-                                                color="inherit"
-                                            >
-                                                <SettingsIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Menu
-                                            sx={{ mt: '45px' }}
-                                            id="menu-appbar"
-                                            anchorEl={anchorElAdmin}
-                                            anchorOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
+                            {user && validSteamId && adminItems.length > 0 && (
+                                <>
+                                    <Tooltip title="Mod/Admin">
+                                        <IconButton
+                                            sx={{
+                                                p: 0,
+                                                marginRight: '0.5rem'
                                             }}
-                                            keepMounted
-                                            transformOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
-                                            }}
-                                            open={Boolean(anchorElAdmin)}
-                                            onClose={handleCloseAdminMenu}
+                                            size="large"
+                                            aria-label="account of current user"
+                                            aria-controls="menu-appbar"
+                                            aria-haspopup="true"
+                                            onClick={handleOpenAdminMenu}
+                                            color="inherit"
                                         >
-                                            {adminItems.map((value) => {
-                                                return renderLinkedMenuItem(
-                                                    value.text,
-                                                    value.to,
-                                                    value.icon
-                                                );
-                                            })}
-                                        </Menu>
-                                    </>
-                                )}
+                                            <SettingsIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Menu
+                                        sx={{ mt: '45px' }}
+                                        id="menu-appbar"
+                                        anchorEl={anchorElAdmin}
+                                        anchorOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        keepMounted
+                                        transformOrigin={{
+                                            vertical: 'top',
+                                            horizontal: 'right'
+                                        }}
+                                        open={Boolean(anchorElAdmin)}
+                                        onClose={handleCloseAdminMenu}
+                                    >
+                                        {adminItems.map((value) => {
+                                            return renderLinkedMenuItem(
+                                                value.text,
+                                                value.to,
+                                                value.icon
+                                            );
+                                        })}
+                                    </Menu>
+                                </>
+                            )}
 
-                            {user && user?.steam_id.isValidIndividual() && (
+                            {user && validSteamId && (
                                 <>
                                     <Tooltip title="User Settings">
                                         <IconButton
