@@ -288,7 +288,7 @@ const (
 func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]model.GlobalTF2StatsSnapshot, error) {
 	rows, errExec := database.Query(ctx, query, args...)
 	if errExec != nil {
-		return nil, errExec
+		return nil, Err(errExec)
 	}
 	defer rows.Close()
 	var stats []model.GlobalTF2StatsSnapshot
@@ -338,10 +338,10 @@ func currentHourlyTime() time.Time {
 
 type statIndexFunc = func(t time.Time) (time.Time, int)
 
-func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context, indexFunc statIndexFunc, duration StatDuration) error {
+func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	maxDate := currentHourlyTime()
 	query, args, errQuery := sb.
-		Select(fp.PrependValue(globalStatColumns, "stat_id")...).
+		Select(fp.Prepend(globalStatColumns, "stat_id")...).
 		From(statDurationTable(Live)).
 		Where(sq.Lt{"created_on": maxDate}). // Ignore any results until a full hour has passed
 		OrderBy("created_on").
@@ -482,10 +482,14 @@ func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDur
 	if table == "" {
 		return nil, errors.New("Unsupported stat duration")
 	}
-	query, args, errQuery := sb.Select(fp.PrependValue(globalStatColumns, "stat_id")...).
+	qb := sb.Select(fp.Prepend(globalStatColumns, "stat_id")...).
 		From(table).
-		OrderBy("created_on").
-		ToSql()
+		OrderBy("created_on desc")
+	switch duration {
+	case Hourly:
+		qb = qb.Limit(24 * 7)
+	}
+	query, args, errQuery := qb.ToSql()
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

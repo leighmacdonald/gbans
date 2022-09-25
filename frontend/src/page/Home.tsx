@@ -1,6 +1,5 @@
 import React from 'react';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import { NewsView } from '../component/NewsView';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -13,6 +12,7 @@ import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -24,84 +24,90 @@ export const Home = (): JSX.Element => {
             </Grid>
             <Grid item xs={3}>
                 <Stack spacing={3}>
-                    <Paper elevation={1}>
-                        {currentUser.ban_id == 0 ? (
-                            <Button
-                                startIcon={<StorageIcon />}
-                                fullWidth
-                                color={'success'}
-                                variant={'contained'}
-                                onClick={() => {
-                                    navigate('/servers');
-                                }}
-                            >
-                                Play Now!
-                            </Button>
-                        ) : (
-                            <Button
-                                startIcon={<SupportIcon />}
-                                fullWidth
-                                color={'success'}
-                                variant={'contained'}
-                                onClick={() => {
-                                    navigate(`/ban/${currentUser.ban_id}`);
-                                }}
-                            >
-                                Appeal Ban
-                            </Button>
-                        )}
-                    </Paper>
-                    <Paper elevation={1}>
+                    {currentUser.ban_id == 0 ? (
                         <Button
-                            startIcon={<GavelIcon />}
+                            startIcon={<StorageIcon />}
                             fullWidth
-                            color={'primary'}
+                            color={'success'}
                             variant={'contained'}
                             onClick={() => {
-                                navigate('/wiki/Rules');
+                                navigate('/servers');
                             }}
                         >
-                            Rules
+                            Play Now!
                         </Button>
-                    </Paper>
-                    <Paper elevation={1}>
+                    ) : (
                         <Button
-                            startIcon={<EventIcon />}
+                            startIcon={<SupportIcon />}
                             fullWidth
-                            color={'primary'}
+                            color={'success'}
                             variant={'contained'}
                             onClick={() => {
-                                navigate('/wiki/Events');
+                                navigate(`/ban/${currentUser.ban_id}`);
                             }}
                         >
-                            Events
+                            Appeal Ban
                         </Button>
-                    </Paper>
-                    <Paper elevation={1}>
-                        <Button
-                            startIcon={<AttachMoneyIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            onClick={() => {
-                                navigate('/wiki/Donate');
-                            }}
-                        >
-                            Donate
-                        </Button>
-                    </Paper>
-                    <Paper elevation={1}>
-                        <Button
-                            component={Link}
-                            startIcon={<MarkUnreadChatAltIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            href={'https://discord.gg/uncletopia'}
-                        >
-                            Join Discord
-                        </Button>
-                    </Paper>
+                    )}
+
+                    <Button
+                        startIcon={<GavelIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/wiki/Rules');
+                        }}
+                    >
+                        Rules
+                    </Button>
+
+                    <Button
+                        startIcon={<EventIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/wiki/Events');
+                        }}
+                    >
+                        Events
+                    </Button>
+
+                    <Button
+                        startIcon={<AttachMoneyIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/wiki/Donate');
+                        }}
+                    >
+                        Donate
+                    </Button>
+
+                    <Button
+                        startIcon={<EqualizerIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/global_stats');
+                        }}
+                    >
+                        TF2 Stats
+                    </Button>
+
+                    <Button
+                        component={Link}
+                        startIcon={<MarkUnreadChatAltIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        href={'https://discord.gg/uncletopia'}
+                    >
+                        Join Discord
+                    </Button>
                 </Stack>
             </Grid>
         </Grid>

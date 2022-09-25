@@ -222,18 +222,49 @@ export interface GlobalTF2StatSnapshot {
     created_on: Date;
 }
 
-export const apiGetGlobalTF2Stats = async () =>
-    await apiCall<GlobalTF2StatSnapshot[]>(`/api/global_stats`, 'GET').then(
-        (resp) => {
-            if (!resp.result) {
-                return resp;
-            }
-            resp.result = resp.result?.map((r) => {
-                return {
-                    ...r,
-                    created_on: parseDateTime(r.created_on as unknown as string)
-                };
-            });
+export enum StatDuration {
+    Live,
+    Hourly,
+    Daily,
+    Weekly,
+    Yearly
+}
+
+export const statDurationString = (duration: StatDuration): string => {
+    switch (duration) {
+        case StatDuration.Live:
+            return 'Live';
+        case StatDuration.Hourly:
+            return 'Hourly';
+        case StatDuration.Daily:
+            return 'Daily';
+        case StatDuration.Weekly:
+            return 'Weekly';
+        case StatDuration.Yearly:
+            return 'Yearly';
+    }
+};
+
+export const StatDurations = [
+    StatDuration.Live,
+    StatDuration.Hourly,
+    StatDuration.Daily,
+    StatDuration.Weekly,
+    StatDuration.Yearly
+];
+export const apiGetGlobalTF2Stats = async (duration: StatDuration) =>
+    await apiCall<GlobalTF2StatSnapshot[]>(
+        `/api/global_stats?duration=${duration}`,
+        'GET'
+    ).then((resp) => {
+        if (!resp.result) {
             return resp;
         }
-    );
+        resp.result = resp.result?.map((r) => {
+            return {
+                ...r,
+                created_on: parseDateTime(r.created_on as unknown as string)
+            };
+        });
+        return resp;
+    });

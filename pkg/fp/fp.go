@@ -1,6 +1,11 @@
+// Package fp provides basic generic functional style functions
 package fp
 
 import "golang.org/x/exp/constraints"
+
+type Number interface {
+	constraints.Integer | constraints.Float
+}
 
 // Uniq will return a unique list of value from the input list
 func Uniq[T comparable](input []T) (output []T) {
@@ -43,12 +48,8 @@ func Remove[T comparable](input []T, value T) []T {
 	return newValues
 }
 
-func PrependValue[T comparable](input []T, value T) []T {
+func Prepend[T comparable](input []T, value T) []T {
 	return append([]T{value}, input...)
-}
-
-type Number interface {
-	constraints.Integer | constraints.Float
 }
 
 func Max[T Number](numbers []T) T {
@@ -69,4 +70,11 @@ func Avg[T Number](numbers []T) T {
 		count++
 	}
 	return sum / count
+}
+
+func Reverse[S ~[]E, E any](s S) S {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
 }

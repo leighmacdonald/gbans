@@ -2479,11 +2479,22 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 
 func (web *web) onAPIGetGlobalTF2Stats(database store.StatStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		gStats, errGetStats := database.GetGlobalTF2Stats(ctx, store.Hourly)
+		durationStr, errDuration := ctx.GetQuery("duration")
+		if !errDuration {
+			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			return
+		}
+		intValue, errParse := strconv.ParseInt(durationStr, 10, 64)
+		if errParse != nil {
+			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			return
+		}
+		duration := store.StatDuration(intValue)
+		gStats, errGetStats := database.GetGlobalTF2Stats(ctx, duration)
 		if errGetStats != nil {
 			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
 			return
 		}
-		responseOK(ctx, http.StatusOK, gStats)
+		responseOK(ctx, http.StatusOK, fp.Reverse(gStats))
 	}
 }
