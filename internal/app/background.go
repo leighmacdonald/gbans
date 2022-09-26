@@ -507,11 +507,10 @@ func masterServerListUpdater(ctx context.Context, database store.StatStore, upda
 	prevStats := model.NewGlobalTF2Stats()
 
 	var build = func() {
-		if errBuild := database.BuildGlobalTF2Stats(ctx, store.HourlyIndex, store.Hourly); errBuild != nil {
+		if errBuild := database.BuildGlobalTF2Stats(ctx); errBuild != nil {
 			log.WithError(errBuild).Error("Error building stats")
 			return
 		}
-		log.Infof("Build stat table successfully")
 	}
 
 	var update = func() error {

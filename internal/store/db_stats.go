@@ -336,6 +336,13 @@ func currentHourlyTime() time.Time {
 	return time.Date(year, mon, day, hour, 0, 0, 0, now.Location())
 }
 
+// currentDailyTime calculates the absolute start of the current day
+func currentDailyTime() time.Time {
+	now := config.Now()
+	year, mon, day := now.Date()
+	return time.Date(year, mon, day, 0, 0, 0, 0, now.Location())
+}
+
 type statIndexFunc = func(t time.Time) (time.Time, int)
 
 func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
@@ -356,99 +363,89 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	if len(stats) == 0 {
 		return nil
 	}
-	loops := []struct {
-		idxFunc  statIndexFunc
-		duration StatDuration
-	}{
-		{idxFunc: DailyIndex, duration: Daily},
-		{idxFunc: HourlyIndex, duration: Hourly},
-	}
-	for _, loop := range loops {
-		var (
-			hourlySums           []model.GlobalTF2StatsSnapshot
-			curSums              *model.GlobalTF2StatsSnapshot
-			tempPlayers          []int
-			tempBots             []int
-			tempServersCommunity []int
-			tempServersTotal     []int
-			tempCapacityFull     []int
-			tempCapacityEmpty    []int
-			tempCapacityPartial  []int
-		)
-		tempMapTypes := map[string][]int{}
-		tempRegions := map[string][]int{}
-		curIdx := 0
-		for _, s := range stats {
-			// Group & sum hourly as the minimum granularity
-			curTime, timeIdx := loop.idxFunc(s.CreatedOn)
-			if curIdx == 0 {
-				curIdx = timeIdx
-			} else if curIdx != timeIdx && curSums != nil {
-				// If the hour index changed, flush the current results out
-				sumStat := model.NewGlobalTF2Stats()
-				sumStat.CreatedOn = curTime
-				sumStat.Players = fp.Avg(tempPlayers)
-				sumStat.Bots = fp.Avg(tempBots)
-				sumStat.ServersCommunity = fp.Avg(tempServersCommunity)
-				sumStat.ServersTotal = fp.Avg(tempServersTotal)
-				sumStat.CapacityFull = fp.Avg(tempCapacityFull)
-				sumStat.CapacityEmpty = fp.Avg(tempCapacityEmpty)
-				sumStat.CapacityPartial = fp.Avg(tempCapacityPartial)
-				for k := range tempMapTypes {
-					sumStat.MapTypes[k] = fp.Avg(tempMapTypes[k])
-				}
-				for k := range tempRegions {
-					sumStat.Regions[k] = fp.Avg(tempRegions[k])
-				}
-				hourlySums = append(hourlySums, sumStat)
-				curSums = nil
-				curIdx = timeIdx
-				tempPlayers = nil
-				tempBots = nil
-				tempServersCommunity = nil
-				tempServersTotal = nil
-				tempCapacityFull = nil
-				tempCapacityEmpty = nil
-				tempCapacityPartial = nil
-				tempRegions = map[string][]int{}
-				tempMapTypes = map[string][]int{}
+	var (
+		hourlySums           []model.GlobalTF2StatsSnapshot
+		curSums              *model.GlobalTF2StatsSnapshot
+		tempPlayers          []int
+		tempBots             []int
+		tempServersCommunity []int
+		tempServersTotal     []int
+		tempCapacityFull     []int
+		tempCapacityEmpty    []int
+		tempCapacityPartial  []int
+	)
+	tempMapTypes := map[string][]int{}
+	tempRegions := map[string][]int{}
+	curIdx := 0
+	for _, s := range stats {
+		// Group & sum hourly as the minimum granularity
+		curTime, timeIdx := HourlyIndex(s.CreatedOn)
+		if curIdx == 0 {
+			curIdx = timeIdx
+		} else if curIdx != timeIdx && curSums != nil {
+			// If the hour index changed, flush the current results out
+			sumStat := model.NewGlobalTF2Stats()
+			sumStat.CreatedOn = curTime
+			sumStat.Players = fp.Avg(tempPlayers)
+			sumStat.Bots = fp.Avg(tempBots)
+			sumStat.ServersCommunity = fp.Avg(tempServersCommunity)
+			sumStat.ServersTotal = fp.Avg(tempServersTotal)
+			sumStat.CapacityFull = fp.Avg(tempCapacityFull)
+			sumStat.CapacityEmpty = fp.Avg(tempCapacityEmpty)
+			sumStat.CapacityPartial = fp.Avg(tempCapacityPartial)
+			for k := range tempMapTypes {
+				sumStat.MapTypes[k] = fp.Avg(tempMapTypes[k])
 			}
-			if curSums == nil {
-				curSums = &model.GlobalTF2StatsSnapshot{CreatedOn: curTime}
+			for k := range tempRegions {
+				sumStat.Regions[k] = fp.Avg(tempRegions[k])
 			}
-			tempPlayers = append(tempPlayers, s.Players)
-			tempBots = append(tempBots, s.Bots)
-			tempServersCommunity = append(tempServersCommunity, s.ServersCommunity)
-			tempServersTotal = append(tempServersTotal, s.ServersTotal)
-			tempCapacityFull = append(tempCapacityFull, s.CapacityFull)
-			tempCapacityEmpty = append(tempCapacityEmpty, s.CapacityEmpty)
-			tempCapacityPartial = append(tempCapacityPartial, s.CapacityPartial)
-			for k, v := range s.MapTypes {
-				_, found := tempMapTypes[k]
-				if !found {
-					tempMapTypes[k] = []int{}
-				}
-				tempMapTypes[k] = append(tempMapTypes[k], v)
-			}
-			for k, v := range s.Regions {
-				_, found := tempRegions[k]
-				if !found {
-					tempRegions[k] = []int{}
-				}
-				tempRegions[k] = append(tempRegions[k], v)
-			}
+			hourlySums = append(hourlySums, sumStat)
+			curSums = nil
+			curIdx = timeIdx
+			tempPlayers = nil
+			tempBots = nil
+			tempServersCommunity = nil
+			tempServersTotal = nil
+			tempCapacityFull = nil
+			tempCapacityEmpty = nil
+			tempCapacityPartial = nil
+			tempRegions = map[string][]int{}
+			tempMapTypes = map[string][]int{}
 		}
-		for _, hourly := range hourlySums {
-			if errSave := database.SaveGlobalTF2Stats(ctx, loop.duration, hourly); errSave != nil {
-				if errors.Is(errSave, ErrDuplicate) {
-					continue
-				}
-				return errSave
+		if curSums == nil {
+			curSums = &model.GlobalTF2StatsSnapshot{CreatedOn: curTime}
+		}
+		tempPlayers = append(tempPlayers, s.Players)
+		tempBots = append(tempBots, s.Bots)
+		tempServersCommunity = append(tempServersCommunity, s.ServersCommunity)
+		tempServersTotal = append(tempServersTotal, s.ServersTotal)
+		tempCapacityFull = append(tempCapacityFull, s.CapacityFull)
+		tempCapacityEmpty = append(tempCapacityEmpty, s.CapacityEmpty)
+		tempCapacityPartial = append(tempCapacityPartial, s.CapacityPartial)
+		for k, v := range s.MapTypes {
+			_, found := tempMapTypes[k]
+			if !found {
+				tempMapTypes[k] = []int{}
 			}
+			tempMapTypes[k] = append(tempMapTypes[k], v)
+		}
+		for k, v := range s.Regions {
+			_, found := tempRegions[k]
+			if !found {
+				tempRegions[k] = []int{}
+			}
+			tempRegions[k] = append(tempRegions[k], v)
 		}
 	}
-	log.WithFields(log.Fields{"count": len(stats)}).
-		Debug("Pruning temp stat tables")
+	for _, hourly := range hourlySums {
+		if errSave := database.SaveGlobalTF2Stats(ctx, Hourly, hourly); errSave != nil {
+			if errors.Is(errSave, ErrDuplicate) {
+				continue
+			}
+			return errSave
+		}
+	}
+
 	var statIds []int64
 	for _, s := range stats {
 		statIds = append(statIds, s.StatId)
