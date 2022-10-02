@@ -28,7 +28,9 @@ export const GlobalTF2StatsPage = (): JSX.Element => {
             setData(resp.result ?? []);
         });
     }, [duration]);
+
     const durations = [StatDuration.Hourly];
+
     return (
         <Grid container paddingTop={3}>
             <Grid item xs={12}>

@@ -44,3 +44,5 @@ sm
 .env
 /gbans.sql
 /unhandled_messages.log
+*.privatekey.vdf
+*.publickey.vdf

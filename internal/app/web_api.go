@@ -21,6 +21,7 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -439,6 +440,7 @@ func (web *web) onAPIPostBansCIDRCreate(database store.Store) gin.HandlerFunc {
 }
 func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 	type apiBanRequest struct {
+		SourceId   model.StringSID `json:"source_id"`
 		TargetId   model.StringSID `json:"target_id"`
 		Duration   string          `json:"duration"`
 		BanType    model.BanType   `json:"ban_type"`
@@ -453,15 +455,22 @@ func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
+		origin := model.Web
+		sourceId := model.StringSID(currentUserProfile(ctx).SteamID.String())
+		// srcds sourced bans provide a source_id to id the admin
+		if banRequest.SourceId != "" {
+			sourceId = banRequest.SourceId
+			origin = model.InGame
+		}
 		var banSteam model.BanSteam
 		if errBanSteam := NewBanSteam(
-			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			sourceId,
 			banRequest.TargetId,
 			model.Duration(banRequest.Duration),
 			banRequest.Reason,
 			banRequest.ReasonText,
 			banRequest.Note,
-			model.Web,
+			origin,
 			banRequest.ReportId,
 			banRequest.BanType,
 			&banSteam,
@@ -479,9 +488,7 @@ func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to perform ban")
 			return
 		}
-
 		responseOK(ctx, http.StatusCreated, banSteam)
-
 	}
 }
 
@@ -2370,7 +2377,7 @@ func (web *web) onAPIEditBanMessage(database store.BanStore) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
+func (web *web) onAPIPostServerQuery(database store.Store) gin.HandlerFunc {
 	type masterQueryRequest struct {
 		// ctf,payload,cp,mvm,pd,passtime,mannpower,koth
 		GameTypes  []string  `json:"game_types,omitempty"`
@@ -2383,6 +2390,7 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		Name       string    `json:"name,omitempty"`
 		HasBots    bool      `json:"has_bots,omitempty"`
 	}
+
 	type slimServer struct {
 		Addr       string   `json:"addr"`
 		Name       string   `json:"name"`
@@ -2392,8 +2400,82 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		Bots       int      `json:"bots"`
 		Map        string   `json:"map"`
 		GameTypes  []string `json:"game_types"`
+		Latitude   float64  `json:"latitude"`
+		Longitude  float64  `json:"longitude"`
+		Distance   float64  `json:"distance"`
 	}
+
+	var distance = func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+		radianLat1 := math.Pi * lat1 / 180
+		radianLat2 := math.Pi * lat2 / 180
+		theta := lng1 - lng2
+		radianTheta := math.Pi * theta / 180
+		dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
+		if dist > 1 {
+			dist = 1
+		}
+		dist = math.Acos(dist)
+		dist = dist * 180 / math.Pi
+		dist = dist * 60 * 1.1515
+		dist = dist * 1.609344 // convert to km
+		return dist
+	}
+
+	var filterGameTypes = func(servers []model.ServerLocation, gameTypes []string) []model.ServerLocation {
+		var valid []model.ServerLocation
+		for _, server := range servers {
+			serverTypes := strings.Split(server.Gametype, ",")
+			for _, gt := range gameTypes {
+				if fp.Contains(serverTypes, gt) {
+					valid = append(valid, server)
+					break
+				}
+			}
+		}
+		return valid
+	}
+
+	var filterMaps = func(servers []model.ServerLocation, mapNames []string) []model.ServerLocation {
+		var valid []model.ServerLocation
+		for _, server := range servers {
+			for _, mapName := range mapNames {
+				if util.GlobString(mapName, server.Map) {
+					valid = append(valid, server)
+					break
+				}
+			}
+		}
+		return valid
+	}
+
+	var filterPlayersMin = func(servers []model.ServerLocation, minimum int) []model.ServerLocation {
+		var valid []model.ServerLocation
+		for _, server := range servers {
+			if server.Players >= minimum {
+				valid = append(valid, server)
+				break
+			}
+		}
+		return valid
+	}
+
+	var filterPlayersMax = func(servers []model.ServerLocation, maximum int) []model.ServerLocation {
+		var valid []model.ServerLocation
+		for _, server := range servers {
+			if server.Players <= maximum {
+				valid = append(valid, server)
+				break
+			}
+		}
+		return valid
+	}
+
 	return func(ctx *gin.Context) {
+		var record ip2location.LocationRecord
+		if errLoc := database.GetLocationRecord(ctx, net.ParseIP("68.144.74.48"), &record); errLoc != nil {
+			responseErr(ctx, http.StatusForbidden, nil)
+			return
+		}
 		var req masterQueryRequest
 		if errBind := ctx.BindJSON(&req); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -2403,51 +2485,6 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		filtered := masterServerList
 		masterServerListMu.RUnlock()
 
-		var filterGameTypes = func(servers []steamweb.Server, gameTypes []string) []steamweb.Server {
-			var valid []steamweb.Server
-			for _, server := range servers {
-				serverTypes := strings.Split(server.Gametype, ",")
-				for _, gt := range gameTypes {
-					if fp.Contains(serverTypes, gt) {
-						valid = append(valid, server)
-						break
-					}
-				}
-			}
-			return valid
-		}
-		var filterMaps = func(servers []steamweb.Server, mapNames []string) []steamweb.Server {
-			var valid []steamweb.Server
-			for _, server := range servers {
-				for _, mapName := range mapNames {
-					if util.GlobString(mapName, server.Map) {
-						valid = append(valid, server)
-						break
-					}
-				}
-			}
-			return valid
-		}
-		var filterPlayersMin = func(servers []steamweb.Server, minimum int) []steamweb.Server {
-			var valid []steamweb.Server
-			for _, server := range servers {
-				if server.Players >= minimum {
-					valid = append(valid, server)
-					break
-				}
-			}
-			return valid
-		}
-		var filterPlayersMax = func(servers []steamweb.Server, maximum int) []steamweb.Server {
-			var valid []steamweb.Server
-			for _, server := range servers {
-				if server.Players <= maximum {
-					valid = append(valid, server)
-					break
-				}
-			}
-			return valid
-		}
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)
 		}
@@ -2462,6 +2499,10 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		}
 		var slim []slimServer
 		for _, server := range filtered {
+			dist := distance(server.Latitude, server.Longitude, record.LatLong.Latitude, record.LatLong.Longitude)
+			if dist <= 0 || dist > 5000 {
+				continue
+			}
 			slim = append(slim, slimServer{
 				Addr:       fmt.Sprintf("%s:%d", server.Addr, server.Gameport),
 				Name:       server.Name,
@@ -2471,9 +2512,15 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 				Bots:       server.Bots,
 				Map:        server.Map,
 				GameTypes:  strings.Split(server.Gametype, ","),
+				Latitude:   server.Latitude,
+				Longitude:  server.Longitude,
+				Distance:   dist,
 			})
 		}
-		responseOK(ctx, http.StatusOK, filtered)
+		sort.SliceStable(slim, func(i, j int) bool {
+			return slim[i].Distance < slim[j].Distance
+		})
+		responseOK(ctx, http.StatusOK, slim)
 	}
 }
 

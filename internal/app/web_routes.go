@@ -98,7 +98,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.POST("/api/logs", web.onAPIGetMatches(database))
 	engine.GET("/media/:media_id", web.onGetMediaById(database))
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
-	engine.POST("/api/server_query", web.onAPIPostServerQuery())
+	engine.POST("/api/server_query", web.onAPIPostServerQuery(database))
 
 	engine.GET("/api/global_stats", web.onAPIGetGlobalTF2Stats(database))
 
@@ -122,6 +122,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	serverAuth.POST("/api/check", web.onAPIPostServerCheck(database))
 	serverAuth.POST("/api/demo", web.onAPIPostDemo(database))
 	serverAuth.POST("/api/log", web.onAPIPostLog(database, logFileC))
+	serverAuth.POST("/api/sm/bans/steam/create", web.onAPIPostBanSteamCreate(database))
 
 	// Basic logged-in user
 	authed := engine.Use(authMiddleware(database, model.PUser))

@@ -58,8 +58,9 @@ export const BanPage = (): JSX.Element => {
     const canPost = useMemo(() => {
         return (
             currentUser.permission_level >= PermissionLevel.Moderator ||
-            (ban?.ban.appeal_state != AppealState.Open &&
-                ban?.person.steam_id == currentUser.steam_id)
+            (ban?.ban.appeal_state == AppealState.Open &&
+                ban?.person.steam_id.getSteamID64() ==
+                    currentUser.steam_id.getSteamID64())
         );
     }, [ban, currentUser]);
 
@@ -88,7 +89,7 @@ export const BanPage = (): JSX.Element => {
                 return;
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ban_id]);
+    }, [id, navigate, sendFlash]);
 
     const loadMessages = useCallback(() => {
         if (!id) {

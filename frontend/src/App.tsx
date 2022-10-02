@@ -479,13 +479,7 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/global_stats'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                <PrivateRoute
-                                                                    permission={
-                                                                        PermissionLevel.Editor
-                                                                    }
-                                                                >
-                                                                    <GlobalTF2StatsPage />
-                                                                </PrivateRoute>
+                                                                <GlobalTF2StatsPage />
                                                             </ErrorBoundary>
                                                         }
                                                     />

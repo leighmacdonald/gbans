@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
@@ -666,4 +667,9 @@ func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
 		Regions:   map[string]int{},
 		CreatedOn: config.Now(),
 	}
+}
+
+type ServerLocation struct {
+	ip2location.LatLong
+	steamweb.Server
 }

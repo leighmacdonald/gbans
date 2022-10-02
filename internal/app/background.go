@@ -8,11 +8,13 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -503,9 +505,9 @@ func SteamRegionIdString(region SvRegion) string {
 	}
 }
 
-func masterServerListUpdater(ctx context.Context, database store.StatStore, updateFreq time.Duration) {
+func masterServerListUpdater(ctx context.Context, database store.Store, updateFreq time.Duration) {
 	prevStats := model.NewGlobalTF2Stats()
-
+	locationCache := map[string]ip2location.LatLong{}
 	var build = func() {
 		if errBuild := database.BuildGlobalTF2Stats(ctx); errBuild != nil {
 			log.WithError(errBuild).Error("Error building stats")
@@ -521,9 +523,25 @@ func masterServerListUpdater(ctx context.Context, database store.StatStore, upda
 		if errServers != nil {
 			return errors.Wrap(errServers, "Failed to fetch server list")
 		}
-		var communityServers []steamweb.Server
+		var communityServers []model.ServerLocation
 		stats := model.NewGlobalTF2Stats()
-		for _, server := range allServers {
+		for _, baseServer := range allServers {
+			server := model.ServerLocation{
+				LatLong: ip2location.LatLong{},
+				Server:  baseServer,
+			}
+			hostParts := strings.SplitN(server.Addr, ":", 2)
+			ipAddr := hostParts[0]
+			_, found := locationCache[ipAddr]
+			if !found {
+				var locRecord ip2location.LocationRecord
+				ip := net.ParseIP(ipAddr)
+				if errLocation := database.GetLocationRecord(ctx, ip, &locRecord); errLocation != nil {
+					continue
+				}
+				locationCache[ipAddr] = locRecord.LatLong
+			}
+			server.LatLong = locationCache[ipAddr]
 			stats.ServersTotal++
 			stats.Players += server.Players
 			stats.Bots += server.Bots

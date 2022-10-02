@@ -228,7 +228,7 @@ func (database *pgStore) GetLocationRecord(ctx context.Context, ip net.IP, r *ip
 	const query = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
-		WHERE $1::inet <@ ip_range`
+		WHERE ip_range @> $1::inet`
 	if errQuery := database.conn.QueryRow(ctx, query, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); errQuery != nil {
 		return Err(errQuery)

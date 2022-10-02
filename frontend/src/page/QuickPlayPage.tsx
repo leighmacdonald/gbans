@@ -294,6 +294,13 @@ export const QuickPlayPage = (): JSX.Element => {
                         queryValue: (row) => row.name
                     },
                     {
+                        label: 'Distance',
+                        sortKey: 'distance',
+                        tooltip: 'Distance',
+                        align: 'left',
+                        sortable: true
+                    },
+                    {
                         label: 'Address',
                         sortKey: 'addr',
                         tooltip: 'Address',
@@ -336,7 +343,8 @@ export const QuickPlayPage = (): JSX.Element => {
                         }
                     }
                 ]}
-                defaultSortColumn={'name'}
+                defaultSortOrder={'asc'}
+                defaultSortColumn={'distance'}
                 rowsPerPage={RowsPerPage.TwentyFive}
                 rows={filteredServers}
             />
@@ -386,6 +394,11 @@ export const QuickPlayPage = (): JSX.Element => {
                                             value={chatInput}
                                             onChange={(evt) => {
                                                 setChatInput(evt.target.value);
+                                            }}
+                                            onKeyDown={(evt) => {
+                                                if (evt.key == 'Enter') {
+                                                    sendMessage();
+                                                }
                                             }}
                                             disabled={!isReady}
                                         />

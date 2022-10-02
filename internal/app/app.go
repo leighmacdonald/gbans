@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/steamweb"
 	"math/rand"
 	"net"
 	"os"
@@ -35,7 +34,7 @@ var (
 	// Current known state of the servers a2s server info query
 	serverStateA2S     map[string]a2s.ServerInfo
 	serverStateA2SMu   *sync.RWMutex
-	masterServerList   []steamweb.Server
+	masterServerList   []model.ServerLocation
 	masterServerListMu *sync.RWMutex
 	discordSendMsg     chan discordPayload
 	warningChan        chan newUserWarning

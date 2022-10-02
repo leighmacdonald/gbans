@@ -187,6 +187,9 @@ export interface SlimServer {
     bots: number;
     map: string;
     game_types: string[];
+    latitude: number;
+    longitude: number;
+    distance: number;
 }
 
 export const apiServerQuery = async (opts: ServerQueryOpts) =>
