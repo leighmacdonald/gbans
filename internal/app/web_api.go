@@ -176,7 +176,7 @@ func (web *web) onAPIPostPingMod(database store.Store) gin.HandlerFunc {
 		}
 		embed := respOk(nil, "New User Report")
 		embed.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
-		if playerInfo.Player.Name != "" {
+		if playerInfo.Player != nil && playerInfo.Player.Name != "" {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "Reporter",
 				Value:  playerInfo.Player.Name,

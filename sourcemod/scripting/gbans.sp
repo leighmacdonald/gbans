@@ -26,6 +26,7 @@ enum struct PlayerInfo {
     bool authed;
     char ip[16];
     int ban_type;
+    char message[256];
 }
 // clang-format on
 
@@ -54,9 +55,7 @@ void OnPluginStart() {
     RegConsoleCmd("gb_mod", CmdMod, "Ping a moderator");
     RegConsoleCmd("mod", CmdMod, "Ping a moderator");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
-    RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
-    RegAdminCmd("gb_mute", AdminCmdMute, ADMFLAG_KICK);
-    RegAdminCmd("gb_kick", AdminCmdKick, ADMFLAG_KICK);
+    //RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
 
@@ -102,15 +101,21 @@ System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
 
 public
 void OnClientPostAdminCheck(int clientId) {
-    if (g_players[clientId].ban_type == BSNoComm) {
-        if (!BaseComm_IsClientMuted(clientId)) {
-            BaseComm_SetClientMute(clientId, true);
+    switch (g_players[clientId].ban_type) {
+        case BSNoComm: {
+            if (!BaseComm_IsClientMuted(clientId)) {
+                BaseComm_SetClientMute(clientId, true);
+            }
+            if (!BaseComm_IsClientGagged(clientId)) {
+                BaseComm_SetClientGag(clientId, true);
+            }
+            ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
+            LogAction(0, clientId, "Muted \"%L\" for an unfinished mute punishment.", clientId);
         }
-        if (!BaseComm_IsClientGagged(clientId)) {
-            BaseComm_SetClientGag(clientId, true);
+        case BSBanned: {
+            KickClient(clientId, g_players[clientId].message);
+            LogAction(0, clientId, "Kicked \"%L\" for an unfinished ban.", clientId);
         }
-        ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
-        LogAction(0, clientId, "Muted \"%L\" for an unfinished mute punishment.", clientId);
     }
 }
 
@@ -174,24 +179,6 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
     }
 }
 
-public
-Action AdminCmdBanIP(int client, int argc) {
-    PrintToServer("banip called");
-    return Plugin_Handled;
-}
-
-public
-Action AdminCmdMute(int clientId, int argc) {
-    if (IsClientInGame(clientId) && !IsFakeClient(clientId)) {
-        if (!BaseComm_IsClientMuted(clientId)) {
-            BaseComm_SetClientMute(clientId, true);
-        }
-        if (!BaseComm_IsClientGagged(clientId)) {
-            BaseComm_SetClientGag(clientId, true);
-        }
-    }
-    return Plugin_Handled;
-}
 
 public
 Action AdminCmdReauth(int clientId, int argc) {
@@ -199,13 +186,13 @@ Action AdminCmdReauth(int clientId, int argc) {
     return Plugin_Handled;
 }
 
-public
-Action AdminCmdKick(int clientId, int argc) {
-    if (IsClientInGame(clientId) && !IsFakeClient(clientId)) {
-        KickClient(clientId);
-    }
-    return Plugin_Handled;
-}
+// public
+// Action AdminCmdKick(int clientId, int argc) {
+//     if (IsClientInGame(clientId) && !IsFakeClient(clientId)) {
+//         KickClient(clientId);
+//     }
+//     return Plugin_Handled;
+// }
 
 public
 Action CmdVersion(int clientId, int args) {
@@ -266,18 +253,9 @@ void OnPingModRespReceived(bool success, const char[] error, System2HTTPRequest 
         return;
     }
     if (response.StatusCode != HTTP_STATUS_OK) {
-        PrintToServer("[GB] Bad status on authentication request: %s", error);
+        PrintToServer("[GB] Bad status on mod resp request (%d): %s", response.StatusCode, error);
         return;
     }
-    char[] content = new char[response.ContentLength + 1];
-    char message[250];
-    int client;
-    response.GetContent(content, response.ContentLength + 1);
-    JSON_Object resp = json_decode(content);
-    resp.GetString("message", message, sizeof(message));
-    resp.GetInt("client");
-    ReplyToCommand(client, message);
-    json_cleanup_and_delete(resp);
 }
 
 public
@@ -376,7 +354,6 @@ Action AdminCmdBan(int clientId, int argc) {
         ReplyToCommand(clientId, "Failed to locate user: %s", targetIdStr);
         return Plugin_Handled;
     }
-    ReplyToCommand(clientId, "TargetIdx: %d", targetIdx);
     banReason reason = custom;
     if (!parseReason(reasonStr, reason)) {
         ReplyToCommand(clientId, "Failed to parse reason");
@@ -389,7 +366,7 @@ Action AdminCmdBan(int clientId, int argc) {
     }
     
     if (!ban(clientId, targetIdx, reason, duration, banType)) {
-        ReplyToCommand(clientId, "ban error");
+        ReplyToCommand(clientId, "Error sending ban request");
     }
 
     return Plugin_Handled;
@@ -430,7 +407,7 @@ bool ban(int sourceId, int targetId, banReason reason, const char[] duration, in
     req.SetData(encoded);
     req.POST();
     delete req;
-    ReplyToCommand(sourceId, "Ban request sent");
+
     g_reply_to_client_id = sourceId;
 
     return true;
@@ -439,6 +416,7 @@ bool ban(int sourceId, int targetId, banReason reason, const char[] duration, in
 void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                            HTTPRequestMethod method) {
     if (!success) {
+        PrintToServer("[GB] Ban request did not complete successfully");
         return;
     }
 
@@ -529,6 +507,7 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             g_players[client_id].authed = true;
             g_players[client_id].ip = ip;
             g_players[client_id].ban_type = ban_type;
+            g_players[client_id].message = msg;
 
             PrintToServer("[GB] Client authenticated (banType: %d)", ban_type);
         }
