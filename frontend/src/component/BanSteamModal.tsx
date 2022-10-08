@@ -65,8 +65,8 @@ export const BanSteamModal = ({
             sendFlash('error', 'no steamId');
             return;
         }
-        if (banReason == BanReason.Custom && customDuration == '') {
-            sendFlash('error', 'Custom duration cannot be empty');
+        if (banReason == BanReason.Custom && reasonText == '') {
+            sendFlash('error', 'Custom reason cannot be empty');
             return;
         }
         const dur = duration == Duration.durCustom ? customDuration : duration;
