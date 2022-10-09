@@ -1,45 +1,31 @@
 import React, { useMemo } from 'react';
 import Stack from '@mui/material/Stack';
-import {
-    apiCreateBanSteam,
-    apiGetProfile,
-    BanReason,
-    BanReasons,
-    banReasonsList,
-    BanType,
-    Duration,
-    Durations,
-    IAPIBanRecord
-} from '../api';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
+import { apiCreateBanSteam, BanReason, BanType, Duration } from '../api';
 import { Heading } from './Heading';
 import SteamID from 'steamid';
-
 import * as yup from 'yup';
 import { useFormik } from 'formik';
-import Button from '@mui/material/Button';
 import GavelIcon from '@mui/icons-material/Gavel';
-import CheckIcon from '@mui/icons-material/Check';
-import ClearIcon from '@mui/icons-material/Clear';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle
-} from '@mui/material';
-import { SteamIDInput, SteamIDInputValue } from './formik/SteamIDInput';
+    SteamIdField,
+    SteamIDInputValue,
+    steamIdValidator
+} from './formik/SteamIdField';
 import { logErr } from '../util/errors';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { BanTypeField } from './formik/BanTypeField';
+import { BanReasonField } from './formik/BanReasonField';
+import { DurationField } from './formik/DurationField';
+import { DurationCustomField } from './formik/DurationCustomField';
+import { NoteField } from './formik/NoteField';
+import { ReportIdField } from './formik/ReportIdField';
+import { ModalButtons } from './formik/ModalButtons';
+import { BanReasonTextField } from './formik/BanReasonTextField';
 
-export interface BanModalProps<Ban> {
+export interface BanModalProps {
     open: boolean;
     setOpen: (open: boolean) => void;
-    ban?: Ban;
     reportId?: number;
     steamId?: SteamID;
 }
@@ -55,22 +41,7 @@ interface BanSteamFormValues extends SteamIDInputValue {
 }
 
 const validationSchema = yup.object({
-    steam_id: yup
-        .string()
-        .test('checkSteamId', 'Invalid steamid/vanity', async (steamId) => {
-            if (!steamId) {
-                return false;
-            }
-            try {
-                const resp = await apiGetProfile(steamId);
-                return !(!resp.status || !resp.result);
-            } catch (e) {
-                logErr(e);
-                return false;
-            }
-        })
-        .label('Enter your steam_id')
-        .required('steam_id is required'),
+    steam_id: steamIdValidator,
     reportId: yup.number().min(0, 'Must be positive integer').nullable(),
     banType: yup
         .number()
@@ -94,7 +65,7 @@ export const BanSteamModal = ({
     setOpen,
     steamId,
     reportId
-}: BanModalProps<IAPIBanRecord>) => {
+}: BanModalProps) => {
     const { sendFlash } = useUserFlashCtx();
 
     const isReadOnlySid = useMemo(() => {
@@ -142,9 +113,9 @@ export const BanSteamModal = ({
             }
         }
     });
-
+    const formId = 'banSteamForm';
     return (
-        <form onSubmit={formik.handleSubmit} id={'banForm'}>
+        <form onSubmit={formik.handleSubmit} id={formId}>
             <Dialog
                 fullWidth
                 open={open}
@@ -158,210 +129,21 @@ export const BanSteamModal = ({
 
                 <DialogContent>
                     <Stack spacing={2}>
-                        <SteamIDInput
+                        <SteamIdField
                             formik={formik}
                             fullWidth
                             isReadOnly={isReadOnlySid}
                         />
-
-                        <Stack spacing={3} alignItems={'center'}>
-                            <TextField
-                                fullWidth
-                                id={'report_id'}
-                                label={'report_id'}
-                                name={'report_id'}
-                                disabled={true}
-                                hidden={true}
-                                value={formik.values.reportId}
-                                onChange={formik.handleChange}
-                            />
-                            <FormControl fullWidth>
-                                <InputLabel id="actionType-label">
-                                    Action Type
-                                </InputLabel>
-                                <Select<BanType>
-                                    fullWidth
-                                    label={'Action Type'}
-                                    labelId="actionType-label"
-                                    id="banType"
-                                    name={'banType'}
-                                    value={formik.values.banType}
-                                    onChange={formik.handleChange}
-                                    error={
-                                        formik.touched.banType &&
-                                        Boolean(formik.errors.banType)
-                                    }
-                                    defaultValue={BanType.Banned}
-                                >
-                                    {[BanType.Banned, BanType.NoComm].map(
-                                        (v) => (
-                                            <MenuItem
-                                                key={`time-${v}`}
-                                                value={v}
-                                            >
-                                                {v == BanType.NoComm
-                                                    ? 'Mute'
-                                                    : 'Ban'}
-                                            </MenuItem>
-                                        )
-                                    )}
-                                </Select>
-                                <FormHelperText>
-                                    {formik.touched.banType &&
-                                        formik.errors.banType}
-                                </FormHelperText>
-                            </FormControl>
-
-                            <FormControl fullWidth>
-                                <InputLabel id="reason-label">
-                                    Reason
-                                </InputLabel>
-                                <Select<BanReason>
-                                    labelId="reason-label"
-                                    id="reason"
-                                    name={'reason'}
-                                    value={formik.values.reason}
-                                    onChange={formik.handleChange}
-                                    error={
-                                        formik.touched.reason &&
-                                        Boolean(formik.errors.reason)
-                                    }
-                                >
-                                    {banReasonsList.map((v) => (
-                                        <MenuItem key={`time-${v}`} value={v}>
-                                            {BanReasons[v]}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                <FormHelperText>
-                                    {formik.touched.reason &&
-                                        formik.errors.reason}
-                                </FormHelperText>
-                            </FormControl>
-
-                            <TextField
-                                fullWidth
-                                id={'reasonText'}
-                                label={'Custom Reason'}
-                                name={'reasonText'}
-                                disabled={
-                                    formik.values.reason != BanReason.Custom
-                                }
-                                value={formik.values.reasonText}
-                                onChange={formik.handleChange}
-                                error={
-                                    formik.touched.reasonText &&
-                                    Boolean(formik.errors.reasonText)
-                                }
-                                helperText={
-                                    formik.touched.reasonText &&
-                                    formik.errors.reasonText
-                                }
-                            />
-
-                            <FormControl fullWidth>
-                                <InputLabel id="duration-label">
-                                    Duration
-                                </InputLabel>
-                                <Select<Duration>
-                                    fullWidth
-                                    label={'Ban Duration'}
-                                    labelId="duration-label"
-                                    id="duration"
-                                    name={'duration'}
-                                    value={formik.values.duration}
-                                    onChange={formik.handleChange}
-                                    error={
-                                        formik.touched.duration &&
-                                        Boolean(formik.errors.duration)
-                                    }
-                                >
-                                    {Durations.map((v) => (
-                                        <MenuItem key={`time-${v}`} value={v}>
-                                            {v}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                <FormHelperText>
-                                    {formik.touched.duration &&
-                                        formik.errors.duration}
-                                </FormHelperText>
-                            </FormControl>
-
-                            <TextField
-                                fullWidth
-                                label={'Custom Duration'}
-                                id={'durationCustom'}
-                                name={'durationCustom'}
-                                disabled={
-                                    formik.values.duration != Duration.durCustom
-                                }
-                                value={formik.values.durationCustom}
-                                onChange={formik.handleChange}
-                                error={
-                                    formik.touched.durationCustom &&
-                                    Boolean(formik.errors.durationCustom)
-                                }
-                                helperText={
-                                    formik.touched.durationCustom &&
-                                    formik.errors.durationCustom
-                                }
-                            />
-
-                            <TextField
-                                fullWidth
-                                id="note"
-                                name={'note'}
-                                label="Moderator Notes (hidden from public)"
-                                multiline
-                                value={formik.values.note}
-                                onChange={formik.handleChange}
-                                error={
-                                    formik.touched.note &&
-                                    Boolean(formik.errors.note)
-                                }
-                                helperText={
-                                    formik.touched.note && formik.errors.note
-                                }
-                                rows={10}
-                                variant="outlined"
-                            />
-                        </Stack>
+                        <ReportIdField formik={formik} />
+                        <BanTypeField formik={formik} />
+                        <BanReasonField formik={formik} />
+                        <BanReasonTextField formik={formik} />
+                        <DurationField formik={formik} />
+                        <DurationCustomField formik={formik} />
+                        <NoteField formik={formik} />
                     </Stack>
                 </DialogContent>
-                <DialogActions>
-                    <Button
-                        variant={'contained'}
-                        color={'success'}
-                        startIcon={<CheckIcon />}
-                        type={'submit'}
-                        form={'banForm'}
-                    >
-                        Accept
-                    </Button>
-
-                    <Button
-                        variant={'contained'}
-                        color={'warning'}
-                        startIcon={<ClearIcon />}
-                        type={'reset'}
-                        form={'banForm'}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        variant={'contained'}
-                        color={'error'}
-                        startIcon={<ClearIcon />}
-                        type={'button'}
-                        form={'banForm'}
-                        onClick={() => {
-                            setOpen(false);
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                </DialogActions>
+                <ModalButtons formId={formId} setOpen={setOpen} />
             </Dialog>
         </form>
     );

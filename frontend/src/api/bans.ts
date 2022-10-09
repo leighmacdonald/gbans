@@ -235,10 +235,6 @@ export interface BanPayloadASN extends BanBasePayload {
     as_num: number;
 }
 
-export interface BanPayloadGroup extends BanBasePayload {
-    group_id: string;
-}
-
 export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans/steam`,
@@ -340,8 +336,8 @@ export const apiCreateBanASN = async (p: BanPayloadASN) =>
         p
     );
 
-export const apiCreateBanGroup = async (p: BanPayloadGroup) =>
-    await apiCall<IAPIBanGroupRecord, BanPayloadGroup>(
+export const apiCreateBanGroup = async (p: BanBasePayload) =>
+    await apiCall<IAPIBanGroupRecord, BanBasePayload>(
         `/api/bans/group/create`,
         'POST',
         p

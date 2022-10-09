@@ -2,7 +2,27 @@ import React from 'react';
 import TextField from '@mui/material/TextField';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
 import { Nullable } from '../../util/types';
-import { PlayerProfile } from '../../api';
+import { apiGetProfile, PlayerProfile } from '../../api';
+import * as yup from 'yup';
+import { logErr } from '../../util/errors';
+
+export const steamIdValidator = yup
+    .string()
+    .test('checkSteamId', 'Invalid steamid/vanity', async (steamId) => {
+        if (!steamId) {
+            return false;
+        }
+        try {
+            const resp = await apiGetProfile(steamId);
+            return !(!resp.status || !resp.result);
+        } catch (e) {
+            logErr(e);
+            return false;
+        }
+    })
+    .label('Enter your steam_id')
+    .required('steam_id is required');
+
 export interface SteamIDInputProps<T> {
     id?: string;
     label?: string;
@@ -17,7 +37,7 @@ export interface SteamIDInputValue {
     steam_id: string;
 }
 
-export const SteamIDInput = ({
+export const SteamIdField = ({
     id,
     formik,
     isReadOnly

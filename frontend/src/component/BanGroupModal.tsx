@@ -1,218 +1,132 @@
-import React, { ChangeEvent, useCallback, useState } from 'react';
+import React from 'react';
 import Stack from '@mui/material/Stack';
 import {
     apiCreateBanGroup,
-    BanPayloadGroup,
     BanReason,
-    BanReasons,
-    banReasonsList,
     BanType,
     Duration,
-    Durations,
     IAPIBanGroupRecord
 } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
+import { ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
-import { ProfileSelectionInput } from './ProfileSelectionInput';
-import SteamID from 'steamid';
 import { logErr } from '../util/errors';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import GavelIcon from '@mui/icons-material/Gavel';
+import { BanTypeField } from './formik/BanTypeField';
+import { BanReasonField } from './formik/BanReasonField';
+import { DurationField } from './formik/DurationField';
+import { DurationCustomField } from './formik/DurationCustomField';
+import { NoteField } from './formik/NoteField';
+import { ModalButtons } from './formik/ModalButtons';
+import { GroupIdField } from './formik/GroupIdField';
 
 export interface BanGroupModalProps
     extends ConfirmationModalProps<IAPIBanGroupRecord> {
     asnNum?: number;
 }
 
-export const BanGroupModal = ({
-    open,
-    setOpen,
-    onSuccess
-}: BanGroupModalProps) => {
-    const [targetSteamId, setTargetSteamId] = useState<SteamID>(
-        new SteamID('')
-    );
-    const [input, setInput] = useState<string>('');
-    const [duration, setDuration] = useState<Duration>(Duration.durInf);
-    const [customDuration, setCustomDuration] = useState<string>('');
-    const [banReason, setBanReason] = useState<BanReason>(BanReason.External);
-    const [noteText, setNoteText] = useState<string>('');
-    const [reasonText, setReasonText] = useState<string>('');
-    const [groupId, setGroupId] = useState<string>('');
+interface BanGroupFormValues {
+    groupId: string;
+    banType: BanType;
+    reason: BanReason;
+    reasonText: string;
+    duration: Duration;
+    durationCustom: string;
+    note: string;
+}
 
+const validationSchema = yup.object({
+    groupId: yup.string().min(10, 'Must be positive integer'),
+    banType: yup
+        .number()
+        .label('Select a ban type')
+        .required('ban type is required'),
+    reason: yup
+        .number()
+        .label('Select a reason')
+        .required('reason is required'),
+    reasonText: yup.string().label('Custom reason'),
+    duration: yup
+        .string()
+        .label('Ban/Mute duration')
+        .required('Duration is required'),
+    durationCustom: yup.string().label('Custom duration'),
+    note: yup.string().label('Hidden Moderator Note')
+});
+
+export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
     const { sendFlash } = useUserFlashCtx();
 
-    const handleSubmit = useCallback(() => {
-        if (banReason == BanReason.Custom && reasonText == '') {
-            sendFlash('error', 'Custom reason cannot be empty');
-            return;
-        }
-        const dur = duration == Duration.durCustom ? customDuration : duration;
-        if (!dur) {
-            sendFlash('error', 'Custom duration invalid');
-            return;
-        }
-        const opts: BanPayloadGroup = {
-            target_id: targetSteamId.toString(),
-            duration: dur,
-            group_id: groupId,
-            reason_text: reasonText,
-            reason: banReason,
-            note: noteText,
-            ban_type: BanType.Banned
-        };
-
-        apiCreateBanGroup(opts)
-            .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', `Fialed to create group ban`);
+    const formik = useFormik<BanGroupFormValues>({
+        initialValues: {
+            banType: BanType.NoComm,
+            duration: Duration.dur2w,
+            durationCustom: '',
+            note: '',
+            reason: BanReason.Cheating,
+            groupId: '',
+            reasonText: ''
+        },
+        validateOnBlur: true,
+        validateOnChange: false,
+        onReset: () => {
+            alert('reset!');
+        },
+        validationSchema: validationSchema,
+        onSubmit: async (values) => {
+            try {
+                const resp = await apiCreateBanGroup({
+                    note: values.note,
+                    ban_type: values.banType,
+                    duration: values.duration,
+                    reason: values.reason,
+                    reason_text: values.reasonText,
+                    target_id: values.groupId
+                });
+                if (!resp.status || !resp.result) {
+                    sendFlash('error', 'Error saving ban');
                     return;
                 }
-                sendFlash(
-                    'success',
-                    `Steam group ban created successfully: ${response.result.ban_group_id}`
-                );
-                onSuccess && onSuccess(response.result);
-            })
-            .catch(logErr);
-    }, [
-        banReason,
-        customDuration,
-        duration,
-        targetSteamId,
-        groupId,
-        reasonText,
-        noteText,
-        sendFlash,
-        onSuccess
-    ]);
-
+                sendFlash('success', 'Ban created successfully');
+            } catch (e) {
+                logErr(e);
+                sendFlash('error', 'Error saving ban');
+            } finally {
+                setOpen(false);
+            }
+        }
+    });
+    const formId = 'banGroupForm';
     return (
-        <ConfirmationModal
-            open={open}
-            setOpen={setOpen}
-            onSuccess={() => {
-                setOpen(false);
-            }}
-            onCancel={() => {
-                setOpen(false);
-            }}
-            onAccept={() => {
-                handleSubmit();
-            }}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-        >
-            <Stack spacing={2}>
-                <Heading>Ban Steam Group</Heading>
-                <Stack spacing={3} alignItems={'center'}>
-                    <ProfileSelectionInput
-                        fullWidth
-                        onProfileSuccess={(profile) => {
-                            if (profile) {
-                                setTargetSteamId(profile.player.steam_id);
-                            } else {
-                                setTargetSteamId(new SteamID(''));
-                            }
-                        }}
-                        input={input}
-                        setInput={setInput}
-                    />
-                    <TextField
-                        fullWidth
-                        id={'group_id'}
-                        label={'Steam Group ID'}
-                        onChange={(evt) => {
-                            setGroupId(evt.target.value);
-                        }}
-                    />
-                    <FormControl fullWidth>
-                        <InputLabel id="group-reason-label">Reason</InputLabel>
-                        <Select<BanReason>
-                            fullWidth
-                            labelId={'group-reason-label'}
-                            label={'Reason'}
-                            id="reason-helper"
-                            value={banReason}
-                            onChange={(evt: SelectChangeEvent<BanReason>) => {
-                                setBanReason(evt.target.value as BanReason);
-                            }}
-                        >
-                            {banReasonsList.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {BanReasons[v]}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    {banReason == BanReason.Custom && (
-                        <TextField
-                            fullWidth
-                            label={'Custom Reason'}
-                            id={'reasonText'}
-                            value={reasonText}
-                            onChange={(evt) => {
-                                setReasonText(evt.target.value);
-                            }}
-                        />
-                    )}
-                    <FormControl fullWidth>
-                        <InputLabel id="group-duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select<Duration>
-                            fullWidth
-                            labelId="group-duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            defaultValue={Duration.durInf}
-                            onChange={(evt: SelectChangeEvent<Duration>) => {
-                                setDuration(evt.target.value as Duration);
-                            }}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
+        <form onSubmit={formik.handleSubmit} id={'banForm'}>
+            <Dialog
+                fullWidth
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                    Ban Steam Group
+                </DialogTitle>
 
-                    {duration == Duration.durCustom && (
-                        <TextField
-                            fullWidth
-                            label={'Custom Curation'}
-                            id={'customDuration'}
-                            value={customDuration}
-                            onChange={(evt) => {
-                                setCustomDuration(evt.target.value);
-                            }}
-                        />
-                    )}
-
-                    <TextField
-                        fullWidth
-                        id="note-field"
-                        label="Moderator Notes (hidden from public)"
-                        multiline
-                        value={noteText}
-                        onChange={(evt: ChangeEvent<HTMLInputElement>) => {
-                            setNoteText((evt.target as HTMLInputElement).value);
-                        }}
-                        rows={10}
-                        variant="outlined"
-                    />
-                </Stack>
-            </Stack>
-        </ConfirmationModal>
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <Stack spacing={3} alignItems={'center'}>
+                            <GroupIdField formik={formik} />
+                            <BanTypeField formik={formik} />
+                            <BanReasonField formik={formik} />
+                            <DurationField formik={formik} />
+                            <DurationCustomField formik={formik} />
+                            <NoteField formik={formik} />
+                        </Stack>
+                    </Stack>
+                </DialogContent>
+                <ModalButtons formId={formId} setOpen={setOpen} />
+            </Dialog>
+        </form>
     );
 };
