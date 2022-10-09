@@ -6,6 +6,12 @@ import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
 import React from 'react';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
+import * as yup from 'yup';
+
+export const BanTypeFieldValidator = yup
+    .number()
+    .label('Select a ban type')
+    .required('ban type is required');
 
 export const BanTypeField = ({
     formik

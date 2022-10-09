@@ -14,14 +14,23 @@ import {
 } from './formik/SteamIdField';
 import { logErr } from '../util/errors';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { BanTypeField } from './formik/BanTypeField';
-import { BanReasonField } from './formik/BanReasonField';
-import { DurationField } from './formik/DurationField';
-import { DurationCustomField } from './formik/DurationCustomField';
-import { NoteField } from './formik/NoteField';
-import { ReportIdField } from './formik/ReportIdField';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import {
+    DurationCustomField,
+    DurationCustomFieldValidator
+} from './formik/DurationCustomField';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import { ReportIdField, ReportIdFieldValidator } from './formik/ReportIdField';
 import { ModalButtons } from './formik/ModalButtons';
-import { BanReasonTextField } from './formik/BanReasonTextField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
 
 export interface BanModalProps {
     open: boolean;
@@ -42,22 +51,13 @@ interface BanSteamFormValues extends SteamIDInputValue {
 
 const validationSchema = yup.object({
     steam_id: steamIdValidator,
-    reportId: yup.number().min(0, 'Must be positive integer').nullable(),
-    banType: yup
-        .number()
-        .label('Select a ban type')
-        .required('ban type is required'),
-    reason: yup
-        .number()
-        .label('Select a reason')
-        .required('reason is required'),
-    reasonText: yup.string().label('Custom reason'),
-    duration: yup
-        .string()
-        .label('Ban/Mute duration')
-        .required('Duration is required'),
-    durationCustom: yup.string().label('Custom duration'),
-    note: yup.string().label('Hidden Moderator Note')
+    reportId: ReportIdFieldValidator,
+    banType: BanTypeFieldValidator,
+    reason: BanReasonFieldValidator,
+    reasonText: BanReasonTextFieldValidator,
+    duration: DurationFieldValidator,
+    durationCustom: DurationCustomFieldValidator,
+    note: NoteFieldValidator
 });
 
 export const BanSteamModal = ({

@@ -2,6 +2,9 @@ import React from 'react';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
 import TextField from '@mui/material/TextField';
 import { BanReason } from '../../api';
+import * as yup from 'yup';
+
+export const BanReasonTextFieldValidator = yup.string().label('Custom reason');
 
 export const BanReasonTextField = ({
     formik

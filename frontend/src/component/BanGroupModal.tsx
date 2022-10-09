@@ -15,13 +15,23 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import GavelIcon from '@mui/icons-material/Gavel';
-import { BanTypeField } from './formik/BanTypeField';
-import { BanReasonField } from './formik/BanReasonField';
-import { DurationField } from './formik/DurationField';
-import { DurationCustomField } from './formik/DurationCustomField';
-import { NoteField } from './formik/NoteField';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import {
+    DurationCustomField,
+    DurationCustomFieldValidator
+} from './formik/DurationCustomField';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
 import { ModalButtons } from './formik/ModalButtons';
-import { GroupIdField } from './formik/GroupIdField';
+import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
 
 export interface BanGroupModalProps
     extends ConfirmationModalProps<IAPIBanGroupRecord> {
@@ -39,22 +49,13 @@ interface BanGroupFormValues {
 }
 
 const validationSchema = yup.object({
-    groupId: yup.string().min(10, 'Must be positive integer'),
-    banType: yup
-        .number()
-        .label('Select a ban type')
-        .required('ban type is required'),
-    reason: yup
-        .number()
-        .label('Select a reason')
-        .required('reason is required'),
-    reasonText: yup.string().label('Custom reason'),
-    duration: yup
-        .string()
-        .label('Ban/Mute duration')
-        .required('Duration is required'),
-    durationCustom: yup.string().label('Custom duration'),
-    note: yup.string().label('Hidden Moderator Note')
+    groupId: GroupIdFieldValidator,
+    banType: BanTypeFieldValidator,
+    reason: BanReasonFieldValidator,
+    reasonText: BanReasonTextFieldValidator,
+    duration: DurationFieldValidator,
+    durationCustom: DurationCustomFieldValidator,
+    note: NoteFieldValidator
 });
 
 export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
@@ -119,6 +120,7 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
                             <GroupIdField formik={formik} />
                             <BanTypeField formik={formik} />
                             <BanReasonField formik={formik} />
+                            <BanReasonTextField formik={formik} />
                             <DurationField formik={formik} />
                             <DurationCustomField formik={formik} />
                             <NoteField formik={formik} />

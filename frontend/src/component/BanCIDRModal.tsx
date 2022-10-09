@@ -1,250 +1,143 @@
-import React, {
-    ChangeEvent,
-    SyntheticEvent,
-    useCallback,
-    useState
-} from 'react';
-import { ProfileSelectionInput } from './ProfileSelectionInput';
+import React from 'react';
 import Stack from '@mui/material/Stack';
-import {
-    apiCreateBanCIDR,
-    BanPayloadCIDR,
-    BanReason,
-    BanReasons,
-    banReasonsList,
-    BanType,
-    Duration,
-    Durations,
-    IAPIBanCIDRRecord,
-    ip2int
-} from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import { apiCreateBanCIDR, BanReason, BanType, Duration } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import IPCIDR from 'ip-cidr';
 import { Heading } from './Heading';
-import SteamID from 'steamid';
 import { logErr } from '../util/errors';
+import {
+    SteamIdField,
+    SteamIDInputValue,
+    steamIdValidator
+} from './formik/SteamIdField';
+import * as yup from 'yup';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import {
+    DurationCustomField,
+    DurationCustomFieldValidator
+} from './formik/DurationCustomField';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import GavelIcon from '@mui/icons-material/Gavel';
+import { ModalButtons } from './formik/ModalButtons';
+import { useFormik } from 'formik';
+import {
+    NetworkRangeField,
+    NetworkRangeFieldValidator
+} from './formik/NetworkRangeField';
 
-export interface BanCIDRModalProps
-    extends ConfirmationModalProps<IAPIBanCIDRRecord> {
-    reportId?: number;
-    targetId?: SteamID;
+export interface BanCIDRModalProps {
+    open: boolean;
+    setOpen: (open: boolean) => void;
 }
 
-export const BanCIDRModal = ({
-    open,
-    setOpen,
-    onSuccess,
-    targetId
-}: BanCIDRModalProps) => {
-    const [targetSteamId, setTargetSteamId] = useState<SteamID>(
-        targetId ?? new SteamID('')
-    );
-    const [input, setInput] = useState<string>('');
-    const [duration, setDuration] = useState<Duration>(Duration.dur48h);
-    const [customDuration, setCustomDuration] = useState<string>('');
-    const [banReason, setBanReason] = useState<BanReason>(BanReason.Cheating);
-    const [noteText, setNoteText] = useState<string>('');
-    const [reasonText, setReasonText] = useState<string>('');
-    const [network, setNetwork] = useState<string>('');
-    const [networkSize, setNetworkSize] = useState<number>(0);
+interface BanCIDRFormValues extends SteamIDInputValue {
+    cidr: string;
+    banType: BanType;
+    reason: BanReason;
+    reasonText: string;
+    duration: Duration;
+    durationCustom: string;
+    note: string;
+}
+
+const validationSchema = yup.object({
+    steam_id: steamIdValidator,
+    cidr: NetworkRangeFieldValidator,
+    banType: BanTypeFieldValidator,
+    reason: BanReasonFieldValidator,
+    reasonText: BanReasonTextFieldValidator,
+    duration: DurationFieldValidator,
+    durationCustom: DurationCustomFieldValidator,
+    note: NoteFieldValidator
+});
+
+export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
     const { sendFlash } = useUserFlashCtx();
 
-    const handleSubmit = useCallback(() => {
-        if (banReason == BanReason.Custom && reasonText == '') {
-            sendFlash('error', 'Custom reason cannot be empty');
-            return;
-        }
-        const dur = duration == Duration.durCustom ? customDuration : duration;
-        if (!dur) {
-            sendFlash('error', 'Custom duration invalid');
-            return;
-        }
-        const opts: BanPayloadCIDR = {
-            target_id: targetSteamId.toString(),
-            duration: dur,
-            cidr: network,
-            reason_text: reasonText,
-            reason: banReason,
-            note: noteText,
-            ban_type: BanType.Banned
-        };
-        apiCreateBanCIDR(opts)
-            .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', `Failed to create ban`);
+    const formik = useFormik<BanCIDRFormValues>({
+        initialValues: {
+            banType: BanType.NoComm,
+            duration: Duration.dur2w,
+            durationCustom: '',
+            note: '',
+            reason: BanReason.Cheating,
+            steam_id: '',
+            reasonText: '',
+            cidr: ''
+        },
+        validateOnBlur: true,
+        validateOnChange: false,
+        onReset: () => {
+            alert('reset!');
+        },
+        validationSchema: validationSchema,
+        onSubmit: async (values) => {
+            try {
+                const resp = await apiCreateBanCIDR({
+                    note: values.note,
+                    ban_type: values.banType,
+                    duration: values.duration,
+                    reason: values.reason,
+                    reason_text: values.reasonText,
+                    target_id: values.steam_id,
+                    cidr: values.cidr
+                });
+                if (!resp.status || !resp.result) {
+                    sendFlash('error', 'Error saving ban');
                     return;
                 }
-                sendFlash(
-                    'success',
-                    `CIDR ban created successfully: ${response.result.net_id}`
-                );
-                onSuccess && onSuccess(response.result);
-            })
-            .catch(logErr);
-    }, [
-        targetSteamId,
-        banReason,
-        customDuration,
-        duration,
-        network,
-        reasonText,
-        noteText,
-        sendFlash,
-        onSuccess
-    ]);
-
-    const handleUpdateNetwork = (evt: SyntheticEvent) => {
-        const value = (evt.target as HTMLInputElement).value;
-        setNetwork(value);
-        if (value !== '') {
-            try {
-                const cidr = new IPCIDR(value);
-                if (cidr != undefined) {
-                    setNetworkSize(
-                        ip2int(cidr?.end()) - ip2int(cidr?.start()) + 1
-                    );
-                }
+                sendFlash('success', 'Ban created successfully');
             } catch (e) {
-                return;
+                logErr(e);
+                sendFlash('error', 'Error saving ban');
+            } finally {
+                setOpen(false);
             }
         }
-    };
+    });
 
-    const handleUpdateReason = (evt: SelectChangeEvent<BanReason>) => {
-        setBanReason(evt.target.value as BanReason);
-    };
-
-    const handleUpdateDuration = (evt: SelectChangeEvent<Duration>) => {
-        setDuration(evt.target.value as Duration);
-    };
-
-    const handleUpdateNote = (evt: ChangeEvent<HTMLInputElement>) => {
-        setNoteText((evt.target as HTMLInputElement).value);
-    };
+    const formId = 'banCIDRForm';
 
     return (
-        <ConfirmationModal
-            open={open}
-            setOpen={setOpen}
-            onSuccess={() => {
-                setOpen(false);
-            }}
-            onCancel={() => {
-                setOpen(false);
-            }}
-            onAccept={() => {
-                handleSubmit();
-            }}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-        >
-            <Stack spacing={2}>
-                <Heading>Ban CIDR Range</Heading>
-                {!targetId && (
-                    <ProfileSelectionInput
-                        fullWidth
-                        onProfileSuccess={(profile) => {
-                            if (profile) {
-                                setTargetSteamId(profile.player.steam_id);
-                            } else {
-                                setTargetSteamId(new SteamID(''));
-                            }
-                        }}
-                        input={input}
-                        setInput={setInput}
-                    />
-                )}
-                <Stack spacing={3} alignItems={'center'}>
-                    <TextField
-                        fullWidth={true}
-                        id={'network'}
-                        label={'Network Range (CIDR Format)'}
-                        onChange={handleUpdateNetwork}
-                    />
-                    <Typography variant={'body1'}>
-                        Current number of hosts in range: {networkSize}
-                    </Typography>
-                    <FormControl fullWidth>
-                        <InputLabel id="cidr-reason-label">Reason</InputLabel>
-                        <Select<BanReason>
-                            fullWidth
-                            labelId="cidr-reason-label"
-                            id="reason-helper"
-                            value={banReason}
-                            onChange={handleUpdateReason}
-                        >
-                            {banReasonsList.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {BanReasons[v]}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    {banReason == BanReason.Custom && (
-                        <TextField
-                            fullWidth
-                            label={'Reason'}
-                            id={'reasonText'}
-                            value={reasonText}
-                            onChange={(evt) => {
-                                setReasonText(evt.target.value);
-                            }}
-                        />
-                    )}
-                    <FormControl fullWidth>
-                        <InputLabel id="duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select<Duration>
-                            fullWidth
-                            labelId="duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            onChange={handleUpdateDuration}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
+        <form onSubmit={formik.handleSubmit} id={formId}>
+            <Dialog
+                fullWidth
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                    Ban Steam Profile
+                </DialogTitle>
 
-                    {duration == Duration.durCustom && (
-                        <TextField
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <SteamIdField
+                            formik={formik}
                             fullWidth
-                            label={'Custom Duration'}
-                            id={'customDuration'}
-                            value={customDuration}
-                            onChange={(evt) => {
-                                setCustomDuration(evt.target.value);
-                            }}
+                            isReadOnly={false}
                         />
-                    )}
-                    <TextField
-                        fullWidth
-                        id="note-field"
-                        label="Moderator Notes (hidden from public)"
-                        multiline
-                        value={noteText}
-                        onChange={handleUpdateNote}
-                        rows={10}
-                        variant="outlined"
-                    />
-                </Stack>
-            </Stack>
-        </ConfirmationModal>
+                        <NetworkRangeField formik={formik} />
+                        <BanTypeField formik={formik} />
+                        <BanReasonField formik={formik} />
+                        <BanReasonTextField formik={formik} />
+                        <DurationField formik={formik} />
+                        <DurationCustomField formik={formik} />
+                        <NoteField formik={formik} />
+                    </Stack>
+                </DialogContent>
+                <ModalButtons formId={formId} setOpen={setOpen} />
+            </Dialog>
+        </form>
     );
 };

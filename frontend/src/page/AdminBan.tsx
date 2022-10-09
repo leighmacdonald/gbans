@@ -113,28 +113,11 @@ export const AdminBan = (): JSX.Element => {
             <BanCIDRModal
                 open={banCIDRModalOpen}
                 setOpen={setBanCIDRModalOpen}
-                onSuccess={() => {
-                    loadBansCIDR();
-                    setBanCIDRModalOpen(false);
-                }}
             />
-            <BanASNModal
-                open={banASNModalOpen}
-                setOpen={setBanASNModalOpen}
-                onSuccess={() => {
-                    loadBansASN();
-                    setBanASNModalOpen(false);
-                }}
-            />
+            <BanASNModal open={banASNModalOpen} setOpen={setBanASNModalOpen} />
             <BanGroupModal
                 open={banGroupModalOpen}
                 setOpen={setBanGroupModalOpen}
-                onSuccess={(t) => {
-                    setBanGroups((bans) => {
-                        return [...bans, t];
-                    });
-                    setBanGroupModalOpen(false);
-                }}
             />
             {currentBan && (
                 <UnbanSteamModal

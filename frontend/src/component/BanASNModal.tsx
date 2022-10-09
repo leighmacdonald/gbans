@@ -1,226 +1,139 @@
-import React, { ChangeEvent, useCallback, useState } from 'react';
+import React from 'react';
 import Stack from '@mui/material/Stack';
-import {
-    apiCreateBanASN,
-    BanReason,
-    BanReasons,
-    banReasonsList,
-    BanType,
-    Duration,
-    Durations,
-    IAPIBanASNRecord
-} from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
+import { apiCreateBanASN, BanReason, BanType, Duration } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
-import { ProfileSelectionInput } from './ProfileSelectionInput';
-import SteamID from 'steamid';
 import { logErr } from '../util/errors';
+import {
+    SteamIdField,
+    SteamIDInputValue,
+    steamIdValidator
+} from './formik/SteamIdField';
+import * as yup from 'yup';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import {
+    DurationCustomField,
+    DurationCustomFieldValidator
+} from './formik/DurationCustomField';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import GavelIcon from '@mui/icons-material/Gavel';
+import { ModalButtons } from './formik/ModalButtons';
+import { useFormik } from 'formik';
+import { ASNumberField, ASNumberFieldValidator } from './formik/ASNumberField';
 
-export interface BanASNModalProps
-    extends ConfirmationModalProps<IAPIBanASNRecord> {
-    asnNum?: number;
+export interface BanASNModalProps {
+    open: boolean;
+    setOpen: (open: boolean) => void;
 }
 
-export const BanASNModal = ({ open, setOpen, onSuccess }: BanASNModalProps) => {
-    const [targetSteamId, setTargetSteamId] = useState<string>('');
-    const [duration, setDuration] = useState<Duration>(Duration.dur48h);
-    const [customDuration, setCustomDuration] = useState<string>('');
-    const [banReason, setBanReason] = useState<BanReason>(BanReason.Cheating);
-    const [noteText, setNoteText] = useState<string>('');
-    const [reasonText, setReasonText] = useState<string>('');
-    const [asNum, setASNum] = useState<number>(0);
+interface BanASNFormValues extends SteamIDInputValue {
+    asNum: number;
+    banType: BanType;
+    reason: BanReason;
+    reasonText: string;
+    duration: Duration;
+    durationCustom: string;
+    note: string;
+}
 
+const validationSchema = yup.object({
+    steam_id: steamIdValidator,
+    asNum: ASNumberFieldValidator,
+    banType: BanTypeFieldValidator,
+    reason: BanReasonFieldValidator,
+    reasonText: BanReasonTextFieldValidator,
+    duration: DurationFieldValidator,
+    durationCustom: DurationCustomFieldValidator,
+    note: NoteFieldValidator
+});
+
+export const BanASNModal = ({ open, setOpen }: BanASNModalProps) => {
     const { sendFlash } = useUserFlashCtx();
 
-    const handleSubmit = useCallback(() => {
-        if (banReason == BanReason.Custom && reasonText == '') {
-            sendFlash('error', 'Custom reason cannot be empty');
-            return;
-        }
-        const dur = duration == Duration.durCustom ? customDuration : duration;
-        if (!dur) {
-            sendFlash('error', 'Custom duration invalid');
-            return;
-        }
-        let targetId = new SteamID('');
-        if (targetSteamId != '') {
+    const formik = useFormik<BanASNFormValues>({
+        initialValues: {
+            banType: BanType.NoComm,
+            duration: Duration.dur2w,
+            durationCustom: '',
+            note: '',
+            reason: BanReason.Cheating,
+            steam_id: '',
+            reasonText: '',
+            asNum: 0
+        },
+        validateOnBlur: true,
+        validateOnChange: false,
+        onReset: () => {
+            alert('reset!');
+        },
+        validationSchema: validationSchema,
+        onSubmit: async (values) => {
             try {
-                const id = new SteamID(targetSteamId);
-                if (!id.isValidIndividual()) {
-                    sendFlash('error', 'Target steam id invalid');
+                const resp = await apiCreateBanASN({
+                    note: values.note,
+                    ban_type: values.banType,
+                    duration: values.duration,
+                    reason: values.reason,
+                    reason_text: values.reasonText,
+                    target_id: values.steam_id,
+                    as_num: values.asNum
+                });
+                if (!resp.status || !resp.result) {
+                    sendFlash('error', 'Error saving ban');
                     return;
                 }
-                targetId = id;
+                sendFlash('success', 'Ban created successfully');
             } catch (e) {
-                sendFlash('error', 'Target steam id invalid');
-                return;
+                logErr(e);
+                sendFlash('error', 'Error saving ban');
+            } finally {
+                setOpen(false);
             }
         }
-        apiCreateBanASN({
-            target_id: targetId.toString(),
-            duration: dur,
-            as_num: asNum,
-            reason_text: reasonText,
-            reason: banReason,
-            note: noteText,
-            ban_type: BanType.Banned
-        })
-            .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', `Failed to create asn ban`);
-                    return;
-                }
-                sendFlash(
-                    'success',
-                    `ASN ban created successfully: ${response.result.ban_asn_id}`
-                );
-                onSuccess && onSuccess(response.result);
-            })
-            .catch(logErr);
-    }, [
-        targetSteamId,
-        banReason,
-        customDuration,
-        duration,
-        asNum,
-        reasonText,
-        noteText,
-        sendFlash,
-        onSuccess
-    ]);
+    });
+    const formId = 'banASNForm';
 
     return (
-        <ConfirmationModal
-            open={open}
-            setOpen={setOpen}
-            onSuccess={() => {
-                setOpen(false);
-            }}
-            onCancel={() => {
-                setOpen(false);
-            }}
-            onAccept={() => {
-                handleSubmit();
-            }}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-        >
-            <Stack spacing={2}>
-                <Heading>Ban AS Number</Heading>
-                <Stack spacing={3} alignItems={'center'}>
-                    <ProfileSelectionInput
-                        fullWidth
-                        onProfileSuccess={(profile) => {
-                            if (profile) {
-                                setTargetSteamId(
-                                    profile.player.steam_id.toString
-                                );
-                            } else {
-                                setTargetSteamId('');
-                            }
-                        }}
-                        input={targetSteamId}
-                        setInput={setTargetSteamId}
-                    />
+        <form onSubmit={formik.handleSubmit} id={formId}>
+            <Dialog
+                fullWidth
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                    Ban Steam Profile
+                </DialogTitle>
 
-                    <TextField
-                        fullWidth
-                        id={'as_num'}
-                        label={'Autonomous System Number'}
-                        onChange={(evt) => {
-                            setASNum(parseInt(evt.target.value));
-                        }}
-                    />
-
-                    <FormControl fullWidth>
-                        <InputLabel id="asn-reason-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select<BanReason>
-                            labelId="asn-reason-label"
-                            id="asn-reason"
-                            value={banReason}
-                            onChange={(evt: SelectChangeEvent<BanReason>) => {
-                                setBanReason(evt.target.value as BanReason);
-                            }}
-                        >
-                            {banReasonsList.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {BanReasons[v]}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    {banReason == BanReason.Custom && (
-                        <TextField
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <SteamIdField
+                            formik={formik}
                             fullWidth
-                            label={'Custom Reason'}
-                            id={'reasonText'}
-                            value={reasonText}
-                            onChange={(evt) => {
-                                setReasonText(evt.target.value);
-                            }}
+                            isReadOnly={false}
                         />
-                    )}
-                    <FormControl fullWidth>
-                        <InputLabel id="asn-duration-label">
-                            Ban Duration
-                        </InputLabel>
-                        <Select<Duration>
-                            fullWidth
-                            labelId="asn-duration-label"
-                            id="duration-helper"
-                            value={duration}
-                            onChange={(evt: SelectChangeEvent<Duration>) => {
-                                setDuration(evt.target.value as Duration);
-                            }}
-                        >
-                            {Durations.map((v) => (
-                                <MenuItem key={`time-${v}`} value={v}>
-                                    {v}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        <FormHelperText>
-                            Choosing custom will allow you to input a custom
-                            duration
-                        </FormHelperText>
-                    </FormControl>
-
-                    {duration == Duration.durCustom && (
-                        <TextField
-                            fullWidth
-                            label={'Custom Duration'}
-                            id={'customASNDuration'}
-                            value={customDuration}
-                            onChange={(evt) => {
-                                setCustomDuration(evt.target.value);
-                            }}
-                        />
-                    )}
-
-                    <TextField
-                        fullWidth
-                        id="note-field"
-                        label="Moderator Notes (hidden from public)"
-                        multiline
-                        value={noteText}
-                        onChange={(evt: ChangeEvent<HTMLInputElement>) => {
-                            setNoteText((evt.target as HTMLInputElement).value);
-                        }}
-                        rows={10}
-                        variant="outlined"
-                    />
-                </Stack>
-            </Stack>
-        </ConfirmationModal>
+                        <ASNumberField formik={formik} />
+                        <BanTypeField formik={formik} />
+                        <BanReasonField formik={formik} />
+                        <BanReasonTextField formik={formik} />
+                        <DurationField formik={formik} />
+                        <DurationCustomField formik={formik} />
+                        <NoteField formik={formik} />
+                    </Stack>
+                </DialogContent>
+                <ModalButtons formId={formId} setOpen={setOpen} />
+            </Dialog>
+        </form>
     );
 };

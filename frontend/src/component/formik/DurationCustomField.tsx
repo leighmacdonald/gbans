@@ -2,6 +2,11 @@ import { Duration } from '../../api';
 import React from 'react';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
 import TextField from '@mui/material/TextField';
+import * as yup from 'yup';
+
+export const DurationCustomFieldValidator = yup
+    .string()
+    .label('Custom duration');
 
 export const DurationCustomField = ({
     formik
