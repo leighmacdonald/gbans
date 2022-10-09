@@ -3,7 +3,7 @@ import { RouteProps } from 'react-router';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { Login } from '../page/Login';
 
-export interface PrivateRouteProps extends RouteProps {
+export interface PrivateRouteProps {
     children: JSX.Element;
     permission: number;
 }
@@ -11,7 +11,7 @@ export interface PrivateRouteProps extends RouteProps {
 export const PrivateRoute = ({
     children,
     permission
-}: PrivateRouteProps): JSX.Element => {
+}: PrivateRouteProps & RouteProps): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const canView = useMemo(() => {
         return currentUser && currentUser.permission_level >= permission;

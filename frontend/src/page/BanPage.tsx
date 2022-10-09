@@ -19,7 +19,6 @@ import {
     UserMessage
 } from '../api';
 import { NotNull } from '../util/types';
-import { Heading } from '../component/Heading';
 import { SteamIDList } from '../component/SteamIDList';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import Paper from '@mui/material/Paper';
@@ -41,6 +40,10 @@ import Link from '@mui/material/Link';
 import { FormControl, Select } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import InfoIcon from '@mui/icons-material/Info';
+import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
+import AddModeratorIcon from '@mui/icons-material/AddModerator';
 
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
@@ -161,10 +164,8 @@ export const BanPage = (): JSX.Element => {
         <Grid container paddingTop={3} spacing={2}>
             <Grid item xs={8}>
                 <Stack spacing={2}>
-                    <Heading>{`Ban Appeal #${id}`}</Heading>
-
                     {canPost && messages.length == 0 && (
-                        <Paper elevation={1}>
+                        <ContainerWithHeader title={`Ban Appeal #${id}`}>
                             <Typography
                                 variant={'body2'}
                                 padding={2}
@@ -173,9 +174,8 @@ export const BanPage = (): JSX.Element => {
                                 You can start the appeal process by replying on
                                 this form.
                             </Typography>
-                        </Paper>
+                        </ContainerWithHeader>
                     )}
-
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}
@@ -218,96 +218,94 @@ export const BanPage = (): JSX.Element => {
                         />
                     )}
                     {ban && (
-                        <Paper elevation={1}>
-                            <Stack>
-                                <Heading>Ban Details</Heading>
-                                <List dense={true}>
+                        <ContainerWithHeader
+                            title={'Ban Details'}
+                            iconRight={<InfoIcon />}
+                        >
+                            <List dense={true}>
+                                <ListItem>
+                                    <ListItemText
+                                        primary={'Reason'}
+                                        secondary={BanReasons[ban.ban.reason]}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary={'Ban Type'}
+                                        secondary={banTypeString(
+                                            ban.ban.ban_type
+                                        )}
+                                    />
+                                </ListItem>
+                                {ban.ban.reason_text != '' && (
                                     <ListItem>
                                         <ListItemText
-                                            primary={'Reason'}
-                                            secondary={
-                                                BanReasons[ban.ban.reason]
-                                            }
+                                            primary={'Reason (Custom)'}
+                                            secondary={ban.ban.reason_text}
                                         />
                                     </ListItem>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={'Ban Type'}
-                                            secondary={banTypeString(
-                                                ban.ban.ban_type
-                                            )}
-                                        />
-                                    </ListItem>
-                                    {ban.ban.reason_text != '' && (
+                                )}
+
+                                <ListItem>
+                                    <ListItemText
+                                        primary={'Created At'}
+                                        secondary={renderDateTime(
+                                            ban.ban.created_on
+                                        )}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary={'Expires At'}
+                                        secondary={renderDateTime(
+                                            ban.ban.valid_until
+                                        )}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary={'Expires'}
+                                        secondary={renderTimeDistance(
+                                            ban.ban.valid_until
+                                        )}
+                                    />
+                                </ListItem>
+                                {ban &&
+                                    currentUser.permission_level >=
+                                        PermissionLevel.Moderator && (
                                         <ListItem>
                                             <ListItemText
-                                                primary={'Reason (Custom)'}
-                                                secondary={ban.ban.reason_text}
+                                                primary={'Author'}
+                                                secondary={ban.ban.source_id.toString()}
                                             />
                                         </ListItem>
                                     )}
-
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={'Created At'}
-                                            secondary={renderDateTime(
-                                                ban.ban.created_on
-                                            )}
-                                        />
-                                    </ListItem>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={'Expires At'}
-                                            secondary={renderDateTime(
-                                                ban.ban.valid_until
-                                            )}
-                                        />
-                                    </ListItem>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary={'Expires'}
-                                            secondary={renderTimeDistance(
-                                                ban.ban.valid_until
-                                            )}
-                                        />
-                                    </ListItem>
-                                    {ban &&
-                                        currentUser.permission_level >=
-                                            PermissionLevel.Moderator && (
-                                            <ListItem>
-                                                <ListItemText
-                                                    primary={'Author'}
-                                                    secondary={ban.ban.source_id.toString()}
-                                                />
-                                            </ListItem>
-                                        )}
-                                </List>
-                            </Stack>
-                        </Paper>
+                            </List>
+                        </ContainerWithHeader>
                     )}
 
-                    {ban && (
-                        <Paper elevation={1}>
-                            <SteamIDList steam_id={ban?.ban.target_id} />
-                        </Paper>
-                    )}
+                    {ban && <SteamIDList steam_id={ban?.ban.target_id} />}
 
                     {ban &&
                         currentUser.permission_level >=
                             PermissionLevel.Moderator &&
                         ban.ban.note != '' && (
-                            <Paper>
-                                <Heading>Mod Notes</Heading>
+                            <ContainerWithHeader
+                                title={'Mod Notes'}
+                                iconRight={<DocumentScannerIcon />}
+                            >
                                 <Typography variant={'body2'} padding={2}>
                                     {ban.ban.note}
                                 </Typography>
-                            </Paper>
+                            </ContainerWithHeader>
                         )}
 
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
-                        <Paper>
-                            <Heading>Moderation Tools</Heading>
+                        <ContainerWithHeader
+                            title={'Moderation Tools'}
+                            iconRight={<AddModeratorIcon />}
+                        >
                             <Stack spacing={2} padding={2}>
                                 <Stack direction={'row'} spacing={2}>
                                     <FormControl fullWidth>
@@ -391,7 +389,7 @@ export const BanPage = (): JSX.Element => {
                                     </Button>
                                 </ButtonGroup>
                             </Stack>
-                        </Paper>
+                        </ContainerWithHeader>
                     )}
                 </Stack>
             </Grid>

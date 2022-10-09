@@ -21,11 +21,22 @@
 #define HTTP_STATUS_OK 200
 #define HTTP_STATUS_CONFLICT 409
 
+#define PERMISSION_RESERVED 15
+#define PERMISSION_EDITOR 25
+#define PERMISSION_MOD 50
+#define PERMISSION_ADMIN 100
+
+#define FLAGS_RESERVED "a"
+#define FLAGS_EDITOR "aj"
+#define FLAGS_MOD "abcdegjk"
+#define FLAGS_ADMIN "z"
+
 // clang-format off
 enum struct PlayerInfo {
     bool authed;
     char ip[16];
     int ban_type;
+    int permission_level;
     char message[256];
 }
 // clang-format on
@@ -495,22 +506,63 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             // Fail open if the server is broken
             return;
         }
+        
         JSON_Object resp = json_decode(content);
         JSON_Object data = resp.GetObject("result");
         int client_id = data.GetInt("client_id");
         int ban_type = data.GetInt("ban_type");
-        char msg[256];
+        int permission_level = data.GetInt("permission_level");
+        char msg[256]; // welcome or ban message
         data.GetString("msg", msg, sizeof(msg));
-        if(!IsFakeClient(client_id)) {
-            char ip[16];
-            GetClientIP(client_id, ip, sizeof(ip));
-            g_players[client_id].authed = true;
-            g_players[client_id].ip = ip;
-            g_players[client_id].ban_type = ban_type;
-            g_players[client_id].message = msg;
-
-            PrintToServer("[GB] Client authenticated (banType: %d)", ban_type);
+        if(IsFakeClient(client_id)) {
+            return;
         }
+        char ip[16];
+        GetClientIP(client_id, ip, sizeof(ip));
+        g_players[client_id].authed = true;
+        g_players[client_id].ip = ip;
+        g_players[client_id].ban_type = ban_type;
+        g_players[client_id].message = msg;
+        g_players[client_id].permission_level = permission_level;
+        char identity[50];
+        GetClientAuthId(client_id, AuthId_Steam3, identity, sizeof(identity), true);
+
+        // Anyone with special priviledges is considered an admin
+        bool is_admin = permission_level >= PERMISSION_RESERVED;
+        if (is_admin && FindAdminByIdentity("steam", identity) == INVALID_ADMIN_ID) {
+            char name[50];
+            if (!GetClientName(client_id, name, sizeof(name))) {
+                PrintToServer("Unable to get client name", name, identity);
+                return;
+            }
+            
+            AdminId adminId = CreateAdmin(name);
+            switch (permission_level) {
+                case PERMISSION_ADMIN:{
+                    adminId.SetFlag(Admin_Root, true);
+                }
+                case PERMISSION_MOD: {
+                    adminId.SetFlag(Admin_Reservation, true);
+                    adminId.SetFlag(Admin_Generic, true);
+                    adminId.SetFlag(Admin_Kick, true);
+                    adminId.SetFlag(Admin_Ban, true);
+                }
+                case PERMISSION_EDITOR: {
+                    adminId.SetFlag(Admin_Reservation, true);
+                    adminId.SetFlag(Admin_Generic, true);
+                    adminId.SetFlag(Admin_Kick, true);
+                }
+                case PERMISSION_RESERVED: {
+                    adminId.SetFlag(Admin_Reservation, true);
+                }
+
+            }
+            
+        }
+
+
+        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", ban_type, permission_level);
+        
         json_cleanup_and_delete(resp);  
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);

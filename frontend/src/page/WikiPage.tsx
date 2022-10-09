@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import Grid from '@mui/material/Grid';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
 import { log, logErr } from '../util/errors';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import {
@@ -18,8 +17,9 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import Paper from '@mui/material/Paper';
 import { MDEditor } from '../component/MDEditor';
 import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
-import { Heading } from '../component/Heading';
 import Box from '@mui/material/Box';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import ArticleIcon from '@mui/icons-material/Article';
 
 const defaultPage: Page = {
     slug: '',
@@ -94,28 +94,30 @@ export const WikiPage = (): JSX.Element => {
             )}
             {!loading && !editMode && page.revision > 0 && (
                 <Grid item xs={12}>
-                    <Paper elevation={1}>
-                        <Stack>
-                            <Heading>{page.slug}</Heading>
-                            <Box padding={2}>
-                                <RenderedMarkdownBox
-                                    bodyHTML={bodyHTML}
-                                    readonly={
-                                        currentUser.permission_level <
-                                        PermissionLevel.Moderator
-                                    }
-                                    setEditMode={setEditMode}
-                                />
-                            </Box>
-                        </Stack>
-                    </Paper>
+                    <ContainerWithHeader
+                        title={page.slug}
+                        iconLeft={<ArticleIcon />}
+                    >
+                        <Box padding={2}>
+                            <RenderedMarkdownBox
+                                bodyHTML={bodyHTML}
+                                readonly={
+                                    currentUser.permission_level <
+                                    PermissionLevel.Moderator
+                                }
+                                setEditMode={setEditMode}
+                            />
+                        </Box>
+                    </ContainerWithHeader>
                 </Grid>
             )}
             {!loading && !editMode && page.revision == 0 && (
                 <Grid item xs={12}>
-                    <Paper elevation={1}>
-                        <Stack spacing={3} padding={3}>
-                            <Heading>Wiki Entry Not Found</Heading>
+                    <ContainerWithHeader
+                        title={'Wiki Entry Not Found'}
+                        iconLeft={<ArticleIcon />}
+                    >
+                        <>
                             <Typography variant={'h3'}>
                                 slug: {slug || 'home'}
                             </Typography>
@@ -133,8 +135,8 @@ export const WikiPage = (): JSX.Element => {
                                     </Button>
                                 </Typography>
                             )}
-                        </Stack>
-                    </Paper>
+                        </>
+                    </ContainerWithHeader>
                 </Grid>
             )}
             {!loading && editMode && (

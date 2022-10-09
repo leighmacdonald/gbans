@@ -3,14 +3,12 @@ import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { ReportForm } from '../component/ReportForm';
 import { apiGetReports, reportStatusString, ReportWithAuthor } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { ReportStatusIcon } from '../component/ReportStatusIcon';
-import { Heading } from '../component/Heading';
 import { DataTable } from '../component/DataTable';
 import { PersonCell } from '../component/PersonCell';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -20,6 +18,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import HistoryIcon from '@mui/icons-material/History';
+import InfoIcon from '@mui/icons-material/Info';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
@@ -54,36 +55,29 @@ export const ReportCreatePage = (): JSX.Element => {
         <Grid container spacing={3} paddingTop={3}>
             <Grid item xs={12} md={8}>
                 <Stack spacing={2}>
-                    {canReport && (
-                        <Paper elevation={1}>
-                            <ReportForm />
-                        </Paper>
-                    )}
+                    {canReport && <ReportForm />}
                     {!canReport && (
-                        <Paper elevation={1}>
-                            <Stack spacing={2}>
-                                <Heading>Permission Denied</Heading>
-                                <Typography variant={'body1'} padding={2}>
-                                    Cannot report players while current banned
-                                </Typography>
-                                <ButtonGroup sx={{ padding: 2 }}>
-                                    <Button
-                                        variant={'contained'}
-                                        color={'primary'}
-                                        onClick={() => {
-                                            navigate(
-                                                `/ban/${currentUser.ban_id}`
-                                            );
-                                        }}
-                                    >
-                                        Appeal Ban
-                                    </Button>
-                                </ButtonGroup>
-                            </Stack>
-                        </Paper>
+                        <ContainerWithHeader title={'Permission Denied'}>
+                            <Typography variant={'body1'} padding={2}>
+                                Cannot report players while current banned
+                            </Typography>
+                            <ButtonGroup sx={{ padding: 2 }}>
+                                <Button
+                                    variant={'contained'}
+                                    color={'primary'}
+                                    onClick={() => {
+                                        navigate(`/ban/${currentUser.ban_id}`);
+                                    }}
+                                >
+                                    Appeal Ban
+                                </Button>
+                            </ButtonGroup>
+                        </ContainerWithHeader>
                     )}
-                    <Paper elevation={1}>
-                        <Heading>Your Report History</Heading>
+                    <ContainerWithHeader
+                        title={'Your Report History'}
+                        iconLeft={<HistoryIcon />}
+                    >
                         <DataTable
                             columns={[
                                 {
@@ -158,47 +152,46 @@ export const ReportCreatePage = (): JSX.Element => {
                             rowsPerPage={10}
                             rows={reportHistory || []}
                         />
-                    </Paper>
+                    </ContainerWithHeader>
                 </Stack>
             </Grid>
             <Grid item xs={12} md={4}>
-                <Stack spacing={2}>
-                    <Paper elevation={1}>
-                        <Heading> Reporting Guide</Heading>
-                        <List>
-                            <ListItem>
-                                <ListItemText>
-                                    Once your report is posted, it will be
-                                    reviewed by an Uncletopia moderator. If
-                                    further details are required you will be
-                                    notified about it.
-                                </ListItemText>
-                            </ListItem>
-                        </List>
-                        <List>
-                            <ListItem>
-                                <ListItemText>
-                                    Reports that are made in bad faith, or
-                                    otherwise are considered to be trolling will
-                                    be closed, and the reporter will be banned.
-                                </ListItemText>
-                            </ListItem>
-                        </List>
-                        <List>
-                            <ListItem>
-                                <ListItemText>
-                                    Its only possible to open a single report
-                                    against a particular player. If you wish to
-                                    add more evidence or discuss further an
-                                    existing report, please open the existing
-                                    report and add it by creating a new message
-                                    there. You can see your current report
-                                    history below.
-                                </ListItemText>
-                            </ListItem>
-                        </List>
-                    </Paper>
-                </Stack>
+                <ContainerWithHeader
+                    title={'Reporting Guide'}
+                    iconRight={<InfoIcon />}
+                    align={'flex-end'}
+                >
+                    <List>
+                        <ListItem>
+                            <ListItemText>
+                                Once your report is posted, it will be reviewed
+                                by an Uncletopia moderator. If further details
+                                are required you will be notified about it.
+                            </ListItemText>
+                        </ListItem>
+                    </List>
+                    <List>
+                        <ListItem>
+                            <ListItemText>
+                                Reports that are made in bad faith, or otherwise
+                                are considered to be trolling will be closed,
+                                and the reporter will be banned.
+                            </ListItemText>
+                        </ListItem>
+                    </List>
+                    <List>
+                        <ListItem>
+                            <ListItemText>
+                                Its only possible to open a single report
+                                against a particular player. If you wish to add
+                                more evidence or discuss further an existing
+                                report, please open the existing report and add
+                                it by creating a new message there. You can see
+                                your current report history below.
+                            </ListItemText>
+                        </ListItem>
+                    </List>
+                </ContainerWithHeader>
             </Grid>
         </Grid>
     );

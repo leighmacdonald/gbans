@@ -181,9 +181,7 @@ export const Servers = (): JSX.Element => {
                     <ServerMap />
                 </Paper>
                 <ServerFilters />
-                <Paper elevation={1}>
-                    <ServerList />
-                </Paper>
+                <ServerList />
                 <ServerStats />
             </Stack>
         </MapStateCtx.Provider>

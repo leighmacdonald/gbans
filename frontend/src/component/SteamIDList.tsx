@@ -1,12 +1,12 @@
 import React from 'react';
 import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
-import Stack from '@mui/material/Stack';
 import useTheme from '@mui/material/styles/useTheme';
 import ListItem from '@mui/material/ListItem';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import { ContainerWithHeader } from './ContainerWithHeader';
 
 export interface SteamIDListProps {
     steam_id: SteamID;
@@ -16,8 +16,7 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
     return (
-        <Stack>
-            <Heading>Steam ID</Heading>
+        <ContainerWithHeader title={'Steam ID'} iconLeft={<FingerprintIcon />}>
             <List dense={true}>
                 {[
                     [steam_id.getSteamID64(), 'steam64'],
@@ -47,6 +46,6 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
                     );
                 })}
             </List>
-        </Stack>
+        </ContainerWithHeader>
     );
 };

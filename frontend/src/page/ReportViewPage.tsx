@@ -333,9 +333,6 @@ export const ReportViewPage = (): JSX.Element => {
                             reportId={report.report.report_id}
                             open={banModalOpen}
                             setOpen={setBanModalOpen}
-                            onSuccess={() => {
-                                setBanModalOpen(false);
-                            }}
                             steamId={report?.subject.steam_id}
                         />
                     ) : (

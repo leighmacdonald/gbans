@@ -1,5 +1,4 @@
 import React from 'react';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
@@ -15,9 +14,10 @@ import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { LoadingSpinner } from './LoadingSpinner';
 import { DataTable, RowsPerPage } from './DataTable';
-import { Heading } from './Heading';
 import { cleanMapName } from '../api';
 import { tf2Fonts } from '../theme';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import StorageIcon from '@mui/icons-material/Storage';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -40,15 +40,16 @@ export const ServerList = () => {
     const { selectedServers } = useMapStateCtx();
     if (selectedServers.length === 0) {
         return (
-            <Stack spacing={1}>
-                <Heading>Servers</Heading>
+            <ContainerWithHeader
+                title={'Servers Loading...'}
+                iconLeft={<StorageIcon />}
+            >
                 <LoadingSpinner />
-            </Stack>
+            </ContainerWithHeader>
         );
     }
     return (
-        <Stack spacing={1}>
-            <Heading>Servers</Heading>
+        <ContainerWithHeader title={'Servers'} iconLeft={<StorageIcon />}>
             <DataTable
                 defaultSortOrder={'asc'}
                 rowsPerPage={RowsPerPage.Hundred}
@@ -187,6 +188,6 @@ export const ServerList = () => {
                 defaultSortColumn={'distance'}
                 rows={selectedServers}
             />
-        </Stack>
+        </ContainerWithHeader>
     );
 };

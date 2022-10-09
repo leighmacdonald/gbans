@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import Stack from '@mui/material/Stack';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
@@ -10,9 +9,10 @@ import { useNavigate } from 'react-router-dom';
 import { apiCreateReport, BanReason, BanReasons, PlayerProfile } from '../api';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import { MDEditor } from './MDEditor';
-import { Heading } from './Heading';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 
 export const ReportForm = (): JSX.Element => {
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
@@ -60,9 +60,11 @@ export const ReportForm = (): JSX.Element => {
     );
 
     return (
-        <Stack spacing={3}>
-            <Heading>Create a New Report</Heading>
-            <Box paddingLeft={2} paddingRight={2} width={'100%'}>
+        <ContainerWithHeader
+            title={'Create a New Report'}
+            iconLeft={<EditNotificationsIcon />}
+        >
+            <Box paddingLeft={2} paddingRight={2} marginTop={3} width={'100%'}>
                 <ProfileSelectionInput
                     fullWidth
                     input={inputSteamID}
@@ -126,6 +128,6 @@ export const ReportForm = (): JSX.Element => {
                 onSave={onSave}
                 saveLabel={'Create Report'}
             />
-        </Stack>
+        </ContainerWithHeader>
     );
 };

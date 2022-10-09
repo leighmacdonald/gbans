@@ -40,6 +40,10 @@ import {
     IAPIBanGroupRecord,
     IAPIBanRecordProfile
 } from '../api';
+import {
+    DataTableRelativeDateField,
+    isPermanentBan
+} from '../component/DataTableRelativeDateField';
 
 export const AdminBan = (): JSX.Element => {
     const theme = useTheme();
@@ -105,10 +109,6 @@ export const AdminBan = (): JSX.Element => {
             <BanSteamModal
                 open={banSteamModalOpen}
                 setOpen={setBanSteamModalOpen}
-                onSuccess={() => {
-                    loadBansSteam();
-                    setBanSteamModalOpen(false);
-                }}
             />
             <BanCIDRModal
                 open={banCIDRModalOpen}
@@ -355,12 +355,9 @@ export const AdminBan = (): JSX.Element => {
                                         sortable: true,
                                         renderer: (obj) => {
                                             return (
-                                                <Typography variant={'body1'}>
-                                                    {format(
-                                                        obj.valid_until,
-                                                        'yyyy-MM-dd'
-                                                    )}
-                                                </Typography>
+                                                <DataTableRelativeDateField
+                                                    date={obj.valid_until}
+                                                />
                                             );
                                         }
                                     },
@@ -373,21 +370,18 @@ export const AdminBan = (): JSX.Element => {
                                         virtual: true,
                                         virtualKey: 'duration',
                                         renderer: (row) => {
-                                            const dur = intervalToDuration({
-                                                start: row.created_on,
-                                                end: row.valid_until
-                                            });
-                                            const durationText =
-                                                dur.years && dur.years > 5
-                                                    ? 'Permanent'
-                                                    : formatDuration(dur);
-                                            return (
-                                                <Typography
-                                                    variant={'body1'}
-                                                    overflow={'hidden'}
-                                                >
-                                                    {durationText}
-                                                </Typography>
+                                            return isPermanentBan(
+                                                row.created_on,
+                                                row.valid_until
+                                            ) ? (
+                                                'Permanent'
+                                            ) : (
+                                                <DataTableRelativeDateField
+                                                    date={row.created_on}
+                                                    compareDate={
+                                                        row.valid_until
+                                                    }
+                                                />
                                             );
                                         }
                                     },
@@ -561,12 +555,10 @@ export const AdminBan = (): JSX.Element => {
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
                                     return (
-                                        <Typography variant={'body1'}>
-                                            {format(
-                                                obj.created_on,
-                                                'yyyy-MM-dd'
-                                            )}
-                                        </Typography>
+                                        <DataTableRelativeDateField
+                                            date={obj.created_on}
+                                            suffix={true}
+                                        />
                                     );
                                 }
                             },
@@ -581,12 +573,9 @@ export const AdminBan = (): JSX.Element => {
                                 sortable: true,
                                 renderer: (obj) => {
                                     return (
-                                        <Typography variant={'body1'}>
-                                            {format(
-                                                obj.valid_until,
-                                                'yyyy-MM-dd'
-                                            )}
-                                        </Typography>
+                                        <DataTableRelativeDateField
+                                            date={obj.valid_until}
+                                        />
                                     );
                                 }
                             },

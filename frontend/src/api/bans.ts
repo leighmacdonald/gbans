@@ -125,7 +125,6 @@ export const banReasonsList = [
     BanReason.ItemDescriptions,
     BanReason.External,
     BanReason.Custom,
-    BanReason.External,
     BanReason.BotHost
 ];
 

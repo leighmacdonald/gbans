@@ -15,11 +15,14 @@ import { SteamIDList } from '../component/SteamIDList';
 import { Masonry } from '@mui/lab';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MatchHistory } from '../component/MatchHistory';
-import { Heading } from '../component/Heading';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
+import LinkIcon from '@mui/icons-material/Link';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -55,119 +58,127 @@ export const Profile = (): JSX.Element => {
             });
     }, [sendFlash, steam_id]);
 
+    const renderedProfile = useMemo(() => {
+        if (!profile) {
+            return <></>;
+        }
+        return (
+            <>
+                <Grid item xs={8}>
+                    <Stack spacing={3}>
+                        <Stack direction={'row'} spacing={3}>
+                            <ProfileInfoBox
+                                profile={profile}
+                                align={'flex-start'}
+                            />
+                            <SteamIDList steam_id={profile.player.steam_id} />
+                        </Stack>
+                        <ContainerWithHeader
+                            title={'Steam Community Status'}
+                            iconLeft={<LocalLibraryIcon />}
+                        >
+                            <Stack
+                                direction="row"
+                                spacing={2}
+                                padding={2}
+                                justifyContent={'space-evenly'}
+                            >
+                                <Chip
+                                    color={
+                                        profile.player.vac_bans > 0
+                                            ? 'error'
+                                            : 'success'
+                                    }
+                                    label={'VAC'}
+                                />
+                                <Chip
+                                    color={
+                                        profile.player.game_bans > 0
+                                            ? 'error'
+                                            : 'success'
+                                    }
+                                    label={'Game Ban'}
+                                />
+                                <Chip
+                                    color={
+                                        profile.player.economy_ban != 'none'
+                                            ? 'error'
+                                            : 'success'
+                                    }
+                                    label={'Economy Ban'}
+                                />
+                                <Chip
+                                    color={
+                                        profile.player.community_banned
+                                            ? 'error'
+                                            : 'success'
+                                    }
+                                    label={'Community Ban'}
+                                />
+                            </Stack>
+                        </ContainerWithHeader>
+
+                        <ContainerWithHeader
+                            title={'External Links'}
+                            iconLeft={<LinkIcon />}
+                        >
+                            <Masonry
+                                columns={3}
+                                spacing={1}
+                                sx={{ padding: 0, margin: 0 }}
+                            >
+                                {createExternalLinks(
+                                    profile.player.steam_id
+                                ).map((l) => {
+                                    return (
+                                        <Button
+                                            sx={{
+                                                padding: 1
+                                            }}
+                                            color={'secondary'}
+                                            variant={'contained'}
+                                            component={Link}
+                                            href={l.url}
+                                            key={l.url}
+                                        >
+                                            {l.title}
+                                        </Button>
+                                    );
+                                })}
+                            </Masonry>
+                        </ContainerWithHeader>
+
+                        {currentUser.permission_level >=
+                            PermissionLevel.Admin && (
+                            <ContainerWithHeader
+                                title={'Match History'}
+                                iconLeft={<RestoreIcon />}
+                            >
+                                <MatchHistory opts={matchOpts} />
+                            </ContainerWithHeader>
+                        )}
+                    </Stack>
+                </Grid>
+                <Grid item xs={4}>
+                    <Stack spacing={3}>
+                        <Paper elevation={1}>
+                            <FriendList friends={profile?.friends || []} />
+                        </Paper>
+                    </Stack>
+                </Grid>
+            </>
+        );
+    }, [currentUser.permission_level, matchOpts, profile]);
+
     return (
         <Grid container paddingTop={3} spacing={3}>
-            {loading && (
+            {loading ? (
                 <Grid item xs={12} alignContent={'center'}>
                     <LoadingSpinner />
                 </Grid>
+            ) : (
+                renderedProfile
             )}
-            {!loading &&
-                profile &&
-                profile.player.steam_id.isValidIndividual() && (
-                    <>
-                        <Grid item xs={8}>
-                            <Stack spacing={3}>
-                                <Stack direction={'row'} spacing={3}>
-                                    <ProfileInfoBox profile={profile} />
-                                    <Paper elevation={1}>
-                                        <SteamIDList
-                                            steam_id={profile.player.steam_id}
-                                        />
-                                    </Paper>
-                                </Stack>
-
-                                <Paper elevation={1}>
-                                    <Heading>Steam Community Status</Heading>
-                                    <Stack
-                                        direction="row"
-                                        spacing={2}
-                                        padding={2}
-                                        justifyContent={'space-evenly'}
-                                    >
-                                        <Chip
-                                            color={
-                                                profile.player.vac_bans > 0
-                                                    ? 'error'
-                                                    : 'success'
-                                            }
-                                            label={'VAC'}
-                                        />
-                                        <Chip
-                                            color={
-                                                profile.player.game_bans > 0
-                                                    ? 'error'
-                                                    : 'success'
-                                            }
-                                            label={'Game Ban'}
-                                        />
-                                        <Chip
-                                            color={
-                                                profile.player.economy_ban !=
-                                                'none'
-                                                    ? 'error'
-                                                    : 'success'
-                                            }
-                                            label={'Economy Ban'}
-                                        />
-                                        <Chip
-                                            color={
-                                                profile.player.community_banned
-                                                    ? 'error'
-                                                    : 'success'
-                                            }
-                                            label={'Community Ban'}
-                                        />
-                                    </Stack>
-                                </Paper>
-
-                                <Paper elevation={1}>
-                                    <Heading>External Links</Heading>
-                                    <Masonry
-                                        columns={3}
-                                        spacing={1}
-                                        sx={{ padding: 0, margin: 0 }}
-                                    >
-                                        {createExternalLinks(
-                                            profile.player.steam_id
-                                        ).map((l) => {
-                                            return (
-                                                <Button
-                                                    sx={{
-                                                        padding: 1
-                                                    }}
-                                                    color={'secondary'}
-                                                    variant={'contained'}
-                                                    component={Link}
-                                                    href={l.url}
-                                                    key={l.url}
-                                                >
-                                                    {l.title}
-                                                </Button>
-                                            );
-                                        })}
-                                    </Masonry>
-                                </Paper>
-                                {currentUser.permission_level >=
-                                    PermissionLevel.Admin && (
-                                    <Paper elevation={1}>
-                                        <Heading>Match History</Heading>
-                                        <MatchHistory opts={matchOpts} />
-                                    </Paper>
-                                )}
-                            </Stack>
-                        </Grid>
-                        <Grid item xs={4}>
-                            <Stack spacing={3}>
-                                <Paper elevation={1}>
-                                    <FriendList
-                                        friends={profile?.friends || []}
-                                    />
-                                </Paper>
-                            </Stack>
-                        </Grid>
-                    </>
-                )}
         </Grid>
     );
 };

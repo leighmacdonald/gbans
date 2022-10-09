@@ -538,10 +538,11 @@ func (web *web) onAPIPostServerCheck(database store.Store) gin.HandlerFunc {
 		Name     string      `json:"name,omitempty"`
 	}
 	type checkResponse struct {
-		ClientID int           `json:"client_id"`
-		SteamID  steamid.SID   `json:"steam_id"`
-		BanType  model.BanType `json:"ban_type"`
-		Msg      string        `json:"msg"`
+		ClientID        int             `json:"client_id"`
+		SteamID         steamid.SID     `json:"steam_id"`
+		BanType         model.BanType   `json:"ban_type"`
+		PermissionLevel model.Privilege `json:"permission_level"`
+		Msg             string          `json:"msg"`
 	}
 	return func(ctx *gin.Context) {
 		var request checkRequest
@@ -585,6 +586,7 @@ func (web *web) onAPIPostServerCheck(database store.Store) gin.HandlerFunc {
 			})
 			return
 		}
+		resp.PermissionLevel = person.PermissionLevel
 		if errAddHist := database.AddConnectionHistory(ctx, &model.PersonConnection{
 			IPAddr:      request.IP,
 			SteamId:     steamid.SIDToSID64(request.SteamID),
