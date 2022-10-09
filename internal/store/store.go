@@ -135,6 +135,8 @@ type StatStore interface {
 	MatchSave(ctx context.Context, match *model.Match) error
 	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
 	Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error)
+	SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats model.LocalTF2StatsSnapshot) error
+	GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]model.LocalTF2StatsSnapshot, error)
 	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error
 	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error)
 	BuildGlobalTF2Stats(ctx context.Context) error

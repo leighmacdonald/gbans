@@ -561,6 +561,7 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	go playerMessageWriter(ctx, database)
 	go playerConnectionWriter(ctx, database)
 	go steamGroupMembershipUpdater(ctx, database)
+	go localStatUpdater(ctx, database)
 	go masterServerListUpdater(ctx, database, masterUpdateFreq)
 }
 

@@ -633,6 +633,30 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) Me
 	}
 }
 
+type LocalTF2StatsSnapshot struct {
+	StatId          int64          `json:"local_stats_players_stat_id"`
+	Players         int            `json:"players"`
+	CapacityFull    int            `json:"capacity_full"`
+	CapacityEmpty   int            `json:"capacity_empty"`
+	CapacityPartial int            `json:"capacity_partial"`
+	MapTypes        map[string]int `json:"map_types"`
+	Regions         map[string]int `json:"regions"`
+	CreatedOn       time.Time      `json:"created_on"`
+}
+
+func (stats LocalTF2StatsSnapshot) TrimMapTypes() map[string]int {
+	const minSize = 5
+	out := map[string]int{}
+	for k, v := range stats.MapTypes {
+		mapKey := k
+		if v < minSize {
+			mapKey = "unknown"
+		}
+		out[mapKey] = v
+	}
+	return out
+}
+
 type GlobalTF2StatsSnapshot struct {
 	StatId           int64          `json:"stat_id"`
 	Players          int            `json:"players"`
@@ -663,6 +687,13 @@ func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
 
 func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
 	return GlobalTF2StatsSnapshot{
+		MapTypes:  map[string]int{},
+		Regions:   map[string]int{},
+		CreatedOn: config.Now(),
+	}
+}
+func NewLocalTF2Stats() LocalTF2StatsSnapshot {
+	return LocalTF2StatsSnapshot{
 		MapTypes:  map[string]int{},
 		Regions:   map[string]int{},
 		CreatedOn: config.Now(),

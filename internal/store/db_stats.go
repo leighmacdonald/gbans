@@ -260,11 +260,24 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 	return nil
 }
 
+var localStatColumns = []string{"players", "capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
+
+func (database *pgStore) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats model.LocalTF2StatsSnapshot) error {
+	query, args, errQuery := sb.Insert(statDurationTable(Local, duration)).
+		Columns(localStatColumns...).
+		Values(stats.Players, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
+		ToSql()
+	if errQuery != nil {
+		return errQuery
+	}
+	return Err(database.Exec(ctx, query, args...))
+}
+
 var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
 	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
 
 func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error {
-	query, args, errQuery := sb.Insert(statDurationTable(duration)).
+	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
 		Columns(globalStatColumns...).
 		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull,
 			stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
@@ -274,6 +287,13 @@ func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDu
 	}
 	return Err(database.Exec(ctx, query, args...))
 }
+
+type StatLocality int
+
+const (
+	Local StatLocality = iota
+	Global
+)
 
 type StatDuration int
 
@@ -301,6 +321,32 @@ func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, 
 			&stat.Secure,
 			&stat.ServersCommunity,
 			&stat.ServersTotal,
+			&stat.CapacityFull,
+			&stat.CapacityEmpty,
+			&stat.CapacityPartial,
+			&stat.MapTypes,
+			&stat.CreatedOn,
+			&stat.Regions,
+		); errScan != nil {
+			return nil, Err(errScan)
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
+func fetchLocalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]model.LocalTF2StatsSnapshot, error) {
+	rows, errExec := database.Query(ctx, query, args...)
+	if errExec != nil {
+		return nil, Err(errExec)
+	}
+	defer rows.Close()
+	var stats []model.LocalTF2StatsSnapshot
+	for rows.Next() {
+		var stat model.LocalTF2StatsSnapshot
+		if errScan := rows.Scan(
+			&stat.StatId,
+			&stat.Players,
 			&stat.CapacityFull,
 			&stat.CapacityEmpty,
 			&stat.CapacityPartial,
@@ -349,7 +395,7 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	maxDate := currentHourlyTime()
 	query, args, errQuery := sb.
 		Select(fp.Prepend(globalStatColumns, "stat_id")...).
-		From(statDurationTable(Live)).
+		From(statDurationTable(Global, Live)).
 		Where(sq.Lt{"created_on": maxDate}). // Ignore any results until a full hour has passed
 		OrderBy("created_on").
 		ToSql()
@@ -452,7 +498,7 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	}
 	// Delete old entries
 	delQuery, delArgs, delQueryErr := sb.
-		Delete(statDurationTable(Live)).
+		Delete(statDurationTable(Global, Live)).
 		Where(sq.Eq{"stat_id": statIds}).
 		ToSql()
 	if delQueryErr != nil {
@@ -461,21 +507,31 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	return database.Exec(ctx, delQuery, delArgs...)
 }
 
-func statDurationTable(duration StatDuration) string {
-	switch duration {
-	case Hourly:
-		return "global_stats_players_hourly"
-	case Daily:
-		return "global_stats_players_daily"
-	case Live:
-		return "global_stats_players"
+func statDurationTable(locality StatLocality, duration StatDuration) string {
+	switch locality {
+	case Global:
+		switch duration {
+		case Hourly:
+			return "global_stats_players_hourly"
+		case Daily:
+			return "global_stats_players_daily"
+		default:
+			return "global_stats_players"
+		}
 	default:
-		return ""
+		switch duration {
+		case Hourly:
+			return "local_stats_players_hourly"
+		case Daily:
+			return "local_stats_players_daily"
+		default:
+			return "local_stats_players"
+		}
 	}
 }
 
 func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error) {
-	table := statDurationTable(duration)
+	table := statDurationTable(Global, duration)
 	if table == "" {
 		return nil, errors.New("Unsupported stat duration")
 	}
@@ -491,4 +547,23 @@ func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDur
 		return nil, Err(errQuery)
 	}
 	return fetchGlobalTF2Snapshots(ctx, database, query, args)
+}
+
+func (database *pgStore) GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]model.LocalTF2StatsSnapshot, error) {
+	table := statDurationTable(Local, duration)
+	if table == "" {
+		return nil, errors.New("Unsupported stat duration")
+	}
+	qb := sb.Select(fp.Prepend(localStatColumns, "stat_id")...).
+		From(table).
+		OrderBy("created_on desc")
+	switch duration {
+	case Hourly:
+		qb = qb.Limit(24 * 7)
+	}
+	query, args, errQuery := qb.ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	return fetchLocalTF2Snapshots(ctx, database, query, args)
 }

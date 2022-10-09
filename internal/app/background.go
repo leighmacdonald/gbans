@@ -505,6 +505,55 @@ func SteamRegionIdString(region SvRegion) string {
 	}
 }
 
+func localStatUpdater(ctx context.Context, database store.Store) {
+	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
+	if errSaveTicker != nil {
+		log.WithError(errSaveTicker).Panicf("Invalid save ticker cron format")
+		return
+	}
+	// Rebuild stats every hour
+	//buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
+	//if errBuildTicker != nil {
+	//	log.WithError(errBuildTicker).Panicf("Invalid build ticker cron format")
+	//	return
+	//}
+	for {
+		select {
+		case saveTime := <-saveTicker.C:
+			stats := model.NewLocalTF2Stats()
+			stats.CreatedOn = saveTime
+			serverStateMu.RLock()
+			for _, ss := range serverState {
+				stats.Players += ss.PlayerCount
+				_, foundRegion := stats.Regions[ss.Region]
+				if !foundRegion {
+					stats.Regions[ss.Region] = 0
+				}
+				stats.Regions[ss.Region] += ss.PlayerCount
+				mapType := guessMapType(ss.Map)
+				_, mapTypeFound := stats.MapTypes[mapType]
+				if !mapTypeFound {
+					stats.MapTypes[mapType] = 0
+				}
+				if ss.PlayerCount == ss.MaxPlayers {
+					stats.CapacityFull++
+				} else if ss.PlayerCount == 0 {
+					stats.CapacityEmpty++
+				} else {
+					stats.CapacityPartial++
+				}
+			}
+			serverStateMu.RUnlock()
+			if errSave := database.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
+				log.WithError(errSave).Error("Failed to save local stats state")
+				continue
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func masterServerListUpdater(ctx context.Context, database store.Store, updateFreq time.Duration) {
 	prevStats := model.NewGlobalTF2Stats()
 	locationCache := map[string]ip2location.LatLong{}

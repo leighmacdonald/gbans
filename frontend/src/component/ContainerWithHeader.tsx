@@ -11,7 +11,7 @@ export type JustifyTypes =
 
 interface ContainerWithHeaderProps {
     title: string;
-    children: JSX.Element[] | JSX.Element | string;
+    children?: JSX.Element[] | JSX.Element | string;
     iconLeft?: React.ReactNode;
     iconRight?: React.ReactNode;
     align?: JustifyTypes;
