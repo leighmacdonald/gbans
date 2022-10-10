@@ -99,8 +99,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/media/:media_id", web.onGetMediaById(database))
 	engine.POST("/api/news_latest", web.onAPIGetNewsLatest(database))
 	engine.POST("/api/server_query", web.onAPIPostServerQuery(database))
-
-	engine.GET("/api/global_stats", web.onAPIGetGlobalTF2Stats(database))
+	engine.GET("/api/server_stats", web.onAPIGetTF2Stats(database))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts(database))

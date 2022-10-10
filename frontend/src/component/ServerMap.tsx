@@ -6,6 +6,7 @@ import * as markerIcon from 'leaflet/dist/images/marker-icon.png';
 import * as markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import L from 'leaflet';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
+import { logErr } from '../util/errors';
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -23,24 +24,30 @@ const UserPosition = () => {
 
     useEffect(() => {
         const defPos = { lat: 42.434719, lng: -83.985001 };
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const userPos = {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude
-                    };
-                    map.setView(userPos, 3);
-                    setPos(userPos);
-                },
-                () => {
-                    map.setView(defPos, 4);
-                    setPos(defPos);
-                }
-            );
-        } else {
+        try {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const userPos = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        };
+                        map.setView(userPos, 3);
+                        setPos(userPos);
+                    },
+                    () => {
+                        map.setView(defPos, 4);
+                        setPos(defPos);
+                    }
+                );
+            } else {
+                map.setView(defPos);
+                setPos(defPos);
+            }
+        } catch (e) {
             map.setView(defPos);
             setPos(defPos);
+            logErr(e);
         }
     }, [map, setPos]);
 

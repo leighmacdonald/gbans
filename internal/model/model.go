@@ -2,6 +2,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"strings"
@@ -74,6 +76,20 @@ type Server struct {
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`
 	UpdatedOn      time.Time `db:"updated_on" json:"updated_on"`
+}
+
+func (s Server) IP() (net.IP, error) {
+	parsedIp := net.ParseIP(s.Address)
+	if parsedIp != nil {
+		// We already have an ip
+		return parsedIp, nil
+	}
+	// TODO proper timeout for ctx
+	ips, errResolve := net.DefaultResolver.LookupIP(context.Background(), "ip4", s.Address)
+	if errResolve != nil || len(ips) == 0 {
+		return nil, errors.Wrap(errResolve, "Could not resolve address")
+	}
+	return ips[0], nil
 }
 
 func (s Server) Addr() string {
@@ -640,21 +656,9 @@ type LocalTF2StatsSnapshot struct {
 	CapacityEmpty   int            `json:"capacity_empty"`
 	CapacityPartial int            `json:"capacity_partial"`
 	MapTypes        map[string]int `json:"map_types"`
+	Servers         map[string]int `json:"servers"`
 	Regions         map[string]int `json:"regions"`
 	CreatedOn       time.Time      `json:"created_on"`
-}
-
-func (stats LocalTF2StatsSnapshot) TrimMapTypes() map[string]int {
-	const minSize = 5
-	out := map[string]int{}
-	for k, v := range stats.MapTypes {
-		mapKey := k
-		if v < minSize {
-			mapKey = "unknown"
-		}
-		out[mapKey] = v
-	}
-	return out
 }
 
 type GlobalTF2StatsSnapshot struct {
@@ -696,6 +700,7 @@ func NewLocalTF2Stats() LocalTF2StatsSnapshot {
 	return LocalTF2StatsSnapshot{
 		MapTypes:  map[string]int{},
 		Regions:   map[string]int{},
+		Servers:   map[string]int{},
 		CreatedOn: config.Now(),
 	}
 }

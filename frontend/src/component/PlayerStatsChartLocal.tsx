@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { GlobalTF2StatSnapshot } from '../api';
+import { LocalTF2StatSnapshot } from '../api';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -9,13 +9,12 @@ import {
     Title,
     Tooltip,
     Legend,
-    Filler,
-    ChartOptions
+    Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { renderDateTime } from '../util/text';
 import Container from '@mui/material/Container';
-import { Colors, ColorsTrans } from '../util/ui';
+import { Colors, ColorsTrans, makeChartOpts } from '../util/ui';
 
 ChartJS.register(
     CategoryScale,
@@ -29,30 +28,14 @@ ChartJS.register(
 );
 
 export interface PlayerStatsChartProps {
-    data: GlobalTF2StatSnapshot[];
+    data: LocalTF2StatSnapshot[];
 }
 
-export const PlayerStatsChart = ({ data }: PlayerStatsChartProps) => {
-    const options: ChartOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const
-            },
-            title: {
-                display: false,
-                text: 'Global TF2 Player Counts'
-            }
-        }
-    };
-
-    const labels = useMemo(() => {
-        return data.map((d) => renderDateTime(d.created_on));
-    }, [data]);
-
+export const PlayerStatsChartLocal = ({ data }: PlayerStatsChartProps) => {
+    const options = makeChartOpts('Local TF2 Player Counts');
     const chartData = useMemo(() => {
         return {
-            labels,
+            labels: data.map((d) => renderDateTime(d.created_on)),
             datasets: [
                 {
                     fill: true,
@@ -60,17 +43,10 @@ export const PlayerStatsChart = ({ data }: PlayerStatsChartProps) => {
                     data: data.map((v) => v.players),
                     borderColor: Colors[0],
                     backgroundColor: ColorsTrans[0]
-                },
-                {
-                    fill: true,
-                    label: 'Bots',
-                    data: data.map((v) => v.bots),
-                    borderColor: Colors[1],
-                    backgroundColor: ColorsTrans[1]
                 }
             ]
         };
-    }, [data, labels]);
+    }, [data]);
 
     return (
         <Container sx={{ padding: 2 }}>

@@ -51,7 +51,7 @@ import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { Pug } from './page/Pug';
 import { QuickPlayPage } from './page/QuickPlayPage';
-import { GlobalTF2StatsPage } from './page/GlobalTF2StatsPage';
+import { TF2StatsPage } from './page/TF2StatsPage';
 
 export interface AppProps {
     initialToken?: string;
@@ -479,7 +479,7 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                                                         path={'/global_stats'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                <GlobalTF2StatsPage />
+                                                                <TF2StatsPage />
                                                             </ErrorBoundary>
                                                         }
                                                     />

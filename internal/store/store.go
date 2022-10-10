@@ -140,6 +140,7 @@ type StatStore interface {
 	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error
 	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error)
 	BuildGlobalTF2Stats(ctx context.Context) error
+	BuildLocalTF2Stats(ctx context.Context) error
 }
 
 type NetworkStore interface {

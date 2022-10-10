@@ -208,18 +208,22 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
 export const apiGetMatches = async (opts: MatchesQueryOpts) =>
     await apiCall<MatchSummary[], MatchesQueryOpts>(`/api/logs`, 'POST', opts);
 
-export interface GlobalTF2StatSnapshot {
+export interface LocalTF2StatSnapshot {
     stat_id: number;
     players: number;
-    bots: number;
-    secure: number;
-    servers_community: number;
-    servers_total: number;
     capacity_full: number;
     capacity_empty: number;
     capacity_partial: number;
     map_types: Record<string, number>;
+    servers: Record<string, number>;
     created_on: Date;
+}
+
+export interface GlobalTF2StatSnapshot extends LocalTF2StatSnapshot {
+    bots: number;
+    secure: number;
+    servers_community: number;
+    servers_total: number;
 }
 
 export enum StatDuration {
@@ -252,9 +256,20 @@ export const StatDurations = [
     StatDuration.Weekly,
     StatDuration.Yearly
 ];
-export const apiGetGlobalTF2Stats = async (duration: StatDuration) =>
-    await apiCall<GlobalTF2StatSnapshot[]>(
-        `/api/global_stats?duration=${duration}`,
+
+export enum StatSource {
+    Local,
+    Global
+}
+
+export const apiGetTF2Stats = async (
+    source: StatSource,
+    duration: StatDuration
+) =>
+    await apiCall<GlobalTF2StatSnapshot[] | LocalTF2StatSnapshot[]>(
+        `/api/server_stats?source=${
+            source === StatSource.Local ? 'local' : 'global'
+        }&duration=${duration}`,
         'GET'
     ).then((resp) => {
         if (!resp.result) {

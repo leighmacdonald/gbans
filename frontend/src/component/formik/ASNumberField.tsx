@@ -5,7 +5,9 @@ import * as yup from 'yup';
 
 export const ASNumberFieldValidator = yup
     .number()
-    .min(1, 'Must be positive integer');
+    .required()
+    .positive()
+    .integer();
 
 export const ASNumberField = ({
     formik

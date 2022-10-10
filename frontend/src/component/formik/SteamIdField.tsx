@@ -8,13 +8,17 @@ import { logErr } from '../../util/errors';
 
 export const steamIdValidator = yup
     .string()
-    .test('checkSteamId', 'Invalid steamid/vanity', async (steamId) => {
+    .test('checkSteamId', 'Invalid steamid/vanity', async (steamId, ctx) => {
         if (!steamId) {
             return false;
         }
         try {
             const resp = await apiGetProfile(steamId);
-            return !(!resp.status || !resp.result);
+            if (!resp.status || !resp.result) {
+                return false;
+            }
+            ctx.parent.value = resp.result.player.steam_id.getSteamID64();
+            return true;
         } catch (e) {
             logErr(e);
             return false;

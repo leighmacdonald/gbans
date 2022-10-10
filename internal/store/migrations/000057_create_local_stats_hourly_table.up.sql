@@ -8,7 +8,8 @@ CREATE TABLE local_stats_players
     capacity_empty   integer default 0    not null,
     capacity_partial integer default 0    not null,
     regions          jsonb   default '{}' not null,
-    map_types         jsonb   default '{}' not null,
+    map_types        jsonb   default '{}' not null,
+    servers          jsonb   default '{}' not null,
     created_on       timestamptz          not null
 );
 
@@ -20,7 +21,8 @@ CREATE TABLE local_stats_players_hourly
     capacity_empty   integer default 0    not null,
     capacity_partial integer default 0    not null,
     regions          jsonb   default '{}' not null,
-    map_types         jsonb   default '{}' not null,
+    map_types        jsonb   default '{}' not null,
+    servers          jsonb   default '{}' not null,
     created_on       timestamptz          not null
 );
 
@@ -36,7 +38,8 @@ CREATE TABLE local_stats_players_daily
     capacity_empty   integer default 0    not null,
     capacity_partial integer default 0    not null,
     regions          jsonb   default '{}' not null,
-    map_types         jsonb   default '{}' not null,
+    map_types        jsonb   default '{}' not null,
+    servers          jsonb   default '{}' not null,
     created_on       timestamptz          not null
 );
 

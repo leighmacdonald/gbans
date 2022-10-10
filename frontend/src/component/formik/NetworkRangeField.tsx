@@ -6,7 +6,21 @@ import * as yup from 'yup';
 export const NetworkRangeFieldValidator = yup
     .string()
     .label('Input a CIDR network range')
-    .required('CIDR address is required');
+    .required('CIDR address is required')
+    .test('rangeValid', 'Range invalid', (addr) => {
+        if (!addr) {
+            return false;
+        }
+        if (!addr.includes('/')) {
+            addr = addr + '/32';
+        } else {
+            const v = addr.split('/');
+            if (v.length > 1 && parseInt(v[1]) < 24) {
+                return false;
+            }
+        }
+        return true;
+    });
 
 export const NetworkRangeField = ({
     formik

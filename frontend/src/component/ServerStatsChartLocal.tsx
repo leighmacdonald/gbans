@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { GlobalTF2StatSnapshot } from '../api';
+import { LocalTF2StatSnapshot } from '../api';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -7,9 +7,9 @@ import {
     PointElement,
     LineElement,
     Title,
+    Filler,
     Tooltip,
     Legend,
-    Filler,
     ChartOptions
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -28,11 +28,11 @@ ChartJS.register(
     Legend
 );
 
-export interface PlayerStatsChartProps {
-    data: GlobalTF2StatSnapshot[];
+export interface ServerStatsChartProps {
+    data: LocalTF2StatSnapshot[];
 }
 
-export const PlayerStatsChart = ({ data }: PlayerStatsChartProps) => {
+export const ServerStatsChartLocal = ({ data }: ServerStatsChartProps) => {
     const options: ChartOptions = {
         responsive: true,
         plugins: {
@@ -41,7 +41,7 @@ export const PlayerStatsChart = ({ data }: PlayerStatsChartProps) => {
             },
             title: {
                 display: false,
-                text: 'Global TF2 Player Counts'
+                text: 'Local TF2 Server Counts'
             }
         }
     };
@@ -56,17 +56,24 @@ export const PlayerStatsChart = ({ data }: PlayerStatsChartProps) => {
             datasets: [
                 {
                     fill: true,
-                    label: 'Players',
-                    data: data.map((v) => v.players),
+                    label: 'Full Servers',
+                    data: data.map((v) => v.capacity_full),
                     borderColor: Colors[0],
                     backgroundColor: ColorsTrans[0]
                 },
                 {
                     fill: true,
-                    label: 'Bots',
-                    data: data.map((v) => v.bots),
+                    label: 'Occupied Servers',
+                    data: data.map((v) => v.capacity_partial),
                     borderColor: Colors[1],
                     backgroundColor: ColorsTrans[1]
+                },
+                {
+                    fill: true,
+                    label: 'Empty Servers',
+                    data: data.map((v) => v.capacity_empty),
+                    borderColor: Colors[2],
+                    backgroundColor: ColorsTrans[2]
                 }
             ]
         };

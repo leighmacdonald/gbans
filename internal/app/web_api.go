@@ -2526,24 +2526,42 @@ func (web *web) onAPIPostServerQuery(database store.Store) gin.HandlerFunc {
 	}
 }
 
-func (web *web) onAPIGetGlobalTF2Stats(database store.StatStore) gin.HandlerFunc {
+func (web *web) onAPIGetTF2Stats(database store.StatStore) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		source, sourceFound := ctx.GetQuery("source")
+		if !sourceFound {
+			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			return
+		}
 		durationStr, errDuration := ctx.GetQuery("duration")
 		if !errDuration {
-			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		intValue, errParse := strconv.ParseInt(durationStr, 10, 64)
 		if errParse != nil {
-			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
+			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		duration := store.StatDuration(intValue)
-		gStats, errGetStats := database.GetGlobalTF2Stats(ctx, duration)
-		if errGetStats != nil {
-			responseErr(ctx, http.StatusInternalServerError, []model.GlobalTF2StatsSnapshot{})
-			return
+		switch source {
+		case "local":
+			localStats, errGetStats := database.GetLocalTF2Stats(ctx, duration)
+			if errGetStats != nil {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+			responseOK(ctx, http.StatusOK, fp.Reverse(localStats))
+		case "global":
+			gStats, errGetStats := database.GetGlobalTF2Stats(ctx, duration)
+			if errGetStats != nil {
+				responseErr(ctx, http.StatusInternalServerError, nil)
+				return
+			}
+			responseOK(ctx, http.StatusOK, fp.Reverse(gStats))
+		default:
+			responseErr(ctx, http.StatusBadRequest, nil)
 		}
-		responseOK(ctx, http.StatusOK, fp.Reverse(gStats))
+
 	}
 }

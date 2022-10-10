@@ -221,6 +221,7 @@ export const BanPage = (): JSX.Element => {
                         <ContainerWithHeader
                             title={'Ban Details'}
                             iconRight={<InfoIcon />}
+                            align={'flex-end'}
                         >
                             <List dense={true}>
                                 <ListItem>
@@ -293,6 +294,7 @@ export const BanPage = (): JSX.Element => {
                             <ContainerWithHeader
                                 title={'Mod Notes'}
                                 iconRight={<DocumentScannerIcon />}
+                                align={'flex-end'}
                             >
                                 <Typography variant={'body2'} padding={2}>
                                     {ban.ban.note}
@@ -305,6 +307,7 @@ export const BanPage = (): JSX.Element => {
                         <ContainerWithHeader
                             title={'Moderation Tools'}
                             iconRight={<AddModeratorIcon />}
+                            align={'flex-end'}
                         >
                             <Stack spacing={2} padding={2}>
                                 <Stack direction={'row'} spacing={2}>

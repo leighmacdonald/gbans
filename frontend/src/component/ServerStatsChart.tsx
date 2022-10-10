@@ -9,12 +9,12 @@ import {
     Title,
     Filler,
     Tooltip,
-    Legend,
-    ChartOptions
+    Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { renderDateTime } from '../util/text';
 import Container from '@mui/material/Container';
+import { Colors, ColorsTrans, makeChartOpts } from '../util/ui';
 
 ChartJS.register(
     CategoryScale,
@@ -32,51 +32,35 @@ export interface ServerStatsChartProps {
 }
 
 export const ServerStatsChart = ({ data }: ServerStatsChartProps) => {
-    const options: ChartOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const
-            },
-            title: {
-                display: false,
-                text: 'Global TF2 Server Counts'
-            }
-        }
-    };
-
-    const labels = useMemo(() => {
-        return data.map((d) => renderDateTime(d.created_on));
-    }, [data]);
-
+    const options = makeChartOpts('Global TF2 Server Counts');
     const chartData = useMemo(() => {
         return {
-            labels,
+            labels: data.map((d) => renderDateTime(d.created_on)),
             datasets: [
                 {
                     fill: true,
                     label: 'Full Servers',
                     data: data.map((v) => v.capacity_full),
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                    borderColor: Colors[0],
+                    backgroundColor: ColorsTrans[0]
                 },
                 {
                     fill: true,
                     label: 'Occupied Servers',
                     data: data.map((v) => v.capacity_partial),
-                    borderColor: 'rgb(246,187,60)',
-                    backgroundColor: 'rgba(246,187,60, 0.5)'
+                    borderColor: Colors[1],
+                    backgroundColor: ColorsTrans[1]
                 },
                 {
                     fill: true,
                     label: 'Empty Servers',
                     data: data.map((v) => v.capacity_empty),
-                    borderColor: 'rgb(53, 162, 235)',
-                    backgroundColor: 'rgba(53, 162, 235, 0.5)'
+                    borderColor: Colors[2],
+                    backgroundColor: ColorsTrans[2]
                 }
             ]
         };
-    }, [data, labels]);
+    }, [data]);
 
     return (
         <Container sx={{ padding: 2 }}>

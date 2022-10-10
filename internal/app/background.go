@@ -262,7 +262,16 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore, updat
 				if state.Name != "" {
 					state.Name = statusInfo.ServerName
 				}
-
+				if state.PlayerCount < statusInfo.PlayersCount {
+					state.PlayerCount = statusInfo.PlayersCount
+				}
+				// rcon status doesn't respect sv_visiblemaxplayers (sp?) so this doesn't work well
+				//if state.MaxPlayers < statusInfo.PlayersMax {
+				//	state.MaxPlayers = statusInfo.PlayersMax
+				//}
+				if state.Map != "" && state.Map != statusInfo.Map {
+					state.Map = statusInfo.Map
+				}
 				var knownPlayers []model.ServerStatePlayer
 				for _, player := range statusInfo.Players {
 					var newPlayer model.ServerStatePlayer
@@ -506,36 +515,67 @@ func SteamRegionIdString(region SvRegion) string {
 }
 
 func localStatUpdater(ctx context.Context, database store.Store) {
+	var build = func() {
+		if errBuild := database.BuildLocalTF2Stats(ctx); errBuild != nil {
+			log.WithError(errBuild).Error("Error building local stats")
+		}
+	}
 	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
 	if errSaveTicker != nil {
 		log.WithError(errSaveTicker).Panicf("Invalid save ticker cron format")
 		return
 	}
 	// Rebuild stats every hour
-	//buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
-	//if errBuildTicker != nil {
-	//	log.WithError(errBuildTicker).Panicf("Invalid build ticker cron format")
-	//	return
-	//}
+	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
+	if errBuildTicker != nil {
+		log.WithError(errBuildTicker).Panicf("Invalid build ticker cron format")
+		return
+	}
+	build()
 	for {
 		select {
+		case <-buildTicker.C:
+			build()
 		case saveTime := <-saveTicker.C:
 			stats := model.NewLocalTF2Stats()
 			stats.CreatedOn = saveTime
+			servers, errServers := database.GetServers(ctx, false)
+			if errServers != nil {
+				log.WithError(errServers).Errorf("Failed to fetch servers to build local cache")
+				continue
+			}
+			serverNameMap := map[string]string{}
+			for _, server := range servers {
+				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerNameShort
+				ipAddr, errIp := server.IP()
+				if errIp != nil {
+					continue
+				}
+				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
+			}
 			serverStateMu.RLock()
 			for _, ss := range serverState {
+				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
+				serverName, nameFound := serverNameMap[sn]
+				if !nameFound {
+					log.WithFields(log.Fields{"name": serverName}).Errorf("Cannot find server name")
+					continue
+				}
+				stats.Servers[serverName] = ss.PlayerCount
 				stats.Players += ss.PlayerCount
 				_, foundRegion := stats.Regions[ss.Region]
 				if !foundRegion {
 					stats.Regions[ss.Region] = 0
 				}
 				stats.Regions[ss.Region] += ss.PlayerCount
+
 				mapType := guessMapType(ss.Map)
 				_, mapTypeFound := stats.MapTypes[mapType]
 				if !mapTypeFound {
 					stats.MapTypes[mapType] = 0
 				}
-				if ss.PlayerCount == ss.MaxPlayers {
+				stats.MapTypes[mapType] += ss.PlayerCount
+				if ss.PlayerCount >= ss.MaxPlayers && ss.MaxPlayers > 0 {
 					stats.CapacityFull++
 				} else if ss.PlayerCount == 0 {
 					stats.CapacityEmpty++
@@ -594,7 +634,7 @@ func masterServerListUpdater(ctx context.Context, database store.Store, updateFr
 			stats.ServersTotal++
 			stats.Players += server.Players
 			stats.Bots += server.Bots
-			if server.Players == server.MaxPlayers {
+			if server.MaxPlayers > 0 && server.Players >= server.MaxPlayers {
 				stats.CapacityFull++
 			} else if server.Players == 0 {
 				stats.CapacityEmpty++
