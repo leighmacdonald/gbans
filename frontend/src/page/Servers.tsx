@@ -41,7 +41,7 @@ export const ServerStats = () => {
     const cap = servers.length * 24;
     const use = sum(servers.map((value) => value?.players?.length || 0));
     const regions = servers.reduce((acc, cv) => {
-        if (!Object.hasOwn(acc, cv.region)) {
+        if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
             acc[cv.region] = [];
         }
         acc[cv.region].push(cv);
@@ -78,14 +78,18 @@ export const ServerStats = () => {
 
                 {keys.map((v) => {
                     const pSum = sum(
-                        ((Object.hasOwn(regions, v) && regions[v]) || []).map(
-                            (value) => value?.players?.length || 0
-                        )
+                        (
+                            (Object.prototype.hasOwnProperty.call(regions, v) &&
+                                regions[v]) ||
+                            []
+                        ).map((value) => value?.players?.length || 0)
                     );
                     const pMax = sum(
-                        ((Object.hasOwn(regions, v) && regions[v]) || []).map(
-                            (value) => value?.max_players || 24
-                        )
+                        (
+                            (Object.prototype.hasOwnProperty.call(regions, v) &&
+                                regions[v]) ||
+                            []
+                        ).map((value) => value?.max_players || 24)
                     );
                     return (
                         <Grid item xs={3} xl={4} key={`stat-${v}`}>
