@@ -23,38 +23,12 @@ type Linkable interface {
 	ToURL() string
 }
 
-type PersonChat struct {
-	PersonChatId int64
-	SteamId      steamid.SID64
-	ServerId     int
-	TeamChat     bool
-	Message      string
-	CreatedOn    time.Time
-}
-
-// PersonIPRecord holds a composite result of the more relevant ip2location results
-type PersonIPRecord struct {
-	IPAddr      net.IP
-	CreatedOn   time.Time
-	CityName    string
-	CountryName string
-	CountryCode string
-	ASName      string
-	ASNum       int
-	ISP         string
-	UsageType   string
-	Threat      string
-	DomainUsed  string
-}
-
 type Server struct {
 	// Auto generated id
 	ServerID int `db:"server_id" json:"server_id"`
 	// ServerNameShort is a short reference name for the server eg: us-1
 	ServerNameShort string `db:"short_name" json:"server_name"`
 	ServerNameLong  string `db:"server_name_long" json:"server_name_long"`
-	// Token is the current valid authentication token that the server uses to make authenticated requests
-	Token string `db:"token" json:"token"`
 	// Address is the ip of the server
 	Address string `db:"address" json:"address"`
 	// Port is the port of the server
@@ -210,101 +184,6 @@ type ServerStatePlayer struct {
 	Loss          int           `json:"-"`
 	IP            net.IP        `json:"-"`
 	Port          int           `json:"-"`
-}
-
-type Person struct {
-	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	CreatedOn        time.Time     `json:"created_on"`
-	UpdatedOn        time.Time     `json:"updated_on"`
-	PermissionLevel  Privilege     `json:"permission_level"`
-	Muted            bool          `json:"muted"`
-	IsNew            bool          `json:"-"`
-	DiscordID        string        `json:"discord_id"`
-	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
-	CommunityBanned  bool          `json:"community_banned"`
-	VACBans          int           `json:"vac_bans"`
-	GameBans         int           `json:"game_bans"`
-	EconomyBan       string        `json:"economy_ban"`
-	DaysSinceLastBan int           `json:"days_since_last_ban"`
-	UpdatedOnSteam   time.Time     `json:"updated_on_steam"`
-	*steamweb.PlayerSummary
-}
-
-func (p *Person) ToURL() string {
-	return config.ExtURL("/profile/%d", p.SteamID.Int64())
-}
-
-// UserProfile is the model used in the webui representing the logged-in user.
-type UserProfile struct {
-	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	CreatedOn       time.Time     `json:"created_on"`
-	UpdatedOn       time.Time     `json:"updated_on"`
-	PermissionLevel Privilege     `json:"permission_level"`
-	DiscordID       string        `json:"discord_id"`
-	Name            string        `json:"name"`
-	Avatar          string        `json:"avatar"`
-	AvatarFull      string        `json:"avatarfull"`
-	BanID           int64         `json:"ban_id"`
-	Muted           bool          `json:"muted"`
-}
-
-func (p UserProfile) ToURL() string {
-	return config.ExtURL("/profile/%d", p.SteamID.Int64())
-}
-
-// LoggedIn checks for a valid steamID
-func (p *Person) LoggedIn() bool {
-	return p.SteamID.Valid() && p.SteamID.Int64() > 0
-}
-
-// AsTarget checks for a valid steamID
-func (p *Person) AsTarget() StringSID {
-	return StringSID(p.SteamID.String())
-}
-
-// NewPerson allocates a new default person instance
-func NewPerson(sid64 steamid.SID64) Person {
-	t0 := config.Now()
-	return Person{
-		SteamID:          sid64,
-		CreatedOn:        t0,
-		UpdatedOn:        t0,
-		PermissionLevel:  PUser,
-		Muted:            false,
-		IsNew:            true,
-		DiscordID:        "",
-		IPAddr:           nil,
-		CommunityBanned:  false,
-		VACBans:          0,
-		GameBans:         0,
-		EconomyBan:       "none",
-		DaysSinceLastBan: 0,
-		UpdatedOnSteam:   t0,
-		PlayerSummary:    &steamweb.PlayerSummary{},
-	}
-}
-
-// NewUserProfile allocates a new default person instance
-func NewUserProfile(sid64 steamid.SID64) UserProfile {
-	t0 := config.Now()
-	return UserProfile{
-		SteamID:         sid64,
-		CreatedOn:       t0,
-		UpdatedOn:       t0,
-		PermissionLevel: PUser,
-		Name:            "Guest",
-	}
-}
-
-type People []Person
-
-func (p People) AsMap() map[steamid.SID64]Person {
-	m := map[steamid.SID64]Person{}
-	for _, person := range p {
-		m[person.SteamID] = person
-	}
-	return m
 }
 
 type Stats struct {

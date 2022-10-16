@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var columnsServer = []string{"server_id", "short_name", "name", "token", "address", "port", "rcon", "password",
+var columnsServer = []string{"server_id", "short_name", "name", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"latitude", "longitude", "default_map", "deleted", "log_secret"}
 
@@ -25,7 +25,7 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int, server *mo
 		return Err(errQuery)
 	}
 	if errRow := database.conn.QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
+		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 			&server.Latitude, &server.Longitude,
@@ -54,7 +54,7 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 	defer rows.Close()
 	for rows.Next() {
 		var server model.Server
-		if errScan := rows.Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Token, &server.Address, &server.Port, &server.RCON,
+		if errScan := rows.Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 			&server.DefaultMap, &server.Deleted, &server.LogSecret); errScan != nil {
@@ -81,7 +81,6 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 			&server.ServerID,
 			&server.ServerNameShort,
 			&server.ServerNameLong,
-			&server.Token,
 			&server.Address,
 			&server.Port,
 			&server.RCON,
@@ -103,12 +102,12 @@ func (database *pgStore) SaveServer(ctx context.Context, server *model.Server) e
 func (database *pgStore) insertServer(ctx context.Context, server *model.Server) error {
 	const query = `
 		INSERT INTO server (
-		    short_name, name, token, address, port, rcon, token_created_on, 
+		    short_name, name, address, port, rcon, token_created_on, 
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude, 
 			default_map, deleted, log_secret) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING server_id;`
-	err := database.conn.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Token, server.Address, server.Port,
+	err := database.conn.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.DefaultMap, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
@@ -123,7 +122,6 @@ func (database *pgStore) updateServer(ctx context.Context, server *model.Server)
 	query, args, errQueryArgs := sb.Update(string(tableServer)).
 		Set("short_name", server.ServerNameShort).
 		Set("name", server.ServerNameLong).
-		Set("token", server.Token).
 		Set("address", server.Address).
 		Set("port", server.Port).
 		Set("rcon", server.RCON).

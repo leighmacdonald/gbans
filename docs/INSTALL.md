@@ -9,7 +9,8 @@ instructions:
 
 - [System2](https://github.com/dordnung/System2) Provides HTTP(S) client functionality
 - [sm-json](https://github.com/clugg/sm-json) `Required for development only` Provides JSON encoding/decoding.
- 
+- [Connect](https://github.com/asherkin/connect) Provides `OnClientPreConnectEx`
+
 ## gbans Server
 
 Precompiled binaries will be provided once the project is in a more stable state.
@@ -34,24 +35,7 @@ You should now have a binary located at `./build/$platform/gbans`
 ### Server
 
 Copy the example configuration `gbans_example.yml` and name it `gbans.yml`. It should be in
-the same directory as the binary. Configure it as desired. Discord is currently highly recommended, at 
-least until the webui is more feature complete.
-
-#### Adding servers
-
-Servers must be registered in the database for them to work. Currently, the only way to automatically
-do this is with the `gbans addserver` command. 
-
-`gbans addserver <server_name> <addr> <port> <rcon>`
-
-```
-./gbans addserver example-1 10.0.0.1 27015 my_rcon_pass
-INFO[0000] Using config file: gbans.yaml 
-INFO[0000] Added server example-1 with token QecfPbmJeueCrczjetUB 
-```
-
-Save the token returned, it will be used in the sourcemod configuration below. Each server
-must have a unique token. 
+the same directory as the binary. Configure it as desired. 
 
 #### Starting the server
 

@@ -20,6 +20,12 @@ type GenericStore interface {
 	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
 }
 
+type AuthStore interface {
+	GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *model.PersonAuth) error
+	SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error
+	DeletePersonAuth(ctx context.Context, authId int64) error
+}
+
 type ServerStore interface {
 	GetServer(ctx context.Context, serverID int, server *model.Server) error
 	GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error)
@@ -166,5 +172,6 @@ type Store interface {
 	NewsStore
 	WikiStore
 	MediaStore
+	AuthStore
 	io.Closer
 }

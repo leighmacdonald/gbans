@@ -29,13 +29,11 @@ ChartJS.register(
     Legend
 );
 
-export interface GameTypeStatsChartLocalProps {
-    data: LocalTF2StatSnapshot[];
-}
-
 export const GameTypeStatsChartLocal = ({
     data
-}: GameTypeStatsChartLocalProps) => {
+}: {
+    data: LocalTF2StatSnapshot[];
+}) => {
     const options = makeChartOpts('Local TF2 Game Types');
     const chartData = useMemo(() => {
         const mapKeys = uniq(

@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
+	"net"
 	"strings"
 	"time"
 )
@@ -88,7 +89,7 @@ func (database *pgStore) insertPerson(ctx context.Context, person *model.Person)
 	return nil
 }
 
-//"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"
+// "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"
 var profileColumns = []string{"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
@@ -461,4 +462,39 @@ func (database *pgStore) AddConnectionHistory(ctx context.Context, conn *model.P
 		return Err(errQuery)
 	}
 	return nil
+}
+
+var personAuthColumns = []string{"person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on"}
+
+func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *model.PersonAuth) error {
+	query, args, errQuery := sb.
+		Select(personAuthColumns...).
+		From("person_auth").
+		Where(sq.And{sq.Eq{"steam_id": sid64}, sq.Eq{"ip_addr": ipAddr.String()}}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	return Err(database.QueryRow(ctx, query, args...).
+		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
+}
+
+func (database *pgStore) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error {
+	query, args, errQuery := sb.Insert("person_auth").
+		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
+		Values(auth.SteamId, auth.IpAddr.String(), auth.RefreshToken, auth.CreatedOn).
+		Suffix("RETURNING \"person_auth_id\"").
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	return Err(database.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthId))
+}
+
+func (database *pgStore) DeletePersonAuth(ctx context.Context, authId int64) error {
+	query, args, errQuery := sb.Delete("person_auth").Where(sq.Eq{"person_auth_id": authId}).ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	return Err(database.Exec(ctx, query, args...))
 }

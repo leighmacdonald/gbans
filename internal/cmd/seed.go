@@ -129,7 +129,6 @@ var seedCmd = &cobra.Command{
 			}
 			s := model.Server{
 				ServerNameShort: server.ShortName,
-				Token:           golib.RandomString(40),
 				Address:         server.Host,
 				Port:            port,
 				RCON:            rconPass,

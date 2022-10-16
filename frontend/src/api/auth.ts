@@ -1,6 +1,7 @@
 import { apiCall } from './common';
 import { logErr } from '../util/errors';
 
+export const refreshKey = 'refresh';
 export const tokenKey = 'token';
 export const userKey = 'user';
 

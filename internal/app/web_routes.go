@@ -106,7 +106,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.GET("/api/sd/ansible/hosts", web.onAPIGetPrometheusHosts(database))
 
 	// Game server plugin routes
-	engine.POST("/api/server_auth", web.onSAPIPostServerAuth(database))
+	engine.POST("/api/server/auth", web.onSAPIPostServerAuth(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
 	qpConnections := qpConnectionManager{

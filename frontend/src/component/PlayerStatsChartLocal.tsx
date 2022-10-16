@@ -27,11 +27,11 @@ ChartJS.register(
     Legend
 );
 
-export interface PlayerStatsChartProps {
+export const PlayerStatsChartLocal = ({
+    data
+}: {
     data: LocalTF2StatSnapshot[];
-}
-
-export const PlayerStatsChartLocal = ({ data }: PlayerStatsChartProps) => {
+}) => {
     const options = makeChartOpts('Local TF2 Player Counts');
     const chartData = useMemo(() => {
         return {

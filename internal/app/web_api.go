@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
-	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -519,14 +518,18 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 			log.Warnf("Invalid server key used: %s", util.SanitizeLog(request.ServerName))
 			return
 		}
-		server.Token = golib.RandomString(40)
+		accessToken, errToken := newServerJWT(server.ServerID)
+		if errToken != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
 		server.TokenCreatedOn = config.Now()
 		if errSaveServer := database.SaveServer(ctx, &server); errSaveServer != nil {
 			log.Errorf("Failed to updated server token: %v", errSaveServer)
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: server.Token})
+		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: accessToken})
 	}
 }
 
@@ -2562,6 +2565,5 @@ func (web *web) onAPIGetTF2Stats(database store.StatStore) gin.HandlerFunc {
 		default:
 			responseErr(ctx, http.StatusBadRequest, nil)
 		}
-
 	}
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -12,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/yohcop/openid-go"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -37,52 +37,39 @@ const testToken = "test-token"
 
 func (web *web) authServerMiddleWare(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		person := model.NewPerson(0)
 		authHeader := ctx.GetHeader("Authorization")
 		tp := strings.SplitN(authHeader, " ", 2)
 		if authHeader != "" && len(tp) == 2 && tp[0] == "Bearer" {
 			token := tp[1]
-			if config.General.Mode == "test" && token == testToken {
-				loggedInPerson := model.NewPerson(config.General.Owner)
-				if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, config.General.Owner, &loggedInPerson); errGetPerson != nil {
-					log.Errorf("Failed to load persons session user: %v", errGetPerson)
+			claims := &serverAuthClaims{}
+			parsedToken, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
+			if errParseClaims != nil {
+				if errParseClaims == jwt.ErrSignatureInvalid {
+					log.Error("jwt signature invalid!")
 					ctx.AbortWithStatus(http.StatusUnauthorized)
 					return
 				}
-				person = loggedInPerson
-			} else {
-				claims := &authClaims{}
-				parsedToken, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
-				if errParseClaims != nil {
-					if errParseClaims == jwt.ErrSignatureInvalid {
-						log.Error("jwt signature invalid!")
-						ctx.AbortWithStatus(http.StatusUnauthorized)
-						return
-					}
-					ctx.AbortWithStatus(http.StatusUnauthorized)
-					//log.WithFields(log.Fields{"claim": token}).Errorf("Failed to parse jwt claims: %s", errParseClaims)
-					return
-				}
-				if !parsedToken.Valid {
-					ctx.AbortWithStatus(http.StatusUnauthorized)
-					log.Error("Invalid jwt token parsed")
-					return
-				}
-				if !steamid.SID64(claims.SteamID).Valid() {
-					ctx.AbortWithStatus(http.StatusUnauthorized)
-					log.Errorf("Invalid jwt claim steamID!")
-					return
-				}
-				loggedInPerson := model.NewPerson(steamid.SID64(claims.SteamID))
-				if errGetPerson := database.GetPersonBySteamID(ctx, steamid.SID64(claims.SteamID), &loggedInPerson); errGetPerson != nil {
-					log.Errorf("Failed to load persons session user: %v", errGetPerson)
-					ctx.AbortWithStatus(http.StatusUnauthorized)
-					return
-				}
-				person = loggedInPerson
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				//log.WithFields(log.Fields{"claim": token}).Errorf("Failed to parse jwt claims: %s", errParseClaims)
+				return
+			}
+			if !parsedToken.Valid {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				log.Error("Invalid jwt token parsed")
+				return
+			}
+			if claims.ServerId <= 0 {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				log.Errorf("Invalid jwt claim ServerId!")
+				return
+			}
+			var server model.Server
+			if errGetPerson := database.GetServer(ctx, claims.ServerId, &server); errGetPerson != nil || server.ServerID <= 0 {
+				log.Errorf("Failed to load persons session user: %v", errGetPerson)
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
 			}
 		}
-		ctx.Set("person", person)
 		ctx.Next()
 	}
 }
@@ -139,9 +126,9 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			ctx.Redirect(302, referralUrl)
 			return
 		}
-		webToken, errJWT := newJWT(sid)
+		accessToken, errJWT := newUserJWT(sid)
 		if errJWT != nil {
-			log.Errorf("Failed to create new JWT: %query", errJWT)
+			log.Errorf("Failed to create new access token: %q", errJWT)
 			ctx.Redirect(302, referralUrl)
 			return
 		}
@@ -150,9 +137,25 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			ctx.Redirect(302, referralUrl)
 			return
 		}
+		ipAddr := net.ParseIP(ctx.ClientIP())
+		refreshToken := model.NewPersonAuth(sid, ipAddr)
+		if errAuth := database.GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
+			if !errors.Is(errAuth, store.ErrNoResult) {
+				log.Errorf("Failed to fetch refresh token: %q", errAuth)
+				ctx.Redirect(302, referralUrl)
+				return
+			}
+			if createErr := database.SavePersonAuth(ctx, &refreshToken); createErr != nil {
+				log.Errorf("Failed to create new refresh token: %q", errAuth)
+				ctx.Redirect(302, referralUrl)
+				return
+			}
+			return
+		}
 		query := parsedUrl.Query()
-		query.Set("token", webToken)
-		query.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
+		query.Set("refresh", refreshToken.RefreshToken)
+		query.Set("token", accessToken)
+		//query.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
 		query.Set("next_url", referralUrl)
 		parsedUrl.RawQuery = query.Encode()
 		ctx.Redirect(302, parsedUrl.String())
@@ -180,7 +183,7 @@ func (web *web) onTokenRefresh() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		claims := &authClaims{}
+		claims := &personAuthClaims{}
 		parsedClaims, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
 		if errParseClaims != nil {
 			if errParseClaims == jwt.ErrSignatureInvalid {
@@ -200,7 +203,7 @@ func (web *web) onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 		// Now, create a new token for the current user, with a renewed expiration time
-		newToken, errJWT := newJWT(steamid.SID64(claims.SteamID))
+		newToken, errJWT := newUserJWT(steamid.SID64(claims.SteamID))
 		if errJWT != nil || newToken == token {
 			log.Errorf("Failed to renew JWT: %q", errJWT)
 			responseErr(ctx, http.StatusUnauthorized, nil)
@@ -214,17 +217,39 @@ type userToken struct {
 	Token string `json:"token"`
 }
 
-type authClaims struct {
+type personAuthClaims struct {
 	SteamID int64 `json:"steam_id"`
+	jwt.StandardClaims
+}
+
+type serverAuthClaims struct {
+	ServerId int `json:"server_id"`
 	jwt.StandardClaims
 }
 
 const authTokenLifetimeDuration = time.Hour * 24
 
-func newJWT(steamID steamid.SID64) (string, error) {
+func newUserJWT(steamID steamid.SID64) (string, error) {
 	t0 := config.Now()
-	claims := &authClaims{
+	claims := &personAuthClaims{
 		SteamID: steamID.Int64(),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
+			IssuedAt:  t0.Unix(),
+		},
+	}
+	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, errSigned := tokenWithClaims.SignedString([]byte(config.HTTP.CookieKey))
+	if errSigned != nil {
+		return "", errors.Wrap(errSigned, "Failed create signed string")
+	}
+	return signedToken, nil
+}
+
+func newServerJWT(serverId int) (string, error) {
+	t0 := config.Now()
+	claims := &serverAuthClaims{
+		ServerId: serverId,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
 			IssuedAt:  t0.Unix(),
@@ -301,7 +326,7 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 }
 
 func sid64FromJWTToken(token string) (steamid.SID64, error) {
-	claims := &authClaims{}
+	claims := &personAuthClaims{}
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
 	if errParseClaims != nil {
 		if errParseClaims == jwt.ErrSignatureInvalid {
