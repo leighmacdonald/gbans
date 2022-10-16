@@ -58,8 +58,10 @@ func (database *pgStore) GetServerPermissions(ctx context.Context) ([]model.Serv
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
 			return nil, Err(errScan)
 		}
-		flags := "a"
+		flags := ""
 		switch perm {
+		case model.PReserved:
+			flags = "a"
 		case model.PEditor:
 			flags = "aj"
 		case model.PModerator:
