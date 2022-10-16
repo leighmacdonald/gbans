@@ -7,6 +7,7 @@
 #include <sdktools>
 #include <sourcemod>
 #include <system2> // system2 extension
+#include <connect> // connect extension
 #include <gbans>
 
 #define DEBUG
@@ -14,9 +15,6 @@
 #define PLUGIN_AUTHOR "Leigh MacDonald"
 #define PLUGIN_VERSION "0.00"
 #define PLUGIN_NAME "gbans"
-
-// Authentication token len
-#define TOKEN_LEN 40
 
 #define HTTP_STATUS_OK 200
 #define HTTP_STATUS_CONFLICT 409
@@ -42,7 +40,6 @@ enum struct PlayerInfo {
 // clang-format on
 
 // Globals must all start with g_
-char g_token[TOKEN_LEN + 1]; // tokens are 40 chars + term
 
 PlayerInfo g_players[MAXPLAYERS + 1];
 
@@ -50,6 +47,7 @@ int g_port;
 char g_host[128];
 char g_server_name[128];
 char g_server_key[41];
+char g_access_token[512];
 
 // Store temp clientId for networked callbacks 
 int g_reply_to_client_id = 0;
@@ -57,6 +55,14 @@ int g_reply_to_client_id = 0;
 public
 Plugin myinfo = {name = PLUGIN_NAME, author = PLUGIN_AUTHOR, description = "gbans game client",
                  version = PLUGIN_VERSION, url = "https://github.com/leighmacdonald/gbans"};
+
+public Extension __ext_Connect = 
+{
+	name = "Connect",
+	file = "connect.ext",
+	autoload = 1,
+	required = 1,
+}
 
 public
 void OnPluginStart() {
@@ -71,7 +77,7 @@ void OnPluginStart() {
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
 
     ReadConfig();
-    AuthenticateServer();
+    refreshToken();
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -104,8 +110,8 @@ System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
     System2HTTPRequest httpRequest = new System2HTTPRequest(cb, fullAddr);
     httpRequest.SetPort(g_port);
     httpRequest.SetHeader("Content-Type", "application/json");
-    if (strlen(g_token) == TOKEN_LEN) {
-        httpRequest.SetHeader("Authorization", g_token);
+    if (strlen(g_access_token) > 0) {
+        httpRequest.SetHeader("Authorization", g_access_token);
     }
     return httpRequest;
 }
@@ -138,7 +144,7 @@ Recv Token <- API
 Send authenticated commands with header "Authorization $token" set for subsequent calls -> API /api/<path>
 
 */
-void AuthenticateServer() {
+void refreshToken() {
     JSON_Object obj = new JSON_Object();
     obj.SetString("server_name", g_server_name);
     obj.SetString("key", g_server_key);
@@ -146,7 +152,7 @@ void AuthenticateServer() {
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
 
-    System2HTTPRequest req = newReq(OnAuthReqReceived, "/api/server_auth");
+    System2HTTPRequest req = newReq(OnAuthReqReceived, "/api/server/auth");
     req.SetData(encoded);
     req.POST();
     delete req;
@@ -176,13 +182,13 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
             return;
         }
         JSON_Object data = resp.GetObject("result");
-        char token[41];
+        char token[512];
         data.GetString("token", token, sizeof(token));
-        if (strlen(token) != 40) {
+        if (strlen(token) == 0) {
             PrintToServer("[GB] Invalid response status, invalid token");
             return;
         }
-        g_token = token;
+        g_access_token = token;
         PrintToServer("[GB] Successfully authenticated with gbans server");
         json_cleanup_and_delete(resp);
     } else {
@@ -193,9 +199,10 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
 
 public
 Action AdminCmdReauth(int clientId, int argc) {
-    AuthenticateServer();
+    refreshToken();
     return Plugin_Handled;
 }
+
 
 // public
 // Action AdminCmdKick(int clientId, int argc) {
@@ -552,19 +559,101 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
                     adminId.SetFlag(Admin_Generic, true);
                     adminId.SetFlag(Admin_Kick, true);
                 }
-                case PERMISSION_RESERVED: {
+            case PERMISSION_RESERVED: {
                     adminId.SetFlag(Admin_Reservation, true);
                 }
-
-            }
-            
+            }            
         }
-
-
-        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", ban_type, permission_level);
-        
+        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", ban_type, permission_level);      
         json_cleanup_and_delete(resp);  
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);
     }
+}
+
+public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
+{
+    PrintToServer("[GB] OnClientPreConnectEx: %s : %s : %s : %s", name, password, ip, steamID);
+	if (GetClientCount(false) < MaxClients)
+	{
+		return true;	
+	}
+
+	AdminId admin = FindAdminByIdentity(AUTHMETHOD_STEAM, steamID);
+	
+	if (admin == INVALID_ADMIN_ID)
+	{
+		return true;
+	}
+	
+	if (GetAdminFlag(admin, Admin_Reservation))
+	{
+		int target = SelectKickClient();
+						
+		if (target)
+		{
+			KickClientEx(target, "%s", "Dropped for admin");
+		}
+	}
+
+	return true;
+}
+
+int SelectKickClient()
+{	
+	float highestValue;
+	int highestValueId;
+	
+	float highestSpecValue;
+	int highestSpecValueId;
+	
+	bool specFound;
+	
+	float value;
+	
+	for (int i = 1; i <= MaxClients; i++)
+	{	
+		if (!IsClientConnected(i))
+		{
+			continue;
+		}
+	
+		int flags = GetUserFlagBits(i);
+		
+		if (IsFakeClient(i) || flags & ADMFLAG_ROOT || flags & ADMFLAG_RESERVATION || CheckCommandAccess(i, "sm_reskick_immunity", ADMFLAG_RESERVATION, false))
+		{
+			continue;
+		}
+		
+		value = 0.0;
+			
+		if (IsClientInGame(i))
+		{
+			value = GetClientTime(i);
+
+			if (IsClientObserver(i))
+			{			
+				specFound = true;
+				
+				if (value > highestSpecValue)
+				{
+					highestSpecValue = value;
+					highestSpecValueId = i;
+				}
+			}
+		}
+		
+		if (value >= highestValue)
+		{
+			highestValue = value;
+			highestValueId = i;
+		}
+	}
+	
+	if (specFound)
+	{
+		return highestSpecValueId;
+	}
+	
+	return highestValueId;
 }
