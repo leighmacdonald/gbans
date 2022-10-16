@@ -33,43 +33,41 @@ func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 var nonceStore = openid.NewSimpleNonceStore()
 var discoveryCache = &noOpDiscoveryCache{}
 
-const testToken = "test-token"
-
 func (web *web) authServerMiddleWare(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
-		tp := strings.SplitN(authHeader, " ", 2)
-		if authHeader != "" && len(tp) == 2 && tp[0] == "Bearer" {
-			token := tp[1]
-			claims := &serverAuthClaims{}
-			parsedToken, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
-			if errParseClaims != nil {
-				if errParseClaims == jwt.ErrSignatureInvalid {
-					log.Error("jwt signature invalid!")
-					ctx.AbortWithStatus(http.StatusUnauthorized)
-					return
-				}
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				//log.WithFields(log.Fields{"claim": token}).Errorf("Failed to parse jwt claims: %s", errParseClaims)
-				return
-			}
-			if !parsedToken.Valid {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				log.Error("Invalid jwt token parsed")
-				return
-			}
-			if claims.ServerId <= 0 {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				log.Errorf("Invalid jwt claim ServerId!")
-				return
-			}
-			var server model.Server
-			if errGetPerson := database.GetServer(ctx, claims.ServerId, &server); errGetPerson != nil || server.ServerID <= 0 {
-				log.Errorf("Failed to load persons session user: %v", errGetPerson)
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				return
-			}
+		if authHeader == "" {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
 		}
+		claims := &serverAuthClaims{}
+		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, getTokenKey)
+		if errParseClaims != nil {
+			if errParseClaims == jwt.ErrSignatureInvalid {
+				log.Error("jwt signature invalid!")
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		if !parsedToken.Valid {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			log.Error("Invalid jwt token parsed")
+			return
+		}
+		if claims.ServerId <= 0 {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			log.Errorf("Invalid jwt claim ServerId!")
+			return
+		}
+		var server model.Server
+		if errGetServer := database.GetServer(ctx, claims.ServerId, &server); errGetServer != nil {
+			log.Errorf("Failed to load persons session user: %v", errGetServer)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
 		ctx.Next()
 	}
 }

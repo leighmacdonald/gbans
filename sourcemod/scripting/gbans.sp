@@ -24,11 +24,6 @@
 #define PERMISSION_MOD 50
 #define PERMISSION_ADMIN 100
 
-#define FLAGS_RESERVED "a"
-#define FLAGS_EDITOR "aj"
-#define FLAGS_MOD "abcdegjk"
-#define FLAGS_ADMIN "z"
-
 // clang-format off
 enum struct PlayerInfo {
     bool authed;
@@ -74,6 +69,7 @@ void OnPluginStart() {
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     //RegAdminCmd("gb_banip", AdminCmdBanIP, ADMFLAG_BAN);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_KICK);
+    RegAdminCmd("gb_reload", AdminCmdReload, ADMFLAG_KICK);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
 
     ReadConfig();
@@ -136,6 +132,12 @@ void OnClientPostAdminCheck(int clientId) {
     }
 }
 
+public
+Action AdminCmdReauth(int clientId, int argc) {
+    refreshToken();
+    return Plugin_Handled;
+}
+
 /**
 Authenicates the server with the backend API system.
 
@@ -196,11 +198,90 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
     }
 }
 
-
 public
-Action AdminCmdReauth(int clientId, int argc) {
-    refreshToken();
+Action AdminCmdReload(int clientId, int argc) {
+    reloadAdmins();
     return Plugin_Handled;
+}
+
+void reloadAdmins() {
+    PrintToServer("[GB] Refreshing admin users");
+    System2HTTPRequest req = newReq(OnAdminsReqReceived, "/api/server/admins");
+    req.GET();
+    delete req;
+}
+
+void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+                       HTTPRequestMethod method) {
+    if (success) {
+        char lastURL[128];
+        response.GetLastURL(lastURL, sizeof(lastURL));
+        int statusCode = response.StatusCode;
+        float totalTime = response.TotalTime;
+#if defined DEBUG
+        PrintToServer("[GB] Request to %s finished with status code %d in %.2f seconds", lastURL, statusCode,
+                      totalTime);
+#endif
+        if (statusCode != HTTP_STATUS_OK) {
+            PrintToServer("[GB] Bad status on reload admins request: %d", statusCode);
+            return;
+        }
+        char[] content = new char[response.ContentLength + 1];
+        response.GetContent(content, response.ContentLength + 1);
+        JSON_Object resp = json_decode(content);
+        bool ok = resp.GetBool("status");
+        if (!ok) {
+            PrintToServer("[GB] Invalid response status, cannot reload admins");
+            return;
+        }
+        JSON_Array adminArray = view_as<JSON_Array>(resp.GetObject("result"));
+
+        int length = adminArray.Length;
+        AdminId adm;
+        int immunity;
+        for (int i = 0; i < length; i += 1) {
+            JSON_Object perm = adminArray.GetObject(i);
+            char flags[32];
+
+            perm.GetString("flags", flags, sizeof(flags));
+            char steamId[32];
+
+            perm.GetString("steam_id", steamId, sizeof(steamId));
+
+            int permissionLevel = perm.GetInt("permission_level");
+
+            PrintToServer("[GB] Admin: %s|%d|%s", steamId, permissionLevel, flags);
+
+            if ((adm = FindAdminByIdentity(AUTHMETHOD_STEAM, steamId)) == INVALID_ADMIN_ID)
+            {
+                // "" = anon admin
+                adm = CreateAdmin("");
+                if (!adm.BindIdentity(AUTHMETHOD_STEAM, steamId))
+                {
+                    LogError("Could not bind prefetched SQL admin (identity \"%s\")", steamId);
+                    continue;
+                }
+            }
+
+            /* Apply each flag */
+            int len = strlen(flags);
+            AdminFlag flag;
+            for (int j=0; j<len; j++)
+            {
+                if (!FindFlagByChar(flags[j], flag))
+                {
+                    continue;
+                }
+                adm.SetFlag(flag, true);
+            }
+            adm.ImmunityLevel = immunity;
+        }       
+
+        PrintToServer("[GB] Successfully reloaded %d admins", length);
+        json_cleanup_and_delete(resp);
+    } else {
+        PrintToServer("[GB] Error on reload admins request: %s", error);
+    }
 }
 
 

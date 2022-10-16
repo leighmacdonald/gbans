@@ -99,6 +99,7 @@ type ReportStore interface {
 type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *model.Person) error
+	GetServerPermissions(ctx context.Context) ([]model.ServerPermission, error)
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
 	GetPeople(ctx context.Context, qf QueryFilter) (model.People, error)
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)

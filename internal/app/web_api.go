@@ -146,6 +146,17 @@ func (web *web) onAPIPostDemo(database store.Store) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPIGetServerAdmins(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		perms, err := database.GetServerPermissions(ctx)
+		if err != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, perms)
+	}
+}
+
 func (web *web) onAPIPostPingMod(database store.Store) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`

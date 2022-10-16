@@ -35,6 +35,47 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int, server *mo
 	return nil
 }
 
+func (database *pgStore) GetServerPermissions(ctx context.Context) ([]model.ServerPermission, error) {
+	query, args, errQuery := sb.
+		Select("steam_id", "permission_level").From("person").
+		Where(sq.GtOrEq{"permission_level": model.PReserved}).
+		OrderBy("permission_level desc").
+		ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	rows, errRows := database.Query(ctx, query, args...)
+	if errRows != nil {
+		return nil, Err(errRows)
+	}
+	defer rows.Close()
+	var perms []model.ServerPermission
+	for rows.Next() {
+		var (
+			sid  steamid.SID64
+			perm model.Privilege
+		)
+		if errScan := rows.Scan(&sid, &perm); errScan != nil {
+			return nil, Err(errScan)
+		}
+		flags := "a"
+		switch perm {
+		case model.PEditor:
+			flags = "aj"
+		case model.PModerator:
+			flags = "abcdegjk"
+		case model.PAdmin:
+			flags = "z"
+		}
+		perms = append(perms, model.ServerPermission{
+			SteamId:         steamid.SID64ToSID(sid),
+			PermissionLevel: perm,
+			Flags:           flags,
+		})
+	}
+	return perms, nil
+}
+
 func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error) {
 	var servers []model.Server
 	queryBuilder := sb.Select(columnsServer...).From(string(tableServer))

@@ -117,6 +117,7 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 
 	// Server Auth Request
 	serverAuth := engine.Use(web.authServerMiddleWare(database))
+	serverAuth.GET("/api/server/admins", web.onAPIGetServerAdmins(database))
 	serverAuth.POST("/api/ping_mod", web.onAPIPostPingMod(database))
 	serverAuth.POST("/api/check", web.onAPIPostServerCheck(database))
 	serverAuth.POST("/api/demo", web.onAPIPostDemo(database))

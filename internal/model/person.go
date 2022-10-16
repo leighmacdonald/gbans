@@ -11,6 +11,12 @@ import (
 
 const refreshTokenLen = 80
 
+type ServerPermission struct {
+	SteamId         steamid.SID `json:"steam_id"`
+	PermissionLevel Privilege   `json:"permission_level"`
+	Flags           string      `json:"flags"`
+}
+
 type Person struct {
 	// TODO merge use of steamid & steam_id
 	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
