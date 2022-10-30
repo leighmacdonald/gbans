@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -18,10 +18,12 @@ import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanPage } from './page/BanPage';
 import {
-    apiGetCurrentProfile,
     PermissionLevel,
-    readToken,
-    UserProfile
+    readRefreshToken,
+    readAccessToken,
+    UserProfile,
+    writeAccessToken,
+    writeRefreshToken
 } from './api';
 import { AdminBan } from './page/AdminBan';
 import { TopBar } from './component/TopBar';
@@ -36,42 +38,29 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
-import { logErr } from './util/errors';
 import { MatchPage } from './page/MatchPage';
 import { AlertColor } from '@mui/material/Alert/Alert';
 import { MatchListPage } from './page/MatchListPage';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { useStopwatch } from 'react-timer-hook';
 import { AdminChat } from './page/AdminChat';
 import { Login } from './page/Login';
-import { Nullable } from './util/types';
 import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { Pug } from './page/Pug';
 import { QuickPlayPage } from './page/QuickPlayPage';
 import { TF2StatsPage } from './page/TF2StatsPage';
+import { UserInit } from './component/UserInit';
 
 export interface AppProps {
-    initialToken?: string;
     initialTheme: PaletteMode;
 }
 
-export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
+export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
-    const [token, setToken] = useState<Nullable<string>>(initialToken);
-
-    const getToken = () => {
-        return readToken();
-    };
-
-    const saveToken = (userToken: string) => {
-        localStorage.setItem('token', userToken);
-        setToken(userToken);
-    };
 
     const saveUser = (profile: UserProfile) => {
         setCurrentUser(profile);
@@ -96,21 +85,6 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
         }),
         []
     );
-    //NonNullable<UserProfile>
-    useEffect(() => {
-        if (token) {
-            apiGetCurrentProfile()
-                .then((response) => {
-                    if (!response.status || !response.result) {
-                        return;
-                    }
-                    setCurrentUser(response.result);
-                })
-                .catch(logErr);
-        } else {
-            setCurrentUser(GuestProfile);
-        }
-    }, [token, setCurrentUser]);
 
     const theme = useMemo(() => createThemeByMode(mode), [mode]);
 
@@ -140,34 +114,16 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
         },
         [flashes, setFlashes]
     );
-    const startTime = new Date();
-    startTime.setTime(startTime.getTime() + 1000);
-
-    const { minutes } = useStopwatch({
-        autoStart: true
-    });
-
-    useEffect(() => {
-        if (minutes % 2 != 0) {
-            return;
-        }
-        // refreshToken().then((resp) => {
-        //     if (!resp?.status && !resp?.resp && resp?.resp.status != 425) {
-        //         logErr('error refreshing');
-        //     } else {
-        //         console.log('Token refreshed');
-        //     }
-        // });
-    }, [minutes]);
 
     return (
         <CurrentUserCtx.Provider
             value={{
                 currentUser,
-                token,
-                getToken,
                 setCurrentUser: saveUser,
-                setToken: saveToken
+                getToken: readAccessToken,
+                setToken: writeAccessToken,
+                getRefreshToken: readRefreshToken,
+                setRefreshToken: writeRefreshToken
             }}
         >
             <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
@@ -177,6 +133,7 @@ export const App = ({ initialToken, initialTheme }: AppProps): JSX.Element => {
                             <ColourModeContext.Provider value={colorMode}>
                                 <ThemeProvider theme={theme}>
                                     <React.StrictMode>
+                                        <UserInit />
                                         <CssBaseline />
                                         <Container maxWidth={'lg'}>
                                             <TopBar />

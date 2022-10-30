@@ -479,6 +479,19 @@ func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64,
 		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
+func (database *pgStore) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *model.PersonAuth) error {
+	query, args, errQuery := sb.
+		Select(personAuthColumns...).
+		From("person_auth").
+		Where(sq.And{sq.Eq{"refresh_token": token}, sq.Lt{"created_on + interval '1 day'": config.Now()}}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	return Err(database.QueryRow(ctx, query, args...).
+		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
+}
+
 func (database *pgStore) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error {
 	query, args, errQuery := sb.Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").

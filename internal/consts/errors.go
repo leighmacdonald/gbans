@@ -5,6 +5,7 @@ import "github.com/pkg/errors"
 
 var (
 	ErrAuthentication   = errors.New("Auth invalid")
+	ErrExpired          = errors.New("expired")
 	ErrInvalidDuration  = errors.New("Invalid duration")
 	ErrInvalidSID       = errors.New("Invalid steamid")
 	ErrInvalidTeam      = errors.New("Invalid team")

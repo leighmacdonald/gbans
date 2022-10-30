@@ -6,26 +6,64 @@ export const tokenKey = 'token';
 export const userKey = 'user';
 
 export interface UserToken {
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }
 
 export const refreshToken = async () => {
     try {
-        const resp = await apiCall<UserToken>('/api/auth/refresh', 'GET');
-        if (!resp.status || !resp.result?.token) {
+        const resp = await apiCall<UserToken, UserToken>(
+            '/api/auth/refresh',
+            'POST',
+            {
+                accessToken: readAccessToken(),
+                refreshToken: readRefreshToken()
+            } as UserToken
+        );
+        if (
+            !resp.status ||
+            !resp.result?.accessToken ||
+            !resp.result?.refreshToken
+        ) {
             logErr('Failed to refresh auth token');
             return resp;
         }
-        localStorage.setItem(tokenKey, resp.result?.token);
-        return resp;
+        writeAccessToken(resp.result?.accessToken);
+        writeRefreshToken(resp.result?.refreshToken);
+        return true;
     } catch (e) {
         logErr(e);
-        return null;
+        return false;
     }
 };
-export const readToken = () => {
+
+export const writeAccessToken = (token: string) => {
     try {
-        return localStorage.getItem(tokenKey) as string;
+        return sessionStorage.setItem(tokenKey, token);
+    } catch (e) {
+        return '';
+    }
+};
+
+export const readAccessToken = () => {
+    try {
+        return sessionStorage.getItem(tokenKey) as string;
+    } catch (e) {
+        return '';
+    }
+};
+
+export const writeRefreshToken = (token: string) => {
+    try {
+        return localStorage.setItem(refreshKey, token);
+    } catch (e) {
+        return '';
+    }
+};
+
+export const readRefreshToken = () => {
+    try {
+        return localStorage.getItem(refreshKey) as string;
     } catch (e) {
         return '';
     }

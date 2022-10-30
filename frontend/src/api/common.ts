@@ -1,7 +1,7 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
 import { applySteamId } from './profile';
-import { readToken } from './auth';
+import { readAccessToken, readRefreshToken, refreshToken } from './auth';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -28,6 +28,7 @@ export interface apiResponse<T> {
  * @param url
  * @param method
  * @param body
+ * @param isRefresh
  */
 export const apiCall = async <
     TResponse,
@@ -35,7 +36,8 @@ export const apiCall = async <
 >(
     url: string,
     method: string,
-    body?: TRequestBody
+    body?: TRequestBody,
+    isRefresh?: boolean
 ): Promise<apiResponse<TResponse> & apiError> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
@@ -45,26 +47,37 @@ export const apiCall = async <
         credentials: 'include',
         method: method.toUpperCase()
     };
-    const token = readToken();
-    if (token != '') {
+    const token = readAccessToken();
+    const refresh = readRefreshToken();
+    if (refresh != '' && token != '') {
         headers['Authorization'] = `Bearer ${token}`;
     }
     if (method !== 'GET' && body) {
         opts['body'] = JSON.stringify(body);
     }
     opts.headers = headers;
-    const resp = await fetch(url, opts);
+    const u = new URL(url, `${location.protocol}//${location.host}`);
+    if (u.port == '8080') {
+        u.port = '6006';
+    }
+    const resp = await fetch(u, opts);
+    if (resp.status == 401 && !isRefresh && readRefreshToken() != '') {
+        // Try and refresh the token once
+        if (await refreshToken()) {
+            // Successful token refresh, make a single recursive retry
+            return apiCall(url, method, body, true);
+        }
+    }
     if (resp.status === 403 && token != '') {
         return { status: resp.ok, resp: resp, error: 'Unauthorized' };
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jsonText = await resp.text();
     const json: apiResponse<TResponse> = JSON.parse(jsonText, applySteamId);
     if (!resp.ok) {
         return {
             status: resp.ok && json.status,
             resp: resp,
-            error: (json as any).error || ''
+            error: (json as apiError).error || ''
         };
     }
     return { result: json.result, resp, status: resp.ok && json.status };

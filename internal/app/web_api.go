@@ -829,7 +829,7 @@ func (web *web) onAPIExportBansTF2BD(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
 		bans, errBans := database.GetBansSteam(ctx, store.BansQueryFilter{
-			QueryFilter: store.QueryFilter{Limit: 10000},
+			QueryFilter: store.QueryFilter{},
 			SteamId:     0,
 		})
 		if errBans != nil {
@@ -840,8 +840,7 @@ func (web *web) onAPIExportBansTF2BD(database store.Store) gin.HandlerFunc {
 		for _, ban := range bans {
 			if ban.Ban.Reason != model.Cheating ||
 				ban.Ban.Deleted ||
-				!ban.Ban.IsEnabled ||
-				time.Until(ban.Ban.ValidUntil) < time.Hour*24*365*5 {
+				!ban.Ban.IsEnabled {
 				continue
 			}
 			filtered = append(filtered, ban)

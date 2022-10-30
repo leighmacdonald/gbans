@@ -21,6 +21,7 @@ type GenericStore interface {
 }
 
 type AuthStore interface {
+	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *model.PersonAuth) error
 	GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *model.PersonAuth) error
 	SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error
 	DeletePersonAuth(ctx context.Context, authId int64) error

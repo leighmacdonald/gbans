@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { apiGetCurrentProfile, refreshKey, tokenKey } from '../api';
+import {
+    apiGetCurrentProfile,
+    refreshKey,
+    tokenKey,
+    writeAccessToken,
+    writeRefreshToken
+} from '../api';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useNavigate } from 'react-router-dom';
 import { logErr } from '../util/errors';
@@ -9,7 +15,7 @@ const defaultLocation = '/';
 
 export const LoginSuccess = () => {
     //const { sendFlash } = useUserFlashCtx();
-    const { setCurrentUser, setToken } = useCurrentUserCtx();
+    const { setCurrentUser } = useCurrentUserCtx();
     const navigate = useNavigate();
     const [inProgress, setInProgress] = useState(true);
 
@@ -25,8 +31,8 @@ export const LoginSuccess = () => {
             logErr('No auth token received');
             return;
         }
-        setToken(token);
-        localStorage.setItem(refreshKey, refresh);
+        writeRefreshToken(refresh);
+        writeAccessToken(token);
 
         let next_url = urlParams.get('next_url') ?? defaultLocation;
 
@@ -45,7 +51,7 @@ export const LoginSuccess = () => {
                 setInProgress(false);
                 navigate(next_url);
             });
-    }, [navigate, setCurrentUser, setToken]);
+    }, [navigate, setCurrentUser]);
 
     return (
         <>

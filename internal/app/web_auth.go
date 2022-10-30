@@ -67,7 +67,6 @@ func (web *web) authServerMiddleWare(database store.Store) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
 		ctx.Next()
 	}
 }
@@ -80,14 +79,19 @@ func (web *web) onGetLogout() gin.HandlerFunc {
 	}
 }
 
+func referral(ctx *gin.Context) string {
+	referralUrl, found := ctx.GetQuery("return_url")
+	if !found {
+		referralUrl = "/"
+	}
+	return referralUrl
+}
+
 func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(ctx *gin.Context) {
-		referralUrl, found := ctx.GetQuery("return_url")
-		if !found {
-			referralUrl = "/"
-		}
 		var idStr string
+		referralUrl := referral(ctx)
 		fullURL := config.General.ExternalUrl + ctx.Request.URL.String()
 		if config.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
@@ -124,10 +128,10 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			ctx.Redirect(302, referralUrl)
 			return
 		}
-		accessToken, errJWT := newUserJWT(sid)
-		if errJWT != nil {
-			log.Errorf("Failed to create new access token: %q", errJWT)
+		accessToken, refreshToken, errToken := makeTokens(ctx, database, sid)
+		if errToken != nil {
 			ctx.Redirect(302, referralUrl)
+			log.Errorf("Failed to create access token pair: %s", errToken)
 			return
 		}
 		parsedUrl, errParse := url.Parse("/login/success")
@@ -135,25 +139,9 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			ctx.Redirect(302, referralUrl)
 			return
 		}
-		ipAddr := net.ParseIP(ctx.ClientIP())
-		refreshToken := model.NewPersonAuth(sid, ipAddr)
-		if errAuth := database.GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
-			if !errors.Is(errAuth, store.ErrNoResult) {
-				log.Errorf("Failed to fetch refresh token: %q", errAuth)
-				ctx.Redirect(302, referralUrl)
-				return
-			}
-			if createErr := database.SavePersonAuth(ctx, &refreshToken); createErr != nil {
-				log.Errorf("Failed to create new refresh token: %q", errAuth)
-				ctx.Redirect(302, referralUrl)
-				return
-			}
-			return
-		}
 		query := parsedUrl.Query()
-		query.Set("refresh", refreshToken.RefreshToken)
+		query.Set("refresh", refreshToken)
 		query.Set("token", accessToken)
-		//query.Set("permission_level", fmt.Sprintf("%d", person.PermissionLevel))
 		query.Set("next_url", referralUrl)
 		parsedUrl.RawQuery = query.Encode()
 		ctx.Redirect(302, parsedUrl.String())
@@ -161,58 +149,64 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 			"sid":              sid,
 			"status":           "success",
 			"permission_level": person.PermissionLevel,
+			"url":              config.ExtURL("/profile/%d", sid),
 		}).Infof("User login")
 	}
+}
+func makeTokens(ctx *gin.Context, database store.AuthStore, sid steamid.SID64) (string, string, error) {
+	accessToken, errJWT := newUserJWT(sid)
+	if errJWT != nil {
+		return "", "", errors.Wrap(errJWT, "Failed to create new access token")
+	}
+	ipAddr := net.ParseIP(ctx.ClientIP())
+	refreshToken := model.NewPersonAuth(sid, ipAddr)
+	if errAuth := database.GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
+		if !errors.Is(errAuth, store.ErrNoResult) {
+			return "", "", errors.Wrap(errAuth, "Failed to fetch refresh token")
+		}
+		if createErr := database.SavePersonAuth(ctx, &refreshToken); createErr != nil {
+			return "", "", errors.Wrap(errAuth, "Failed to create new refresh token")
+		}
+	}
+	return accessToken, refreshToken.RefreshToken, nil
 }
 
 func getTokenKey(_ *jwt.Token) (any, error) {
 	return []byte(config.HTTP.CookieKey), nil
 }
 
-func (web *web) onTokenRefresh() gin.HandlerFunc {
+// onTokenRefresh handles generating new token pairs to access the api
+// NOTE: All error code paths must return 401 (Unauthorized)
+func (web *web) onTokenRefresh(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader("Authorization")
-		tp := strings.SplitN(authHeader, " ", 2)
-		var token string
-		if authHeader != "" && len(tp) == 2 && tp[0] == "Bearer" {
-			token = tp[1]
-		}
-		if token == "" {
+		var rt userToken
+		if errBind := ctx.BindJSON(&rt); errBind != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+			log.Errorf("Malformed usertoken")
 			return
 		}
-		claims := &personAuthClaims{}
-		parsedClaims, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
-		if errParseClaims != nil {
-			if errParseClaims == jwt.ErrSignatureInvalid {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				return
-			}
+		var auth model.PersonAuth
+		if authError := database.GetPersonAuthByRefreshToken(ctx, rt.RefreshToken, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+			log.Errorf("refreshToken unknown or expired")
 			return
 		}
-		if !parsedClaims.Valid {
+		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, database, auth.SteamId)
+		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+			log.Errorf("Failed to create access token pair: %s", errToken)
 			return
 		}
-		// Don't reissue too often
-		if time.Since(time.Unix(claims.IssuedAt, 0)) < 30*time.Second {
-			ctx.AbortWithStatus(http.StatusTooEarly)
-			return
-		}
-		// Now, create a new token for the current user, with a renewed expiration time
-		newToken, errJWT := newUserJWT(steamid.SID64(claims.SteamID))
-		if errJWT != nil || newToken == token {
-			log.Errorf("Failed to renew JWT: %q", errJWT)
-			responseErr(ctx, http.StatusUnauthorized, nil)
-			return
-		}
-		responseOK(ctx, http.StatusOK, userToken{Token: newToken})
+		responseOK(ctx, http.StatusOK, userToken{
+			AccessToken:  newAccessToken,
+			RefreshToken: newRefreshToken,
+		})
 	}
 }
 
 type userToken struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type personAuthClaims struct {
@@ -225,7 +219,7 @@ type serverAuthClaims struct {
 	jwt.StandardClaims
 }
 
-const authTokenLifetimeDuration = time.Hour * 24
+const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
 
 func newUserJWT(steamID steamid.SID64) (string, error) {
 	t0 := config.Now()
@@ -285,6 +279,10 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 		if level >= model.PUser {
 			sid, errFromToken := sid64FromJWTToken(token)
 			if errFromToken != nil {
+				if errors.Is(errFromToken, consts.ErrExpired) {
+					ctx.AbortWithStatus(http.StatusUnauthorized)
+					return
+				}
 				log.Errorf("Failed to load persons session user: %v", errFromToken)
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
@@ -327,8 +325,13 @@ func sid64FromJWTToken(token string) (steamid.SID64, error) {
 	claims := &personAuthClaims{}
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
 	if errParseClaims != nil {
-		if errParseClaims == jwt.ErrSignatureInvalid {
+		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 			return 0, consts.ErrAuthentication
+		}
+		e, ok := errParseClaims.(*jwt.ValidationError)
+		if ok && e.Errors == jwt.ValidationErrorExpired {
+			log.Infof("Expired token received, forcing refresh")
+			return 0, consts.ErrExpired
 		}
 		return 0, consts.ErrAuthentication
 	}
