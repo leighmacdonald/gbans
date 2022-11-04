@@ -63,7 +63,7 @@ func (web *web) authServerMiddleWare(database store.Store) gin.HandlerFunc {
 		}
 		var server model.Server
 		if errGetServer := database.GetServer(ctx, claims.ServerId, &server); errGetServer != nil {
-			log.Errorf("Failed to load persons session user: %v", errGetServer)
+			log.WithError(errGetServer).Errorf("Failed to load server during auth")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -185,6 +185,10 @@ func (web *web) onTokenRefresh(database store.Store) gin.HandlerFunc {
 			log.Errorf("Malformed usertoken")
 			return
 		}
+		if rt.RefreshToken == "" {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 		var auth model.PersonAuth
 		if authError := database.GetPersonAuthByRefreshToken(ctx, rt.RefreshToken, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -205,7 +209,7 @@ func (web *web) onTokenRefresh(database store.Store) gin.HandlerFunc {
 }
 
 type userToken struct {
-	AccessToken  string `json:"accessToken"`
+	AccessToken  string `json:"accessToken,omitempty"`
 	RefreshToken string `json:"refreshToken"`
 }
 
@@ -283,13 +287,13 @@ func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc
 					ctx.AbortWithStatus(http.StatusUnauthorized)
 					return
 				}
-				log.Errorf("Failed to load persons session user: %v", errFromToken)
+				log.WithError(errFromToken).Errorf("Failed to load sid from access token")
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
 			loggedInPerson := model.NewPerson(sid)
 			if errGetPerson := database.GetPersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
-				log.Errorf("Failed to load persons session user: %v", errGetPerson)
+				log.WithError(errGetPerson).Errorf("Failed to load person during auth")
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}

@@ -5,10 +5,9 @@
 // Env variables will override the config values. They can all be set using the same format as shown to
 // map to the correct config keys:
 //
-// 		export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
-// 		export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
-// 		./gbans serve
-//
+//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
+//	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
+//	./gbans serve
 package config
 
 import (
@@ -285,10 +284,10 @@ var defaultConfig = map[string]any{
 	"general.steam_key":                        "",
 	"general.mode":                             "release",
 	"general.owner":                            76561198044052046,
-	"general.warning_timeout":                  time.Hour * 6,
-	"general.warning_limit":                    3,
-	"general.warning_exceeded_action":          Kick,
-	"general.warning_exceeded_duration":        "1w",
+	"general.warning_timeout":                  time.Hour * 24,
+	"general.warning_limit":                    1,
+	"general.warning_exceeded_action":          Gag,
+	"general.warning_exceeded_duration":        "168h",
 	"general.use_utc":                          true,
 	"general.server_status_update_freq":        "60s",
 	"general.master_server_status_update_freq": "30s",

@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -20,7 +21,7 @@ import (
 func sendDiscordPayload(outChannel chan discordPayload, payload discordPayload) {
 	if config.Discord.PublicLogChannelEnable {
 		select {
-		case discordSendMsg <- payload:
+		case outChannel <- payload:
 		default:
 			log.Warnf("Cannot send discord payload, channel full")
 		}
@@ -28,7 +29,7 @@ func sendDiscordPayload(outChannel chan discordPayload, payload discordPayload) 
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
+func (app *App) Kick(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
 	reason model.Reason, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
@@ -36,7 +37,7 @@ func Kick(ctx context.Context, database store.Store, origin model.Origin, target
 	}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errFind := Find(ctx, database, target, "", &foundPI); errFind != nil {
+	if errFind := app.Find(ctx, database, target, "", &foundPI); errFind != nil {
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
@@ -46,19 +47,55 @@ func Kick(ctx context.Context, database store.Store, origin model.Origin, target
 			return errExecRCON
 		}
 		log.Debugf("RCON response: %s", rconResponse)
+		log.WithFields(log.Fields{"origin": origin, "target": target, "author": util.SanitizeLog(authorSid64.String())}).
+			Infof("User kicked")
 	}
 	if playerInfo != nil {
 		*playerInfo = foundPI
 	}
-	log.WithFields(log.Fields{"origin": origin, "target": target, "author": util.SanitizeLog(authorSid64.String())}).
-		Infof("User kicked")
+
+	return nil
+}
+
+// Silence will gag & mute a player
+func (app *App) Silence(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
+	reason model.Reason, playerInfo *model.PlayerInfo) error {
+	authorSid64, errAid := author.SID64()
+	if errAid != nil {
+		return errAid
+	}
+	// kick the user if they currently are playing on a server
+	var foundPI model.PlayerInfo
+	if errFind := app.Find(ctx, database, target, "", &foundPI); errFind != nil {
+		return errFind
+	}
+	if foundPI.Valid && foundPI.InGame {
+		rconResponse, errExecRCON := query.ExecRCON(
+			ctx,
+			*foundPI.Server,
+			fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(foundPI.Player.SID), reason),
+		)
+		if errExecRCON != nil {
+			log.Errorf("Faied to kick user afeter ban: %v", errExecRCON)
+			return errExecRCON
+		}
+		log.Debugf("RCON response: %s", rconResponse)
+		log.WithFields(log.Fields{
+			"origin": origin,
+			"target": target,
+			"author": util.SanitizeLog(authorSid64.String())}).Infof("User silenced")
+	}
+	if playerInfo != nil {
+		*playerInfo = foundPI
+	}
+
 	return nil
 }
 
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
-func SetSteam(ctx context.Context, database store.Store, sid64 steamid.SID64, discordId string) error {
+func (app *App) SetSteam(ctx context.Context, database store.Store, sid64 steamid.SID64, discordId string) error {
 	newPerson := model.NewPerson(sid64)
 	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
@@ -75,7 +112,7 @@ func SetSteam(ctx context.Context, database store.Store, sid64 steamid.SID64, di
 }
 
 // Say is used to send a message to the server via sm_say
-func Say(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
+func (app *App) Say(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
 	var server model.Server
 	if errGetServer := database.GetServerByName(ctx, serverName, &server); errGetServer != nil {
 		return errors.Errorf("Failed to fetch server: %s", serverName)
@@ -95,7 +132,7 @@ func Say(ctx context.Context, database store.Store, author steamid.SID64, server
 }
 
 // CSay is used to send a centered message to the server via sm_csay
-func CSay(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
+func (app *App) CSay(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
 	var (
 		servers []model.Server
 		err     error
@@ -121,25 +158,35 @@ func CSay(ctx context.Context, database store.Store, author steamid.SID64, serve
 }
 
 // PSay is used to send a private message to a player
-func PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.StringSID, message string) error {
-	var playerInfo model.PlayerInfo
-	// TODO check resp
-	_ = Find(ctx, database, target, "", &playerInfo)
-	if !playerInfo.Valid || !playerInfo.InGame {
-		return consts.ErrUnknownID
+func (app *App) PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.StringSID, message string, server *model.Server) error {
+	var actualServer *model.Server
+	if server != nil {
+		actualServer = server
+	} else {
+		var playerInfo model.PlayerInfo
+		// TODO check resp
+		_ = app.Find(ctx, database, target, "", &playerInfo)
+		if !playerInfo.Valid || !playerInfo.InGame {
+			return consts.ErrUnknownID
+		}
+		actualServer = playerInfo.Server
 	}
-	msg := fmt.Sprintf(`sm_psay %d "%s"`, playerInfo.Player.UserID, message)
-	_, errExecRCON := query.ExecRCON(ctx, *playerInfo.Server, msg)
+	sid, errSid := target.SID64()
+	if errSid != nil {
+		return errSid
+	}
+	msg := fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(sid), message)
+	_, errExecRCON := query.ExecRCON(ctx, *actualServer, msg)
 	if errExecRCON != nil {
 		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
 	}
-	log.WithFields(log.Fields{"author": author, "server": playerInfo.Server.ServerNameShort, "msg": message, "target": playerInfo.Player.SID}).
+	log.WithFields(log.Fields{"author": author, "server": server.ServerNameShort, "msg": message, "target": sid}).
 		Infof("Private message sent")
 	return nil
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
-func FilterAdd(ctx context.Context, database store.Store, newPattern string, name string) (model.Filter, error) {
+func (app *App) FilterAdd(ctx context.Context, database store.Store, newPattern *regexp.Regexp, name string) (model.Filter, error) {
 	var filter model.Filter
 	if errGetFilter := database.GetFilterByName(ctx, name, &filter); errGetFilter != nil {
 		if !errors.Is(errGetFilter, store.ErrNoResult) {
@@ -150,7 +197,7 @@ func FilterAdd(ctx context.Context, database store.Store, newPattern string, nam
 	}
 	existing := filter.Patterns
 	for _, pat := range existing {
-		if pat == newPattern {
+		if pat.String() == newPattern.String() {
 			return filter, store.ErrDuplicate
 		}
 	}
@@ -166,7 +213,7 @@ func FilterAdd(ctx context.Context, database store.Store, newPattern string, nam
 }
 
 // FilterDel removed and existing chat filter
-func FilterDel(ctx context.Context, database store.Store, filterId int64) (bool, error) {
+func (app *App) FilterDel(ctx context.Context, database store.Store, filterId int64) (bool, error) {
 	var filter model.Filter
 	if errGetFilter := database.GetFilterByID(ctx, filterId, &filter); errGetFilter != nil {
 		return false, errGetFilter
@@ -178,7 +225,7 @@ func FilterDel(ctx context.Context, database store.Store, filterId int64) (bool,
 }
 
 // FilterCheck can be used to check if a phrase will match any filters
-func FilterCheck(message string) []model.Filter {
+func (app *App) FilterCheck(message string) []model.Filter {
 	if message == "" {
 		return nil
 	}
@@ -216,7 +263,7 @@ func findFilteredWordMatch(body string) (string, *model.Filter) {
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, person *model.Person) error {
+func (app *App) PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, person *model.Person) error {
 	if errGetPerson := database.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
 		return errGetPerson
 	}

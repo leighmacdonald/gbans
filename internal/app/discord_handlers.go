@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -108,12 +109,12 @@ func (opts CommandOptions) String(key optionKey) string {
 	return val
 }
 
-func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
+func (bot *Discord) onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
 	r *botResponse) error {
 	opts := optionMap(i.ApplicationCommandData().Options)
 	userIdentifier := model.StringSID(opts[OptUserIdentifier].StringValue())
 	playerInfo := model.NewPlayerInfo()
-	if errFind := Find(ctx, bot.database, userIdentifier, "", &playerInfo); errFind != nil {
+	if errFind := bot.app.Find(ctx, bot.database, userIdentifier, "", &playerInfo); errFind != nil {
 		return errCommandFailed
 	}
 	if !playerInfo.Valid || !playerInfo.InGame {
@@ -135,7 +136,7 @@ func (bot *discord) onFind(ctx context.Context, _ *discordgo.Session, i *discord
 	return nil
 }
 
-func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	r *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	playerID := model.StringSID(opts.String(OptUserIdentifier))
@@ -169,7 +170,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
+	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
 		return errBan
 	}
 	response := respOk(r, "Player muted successfully")
@@ -177,7 +178,7 @@ func (bot *discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 	return nil
 }
 
-func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
+func (bot *Discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[OptASN].StringValue()
@@ -218,7 +219,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBanASN := BanASN(ctx, bot.database, &banASN); errBanASN != nil {
+	if errBanASN := bot.app.BanASN(ctx, bot.database, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, store.ErrDuplicate) {
 			return errors.New("Duplicate ASN ban")
 		}
@@ -230,7 +231,7 @@ func (bot *discord) onBanASN(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
+func (bot *Discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	target := model.StringSID(opts[OptUserIdentifier].StringValue())
@@ -261,7 +262,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBanNet := BanCIDR(ctx, bot.database, &banCIDR); errBanNet != nil {
+	if errBanNet := bot.app.BanCIDR(ctx, bot.database, &banCIDR); errBanNet != nil {
 		return errBanNet
 	}
 
@@ -271,7 +272,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 			return
 		}
 		var playerInfo model.PlayerInfo
-		errFindPlayer := FindPlayerByCIDR(ctx, bot.database, network, &playerInfo)
+		errFindPlayer := bot.app.FindPlayerByCIDR(ctx, bot.database, network, &playerInfo)
 		if errFindPlayer != nil {
 			return
 		}
@@ -286,7 +287,7 @@ func (bot *discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 }
 
 // onBanSteam !ban <id> <duration> [reason]
-func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
+func (bot *Discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	target := opts[OptUserIdentifier].StringValue()
@@ -315,7 +316,7 @@ func (bot *discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
+	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
 		if errors.Is(errBan, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
 		}
@@ -344,7 +345,7 @@ func createDiscordBanEmbed(ban model.BanSteam, response *botResponse) *discordgo
 	return embed
 }
 
-func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	sid, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
@@ -553,7 +554,7 @@ func (bot *discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	return nil
 }
 
-func (bot *discord) onHistory(ctx context.Context, session *discordgo.Session,
+func (bot *Discord) onHistory(ctx context.Context, session *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	switch interaction.ApplicationCommandData().Name {
 	case string(cmdHistoryIP):
@@ -564,7 +565,7 @@ func (bot *discord) onHistory(ctx context.Context, session *discordgo.Session,
 	}
 }
 
-func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	steamId, errResolve := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
@@ -572,7 +573,7 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(steamId)
-	if errPersonBySID := PersonBySID(ctx, bot.database, steamId, &person); errPersonBySID != nil {
+	if errPersonBySID := bot.app.PersonBySID(ctx, bot.database, steamId, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	ipRecords, errGetPersonIPHist := bot.database.GetPersonIPHistory(ctx, steamId, 20)
@@ -620,14 +621,14 @@ func (bot *discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 //	return nil
 //}
 
-func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
+func (bot *Discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	steamId, errResolveSID := ResolveSID(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	errSetSteam := SetSteam(ctx, bot.database, steamId, interaction.Member.User.ID)
+	errSetSteam := bot.app.SetSteam(ctx, bot.database, steamId, interaction.Member.User.ID)
 	if errSetSteam != nil {
 		return errSetSteam
 	}
@@ -636,7 +637,7 @@ func (bot *discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
+func (bot *Discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[OptUnbanReason].StringValue()
@@ -644,7 +645,7 @@ func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	found, errUnban := Unban(ctx, bot.database, steamId, reason)
+	found, errUnban := bot.app.Unban(ctx, bot.database, steamId, reason, bot.botSendMessageChan)
 	if errUnban != nil {
 		return errUnban
 	}
@@ -656,11 +657,11 @@ func (bot *discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func (bot *discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[OptASN].StringValue()
-	banExisted, errUnbanASN := UnbanASN(ctx, bot.database, asNumStr)
+	banExisted, errUnbanASN := bot.app.UnbanASN(ctx, bot.database, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, store.ErrNoResult) {
 			return errors.New("BanSteam for ASN does not exist")
@@ -687,7 +688,7 @@ func (bot *discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, intera
 	return nil
 }
 
-func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	target := model.StringSID(opts[OptUserIdentifier].StringValue())
@@ -697,11 +698,11 @@ func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(targetSid64)
-	if errPersonBySID := PersonBySID(ctx, bot.database, targetSid64, &person); errPersonBySID != nil {
+	if errPersonBySID := bot.app.PersonBySID(ctx, bot.database, targetSid64, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	var playerInfo model.PlayerInfo
-	errKick := Kick(ctx, bot.database, model.Bot, target, "", reason, &playerInfo)
+	errKick := bot.app.Kick(ctx, bot.database, model.Bot, target, "", reason, &playerInfo)
 	if errKick != nil {
 		return errCommandFailed
 	}
@@ -715,12 +716,12 @@ func (bot *discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 	return nil
 }
 
-func (bot *discord) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
-	if errSay := Say(ctx, bot.database, 0, server, msg); errSay != nil {
+	if errSay := bot.app.Say(ctx, bot.database, 0, server, msg); errSay != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Sent center message successfully")
@@ -729,12 +730,12 @@ func (bot *discord) onSay(ctx context.Context, _ *discordgo.Session, interaction
 	return nil
 }
 
-func (bot *discord) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
-	if errCSay := CSay(ctx, bot.database, 0, server, msg); errCSay != nil {
+	if errCSay := bot.app.CSay(ctx, bot.database, 0, server, msg); errCSay != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Sent console message successfully")
@@ -743,12 +744,12 @@ func (bot *discord) onCSay(ctx context.Context, _ *discordgo.Session, interactio
 	return nil
 }
 
-func (bot *discord) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	player := model.StringSID(opts[OptUserIdentifier].StringValue())
 	msg := opts[OptMessage].StringValue()
-	if errPSay := PSay(ctx, bot.database, 0, player, msg); errPSay != nil {
+	if errPSay := bot.app.PSay(ctx, bot.database, 0, player, msg, nil); errPSay != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Sent private message successfully")
@@ -781,9 +782,9 @@ func mapRegion(region string) string {
 	}
 }
 
-func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
+func (bot *Discord) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
 	response *botResponse) error {
-	state := ServerState().ByRegion()
+	state := bot.app.ServerState().ByRegion()
 	stats := map[string]float64{}
 	used, total := 0, 0
 	embed := respOk(response, "Current Server Populations")
@@ -829,7 +830,7 @@ func (bot *discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 	return nil
 }
 
-func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[OptServerIdentifier].StringValue()
@@ -841,7 +842,7 @@ func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 		return errCommandFailed
 	}
 	var state model.ServerState
-	serverStates := ServerState()
+	serverStates := bot.app.ServerState()
 	if !serverStates.ByName(server.ServerNameShort, &state) {
 		return consts.ErrUnknownID
 	}
@@ -884,7 +885,7 @@ func (bot *discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 	return nil
 }
 
-func (bot *discord) onBan(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onBan(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	name := interaction.ApplicationCommandData().Options[0].Name
 	switch name {
@@ -900,7 +901,7 @@ func (bot *discord) onBan(ctx context.Context, session *discordgo.Session, inter
 	}
 }
 
-func (bot *discord) onUnban(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onUnban(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "steam":
@@ -915,7 +916,7 @@ func (bot *discord) onUnban(ctx context.Context, session *discordgo.Session, int
 	}
 }
 
-func (bot *discord) onFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "add":
@@ -929,7 +930,7 @@ func (bot *discord) onFilter(ctx context.Context, session *discordgo.Session, in
 	}
 }
 
-func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	pattern := opts["pattern"].StringValue()
@@ -941,7 +942,11 @@ func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 		}
 		return errors.New("Error fetching author info")
 	}
-	newFilter, errFilterAdd := FilterAdd(ctx, bot.database, pattern, filterName)
+	expr, errExpr := regexp.Compile(pattern)
+	if errExpr != nil {
+		return errors.Wrap(errExpr, "Error fetching author info")
+	}
+	newFilter, errFilterAdd := bot.app.FilterAdd(ctx, bot.database, expr, filterName)
 	if errFilterAdd != nil {
 		return errCommandFailed
 	}
@@ -950,7 +955,7 @@ func (bot *discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 	return nil
 }
 
-func (bot *discord) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	wordId := opts["filter"].IntValue()
@@ -969,11 +974,11 @@ func (bot *discord) onFilterDel(ctx context.Context, _ *discordgo.Session, inter
 	return nil
 }
 
-func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[OptMessage].StringValue()
-	matches := FilterCheck(message)
+	matches := bot.app.FilterCheck(message)
 	title := ""
 	if len(matches) == 0 {
 		title = "No Match Found"
@@ -1089,7 +1094,7 @@ func (bot *discord) onFilterCheck(_ context.Context, _ *discordgo.Session, inter
 //	return nil
 //}
 
-func (bot *discord) onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (bot *Discord) onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	matchId := opts[OptMatchId].IntValue()

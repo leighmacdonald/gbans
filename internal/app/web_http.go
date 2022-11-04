@@ -23,6 +23,7 @@ type WebHandler interface {
 }
 
 type web struct {
+	app                *App
 	httpServer         *http.Server
 	botSendMessageChan chan discordPayload
 }
@@ -43,7 +44,7 @@ func (web *web) ListenAndServe(ctx context.Context) error {
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb(database store.Store, botSendMessageChan chan discordPayload, logFileC chan *LogFilePayload) (WebHandler, error) {
+func NewWeb(app *App, database store.Store, botSendMessageChan chan discordPayload, logFileC chan *LogFilePayload) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -80,7 +81,7 @@ func NewWeb(database store.Store, botSendMessageChan chan discordPayload, logFil
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	webHandler := web{httpServer: httpServer, botSendMessageChan: botSendMessageChan}
+	webHandler := web{app: app, httpServer: httpServer, botSendMessageChan: botSendMessageChan}
 	webHandler.setupRouter(database, router, logFileC)
 	return &webHandler, nil
 }

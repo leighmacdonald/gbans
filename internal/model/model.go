@@ -8,13 +8,13 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -36,7 +36,7 @@ type Server struct {
 	// RCON is the RCON password for the server
 	RCON          string `db:"rcon" json:"rcon"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
-	// Password is what the server uses to generate a token to make authenticated calls
+	// Password is what the server uses to generate a token to make authenticated calls (permanent refresh token)
 	Password   string  `db:"password" json:"password"`
 	IsEnabled  bool    `json:"is_enabled"`
 	Deleted    bool    `json:"deleted"`
@@ -203,18 +203,43 @@ type Stats struct {
 }
 
 type Filter struct {
-	WordID           int64      `json:"word_id,omitempty"`
-	Patterns         []string   `json:"patterns,omitempty"`
-	CreatedOn        time.Time  `json:"created_on"`
-	UpdatedOn        time.Time  `json:"updated_on"`
-	DiscordId        string     `json:"discord_id,omitempty"`
-	DiscordCreatedOn *time.Time `json:"discord_created_on"`
-	FilterName       string     `json:"filter_name"`
+	WordID           int64       `json:"word_id,omitempty"`
+	Patterns         WordFilters `json:"patterns,omitempty"`
+	CreatedOn        time.Time   `json:"created_on"`
+	UpdatedOn        time.Time   `json:"updated_on"`
+	DiscordId        string      `json:"discord_id,omitempty"`
+	DiscordCreatedOn *time.Time  `json:"discord_created_on"`
+	FilterName       string      `json:"filter_name"`
+}
+
+type WordFilters []*regexp.Regexp
+
+const wordFilterSeparator = "---"
+
+func (wf *WordFilters) String() string {
+	var s []string
+	for _, f := range *wf {
+		s = append(s, f.String())
+	}
+	return strings.Join(s, wordFilterSeparator)
+}
+
+func WordFiltersFromString(patterns string) WordFilters {
+	var expressions WordFilters
+	for _, expr := range strings.Split(patterns, wordFilterSeparator) {
+		rx, errRx := regexp.Compile(expr)
+		if errRx != nil {
+
+		} else {
+			expressions = append(expressions, rx)
+		}
+	}
+	return expressions
 }
 
 func (f *Filter) Match(value string) bool {
 	for _, pattern := range f.Patterns {
-		if util.GlobString(pattern, value) {
+		if pattern.MatchString(value) {
 			return true
 		}
 	}

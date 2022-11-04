@@ -36,7 +36,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	github.com/yohcop/openid-go v1.0.0
-	golang.org/x/exp v0.0.0-20221028150844-83b7d23a625f
+	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
 	golang.org/x/oauth2 v0.1.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )

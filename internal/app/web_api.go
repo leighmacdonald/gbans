@@ -172,7 +172,7 @@ func (web *web) onAPIPostPingMod(database store.Store) gin.HandlerFunc {
 			return
 		}
 		var playerInfo model.PlayerInfo
-		errFind := Find(ctx, database, model.StringSID(req.SteamID.String()), "", &playerInfo)
+		errFind := web.app.Find(ctx, database, model.StringSID(req.SteamID.String()), "", &playerInfo)
 		if errFind != nil {
 			log.Error("Failed to find player on /mod call")
 		}
@@ -303,7 +303,7 @@ func (web *web) onAPIPostBanDelete(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, "Failed to query")
 			return
 		}
-		changed, errSave := Unban(ctx, database, bp.Person.SteamID, req.UnbanReasonText)
+		changed, errSave := web.app.Unban(ctx, database, bp.Person.SteamID, req.UnbanReasonText, web.app.discordSendMsg)
 		if errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, "Failed to unban")
 			return
@@ -349,7 +349,7 @@ func (web *web) onAPIPostBansGroupCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-		if errBan := BanSteamGroup(ctx, database, &banSteamGroup); errBan != nil {
+		if errBan := web.app.BanSteamGroup(ctx, database, &banSteamGroup); errBan != nil {
 			if errors.Is(errBan, store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, "Duplicate steam group ban")
 				return
@@ -393,7 +393,7 @@ func (web *web) onAPIPostBansASNCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-		if errBan := BanASN(ctx, database, &banASN); errBan != nil {
+		if errBan := web.app.BanASN(ctx, database, &banASN); errBan != nil {
 			if errors.Is(errBan, store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, "Duplicate asn ban")
 				return
@@ -437,7 +437,7 @@ func (web *web) onAPIPostBansCIDRCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-		if errBan := BanCIDR(ctx, database, &banCIDR); errBan != nil {
+		if errBan := web.app.BanCIDR(ctx, database, &banCIDR); errBan != nil {
 			if errors.Is(errBan, store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, "Duplicate cidr ban")
 				return
@@ -488,7 +488,7 @@ func (web *web) onAPIPostBanSteamCreate(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-		if errBan := BanSteam(ctx, database, &banSteam, web.botSendMessageChan); errBan != nil {
+		if errBan := web.app.BanSteam(ctx, database, &banSteam, web.botSendMessageChan); errBan != nil {
 			log.WithFields(log.Fields{"target_id": banSteam.TargetId.String()}).
 				Errorf("Failed to ban steam profile: %v", errBan)
 			if errors.Is(errBan, store.ErrDuplicate) {
@@ -521,6 +521,7 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 		var server model.Server
 		errGetServer := database.GetServerByName(ctx, request.ServerName, &server)
 		if errGetServer != nil {
+			log.WithError(errGetServer).Errorf("Failed to find server auth by name")
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
@@ -532,6 +533,8 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 		accessToken, errToken := newServerJWT(server.ServerID)
 		if errToken != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.WithError(errToken).
+				Errorf("Failed to create new server access token")
 			return
 		}
 		server.TokenCreatedOn = config.Now()
@@ -540,6 +543,7 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
+		log.Debugln(accessToken)
 		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: accessToken})
 	}
 }
@@ -583,7 +587,7 @@ func (web *web) onAPIPostServerCheck(database store.Store) gin.HandlerFunc {
 			return
 		}
 
-		if IsSteamGroupBanned(steamID) {
+		if web.app.IsSteamGroupBanned(steamID) {
 			resp.BanType = model.Banned
 			resp.Msg = "Group Banned"
 			responseErr(ctx, http.StatusOK, resp)
@@ -757,7 +761,7 @@ func (web *web) onAPIGetPrometheusHosts(database store.Store) gin.HandlerFunc {
 // onAPIGetServerStates returns the current known cached server state
 func (web *web) onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		responseOK(ctx, http.StatusOK, ServerState())
+		responseOK(ctx, http.StatusOK, web.app.ServerState())
 	}
 }
 
@@ -2496,9 +2500,9 @@ func (web *web) onAPIPostServerQuery(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		masterServerListMu.RLock()
-		filtered := masterServerList
-		masterServerListMu.RUnlock()
+		web.app.masterServerListMu.RLock()
+		filtered := web.app.masterServerList
+		web.app.masterServerListMu.RUnlock()
 
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)

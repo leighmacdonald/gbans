@@ -54,6 +54,7 @@ export const UnbanSteamModal = ({
             }}
             onAccept={() => {
                 handleSubmit();
+                setOpen(false);
             }}
             aria-labelledby="modal-title"
             aria-describedby="modal-description"

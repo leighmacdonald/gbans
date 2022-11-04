@@ -124,3 +124,6 @@ docker_generate_local_server:
 
 local_server:
 	cd tf2server && ../scripts/test_game_server.sh
+
+copy_ut:
+	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/

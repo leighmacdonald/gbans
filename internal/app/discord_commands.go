@@ -68,7 +68,7 @@ const (
 	OptCIDR             = "cidr"
 )
 
-func (bot *discord) botRegisterSlashCommands() error {
+func (bot *Discord) botRegisterSlashCommands() error {
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptUserIdentifier,
@@ -514,7 +514,7 @@ const (
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-func (bot *discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	command := botCmd(interaction.ApplicationCommandData().Name)
 	response := botResponse{MsgType: mtString}
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {

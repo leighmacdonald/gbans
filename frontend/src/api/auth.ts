@@ -12,13 +12,13 @@ export interface UserToken {
 
 export const refreshToken = async () => {
     try {
-        const resp = await apiCall<UserToken, UserToken>(
+        const resp = await apiCall<UserToken>(
             '/api/auth/refresh',
             'POST',
             {
-                accessToken: readAccessToken(),
                 refreshToken: readRefreshToken()
-            } as UserToken
+            } as UserToken,
+            true
         );
         if (
             !resp.status ||
@@ -26,14 +26,14 @@ export const refreshToken = async () => {
             !resp.result?.refreshToken
         ) {
             logErr('Failed to refresh auth token');
-            return resp;
+            return '';
         }
         writeAccessToken(resp.result?.accessToken);
         writeRefreshToken(resp.result?.refreshToken);
-        return true;
+        return resp.result?.accessToken;
     } catch (e) {
         logErr(e);
-        return false;
+        return '';
     }
 };
 

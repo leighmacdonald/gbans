@@ -24,10 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	// BuildVersion holds the current git revision, as of build time
-	BuildVersion = "master"
-	logFileChan  chan *LogFilePayload
+type App struct {
+	logFileChan chan *LogFilePayload
 	// Current known state of the servers rcon status command
 	serverStateStatus   map[string]extra.Status
 	serverStateStatusMu *sync.RWMutex
@@ -43,22 +41,15 @@ var (
 
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
+}
+
+var (
+	// BuildVersion holds the current git revision, as of build time
+	BuildVersion = "master"
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
-	serverStateMu = &sync.RWMutex{}
-	serverStateA2SMu = &sync.RWMutex{}
-	serverStateStatusMu = &sync.RWMutex{}
-	masterServerListMu = &sync.RWMutex{}
-	logFileChan = make(chan *LogFilePayload, 10)
-	discordSendMsg = make(chan discordPayload, 5)
-	warningChan = make(chan newUserWarning)
-	serverStateA2S = map[string]a2s.ServerInfo{}
-	serverStateStatus = map[string]extra.Status{}
-
-	bannedGroupMembers = map[steamid.GID]steamid.Collection{}
-	bannedGroupMembersMu = &sync.RWMutex{}
 }
 
 type userWarning struct {
@@ -71,8 +62,27 @@ type discordPayload struct {
 	embed     *discordgo.MessageEmbed
 }
 
+func New() *App {
+	app := App{
+		logFileChan:          make(chan *LogFilePayload, 10),
+		serverStateStatus:    map[string]extra.Status{},
+		serverStateStatusMu:  &sync.RWMutex{},
+		serverStateA2S:       map[string]a2s.ServerInfo{},
+		serverStateA2SMu:     &sync.RWMutex{},
+		masterServerList:     []model.ServerLocation{},
+		masterServerListMu:   &sync.RWMutex{},
+		discordSendMsg:       make(chan discordPayload, 5),
+		warningChan:          make(chan newUserWarning),
+		serverStateMu:        &sync.RWMutex{},
+		serverState:          model.ServerStateCollection{},
+		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
+		bannedGroupMembersMu: &sync.RWMutex{},
+	}
+	return &app
+}
+
 // Start is the main application entry point
-func Start(ctx context.Context) error {
+func (app *App) Start(ctx context.Context) error {
 	dbStore, dbErr := store.New(ctx, config.DB.DSN)
 	if dbErr != nil {
 		return errors.Wrapf(dbErr, "Failed to setup store")
@@ -83,7 +93,7 @@ func Start(ctx context.Context) error {
 		}
 	}()
 
-	webService, errWeb := NewWeb(dbStore, discordSendMsg, logFileChan)
+	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
 	if errWeb != nil {
 		return errors.Wrapf(errWeb, "Failed to setup web")
 	}
@@ -97,13 +107,13 @@ func Start(ctx context.Context) error {
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		go initDiscord(ctx, dbStore, discordSendMsg)
+		go app.initDiscord(ctx, dbStore, app.discordSendMsg)
 	} else {
 		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	initWorkers(ctx, dbStore, discordSendMsg, logFileChan, warningChan)
+	app.initWorkers(ctx, dbStore, app.discordSendMsg, app.logFileChan, app.warningChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
@@ -118,12 +128,13 @@ func Start(ctx context.Context) error {
 }
 
 type newUserWarning struct {
-	SteamId steamid.SID64
+	ServerEvent model.ServerEvent
+	Message     string
 	userWarning
 }
 
 // warnWorker handles tracking and applying warnings based on incoming events
-func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
+func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 	botSendMessageChan chan discordPayload, database store.Store) {
 	warnings := map[steamid.SID64][]userWarning{}
 	eventChan := make(chan model.ServerEvent)
@@ -131,54 +142,111 @@ func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 		log.Fatalf("Failed to register event reader: %v", errRegister)
 	}
 	ticker := time.NewTicker(1 * time.Second)
+
+	warningHandler := func() {
+		for {
+			select {
+			case now := <-ticker.C:
+				for steamId := range warnings {
+					for warnIdx, warning := range warnings[steamId] {
+						if now.Sub(warning.CreatedOn) > config.General.WarningTimeout {
+							if len(warnings[steamId]) > 1 {
+								warnings[steamId] = append(warnings[steamId][:warnIdx], warnings[steamId][warnIdx+1])
+							} else {
+								warnings[steamId] = nil
+							}
+						}
+						if len(warnings[steamId]) == 0 {
+							delete(warnings, steamId)
+						}
+					}
+				}
+			case newWarn := <-newWarnings:
+				steamId := newWarn.ServerEvent.Source.SteamID
+				if !steamId.Valid() {
+					continue
+				}
+				_, found := warnings[steamId]
+				if !found {
+					warnings[steamId] = []userWarning{}
+				}
+				warnings[steamId] = append(warnings[steamId], newWarn.userWarning)
+
+				warnNotice := &discordgo.MessageEmbed{
+					URL:   fmt.Sprintf(config.ExtURL("/profiles/%d", steamId)),
+					Type:  discordgo.EmbedTypeRich,
+					Title: fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[steamId]), config.General.WarningLimit),
+					Color: int(orange),
+					Image: &discordgo.MessageEmbedImage{URL: newWarn.ServerEvent.Source.AvatarFull},
+				}
+				addField(warnNotice, "Server", newWarn.ServerEvent.Server.ServerNameShort)
+				addField(warnNotice, "Message", newWarn.Message)
+				if len(warnings[steamId]) > config.General.WarningLimit {
+					log.Infof("Warn limit exceeded (%d): %d", steamId, len(warnings[steamId]))
+					var errBan error
+					var banSteam model.BanSteam
+					if errOpts := NewBanSteam(model.StringSID(config.General.Owner.String()),
+						model.StringSID(steamId.String()),
+						model.Duration(config.General.WarningExceededDurationValue),
+						newWarn.WarnReason,
+						"",
+						"Automatic warning ban",
+						model.System,
+						0,
+						model.NoComm,
+						&banSteam); errOpts != nil {
+						log.Errorf("Failed to create warning ban: %v", errOpts)
+						return
+					}
+
+					switch config.General.WarningExceededAction {
+					case config.Gag:
+						banSteam.BanType = model.NoComm
+						errBan = app.BanSteam(ctx, database, &banSteam, botSendMessageChan)
+					case config.Ban:
+						banSteam.BanType = model.Banned
+						errBan = app.BanSteam(ctx, database, &banSteam, botSendMessageChan)
+					case config.Kick:
+						var playerInfo model.PlayerInfo
+						errBan = app.Kick(ctx, database, model.System, model.StringSID(steamId.String()),
+							model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
+					}
+					if errBan != nil {
+						log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
+							Errorf("Failed to apply warning action: %v", errBan)
+					}
+					addField(warnNotice, "Name", newWarn.ServerEvent.Source.PersonaName)
+					expIn := "Permanent"
+					expAt := "Permanent"
+					if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
+						expIn = config.FmtDuration(banSteam.ValidUntil)
+						expAt = config.FmtTimeShort(banSteam.ValidUntil)
+					}
+					addField(warnNotice, "Expires In", expIn)
+					addField(warnNotice, "Expires At", expAt)
+				} else {
+					msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
+						"Further offenses will result in mutes/bans", len(warnings[steamId]))
+					if errPSay := app.PSay(ctx, database, 0, model.StringSID(steamId.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
+						log.WithError(errPSay).Errorf("Failed to send user warning psay message")
+					}
+					addFieldsSteamID(warnNotice, steamId)
+					addField(warnNotice, "message", newWarn.Message)
+				}
+				sendDiscordPayload(app.discordSendMsg, discordPayload{
+					channelId: config.Discord.ModLogChannelId,
+					embed:     warnNotice,
+				})
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
+
+	go warningHandler()
+
 	for {
 		select {
-		case newWarn := <-newWarnings:
-			if !newWarn.SteamId.Valid() {
-				continue
-			}
-			_, found := warnings[newWarn.SteamId]
-			if !found {
-				warnings[newWarn.SteamId] = []userWarning{}
-			}
-			warnings[newWarn.SteamId] = append(warnings[newWarn.SteamId], newWarn.userWarning)
-			if len(warnings[newWarn.SteamId]) >= config.General.WarningLimit {
-				log.Errorf("Warn limit exceeded (%d): %d", newWarn.SteamId, len(warnings[newWarn.SteamId]))
-				var errBan error
-				var banSteam model.BanSteam
-
-				if errOpts := NewBanSteam(model.StringSID(config.General.Owner.String()),
-					model.StringSID(newWarn.SteamId.String()),
-					model.Duration(config.General.WarningExceededDuration.String()),
-					newWarn.WarnReason,
-					newWarn.WarnReason.String(),
-					"Automatic warning ban",
-					model.System,
-					0,
-					model.Banned,
-					&banSteam); errOpts != nil {
-					log.Errorf("Failed to create warning ban: %v", errOpts)
-					return
-				}
-
-				switch config.General.WarningExceededAction {
-				case config.Gag:
-					banSteam.BanType = model.NoComm
-					errBan = BanSteam(ctx, database, &banSteam, botSendMessageChan)
-				case config.Ban:
-					banSteam.BanType = model.Banned
-					errBan = BanSteam(ctx, database, &banSteam, botSendMessageChan)
-				case config.Kick:
-					var playerInfo model.PlayerInfo
-					errBan = Kick(ctx, database, model.System, model.StringSID(newWarn.SteamId.String()),
-						model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
-				}
-
-				if errBan != nil {
-					log.WithFields(log.Fields{"action": config.General.WarningExceededAction}).
-						Errorf("Failed to apply warning action: %v", errBan)
-				}
-			}
 		case serverEvent := <-eventChan:
 			msg, found := serverEvent.MetaData["msg"].(string)
 			if !found {
@@ -186,8 +254,8 @@ func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 			}
 			matchedWord, matchedFilter := findFilteredWordMatch(msg)
 			if matchedFilter != nil {
-				warningChan <- newUserWarning{
-					SteamId: serverEvent.Source.SteamID,
+				app.warningChan <- newUserWarning{
+					ServerEvent: serverEvent,
 					userWarning: userWarning{
 						WarnReason: model.Language,
 						CreatedOn:  config.Now(),
@@ -198,26 +266,10 @@ func warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					"msg":         msg,
 					"filter_id":   matchedFilter.WordID,
 					"filter_name": matchedFilter.FilterName,
-				}).Infof("User triggered word filter")
-			}
-		case <-ticker.C:
-			now := config.Now()
-			for steamId := range warnings {
-				for warnIdx, warning := range warnings[steamId] {
-					if now.Sub(warning.CreatedOn) > config.General.WarningTimeout {
-						if len(warnings[steamId]) > 1 {
-							warnings[steamId] = append(warnings[steamId][:warnIdx], warnings[steamId][warnIdx+1])
-						} else {
-							warnings[steamId] = nil
-						}
-					}
-					if len(warnings[steamId]) == 0 {
-						delete(warnings, steamId)
-					}
-				}
+				}).Debugf("User triggered word filter")
+
 			}
 		case <-ctx.Done():
-			log.Debugf("warnWorker shutting down")
 			return
 		}
 	}
@@ -534,7 +586,7 @@ func initFilters(ctx context.Context, database store.FilterStore) {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload,
+func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload,
 	logFileC chan *LogFilePayload, warningChan chan newUserWarning) {
 
 	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
@@ -548,21 +600,21 @@ func initWorkers(ctx context.Context, database store.Store, botSendMessageChan c
 	}
 
 	go banSweeper(ctx, database)
-	go mapChanger(ctx, database, time.Second*300)
-	go serverA2SStatusUpdater(ctx, database, freq)
-	go serverRCONStatusUpdater(ctx, database, freq)
-	go serverStateRefresher(ctx, database, freq)
+	go app.mapChanger(ctx, database, time.Second*300)
+	go app.serverA2SStatusUpdater(ctx, database, freq)
+	go app.serverRCONStatusUpdater(ctx, database, freq)
+	go app.serverStateRefresher(ctx, database, freq)
 	go profileUpdater(ctx, database)
-	go warnWorker(ctx, warningChan, botSendMessageChan, database)
+	go app.warnWorker(ctx, warningChan, botSendMessageChan, database)
 	go logReader(ctx, logFileC, database)
 	go initLogSrc(ctx, database)
 	go logMetricsConsumer(ctx)
 	//go matchSummarizer(ctx, database)
 	go playerMessageWriter(ctx, database)
 	go playerConnectionWriter(ctx, database)
-	go steamGroupMembershipUpdater(ctx, database)
-	go localStatUpdater(ctx, database)
-	go masterServerListUpdater(ctx, database, masterUpdateFreq)
+	go app.steamGroupMembershipUpdater(ctx, database)
+	go app.localStatUpdater(ctx, database)
+	go app.masterServerListUpdater(ctx, database, masterUpdateFreq)
 }
 
 // UDP log sink
@@ -574,9 +626,9 @@ func initLogSrc(ctx context.Context, database store.Store) {
 	logSrc.start(database)
 }
 
-func initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
+func (app *App) initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {
 	if config.Discord.Token != "" {
-		session, sessionErr := NewDiscord(ctx, database)
+		session, sessionErr := NewDiscord(ctx, app, database)
 		if sessionErr != nil {
 			log.Fatalf("Failed to setup session: %v", sessionErr)
 		}

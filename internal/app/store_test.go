@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"net"
-	"strings"
 	"testing"
 	"time"
 )
@@ -20,7 +19,6 @@ import (
 func TestServer(t *testing.T) {
 	serverA := model.Server{
 		ServerNameShort: fmt.Sprintf("test-%s", golib.RandomString(10)),
-		Token:           "",
 		Address:         "172.16.1.100",
 		Port:            27015,
 		RCON:            "test",
@@ -40,7 +38,6 @@ func TestServer(t *testing.T) {
 	require.NoError(t, testDatabase.GetServer(ctx, serverA.ServerID, &s1Get))
 	require.Equal(t, serverA.ServerID, s1Get.ServerID)
 	require.Equal(t, serverA.ServerNameShort, s1Get.ServerNameShort)
-	require.Equal(t, serverA.Token, s1Get.Token)
 	require.Equal(t, serverA.Address, s1Get.Address)
 	require.Equal(t, serverA.Port, s1Get.Port)
 	require.Equal(t, serverA.RCON, s1Get.RCON)
@@ -283,7 +280,7 @@ func TestFilters(t *testing.T) {
 	for wordIdx, word := range words {
 		filter := model.Filter{
 			FilterName: fmt.Sprintf("%d-%s", wordIdx, word),
-			Patterns:   strings.Split(word, "||"),
+			Patterns:   model.WordFiltersFromString(word),
 			CreatedOn:  config.Now(),
 		}
 		require.NoError(t, testDatabase.SaveFilter(context.Background(), &filter), "Failed to insert filter: %s", word)

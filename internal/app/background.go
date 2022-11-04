@@ -20,10 +20,10 @@ import (
 	"time"
 )
 
-func IsSteamGroupBanned(steamId steamid.SID64) bool {
-	bannedGroupMembersMu.RLock()
-	defer bannedGroupMembersMu.RUnlock()
-	for _, groupMembers := range bannedGroupMembers {
+func (app *App) IsSteamGroupBanned(steamId steamid.SID64) bool {
+	app.bannedGroupMembersMu.RLock()
+	defer app.bannedGroupMembersMu.RUnlock()
+	for _, groupMembers := range app.bannedGroupMembers {
 		for _, member := range groupMembers {
 			if steamId == member {
 				return true
@@ -33,7 +33,7 @@ func IsSteamGroupBanned(steamId steamid.SID64) bool {
 	return false
 }
 
-func steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
+func (app *App) steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
 	var update = func() {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
@@ -48,9 +48,9 @@ func steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
 			newMap[gid] = members
 			total += len(members)
 		}
-		bannedGroupMembersMu.Lock()
-		bannedGroupMembers = newMap
-		bannedGroupMembersMu.Unlock()
+		app.bannedGroupMembersMu.Lock()
+		app.bannedGroupMembers = newMap
+		app.bannedGroupMembersMu.Unlock()
 		cancel()
 		log.WithFields(log.Fields{"count": total}).Debugf("Updated group member ban list")
 	}
@@ -62,6 +62,21 @@ func steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
 			update()
 		case <-ctx.Done():
 			log.Debugf("steamGroupMembershipUpdater shutting down")
+			return
+		}
+	}
+}
+
+func cleanupTasks(ctx context.Context, database store.AuthStore) {
+	ticker := time.NewTicker(time.Hour * 24)
+	for {
+		select {
+		case <-ticker.C:
+			if err := database.PrunePersonAuth(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+				log.WithError(err).Errorf("Error pruning expired refresh tokens")
+			}
+		case <-ctx.Done():
+			log.Debugf("profileUpdater shutting down")
 			return
 		}
 	}
@@ -120,7 +135,7 @@ func profileUpdater(ctx context.Context, database store.PersonStore) {
 	}
 }
 
-func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+func (app *App) serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
 	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
 		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
 		defer cancel()
@@ -138,9 +153,9 @@ func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, upd
 					log.Tracef("Failed to update a2s status: %v", errA)
 					return
 				}
-				serverStateA2SMu.Lock()
-				serverStateA2S[server.ServerNameShort] = *newStatus
-				serverStateA2SMu.Unlock()
+				app.serverStateA2SMu.Lock()
+				app.serverStateA2S[server.ServerNameShort] = *newStatus
+				app.serverStateA2SMu.Unlock()
 			}(srv)
 		}
 		waitGroup.Wait()
@@ -161,7 +176,7 @@ func serverA2SStatusUpdater(ctx context.Context, database store.ServerStore, upd
 	}
 }
 
-func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+func (app *App) serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
 	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
 		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
 		defer cancel()
@@ -179,9 +194,9 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 					log.Tracef("Failed to query server status: %v", queryErr)
 					return
 				}
-				serverStateStatusMu.Lock()
-				serverStateStatus[server.ServerNameShort] = newStatus
-				serverStateStatusMu.Unlock()
+				app.serverStateStatusMu.Lock()
+				app.serverStateStatus[server.ServerNameShort] = newStatus
+				app.serverStateStatusMu.Unlock()
 			}(cancelCtx, srv)
 		}
 		waitGroup.Wait()
@@ -204,17 +219,17 @@ func serverRCONStatusUpdater(ctx context.Context, database store.ServerStore, up
 
 // serverStateRefresher periodically compiles and caches the current known db, rcon & a2s server state
 // into a ServerState instance
-func serverStateRefresher(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
+func (app *App) serverStateRefresher(ctx context.Context, database store.ServerStore, updateFreq time.Duration) {
 	var refreshState = func() error {
 		var newState model.ServerStateCollection
 		servers, errServers := database.GetServers(ctx, false)
 		if errServers != nil {
 			return errors.Errorf("Failed to fetch servers: %v", errServers)
 		}
-		serverStateA2SMu.RLock()
-		defer serverStateA2SMu.RUnlock()
-		serverStateStatusMu.RLock()
-		defer serverStateStatusMu.RUnlock()
+		app.serverStateA2SMu.RLock()
+		defer app.serverStateA2SMu.RUnlock()
+		app.serverStateStatusMu.RLock()
+		defer app.serverStateStatusMu.RUnlock()
 		for _, server := range servers {
 			var state model.ServerState
 			// use existing state for start?
@@ -228,7 +243,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore, updat
 			state.CountryCode = server.CC
 			state.Latitude = server.Latitude
 			state.Longitude = server.Longitude
-			a2sInfo, a2sFound := serverStateA2S[server.ServerNameShort]
+			a2sInfo, a2sFound := app.serverStateA2S[server.ServerNameShort]
 			if a2sFound {
 				if a2sInfo.Name != "" {
 					state.Name = a2sInfo.Name
@@ -257,7 +272,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore, updat
 					state.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
 				}
 			}
-			statusInfo, statusFound := serverStateStatus[server.ServerNameShort]
+			statusInfo, statusFound := app.serverStateStatus[server.ServerNameShort]
 			if statusFound {
 				if state.Name != "" {
 					state.Name = statusInfo.ServerName
@@ -290,9 +305,9 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore, updat
 			}
 			newState = append(newState, state)
 		}
-		serverStateMu.Lock()
-		serverState = newState
-		serverStateMu.Unlock()
+		app.serverStateMu.Lock()
+		app.serverState = newState
+		app.serverStateMu.Unlock()
 		return nil
 	}
 	ticker := time.NewTicker(updateFreq)
@@ -315,7 +330,7 @@ func serverStateRefresher(ctx context.Context, database store.ServerStore, updat
 // Relevant config values:
 // - general.map_changer_enabled
 // - general.default_map
-func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Duration) {
+func (app *App) mapChanger(ctx context.Context, database store.ServerStore, timeout time.Duration) {
 	type at struct {
 		lastActive time.Time
 		triggered  bool
@@ -328,7 +343,7 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 			if !config.General.MapChangerEnabled {
 				continue
 			}
-			stateCopy := ServerState()
+			stateCopy := app.ServerState()
 			for _, state := range stateCopy {
 				activity, activityFound := activityMap[state.NameShort]
 				if !activityFound || len(state.Players) > 0 {
@@ -384,7 +399,6 @@ func mapChanger(ctx context.Context, database store.ServerStore, timeout time.Du
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
-// TODO save history
 func banSweeper(ctx context.Context, database store.Store) {
 	log.WithFields(log.Fields{"service": "ban_sweeper", "status": "ready"}).Debugf("Service status changed")
 	ticker := time.NewTicker(time.Minute)
@@ -416,13 +430,16 @@ func banSweeper(ctx context.Context, database store.Store) {
 							if name == "" {
 								name = person.SteamID.String()
 							}
-							log.WithFields(log.Fields{
+							fields := log.Fields{
 								"sid":    expiredBan.TargetId,
 								"name":   name,
 								"origin": expiredBan.Origin.String(),
 								"reason": expiredBan.Reason.String(),
-								"custom": expiredBan.ReasonText,
-							}).Infof("%s expired", banType)
+							}
+							if expiredBan.ReasonText != "" {
+								fields["custom"] = expiredBan.ReasonText
+							}
+							log.WithFields(fields).Infof("%s expired", banType)
 						}
 					}
 				}
@@ -514,7 +531,7 @@ func SteamRegionIdString(region SvRegion) string {
 	}
 }
 
-func localStatUpdater(ctx context.Context, database store.Store) {
+func (app *App) localStatUpdater(ctx context.Context, database store.Store) {
 	var build = func() {
 		if errBuild := database.BuildLocalTF2Stats(ctx); errBuild != nil {
 			log.WithError(errBuild).Error("Error building local stats")
@@ -553,8 +570,8 @@ func localStatUpdater(ctx context.Context, database store.Store) {
 				}
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
 			}
-			serverStateMu.RLock()
-			for _, ss := range serverState {
+			app.serverStateMu.RLock()
+			for _, ss := range app.serverState {
 				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
 				serverName, nameFound := serverNameMap[sn]
 				if !nameFound {
@@ -583,7 +600,7 @@ func localStatUpdater(ctx context.Context, database store.Store) {
 					stats.CapacityPartial++
 				}
 			}
-			serverStateMu.RUnlock()
+			app.serverStateMu.RUnlock()
 			if errSave := database.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
 				log.WithError(errSave).Error("Failed to save local stats state")
 				continue
@@ -594,7 +611,7 @@ func localStatUpdater(ctx context.Context, database store.Store) {
 	}
 }
 
-func masterServerListUpdater(ctx context.Context, database store.Store, updateFreq time.Duration) {
+func (app *App) masterServerListUpdater(ctx context.Context, database store.Store, updateFreq time.Duration) {
 	prevStats := model.NewGlobalTF2Stats()
 	locationCache := map[string]ip2location.LatLong{}
 	var build = func() {
@@ -664,9 +681,9 @@ func masterServerListUpdater(ctx context.Context, database store.Store, updateFr
 			}
 			communityServers = append(communityServers, server)
 		}
-		masterServerListMu.Lock()
-		masterServerList = communityServers
-		masterServerListMu.Unlock()
+		app.masterServerListMu.Lock()
+		app.masterServerList = communityServers
+		app.masterServerListMu.Unlock()
 		prevStats = stats
 		log.WithFields(log.Fields{
 			"community": fmt.Sprintf("%d/%d", stats.ServersCommunity, stats.ServersTotal),
@@ -679,8 +696,8 @@ func masterServerListUpdater(ctx context.Context, database store.Store, updateFr
 	build()
 	_ = update()
 	updateTicker := time.NewTicker(updateFreq)
-	// Fetch new stats every 5 minutes
-	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
+	// Fetch new stats every 30 minutes
+	saveTicker, errSaveTicker := cronticker.NewTicker("0 */30 * * * *")
 	if errSaveTicker != nil {
 		log.WithError(errSaveTicker).Panicf("Invalid save ticker cron format")
 		return

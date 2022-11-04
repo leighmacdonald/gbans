@@ -49,7 +49,13 @@ export const apiCall = async <
     };
     const token = readAccessToken();
     const refresh = readRefreshToken();
-    if (refresh != '' && token != '') {
+    if (!token && refresh != '' && !isRefresh) {
+        if ((await refreshToken()) != '') {
+            return apiCall(url, method, body, true);
+        }
+    }
+
+    if (token != '' && token != null) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     if (method !== 'GET' && body) {
@@ -61,9 +67,9 @@ export const apiCall = async <
         u.port = '6006';
     }
     const resp = await fetch(u, opts);
-    if (resp.status == 401 && !isRefresh && readRefreshToken() != '') {
+    if (resp.status == 401 && !isRefresh && refresh != '') {
         // Try and refresh the token once
-        if (await refreshToken()) {
+        if ((await refreshToken()) != '') {
             // Successful token refresh, make a single recursive retry
             return apiCall(url, method, body, true);
         }

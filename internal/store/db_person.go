@@ -416,19 +416,21 @@ func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistory
 }
 
 func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit int) (model.PersonConnections, error) {
-	qb := sb.Select("pc.person_connection_id",
-		"pc.steam_id",
-		"pc.ip_addr",
-		"coalesce(pc.persona_name, pc.steam_id::text)",
-		"pc.created_on",
-		"coalesce(loc.city_name, '')",
-		"coalesce(loc.country_name, '')",
-		"coalesce(loc.country_code, '')").
+	qb := sb.
+		Select(
+			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
+			"pc.person_connection_id",
+			"pc.steam_id",
+			"pc.ip_addr",
+			"pc.created_on",
+			"coalesce(loc.city_name, '')",
+			"coalesce(loc.country_name, '')",
+			"coalesce(loc.country_code, '')").
 		From("person_connections pc").
 		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
 		//Join("LEFT JOIN net_asn asn ON pc.ip_addr <@ asn.ip_range").
 		//Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
-		OrderBy("pc.person_connection_id DESC").
+		OrderBy("1").
 		Limit(1000)
 	qb = qb.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 	query, args, errCreateQuery := qb.ToSql()
@@ -443,7 +445,7 @@ func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.S
 	var connections model.PersonConnections
 	for rows.Next() {
 		var c model.PersonConnection
-		if errScan := rows.Scan(&c.PersonConnectionId, &c.SteamId, &c.IPAddr, &c.PersonaName, &c.CreatedOn,
+		if errScan := rows.Scan(&c.PersonaName, &c.PersonConnectionId, &c.SteamId, &c.IPAddr, &c.CreatedOn,
 			&c.IPInfo.CityName, &c.IPInfo.CountryName, &c.IPInfo.CountryCode,
 		); errScan != nil {
 			return nil, Err(errScan)
@@ -457,7 +459,8 @@ func (database *pgStore) AddConnectionHistory(ctx context.Context, conn *model.P
 	const q = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on) 
 		VALUES ($1, $2, $3, $4) RETURNING person_connection_id`
-	if errQuery := database.QueryRow(ctx, q, conn.SteamId, conn.IPAddr, conn.PersonaName, conn.CreatedOn).
+	if errQuery := database.
+		QueryRow(ctx, q, conn.SteamId, conn.IPAddr, conn.PersonaName, conn.CreatedOn).
 		Scan(&conn.PersonConnectionId); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -475,7 +478,8 @@ func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64,
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	return Err(database.QueryRow(ctx, query, args...).
+	return Err(database.
+		QueryRow(ctx, query, args...).
 		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
@@ -483,17 +487,19 @@ func (database *pgStore) GetPersonAuthByRefreshToken(ctx context.Context, token 
 	query, args, errQuery := sb.
 		Select(personAuthColumns...).
 		From("person_auth").
-		Where(sq.And{sq.Eq{"refresh_token": token}, sq.Lt{"created_on + interval '1 day'": config.Now()}}).
+		Where(sq.And{sq.Eq{"refresh_token": token}}).
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	return Err(database.QueryRow(ctx, query, args...).
+	return Err(database.
+		QueryRow(ctx, query, args...).
 		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
 func (database *pgStore) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error {
-	query, args, errQuery := sb.Insert("person_auth").
+	query, args, errQuery := sb.
+		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
 		Values(auth.SteamId, auth.IpAddr.String(), auth.RefreshToken, auth.CreatedOn).
 		Suffix("RETURNING \"person_auth_id\"").
@@ -505,7 +511,21 @@ func (database *pgStore) SavePersonAuth(ctx context.Context, auth *model.PersonA
 }
 
 func (database *pgStore) DeletePersonAuth(ctx context.Context, authId int64) error {
-	query, args, errQuery := sb.Delete("person_auth").Where(sq.Eq{"person_auth_id": authId}).ToSql()
+	query, args, errQuery := sb.
+		Delete("person_auth").
+		Where(sq.Eq{"person_auth_id": authId}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	return Err(database.Exec(ctx, query, args...))
+}
+
+func (database *pgStore) PrunePersonAuth(ctx context.Context) error {
+	query, args, errQuery := sb.
+		Delete("person_auth").
+		Where(sq.Gt{"created_on + interval '1 month'": config.Now()}).
+		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
 	}

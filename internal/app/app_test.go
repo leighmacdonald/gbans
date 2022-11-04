@@ -39,8 +39,9 @@ func TestMain(testMain *testing.M) {
 			log.Errorf("Error cleanly closing app: %v", errClose)
 		}
 	}()
+	app := New()
 	testDatabase = dbStore
-	webService, errWeb := NewWeb(dbStore, discordSendMsg, logFileChan)
+	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
 	if errWeb != nil {
 		tearDown(dbStore)
 		log.Errorf("Failed to setup web: %v", errWeb)
@@ -56,13 +57,13 @@ func TestMain(testMain *testing.M) {
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		go initDiscord(testCtx, dbStore, discordSendMsg)
+		go app.initDiscord(testCtx, dbStore, app.discordSendMsg)
 	} else {
 		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	initWorkers(testCtx, dbStore, discordSendMsg, logFileChan, warningChan)
+	app.initWorkers(testCtx, dbStore, app.discordSendMsg, app.logFileChan, app.warningChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {

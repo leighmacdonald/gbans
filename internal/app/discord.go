@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"strings"
 	"sync"
 )
 
@@ -30,7 +29,7 @@ var (
 	errTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
 )
 
-func (bot *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
+func (bot *Discord) SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
 	if bot.session == nil {
 		return nil
 	}
@@ -40,9 +39,10 @@ func (bot *discord) SendEmbed(channelId string, message *discordgo.MessageEmbed)
 	return nil
 }
 
-// discord implements the ChatBot interface for the discord chat platform.
-type discord struct {
+// Discord implements the ChatBot interface for the discord chat platform.
+type Discord struct {
 	session            *discordgo.Session
+	app                *App
 	ctx                context.Context
 	database           store.Store
 	connectedMu        *sync.RWMutex
@@ -54,9 +54,10 @@ type discord struct {
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
-	bot := discord{
+func NewDiscord(ctx context.Context, app *App, database store.Store) (*Discord, error) {
+	bot := Discord{
 		ctx:         ctx,
+		app:         app,
 		session:     nil,
 		database:    database,
 		connectedMu: &sync.RWMutex{},
@@ -86,7 +87,7 @@ func NewDiscord(ctx context.Context, database store.Store) (*discord, error) {
 	return &bot, nil
 }
 
-func (bot *discord) Start(ctx context.Context, token string) error {
+func (bot *Discord) Start(ctx context.Context, token string) error {
 	// Immediately connects, so we connect within the Start func
 	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
@@ -118,7 +119,7 @@ func (bot *discord) Start(ctx context.Context, token string) error {
 	return nil
 }
 
-func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
+func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
 	bot.connectedMu.RLock()
 	ready := bot.initReadySent
@@ -166,7 +167,7 @@ func (bot *discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	bot.connectedMu.Unlock()
 }
 
-func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
+func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
 	status := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{
@@ -192,7 +193,7 @@ func (bot *discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).Infof("Discord state changed")
 }
 
-func (bot *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.connectedMu.Lock()
 	bot.connected = false
 	bot.Ready = false
@@ -200,7 +201,7 @@ func (bot *discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) 
 	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
 }
 
-func (bot *discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
+func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
 	bot.connectedMu.RLock()
 	if !bot.connected {
 		bot.connectedMu.RUnlock()
@@ -221,7 +222,7 @@ func (bot *discord) sendChannelMessage(session *discordgo.Session, channelId str
 	return nil
 }
 
-func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
+func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
 	bot.connectedMu.RLock()
 	if !bot.connected {
 		bot.connectedMu.RUnlock()
@@ -251,7 +252,7 @@ func (bot *discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 	return errResp
 }
 
-func (bot *discord) Send(channelId string, message string, wrap bool) error {
+func (bot *Discord) Send(channelId string, message string, wrap bool) error {
 	return bot.sendChannelMessage(bot.session, channelId, message, wrap)
 }
 
@@ -320,7 +321,7 @@ func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
 }
 
 func addFieldFilter(embed *discordgo.MessageEmbed, filter model.Filter) {
-	addFieldInline(embed, "Patterns", strings.Join(filter.Patterns, ","))
+	addFieldInline(embed, "Patterns", filter.Patterns.String())
 	addFieldInline(embed, "ID", fmt.Sprintf("%d", filter.WordID))
 }
 

@@ -1,5 +1,5 @@
 # node-sass does not compile with node:16 yet
-FROM node:alpine as frontend
+FROM node:18-alpine as frontend
 WORKDIR /build
 RUN apk add python3 make g++
 COPY frontend/package.json frontend/package.json
@@ -9,7 +9,7 @@ WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
 
-FROM golang:1.18-alpine as build
+FROM golang:1.19-alpine as build
 WORKDIR /build
 RUN apk add make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./

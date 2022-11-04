@@ -6,15 +6,13 @@ import {
     writeAccessToken,
     writeRefreshToken
 } from '../api';
-import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useNavigate } from 'react-router-dom';
-import { logErr } from '../util/errors';
 import Typography from '@mui/material/Typography';
+import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 const defaultLocation = '/';
 
 export const LoginSuccess = () => {
-    //const { sendFlash } = useUserFlashCtx();
     const { setCurrentUser } = useCurrentUserCtx();
     const navigate = useNavigate();
     const [inProgress, setInProgress] = useState(true);
@@ -23,35 +21,46 @@ export const LoginSuccess = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const refresh = urlParams.get(refreshKey);
         const token = urlParams.get(tokenKey);
-        if (!refresh) {
-            logErr('No refresh token received');
-            return;
-        }
-        if (!token) {
-            logErr('No auth token received');
+        if (!refresh || !token) {
             return;
         }
         writeRefreshToken(refresh);
         writeAccessToken(token);
 
-        let next_url = urlParams.get('next_url') ?? defaultLocation;
-
+        const next_url = urlParams.get('next_url') ?? defaultLocation;
+        localStorage.removeItem('token'); // cleanup old key
         apiGetCurrentProfile()
             .then((response) => {
-                // if (!response.status || !response.result) {
-                //     sendFlash('error', 'Failed to load profile :(');
-                //     return;
-                // }
-                setCurrentUser(response?.result || GuestProfile);
+                if (!response.status || !response.result) {
+                    return;
+                }
+                setCurrentUser(response.result);
             })
             .catch(() => {
-                next_url = defaultLocation;
+                setCurrentUser(GuestProfile);
             })
             .finally(() => {
                 setInProgress(false);
                 navigate(next_url);
             });
-    }, [navigate, setCurrentUser]);
+
+        // apiGetCurrentProfile()
+        //     .then((response) => {
+        //         // if (!response.status || !response.result) {
+        //         //     sendFlash('error', 'Failed to load profile :(');
+        //         //     return;
+        //         // }
+        //         setCurrentUser(response?.result || GuestProfile);
+        //     })
+        //     .catch(() => {
+        //         next_url = defaultLocation;
+        //     })
+        //     .finally(() => {
+        //         setInProgress(false);
+        //         navigate(next_url);
+        //     });
+        // eslint-disable-next-line
+    }, []);
 
     return (
         <>

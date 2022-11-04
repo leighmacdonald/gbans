@@ -13,7 +13,6 @@ import { formatDistance, parseJSON } from 'date-fns';
 import { UserMessage, UserProfile } from '../api';
 import { renderMarkdown } from '../api/wiki';
 import { MDEditor } from './MDEditor';
-import { renderTimeDistance } from '../util/text';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 
 export interface UserMessageViewProps {
@@ -62,15 +61,9 @@ export const UserMessageView = ({
             </Box>
         );
     } else {
-        let d1 = formatDistance(parseJSON(message.created_on), new Date(), {
+        const d1 = formatDistance(parseJSON(message.created_on), new Date(), {
             addSuffix: true
         });
-        if (message.updated_on != message.created_on) {
-            d1 = `${d1} (edited: ${renderTimeDistance(
-                message.created_on,
-                message.updated_on
-            )})`;
-        }
         return (
             <Card elevation={1}>
                 <CardHeader
