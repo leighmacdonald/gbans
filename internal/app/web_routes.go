@@ -110,9 +110,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.POST("/api/server/auth", web.onSAPIPostServerAuth(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
-	qpConnections := qpConnectionManager{
+	wsConnections := wsConnectionManager{
 		RWMutex:     &sync.RWMutex{},
-		lobbies:     map[string]*qpLobby{},
+		lobbies:     map[string]LobbyService{},
 		connections: nil,
 	}
 	srvGrp := engine.Group("/")
@@ -130,9 +130,8 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(database, model.PUser))
-		authed.GET("/ws/quickplay", func(c *gin.Context) {
-			currentUser := currentUserProfile(c)
-			qpWSHandler(c.Writer, c.Request, &qpConnections, currentUser)
+		authed.GET("/ws", func(c *gin.Context) {
+			wsConnHandler(c.Writer, c.Request, &wsConnections, currentUserProfile(c))
 		})
 
 		authed.GET("/api/current_profile", web.onAPICurrentProfile())

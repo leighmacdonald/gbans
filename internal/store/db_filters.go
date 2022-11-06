@@ -87,12 +87,11 @@ func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error)
 	defer rows.Close()
 	for rows.Next() {
 		var filter model.Filter
-		var pattern string
-		if errQuery = rows.Scan(&filter.WordID, &pattern, &filter.CreatedOn, &filter.DiscordId,
+		if errQuery = rows.Scan(&filter.WordID, &filter.PatternsString, &filter.CreatedOn, &filter.DiscordId,
 			&filter.DiscordCreatedOn, &filter.FilterName); errQuery != nil {
 			return nil, errors.Wrapf(errQuery, "Failed to load filter")
 		}
-		filter.Patterns = model.WordFiltersFromString(pattern)
+		filter.Patterns = model.WordFiltersFromString(filter.PatternsString)
 		filters = append(filters, filter)
 	}
 	return filters, nil

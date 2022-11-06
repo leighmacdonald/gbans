@@ -1,8 +1,11 @@
 import { apiCall } from './common';
 
+export const wordFilterSeparator = '---';
+
 export interface Filter {
     word_id: number;
-    patterns: string[];
+    patterns: RegExp[];
+    patterns_string: string;
     created_on?: Date;
     updated_on?: Date;
     discord_id?: string;

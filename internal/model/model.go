@@ -205,6 +205,7 @@ type Stats struct {
 type Filter struct {
 	WordID           int64       `json:"word_id,omitempty"`
 	Patterns         WordFilters `json:"patterns,omitempty"`
+	PatternsString   string      `json:"patterns_string"`
 	CreatedOn        time.Time   `json:"created_on"`
 	UpdatedOn        time.Time   `json:"updated_on"`
 	DiscordId        string      `json:"discord_id,omitempty"`

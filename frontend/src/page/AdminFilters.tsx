@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import minimatch from 'minimatch';
 import { Heading } from '../component/Heading';
 import SaveIcon from '@mui/icons-material/Save';
 import TextField from '@mui/material/TextField';
@@ -24,6 +23,7 @@ export const AdminFilters = () => {
     const [editFilter, setEditFilter] = useState<Filter>({
         word_id: 0,
         filter_name: '',
+        patterns_string: '',
         patterns: []
     });
 
@@ -55,6 +55,7 @@ export const AdminFilters = () => {
             sendFlash('success', 'Filter saved');
             setEditFilter({
                 word_id: 0,
+                patterns_string: '',
                 filter_name: '',
                 patterns: []
             });
@@ -106,7 +107,7 @@ export const AdminFilters = () => {
                                     margin={'dense'}
                                     variant={'standard'}
                                     fullWidth
-                                    placeholder={'fric*'}
+                                    placeholder={'.*fric.*'}
                                     value={newPattern}
                                     onChange={(evt) => {
                                         setNewPattern(evt.target.value);
@@ -122,13 +123,17 @@ export const AdminFilters = () => {
                                             return;
                                         }
                                         setEditFilter((f) => {
-                                            return {
-                                                ...f,
-                                                patterns: [
-                                                    ...f.patterns,
-                                                    newPattern
-                                                ]
-                                            };
+                                            try {
+                                                return {
+                                                    ...f,
+                                                    patterns: [
+                                                        ...f.patterns,
+                                                        new RegExp(newPattern)
+                                                    ]
+                                                };
+                                            } catch (e) {
+                                                return f;
+                                            }
                                         });
                                         setNewPattern('');
                                     }}
@@ -153,7 +158,9 @@ export const AdminFilters = () => {
                                                 setEditFilter((f) => {
                                                     const p =
                                                         editFilter.patterns;
-                                                    p[i] = evt.target.value;
+                                                    p[i] = new RegExp(
+                                                        evt.target.value
+                                                    );
                                                     return {
                                                         ...f,
                                                         patterns: p
@@ -203,6 +210,7 @@ export const AdminFilters = () => {
                                         setEditFilter({
                                             word_id: 0,
                                             filter_name: '',
+                                            patterns_string: '',
                                             patterns: []
                                         });
                                         setNewPattern('');
@@ -225,7 +233,7 @@ export const AdminFilters = () => {
                                 return rows.filter((row) => {
                                     return (
                                         row.patterns.filter((pattern) =>
-                                            minimatch(query, pattern)
+                                            pattern.test(query)
                                         ).length > 0
                                     );
                                 });
@@ -257,7 +265,7 @@ export const AdminFilters = () => {
                                     //width: '100%',
                                     queryValue: (o) => `${o.word_id}`,
                                     renderer: (row) => {
-                                        return row.patterns.join(', ');
+                                        return row.patterns_string;
                                     }
                                 },
                                 {

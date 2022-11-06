@@ -7,44 +7,43 @@ import (
 	"sync"
 )
 
-type qpLobby struct {
+type pugLobby struct {
 	*sync.RWMutex
+	Leader   *wsClient
 	LobbyId  string          `json:"lobby_id"`
 	Clients  wsClients       `json:"clients"`
 	Messages []wsUserMessage `json:"messages"`
-	Leader   *wsClient       `json:"leader"`
 }
 
-func newQPLobby(lobbyId string, creator *wsClient) *qpLobby {
-	return &qpLobby{
+func newPugLobby(creator *wsClient, id string) *pugLobby {
+	return &pugLobby{
 		Leader:   creator,
 		RWMutex:  &sync.RWMutex{},
-		LobbyId:  lobbyId,
+		LobbyId:  id,
 		Clients:  wsClients{creator},
 		Messages: []wsUserMessage{},
 	}
 }
 
-func (lobby *qpLobby) clientCount() int {
+func (lobby *pugLobby) clientCount() int {
 	lobby.RLock()
 	defer lobby.RUnlock()
 	return len(lobby.Clients)
 }
 
-func (lobby *qpLobby) id() string {
+func (lobby *pugLobby) id() string {
 	lobby.RLock()
 	defer lobby.RUnlock()
 	return lobby.LobbyId
 }
 
-func (lobby *qpLobby) join(client *wsClient) error {
+func (lobby *pugLobby) join(client *wsClient) error {
 	lobby.Lock()
 	defer lobby.Unlock()
 	if slices.Contains(lobby.Clients, client) {
 		return ErrDuplicateClient
 	}
 	lobby.Clients = append(lobby.Clients, client)
-	// TODO ensure uniq
 	client.lobbies = append(client.lobbies, lobby)
 	log.WithFields(log.Fields{
 		"clients": len(lobby.Clients),
@@ -57,7 +56,12 @@ func (lobby *qpLobby) join(client *wsClient) error {
 	return nil
 }
 
-func (lobby *qpLobby) leave(client *wsClient) error {
+func (lobby *pugLobby) promote(client *wsClient) error {
+	lobby.Leader = client
+	return nil
+}
+
+func (lobby *pugLobby) leave(client *wsClient) error {
 	lobby.Lock()
 	defer lobby.Unlock()
 	if !slices.Contains(lobby.Clients, client) {
@@ -68,7 +72,6 @@ func (lobby *qpLobby) leave(client *wsClient) error {
 	}
 	lobby.Clients = fp.Remove(lobby.Clients, client)
 	client.removeLobby(lobby)
-
 	//if client.Leader {
 	//	client.Leader = false
 	//	return lobby.promote(lobby.Clients[0])
@@ -76,29 +79,15 @@ func (lobby *qpLobby) leave(client *wsClient) error {
 	return nil
 }
 
-func (lobby *qpLobby) promote(client *wsClient) error {
-	lobby.Leader = client
-	return nil
-}
-
-func (lobby *qpLobby) sendUserMessage(msg wsUserMessage) {
-	lobby.Lock()
-	defer lobby.Unlock()
-	lobby.Messages = append(lobby.Messages, msg)
-}
-
-func (lobby *qpLobby) broadcast(response wsBaseResponse) error {
+func (lobby *pugLobby) broadcast(response wsBaseResponse) error {
 	for _, client := range lobby.Clients {
 		client.send <- response
 	}
 	return nil
 }
 
-func sendJoinLobbySuccess(client *wsClient, lobby LobbyService) {
-	client.send <- wsBaseResponse{
-		wsMsgTypeJoinLobbySuccess,
-		wsMsgJoinedLobbySuccess{
-			LobbyId: lobby.id(),
-		},
-	}
+func (lobby *pugLobby) sendUserMessage(msg wsUserMessage) {
+	lobby.Lock()
+	defer lobby.Unlock()
+	lobby.Messages = append(lobby.Messages, msg)
 }

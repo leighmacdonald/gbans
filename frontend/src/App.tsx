@@ -48,7 +48,7 @@ import { Login } from './page/Login';
 import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
-import { Pug } from './page/Pug';
+import { PugPage } from './pug/PugPage';
 import { QuickPlayPage } from './page/QuickPlayPage';
 import { TF2StatsPage } from './page/TF2StatsPage';
 import { UserInit } from './component/UserInit';
@@ -226,7 +226,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         PermissionLevel.Admin
                                                                     }
                                                                 >
-                                                                    <Pug />
+                                                                    <PugPage />
                                                                 </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }
