@@ -46,6 +46,7 @@ const (
 	lobbyTypePug
 )
 
+// LobbyService provides common interface for interacting with multiple lobby types
 type LobbyService interface {
 	join(client *wsClient) error
 	leave(client *wsClient) error
