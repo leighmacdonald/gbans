@@ -22,6 +22,7 @@ export const DescriptionField = ({
         <FormControl fullWidth>
             <TextField
                 fullWidth
+                disabled={formik.isSubmitting}
                 id={'description'}
                 label={'description'}
                 name={'description'}

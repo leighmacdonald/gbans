@@ -36,8 +36,7 @@ export const Login = ({ message }: LoginFormProps) => {
                     <>
                         {loggedInUser && (
                             <Typography variant={'body1'} padding={2}>
-                                Insufficient sufficient permission to access
-                                this page.
+                                Insufficient permission to access this page.
                             </Typography>
                         )}
                         {!loggedInUser && (

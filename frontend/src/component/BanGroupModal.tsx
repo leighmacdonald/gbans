@@ -127,7 +127,11 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
                         </Stack>
                     </Stack>
                 </DialogContent>
-                <ModalButtons formId={formId} setOpen={setOpen} />
+                <ModalButtons
+                    formId={formId}
+                    setOpen={setOpen}
+                    inProgress={false}
+                />
             </Dialog>
         </form>
     );

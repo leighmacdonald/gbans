@@ -339,13 +339,13 @@ func currentHourlyTime() time.Time {
 }
 
 // currentDailyTime calculates the absolute start of the current day
-func currentDailyTime() time.Time {
-	now := config.Now()
-	year, mon, day := now.Date()
-	return time.Date(year, mon, day, 0, 0, 0, 0, now.Location())
-}
+//func currentDailyTime() time.Time {
+//	now := config.Now()
+//	year, mon, day := now.Date()
+//	return time.Date(year, mon, day, 0, 0, 0, 0, now.Location())
+//}
 
-type statIndexFunc = func(t time.Time) (time.Time, int)
+//type statIndexFunc = func(t time.Time) (time.Time, int)
 
 func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 	maxDate := currentHourlyTime()

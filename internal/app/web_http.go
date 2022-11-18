@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
-	ginlogrus "github.com/toorop/gin-logrus"
 	"net/http"
 	"time"
 )
@@ -26,6 +25,7 @@ type web struct {
 	app                *App
 	httpServer         *http.Server
 	botSendMessageChan chan discordPayload
+	cm                 *wsConnectionManager
 }
 
 func (web *web) ListenAndServe(ctx context.Context) error {
@@ -53,7 +53,8 @@ func NewWeb(app *App, database store.Store, botSendMessageChan chan discordPaylo
 	}
 	router := gin.New()
 	l := log.New()
-	router.Use(ginlogrus.Logger(l), gin.Recovery())
+	router.Use(ErrorHandler(l), gin.Recovery())
+	//router.Use(ginlogrus.Logger(l), gin.Recovery())
 
 	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),
@@ -81,7 +82,8 @@ func NewWeb(app *App, database store.Store, botSendMessageChan chan discordPaylo
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	webHandler := web{app: app, httpServer: httpServer, botSendMessageChan: botSendMessageChan}
+	cm := newWSConnectionManager(app.ctx)
+	webHandler := web{app: app, httpServer: httpServer, botSendMessageChan: botSendMessageChan, cm: cm}
 	webHandler.setupRouter(database, router, logFileC)
 	return &webHandler, nil
 }

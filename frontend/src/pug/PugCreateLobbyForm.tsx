@@ -1,13 +1,11 @@
 import * as yup from 'yup';
 import { useFormik } from 'formik';
-import { logErr } from '../util/errors';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { Heading } from '../component/Heading';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Stack from '@mui/material/Stack';
 import { ModalButtons } from '../component/formik/ModalButtons';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     GameType,
     GameTypeField,
@@ -26,20 +24,24 @@ import {
     DescriptionField,
     descriptionValidator
 } from '../component/formik/DescriptionField';
-
-interface PugCreateLobbyFormValues {
-    gameType: GameType;
-    gameConfig: GameConfig;
-    map: string;
-    description: string;
-    discord_required: boolean;
-}
+import { usePugCtx } from './PugCtx';
+import {
+    DiscordRequiredField,
+    discordRequiredValidator
+} from '../component/formik/DiscordRequiredField';
+import {
+    ServerSelectionField,
+    serverValidator
+} from '../component/formik/ServerSelectionField';
+import { wsMsgTypePugCreateLobbyRequest } from './pug';
 
 const validationSchema = yup.object({
-    map: mapValidator,
-    gameType: gameTypeValidator,
-    gameConfig: gameConfigValidator,
-    description: descriptionValidator
+    map_name: mapValidator,
+    game_type: gameTypeValidator,
+    game_config: gameConfigValidator,
+    description: descriptionValidator,
+    discord_required: discordRequiredValidator,
+    server_name: serverValidator
 });
 
 interface PugCreateLobbyFormProps {
@@ -51,15 +53,18 @@ export const PugCreateLobbyForm = ({
     open,
     setOpen
 }: PugCreateLobbyFormProps) => {
+    const [inProgress, setInProgress] = useState(false);
     const defaultValues = {
-        map: 'cp_process_final',
-        gameType: GameType.sixes,
-        gameConfig: GameConfig.rgl,
+        map_name: 'cp_process_final',
+        game_type: GameType.sixes,
+        game_config: GameConfig.rgl,
         description: '',
-        discord_required: false
+        discord_required: false,
+        server_name: 'sea-1'
     };
-    const { sendFlash } = useUserFlashCtx();
-    const formik = useFormik<PugCreateLobbyFormValues>({
+
+    const { createLobby, lobby } = usePugCtx();
+    const formik = useFormik<wsMsgTypePugCreateLobbyRequest>({
         initialValues: defaultValues,
         validateOnBlur: true,
         validateOnChange: false,
@@ -67,17 +72,17 @@ export const PugCreateLobbyForm = ({
             alert('reset!');
         },
         validationSchema: validationSchema,
-        onSubmit: async (_) => {
-            try {
-                sendFlash('success', 'Lobby created successfully');
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error saving ban');
-            } finally {
-                setOpen(false);
-            }
+        onSubmit: async (opts) => {
+            setInProgress(true);
+            createLobby(opts);
         }
     });
+
+    useEffect(() => {
+        if (lobby?.lobbyId) {
+            setInProgress(false);
+        }
+    }, [lobby]);
 
     const formId = 'PugCreateLobbyForm';
     return (
@@ -99,9 +104,15 @@ export const PugCreateLobbyForm = ({
                         <MapSelectionField formik={formik} />
                         <GameConfigField formik={formik} />
                         <DescriptionField formik={formik} />
+                        <DiscordRequiredField formik={formik} />
+                        <ServerSelectionField formik={formik} />
                     </Stack>
                 </DialogContent>
-                <ModalButtons formId={formId} setOpen={setOpen} />
+                <ModalButtons
+                    formId={formId}
+                    setOpen={setOpen}
+                    inProgress={inProgress}
+                />
             </Dialog>
         </form>
     );

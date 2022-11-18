@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 const (
@@ -51,6 +52,8 @@ type Discord struct {
 	botSendMessageChan chan discordPayload
 	initReadySent      bool
 	Ready              bool
+	retryCount         int
+	lastRetry          time.Time
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
@@ -106,12 +109,12 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	session.AddHandler(bot.onInteractionCreate)
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 
-	bot.session = session
-
 	// Open a websocket connection to discord and begin listening.
-	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
+	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
+
+	bot.session = session
 	if errRegister := bot.botRegisterSlashCommands(); errRegister != nil {
 		log.Errorf("Failed to register discord slash commands: %v", errRegister)
 	}

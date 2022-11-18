@@ -67,7 +67,7 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context, _ store.PersonS
 	}
 }
 
-func cleanupTasks(ctx context.Context, database store.AuthStore) {
+func (app *App) cleanupTasks(ctx context.Context, database store.AuthStore) {
 	ticker := time.NewTicker(time.Hour * 24)
 	for {
 		select {

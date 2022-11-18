@@ -1,25 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { PugCtx } from '../contexts/PugCtx';
-import { PugLobby, PugPlayer } from './pug';
+import { PugCtx } from './PugCtx';
+import {
+    PugLobby,
+    wsMsgTypePugCreateLobbyRequest,
+    wsMsgTypePugUserMessageRequest,
+    wsMsgTypePugUserMessageResponse,
+    wsPugResponseTypes
+} from './pug';
 import { Nullable } from '../util/types';
 
-import {
-    qpMsgType,
-    qpRequestTypes,
-    qpUserMessageI,
-    readAccessToken
-} from '../api';
+import { readAccessToken } from '../api';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { JoinOrCreateLobby } from './JoinOrCreateLobby';
 import { PugLobbyView } from './PugLobbyView';
+import { encode, MsgType, wsValue } from '../api/ws';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const PugPage = (): JSX.Element => {
-    const [lobby] = useState<Nullable<PugLobby>>(null);
-    const [_, setMessageHistory] = useState<qpUserMessageI[]>([]);
-
-    const token = useMemo(() => {
-        return readAccessToken();
-    }, []);
+    const [lobby, setLobby] = useState<Nullable<PugLobby>>(null);
+    const [lobbies, setLobbies] = useState<PugLobby[]>([]);
+    const [messages, setMessages] = useState<wsMsgTypePugUserMessageResponse[]>(
+        []
+    );
+    const { sendFlash } = useUserFlashCtx();
 
     const socketUrl = useMemo(() => {
         const parsedUrl = new URL(window.location.href);
@@ -28,35 +31,29 @@ export const PugPage = (): JSX.Element => {
         }/ws`;
     }, []);
 
-    const { readyState, lastJsonMessage /*, sendJsonMessage*/ } = useWebSocket(
+    const systemMsg = useCallback((message: string) => {
+        setMessages((prevState) =>
+            prevState.concat({
+                message: message,
+                created_at: new Date().toISOString()
+            })
+        );
+    }, []);
+
+    const { readyState, lastJsonMessage, sendJsonMessage } = useWebSocket(
         socketUrl,
         {
             onError: (event: WebSocketEventMap['error']) => {
-                setMessageHistory((prevState) =>
-                    prevState.concat({
-                        message: event.type,
-                        created_at: new Date().toISOString()
-                    })
-                );
+                systemMsg(event.type);
             },
             onClose: () => {
-                setMessageHistory((prevState) =>
-                    prevState.concat({
-                        message: 'Lobby connection closed',
-                        created_at: new Date().toISOString()
-                    })
-                );
+                systemMsg('Lobby connection closed');
             },
             queryParams: {
-                token: token
+                token: readAccessToken()
             },
             onOpen: () => {
-                setMessageHistory((prevState) =>
-                    prevState.concat({
-                        message: 'Lobby connection opened',
-                        created_at: new Date().toISOString()
-                    })
-                );
+                systemMsg('Lobby connection opened');
             }, //Will attempt to reconnect on all close events, such as server shutting down
             shouldReconnect: () => true
         }
@@ -66,42 +63,95 @@ export const PugPage = (): JSX.Element => {
         return readyState == ReadyState.OPEN;
     }, [readyState]);
 
-    const joinLobby = useCallback(() => {
-        if (!isReady) {
-            return;
-        }
-        return;
-    }, [isReady]);
-
-    const leaveLobby = useCallback(
-        (_: PugPlayer) => {
+    const joinLobby = useCallback(
+        (lobby_id: string) => {
             if (!isReady) {
                 return;
             }
+            const msg = encode(MsgType.wsMsgTypePugJoinLobbyRequest, {
+                lobby_id
+            });
+            sendJsonMessage(msg);
             return;
         },
         [isReady]
     );
 
-    const createLobby = useCallback(() => {
+    const leaveLobby = useCallback(() => {
         if (!isReady) {
             return;
         }
+        const msg = encode(MsgType.wsMsgTypePugLeaveLobbyRequest, {});
+        sendJsonMessage(msg);
         return;
-    }, [isReady]);
+    }, [isReady, sendJsonMessage]);
+
+    const createLobby = useCallback(
+        async (opts: wsMsgTypePugCreateLobbyRequest) => {
+            if (!isReady) {
+                return;
+            }
+            const msg = encode(MsgType.wsMsgTypePugCreateLobbyRequest, opts);
+            sendJsonMessage(msg);
+            return;
+        },
+        [sendJsonMessage, isReady]
+    );
+
+    const sendMessage = useCallback(
+        (body: string) => {
+            if (!isReady) {
+                return;
+            }
+            const msg = encode<wsMsgTypePugUserMessageRequest>(
+                MsgType.wsMsgTypePugUserMessageRequest,
+                {
+                    message: body
+                }
+            );
+            sendJsonMessage(msg);
+        },
+        [isReady, sendJsonMessage]
+    );
 
     useEffect(() => {
         if (lastJsonMessage != null) {
-            const p = lastJsonMessage as qpRequestTypes;
-            switch (p.msg_type) {
-                case qpMsgType.qpMsgTypeJoinLobbySuccess: {
-                    // const req = p as qpMsgJoinedLobbySuccess;
-                    // setLobby(req.payload.lobby);
-                    return;
+            const last = lastJsonMessage as wsValue<wsPugResponseTypes>;
+            switch (last.msg_type) {
+                case MsgType.wsMsgTypePugCreateLobbyResponse: {
+                    const lobby = last.payload.lobby as PugLobby;
+                    setLobby(lobby);
+                    sendFlash('success', `Joined lobby ${lobby.lobbyId}`);
+                    break;
                 }
-                case qpMsgType.qpMsgTypeSendMsgRequest: {
-                    // const req = p as qpUserMessage;
-                    // setMessageHistory((prev) => prev.concat(req.payload));
+                case MsgType.wsMsgTypePugJoinLobbyResponse: {
+                    const lobby = last.payload.lobby as PugLobby;
+                    setLobby(lobby);
+                    sendFlash('success', `Joined lobby ${lobby.lobbyId}`);
+                    break;
+                }
+                case MsgType.wsMsgTypePugLeaveLobbyResponse: {
+                    setLobby(null);
+                    sendFlash('success', `Left lobby`);
+                    break;
+                }
+                case MsgType.wsMsgTypePugLobbyListStatesResponse: {
+                    const lobbies = last.payload.lobbies as PugLobby[];
+                    setLobbies(lobbies);
+                    console.log('state updated');
+                    break;
+                }
+                case MsgType.wsMsgTypePugUserMessageResponse: {
+                    const { payload } = last;
+                    setMessages((prev) => {
+                        if (!payload.message) {
+                            return prev;
+                        }
+                        return [
+                            ...prev,
+                            payload as wsMsgTypePugUserMessageResponse
+                        ];
+                    });
                     return;
                 }
                 default: {
@@ -109,11 +159,23 @@ export const PugPage = (): JSX.Element => {
                 }
             }
         }
-    }, [lastJsonMessage]);
+    }, [lastJsonMessage, sendFlash]);
 
     return (
-        <PugCtx.Provider value={{ createLobby, leaveLobby, joinLobby, lobby }}>
-            {lobby ? <PugLobbyView /> : <JoinOrCreateLobby />}
+        <PugCtx.Provider
+            value={{
+                createLobby,
+                leaveLobby,
+                joinLobby,
+                lobby,
+                setLobby,
+                sendMessage,
+                messages,
+                lobbies,
+                setLobbies
+            }}
+        >
+            {lobby ? <PugLobbyView /> : <JoinOrCreateLobby isReady={isReady} />}
         </PugCtx.Provider>
     );
 };

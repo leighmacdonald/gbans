@@ -3,16 +3,24 @@ import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import React from 'react';
 import { DialogActions } from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 
 interface ModalButtonsProps {
     formId: string;
     setOpen: (closed: boolean) => void;
+
+    inProgress: boolean;
 }
 
-export const ModalButtons = ({ formId, setOpen }: ModalButtonsProps) => {
+export const ModalButtons = ({
+    formId,
+    setOpen,
+    inProgress
+}: ModalButtonsProps) => {
     return (
         <DialogActions>
-            <Button
+            <LoadingButton
+                loading={inProgress}
                 variant={'contained'}
                 color={'success'}
                 startIcon={<CheckIcon />}
@@ -20,7 +28,7 @@ export const ModalButtons = ({ formId, setOpen }: ModalButtonsProps) => {
                 form={formId}
             >
                 Accept
-            </Button>
+            </LoadingButton>
 
             <Button
                 variant={'contained'}

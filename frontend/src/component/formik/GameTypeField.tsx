@@ -21,7 +21,7 @@ export const GameTypes = [
 
 export const gameTypeValidator = yup
     .string()
-    .test('checkGameType', 'Invalid game type selection', async (gameType) => {
+    .test('checkGameType', 'Invalid game type selection', (gameType) => {
         return GameTypes.includes(gameType as GameType);
     })
     .label('Select a game type to play')
@@ -31,7 +31,7 @@ export const GameTypeField = ({
     formik
 }: {
     formik: FormikState<{
-        gameType: GameType;
+        game_type: GameType;
     }> &
         FormikHandlers;
 }) => {
@@ -40,14 +40,15 @@ export const GameTypeField = ({
             <InputLabel id="gameType-label">Game Type</InputLabel>
             <Select<GameType>
                 fullWidth
+                disabled={formik.isSubmitting}
                 label={'Game Type'}
                 labelId="gameType-label"
                 id="gameType"
                 name={'gameType'}
-                value={formik.values.gameType}
+                value={formik.values.game_type}
                 onChange={formik.handleChange}
                 error={
-                    formik.touched.gameType && Boolean(formik.errors.gameType)
+                    formik.touched.game_type && Boolean(formik.errors.game_type)
                 }
                 defaultValue={GameType.sixes}
             >
@@ -58,7 +59,7 @@ export const GameTypeField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.gameType && formik.errors.gameType}
+                {formik.touched.game_type && formik.errors.game_type}
             </FormHelperText>
         </FormControl>
     );

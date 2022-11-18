@@ -35,7 +35,7 @@ type Game struct {
 	Players    Players
 }
 
-func (game Game) Join(player *Player) error {
+func (game *Game) Join(player *Player) error {
 	if fp.Contains(game.Players, player) {
 		return ErrPlayerExists
 	}
@@ -43,7 +43,7 @@ func (game Game) Join(player *Player) error {
 	return nil
 }
 
-func (game Game) Leave(player *Player) error {
+func (game *Game) Leave(player *Player) error {
 	if !fp.Contains(game.Players, player) {
 		return ErrPlayerMissing
 	}
@@ -51,12 +51,12 @@ func (game Game) Leave(player *Player) error {
 	return nil
 }
 
-func (game Game) Validate() []error {
+func (game *Game) Validate() []error {
 	// Validate the current game settings
 	return nil
 }
 
-func (game Game) ReadyUp() []error {
+func (game *Game) ReadyUp() []error {
 	// Make sure everyone is ready before starting match
 	return nil
 }

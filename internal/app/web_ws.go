@@ -11,17 +11,35 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type wsMsgType int
 
 const (
-	wsMsgTypeJoinLobbyRequest = iota
-	wsMsgTypeLeaveLobbyRequest
-	wsMsgTypeJoinLobbySuccess
-	wsMsgTypeSendMsgRequest
-	wsMsgTypeErrResponse
-	wsMsgTypeCreateLobbyRequest
+	wsMsgTypePugCreateLobbyRequest  = 1000
+	wsMsgTypePugCreateLobbyResponse = 1001
+	wsMsgTypePugLeaveLobbyRequest   = 1002
+	wsMsgTypePugLeaveLobbyResponse  = 1003
+	wsMsgTypePugJoinLobbyRequest    = 1004
+	wsMsgTypePugJoinLobbyResponse   = 1005
+	wsMsgTypePugUserMessageRequest  = 1006
+	wsMsgTypePugUserMessageResponse = 1007
+
+	wsMsgTypePugLobbyListStatesRequest  = 1008
+	wsMsgTypePugLobbyListStatesResponse = 1009
+
+	// Quickplay
+	wsMsgTypeQPCreateLobbyRequest  = 2000
+	wsMsgTypeQPCreateLobbyResponse = 2001
+	wsMsgTypeQPLeaveLobbyRequest   = 2002
+	wsMsgTypeQPLeaveLobbyResponse  = 2003
+	wsMsgTypeQPJoinLobbyRequest    = 2004
+	wsMsgTypeQPJoinLobbyResponse   = 2005
+	wsMsgTypeQPUserMessageRequest  = 2006
+	wsMsgTypeQPUserMessageResponse = 2007
+
+	wsMsgTypeErrResponse = 10000
 )
 
 const tokenLen = 6
@@ -37,6 +55,7 @@ var (
 	ErrUnknownClient   = errors.New("Unknown client")
 	ErrEmptyLobby      = errors.New("Trying to leave empty lobby")
 	ErrLobbyNotEmpty   = errors.New("Lobby is not empty")
+	ErrInvalidHandler  = errors.New("Invalid handler")
 )
 
 type LobbyType int
@@ -48,20 +67,30 @@ const (
 
 // LobbyService provides common interface for interacting with multiple lobby types
 type LobbyService interface {
+	lobbyType() LobbyType
 	join(client *wsClient) error
 	leave(client *wsClient) error
-	sendUserMessage(msg wsUserMessage)
-	broadcast(response wsBaseResponse) error
+	sendUserMessage(client *wsClient, msg lobbyUserMessageRequest)
+	broadcast(msgType wsMsgType, status bool, payload any)
 	clientCount() int
 	id() string
 }
 
 type wsClient struct {
-	send    chan wsBaseResponse
-	socket  *websocket.Conn
-	User    model.UserProfile `json:"user"`
-	ctx     context.Context
-	lobbies []LobbyService
+	sendChan chan wsValue
+	socket   *websocket.Conn
+	User     model.UserProfile `json:"user"`
+	ctx      context.Context
+	lobbies  []LobbyService
+}
+
+func (client *wsClient) currentPugLobby() (*pugLobby, bool) {
+	for _, lobby := range client.lobbies {
+		if lobby.lobbyType() == lobbyTypePug {
+			return lobby.(*pugLobby), true
+		}
+	}
+	return nil, false
 }
 
 func (client *wsClient) removeLobby(lobby LobbyService) {
@@ -73,17 +102,29 @@ func (client *wsClient) removeLobby(lobby LobbyService) {
 	}
 	client.lobbies = nl
 }
+func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
+	select {
+	case client.sendChan <- wsValue{
+		MsgType: msgType,
+		Status:  status,
+		Payload: payload,
+	}:
+	default:
+		log.Warnf("Cannot send client ws payload: channel full")
+	}
 
+}
 func newWsClient(ctx context.Context, socket *websocket.Conn, user model.UserProfile) *wsClient {
-	return &wsClient{ctx: ctx, socket: socket, User: user, send: make(chan wsBaseResponse)}
+	return &wsClient{ctx: ctx, socket: socket, User: user, sendChan: make(chan wsValue, 5)}
 }
 
 func (client *wsClient) writer() {
 	for {
 		select {
-		case payload := <-client.send:
+		case payload := <-client.sendChan:
 			if errSend := client.socket.WriteJSON(payload); errSend != nil {
 				log.WithError(errSend).Errorf("Failed to send json payload")
+				return
 			}
 			log.WithFields(log.Fields{"msg_type": payload.MsgType}).Debugf("Wrote client payload")
 		case <-client.ctx.Done():
@@ -94,54 +135,91 @@ func (client *wsClient) writer() {
 
 type wsClients []*wsClient
 
-func (clients wsClients) broadcast(payload wsBaseResponse) {
+func (clients wsClients) broadcast(msgType wsMsgType, status bool, payload any) {
 	for _, client := range clients {
-		client.send <- payload
+		client.send(msgType, status, payload)
 	}
 }
 
-type wsBaseResponse struct {
+type wsValue struct {
 	MsgType wsMsgType `json:"msg_type"`
+	Status  bool      `json:"status"`
 	Payload any       `json:"payload"`
-}
-
-type wsBasePayload struct {
-	MsgType    wsMsgType       `json:"msg_type"`
-	Payload    json.RawMessage `json:"payload"`
-	MsgSubType int             `json:"msg_sub_type"`
-}
-
-type wsCreateLobbyRequest struct {
-	LobbyType LobbyType `json:"lobby_type"`
 }
 
 type wsJoinLobbyRequest struct {
 	LobbyId string `json:"lobby_id"`
 }
 
-type wsLeaveLobbyRequest struct {
-	LobbyId string `json:"lobby_id"`
+type wsJoinLobbyResponse struct {
+	Lobby *pugLobby `json:"lobby"`
 }
 
-type wsUserMessage struct {
-	LobbyId   string `json:"lobby_id"`
-	SteamId   string `json:"steam_id"`
-	Message   string `json:"message"`
-	CreatedAt string `json:"created_at"`
+type wsPugLobbyListStatesResponse struct {
+	Lobbies []*pugLobby `json:"lobbies"`
 }
 
-type wsMsgJoinedLobbySuccess struct {
-	LobbyId string `json:"lobby_id"`
+type pugUserMessageResponse struct {
+	User      model.UserProfile `json:"user"`
+	Message   string            `json:"message"`
+	CreatedAt time.Time         `json:"created_at"`
+}
+type lobbyUserMessageRequest struct {
+	Message string `json:"message"`
 }
 
 type wsMsgErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type wsBroadcastFn func(msgType wsMsgType, status bool, payload any)
+
+type wsRequestHandler func(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error
+
 type wsConnectionManager struct {
 	*sync.RWMutex
 	connections wsClients
 	lobbies     map[string]LobbyService
+	handlers    map[wsMsgType]wsRequestHandler
+}
+
+func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
+	lobbies := []*pugLobby{}
+	cm.RLock()
+	for _, l := range cm.lobbies {
+		lobbies = append(lobbies, l.(*pugLobby))
+	}
+	cm.RUnlock()
+	return lobbies
+}
+
+func newWSConnectionManager(ctx context.Context) *wsConnectionManager {
+	wsHandlers := map[wsMsgType]wsRequestHandler{
+		wsMsgTypePugCreateLobbyRequest: createPugLobby,
+		wsMsgTypePugUserMessageRequest: sendPugUserMessage,
+		wsMsgTypePugLeaveLobbyRequest:  leavePugLobby,
+		wsMsgTypePugJoinLobbyRequest:   joinPugLobby,
+	}
+	connManager := wsConnectionManager{
+		RWMutex:     &sync.RWMutex{},
+		lobbies:     map[string]LobbyService{},
+		handlers:    wsHandlers,
+		connections: nil,
+	}
+	go func(cm *wsConnectionManager) {
+		// Send lobby state updates periodically to all clients
+		timer := time.NewTicker(time.Second * 5)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-timer.C:
+				cm.connections.broadcast(wsMsgTypePugLobbyListStatesResponse,
+					true, wsPugLobbyListStatesResponse{Lobbies: cm.pubLobbyList()})
+			}
+		}
+	}(&connManager)
+	return &connManager
 }
 
 func (cm *wsConnectionManager) findLobby(lobbyId string) (LobbyService, error) {
@@ -157,7 +235,15 @@ func (cm *wsConnectionManager) findLobby(lobbyId string) (LobbyService, error) {
 	return lobby, nil
 }
 
-func (cm *wsConnectionManager) createQPLobby(client *wsClient) (LobbyService, error) {
+type createLobbyOpts struct {
+	GameType        string `json:"game_type"`
+	GameConfig      string `json:"game_config"`
+	MapName         string `json:"map_name"`
+	Description     string `json:"description"`
+	DiscordRequired bool   `json:"discord_required"`
+}
+
+func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobbyOpts) (*pugLobby, error) {
 	cm.Lock()
 	defer cm.Unlock()
 	lobbyId := golib.RandomString(tokenLen)
@@ -165,12 +251,30 @@ func (cm *wsConnectionManager) createQPLobby(client *wsClient) (LobbyService, er
 	if found {
 		return nil, errors.New("Failed to create unique lobby")
 	}
-	lobby := newQPLobby(lobbyId, client)
+	lobby, errLobby := newPugLobby(client, lobbyId, opts)
+	if errLobby != nil {
+		return nil, errLobby
+	}
 	cm.lobbies[lobbyId] = lobby
 	log.WithFields(log.Fields{"lobby_id": lobbyId}).
-		Info("Lobby created")
+		Info("Pug lobby created")
 	return lobby, nil
 }
+
+//func (cm *wsConnectionManager) createQPLobby(client *wsClient) (LobbyService, error) {
+//	cm.Lock()
+//	defer cm.Unlock()
+//	lobbyId := golib.RandomString(tokenLen)
+//	_, found := cm.lobbies[lobbyId]
+//	if found {
+//		return nil, errors.New("Failed to create unique lobby")
+//	}
+//	lobby := newQPLobby(lobbyId, client)
+//	cm.lobbies[lobbyId] = lobby
+//	log.WithFields(log.Fields{"lobby_id": lobbyId}).
+//		Info("Lobby created")
+//	return lobby, nil
+//}
 
 func (cm *wsConnectionManager) removeLobby(lobbyId string) error {
 	cm.Lock()
@@ -190,18 +294,16 @@ func (cm *wsConnectionManager) removeLobby(lobbyId string) error {
 
 func (cm *wsConnectionManager) join(client *wsClient) error {
 	cm.Lock()
-	defer cm.Unlock()
 	cm.connections = append(cm.connections, client)
+	cm.Unlock()
 	log.WithFields(log.Fields{"steam_id": client.User.SteamID}).
 		Info("New client connection")
+	sendPugLobbyListStates(cm, client, nil)
 	return nil
 }
 
 func lobbyIdValid(lobbyId string) bool {
-	if len(lobbyId) != tokenLen {
-		return false
-	}
-	return true
+	return len(lobbyId) == tokenLen
 }
 
 func (cm *wsConnectionManager) leave(client *wsClient) error {
@@ -220,123 +322,31 @@ func (cm *wsConnectionManager) newLobbyId() string {
 	cm.RLock()
 	defer cm.RUnlock()
 	valid := false
+	loops := 0
+	const maxLoops = 100
 	var lobbyId string
-	for !valid {
+	for !valid && loops <= maxLoops {
 		lobbyId = golib.RandomString(6)
 		lobby, _ := cm.findLobby(lobbyId)
 		valid = lobby == nil
+		loops++
+	}
+	if loops >= maxLoops {
+		panic("Could not generate unique lobby id")
 	}
 	return lobbyId
 }
 
-func (cm *wsConnectionManager) handleWSMessage(client *wsClient, payload wsBasePayload) error {
-	switch payload.MsgType {
-	case wsMsgTypeLeaveLobbyRequest:
-		var req wsLeaveLobbyRequest
-		if errUnmarshal := json.Unmarshal(payload.Payload, &req); errUnmarshal != nil {
-			log.WithError(errUnmarshal).Error("Failed to unmarshal join request")
-		}
-		if !lobbyIdValid(req.LobbyId) {
-			return ErrInvalidLobbyId
-		}
-		lobby, lobbyErr := cm.findLobby(req.LobbyId)
-		if lobbyErr != nil {
-			return lobbyErr
-		}
-		if errJoin := lobby.leave(client); errJoin != nil {
-			return errJoin
-		}
-		if lobby.clientCount() == 0 {
-			cm.removeLobby(lobby.id())
-		}
-		return nil
-	case wsMsgTypeCreateLobbyRequest:
-		var req wsCreateLobbyRequest
-		if errUnmarshal := json.Unmarshal(payload.Payload, &req); errUnmarshal != nil {
-			log.WithError(errUnmarshal).Error("Failed to unmarshal join request")
-		}
-		var lobby LobbyService
-		lobbyId := cm.newLobbyId()
-		switch req.LobbyType {
-		case lobbyTypePug:
-			lobby = newPugLobby(client, lobbyId)
-		case lobbyTypeQuickPlay:
-			lobby = newQPLobby(lobbyId, client)
-		default:
-			return errors.New("Unsupported lobby type")
-		}
-		cm.Lock()
-		cm.lobbies[lobby.id()] = lobby
-		cm.Unlock()
-
-		if errJoin := lobby.join(client); errJoin != nil {
-			return errJoin
-		}
-
-		if errResp := lobby.broadcast(wsBaseResponse{
-			MsgType: wsMsgTypeJoinLobbySuccess,
-			Payload: wsMsgJoinedLobbySuccess{
-				LobbyId: lobby.id(),
-			},
-		}); errResp != nil {
-			log.WithError(errResp).
-				Error("Failed to send join lobby success response")
-		}
-		return nil
-	case wsMsgTypeJoinLobbyRequest:
-		var req wsJoinLobbyRequest
-		if errUnmarshal := json.Unmarshal(payload.Payload, &req); errUnmarshal != nil {
-			log.WithError(errUnmarshal).Error("Failed to unmarshal join request")
-		}
-		lobby, lobbyErr := cm.findLobby(req.LobbyId)
-		if lobbyErr != nil {
-			return lobbyErr
-		}
-		if errJoin := lobby.join(client); errJoin != nil {
-			return errJoin
-		}
-		if errResp := lobby.broadcast(wsBaseResponse{
-			MsgType: wsMsgTypeJoinLobbySuccess,
-			Payload: wsMsgJoinedLobbySuccess{
-				LobbyId: lobby.id(),
-			},
-		}); errResp != nil {
-			log.WithError(errResp).
-				Error("Failed to send join lobby success response")
-		}
-		return nil
-	case wsMsgTypeSendMsgRequest:
-		var userMessage wsUserMessage
-		if errUnmarshal := json.Unmarshal(payload.Payload, &userMessage); errUnmarshal != nil {
-			log.WithError(errUnmarshal).Error("Failed to unmarshal msg request")
-			return errUnmarshal
-		}
-		lobby, lobbyErr := cm.findLobby(userMessage.LobbyId)
-		if lobbyErr != nil {
-			return lobbyErr
-		}
-		lobby.sendUserMessage(userMessage)
-		return nil
-	default:
-		return errors.New("Unknown message type")
+func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType, payload json.RawMessage) error {
+	// TODO split out into map and register handlers instead of mega switch
+	handler, handlerFound := cm.handlers[msgType]
+	if !handlerFound {
+		return errors.New("Unhandled message type")
 	}
+	return handler(cm, client, payload)
 }
 
-func (cm *wsConnectionManager) createAndJoinLobby(client *wsClient) {
-	// Create and join a lobby for the user
-	lobby, lobbyErr := cm.createQPLobby(client)
-	if lobbyErr != nil {
-		log.WithError(lobbyErr).Error("Failed to create lobby")
-		return
-	}
-	if errJoin := lobby.join(client); errJoin != nil {
-		log.WithError(lobbyErr).Error("Failed to join lobby")
-		return
-	}
-	sendJoinLobbySuccess(client, lobby)
-}
-
-func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManager, user model.UserProfile) {
+func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfile) {
 	//webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
@@ -358,32 +368,42 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 
 	go client.writer()
 
-	if errJoin := cm.join(client); errJoin != nil {
+	if errJoin := web.cm.join(client); errJoin != nil {
 		log.WithError(errJoin).Error("Failed to join client pool")
 	}
 
 	defer func() {
-		if errLeave := cm.leave(client); errLeave != nil {
+		if errLeave := web.cm.leave(client); errLeave != nil {
 			log.WithError(errLeave).Errorf("Error dropping client")
 		}
 		log.WithFields(log.Fields{"steam_id": client.User.SteamID.String()}).
 			Debugf("Client disconnected")
 	}()
-
+	type wsRequest struct {
+		MsgType wsMsgType       `json:"msg_type"`
+		Status  bool            `json:"status"`
+		Payload json.RawMessage `json:"payload"`
+	}
 	for {
-		var basePayload wsBasePayload
+		var basePayload wsRequest
 		if errRead := conn.ReadJSON(&basePayload); errRead != nil {
-			log.WithError(errRead).Error("Failed to read json payload")
+			wsErr, ok := errRead.(*websocket.CloseError)
+			if !ok {
+				log.WithError(errRead).Error("Unhandled error trying to write ws payload")
+			} else {
+				switch wsErr.Code {
+				case websocket.CloseGoingAway:
+					// remove client
+				}
+			}
+			_ = web.cm.leave(client)
 			return
 		}
-		if errHandle := cm.handleWSMessage(client, basePayload); errHandle != nil {
-			log.WithError(errHandle).Error("Failed to handle message")
-			client.send <- wsBaseResponse{
-				wsMsgTypeErrResponse,
-				wsMsgErrorResponse{
-					Error: errHandle.Error(),
-				},
-			}
+		if errHandle := web.cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {
+			log.WithError(errHandle).Error("Failed to handle ws message")
+			client.send(basePayload.MsgType+1, false, wsMsgErrorResponse{
+				Error: errHandle.Error(),
+			})
 		}
 	}
 }

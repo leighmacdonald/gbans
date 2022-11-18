@@ -31,7 +31,7 @@ export const MapSelectionField = ({
     formik
 }: {
     formik: FormikState<{
-        map: string;
+        map_name: string;
     }> &
         FormikHandlers;
 }) => {
@@ -39,12 +39,15 @@ export const MapSelectionField = ({
         <FormControl fullWidth>
             <InputLabel id="map-selection-label">Map Selection</InputLabel>
             <Select<string>
+                disabled={formik.isSubmitting}
                 labelId="map-selection-label"
                 id="map-selection"
                 name={'map-selection'}
-                value={formik.values.map}
+                value={formik.values.map_name}
                 onChange={formik.handleChange}
-                error={formik.touched.map && Boolean(formik.errors.map)}
+                error={
+                    formik.touched.map_name && Boolean(formik.errors.map_name)
+                }
             >
                 {baseMaps.map((v) => (
                     <MenuItem key={`time-${v}`} value={v}>
@@ -53,7 +56,7 @@ export const MapSelectionField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.map && formik.errors.map}
+                {formik.touched.map_name && formik.errors.map_name}
             </FormHelperText>
         </FormControl>
     );

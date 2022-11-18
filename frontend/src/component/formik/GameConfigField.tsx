@@ -23,10 +23,8 @@ export const GameConfigs = [
 
 export const gameConfigValidator = yup
     .string()
-    .test(
-        'checkGameConfig',
-        'Invalid game type selection',
-        async (gameConfig) => GameConfigs.includes(gameConfig as GameConfig)
+    .test('checkGameConfig', 'Invalid game type selection', (gameConfig) =>
+        GameConfigs.includes(gameConfig as GameConfig)
     )
     .label('Select a config to use')
     .required('game config is required');
@@ -35,7 +33,7 @@ export const GameConfigField = ({
     formik
 }: {
     formik: FormikState<{
-        gameConfig: GameConfig;
+        game_config: GameConfig;
     }> &
         FormikHandlers;
 }) => {
@@ -44,15 +42,16 @@ export const GameConfigField = ({
             <InputLabel id="actionType-label">Game Config</InputLabel>
             <Select<GameConfig>
                 fullWidth
+                disabled={formik.isSubmitting}
                 label={'Game Config'}
                 labelId="gameConfig-label"
                 id="gameConfig"
                 name={'gameConfig'}
-                value={formik.values.gameConfig}
+                value={formik.values.game_config}
                 onChange={formik.handleChange}
                 error={
-                    formik.touched.gameConfig &&
-                    Boolean(formik.errors.gameConfig)
+                    formik.touched.game_config &&
+                    Boolean(formik.errors.game_config)
                 }
                 defaultValue={GameConfig.rgl}
             >
@@ -63,7 +62,7 @@ export const GameConfigField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.gameConfig && formik.errors.gameConfig}
+                {formik.touched.game_config && formik.errors.game_config}
             </FormHelperText>
         </FormControl>
     );

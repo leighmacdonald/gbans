@@ -41,6 +41,7 @@ type App struct {
 
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
+	ctx                  context.Context
 }
 
 var (
@@ -62,7 +63,7 @@ type discordPayload struct {
 	embed     *discordgo.MessageEmbed
 }
 
-func New() *App {
+func New(ctx context.Context) *App {
 	app := App{
 		logFileChan:          make(chan *LogFilePayload, 10),
 		serverStateStatus:    map[string]extra.Status{},
@@ -77,13 +78,14 @@ func New() *App {
 		serverState:          model.ServerStateCollection{},
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
+		ctx:                  ctx,
 	}
 	return &app
 }
 
 // Start is the main application entry point
-func (app *App) Start(ctx context.Context) error {
-	dbStore, dbErr := store.New(ctx, config.DB.DSN)
+func (app *App) Start() error {
+	dbStore, dbErr := store.New(app.ctx, config.DB.DSN)
 	if dbErr != nil {
 		return errors.Wrapf(dbErr, "Failed to setup store")
 	}
@@ -107,21 +109,21 @@ func (app *App) Start(ctx context.Context) error {
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		go app.initDiscord(ctx, dbStore, app.discordSendMsg)
+		go app.initDiscord(app.ctx, dbStore, app.discordSendMsg)
 	} else {
 		log.Warnf("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
-	app.initWorkers(ctx, dbStore, app.discordSendMsg, app.logFileChan, app.warningChan)
+	app.initWorkers(app.ctx, dbStore, app.discordSendMsg, app.logFileChan, app.warningChan)
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		initFilters(ctx, dbStore)
+		initFilters(app.ctx, dbStore)
 	}
 
 	// Start & block, listening on the HTTP server
-	if errHttpListen := webService.ListenAndServe(ctx); errHttpListen != nil {
+	if errHttpListen := webService.ListenAndServe(app.ctx); errHttpListen != nil {
 		return errors.Wrapf(errHttpListen, "Error shutting down service")
 	}
 	return nil
@@ -173,7 +175,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 				warnings[steamId] = append(warnings[steamId], newWarn.userWarning)
 
 				warnNotice := &discordgo.MessageEmbed{
-					URL:   fmt.Sprintf(config.ExtURL("/profiles/%d", steamId)),
+					URL:   config.ExtURL("/profiles/%d", steamId),
 					Type:  discordgo.EmbedTypeRich,
 					Title: fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[steamId]), config.General.WarningLimit),
 					Color: int(orange),
@@ -615,6 +617,7 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 	go app.steamGroupMembershipUpdater(ctx, database)
 	go app.localStatUpdater(ctx, database)
 	go app.masterServerListUpdater(ctx, database, masterUpdateFreq)
+	go app.cleanupTasks(ctx, database)
 }
 
 // UDP log sink

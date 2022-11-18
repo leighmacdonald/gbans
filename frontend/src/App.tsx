@@ -49,7 +49,6 @@ import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { PugPage } from './pug/PugPage';
-import { QuickPlayPage } from './page/QuickPlayPage';
 import { TF2StatsPage } from './page/TF2StatsPage';
 import { UserInit } from './component/UserInit';
 
@@ -231,20 +230,20 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                             </ErrorBoundary>
                                                         }
                                                     />
-                                                    <Route
-                                                        path={'/quickplay'}
-                                                        element={
-                                                            <ErrorBoundary>
-                                                                <PrivateRoute
-                                                                    permission={
-                                                                        PermissionLevel.Admin
-                                                                    }
-                                                                >
-                                                                    <QuickPlayPage />
-                                                                </PrivateRoute>
-                                                            </ErrorBoundary>
-                                                        }
-                                                    />
+                                                    {/*<Route*/}
+                                                    {/*    path={'/quickplay'}*/}
+                                                    {/*    element={*/}
+                                                    {/*        <ErrorBoundary>*/}
+                                                    {/*            <PrivateRoute*/}
+                                                    {/*                permission={*/}
+                                                    {/*                    PermissionLevel.Admin*/}
+                                                    {/*                }*/}
+                                                    {/*            >*/}
+                                                    {/*                <QuickPlayPage />*/}
+                                                    {/*            </PrivateRoute>*/}
+                                                    {/*        </ErrorBoundary>*/}
+                                                    {/*    }*/}
+                                                    {/*/>*/}
                                                     <Route
                                                         path={'/report'}
                                                         element={

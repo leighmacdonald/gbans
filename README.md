@@ -9,71 +9,70 @@
 ![Lines of Code](https://tokei.rs/b1/github/leighmacdonald/gbans)
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
-gbans is a game management system for Team Fortress 2 that incorporates a global ban system similar to
+gbans is a centralized game administration system for Team Fortress 2 that incorporates a global ban system similar to
 [sourcebans++](https://sbpp.dev) as well as some additional basic community tools like news & wikis.
-gbans was initially intended to be a more modern & secure replacement
+The project was initially only intended to be a more modern & secure replacement for sourcebans, but has evolved to
+handle more broader community aspects.
 
 ## Stability / Usage Notice
 
-While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the project on a 
-community with around 50 servers, I would not recommend non-developers use the project yet. It's still in fairly 
-major development mode and large sections are still incomplete or function but very rough. This is 
-very notable for the web frontend which we don't really use yet. Sticking with the discord command interface is the 
+While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the project on a
+community with around 50 servers, I would not recommend non-developers use the project yet. It's still in fairly
+major development mode and large sections are still incomplete or function but very rough. This is
+very notable for the web frontend which we don't really use yet. Sticking with the discord command interface is the
 best current way to interact with the system.
 
 Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
 
-## Primary differences from sourcebans++ ban functionality
-
-- No direct SQL queries across networks.
-- Game servers authenticate with the gbans server upon startup of the plugin. Subsequent requests will use the returned
-authentication token.
-- Communication over HTTPS
-- Discord bot integration for administration & announcements.
-- Built using [Go 1.18+](https://golang.org/) & [PostgreSQL](https://www.postgresql.org/). It has a built-in
-  webserver that is safe to directly expose to the internet. This means it's not necessary to setup MySQL, Nginx/Apache
-  and PHP on your server.
-
 ## Features
 
 - [ ] General
-  - [x] Multi server support
-  - [x] Global bans
-  - [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
+    - [x] Multi server support
+    - [x] Global bans & mutes
+    - [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
+    - [ ] Multi-tenant support
 - [ ] Import/Export of gbans databases
-  - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
-  - [ ] Multi-tenant support
+    - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
+    - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector) compatible player list
 - [x] Game support
-   - [x] Team Fortress 2
-- [ ] Blocking lists & types 
-  - [x] Valves source server banip config 
-  - [ ] Existing sourcebans database
-  - [x] [CIDR/IP](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) bans
-  - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json)
-  - [ ] Known VPN Networks
-  - [ ] Known non-residential addresses 
-  - [ ] Known proxies
-  - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
+    - [x] Team Fortress 2
+- [ ] Blocking lists & types
+    - [x] Valves source server banip config
+    - [ ] Existing sourcebans database
+    - [x] [CIDR/IP](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) bans
+    - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector/blob/master/staging/cfg/playerlist.official.json)
+    - [ ] Known VPN Networks
+    - [ ] Known non-residential addresses
+    - [ ] Known proxies
+    - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
 - [x] Database support
-  - [x] Postgresql w/PostGIS
+    - [x] Postgresql w/PostGIS
 - [x] Relay game logs to central service
 - [ ] SourceMod Plugin
-  - [x] Game server authentication
-  - [x] Restrict banned players from connecting
-  - [x] Restrict muted/gagged players on join
-  - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
-  - [ ] `/gb_unban` Unban a previously banned user
-  - [ ] `/gb_kick` Kick a user
-  - [x] `/gb_mod or /mod <message>` Call for a mod on discord
+    - [x] Game server authentication
+    - [x] Restrict banned players from connecting
+    - [x] Restrict muted/gagged players on join
+    - [x] Dynamically load admins/mods/reserved slots from gbans
+    - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
+    - [ ] `/gb_unban` Unban a previously banned user
+    - [ ] `/gb_kick` Kick a user
+    - [x] `/gb_mod or /mod <message>` Call for a mod on discord
 - [ ] User Interfaces
-  - [ ] CLI
-  - [x] Discord
-  - [ ] Web
+    - [ ] CLI
+    - [x] Discord
+    - [x] Web
+    - [ ] Web
+        - [x] Server Browser
+        - [x] News
+        - [x] Wiki
+        - [x] User reports
+        - [x] Ban Appeals
+        - [ ] Quick Play
+        - [ ] Pug
 
-    
 ## Docker
 
-Docker is recommended to run gbans. You can find the official docker images at 
+Docker is recommended to run gbans. You can find the official docker images at
 [dockerhub](https://hub.docker.com/repository/docker/leighmacdonald/gbans).
 
 Assuming you have created your config file and have a database setup you can run it using something

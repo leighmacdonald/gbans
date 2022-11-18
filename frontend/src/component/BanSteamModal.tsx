@@ -143,7 +143,11 @@ export const BanSteamModal = ({
                         <NoteField formik={formik} />
                     </Stack>
                 </DialogContent>
-                <ModalButtons formId={formId} setOpen={setOpen} />
+                <ModalButtons
+                    formId={formId}
+                    setOpen={setOpen}
+                    inProgress={false}
+                />
             </Dialog>
         </form>
     );

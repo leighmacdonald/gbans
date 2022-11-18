@@ -15,6 +15,10 @@ export const renderDate = (t: Date): string => {
     return format(t, 'Y-MM-dd');
 };
 
+export const renderTime = (t: Date): string => {
+    return format(t, 'HH:mm');
+};
+
 export const renderTimeDistance = (
     t1: Date | string,
     t2?: Date | string

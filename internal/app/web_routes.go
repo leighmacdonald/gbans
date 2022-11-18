@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -23,6 +22,16 @@ func prometheusHandler() gin.HandlerFunc {
 }
 
 var registered = false
+
+func ErrorHandler(logger *log.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		for _, ginErr := range c.Errors {
+			logger.Error(ginErr)
+		}
+	}
+}
 
 func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC chan *LogFilePayload) {
 	corsConfig := cors.DefaultConfig()
@@ -110,11 +119,6 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.POST("/api/server/auth", web.onSAPIPostServerAuth(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
-	wsConnections := wsConnectionManager{
-		RWMutex:     &sync.RWMutex{},
-		lobbies:     map[string]LobbyService{},
-		connections: nil,
-	}
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request
@@ -126,12 +130,13 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 		serverAuth.POST("/api/log", web.onAPIPostLog(database, logFileC))
 		serverAuth.POST("/api/sm/bans/steam/create", web.onAPIPostBanSteamCreate(database))
 	}
+
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(database, model.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
-			wsConnHandler(c.Writer, c.Request, &wsConnections, currentUserProfile(c))
+			web.wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
 
 		authed.GET("/api/current_profile", web.onAPICurrentProfile())

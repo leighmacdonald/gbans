@@ -14,8 +14,8 @@ var serveCmd = &cobra.Command{
 	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCtx := context.Background()
-		gbans := app.New()
-		if errApp := gbans.Start(rootCtx); errApp != nil {
+		gbans := app.New(rootCtx)
+		if errApp := gbans.Start(); errApp != nil {
 			log.Errorf("Application error: %v", errApp)
 		}
 	},

@@ -148,6 +148,7 @@ func (web *web) onOpenIDCallback(database store.Store) gin.HandlerFunc {
 		log.WithFields(log.Fields{
 			"sid":              sid,
 			"status":           "success",
+			"name":             person.PersonaName,
 			"permission_level": person.PermissionLevel,
 			"url":              config.ExtURL("/profile/%d", sid),
 		}).Infof("User login")
@@ -259,13 +260,15 @@ func newServerJWT(serverId int) (string, error) {
 	return signedToken, nil
 }
 
+// authMiddleware handles client authentication to the HTTP & websocket api.
+// websocket clients must pass the key as a query parameter called "token"
 func authMiddleware(database store.Store, level model.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
 	return func(ctx *gin.Context) {
 		var token string
-		if ctx.FullPath() == "/ws/quickplay" {
+		if ctx.FullPath() == "/ws" {
 			token = ctx.Query("token")
 		} else {
 			hdr := header{}

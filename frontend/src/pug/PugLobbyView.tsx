@@ -15,6 +15,13 @@ import sniperIcon from '../icons/class_sniper.png';
 import spyIcon from '../icons/class_spy.png';
 import Avatar from '@mui/material/Avatar';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { ChatView } from '../component/ChatView';
+import { usePugCtx } from './PugCtx';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { PugLobby } from './pug';
+import { Nullable } from '../util/types';
 
 const ClassBox = ({ src }: { src: string }) => {
     return (
@@ -26,11 +33,61 @@ const ClassBox = ({ src }: { src: string }) => {
     );
 };
 
-export const PugLobbyView = () => {
+const DetailRow = ({ heading, value }: { heading: string; value: string }) => {
+    return (
+        <>
+            <Typography variant={'h6'}>{heading}</Typography>
+            <Typography variant={'subtitle1'}>{value}</Typography>
+        </>
+    );
+};
+
+const LobbyDetailsView = ({ lobby }: { lobby: Nullable<PugLobby> }) => {
+    return (
+        <ContainerWithHeader title={'Lobby Settings'}>
+            {lobby ? (
+                <Stack padding={1}>
+                    <DetailRow heading={'Lobby ID'} value={lobby.lobbyId} />
+                    <DetailRow
+                        heading={'Game Mode'}
+                        value={lobby.options.game_type}
+                    />
+                    <DetailRow
+                        heading={'Rule Set'}
+                        value={lobby.options.game_config}
+                    />
+                    <DetailRow
+                        heading={'Map Name'}
+                        value={lobby.options.map_name}
+                    />
+                    <DetailRow
+                        heading={'Description'}
+                        value={
+                            lobby.options.description != ''
+                                ? lobby.options.description
+                                : 'No description'
+                        }
+                    />
+                    <DetailRow
+                        heading={'Discord Required'}
+                        value={lobby.options.discord_required ? 'Yes' : 'No'}
+                    />
+                    <DetailRow
+                        heading={'Server'}
+                        value={lobby.options.server_name}
+                    />
+                </Stack>
+            ) : (
+                <Typography variant={'subtitle1'}>No Lobby?</Typography>
+            )}
+        </ContainerWithHeader>
+    );
+};
+
+const LobbyClassSelectionView = () => {
     const { currentUser } = useCurrentUserCtx();
     return (
-        <Grid container paddingTop={3} spacing={2}>
-            <Grid item xs={12}></Grid>
+        <Grid container>
             <Grid item xs={5}>
                 <Paper>
                     <Stack spacing={1}>
@@ -78,5 +135,30 @@ export const PugLobbyView = () => {
                 </Paper>
             </Grid>
         </Grid>
+    );
+};
+
+export const PugLobbyView = () => {
+    const { messages, sendMessage, leaveLobby, lobby } = usePugCtx();
+    return (
+        <Stack spacing={2}>
+            <Grid container paddingTop={3} spacing={2}>
+                <Grid item xs={4}>
+                    <LobbyDetailsView lobby={lobby} />
+                </Grid>
+                <Grid item xs={8}>
+                    <ChatView messages={messages} sendMessage={sendMessage} />
+                </Grid>
+            </Grid>
+            {/*{'TODO Spectators'}*/}
+            <LobbyClassSelectionView />
+            <Button
+                onClick={() => {
+                    leaveLobby();
+                }}
+            >
+                Leave Pug
+            </Button>
+        </Stack>
     );
 };
