@@ -138,31 +138,32 @@ func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 		if errFilters != nil {
 			return
 		}
+		var patterns []string
 		for _, filter := range filters {
-			create := &discordgo.AutoModerationRule{
-				Name:        filter.FilterName,
-				EventType:   discordgo.AutoModerationEventMessageSend,
-				TriggerType: discordgo.AutoModerationEventTriggerKeyword,
-				TriggerMetadata: &discordgo.AutoModerationTriggerMetadata{
-					KeywordFilter: []string{"*test*"},
-				},
-				Enabled: &config.Discord.AutoModEnable,
-				Actions: []discordgo.AutoModerationAction{
-					{Type: discordgo.AutoModerationRuleActionBlockMessage},
-				},
-				ExemptChannels: &config.Discord.ModChannels,
+			for _, p := range filter.Patterns {
+				patterns = append(patterns, p.String())
 			}
-			rule, errRule := session.AutoModerationRuleCreate(config.Discord.GuildID, create)
-			if errRule != nil {
-				log.Errorf("Failed to register word filter rule: %v", errRule)
-				continue
-			}
-			filter.DiscordId = rule.ID
-			now := config.Now()
-			filter.DiscordCreatedOn = &now
-			if errSaveFilter := bot.database.SaveFilter(bot.ctx, &filter); errSaveFilter != nil {
-				log.Errorf("Failed to save discord rule id: %v", errSaveFilter)
-			}
+		}
+		if len(patterns) > 10 {
+			patterns = patterns[0:10]
+		}
+		create := &discordgo.AutoModerationRule{
+			Name:        "gbans automod",
+			EventType:   discordgo.AutoModerationEventMessageSend,
+			TriggerType: discordgo.AutoModerationEventTriggerKeyword,
+			TriggerMetadata: &discordgo.AutoModerationTriggerMetadata{
+				RegexPatterns: patterns,
+			},
+			Enabled: &config.Discord.AutoModEnable,
+			Actions: []discordgo.AutoModerationAction{
+				{Type: discordgo.AutoModerationRuleActionBlockMessage},
+			},
+			ExemptChannels: &config.Discord.ModChannels,
+			ExemptRoles:    &[]string{},
+		}
+		_, errRule := session.AutoModerationRuleCreate(config.Discord.GuildID, create)
+		if errRule != nil {
+			log.Errorf("Failed to register word filter rule: %v", errRule)
 		}
 	}
 	bot.connectedMu.Lock()

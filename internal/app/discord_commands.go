@@ -79,7 +79,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptUserIdentifier,
 		Description: "Optional SteamID in any format OR profile url to attach to a command",
-		Required:    false,
+		Required:    true,
 	}
 	optServerID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
@@ -303,6 +303,12 @@ func (bot *Discord) botRegisterSlashCommands() error {
 						optDuration,
 						optBanReason,
 						optUserIDOptional,
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        OptNote,
+							Description: "Mod only notes for the mute reason",
+							Required:    true,
+						},
 					},
 				},
 				{
@@ -319,6 +325,12 @@ func (bot *Discord) botRegisterSlashCommands() error {
 						optUserID,
 						optDuration,
 						optBanReason,
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        OptNote,
+							Description: "Mod only notes for the mute reason",
+							Required:    true,
+						},
 					},
 				},
 			},
