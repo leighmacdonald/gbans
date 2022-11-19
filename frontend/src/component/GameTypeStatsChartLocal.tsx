@@ -11,12 +11,12 @@ import {
     Legend,
     Filler
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
 import { renderDateTime } from '../util/text';
 import Container from '@mui/material/Container';
 import uniq from 'lodash-es/uniq';
 import flatten from 'lodash-es/flatten';
 import { Colors, ColorsTrans, makeChartOpts } from '../util/ui';
+import { Line } from 'react-chartjs-2';
 
 ChartJS.register(
     CategoryScale,

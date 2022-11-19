@@ -690,7 +690,7 @@ func (app *App) masterServerListUpdater(ctx context.Context, database store.Stor
 			"players":   stats.Players,
 			"bots":      stats.Bots,
 			"servers":   fmt.Sprintf("%d/%d/%d", stats.CapacityEmpty, stats.CapacityPartial, stats.CapacityFull),
-		}).Debugf("Updated master server list")
+		}).Tracef("Updated master server list")
 		return nil
 	}
 	build()

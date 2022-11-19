@@ -44,9 +44,9 @@ export const GameConfigField = ({
                 fullWidth
                 disabled={formik.isSubmitting}
                 label={'Game Config'}
-                labelId="gameConfig-label"
-                id="gameConfig"
-                name={'gameConfig'}
+                labelId="game_config-label"
+                id="game_config"
+                name={'game_config'}
                 value={formik.values.game_config}
                 onChange={formik.handleChange}
                 error={
@@ -56,7 +56,7 @@ export const GameConfigField = ({
                 defaultValue={GameConfig.rgl}
             >
                 {GameConfigs.map((v) => (
-                    <MenuItem key={`time-${v}`} value={v}>
+                    <MenuItem key={`game_config-${v}`} value={v}>
                         {v}
                     </MenuItem>
                 ))}

@@ -126,7 +126,7 @@ func (client *wsClient) writer() {
 				log.WithError(errSend).Errorf("Failed to send json payload")
 				return
 			}
-			log.WithFields(log.Fields{"msg_type": payload.MsgType}).Debugf("Wrote client payload")
+			log.WithFields(log.Fields{"msg_type": payload.MsgType}).Tracef("Wrote client payload")
 		case <-client.ctx.Done():
 			return
 		}

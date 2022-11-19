@@ -42,9 +42,9 @@ export const GameTypeField = ({
                 fullWidth
                 disabled={formik.isSubmitting}
                 label={'Game Type'}
-                labelId="gameType-label"
-                id="gameType"
-                name={'gameType'}
+                labelId="game_type-label"
+                id="game_type"
+                name={'game_type'}
                 value={formik.values.game_type}
                 onChange={formik.handleChange}
                 error={

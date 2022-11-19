@@ -27,14 +27,12 @@ export const ServerSelectionField = ({
 }) => {
     return (
         <FormControl fullWidth>
-            <InputLabel id="server-selection-label">
-                Server Selection
-            </InputLabel>
+            <InputLabel id="server_name-label">Server Selection</InputLabel>
             <Select<string>
                 disabled={formik.isSubmitting}
-                labelId="server-selection-label"
-                id="server-selection"
-                name={'server-selection'}
+                labelId="server_name-label"
+                id="server_name"
+                name={'server_name'}
                 value={formik.values.server_name}
                 onChange={formik.handleChange}
                 error={
@@ -43,7 +41,7 @@ export const ServerSelectionField = ({
                 }
             >
                 {demoServers.map((v) => (
-                    <MenuItem key={`time-${v}`} value={v}>
+                    <MenuItem key={`server_name-${v}`} value={v}>
                         {v}
                     </MenuItem>
                 ))}

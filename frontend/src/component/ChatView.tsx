@@ -54,7 +54,7 @@ export const ChatView: FC<ChatViewProps> = ({ messages, sendMessage }) => {
             return;
         }
         sendMessage(msg);
-        //setMsg('');
+        setMsg('');
     }, [msg, sendMessage]);
 
     return (
@@ -71,6 +71,12 @@ export const ChatView: FC<ChatViewProps> = ({ messages, sendMessage }) => {
                             id="outlined-basic"
                             variant="standard"
                             value={msg}
+                            onKeyDown={(evt) => {
+                                if (evt.key !== 'Enter') {
+                                    return;
+                                }
+                                onSend();
+                            }}
                             onChange={(event) => {
                                 setMsg(event.target.value);
                             }}
@@ -80,6 +86,7 @@ export const ChatView: FC<ChatViewProps> = ({ messages, sendMessage }) => {
                             variant={'text'}
                             color={'primary'}
                             onClick={onSend}
+                            disabled={msg.length === 0}
                         >
                             Send
                         </Button>

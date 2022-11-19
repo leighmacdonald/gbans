@@ -41,8 +41,8 @@ export const MapSelectionField = ({
             <Select<string>
                 disabled={formik.isSubmitting}
                 labelId="map-selection-label"
-                id="map-selection"
-                name={'map-selection'}
+                id="map_name"
+                name={'map_name'}
                 value={formik.values.map_name}
                 onChange={formik.handleChange}
                 error={
@@ -50,7 +50,7 @@ export const MapSelectionField = ({
                 }
             >
                 {baseMaps.map((v) => (
-                    <MenuItem key={`time-${v}`} value={v}>
+                    <MenuItem key={`map_name-${v}`} value={v}>
                         {v}
                     </MenuItem>
                 ))}

@@ -208,13 +208,7 @@ func (web *web) onAPIPostPingMod(database store.Store) gin.HandlerFunc {
 			})
 		}
 		for _, chanId := range config.Discord.ModChannels {
-			select {
-			case web.botSendMessageChan <- discordPayload{channelId: chanId, embed: embed}:
-			default:
-				log.Warnf("Cannot send discord payload, channel full")
-				responseErr(ctx, http.StatusInternalServerError, nil)
-				return
-			}
+			sendDiscordPayload(web.botSendMessageChan, discordPayload{channelId: chanId, embed: embed})
 		}
 		responseOK(ctx, http.StatusOK, gin.H{
 			"client":  req.Client,

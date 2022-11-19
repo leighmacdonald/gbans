@@ -121,18 +121,15 @@ export const PugPage = (): JSX.Element => {
                 case MsgType.wsMsgTypePugCreateLobbyResponse: {
                     const lobby = last.payload.lobby as PugLobby;
                     setLobby(lobby);
-                    sendFlash('success', `Joined lobby ${lobby.lobbyId}`);
                     break;
                 }
                 case MsgType.wsMsgTypePugJoinLobbyResponse: {
                     const lobby = last.payload.lobby as PugLobby;
                     setLobby(lobby);
-                    sendFlash('success', `Joined lobby ${lobby.lobbyId}`);
                     break;
                 }
                 case MsgType.wsMsgTypePugLeaveLobbyResponse: {
                     setLobby(null);
-                    sendFlash('success', `Left lobby`);
                     break;
                 }
                 case MsgType.wsMsgTypePugLobbyListStatesResponse: {

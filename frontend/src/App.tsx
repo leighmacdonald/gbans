@@ -49,7 +49,6 @@ import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { PugPage } from './pug/PugPage';
-import { TF2StatsPage } from './page/TF2StatsPage';
 import { UserInit } from './component/UserInit';
 
 export interface AppProps {
@@ -430,16 +429,6 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                             </ErrorBoundary>
                                                         }
                                                     />
-
-                                                    <Route
-                                                        path={'/global_stats'}
-                                                        element={
-                                                            <ErrorBoundary>
-                                                                <TF2StatsPage />
-                                                            </ErrorBoundary>
-                                                        }
-                                                    />
-
                                                     <Route
                                                         path={'/admin/servers'}
                                                         element={
