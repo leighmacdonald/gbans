@@ -52,7 +52,7 @@ type Discord struct {
 	botSendMessageChan chan discordPayload
 	initReadySent      bool
 	Ready              bool
-	retryCount         int
+	retryCount         int64
 	lastRetry          time.Time
 }
 
@@ -68,6 +68,7 @@ func NewDiscord(ctx context.Context, app *App, database store.Store) (*Discord, 
 		// Only update the automod on first connect
 		initReadySent: false,
 		Ready:         false,
+		retryCount:    -1,
 	}
 	bot.commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      bot.onBan,
@@ -201,8 +202,12 @@ func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) 
 	bot.connectedMu.Lock()
 	bot.connected = false
 	bot.Ready = false
+	bot.retryCount++
 	bot.connectedMu.Unlock()
 	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
+	if bot.retryCount > 0 {
+		time.Sleep(time.Duration(bot.retryCount * int64(time.Second) * 5))
+	}
 }
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {

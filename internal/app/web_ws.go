@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/mm"
 	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -17,17 +18,18 @@ import (
 type wsMsgType int
 
 const (
-	wsMsgTypePugCreateLobbyRequest  = 1000
-	wsMsgTypePugCreateLobbyResponse = 1001
-	wsMsgTypePugLeaveLobbyRequest   = 1002
-	wsMsgTypePugLeaveLobbyResponse  = 1003
-	wsMsgTypePugJoinLobbyRequest    = 1004
-	wsMsgTypePugJoinLobbyResponse   = 1005
-	wsMsgTypePugUserMessageRequest  = 1006
-	wsMsgTypePugUserMessageResponse = 1007
-
+	wsMsgTypePugCreateLobbyRequest      = 1000
+	wsMsgTypePugCreateLobbyResponse     = 1001
+	wsMsgTypePugLeaveLobbyRequest       = 1002
+	wsMsgTypePugLeaveLobbyResponse      = 1003
+	wsMsgTypePugJoinLobbyRequest        = 1004
+	wsMsgTypePugJoinLobbyResponse       = 1005
+	wsMsgTypePugUserMessageRequest      = 1006
+	wsMsgTypePugUserMessageResponse     = 1007
 	wsMsgTypePugLobbyListStatesRequest  = 1008
 	wsMsgTypePugLobbyListStatesResponse = 1009
+	wsMsgTypePugJoinSlotRequest         = 1010
+	wsMsgTypePugJoinSlotResponse        = 1011
 
 	// Quickplay
 	wsMsgTypeQPCreateLobbyRequest  = 2000
@@ -56,6 +58,7 @@ var (
 	ErrEmptyLobby      = errors.New("Trying to leave empty lobby")
 	ErrLobbyNotEmpty   = errors.New("Lobby is not empty")
 	ErrInvalidHandler  = errors.New("Invalid handler")
+	ErrSlotInvalid     = errors.New("Slot invalid")
 )
 
 type LobbyType int
@@ -69,6 +72,7 @@ const (
 type LobbyService interface {
 	lobbyType() LobbyType
 	join(client *wsClient) error
+	joinSlot(client *wsClient, slot string) error
 	leave(client *wsClient) error
 	sendUserMessage(client *wsClient, msg lobbyUserMessageRequest)
 	broadcast(msgType wsMsgType, status bool, payload any)
@@ -102,6 +106,7 @@ func (client *wsClient) removeLobby(lobby LobbyService) {
 	}
 	client.lobbies = nl
 }
+
 func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
 	select {
 	case client.sendChan <- wsValue{
@@ -114,6 +119,7 @@ func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
 	}
 
 }
+
 func newWsClient(ctx context.Context, socket *websocket.Conn, user model.UserProfile) *wsClient {
 	return &wsClient{ctx: ctx, socket: socket, User: user, sendChan: make(chan wsValue, 5)}
 }
@@ -172,7 +178,10 @@ type wsMsgErrorResponse struct {
 	Error string `json:"error"`
 }
 
-type wsBroadcastFn func(msgType wsMsgType, status bool, payload any)
+type wsJoinLobbySlotRequest struct {
+	LobbyId string `json:"lobby_id"`
+	Slot    string `json:"slot"`
+}
 
 type wsRequestHandler func(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error
 
@@ -194,16 +203,16 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 }
 
 func newWSConnectionManager(ctx context.Context) *wsConnectionManager {
-	wsHandlers := map[wsMsgType]wsRequestHandler{
-		wsMsgTypePugCreateLobbyRequest: createPugLobby,
-		wsMsgTypePugUserMessageRequest: sendPugUserMessage,
-		wsMsgTypePugLeaveLobbyRequest:  leavePugLobby,
-		wsMsgTypePugJoinLobbyRequest:   joinPugLobby,
-	}
 	connManager := wsConnectionManager{
-		RWMutex:     &sync.RWMutex{},
-		lobbies:     map[string]LobbyService{},
-		handlers:    wsHandlers,
+		RWMutex: &sync.RWMutex{},
+		lobbies: map[string]LobbyService{},
+		handlers: map[wsMsgType]wsRequestHandler{
+			wsMsgTypePugCreateLobbyRequest: createPugLobby,
+			wsMsgTypePugUserMessageRequest: sendPugUserMessage,
+			wsMsgTypePugLeaveLobbyRequest:  leavePugLobby,
+			wsMsgTypePugJoinLobbyRequest:   joinPugLobby,
+			wsMsgTypePugJoinSlotRequest:    joinPugLobbySlot,
+		},
 		connections: nil,
 	}
 	go func(cm *wsConnectionManager) {
@@ -236,11 +245,11 @@ func (cm *wsConnectionManager) findLobby(lobbyId string) (LobbyService, error) {
 }
 
 type createLobbyOpts struct {
-	GameType        string `json:"game_type"`
-	GameConfig      string `json:"game_config"`
-	MapName         string `json:"map_name"`
-	Description     string `json:"description"`
-	DiscordRequired bool   `json:"discord_required"`
+	GameType        mm.GameType   `json:"game_type"`
+	GameConfig      mm.GameConfig `json:"game_config"`
+	MapName         string        `json:"map_name"`
+	Description     string        `json:"description"`
+	DiscordRequired bool          `json:"discord_required"`
 }
 
 func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobbyOpts) (*pugLobby, error) {
@@ -319,8 +328,6 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 }
 
 func (cm *wsConnectionManager) newLobbyId() string {
-	cm.RLock()
-	defer cm.RUnlock()
 	valid := false
 	loops := 0
 	const maxLoops = 100

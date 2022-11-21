@@ -539,7 +539,7 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 				Content: "Calculating numberwang...",
 			},
 		}); errRespond != nil {
-			respErr(&response, fmt.Sprintf("Error: %session", errRespond.Error()))
+			respErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
 				log.Errorf("Failed sending error message for pre-interaction: %v", errSendInteraction)
 			}
@@ -547,7 +547,6 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 		}
 		commandCtx, cancelCommand := context.WithTimeout(bot.ctx, time.Second*30)
 		defer cancelCommand()
-
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
 			respErr(&response, errHandleCommand.Error())

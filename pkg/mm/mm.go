@@ -1,12 +1,8 @@
 package mm
 
 import (
-	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	"time"
+	"strings"
 )
 
 var (
@@ -19,64 +15,27 @@ type GameType int
 const (
 	Highlander GameType = iota
 	Sixes
+	Ultiduo
 )
 
-type Player struct {
-	SteamId        steamid.SID64
-	ClassSelection []logparse.PlayerClass
-}
+type GameConfig int
 
-type Players []*Player
+const (
+	CfgRGL GameConfig = iota
+	CfgUGC
+	CfgOzFortress
+)
 
-type Game struct {
-	CreatedOn  time.Time
-	GameType   GameType
-	MaxPlayers int
-	Players    Players
-}
-
-func (game *Game) Join(player *Player) error {
-	if fp.Contains(game.Players, player) {
-		return ErrPlayerExists
+func addTeamPrefixes(keys ...string) []string {
+	var out []string
+	for _, key := range keys {
+		for _, t := range []string{"red", "blu"} {
+			out = append(out, strings.Join([]string{t, key}, "_"))
+		}
 	}
-	game.Players = append(game.Players, player)
-	return nil
+	return out
 }
 
-func (game *Game) Leave(player *Player) error {
-	if !fp.Contains(game.Players, player) {
-		return ErrPlayerMissing
-	}
-	game.Players = fp.Remove(game.Players, player)
-	return nil
-}
-
-func (game *Game) Validate() []error {
-	// Validate the current game settings
-	return nil
-}
-
-func (game *Game) ReadyUp() []error {
-	// Make sure everyone is ready before starting match
-	return nil
-}
-
-func NewPlayer(preferredClass []logparse.PlayerClass, steamId steamid.SID64) *Player {
-	return &Player{
-		ClassSelection: preferredClass,
-		SteamId:        steamId,
-	}
-}
-
-func NewGame(gameType GameType) Game {
-	maxPlayers := 12
-	if gameType == Highlander {
-		maxPlayers = 18
-	}
-	return Game{
-		GameType:   gameType,
-		MaxPlayers: maxPlayers,
-		Players:    Players{},
-		CreatedOn:  config.Now(),
-	}
-}
+var ClassMappingKeysHL = addTeamPrefixes("scout", "soldier", "pyro", "demoman", "heavyweapons", "engineer", "medic", "sniper", "spy")
+var ClassMappingKeysSixes = addTeamPrefixes("scout_pocket", "scout_flank", "soldier_pocket", "soldier_roamer", "demoman", "medic")
+var ClassMappingKeysUltiduo = addTeamPrefixes("soldier", "medic")

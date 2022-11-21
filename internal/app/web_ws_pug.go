@@ -4,19 +4,25 @@ import (
 	"encoding/json"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/mm"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 	"sync"
 )
 
+type classMapping map[string]steamid.SID64
+
 type pugLobby struct {
 	*sync.RWMutex
-	Leader   *wsClient                `json:"leader"`
-	LobbyId  string                   `json:"lobbyId"`
-	Clients  wsClients                `json:"clients"`
-	Messages []pugUserMessageResponse `json:"messages"`
-	Options  createLobbyOpts          `json:"options"`
+	Leader    *wsClient                `json:"leader"`
+	LobbyId   string                   `json:"lobbyId"`
+	Clients   wsClients                `json:"clients"`
+	Messages  []pugUserMessageResponse `json:"messages"`
+	Options   createLobbyOpts          `json:"options"`
+	Classes   classMapping             `json:"classes"`
+	ClassKeys []string                 `json:"classKeys"`
 }
 
 func (lobby *pugLobby) lobbyType() LobbyType {
@@ -32,6 +38,14 @@ func newPugLobby(creator *wsClient, id string, opts createLobbyOpts) (*pugLobby,
 		Messages: []pugUserMessageResponse{},
 		Options:  opts,
 	}
+	switch opts.GameType {
+	case mm.Sixes:
+		lobby.ClassKeys = mm.ClassMappingKeysSixes
+	case mm.Highlander:
+		lobby.ClassKeys = mm.ClassMappingKeysHL
+	case mm.Ultiduo:
+		lobby.ClassKeys = mm.ClassMappingKeysUltiduo
+	}
 	creator.lobbies = append(creator.lobbies, lobby)
 	return lobby, nil
 }
@@ -46,6 +60,19 @@ func (lobby *pugLobby) id() string {
 	lobby.RLock()
 	defer lobby.RUnlock()
 	return lobby.LobbyId
+}
+func (lobby *pugLobby) joinSlot(client *wsClient, slot string) error {
+	lobby.Lock()
+	defer lobby.Unlock()
+	if !fp.Contains(lobby.ClassKeys, slot) {
+		return ErrSlotInvalid
+	}
+	_, found := lobby.Classes[slot]
+	if found {
+		return ErrSlotInvalid
+	}
+	lobby.Classes[slot] = client.User.SteamID
+	return nil
 }
 
 func (lobby *pugLobby) join(client *wsClient) error {
@@ -136,6 +163,7 @@ func leavePugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMe
 	}
 	return nil
 }
+
 func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
 	var req wsJoinLobbyRequest
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
@@ -150,6 +178,19 @@ func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMes
 		return errJoin
 	}
 	return nil
+}
+
+func joinPugLobbySlot(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
+	var req wsJoinLobbySlotRequest
+	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
+		log.WithError(errUnmarshal).Error("Failed to unmarshal create request")
+		return errUnmarshal
+	}
+	lobby, findErr := cm.findLobby(req.LobbyId)
+	if findErr != nil {
+		return findErr
+	}
+	return lobby.joinSlot(client, req.Slot)
 }
 
 func createPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
