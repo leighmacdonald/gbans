@@ -108,7 +108,11 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	session.AddHandler(bot.onConnect)
 	session.AddHandler(bot.onDisconnect)
 	session.AddHandler(bot.onInteractionCreate)
-	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+
+	session.Identify.Intents |= discordgo.IntentsGuildMessages
+	session.Identify.Intents |= discordgo.IntentAutoModerationExecution
+	session.Identify.Intents |= discordgo.IntentMessageContent
+	session.Identify.Intents |= discordgo.PermissionModerateMembers
 
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
@@ -132,9 +136,7 @@ func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 		bot.connectedMu.Lock()
 		bot.initReadySent = true
 		bot.connectedMu.Unlock()
-		session.Identify.Intents |= discordgo.IntentAutoModerationExecution
-		session.Identify.Intents |= discordgo.IntentMessageContent
-		session.Identify.Intents |= discordgo.PermissionModerateMembers
+
 		filters, errFilters := bot.database.GetFilters(bot.ctx)
 		if errFilters != nil {
 			return

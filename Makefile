@@ -48,7 +48,7 @@ run:
 	@go run $(GO_FLAGS) -race main.go
 
 sourcemod:
-	@./sourcemod/build/package/addons/sourcemod/scripting/spcomp -i./sourcemod/include sourcemod/gbans.sp -ogbans.smx
+	@spcomp64 sourcemod/scripting/gbans.sp -o sourcemod/plugins/gbans.smx -i$(HOME)/sdk/sourcemod-1.11.0/addons/sourcemod/scripting/include -i sourcemod/scripting/include -i $(HOME)/projects/uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/include/ -v2
 
 install:
 	@go install $(GO_FLAGS) ./...
