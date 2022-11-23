@@ -37,7 +37,7 @@ void OnPluginStart() {
     LoadTranslations("common.phrases.txt");
 
     g_host = CreateConVar("sm_gbans_host", "localhost", "Remote gbans host");
-	g_port = CreateConVar("sm_gbans_port", "6006", "Remote gbans port");
+	g_port = CreateConVar("sm_gbans_port", "6006", "Remote gbans port", _, true, 1.0, true, 65535.0);
 	g_server_name = CreateConVar("sm_gbans_server_name", "", "Short hand server name");
 	g_server_key = CreateConVar("sm_gbans_server_key", "", "GBans server key used to authenticate with the service");
     
@@ -59,6 +59,10 @@ void OnPluginStart() {
     RegAdminCmd("gb_reload", AdminCmdReload, ADMFLAG_ROOT);
     RegConsoleCmd("gb_help", CmdHelp, "Get a list of gbans commands");
 
+}
+
+public
+void OnConfigsExecuted() {
     setupSTV();
     refreshToken();
 }

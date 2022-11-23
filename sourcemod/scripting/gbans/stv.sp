@@ -1,31 +1,5 @@
 /*
-* 
-* Auto Recorder
-* http://forums.alliedmods.net/showthread.php?t=92072
-* 
-* Description:
-* Automates SourceTV recording based on player count
-* and time of day. Also allows admins to manually record.
-* 
-* Changelog
-* May 09, 2009 - v.1.0.0:
-*   [*] Initial Release
-* May 11, 2009 - v.1.1.0:
-*   [+] Added path cvar to control where demos are stored
-*   [*] Changed manual recording to override automatic recording
-*   [+] Added seconds to demo names
-* May 04, 2016 - v.1.1.1:
-*   [*] Changed demo file names to replace slashes with hyphens [ajmadsen]
-* Aug 26, 2016 - v.1.2.0:
-*   [*] Now ignores bots in the player count by default
-*   [*] The SourceTV client is now always ignored in the player count
-*   [+] Added sm_autorecord_ignorebots to control whether to ignore bots
-*   [*] Now checks the status of the server immediately when a setting is changed
-* Jun 21, 2017 - v.1.3.0:
-*   [*] Fixed minimum player count setting being off by one
-*   [*] Fixed player counting code getting out of range
-*   [*] Updated source code to the new syntax
-* 
+* Adapted from: Auto Recorder http://forums.alliedmods.net/showthread.php?t=92072
 */
 
 #include <sourcemod>
@@ -107,15 +81,13 @@ public Action Command_Record(int client, int args)
 {
 	if(g_bIsRecording)
 	{
-		ReplyToCommand(client, "[SM] SourceTV is already recording!");
+		ReplyToCommand(client, "[GB] SourceTV is already recording!");
 		return Plugin_Handled;
 	}
 
 	StartRecord();
 	g_bIsManual = true;
-
-	ReplyToCommand(client, "[SM] SourceTV is now recording...");
-
+	ReplyToCommand(client, "[GB] SourceTV is now recording...");
 	return Plugin_Handled;
 }
 
@@ -123,20 +95,16 @@ public Action Command_StopRecord(int client, int args)
 {
 	if(!g_bIsRecording)
 	{
-		ReplyToCommand(client, "[SM] SourceTV is not recording!");
+		ReplyToCommand(client, "[GB] SourceTV is not recording!");
 		return Plugin_Handled;
 	}
-
 	StopRecord();
-
 	if(g_bIsManual)
 	{
 		g_bIsManual = false;
 		CheckStatus();
 	}
-
-	ReplyToCommand(client, "[SM] Stopped recording.");
-
+	ReplyToCommand(client, "[GB] Stopped recording.");
 	return Plugin_Handled;
 }
 
@@ -145,11 +113,9 @@ void CheckStatus()
 	if(g_hAutoRecord.BoolValue && !g_bIsManual)
 	{
 		int iMinClients = g_hMinPlayersStart.IntValue;
-
 		int iTimeStart = g_hTimeStart.IntValue;
 		int iTimeStop = g_hTimeStop.IntValue;
 		bool bReverseTimes = (iTimeStart > iTimeStop);
-
 		char sCurrentTime[4];
 		FormatTime(sCurrentTime, sizeof(sCurrentTime), "%H", GetTime());
 		int iCurrentTime = StringToInt(sCurrentTime);
@@ -193,6 +159,8 @@ void StartRecord()
 		char sPath[PLATFORM_MAX_PATH];
 		char sTime[16];
 		char sMap[32];
+        char serverName[128];
+        g_server_name.GetString(serverName, sizeof(serverName));
 
 		g_hDemoPath.GetString(sPath, sizeof(sPath));
 		FormatTime(sTime, sizeof(sTime), "%Y%m%d-%H%M%S", GetTime());
@@ -201,10 +169,10 @@ void StartRecord()
 		// replace slashes in map path name with dashes, to prevent fail on workshop maps
 		ReplaceString(sMap, sizeof(sMap), "/", "-", false);		
 
-		ServerCommand("tv_record \"%s/auto-%s-%s\"", sPath, sTime, sMap);
+		ServerCommand("tv_record \"%s/%s-%s-%s\"", sPath, serverName, sTime, sMap);
 		g_bIsRecording = true;
 
-		LogMessage("Recording to auto-%s-%s.dem", sTime, sMap);
+		LogMessage("[GB] Recording to %s-%s-%s.dem", serverName, sTime, sMap);
 	}
 }
 

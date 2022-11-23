@@ -537,7 +537,6 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		log.Debugln(accessToken)
 		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: accessToken})
 	}
 }

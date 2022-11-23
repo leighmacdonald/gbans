@@ -47,7 +47,6 @@ type Discord struct {
 	ctx                context.Context
 	database           store.Store
 	connectedMu        *sync.RWMutex
-	connected          bool
 	commandHandlers    map[botCmd]botCommandHandler
 	botSendMessageChan chan discordPayload
 	initReadySent      bool
@@ -64,7 +63,6 @@ func NewDiscord(ctx context.Context, app *App, database store.Store) (*Discord, 
 		session:     nil,
 		database:    database,
 		connectedMu: &sync.RWMutex{},
-		connected:   false,
 		// Only update the automod on first connect
 		initReadySent: false,
 		Ready:         false,
@@ -98,8 +96,10 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
 	defer func() {
-		if errDisc := bot.session.Close(); errDisc != nil {
-			log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
+		if bot.session != nil {
+			if errDisc := bot.session.Close(); errDisc != nil {
+				log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
+			}
 		}
 	}()
 
@@ -194,15 +194,11 @@ func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 	if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
 		log.WithError(errUpdateStatus).Errorf("Failed to update status complex")
 	}
-	bot.connectedMu.Lock()
-	bot.connected = true
-	bot.connectedMu.Unlock()
 	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).Infof("Discord state changed")
 }
 
 func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.connectedMu.Lock()
-	bot.connected = false
 	bot.Ready = false
 	bot.retryCount++
 	bot.connectedMu.Unlock()
@@ -214,7 +210,7 @@ func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) 
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
 	bot.connectedMu.RLock()
-	if !bot.connected {
+	if !bot.Ready {
 		bot.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
@@ -235,7 +231,7 @@ func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId str
 
 func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
 	bot.connectedMu.RLock()
-	if !bot.connected {
+	if !bot.Ready {
 		bot.connectedMu.RUnlock()
 		log.Warnf("Tried to send message to disconnected client")
 		return nil
