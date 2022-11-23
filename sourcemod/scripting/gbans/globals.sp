@@ -1,3 +1,7 @@
+#if defined _gbans_globals_included
+ #endinput
+#endif
+#define _gbans_globals_included
 
 #define PLUGIN_AUTHOR "Leigh MacDonald"
 #define PLUGIN_VERSION "0.00"
@@ -32,7 +36,7 @@ ConVar g_hTimeStart = null;
 ConVar g_hTimeStop = null;
 ConVar g_hFinishMap = null;
 ConVar g_hDemoPath = null;
-
+ConVar g_hDemoPathComplete = null;
 
 char g_access_token[512];
 

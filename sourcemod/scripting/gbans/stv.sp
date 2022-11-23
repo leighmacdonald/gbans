@@ -3,6 +3,10 @@
 */
 
 #include <sourcemod>
+#include <sourcetvmanager>
+#include <tf2_stocks>
+#include <json>
+#include "globals.sp"
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -25,6 +29,13 @@ public void setupSTV()
 		InitDirectory(sPath);
 	}
 
+	char sPathComplete[PLATFORM_MAX_PATH];
+	g_hDemoPathComplete.GetString(sPathComplete, sizeof(sPathComplete));
+	if(!DirExists(sPathComplete))
+	{
+		InitDirectory(sPathComplete);
+	}
+
 	g_hMinPlayersStart.AddChangeHook(OnConVarChanged);
 	g_hIgnoreBots.AddChangeHook(OnConVarChanged);
 	g_hTimeStart.AddChangeHook(OnConVarChanged);
@@ -39,7 +50,7 @@ public void setupSTV()
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] newValue)
 {
-	if(convar == g_hDemoPath)
+	if(convar == g_hDemoPath || convar == g_hDemoPathComplete)
 	{
 		if(!DirExists(newValue))
 		{
@@ -74,7 +85,7 @@ public void OnClientDisconnect_Post(int client)
 public Action Timer_CheckStatus(Handle timer)
 {
 	CheckStatus();
-    return Plugin_Handled;
+	return Plugin_Handled;
 }
 
 public Action Command_Record(int client, int args)
@@ -119,7 +130,6 @@ void CheckStatus()
 		char sCurrentTime[4];
 		FormatTime(sCurrentTime, sizeof(sCurrentTime), "%H", GetTime());
 		int iCurrentTime = StringToInt(sCurrentTime);
-
 		if(GetPlayerCount() >= iMinClients && (iTimeStart < 0 || (iCurrentTime >= iTimeStart && (bReverseTimes || iCurrentTime < iTimeStop))))
 		{
 			StartRecord();
@@ -159,8 +169,8 @@ void StartRecord()
 		char sPath[PLATFORM_MAX_PATH];
 		char sTime[16];
 		char sMap[32];
-        char serverName[128];
-        g_server_name.GetString(serverName, sizeof(serverName));
+		char serverName[128];
+		g_server_name.GetString(serverName, sizeof(serverName));
 
 		g_hDemoPath.GetString(sPath, sizeof(sPath));
 		FormatTime(sTime, sizeof(sTime), "%Y%m%d-%H%M%S", GetTime());
@@ -183,6 +193,44 @@ void StopRecord()
 		ServerCommand("tv_stoprecord");
 		g_bIsRecording = false;
 	}
+}
+
+// TODO track scores for disconnected
+JSON_Object writeScores() {
+	JSON_Object root = new JSON_Object();
+	JSON_Object scores = new JSON_Object();
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i))
+		{
+			char authId[60];
+			if (!GetClientAuthId(i, AuthId_SteamID64, authId, sizeof(authId), true)) {
+				continue;
+			}
+			// Only trigger for client indexes actually in the game
+			int score = TF2_GetPlayerResourceData(i, TFResource_TotalScore);
+			scores.SetInt(authId, score);
+		}
+	}  
+	root.SetObject("scores", scores);
+	return root;
+}
+
+public void SourceTV_OnStopRecording(int instance, const char[] filename, int recordingtick) {
+	char sPieces[32][PLATFORM_MAX_PATH];
+	char outPath[PLATFORM_MAX_PATH];
+	g_hDemoPathComplete.GetString(outPath, sizeof(outPath));
+
+	int iNumPieces = ExplodeString(filename, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
+
+	Format(outPath, sizeof(outPath), "%s/%s", outPath, sPieces[iNumPieces-1]);
+
+	PrintToServer("[GB] STV Completed: %s dest: %s", filename, outPath);
+	if (!RenameFile(outPath, filename)) {
+		PrintToServer("Failed to rename completed demo file");
+		return;
+	}
+	PrintToServer("Complete demo recording: %s", outPath);
 }
 
 void InitDirectory(const char[] sDir)
