@@ -7,6 +7,8 @@
 #define PLUGIN_VERSION "0.00"
 #define PLUGIN_NAME "gbans"
 
+#define MAX_SCORES 256
+
 // clang-format off
 enum struct PlayerInfo {
     bool authed;

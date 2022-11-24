@@ -8,14 +8,15 @@ import (
 )
 
 func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := sb.Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads").
+	query, args, errQueryArgs := sb.
+		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
 	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
-		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads); errQuery != nil {
+		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
@@ -23,7 +24,8 @@ func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *mo
 
 func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	var demos []model.DemoFile
-	query, args, errQueryArgs := sb.Select("demo_id", "server_id", "title", "created_on", "size", "downloads").
+	query, args, errQueryArgs := sb.
+		Select("demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name", "archive").
 		From("demo").
 		OrderBy("created_on DESC").
 		Limit(1000).
@@ -38,7 +40,8 @@ func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error)
 	defer rows.Close()
 	for rows.Next() {
 		var demoFile model.DemoFile
-		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads); errScan != nil {
+		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
+			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive); errScan != nil {
 			return nil, Err(errQuery)
 		}
 		demos = append(demos, demoFile)
@@ -47,7 +50,7 @@ func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error)
 }
 
 func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	if demoFile.ServerID > 0 {
+	if demoFile.DemoID > 0 {
 		return database.updateDemo(ctx, demoFile)
 	} else {
 		return database.insertDemo(ctx, demoFile)
@@ -55,9 +58,11 @@ func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile)
 }
 
 func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := sb.Insert(string(tableDemo)).
-		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads").
-		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn, demoFile.Size, demoFile.Downloads).
+	query, args, errQueryArgs := sb.
+		Insert(string(tableDemo)).
+		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive").
+		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn,
+			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive).
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -72,10 +77,13 @@ func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFil
 }
 
 func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := sb.Update(string(tableDemo)).
+	query, args, errQueryArgs := sb.
+		Update(string(tableDemo)).
 		Set("title", demoFile.Title).
 		Set("size", demoFile.Size).
 		Set("downloads", demoFile.Downloads).
+		Set("map_name", demoFile.MapName).
+		Set("archive", demoFile.Archive).
 		Where(sq.Eq{"server_id": demoFile.ServerID}).
 		ToSql()
 	if errQueryArgs != nil {
@@ -89,7 +97,8 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFil
 }
 
 func (database *pgStore) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := sb.Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
+	query, args, errQueryArgs := sb.
+		Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}

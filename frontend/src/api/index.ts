@@ -7,3 +7,4 @@ export * from './report';
 export * from './stats';
 export * from './auth';
 export * from './qp';
+export * from './demo';

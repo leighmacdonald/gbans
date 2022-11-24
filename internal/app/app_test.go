@@ -59,7 +59,7 @@ func TestMain(testMain *testing.M) {
 	if config.Discord.Enabled {
 		go app.initDiscord(testCtx, dbStore, app.discordSendMsg)
 	} else {
-		log.Warnf("discord bot not enabled")
+		log.Warn("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers

@@ -23,8 +23,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"os"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -128,21 +126,19 @@ func (web *web) onAPIPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		dateStr := config.Now().Format("2006-01-02_15-04-05")
-		name := fmt.Sprintf("demo_%s_%s_%s.dem", server.ServerNameShort, dateStr, upload.MapName)
-		outDir := path.Join(config.General.DemoRootPath, server.ServerNameShort, config.Now().Format("2006-01-02"))
-		if errMkDir := os.MkdirAll(outDir, 0775); errMkDir != nil {
-			log.Errorf("Failed to create demo dir: %v", errMkDir)
+		newDemo := model.DemoFile{
+			ServerID:  server.ServerID,
+			Title:     upload.DemoName,
+			Data:      rawDemo,
+			CreatedOn: config.Now(),
+			MapName:   upload.MapName,
+		}
+		if errSave := database.SaveDemo(ctx, &newDemo); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.WithError(errSave).Error("Failed to save demo")
 			return
 		}
-		outPath := path.Join(outDir, name)
-		if errWrite := os.WriteFile(outPath, rawDemo, 0775); errWrite != nil {
-			log.Errorf("Failed to write demo: %v", errWrite)
-			responseErr(ctx, http.StatusInternalServerError, nil)
-			return
-		}
-		responseOK(ctx, http.StatusCreated, gin.H{"path": outPath})
+		responseOK(ctx, http.StatusCreated, gin.H{"demo_id": newDemo.DemoID})
 	}
 }
 
