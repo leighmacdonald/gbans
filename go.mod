@@ -20,7 +20,7 @@ require (
 	github.com/krayzpipes/cronticker v0.0.1
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.7
-	github.com/leighmacdonald/srcdsup v0.0.0-20221123092917-425fba03fdac
+	github.com/leighmacdonald/srcdsup v0.0.0-20221124080929-f7e3ce319572
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.4
 	github.com/microcosm-cc/bluemonday v1.0.21

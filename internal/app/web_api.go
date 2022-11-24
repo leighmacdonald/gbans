@@ -106,7 +106,7 @@ func (web *web) onAPIPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		if upload.ServerName == "" || upload.Body == "" || upload.MapName == "" {
+		if upload.ServerName == "" || upload.Body == "" {
 			log.WithFields(log.Fields{
 				"server_name": util.SanitizeLog(upload.ServerName),
 				"map_name":    util.SanitizeLog(upload.MapName),
@@ -126,12 +126,26 @@ func (web *web) onAPIPostDemo(database store.Store) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
+
+		// Convert string based sid to int64
+		// NOTE Should probably be sent as a string but sourcemod BigNum is ???
+		intStats := map[steamid.SID64]srcdsup.PlayerStats{}
+		for steamId, v := range upload.Scores {
+			sid64, errSid := steamid.SID64FromString(steamId)
+			if errSid != nil {
+				log.WithError(errSid).Error("Failed to parse score steam id")
+				continue
+			}
+			intStats[sid64] = v
+		}
 		newDemo := model.DemoFile{
 			ServerID:  server.ServerID,
 			Title:     upload.DemoName,
 			Data:      rawDemo,
+			Size:      int64(len(rawDemo)),
 			CreatedOn: config.Now(),
 			MapName:   upload.MapName,
+			Stats:     intStats,
 		}
 		if errSave := database.SaveDemo(ctx, &newDemo); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)

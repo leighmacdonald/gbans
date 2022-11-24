@@ -278,7 +278,7 @@ public void SourceTV_OnStopRecording(int instance, const char[] filename, int re
 	PrintToServer("[GB] Writing meta: %s", outPathMeta);
 	File outFileMeta = OpenFile(outPathMeta, "w");
 	if (outFileMeta != null) {
-		if (!WriteFileString(outFileMeta, outScore, true)) {
+		if (!WriteFileString(outFileMeta, outScore, false)) {
 			PrintToServer("[GB] Failed to open for writing: %s", outPathMeta);
 		}
 	}

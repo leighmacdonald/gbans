@@ -9,14 +9,14 @@ import (
 
 func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
 	query, args, errQueryArgs := sb.
-		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive").
+		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
 	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
-		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive); errQuery != nil {
+		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
@@ -25,7 +25,7 @@ func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *mo
 func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
 	var demos []model.DemoFile
 	query, args, errQueryArgs := sb.
-		Select("demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name", "archive").
+		Select("demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
 		OrderBy("created_on DESC").
 		Limit(1000).
@@ -41,7 +41,7 @@ func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error)
 	for rows.Next() {
 		var demoFile model.DemoFile
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
-			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive); errScan != nil {
+			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errScan != nil {
 			return nil, Err(errQuery)
 		}
 		demos = append(demos, demoFile)
@@ -60,9 +60,9 @@ func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile)
 func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Insert(string(tableDemo)).
-		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive").
+		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn,
-			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive).
+			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats).
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -84,6 +84,7 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFil
 		Set("downloads", demoFile.Downloads).
 		Set("map_name", demoFile.MapName).
 		Set("archive", demoFile.Archive).
+		Set("stats", demoFile.Stats).
 		Where(sq.Eq{"server_id": demoFile.ServerID}).
 		ToSql()
 	if errQueryArgs != nil {

@@ -848,8 +848,8 @@ github.com/leighmacdonald/golib v1.1.0 h1:VONSqNme6IG2Uzb7IJKqzM9dqtUtMikbZuKMXG
 github.com/leighmacdonald/golib v1.1.0/go.mod h1:cAKDtUY1YGAwtUtlwGUAb4Z+o62Lw5d8JkeI/6+MCQQ=
 github.com/leighmacdonald/rcon v1.0.7 h1:AEm7QanIkmbrQbClcgBe8Bp3GOt7WFHwnX4npsjnCaY=
 github.com/leighmacdonald/rcon v1.0.7/go.mod h1:p5OkjaGLwyjRKVRu39dto1zcqIVMZS/CQuLDYNnumzo=
-github.com/leighmacdonald/srcdsup v0.0.0-20221123092917-425fba03fdac h1:+fI/VBbiTWygd+hgk26FI2/ePTWPCfNX6LK/WtN5q4M=
-github.com/leighmacdonald/srcdsup v0.0.0-20221123092917-425fba03fdac/go.mod h1:gPdJsBAQdxQltmgDOZxtehOzwH3gpJvOuS3UphwUNwQ=
+github.com/leighmacdonald/srcdsup v0.0.0-20221124080929-f7e3ce319572 h1:OKWy7DQl3ZY2YoSb1SjA8/ZHcb+GfMBScKsZZqYvyAQ=
+github.com/leighmacdonald/srcdsup v0.0.0-20221124080929-f7e3ce319572/go.mod h1:gPdJsBAQdxQltmgDOZxtehOzwH3gpJvOuS3UphwUNwQ=
 github.com/leighmacdonald/steamid/v2 v2.2.0 h1:bQFV6+D3pJN9t9Yh82hIKxCiGwz0nZF5LOSW9GcoHvg=
 github.com/leighmacdonald/steamid/v2 v2.2.0/go.mod h1:/ION2ezN8XhB7yIBZhBPaD0f3kTcThcgiMRHf9DewZY=
 github.com/leighmacdonald/steamweb v0.0.4 h1:zfF7qz0lKPVhrtHFrYJ2A/ljWGv330B5nOuQDHkMhl0=
