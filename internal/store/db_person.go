@@ -30,6 +30,10 @@ func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) 
 // SavePerson will insert or update the person record
 func (database *pgStore) SavePerson(ctx context.Context, person *model.Person) error {
 	person.UpdatedOn = config.Now()
+	// FIXME
+	if person.PermissionLevel == 0 {
+		person.PermissionLevel = 10
+	}
 	if !person.IsNew {
 		return database.updatePerson(ctx, person)
 	}
