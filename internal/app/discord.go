@@ -112,7 +112,8 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
 	session.Identify.Intents |= discordgo.IntentAutoModerationExecution
 	session.Identify.Intents |= discordgo.IntentMessageContent
-	session.Identify.Intents |= discordgo.PermissionModerateMembers
+	session.Identify.Intents |= discordgo.IntentGuildMembers
+	session.Identify.Intents |= discordgo.IntentGuildPresences
 
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := session.Open(); errSessionOpen != nil {

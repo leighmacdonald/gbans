@@ -248,26 +248,31 @@ stock bool IsValidClient(int client)
 }
 
 // TODO track scores for disconnected
-JSON_Object writeScores() {
+JSON_Object writeMeta() {
 	JSON_Object root = new JSON_Object();
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		saveClientScore(i);
 	}  
 	root.SetObject("scores", g_scores);
+
+	char mapName[256];
+	GetCurrentMap(mapName, sizeof(mapName));
+	root.SetString("map_name", mapName);
+
 	return root;
 }
 
 public void SourceTV_OnStopRecording(int instance, const char[] filename, int recordingtick) {
-	char outScore[4096];
+	char outMeta[4096];
 	char sPieces[32][PLATFORM_MAX_PATH];
 	char outPath[PLATFORM_MAX_PATH];
 	char outPathMeta[PLATFORM_MAX_PATH];
 
-	JSON_Object scores = writeScores();
-	scores.Encode(outScore, sizeof(outScore));
-	PrintToServer(outScore);
-	json_cleanup_and_delete(scores);
+	JSON_Object metaData = writeMeta();
+	metaData.Encode(outMeta, sizeof(outMeta));
+	PrintToServer(outMeta);
+	json_cleanup_and_delete(metaData);
 	
 	g_hDemoPathComplete.GetString(outPath, sizeof(outPath));
 	
@@ -278,7 +283,7 @@ public void SourceTV_OnStopRecording(int instance, const char[] filename, int re
 	PrintToServer("[GB] Writing meta: %s", outPathMeta);
 	File outFileMeta = OpenFile(outPathMeta, "w");
 	if (outFileMeta != null) {
-		if (!WriteFileString(outFileMeta, outScore, false)) {
+		if (!WriteFileString(outFileMeta, outMeta, false)) {
 			PrintToServer("[GB] Failed to open for writing: %s", outPathMeta);
 		}
 	}

@@ -5,7 +5,7 @@ import { STVListVIew } from '../component/STVListVIew';
 
 export const STVPage = (): JSX.Element => {
     return (
-        <Grid container>
+        <Grid container paddingTop={3} spacing={2}>
             <Grid item xs>
                 <Paper elevation={1}>
                     <STVListVIew />

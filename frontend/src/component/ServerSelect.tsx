@@ -55,7 +55,7 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
                 {servers &&
                     servers.map((s) => (
                         <MenuItem value={s.server_id} key={s.server_id}>
-                            {s.name_a2s || s.name}
+                            {s.name_short || s.name}
                         </MenuItem>
                     ))}
             </Select>

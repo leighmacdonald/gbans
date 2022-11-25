@@ -26,9 +26,9 @@ func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *mo
 }
 
 type GetDemosOptions struct {
-	SteamId  string `json:"steamId"`
-	ServerId int    `json:"serverId"`
-	MapName  string `json:"mapName"`
+	SteamId   string `json:"steamId"`
+	ServerIds []int  `json:"serverIds"`
+	MapName   string `json:"mapName"`
 }
 
 func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error) {
@@ -41,7 +41,7 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 		OrderBy("created_on DESC").
 		Limit(1000)
 	if opts.MapName != "" {
-		qb.Where(sq.Eq{"map_name": opts.MapName})
+		qb = qb.Where(sq.Eq{"map_name": opts.MapName})
 	}
 	if opts.SteamId != "" {
 		sid64, errSid := steamid.SID64FromString(opts.SteamId)
@@ -49,10 +49,13 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 			return nil, consts.ErrInvalidSID
 		}
 		// FIXME Can this be done with normal parameters + sb?
-		qb.Where(fmt.Sprintf("stats @? '$ ? (exists (@.\"%d\"))'", sid64.Int64()))
+		qb = qb.Where(fmt.Sprintf("stats @?? '$ ?? (exists (@.\"%d\"))'", sid64.Int64()))
 	}
-	if opts.ServerId > 0 {
-		qb.Where(sq.Eq{"server_id": opts.ServerId})
+	if len(opts.ServerIds) > 0 {
+		// 0 = all
+		if opts.ServerIds[0] != 0 {
+			qb = qb.Where(sq.Eq{"d.server_id": opts.ServerIds})
+		}
 	}
 	query, args, errQueryArgs := qb.ToSql()
 	if errQueryArgs != nil {
@@ -111,7 +114,7 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFil
 		Set("map_name", demoFile.MapName).
 		Set("archive", demoFile.Archive).
 		Set("stats", demoFile.Stats).
-		Where(sq.Eq{"server_id": demoFile.ServerID}).
+		Where(sq.Eq{"demo_id": demoFile.DemoID}).
 		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)

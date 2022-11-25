@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net"
+	"sort"
 	"strings"
 	"time"
 )
@@ -20,6 +21,9 @@ func (app *App) ServerState() model.ServerStateCollection {
 	app.serverStateMu.RLock()
 	state := app.serverState
 	app.serverStateMu.RUnlock()
+	sort.Slice(state, func(i, j int) bool {
+		return state[i].NameShort < state[j].NameShort
+	})
 	return state
 }
 

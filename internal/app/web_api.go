@@ -178,6 +178,10 @@ func (web *web) onAPIGetDemoDownload(database store.Store) gin.HandlerFunc {
 		ctx.Header("Content-Transfer-Encoding", "binary")
 		ctx.Header("Content-Disposition", "attachment; filename="+demo.Title)
 		ctx.Data(http.StatusOK, "application/octet-stream", demo.Data)
+		demo.Downloads++
+		if errSave := database.SaveDemo(ctx, &demo); errSave != nil {
+			log.WithError(errSave).Error("Failed to increment download count for demo")
+		}
 	}
 }
 
@@ -591,6 +595,7 @@ func (web *web) onSAPIPostServerAuth(database store.Store) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: accessToken})
+		log.WithFields(log.Fields{"server": server.ServerNameShort}).Info("Server authenticated successfully")
 	}
 }
 
