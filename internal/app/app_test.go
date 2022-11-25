@@ -39,7 +39,7 @@ func TestMain(testMain *testing.M) {
 			log.Errorf("Error cleanly closing app: %v", errClose)
 		}
 	}()
-	app := New()
+	app := New(testCtx)
 	testDatabase = dbStore
 	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
 	if errWeb != nil {
