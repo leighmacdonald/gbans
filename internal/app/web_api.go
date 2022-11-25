@@ -156,6 +156,49 @@ func (web *web) onAPIPostDemo(database store.Store) gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPIGetDemoDownload(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		demoId, errId := getInt64Param(ctx, "demo_id")
+		if errId != nil || demoId <= 0 {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.WithError(errId).Error("Invalid demo id requested")
+			return
+		}
+		var demo model.DemoFile
+		if errGet := database.GetDemo(ctx, demoId, &demo); errGet != nil {
+			if errors.Is(errGet, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.WithError(errGet).Error("Error fetching demo")
+			return
+		}
+		ctx.Header("Content-Description", "File Transfer")
+		ctx.Header("Content-Transfer-Encoding", "binary")
+		ctx.Header("Content-Disposition", "attachment; filename="+demo.Title)
+		ctx.Data(http.StatusOK, "application/octet-stream", demo.Data)
+	}
+}
+
+func (web *web) onAPIPostDemosQuery(database store.Store) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var opts store.GetDemosOptions
+		if errBind := ctx.BindJSON(&opts); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.WithError(errBind).Error("Malformed demo query request")
+			return
+		}
+		demos, errDemos := database.GetDemos(ctx, opts)
+		if errDemos != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.WithError(errDemos).Error("Failed to query demos")
+			return
+		}
+		responseOK(ctx, http.StatusCreated, demos)
+	}
+}
+
 func (web *web) onAPIGetServerAdmins(database store.Store) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		perms, err := database.GetServerPermissions(ctx)

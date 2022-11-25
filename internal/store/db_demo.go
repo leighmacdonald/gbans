@@ -2,8 +2,11 @@ package store
 
 import (
 	"context"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,14 +25,36 @@ func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *mo
 	return nil
 }
 
-func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error) {
+type GetDemosOptions struct {
+	SteamId  string `json:"steamId"`
+	ServerId int    `json:"serverId"`
+	MapName  string `json:"mapName"`
+}
+
+func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error) {
 	var demos []model.DemoFile
-	query, args, errQueryArgs := sb.
-		Select("demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name", "archive", "stats").
-		From("demo").
+	qb := sb.
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name").
+		From("demo d").
+		LeftJoin("server s ON s.server_id = d.server_id").
 		OrderBy("created_on DESC").
-		Limit(1000).
-		ToSql()
+		Limit(1000)
+	if opts.MapName != "" {
+		qb.Where(sq.Eq{"map_name": opts.MapName})
+	}
+	if opts.SteamId != "" {
+		sid64, errSid := steamid.SID64FromString(opts.SteamId)
+		if errSid != nil {
+			return nil, consts.ErrInvalidSID
+		}
+		// FIXME Can this be done with normal parameters + sb?
+		qb.Where(fmt.Sprintf("stats @? '$ ? (exists (@.\"%d\"))'", sid64.Int64()))
+	}
+	if opts.ServerId > 0 {
+		qb.Where(sq.Eq{"server_id": opts.ServerId})
+	}
+	query, args, errQueryArgs := qb.ToSql()
 	if errQueryArgs != nil {
 		return nil, Err(errQueryArgs)
 	}
@@ -41,7 +66,8 @@ func (database *pgStore) GetDemos(ctx context.Context) ([]model.DemoFile, error)
 	for rows.Next() {
 		var demoFile model.DemoFile
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
-			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errScan != nil {
+			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
+			&demoFile.ServerNameShort, &demoFile.ServerNameLong); errScan != nil {
 			return nil, Err(errQuery)
 		}
 		demos = append(demos, demoFile)

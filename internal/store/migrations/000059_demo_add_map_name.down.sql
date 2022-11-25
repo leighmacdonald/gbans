@@ -5,4 +5,6 @@ alter table if exists demo drop column if exists created_on;
 alter table if exists demo drop column if exists archive;
 alter table if exists demo drop column if exists stats;
 
+drop index if exists demo_players_idx;
+
 COMMIT;

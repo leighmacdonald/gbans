@@ -50,6 +50,7 @@ import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
 import { PugPage } from './pug/PugPage';
 import { UserInit } from './component/UserInit';
+import { STVPage } from './page/STVPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -150,6 +151,14 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                         element={
                                                             <ErrorBoundary>
                                                                 <Servers />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/stv'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <STVPage />
                                                             </ErrorBoundary>
                                                         }
                                                     />
