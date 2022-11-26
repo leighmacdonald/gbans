@@ -268,7 +268,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					"msg":         msg,
 					"filter_id":   matchedFilter.WordID,
 					"filter_name": matchedFilter.FilterName,
-				}).Debugf("User triggered word filter")
+				}).Infof("User triggered word filter")
 
 			}
 		case <-ctx.Done():
