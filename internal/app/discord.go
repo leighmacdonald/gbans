@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -49,8 +50,7 @@ type Discord struct {
 	connectedMu        *sync.RWMutex
 	commandHandlers    map[botCmd]botCommandHandler
 	botSendMessageChan chan discordPayload
-	initReadySent      bool
-	Ready              bool
+	Connected          atomic.Bool
 	retryCount         int64
 	lastRetry          time.Time
 }
@@ -63,10 +63,8 @@ func NewDiscord(ctx context.Context, app *App, database store.Store) (*Discord, 
 		session:     nil,
 		database:    database,
 		connectedMu: &sync.RWMutex{},
-		// Only update the automod on first connect
-		initReadySent: false,
-		Ready:         false,
-		retryCount:    -1,
+		Connected:   atomic.Bool{},
+		retryCount:  -1,
 	}
 	bot.commandHandlers = map[botCmd]botCommandHandler{
 		cmdBan:      bot.onBan,
@@ -130,14 +128,7 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 
 func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
-	bot.connectedMu.RLock()
-	ready := bot.initReadySent
-	bot.connectedMu.RUnlock()
-	if !ready && config.Discord.AutoModEnable {
-		bot.connectedMu.Lock()
-		bot.initReadySent = true
-		bot.connectedMu.Unlock()
-
+	if config.Discord.AutoModEnable {
 		filters, errFilters := bot.database.GetFilters(bot.ctx)
 		if errFilters != nil {
 			return
@@ -170,9 +161,6 @@ func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 			log.Errorf("Failed to register word filter rule: %v", errRule)
 		}
 	}
-	bot.connectedMu.Lock()
-	bot.Ready = true
-	bot.connectedMu.Unlock()
 }
 
 func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -195,14 +183,13 @@ func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 	if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
 		log.WithError(errUpdateStatus).Errorf("Failed to update status complex")
 	}
+	bot.Connected.Store(true)
 	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).Infof("Discord state changed")
 }
 
 func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	bot.connectedMu.Lock()
-	bot.Ready = false
+	bot.Connected.Store(false)
 	bot.retryCount++
-	bot.connectedMu.Unlock()
 	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
 	if bot.retryCount > 0 {
 		time.Sleep(time.Duration(bot.retryCount * int64(time.Second) * 5))
@@ -210,13 +197,10 @@ func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) 
 }
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
-	bot.connectedMu.RLock()
-	if !bot.Ready {
-		bot.connectedMu.RUnlock()
-		log.Warnf("Tried to send message to disconnected client")
+	if !bot.Connected.Load() {
+		log.Errorf("Tried to send message to disconnected client")
 		return nil
 	}
-	bot.connectedMu.RUnlock()
 	if wrap {
 		msg = discordMsgWrapper + msg + discordMsgWrapper
 	}
@@ -231,13 +215,10 @@ func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId str
 }
 
 func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
-	bot.connectedMu.RLock()
-	if !bot.Ready {
-		bot.connectedMu.RUnlock()
-		log.Warnf("Tried to send message to disconnected client")
+	if !bot.Connected.Load() {
+		log.Errorf("Tried to send message edit to disconnected client")
 		return nil
 	}
-	bot.connectedMu.RUnlock()
 	edit := &discordgo.WebhookEdit{
 		Embeds:          nil,
 		AllowedMentions: nil,

@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -321,6 +322,50 @@ func (app *App) serverStateRefresher(ctx context.Context, database store.ServerS
 			}
 		}
 	}
+}
+
+func (app *App) patreonUpdater() {
+	updateTimer := time.NewTicker(time.Hour * 1)
+	var update = func() {
+		newCampaigns, errCampaigns := thirdparty.PatreonGetTiers(app.patreon)
+		if errCampaigns != nil {
+			log.WithError(errCampaigns).Errorf("Failed to refresh campaigns")
+			return
+		}
+		newPledges, newUsers, errPledges := thirdparty.PatreonGetPledges(app.patreon)
+		if errPledges != nil {
+			log.WithError(errPledges).Errorf("Failed to refresh pledges")
+			return
+		}
+		app.patreonMu.Lock()
+		app.patreonCampaigns = newCampaigns
+		app.patreonPledges = newPledges
+		app.patreonUsers = newUsers
+		app.patreonMu.Unlock()
+		cents := 0
+		totalCents := 0
+		for _, p := range newPledges {
+			cents += p.Attributes.AmountCents
+			if p.Attributes.TotalHistoricalAmountCents != nil {
+				totalCents += *p.Attributes.TotalHistoricalAmountCents
+			}
+		}
+		log.WithFields(log.Fields{
+			"campaign_count": len(newCampaigns),
+			"current_cents":  cents,
+			"total_cents":    totalCents,
+		}).Infof("Patreon Updated")
+	}
+	update()
+	for {
+		select {
+		case <-updateTimer.C:
+			update()
+		case <-app.ctx.Done():
+			return
+		}
+	}
+
 }
 
 // mapChanger watches over servers and checks for servers on maps with 0 players.

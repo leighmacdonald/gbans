@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"gopkg.in/mxpv/patreon-go.v1"
 	"math/rand"
 	"net"
 	"os"
@@ -42,6 +43,12 @@ type App struct {
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	ctx                  context.Context
+
+	patreon          *patreon.Client
+	patreonMu        *sync.RWMutex
+	patreonCampaigns []patreon.Campaign
+	patreonPledges   []patreon.Pledge
+	patreonUsers     map[string]*patreon.User
 }
 
 var (
@@ -78,6 +85,7 @@ func New(ctx context.Context) *App {
 		serverState:          model.ServerStateCollection{},
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
+		patreonMu:            &sync.RWMutex{},
 		ctx:                  ctx,
 	}
 	return &app
@@ -94,6 +102,12 @@ func (app *App) Start() error {
 			log.Errorf("Error cleanly closing app: %v", errClose)
 		}
 	}()
+
+	patreonClient, errPatreon := thirdparty.NewPatreonClient(app.ctx, dbStore)
+	if errPatreon != nil {
+		return errors.Wrapf(errPatreon, "Failed to setup patreon client")
+	}
+	app.patreon = patreonClient
 
 	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
 	if errWeb != nil {
@@ -600,7 +614,7 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 	if errParseMasterUpdateFreq != nil {
 		log.Fatalf("Failed to parse master_server_status_update_freq: %v", errParseMasterUpdateFreq)
 	}
-
+	go app.patreonUpdater()
 	go banSweeper(ctx, database)
 	go app.mapChanger(ctx, database, time.Second*300)
 	go app.serverA2SStatusUpdater(ctx, database, freq)
@@ -641,7 +655,7 @@ func (app *App) initDiscord(ctx context.Context, database store.Store, botSendMe
 				case <-ctx.Done():
 					return
 				case payload := <-botSendMessageChan:
-					if !session.Ready {
+					if !session.Connected.Load() {
 						continue
 					}
 					if errSend := session.SendEmbed(payload.channelId, payload.embed); errSend != nil {

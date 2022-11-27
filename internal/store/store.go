@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -176,5 +177,6 @@ type Store interface {
 	WikiStore
 	MediaStore
 	AuthStore
+	thirdparty.PatreonStore
 	io.Closer
 }

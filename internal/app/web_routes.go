@@ -122,6 +122,9 @@ func (web *web) setupRouter(database store.Store, engine *gin.Engine, logFileC c
 	engine.POST("/api/server/auth", web.onSAPIPostServerAuth(database))
 	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile(database))
 
+	engine.GET("/api/patreon/campaigns", web.onAPIGetPatreonCampaigns())
+	engine.GET("/api/patreon/pledges", web.onAPIGetPatreonPledges())
+
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request

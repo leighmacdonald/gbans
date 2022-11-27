@@ -2639,3 +2639,40 @@ func (web *web) onAPIGetTF2Stats(database store.StatStore) gin.HandlerFunc {
 		}
 	}
 }
+
+func (web *web) onAPIGetPatreonCampaigns() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		web.app.patreonMu.RLock()
+		campaigns := web.app.patreonCampaigns
+		web.app.patreonMu.RUnlock()
+		responseOK(ctx, http.StatusOK, campaigns)
+	}
+}
+func (web *web) onAPIGetPatreonPledges() gin.HandlerFunc {
+	// Only leak specific details
+	type basicPledge struct {
+		Name      string
+		Amount    int
+		CreatedAt time.Time
+	}
+	return func(ctx *gin.Context) {
+		web.app.patreonMu.RLock()
+		pledges := web.app.patreonPledges
+		users := web.app.patreonUsers
+		web.app.patreonMu.RUnlock()
+
+		var basic []basicPledge
+		for _, p := range pledges {
+			t0 := config.Now()
+			if p.Attributes.CreatedAt.Valid {
+				t0 = p.Attributes.CreatedAt.Time.UTC()
+			}
+			basic = append(basic, basicPledge{
+				Name:      users[p.Relationships.Patron.Data.ID].Attributes.FullName,
+				Amount:    p.Attributes.AmountCents,
+				CreatedAt: t0,
+			})
+		}
+		responseOK(ctx, http.StatusOK, pledges)
+	}
+}
