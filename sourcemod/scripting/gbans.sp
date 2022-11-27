@@ -38,10 +38,10 @@ void OnPluginStart() {
     LoadTranslations("common.phrases.txt");
 
     // Core settings
-    g_host = CreateConVar("gb_host", "localhost", "Remote gbans host");
-	g_port = CreateConVar("gb_port", "6006", "Remote gbans port", _, true, 1.0, true, 65535.0);
-	g_server_name = CreateConVar("gb_server_name", "", "Short hand server name");
-	g_server_key = CreateConVar("gb_server_key", "", "GBans server key used to authenticate with the service");
+    g_host = CreateConVar("gb_core_host", "localhost", "Remote gbans host");
+	g_port = CreateConVar("gb_core_port", "6006", "Remote gbans port", _, true, 1.0, true, 65535.0);
+	g_server_name = CreateConVar("gb_core_server_name", "", "Short hand server name");
+	g_server_key = CreateConVar("gb_core_server_key", "", "GBans server key used to authenticate with the service");
     
     // STV settings
     g_hAutoRecord = CreateConVar("gb_stv_enable", "1", "Enable automatic recording", _, true, 0.0, true, 1.0);
