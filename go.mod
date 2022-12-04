@@ -20,7 +20,7 @@ require (
 	github.com/krayzpipes/cronticker v0.0.1
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.7
-	github.com/leighmacdonald/srcdsup v0.0.0-20221124082500-00c083f52549
+	github.com/leighmacdonald/srcdsup v0.0.0-20221125023417-58782d27aca0
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.4
 	github.com/microcosm-cc/bluemonday v1.0.21
@@ -35,7 +35,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/yohcop/openid-go v1.0.0
-	golang.org/x/exp v0.0.0-20221114191408-850992195362
+	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9
 	golang.org/x/oauth2 v0.2.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
@@ -52,19 +52,19 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.12.0 // indirect
+	github.com/jackc/pgtype v1.13.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
