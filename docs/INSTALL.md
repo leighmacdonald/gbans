@@ -87,3 +87,51 @@ console. With a message like below on successful authentication with the server.
 [GB] Request to https://gbans.example.com/v1/auth finished with status code 200 in 0.01 seconds
 [GB] Successfully authenticated with gbans server
 ```
+
+
+### Discord
+
+To use discord you need to [create a discord application](https://discord.com/developers/applications). You will need the
+following values from your application:
+
+- Application ID (General -> Application ID)
+- Token  (Bot -> Token)
+- Client Secret (OAuth2 -> Client Secret)
+
+You Will also need to fetch the following ids from your discord client. You will want to enable discord developer mode 
+to be able to easily acquire these role and channel ids through your own discord client.
+
+- Your main server guild id.
+- Logging Channels IDS
+  - Public Log Channel
+  - (Private) Moderation Channel
+  - (Private) Bot Logs
+  - (Private) Report Logs
+- Moderator Roles Ids
+
+You must also set an oauth2 redirect (Oauth2 -> Redirects -> Add) to point to your own server.
+
+    https://example.com/login/discord
+
+Example configuration for discord
+
+    discord:
+      # Enable optional discord integration
+      enabled: true
+      app_id: 814566730000000000
+      app_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      guild_id: 875964612233801748
+      # Your discord bot token
+      # See: https://discord.com/developers/applications
+      token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      mod_role_ids: [333333333333333333, 4444444444444444444]
+      # People in these channels automatically have moderator privilege
+      # To find these, Right click the channel -> copy id
+      mod_channel_ids:
+        - "111111111111111111"
+      mod_log_channel_id: "111111111111111111"
+      log_channel_id: "111111111111111111"
+      public_log_channel_enable: true
+      public_log_channel_id: "222222222222222222"
+      report_log_channel_id: "111111111111111111"
+      auto_mod_enable: false
