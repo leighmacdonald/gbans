@@ -12,7 +12,7 @@ import { AdminPeople } from './page/AdminPeople';
 import { Servers } from './page/Servers';
 import { AdminServers } from './page/AdminServers';
 import { Flash } from './component/Flashes';
-import { LoginSuccess } from './page/LoginSuccess';
+import { LoginSteamSuccess } from './page/LoginSteamSuccess';
 import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
@@ -51,6 +51,7 @@ import { AdminAppeals } from './page/AdminAppeals';
 import { PugPage } from './pug/PugPage';
 import { UserInit } from './component/UserInit';
 import { STVPage } from './page/STVPage';
+import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -464,7 +465,21 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                         path={'/login/success'}
                                                         element={
                                                             <ErrorBoundary>
-                                                                <LoginSuccess />
+                                                                <LoginSteamSuccess />
+                                                            </ErrorBoundary>
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path={'/login/discord'}
+                                                        element={
+                                                            <ErrorBoundary>
+                                                                <PrivateRoute
+                                                                    permission={
+                                                                        PermissionLevel.User
+                                                                    }
+                                                                >
+                                                                    <LoginDiscordSuccess />
+                                                                </PrivateRoute>
                                                             </ErrorBoundary>
                                                         }
                                                     />

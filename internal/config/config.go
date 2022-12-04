@@ -146,6 +146,7 @@ type generalConfig struct {
 type discordConfig struct {
 	Enabled                bool     `mapstructure:"enabled"`
 	AppID                  string   `mapstructure:"app_id"`
+	AppSecret              string   `mapstructure:"app_secret"`
 	Token                  string   `mapstructure:"token"`
 	ModRoleIDs             []string `mapstructure:"mod_role_ids"`
 	GuildID                string   `mapstructure:"guild_id"`
@@ -319,6 +320,7 @@ var defaultConfig = map[string]any{
 	"filter.external_source":                   []string{},
 	"discord.enabled":                          false,
 	"discord.app_id":                           0,
+	"discord.app_secret":                       "",
 	"discord.token":                            "",
 	"discord.mod_role_ids":                     []string{},
 	"discord.perms":                            125958,

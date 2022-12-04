@@ -80,6 +80,14 @@ export const parseJwt = (token: string) => {
     return JSON.parse(payload.toString());
 };
 
+const baseUrl = () => {
+    let returnUrl = window.location.hostname;
+    if (window.location.port !== '') {
+        returnUrl = `${returnUrl}:${window.location.port}`;
+    }
+    return `${window.location.protocol}//${returnUrl}`;
+};
+
 export const handleOnLogin = (returnPath: string): string => {
     let returnUrl = window.location.hostname;
     if (window.location.port !== '') {
@@ -110,5 +118,17 @@ export const handleOnLogin = (returnPath: string): string => {
         ) +
         '&openid.identity=' +
         encodeURIComponent('http://specs.openid.net/auth/2.0/identifier_select')
+    );
+};
+
+export const discordLoginURL = () => {
+    return (
+        'https://discord.com/oauth2/authorize' +
+        '?client_id=' +
+        window.gbans.discordClientId +
+        '&redirect_uri=' +
+        encodeURIComponent(baseUrl() + '/login/discord') +
+        '&response_type=code' +
+        '&scope=identify'
     );
 };
