@@ -43,12 +43,12 @@ type App struct {
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	ctx                  context.Context
-
-	patreon          *patreon.Client
-	patreonMu        *sync.RWMutex
-	patreonCampaigns []patreon.Campaign
-	patreonPledges   []patreon.Pledge
-	patreonUsers     map[string]*patreon.User
+	store                store.Store
+	patreon              *patreon.Client
+	patreonMu            *sync.RWMutex
+	patreonCampaigns     []patreon.Campaign
+	patreonPledges       []patreon.Pledge
+	patreonUsers         map[string]*patreon.User
 }
 
 var (
@@ -102,14 +102,15 @@ func (app *App) Start() error {
 			log.Errorf("Error cleanly closing app: %v", errClose)
 		}
 	}()
-
+	app.store = dbStore
 	patreonClient, errPatreon := thirdparty.NewPatreonClient(app.ctx, dbStore)
 	if errPatreon != nil {
-		return errors.Wrapf(errPatreon, "Failed to setup patreon client")
+		log.WithError(errPatreon).Error("Failed to setup patreon client")
+	} else {
+		app.patreon = patreonClient
 	}
-	app.patreon = patreonClient
 
-	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
+	webService, errWeb := NewWeb(app)
 	if errWeb != nil {
 		return errors.Wrapf(errWeb, "Failed to setup web")
 	}
@@ -218,10 +219,10 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					switch config.General.WarningExceededAction {
 					case config.Gag:
 						banSteam.BanType = model.NoComm
-						errBan = app.BanSteam(ctx, database, &banSteam, botSendMessageChan)
+						errBan = app.BanSteam(ctx, database, &banSteam)
 					case config.Ban:
 						banSteam.BanType = model.Banned
-						errBan = app.BanSteam(ctx, database, &banSteam, botSendMessageChan)
+						errBan = app.BanSteam(ctx, database, &banSteam)
 					case config.Kick:
 						var playerInfo model.PlayerInfo
 						errBan = app.Kick(ctx, database, model.System, model.StringSID(steamId.String()),
@@ -249,7 +250,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					addFieldsSteamID(warnNotice, steamId)
 					addField(warnNotice, "message", newWarn.Message)
 				}
-				sendDiscordPayload(app.discordSendMsg, discordPayload{
+				app.sendDiscordPayload(discordPayload{
 					channelId: config.Discord.ModLogChannelId,
 					embed:     warnNotice,
 				})
@@ -632,6 +633,7 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 	go app.localStatUpdater(ctx, database)
 	go app.masterServerListUpdater(ctx, database, masterUpdateFreq)
 	go app.cleanupTasks(ctx, database)
+	go app.showReportMeta(ctx, database)
 }
 
 // UDP log sink
@@ -664,8 +666,8 @@ func (app *App) initDiscord(ctx context.Context, database store.Store, botSendMe
 				}
 			}
 		}()
-		l := log.StandardLogger()
-		l.AddHook(NewDiscordLogHook(botSendMessageChan))
+		//l := log.StandardLogger()
+		//l.AddHook(NewDiscordLogHook(botSendMessageChan))
 		if errSessionStart := session.Start(ctx, config.Discord.Token); errSessionStart != nil {
 			log.Errorf("discord returned error: %v", errSessionStart)
 		}

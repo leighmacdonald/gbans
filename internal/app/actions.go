@@ -18,10 +18,14 @@ import (
 	"time"
 )
 
-func sendDiscordPayload(outChannel chan discordPayload, payload discordPayload) {
+func (app *App) sendDiscordPayload(payload discordPayload) {
+	log.WithFields(log.Fields{
+		"channel": payload.channelId,
+		"enabled": config.Discord.PublicLogChannelEnable,
+	}).Tracef("Sending discord payload")
 	if config.Discord.PublicLogChannelEnable {
 		select {
-		case outChannel <- payload:
+		case app.discordSendMsg <- payload:
 		default:
 			log.Warnf("Cannot send discord payload, channel full")
 		}
@@ -37,7 +41,7 @@ func (app *App) Kick(ctx context.Context, database store.Store, origin model.Ori
 	}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errFind := app.Find(ctx, database, target, "", &foundPI); errFind != nil {
+	if errFind := app.Find(ctx, target, "", &foundPI); errFind != nil {
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
@@ -58,7 +62,7 @@ func (app *App) Kick(ctx context.Context, database store.Store, origin model.Ori
 }
 
 // Silence will gag & mute a player
-func (app *App) Silence(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
+func (app *App) Silence(ctx context.Context, origin model.Origin, target model.StringSID, author model.StringSID,
 	reason model.Reason, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
@@ -66,7 +70,7 @@ func (app *App) Silence(ctx context.Context, database store.Store, origin model.
 	}
 	// kick the user if they currently are playing on a server
 	var foundPI model.PlayerInfo
-	if errFind := app.Find(ctx, database, target, "", &foundPI); errFind != nil {
+	if errFind := app.Find(ctx, target, "", &foundPI); errFind != nil {
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
@@ -95,16 +99,16 @@ func (app *App) Silence(ctx context.Context, database store.Store, origin model.
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
-func (app *App) SetSteam(ctx context.Context, database store.Store, sid64 steamid.SID64, discordId string) error {
+func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error {
 	newPerson := model.NewPerson(sid64)
-	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
+	if errGetPerson := app.store.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
 	if (newPerson.DiscordID) != "" {
 		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
 	}
 	newPerson.DiscordID = discordId
-	if errSavePerson := database.SavePerson(ctx, &newPerson); errSavePerson != nil {
+	if errSavePerson := app.store.SavePerson(ctx, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
 	log.WithFields(log.Fields{"sid64": sid64, "discordId": discordId}).Infof("Discord steamid set")
@@ -112,9 +116,9 @@ func (app *App) SetSteam(ctx context.Context, database store.Store, sid64 steami
 }
 
 // Say is used to send a message to the server via sm_say
-func (app *App) Say(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
+func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string, message string) error {
 	var server model.Server
-	if errGetServer := database.GetServerByName(ctx, serverName, &server); errGetServer != nil {
+	if errGetServer := app.store.GetServerByName(ctx, serverName, &server); errGetServer != nil {
 		return errors.Errorf("Failed to fetch server: %s", serverName)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, message)
@@ -132,19 +136,19 @@ func (app *App) Say(ctx context.Context, database store.Store, author steamid.SI
 }
 
 // CSay is used to send a centered message to the server via sm_csay
-func (app *App) CSay(ctx context.Context, database store.Store, author steamid.SID64, serverName string, message string) error {
+func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName string, message string) error {
 	var (
 		servers []model.Server
 		err     error
 	)
 	if serverName == "*" {
-		servers, err = database.GetServers(ctx, false)
+		servers, err = app.store.GetServers(ctx, false)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to fetch servers")
 		}
 	} else {
 		var server model.Server
-		if errS := database.GetServerByName(ctx, serverName, &server); errS != nil {
+		if errS := app.store.GetServerByName(ctx, serverName, &server); errS != nil {
 			return errors.Wrapf(errS, "Failed to fetch server: %s", serverName)
 		}
 		servers = append(servers, server)
@@ -165,7 +169,7 @@ func (app *App) PSay(ctx context.Context, database store.Store, author steamid.S
 	} else {
 		var playerInfo model.PlayerInfo
 		// TODO check resp
-		_ = app.Find(ctx, database, target, "", &playerInfo)
+		_ = app.Find(ctx, target, "", &playerInfo)
 		if !playerInfo.Valid || !playerInfo.InGame {
 			return consts.ErrUnknownID
 		}

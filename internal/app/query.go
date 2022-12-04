@@ -37,7 +37,7 @@ func (app *App) ServerState() model.ServerStateCollection {
 // actively connected
 //
 // TODO cleanup this mess
-func (app *App) Find(ctx context.Context, database store.Store, playerStr model.StringSID, ip string, playerInfo *model.PlayerInfo) error {
+func (app *App) Find(ctx context.Context, playerStr model.StringSID, ip string, playerInfo *model.PlayerInfo) error {
 	var (
 		result = &model.PlayerInfo{
 			Player: &model.ServerStatePlayer{},
@@ -51,7 +51,7 @@ func (app *App) Find(ctx context.Context, database store.Store, playerStr model.
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	if ip != "" {
-		err = app.findPlayerByIP(c, database, net.ParseIP(ip), playerInfo)
+		err = app.findPlayerByIP(c, net.ParseIP(ip), playerInfo)
 		if err == nil {
 			foundSid = result.Player.SID
 			inGame = true
@@ -60,14 +60,14 @@ func (app *App) Find(ctx context.Context, database store.Store, playerStr model.
 		found := false
 		sid, errSid := steamid.StringToSID64(string(playerStr))
 		if errSid == nil && sid.Valid() {
-			if errPSID := app.findPlayerBySID(c, database, sid, playerInfo); errPSID == nil {
+			if errPSID := app.findPlayerBySID(c, sid, playerInfo); errPSID == nil {
 				foundSid = sid
 				found = true
 				inGame = true
 			}
 		}
 		if !found {
-			if err = app.findPlayerByName(c, database, string(playerStr), playerInfo); err == nil {
+			if err = app.findPlayerByName(c, string(playerStr), playerInfo); err == nil {
 				foundSid = result.Player.SID
 				inGame = true
 			}
@@ -82,12 +82,12 @@ func (app *App) Find(ctx context.Context, database store.Store, playerStr model.
 	return nil
 }
 
-func (app *App) findPlayerByName(ctx context.Context, database store.ServerStore, name string, playerInfo *model.PlayerInfo) error {
+func (app *App) findPlayerByName(ctx context.Context, name string, playerInfo *model.PlayerInfo) error {
 	for _, state := range app.ServerState() {
 		for _, player := range state.Players {
 			if strings.Contains(strings.ToLower(player.Name), strings.ToLower(name)) {
 				var server model.Server
-				if errGetServerByName := database.GetServerByName(ctx, state.NameShort, &server); errGetServerByName != nil {
+				if errGetServerByName := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServerByName != nil {
 					return errGetServerByName
 				}
 				playerInfo.Valid = true
@@ -101,12 +101,12 @@ func (app *App) findPlayerByName(ctx context.Context, database store.ServerStore
 	return consts.ErrUnknownID
 }
 
-func (app *App) findPlayerBySID(ctx context.Context, database store.ServerStore, sid steamid.SID64, playerInfo *model.PlayerInfo) error {
+func (app *App) findPlayerBySID(ctx context.Context, sid steamid.SID64, playerInfo *model.PlayerInfo) error {
 	for _, state := range app.ServerState() {
 		for _, player := range state.Players {
 			if player.SID == sid {
 				var server model.Server
-				if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
+				if errGetServer := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -120,12 +120,12 @@ func (app *App) findPlayerBySID(ctx context.Context, database store.ServerStore,
 	return consts.ErrUnknownID
 }
 
-func (app *App) findPlayerByIP(ctx context.Context, database store.ServerStore, ip net.IP, playerInfo *model.PlayerInfo) error {
+func (app *App) findPlayerByIP(ctx context.Context, ip net.IP, playerInfo *model.PlayerInfo) error {
 	for _, state := range app.ServerState() {
 		for _, player := range state.Players {
 			if ip.Equal(player.IP) {
 				var server model.Server
-				if errGetServer := database.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
+				if errGetServer := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -141,13 +141,13 @@ func (app *App) findPlayerByIP(ctx context.Context, database store.ServerStore, 
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func (app *App) FindPlayerByCIDR(ctx context.Context, database store.ServerStore, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
+func (app *App) FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
 	for _, state := range app.ServerState() {
 		for _, player := range state.Players {
 			if ipNet.Contains(player.IP) {
 				localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 				var server model.Server
-				if errGetServer := database.GetServerByName(localCtx, state.NameShort, &server); errGetServer != nil {
+				if errGetServer := app.store.GetServerByName(localCtx, state.NameShort, &server); errGetServer != nil {
 					cancel()
 					return errGetServer
 				}
@@ -164,7 +164,7 @@ func (app *App) FindPlayerByCIDR(ctx context.Context, database store.ServerStore
 
 // getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
 // that it will also query the steam webapi to fetch and load the extra Player summary info
-func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore, sid steamid.SID64, ipAddr string, person *model.Person) error {
+func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore, sid steamid.SID64, person *model.Person) error {
 	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}

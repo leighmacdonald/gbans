@@ -223,8 +223,10 @@ func newWSConnectionManager(ctx context.Context) *wsConnectionManager {
 			case <-ctx.Done():
 				return
 			case <-timer.C:
+				cm.RLock()
 				cm.connections.broadcast(wsMsgTypePugLobbyListStatesResponse,
 					true, wsPugLobbyListStatesResponse{Lobbies: cm.pubLobbyList()})
+				cm.RUnlock()
 			}
 		}
 	}(&connManager)

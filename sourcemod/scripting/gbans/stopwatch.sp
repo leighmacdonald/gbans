@@ -31,7 +31,17 @@ public round_start(Handle:event, const String:name[], bool:dontBroadcast) {
     
     // wait for players, then start the tournament
     ServerCommand("mp_restartgame %d", GetConVarInt(FindConVar("mp_waitingforplayers_time")));
+
+    AllowMatch();
 	
+}
+
+stock void AllowMatch()
+{
+    for(int i = 1; i <= MaxClients; i++)
+    {
+        GameRules_SetProp("m_bTeamReady", 1, .element=i);
+    }
 }
 
 public Action:cmd_block(client, args) {

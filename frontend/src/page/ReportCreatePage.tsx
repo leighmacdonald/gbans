@@ -165,8 +165,8 @@ export const ReportCreatePage = (): JSX.Element => {
                         <ListItem>
                             <ListItemText>
                                 Once your report is posted, it will be reviewed
-                                by an Uncletopia moderator. If further details
-                                are required you will be notified about it.
+                                by a moderator. If further details are required
+                                you will be notified about it.
                             </ListItemText>
                         </ListItem>
                     </List>

@@ -114,7 +114,7 @@ func (bot *Discord) onFind(ctx context.Context, _ *discordgo.Session, i *discord
 	opts := optionMap(i.ApplicationCommandData().Options)
 	userIdentifier := model.StringSID(opts[OptUserIdentifier].StringValue())
 	playerInfo := model.NewPlayerInfo()
-	if errFind := bot.app.Find(ctx, bot.database, userIdentifier, "", &playerInfo); errFind != nil {
+	if errFind := bot.app.Find(ctx, userIdentifier, "", &playerInfo); errFind != nil {
 		return errCommandFailed
 	}
 	if !playerInfo.Valid || !playerInfo.InGame {
@@ -122,7 +122,7 @@ func (bot *Discord) onFind(ctx context.Context, _ *discordgo.Session, i *discord
 	}
 	resp := respOk(r, "Player Found")
 	person := model.NewPerson(playerInfo.SteamID)
-	if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.database, playerInfo.SteamID, "", &person); errGetProfile != nil {
+	if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.app.store, playerInfo.SteamID, &person); errGetProfile != nil {
 		return errors.New("Failed to get profile")
 	}
 	resp.Type = discordgo.EmbedTypeRich
@@ -170,7 +170,7 @@ func (bot *Discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
+	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam); errBan != nil {
 		return errBan
 	}
 	response := respOk(r, "Player muted successfully")
@@ -272,7 +272,7 @@ func (bot *Discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 			return
 		}
 		var playerInfo model.PlayerInfo
-		errFindPlayer := bot.app.FindPlayerByCIDR(ctx, bot.database, network, &playerInfo)
+		errFindPlayer := bot.app.FindPlayerByCIDR(ctx, network, &playerInfo)
 		if errFindPlayer != nil {
 			return
 		}
@@ -316,7 +316,7 @@ func (bot *Discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam, bot.botSendMessageChan); errBan != nil {
+	if errBan := bot.app.BanSteam(ctx, bot.database, &banSteam); errBan != nil {
 		if errors.Is(errBan, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
 		}
@@ -353,7 +353,7 @@ func (bot *Discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		return consts.ErrInvalidSID
 	}
 	player := model.NewPerson(sid)
-	if errGetPlayer := getOrCreateProfileBySteamID(ctx, bot.database, sid, "", &player); errGetPlayer != nil {
+	if errGetPlayer := getOrCreateProfileBySteamID(ctx, bot.database, sid, &player); errGetPlayer != nil {
 		return errCommandFailed
 	}
 	ban := model.NewBannedPerson()
@@ -404,7 +404,7 @@ func (bot *Discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		expiry = ban.Ban.ValidUntil
 		createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
 		if ban.Ban.SourceId > 0 {
-			if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.database, ban.Ban.SourceId, "", &authorProfile); errGetProfile != nil {
+			if errGetProfile := getOrCreateProfileBySteamID(ctx, bot.database, ban.Ban.SourceId, &authorProfile); errGetProfile != nil {
 				log.Errorf("Failed to load author for ban: %v", errGetProfile)
 			} else {
 				author = &discordgo.MessageEmbedAuthor{
@@ -427,7 +427,7 @@ func (bot *Discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 		color = orange
 		banStateStr = "muted"
 	}
-	addFieldInline(embed, "BanSteam/Muted", banStateStr)
+	addFieldInline(embed, "Ban/Muted", banStateStr)
 	// TODO move elsewhere
 	logData, errLogs := thirdparty.LogsTFOverview(sid)
 	if errLogs != nil {
@@ -628,7 +628,7 @@ func (bot *Discord) onSetSteam(ctx context.Context, _ *discordgo.Session,
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	errSetSteam := bot.app.SetSteam(ctx, bot.database, steamId, interaction.Member.User.ID)
+	errSetSteam := bot.app.SetSteam(ctx, steamId, interaction.Member.User.ID)
 	if errSetSteam != nil {
 		return errSetSteam
 	}
@@ -645,7 +645,7 @@ func (bot *Discord) onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	found, errUnban := bot.app.Unban(ctx, bot.database, steamId, reason, bot.botSendMessageChan)
+	found, errUnban := bot.app.Unban(ctx, steamId, reason)
 	if errUnban != nil {
 		return errUnban
 	}
@@ -664,12 +664,12 @@ func (bot *Discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, intera
 	banExisted, errUnbanASN := bot.app.UnbanASN(ctx, bot.database, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, store.ErrNoResult) {
-			return errors.New("BanSteam for ASN does not exist")
+			return errors.New("Ban for ASN does not exist")
 		}
 		return errCommandFailed
 	}
 	if !banExisted {
-		return errors.New("BanSteam for ASN does not exist")
+		return errors.New("Ban for ASN does not exist")
 	}
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
 	if errConv != nil {
@@ -721,7 +721,7 @@ func (bot *Discord) onSay(ctx context.Context, _ *discordgo.Session, interaction
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
-	if errSay := bot.app.Say(ctx, bot.database, 0, server, msg); errSay != nil {
+	if errSay := bot.app.Say(ctx, 0, server, msg); errSay != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Sent center message successfully")
@@ -735,7 +735,7 @@ func (bot *Discord) onCSay(ctx context.Context, _ *discordgo.Session, interactio
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	server := opts[OptServerIdentifier].StringValue()
 	msg := opts[OptMessage].StringValue()
-	if errCSay := bot.app.CSay(ctx, bot.database, 0, server, msg); errCSay != nil {
+	if errCSay := bot.app.CSay(ctx, 0, server, msg); errCSay != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Sent console message successfully")
@@ -788,7 +788,7 @@ func (bot *Discord) onServers(_ context.Context, _ *discordgo.Session, _ *discor
 	stats := map[string]float64{}
 	used, total := 0, 0
 	embed := respOk(response, "Current Server Populations")
-	embed.URL = "https://uncletopia.com/servers"
+	embed.URL = config.ExtURL("/servers")
 	var regionNames []string
 	for k := range state {
 		regionNames = append(regionNames, k)

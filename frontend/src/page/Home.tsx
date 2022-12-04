@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
+import VideocamIcon from '@mui/icons-material/Videocam';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -96,6 +97,18 @@ export const Home = (): JSX.Element => {
                         }}
                     >
                         TF2 Stats
+                    </Button>
+
+                    <Button
+                        startIcon={<VideocamIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/stv');
+                        }}
+                    >
+                        SourceTV
                     </Button>
 
                     <Button

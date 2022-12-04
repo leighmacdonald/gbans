@@ -12,7 +12,6 @@ import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
-import { Masonry } from '@mui/lab';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MatchHistory } from '../component/MatchHistory';
 import RestoreIcon from '@mui/icons-material/Restore';
@@ -121,31 +120,33 @@ export const Profile = (): JSX.Element => {
                         <ContainerWithHeader
                             title={'External Links'}
                             iconLeft={<LinkIcon />}
+                            align={'flex-start'}
                         >
-                            <Masonry
-                                columns={3}
-                                spacing={1}
-                                sx={{ padding: 0, margin: 0 }}
-                            >
+                            <Grid container spacing={1} paddingLeft={1}>
                                 {createExternalLinks(
                                     profile.player.steam_id
                                 ).map((l) => {
                                     return (
-                                        <Button
-                                            sx={{
-                                                padding: 1
-                                            }}
-                                            color={'secondary'}
-                                            variant={'contained'}
-                                            component={Link}
-                                            href={l.url}
-                                            key={l.url}
+                                        <Grid
+                                            item
+                                            xs={4}
+                                            key={`btn-${l.url}`}
+                                            padding={1}
                                         >
-                                            {l.title}
-                                        </Button>
+                                            <Button
+                                                fullWidth
+                                                color={'secondary'}
+                                                variant={'contained'}
+                                                component={Link}
+                                                href={l.url}
+                                                key={l.url}
+                                            >
+                                                {l.title}
+                                            </Button>
+                                        </Grid>
                                     );
                                 })}
-                            </Masonry>
+                            </Grid>
                         </ContainerWithHeader>
 
                         {currentUser.permission_level >=

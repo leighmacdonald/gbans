@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -63,6 +64,86 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context, _ store.PersonS
 			update()
 		case <-ctx.Done():
 			log.Debugf("steamGroupMembershipUpdater shutting down")
+			return
+		}
+	}
+}
+
+func (app *App) showReportMeta(ctx context.Context, database store.ReportStore) {
+	type reportMeta struct {
+		TotalOpen   int
+		TotalClosed int
+		Open        int
+		NeedInfo    int
+		Open1Day    int
+		Open3Days   int
+		OpenWeek    int
+		OpenNew     int
+	}
+	var showReports = func() {
+		reports, errReports := database.GetReports(ctx, store.AuthorQueryFilter{
+			QueryFilter: store.QueryFilter{
+				Limit: 0,
+			},
+		})
+		if errReports != nil {
+			log.Errorf("failed to fetch reports for report metadata")
+			return
+		}
+		now := config.Now()
+		var m reportMeta
+		for _, report := range reports {
+			if report.ReportStatus == model.ClosedWithAction || report.ReportStatus == model.ClosedWithoutAction {
+				m.TotalClosed++
+				continue
+			}
+			m.TotalOpen++
+			if report.ReportStatus == model.NeedMoreInfo {
+				m.NeedInfo++
+			} else {
+				m.Open++
+			}
+			if now.Sub(report.CreatedOn) > time.Hour*24*7 {
+				m.OpenWeek++
+			} else if now.Sub(report.CreatedOn) > time.Hour*24*3 {
+				m.Open3Days++
+			} else if now.Sub(report.CreatedOn) > time.Hour*24 {
+				m.Open1Day++
+			} else {
+				m.OpenNew++
+			}
+		}
+		reportNotice := &discordgo.MessageEmbed{
+			URL:   config.ExtURL("/admin/reports"),
+			Type:  discordgo.EmbedTypeRich,
+			Title: "User Report Stats",
+			Color: int(green),
+		}
+		if m.OpenWeek > 0 {
+			reportNotice.Color = int(red)
+		} else if m.Open3Days > 0 {
+			reportNotice.Color = int(orange)
+		}
+		reportNotice.Description = "Current Open Report Counts"
+
+		addFieldInline(reportNotice, "New", fmt.Sprintf("%d", m.Open1Day))
+		addFieldInline(reportNotice, "Total Open", fmt.Sprintf("%d", m.TotalOpen))
+		addFieldInline(reportNotice, "Total Closed", fmt.Sprintf("%d", m.TotalClosed))
+		addFieldInline(reportNotice, ">1 Day", fmt.Sprintf("%d", m.Open1Day))
+		addFieldInline(reportNotice, ">3 Days", fmt.Sprintf("%d", m.Open3Days))
+		addFieldInline(reportNotice, ">1 Week", fmt.Sprintf("%d", m.OpenWeek))
+		app.sendDiscordPayload(discordPayload{channelId: config.Discord.ReportLogChannelId, embed: reportNotice})
+		//sendDiscordPayload(app.discordSendMsg)
+	}
+	time.Sleep(time.Second * 2)
+	showReports()
+	ticker := time.NewTicker(time.Hour * 24)
+	for {
+		select {
+		case <-ticker.C:
+			showReports()
+		case <-ctx.Done():
+			log.Debugf("showReportMeta shutting down")
 			return
 		}
 	}
@@ -326,6 +407,9 @@ func (app *App) serverStateRefresher(ctx context.Context, database store.ServerS
 
 func (app *App) patreonUpdater() {
 	updateTimer := time.NewTicker(time.Hour * 1)
+	if app.patreon == nil {
+		return
+	}
 	var update = func() {
 		newCampaigns, errCampaigns := thirdparty.PatreonGetTiers(app.patreon)
 		if errCampaigns != nil {

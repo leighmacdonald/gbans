@@ -41,7 +41,7 @@ func TestMain(testMain *testing.M) {
 	}()
 	app := New(testCtx)
 	testDatabase = dbStore
-	webService, errWeb := NewWeb(app, dbStore, app.discordSendMsg, app.logFileChan)
+	webService, errWeb := NewWeb(app)
 	if errWeb != nil {
 		tearDown(dbStore)
 		log.Errorf("Failed to setup web: %v", errWeb)

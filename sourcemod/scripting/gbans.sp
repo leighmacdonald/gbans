@@ -25,14 +25,6 @@ public
 Plugin myinfo = {name = PLUGIN_NAME, author = PLUGIN_AUTHOR, description = "gbans game client",
                  version = PLUGIN_VERSION, url = "https://github.com/leighmacdonald/gbans"};
 
-// public Extension __ext_Connect = 
-// {
-// 	name = "Connect",
-// 	file = "connect.ext",
-// 	autoload = 1,
-// 	required = 1,
-// }
-
 public
 void OnPluginStart() {
     LoadTranslations("common.phrases.txt");

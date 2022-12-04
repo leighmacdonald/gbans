@@ -79,6 +79,9 @@ export const apiGetCurrentProfile = async () =>
 export const apiGetPeople = async () =>
     await apiCall<Person[]>(`/api/players`, 'GET');
 
+export const apiLinkDiscord = async (opts: { code: string }) =>
+    await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
+
 export interface FindProfileProps {
     query: string;
 }

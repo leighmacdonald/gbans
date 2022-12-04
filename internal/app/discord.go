@@ -191,9 +191,6 @@ func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) 
 	bot.Connected.Store(false)
 	bot.retryCount++
 	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
-	if bot.retryCount > 0 {
-		time.Sleep(time.Duration(bot.retryCount * int64(time.Second) * 5))
-	}
 }
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {

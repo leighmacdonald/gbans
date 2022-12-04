@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -22,10 +21,9 @@ type WebHandler interface {
 }
 
 type web struct {
-	app                *App
-	httpServer         *http.Server
-	botSendMessageChan chan discordPayload
-	cm                 *wsConnectionManager
+	app        *App
+	httpServer *http.Server
+	cm         *wsConnectionManager
 }
 
 func (web *web) ListenAndServe(ctx context.Context) error {
@@ -44,7 +42,7 @@ func (web *web) ListenAndServe(ctx context.Context) error {
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb(app *App, database store.Store, botSendMessageChan chan discordPayload, logFileC chan *LogFilePayload) (WebHandler, error) {
+func NewWeb(app *App) (WebHandler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -83,8 +81,8 @@ func NewWeb(app *App, database store.Store, botSendMessageChan chan discordPaylo
 		httpServer.TLSConfig = tlsVar
 	}
 	cm := newWSConnectionManager(app.ctx)
-	webHandler := web{app: app, httpServer: httpServer, botSendMessageChan: botSendMessageChan, cm: cm}
-	webHandler.setupRouter(database, router, logFileC)
+	webHandler := web{app: app, httpServer: httpServer, cm: cm}
+	webHandler.setupRouter(router)
 	return &webHandler, nil
 }
 

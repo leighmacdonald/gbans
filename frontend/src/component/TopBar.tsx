@@ -287,7 +287,7 @@ export const TopBar = () => {
                             ...tf2Fonts
                         }}
                     >
-                        Uncletopia
+                        {window.gbans.siteName || 'gbans'}
                     </Typography>
 
                     <Box
@@ -341,7 +341,7 @@ export const TopBar = () => {
                             display: { xs: 'flex', md: 'none' }
                         }}
                     >
-                        Uncletopia
+                        {window.gbans.siteName || 'gbans'}
                     </Typography>
                     <Box
                         sx={{
