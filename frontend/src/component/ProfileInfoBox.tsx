@@ -18,8 +18,9 @@ export const ProfileInfoBox = ({ profile, align }: ProfileInfoBoxProps) => {
             title={profile.player.personaname}
             iconLeft={<PregnantWomanIcon />}
             align={align}
+            marginTop={0}
         >
-            <Stack direction={'row'} spacing={3}>
+            <Stack direction={'row'} spacing={3} marginTop={0}>
                 <Avatar
                     variant={'square'}
                     src={profile.player.avatarfull}

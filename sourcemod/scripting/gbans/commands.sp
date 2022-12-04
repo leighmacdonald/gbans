@@ -114,7 +114,7 @@ Action AdminCmdBan(int clientId, int argc) {
         ReplyToCommand(clientId, "Failed to locate user: %s", targetIdStr);
         return Plugin_Handled;
     }
-    banReason reason = custom;
+    GB_BanReason reason = custom;
     if (!parseReason(reasonStr, reason)) {
         ReplyToCommand(clientId, "Failed to parse reason");
         return Plugin_Handled;
@@ -125,9 +125,9 @@ Action AdminCmdBan(int clientId, int argc) {
         return Plugin_Handled;
     }
     
-    if (!ban(clientId, targetIdx, reason, duration, banType)) {
+    if (!ban(clientId, targetIdx, reason, duration, banType, "", 0)) {
         ReplyToCommand(clientId, "Error sending ban request");
     }
-
+    
     return Plugin_Handled;
 }

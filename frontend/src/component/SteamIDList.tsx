@@ -16,7 +16,11 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
     return (
-        <ContainerWithHeader title={'Steam ID'} iconLeft={<FingerprintIcon />}>
+        <ContainerWithHeader
+            title={'Steam ID'}
+            iconLeft={<FingerprintIcon />}
+            marginTop={0}
+        >
             <List dense={true}>
                 {[
                     [steam_id.getSteamID64(), 'steam64'],

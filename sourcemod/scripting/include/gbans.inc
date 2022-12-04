@@ -29,7 +29,7 @@ public SharedPlugin __pl_gbans =
 	#endif
 };
 
-enum banReason {
+enum GB_BanReason {
 	custom            = 1,
 	external          = 2,
 	cheating          = 3,
@@ -38,7 +38,7 @@ enum banReason {
 	exploiting        = 6,
 	warningsExceeded  = 7,
 	spam              = 8,
-	language          = 9,
+	languageUsed      = 9,
 	profile           = 10,
 	itemDescriptions  = 11
 }
@@ -46,6 +46,12 @@ enum banReason {
 /**
  * Ban or Mute+Gag a client
  * 
- * 
+ * @param adminId Client idx of admin who banned, -1 for system.
+ * @param targetId Client idx of ban target
+ * @param reason Reason for the ban
+ * @param duration golang style duration string, 0 = permanent
+ * @param banType One of BSBanned (banned) or BSNoComm (Muted/Gagged)
+ * @return success status
  */
-native bool GB_BanClient(int adminId, int targetId, banReason reason, const char[] duration = "2d", int banType = BSBanned);
+native bool GB_BanClient(int adminId, int targetId, GB_BanReason reason, const char[] duration = "2d", 
+	int banType = BSBanned, const char[] demoname = "", int tick = 0);

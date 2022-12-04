@@ -1,12 +1,12 @@
 #pragma semicolon 1
 
 public
-bool parseReason(const char[] reasonStr, banReason &reason) {
+bool parseReason(const char[] reasonStr, GB_BanReason &reason) {
     int reasonInt = StringToInt(reasonStr, 10);
     if (reasonInt <= 0 || reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(itemDescriptions)) {
         return false;
     }
-    reason = view_as<banReason>(reasonInt);
+    reason = view_as<GB_BanReason>(reasonInt);
     return true;
 }
 

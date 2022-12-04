@@ -500,6 +500,7 @@ func (web *web) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 		responseOK(ctx, http.StatusCreated, banCIDR)
 	}
 }
+
 func (web *web) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	type apiBanRequest struct {
 		SourceId   model.StringSID `json:"source_id"`
@@ -510,6 +511,8 @@ func (web *web) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		ReasonText string          `json:"reason_text"`
 		Note       string          `json:"note"`
 		ReportId   int64           `json:"report_id"`
+		DemoName   string          `json:"demo_name"`
+		DemoTick   int             `json:"demo_tick"`
 	}
 	return func(ctx *gin.Context) {
 		var banRequest apiBanRequest

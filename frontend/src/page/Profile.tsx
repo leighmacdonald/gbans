@@ -22,6 +22,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import LinkIcon from '@mui/icons-material/Link';
+import Box from '@mui/material/Box';
 
 export const Profile = (): JSX.Element => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -65,16 +66,19 @@ export const Profile = (): JSX.Element => {
             <>
                 <Grid item xs={8}>
                     <Stack spacing={3}>
-                        <Stack direction={'row'} spacing={3}>
-                            <ProfileInfoBox
-                                profile={profile}
-                                align={'flex-start'}
-                            />
+                        <Stack direction={'row'} spacing={3} marginTop={0}>
+                            <Box width={'100%'}>
+                                <ProfileInfoBox
+                                    profile={profile}
+                                    align={'flex-start'}
+                                />
+                            </Box>
                             <SteamIDList steam_id={profile.player.steam_id} />
                         </Stack>
                         <ContainerWithHeader
                             title={'Steam Community Status'}
                             iconLeft={<LocalLibraryIcon />}
+                            marginTop={0}
                         >
                             <Stack
                                 direction="row"
@@ -154,6 +158,7 @@ export const Profile = (): JSX.Element => {
                             <ContainerWithHeader
                                 title={'Match History'}
                                 iconLeft={<RestoreIcon />}
+                                marginTop={0}
                             >
                                 <MatchHistory opts={matchOpts} />
                             </ContainerWithHeader>
