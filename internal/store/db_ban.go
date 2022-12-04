@@ -168,40 +168,55 @@ func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.BanSteam, 
 	return bans, nil
 }
 
-func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]model.BanSteam, error) {
+func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]model.AppealOverview, error) {
 	const query = `
-		SELECT ban_id, target_id, source_id, ban_type, reason, reason_text, note, valid_until, origin, 
-		       created_on, updated_on, deleted, CASE WHEN report_id IS NULL THEN 0 ELSE report_id END, 
-		       unban_reason_text, is_enabled, appeal_state
-		FROM ban
-		WHERE ban_id IN (WITH RECURSIVE appeals AS (
+	SELECT
+		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.origin,
+		b.created_on, b.updated_on, b.deleted, CASE WHEN b.report_id IS NULL THEN 0 ELSE report_id END,
+		b.unban_reason_text, b.is_enabled, b.appeal_state,
+		source.steam_id as source_steam_id, source.personaname as source_personaname,
+		source.avatar as source_avatar, source.avatarfull as source_avatarfull,
+		target.steam_id as target_steam_id, target.personaname as target_personaname,
+		target.avatar as target_avater, target.avatarfull as target_avatarfull
+	FROM ban b
+	LEFT JOIN person source on source.steam_id = b.source_id
+	LEFT JOIN person target on target.steam_id = b.target_id
+	WHERE ban_id IN (
+		WITH RECURSIVE appeals AS (
 			SELECT ban_id, ban_id as root_id
 			FROM ban_appeal
-			UNION ALL 
+			UNION ALL
 			SELECT ba.ban_id as ban_id, ba.ban_message_id as root_id
 			FROM ban_appeal ba JOIN appeals b ON ba.ban_message_id = b.ban_id
 			WHERE ba.deleted = false
 		)
 		SELECT ban_id
 		FROM appeals
-		GROUP BY ban_id) AND deleted = false`
+		GROUP BY ban_id
+	) AND deleted = false
+	`
 
-	var bans []model.BanSteam
+	var overviews []model.AppealOverview
 	rows, errQuery := database.Query(ctx, query)
 	if errQuery != nil {
 		return nil, errQuery
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var ban model.BanSteam
-		if errScan := rows.Scan(&ban.BanID, &ban.TargetId, &ban.SourceId, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
-			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportId, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState); errScan != nil {
+		var ao model.AppealOverview
+		if errScan := rows.Scan(
+			&ao.BanID, &ao.TargetId, &ao.SourceId, &ao.BanType,
+			&ao.Reason, &ao.ReasonText, &ao.Note, &ao.ValidUntil,
+			&ao.Origin, &ao.CreatedOn, &ao.UpdatedOn, &ao.Deleted,
+			&ao.ReportId, &ao.UnbanReasonText, &ao.IsEnabled, &ao.AppealState,
+			&ao.SourceSteamId, &ao.SourcePersonaName, &ao.SourceAvatar, &ao.SourceAvatarFull,
+			&ao.TargetSteamId, &ao.TargetPersonaName, &ao.TargetAvatar, &ao.TargetAvatarFull,
+		); errScan != nil {
 			return nil, errScan
 		}
-		bans = append(bans, ban)
+		overviews = append(overviews, ao)
 	}
-	return bans, nil
+	return overviews, nil
 }
 
 type BansQueryFilter struct {
@@ -286,15 +301,15 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilte
 
 func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]model.BanSteam, error) {
 	query := fmt.Sprintf(`
-		SELECT
-			b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, 
-			b.origin, b.valid_until, b.created_on, b.updated_on, b.deleted, 
-			case WHEN b.report_id is null THEN 0 ELSE b.report_id END, b.unban_reason_text,
-			b.is_enabled, b.appeal_state
-		FROM ban b
-		WHERE updated_on < $1 AND deleted = false
-		LIMIT %d
-		OFFSET %d`, filter.Limit, filter.Offset)
+	SELECT
+	b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note,
+	b.origin, b.valid_until, b.created_on, b.updated_on, b.deleted,
+	case WHEN b.report_id is null THEN 0 ELSE b.report_id END, b.unban_reason_text,
+	b.is_enabled, b.appeal_state
+	FROM ban b
+	WHERE updated_on < $1 AND deleted = false
+	LIMIT %d
+	OFFSET %d`, filter.Limit, filter.Offset)
 	var bans []model.BanSteam
 	rows, errQuery := database.Query(ctx, query, since)
 	if errQuery != nil {
@@ -323,9 +338,9 @@ func (database *pgStore) SaveBanMessage(ctx context.Context, message *model.User
 func (database *pgStore) updateBanMessage(ctx context.Context, message *model.UserMessage) error {
 	message.UpdatedOn = config.Now()
 	const query = `
-		UPDATE ban_appeal 
-		SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
-		WHERE ban_message_id = $1
+	UPDATE ban_appeal
+	SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
+	WHERE ban_message_id = $1
 	`
 	if errQuery := database.Exec(ctx, query,
 		message.MessageId,
@@ -346,11 +361,11 @@ func (database *pgStore) updateBanMessage(ctx context.Context, message *model.Us
 
 func (database *pgStore) insertBanMessage(ctx context.Context, message *model.UserMessage) error {
 	const query = `
-		INSERT INTO ban_appeal (
-		    ban_id, author_id, message_md, deleted, created_on, updated_on
-		)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING ban_message_id
+	INSERT INTO ban_appeal (
+	ban_id, author_id, message_md, deleted, created_on, updated_on
+	)
+	VALUES ($1, $2, $3, $4, $5, $6)
+	RETURNING ban_message_id
 	`
 	if errQuery := database.QueryRow(ctx, query,
 		message.ParentId,
@@ -372,11 +387,11 @@ func (database *pgStore) insertBanMessage(ctx context.Context, message *model.Us
 
 func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]model.UserMessage, error) {
 	const query = `
-		SELECT 
-		   ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
-		FROM ban_appeal
-		WHERE deleted = false AND ban_id = $1 
-		ORDER BY created_on`
+	SELECT
+	ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
+	FROM ban_appeal
+	WHERE deleted = false AND ban_id = $1
+	ORDER BY created_on`
 	rows, errQuery := database.Query(ctx, query, banId)
 	if errQuery != nil {
 		if Err(errQuery) == ErrNoResult {
@@ -405,10 +420,10 @@ func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]mod
 
 func (database *pgStore) GetBanMessageById(ctx context.Context, banMessageId int, message *model.UserMessage) error {
 	const query = `
-		SELECT 
-		   ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
-		FROM ban_appeal
-		WHERE ban_message_id = $1`
+	SELECT
+	ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
+	FROM ban_appeal
+	WHERE ban_message_id = $1`
 	if errQuery := database.QueryRow(ctx, query, banMessageId).Scan(
 		&message.MessageId,
 		&message.ParentId,
@@ -438,10 +453,10 @@ func (database *pgStore) DropBanMessage(ctx context.Context, message *model.User
 
 func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *model.BanGroup) error {
 	const q = `
-		SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted, 
-		       note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
-		FROM ban_group 
-		WHERE target_id = $1 AND is_enabled = true AND deleted = false`
+	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
+	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
+	FROM ban_group
+	WHERE target_id = $1 AND is_enabled = true AND deleted = false`
 	return Err(database.QueryRow(ctx, q, groupId).
 		Scan(
 			&banGroup.BanGroupId,
@@ -461,10 +476,10 @@ func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, b
 
 func (database *pgStore) GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *model.BanGroup) error {
 	const q = `
-		SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted, 
-		       note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
-		FROM ban_group 
-		WHERE ban_group_id = $1 AND is_enabled = true AND deleted = false`
+	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
+	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
+	FROM ban_group
+	WHERE ban_group_id = $1 AND is_enabled = true AND deleted = false`
 	return Err(database.QueryRow(ctx, q, banGroupId).
 		Scan(
 			&banGroup.BanGroupId,
@@ -484,10 +499,10 @@ func (database *pgStore) GetBanGroupById(ctx context.Context, banGroupId int64, 
 
 func (database *pgStore) GetBanGroups(ctx context.Context) ([]model.BanGroup, error) {
 	const q = `
-		SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted, 
-		       note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
-		FROM ban_group 
-		WHERE deleted = false`
+	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
+	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
+	FROM ban_group
+	WHERE deleted = false`
 	rows, errRows := database.Query(ctx, q)
 	if errRows != nil {
 		return nil, Err(errRows)
@@ -525,10 +540,10 @@ func (database *pgStore) SaveBanGroup(ctx context.Context, banGroup *model.BanGr
 
 func (database *pgStore) insertBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
 	const q = `
-		INSERT INTO ban_group (source_id, target_id, group_id, group_name, is_enabled, deleted, note, 
-		                       unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state) 
-		VALUES ($1, $2, $3, $4, $5, $6,$7,$8, $9, $10, $11, $12, $13)
-		RETURNING ban_group_id`
+	INSERT INTO ban_group (source_id, target_id, group_id, group_name, is_enabled, deleted, note,
+	unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state)
+	VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11, $12, $13)
+	RETURNING ban_group_id`
 	return Err(database.
 		QueryRow(ctx, q, banGroup.SourceId, banGroup.TargetId, banGroup.GroupId, banGroup.GroupName, banGroup.IsEnabled,
 			banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText, banGroup.Origin, banGroup.CreatedOn,
@@ -539,10 +554,10 @@ func (database *pgStore) insertBanGroup(ctx context.Context, banGroup *model.Ban
 func (database *pgStore) updateBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
 	banGroup.UpdatedOn = config.Now()
 	const q = `
-		UPDATE ban_group 
-		SET source_id = $2, target_id = $3, group_name = $4, is_enabled = $5, deleted = $6, note = $7, unban_reason_text = $8,
-		    origin = $9, updated_on = $10, group_id = $11, valid_until = $12, appeal_state = $13
-        WHERE ban_group_id = $1`
+	UPDATE ban_group
+	SET source_id = $2, target_id = $3, group_name = $4, is_enabled = $5, deleted = $6, note = $7, unban_reason_text = $8,
+	origin = $9, updated_on = $10, group_id = $11, valid_until = $12, appeal_state = $13
+	WHERE ban_group_id = $1`
 	return Err(database.
 		Exec(ctx, q, banGroup.BanGroupId, banGroup.SourceId, banGroup.TargetId,
 			banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText,

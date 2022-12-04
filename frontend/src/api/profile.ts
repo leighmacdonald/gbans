@@ -13,6 +13,24 @@ export enum communityVisibilityState {
     Public = 3
 }
 
+enum NotificationSeverity {
+    SeverityInfo,
+    SeverityWarn,
+    SeverityError
+}
+
+export interface UserNotification {
+    person_notification_id: string;
+    steam_id: SteamID;
+    read: boolean;
+    deleted: boolean;
+    severity: NotificationSeverity;
+    message: string;
+    link: string;
+    count: number;
+    created_on: Date;
+}
+
 export interface UserProfile extends TimeStamped {
     steam_id: SteamID;
     permission_level: PermissionLevel;
@@ -22,6 +40,7 @@ export interface UserProfile extends TimeStamped {
     avatarfull: string;
     ban_id: number;
     muted: boolean;
+    notifications?: UserNotification[];
 }
 
 export interface Person extends UserProfile {

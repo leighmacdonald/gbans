@@ -50,6 +50,27 @@ func (p *Person) AsTarget() StringSID {
 	return StringSID(p.SteamID.String())
 }
 
+type SimplePerson struct {
+	SteamId     steamid.SID64 `json:"steam_id"`
+	PersonaName string        `json:"persona_name"`
+	Avatar      string        `json:"avatar"`
+	AvatarFull  string        `json:"avatar_full"`
+}
+
+type AppealOverview struct {
+	BanSteam
+
+	SourceSteamId     steamid.SID64 `json:"source_steam_id"`
+	SourcePersonaName string        `json:"source_persona_name"`
+	SourceAvatar      string        `json:"source_avatar"`
+	SourceAvatarFull  string        `json:"source_avatar_full"`
+
+	TargetSteamId     steamid.SID64 `json:"target_steam_id"`
+	TargetPersonaName string        `json:"target_persona_name"`
+	TargetAvatar      string        `json:"target_avatar"`
+	TargetAvatarFull  string        `json:"target_avatar_full"`
+}
+
 // NewPerson allocates a new default person instance
 func NewPerson(sid64 steamid.SID64) Person {
 	t0 := config.Now()
@@ -108,16 +129,17 @@ type PersonIPRecord struct {
 
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
-	SteamID         steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	CreatedOn       time.Time     `json:"created_on"`
-	UpdatedOn       time.Time     `json:"updated_on"`
-	PermissionLevel Privilege     `json:"permission_level"`
-	DiscordID       string        `json:"discord_id"`
-	Name            string        `json:"name"`
-	Avatar          string        `json:"avatar"`
-	AvatarFull      string        `json:"avatarfull"`
-	BanID           int64         `json:"ban_id"`
-	Muted           bool          `json:"muted"`
+	SteamID         steamid.SID64      `db:"steam_id" json:"steam_id,string"`
+	CreatedOn       time.Time          `json:"created_on"`
+	UpdatedOn       time.Time          `json:"updated_on"`
+	PermissionLevel Privilege          `json:"permission_level"`
+	DiscordID       string             `json:"discord_id"`
+	Name            string             `json:"name"`
+	Avatar          string             `json:"avatar"`
+	AvatarFull      string             `json:"avatarfull"`
+	BanID           int64              `json:"ban_id"`
+	Muted           bool               `json:"muted"`
+	Notifications   []UserNotification `json:"notifications"`
 }
 
 func (p UserProfile) ToURL() string {

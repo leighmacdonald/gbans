@@ -1768,6 +1768,12 @@ func (web *web) onAPISetReportStatus() gin.HandlerFunc {
 			"from":      original.String(),
 			"to":        report.ReportStatus.String(),
 		}).Infof("Report status changed")
+		web.app.sendUserNotification(notificationPayload{
+			sids:     steamid.Collection{report.AuthorId},
+			severity: model.SeverityInfo,
+			message:  "Report status updated",
+			link:     report.ToURL(),
+		})
 	}
 }
 

@@ -535,3 +535,82 @@ func (database *pgStore) PrunePersonAuth(ctx context.Context) error {
 	}
 	return Err(database.Exec(ctx, query, args...))
 }
+
+func (database *pgStore) SendNotification(ctx context.Context, targetId steamid.SID64, severity model.NotificationSeverity, message string, link string) error {
+	query, args, errQuery := sb.
+		Insert("person_notification").
+		Columns("steam_id", "severity", "message", "link", "created_on").
+		Values(targetId, severity, message, link, config.Now()).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+	if errExec := database.Exec(ctx, query, args...); errExec != nil {
+		return Err(errExec)
+	}
+	return nil
+}
+
+func (database *pgStore) GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]model.UserNotification, error) {
+	notifications := []model.UserNotification{}
+	query, args, errQuery := sb.
+		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
+		From("person_notification").
+		Where(sq.And{sq.Eq{"steam_id": steamId}, sq.Eq{"deleted": false}}).
+		OrderBy("person_notification_id desc").
+		ToSql()
+	if errQuery != nil {
+		return notifications, Err(errQuery)
+	}
+	rows, errRows := database.Query(ctx, query, args...)
+	if errRows != nil {
+		return notifications, errRows
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var n model.UserNotification
+		if errScan := rows.Scan(&n.NotificationId, &n.SteamId, &n.Read, &n.Deleted,
+			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
+			return notifications, errScan
+		}
+		notifications = append(notifications, n)
+	}
+	return notifications, nil
+}
+
+func (database *pgStore) SetNotificationsRead(ctx context.Context, notificationIds []int64) error {
+	query, args, errQuery := sb.
+		Update("person_notification").
+		Set("deleted", true).
+		Where(sq.Eq{"person_notification_id": notificationIds}).
+		ToSql()
+	if errQuery != nil {
+		return errQuery
+	}
+	return Err(database.Exec(ctx, query, args...))
+}
+
+func (database *pgStore) GetSteamIdsAbove(ctx context.Context, privilege model.Privilege) (steamid.Collection, error) {
+	query, args, errQuery := sb.
+		Select("steam_id", "discord_id").
+		From("person").
+		Where(sq.GtOrEq{"permission_level": privilege}).
+		ToSql()
+	if errQuery != nil {
+		return nil, errQuery
+	}
+	rows, errRows := database.Query(ctx, query, args...)
+	if errRows != nil {
+		return nil, errRows
+	}
+	defer rows.Close()
+	var ids steamid.Collection
+	for rows.Next() {
+		var sid steamid.SID64
+		if errScan := rows.Scan(&sid); errScan != nil {
+			return nil, errScan
+		}
+		ids = append(ids, sid)
+	}
+	return ids, nil
+}

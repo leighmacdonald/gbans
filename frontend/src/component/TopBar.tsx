@@ -44,6 +44,8 @@ import { handleOnLogin, PermissionLevel } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import Link from '@mui/material/Link';
+import Badge from '@mui/material/Badge';
+import MailIcon from '@mui/icons-material/Mail';
 
 interface menuRoute {
     to: string;
@@ -367,6 +369,17 @@ export const TopBar = () => {
                                     {themeIcon}
                                 </IconButton>
                             </Tooltip>
+                            <IconButton color={'inherit'}>
+                                <Badge
+                                    badgeContent={
+                                        (
+                                            currentUser.notifications ?? []
+                                        ).filter((n) => !n.read).length
+                                    }
+                                >
+                                    <MailIcon />
+                                </Badge>
+                            </IconButton>
                             {!currentUser ||
                                 (!validSteamId && (
                                     <Tooltip title="Steam Login">
@@ -387,16 +400,8 @@ export const TopBar = () => {
                                 <>
                                     <Tooltip title="Mod/Admin">
                                         <IconButton
-                                            sx={{
-                                                p: 0,
-                                                marginRight: '0.5rem'
-                                            }}
-                                            size="large"
-                                            aria-label="account of current user"
-                                            aria-controls="menu-appbar"
-                                            aria-haspopup="true"
+                                            color={'inherit'}
                                             onClick={handleOpenAdminMenu}
-                                            color="inherit"
                                         >
                                             <SettingsIcon />
                                         </IconButton>

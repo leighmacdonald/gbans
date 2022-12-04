@@ -37,6 +37,7 @@ type App struct {
 	masterServerListMu *sync.RWMutex
 	discordSendMsg     chan discordPayload
 	warningChan        chan newUserWarning
+	notificationChan   chan notificationPayload
 	serverStateMu      *sync.RWMutex
 	serverState        model.ServerStateCollection
 
@@ -81,6 +82,7 @@ func New(ctx context.Context) *App {
 		masterServerListMu:   &sync.RWMutex{},
 		discordSendMsg:       make(chan discordPayload, 5),
 		warningChan:          make(chan newUserWarning),
+		notificationChan:     make(chan notificationPayload, 5),
 		serverStateMu:        &sync.RWMutex{},
 		serverState:          model.ServerStateCollection{},
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
@@ -629,11 +631,12 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 	//go matchSummarizer(ctx, database)
 	go playerMessageWriter(ctx, database)
 	go playerConnectionWriter(ctx, database)
-	go app.steamGroupMembershipUpdater(ctx, database)
-	go app.localStatUpdater(ctx, database)
-	go app.masterServerListUpdater(ctx, database, masterUpdateFreq)
-	go app.cleanupTasks(ctx, database)
-	go app.showReportMeta(ctx, database)
+	go app.steamGroupMembershipUpdater()
+	go app.localStatUpdater()
+	go app.masterServerListUpdater(masterUpdateFreq)
+	go app.cleanupTasks()
+	go app.showReportMeta()
+	go app.notificationSender()
 }
 
 // UDP log sink
@@ -643,6 +646,14 @@ func initLogSrc(ctx context.Context, database store.Store) {
 		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
 	}
 	logSrc.start(database)
+}
+
+func (app *App) sendUserNotification(pl notificationPayload) {
+	select {
+	case app.notificationChan <- pl:
+	default:
+		log.Error("Failed to write user notification payload, channel full")
+	}
 }
 
 func (app *App) initDiscord(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload) {

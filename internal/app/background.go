@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -35,9 +36,9 @@ func (app *App) IsSteamGroupBanned(steamId steamid.SID64) bool {
 	return false
 }
 
-func (app *App) steamGroupMembershipUpdater(ctx context.Context, _ store.PersonStore) {
+func (app *App) steamGroupMembershipUpdater() {
 	var update = func() {
-		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
+		localCtx, cancel := context.WithTimeout(app.ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
 		total := 0
 		for _, gid := range config.General.BannedSteamGroupIds {
@@ -62,14 +63,14 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context, _ store.PersonS
 		select {
 		case <-ticker.C:
 			update()
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			log.Debugf("steamGroupMembershipUpdater shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) showReportMeta(ctx context.Context, database store.ReportStore) {
+func (app *App) showReportMeta() {
 	type reportMeta struct {
 		TotalOpen   int
 		TotalClosed int
@@ -81,7 +82,7 @@ func (app *App) showReportMeta(ctx context.Context, database store.ReportStore) 
 		OpenNew     int
 	}
 	var showReports = func() {
-		reports, errReports := database.GetReports(ctx, store.AuthorQueryFilter{
+		reports, errReports := app.store.GetReports(app.ctx, store.AuthorQueryFilter{
 			QueryFilter: store.QueryFilter{
 				Limit: 0,
 			},
@@ -142,23 +143,88 @@ func (app *App) showReportMeta(ctx context.Context, database store.ReportStore) 
 		select {
 		case <-ticker.C:
 			showReports()
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			log.Debugf("showReportMeta shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) cleanupTasks(ctx context.Context, database store.AuthStore) {
+func (app *App) cleanupTasks() {
 	ticker := time.NewTicker(time.Hour * 24)
 	for {
 		select {
 		case <-ticker.C:
-			if err := database.PrunePersonAuth(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+			if err := app.store.PrunePersonAuth(app.ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
 				log.WithError(err).Errorf("Error pruning expired refresh tokens")
 			}
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			log.Debugf("profileUpdater shutting down")
+			return
+		}
+	}
+}
+
+type notificationPayload struct {
+	minPerms model.Privilege
+	sids     steamid.Collection
+	severity model.NotificationSeverity
+	message  string
+	link     string
+}
+
+func (app *App) notificationSender() {
+	for {
+		select {
+		case notification := <-app.notificationChan:
+			// Collect all required ids
+			if notification.minPerms >= model.PUser {
+				sids, errIds := app.store.GetSteamIdsAbove(app.ctx, notification.minPerms)
+				if errIds != nil {
+					log.WithError(errIds).Errorf("Failed to fetch steamids for notification")
+					break
+				}
+				notification.sids = append(notification.sids, sids...)
+			}
+			uniqueIds := fp.Uniq(notification.sids)
+
+			people, errPeople := app.store.GetPeopleBySteamID(app.ctx, uniqueIds)
+			if errPeople != nil && !errors.Is(errPeople, store.ErrNoResult) {
+				log.WithError(errPeople).Errorf("Failed to fetch people for notification")
+				break
+			}
+			var discordIds []string
+			for _, p := range people {
+				if p.DiscordID != "" {
+					discordIds = append(discordIds, p.DiscordID)
+				}
+			}
+			go func(ids []string, pl notificationPayload) {
+				for _, discordId := range ids {
+					embed := &discordgo.MessageEmbed{
+						Title:       "Notification",
+						Description: pl.message,
+					}
+					if pl.link != "" {
+						embed.URL = config.ExtURL(pl.link)
+					}
+					app.sendDiscordPayload(discordPayload{channelId: discordId, embed: embed})
+					// Discord rate limits to 50/seq so we are being very conservative here
+					// 50req/s max rate?
+					time.Sleep(time.Second * 2)
+				}
+			}(discordIds, notification)
+
+			// Broadcast to
+			for _, sid := range uniqueIds {
+				// Todo, prep stmt at least.
+				if errSend := app.store.SendNotification(app.ctx, sid, notification.severity,
+					notification.message, notification.link); errSend != nil {
+					log.WithError(errSend).Errorf("Failed to send notification")
+					break
+				}
+			}
+		case <-app.ctx.Done():
 			return
 		}
 	}
@@ -660,9 +726,9 @@ func SteamRegionIdString(region SvRegion) string {
 	}
 }
 
-func (app *App) localStatUpdater(ctx context.Context, database store.Store) {
+func (app *App) localStatUpdater() {
 	var build = func() {
-		if errBuild := database.BuildLocalTF2Stats(ctx); errBuild != nil {
+		if errBuild := app.store.BuildLocalTF2Stats(app.ctx); errBuild != nil {
 			log.WithError(errBuild).Error("Error building local stats")
 		}
 	}
@@ -685,7 +751,7 @@ func (app *App) localStatUpdater(ctx context.Context, database store.Store) {
 		case saveTime := <-saveTicker.C:
 			stats := model.NewLocalTF2Stats()
 			stats.CreatedOn = saveTime
-			servers, errServers := database.GetServers(ctx, false)
+			servers, errServers := app.store.GetServers(app.ctx, false)
 			if errServers != nil {
 				log.WithError(errServers).Errorf("Failed to fetch servers to build local cache")
 				continue
@@ -730,21 +796,21 @@ func (app *App) localStatUpdater(ctx context.Context, database store.Store) {
 				}
 			}
 			app.serverStateMu.RUnlock()
-			if errSave := database.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
+			if errSave := app.store.SaveLocalTF2Stats(app.ctx, store.Live, stats); errSave != nil {
 				log.WithError(errSave).Error("Failed to save local stats state")
 				continue
 			}
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		}
 	}
 }
 
-func (app *App) masterServerListUpdater(ctx context.Context, database store.Store, updateFreq time.Duration) {
+func (app *App) masterServerListUpdater(updateFreq time.Duration) {
 	prevStats := model.NewGlobalTF2Stats()
 	locationCache := map[string]ip2location.LatLong{}
 	var build = func() {
-		if errBuild := database.BuildGlobalTF2Stats(ctx); errBuild != nil {
+		if errBuild := app.store.BuildGlobalTF2Stats(app.ctx); errBuild != nil {
 			log.WithError(errBuild).Error("Error building stats")
 			return
 		}
@@ -771,7 +837,7 @@ func (app *App) masterServerListUpdater(ctx context.Context, database store.Stor
 			if !found {
 				var locRecord ip2location.LocationRecord
 				ip := net.ParseIP(ipAddr)
-				if errLocation := database.GetLocationRecord(ctx, ip, &locRecord); errLocation != nil {
+				if errLocation := app.store.GetLocationRecord(app.ctx, ip, &locRecord); errLocation != nil {
 					continue
 				}
 				locationCache[ipAddr] = locRecord.LatLong
@@ -847,11 +913,11 @@ func (app *App) masterServerListUpdater(ctx context.Context, database store.Stor
 			build()
 		case saveTime := <-saveTicker.C:
 			prevStats.CreatedOn = saveTime
-			if errSave := database.SaveGlobalTF2Stats(ctx, store.Live, prevStats); errSave != nil {
+			if errSave := app.store.SaveGlobalTF2Stats(app.ctx, store.Live, prevStats); errSave != nil {
 				log.WithError(errSave).Error("Failed to save global stats state")
 				continue
 			}
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		}
 	}

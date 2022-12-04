@@ -170,6 +170,25 @@ export interface IAPIBanRecord extends BanBase {
     ban_type: BanType;
 }
 
+export interface SimplePerson {
+    steam_id: SteamID;
+    persona_name: string;
+    avatar: string;
+    avatar_full: string;
+}
+
+export interface AppealOverview extends IAPIBanRecord {
+    source_steam_id: SteamID;
+    source_persona_name: string;
+    source_avatar: string;
+    source_avatar_full: string;
+
+    target_steam_id: SteamID;
+    target_persona_name: string;
+    target_avatar: string;
+    target_avatar_full: string;
+}
+
 export interface IAPIBanGroupRecord extends BanBase {
     ban_group_id: number;
     group_id: SteamID;
@@ -304,7 +323,7 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
 };
 
 export const apiGetAppeals = async (opts?: BansQueryFilter) => {
-    const resp = await apiCall<IAPIBanRecord[]>(
+    const resp = await apiCall<AppealOverview[]>(
         `/api/appeals`,
         'POST',
         opts ?? {}

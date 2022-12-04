@@ -60,7 +60,7 @@ type BanStore interface {
 	GetBansSteam(ctx context.Context, queryFilter BansQueryFilter) ([]model.BannedPerson, error)
 	GetBansOlderThan(ctx context.Context, queryFilter QueryFilter, time time.Time) ([]model.BanSteam, error)
 	GetExpiredBans(ctx context.Context) ([]model.BanSteam, error)
-	GetAppealsByActivity(ctx context.Context, queryFilter QueryFilter) ([]model.BanSteam, error)
+	GetAppealsByActivity(ctx context.Context, queryFilter QueryFilter) ([]model.AppealOverview, error)
 
 	GetBansNet(ctx context.Context) ([]model.BanCIDR, error)
 	GetBanNetById(ctx context.Context, netId int64, banCidr *model.BanCIDR) error
@@ -114,6 +114,10 @@ type PersonStore interface {
 	GetPersonMessageById(ctx context.Context, query int64, msg *model.PersonMessage) error
 	AddChatHistory(ctx context.Context, message *model.PersonMessage) error
 	AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error
+	SendNotification(ctx context.Context, targets steamid.SID64, severity model.NotificationSeverity, message string, link string) error
+	GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]model.UserNotification, error)
+	SetNotificationsRead(ctx context.Context, notificationIds []int64) error
+	GetSteamIdsAbove(ctx context.Context, privilege model.Privilege) (steamid.Collection, error)
 }
 
 type FilterStore interface {
