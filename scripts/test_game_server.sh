@@ -1,5 +1,5 @@
 export STEAMAPPDIR=./tf-dedicated
-export STEAMCMDDIR=./steamcmd
+export STEAMCMDDIR=../steamcmd
 export STEAMAPP=tf
 export SRCDS_TOKEN=""
 export SRCDS_PORT="27015"

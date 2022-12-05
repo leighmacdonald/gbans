@@ -123,7 +123,11 @@ docker_generate_local_server:
 	local_server
 
 local_server:
-	cd tf2server && ../scripts/test_game_server.sh
+	cd tf2server/tf-dedicated && ../../scripts/test_game_server.sh
+
+docker_update_plugin:
+	docker cp ~/projects/gbans/sourcemod/plugins/gbans.smx srcds-localhost-1:/home/steam/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
+	rcon -H 192.168.0.72 -p dev_pass sm plugins reload gbans
 
 copy_ut:
 	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/

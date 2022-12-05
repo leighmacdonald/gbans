@@ -51,3 +51,8 @@ char g_access_token[512];
 // Store temp clientId for networked callbacks 
 int g_reply_to_client_id = 0;
 
+// Reports command
+bool g_reportInProgress = false;
+char g_reportSid64[30];
+char g_reportReasonCustom[1024];
+GB_BanReason g_reportTargetReason;

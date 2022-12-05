@@ -13,6 +13,7 @@
 #include "gbans/globals.sp"
 #include "gbans/common.sp"
 #include "gbans/ban.sp"
+#include "gbans/report.sp"
 #include "gbans/commands.sp"
 #include "gbans/connect.sp"
 #include "gbans/auth.sp"
@@ -55,6 +56,8 @@ void OnPluginStart() {
     RegConsoleCmd("gb_version", CmdVersion, "Get gbans version");
     RegConsoleCmd("gb_mod", CmdMod, "Ping a moderator");
     RegConsoleCmd("mod", CmdMod, "Ping a moderator");
+
+    RegConsoleCmd("report", CmdReport, "Report a player");
     RegAdminCmd("gb_ban", AdminCmdBan, ADMFLAG_BAN);
     RegAdminCmd("gb_reauth", AdminCmdReauth, ADMFLAG_ROOT);
     RegAdminCmd("gb_reload", AdminCmdReload, ADMFLAG_ROOT);
