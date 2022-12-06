@@ -1,11 +1,13 @@
 #include <adminmenu>
 
+#pragma newdecls required
+
 public Action CmdReport(int clientId, int argc) {
-	if (g_reportInProgress) {
+	if (gReportInProgress) {
 		ReplyToCommand(clientId, "A report is current in progress, please wait for it to compelte");
 		return Plugin_Handled;
 	}
-	g_reportInProgress = true;
+	gReportInProgress = true;
 	ShowTargetMenu(clientId);
     return Plugin_Handled;
 }
@@ -16,6 +18,10 @@ public void ShowTargetMenu(int clientId) {
 	SetMenuTitle(menu, "Select A Player:");
 	SetMenuExitBackButton(menu, true);
 	DisplayMenu(menu, clientId, MENU_TIME_FOREVER);
+}
+
+public Action OnClientSayCommand(int iClient, const char[] sCommand, const char[] sArgs) {
+
 }
 
 public void ShowReasonMenu(int clientId) {
@@ -35,8 +41,7 @@ public void ShowReasonMenu(int clientId) {
 	DisplayMenu(menu, clientId, MENU_TIME_FOREVER);
 }
 
-
-public MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedId) {
+public int MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedId) {
 	if (action == MenuAction_Cancel || action == MenuAction_End) {
 		CloseHandle(menu);
 	} else if (action == MenuAction_Select) {
@@ -49,7 +54,7 @@ public MenuHandler_Target(Menu menu, MenuAction action, int clientId, int select
 			PrintToChat(clientId, "[SM] %t", "Player no longer available");
 			return;
 		} else {
-			if (!GetClientAuthId(target, AuthId_SteamID64, g_reportSid64, sizeof(g_reportSid64), true)) {
+			if (!GetClientAuthId(target, AuthId_SteamID64, gReportSid64, sizeof(gReportSid64), true)) {
 				PrintToChat(clientId, "[SM] %t", "Player no longer available");
 				return;
 			}
@@ -60,38 +65,38 @@ public MenuHandler_Target(Menu menu, MenuAction action, int clientId, int select
 	}
 }
 
-public MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedId) {
+public int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedId) {
 	if (action == MenuAction_Cancel || action == MenuAction_End)	{
 		CloseHandle(menu);
 	} else if (action == MenuAction_Select)	{
 		char sInfo[64];
 		GetMenuItem(menu, selectedId, sInfo, sizeof(sInfo));
 		if (StrEqual(sInfo, "cheating")) {
-			g_reportTargetReason = cheating;
+			gReportTargetReason = cheating;
 		} else if (StrEqual(sInfo, "racism")) {
-			g_reportTargetReason = racism;
+			gReportTargetReason = racism;
 		} else if (StrEqual(sInfo, "harassment")) {
-			g_reportTargetReason = harassment;
+			gReportTargetReason = harassment;
 		} else if (StrEqual(sInfo, "exploiting")) {
-			g_reportTargetReason = exploiting;
+			gReportTargetReason = exploiting;
 		} else if (StrEqual(sInfo, "spam")) {
-			g_reportTargetReason = spam;
+			gReportTargetReason = spam;
 		} else if (StrEqual(sInfo, "languageUsed")) {
-			g_reportTargetReason = languageUsed;
+			gReportTargetReason = languageUsed;
 		} else if (StrEqual(sInfo, "profile")) {
-			g_reportTargetReason = profile;
+			gReportTargetReason = profile;
 		} else if (StrEqual(sInfo, "itemDescriptions")) {
-			g_reportTargetReason = itemDescriptions;
+			gReportTargetReason = itemDescriptions;
 		} else if (StrEqual(sInfo, "custom")) {
-			g_reportTargetReason = custom;
+			gReportTargetReason = custom;
 		} else {
 			ReplyToCommand(clientId, "Unsupported reason value");
 			return;
 		}
-		if (g_reportTargetReason == custom) {
+		if (gReportTargetReason == custom) {
 			
 		} else {
-			g_reportInProgress = false; 
+			gReportInProgress = false; 
 		}
 	} else if (action == MenuAction_End) {
 		delete menu;

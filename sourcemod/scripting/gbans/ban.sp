@@ -74,7 +74,7 @@ bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration,
     req.POST();
     delete req;
 
-    g_reply_to_client_id = sourceId;
+    gReplyToClientId = sourceId;
 
     return true;
 }
@@ -88,10 +88,10 @@ void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest requ
 
     if (response.StatusCode != HTTP_STATUS_OK) {
         if (response.StatusCode == HTTP_STATUS_CONFLICT) {
-            ReplyToCommand(g_reply_to_client_id, "Duplicate ban");
+            ReplyToCommand(gReplyToClientId, "Duplicate ban");
             return;
         }
-        ReplyToCommand(g_reply_to_client_id, "Unhandled error response");
+        ReplyToCommand(gReplyToClientId, "Unhandled error response");
         return;
     }
 
@@ -108,7 +108,7 @@ void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest requ
 
     JSON_Object banResult = resp.GetObject("result");
     int banId = banResult.GetInt("ban_id");
-    ReplyToCommand(g_reply_to_client_id, "User banned (#%d)", banId);
+    ReplyToCommand(gReplyToClientId, "User banned (#%d)", banId);
 
     json_cleanup_and_delete(resp);
 }

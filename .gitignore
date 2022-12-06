@@ -46,3 +46,4 @@ sm
 /unhandled_messages.log
 *.privatekey.vdf
 *.publickey.vdf
+.vscode

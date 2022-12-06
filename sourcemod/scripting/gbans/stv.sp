@@ -11,37 +11,32 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-bool g_bIsRecording = false;
-bool g_bIsManual = false;
-
-JSON_Object g_scores = null;
-
 public void setupSTV()
 {
-	RegAdminCmd("sm_gbans_stv_record", Command_Record, ADMFLAG_KICK, "Starts a SourceTV demo");
-	RegAdminCmd("sm_gbans_stv_stoprecord", Command_StopRecord, ADMFLAG_KICK, "Stops the current SourceTV demo");
+	RegAdminCmd("gb_stv_record", Command_Record, ADMFLAG_KICK, "Starts a SourceTV demo");
+	RegAdminCmd("gb_stv_stoprecord", Command_StopRecord, ADMFLAG_KICK, "Stops the current SourceTV demo");
 
-	g_scores = new JSON_Object();
-	g_hTvEnabled = FindConVar("tv_enable");
+	gScores = new JSON_Object();
+	gTvEnabled = FindConVar("tv_enable");
 	char sPath[PLATFORM_MAX_PATH];
-	g_hDemoPath.GetString(sPath, sizeof(sPath));
+	gDemoPathActive.GetString(sPath, sizeof(sPath));
 	if(!DirExists(sPath))
 	{
 		InitDirectory(sPath);
 	}
 
 	char sPathComplete[PLATFORM_MAX_PATH];
-	g_hDemoPathComplete.GetString(sPathComplete, sizeof(sPathComplete));
+	gDemoPathComplete.GetString(sPathComplete, sizeof(sPathComplete));
 	if(!DirExists(sPathComplete))
 	{
 		InitDirectory(sPathComplete);
 	}
 
-	g_hMinPlayersStart.AddChangeHook(OnConVarChanged);
-	g_hIgnoreBots.AddChangeHook(OnConVarChanged);
-	g_hTimeStart.AddChangeHook(OnConVarChanged);
-	g_hTimeStop.AddChangeHook(OnConVarChanged);
-	g_hDemoPath.AddChangeHook(OnConVarChanged);
+	gMinPlayersStart.AddChangeHook(OnConVarChanged);
+	gIgnoreBots.AddChangeHook(OnConVarChanged);
+	gTimeStart.AddChangeHook(OnConVarChanged);
+	gTimeStop.AddChangeHook(OnConVarChanged);
+	gDemoPathActive.AddChangeHook(OnConVarChanged);
 
 	CreateTimer(300.0, Timer_CheckStatus, _, TIMER_REPEAT);
 
@@ -51,7 +46,7 @@ public void setupSTV()
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] newValue)
 {
-	if(convar == g_hDemoPath || convar == g_hDemoPathComplete)
+	if(convar == gDemoPathActive || convar == gDemoPathComplete)
 	{
 		if(!DirExists(newValue))
 		{
@@ -66,10 +61,10 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 
 public void onMapEndSTV()
 {
-	if(g_bIsRecording)
+	if(gIsRecording)
 	{
 		StopRecord();
-		g_bIsManual = false;
+		gIsManual = false;
 	}
 }
 
@@ -91,29 +86,29 @@ public Action Timer_CheckStatus(Handle timer)
 
 public Action Command_Record(int client, int args)
 {
-	if(g_bIsRecording)
+	if(gIsRecording)
 	{
 		ReplyToCommand(client, "[GB] SourceTV is already recording!");
 		return Plugin_Handled;
 	}
 
 	StartRecord();
-	g_bIsManual = true;
+	gIsManual = true;
 	ReplyToCommand(client, "[GB] SourceTV is now recording...");
 	return Plugin_Handled;
 }
 
 public Action Command_StopRecord(int client, int args)
 {
-	if(!g_bIsRecording)
+	if(!gIsRecording)
 	{
 		ReplyToCommand(client, "[GB] SourceTV is not recording!");
 		return Plugin_Handled;
 	}
 	StopRecord();
-	if(g_bIsManual)
+	if(gIsManual)
 	{
-		g_bIsManual = false;
+		gIsManual = false;
 		CheckStatus();
 	}
 	ReplyToCommand(client, "[GB] Stopped recording.");
@@ -122,11 +117,11 @@ public Action Command_StopRecord(int client, int args)
 
 void CheckStatus()
 {
-	if(g_hAutoRecord.BoolValue && !g_bIsManual)
+	if(gAutoRecord.BoolValue && !gIsManual)
 	{
-		int iMinClients = g_hMinPlayersStart.IntValue;
-		int iTimeStart = g_hTimeStart.IntValue;
-		int iTimeStop = g_hTimeStop.IntValue;
+		int iMinClients = gMinPlayersStart.IntValue;
+		int iTimeStart = gTimeStart.IntValue;
+		int iTimeStop = gTimeStop.IntValue;
 		bool bReverseTimes = (iTimeStart > iTimeStop);
 		char sCurrentTime[4];
 		FormatTime(sCurrentTime, sizeof(sCurrentTime), "%H", GetTime());
@@ -135,7 +130,7 @@ void CheckStatus()
 		{
 			StartRecord();
 		}
-		else if(g_bIsRecording && !g_hFinishMap.BoolValue && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
+		else if(gIsRecording && !gFinishMap.BoolValue && (iTimeStop < 0 || iCurrentTime >= iTimeStop))
 		{
 			StopRecord();
 		}
@@ -144,7 +139,7 @@ void CheckStatus()
 
 int GetPlayerCount()
 {
-	bool bIgnoreBots = g_hIgnoreBots.BoolValue;
+	bool bIgnoreBots = gIgnoreBots.BoolValue;
 
 	int iNumPlayers = 0;
 	for(int i = 1; i <= MaxClients; i++)
@@ -165,15 +160,15 @@ int GetPlayerCount()
 
 void StartRecord()
 {
-	if(g_hTvEnabled.BoolValue && !g_bIsRecording)
+	if(gTvEnabled.BoolValue && !gIsRecording)
 	{
 		char sPath[PLATFORM_MAX_PATH];
 		char sTime[16];
 		char sMap[64];
 		// char serverName[128];
-		// g_server_name.GetString(serverName, sizeof(serverName));
+		// gServerName.GetString(serverName, sizeof(serverName));
 
-		g_hDemoPath.GetString(sPath, sizeof(sPath));
+		gDemoPathActive.GetString(sPath, sizeof(sPath));
 		FormatTime(sTime, sizeof(sTime), "%Y%m%d-%H%M%S", GetTime());
 		GetCurrentMap(sMap, sizeof(sMap));
 
@@ -182,7 +177,7 @@ void StartRecord()
 	    ReplaceString(sMap, sizeof(sMap), ".", "-", false);	
 
 		ServerCommand("tv_record \"%s/%s-%s\"", sPath, sTime, sMap);
-		g_bIsRecording = true;
+		gIsRecording = true;
 
 		LogMessage("[GB] Recording to %s-%s.dem", sTime, sMap);
 	}
@@ -191,10 +186,10 @@ void StartRecord()
 
 void StopRecord()
 {
-	if(g_hTvEnabled.BoolValue)
+	if(gTvEnabled.BoolValue)
 	{
 		ServerCommand("tv_stoprecord");
-		g_bIsRecording = false;
+		gIsRecording = false;
 	}
 }
 
@@ -234,7 +229,7 @@ void saveClientScore(int client ) {
 	//values.SetInt("defenses", defenses);
 	// Only trigger for client indexes actually in the game
 	//int score = TF2_GetPlayerResourceData(client, TFResource_TotalScore);
-	g_scores.SetObject(authId, values);
+	gScores.SetObject(authId, values);
 }
 
 
@@ -254,7 +249,7 @@ JSON_Object writeMeta() {
 	{
 		saveClientScore(i);
 	}  
-	root.SetObject("scores", g_scores);
+	root.SetObject("scores", gScores);
 
 	char mapName[256];
 	GetCurrentMap(mapName, sizeof(mapName));
@@ -274,7 +269,7 @@ public void SourceTV_OnStopRecording(int instance, const char[] filename, int re
 	PrintToServer(outMeta);
 	json_cleanup_and_delete(metaData);
 	
-	g_hDemoPathComplete.GetString(outPath, sizeof(outPath));
+	gDemoPathComplete.GetString(outPath, sizeof(outPath));
 	
 	int iNumPieces = ExplodeString(filename, "/", sPieces, sizeof(sPieces), sizeof(sPieces[]));
 

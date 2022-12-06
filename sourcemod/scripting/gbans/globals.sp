@@ -13,46 +13,52 @@
 enum struct PlayerInfo {
     bool authed;
     char ip[16];
-    int ban_type;
-    int permission_level;
+    int banType;
+    int permissionLevel;
     char message[256];
 }
 // clang-format on
 
 
-// Globals must all start with g_
-PlayerInfo g_players[MAXPLAYERS + 1];
+// Globals must all start with g
+PlayerInfo gPlayers[MAXPLAYERS + 1];
 
 // Core gbans options
-ConVar g_port  = null;
-ConVar g_host  = null;
-ConVar g_server_name = null;
-ConVar g_server_key = null;
+ConVar gPort  = null;
+ConVar gHost  = null;
+ConVar gServerName = null;
+ConVar gServerKey = null;
 
 // STV options
-ConVar g_hTvEnabled = null;
-ConVar g_hAutoRecord = null;
-ConVar g_hMinPlayersStart = null;
-ConVar g_hIgnoreBots = null;
-ConVar g_hTimeStart = null;
-ConVar g_hTimeStop = null;
-ConVar g_hFinishMap = null;
-ConVar g_hDemoPath = null;
-ConVar g_hDemoPathComplete = null;
+ConVar gTvEnabled = null;
+ConVar gAutoRecord = null;
+ConVar gMinPlayersStart = null;
+ConVar gIgnoreBots = null;
+ConVar gTimeStart = null;
+ConVar gTimeStop = null;
+ConVar gFinishMap = null;
+ConVar gDemoPathActive = null;
+ConVar gDemoPathComplete = null;
 
 
 // Stopwatch options
-ConVar g_hStopwatchEnabled = null;
-ConVar g_hStopwatchNameRed = null;
-ConVar g_hStopwatchNameBlu = null;
+ConVar gStopwatchEnabled = null;
+ConVar gStopwatchNameRed = null;
+ConVar gStopwatchNameBlu = null;
 
-char g_access_token[512];
+char gAccessToken[512];
 
 // Store temp clientId for networked callbacks 
-int g_reply_to_client_id = 0;
+int gReplyToClientId = 0;
 
 // Reports command
-bool g_reportInProgress = false;
-char g_reportSid64[30];
-char g_reportReasonCustom[1024];
-GB_BanReason g_reportTargetReason;
+bool gReportInProgress = false;
+char gReportSid64[30];
+char gReportReasonCustom[1024];
+GB_BanReason gReportTargetReason;
+
+// Stv
+
+bool gIsRecording = false;
+bool gIsManual = false;
+JSON_Object gScores = null;

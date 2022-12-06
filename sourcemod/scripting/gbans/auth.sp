@@ -13,15 +13,15 @@ Send authenticated commands with header "Authorization $token" set for subsequen
 
 */
 void refreshToken() {
-    char server_name[PLATFORM_MAX_PATH];
-    g_server_name.GetString(server_name, sizeof(server_name));
+    char serverName[PLATFORM_MAX_PATH];
+    gServerName.GetString(serverName, sizeof(serverName));
 
-    char server_key[PLATFORM_MAX_PATH];
-    g_server_key.GetString(server_key, sizeof(server_key));
+    char serverKey[PLATFORM_MAX_PATH];
+    gServerKey.GetString(serverKey, sizeof(serverKey));
 
     JSON_Object obj = new JSON_Object();
-    obj.SetString("server_name", server_name);
-    obj.SetString("key", server_key);
+    obj.SetString("server_name", serverName);
+    obj.SetString("key", serverKey);
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
@@ -57,7 +57,7 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
             PrintToServer("[GB] Invalid response status, invalid token");
             return;
         }
-        g_access_token = token;
+        gAccessToken = token;
         PrintToServer("[GB] Successfully authenticated with gbans server");
         json_cleanup_and_delete(resp);
         reloadAdmins();
@@ -143,7 +143,7 @@ void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
 
 public
 void OnClientPostAdminCheck(int clientId) {
-    switch (g_players[clientId].ban_type) {
+    switch (gPlayers[clientId].banType) {
         case BSNoComm: {
             if (!BaseComm_IsClientMuted(clientId)) {
                 BaseComm_SetClientMute(clientId, true);
@@ -155,7 +155,7 @@ void OnClientPostAdminCheck(int clientId) {
             LogAction(0, clientId, "Muted \"%L\" for an unfinished mute punishment.", clientId);
         }
         case BSBanned: {
-            KickClient(clientId, g_players[clientId].message);
+            KickClient(clientId, gPlayers[clientId].message);
             LogAction(0, clientId, "Kicked \"%L\" for an unfinished ban.", clientId);
         }
     }
@@ -163,7 +163,7 @@ void OnClientPostAdminCheck(int clientId) {
 
 
 void CheckPlayer(int clientId, const char[] auth, const char[] ip, const char[] name) {
-    if (/**!IsClientConnected(clientId) ||*/ IsFakeClient(clientId)) {
+    if (!IsClientConnected(clientId) || IsFakeClient(clientId)) {
         PrintToServer("[GB] Skipping check on invalid player");
         return;
     }
@@ -197,23 +197,23 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
         
         JSON_Object resp = json_decode(content);
         JSON_Object data = resp.GetObject("result");
-        int client_id = data.GetInt("client_id");
-        int ban_type = data.GetInt("ban_type");
-        int permission_level = data.GetInt("permission_level");
+        int clientId = data.GetInt("client_id");
+        int banType = data.GetInt("ban_type");
+        int permissionLevel = data.GetInt("permission_level");
         char msg[256]; // welcome or ban message
         data.GetString("msg", msg, sizeof(msg));
-        if(IsFakeClient(client_id)) {
+        if(IsFakeClient(clientId)) {
             return;
         }
         char ip[16];
-        GetClientIP(client_id, ip, sizeof(ip));
-        g_players[client_id].authed = true;
-        g_players[client_id].ip = ip;
-        g_players[client_id].ban_type = ban_type;
-        g_players[client_id].message = msg;
-        g_players[client_id].permission_level = permission_level;
+        GetClientIP(clientId, ip, sizeof(ip));
+        gPlayers[clientId].authed = true;
+        gPlayers[clientId].ip = ip;
+        gPlayers[clientId].banType = banType;
+        gPlayers[clientId].message = msg;
+        gPlayers[clientId].permissionLevel = permissionLevel;
 
-        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", ban_type, permission_level);      
+        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", banType, permissionLevel);      
         json_cleanup_and_delete(resp);  
     } else {
         PrintToServer("[GB] Error on authentication request: %s", error);

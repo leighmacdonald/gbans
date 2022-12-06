@@ -2,8 +2,8 @@
 
 public
 bool OnClientConnect(int clientId, char[] rejectMsg, int maxLen) {
-    g_players[clientId].authed = false;
-    g_players[clientId].ban_type = BSUnknown;
+    gPlayers[clientId].authed = false;
+    gPlayers[clientId].banType = BSUnknown;
     return true;
 }
 
@@ -17,9 +17,9 @@ void OnClientAuthorized(int clientId, const char[] auth) {
 
     /* Do not check bots nor check player with lan steamid. */
     if (auth[0] == 'B' /*|| auth[9] == 'L'*/) {
-        g_players[clientId].authed = true;
-        g_players[clientId].ip = ip;
-        g_players[clientId].ban_type = BSUnknown;
+        gPlayers[clientId].authed = true;
+        gPlayers[clientId].ip = ip;
+        gPlayers[clientId].banType = BSUnknown;
         return;
     }
 #if defined DEBUG

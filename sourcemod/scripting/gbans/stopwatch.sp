@@ -1,6 +1,6 @@
 
 public onPluginStartStopwatch() {
-	HookEvent("teamplay_round_start", round_start, EventHookMode_PostNoCopy);
+	HookEvent("teamplay_round_start", onTeamplayRoundStart, EventHookMode_PostNoCopy);
 	RegConsoleCmd("tournament_readystate", cmd_block);
 	RegConsoleCmd("tournament_teamname", cmd_block);
 }
@@ -11,8 +11,8 @@ public onMapEndStopwatch() {
     }
 }
 
-public round_start(Handle:event, const String:name[], bool:dontBroadcast) {
-	if (!g_hStopwatchEnabled.BoolValue || GetConVarBool(FindConVar("mp_tournament"))) {
+public onTeamplayRoundStart(Handle:event, const String:name[], bool:dontBroadcast) {
+	if (!gStopwatchEnabled.BoolValue || GetConVarBool(FindConVar("mp_tournament"))) {
         return 
     }
     // set cvars
@@ -22,11 +22,11 @@ public round_start(Handle:event, const String:name[], bool:dontBroadcast) {
 
     // set team names
     char teamnameA[16];
-    g_hStopwatchNameBlu.GetString(teamnameA, sizeof(teamnameA));
+    gStopwatchNameBlu.GetString(teamnameA, sizeof(teamnameA));
     SetConVarString(FindConVar("mp_tournament_blueteamname"), teamnameA);
 
     char teamnameB[16];
-    g_hStopwatchNameRed.GetString(teamnameB, sizeof(teamnameB));
+    gStopwatchNameRed.GetString(teamnameB, sizeof(teamnameB));
     SetConVarString(FindConVar("mp_tournament_redteamname"), teamnameB);
     
     // wait for players, then start the tournament
@@ -45,5 +45,5 @@ stock void AllowMatch()
 }
 
 public Action:cmd_block(client, args) {
-	return (g_hStopwatchEnabled.BoolValue ? Plugin_Handled : Plugin_Continue);
+	return (gStopwatchEnabled.BoolValue ? Plugin_Handled : Plugin_Continue);
 }

@@ -35,10 +35,10 @@ Action CmdMod(int clientId, int argc) {
         return Plugin_Continue;
     }
 
-    char server_name[PLATFORM_MAX_PATH];
-    g_host.GetString(server_name, sizeof(server_name));
+    char serverName[PLATFORM_MAX_PATH];
+    gHost.GetString(serverName, sizeof(serverName));
     JSON_Object obj = new JSON_Object();
-    obj.SetString("server_name", server_name);
+    obj.SetString("server_name", serverName);
     obj.SetString("steam_id", auth_id);
     obj.SetString("name", name);
     obj.SetString("reason", reason);
