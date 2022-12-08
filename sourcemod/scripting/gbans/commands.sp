@@ -1,7 +1,9 @@
 #pragma semicolon 1
+#pragma tabsize 4
+#pragma newdecls required
 
 public
-Action CmdVersion(int clientId, int args) {
+Action onCmdVersion(int clientId, int args) {
     ReplyToCommand(clientId, "[GB] Version %s", PLUGIN_VERSION);
     return Plugin_Handled;
 }
@@ -10,7 +12,7 @@ Action CmdVersion(int clientId, int args) {
 Ping the moderators through discord
 */
 public
-Action CmdMod(int clientId, int argc) {
+Action onCmdMod(int clientId, int argc) {
     if (argc < 1) {
         ReplyToCommand(clientId, "Must supply a reason message for pinging");
         return Plugin_Handled;
@@ -31,7 +33,7 @@ Action CmdMod(int clientId, int argc) {
     }
     char name[64];
     if (!GetClientName(clientId, name, sizeof(name))) {
-        PrintToServer("Failed to get user name?");
+        gbLog("Failed to get user name?");
         return Plugin_Continue;
     }
 
@@ -46,7 +48,7 @@ Action CmdMod(int clientId, int argc) {
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
-    System2HTTPRequest req = newReq(OnPingModRespReceived, "/api/ping_mod");
+    System2HTTPRequest req = newReq(onPingModRespReceived, "/api/ping_mod");
     req.SetData(encoded);
     req.POST();
     delete req;
@@ -56,20 +58,20 @@ Action CmdMod(int clientId, int argc) {
     return Plugin_Handled;
 }
 
-void OnPingModRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+void onPingModRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                            HTTPRequestMethod method) {
     if (!success) {
         return;
     }
     if (response.StatusCode != HTTP_STATUS_OK) {
-        PrintToServer("[GB] Bad status on mod resp request (%d): %s", response.StatusCode, error);
+        gbLog("Bad status on mod resp request (%d): %s", response.StatusCode, error);
         return;
     }
 }
 
 public
-Action CmdHelp(int clientId, int argc) {
-    CmdVersion(clientId, argc);
+Action onCmdHelp(int clientId, int argc) {
+    onCmdVersion(clientId, argc);
     ReplyToCommand(clientId, "gb_ban #user duration [reason]");
     ReplyToCommand(clientId, "gb_ban_ip #user duration [reason]");
     ReplyToCommand(clientId, "gb_kick #user [reason]");
@@ -80,14 +82,13 @@ Action CmdHelp(int clientId, int argc) {
 }
 
 public
-Action AdminCmdReauth(int clientId, int argc) {
+Action onAdminCmdReauth(int clientId, int argc) {
     refreshToken();
     return Plugin_Handled;
 }
 
-
 public
-Action AdminCmdBan(int clientId, int argc) {
+Action onAdminCmdBan(int clientId, int argc) {
     char command[64];
     char targetIdStr[50];
     char duration[50];
@@ -107,7 +108,7 @@ Action AdminCmdBan(int clientId, int argc) {
     GetCmdArg(3, duration, sizeof(duration));
     GetCmdArg(4, reasonStr, sizeof(reasonStr));
 
-    PrintToServer("Target: %s banType: %s duration: %s reason: %s", targetIdStr, banTypeStr, duration, reasonStr);
+    gbLog("Target: %s banType: %s duration: %s reason: %s", targetIdStr, banTypeStr, duration, reasonStr);
 
     int targetIdx = FindTarget(clientId, targetIdStr, true, false);
     if (targetIdx < 0) {
@@ -124,10 +125,10 @@ Action AdminCmdBan(int clientId, int argc) {
         ReplyToCommand(clientId, "Invalid ban type");
         return Plugin_Handled;
     }
-    
+
     if (!ban(clientId, targetIdx, reason, duration, banType, "", 0)) {
         ReplyToCommand(clientId, "Error sending ban request");
     }
-    
+
     return Plugin_Handled;
 }

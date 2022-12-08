@@ -37,7 +37,7 @@ ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
 IncludeBlocks:   Preserve
 IncludeCategories: 
-  - Regex:           '^<ext/.*\.h>'
+  - Regex:           '^<*\.sp>'
     Priority:        2
   - Regex:           '^<.*\.h>'
     Priority:        1
@@ -47,10 +47,10 @@ IncludeCategories:
     Priority:        3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseLabels: true
-IndentPPDirectives: AfterHash
+IndentPPDirectives: None
 IndentWidth:     4
 MaxEmptyLinesToKeep: 1
-ReflowComments:  false
+ReflowComments:  true
 AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakAfterReturnType: None
 SortIncludes:    true

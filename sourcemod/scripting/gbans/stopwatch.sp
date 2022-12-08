@@ -1,19 +1,27 @@
+#pragma semicolon 1
+#pragma tabsize 4
+#pragma newdecls required
 
-public onPluginStartStopwatch() {
-	HookEvent("teamplay_round_start", onTeamplayRoundStart, EventHookMode_PostNoCopy);
-	RegConsoleCmd("tournament_readystate", cmd_block);
-	RegConsoleCmd("tournament_teamname", cmd_block);
+public
+int onPluginStartStopwatch() {
+    HookEvent("teamplay_round_start", onTeamplayRoundStart, EventHookMode_PostNoCopy);
+    RegConsoleCmd("tournament_readystate", cmd_block);
+    RegConsoleCmd("tournament_teamname", cmd_block);
+    return 0;
 }
 
-public onMapEndStopwatch() {
+public
+int onMapEndStopwatch() {
     if (GetConVarBool(FindConVar("mp_tournament"))) {
-	    SetConVarBool(FindConVar("mp_tournament"), false);
+        SetConVarBool(FindConVar("mp_tournament"), false);
     }
+    return 0;
 }
 
-public onTeamplayRoundStart(Handle:event, const String:name[], bool:dontBroadcast) {
-	if (!gStopwatchEnabled.BoolValue || GetConVarBool(FindConVar("mp_tournament"))) {
-        return 
+public
+int onTeamplayRoundStart(Handle event, const char[] name, bool dontBroadcast) {
+    if (!gStopwatchEnabled.BoolValue || GetConVarBool(FindConVar("mp_tournament"))) {
+        return -1;
     }
     // set cvars
     SetConVarBool(FindConVar("mp_tournament"), true);
@@ -28,22 +36,21 @@ public onTeamplayRoundStart(Handle:event, const String:name[], bool:dontBroadcas
     char teamnameB[16];
     gStopwatchNameRed.GetString(teamnameB, sizeof(teamnameB));
     SetConVarString(FindConVar("mp_tournament_redteamname"), teamnameB);
-    
+
     // wait for players, then start the tournament
     ServerCommand("mp_restartgame %d", GetConVarInt(FindConVar("mp_waitingforplayers_time")));
 
     AllowMatch();
-	
+    return 0;
 }
 
-stock void AllowMatch()
-{
-    for(int i = 1; i <= MaxClients; i++)
-    {
-        GameRules_SetProp("m_bTeamReady", 1, .element=i);
+stock void AllowMatch() {
+    for (int i = 1; i <= MaxClients; i++) {
+        GameRules_SetProp("m_bTeamReady", 1, .element = i);
     }
 }
 
-public Action:cmd_block(client, args) {
-	return (gStopwatchEnabled.BoolValue ? Plugin_Handled : Plugin_Continue);
+public
+Action cmd_block(int client, int args) {
+    return (gStopwatchEnabled.BoolValue ? Plugin_Handled : Plugin_Continue);
 }

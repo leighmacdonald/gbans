@@ -1,4 +1,6 @@
 #pragma semicolon 1
+#pragma tabsize 4
+#pragma newdecls required
 
 any Native_GB_BanClient(Handle plugin, int numParams) {
     int adminId = GetNativeCell(1);
@@ -14,16 +16,16 @@ any Native_GB_BanClient(Handle plugin, int numParams) {
         return ThrowNativeError(SP_ERROR_NATIVE, "Invalid reason index (%d)", reason);
     }
     GB_BanReason reasonValue = view_as<GB_BanReason>(reason);
-    char duration[32]; 
-    if ( GetNativeString(4, duration, sizeof(duration)) != SP_ERROR_NONE) {
+    char duration[32];
+    if (GetNativeString(4, duration, sizeof(duration)) != SP_ERROR_NONE) {
         return ThrowNativeError(SP_ERROR_NATIVE, "Invalid duration, but must be positive integer or 0 for permanent");
     }
     int banType = GetNativeCell(5);
     if (banType != BSBanned && banType != BSNoComm) {
         return ThrowNativeError(SP_ERROR_NATIVE, "Invalid banType, but must be 1: mute/gag  or 2: ban");
     }
-    char demoName[128]; 
-    if ( GetNativeString(6, demoName, sizeof(demoName)) != SP_ERROR_NONE) {
+    char demoName[128];
+    if (GetNativeString(6, demoName, sizeof(demoName)) != SP_ERROR_NONE) {
         return ThrowNativeError(SP_ERROR_NATIVE, "Invalid demoName");
     }
     int tick = GetNativeCell(7);
@@ -38,11 +40,12 @@ any Native_GB_BanClient(Handle plugin, int numParams) {
 
 /**
  * ban performs the actual work of sending the ban request to the gbans server
- * 
+ *
  * NOTE: There is currently no way to set a custom ban reason string
  */
 public
-bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration, int banType, const char[] demoName, int tick)  {
+bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration, int banType, const char[] demoName,
+         int tick) {
     char sourceSid[50];
     if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof(sourceSid), true)) {
         ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
@@ -53,7 +56,7 @@ bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration,
         ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
         return false;
     }
-    
+
     JSON_Object obj = new JSON_Object();
     obj.SetString("source_id", sourceSid);
     obj.SetString("target_id", targetSid);
@@ -69,7 +72,7 @@ bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration,
     char encoded[1024];
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
-    System2HTTPRequest req = newReq(OnBanRespReceived, "/api/sm/bans/steam/create");
+    System2HTTPRequest req = newReq(onBanRespReceived, "/api/sm/bans/steam/create");
     req.SetData(encoded);
     req.POST();
     delete req;
@@ -79,10 +82,10 @@ bool ban(int sourceId, int targetId, GB_BanReason reason, const char[] duration,
     return true;
 }
 
-void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
-                           HTTPRequestMethod method) {
+void onBanRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+                       HTTPRequestMethod method) {
     if (!success) {
-        PrintToServer("[GB] Ban request did not complete successfully");
+        gbLog("Ban request did not complete successfully");
         return;
     }
 
@@ -96,12 +99,12 @@ void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest requ
     }
 
     char[] content = new char[response.ContentLength + 1];
-    
+
     response.GetContent(content, response.ContentLength + 1);
 
     JSON_Object resp = json_decode(content);
     if (!resp.GetBool("status")) {
-        PrintToServer("[GB] Invalid response status");
+        gbLog("Invalid response status");
         json_cleanup_and_delete(resp);
         return;
     }
@@ -112,4 +115,3 @@ void OnBanRespReceived(bool success, const char[] error, System2HTTPRequest requ
 
     json_cleanup_and_delete(resp);
 }
-

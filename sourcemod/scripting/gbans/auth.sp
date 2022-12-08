@@ -26,20 +26,20 @@ void refreshToken() {
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
 
-    System2HTTPRequest req = newReq(OnAuthReqReceived, "/api/server/auth");
+    System2HTTPRequest req = newReq(onAuthReqReceived, "/api/server/auth");
     req.SetData(encoded);
     req.POST();
     delete req;
 }
 
-void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+void onAuthReqReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                        HTTPRequestMethod method) {
     if (success) {
         char lastURL[128];
         response.GetLastURL(lastURL, sizeof(lastURL));
         int statusCode = response.StatusCode;
         if (statusCode != HTTP_STATUS_OK) {
-            PrintToServer("[GB] Bad status on authentication request: %d", statusCode);
+            gbLog("Bad status on authentication request: %d", statusCode);
             return;
         }
         char[] content = new char[response.ContentLength + 1];
@@ -47,46 +47,46 @@ void OnAuthReqReceived(bool success, const char[] error, System2HTTPRequest requ
         JSON_Object resp = json_decode(content);
         bool ok = resp.GetBool("status");
         if (!ok) {
-            PrintToServer("[GB] Invalid response status, cannot authenticate");
+            gbLog("Invalid response status, cannot authenticate");
             return;
         }
         JSON_Object data = resp.GetObject("result");
         char token[512];
         data.GetString("token", token, sizeof(token));
         if (strlen(token) == 0) {
-            PrintToServer("[GB] Invalid response status, invalid token");
+            gbLog("Invalid response status, invalid token");
             return;
         }
         gAccessToken = token;
-        PrintToServer("[GB] Successfully authenticated with gbans server");
+        gbLog("Successfully authenticated with gbans server");
         json_cleanup_and_delete(resp);
         reloadAdmins();
     } else {
-        PrintToServer("[GB] Error on authentication request: %s", error);
+        gbLog("Error on authentication request: %s", error);
     }
 }
 
 public
-Action AdminCmdReload(int clientId, int argc) {
+Action onAdminCmdReload(int clientId, int argc) {
     reloadAdmins();
     return Plugin_Handled;
 }
 
 void reloadAdmins() {
-    PrintToServer("[GB] Refreshing admin users");
-    System2HTTPRequest req = newReq(OnAdminsReqReceived, "/api/server/admins");
+    gbLog("Refreshing admin users");
+    System2HTTPRequest req = newReq(onAdminsReqReceived, "/api/server/admins");
     req.GET();
     delete req;
 }
 
-void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
-                       HTTPRequestMethod method) {
+void onAdminsReqReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+                         HTTPRequestMethod method) {
     if (success) {
         char lastURL[128];
         response.GetLastURL(lastURL, sizeof(lastURL));
         int statusCode = response.StatusCode;
         if (statusCode != HTTP_STATUS_OK) {
-            PrintToServer("[GB] Bad status on reload admins request: %d", statusCode);
+            gbLog("Bad status on reload admins request: %d", statusCode);
             return;
         }
         char[] content = new char[response.ContentLength + 1];
@@ -94,7 +94,7 @@ void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
         JSON_Object resp = json_decode(content);
         bool ok = resp.GetBool("status");
         if (!ok) {
-            PrintToServer("[GB] Invalid response status, cannot reload admins");
+            gbLog("Invalid response status, cannot reload admins");
             return;
         }
         JSON_Array adminArray = view_as<JSON_Array>(resp.GetObject("result"));
@@ -109,13 +109,11 @@ void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
             perm.GetString("flags", flags, sizeof(flags));
             perm.GetString("steam_id", steamId, sizeof(steamId));
 
-            if ((adm = FindAdminByIdentity(AUTHMETHOD_STEAM, steamId)) == INVALID_ADMIN_ID)
-            {
+            if ((adm = FindAdminByIdentity(AUTHMETHOD_STEAM, steamId)) == INVALID_ADMIN_ID) {
                 // "" = anon admin
                 adm = CreateAdmin("");
-                if (!adm.BindIdentity(AUTHMETHOD_STEAM, steamId))
-                {
-                    LogError("Could not bind prefetched SQL admin (identity \"%s\")", steamId);
+                if (!adm.BindIdentity(AUTHMETHOD_STEAM, steamId)) {
+                    LogError("Could not bind prefetched gbans admin (identity \"%s\")", steamId);
                     continue;
                 }
             }
@@ -123,26 +121,24 @@ void OnAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
             /* Apply each flag */
             int len = strlen(flags);
             AdminFlag flag;
-            for (int j=0; j<len; j++)
-            {
-                if (!FindFlagByChar(flags[j], flag))
-                {
+            for (int j = 0; j < len; j++) {
+                if (!FindFlagByChar(flags[j], flag)) {
                     continue;
                 }
                 adm.SetFlag(flag, true);
             }
             adm.ImmunityLevel = immunity;
-        }       
+        }
 
-        PrintToServer("[GB] Successfully reloaded %d admins", length);
+        gbLog("Successfully reloaded %d admins", length);
         json_cleanup_and_delete(resp);
     } else {
-        PrintToServer("[GB] Error on reload admins request: %s", error);
+        gbLog("Error on reload admins request: %s", error);
     }
 }
 
 public
-void OnClientPostAdminCheck(int clientId) {
+void onClientPostAdminCheck(int clientId) {
     switch (gPlayers[clientId].banType) {
         case BSNoComm: {
             if (!BaseComm_IsClientMuted(clientId)) {
@@ -161,10 +157,9 @@ void OnClientPostAdminCheck(int clientId) {
     }
 }
 
-
-void CheckPlayer(int clientId, const char[] auth, const char[] ip, const char[] name) {
+void checkPlayer(int clientId, const char[] auth, const char[] ip, const char[] name) {
     if (!IsClientConnected(clientId) || IsFakeClient(clientId)) {
-        PrintToServer("[GB] Skipping check on invalid player");
+        gbLog("Skipping check on invalid player");
         return;
     }
     char encoded[1024];
@@ -176,13 +171,13 @@ void CheckPlayer(int clientId, const char[] auth, const char[] ip, const char[] 
     obj.Encode(encoded, sizeof(encoded));
     json_cleanup_and_delete(obj);
 
-    System2HTTPRequest req = newReq(OnCheckResp, "/api/check");
+    System2HTTPRequest req = newReq(onCheckResp, "/api/check");
     req.SetData(encoded);
     req.POST();
     delete req;
 }
 
-void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
+void onCheckResp(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                  HTTPRequestMethod method) {
     if (success) {
         char lastURL[128];
@@ -194,7 +189,7 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
             // Fail open if the server is broken
             return;
         }
-        
+
         JSON_Object resp = json_decode(content);
         JSON_Object data = resp.GetObject("result");
         int clientId = data.GetInt("client_id");
@@ -202,7 +197,7 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
         int permissionLevel = data.GetInt("permission_level");
         char msg[256]; // welcome or ban message
         data.GetString("msg", msg, sizeof(msg));
-        if(IsFakeClient(clientId)) {
+        if (IsFakeClient(clientId)) {
             return;
         }
         char ip[16];
@@ -213,9 +208,9 @@ void OnCheckResp(bool success, const char[] error, System2HTTPRequest request, S
         gPlayers[clientId].message = msg;
         gPlayers[clientId].permissionLevel = permissionLevel;
 
-        PrintToServer("[GB] Client authenticated (banType: %d level: %d)", banType, permissionLevel);      
-        json_cleanup_and_delete(resp);  
+        gbLog("Client authenticated (banType: %d level: %d)", banType, permissionLevel);
+        json_cleanup_and_delete(resp);
     } else {
-        PrintToServer("[GB] Error on authentication request: %s", error);
+        gbLog("Error on authentication request: %s", error);
     }
 }

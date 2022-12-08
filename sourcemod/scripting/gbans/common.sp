@@ -1,7 +1,15 @@
 #pragma semicolon 1
+#pragma tabsize 4
+#pragma newdecls required
+
+void gbLog(const char[] format, any...) {
+    char buffer[254];
+    VFormat(buffer, sizeof(buffer), format, 2);
+    PrintToServer("[GB] %s", buffer);
+}
 
 public
-bool parseReason(const char[] reasonStr, GB_BanReason &reason) {
+bool parseReason(const char[] reasonStr, GB_BanReason& reason) {
     int reasonInt = StringToInt(reasonStr, 10);
     if (reasonInt <= 0 || reasonInt < view_as<int>(custom) || reasonInt > view_as<int>(itemDescriptions)) {
         return false;
@@ -25,23 +33,25 @@ System2HTTPRequest newReq(System2HTTPResponseCallback cb, const char[] path) {
     return httpRequest;
 }
 
-public void OnMapEnd()
-{
+public
+void OnMapEnd() {
     onMapEndStopwatch();
     onMapEndSTV();
 }
 
-stock bool isValidClient(int iClient, bool bAlive = false)
-{
-	if (iClient >= 1 &&
-		iClient <= MaxClients &&
-		IsClientConnected(iClient) &&
-		IsClientInGame(iClient) &&
-		!IsFakeClient(iClient) &&
-		(bAlive == false || IsPlayerAlive(iClient)))
-	{
-		return true;
-	}
-
-	return false;
+stock bool isValidClient(int client) {
+    if (!(1 <= client <= MaxClients) || !IsClientInGame(client) || IsFakeClient(client) || IsClientSourceTV(client) ||
+        IsClientReplay(client)) {
+        return false;
+    }
+    return true;
 }
+
+// stock bool isValidClient(int iClient) {
+//     if (iClient >= 1 && iClient <= MaxClients && IsClientConnected(iClient) && IsClientInGame(iClient) &&
+//         !IsFakeClient(iClient)) {
+//         return true;
+//     }
+
+//     return false;
+// }
