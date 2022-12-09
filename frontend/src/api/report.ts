@@ -41,13 +41,16 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 
 export interface Report extends TimeStamped {
     report_id: number;
-    author_id: SteamID;
-    reported_id: SteamID;
+    source_id: SteamID;
+    target_id: SteamID;
     description: string;
     report_status: ReportStatus;
     deleted: boolean;
     reason: BanReason;
     reason_text: string;
+    demo_name: string;
+    demo_tick: number;
+    demo_id: number;
 }
 
 export interface ReportMessagesResponse {
@@ -64,10 +67,12 @@ export interface UserMessage extends TimeStamped {
 }
 
 export interface CreateReportRequest {
-    steam_id: string;
+    target_id: string;
     description: string;
     reason: BanReason;
     reason_text: string;
+    demo_name: string;
+    demo_tick: number;
 }
 
 export interface ReportWithAuthor {

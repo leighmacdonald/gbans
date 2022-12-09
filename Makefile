@@ -110,24 +110,10 @@ docker_dump:
 docker_restore:
 	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
-# This will dump the current local tf2 server into a local directory.
-# This allows he following:
-# - Uses the actual configs generated from ansible deployment to local host
-# - Faster iterations of small changes
-# - Simple use of vscode sourcepawn plugin to automatically write the plugin to the correct dir and reload via rcon
-# - Use the identical sourcemod versions to prod
-# Alternatively you can create a build script to copy the plugin into the running container and reload via rcon
-docker_generate_local_server:
-	rm -rf tf2server || true
-	docker cp -a srcds-localhost-1:/home/steam tf2server
-	local_server
-
-local_server:
-	cd tf2server/tf-dedicated && ../../scripts/test_game_server.sh
-
 docker_update_plugin:
-	docker cp ~/projects/gbans/sourcemod/plugins/gbans.smx srcds-localhost-1:/home/steam/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
+	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/steam/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
 	rcon -H 192.168.0.72 -p dev_pass sm plugins reload gbans
+	docker logs -f srcds-localhost-1
 
 copy_ut:
 	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/

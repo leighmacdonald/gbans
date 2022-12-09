@@ -80,19 +80,19 @@ export const ReportViewPage = (): JSX.Element => {
     }, [report_id, setReport, id, sendFlash, navigate]);
 
     const loadBans = useCallback(() => {
-        if (!report?.report.reported_id) {
+        if (!report?.report.target_id) {
             return;
         }
         apiGetBansSteam({
             limit: 100,
             deleted: true,
-            steam_id: report?.report.reported_id
+            steam_id: report?.report.target_id
         }).then((history) => {
             setBanHistory(history);
             const cur = history.filter((b) => !b.deleted).pop();
             setCurrentBan(cur);
         });
-    }, [report?.report.reported_id]);
+    }, [report?.report.target_id]);
 
     useEffect(() => {
         loadBans();

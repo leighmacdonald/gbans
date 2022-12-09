@@ -453,15 +453,20 @@ func (status ReportStatus) String() string {
 
 type Report struct {
 	ReportId     int64         `json:"report_id"`
-	AuthorId     steamid.SID64 `json:"author_id,string"`
-	ReportedId   steamid.SID64 `json:"reported_id,string"`
+	SourceId     steamid.SID64 `json:"source_id,string"`
+	TargetId     steamid.SID64 `json:"target_id,string"`
 	Description  string        `json:"description"`
 	ReportStatus ReportStatus  `json:"report_status"`
 	Reason       Reason        `json:"reason"`
 	ReasonText   string        `json:"reason_text"`
 	Deleted      bool          `json:"deleted"`
-	CreatedOn    time.Time     `json:"created_on"`
-	UpdatedOn    time.Time     `json:"updated_on"`
+	// Note that we do not use a foreign key here since the demos are not sent until completion
+	// and reports can happen mid-game
+	DemoName  string    `json:"demo_name"`
+	DemoTick  int       `json:"demo_tick"`
+	DemoId    int       `json:"demo_id"`
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 }
 
 func (report Report) ToURL() string {
@@ -471,11 +476,13 @@ func (report Report) ToURL() string {
 func NewReport() Report {
 	return Report{
 		ReportId:     0,
-		AuthorId:     0,
+		SourceId:     0,
 		Description:  "",
 		ReportStatus: 0,
 		CreatedOn:    config.Now(),
 		UpdatedOn:    config.Now(),
+		DemoTick:     -1,
+		DemoName:     "",
 	}
 }
 

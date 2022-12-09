@@ -6,6 +6,7 @@ import { DataTable, RowsPerPage } from './DataTable';
 import { humanFileSize, renderDateTime } from '../util/text';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import IconButton from '@mui/material/IconButton';
+import FlagIcon from '@mui/icons-material/Flag';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { ServerSelect } from './ServerSelect';
@@ -16,6 +17,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
+import { useNavigate } from 'react-router-dom';
 
 export interface STVListVIewProps {
     demos: DemoFile[];
@@ -28,6 +30,7 @@ export const STVListVIew = () => {
     const [serverIds, setServerIds] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { currentUser } = useCurrentUserCtx();
+    const navigate = useNavigate();
 
     const reload = useCallback(() => {
         setIsLoading(true);
@@ -146,12 +149,36 @@ export const STVListVIew = () => {
                             }
                         },
                         {
+                            tooltip: 'Create Report From Demo',
+                            label: 'RP',
+                            virtual: true,
+                            align: 'center',
+                            virtualKey: 'report',
+                            width: '40px',
+                            renderer: (row) => {
+                                return (
+                                    <IconButton
+                                        color={'error'}
+                                        onClick={() => {
+                                            localStorage.setItem(
+                                                'demoName',
+                                                row.title
+                                            );
+                                            navigate('/report');
+                                        }}
+                                    >
+                                        <FlagIcon />
+                                    </IconButton>
+                                );
+                            }
+                        },
+                        {
                             tooltip: 'Download',
                             label: 'DL',
                             virtual: true,
                             align: 'center',
-                            virtualKey: 'Download',
-                            width: '50px',
+                            virtualKey: 'download',
+                            width: '40px',
                             renderer: (row) => {
                                 return (
                                     <IconButton

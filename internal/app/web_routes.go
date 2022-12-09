@@ -124,7 +124,9 @@ func (web *web) setupRouter(engine *gin.Engine) {
 		serverAuth.POST("/api/check", web.onAPIPostServerCheck())
 		serverAuth.POST("/api/demo", web.onAPIPostDemo())
 		serverAuth.POST("/api/log", web.onAPIPostLog())
+		// Duplicated since we need to authenticate via server middleware
 		serverAuth.POST("/api/sm/bans/steam/create", web.onAPIPostBanSteamCreate())
+		serverAuth.POST("/api/sm/report/create", web.onAPIPostReportCreate())
 	}
 
 	authedGrp := engine.Group("/")

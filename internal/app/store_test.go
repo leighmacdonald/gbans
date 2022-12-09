@@ -68,8 +68,8 @@ func TestReport(t *testing.T) {
 	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(),
 		steamid.SID64(steamid.RandSID64().Int64()+int64(rand.Int())), &target))
 	report := model.NewReport()
-	report.AuthorId = author.SteamID
-	report.ReportedId = target.SteamID
+	report.SourceId = author.SteamID
+	report.TargetId = target.SteamID
 	report.Description = golib.RandomString(120)
 	require.NoError(t, testDatabase.SaveReport(context.TODO(), &report))
 

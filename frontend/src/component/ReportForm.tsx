@@ -13,11 +13,16 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
+import Stack from '@mui/material/Stack';
 
 export const ReportForm = (): JSX.Element => {
     const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
     const [body, setBody] = useState<string>('');
     const [reasonText, setReasonText] = useState<string>('');
+    const [demoName, setDemoName] = useState(() => {
+        return localStorage.getItem('demoName') ?? '';
+    });
+    const [demoTick, setDemoTick] = useState(0);
     const [profile, setProfile] = useState<PlayerProfile | null>();
     const [inputSteamID, setInputSteamID] = useState<string>('');
     const { sendFlash } = useUserFlashCtx();
@@ -36,10 +41,12 @@ export const ReportForm = (): JSX.Element => {
                     return;
                 }
                 apiCreateReport({
-                    steam_id: profile?.player.steam_id.toString(),
+                    target_id: profile?.player.steam_id.toString(),
                     description: body_md,
                     reason: reason,
-                    reason_text: reasonText
+                    reason_text: reasonText,
+                    demo_name: demoName,
+                    demo_tick: demoTick
                 })
                     .then((response) => {
                         if (!response.status) {
@@ -56,13 +63,14 @@ export const ReportForm = (): JSX.Element => {
                     .catch(logErr);
             }
         },
-        [navigate, profile, reason, reasonText, sendFlash]
+        [demoName, demoTick, navigate, profile, reason, reasonText, sendFlash]
     );
 
     return (
         <ContainerWithHeader
             title={'Create a New Report'}
             iconLeft={<EditNotificationsIcon />}
+            spacing={2}
         >
             <Box paddingLeft={2} paddingRight={2} marginTop={3} width={'100%'}>
                 <ProfileSelectionInput
@@ -121,6 +129,31 @@ export const ReportForm = (): JSX.Element => {
                             }}
                         />
                     </FormControl>
+                )}
+                {demoName != '' && (
+                    <Stack direction={'row'}>
+                        <FormControl fullWidth>
+                            <TextField
+                                label={'Demo Name'}
+                                value={demoName}
+                                disabled={true}
+                                fullWidth
+                                onChange={(event) => {
+                                    setDemoName(event.target.value);
+                                }}
+                            />
+                        </FormControl>
+                        <FormControl fullWidth>
+                            <TextField
+                                label={'Demo Tick'}
+                                value={demoTick}
+                                fullWidth
+                                onChange={(event) => {
+                                    setDemoTick(parseInt(event.target.value));
+                                }}
+                            />
+                        </FormControl>
+                    </Stack>
                 )}
             </Box>
             <MDEditor

@@ -33,6 +33,9 @@ import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { UserMessageView } from './UserMessageView';
 import { TabPanel } from './TabPanel';
 import { PersonMessageTable } from './PersonMessageTable';
+import Link from '@mui/material/Link';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import Button from '@mui/material/Button';
 
 interface ReportComponentProps {
     report: Report;
@@ -69,7 +72,7 @@ export const ReportComponent = ({
             apiCreateReportMessage(report.report_id, message)
                 .then((response) => {
                     if (!response.status || !response.result) {
-                        sendFlash('error', 'Failed to save resport message');
+                        sendFlash('error', 'Failed to save report message');
                         return;
                     }
                     setMessages([
@@ -116,7 +119,7 @@ export const ReportComponent = ({
     }, [loadMessages, report]);
 
     useEffect(() => {
-        apiGetPersonConnections(report.reported_id)
+        apiGetPersonConnections(report.target_id)
             .then((response) => {
                 setConnections(response.result || []);
             })
@@ -124,7 +127,7 @@ export const ReportComponent = ({
     }, [report]);
 
     useEffect(() => {
-        apiGetPersonMessages(report.reported_id)
+        apiGetPersonMessages(report.target_id)
             .then((response) => {
                 setChatHistory(response.result || []);
             })
@@ -288,7 +291,35 @@ export const ReportComponent = ({
                             />
                         </TabPanel>
                     </Paper>
-
+                    {report.demo_name != '' && (
+                        <Paper>
+                            <Stack direction={'row'} padding={1}>
+                                <Typography
+                                    padding={2}
+                                    variant={'button'}
+                                    alignContent={'center'}
+                                >
+                                    Demo Info
+                                </Typography>
+                                <Button
+                                    startIcon={<FileDownloadIcon />}
+                                    component={Link}
+                                    variant={'outlined'}
+                                    href={`/demos/${report.demo_id}`}
+                                    color={'primary'}
+                                >
+                                    {report.demo_name}
+                                </Button>
+                                <Typography
+                                    padding={2}
+                                    variant={'body1'}
+                                    alignContent={'center'}
+                                >
+                                    Tick: {report.demo_tick}
+                                </Typography>
+                            </Stack>
+                        </Paper>
+                    )}
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}

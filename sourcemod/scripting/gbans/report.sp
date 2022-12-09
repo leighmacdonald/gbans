@@ -5,7 +5,7 @@
 #include <adminmenu>
 
 const reportTimeout = 30;
-const reportMinReasonLen = 20;
+const reportMinReasonLen = 10;
 
 public
 Action onCmdReport(int clientId, int argc) {
@@ -34,37 +34,46 @@ void resetReportStatus() {
     gReportTargetId = -1;
     gReportStartedAtTime = -1;
     gReportTargetReason = unknown;
-    gReportTargetReasonCustom = "";
+    gReportWaitingForReason = false;
 }
 
 public
 Action OnClientSayCommand(int clientId, const char[] command, const char[] args) {
-    if (clientId != gReportSourceId || gReportSourceId == -1 || gReportStartedAtTime == -1 ||
-        gReportTargetReason == unknown) {
+    if (!gReportWaitingForReason || clientId != gReportSourceId && gReportSourceId == -1 ||
+        gReportTargetReason != custom) {
         return Plugin_Continue;
     } else if (StrEqual(args, "cancel", false)) {
+        PrintToChat(clientId, "Report cancelled");
         resetReportStatus();
         return Plugin_Stop;
     } else if (strlen(args) < reportMinReasonLen) {
-        ReplyToCommand(clientId, "Report reason too short");
-        return Plugin_Continue;
+        PrintToChat(clientId, "Report reason too short, try again or type \"cancel\" to reset");
+        return Plugin_Stop;
     }
-    strcopy(gReportTargetReasonCustom, sizeof(gReportTargetReasonCustom), args);
+    gbLog("Got report reason: %s", args);
+    report(gReportSourceId, gReportTargetId, gReportTargetReason, args);
     return Plugin_Stop;
 }
 
 public
-bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reasonText, const char[] demoName,
-            int demoTick) {
+bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reasonText) {
+    gbLog("Report: %d %d %d %s", sourceId, targetId, reason, reasonText);
     char sourceSid[50];
     if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof(sourceSid), true)) {
         ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
+        resetReportStatus();
         return false;
     }
     char targetSid[50];
     if (!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof(targetSid), true)) {
         ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
+        resetReportStatus();
         return false;
+    }
+    int demoTick = -1;
+    char demoName[256];
+    if (SourceTV_GetDemoFileName(demoName, sizeof(demoName))) {
+        demoTick = SourceTV_GetRecordingTick();
     }
 
     JSON_Object obj = new JSON_Object();
@@ -84,8 +93,11 @@ bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reason
     req.POST();
     delete req;
 
+    resetReportStatus();
+
     return true;
 }
+
 void onReportRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                           HTTPRequestMethod method) {
     if (!success) {
@@ -174,10 +186,11 @@ int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedI
             return -1;
         }
         if (gReportTargetReason == custom) {
-        } else {
-            gReportStartedAtTime = -1;
-            report(gReportSourceId, gReportTargetId, gReportTargetReason, "", "", -1);
+            ReplyToCommand(clientId, "Enter your reason in chat, it will not be shown to others");
+            gReportWaitingForReason = true;
+            return 0;
         }
+        return report(gReportSourceId, gReportTargetId, gReportTargetReason, "");
     } else if (action == MenuAction_End) {
         delete menu;
     }

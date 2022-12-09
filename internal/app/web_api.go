@@ -1464,10 +1464,13 @@ func (web *web) onAPIPostServer() gin.HandlerFunc {
 
 func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 	type createReport struct {
-		SteamId     string       `json:"steam_id"`
-		Description string       `json:"description"`
-		Reason      model.Reason `json:"reason"`
-		ReasonText  string       `json:"reason_text"`
+		SourceId    model.StringSID `json:"source_id"`
+		TargetId    model.StringSID `json:"target_id"`
+		Description string          `json:"description"`
+		Reason      model.Reason    `json:"reason"`
+		ReasonText  string          `json:"reason_text"`
+		DemoName    string          `json:"demo_name"`
+		DemoTick    int             `json:"demo_tick"`
 	}
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
@@ -1477,21 +1480,40 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 			log.Errorf("Failed to bind report: %v", errBind)
 			return
 		}
-		sid, errSid := steamid.ResolveSID64(ctx, newReport.SteamId)
-		if errSid != nil {
+		// Server initiated requests will have a sourceId set by the server
+		// Web based reports the source should not be set, the reporter will be taken from the
+		// current session information instead
+		if newReport.SourceId == "" {
+			newReport.SourceId = model.StringSID(currentUser.SteamID.String())
+		}
+		sourceId, errSourceId := newReport.SourceId.SID64()
+		if errSourceId != nil {
 			responseErrUser(ctx, http.StatusBadRequest, nil, "Failed to resolve steam id")
-			log.Errorf("Invaid steam_id: %v", errSid)
+			log.WithError(errSourceId).Errorf("Invaid steam_id: %v", errSourceId)
 			return
 		}
-		var person model.Person
-		if errCreatePerson := getOrCreateProfileBySteamID(ctx, web.app.store, sid, &person); errCreatePerson != nil {
+		targetId, errTargetId := newReport.TargetId.SID64()
+		if errTargetId != nil {
+			responseErrUser(ctx, http.StatusBadRequest, nil, "Failed to resolve steam id")
+			log.WithError(errTargetId).Errorf("Invaid target_id: %v", errTargetId)
+			return
+		}
+		var personSource model.Person
+		if errCreatePerson := getOrCreateProfileBySteamID(ctx, web.app.store, sourceId, &personSource); errCreatePerson != nil {
 			responseErrUser(ctx, http.StatusInternalServerError, nil, "Internal error")
 			log.Errorf("Could not load player profile: %v", errCreatePerson)
 			return
 		}
+		var personTarget model.Person
+		if errCreatePerson := getOrCreateProfileBySteamID(ctx, web.app.store, targetId, &personTarget); errCreatePerson != nil {
+			responseErrUser(ctx, http.StatusInternalServerError, nil, "Internal error")
+			log.Errorf("Could not load player profile: %v", errCreatePerson)
+			return
+		}
+
 		// Ensure the user doesn't already have an open report against the user
 		var existing model.Report
-		if errReports := web.app.store.GetReportBySteamId(ctx, currentUser.SteamID, sid, &existing); errReports != nil {
+		if errReports := web.app.store.GetReportBySteamId(ctx, currentUser.SteamID, targetId, &existing); errReports != nil {
 			if !errors.Is(errReports, store.ErrNoResult) {
 				log.Errorf("Failed to query reports by steam id: %v", errReports)
 				responseErr(ctx, http.StatusInternalServerError, nil)
@@ -1506,12 +1528,14 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 
 		// TODO encapsulate all operations in single tx
 		report := model.NewReport()
-		report.AuthorId = currentUser.SteamID
+		report.SourceId = sourceId
 		report.ReportStatus = model.Opened
 		report.Description = newReport.Description
-		report.ReportedId = sid
+		report.TargetId = targetId
 		report.Reason = newReport.Reason
 		report.ReasonText = newReport.ReasonText
+		report.DemoName = newReport.DemoName
+		report.DemoTick = newReport.DemoTick
 		if errReportSave := web.app.store.SaveReport(ctx, &report); errReportSave != nil {
 			responseErrUser(ctx, http.StatusInternalServerError, nil, "Failed to save report")
 			log.Errorf("Failed to save report: %v", errReportSave)
@@ -1523,16 +1547,16 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 		embed.Description = report.Description
 		embed.URL = config.ExtURL("/report/%d", report.ReportId)
 		addAuthorProfile(embed, currentUser)
-		name := person.PersonaName
+		name := personSource.PersonaName
 		if name == "" {
-			name = report.ReportedId.String()
+			name = report.TargetId.String()
 		}
 		addField(embed, "Subject", name)
 		addField(embed, "Reason", report.Reason.String())
 		if report.ReasonText != "" {
 			addField(embed, "Custom Reason", report.ReasonText)
 		}
-		addFieldsSteamID(embed, report.ReportedId)
+		addFieldsSteamID(embed, report.TargetId)
 		addLink(embed, report)
 		web.app.sendDiscordPayload(discordPayload{
 			channelId: config.Discord.ReportLogChannelId,
@@ -1618,7 +1642,7 @@ func (web *web) onAPIPostReportMessage() gin.HandlerFunc {
 			Title:       "New report message posted",
 			Description: msg.Message,
 		}
-		addField(embed, "Author", report.AuthorId.String())
+		addField(embed, "Author", report.SourceId.String())
 		addLink(embed, report)
 		web.app.sendDiscordPayload(discordPayload{
 			channelId: config.Discord.ReportLogChannelId,
@@ -1769,7 +1793,7 @@ func (web *web) onAPISetReportStatus() gin.HandlerFunc {
 			"to":        report.ReportStatus.String(),
 		}).Infof("Report status changed")
 		web.app.sendUserNotification(notificationPayload{
-			sids:     steamid.Collection{report.AuthorId},
+			sids:     steamid.Collection{report.SourceId},
 			severity: model.SeverityInfo,
 			message:  "Report status updated",
 			link:     report.ToURL(),
@@ -1790,7 +1814,7 @@ func (web *web) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.AuthorId, report.ReportedId}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceId, report.TargetId}, model.PModerator) {
 			return
 		}
 
@@ -1848,7 +1872,7 @@ func (web *web) onAPIGetReports() gin.HandlerFunc {
 		}
 		var authorIds steamid.Collection
 		for _, report := range reports {
-			authorIds = append(authorIds, report.AuthorId)
+			authorIds = append(authorIds, report.SourceId)
 		}
 		authors, errAuthors := web.app.store.GetPeopleBySteamID(ctx, fp.Uniq[steamid.SID64](authorIds))
 		if errAuthors != nil {
@@ -1859,7 +1883,7 @@ func (web *web) onAPIGetReports() gin.HandlerFunc {
 
 		var subjectIds steamid.Collection
 		for _, report := range reports {
-			subjectIds = append(subjectIds, report.ReportedId)
+			subjectIds = append(subjectIds, report.TargetId)
 		}
 		subjects, errSubjects := web.app.store.GetPeopleBySteamID(ctx, fp.Uniq[steamid.SID64](subjectIds))
 		if errSubjects != nil {
@@ -1870,9 +1894,9 @@ func (web *web) onAPIGetReports() gin.HandlerFunc {
 
 		for _, report := range reports {
 			userReports = append(userReports, reportWithAuthor{
-				Author:  authorMap[report.AuthorId],
+				Author:  authorMap[report.SourceId],
 				Report:  report,
-				Subject: subjectMap[report.ReportedId],
+				Subject: subjectMap[report.TargetId],
 			})
 		}
 		sort.SliceStable(userReports, func(i, j int) bool {
@@ -1900,12 +1924,12 @@ func (web *web) onAPIGetReport() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.AuthorId}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceId}, model.PModerator) {
 			responseErr(ctx, http.StatusUnauthorized, nil)
 			return
 		}
 
-		if errAuthor := web.app.store.GetOrCreatePersonBySteamID(ctx, report.Report.AuthorId, &report.Author); errAuthor != nil {
+		if errAuthor := web.app.store.GetOrCreatePersonBySteamID(ctx, report.Report.SourceId, &report.Author); errAuthor != nil {
 			if store.Err(errAuthor) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -1914,7 +1938,7 @@ func (web *web) onAPIGetReport() gin.HandlerFunc {
 			log.Errorf("Failed to load report author: %v", errAuthor)
 			return
 		}
-		if errSubject := web.app.store.GetOrCreatePersonBySteamID(ctx, report.Report.ReportedId, &report.Subject); errSubject != nil {
+		if errSubject := web.app.store.GetOrCreatePersonBySteamID(ctx, report.Report.TargetId, &report.Subject); errSubject != nil {
 			if store.Err(errSubject) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
