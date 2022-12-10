@@ -15,12 +15,13 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import Link from '@mui/material/Link';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
@@ -59,7 +60,8 @@ export const ReportCreatePage = (): JSX.Element => {
                     {!canReport && (
                         <ContainerWithHeader title={'Permission Denied'}>
                             <Typography variant={'body1'} padding={2}>
-                                Cannot report players while current banned
+                                You are unable to report players while you are
+                                currently banned/muted.
                             </Typography>
                             <ButtonGroup sx={{ padding: 2 }}>
                                 <Button
@@ -169,8 +171,20 @@ export const ReportCreatePage = (): JSX.Element => {
                                 you will be notified about it.
                             </ListItemText>
                         </ListItem>
-                    </List>
-                    <List>
+                        <ListItem>
+                            <ListItemText>
+                                If you wish to link to a specific SourceTV
+                                recording, you can find them listed{' '}
+                                <Link component={RouterLink} to={'/stv'}>
+                                    here
+                                </Link>
+                                . Once you find the recording you want, you may
+                                select the report icon which will open a new
+                                report with the demo attached. From there you
+                                will optionally be able to enter a specific tick
+                                if you have one.
+                            </ListItemText>
+                        </ListItem>
                         <ListItem>
                             <ListItemText>
                                 Reports that are made in bad faith, or otherwise
@@ -178,8 +192,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                 and the reporter will be banned.
                             </ListItemText>
                         </ListItem>
-                    </List>
-                    <List>
+
                         <ListItem>
                             <ListItemText>
                                 Its only possible to open a single report

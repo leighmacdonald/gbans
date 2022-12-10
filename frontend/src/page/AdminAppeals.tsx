@@ -9,12 +9,11 @@ import format from 'date-fns/format';
 import { Heading } from '../component/Heading';
 import { steamIdQueryValue } from '../util/text';
 import Button from '@mui/material/Button';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { PersonCell } from '../component/PersonCell';
 
 export const AdminAppeals = (): JSX.Element => {
     const [appeals, setAppeals] = useState<AppealOverview[]>([]);
-    const navigate = useNavigate();
 
     useEffect(() => {
         apiGetAppeals()
@@ -41,10 +40,9 @@ export const AdminAppeals = (): JSX.Element => {
                                 queryValue: (o) => `${o.ban_id}`,
                                 renderer: (obj) => (
                                     <Button
+                                        component={Link}
                                         variant={'contained'}
-                                        onClick={() => {
-                                            navigate(`/ban/${obj.ban_id}`);
-                                        }}
+                                        to={`/ban/${obj.ban_id}`}
                                     >
                                         #{obj.ban_id}
                                     </Button>

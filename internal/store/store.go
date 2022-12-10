@@ -38,7 +38,8 @@ type ServerStore interface {
 }
 
 type DemoStore interface {
-	GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error
+	GetDemoById(ctx context.Context, demoId int64, demoFile *model.DemoFile) error
+	GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error
 	GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error)
 	SaveDemo(ctx context.Context, d *model.DemoFile) error
 	DropDemo(ctx context.Context, d *model.DemoFile) error

@@ -166,7 +166,36 @@ func (web *web) onAPIGetDemoDownload() gin.HandlerFunc {
 			return
 		}
 		var demo model.DemoFile
-		if errGet := web.app.store.GetDemo(ctx, demoId, &demo); errGet != nil {
+		if errGet := web.app.store.GetDemoById(ctx, demoId, &demo); errGet != nil {
+			if errors.Is(errGet, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, nil)
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.WithError(errGet).Error("Error fetching demo")
+			return
+		}
+		ctx.Header("Content-Description", "File Transfer")
+		ctx.Header("Content-Transfer-Encoding", "binary")
+		ctx.Header("Content-Disposition", "attachment; filename="+demo.Title)
+		ctx.Data(http.StatusOK, "application/octet-stream", demo.Data)
+		demo.Downloads++
+		if errSave := web.app.store.SaveDemo(ctx, &demo); errSave != nil {
+			log.WithError(errSave).Error("Failed to increment download count for demo")
+		}
+	}
+}
+
+func (web *web) onAPIGetDemoDownloadByName() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		demoName := ctx.Param("demo_name")
+		if demoName == "" {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Error("Invalid demo name requested")
+			return
+		}
+		var demo model.DemoFile
+		if errGet := web.app.store.GetDemoByName(ctx, demoName, &demo); errGet != nil {
 			if errors.Is(errGet, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -1498,6 +1527,10 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 			log.WithError(errTargetId).Errorf("Invaid target_id: %v", errTargetId)
 			return
 		}
+		if sourceId == targetId {
+			responseErrUser(ctx, http.StatusForbidden, nil, "Cannot report yourself")
+			return
+		}
 		var personSource model.Person
 		if errCreatePerson := getOrCreateProfileBySteamID(ctx, web.app.store, sourceId, &personSource); errCreatePerson != nil {
 			responseErrUser(ctx, http.StatusInternalServerError, nil, "Internal error")
@@ -1534,7 +1567,8 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 		report.TargetId = targetId
 		report.Reason = newReport.Reason
 		report.ReasonText = newReport.ReasonText
-		report.DemoName = newReport.DemoName
+		parts := strings.Split(newReport.DemoName, "/")
+		report.DemoName = parts[len(parts)-1]
 		report.DemoTick = newReport.DemoTick
 		if errReportSave := web.app.store.SaveReport(ctx, &report); errReportSave != nil {
 			responseErrUser(ctx, http.StatusInternalServerError, nil, "Failed to save report")
@@ -1545,7 +1579,7 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 
 		embed := respOk(nil, "New user report created")
 		embed.Description = report.Description
-		embed.URL = config.ExtURL("/report/%d", report.ReportId)
+		embed.URL = report.ToURL()
 		addAuthorProfile(embed, currentUser)
 		name := personSource.PersonaName
 		if name == "" {
@@ -1555,6 +1589,10 @@ func (web *web) onAPIPostReportCreate() gin.HandlerFunc {
 		addField(embed, "Reason", report.Reason.String())
 		if report.ReasonText != "" {
 			addField(embed, "Custom Reason", report.ReasonText)
+		}
+		if report.DemoName != "" {
+			addField(embed, "Demo", config.ExtURL("/demos/name/%s", report.DemoName))
+			addField(embed, "Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 		}
 		addFieldsSteamID(embed, report.TargetId)
 		addLink(embed, report)

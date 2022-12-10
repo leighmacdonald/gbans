@@ -299,24 +299,25 @@ export const ReportComponent = ({
                                     variant={'button'}
                                     alignContent={'center'}
                                 >
-                                    Demo Info
+                                    Demo&nbsp;Info
                                 </Typography>
-                                <Button
-                                    startIcon={<FileDownloadIcon />}
-                                    component={Link}
-                                    variant={'outlined'}
-                                    href={`/demos/${report.demo_id}`}
-                                    color={'primary'}
-                                >
-                                    {report.demo_name}
-                                </Button>
                                 <Typography
                                     padding={2}
                                     variant={'body1'}
                                     alignContent={'center'}
                                 >
-                                    Tick: {report.demo_tick}
+                                    Tick:&nbsp;{report.demo_tick}
                                 </Typography>
+                                <Button
+                                    fullWidth
+                                    startIcon={<FileDownloadIcon />}
+                                    component={Link}
+                                    variant={'text'}
+                                    href={`/demos/${report.demo_id}`}
+                                    color={'primary'}
+                                >
+                                    {report.demo_name}
+                                </Button>
                             </Stack>
                         </Paper>
                     )}

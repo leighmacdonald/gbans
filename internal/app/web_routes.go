@@ -102,6 +102,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	engine.GET("/api/server_stats", web.onAPIGetTF2Stats())
 
 	engine.POST("/api/demos", web.onAPIPostDemosQuery())
+	engine.GET("/demos/name/:demo_name", web.onAPIGetDemoDownloadByName())
 	engine.GET("/demos/:demo_id", web.onAPIGetDemoDownload())
 
 	// Service discovery endpoints

@@ -147,11 +147,14 @@ export interface PersonMessage {
 }
 
 export const apiGetPersonConnections = async (steam_id: SteamID) =>
-    await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
+    await apiCall<PersonConnection[]>(
+        `/api/connections/${steam_id.getSteamID64()}`,
+        'GET'
+    );
 
 export const apiGetPersonMessages = async (steam_id: SteamID) => {
     const resp = await apiCall<PersonMessage[]>(
-        `/api/messages/${steam_id}`,
+        `/api/messages/${steam_id.getSteamID64()}`,
         'GET'
     );
     resp.result = resp.result?.map((msg) => {

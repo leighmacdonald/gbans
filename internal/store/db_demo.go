@@ -7,14 +7,30 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (database *pgStore) GetDemo(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
+func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoId}).ToSql()
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
+	}
+	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
+		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
+		return Err(errQuery)
+	}
+	return nil
+}
+
+func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := sb.
+		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
+		From("demo").
+		Where(sq.Eq{"title": demoName}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
@@ -79,11 +95,32 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 }
 
 func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	if demoFile.DemoID > 0 {
-		return database.updateDemo(ctx, demoFile)
-	} else {
-		return database.insertDemo(ctx, demoFile)
+	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
+	// deleted during cleanup.
+	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
+	// we have no completed demo instance/id yet.
+	query, args, queryErr := sb.
+		Select("count(report_id)").
+		From("report").
+		Where(sq.Eq{"demo_name": demoFile.Title}).
+		ToSql()
+	if queryErr != nil {
+		return errors.Wrap(queryErr, "Failed to select reports")
 	}
+	var count int
+	if errScan := database.QueryRow(ctx, query, args...).Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
+		return Err(errScan)
+	}
+	if count > 0 {
+		demoFile.Archive = true
+	}
+	var err error
+	if demoFile.DemoID > 0 {
+		err = database.updateDemo(ctx, demoFile)
+	} else {
+		err = database.insertDemo(ctx, demoFile)
+	}
+	return Err(err)
 }
 
 func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {

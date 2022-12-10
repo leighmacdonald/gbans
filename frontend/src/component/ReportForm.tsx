@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
@@ -27,6 +27,12 @@ export const ReportForm = (): JSX.Element => {
     const [inputSteamID, setInputSteamID] = useState<string>('');
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        return () => {
+            localStorage.removeItem('demoName');
+        };
+    }, []);
 
     const onSave = useCallback(
         (body_md: string) => {
@@ -131,7 +137,7 @@ export const ReportForm = (): JSX.Element => {
                     </FormControl>
                 )}
                 {demoName != '' && (
-                    <Stack direction={'row'}>
+                    <Stack direction={'row'} spacing={2}>
                         <FormControl fullWidth>
                             <TextField
                                 label={'Demo Name'}
