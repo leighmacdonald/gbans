@@ -57,8 +57,8 @@ char gAccessToken[512];
 int gReplyToClientId = 0;
 
 // Reports command
-int gReportSourceId = 1;
-int gReportTargetId = 1;
+int gReportSourceId = -1;
+int gReportTargetId = -1;
 bool gReportWaitingForReason = false;
 GB_BanReason gReportTargetReason;
 int gReportStartedAtTime = -1;

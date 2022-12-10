@@ -112,6 +112,6 @@ void onBanRespReceived(bool success, const char[] error, System2HTTPRequest requ
     JSON_Object banResult = resp.GetObject("result");
     int banId = banResult.GetInt("ban_id");
     ReplyToCommand(gReplyToClientId, "User banned (#%d)", banId);
-
+    gReplyToClientId = -1;
     json_cleanup_and_delete(resp);
 }

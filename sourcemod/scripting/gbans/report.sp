@@ -10,8 +10,8 @@ const reportMinReasonLen = 10;
 public
 Action onCmdReport(int clientId, int argc) {
     if (gReportStartedAtTime > 0) {
-        ReplyToCommand(clientId, "A report is current in progress, please wait for it to compelte");
-        return Plugin_Handled;
+        ReplyToCommand(clientId, "A report is current in progress, please wait for it to complete");
+        return Plugin_Stop;
     }
     gReportStartedAtTime = GetTime();
     ShowTargetMenu(clientId);
@@ -43,30 +43,29 @@ Action OnClientSayCommand(int clientId, const char[] command, const char[] args)
         gReportTargetReason != custom) {
         return Plugin_Continue;
     } else if (StrEqual(args, "cancel", false)) {
-        PrintToChat(clientId, "Report cancelled");
+        PrintToChat(gReportSourceId, "Report cancelled");
         resetReportStatus();
         return Plugin_Stop;
     } else if (strlen(args) < reportMinReasonLen) {
-        PrintToChat(clientId, "Report reason too short, try again or type \"cancel\" to reset");
-        return Plugin_Stop;
+        PrintToChat(gReportSourceId, "Report reason too short, try again or type \"cancel\" to reset");
+        return Plugin_Continue;
     }
     gbLog("Got report reason: %s", args);
     report(gReportSourceId, gReportTargetId, gReportTargetReason, args);
-    return Plugin_Stop;
+    return Plugin_Continue;
 }
 
 public
 bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reasonText) {
-    gbLog("Report: %d %d %d %s", sourceId, targetId, reason, reasonText);
     char sourceSid[50];
     if (!GetClientAuthId(sourceId, AuthId_Steam3, sourceSid, sizeof(sourceSid), true)) {
-        ReplyToCommand(sourceId, "Failed to get sourceId of user: %d", sourceId);
+        PrintToChat(sourceId, "Failed to get sourceId of user: %d", sourceId);
         resetReportStatus();
         return false;
     }
     char targetSid[50];
     if (!GetClientAuthId(targetId, AuthId_Steam3, targetSid, sizeof(targetSid), true)) {
-        ReplyToCommand(sourceId, "Failed to get targetId of user: %d", targetId);
+        PrintToChat(sourceId, "Failed to get targetId of user: %d", targetId);
         resetReportStatus();
         return false;
     }
@@ -93,18 +92,49 @@ bool report(int sourceId, int targetId, GB_BanReason reason, const char[] reason
     req.POST();
     delete req;
 
-    resetReportStatus();
-
     return true;
 }
 
 void onReportRespReceived(bool success, const char[] error, System2HTTPRequest request, System2HTTPResponse response,
                           HTTPRequestMethod method) {
     if (!success) {
-        gbLog("Invalid report response");
+        gbLog("Invalid report response: %s", error);
+        PrintToChat(gReportSourceId, "[Report] Error making request");
+        resetReportStatus();
         return;
     }
-    return;
+    char[] content = new char[response.ContentLength + 1];
+    response.GetContent(content, response.ContentLength + 1);
+
+    JSON_Object resp = json_decode(content);
+    int status = resp.GetBool("status");
+    if (response.StatusCode != HTTP_STATUS_CREATED || !status) {
+        if (response.StatusCode == HTTP_STATUS_CONFLICT) {
+            PrintToChat(gReportSourceId, "[Report] User has already been reported, thanks.");
+            resetReportStatus();
+            return;
+        }
+        gbLog("Invalid response status");
+        char err[200];
+        resp.GetString("error", err, sizeof(err));
+        if (StrEqual(err, "")) {
+            err = "Internal Error";
+        }
+        PrintToChat(gReportSourceId, "[Report] Error: %s", err);
+        resetReportStatus();
+        return;
+    }
+
+    JSON_Object result = resp.GetObject("result");
+    int reportId = result.GetInt("report_id");
+    char serverHost[PLATFORM_MAX_PATH];
+    gHost.GetString(serverHost, sizeof(serverHost));
+    char fullAddr[PLATFORM_MAX_PATH];
+    Format(fullAddr, sizeof(fullAddr), "%s/report/%d", serverHost, reportId);
+    PrintToChat(gReportSourceId, "[Report] Report created succesfully, thanks for your help");
+    PrintToChat(gReportSourceId, "[Report] %s", fullAddr);
+    json_cleanup_and_delete(resp);
+    resetReportStatus();
 }
 
 public
@@ -135,7 +165,10 @@ Action Timer_checkReportState() {
 
 public
 int MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedId) {
-    if (action == MenuAction_Cancel || action == MenuAction_End) {
+    if (action == MenuAction_Cancel) {
+        resetReportStatus();
+        CloseHandle(menu);
+    } else if (action == MenuAction_End) {
         CloseHandle(menu);
     } else if (action == MenuAction_Select) {
         int userId, targetId;
@@ -144,12 +177,13 @@ int MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedI
         userId = StringToInt(sTargetUserID);
 
         if ((targetId = GetClientOfUserId(userId)) == 0) {
-            PrintToChat(clientId, "[SM] %t", "Player no longer available");
+            PrintToChat(clientId, "[Report] %t", "Player no longer available");
+            resetReportStatus();
             return -1;
         }
         gReportSourceId = clientId;
         gReportTargetId = targetId;
-        ShowReasonMenu(clientId);
+        ShowReasonMenu(gReportSourceId);
     } else if (action == MenuAction_End) {
         delete menu;
     }
@@ -158,7 +192,10 @@ int MenuHandler_Target(Menu menu, MenuAction action, int clientId, int selectedI
 
 public
 int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedId) {
-    if (action == MenuAction_Cancel || action == MenuAction_End) {
+    if (action == MenuAction_Cancel) {
+        resetReportStatus();
+        CloseHandle(menu);
+    } else if (action == MenuAction_End) {
         CloseHandle(menu);
     } else if (action == MenuAction_Select) {
         char sInfo[64];
@@ -182,11 +219,12 @@ int MenuHandler_Reason(Menu menu, MenuAction action, int clientId, int selectedI
         } else if (StrEqual(sInfo, "custom")) {
             gReportTargetReason = custom;
         } else {
-            ReplyToCommand(clientId, "Unsupported reason value");
+            PrintToChat(gReportSourceId, "[Report] Unsupported reason value");
+            resetReportStatus();
             return -1;
         }
         if (gReportTargetReason == custom) {
-            ReplyToCommand(clientId, "Enter your reason in chat, it will not be shown to others");
+            PrintToChat(gReportSourceId, "[Report] Enter your reason in chat, it will be hidden from other users");
             gReportWaitingForReason = true;
             return 0;
         }
