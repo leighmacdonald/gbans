@@ -64,6 +64,7 @@ GB_BanReason gReportTargetReason;
 int gReportStartedAtTime = -1;
 
 // Stv
+bool gStvMapChanged = false;
 bool gIsRecording = false;
 bool gIsManual = false;
 JSON_Object gScores = null;

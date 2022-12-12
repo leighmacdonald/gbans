@@ -21,9 +21,7 @@ Action onCmdReport(int clientId, int argc) {
 public
 void ShowTargetMenu(int clientId) {
     Menu menu = CreateMenu(MenuHandler_Target);
-    AddTargetsToMenu2(
-        menu, 0,
-        COMMAND_FILTER_CONNECTED | COMMAND_FILTER_NO_IMMUNITY | COMMAND_FILTER_NO_MULTI | COMMAND_FILTER_NO_BOTS);
+    AddTargetsToMenu2(menu, clientId, COMMAND_FILTER_CONNECTED | COMMAND_FILTER_NO_MULTI | COMMAND_FILTER_NO_BOTS);
     SetMenuTitle(menu, "Select A Player:");
     SetMenuExitBackButton(menu, true);
     DisplayMenu(menu, clientId, MENU_TIME_FOREVER);

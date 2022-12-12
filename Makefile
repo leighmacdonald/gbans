@@ -111,7 +111,7 @@ docker_restore:
 	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
 docker_update_plugin:
-	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/steam/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
+	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
 	rcon -H 192.168.0.72 -p dev_pass sm plugins reload gbans
 	docker logs -f srcds-localhost-1
 
