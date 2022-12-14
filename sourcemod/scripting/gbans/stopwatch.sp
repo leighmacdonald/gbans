@@ -29,6 +29,10 @@ Action cmd_mp_tournament_teamname(int client, const char[] command, int argc) {
 bool isValidStopwatchMap() {
     char mapName[256];
     GetCurrentMap(mapName, sizeof(mapName));
+    if (StrContains(mapName, "workshop/")) {
+        gbLog("matched workshop: %s", mapName);
+        return StrContains(mapName, "workshop/pl_", false) == 0;
+    }
     return StrContains(mapName, "pl_", false) == 0;
 }
 
