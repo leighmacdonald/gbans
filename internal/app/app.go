@@ -637,6 +637,7 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 	go app.cleanupTasks()
 	go app.showReportMeta()
 	go app.notificationSender()
+	go app.demoCleaner()
 }
 
 // UDP log sink

@@ -150,6 +150,26 @@ func (app *App) showReportMeta() {
 	}
 }
 
+func (app *App) demoCleaner() {
+	ticker := time.NewTicker(time.Hour * 24)
+	var update = func() {
+		if err := app.store.FlushDemos(app.ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+			log.WithError(err).Errorf("Error pruning expired refresh tokens")
+		}
+		log.Info("Old demos flushed")
+	}
+	update()
+	for {
+		select {
+		case <-ticker.C:
+			update()
+		case <-app.ctx.Done():
+			log.Debugf("profileUpdater shutting down")
+			return
+		}
+	}
+}
+
 func (app *App) cleanupTasks() {
 	ticker := time.NewTicker(time.Hour * 24)
 	for {

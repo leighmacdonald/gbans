@@ -4,18 +4,34 @@ import (
 	"context"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
+
+func (database *pgStore) FlushDemos(ctx context.Context) error {
+	query, args, errQuery := sb.
+		Delete("demo").
+		Where(sq.And{
+			sq.Eq{"archive": false},
+			sq.Lt{"created_on": config.Now().Add(-(time.Hour * 24 * 14))},
+		}).ToSql()
+	if errQuery != nil {
+		return errQuery
+	}
+	return Err(database.Exec(ctx, query, args...))
+}
 
 func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
-		Where(sq.Eq{"demo_id": demoId}).ToSql()
+		Where(sq.Eq{"demo_id": demoId}).
+		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
@@ -30,7 +46,8 @@ func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, dem
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
-		Where(sq.Eq{"title": demoName}).ToSql()
+		Where(sq.Eq{"title": demoName}).
+		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}

@@ -43,6 +43,7 @@ type DemoStore interface {
 	GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error)
 	SaveDemo(ctx context.Context, d *model.DemoFile) error
 	DropDemo(ctx context.Context, d *model.DemoFile) error
+	FlushDemos(ctx context.Context) error
 }
 
 type NewsStore interface {
