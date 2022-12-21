@@ -19,7 +19,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/krayzpipes/cronticker v0.0.1
 	github.com/leighmacdonald/golib v1.1.0
-	github.com/leighmacdonald/rcon v1.0.7
+	github.com/leighmacdonald/rcon v1.0.8
 	github.com/leighmacdonald/srcdsup v0.0.0-20221125023417-58782d27aca0
 	github.com/leighmacdonald/steamid/v2 v2.2.0
 	github.com/leighmacdonald/steamweb v0.0.4
@@ -35,7 +35,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/yohcop/openid-go v1.0.0
-	golang.org/x/exp v0.0.0-20221208152030-732eee02a75a
+	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.3.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
@@ -80,7 +80,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.38.0 // indirect
+	github.com/prometheus/common v0.39.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect

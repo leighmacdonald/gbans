@@ -2,7 +2,6 @@ package logparse
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -57,16 +56,16 @@ const (
 
 	// World events not attached to specific players
 
-	WRoundOvertime     EventType = 100
-	WRoundStart        EventType = 101
-	WRoundWin          EventType = 102
-	WRoundLen          EventType = 103
-	WTeamScore         EventType = 104
-	WTeamFinalScore    EventType = 105
-	WGameOver          EventType = 106
-	WPaused            EventType = 107
-	WResumed           EventType = 108
-	WRoundSetupEnd     EventType = 109
+	WRoundOvertime  EventType = 100
+	WRoundStart     EventType = 101
+	WRoundWin       EventType = 102
+	WRoundLen       EventType = 103
+	WTeamScore      EventType = 104
+	WTeamFinalScore EventType = 105
+	WGameOver       EventType = 106
+	WPaused         EventType = 107
+	WResumed        EventType = 108
+	// WRoundSetupEnd     EventType = 109
 	WMiniRoundWin      EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
 	WMiniRoundLen      EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
 	WMiniRoundSelected EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
@@ -167,6 +166,7 @@ func ParsePOS(s string, p *Pos) error {
 }
 
 // PickupItem is used for
+//
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type PickupItem int
 
@@ -215,6 +215,7 @@ func (pc PlayerClass) String() string {
 }
 
 // Medigun holds which medigun a player was using
+//
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Medigun int
 
@@ -644,27 +645,27 @@ var Weapons = map[PlayerClass][]Weapon{
 	},
 }
 
-var backStabWeapons = []Weapon{
-	BigEarner,
-	EternalReward,
-	BlackRose,
-	Knife,
-	Kunai,
-	Spycicle,
-	SharpDresser,
-	SniperRifle,
-	Machina,
-	Ambassador,
-	DiamondBack,
-	MarketGardener,
-	// kgb
-	Backburner,
-	AwperHand,
-	ProRifle,
-	ShootingStar,
-	TheClassic,
-}
+//var backStabWeapons = []Weapon{
+//	BigEarner,
+//	EternalReward,
+//	BlackRose,
+//	Knife,
+//	Kunai,
+//	Spycicle,
+//	SharpDresser,
+//	SniperRifle,
+//	Machina,
+//	Ambassador,
+//	DiamondBack,
+//	MarketGardener,
+//	// kgb
+//	Backburner,
+//	AwperHand,
+//	ProRifle,
+//	ShootingStar,
+//	TheClassic,
+//}
 
-func IsCritWeapon(weapon Weapon) bool {
-	return fp.Contains[Weapon](backStabWeapons, weapon)
-}
+//func IsCritWeapon(weapon Weapon) bool {
+//	return fp.Contains[Weapon](backStabWeapons, weapon)
+//}
