@@ -136,7 +136,6 @@ type generalConfig struct {
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
-	MapChangerEnabled            bool          `mapstructure:"map_changer_enabled"`
 	DemoRootPath                 string        `mapstructure:"demo_root_path"`
 	ExternalUrl                  string        `mapstructure:"external_url"`
 	BannedSteamGroupIds          []steamid.GID `mapstructure:"banned_steam_group_ids"`
@@ -293,7 +292,6 @@ var defaultConfig = map[string]any{
 	"general.server_status_update_freq":        "60s",
 	"general.master_server_status_update_freq": "30s",
 	"general.default_maps":                     []string{"pl_badwater"},
-	"general.map_changer_enabled":              false,
 	"general.demo_root_path":                   "./.demos/",
 	"general.external_url":                     "http://gbans.localhost:6006",
 	"general.banned_steam_group_ids":           []steamid.GID{},

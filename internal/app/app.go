@@ -132,13 +132,22 @@ func (app *App) Start() error {
 	}
 
 	// Start the background goroutine workers
-	app.initWorkers(app.ctx, dbStore, app.discordSendMsg, app.logFileChan, app.warningChan)
+	app.initWorkers()
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
 		initFilters(app.ctx, dbStore)
 	}
 
+	if errSend := app.sendNotification(notificationPayload{
+		minPerms: model.PAdmin,
+		sids:     nil,
+		severity: model.SeverityInfo,
+		message:  "App start",
+		link:     "",
+	}); errSend != nil {
+		log.Error(errSend)
+	}
 	// Start & block, listening on the HTTP server
 	if errHttpListen := webService.ListenAndServe(app.ctx); errHttpListen != nil {
 		return errors.Wrapf(errHttpListen, "Error shutting down service")
@@ -153,8 +162,7 @@ type newUserWarning struct {
 }
 
 // warnWorker handles tracking and applying warnings based on incoming events
-func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
-	botSendMessageChan chan discordPayload, database store.Store) {
+func (app *App) warnWorker() {
 	warnings := map[steamid.SID64][]userWarning{}
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
@@ -180,7 +188,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 						}
 					}
 				}
-			case newWarn := <-newWarnings:
+			case newWarn := <-app.warningChan:
 				steamId := newWarn.ServerEvent.Source.SteamID
 				if !steamId.Valid() {
 					continue
@@ -221,13 +229,13 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					switch config.General.WarningExceededAction {
 					case config.Gag:
 						banSteam.BanType = model.NoComm
-						errBan = app.BanSteam(ctx, database, &banSteam)
+						errBan = app.BanSteam(app.ctx, app.store, &banSteam)
 					case config.Ban:
 						banSteam.BanType = model.Banned
-						errBan = app.BanSteam(ctx, database, &banSteam)
+						errBan = app.BanSteam(app.ctx, app.store, &banSteam)
 					case config.Kick:
 						var playerInfo model.PlayerInfo
-						errBan = app.Kick(ctx, database, model.System, model.StringSID(steamId.String()),
+						errBan = app.Kick(app.ctx, app.store, model.System, model.StringSID(steamId.String()),
 							model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
 					}
 					if errBan != nil {
@@ -246,7 +254,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 				} else {
 					msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 						"Further offenses will result in mutes/bans", len(warnings[steamId]))
-					if errPSay := app.PSay(ctx, database, 0, model.StringSID(steamId.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
+					if errPSay := app.PSay(app.ctx, app.store, 0, model.StringSID(steamId.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
 						log.WithError(errPSay).Errorf("Failed to send user warning psay message")
 					}
 					addFieldsSteamID(warnNotice, steamId)
@@ -256,7 +264,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 					channelId: config.Discord.ModLogChannelId,
 					embed:     warnNotice,
 				})
-			case <-ctx.Done():
+			case <-app.ctx.Done():
 				return
 			}
 		}
@@ -288,7 +296,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 				}).Infof("User triggered word filter")
 
 			}
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		}
 	}
@@ -373,7 +381,7 @@ func (app *App) warnWorker(ctx context.Context, newWarnings chan newUserWarning,
 //	}
 //}
 
-func playerMessageWriter(ctx context.Context, database store.Store) {
+func (app *App) playerMessageWriter() {
 	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := event.Consume(serverEventChan, []logparse.EventType{
 		logparse.Say,
@@ -384,7 +392,7 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 	}
 	for {
 		select {
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		case evt := <-serverEventChan:
 			switch evt.EventType {
@@ -405,8 +413,8 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 					Team:        evt.EventType == logparse.SayTeam,
 					CreatedOn:   evt.CreatedOn,
 				}
-				lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-				if errChat := database.AddChatHistory(lCtx, &msg); errChat != nil {
+				lCtx, cancel := context.WithTimeout(app.ctx, time.Second*5)
+				if errChat := app.store.AddChatHistory(lCtx, &msg); errChat != nil {
 					log.Errorf("Failed to add chat history: %v", errChat)
 				}
 				cancel()
@@ -416,7 +424,7 @@ func playerMessageWriter(ctx context.Context, database store.Store) {
 	}
 }
 
-func playerConnectionWriter(ctx context.Context, database store.Store) {
+func (app *App) playerConnectionWriter() {
 	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := event.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
@@ -424,7 +432,7 @@ func playerConnectionWriter(ctx context.Context, database store.Store) {
 	}
 	for {
 		select {
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		case evt := <-serverEventChan:
 			addr := evt.GetValueString("address")
@@ -443,8 +451,8 @@ func playerConnectionWriter(ctx context.Context, database store.Store) {
 				PersonaName: evt.Source.PersonaName,
 				CreatedOn:   evt.CreatedOn,
 			}
-			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			if errChat := database.AddConnectionHistory(lCtx, &msg); errChat != nil {
+			lCtx, cancel := context.WithTimeout(app.ctx, time.Second*5)
+			if errChat := app.store.AddConnectionHistory(lCtx, &msg); errChat != nil {
 				log.Errorf("Failed to add connection history: %v", errChat)
 			}
 			cancel()
@@ -540,7 +548,7 @@ type LogFilePayload struct {
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with RegisterLogEventReader
-func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.Store) {
+func (app *App) logReader() {
 	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
 		var errCreateFile error
@@ -557,14 +565,14 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 	playerStateCache := newPlayerCache()
 	for {
 		select {
-		case logFile := <-logFileChan:
+		case logFile := <-app.logFileChan:
 			emitted := 0
 			failed := 0
 			unknown := 0
 			ignored := 0
 			for _, logLine := range logFile.Lines {
 				var serverEvent model.ServerEvent
-				errLogServerEvent := logToServerEvent(ctx, logFile.Server, logLine, db, playerStateCache, &serverEvent)
+				errLogServerEvent := logToServerEvent(app.ctx, logFile.Server, logLine, app.store, playerStateCache, &serverEvent)
 				if errLogServerEvent != nil {
 					log.Errorf("Failed to parse: %v", errLogServerEvent)
 					failed++
@@ -586,7 +594,7 @@ func logReader(ctx context.Context, logFileChan chan *LogFilePayload, db store.S
 			}
 			log.WithFields(log.Fields{"ok": emitted, "failed": failed, "unknown": unknown, "ignored": ignored}).
 				Debugf("Completed emitting logfile events")
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			log.Trace("logReader shutting down")
 			return
 		}
@@ -605,32 +613,28 @@ func initFilters(ctx context.Context, database store.FilterStore) {
 	log.WithFields(log.Fields{"count": len(words), "list": "local", "type": "words"}).Debugf("Loaded blocklist")
 }
 
-func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMessageChan chan discordPayload,
-	logFileC chan *LogFilePayload, warningChan chan newUserWarning) {
-
-	freq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
+func (app *App) initWorkers() {
+	statusUpdateFreq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errDuration != nil {
 		log.Fatalf("Failed to parse server_status_update_freq: %v", errDuration)
 	}
-
 	masterUpdateFreq, errParseMasterUpdateFreq := time.ParseDuration(config.General.ServerStatusUpdateFreq)
 	if errParseMasterUpdateFreq != nil {
 		log.Fatalf("Failed to parse master_server_status_update_freq: %v", errParseMasterUpdateFreq)
 	}
 	go app.patreonUpdater()
-	go banSweeper(ctx, database)
-	go app.mapChanger(ctx, database, time.Second*300)
-	go app.serverA2SStatusUpdater(ctx, database, freq)
-	go app.serverRCONStatusUpdater(ctx, database, freq)
-	go app.serverStateRefresher(ctx, database, freq)
-	go profileUpdater(ctx, database)
-	go app.warnWorker(ctx, warningChan, botSendMessageChan, database)
-	go logReader(ctx, logFileC, database)
-	go initLogSrc(ctx, database)
-	go logMetricsConsumer(ctx)
+	go app.banSweeper()
+	go app.serverA2SStatusUpdater(statusUpdateFreq)
+	go app.serverRCONStatusUpdater(statusUpdateFreq)
+	go app.serverStateRefresher(statusUpdateFreq)
+	go app.profileUpdater()
+	go app.warnWorker()
+	go app.logReader()
+	go app.initLogSrc()
+	go app.logMetricsConsumer()
 	//go matchSummarizer(ctx, database)
-	go playerMessageWriter(ctx, database)
-	go playerConnectionWriter(ctx, database)
+	go app.playerMessageWriter()
+	go app.playerConnectionWriter()
 	go app.steamGroupMembershipUpdater()
 	go app.localStatUpdater()
 	go app.masterServerListUpdater(masterUpdateFreq)
@@ -641,12 +645,12 @@ func (app *App) initWorkers(ctx context.Context, database store.Store, botSendMe
 }
 
 // UDP log sink
-func initLogSrc(ctx context.Context, database store.Store) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(ctx, config.Log.SrcdsLogAddr, database)
+func (app *App) initLogSrc() {
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.ctx, config.Log.SrcdsLogAddr, app.store)
 	if errLogSrc != nil {
 		log.Fatalf("Failed to setup udp log src: %v", errLogSrc)
 	}
-	logSrc.start(database)
+	logSrc.start(app.store)
 }
 
 func (app *App) sendUserNotification(pl notificationPayload) {

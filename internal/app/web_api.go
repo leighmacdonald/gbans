@@ -899,6 +899,21 @@ func (web *web) onAPIGetResolveProfile() gin.HandlerFunc {
 	}
 }
 
+func (web *web) onAPICurrentProfileNotifications() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userProfile := currentUserProfile(ctx)
+		notifications, errNot := web.app.store.GetPersonNotifications(ctx, userProfile.SteamID)
+		if errNot != nil {
+			if errors.Is(errNot, store.ErrNoResult) {
+				responseOK(ctx, http.StatusOK, []model.UserNotification{})
+				return
+			}
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		responseOK(ctx, http.StatusOK, notifications)
+	}
+}
 func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userProfile := currentUserProfile(ctx)
@@ -914,7 +929,6 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, userProfile)
 	}
 }
-
 func (web *web) onAPIExportBansTF2BD() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results

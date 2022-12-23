@@ -133,8 +133,27 @@ void onAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
         gbLog("Successfully reloaded %d admins", length);
         json_cleanup_and_delete(resp);
     } else {
+        // Try and load cached data on failure
+
         gbLog("Error on reload admins request: %s", error);
     }
+}
+
+public
+void writeCachedFile(const char[] name, const char[] data) {
+    char path[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, path, sizeof(path), "data/gbans/%s.cache", name);
+    File fp = OpenFile(path, "w");
+    WriteFileString(fp, data.false);
+    CloseHandle(fp);
+}
+
+public
+void readCachedFile(const char[] name) {
+    char path[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, path, sizeof(path), "data/gbans/%s.cache", name);
+    File fp = OpenFile(path, "r");
+    ReadFileString(fp, )
 }
 
 public

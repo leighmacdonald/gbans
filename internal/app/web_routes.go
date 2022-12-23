@@ -140,6 +140,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 
 		authed.GET("/api/auth/discord", web.onOAuthDiscordCallback())
 		authed.GET("/api/current_profile", web.onAPICurrentProfile())
+		authed.GET("/api/current_profile/notifications", web.onAPICurrentProfileNotifications())
 		authed.POST("/api/report", web.onAPIPostReportCreate())
 		authed.GET("/api/report/:report_id", web.onAPIGetReport())
 		authed.POST("/api/reports", web.onAPIGetReports())

@@ -592,7 +592,7 @@ func (database *pgStore) SetNotificationsRead(ctx context.Context, notificationI
 
 func (database *pgStore) GetSteamIdsAbove(ctx context.Context, privilege model.Privilege) (steamid.Collection, error) {
 	query, args, errQuery := sb.
-		Select("steam_id", "discord_id").
+		Select("steam_id").
 		From("person").
 		Where(sq.GtOrEq{"permission_level": privilege}).
 		ToSql()
