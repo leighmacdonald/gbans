@@ -369,17 +369,20 @@ export const TopBar = () => {
                                     {themeIcon}
                                 </IconButton>
                             </Tooltip>
-                            <IconButton color={'inherit'}>
-                                <Badge
-                                    badgeContent={
-                                        (
-                                            currentUser.notifications ?? []
-                                        ).filter((n) => !n.read).length
-                                    }
-                                >
-                                    <MailIcon />
-                                </Badge>
-                            </IconButton>
+                            {currentUser.permission_level >=
+                                PermissionLevel.Admin && (
+                                <IconButton color={'inherit'}>
+                                    <Badge
+                                        badgeContent={
+                                            (
+                                                currentUser.notifications ?? []
+                                            ).filter((n) => !n.read).length
+                                        }
+                                    >
+                                        <MailIcon />
+                                    </Badge>
+                                </IconButton>
+                            )}
                             {!currentUser ||
                                 (!validSteamId && (
                                     <Tooltip title="Steam Login">

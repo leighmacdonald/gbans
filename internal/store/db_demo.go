@@ -155,7 +155,7 @@ func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFil
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	log.Debugf("New demo saved: %s", demoFile.Title)
+	log.WithFields(log.Fields{"name": demoFile.Title}).Info("New demo saved")
 	return nil
 }
 

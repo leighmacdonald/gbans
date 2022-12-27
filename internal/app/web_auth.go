@@ -325,7 +325,6 @@ func (web *web) onTokenRefresh() gin.HandlerFunc {
 		var auth model.PersonAuth
 		if authError := web.app.store.GetPersonAuthByRefreshToken(ctx, rt.RefreshToken, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Debugf("refreshToken unknown or expired")
 			return
 		}
 		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, web.app.store, auth.SteamId)

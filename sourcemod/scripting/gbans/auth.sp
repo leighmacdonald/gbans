@@ -144,7 +144,7 @@ void writeCachedFile(const char[] name, const char[] data) {
     char path[PLATFORM_MAX_PATH];
     BuildPath(Path_SM, path, sizeof(path), "data/gbans/%s.cache", name);
     File fp = OpenFile(path, "w");
-    WriteFileString(fp, data.false);
+    WriteFileString(fp, data, false);
     CloseHandle(fp);
 }
 
@@ -152,12 +152,13 @@ public
 void readCachedFile(const char[] name) {
     char path[PLATFORM_MAX_PATH];
     BuildPath(Path_SM, path, sizeof(path), "data/gbans/%s.cache", name);
-    File fp = OpenFile(path, "r");
-    ReadFileString(fp, )
+    // File fp = OpenFile(path, "r");
+    // ReadFileString(fp, )
 }
 
 public
 void onClientPostAdminCheck(int clientId) {
+    gbLog("Post admin check ran");
     switch (gPlayers[clientId].banType) {
         case BSNoComm: {
             if (!BaseComm_IsClientMuted(clientId)) {
@@ -229,6 +230,8 @@ void onCheckResp(bool success, const char[] error, System2HTTPRequest request, S
 
         gbLog("Client authenticated (banType: %d level: %d)", banType, permissionLevel);
         json_cleanup_and_delete(resp);
+        // Called manually since we are using the connect extension
+        onClientPostAdminCheck(clientId);
     } else {
         gbLog("Error on authentication request: %s", error);
     }

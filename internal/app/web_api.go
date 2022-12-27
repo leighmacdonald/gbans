@@ -740,7 +740,7 @@ func (web *web) onAPIPostServerCheck() gin.HandlerFunc {
 			if errGetBan == store.ErrNoResult {
 				// No ban, exit early
 				resp.BanType = model.OK
-				responseErr(ctx, http.StatusOK, resp)
+				responseOK(ctx, http.StatusOK, resp)
 				return
 			}
 			resp.Msg = "Error determining state"
@@ -756,8 +756,8 @@ func (web *web) onAPIPostServerCheck() gin.HandlerFunc {
 		} else {
 			reason = bannedPerson.Ban.Reason.String()
 		}
-		resp.Msg = fmt.Sprintf("%s - %s [Remain: %s]", bannedPerson.Ban.ToURL(), reason,
-			bannedPerson.Ban.ValidUntil.Sub(config.Now()).String())
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(),
+			bannedPerson.Ban.ValidUntil.Sub(config.Now()).Round(time.Minute).String())
 		responseOK(ctx, http.StatusOK, resp)
 		if resp.BanType == model.NoComm {
 			log.WithFields(log.Fields{"type": "steam", "reason": reason, "profile": bannedPerson.Person.ToURL(), "banType": "mute"}).
