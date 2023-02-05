@@ -9,6 +9,13 @@ bool OnClientConnect(int clientId, char[] rejectMsg, int maxLen) {
     return true;
 }
 
+public Action Event_PlayerDisconnect(Event event, const char[] name, bool broadcastDisabled) {
+	if(gHideDisconnect.BoolValue) {
+		event.broadcastDisabled = true;
+	}
+	return Plugin_Continue;
+}
+
 public
 void OnClientAuthorized(int clientId, const char[] auth) {
     char ip[16];
