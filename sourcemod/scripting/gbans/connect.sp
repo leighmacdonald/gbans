@@ -9,9 +9,16 @@ bool OnClientConnect(int clientId, char[] rejectMsg, int maxLen) {
     return true;
 }
 
-public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
-	event.BroadcastDisabled = gHideDisconnect.BoolValue;
-	return Plugin_Continue;
+public
+Action Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast) {
+    event.BroadcastDisabled = gHideConnections.BoolValue;
+    return Plugin_Continue;
+}
+
+public
+Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
+    event.BroadcastDisabled = gHideConnections.BoolValue;
+    return Plugin_Continue;
 }
 
 public
