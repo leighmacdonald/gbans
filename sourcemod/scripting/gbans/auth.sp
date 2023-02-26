@@ -167,11 +167,8 @@ void OnClientPutInServer(int clientId) {
 
 public
 void OnClientPutInServerMutes(int clientId) {
-    gbLog("OnClientPutInServer check ran");
-    gbLog("banType: %d", gPlayers[clientId].banType);
     switch (gPlayers[clientId].banType) {
         case BSNoComm: {
-            gbLog("muting...");
             if (!BaseComm_IsClientMuted(clientId)) {
                 BaseComm_SetClientMute(clientId, true);
             }
@@ -179,14 +176,13 @@ void OnClientPutInServerMutes(int clientId) {
                 BaseComm_SetClientGag(clientId, true);
             }
             ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
-            LogAction(0, clientId, "Muted \"%L\" for an unfinished mute punishment.", clientId);
+            gbLog("Muted \"%L\" for an unfinished mute punishment.", clientId);
         }
     }
 }
 
 public
 void onClientPostAdminCheck(int clientId) {
-    gbLog("Post admin check ran");
     switch (gPlayers[clientId].banType) {
         // BSNoComm handled in OnClientPutInServer
         case BSBanned: {

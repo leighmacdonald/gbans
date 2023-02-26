@@ -929,6 +929,46 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, userProfile)
 	}
 }
+
+func (web *web) onAPIExportBansValveSteamId() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		bans, errBans := web.app.store.GetBansSteam(ctx, store.BansQueryFilter{
+			QueryFilter: store.QueryFilter{},
+			SteamId:     0,
+		})
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		var entries []string
+		for _, ban := range bans {
+			if ban.Ban.Deleted ||
+				!ban.Ban.IsEnabled {
+				continue
+			}
+			entries = append(entries, fmt.Sprintf("banid 0 %s", steamid.SID64ToSID(ban.Person.SteamID)))
+		}
+		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
+	}
+}
+func (web *web) onAPIExportBansValveIP() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		bans, errBans := web.app.store.GetBansNet(ctx)
+		if errBans != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		var entries []string
+		for _, ban := range bans {
+			if ban.Deleted ||
+				!ban.IsEnabled {
+				continue
+			}
+			entries = append(entries, fmt.Sprintf("addip 0 %s", ban.CIDR.IP.String()))
+		}
+		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
+	}
+}
 func (web *web) onAPIExportBansTF2BD() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
