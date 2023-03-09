@@ -414,8 +414,9 @@ func (web *web) onAPIPostBansGroupCreate() gin.HandlerFunc {
 			return
 		}
 		var banSteamGroup model.BanGroup
+		sid := currentUserProfile(ctx).SteamID
 		if errBanSteamGroup := NewBanSteamGroup(
-			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			model.StringSID(sid.String()),
 			banRequest.TargetId,
 			model.Duration(banRequest.Duration),
 			banRequest.Reason,
@@ -459,8 +460,9 @@ func (web *web) onAPIPostBansASNCreate() gin.HandlerFunc {
 			return
 		}
 		var banASN model.BanASN
+		sid := currentUserProfile(ctx).SteamID
 		if errBanSteamGroup := NewBanASN(
-			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			model.StringSID(sid.String()),
 			banRequest.TargetId,
 			model.Duration(banRequest.Duration),
 			banRequest.Reason,
@@ -503,8 +505,9 @@ func (web *web) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 			return
 		}
 		var banCIDR model.BanCIDR
+		sid := currentUserProfile(ctx).SteamID
 		if errBanCIDR := NewBanCIDR(
-			model.StringSID(currentUserProfile(ctx).SteamID.String()),
+			model.StringSID(sid.String()),
 			banRequest.TargetId,
 			model.Duration(banRequest.Duration),
 			banRequest.Reason,
@@ -550,7 +553,8 @@ func (web *web) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 		origin := model.Web
-		sourceId := model.StringSID(currentUserProfile(ctx).SteamID.String())
+		sid := currentUserProfile(ctx).SteamID
+		sourceId := model.StringSID(sid.String())
 		// srcds sourced bans provide a source_id to id the admin
 		if banRequest.SourceId != "" {
 			sourceId = banRequest.SourceId

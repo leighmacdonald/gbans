@@ -99,8 +99,12 @@ var seedCmd = &cobra.Command{
 			log.Errorf("Failed to get friendlist")
 		}
 		for _, friend := range friendList {
-			person := model.NewPerson(friend.Steamid)
-			if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, friend.Steamid, &person); errGetPerson != nil {
+			sid, errSid := steamid.StringToSID64(friend.Steamid)
+			if errSid != nil {
+				log.Panicf("Failed to parse friend steam id: %v", errSid)
+			}
+			person := model.NewPerson(sid)
+			if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid, &person); errGetPerson != nil {
 				log.Errorf("Failed to create person: %v", errGetPerson)
 			}
 			var banSteam model.BanSteam

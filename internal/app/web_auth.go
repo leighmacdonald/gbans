@@ -213,7 +213,7 @@ func (web *web) onOAuthDiscordCallback() gin.HandlerFunc {
 		responseOK(ctx, http.StatusInternalServerError, nil)
 		log.WithFields(log.Fields{
 			"discordId": discordId,
-			"steamId":   currentUserProfile(ctx).SteamID.String(),
+			"steamId":   sid.String(),
 		}).Infof("Discord account linked successfully")
 	}
 }
