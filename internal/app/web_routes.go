@@ -85,6 +85,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	engine.POST("/api/auth/refresh", web.onTokenRefresh())
 
 	engine.GET("/export/bans/tf2bd", web.onAPIExportBansTF2BD())
+	engine.GET("/export/sourcemod/admins_simple.ini", web.onAPIExportSourcemodSimpleAdmins())
 	engine.GET("/export/bans/valve/steamid", web.onAPIExportBansValveSteamId())
 	engine.GET("/export/bans/valve/network", web.onAPIExportBansValveIP())
 	engine.GET("/metrics", prometheusHandler())

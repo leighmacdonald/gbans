@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // apiResponse represents the common high level response of all api responses. All child data is
@@ -973,6 +974,51 @@ func (web *web) onAPIExportBansValveIP() gin.HandlerFunc {
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
 	}
 }
+
+func asciiSafe(input string) string {
+	return strings.Map(func(r rune) rune {
+		if r > unicode.MaxASCII {
+			return -1
+		}
+		return r
+	}, input)
+}
+
+func (web *web) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		privilegedIds, errPrivilegedIds := web.app.store.GetSteamIdsAbove(ctx, model.PReserved)
+		if errPrivilegedIds != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		players, errPlayers := web.app.store.GetPeopleBySteamID(ctx, privilegedIds)
+		if errPlayers != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			return
+		}
+		sort.Slice(players, func(i, j int) bool {
+			return players[i].PermissionLevel > players[j].PermissionLevel
+		})
+		bld := strings.Builder{}
+		for _, player := range players {
+			perms := ""
+			switch player.PermissionLevel {
+			case model.PAdmin:
+				perms = "99:z"
+			case model.PModerator:
+				perms = "abcdefgjk"
+			case model.PEditor:
+				perms = "ak"
+			case model.PReserved:
+				perms = "a"
+			}
+			bld.WriteString(fmt.Sprintf("\"%s\" \"%s\" /* %s  */\n", steamid.SID64ToSID(player.SteamID), perms,
+				asciiSafe(player.PersonaName)))
+		}
+		ctx.String(http.StatusOK, bld.String())
+	}
+}
+
 func (web *web) onAPIExportBansTF2BD() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
