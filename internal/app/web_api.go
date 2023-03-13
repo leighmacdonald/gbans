@@ -1004,7 +1004,7 @@ func (web *web) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 			perms := ""
 			switch player.PermissionLevel {
 			case model.PAdmin:
-				perms = "99:z"
+				perms = "z"
 			case model.PModerator:
 				perms = "abcdefgjk"
 			case model.PEditor:
@@ -1012,8 +1012,7 @@ func (web *web) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 			case model.PReserved:
 				perms = "a"
 			}
-			bld.WriteString(fmt.Sprintf("\"%s\" \"%s\" /* %s  */\n", steamid.SID64ToSID(player.SteamID), perms,
-				asciiSafe(player.PersonaName)))
+			bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
 		}
 		ctx.String(http.StatusOK, bld.String())
 	}

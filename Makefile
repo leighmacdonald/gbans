@@ -112,7 +112,7 @@ docker_restore:
 
 docker_update_plugin:
 	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
-	rcon -H 192.168.0.72 -p dev_pass sm plugins reload gbans
+	rcon -H 192.168.0.57 -p dev_pass sm plugins reload gbans
 	docker logs -f srcds-localhost-1
 
 copy_ut:

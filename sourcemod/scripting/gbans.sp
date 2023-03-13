@@ -2,6 +2,7 @@
 #pragma tabsize 4
 #pragma newdecls required
 
+#include <admin>
 #include <basecomm>
 #include <connect> // connect extension
 #include <gbans>
