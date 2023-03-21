@@ -221,8 +221,9 @@ func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryF
 
 type BansQueryFilter struct {
 	QueryFilter
-	SteamId steamid.SID64 `json:"steam_id,omitempty"`
-	Reasons []model.Reason
+	SteamId       steamid.SID64 `json:"steam_id,omitempty"`
+	Reasons       []model.Reason
+	PermanentOnly bool
 }
 
 func NewBansQueryFilter(steamId steamid.SID64) BansQueryFilter {
@@ -252,6 +253,9 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilte
 	}
 	if len(filter.Reasons) > 0 {
 		qb = qb.Where(sq.Eq{"reason": filter.Reasons})
+	}
+	if filter.PermanentOnly {
+		qb = qb.Where(sq.Gt{"valid_until": config.Now()})
 	}
 	if filter.SteamId.Valid() {
 		qb = qb.Where(sq.Eq{"b.target_id": filter.SteamId.Int64()})

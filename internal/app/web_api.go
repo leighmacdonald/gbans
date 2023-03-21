@@ -938,9 +938,7 @@ func (web *web) onAPICurrentProfile() gin.HandlerFunc {
 func (web *web) onAPIExportBansValveSteamId() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, errBans := web.app.store.GetBansSteam(ctx, store.BansQueryFilter{
-			QueryFilter: store.QueryFilter{},
-			SteamId:     0,
-			Reasons:     []model.Reason{model.Cheating},
+			PermanentOnly: true,
 		})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
