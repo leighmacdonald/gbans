@@ -940,6 +940,7 @@ func (web *web) onAPIExportBansValveSteamId() gin.HandlerFunc {
 		bans, errBans := web.app.store.GetBansSteam(ctx, store.BansQueryFilter{
 			QueryFilter: store.QueryFilter{},
 			SteamId:     0,
+			Reasons:     []model.Reason{model.Cheating},
 		})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
