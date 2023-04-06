@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +16,7 @@ func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) e
 	}
 }
 
+// todo squirrel version, it expects sql.db though...
 func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) error {
 	const query = `
 		INSERT INTO filtered_word (word, filter_name, created_on, discord_created_on, discord_id) 
@@ -29,12 +31,18 @@ func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter)
 }
 
 func (database *pgStore) updateFilter(ctx context.Context, filter *model.Filter) error {
-	const query = `
-		UPDATE filtered_word SET word = $2, created_on = $3, discord_id = $4, discord_created_on = $5, filter_name = $6
-    	WHERE word_id = $1`
-	if errQuery := database.Exec(ctx, query, filter.WordID, filter.Patterns.String(),
-		filter.CreatedOn, filter.DiscordId, filter.DiscordCreatedOn, filter.FilterName); errQuery != nil {
+	query, args, errQuery := sb.Update("filtered_word").
+		Set("word", filter.Patterns.String()).
+		Set("created_on", filter.CreatedOn).
+		Set("discord_id", filter.DiscordId).
+		Set("discord_created_on", filter.DiscordCreatedOn).
+		Set("filter_name", filter.FilterName).
+		Where(sq.Eq{"word_id": filter.WordID}).ToSql()
+	if errQuery != nil {
 		return Err(errQuery)
+	}
+	if err := database.Exec(ctx, query, args...); err != nil {
+		return Err(err)
 	}
 	log.Debugf("Created filter: %d", filter.WordID)
 	return nil

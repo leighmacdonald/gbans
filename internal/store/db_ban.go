@@ -177,7 +177,7 @@ func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryF
 		source.steam_id as source_steam_id, source.personaname as source_personaname,
 		source.avatar as source_avatar, source.avatarfull as source_avatarfull,
 		target.steam_id as target_steam_id, target.personaname as target_personaname,
-		target.avatar as target_avater, target.avatarfull as target_avatarfull
+		target.avatar as target_avatar, target.avatarfull as target_avatarfull
 	FROM ban b
 	LEFT JOIN person source on source.steam_id = b.source_id
 	LEFT JOIN person target on target.steam_id = b.target_id
@@ -307,18 +307,21 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilte
 }
 
 func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]model.BanSteam, error) {
-	query := fmt.Sprintf(`
-	SELECT
-	b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note,
-	b.origin, b.valid_until, b.created_on, b.updated_on, b.deleted,
-	case WHEN b.report_id is null THEN 0 ELSE b.report_id END, b.unban_reason_text,
-	b.is_enabled, b.appeal_state
-	FROM ban b
-	WHERE updated_on < $1 AND deleted = false
-	LIMIT %d
-	OFFSET %d`, filter.Limit, filter.Offset)
+	query, args, queryErr := sb.
+		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
+			"case WHEN b.report_id is null THEN 0 ELSE b.report_id END", "b.unban_reason_text", "b.is_enabled", "b.appeal_state").
+		From("ban b").
+		Where(sq.And{sq.Lt{"updated_on": since}, sq.Eq{"deleted": false}}).
+		Limit(filter.Limit).
+		Offset(filter.Offset).
+		ToSql()
+
+	if queryErr != nil {
+		return nil, Err(queryErr)
+	}
 	var bans []model.BanSteam
-	rows, errQuery := database.Query(ctx, query, since)
+	rows, errQuery := database.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, errQuery
 	}
