@@ -458,7 +458,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
-		if !*command.DefaultPermission && len(modPerms) > 0 {
+		if command.DefaultPermission != nil && !*command.DefaultPermission && len(modPerms) > 0 {
 			perms = append(perms, permissionRequest{
 				ID:          command.ID,
 				Permissions: modPerms,
