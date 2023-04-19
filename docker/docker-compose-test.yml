@@ -16,7 +16,7 @@ services:
     command: ["make", "test"]
 
   postgres-test:
-    image: postgis/postgis:13-3.1-alpine
+    image: postgis/postgis:15-3.3
     restart: always
     expose:
       - "5434"
