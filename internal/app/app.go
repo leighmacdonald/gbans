@@ -106,9 +106,7 @@ func (app *App) Start() error {
 	}()
 	app.store = dbStore
 	patreonClient, errPatreon := thirdparty.NewPatreonClient(app.ctx, dbStore)
-	if errPatreon != nil {
-		log.WithError(errPatreon).Error("Failed to setup patreon client")
-	} else {
+	if errPatreon == nil {
 		app.patreon = patreonClient
 	}
 

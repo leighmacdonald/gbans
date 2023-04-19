@@ -217,6 +217,9 @@ func (app *App) profileUpdater() {
 			log.Errorf("Failed to get expired profiles: %v", errGetExpired)
 			return
 		}
+		if len(people) == 0 {
+			return
+		}
 		var sids steamid.Collection
 		for _, person := range people {
 			sids = append(sids, person.SteamID)
