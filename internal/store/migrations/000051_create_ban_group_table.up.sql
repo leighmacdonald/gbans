@@ -21,24 +21,37 @@ create table if not exists ban_group
 
 create unique index if not exists ban_group_group_id_uindex on ban_group (group_id);
 
-alter table if exists ban rename column steam_id to target_id;
-alter table if exists ban rename column author_id to source_id;
-alter table if exists ban rename column ban_source to origin;
-alter table if exists ban add column if not exists is_enabled bool default true not null;
+alter table if exists ban
+    rename column steam_id to target_id;
+alter table if exists ban
+    rename column author_id to source_id;
+alter table if exists ban
+    rename column ban_source to origin;
+alter table if exists ban
+    add column if not exists is_enabled bool default true not null;
 
-alter table if exists ban_net rename column source to origin;
-alter table if exists ban_net add column if not exists note text default '' not null;
-alter table if exists ban_net add column if not exists unban_reason_text text default '' not null;
-alter table if exists ban_net add column if not exists is_enabled bool default true not null;
-alter table if exists ban_net add column if not exists source_id bigint default 0 not null;
-alter table if exists ban_net add column if not exists target_id bigint default 0 not null;
+alter table if exists ban_net
+    rename column source to origin;
+alter table if exists ban_net
+    add column if not exists note text default '' not null;
+alter table if exists ban_net
+    add column if not exists unban_reason_text text default '' not null;
+alter table if exists ban_net
+    add column if not exists is_enabled bool default true not null;
+alter table if exists ban_net
+    add column if not exists source_id bigint default 0 not null;
+alter table if exists ban_net
+    add column if not exists target_id bigint default 0 not null;
 
-alter table if exists ban_asn rename column author_id to source_id;
-alter table if exists ban_asn add column if not exists unban_reason_text text default '' not null;
-alter table if exists ban_asn add column if not exists note text default '' not null;
-alter table if exists ban_asn add column if not exists valid_until timestamp not null;
-alter table if exists ban_asn add column if not exists is_enabled bool default true not null;
-
-alter table if exists ban_net rename column author_id to source_id;
+alter table if exists ban_asn
+    rename column author_id to source_id;
+alter table if exists ban_asn
+    add column if not exists unban_reason_text text default '' not null;
+alter table if exists ban_asn
+    add column if not exists note text default '' not null;
+alter table if exists ban_asn
+    add column if not exists valid_until timestamp not null;
+alter table if exists ban_asn
+    add column if not exists is_enabled bool default true not null;
 
 commit;
