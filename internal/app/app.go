@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"gopkg.in/mxpv/patreon-go.v1"
-	"math/rand"
 	"net"
 	"os"
 	"sync"
@@ -56,10 +55,6 @@ var (
 	// BuildVersion holds the current git revision, as of build time
 	BuildVersion = "master"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 type userWarning struct {
 	WarnReason model.Reason
