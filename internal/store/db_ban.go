@@ -466,7 +466,7 @@ func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, b
 	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
 	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
 	FROM ban_group
-	WHERE target_id = $1 AND is_enabled = true AND deleted = false`
+	WHERE group_id = $1 AND is_enabled = true AND deleted = false`
 	return Err(database.QueryRow(ctx, q, groupId).
 		Scan(
 			&banGroup.BanGroupId,

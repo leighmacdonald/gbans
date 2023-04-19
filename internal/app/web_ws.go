@@ -18,30 +18,30 @@ import (
 type wsMsgType int
 
 const (
-	wsMsgTypePugCreateLobbyRequest      = 1000
-	wsMsgTypePugCreateLobbyResponse     = 1001
-	wsMsgTypePugLeaveLobbyRequest       = 1002
-	wsMsgTypePugLeaveLobbyResponse      = 1003
-	wsMsgTypePugJoinLobbyRequest        = 1004
-	wsMsgTypePugJoinLobbyResponse       = 1005
-	wsMsgTypePugUserMessageRequest      = 1006
-	wsMsgTypePugUserMessageResponse     = 1007
-	wsMsgTypePugLobbyListStatesRequest  = 1008
+	wsMsgTypePugCreateLobbyRequest  = 1000
+	wsMsgTypePugCreateLobbyResponse = 1001
+	wsMsgTypePugLeaveLobbyRequest   = 1002
+	wsMsgTypePugLeaveLobbyResponse  = 1003
+	wsMsgTypePugJoinLobbyRequest    = 1004
+	wsMsgTypePugJoinLobbyResponse   = 1005
+	wsMsgTypePugUserMessageRequest  = 1006
+	wsMsgTypePugUserMessageResponse = 1007
+	//wsMsgTypePugLobbyListStatesRequest  = 1008
 	wsMsgTypePugLobbyListStatesResponse = 1009
 	wsMsgTypePugJoinSlotRequest         = 1010
-	wsMsgTypePugJoinSlotResponse        = 1011
-
-	// Quickplay
-	wsMsgTypeQPCreateLobbyRequest  = 2000
-	wsMsgTypeQPCreateLobbyResponse = 2001
-	wsMsgTypeQPLeaveLobbyRequest   = 2002
-	wsMsgTypeQPLeaveLobbyResponse  = 2003
-	wsMsgTypeQPJoinLobbyRequest    = 2004
-	wsMsgTypeQPJoinLobbyResponse   = 2005
-	wsMsgTypeQPUserMessageRequest  = 2006
-	wsMsgTypeQPUserMessageResponse = 2007
-
-	wsMsgTypeErrResponse = 10000
+	//wsMsgTypePugJoinSlotResponse        = 1011
+	//
+	//// Quickplay
+	//wsMsgTypeQPCreateLobbyRequest  = 2000
+	//wsMsgTypeQPCreateLobbyResponse = 2001
+	//wsMsgTypeQPLeaveLobbyRequest   = 2002
+	//wsMsgTypeQPLeaveLobbyResponse  = 2003
+	//wsMsgTypeQPJoinLobbyRequest    = 2004
+	//wsMsgTypeQPJoinLobbyResponse   = 2005
+	//wsMsgTypeQPUserMessageRequest  = 2006
+	//wsMsgTypeQPUserMessageResponse = 2007
+	//
+	//wsMsgTypeErrResponse = 10000
 )
 
 const tokenLen = 6
@@ -329,22 +329,22 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 	return nil
 }
 
-func (cm *wsConnectionManager) newLobbyId() string {
-	valid := false
-	loops := 0
-	const maxLoops = 100
-	var lobbyId string
-	for !valid && loops <= maxLoops {
-		lobbyId = golib.RandomString(6)
-		lobby, _ := cm.findLobby(lobbyId)
-		valid = lobby == nil
-		loops++
-	}
-	if loops >= maxLoops {
-		panic("Could not generate unique lobby id")
-	}
-	return lobbyId
-}
+//func (cm *wsConnectionManager) newLobbyId() string {
+//	valid := false
+//	loops := 0
+//	const maxLoops = 100
+//	var lobbyId string
+//	for !valid && loops <= maxLoops {
+//		lobbyId = golib.RandomString(6)
+//		lobby, _ := cm.findLobby(lobbyId)
+//		valid = lobby == nil
+//		loops++
+//	}
+//	if loops >= maxLoops {
+//		panic("Could not generate unique lobby id")
+//	}
+//	return lobbyId
+//}
 
 func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType, payload json.RawMessage) error {
 	// TODO split out into map and register handlers instead of mega switch

@@ -344,7 +344,7 @@ var defaultConfig = map[string]any{
 	"log.full_timestamp":                       false,
 	"log.srcds_log_addr":                       ":27115",
 	"log.srcds_log_external_host":              "",
-	"database.dsn":                             "postgresql://localhost/gbans",
+	"database.dsn":                             "postgresql://gbans:gbans@localhost/gbans",
 	"database.auto_migrate":                    true,
 	"database.log_queries":                     false,
 	"database.log_write_freq":                  time.Second * 10,

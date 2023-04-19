@@ -14,5 +14,5 @@ func TestIsFilteredWord(t *testing.T) {
 	require.Equal(t, l1+1, len(wordFilters))
 	matched, matchedFilter := findFilteredWordMatch("This is a badword")
 	require.Equal(t, "badword", matched)
-	require.Equal(t, 1, matchedFilter.WordID)
+	require.Equal(t, int64(1), matchedFilter.WordID)
 }

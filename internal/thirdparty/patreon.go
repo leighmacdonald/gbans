@@ -79,7 +79,7 @@ func updateToken(ctx context.Context, database PatreonStore, oAuthConfig oauth2.
 	if saveTokenErr := database.SetPatreonAuth(ctx, newToken.AccessToken, newToken.RefreshToken); saveTokenErr != nil {
 		return errors.Wrap(errToken, "Failed to save new oath token")
 	}
-	tok = newToken
+	*tok = *newToken
 	return nil
 }
 
@@ -122,9 +122,7 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 			}
 			users[u.ID] = u
 		}
-		for _, pledge := range pledgesResponse.Data {
-			out = append(out, pledge)
-		}
+		out = append(out, pledgesResponse.Data...)
 		nextLink := pledgesResponse.Links.Next
 		if nextLink == "" {
 			break

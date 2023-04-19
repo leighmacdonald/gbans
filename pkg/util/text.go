@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"strings"
+	"unicode"
 )
 
 // StringChunkDelimited is used to split a multiline string into strings with a max size defined as chunkSize.
@@ -82,4 +83,13 @@ func GlobString(pattern, subj string) bool {
 		subj = subj[idx+len(parts[i]):]
 	}
 	return trailingGlob || strings.HasSuffix(subj, parts[end])
+}
+
+func ASCIISafe(input string) string {
+	return strings.Map(func(r rune) rune {
+		if r > unicode.MaxASCII {
+			return -1
+		}
+		return r
+	}, input)
 }

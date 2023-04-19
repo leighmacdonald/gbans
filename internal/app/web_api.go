@@ -27,7 +27,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 )
 
 // apiResponse represents the common high level response of all api responses. All child data is
@@ -972,15 +971,6 @@ func (web *web) onAPIExportBansValveIP() gin.HandlerFunc {
 		}
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
 	}
-}
-
-func asciiSafe(input string) string {
-	return strings.Map(func(r rune) rune {
-		if r > unicode.MaxASCII {
-			return -1
-		}
-		return r
-	}, input)
 }
 
 func (web *web) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
@@ -2824,29 +2814,29 @@ func (web *web) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 }
 func (web *web) onAPIGetPatreonPledges() gin.HandlerFunc {
 	// Only leak specific details
-	type basicPledge struct {
-		Name      string
-		Amount    int
-		CreatedAt time.Time
-	}
+	//type basicPledge struct {
+	//	Name      string
+	//	Amount    int
+	//	CreatedAt time.Time
+	//}
 	return func(ctx *gin.Context) {
 		web.app.patreonMu.RLock()
 		pledges := web.app.patreonPledges
-		users := web.app.patreonUsers
+		//users := web.app.patreonUsers
 		web.app.patreonMu.RUnlock()
 
-		var basic []basicPledge
-		for _, p := range pledges {
-			t0 := config.Now()
-			if p.Attributes.CreatedAt.Valid {
-				t0 = p.Attributes.CreatedAt.Time.UTC()
-			}
-			basic = append(basic, basicPledge{
-				Name:      users[p.Relationships.Patron.Data.ID].Attributes.FullName,
-				Amount:    p.Attributes.AmountCents,
-				CreatedAt: t0,
-			})
-		}
+		//var basic []basicPledge
+		//for _, p := range pledges {
+		//	t0 := config.Now()
+		//	if p.Attributes.CreatedAt.Valid {
+		//		t0 = p.Attributes.CreatedAt.Time.UTC()
+		//	}
+		//	basic = append(basic, basicPledge{
+		//		Name:      users[p.Relationships.Patron.Data.ID].Attributes.FullName,
+		//		Amount:    p.Attributes.AmountCents,
+		//		CreatedAt: t0,
+		//	})
+		//}
 		responseOK(ctx, http.StatusOK, pledges)
 	}
 }

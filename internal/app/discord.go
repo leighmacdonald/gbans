@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 const (
@@ -43,16 +42,14 @@ func (bot *Discord) SendEmbed(channelId string, message *discordgo.MessageEmbed)
 
 // Discord implements the ChatBot interface for the discord chat platform.
 type Discord struct {
-	session            *discordgo.Session
-	app                *App
-	ctx                context.Context
-	database           store.Store
-	connectedMu        *sync.RWMutex
-	commandHandlers    map[botCmd]botCommandHandler
-	botSendMessageChan chan discordPayload
-	Connected          atomic.Bool
-	retryCount         int64
-	lastRetry          time.Time
+	session         *discordgo.Session
+	app             *App
+	ctx             context.Context
+	database        store.Store
+	connectedMu     *sync.RWMutex
+	commandHandlers map[botCmd]botCommandHandler
+	Connected       atomic.Bool
+	retryCount      int64
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance

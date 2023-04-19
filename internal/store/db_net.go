@@ -367,7 +367,7 @@ func (database *pgStore) GetBanASN(ctx context.Context, asNum int64, banASN *mod
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
-		WHERE as_num = $1`
+		WHERE deleted = false AND as_num = $1`
 	if errQuery := database.conn.QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
 		&banASN.SourceId, &banASN.TargetId, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
 		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,

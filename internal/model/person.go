@@ -89,7 +89,9 @@ func NewPerson(sid64 steamid.SID64) Person {
 		EconomyBan:       "none",
 		DaysSinceLastBan: 0,
 		UpdatedOnSteam:   t0,
-		PlayerSummary:    &steamweb.PlayerSummary{},
+		PlayerSummary: &steamweb.PlayerSummary{
+			Steamid: sid64.String(),
+		},
 	}
 }
 

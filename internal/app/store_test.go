@@ -65,8 +65,7 @@ func TestReport(t *testing.T) {
 	var author model.Person
 	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198003911389), &author))
 	var target model.Person
-	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(),
-		steamid.SID64(steamid.RandSID64().Int64()+int64(rand.Int())), &target))
+	require.NoError(t, testDatabase.GetOrCreatePersonBySteamID(context.TODO(), steamid.RandSID64(), &target))
 	report := model.NewReport()
 	report.SourceId = author.SteamID
 	report.TargetId = target.SteamID
@@ -93,7 +92,7 @@ func TestBanNet(t *testing.T) {
 	var banCidr model.BanCIDR
 	require.NoError(t, NewBanCIDR(model.StringSID("76561198003911389"),
 		"76561198044052046", "10m", model.Custom,
-		"", "", model.System, fmt.Sprintf("%s/32", rip), model.Banned, &banCidr))
+		"custom reason", "", model.System, fmt.Sprintf("%s/32", rip), model.Banned, &banCidr))
 	require.NoError(t, testDatabase.SaveBanNet(ctx, &banCidr))
 	require.Less(t, int64(0), banCidr.NetID)
 	banNet, errGetBanNet := testDatabase.GetBanNetByAddress(ctx, net.ParseIP(rip))
@@ -123,7 +122,7 @@ func TestBan(t *testing.T) {
 	require.NoError(t, NewBanSteam(
 		model.StringSID("76561198003911389"),
 		"76561198044052046",
-		"",
+		"1M",
 		model.Cheating,
 		model.Cheating.String(),
 		"Mod Note",
@@ -309,7 +308,7 @@ func TestBanASN(t *testing.T) {
 	var banASN model.BanASN
 	require.NoError(t, NewBanASN(
 		model.StringSID(author.SteamID.String()), "0",
-		"10m", model.Cheating, "", "", model.System, 200, model.Banned, &banASN))
+		"10m", model.Cheating, "", "", model.System, rand.Int63n(23455), model.Banned, &banASN))
 
 	require.NoError(t, testDatabase.SaveBanASN(context.Background(), &banASN))
 	require.True(t, banASN.BanASNId > 0)
@@ -325,7 +324,7 @@ func TestBanGroup(t *testing.T) {
 	var banGroup model.BanGroup
 	require.NoError(t, NewBanSteamGroup(
 		model.StringSID("76561198083950960"),
-		"",
+		"0",
 		"10m",
 		model.Cheating,
 		"",

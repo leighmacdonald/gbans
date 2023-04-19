@@ -237,7 +237,7 @@ func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 s
 	if errGetPerson != nil && Err(errGetPerson) == ErrNoResult {
 		// FIXME
 		newPerson := model.NewPerson(sid64)
-		person = &newPerson
+		*person = newPerson
 		return database.SavePerson(ctx, person)
 	}
 	return errGetPerson

@@ -41,6 +41,7 @@ func TestMain(testMain *testing.M) {
 	}()
 	app := New(testCtx)
 	testDatabase = dbStore
+	app.store = testDatabase
 	webService, errWeb := NewWeb(app)
 	if errWeb != nil {
 		tearDown(dbStore)
