@@ -3,7 +3,7 @@ module github.com/leighmacdonald/gbans
 go 1.20
 
 require (
-	github.com/Depado/ginprom v1.7.7
+	github.com/Depado/ginprom v1.7.10
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/bwmarrin/discordgo v0.27.1
@@ -27,7 +27,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/rumblefrog/go-a2s v1.0.2
 	github.com/sergi/go-diff v1.3.1
 	github.com/sirupsen/logrus v1.9.0
@@ -35,13 +35,13 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/yohcop/openid-go v1.0.1
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
-	golang.org/x/oauth2 v0.6.0
+	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
+	golang.org/x/oauth2 v0.7.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
 
 require (
-	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.8.7 // indirect
@@ -98,8 +98,8 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
