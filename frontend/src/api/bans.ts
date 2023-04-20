@@ -8,6 +8,7 @@ import {
 import { UserMessage } from './report';
 import SteamID from 'steamid';
 import { parseDateTime } from '../util/text';
+import { IpRecord } from '../util/types';
 
 export enum AppealState {
     Open,
@@ -16,6 +17,7 @@ export enum AppealState {
     Reduced,
     NoAppeal
 }
+
 export const AppealStateCollection = [
     AppealState.Open,
     AppealState.Denied,
@@ -197,7 +199,7 @@ export interface IAPIBanGroupRecord extends BanBase {
 
 export interface IAPIBanCIDRRecord extends BanBase {
     net_id: number;
-    cidr: string;
+    cidr: IpRecord;
 }
 
 export interface IAPIBanASNRecord extends BanBase {

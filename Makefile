@@ -88,6 +88,10 @@ lint_cyclo:
 lint_golint:
 	golint -set_exit_status $(go list -tags ci ./...)
 
+
+lint_ts:
+	cd frontend && yarn run eslint:check
+
 static:
 	staticcheck -go 1.20 ./...
 

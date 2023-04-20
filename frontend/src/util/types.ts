@@ -12,3 +12,7 @@ export const EnumToArray = (obj: Record<string, string>) =>
     Object.keys(obj)
         .filter(StringIsNumber)
         .map((key) => obj[key]);
+
+export interface IpRecord {
+    IP: string;
+}

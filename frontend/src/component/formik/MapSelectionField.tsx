@@ -21,7 +21,7 @@ export const baseMaps = [
 
 export const mapValidator = yup
     .string()
-    .test('checkMap', 'Invalid map selection', async (map, _) => {
+    .test('checkMap', 'Invalid map selection', async (map) => {
         return !emptyOrNullString(map);
     })
     .label('Select a map to play')

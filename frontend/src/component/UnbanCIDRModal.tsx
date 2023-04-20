@@ -60,7 +60,7 @@ export const UnbanCIDRModal = ({
                 <Heading>
                     <>
                         Unban CIDR (#{record.net_id}):
-                        {(record.cidr as any).IP}
+                        {record.cidr.IP}
                     </>
                 </Heading>
                 <Stack spacing={3} alignItems={'center'}>

@@ -74,7 +74,7 @@ export const PugPage = (): JSX.Element => {
             sendJsonMessage(msg);
             return;
         },
-        [isReady]
+        [isReady, sendJsonMessage]
     );
 
     const leaveLobby = useCallback(() => {

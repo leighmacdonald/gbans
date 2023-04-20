@@ -29,7 +29,7 @@ export const LoginDiscordSuccess = () => {
                 setInProgress(false);
                 navigate(next_url);
             });
-    }, []);
+    }, [navigate]);
 
     return (
         <>

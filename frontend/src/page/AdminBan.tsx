@@ -499,7 +499,7 @@ export const AdminBan = (): JSX.Element => {
                                     try {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {(obj.cidr as any).IP}
+                                                {obj.cidr.IP}
                                             </Typography>
                                         );
                                     } catch (e) {

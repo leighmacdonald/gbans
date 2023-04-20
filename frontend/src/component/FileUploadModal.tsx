@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -62,7 +62,10 @@ export const FileUploadModal = ({
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleUploadedFile = useCallback(
-        ({ target }: any) => {
+        ({ target }: ChangeEvent<HTMLInputElement>) => {
+            if (!target.files) {
+                return;
+            }
             const file = target.files[0];
             const reader = new FileReader();
             reader.addEventListener('load', (event) => {
@@ -90,6 +93,7 @@ export const FileUploadModal = ({
     const handlePaste = useCallback((event: React.ClipboardEvent) => {
         setUploadInProgress(true);
         const items = event.clipboardData.items;
+        // eslint-disable-next-line no-loops/no-loops
         for (const index in items) {
             const item = items[index];
             if (item.kind === 'file') {

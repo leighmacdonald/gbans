@@ -56,7 +56,7 @@ export const stringHexNumber = (input: string) =>
     (
         '#' +
         (
-            (('000000' as any) +
+            (('000000' as never) +
                 parseInt(
                     // 2
                     parseInt(input, 36) // 3
@@ -83,6 +83,7 @@ export const humanFileSize = (bytes: number, si = false, dp = 1) => {
     let u = -1;
     const r = 10 ** dp;
 
+    // eslint-disable-next-line no-loops/no-loops
     do {
         bytes /= thresh;
         ++u;
