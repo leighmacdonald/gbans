@@ -1,6 +1,6 @@
 module github.com/leighmacdonald/gbans
 
-go 1.20
+go 1.19
 
 require (
 	github.com/Depado/ginprom v1.7.10
@@ -35,7 +35,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/yohcop/openid-go v1.0.1
-	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
+	golang.org/x/exp v0.0.0-20230419192730-864b3d6c5c2c
 	golang.org/x/oauth2 v0.7.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
