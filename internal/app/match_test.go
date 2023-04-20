@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path"
@@ -74,32 +73,32 @@ func TestMatch_Apply(t *testing.T) {
 	}
 	// Player sum values
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Kills,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Kills,
 			getPS(m, ps.SteamId).Kills, "Kills incorrect %v", getName(ps.SteamId))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Deaths,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Deaths,
 			getPS(m, ps.SteamId).Deaths, "Deaths incorrect %v", getName(ps.SteamId))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Damage,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Damage,
 			getPS(m, ps.SteamId).Damage, "Damage incorrect %v", getName(ps.SteamId))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Healing,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Healing,
 			getPS(m, ps.SteamId).Healing, "Healing incorrect %v", getName(ps.SteamId))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Dominations,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Dominations,
 			getPS(m, ps.SteamId).Dominations, "Dominations incorrect %v", getName(ps.SteamId))
 	}
 
 	for _, ps := range match3124689.PlayerSums {
-		assert.Equal(t, getPS(match3124689, ps.SteamId).Revenges,
+		require.Equal(t, getPS(match3124689, ps.SteamId).Revenges,
 			getPS(m, ps.SteamId).Revenges, "Revenges incorrect %v", getName(ps.SteamId))
 	}
 	//for sid := range match3124689.playerSums {
-	//	assert.Equal(t, match3124689.playerSums[sid].Classes,
+	//	require.Equal(t, match3124689.playerSums[sid].Classes,
 	//		m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
 	//}
 
@@ -113,20 +112,20 @@ func TestMatch_Apply(t *testing.T) {
 
 	// Medic sums
 	for _, ms := range match3124689.MedicSums {
-		assert.Equal(t, getMS(match3124689, ms.SteamId).Drops,
+		require.Equal(t, getMS(match3124689, ms.SteamId).Drops,
 			getMS(m, ms.SteamId).Drops, "Drops incorrect %v", getName(ms.SteamId))
 	}
 	//for sid := range match3124689.medicSums {
-	//	assert.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
+	//	require.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	//}
 	//for _, ms := range match3124689.MedicSums {
-	//	assert.Equal(t, map[logparse.Medigun]int{logparse.Uber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
+	//	require.Equal(t, map[logparse.Medigun]int{logparse.Uber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
 	//		getMS(m, ms.SteamId).Charges, "Charges incorrect %v", getName(ms.SteamId))
 	//}
 
 	//for team := range match3124689.teamSums {
-	//	assert.Equal(t, match3124689.teamSums[team].Kills,
+	//	require.Equal(t, match3124689.teamSums[team].Kills,
 	//		m.teamSums[team].Kills, "[Team] Kills incorrect %v", team)
 	//}
 }

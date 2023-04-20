@@ -429,7 +429,7 @@ func (bot *Discord) onCheck(ctx context.Context, _ *discordgo.Session, interacti
 	}
 	addFieldInline(embed, "Ban/Muted", banStateStr)
 	// TODO move elsewhere
-	logData, errLogs := thirdparty.LogsTFOverview(sid)
+	logData, errLogs := thirdparty.LogsTFOverview(ctx, sid)
 	if errLogs != nil {
 		log.Warnf("Failed to fetch logTF data: %v", errLogs)
 	}

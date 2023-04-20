@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 )
@@ -91,11 +91,11 @@ func TestSteamWebAPI(t *testing.T) {
 		return
 	}
 	friends, errFetch := thirdparty.FetchFriends(context.Background(), 76561197961279983)
-	assert.NoError(t, errFetch)
-	assert.True(t, len(friends) > 100)
+	require.NoError(t, errFetch)
+	require.True(t, len(friends) > 100)
 	summaries, errFetchSummaries := thirdparty.FetchSummaries(friends)
-	assert.NoError(t, errFetchSummaries)
-	assert.Equal(t, len(friends), len(summaries))
+	require.NoError(t, errFetchSummaries)
+	require.Equal(t, len(friends), len(summaries))
 }
 
 //func TestFetchPlayerBans(t *testing.T) {
@@ -106,6 +106,6 @@ func TestSteamWebAPI(t *testing.T) {
 //		76561198189957966,
 //	}
 //	bans, errFetch := FetchPlayerBans(reqIds)
-//	assert.NoError(t, errFetch, "HTTP error fetching Player bans")
-//	assert.Equal(t, len(bans), len(reqIds))
+//	require.NoError(t, errFetch, "HTTP error fetching Player bans")
+//	require.Equal(t, len(bans), len(reqIds))
 //}

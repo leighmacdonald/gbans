@@ -1,12 +1,15 @@
 package thirdparty
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"io"
+	"net/http"
+	"time"
 )
 
 type LogsTFResult struct {
@@ -33,9 +36,16 @@ type LogsTFResult struct {
 
 // LogsTFOverview queries the logstf api for metadata about a players logs
 // http://logs.tf/api/v1/log?title=X&uploader=Y&player=Z&limit=N&offset=N
-func LogsTFOverview(sid steamid.SID64) (*LogsTFResult, error) {
+func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, error) {
 	httpClient := util.NewHTTPClient()
-	response, errGet := httpClient.Get(fmt.Sprintf("https://logs.tf/api/v1/log?player=%d", sid.Int64()))
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
+	defer cancel()
+	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet,
+		fmt.Sprintf("https://logs.tf/api/v1/log?player=%d", sid.Int64()), nil)
+	if reqErr != nil {
+		return nil, reqErr
+	}
+	response, errGet := httpClient.Do(req)
 	if errGet != nil {
 		return nil, errors.Wrapf(errGet, "Failed to query logstf")
 	}

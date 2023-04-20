@@ -17,7 +17,7 @@ func FetchCompHist(ctx context.Context, sid steamid.SID64, hist *CompHist) error
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		logsTFResult, errOverview := LogsTFOverview(sid)
+		logsTFResult, errOverview := LogsTFOverview(ctx, sid)
 		if errOverview != nil {
 			return
 		}
