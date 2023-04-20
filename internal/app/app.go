@@ -88,6 +88,47 @@ func New(ctx context.Context) *App {
 	return &app
 }
 
+func firstTimeSetup(ctx context.Context, db store.Store) error {
+	if !config.General.Owner.Valid() {
+		return errors.New("Configured owner is not a valid steam64")
+	}
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+	var owner model.Person
+	if errRootUser := db.GetPersonBySteamID(localCtx, config.General.Owner, &owner); errRootUser != nil {
+		if !errors.Is(errRootUser, store.ErrNoResult) {
+			return errors.Wrapf(errRootUser, "Failed first time setup")
+		}
+		newOwner := model.NewPerson(config.General.Owner)
+		newOwner.PermissionLevel = model.PAdmin
+		if errSave := db.SavePerson(localCtx, &newOwner); errSave != nil {
+			return errors.Wrap(errSave, "Failed to create admin user")
+		}
+		newsEntry := model.NewsEntry{
+			Title:       "Welcome to gbans",
+			BodyMD:      "This is an *example* **news** entry.",
+			IsPublished: true,
+			CreatedOn:   time.Now(),
+			UpdatedOn:   time.Now(),
+		}
+		if errSave := db.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
+			return errors.Wrap(errSave, "Failed to create sample news entry")
+		}
+		server := model.NewServer("server-1", "127.0.0.1", 27015)
+		server.CC = "jp"
+		server.RCON = "example_rcon"
+		server.Latitude = 35.652832
+		server.Longitude = 139.839478
+		server.ServerNameLong = "Example Server"
+		server.LogSecret = 12345678
+		server.Region = "asia"
+		if errSave := db.SaveServer(localCtx, &server); errSave != nil {
+			return errors.Wrap(errSave, "Failed to create sample server entry")
+		}
+	}
+	return nil
+}
+
 // Start is the main application entry point
 func (app *App) Start() error {
 	dbStore, dbErr := store.New(app.ctx, config.DB.DSN)
@@ -100,6 +141,11 @@ func (app *App) Start() error {
 		}
 	}()
 	app.store = dbStore
+
+	if setupErr := firstTimeSetup(app.ctx, app.store); setupErr != nil {
+		log.WithError(setupErr).Fatalf("Failed to do first time setup")
+	}
+
 	patreonClient, errPatreon := thirdparty.NewPatreonClient(app.ctx, dbStore)
 	if errPatreon == nil {
 		app.patreon = patreonClient

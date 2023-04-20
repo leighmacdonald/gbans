@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import TextField, { TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
 import MenuItem from '@mui/material/MenuItem';
 import {
@@ -145,25 +145,19 @@ export const AdminChat = (): JSX.Element => {
                         <Stack direction={'row'} spacing={2} padding={2}>
                             <DesktopDatePicker
                                 label="Date Start"
-                                inputFormat="MM/dd/yyyy"
+                                format={'MM/dd/yyyy'}
                                 value={startDate}
                                 onChange={(newValue: Date | null) => {
                                     setStartDate(newValue);
                                 }}
-                                renderInput={(params: TextFieldProps) => (
-                                    <TextField {...params} />
-                                )}
                             />
                             <DesktopDatePicker
                                 label="Date End"
-                                inputFormat="MM/dd/yyyy"
+                                format="MM/dd/yyyy"
                                 value={endDate}
                                 onChange={(newValue: Date | null) => {
                                     setEndDate(newValue);
                                 }}
-                                renderInput={(params: TextFieldProps) => (
-                                    <TextField {...params} />
-                                )}
                             />
                             <ButtonGroup>
                                 <Button

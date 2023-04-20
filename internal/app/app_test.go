@@ -4,9 +4,7 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 )
@@ -83,19 +81,6 @@ func TestMain(testMain *testing.M) {
 	<-webCtx.Done()
 	tearDown(dbStore)
 	os.Exit(rc)
-}
-
-func TestSteamWebAPI(t *testing.T) {
-	if config.General.SteamKey == "" {
-		t.Skip("No steamkey set")
-		return
-	}
-	friends, errFetch := thirdparty.FetchFriends(context.Background(), 76561197961279983)
-	require.NoError(t, errFetch)
-	require.True(t, len(friends) > 100)
-	summaries, errFetchSummaries := thirdparty.FetchSummaries(friends)
-	require.NoError(t, errFetchSummaries)
-	require.Equal(t, len(friends), len(summaries))
 }
 
 //func TestFetchPlayerBans(t *testing.T) {

@@ -202,7 +202,7 @@ func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter)
 	if queryFilter.Limit == 0 {
 		queryBuilder = queryBuilder.Limit(100)
 	} else {
-		queryBuilder = queryBuilder.Limit(uint64(queryFilter.Limit))
+		queryBuilder = queryBuilder.Limit(queryFilter.Limit)
 	}
 	query, args, errQueryArgs := queryBuilder.ToSql()
 	if errQueryArgs != nil {
@@ -250,7 +250,7 @@ func (database *pgStore) GetPersonByDiscordID(ctx context.Context, discordId str
 		Where(sq.Eq{"discord_id": discordId}).
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return Err(errQueryArgs)
 	}
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
@@ -266,16 +266,18 @@ func (database *pgStore) GetPersonByDiscordID(ctx context.Context, discordId str
 	return nil
 }
 
-func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error) {
-	query := fmt.Sprintf(`SELECT steam_id, created_on, updated_on,
-	communityvisibilitystate, profilestate, personaname, profileurl, avatar,
-	avatarmedium, avatarfull, avatarhash, personastate, realname, timecreated,
-	loccountrycode, locstatecode, loccityid, permission_level, discord_id,
-	community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban, updated_on_steam, muted
-	FROM person ORDER BY updated_on LIMIT %d`, limit)
-
+func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.Person, error) {
+	query, args, errArgs := sb.
+		Select(profileColumns...).
+		From("person").
+		OrderBy("updated_on").
+		Limit(limit).
+		ToSql()
+	if errArgs != nil {
+		return nil, Err(errArgs)
+	}
 	var people []model.Person
-	rows, errQuery := database.conn.Query(ctx, query)
+	rows, errQuery := database.conn.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -288,7 +290,7 @@ func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit int) ([]m
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel,
 			&person.DiscordID, &person.CommunityBanned, &person.VACBans, &person.GameBans,
 			&person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errScan
+			return nil, Err(errScan)
 		}
 		people = append(people, person)
 	}
@@ -419,7 +421,7 @@ func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistory
 	return messages, nil
 }
 
-func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit int) (model.PersonConnections, error) {
+func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (model.PersonConnections, error) {
 	qb := sb.
 		Select(
 			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
@@ -435,7 +437,7 @@ func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.S
 		//Join("LEFT JOIN net_asn asn ON pc.ip_addr <@ asn.ip_range").
 		//Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
 		OrderBy("1").
-		Limit(1000)
+		Limit(limit)
 	qb = qb.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 	query, args, errCreateQuery := qb.ToSql()
 	if errCreateQuery != nil {
@@ -552,7 +554,7 @@ func (database *pgStore) SendNotification(ctx context.Context, targetId steamid.
 }
 
 func (database *pgStore) GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]model.UserNotification, error) {
-	notifications := []model.UserNotification{}
+	var notifications []model.UserNotification
 	query, args, errQuery := sb.
 		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
 		From("person_notification").

@@ -71,7 +71,7 @@ check_deps:
 	go install golang.org/x/lint/golint@latest
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
-check: lint_golangci lint_vet lint_imports lint_cyclo lint_golint static
+check: lint_golangci lint_vet lint_imports lint_cyclo lint_golint static lint_ts
 
 lint_golangci:
 	golangci-lint run --timeout 3m
@@ -88,7 +88,6 @@ lint_cyclo:
 lint_golint:
 	golint -set_exit_status $(go list -tags ci ./...)
 
-
 lint_ts:
 	cd frontend && yarn run eslint:check
 
@@ -102,14 +101,12 @@ clean:
 	@go clean $(GO_FLAGS) -i
 
 docker_test_postgres:
-	@docker-compose -f docker/docker-compose-test.yml down
-	@docker-compose -f docker/docker-compose-test.yml up --exit-code-from postgres-test --remove-orphans postgres-test
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --pull --exit-code-from postgres-test --remove-orphans postgres-test
 
 docker_test:
-	@docker-compose -f docker/docker-compose-test.yml pull
-	@docker-compose -f docker/docker-compose-test.yml down
-	@docker-compose -f docker/docker-compose-test.yml build --no-cache
-	@docker-compose -f docker/docker-compose-test.yml up --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --pull --build --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .
@@ -124,10 +121,12 @@ docker_run:
 	docker run -it --rm -v "$(pwd)"/gbans.yml:/app/gbans.yml:ro leighmacdonald/gbans:latest
 
 up_postgres:
-	docker-compose -f docker/docker-compose.yml up -d postgres
+	docker-compose --project-name dev -f docker/docker-compose-dev.yml down -v
+	docker-compose --project-name dev -f docker/docker-compose-dev.yml up postgres --remove-orphans --renew-anon-volumes
 
 up:
-	docker-compose -f docker/docker-compose.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans
+	docker-compose --project-name dev -f docker/docker-compose-dev.yml down -v
+	docker-compose --project-name dev -f docker/docker-compose-dev.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans
 
 docker_dump:
 	docker exec gbans-postgres pg_dump -U gbans > gbans.sql

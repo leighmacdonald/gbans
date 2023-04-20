@@ -110,8 +110,8 @@ type PersonStore interface {
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *model.Person) error
 	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
-	GetExpiredProfiles(ctx context.Context, limit int) ([]model.Person, error)
-	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit int) (model.PersonConnections, error)
+	GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.Person, error)
+	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit uint64) (model.PersonConnections, error)
 	QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (model.PersonMessages, error)
 	GetPersonMessageById(ctx context.Context, query int64, msg *model.PersonMessage) error
 	AddChatHistory(ctx context.Context, message *model.PersonMessage) error

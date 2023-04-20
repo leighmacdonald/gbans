@@ -1,0 +1,43 @@
+version: "3.3"
+
+services:
+  gbans:
+    build:
+      context: "../"
+      dockerfile: Dockerfile
+    volumes:
+      - dl_cache:/app/.cache
+      - ../gbans.yml:/app/gbans.yml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - prod_network
+    ports:
+      - "6006:6006"
+    environment:
+      GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
+      GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
+    command: ./gbans serve
+  postgres:
+    image: postgis/postgis:15-3.3
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: gbans
+      POSTGRES_DB: gbans
+      POSTGRES_PASSWORD: gbans
+    networks:
+      - prod_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gbans"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dl_cache:
+
+networks:
+  prod_network:
