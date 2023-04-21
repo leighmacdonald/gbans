@@ -231,11 +231,6 @@ export const TopBar = () => {
                 icon: <DnsIcon sx={colourOpts} />
             });
             items.push({
-                to: '/admin/server_logs',
-                text: 'Server Logs',
-                icon: <SubjectIcon sx={colourOpts} />
-            });
-            items.push({
                 to: '/quickplay',
                 text: 'Quickplay',
                 icon: <VideogameAssetIcon sx={colourOpts} />

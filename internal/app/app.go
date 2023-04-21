@@ -131,6 +131,7 @@ func firstTimeSetup(ctx context.Context, db store.Store) error {
 		page.BodyMD = "# Welcome to the wiki"
 		page.UpdatedOn = time.Now()
 		page.CreatedOn = time.Now()
+		page.Revision = 1
 		page.Slug = wiki.RootSlug
 		if errSave := db.SaveWikiPage(localCtx, &page); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create sample wiki entry")
