@@ -31,13 +31,19 @@ func ErrorHandler(logger *log.Logger) gin.HandlerFunc {
 	}
 }
 
+// jsConfig contains all the variables that we inject into the frontend at runtime
+type jsConfig struct {
+	SiteName        string `json:"siteName"`
+	DiscordClientId string `json:"discordClientId"`
+	DiscordLinkId   string `json:"discordLinkId"`
+}
+
 func (web *web) setupRouter(engine *gin.Engine) {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
-	corsConfig.AllowWildcard = false
+	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = false
-	corsConfig.AddAllowMethods("OPTIONS")
 	if config.General.Mode != config.TestMode {
 		engine.Use(cors.New(corsConfig))
 	}
@@ -71,12 +77,10 @@ func (web *web) setupRouter(engine *gin.Engine) {
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
-			c.HTML(http.StatusOK, "index.html", gin.H{
-				"jsGlobals": gin.H{
-					"siteName":        config.General.SiteName,
-					"discordClientId": config.Discord.AppID,
-				},
-				"siteName": config.General.SiteName,
+			c.HTML(http.StatusOK, "index.html", jsConfig{
+				SiteName:        config.General.SiteName,
+				DiscordClientId: config.Discord.AppID,
+				DiscordLinkId:   config.Discord.LinkId,
 			})
 		})
 	}

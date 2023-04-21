@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"gopkg.in/mxpv/patreon-go.v1"
 	"net"
 	"os"
@@ -99,6 +100,7 @@ func firstTimeSetup(ctx context.Context, db store.Store) error {
 		if !errors.Is(errRootUser, store.ErrNoResult) {
 			return errors.Wrapf(errRootUser, "Failed first time setup")
 		}
+		log.Info("Performing initial setup")
 		newOwner := model.NewPerson(config.General.Owner)
 		newOwner.PermissionLevel = model.PAdmin
 		if errSave := db.SavePerson(localCtx, &newOwner); errSave != nil {
@@ -124,6 +126,14 @@ func firstTimeSetup(ctx context.Context, db store.Store) error {
 		server.Region = "asia"
 		if errSave := db.SaveServer(localCtx, &server); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create sample server entry")
+		}
+		var page wiki.Page
+		page.BodyMD = "# Welcome to the wiki"
+		page.UpdatedOn = time.Now()
+		page.CreatedOn = time.Now()
+		page.Slug = wiki.RootSlug
+		if errSave := db.SaveWikiPage(localCtx, &page); errSave != nil {
+			return errors.Wrap(errSave, "Failed to create sample wiki entry")
 		}
 	}
 	return nil

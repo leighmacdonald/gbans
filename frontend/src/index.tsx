@@ -9,6 +9,7 @@ declare global {
         gbans: {
             siteName: string;
             discordClientId: string;
+            discordLinkId: string;
         };
     }
 }

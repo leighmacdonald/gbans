@@ -6,9 +6,6 @@ general:
   # Should normally be "release"
   mode: "release" # release, debug, test
   server_status_update_freq: 10s
-  map_changer_enabled: false
-  default_maps: ["pl_badwater", "pl_upward", "pl_snowycoast"]
-  demo_root_path: ./stv_path/
   external_url: "http://gbans.localhost:6006"
 
 debug:
@@ -55,6 +52,7 @@ discord:
   enabled: false
   app_id: 11111111111111111
   guild_id: 111111111111111111
+  link_id:
   # Your discord bot token
   # See: https://discord.com/developers/applications
   token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"

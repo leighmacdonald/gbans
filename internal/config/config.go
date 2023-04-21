@@ -146,6 +146,7 @@ type discordConfig struct {
 	Enabled                bool     `mapstructure:"enabled"`
 	AppID                  string   `mapstructure:"app_id"`
 	AppSecret              string   `mapstructure:"app_secret"`
+	LinkId                 string   `mapstructure:"link_id"`
 	Token                  string   `mapstructure:"token"`
 	ModRoleIDs             []string `mapstructure:"mod_role_ids"`
 	GuildID                string   `mapstructure:"guild_id"`

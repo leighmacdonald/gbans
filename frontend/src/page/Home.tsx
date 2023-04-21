@@ -111,16 +111,18 @@ export const Home = (): JSX.Element => {
                         SourceTV
                     </Button>
 
-                    <Button
-                        component={Link}
-                        startIcon={<MarkUnreadChatAltIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        href={'https://discord.gg/uncletopia'}
-                    >
-                        Join Discord
-                    </Button>
+                    {window.gbans.discordLinkId != '' && (
+                        <Button
+                            component={Link}
+                            startIcon={<MarkUnreadChatAltIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            href={`https://discord.gg/${window.gbans.discordLinkId}`}
+                        >
+                            Join Discord
+                        </Button>
+                    )}
                 </Stack>
             </Grid>
         </Grid>
