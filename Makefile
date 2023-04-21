@@ -50,6 +50,10 @@ run:
 sourcemod:
 	make -C sourcemod
 
+sourcemod_devel: sourcemod
+	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
+	docker restart srcds-localhost-1
+
 install:
 	@go install $(GO_FLAGS) ./...
 
@@ -141,3 +145,4 @@ docker_update_plugin:
 
 copy_ut:
 	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
+
