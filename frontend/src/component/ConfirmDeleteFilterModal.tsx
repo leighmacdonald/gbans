@@ -4,6 +4,7 @@ import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
 import { apiDeleteFilter, Filter } from '../api/filters';
+import { logErr } from '../util/errors';
 
 export interface ConfirmDeleteFilterModalProps
     extends ConfirmationModalProps<Filter> {
@@ -19,7 +20,11 @@ export const ConfirmDeleteFilterModal = ({
     const { sendFlash } = useUserFlashCtx();
 
     const handleSubmit = useCallback(() => {
-        apiDeleteFilter(record.word_id)
+        if (!record.filter_id) {
+            logErr('filter_id not present, cannot delete');
+            return;
+        }
+        apiDeleteFilter(record.filter_id)
             .then(() => {
                 sendFlash('success', `Deleted filter successfully`);
                 onSuccess && onSuccess(record);
@@ -46,7 +51,7 @@ export const ConfirmDeleteFilterModal = ({
             aria-describedby="modal-description"
         >
             <Stack spacing={2}>
-                <Heading>{`Delete word filter (#${record.word_id})?`}</Heading>
+                <Heading>{`Delete word filter (#${record.filter_id})?`}</Heading>
             </Stack>
         </ConfirmationModal>
     );

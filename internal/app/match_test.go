@@ -33,10 +33,9 @@ func TestMatch_Apply(t *testing.T) {
 	body, errRead := os.ReadFile(p)
 	require.NoError(t, errRead)
 	playerStateCache := newPlayerCache()
-	m := model.NewMatch()
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
-
+	m := model.NewMatch(1)
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {

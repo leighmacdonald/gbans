@@ -134,4 +134,3 @@ Example configuration for discord
       public_log_channel_enable: true
       public_log_channel_id: "222222222222222222"
       report_log_channel_id: "111111111111111111"
-      auto_mod_enable: false

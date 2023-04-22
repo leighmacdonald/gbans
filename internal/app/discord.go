@@ -105,7 +105,6 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	session.AddHandler(bot.onInteractionCreate)
 
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
-	session.Identify.Intents |= discordgo.IntentAutoModerationExecution
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	session.Identify.Intents |= discordgo.IntentGuildPresences
@@ -123,41 +122,9 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	return nil
 }
 
-func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
-	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).Infof("Discord state changed")
-	if config.Discord.AutoModEnable {
-		filters, errFilters := bot.database.GetFilters(bot.ctx)
-		if errFilters != nil {
-			return
-		}
-		var patterns []string
-		for _, filter := range filters {
-			for _, p := range filter.Patterns {
-				patterns = append(patterns, p.String())
-			}
-		}
-		if len(patterns) > 10 {
-			patterns = patterns[0:10]
-		}
-		create := &discordgo.AutoModerationRule{
-			Name:        "gbans automod",
-			EventType:   discordgo.AutoModerationEventMessageSend,
-			TriggerType: discordgo.AutoModerationEventTriggerKeyword,
-			TriggerMetadata: &discordgo.AutoModerationTriggerMetadata{
-				RegexPatterns: patterns,
-			},
-			Enabled: &config.Discord.AutoModEnable,
-			Actions: []discordgo.AutoModerationAction{
-				{Type: discordgo.AutoModerationRuleActionBlockMessage},
-			},
-			ExemptChannels: &config.Discord.ModChannels,
-			ExemptRoles:    &[]string{},
-		}
-		_, errRule := session.AutoModerationRuleCreate(config.Discord.GuildID, create)
-		if errRule != nil {
-			log.Errorf("Failed to register word filter rule: %v", errRule)
-		}
-	}
+func (bot *Discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
+	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).
+		Infof("Discord state changed")
 }
 
 func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -181,13 +148,15 @@ func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 		log.WithError(errUpdateStatus).Errorf("Failed to update status complex")
 	}
 	bot.Connected.Store(true)
-	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).Infof("Discord state changed")
+	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).
+		Infof("Discord state changed")
 }
 
 func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.Connected.Store(false)
 	bot.retryCount++
-	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).Infof("Discord state changed")
+	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).
+		Infof("Discord state changed")
 }
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
@@ -301,11 +270,6 @@ func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
 	addFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamId)))
 	addFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
 	addFieldInline(embed, "SID64", steamId.String())
-}
-
-func addFieldFilter(embed *discordgo.MessageEmbed, filter model.Filter) {
-	addFieldInline(embed, "Patterns", filter.Patterns.String())
-	addFieldInline(embed, "ID", fmt.Sprintf("%d", filter.WordID))
 }
 
 // ChatBot defines a interface for communication with 3rd party service bots

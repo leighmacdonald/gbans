@@ -3,14 +3,14 @@ import { apiCall } from './common';
 export const wordFilterSeparator = '---';
 
 export interface Filter {
-    word_id: number;
-    patterns: RegExp[];
-    patterns_string: string;
+    filter_id?: number;
+    author_id?: bigint;
+    pattern: RegExp | string;
+    is_regex: boolean;
+    is_enabled?: boolean;
+    trigger_count?: number;
     created_on?: Date;
     updated_on?: Date;
-    discord_id?: string;
-    discord_created_on?: Date;
-    filter_name: string;
 }
 
 export const apiGetFilters = async () =>

@@ -110,7 +110,7 @@ docker_test_postgres:
 
 docker_test:
 	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --pull --build --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --force-recreate --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .

@@ -934,7 +934,7 @@ func (bot *Discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 	response *botResponse) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	pattern := opts["pattern"].StringValue()
-	filterName := opts["filter_name"].StringValue()
+	isRegex := opts["is_regex"].BoolValue()
 	author := model.NewPerson(0)
 	if errPersonByDiscordID := bot.database.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errPersonByDiscordID == store.ErrNoResult {
@@ -942,16 +942,25 @@ func (bot *Discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, inter
 		}
 		return errors.New("Error fetching author info")
 	}
-	expr, errExpr := regexp.Compile(pattern)
-	if errExpr != nil {
-		return errors.Wrap(errExpr, "Error fetching author info")
+	if isRegex {
+		_, rxErr := regexp.Compile(pattern)
+		if rxErr != nil {
+			return errors.Errorf("Invalid regular expression: %v", rxErr)
+		}
 	}
-	newFilter, errFilterAdd := bot.app.FilterAdd(ctx, bot.database, expr, filterName)
-	if errFilterAdd != nil {
+	filter := model.Filter{
+		AuthorId:  author.SteamID,
+		Pattern:   pattern,
+		IsRegex:   isRegex,
+		IsEnabled: true,
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
+	}
+	if errFilterAdd := bot.app.FilterAdd(ctx, &filter); errFilterAdd != nil {
 		return errCommandFailed
 	}
 	embed := respOk(response, "Filter Created Successfully")
-	addFieldFilter(embed, newFilter)
+	embed.Description = filter.Pattern
 	return nil
 }
 
@@ -969,8 +978,7 @@ func (bot *Discord) onFilterDel(ctx context.Context, _ *discordgo.Session, inter
 	if errDropFilter := bot.database.DropFilter(ctx, &filter); errDropFilter != nil {
 		return errCommandFailed
 	}
-	embed := respOk(response, "Filter Deleted Successfully")
-	addFieldFilter(embed, filter)
+	respOk(response, "Filter Deleted Successfully")
 	return nil
 }
 
@@ -985,10 +993,7 @@ func (bot *Discord) onFilterCheck(_ context.Context, _ *discordgo.Session, inter
 	} else {
 		title = "Matched Found"
 	}
-	embed := respOk(response, title)
-	for _, filter := range matches {
-		addFieldFilter(embed, filter)
-	}
+	respOk(response, title)
 	return nil
 }
 

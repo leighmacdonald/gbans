@@ -17,10 +17,10 @@ import (
 var ErrIgnored = errors.New("Ignored msg")
 var ErrUnhandled = errors.New("Unhandled msg")
 
-func NewMatch() Match {
+func NewMatch(serverId int) Match {
 	return Match{
 		MatchID:           0,
-		ServerId:          0,
+		ServerId:          serverId,
 		Title:             "Team Fortress 3",
 		MapName:           "pl_you_didnt_set_this",
 		PlayerSums:        MatchPlayerSums{},
@@ -79,38 +79,38 @@ func (mps MatchPlayerSums) GetBySteamId(steamId steamid.SID64) (*MatchPlayerSum,
 // For a simple example of usage, see internal/cmd/stats.go
 //
 // TODO
-// - individual game state cache to track who is on winning team
-// - Track current player session
-// - Track player playtime per class
-// - Track server playtime per class
-// - Track global playtime per class
-// - Track player midfights won
-// - Track player biggest killstreaks (min 18 players in server)
-// - Track server biggest killstreaks (min 18 players in server)
-// - Track global biggest killstreaks (min 18 players in server)
-// - Track player classes killed
-// - Track player classes killedBy
-// - Track server classes killed
-// - Track server classes killedBy
-// - Track global classes killed
-// - Track global classes killedBy
-// - Calculate player points
-// - Calculate server points
-// - Calculate global points
-// - Track player weapon stats
-// - Track server weapon stats
-// - Track global weapon stats
-// - calc HealsTaken (live round time only)
-// - calc Heals/min (live round time only)
-// - calc Dmg/min (live round time only)
-// - calc DmgTaken/min (live round time only)
-// - Count headshots
-// - Count airshots
-// - Count headshots
-// - Track current map to get correct map stats. Tracking the sm_nextmap cvar may partially work for old data.
-//   Update sourcemod plugin to send log event with the current map.
-// - Simplify implementation of the maps with generics
-// - Track players taking packs when they are close to 100% hp
+//   - individual game state cache to track who is on winning team
+//   - Track current player session
+//   - Track player playtime per class
+//   - Track server playtime per class
+//   - Track global playtime per class
+//   - Track player midfights won
+//   - Track player biggest killstreaks (min 18 players in server)
+//   - Track server biggest killstreaks (min 18 players in server)
+//   - Track global biggest killstreaks (min 18 players in server)
+//   - Track player classes killed
+//   - Track player classes killedBy
+//   - Track server classes killed
+//   - Track server classes killedBy
+//   - Track global classes killed
+//   - Track global classes killedBy
+//   - Calculate player points
+//   - Calculate server points
+//   - Calculate global points
+//   - Track player weapon stats
+//   - Track server weapon stats
+//   - Track global weapon stats
+//   - calc HealsTaken (live round time only)
+//   - calc Heals/min (live round time only)
+//   - calc Dmg/min (live round time only)
+//   - calc DmgTaken/min (live round time only)
+//   - Count headshots
+//   - Count airshots
+//   - Count headshots
+//   - Track current map to get correct map stats. Tracking the sm_nextmap cvar may partially work for old data.
+//     Update sourcemod plugin to send log event with the current map.
+//   - Simplify implementation of the maps with generics
+//   - Track players taking packs when they are close to 100% hp
 type Match struct {
 	MatchID           int
 	ServerId          int

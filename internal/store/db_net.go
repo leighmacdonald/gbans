@@ -43,6 +43,7 @@ func (database *pgStore) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]m
 	}
 	return nets, nil
 }
+
 func (database *pgStore) GetBanNetById(ctx context.Context, netId int64, banNet *model.BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 

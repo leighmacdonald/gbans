@@ -126,7 +126,7 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 }
 
 func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
-	m := model.NewMatch()
+	m := model.NewMatch(-1)
 	m.MatchID = matchId
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
 	if errMatch := database.QueryRow(ctx, qm, matchId).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {

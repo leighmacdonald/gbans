@@ -1,38 +1,189 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import { Heading } from '../component/Heading';
-import SaveIcon from '@mui/icons-material/Save';
-import TextField from '@mui/material/TextField';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import EditIcon from '@mui/icons-material/Edit';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import Button from '@mui/material/Button';
 import { DataTable, RowsPerPage } from '../component/DataTable';
 import { apiGetFilters, apiSaveFilter, Filter } from '../api/filters';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { ConfirmDeleteFilterModal } from '../component/ConfirmDeleteFilterModal';
 import { Nullable } from '../util/types';
+import Button from '@mui/material/Button';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Switch from '@mui/material/Switch';
+import { logErr } from '../util/errors';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Typography from '@mui/material/Typography';
+
+interface FilterEditModalProps {
+    open: boolean;
+    setOpen: (openState: boolean) => void;
+    filterId?: number;
+    defaultPattern?: string;
+    defaultIsRegex?: boolean;
+    onSuccess: (filter: Filter) => void;
+}
+
+interface FilterTestFieldProps {
+    pattern: string;
+    isRegex: boolean;
+}
+
+const FilterTestField = ({
+    pattern,
+    isRegex
+}: FilterTestFieldProps): JSX.Element => {
+    const [testString, setTestString] = useState<string>('');
+    const [matched, setMatched] = useState(false);
+    const [validPattern, setValidPattern] = useState(false);
+
+    useEffect(() => {
+        if (!pattern) {
+            setValidPattern(false);
+            setMatched(false);
+            return;
+        }
+        if (isRegex) {
+            try {
+                const p = new RegExp(pattern, 'g');
+                setMatched(p.test(testString.toLowerCase()));
+                setValidPattern(true);
+            } catch (e) {
+                setValidPattern(false);
+                logErr(e);
+            }
+        } else {
+            setMatched(pattern.toLowerCase() == testString.toLowerCase());
+            setValidPattern(true);
+        }
+    }, [isRegex, pattern, testString]);
+
+    return (
+        <Stack>
+            <TextField
+                id="test-string"
+                label="Test String"
+                value={testString}
+                onChange={(event) => {
+                    setTestString(event.target.value);
+                }}
+            />
+            {pattern && (
+                <Typography
+                    variant={'caption'}
+                    color={validPattern && matched ? 'success' : 'error'}
+                >
+                    {validPattern
+                        ? matched
+                            ? 'Matched'
+                            : 'No Match'
+                        : 'Invalid Pattern'}
+                </Typography>
+            )}
+        </Stack>
+    );
+};
+
+const FilterEditModal = ({
+    open,
+    onSuccess,
+    setOpen,
+    filterId,
+    defaultPattern = '',
+    defaultIsRegex = false
+}: FilterEditModalProps): JSX.Element => {
+    const [isRegex, setIsRegex] = useState<boolean>(defaultIsRegex);
+    const [pattern, setPattern] = useState<string>(defaultPattern);
+    const handleClose = () => setOpen(false);
+
+    const onSave = useCallback(async () => {
+        const f: Filter = {
+            is_enabled: true,
+            filter_id: filterId,
+            is_regex: isRegex,
+            pattern: pattern
+        };
+        try {
+            const resp = await apiSaveFilter(f);
+            if (resp.result) {
+                onSuccess(resp.result);
+            }
+        } catch (e) {
+            logErr(e);
+        }
+    }, [filterId, isRegex, onSuccess, pattern]);
+    return (
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth={'sm'}>
+            <DialogTitle component={Heading}>Filter Editor</DialogTitle>
+            <DialogContent>
+                <Stack spacing={2}>
+                    <TextField
+                        required
+                        id="outlined-pattern"
+                        label="Pattern"
+                        value={pattern}
+                        onChange={(event) => {
+                            setPattern(event.target.value);
+                        }}
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isRegex}
+                                onChange={(
+                                    _: ChangeEvent<HTMLInputElement>,
+                                    checked: boolean
+                                ) => {
+                                    setIsRegex(checked);
+                                }}
+                            />
+                        }
+                        label="Regular Expression"
+                    />
+                    <FilterTestField pattern={pattern} isRegex={isRegex} />
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button
+                    variant={'contained'}
+                    color={'error'}
+                    onClick={() => {
+                        setOpen(false);
+                    }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant={'contained'}
+                    color={'success'}
+                    onClick={onSave}
+                    disabled={!pattern}
+                >
+                    Save Filter
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
 
 export const AdminFilters = () => {
-    const [editFilter, setEditFilter] = useState<Filter>({
-        word_id: 0,
-        filter_name: '',
-        patterns_string: '',
-        patterns: []
-    });
-
-    const [newPattern, setNewPattern] = useState('');
     const [filters, setFilters] = useState<Filter[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<Nullable<Filter>>();
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [editorOpen, setEditorOpen] = useState<boolean>(false);
 
-    const { sendFlash } = useUserFlashCtx();
+    const [selected, setSelected] = useState<Nullable<Filter>>();
 
     const reset = () => {
         apiGetFilters().then((resp) => {
@@ -47,25 +198,21 @@ export const AdminFilters = () => {
         reset();
     }, []);
 
-    const onSaveFilter = useCallback(() => {
-        apiSaveFilter(editFilter).then((resp) => {
-            if (!resp.status) {
-                return;
-            }
-            sendFlash('success', 'Filter saved');
-            setEditFilter({
-                word_id: 0,
-                patterns_string: '',
-                filter_name: '',
-                patterns: []
-            });
-            setNewPattern('');
-            reset();
-        });
-    }, [editFilter, sendFlash]);
-
     return (
         <>
+            {editorOpen && (
+                <FilterEditModal
+                    open={editorOpen}
+                    setOpen={setEditorOpen}
+                    filterId={selected?.filter_id}
+                    defaultIsRegex={selected?.is_regex}
+                    defaultPattern={selected?.pattern as string}
+                    onSuccess={() => {
+                        reset();
+                        setEditorOpen(false);
+                    }}
+                />
+            )}
             {deleteTarget && (
                 <ConfirmDeleteFilterModal
                     record={deleteTarget}
@@ -74,7 +221,7 @@ export const AdminFilters = () => {
                     onSuccess={() => {
                         setFilters(
                             filters.filter(
-                                (f) => f.word_id != deleteTarget?.word_id
+                                (f) => f.filter_id != deleteTarget?.filter_id
                             )
                         );
                         setDeleteModalOpen(false);
@@ -82,190 +229,87 @@ export const AdminFilters = () => {
                 />
             )}
             <Grid container spacing={2} paddingTop={3}>
-                <Grid item xs={4}>
-                    <Paper elevation={1}>
-                        <Heading>Filter Editor</Heading>
-                        <Stack spacing={2} padding={2}>
-                            <TextField
-                                variant={'standard'}
-                                margin={'dense'}
-                                fullWidth
-                                label={'Filter Name'}
-                                value={editFilter.filter_name}
-                                onChange={(evt) => {
-                                    setEditFilter((f) => {
-                                        return {
-                                            ...f,
-                                            filter_name: evt.target.value
-                                        };
-                                    });
-                                }}
-                            />
-                            <Stack direction={'row'} spacing={2}>
-                                <TextField
-                                    key={`pattern-new`}
-                                    margin={'dense'}
-                                    variant={'standard'}
-                                    fullWidth
-                                    placeholder={'.*fric.*'}
-                                    value={newPattern}
-                                    onChange={(evt) => {
-                                        setNewPattern(evt.target.value);
-                                    }}
-                                />
-                                <Button
-                                    variant={'contained'}
-                                    color={'success'}
-                                    startIcon={<AddIcon />}
-                                    onClick={(evt) => {
-                                        evt.preventDefault();
-                                        if (!newPattern) {
-                                            return;
-                                        }
-                                        setEditFilter((f) => {
-                                            try {
-                                                return {
-                                                    ...f,
-                                                    patterns: [
-                                                        ...f.patterns,
-                                                        new RegExp(newPattern)
-                                                    ]
-                                                };
-                                            } catch (e) {
-                                                return f;
-                                            }
-                                        });
-                                        setNewPattern('');
-                                    }}
-                                >
-                                    Add
-                                </Button>
-                            </Stack>
-                            {editFilter.patterns.map((_, i) => {
-                                return (
-                                    <Stack
-                                        direction={'row'}
-                                        spacing={2}
-                                        key={`pattern-edit-${i}`}
-                                    >
-                                        <TextField
-                                            margin={'dense'}
-                                            key={`pattern-${i}`}
-                                            variant={'standard'}
-                                            fullWidth
-                                            value={editFilter.patterns[i]}
-                                            onChange={(evt) => {
-                                                setEditFilter((f) => {
-                                                    const p =
-                                                        editFilter.patterns;
-                                                    p[i] = new RegExp(
-                                                        evt.target.value
-                                                    );
-                                                    return {
-                                                        ...f,
-                                                        patterns: p
-                                                    };
-                                                });
-                                            }}
-                                        />
-                                        <Button
-                                            variant={'contained'}
-                                            color={'error'}
-                                            startIcon={<RemoveIcon />}
-                                            onClick={() => {
-                                                const p = editFilter.patterns;
-                                                p.splice(i, 1);
-                                                setEditFilter((f) => {
-                                                    return {
-                                                        ...f,
-                                                        patterns: p
-                                                    };
-                                                });
-                                                setNewPattern('');
-                                            }}
-                                        >
-                                            Del
-                                        </Button>
-                                    </Stack>
-                                );
-                            })}
-                            <ButtonGroup>
-                                <Button
-                                    color={'success'}
-                                    variant={'contained'}
-                                    startIcon={<SaveIcon />}
-                                    onClick={onSaveFilter}
-                                    disabled={
-                                        !editFilter.filter_name ||
-                                        editFilter.patterns.length == 0
-                                    }
-                                >
-                                    Save Filter Rule
-                                </Button>
-                                <Button
-                                    color={'warning'}
-                                    variant={'contained'}
-                                    startIcon={<SaveIcon />}
-                                    onClick={() => {
-                                        setEditFilter({
-                                            word_id: 0,
-                                            filter_name: '',
-                                            patterns_string: '',
-                                            patterns: []
-                                        });
-                                        setNewPattern('');
-                                    }}
-                                >
-                                    Clear
-                                </Button>
-                            </ButtonGroup>
-                        </Stack>
-                    </Paper>
+                <Grid item xs={12}>
+                    <ButtonGroup
+                        variant="contained"
+                        aria-label="outlined primary button group"
+                    >
+                        <Button
+                            startIcon={<AddBoxIcon />}
+                            color={'success'}
+                            onClick={() => {
+                                setSelected(null);
+                                setEditorOpen(true);
+                            }}
+                        >
+                            New
+                        </Button>
+                    </ButtonGroup>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12}>
                     <Paper elevation={1}>
-                        <Heading>Filters (Use filter to test matches)</Heading>
+                        <Heading>Word Filters</Heading>
                         <DataTable
                             filterFn={(query, rows) => {
                                 if (!query) {
                                     return rows;
                                 }
-                                return rows.filter((row) => {
+                                return rows.filter((f) => {
+                                    if (f.is_regex) {
+                                        return (f.pattern as RegExp).test(
+                                            query
+                                        );
+                                    }
                                     return (
-                                        row.patterns.filter((pattern) =>
-                                            pattern.test(query)
-                                        ).length > 0
+                                        (f.pattern as string).toLowerCase() ==
+                                        query
                                     );
                                 });
                             }}
                             columns={[
                                 {
-                                    label: '#',
-                                    tooltip: 'Filter ID',
-                                    sortKey: 'word_id',
+                                    label: 'Pattern',
+                                    tooltip: 'Pattern',
+                                    sortKey: 'pattern',
                                     sortable: true,
                                     align: 'left',
-                                    queryValue: (o) => `${o.word_id}`
-                                },
-                                {
-                                    label: 'Name',
-                                    tooltip: 'Filter Name',
-                                    sortKey: 'filter_name',
-                                    sortable: true,
-                                    align: 'left',
-                                    //width: '250px',
-                                    queryValue: (o) => `${o.word_id}`
-                                },
-                                {
-                                    label: 'Patterns',
-                                    tooltip: 'Patterns',
-                                    sortKey: 'patterns',
-                                    sortable: false,
-                                    align: 'left',
-                                    //width: '100%',
-                                    queryValue: (o) => `${o.word_id}`,
+                                    queryValue: (o) => `${o.filter_id}`,
                                     renderer: (row) => {
-                                        return row.patterns_string;
+                                        return row.pattern as string;
+                                    }
+                                },
+                                {
+                                    label: 'Regex',
+                                    tooltip: 'Regular Expression',
+                                    sortKey: 'is_regex',
+                                    sortable: false,
+                                    align: 'right',
+                                    renderer: (row) => {
+                                        return row.is_regex ? 'true' : 'false';
+                                    }
+                                },
+                                {
+                                    label: 'Enabled',
+                                    tooltip: 'Filter enabled',
+                                    sortKey: 'is_enabled',
+                                    sortable: false,
+                                    align: 'right',
+                                    renderer: (row) => {
+                                        return row.is_enabled
+                                            ? 'true'
+                                            : 'false';
+                                    }
+                                },
+                                {
+                                    label: 'Triggered',
+                                    tooltip:
+                                        'Number of times the filter has been triggered',
+                                    sortKey: 'trigger_count',
+                                    sortable: true,
+                                    sortType: 'number',
+                                    align: 'right',
+                                    renderer: (row) => {
+                                        return row.trigger_count;
                                     }
                                 },
                                 {
@@ -275,7 +319,7 @@ export const AdminFilters = () => {
                                     sortable: false,
                                     align: 'right',
                                     virtual: true,
-                                    queryValue: (o) => `${o.word_id}`,
+                                    queryValue: (o) => `${o.filter_id}`,
                                     renderer: (row) => {
                                         return (
                                             <ButtonGroup>
@@ -283,7 +327,8 @@ export const AdminFilters = () => {
                                                     <IconButton
                                                         color={'warning'}
                                                         onClick={() => {
-                                                            setEditFilter(row);
+                                                            setSelected(row);
+                                                            setEditorOpen(true);
                                                         }}
                                                     >
                                                         <EditIcon />

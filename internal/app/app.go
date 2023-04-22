@@ -273,7 +273,7 @@ func (app *App) warnWorker() {
 						model.NoComm,
 						&banSteam); errOpts != nil {
 						log.Errorf("Failed to create warning ban: %v", errOpts)
-						return
+						continue
 					}
 
 					switch config.General.WarningExceededAction {
@@ -339,10 +339,9 @@ func (app *App) warnWorker() {
 					},
 				}
 				log.WithFields(log.Fields{
-					"word":        fmt.Sprintf("||%s||", matchedWord),
-					"msg":         msg,
-					"filter_id":   matchedFilter.WordID,
-					"filter_name": matchedFilter.FilterName,
+					"word":      fmt.Sprintf("||%s||", matchedWord),
+					"msg":       msg,
+					"filter_id": matchedFilter.FilterID,
 				}).Infof("User triggered word filter")
 
 			}
@@ -352,84 +351,74 @@ func (app *App) warnWorker() {
 	}
 }
 
-//
-//func matchSummarizer(ctx context.Context, db store.Store) {
-//	eventChan := make(chan model.ServerEvent)
-//	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
-//		log.Warnf("logWriter Tried to register duplicate reader channel")
-//	}
-//	match := model.NewMatch()
-//
-//	var reset = func() {
-//		match = model.NewMatch()
-//		log.Debugf("New match summary created")
-//	}
-//
-//	var curServer model.Server
-//	for {
-//		// TODO reset on match start incase of stale data
-//		select {
-//		case evt := <-eventChan:
-//			if match.ServerId == 0 && evt.Server.ServerID > 0 {
-//				curServer = evt.Server
-//				match.ServerId = curServer.ServerID
-//			}
-//			switch evt.EventType {
-//			case logparse.MapLoad:
-//				reset()
-//			}
-//			// Apply the update before any secondary side effects trigger
-//			if errApply := match.Apply(evt); errApply != nil {
-//				log.Tracef("Error applying event: %v", errApply)
-//			}
-//			switch evt.EventType {
-//			case logparse.WGameOver:
-//				if errSave := db.MatchSave(ctx, &match); errSave != nil {
-//					log.Errorf("Failed to save match: %v", errSave)
-//				} else {
-//					sendDiscordNotif(curServer, &match)
-//				}
-//				reset()
-//			}
-//		case <-ctx.Done():
-//			return
-//		}
-//	}
-//}
-//
-//func sendDiscordNotif(server model.Server, match *model.Match) {
-//	embed := &discordgo.MessageEmbed{
-//		Type:        discordgo.EmbedTypeRich,
-//		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
-//		Description: "Match results",
-//		Color:       int(green),
-//		URL:         config.ExtURL("/log/%d", match.MatchID),
-//	}
-//	redScore := 0
-//	bluScore := 0
-//	for _, round := range match.Rounds {
-//		redScore += round.Score.Red
-//		bluScore += round.Score.Blu
-//	}
-//
-//	found := 0
-//	for _, teamStats := range match.TeamSums {
-//		addFieldInline(embed, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
-//		addFieldInline(embed, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
-//		addFieldInline(embed, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
-//		found++
-//	}
-//	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
-//	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
-//	if found == 2 {
-//		log.Debugf("Sending discord summary")
-//		select {
-//		case discordSendMsg <- discordPayload{channelId: config.Discord.LogChannelID, embed: embed}:
-//		default:
-//			log.Warnf("Cannot send discord payload, channel full")
-//		}
-//	}
-//}
+func (app *App) matchSummarizer(ctx context.Context, db store.Store) {
+	eventChan := make(chan model.ServerEvent)
+	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
+		log.Warnf("logWriter Tried to register duplicate reader channel")
+	}
+	matches := map[int]model.Match{}
+
+	var curServer model.Server
+	for {
+		// TODO reset on match start incase of stale data
+		select {
+		case evt := <-eventChan:
+			match, found := matches[evt.Server.ServerID]
+			if !found {
+				// TODO Should wait for some match start event and ignore until
+				matches[evt.Server.ServerID] = model.NewMatch(evt.Server.ServerID)
+				log.Info("New match created (mid-game)")
+			}
+			switch evt.EventType {
+			case logparse.MapLoad:
+				log.Info("New match created (new game)")
+				matches[evt.Server.ServerID] = model.NewMatch(evt.Server.ServerID)
+			}
+			// Apply the update before any secondary side effects trigger
+			if errApply := match.Apply(evt); errApply != nil {
+				log.Tracef("Error applying event: %v", errApply)
+			}
+			switch evt.EventType {
+			case logparse.WGameOver:
+				if errSave := db.MatchSave(ctx, &match); errSave != nil {
+					log.Errorf("Failed to save match: %v", errSave)
+				} else {
+					sendDiscordNotif(app, curServer, match)
+				}
+				delete(matches, evt.Server.ServerID)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func sendDiscordNotif(app *App, server model.Server, match model.Match) {
+	embed := &discordgo.MessageEmbed{
+		Type:        discordgo.EmbedTypeRich,
+		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
+		Description: "Match results",
+		Color:       int(green),
+		URL:         config.ExtURL("/log/%d", match.MatchID),
+	}
+	redScore := 0
+	bluScore := 0
+	for _, round := range match.Rounds {
+		redScore += round.Score.Red
+		bluScore += round.Score.Blu
+	}
+
+	found := 0
+	for _, teamStats := range match.TeamSums {
+		addFieldInline(embed, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
+		addFieldInline(embed, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
+		addFieldInline(embed, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
+		found++
+	}
+	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
+	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+	app.sendDiscordPayload(discordPayload{channelId: config.Discord.LogChannelID, embed: embed})
+}
 
 func (app *App) playerMessageWriter() {
 	serverEventChan := make(chan model.ServerEvent)

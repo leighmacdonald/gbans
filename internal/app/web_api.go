@@ -23,6 +23,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1166,14 +1167,21 @@ func (web *web) onAPIPostWordFilter() gin.HandlerFunc {
 				Errorf("Failed to parse request")
 			return
 		}
-		if filter.FilterName == "" || len(filter.Patterns) == 0 {
+		if filter.Pattern == "" {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
+		if filter.IsRegex {
+			_, compErr := regexp.Compile(filter.Pattern)
+			if compErr != nil {
+				responseErr(ctx, http.StatusBadRequest, nil)
+				return
+			}
+		}
 		now := config.Now()
-		if filter.WordID > 0 {
+		if filter.FilterID > 0 {
 			var existingFilter model.Filter
-			if errGet := web.app.store.GetFilterByID(ctx, filter.WordID, &existingFilter); errGet != nil {
+			if errGet := web.app.store.GetFilterByID(ctx, filter.FilterID, &existingFilter); errGet != nil {
 				if errors.Is(errGet, store.ErrNoResult) {
 					responseErr(ctx, http.StatusNotFound, nil)
 					return
@@ -1182,22 +1190,23 @@ func (web *web) onAPIPostWordFilter() gin.HandlerFunc {
 				return
 			}
 			existingFilter.UpdatedOn = now
-			existingFilter.FilterName = filter.FilterName
-			existingFilter.Patterns = filter.Patterns
+			existingFilter.Pattern = filter.Pattern
+			existingFilter.IsRegex = filter.IsRegex
+			existingFilter.IsEnabled = filter.IsEnabled
 			if errSave := web.app.store.SaveFilter(ctx, &existingFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
 			}
 			filter = existingFilter
 		} else {
+			profile := currentUserProfile(ctx)
 			newFilter := model.Filter{
-				WordID:           0,
-				Patterns:         filter.Patterns,
-				CreatedOn:        now,
-				UpdatedOn:        now,
-				DiscordId:        "",
-				DiscordCreatedOn: nil,
-				FilterName:       filter.FilterName,
+				AuthorId:  profile.SteamID,
+				Pattern:   filter.Pattern,
+				CreatedOn: now,
+				UpdatedOn: now,
+				IsRegex:   filter.IsRegex,
+				IsEnabled: filter.IsEnabled,
 			}
 			if errSave := web.app.store.SaveFilter(ctx, &newFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, nil)

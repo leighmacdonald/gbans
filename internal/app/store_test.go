@@ -276,14 +276,13 @@ func TestFilters(t *testing.T) {
 	require.NoError(t, errGetFilters)
 	words := []string{golib.RandomString(10), golib.RandomString(20)}
 	var savedFilters []model.Filter
-	for wordIdx, word := range words {
+	for _, word := range words {
 		filter := model.Filter{
-			FilterName: fmt.Sprintf("%d-%s", wordIdx, word),
-			Patterns:   model.WordFiltersFromString(word),
-			CreatedOn:  config.Now(),
+			Pattern:   word,
+			CreatedOn: config.Now(),
 		}
 		require.NoError(t, testDatabase.SaveFilter(context.Background(), &filter), "Failed to insert filter: %s", word)
-		require.True(t, filter.WordID > 0)
+		require.True(t, filter.FilterID > 0)
 		savedFilters = append(savedFilters, filter)
 	}
 	currentFilters, errGetCurrentFilters := testDatabase.GetFilters(context.Background())
@@ -292,9 +291,9 @@ func TestFilters(t *testing.T) {
 	if savedFilters != nil {
 		require.NoError(t, testDatabase.DropFilter(context.Background(), &savedFilters[0]))
 		var byId model.Filter
-		require.NoError(t, testDatabase.GetFilterByID(context.Background(), savedFilters[1].WordID, &byId))
-		require.Equal(t, savedFilters[1].WordID, byId.WordID)
-		require.Equal(t, savedFilters[1].Patterns, byId.Patterns)
+		require.NoError(t, testDatabase.GetFilterByID(context.Background(), savedFilters[1].FilterID, &byId))
+		require.Equal(t, savedFilters[1].FilterID, byId.FilterID)
+		require.Equal(t, savedFilters[1].Pattern, byId.Pattern)
 	}
 	droppedFilters, errGetDroppedFilters := testDatabase.GetFilters(context.Background())
 	require.NoError(t, errGetDroppedFilters)

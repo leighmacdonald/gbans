@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -13,7 +14,6 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -190,30 +190,22 @@ func (app *App) PSay(ctx context.Context, database store.Store, author steamid.S
 }
 
 // FilterAdd creates a new chat filter using a regex pattern
-func (app *App) FilterAdd(ctx context.Context, database store.Store, newPattern *regexp.Regexp, name string) (model.Filter, error) {
-	var filter model.Filter
-	if errGetFilter := database.GetFilterByName(ctx, name, &filter); errGetFilter != nil {
-		if !errors.Is(errGetFilter, store.ErrNoResult) {
-			return filter, errors.Wrapf(errGetFilter, "Failed to get parent filter")
-		}
-		filter.CreatedOn = config.Now()
-		filter.FilterName = name
-	}
-	existing := filter.Patterns
-	for _, pat := range existing {
-		if pat.String() == newPattern.String() {
-			return filter, store.ErrDuplicate
-		}
-	}
-	filter.Patterns = append(filter.Patterns, newPattern)
-	if errSave := database.SaveFilter(ctx, &filter); errSave != nil {
+func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
+	if errSave := app.store.SaveFilter(ctx, filter); errSave != nil {
 		if errSave == store.ErrDuplicate {
-			return filter, store.ErrDuplicate
+			return store.ErrDuplicate
 		}
 		log.Errorf("Error saving filter word: %v", errSave)
-		return filter, consts.ErrInternal
+		return consts.ErrInternal
 	}
-	return filter, nil
+	app.sendDiscordPayload(discordPayload{
+		channelId: config.Discord.ModLogChannelId,
+		embed: &discordgo.MessageEmbed{
+			Title:       "Added new filter",
+			Description: filter.Pattern,
+		},
+	})
+	return nil
 }
 
 // FilterDel removed and existing chat filter

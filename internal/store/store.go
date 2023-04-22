@@ -126,7 +126,6 @@ type FilterStore interface {
 	SaveFilter(ctx context.Context, filter *model.Filter) error
 	DropFilter(ctx context.Context, filter *model.Filter) error
 	GetFilterByID(ctx context.Context, wordId int64, filter *model.Filter) error
-	GetFilterByName(ctx context.Context, filterName string, filter *model.Filter) error
 	GetFilters(ctx context.Context) ([]model.Filter, error)
 }
 

@@ -204,48 +204,33 @@ type Stats struct {
 }
 
 type Filter struct {
-	WordID           int64       `json:"word_id,omitempty"`
-	Patterns         WordFilters `json:"patterns,omitempty"`
-	PatternsString   string      `json:"patterns_string"`
-	CreatedOn        time.Time   `json:"created_on"`
-	UpdatedOn        time.Time   `json:"updated_on"`
-	DiscordId        string      `json:"discord_id,omitempty"`
-	DiscordCreatedOn *time.Time  `json:"discord_created_on"`
-	FilterName       string      `json:"filter_name"`
+	FilterID     int64          `json:"filter_id"`
+	AuthorId     steamid.SID64  `json:"author_id"`
+	Pattern      string         `json:"pattern"`
+	IsRegex      bool           `json:"is_regex"`
+	IsEnabled    bool           `json:"is_enabled"`
+	Regex        *regexp.Regexp `json:"-"`
+	TriggerCount int64          `json:"trigger_count"`
+	CreatedOn    time.Time      `json:"created_on"`
+	UpdatedOn    time.Time      `json:"updated_on"`
+}
+
+func (f *Filter) Init() {
+	if f.IsRegex {
+		f.Regex = regexp.MustCompile(f.Pattern)
+	}
 }
 
 type WordFilters []*regexp.Regexp
 
-const wordFilterSeparator = "---"
-
-func (wf *WordFilters) String() string {
-	var s []string
-	for _, f := range *wf {
-		s = append(s, f.String())
-	}
-	return strings.Join(s, wordFilterSeparator)
-}
-
-func WordFiltersFromString(patterns string) WordFilters {
-	var expressions WordFilters
-	for _, expr := range strings.Split(patterns, wordFilterSeparator) {
-		rx, errRx := regexp.Compile(expr)
-		if errRx != nil {
-
-		} else {
-			expressions = append(expressions, rx)
-		}
-	}
-	return expressions
-}
-
 func (f *Filter) Match(value string) bool {
-	for _, pattern := range f.Patterns {
-		if pattern.MatchString(value) {
-			return true
+	if f.IsRegex {
+		if f.Regex == nil {
+			log.Panic("f.Regex failed to compile")
 		}
+		return f.Regex.MatchString(value)
 	}
-	return false
+	return f.Pattern == value
 }
 
 // RawLogEvent represents a full representation of a server log entry including all metadata attached to the log.
