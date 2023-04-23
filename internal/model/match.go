@@ -17,24 +17,18 @@ import (
 var ErrIgnored = errors.New("Ignored msg")
 var ErrUnhandled = errors.New("Unhandled msg")
 
-func NewMatch(serverId int) Match {
+func NewMatch(serverId int, serverName string) Match {
 	return Match{
-		MatchID:           0,
 		ServerId:          serverId,
-		Title:             "Team Fortress 3",
-		MapName:           "pl_you_didnt_set_this",
+		Title:             serverName,
 		PlayerSums:        MatchPlayerSums{},
 		MedicSums:         []*MatchMedicSum{},
 		TeamSums:          []*MatchTeamSum{},
-		Rounds:            nil,
 		ClassKills:        MatchPlayerClassSums{},
 		ClassKillsAssists: MatchPlayerClassSums{},
 		ClassDeaths:       MatchPlayerClassSums{},
-		inMatch:           false,
 		CreatedOn:         config.Now(),
 		curRound:          -1,
-		inRound:           false,
-		useRealDmg:        false,
 	}
 }
 
@@ -364,6 +358,9 @@ func (match *Match) getTeamSum(team logparse.Team) *MatchTeamSum {
 }
 
 func (match *Match) getRound() *MatchRoundSum {
+	if match.curRound == -1 {
+		return nil
+	}
 	return match.Rounds[match.curRound]
 }
 
@@ -390,7 +387,10 @@ func (match *Match) roundStart() {
 }
 
 func (match *Match) roundWin(team logparse.Team) {
-	match.getRound().RoundWinner = team
+	round := match.getRound()
+	if round != nil {
+		round.RoundWinner = team
+	}
 	match.inMatch = true
 	match.inRound = false
 }

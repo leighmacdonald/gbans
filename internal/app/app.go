@@ -58,8 +58,11 @@ var (
 )
 
 type userWarning struct {
-	WarnReason model.Reason
-	CreatedOn  time.Time
+	WarnReason    model.Reason
+	Message       string
+	Matched       string
+	MatchedFilter *model.Filter
+	CreatedOn     time.Time
 }
 
 type discordPayload struct {
@@ -230,11 +233,8 @@ func (app *App) warnWorker() {
 							if len(warnings[steamId]) > 1 {
 								warnings[steamId] = append(warnings[steamId][:warnIdx], warnings[steamId][warnIdx+1])
 							} else {
-								warnings[steamId] = nil
+								delete(warnings, steamId)
 							}
-						}
-						if len(warnings[steamId]) == 0 {
-							delete(warnings, steamId)
 						}
 					}
 				}
@@ -243,12 +243,19 @@ func (app *App) warnWorker() {
 				if !steamId.Valid() {
 					continue
 				}
+				if newWarn.ServerEvent.Server.ServerID != 408 {
+					continue
+				}
+				log.WithFields(log.Fields{
+					"word":      newWarn.Matched,
+					"msg":       newWarn.Message,
+					"filter_id": newWarn.MatchedFilter.FilterID,
+				}).Infof("User triggered word filter")
 				_, found := warnings[steamId]
 				if !found {
 					warnings[steamId] = []userWarning{}
 				}
 				warnings[steamId] = append(warnings[steamId], newWarn.userWarning)
-
 				warnNotice := &discordgo.MessageEmbed{
 					URL:   config.ExtURL("/profiles/%d", steamId),
 					Type:  discordgo.EmbedTypeRich,
@@ -256,8 +263,8 @@ func (app *App) warnWorker() {
 					Color: int(orange),
 					Image: &discordgo.MessageEmbedImage{URL: newWarn.ServerEvent.Source.AvatarFull},
 				}
-				addField(warnNotice, "Server", newWarn.ServerEvent.Server.ServerNameShort)
-				addField(warnNotice, "Message", newWarn.Message)
+				addField(warnNotice, "Matched", newWarn.Matched)
+				addField(warnNotice, "Message", newWarn.userWarning.Message)
 				if len(warnings[steamId]) > config.General.WarningLimit {
 					log.Infof("Warn limit exceeded (%d): %d", steamId, len(warnings[steamId]))
 					var errBan error
@@ -275,7 +282,6 @@ func (app *App) warnWorker() {
 						log.Errorf("Failed to create warning ban: %v", errOpts)
 						continue
 					}
-
 					switch config.General.WarningExceededAction {
 					case config.Gag:
 						banSteam.BanType = model.NoComm
@@ -307,13 +313,19 @@ func (app *App) warnWorker() {
 					if errPSay := app.PSay(app.ctx, app.store, 0, model.StringSID(steamId.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
 						log.WithError(errPSay).Errorf("Failed to send user warning psay message")
 					}
-					addFieldsSteamID(warnNotice, steamId)
-					addField(warnNotice, "message", newWarn.Message)
 				}
+				addField(warnNotice, "Pattern", newWarn.MatchedFilter.Pattern)
+				addFieldsSteamID(warnNotice, steamId)
+				addFieldInt64Inline(warnNotice, "Filter ID", newWarn.MatchedFilter.FilterID)
+				addFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerNameShort)
 				app.sendDiscordPayload(discordPayload{
 					channelId: config.Discord.ModLogChannelId,
 					embed:     warnNotice,
 				})
+				newWarn.MatchedFilter.TriggerCount++
+				if errSave := app.store.SaveFilter(app.ctx, newWarn.MatchedFilter); errSave != nil {
+					log.WithError(errSave).Error("Failed to update filter trigger count")
+				}
 			case <-app.ctx.Done():
 				return
 			}
@@ -334,16 +346,13 @@ func (app *App) warnWorker() {
 				app.warningChan <- newUserWarning{
 					ServerEvent: serverEvent,
 					userWarning: userWarning{
-						WarnReason: model.Language,
-						CreatedOn:  config.Now(),
+						WarnReason:    model.Language,
+						Message:       msg,
+						Matched:       matchedWord,
+						MatchedFilter: matchedFilter,
+						CreatedOn:     config.Now(),
 					},
 				}
-				log.WithFields(log.Fields{
-					"word":      fmt.Sprintf("||%s||", matchedWord),
-					"msg":       msg,
-					"filter_id": matchedFilter.FilterID,
-				}).Infof("User triggered word filter")
-
 			}
 		case <-app.ctx.Done():
 			return
@@ -351,7 +360,7 @@ func (app *App) warnWorker() {
 	}
 }
 
-func (app *App) matchSummarizer(ctx context.Context, db store.Store) {
+func (app *App) matchSummarizer() {
 	eventChan := make(chan model.ServerEvent)
 	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
 		log.Warnf("logWriter Tried to register duplicate reader channel")
@@ -360,40 +369,42 @@ func (app *App) matchSummarizer(ctx context.Context, db store.Store) {
 
 	var curServer model.Server
 	for {
-		// TODO reset on match start incase of stale data
 		select {
 		case evt := <-eventChan:
+			lgr := log.WithFields(log.Fields{"server": evt.Server.ServerNameShort})
 			match, found := matches[evt.Server.ServerID]
-			if !found {
-				// TODO Should wait for some match start event and ignore until
-				matches[evt.Server.ServerID] = model.NewMatch(evt.Server.ServerID)
-				log.Info("New match created (mid-game)")
+			if !found && evt.EventType != logparse.MapLoad {
+				// Wait for new map
+				continue
 			}
-			switch evt.EventType {
-			case logparse.MapLoad:
-				log.Info("New match created (new game)")
-				matches[evt.Server.ServerID] = model.NewMatch(evt.Server.ServerID)
+			if evt.EventType == logparse.LogStart {
+				lgr.Info("New match created (new game)")
+				matches[evt.Server.ServerID] = model.NewMatch(evt.Server.ServerID, evt.Server.ServerNameLong)
 			}
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt); errApply != nil {
-				log.Tracef("Error applying event: %v", errApply)
+				lgr.Tracef("Error applying event: %v", errApply)
 			}
 			switch evt.EventType {
+			case logparse.LogStop:
+				fallthrough
 			case logparse.WGameOver:
-				if errSave := db.MatchSave(ctx, &match); errSave != nil {
-					log.Errorf("Failed to save match: %v", errSave)
-				} else {
-					sendDiscordNotif(app, curServer, match)
-				}
+				go func(completeMatch model.Match) {
+					if errSave := app.store.MatchSave(app.ctx, &completeMatch); errSave != nil {
+						lgr.Errorf("Failed to save match: %v", errSave)
+					} else {
+						sendDiscordMatchResults(app, curServer, completeMatch)
+					}
+				}(match)
 				delete(matches, evt.Server.ServerID)
 			}
-		case <-ctx.Done():
+		case <-app.ctx.Done():
 			return
 		}
 	}
 }
 
-func sendDiscordNotif(app *App, server model.Server, match model.Match) {
+func sendDiscordMatchResults(app *App, server model.Server, match model.Match) {
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
@@ -417,6 +428,7 @@ func sendDiscordNotif(app *App, server model.Server, match model.Match) {
 	}
 	addFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
 	addFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
+	addFieldInline(embed, "Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes()))
 	app.sendDiscordPayload(discordPayload{channelId: config.Discord.LogChannelID, embed: embed})
 }
 
@@ -671,7 +683,7 @@ func (app *App) initWorkers() {
 	go app.logReader()
 	go app.initLogSrc()
 	go app.logMetricsConsumer()
-	//go matchSummarizer(ctx, database)
+	go app.matchSummarizer()
 	go app.playerMessageWriter()
 	go app.playerConnectionWriter()
 	go app.steamGroupMembershipUpdater()

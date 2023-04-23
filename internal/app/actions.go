@@ -198,6 +198,10 @@ func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 		log.Errorf("Error saving filter word: %v", errSave)
 		return consts.ErrInternal
 	}
+	filter.Init()
+	wordFiltersMu.Lock()
+	wordFilters = append(wordFilters, *filter)
+	wordFiltersMu.Unlock()
 	app.sendDiscordPayload(discordPayload{
 		channelId: config.Discord.ModLogChannelId,
 		embed: &discordgo.MessageEmbed{
@@ -217,6 +221,16 @@ func (app *App) FilterDel(ctx context.Context, database store.Store, filterId in
 	if errDropFilter := database.DropFilter(ctx, &filter); errDropFilter != nil {
 		return false, errDropFilter
 	}
+	wordFiltersMu.Lock()
+	var valid []model.Filter
+	for _, f := range wordFilters {
+		if f.FilterID == filterId {
+			continue
+		}
+		valid = append(valid, f)
+	}
+	wordFilters = valid
+	wordFiltersMu.Unlock()
 	return true, nil
 }
 

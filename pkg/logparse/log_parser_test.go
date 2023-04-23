@@ -246,6 +246,15 @@ func TestParseKilledObjectEvt(t *testing.T) {
 		Object:       "OBJ_SENTRYGUN",
 		Weapon:       Sapper,
 		APos:         Pos{X: 2, Y: -579, Z: -255}}, value1)
+	var value2 KilledObjectEvt
+	require.NoError(t, Unmarshal(pt(t, `L 02/21/2021 - 06:22:23: "Uncle Grain<387><BOT><Red>" triggered "killedobject" (object "OBJ_ATTACHMENT_SAPPER") (weapon "wrench") (objectowner "Doug<382><[U:1:1203081575]><Blue>") (attacker_position "-6889 -1367 -63")`, KilledObject), &value2))
+	require.EqualValues(t, KilledObjectEvt{
+		EmptyEvt:     EmptyEvt{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+		SourcePlayer: SourcePlayer{Name: "Uncle Grain", PID: 387, SID: BotSid, Team: 1},
+		TargetPlayer: TargetPlayer{Name2: "Doug", PID2: 382, SID2: steamid.SID3ToSID64("[U:1:1203081575]"), Team2: BLU},
+		Object:       "OBJ_ATTACHMENT_SAPPER",
+		Weapon:       Wrench,
+		APos:         Pos{X: -6889, Y: -1367, Z: -63}}, value2)
 }
 
 func TestParseCarryObjectEvt(t *testing.T) {

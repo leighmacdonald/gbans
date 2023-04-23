@@ -19,7 +19,7 @@ func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) e
 func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
-		VALUES ($1, $2, $3, $4, $5, $6) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
 	if errQuery := database.QueryRow(ctx, query, filter.AuthorId, filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).

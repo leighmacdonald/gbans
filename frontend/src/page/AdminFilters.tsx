@@ -256,9 +256,9 @@ export const AdminFilters = () => {
                                 }
                                 return rows.filter((f) => {
                                     if (f.is_regex) {
-                                        return (f.pattern as RegExp).test(
-                                            query
-                                        );
+                                        // TODO cache regex compilation
+                                        const r = new RegExp(f.pattern);
+                                        return r.test(query);
                                     }
                                     return (
                                         (f.pattern as string).toLowerCase() ==

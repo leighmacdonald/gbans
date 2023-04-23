@@ -1193,7 +1193,7 @@ func (web *web) onAPIPostWordFilter() gin.HandlerFunc {
 			existingFilter.Pattern = filter.Pattern
 			existingFilter.IsRegex = filter.IsRegex
 			existingFilter.IsEnabled = filter.IsEnabled
-			if errSave := web.app.store.SaveFilter(ctx, &existingFilter); errSave != nil {
+			if errSave := web.app.FilterAdd(ctx, &existingFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
 			}
@@ -1208,7 +1208,7 @@ func (web *web) onAPIPostWordFilter() gin.HandlerFunc {
 				IsRegex:   filter.IsRegex,
 				IsEnabled: filter.IsEnabled,
 			}
-			if errSave := web.app.store.SaveFilter(ctx, &newFilter); errSave != nil {
+			if errSave := web.app.FilterAdd(ctx, &newFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
 			}

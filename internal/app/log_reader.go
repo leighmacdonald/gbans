@@ -212,27 +212,39 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 
 func logToServerEvent(ctx context.Context, server model.Server, msg string, db store.Store, playerStateCache *playerCache,
 	event *model.ServerEvent) error {
-	parseResult := logparse.Parse(msg)
-	event.Server = server
-	event.EventType = parseResult.MsgType
-	var playerSource model.Person
-	sid1, sid1Found := parseResult.Values["sid"]
-	if sid1Found {
-		errGetSourcePlayer := db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid1.(string))), &playerSource)
-		if errGetSourcePlayer != nil {
-			return errors.Wrapf(errGetSourcePlayer, "Failed to get source player [%s]", msg)
+	var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
+		if sid == "BOT" {
+			player.SteamID = logparse.BotSid
+			name, ok := results.Values[nameKey]
+			if !ok {
+				return errors.New("Failed to parse bot name")
+			}
+			player.PersonaName = name.(string)
+			return nil
 		} else {
-			event.Source = playerSource
+			return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
 		}
 	}
 
-	var playerTarget model.Person
+	parseResult := logparse.Parse(msg)
+	event.Server = server
+	event.EventType = parseResult.MsgType
+
+	playerSource := model.NewPerson(0)
+	sid1, sid1Found := parseResult.Values["sid"]
+	if sid1Found {
+		if sourceErr := resultToSource(sid1.(string), parseResult, "name", &playerSource); sourceErr != nil {
+			return sourceErr
+		}
+		event.Source = playerSource
+	}
+	playerTarget := model.NewPerson(0)
 	sid2, sid2Found := parseResult.Values["sid2"]
 	if sid2Found {
-		if errGetTargetPlayer := db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid2.(string))), &playerTarget); errGetTargetPlayer != nil {
-		} else {
-			event.Target = playerTarget
+		if sourceErr := resultToSource(sid2.(string), parseResult, "name2", &playerTarget); sourceErr != nil {
+			return sourceErr
 		}
+		event.Target = playerTarget
 	}
 	aposValue, aposFound := parseResult.Values["attacker_position"]
 	if aposFound {

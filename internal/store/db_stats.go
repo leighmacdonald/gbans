@@ -126,7 +126,7 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 }
 
 func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
-	m := model.NewMatch(-1)
+	m := model.NewMatch(-1, "")
 	m.MatchID = matchId
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
 	if errMatch := database.QueryRow(ctx, qm, matchId).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
@@ -226,7 +226,7 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
 		(SELECT COUNT(net_id) FROM ban_net) as bans_cidr,
-		(SELECT COUNT(word_id) FROM filtered_word) as filtered_words,
+		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 	if errQuery := database.conn.QueryRow(ctx, q).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {

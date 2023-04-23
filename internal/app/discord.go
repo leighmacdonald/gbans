@@ -216,6 +216,14 @@ func addField(embed *discordgo.MessageEmbed, title string, value string) {
 	addFieldRaw(embed, title, value, false)
 }
 
+func addFieldInt64Inline(embed *discordgo.MessageEmbed, title string, value int64) {
+	addField(embed, title, fmt.Sprintf("%d", value))
+}
+
+func addFieldInt64(embed *discordgo.MessageEmbed, title string, value int64) {
+	addField(embed, title, fmt.Sprintf("%d", value))
+}
+
 //func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
 //	name := person.PersonaName
 //	if name == "" {

@@ -6,6 +6,7 @@ import (
 )
 
 // EmptyEvt is the base event for all other events. It just contains a timestamp.
+//
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type EmptyEvt struct {
 	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
@@ -45,6 +46,7 @@ type SourcePlayer struct {
 	PID  int           `json:"pid"`
 	SID  steamid.SID64 `json:"sid"`
 	Team Team          `json:"team"`
+	Bot  bool          `json:"bot"`
 }
 
 // TargetPlayer maps the common secondary player values name_2
@@ -53,6 +55,7 @@ type TargetPlayer struct {
 	PID2  int           `json:"pid2"`
 	SID2  steamid.SID64 `json:"sid2"`
 	Team2 Team          `json:"team2"`
+	Bot   bool          `json:"bot"`
 }
 
 type LogStartEvt struct {

@@ -221,8 +221,6 @@ func (f *Filter) Init() {
 	}
 }
 
-type WordFilters []*regexp.Regexp
-
 func (f *Filter) Match(value string) bool {
 	if f.IsRegex {
 		if f.Regex == nil {
