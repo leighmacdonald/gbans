@@ -35,7 +35,7 @@ func TestMatch_Apply(t *testing.T) {
 	playerStateCache := newPlayerCache()
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
-	m := model.NewMatch(1)
+	m := model.NewMatch(1, "test server")
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {

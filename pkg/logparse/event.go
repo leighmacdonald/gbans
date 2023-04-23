@@ -55,7 +55,7 @@ type TargetPlayer struct {
 	PID2  int           `json:"pid2"`
 	SID2  steamid.SID64 `json:"sid2"`
 	Team2 Team          `json:"team2"`
-	Bot   bool          `json:"bot"`
+	Bot2  bool          `json:"bot2"`
 }
 
 type LogStartEvt struct {

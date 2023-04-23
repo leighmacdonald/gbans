@@ -9,7 +9,7 @@ import (
 func TestFilter_Match(t *testing.T) {
 	filter := Filter{
 		FilterID:  1,
-		Pattern:   ".*poo.*oop",
+		Pattern:   `^poo`,
 		IsRegex:   true,
 		CreatedOn: config.Now(),
 	}
