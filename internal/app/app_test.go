@@ -2,9 +2,10 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"os"
 	"testing"
 )
@@ -14,51 +15,49 @@ var (
 )
 
 func TestMain(testMain *testing.M) {
+	logger := zap.NewNop()
+
 	tearDown := func(database store.Store) {
 		q := `select 'drop table "' || tablename || '" cascade;' from pg_tables where schemaname = 'public';`
 		if errMigrate := database.Exec(context.Background(), q); errMigrate != nil {
-			log.Errorf("Failed to migrate database down: %v", errMigrate)
+			logger.Error("Failed to migrate database down", zap.Error(errMigrate))
 			os.Exit(2)
 		}
 	}
 
-	config.Read()
+	_, _ = config.Read()
 	config.General.Mode = config.TestMode
 	testCtx := context.Background()
 
-	dbStore, dbErr := store.New(testCtx, config.DB.DSN)
+	dbStore, dbErr := store.New(testCtx, logger, config.DB.DSN)
 	if dbErr != nil {
-		log.Errorf("Failed to setup store: %v", dbErr)
+		logger.Error("Failed to setup store", zap.Error(dbErr))
 		return
 	}
 	tearDown(dbStore)
-	defer func() {
-		if errClose := dbStore.Close(); errClose != nil {
-			log.Errorf("Error cleanly closing app: %v", errClose)
-		}
-	}()
-	app := New(testCtx)
+	defer util.LogClose(logger, dbStore)
+	app := New(testCtx, logger)
 	testDatabase = dbStore
 	app.store = testDatabase
 	webService, errWeb := NewWeb(app)
 	if errWeb != nil {
 		tearDown(dbStore)
-		log.Errorf("Failed to setup web: %v", errWeb)
+		logger.Error("Failed to setup web", zap.Error(errWeb))
 		return
 	}
 
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
-		initNetBans()
+		_ = initNetBans()
 	} else {
-		log.Warnf("External Network ban lists not enabled")
+		logger.Warn("External Network ban lists not enabled")
 	}
 
 	// Start the discord service
 	if config.Discord.Enabled {
-		go app.initDiscord(testCtx, dbStore, app.discordSendMsg)
+		go app.initDiscord(testCtx, app.discordSendMsg)
 	} else {
-		log.Warn("discord bot not enabled")
+		logger.Warn("discord bot not enabled")
 	}
 
 	// Start the background goroutine workers
@@ -66,14 +65,14 @@ func TestMain(testMain *testing.M) {
 
 	// Load the filtered word set into memory
 	if config.Filter.Enabled {
-		initFilters(testCtx, dbStore)
+		_ = initFilters(testCtx, dbStore)
 	}
 
 	webCtx, cancel := context.WithCancel(testCtx)
 	go func() {
 		// Start & block, listening on the HTTP server
 		if errHttpListen := webService.ListenAndServe(webCtx); errHttpListen != nil {
-			log.Errorf("Error shutting down service: %v", errHttpListen)
+			logger.Error("Error shutting down service", zap.Error(errHttpListen))
 		}
 	}()
 	rc := testMain.Run()

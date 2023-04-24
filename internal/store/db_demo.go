@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -155,7 +155,7 @@ func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFil
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{"name": demoFile.Title}).Info("New demo saved")
+	database.logger.Info("New demo saved", zap.String("name", demoFile.Title))
 	return nil
 }
 
@@ -176,7 +176,7 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFil
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	log.Debugf("Demo updated: %s", demoFile.Title)
+	database.logger.Info("Demo updated", zap.String("name", demoFile.Title))
 	return nil
 }
 
@@ -190,6 +190,6 @@ func (database *pgStore) DropDemo(ctx context.Context, demoFile *model.DemoFile)
 		return Err(errExec)
 	}
 	demoFile.DemoID = 0
-	log.Debugf("Demo deleted: %s", demoFile.Title)
+	database.logger.Info("Demo deleted:", zap.String("name", demoFile.Title))
 	return nil
 }

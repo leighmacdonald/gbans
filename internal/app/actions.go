@@ -13,27 +13,26 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 )
 
 func (app *App) sendDiscordPayload(payload discordPayload) {
-	log.WithFields(log.Fields{
-		"channel": payload.channelId,
-		"enabled": config.Discord.PublicLogChannelEnable,
-	}).Tracef("Sending discord payload")
+	app.logger.Debug("Sending discord payload",
+		zap.String("channel_id", payload.channelId),
+		zap.Bool("enabled", config.Discord.PublicLogChannelEnable))
 	if config.Discord.PublicLogChannelEnable {
 		select {
 		case app.discordSendMsg <- payload:
 		default:
-			log.Warnf("Cannot send discord payload, channel full")
+			app.logger.Error("Cannot send discord payload, discordSendMsg channel full")
 		}
 	}
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (app *App) Kick(ctx context.Context, database store.Store, origin model.Origin, target model.StringSID, author model.StringSID,
+func (app *App) Kick(ctx context.Context, origin model.Origin, target model.StringSID, author model.StringSID,
 	reason model.Reason, playerInfo *model.PlayerInfo) error {
 	authorSid64, errAid := author.SID64()
 	if errAid != nil {
@@ -45,14 +44,13 @@ func (app *App) Kick(ctx context.Context, database store.Store, origin model.Ori
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
-		rconResponse, errExecRCON := query.ExecRCON(ctx, *foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
+		_, errExecRCON := query.ExecRCON(ctx, *foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
 		if errExecRCON != nil {
-			log.Errorf("Faied to kick user afeter ban: %v", errExecRCON)
+			app.logger.Error("Failed to kick user after ban", zap.Error(errExecRCON))
 			return errExecRCON
 		}
-		log.Debugf("RCON response: %s", rconResponse)
-		log.WithFields(log.Fields{"origin": origin, "target": target, "author": util.SanitizeLog(authorSid64.String())}).
-			Infof("User kicked")
+		app.logger.Info("User Kicked", zap.String("origin", origin.String()),
+			zap.String("target", string(target)), zap.String("author", util.SanitizeLog(authorSid64.String())))
 	}
 	if playerInfo != nil {
 		*playerInfo = foundPI
@@ -64,7 +62,7 @@ func (app *App) Kick(ctx context.Context, database store.Store, origin model.Ori
 // Silence will gag & mute a player
 func (app *App) Silence(ctx context.Context, origin model.Origin, target model.StringSID, author model.StringSID,
 	reason model.Reason, playerInfo *model.PlayerInfo) error {
-	authorSid64, errAid := author.SID64()
+	_, errAid := author.SID64()
 	if errAid != nil {
 		return errAid
 	}
@@ -74,20 +72,15 @@ func (app *App) Silence(ctx context.Context, origin model.Origin, target model.S
 		return errFind
 	}
 	if foundPI.Valid && foundPI.InGame {
-		rconResponse, errExecRCON := query.ExecRCON(
+		_, errExecRCON := query.ExecRCON(
 			ctx,
 			*foundPI.Server,
 			fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(foundPI.Player.SID), reason),
 		)
 		if errExecRCON != nil {
-			log.Errorf("Faied to kick user afeter ban: %v", errExecRCON)
+			app.logger.Error("Failed to kick user after ban", zap.Error(errExecRCON))
 			return errExecRCON
 		}
-		log.Debugf("RCON response: %s", rconResponse)
-		log.WithFields(log.Fields{
-			"origin": origin,
-			"target": target,
-			"author": util.SanitizeLog(authorSid64.String())}).Infof("User silenced")
 	}
 	if playerInfo != nil {
 		*playerInfo = foundPI
@@ -111,7 +104,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordId str
 	if errSavePerson := app.store.SavePerson(ctx, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
-	log.WithFields(log.Fields{"sid64": sid64, "discordId": discordId}).Infof("Discord steamid set")
+	app.logger.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordId))
 	return nil
 }
 
@@ -130,8 +123,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 	if len(responsePieces) < 2 {
 		return errors.Errorf("Invalid response")
 	}
-	log.WithFields(log.Fields{"author": author, "server": serverName, "msg": message}).
-		Infof("Server message sent")
+	app.logger.Info("Server message sent", zap.Int64("author", author.Int64()), zap.String("msg", message))
 	return nil
 }
 
@@ -155,14 +147,14 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 	}
 	msg := fmt.Sprintf(`sm_csay %s`, message)
 	// TODO check response
-	_ = query.RCON(ctx, servers, msg)
-	log.WithFields(log.Fields{"author": author, "server": serverName, "msg": message}).
-		Infof("Server center message sent")
+	_ = query.RCON(ctx, app.logger, servers, msg)
+	app.logger.Info("Server center message sent", zap.Int64("author", author.Int64()),
+		zap.String("msg", message), zap.Int("servers", len(servers)))
 	return nil
 }
 
 // PSay is used to send a private message to a player
-func (app *App) PSay(ctx context.Context, database store.Store, author steamid.SID64, target model.StringSID, message string, server *model.Server) error {
+func (app *App) PSay(ctx context.Context, author steamid.SID64, target model.StringSID, message string, server *model.Server) error {
 	var actualServer *model.Server
 	if server != nil {
 		actualServer = server
@@ -184,8 +176,11 @@ func (app *App) PSay(ctx context.Context, database store.Store, author steamid.S
 	if errExecRCON != nil {
 		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
 	}
-	log.WithFields(log.Fields{"author": author, "server": server.ServerNameShort, "msg": message, "target": sid}).
-		Infof("Private message sent")
+	app.logger.Info("Private message sent",
+		zap.Int64("author", author.Int64()),
+		zap.String("message", message),
+		zap.String("server", server.ServerNameShort),
+		zap.Int64("target", sid.Int64()))
 	return nil
 }
 
@@ -195,7 +190,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 		if errSave == store.ErrDuplicate {
 			return store.ErrDuplicate
 		}
-		log.Errorf("Error saving filter word: %v", errSave)
+		app.logger.Error("Error saving filter word", zap.Error(errSave))
 		return consts.ErrInternal
 	}
 	filter.Init()
@@ -280,14 +275,14 @@ func (app *App) PersonBySID(ctx context.Context, database store.Store, sid steam
 	if person.UpdatedOn == person.CreatedOn || time.Since(person.UpdatedOn) > 15*time.Second {
 		summary, errSummary := steamweb.PlayerSummaries(steamid.Collection{person.SteamID})
 		if errSummary != nil || len(summary) != 1 {
-			log.Errorf("Failed to fetch updated profile: %v", errSummary)
+			app.logger.Error("Failed to fetch updated profile", zap.Error(errSummary))
 			return nil
 		}
 		var sum = summary[0]
 		person.PlayerSummary = &sum
 		person.UpdatedOn = config.Now()
 		if errSave := database.SavePerson(ctx, person); errSave != nil {
-			log.Errorf("Failed to save updated profile: %v", errSummary)
+			app.logger.Error("Failed to save updated profile", zap.Error(errSummary))
 			return nil
 		}
 		if errGetPersonBySid64 := database.GetPersonBySteamID(ctx, sid, person); errGetPersonBySid64 != nil && errGetPersonBySid64 != store.ErrNoResult {

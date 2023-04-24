@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net"
 	"strconv"
 	"strings"
@@ -37,13 +37,14 @@ const (
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	ctx       context.Context
+	logger    *zap.Logger
 	udpAddr   *net.UDPAddr
 	database  store.Store
 	secretMap map[int]string
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(ctx context.Context, listenAddr string, database store.Store) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(ctx context.Context, logger *zap.Logger, listenAddr string, database store.Store) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", listenAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
@@ -51,6 +52,7 @@ func newRemoteSrcdsLogSource(ctx context.Context, listenAddr string, database st
 	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
 		ctx:       ctx,
+		logger:    logger,
 		udpAddr:   udpAddr,
 		database:  database,
 		secretMap: map[int]string{},
@@ -64,7 +66,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
-		log.Errorf("Failed to load servers to update DNS: %v", errServers)
+		remoteSrc.logger.Error("Failed to load servers to update DNS", zap.Error(errServers))
 		return
 	}
 	for _, server := range servers {
@@ -73,7 +75,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 	remoteSrc.secretMap = newServers
-	log.Tracef("Updated secret mappings")
+	remoteSrc.logger.Debug("Updated secret mappings")
 }
 
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
@@ -81,13 +83,13 @@ func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
-		log.Errorf("Failed to load servers to add log addr: %v", errServers)
+		remoteSrc.logger.Error("Failed to load servers to add log addr", zap.Error(errServers))
 		return
 	}
 	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
 	defer cancelQuery()
-	query.RCON(queryCtx, servers, fmt.Sprintf("logaddress_add %s", addr))
-	log.WithField("addr", addr).Infof("Added log address")
+	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_add %s", addr))
+	remoteSrc.logger.Info("Added udp log address", zap.String("addr", addr))
 }
 
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
@@ -95,13 +97,13 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
-		log.Errorf("Failed to load servers to del log addr: %v", errServers)
+		remoteSrc.logger.Error("Failed to load servers to del log addr", zap.Error(errServers))
 		return
 	}
 	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
 	defer cancelQuery()
-	query.RCON(queryCtx, servers, fmt.Sprintf("logaddress_del %s", addr))
-	log.Debugf("Removed log address")
+	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_del %s", addr))
+	remoteSrc.logger.Debug("Removed log address", zap.String("addr", addr))
 }
 
 // start initiates the udp network log read loop. DNS names are used to
@@ -109,18 +111,17 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
 // every 60 minutes so that it remains up to date.
 func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 	type newMsg struct {
-		source    int64
-		sourceDNS string
-		body      string
+		source int64
+		body   string
 	}
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if errListenUDP != nil {
-		log.Errorf("Failed to start log listener: %v", errListenUDP)
+		remoteSrc.logger.Error("Failed to start log listener", zap.Error(errListenUDP))
 		return
 	}
 	defer func() {
 		if errConnClose := connection.Close(); errConnClose != nil {
-			log.Errorf("Failed to close connection cleanly: %v", errConnClose)
+			remoteSrc.logger.Error("Failed to close connection cleanly", zap.Error(errConnClose))
 		}
 	}()
 	//msgId := 0
@@ -139,14 +140,14 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			buffer := make([]byte, 1024)
 			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
 			if errReadUDP != nil {
-				log.Warnf("UDP log read error: %v", errReadUDP)
+				remoteSrc.logger.Warn("UDP log read error", zap.Error(errReadUDP))
 				continue
 			}
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
 				if insecureCount%10000 == 0 {
-					log.WithFields(log.Fields{"count": insecureCount + 1}).
-						Errorf("Using unsupported log packet type 0x52")
+					remoteSrc.logger.Error("Using unsupported log packet type 0x52",
+						zap.Int64("count", int64(insecureCount+1)))
 				}
 				insecureCount++
 				errCount++
@@ -154,25 +155,27 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 				line := string(buffer)
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
-					log.Warnf("Received malformed log message: Failed to find marker")
+					remoteSrc.logger.Warn("Received malformed log message: Failed to find marker")
 					errCount++
 					continue
 				}
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 				if errConv != nil {
-					log.Warnf("Received malformed log message: Failed to parse secret: %v", errConv)
+					remoteSrc.logger.Error("Received malformed log message: Failed to parse secret",
+						zap.Error(errConv))
 					errCount++
 					continue
 				}
 				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
 				count++
 				if count%10000 == 0 {
-					log.WithFields(log.Fields{"count": count, "errors": errCount}).Debugf("Log counter")
+					remoteSrc.logger.Debug("UDP SRCDS Logger Packets",
+						zap.Uint64("count", count), zap.Uint64("errors", errCount))
 				}
 			}
 		}
 	}()
-	pc := newPlayerCache()
+	pc := newPlayerCache(remoteSrc.logger)
 	ticker := time.NewTicker(remoteSrc.frequency)
 	//errCount := 0
 	for {
@@ -188,20 +191,19 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			serverNameValue, found := remoteSrc.secretMap[int(logPayload.source)]
 			remoteSrc.RUnlock()
 			if !found {
-				log.Tracef("Rejecting unknown secret log author: %s [%s]", logPayload.sourceDNS, logPayload.body)
+				remoteSrc.logger.Error("Rejecting unknown secret log author")
 				continue
 			}
 			serverName = serverNameValue
-
 			var server model.Server
 			if errServer := database.GetServerByName(remoteSrc.ctx, serverName, &server); errServer != nil {
-				log.Debugf("Failed to get server by name: %v", errServer)
+				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 				continue
 			}
-
 			var serverEvent model.ServerEvent
-			if errLogServerEvent := logToServerEvent(remoteSrc.ctx, server, logPayload.body, database, pc, &serverEvent); errLogServerEvent != nil {
-				log.Debugf("Failed to create serverevent: %v", errLogServerEvent)
+			if errLogServerEvent := logToServerEvent(remoteSrc.ctx, remoteSrc.logger, server, logPayload.body,
+				database, pc, &serverEvent); errLogServerEvent != nil {
+				remoteSrc.logger.Debug("Failed to create ServerEvent", zap.Error(errLogServerEvent))
 				continue
 			}
 
@@ -210,8 +212,8 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 	}
 }
 
-func logToServerEvent(ctx context.Context, server model.Server, msg string, db store.Store, playerStateCache *playerCache,
-	event *model.ServerEvent) error {
+func logToServerEvent(ctx context.Context, logger *zap.Logger, server model.Server, msg string, db store.Store,
+	playerStateCache *playerCache, event *model.ServerEvent) error {
 	var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 		if sid == "BOT" {
 			player.SteamID = logparse.BotSid
@@ -250,7 +252,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if aposFound {
 		var attackerPosition logparse.Pos
 		if errParsePOS := logparse.ParsePOS(aposValue.(string), &attackerPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse attacker position: %p", errParsePOS)
+			logger.Warn("Failed to parse attacker position", zap.Error(errParsePOS))
 		}
 		event.AttackerPOS = attackerPosition
 		delete(parseResult.Values, "attacker_position")
@@ -259,7 +261,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if vposFound {
 		var victimPosition logparse.Pos
 		if errParsePOS := logparse.ParsePOS(vposValue.(string), &victimPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse victim position: %parseResult", errParsePOS)
+			logger.Warn("Failed to parse victim position", zap.Error(errParsePOS))
 		}
 		event.VictimPOS = victimPosition
 		delete(parseResult.Values, "victim_position")
@@ -268,7 +270,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if asFound {
 		var assisterPosition logparse.Pos
 		if errParsePOS := logparse.ParsePOS(asValue.(string), &assisterPosition); errParsePOS != nil {
-			log.Warnf("Failed to parse assister position: %parseResult", errParsePOS)
+			logger.Warn("Failed to parse assister position", zap.Error(errParsePOS))
 		}
 		event.AssisterPOS = assisterPosition
 		delete(parseResult.Values, "assister_position")
@@ -304,7 +306,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if dmgFound {
 		parsedDamage, errParseDamage := strconv.ParseInt(dmgValue.(string), 10, 32)
 		if errParseDamage != nil {
-			log.Warnf("failed to parse damage value: %parseResult", errParseDamage)
+			logger.Warn("failed to parse damage value", zap.Error(errParseDamage))
 		}
 		damage = parsedDamage
 		delete(parseResult.Values, "damage")
@@ -316,7 +318,7 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if realDmgFound {
 		parsedRealDamage, errParseRealDamage := strconv.ParseInt(realDmgValue.(string), 10, 32)
 		if errParseRealDamage != nil {
-			log.Warnf("failed to parse damage value: %parseResult", errParseRealDamage)
+			logger.Warn("failed to parse damage value", zap.Error(errParseRealDamage))
 		}
 		realDamage = parsedRealDamage
 		delete(parseResult.Values, "realdamage")
@@ -348,14 +350,13 @@ func logToServerEvent(ctx context.Context, server model.Server, msg string, db s
 	if healingFound {
 		healingP, errParseHealing := strconv.ParseInt(healingValue.(string), 10, 32)
 		if errParseHealing != nil {
-			log.Warnf("failed to parse healing value: %parseResult", errParseHealing)
+			logger.Warn("failed to parse healing value", zap.Error(errParseHealing))
 		}
 		event.Healing = healingP
 	}
 
 	createdOnValue, createdOnFound := parseResult.Values["created_on"]
 	if !createdOnFound {
-		// log.Warnf("created_on missing")
 		event.CreatedOn = config.Now()
 	} else {
 		event.CreatedOn = createdOnValue.(time.Time)

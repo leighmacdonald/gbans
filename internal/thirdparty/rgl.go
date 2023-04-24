@@ -6,7 +6,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 	"time"
@@ -28,8 +27,6 @@ func GetRGLProfile(ctx context.Context, sid64 steamid.SID64, profile *RGLProfile
 	if !sid64.Valid() {
 		return errors.New("Invalid profile")
 	}
-	logger := log.WithFields(log.Fields{"sid64": sid64.Int64(), "service": "rgl"})
-	logger.Debugf("Fetching profile")
 	httpClient := &http.Client{Timeout: time.Second * 15}
 	request, errNewRequest := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(rglUrl, sid64.Int64()), nil)
 	if errNewRequest != nil {
@@ -51,7 +48,5 @@ func GetRGLProfile(ctx context.Context, sid64 steamid.SID64, profile *RGLProfile
 	profile.Division = document.Find("a#ContentPlaceHolder1_Main_hlDivisionName").Text()
 	profile.Team = document.Find("a#ContentPlaceHolder1_Main_hlTeamName").Text()
 
-	logger.WithFields(log.Fields{"team": profile.Team, "div": profile.Division}).
-		Debugf("Fetched rgl profile successfully")
 	return nil
 }

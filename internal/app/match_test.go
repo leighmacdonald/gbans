@@ -9,8 +9,8 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"os"
 	"path"
 	"strings"
@@ -20,9 +20,10 @@ import (
 
 func TestMatch_Apply(t *testing.T) {
 	// mock?
-	dbStore, dbErr := store.New(context.Background(), config.DB.DSN)
+	testLogger, _ := zap.NewDevelopment()
+	dbStore, dbErr := store.New(context.Background(), testLogger, config.DB.DSN)
 	if dbErr != nil {
-		log.Errorf("Failed to setup store: %v", dbErr)
+		t.Errorf("Failed to setup store: %v", dbErr)
 		return
 	}
 	p := golib.FindFile(path.Join("test_data", "log_3124689.log"), "gbans")
@@ -32,10 +33,10 @@ func TestMatch_Apply(t *testing.T) {
 	}
 	body, errRead := os.ReadFile(p)
 	require.NoError(t, errRead)
-	playerStateCache := newPlayerCache()
+	playerStateCache := newPlayerCache(testLogger)
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
-	m := model.NewMatch(1, "test server")
+	m := model.NewMatch(testLogger, 1, "test server")
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {
@@ -43,6 +44,7 @@ func TestMatch_Apply(t *testing.T) {
 		}
 		var event model.ServerEvent
 		require.NoError(t, logToServerEvent(context.Background(),
+			testLogger,
 			testServer,
 			line,
 			dbStore,
@@ -155,7 +157,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks:       16,
 				BackStabs:         0,
 				HeadShots:         0,
-				Airshots:          0,
+				AirShots:          0,
 				Captures:          3,
 				Classes:           []logparse.PlayerClass{logparse.Scout},
 				Healing:           370,
@@ -174,7 +176,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 27,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    1,
+				AirShots:    1,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     754,
@@ -193,7 +195,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 16,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     481,
@@ -212,7 +214,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 10,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     436,
@@ -231,7 +233,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 24,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1187,
@@ -250,7 +252,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 16,
 				BackStabs:   0,
 				HeadShots:   8,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Sniper},
 				Healing:     686,
@@ -268,7 +270,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 10,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     17708,
@@ -287,7 +289,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 5,
 				BackStabs:   0,
 				HeadShots:   4,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Sniper, logparse.Engineer},
 				Healing:     395,
@@ -306,7 +308,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 23,
 				BackStabs:   9,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Spy, logparse.Pyro},
 				Healing:     456,
@@ -325,7 +327,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 22,
 				BackStabs:   9,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Spy},
 				Healing:     546,
@@ -344,7 +346,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 46,
 				BackStabs:   9,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Scout},
 				Healing:     1036,
@@ -363,7 +365,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 29,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    1,
+				AirShots:    1,
 				Captures:    2,
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     1313,
@@ -382,7 +384,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 16,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    2,
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     553,
@@ -400,7 +402,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 0,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     0,
@@ -419,7 +421,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 20,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    3,
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1216,
@@ -438,7 +440,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 23,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    4,
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Scout},
 				Healing:     922,
@@ -456,7 +458,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 6,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     19762,
@@ -474,7 +476,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 4,
 				BackStabs:   0,
 				HeadShots:   18,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    1,
 				Classes:     []logparse.PlayerClass{logparse.Sniper},
 				Healing:     101,
@@ -492,7 +494,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HealthPacks: 2,
 				BackStabs:   0,
 				HeadShots:   0,
-				Airshots:    0,
+				AirShots:    0,
 				Captures:    0,
 				Classes:     []logparse.PlayerClass{logparse.Spy},
 				Healing:     57,

@@ -13,6 +13,7 @@ package config
 import (
 	"fmt"
 	"github.com/leighmacdonald/steamweb"
+	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"time"
@@ -21,7 +22,6 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -47,11 +47,8 @@ type BanList struct {
 }
 
 type filterConfig struct {
-	Enabled         bool     `mapstructure:"enabled"`
-	IsWarning       bool     `mapstructure:"is_warning"`
-	PingDiscord     bool     `mapstructure:"ping_discord"`
-	ExternalEnabled bool     `mapstructure:"external_enabled"`
-	ExternalSource  []string `mapstructure:"external_source"`
+	Enabled     bool `mapstructure:"enabled"`
+	PingDiscord bool `mapstructure:"ping_discord"`
 }
 
 type rootConfig struct {
@@ -162,8 +159,6 @@ type discordConfig struct {
 
 type logConfig struct {
 	Level                string `mapstructure:"level"`
-	ForceColours         bool   `mapstructure:"force_colours"`
-	DisableColours       bool   `mapstructure:"disable_colours"`
 	ReportCaller         bool   `mapstructure:"report_caller"`
 	FullTimestamp        bool   `mapstructure:"full_timestamp"`
 	SrcdsLogAddr         string `mapstructure:"srcds_log_addr"`
@@ -207,11 +202,11 @@ var (
 )
 
 // Read reads in config file and ENV variables if set.
-func Read(cfgFiles ...string) {
+func Read(cfgFiles ...string) (string, error) {
 	// Find home directory.
 	home, errHomeDir := homedir.Dir()
 	if errHomeDir != nil {
-		log.Fatalf("Failed to get HOME dir: %v", errHomeDir)
+		return "", errors.Errorf("Failed to get HOME dir: %v", errHomeDir)
 	}
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
@@ -219,17 +214,15 @@ func Read(cfgFiles ...string) {
 	viper.SetEnvPrefix("gbans")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
-	found := false
 	for _, cfgFile := range cfgFiles {
 		viper.SetConfigFile(cfgFile)
 		if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
-			log.Fatalf("Failed to read config file: %s", cfgFile)
+			return "", errors.Errorf("Failed to read config file: %s", cfgFile)
 		}
-		found = true
 	}
 	var root rootConfig
 	if errUnmarshal := viper.Unmarshal(&root); errUnmarshal != nil {
-		log.Fatalf("Invalid config file format: %v", errUnmarshal)
+		return "", errors.Errorf("Invalid config file format: %v", errUnmarshal)
 	}
 	if strings.HasPrefix(root.DB.DSN, "pgx://") {
 		root.DB.DSN = strings.Replace(root.DB.DSN, "pgx://", "postgres://", 1)
@@ -244,7 +237,7 @@ func Read(cfgFiles ...string) {
 		warningDuration = time.Hour * 24 * 7
 	}
 	if errDemoRoot := os.MkdirAll(root.General.DemoRootPath, 0775); errDemoRoot != nil {
-		log.Fatalf("Failed to create demo_root_path: %v", errDemoRoot)
+		return "", errors.Errorf("Failed to create demo_root_path: %v", errDemoRoot)
 	}
 	root.General.WarningExceededDuration = warningDuration
 	HTTP = root.HTTP
@@ -256,27 +249,23 @@ func Read(cfgFiles ...string) {
 	Net = root.NetBans
 	Debug = root.Debug
 	Patreon = root.Patreon
-	configureLogger(log.StandardLogger())
+
 	gin.SetMode(General.Mode.String())
 	if errSteam := steamid.SetKey(General.SteamKey); errSteam != nil {
-		log.Errorf("Failed to set steam api key: %v", errHomeDir)
+		return "", errors.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
 	_, errDuration := time.ParseDuration(General.ServerStatusUpdateFreq)
 	if errDuration != nil {
-		log.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
+		return "", errors.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
 	}
 	_, errMaterDuration := time.ParseDuration(General.MasterServerStatusUpdateFreq)
 	if errMaterDuration != nil {
-		log.Errorf("Failed to parse mater_server_status_update_freq: %v", errMaterDuration)
+		return "", errors.Errorf("Failed to parse mater_server_status_update_freq: %v", errMaterDuration)
 	}
 	if errSteamWeb := steamweb.SetKey(General.SteamKey); errSteamWeb != nil {
-		log.Errorf("Failed to set steam api key: %v", errHomeDir)
+		return "", errors.Errorf("Failed to set steam api key: %v", errHomeDir)
 	}
-	if found {
-		log.Debugf("Using config file: %s", viper.ConfigFileUsed())
-	} else {
-		log.Warnf("No configuration found, defaults used")
-	}
+	return viper.ConfigFileUsed(), nil
 }
 
 var defaultConfig = map[string]any{
@@ -312,10 +301,7 @@ var defaultConfig = map[string]any{
 	"debug.skip_open_id_validation":            false,
 	"debug.write_unhandled_log_events":         false,
 	"filter.enabled":                           false,
-	"filter.is_warning":                        true,
 	"filter.ping_discord":                      false,
-	"filter.external_enabled":                  false,
-	"filter.external_source":                   []string{},
 	"discord.enabled":                          false,
 	"discord.app_id":                           0,
 	"discord.app_secret":                       "",
@@ -337,8 +323,6 @@ var defaultConfig = map[string]any{
 	"network_bans.ip2location.ip_enabled":      false,
 	"network_bans.ip2location.proxy_enabled":   false,
 	"log.level":                                "info",
-	"log.force_colours":                        true,
-	"log.disable_colours":                      false,
 	"log.report_caller":                        false,
 	"log.full_timestamp":                       false,
 	"log.srcds_log_addr":                       ":27115",
@@ -353,21 +337,6 @@ func init() {
 	for configKey, value := range defaultConfig {
 		viper.SetDefault(configKey, value)
 	}
-}
-
-func configureLogger(logger *log.Logger) {
-	level, errLevel := log.ParseLevel(Log.Level)
-	if errLevel != nil {
-		log.Debugf("Invalid log level: %s", Log.Level)
-		level = log.InfoLevel
-	}
-	logger.SetLevel(level)
-	logger.SetFormatter(&log.TextFormatter{
-		ForceColors:   Log.ForceColours,
-		DisableColors: Log.DisableColours,
-		FullTimestamp: Log.FullTimestamp,
-	})
-	logger.SetReportCaller(Log.ReportCaller)
 }
 
 func ExtURL(path string, args ...any) string {

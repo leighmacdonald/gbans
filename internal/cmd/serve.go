@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/leighmacdonald/gbans/internal/app"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // serveCmd represents the serve command
@@ -14,9 +15,15 @@ var serveCmd = &cobra.Command{
 	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCtx := context.Background()
-		gbans := app.New(rootCtx)
+		rootLogger := app.MustCreateLogger("")
+		defer func() {
+			if errSync := rootLogger.Sync(); errSync != nil {
+				fmt.Printf("Failed to sync log: %v\n", errSync)
+			}
+		}()
+		gbans := app.New(rootCtx, rootLogger)
 		if errApp := gbans.Start(); errApp != nil {
-			log.Errorf("Application error: %v", errApp)
+			rootLogger.Error("Application error", zap.Error(errApp))
 		}
 	},
 }

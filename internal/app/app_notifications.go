@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func (app *App) sendNotification(notification notificationPayload) error {
@@ -48,7 +48,7 @@ func (app *App) sendNotification(notification notificationPayload) error {
 		// Todo, prep stmt at least.
 		if errSend := app.store.SendNotification(app.ctx, sid, notification.severity,
 			notification.message, notification.link); errSend != nil {
-			log.WithError(errSend).Errorf("Failed to send notification")
+			app.logger.Error("Failed to send notification", zap.Error(errSend))
 			break
 		}
 	}

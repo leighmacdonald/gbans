@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -541,7 +541,7 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 		}); errRespond != nil {
 			respErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
-				log.Errorf("Failed sending error message for pre-interaction: %v", errSendInteraction)
+				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
 			return
 		}
@@ -551,15 +551,15 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 			// TODO User facing errors only
 			respErr(&response, errHandleCommand.Error())
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
-				log.Errorf("Failed sending error message for interaction: %v", errSendInteraction)
+				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
-			log.Errorf("User command error: %v", errHandleCommand)
+			bot.logger.Error("User command error", zap.Error(errHandleCommand))
 			return
 		}
 		if sendSendResponse := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
-			log.Errorf("Failed sending success response for interaction: %v", sendSendResponse)
+			bot.logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
 		} else {
-			log.Tracef("Sent message embed")
+			bot.logger.Debug("Sent message embed")
 		}
 	}
 }

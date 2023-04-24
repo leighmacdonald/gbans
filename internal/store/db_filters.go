@@ -4,7 +4,7 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
@@ -26,7 +26,7 @@ func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter)
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.Debugf("Created filter: %d", filter.FilterID)
+	database.logger.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
@@ -46,15 +46,16 @@ func (database *pgStore) updateFilter(ctx context.Context, filter *model.Filter)
 	if err := database.Exec(ctx, query, args...); err != nil {
 		return Err(err)
 	}
-	log.Debugf("Created filter: %d", filter.FilterID)
+	database.logger.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
+
 func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
 	if errExec := database.Exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
 	}
-	log.WithFields(log.Fields{"filter_id": filter.FilterID}).Infof("Deleted filter")
+	database.logger.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 

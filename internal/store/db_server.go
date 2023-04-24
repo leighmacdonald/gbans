@@ -7,9 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net"
-	"time"
 )
 
 var columnsServer = []string{"server_id", "short_name", "name", "address", "port", "rcon", "password",
@@ -303,72 +301,4 @@ func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryO
 		events = append(events, event)
 	}
 	return events, nil
-}
-
-// BatchInsertServerLogs save server log events to the database using a
-func (database *pgStore) BatchInsertServerLogs(ctx context.Context, serverEvents []model.ServerEvent) error {
-	const (
-		stmtName = "insert-log"
-		query    = `INSERT INTO server_log (
-		    server_id, event_type, source_id, target_id, created_on, weapon, damage, 
-		    item, player_class, attacker_position, victim_position, assister_position,
-            player_team, healing, meta_data
-		) VALUES (
-		    $1, $2, $3, $4, $5, $6, $7, $8, $9, 
-		    CASE WHEN $10 != 0 AND $11 != 0 AND $12 != 0 THEN
-		    	ST_SetSRID(ST_MakePoint($10, $11, $12), 4326)
-		    END,
-		    CASE WHEN $13 != 0 AND $14 != 0 AND $15 != 0 THEN
-		    	ST_SetSRID(ST_MakePoint($13, $14, $13), 4326)
-			END,
-		    CASE WHEN $16 != 0 AND $17 != 0 AND $18 != 0 THEN
-		          ST_SetSRID(ST_MakePoint($16, $17, $18), 4326)
-			END, $19, $20, $21)`
-	)
-	t0 := config.Now()
-	tx, errBeginTx := database.conn.Begin(ctx)
-	if errBeginTx != nil {
-		return errors.Wrapf(errBeginTx, "Failed to prepare logWriter query: %v", errBeginTx)
-	}
-	_, errPrepare := tx.Prepare(ctx, stmtName, query)
-	if errPrepare != nil {
-		return errors.Wrapf(errPrepare, "Failed to prepare logWriter query: %v", errPrepare)
-	}
-	var errExec error
-	for _, serverEvent := range serverEvents {
-		if serverEvent.Server.ServerID == 0 || serverEvent.Server.ServerID <= 0 {
-			continue
-		}
-		source := steamid.SID64(0)
-		target := steamid.SID64(0)
-		if !serverEvent.Source.SteamID.Valid() {
-			source = serverEvent.Source.SteamID
-		}
-		if !serverEvent.Target.SteamID.Valid() {
-			target = serverEvent.Target.SteamID
-		}
-
-		if _, errExec = tx.Exec(ctx, stmtName, serverEvent.Server.ServerID, serverEvent.EventType,
-			source.Int64(), target.Int64(), serverEvent.CreatedOn, serverEvent.Weapon, serverEvent.Damage,
-			serverEvent.Item, serverEvent.PlayerClass,
-			serverEvent.AttackerPOS.Y, serverEvent.AttackerPOS.X, serverEvent.AttackerPOS.Z,
-			serverEvent.VictimPOS.Y, serverEvent.VictimPOS.X, serverEvent.VictimPOS.Z,
-			serverEvent.AssisterPOS.Y, serverEvent.AssisterPOS.X, serverEvent.AssisterPOS.Z,
-			serverEvent.Team, serverEvent.Healing, serverEvent.MetaData); errExec != nil {
-			errExec = errors.Wrapf(errExec, "Failed to write log entries")
-			break
-		}
-	}
-	if errExec != nil {
-		if errRollback := tx.Rollback(ctx); errRollback != nil {
-			return errors.Wrapf(errRollback, "BatchInsertServerLogs rollback failed")
-		}
-		return errors.Wrapf(errExec, "Failed to commit log entries")
-	}
-	if errCommit := tx.Commit(ctx); errCommit != nil {
-		return errors.Wrapf(errCommit, "Failed to commit log entries")
-	}
-	log.WithFields(log.Fields{"count": len(serverEvents), "duration": time.Since(t0).String()}).
-		Debug("Wrote event serverEvents successfully")
-	return nil
 }

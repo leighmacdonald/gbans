@@ -11,3 +11,24 @@ const (
 	PModerator Privilege = 50  // Access detailed player into & ban permissions.
 	PAdmin     Privilege = 100 // Unrestricted admin
 )
+
+func (p Privilege) String() string {
+	switch p {
+	case PBanned:
+		return "banned"
+	case PGuest:
+		return "guest"
+	case PUser:
+		return "user"
+	case PReserved:
+		return "reserved"
+	case PEditor:
+		return "editor"
+	case PModerator:
+		return "moderator"
+	case PAdmin:
+		return "admin"
+	default:
+		return "unknown"
+	}
+}

@@ -1,7 +1,6 @@
 package util
 
 import (
-	log "github.com/sirupsen/logrus"
 	"math"
 	"strconv"
 )
@@ -11,7 +10,6 @@ import (
 func StringToFloat64(numericString string, defaultValue float64) float64 {
 	value, errParseFloat := strconv.ParseFloat(numericString, 64)
 	if errParseFloat != nil {
-		log.Warnf("failed to parse float64 value: %s", numericString)
 		return defaultValue
 	}
 	return value

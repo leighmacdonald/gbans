@@ -85,7 +85,7 @@ type RCONEvt struct {
 type JoinedTeamEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Team Team `json:"team"`
+	Team Team `json:"new_team"`
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/pkg/errors"
-	"log"
 	"net"
 	"time"
 )
@@ -68,9 +67,9 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 			}
 			lastIp = r[len(r)-1].String()
 			firstRequest = false
-			if lastIp == endIp {
-				log.Println("Got EOL")
-			}
+			//if lastIp == endIp {
+			//	fmt.Println("Got EOL")
+			//}
 		}
 	}
 	var results []*ServerEndpoint

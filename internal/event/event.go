@@ -6,7 +6,6 @@ package event
 import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -33,7 +32,6 @@ func Consume(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventTy
 		}
 		logEventReaders[msgType] = append(logEventReaders[msgType], serverEventChan)
 	}
-	log.WithFields(log.Fields{"count": len(msgTypes)}).Trace("Registered event reader(s)")
 	return nil
 }
 

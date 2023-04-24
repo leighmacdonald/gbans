@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"math/big"
 	"net"
@@ -105,18 +104,20 @@ type LocationRecord struct {
 // isp 	VARCHAR(256) 	Internet Service Provider or company's name.
 // domain 	VARCHAR(128) 	Internet domain name associated with IP address range.
 // usage_type 	VARCHAR(11) 	Usage type classification of ISP or company.
-//    (COM) Commercial
-//    (ORG) Organization
-//    (GOV) Government
-//    (MIL) Military
-//    (EDU) University/College/School
-//    (LIB) Library
-//    (CDN) Content Delivery Network
-//    (ISP) Fixed Line ISP
-//    (MOB) Mobile ISP
-//    (DCH) Data Center/Web Hosting/Transit
-//    (SES) Search Engine Spider
-//    (RSV) Reserved
+//
+//	(COM) Commercial
+//	(ORG) Organization
+//	(GOV) Government
+//	(MIL) Military
+//	(EDU) University/College/School
+//	(LIB) Library
+//	(CDN) Content Delivery Network
+//	(ISP) Fixed Line ISP
+//	(MOB) Mobile ISP
+//	(DCH) Data Center/Web Hosting/Transit
+//	(SES) Search Engine Spider
+//	(RSV) Reserved
+//
 // asn 	INT(10) 	Autonomous system number (ASN).
 // as 	VARCHAR(256) 	Autonomous system (AS) name.
 // last_seen 	INT(10) 	Proxy last seen in days.
@@ -233,7 +234,7 @@ func Update(outputPath string, apiKey string) error {
 			return errReadAll
 		}
 		if errCloseBody := resp.Body.Close(); errCloseBody != nil {
-			log.Error("Failed to close response body for geodb download")
+			return errCloseBody
 		}
 		return extractZip(body, outputPath, params.fileName)
 	}
@@ -256,18 +257,15 @@ func Update(outputPath string, apiKey string) error {
 			if errStat == nil {
 				age := time.Since(fileInfo.ModTime())
 				if age < time.Hour*24 {
-					log.Debugf("Skipping download of: %s", param.dbName)
 					return
 				}
 			}
-			log.Infof("Downloading geodb, cache out of date: %s", param.dbName)
 			if errDownload := downloadDatabase(param); errDownload != nil {
-				log.Errorf("Failed to download geo database: %s", errDownload.Error())
+				fmt.Printf("Failed to download geo database: %v", errDownload)
 			}
 		}(param)
 	}
 	waitGroup.Wait()
-	log.Info("Update complete")
 	return exitErr
 }
 
@@ -288,25 +286,23 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 			break
 		}
 		if errReadLine != nil {
-			log.Fatalf("Failed to read csv row: %s", errReadLine.Error())
+			return nil, errors.Wrap(errReadLine, "Failed to read asn csv row")
 		}
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
 		if errParseFromIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseFromIP)
-			continue
+			return nil, errors.Wrap(errParseFromIP, "Failed to parse asn ip record")
 		}
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], ipv6)
 		if errParseToIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseToIP)
-			continue
+			return nil, errors.Wrap(errParseToIP, "Failed to parse asn ip record")
 		}
 		_, network, errParseCIDR := net.ParseCIDR(recordLine[2])
 		if errParseCIDR != nil {
-			continue
+			return nil, errors.Wrap(errParseCIDR, "Failed to parse asn cidr record")
 		}
 		asNum, errParseASNum := strconv.ParseUint(recordLine[3], 10, 64)
 		if errParseASNum != nil {
-			continue
+			return nil, errors.Wrap(errParseCIDR, "Failed to parse as number record")
 		}
 		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]})
 	}
@@ -325,16 +321,13 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 		if errReadLine == io.EOF {
 			break
 		}
-
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
 		if errParseFromIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseFromIP)
-			continue
+			return nil, errors.Wrap(errParseFromIP, "Failed to parse ip record")
 		}
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], ipv6)
 		if errParseToIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseToIP)
-			continue
+			return nil, errors.Wrap(errParseToIP, "Failed to parse ip record")
 		}
 		records = append(records, LocationRecord{
 			IPFrom:      &ipFrom,
@@ -365,13 +358,12 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 		}
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], false)
 		if errParseFromIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseFromIP)
-			continue
+			return nil, errors.Wrap(errParseFromIP, "Failed to parse ip record")
 		}
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], false)
 		if errParseToIP != nil {
-			log.Warnf("Failed to parse ip record: %v", errParseToIP)
-			continue
+			return nil, errors.Wrap(errParseToIP, "Failed to parse ip record")
+
 		}
 		asn := int64(0)
 		if recordLine[10] != "-" {
@@ -445,7 +437,7 @@ func extractZip(data []byte, dest string, filename string) error {
 		}
 		defer func() {
 			if errClose := readCloser.Close(); errClose != nil {
-				log.Errorf("Failed to close zip: %v", errClose)
+				fmt.Printf("failed to close zip: %v", errClose)
 			}
 		}()
 
@@ -467,7 +459,7 @@ func extractZip(data []byte, dest string, filename string) error {
 			}
 			defer func() {
 				if errClose := fo.Close(); errClose != nil {
-					log.Errorf("Error closing open zip file: %v", errClose)
+					fmt.Printf("error closing open zip file: %v", errClose)
 				}
 			}()
 
@@ -508,14 +500,12 @@ func Read(root string) (*BlockListData, error) {
 		return nil, errors.Wrapf(errWalkPath, "Failed to build file list for import")
 	}
 	waitGroup := &sync.WaitGroup{}
-	var count int
 	var data BlockListData
 	var errs []error
 	for _, file := range files {
 		waitGroup.Add(1)
 		go func(filePaths []string) {
 			defer waitGroup.Done()
-			log.Debugf("Loading: %s", filePaths[0])
 			switch filePaths[1] {
 			case geoDatabaseASNFile4:
 				records, errReadASN := readASNRecords(filePaths[0], false)
@@ -524,7 +514,6 @@ func Read(root string) (*BlockListData, error) {
 					return
 				}
 				data.ASN4 = records
-				count = len(records)
 			case geoDatabaseASNFile6:
 				records, errReadASN := readASNRecords(filePaths[0], true)
 				if errReadASN != nil {
@@ -532,7 +521,6 @@ func Read(root string) (*BlockListData, error) {
 					return
 				}
 				data.ASN6 = records
-				count = len(records)
 			case geoDatabaseLocationFile4:
 				records, errReadLocation := readLocationRecords(filePaths[0], false)
 				if errReadLocation != nil {
@@ -540,7 +528,6 @@ func Read(root string) (*BlockListData, error) {
 					return
 				}
 				data.Locations4 = records
-				count = len(records)
 			case geoDatabaseLocationFile6:
 				records, errReadLocation := readLocationRecords(filePaths[0], true)
 				if errReadLocation != nil {
@@ -548,7 +535,6 @@ func Read(root string) (*BlockListData, error) {
 					return
 				}
 				data.Locations6 = records
-				count = len(records)
 			case geoDatabaseProxyFile:
 				records, errReadProxy := readProxyRecords(filePaths[0])
 				if errReadProxy != nil {
@@ -556,10 +542,7 @@ func Read(root string) (*BlockListData, error) {
 					return
 				}
 				data.Proxies = records
-				count = len(records)
 			}
-			log.Debugf("Records: %d", count)
-			count = 0
 		}(file)
 	}
 	waitGroup.Wait()

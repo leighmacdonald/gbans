@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 var (
@@ -86,7 +86,7 @@ func init() {
 func (app *App) logMetricsConsumer() {
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
-		log.Errorf("Failed to register event consumer")
+		app.logger.Error("Failed to register event consumer", zap.Error(errRegister))
 		return
 	}
 	for {

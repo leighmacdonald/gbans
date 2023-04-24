@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func (database *pgStore) insertReport(ctx context.Context, report *model.Report) error {
@@ -31,10 +31,9 @@ func (database *pgStore) insertReport(ctx context.Context, report *model.Report)
 	).Scan(&report.ReportId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"report_id": report.ReportId,
-		"author_id": report.SourceId}).
-		Debugf("Report saved")
+	database.logger.Info("Report saved",
+		zap.Int64("report_id", report.ReportId),
+		zap.Int64("author_id", report.SourceId.Int64()))
 	return nil
 }
 
@@ -80,11 +79,10 @@ func (database *pgStore) updateReportMessage(ctx context.Context, message *model
 	); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"report_id":  message.ParentId,
-		"message_id": message.MessageId,
-		"author_id":  message.AuthorId,
-	}).Infof("Report message saved")
+	database.logger.Info("Report message updated",
+		zap.Int64("report_id", message.ParentId),
+		zap.Int64("message_id", message.MessageId),
+		zap.Int64("author_id", message.AuthorId.Int64()))
 	return nil
 }
 
@@ -106,11 +104,10 @@ func (database *pgStore) insertReportMessage(ctx context.Context, message *model
 	).Scan(&message.MessageId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"report_id":  message.ParentId,
-		"message_id": message.MessageId,
-		"author_id":  message.AuthorId,
-	}).Infof("Report message saved")
+	database.logger.Info("Report message created",
+		zap.Int64("report_id", message.ParentId),
+		zap.Int64("message_id", message.MessageId),
+		zap.Int64("author_id", message.AuthorId.Int64()))
 	return nil
 }
 
@@ -119,10 +116,7 @@ func (database *pgStore) DropReport(ctx context.Context, report *model.Report) e
 	if _, errExec := database.conn.Exec(ctx, q, report.ReportId); errExec != nil {
 		return Err(errExec)
 	}
-	log.WithFields(log.Fields{
-		"report_id": report.ReportId,
-		"soft":      true,
-	}).Infof("Report deleted")
+	database.logger.Info("Report deleted", zap.Int64("report_id", report.ReportId))
 	report.Deleted = true
 	return nil
 }
@@ -132,10 +126,7 @@ func (database *pgStore) DropReportMessage(ctx context.Context, message *model.U
 	if _, errExec := database.conn.Exec(ctx, q, message.Message); errExec != nil {
 		return Err(errExec)
 	}
-	log.WithFields(log.Fields{
-		"report_message_id": message.MessageId,
-		"soft":              true,
-	}).Infof("Report deleted")
+	database.logger.Info("Report message deleted", zap.Int64("report_message_id", message.MessageId))
 	message.Deleted = true
 	return nil
 }
@@ -232,6 +223,7 @@ func (database *pgStore) GetReportBySteamId(ctx context.Context, authorId steami
 			&report.ReasonText,
 			&report.DemoName,
 			&report.DemoTick,
+			&report.DemoId,
 		); errQuery != nil {
 		return Err(errQuery)
 	}

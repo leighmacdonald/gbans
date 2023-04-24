@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"regexp"
 	"strings"
@@ -223,9 +222,6 @@ func (f *Filter) Init() {
 
 func (f *Filter) Match(value string) bool {
 	if f.IsRegex {
-		if f.Regex == nil {
-			log.Panic("f.Regex failed to compile")
-		}
 		return f.Regex.MatchString(value)
 	}
 	return f.Pattern == value
@@ -530,12 +526,11 @@ var MediaSafeMimeTypesImages = []string{
 	"image/webp",
 }
 
-func NewMedia(author steamid.SID64, name string, mime string, content []byte) Media {
+func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
 	mtype := mimetype.Detect(content)
 	if !mtype.Is(mime) && mime != unknownMediaTag {
 		// Should never actually happen unless user is trying nefarious stuff.
-		log.WithFields(log.Fields{"mime": mime, "detected": mtype.String()}).
-			Warnf("Detected mimetype different than provided")
+		return Media{}, errors.New("Detected mimetype different than provided")
 	}
 	t0 := config.Now()
 	return Media{
@@ -547,7 +542,7 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) Me
 		Deleted:   false,
 		CreatedOn: t0,
 		UpdatedOn: t0,
-	}
+	}, nil
 }
 
 type LocalTF2StatsSnapshot struct {

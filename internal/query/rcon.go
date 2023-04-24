@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +31,7 @@ func ExecRCON(ctx context.Context, server model.Server, cmd string) (string, err
 }
 
 // RCON is used to execute rcon commands against multiple servers
-func RCON(ctx context.Context, servers []model.Server, commands ...string) map[string]string {
+func RCON(ctx context.Context, logger *zap.Logger, servers []model.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
 	rwMutex := &sync.RWMutex{}
 	timeout := time.Second * 10
@@ -45,13 +45,13 @@ func RCON(ctx context.Context, servers []model.Server, commands ...string) map[s
 			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
 			conn, errDial := rcon.Dial(rconCtx, addr, server.RCON, timeout)
 			if errDial != nil {
-				log.Errorf("Failed to connect to server %s: %v", server.ServerNameShort, errDial)
+				logger.Error("Failed to connect to server", zap.String("name", server.ServerNameShort), zap.Error(errDial))
 				return
 			}
 			for _, command := range commands {
 				resp, errExec := conn.Exec(sanitizeRCONCommand(command))
 				if errExec != nil {
-					log.Tracef("Failed to exec rcon command %s: %v", server.ServerNameShort, errExec)
+					logger.Error("Failed to exec rcon command", zap.String("name", server.ServerNameShort), zap.Error(errExec))
 				}
 				rwMutex.Lock()
 				responses[server.ServerNameShort] = resp
@@ -69,12 +69,10 @@ func GetServerStatus(ctx context.Context, server model.Server) (extra.Status, er
 	defer cancelRcon()
 	resp, errRcon := ExecRCON(rconCtx, server, "status")
 	if errRcon != nil {
-		log.Tracef("Failed to exec rcon command: %v", errRcon)
 		return extra.Status{}, errRcon
 	}
 	status, errParse := extra.ParseStatus(resp, true)
 	if errParse != nil {
-		log.Errorf("Failed to parse status output: %v", errParse)
 		return extra.Status{}, errParse
 	}
 	return status, nil

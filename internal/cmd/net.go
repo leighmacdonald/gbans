@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"context"
-	"time"
-
+	"fmt"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"time"
 )
 
 var netCmd = &cobra.Command{
@@ -22,28 +23,34 @@ var netUpdateCmd = &cobra.Command{
 	Short: "Updates ip2location dataset",
 	Long:  `Updates ip2location dataset`,
 	Run: func(cmd *cobra.Command, args []string) {
+		rootLogger := app.MustCreateLogger("")
+		defer func() {
+			if errSync := rootLogger.Sync(); errSync != nil {
+				fmt.Printf("Failed to sync log: %v\n", errSync)
+			}
+		}()
 		connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancelConn()
-		database, errStore := store.New(connCtx, config.DB.DSN)
+		database, errStore := store.New(connCtx, rootLogger, config.DB.DSN)
 		if errStore != nil {
-			log.Fatalf("Failed to initialize database connection: %v", errStore)
+			rootLogger.Fatal("Failed to initialize database connection", zap.Error(errStore))
 		}
 		defer func() {
 			if errClose := database.Close(); errClose != nil {
-				log.Errorf("Failed to close database cleanly: %v", errClose)
+				rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 			}
 		}()
 		if errUpdate := ip2location.Update(config.Net.CachePath, config.Net.IP2Location.Token); errUpdate != nil {
-			log.Fatalf("Failed to update")
+			rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
 		}
 		blockListData, errRead := ip2location.Read(config.Net.CachePath)
 		if errRead != nil {
-			log.Fatalf("Failed to read: %v", errRead)
+			rootLogger.Fatal("Failed to read data", zap.Error(errRead))
 		}
 		updateCtx, cancelUpdate := context.WithTimeout(context.Background(), time.Minute*30)
 		defer cancelUpdate()
 		if errInsert := database.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
-			log.Fatalf("Failed to import: %v", errInsert)
+			rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 		}
 	},
 }

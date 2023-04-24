@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"sort"
 	"strings"
@@ -191,11 +190,6 @@ func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore
 			person.DaysSinceLastBan = vac[0].DaysSinceLastBan
 		}
 		person.UpdatedOnSteam = config.Now()
-		log.WithFields(log.Fields{
-			"age":  config.Now().Sub(person.UpdatedOnSteam).String(),
-			"sid":  person.SteamID.Int64(),
-			"name": person.PersonaName,
-		}).Trace("Profile updated")
 	}
 	person.SteamID = sid
 	if errSavePerson := database.SavePerson(ctx, person); errSavePerson != nil {

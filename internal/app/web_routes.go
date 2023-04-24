@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net/http"
 	"path/filepath"
 )
@@ -21,12 +21,12 @@ func prometheusHandler() gin.HandlerFunc {
 
 var registered = false
 
-func ErrorHandler(logger *log.Logger) gin.HandlerFunc {
+func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 
 		for _, ginErr := range c.Errors {
-			logger.Error(ginErr)
+			logger.Error("Unhandled HTTP Error", zap.Error(ginErr))
 		}
 	}
 }
@@ -61,7 +61,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	}
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
 	if errStaticPath != nil {
-		log.Fatalf("Invalid static path: %v", errStaticPath)
+		web.logger.Fatal("Invalid static path", zap.Error(errStaticPath))
 	}
 
 	engine.StaticFS("/dist", http.Dir(absStaticPath))
@@ -140,7 +140,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(web.app.store, model.PUser))
+		authed := authedGrp.Use(authMiddleware(web.logger, web.app.store, model.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
 			web.wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
@@ -169,7 +169,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(web.app.store, model.PEditor))
+		editorRoute := editorGrp.Use(authMiddleware(web.logger, web.app.store, model.PEditor))
 		editorRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug())
 		editorRoute.POST("/api/news", web.onAPIPostNewsCreate())
 		editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate())
@@ -183,7 +183,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(web.app.store, model.PModerator))
+		modRoute := modGrp.Use(authMiddleware(web.logger, web.app.store, model.PModerator))
 		modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState())
 		modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections())
 		modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages())
@@ -208,7 +208,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(web.app.store, model.PAdmin))
+		adminRoute := adminGrp.Use(authMiddleware(web.logger, web.app.store, model.PAdmin))
 		adminRoute.POST("/api/servers", web.onAPIPostServer())
 		adminRoute.POST("/api/servers/:server_id", web.onAPIPostServerUpdate())
 		adminRoute.DELETE("/api/servers/:server_id", web.onAPIPostServerDelete())

@@ -2,7 +2,6 @@ package vpksign
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"path"
@@ -21,10 +20,9 @@ func Sign(ctx context.Context, vpkBinRoot string, inputFilePath string, privateK
 	if errCmd != nil {
 		return errCmd
 	}
-	stdOut, errOut := cmd.CombinedOutput()
+	_, errOut := cmd.CombinedOutput()
 	if errOut != nil {
 		return errCmd
 	}
-	log.Println(string(stdOut))
 	return nil
 }

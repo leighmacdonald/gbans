@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"sort"
 	"strings"
 	"time"
@@ -17,8 +17,9 @@ import (
 var ErrIgnored = errors.New("Ignored msg")
 var ErrUnhandled = errors.New("Unhandled msg")
 
-func NewMatch(serverId int, serverName string) Match {
+func NewMatch(logger *zap.Logger, serverId int, serverName string) Match {
 	return Match{
+		logger:            logger.Named(fmt.Sprintf("match-%d", serverId)),
 		ServerId:          serverId,
 		Title:             serverName,
 		PlayerSums:        MatchPlayerSums{},
@@ -106,6 +107,7 @@ func (mps MatchPlayerSums) GetBySteamId(steamId steamid.SID64) (*MatchPlayerSum,
 //   - Simplify implementation of the maps with generics
 //   - Track players taking packs when they are close to 100% hp
 type Match struct {
+	logger            *zap.Logger
 	MatchID           int
 	ServerId          int
 	Title             string
@@ -226,7 +228,10 @@ func (match *Match) Apply(event ServerEvent) error {
 	switch event.EventType {
 	case logparse.PointCaptured:
 		players := steamid.Collection{}
-		count := event.GetValueInt("numcappers")
+		count, errGet := event.GetValueInt("numcappers")
+		if errGet != nil {
+			return errors.Wrap(errGet, "Failed to get numcappers")
+		}
 		for i := 0; i < count; i++ {
 			sidVal := event.GetValueString(fmt.Sprintf("player%d", i+1))
 			pcs := strings.Split(strings.ReplaceAll(sidVal, "><", " "), " ")
@@ -237,7 +242,7 @@ func (match *Match) Apply(event ServerEvent) error {
 			if val.Valid() {
 				players = append(players, val)
 			} else {
-				log.Warnf("Failed to parse player")
+				return errors.New("Failed to parse player")
 			}
 		}
 		match.pointCapture(event.Team, players)
@@ -250,7 +255,7 @@ func (match *Match) Apply(event ServerEvent) error {
 	case logparse.ShotHit:
 		match.shotHit(event.Source.SteamID)
 	case logparse.MedicDeath:
-		if event.GetValueBool("ubercharge") {
+		if isUber, errValue := event.GetValueBool("ubercharge"); errValue == nil && isUber {
 			// TODO record source player stat
 			match.drop(event.Target.SteamID, event.Team.Opponent())
 		}
@@ -261,9 +266,17 @@ func (match *Match) Apply(event ServerEvent) error {
 	case logparse.ChargeEnded:
 	case logparse.ChargeReady:
 	case logparse.LostUberAdv:
-		match.medicLostAdv(event.Source.SteamID, event.GetValueInt("time"))
+		value, valueErr := event.GetValueInt("time")
+		if valueErr != nil {
+			return errors.Wrap(valueErr, "Failed to parse time value")
+		}
+		match.medicLostAdv(event.Source.SteamID, value)
 	case logparse.MedicDeathEx:
-		match.medicDeath(event.Source.SteamID, event.GetValueInt("uberpct"))
+		value, valueErr := event.GetValueInt("uberpct")
+		if valueErr != nil {
+			return errors.Wrap(valueErr, "Failed to parse uberpct")
+		}
+		match.medicDeath(event.Source.SteamID, value)
 	case logparse.Domination:
 		match.domination(event.Source.SteamID, event.Target.SteamID)
 	case logparse.Revenge:
@@ -300,16 +313,13 @@ func (match *Match) Apply(event ServerEvent) error {
 	case logparse.Pickup:
 		match.pickup(event.Source.SteamID, event.Item, event.Healing)
 	default:
-		log.Tracef("Unhandled apply event")
+		return errors.New("Unhandled apply event")
 	}
 
 	return nil
 }
 
 func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
-	if !sid.Valid() {
-		log.Fatalf("err")
-	}
 	m, err := match.PlayerSums.GetBySteamId(sid)
 	if err != nil {
 		if errors.Is(err, consts.ErrUnknownID) {
@@ -450,10 +460,10 @@ func (match *Match) extinguishes(source steamid.SID64) {
 	match.getPlayer(source).Extinguishes++
 }
 
-func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, team logparse.Team, airshot bool) {
+func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, team logparse.Team, airShot bool) {
 	match.getPlayer(source).Damage += damage
-	if airshot {
-		match.getPlayer(source).Airshots++
+	if airShot {
+		match.getPlayer(source).AirShots++
 	}
 	match.getPlayer(target).DamageTaken += damage
 	match.getTeamSum(team).Damage += damage
@@ -512,7 +522,7 @@ func (match *Match) killedCustom(source steamid.SID64, target steamid.SID64, cus
 	case "headshot":
 		match.getPlayer(source).HeadShots++
 	default:
-		log.Errorf("Custom kill type unknown: %s", custom)
+		match.logger.Error("Custom kill type unknown", zap.String("type", custom))
 	}
 	match.getPlayer(source).Kills++
 	match.getPlayer(target).Deaths++
@@ -571,7 +581,7 @@ type MatchPlayerSum struct {
 	HealthPacks       int
 	BackStabs         int
 	HeadShots         int
-	Airshots          int
+	AirShots          int
 	Captures          int
 	Shots             int
 	Hits              int

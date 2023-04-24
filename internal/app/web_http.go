@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -22,22 +22,34 @@ type WebHandler interface {
 
 type web struct {
 	app        *App
+	logger     *zap.Logger
 	httpServer *http.Server
 	cm         *wsConnectionManager
 }
 
 func (web *web) ListenAndServe(ctx context.Context) error {
-	log.WithFields(log.Fields{"service": "web", "status": "ready"}).Infof("Service status changed")
-	defer log.WithFields(log.Fields{"service": "web", "status": "stopped"}).Infof("Service status changed")
+	web.logger.Info("Service status changed", zap.String("state", "ready"))
+	defer web.logger.Info("Service status changed", zap.String("state", "stopped"))
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		if errShutdown := web.httpServer.Shutdown(shutdownCtx); errShutdown != nil {
-			log.Errorf("Error shutting down http service: %v", errShutdown)
+			web.logger.Error("Error shutting down http service", zap.Error(errShutdown))
 		}
 	}()
 	return web.httpServer.ListenAndServe()
+}
+
+func (web *web) bind(ctx *gin.Context, recv any) bool {
+	if errBind := ctx.BindJSON(&recv); errBind != nil {
+		responseErr(ctx, http.StatusBadRequest, gin.H{
+			"error": "Invalid request parameters",
+		})
+		web.logger.Error("Invalid request", zap.Error(errBind))
+		return false
+	}
+	return true
 }
 
 // NewWeb sets up the router and starts the API HTTP handlers
@@ -49,10 +61,10 @@ func NewWeb(app *App) (WebHandler, error) {
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
+
+	logger := app.logger.Named("web")
 	router := gin.New()
-	l := log.New()
-	router.Use(ErrorHandler(l), gin.Recovery())
-	//router.Use(ginlogrus.Logger(l), gin.Recovery())
+	router.Use(ErrorHandler(logger), gin.Recovery())
 
 	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),
@@ -80,8 +92,8 @@ func NewWeb(app *App) (WebHandler, error) {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	cm := newWSConnectionManager(app.ctx)
-	webHandler := web{app: app, httpServer: httpServer, cm: cm}
+	cm := newWSConnectionManager(app.ctx, logger)
+	webHandler := web{app: app, logger: logger, httpServer: httpServer, cm: cm}
 	webHandler.setupRouter(router)
 	return &webHandler, nil
 }
@@ -93,8 +105,6 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	}
 	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
-		log.Errorf("Could not cast store.Person from session")
-		//ctx.Set(ctxKeyUserProfile, nil)
 		return model.NewUserProfile(0)
 	}
 	return person

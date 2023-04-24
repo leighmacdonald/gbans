@@ -13,11 +13,11 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -74,7 +74,8 @@ func NewQueryFilter(query string) QueryFilter {
 }
 
 // New sets up underlying required services.
-func New(ctx context.Context, dsn string) (Store, error) {
+func New(ctx context.Context, logger *zap.Logger, dsn string) (Store, error) {
+	dbLogger := logger.Named("store")
 	cfg, errConfig := pgxpool.ParseConfig(dsn)
 	if errConfig != nil {
 		return nil, errors.Errorf("Unable to parse config: %v", errConfig)
@@ -83,41 +84,25 @@ func New(ctx context.Context, dsn string) (Store, error) {
 	if config.DB.AutoMigrate {
 		if errMigrate := newDatabase.Migrate(MigrateUp); errMigrate != nil {
 			if errMigrate.Error() == "no change" {
-				log.Debugf("Migration at latest version")
+				dbLogger.Info("Migration at latest version")
 			} else {
 				return nil, errors.Errorf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
-			log.Infof("Migration completed successfully")
+			dbLogger.Info("Migration completed successfully")
 		}
-	}
-	if config.DB.LogQueries {
-		logger := log.New()
-		logLevel, errLevel := log.ParseLevel(config.Log.Level)
-		if errLevel != nil {
-			log.Fatalf("Invalid log level: %s (%v)", config.Log.Level, errLevel)
-		}
-		logger.SetLevel(logLevel)
-		logger.SetFormatter(&log.TextFormatter{
-			ForceColors:   config.Log.ForceColours,
-			DisableColors: config.Log.DisableColours,
-			FullTimestamp: config.Log.FullTimestamp,
-		})
-		logger.SetReportCaller(config.Log.ReportCaller)
-		cfg.ConnConfig.Logger = logrusadapter.NewLogger(logger)
 	}
 	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
 	if errConnectConfig != nil {
-		log.Fatalf("Failed to connect to database: %v", errConnectConfig)
+		return nil, errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
-	return &pgStore{
-		conn: dbConn,
-	}, nil
+	return &pgStore{conn: dbConn, logger: dbLogger}, nil
 }
 
 // pgStore implements Store against a postgresql database
 type pgStore struct {
-	conn *pgxpool.Pool
+	conn   *pgxpool.Pool
+	logger *zap.Logger
 }
 
 func (database *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
@@ -160,7 +145,6 @@ func Err(rootError error) error {
 		case pgerrcode.UniqueViolation:
 			return ErrDuplicate
 		default:
-			log.Errorf("Unhandled store error: (%s) %s", pgErr.Code, pgErr.Message)
 			return rootError
 		}
 	}
@@ -202,11 +186,7 @@ func (database *pgStore) Migrate(action MigrationAction) error {
 	if errMigrate != nil {
 		return errors.Wrapf(errMigrate, "failed to create migration driver")
 	}
-	defer func() {
-		if errClose := driver.Close(); errClose != nil {
-			log.Errorf("Failed to close migrator driver: %v", errClose)
-		}
-	}()
+	defer util.LogClose(database.logger, driver)
 	source, errHttpFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHttpFS != nil {
 		return errHttpFS

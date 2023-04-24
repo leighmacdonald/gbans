@@ -15,7 +15,6 @@
 // unban asn - Unban a ASN
 // unban cidr - Unban a CIDR network or IP
 // unban steam - Unban a steam profile
-//
 package cmd
 
 import (
@@ -50,7 +49,9 @@ func init() {
 	}
 	rootCmd.Version = app.BuildVersion
 	cobra.OnInitialize(func() {
-		config.Read(cfgFile)
+		if _, errRead := config.Read(cfgFile); errRead != nil {
+			fmt.Printf("Failed to read config: %v", errRead)
+		}
 	})
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gbans.yaml)")
 }

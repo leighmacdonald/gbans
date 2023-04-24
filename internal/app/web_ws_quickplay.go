@@ -3,7 +3,6 @@ package app
 //
 //import (
 //	"github.com/leighmacdonald/gbans/pkg/fp"
-//	log "github.com/sirupsen/logrus"
 //	"golang.org/x/exp/slices"
 //	"sync"
 //)
@@ -47,11 +46,7 @@ package app
 //	lobby.Clients = append(lobby.Clients, client)
 //	// TODO ensure uniq
 //	client.lobbies = append(client.lobbies, lobby)
-//	log.WithFields(log.Fields{
-//		"clients": len(lobby.Clients),
-//		"leader":  len(lobby.Clients) == 1,
-//		"lobby":   lobby.LobbyId,
-//	}).Infof("User joined lobby")
+//	lobby.logger.Info("User joined lobby")
 //	if len(lobby.Clients) == 1 {
 //		return lobby.promote(client)
 //	}

@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"strings"
 )
 
@@ -39,7 +39,7 @@ func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	log.Debugf("Wiki slug deleted: %s", slug)
+	database.logger.Info("Wiki slug deleted", zap.String("slug", slug))
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	log.Debugf("Wiki page saved: %s", util.SanitizeLog(page.Slug))
+	database.logger.Info("Wiki page saved", zap.String("slug", util.SanitizeLog(page.Slug)))
 	return nil
 }
 
@@ -80,13 +80,13 @@ func (database *pgStore) SaveMedia(ctx context.Context, media *model.Media) erro
 	).Scan(&media.MediaId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"wiki_media_id": media.MediaId,
-		"author_id":     media.AuthorId,
-		"name":          util.SanitizeLog(media.Name),
-		"size":          media.Size,
-		"mime":          util.SanitizeLog(media.MimeType),
-	}).Infof("Wiki media created")
+	database.logger.Info("Wiki media created",
+		zap.Int("wiki_media_id", media.MediaId),
+		zap.Int64("author_id", media.AuthorId.Int64()),
+		zap.String("name", util.SanitizeLog(media.Name)),
+		zap.Int64("size", media.Size),
+		zap.String("mime", util.SanitizeLog(media.MimeType)),
+	)
 	return nil
 }
 

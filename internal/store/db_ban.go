@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -361,18 +361,17 @@ func (database *pgStore) updateBanMessage(ctx context.Context, message *model.Us
 	); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"ban_id":     message.ParentId,
-		"message_id": message.Message,
-		"author_id":  message.AuthorId,
-	}).Infof("Appeal message edited")
+	database.logger.Info("Ban appeal message updated",
+		zap.Int64("ban_id", message.ParentId),
+		zap.Int64("message_id", message.MessageId),
+		zap.Int64("author_id", message.AuthorId.Int64()))
 	return nil
 }
 
 func (database *pgStore) insertBanMessage(ctx context.Context, message *model.UserMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
-	ban_id, author_id, message_md, deleted, created_on, updated_on
+		ban_id, author_id, message_md, deleted, created_on, updated_on
 	)
 	VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING ban_message_id
@@ -387,11 +386,10 @@ func (database *pgStore) insertBanMessage(ctx context.Context, message *model.Us
 	).Scan(&message.MessageId); errQuery != nil {
 		return Err(errQuery)
 	}
-	log.WithFields(log.Fields{
-		"ban_id":     message.ParentId,
-		"message_id": message.MessageId,
-		"author_id":  message.AuthorId,
-	}).Infof("Report message saved")
+	database.logger.Info("Ban appeal message created",
+		zap.Int64("ban_id", message.ParentId),
+		zap.Int64("message_id", message.MessageId),
+		zap.Int64("author_id", message.AuthorId.Int64()))
 	return nil
 }
 
@@ -453,10 +451,7 @@ func (database *pgStore) DropBanMessage(ctx context.Context, message *model.User
 	if errExec := database.Exec(ctx, q, message.MessageId); errExec != nil {
 		return Err(errExec)
 	}
-	log.WithFields(log.Fields{
-		"ban_message_id": message.MessageId,
-		"soft":           true,
-	}).Infof("Appeal message deleted")
+	database.logger.Info("Appeal message deleted", zap.Int64("ban_message_id", message.MessageId))
 	message.Deleted = true
 	return nil
 }

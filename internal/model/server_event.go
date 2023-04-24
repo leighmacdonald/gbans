@@ -4,7 +4,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamweb"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 	"math"
 	"strconv"
 	"time"
@@ -63,45 +63,49 @@ func (serverEvent ServerEvent) GetValueString(key string) string {
 	return value.(string)
 }
 
-func (serverEvent ServerEvent) GetValueInt64(key string) int64 {
+func (serverEvent ServerEvent) GetValueInt64(key string) (int64, error) {
 	value, found := serverEvent.MetaData[key]
 	if !found {
-		return 0
+		return 0, nil
 	}
 	switch v := value.(type) {
 	case string:
 		parsedValue, errConv := strconv.ParseInt(v, 10, 64)
 		if errConv != nil {
-			log.WithFields(log.Fields{"key": key}).Errorf("Failed to parse key value: %value", errConv)
+			return 0, errors.New("Failed to parse key value")
 		}
-		return parsedValue
+		return parsedValue, nil
 	case float64:
-		return value.(int64)
+		return value.(int64), nil
 	default:
-		return value.(int64)
+		return value.(int64), nil
 	}
 }
 
-func (serverEvent ServerEvent) GetValueInt(key string) int {
-	value := serverEvent.GetValueInt64(key)
+var ErrInvalidKey = errors.New("invalid key")
+
+func (serverEvent ServerEvent) GetValueInt(key string) (int, error) {
+	value, errGet := serverEvent.GetValueInt64(key)
+	if errGet != nil {
+		return 0, errGet
+	}
 	if value > 0 && value <= math.MaxInt32 {
-		return int(value)
+		return int(value), nil
 	}
-	return util.DefaultIntAllocate
+	return util.DefaultIntAllocate, nil
 }
 
-func (serverEvent ServerEvent) GetValueBool(key string) bool {
+func (serverEvent ServerEvent) GetValueBool(key string) (bool, error) {
 	// TODO is there a stringy bool value?
 	value, found := serverEvent.MetaData[key]
 	if !found {
-		return false
+		return false, ErrInvalidKey
 	}
 	val, errParse := strconv.ParseBool(value.(string))
 	if errParse != nil {
-		log.Errorf("Failed to parse bool value: %value", errParse)
-		return false
+		return false, errParse
 	}
-	return val
+	return val, nil
 }
 
 func NewServerEvent() ServerEvent {

@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
@@ -89,7 +89,7 @@ func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.New
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	log.Debugf("New article saved: %s", util.SanitizeLog(entry.Title))
+	database.logger.Info("New article saved", zap.String("title", util.SanitizeLog(entry.Title)))
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.New
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update article")
 	}
-	log.Debugf("News article updated: %s", util.SanitizeLog(entry.Title))
+	database.logger.Info("News article updated", zap.String("title", util.SanitizeLog(entry.Title)))
 	return nil
 }
 
@@ -119,6 +119,6 @@ func (database *pgStore) DropNewsArticle(ctx context.Context, newsId int) error 
 	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	log.Debugf("News deleted: %d", newsId)
+	database.logger.Info("News deleted", zap.Int("news_id", newsId))
 	return nil
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"gopkg.in/mxpv/patreon-go.v1"
 	"time"
@@ -16,7 +16,7 @@ type PatreonStore interface {
 }
 
 // NewPatreonClient https://www.patreon.com/portal/registration/register-clients
-func NewPatreonClient(ctx context.Context, database PatreonStore) (*patreon.Client, error) {
+func NewPatreonClient(ctx context.Context, logger *zap.Logger, database PatreonStore) (*patreon.Client, error) {
 	cat, crt, errAuth := database.GetPatreonAuth(ctx)
 	if errAuth != nil || cat == "" || crt == "" {
 		// Attempt to use config file values as the initial source if we have nothing saved.
@@ -59,9 +59,8 @@ func NewPatreonClient(ctx context.Context, database PatreonStore) (*patreon.Clie
 			select {
 			case <-t0.C:
 				if errUpdate := updateToken(ctx, database, oAuthConfig, tok); errUpdate != nil {
-					log.WithError(errUpdate).Errorf("Failed to update patreon token")
+					logger.Error("Failed to update patreon token", zap.Error(errUpdate))
 				}
-				log.Debugf("Patreon token updated")
 			case <-ctx.Done():
 				return
 			}

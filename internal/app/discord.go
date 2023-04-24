@@ -6,10 +6,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"sync"
 	"sync/atomic"
 )
@@ -45,7 +44,7 @@ type Discord struct {
 	session         *discordgo.Session
 	app             *App
 	ctx             context.Context
-	database        store.Store
+	logger          *zap.Logger
 	connectedMu     *sync.RWMutex
 	commandHandlers map[botCmd]botCommandHandler
 	Connected       atomic.Bool
@@ -53,12 +52,12 @@ type Discord struct {
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord(ctx context.Context, app *App, database store.Store) (*Discord, error) {
+func NewDiscord(app *App) (*Discord, error) {
 	bot := Discord{
-		ctx:         ctx,
+		ctx:         app.ctx,
 		app:         app,
+		logger:      app.logger.Named("discord"),
 		session:     nil,
-		database:    database,
 		connectedMu: &sync.RWMutex{},
 		Connected:   atomic.Bool{},
 		retryCount:  -1,
@@ -93,7 +92,7 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	defer func() {
 		if bot.session != nil {
 			if errDisc := bot.session.Close(); errDisc != nil {
-				log.Errorf("Failed to cleanly shutdown discord: %v", errDisc)
+				bot.logger.Error("Failed to cleanly shutdown discord", zap.Error(errDisc))
 			}
 		}
 	}()
@@ -107,7 +106,7 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
-	session.Identify.Intents |= discordgo.IntentGuildPresences
+	//session.Identify.Intents |= discordgo.IntentGuildPresences
 
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
@@ -116,15 +115,15 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 
 	bot.session = session
 	if errRegister := bot.botRegisterSlashCommands(); errRegister != nil {
-		log.Errorf("Failed to register discord slash commands: %v", errRegister)
+		bot.logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 	<-ctx.Done()
 	return nil
 }
 
-func (bot *Discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	log.WithFields(log.Fields{"service": "discord", "state": "ready"}).
-		Infof("Discord state changed")
+func (bot *Discord) onReady(s *discordgo.Session, _ *discordgo.Ready) {
+	bot.Connected.Store(true)
+	bot.logger.Info("Service state changed", zap.String("state", "ready"))
 }
 
 func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -145,23 +144,20 @@ func (bot *Discord) onConnect(session *discordgo.Session, _ *discordgo.Connect) 
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
 	if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
-		log.WithError(errUpdateStatus).Errorf("Failed to update status complex")
+		bot.logger.Error("Failed to update status complex", zap.Error(errUpdateStatus))
 	}
-	bot.Connected.Store(true)
-	log.WithFields(log.Fields{"service": "discord", "state": "connected"}).
-		Infof("Discord state changed")
+	bot.logger.Info("Service state changed", zap.String("state", "connected"))
 }
 
 func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.Connected.Store(false)
 	bot.retryCount++
-	log.WithFields(log.Fields{"service": "discord", "state": "disconnected"}).
-		Infof("Discord state changed")
+	bot.logger.Info("Service state changed", zap.String("state", "disconnected"))
 }
 
 func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
 	if !bot.Connected.Load() {
-		log.Errorf("Tried to send message to disconnected client")
+		bot.logger.Error("Tried to send message to disconnected client")
 		return nil
 	}
 	if wrap {
@@ -179,7 +175,7 @@ func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId str
 
 func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
 	if !bot.Connected.Load() {
-		log.Errorf("Tried to send message edit to disconnected client")
+		bot.logger.Error("Tried to send message edit to disconnected client")
 		return nil
 	}
 	edit := &discordgo.WebhookEdit{
@@ -208,21 +204,21 @@ func (bot *Discord) Send(channelId string, message string, wrap bool) error {
 	return bot.sendChannelMessage(bot.session, channelId, message, wrap)
 }
 
-func addFieldInline(embed *discordgo.MessageEmbed, title string, value string) {
-	addFieldRaw(embed, title, value, true)
+func addFieldInline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
+	addFieldRaw(embed, logger, title, value, true)
 }
 
-func addField(embed *discordgo.MessageEmbed, title string, value string) {
-	addFieldRaw(embed, title, value, false)
+func addField(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
+	addFieldRaw(embed, logger, title, value, false)
 }
 
-func addFieldInt64Inline(embed *discordgo.MessageEmbed, title string, value int64) {
-	addField(embed, title, fmt.Sprintf("%d", value))
+func addFieldInt64Inline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
+	addField(embed, logger, title, fmt.Sprintf("%d", value))
 }
 
-func addFieldInt64(embed *discordgo.MessageEmbed, title string, value int64) {
-	addField(embed, title, fmt.Sprintf("%d", value))
-}
+//func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
+//	addField(embed, logger, title, fmt.Sprintf("%d", value))
+//}
 
 //func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
 //	name := person.PersonaName
@@ -232,32 +228,36 @@ func addFieldInt64(embed *discordgo.MessageEmbed, title string, value int64) {
 //	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
 //}
 
-func addAuthorProfile(embed *discordgo.MessageEmbed, person model.UserProfile) {
+func addAuthorProfile(embed *discordgo.MessageEmbed, logger *zap.Logger, person model.UserProfile) {
 	name := person.Name
 	if name == "" {
 		name = person.SteamID.String()
 	}
+	if name == "" {
+		logger.Warn("Value cannot be empty, dropping field", zap.String("field", "name"))
+		return
+	}
 	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
 }
 
-func addLink(embed *discordgo.MessageEmbed, value model.Linkable) {
+func addLink(embed *discordgo.MessageEmbed, logger *zap.Logger, value model.Linkable) {
 	url := value.ToURL()
 	if len(url) > 0 {
-		addFieldRaw(embed, "Link", url, false)
+		addFieldRaw(embed, logger, "Link", url, false)
 	}
 }
 
-func addFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
+func addFieldRaw(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string, inline bool) {
 	if len(embed.Fields) >= maxEmbedFields {
-		log.Warnf("Dropping embed fields. Already at max count: %d", maxEmbedFields)
+		logger.Warn("Dropping embed fields. Already at max count", zap.Int("max", maxEmbedFields))
 		return
 	}
 	if len(title) == 0 {
-		log.Warnf("Title cannot be empty, dropping field")
+		logger.Warn("Title cannot be empty, dropping field")
 		return
 	}
 	if len(value) == 0 {
-		log.Warnf("Value cannot be empty, dropping field: %s", title)
+		logger.Warn("Value cannot be empty, dropping field", zap.String("field", title))
 		return
 	}
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
@@ -274,10 +274,10 @@ func truncate(str string, maxLen int) string {
 	return str
 }
 
-func addFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
-	addFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamId)))
-	addFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
-	addFieldInline(embed, "SID64", steamId.String())
+func addFieldsSteamID(embed *discordgo.MessageEmbed, logger *zap.Logger, steamId steamid.SID64) {
+	addFieldInline(embed, logger, "STEAM", string(steamid.SID64ToSID(steamId)))
+	addFieldInline(embed, logger, "STEAM3", string(steamid.SID64ToSID3(steamId)))
+	addFieldInline(embed, logger, "SID64", steamId.String())
 }
 
 // ChatBot defines a interface for communication with 3rd party service bots
@@ -290,120 +290,20 @@ type ChatBot interface {
 	SendEmbed(channelId string, message *discordgo.MessageEmbed) error
 }
 
-type DiscordLogHook struct {
-	MinLevel    log.Level
-	messageChan chan discordPayload
-}
-
-func NewDiscordLogHook(messageChan chan discordPayload) *DiscordLogHook {
-	return &DiscordLogHook{
-		messageChan: messageChan,
-		MinLevel:    log.DebugLevel,
-	}
-}
-
-func (hook *DiscordLogHook) Fire(entry *log.Entry) error {
-	//title := entry.Message
-	//if title == "" {
-	//	title = "Log Message"
-	//}
-	embed := &discordgo.MessageEmbed{
-		Type: discordgo.EmbedTypeRich,
-		//Title:       title,
-		Description: truncate(entry.Message, maxDescriptionChars),
-		Color:       DefaultLevelColors.LevelColor(entry.Level),
-		//Footer:      &defaultFooter,
-		Provider: &defaultProvider,
-		//Author:   &discordgo.MessageEmbedAuthor{Name: "gbans"},
-	}
-	fieldCount := 0
-	for name, value := range entry.Data {
-		var msg string
-		switch typedValue := value.(type) {
-		case string:
-			msg = typedValue
-		case int:
-			msg = fmt.Sprintf("%d", value)
-		case int64:
-			msg = fmt.Sprintf("%d", value)
-		case uint:
-			msg = fmt.Sprintf("%d", value)
-		case uint64:
-			msg = fmt.Sprintf("%d", value)
-		default:
-			msg = fmt.Sprintf("%v", value)
-		}
-		if len(msg) > 40 {
-			addField(embed, name, msg)
-		} else {
-			addFieldInline(embed, name, msg)
-		}
-		fieldCount++
-		if fieldCount == maxEmbedFields {
-			break
-		}
-	}
-	select {
-	case hook.messageChan <- discordPayload{
-		channelId: config.Discord.LogChannelID,
-		embed:     embed,
-	}:
-	default:
-		// errors.New("Failed to write discord logger msg: chan full")
-		return nil
-	}
-	return nil
-}
-
-func (hook *DiscordLogHook) Levels() []log.Level {
-	return LevelThreshold(hook.MinLevel)
-}
-
 // LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int)
 type LevelColors struct {
-	Trace int
 	Debug int
 	Info  int
 	Warn  int
 	Error int
-	Panic int
 	Fatal int
 }
 
 // DefaultLevelColors is a struct of the default colors used
 var DefaultLevelColors = LevelColors{
-	Trace: 3092790,
 	Debug: 10170623,
 	Info:  3581519,
 	Warn:  14327864,
 	Error: 13631488,
-	Panic: 13631488,
 	Fatal: 13631488,
-}
-
-// LevelThreshold returns a slice of all the levels above and including the level specified
-func LevelThreshold(level log.Level) []log.Level {
-	return log.AllLevels[:level+1]
-}
-
-// LevelColor returns the respective color for the logrus level
-func (lc LevelColors) LevelColor(level log.Level) int {
-	switch level {
-	case log.TraceLevel:
-		return lc.Trace
-	case log.DebugLevel:
-		return lc.Debug
-	case log.InfoLevel:
-		return lc.Info
-	case log.WarnLevel:
-		return lc.Warn
-	case log.ErrorLevel:
-		return lc.Error
-	case log.PanicLevel:
-		return lc.Panic
-	case log.FatalLevel:
-		return lc.Fatal
-	default:
-		return lc.Warn
-	}
 }

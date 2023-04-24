@@ -3,13 +3,14 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/mm"
 	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net/http"
 	"sync"
 	"time"
@@ -82,6 +83,7 @@ type LobbyService interface {
 
 type wsClient struct {
 	sendChan chan wsValue
+	logger   *zap.Logger
 	socket   *websocket.Conn
 	User     model.UserProfile `json:"user"`
 	ctx      context.Context
@@ -115,13 +117,19 @@ func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
 		Payload: payload,
 	}:
 	default:
-		log.Warnf("Cannot send client ws payload: channel full")
+		client.logger.Error("Cannot send client ws payload: channel full")
 	}
 
 }
 
-func newWsClient(ctx context.Context, socket *websocket.Conn, user model.UserProfile) *wsClient {
-	return &wsClient{ctx: ctx, socket: socket, User: user, sendChan: make(chan wsValue, 5)}
+func newWsClient(ctx context.Context, logger *zap.Logger, socket *websocket.Conn, user model.UserProfile) *wsClient {
+	return &wsClient{
+		ctx:      ctx,
+		logger:   logger.Named(fmt.Sprintf("ws-%d", user.SteamID.Int64())),
+		socket:   socket,
+		User:     user,
+		sendChan: make(chan wsValue, 5),
+	}
 }
 
 func (client *wsClient) writer() {
@@ -129,10 +137,10 @@ func (client *wsClient) writer() {
 		select {
 		case payload := <-client.sendChan:
 			if errSend := client.socket.WriteJSON(payload); errSend != nil {
-				log.WithError(errSend).Errorf("Failed to send json payload")
+				client.logger.Error("Failed to send json payload", zap.Error(errSend))
 				return
 			}
-			log.WithFields(log.Fields{"msg_type": payload.MsgType}).Tracef("Wrote client payload")
+			client.logger.Debug("Wrote client payload", zap.Int("msg_type", int(payload.MsgType)))
 		case <-client.ctx.Done():
 			return
 		}
@@ -187,6 +195,7 @@ type wsRequestHandler func(cm *wsConnectionManager, client *wsClient, payload js
 
 type wsConnectionManager struct {
 	*sync.RWMutex
+	logger      *zap.Logger
 	connections wsClients
 	lobbies     map[string]LobbyService
 	handlers    map[wsMsgType]wsRequestHandler
@@ -202,9 +211,10 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 	return lobbies
 }
 
-func newWSConnectionManager(ctx context.Context) *wsConnectionManager {
+func newWSConnectionManager(ctx context.Context, logger *zap.Logger) *wsConnectionManager {
 	connManager := wsConnectionManager{
 		RWMutex: &sync.RWMutex{},
+		logger:  logger.Named("conman"),
 		lobbies: map[string]LobbyService{},
 		handlers: map[wsMsgType]wsRequestHandler{
 			wsMsgTypePugCreateLobbyRequest: createPugLobby,
@@ -262,13 +272,12 @@ func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobby
 	if found {
 		return nil, errors.New("Failed to create unique lobby")
 	}
-	lobby, errLobby := newPugLobby(client, lobbyId, opts)
+	lobby, errLobby := newPugLobby(cm.logger, client, lobbyId, opts)
 	if errLobby != nil {
 		return nil, errLobby
 	}
 	cm.lobbies[lobbyId] = lobby
-	log.WithFields(log.Fields{"lobby_id": lobbyId}).
-		Info("Pug lobby created")
+	cm.logger.Info("Pug lobby created", zap.String("lobby_id", lobbyId))
 	return lobby, nil
 }
 
@@ -282,8 +291,7 @@ func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobby
 //	}
 //	lobby := newQPLobby(lobbyId, client)
 //	cm.lobbies[lobbyId] = lobby
-//	log.WithFields(log.Fields{"lobby_id": lobbyId}).
-//		Info("Lobby created")
+//	cm.logger.Info("Lobby created")
 //	return lobby, nil
 //}
 
@@ -298,8 +306,7 @@ func (cm *wsConnectionManager) removeLobby(lobbyId string) error {
 		return ErrLobbyNotEmpty
 	}
 	delete(cm.lobbies, lobbyId)
-	log.WithFields(log.Fields{"lobby_id": lobbyId}).
-		Info("Lobby deleted")
+	cm.logger.Info("Pug lobby deleted", zap.String("lobby_id", lobbyId))
 	return nil
 }
 
@@ -307,8 +314,7 @@ func (cm *wsConnectionManager) join(client *wsClient) error {
 	cm.Lock()
 	cm.connections = append(cm.connections, client)
 	cm.Unlock()
-	log.WithFields(log.Fields{"steam_id": client.User.SteamID}).
-		Info("New client connection")
+	cm.logger.Info("New client connection", zap.Int64("sid64", client.User.SteamID.Int64()))
 	sendPugLobbyListStates(cm, client, nil)
 	return nil
 }
@@ -321,11 +327,13 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 	cm.Lock()
 	defer cm.Unlock()
 	for _, lobby := range cm.lobbies {
-		_ = lobby.leave(client)
+		if errLeave := lobby.leave(client); errLeave != nil {
+			cm.logger.Error("Failed to remove client from lobby",
+				zap.Int64("sid64", client.User.SteamID.Int64()), zap.Error(errLeave))
+		}
 	}
 	cm.connections = fp.Remove(cm.connections, client)
-	log.WithFields(log.Fields{"steam_id": client.User.SteamID}).
-		Infof("Client disconnected")
+	cm.logger.Info("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
 	return nil
 }
 
@@ -360,33 +368,32 @@ func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
 	//	if !allowed {
-	//		log.Errorf("Invalid websocket origin: %s", origin)
+	//		web.logger.Error("Invalid websocket origin", zap.Error(origin))
 	//	}
 	//	return allowed
 	//}
 	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("Failed to upgrade websocket: %v", err)
+		web.logger.Error("Failed to upgrade websocket", zap.Error(err))
 		return
 	}
-	log.WithFields(log.Fields{"conn": conn.LocalAddr().String()}).
-		Debugf("New connection")
+	web.logger.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
 	// New user connection
 	// TODO track between connections so they can resume their session upon dc
-	client := newWsClient(r.Context(), conn, user)
+	client := newWsClient(r.Context(), web.logger, conn, user)
 
 	go client.writer()
 
 	if errJoin := web.cm.join(client); errJoin != nil {
-		log.WithError(errJoin).Error("Failed to join client pool")
+		web.logger.Error("Failed to join client pool", zap.Error(errJoin))
+		return
 	}
 
 	defer func() {
 		if errLeave := web.cm.leave(client); errLeave != nil {
-			log.WithError(errLeave).Errorf("Error dropping client")
+			web.logger.Error("Error dropping client", zap.Error(errLeave))
 		}
-		log.WithFields(log.Fields{"steam_id": client.User.SteamID.String()}).
-			Debugf("Client disconnected")
+		web.logger.Debug("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
 	}()
 	type wsRequest struct {
 		MsgType wsMsgType       `json:"msg_type"`
@@ -398,7 +405,7 @@ func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model
 		if errRead := conn.ReadJSON(&basePayload); errRead != nil {
 			wsErr, ok := errRead.(*websocket.CloseError)
 			if !ok {
-				log.WithError(errRead).Error("Unhandled error trying to write ws payload")
+				web.logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
 			} else {
 				switch wsErr.Code {
 				case websocket.CloseGoingAway:
@@ -409,7 +416,7 @@ func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model
 			return
 		}
 		if errHandle := web.cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {
-			log.WithError(errHandle).Error("Failed to handle ws message")
+			web.logger.Error("Failed to handle ws message", zap.Error(errHandle))
 			client.send(basePayload.MsgType+1, false, wsMsgErrorResponse{
 				Error: errHandle.Error(),
 			})

@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"net"
 	"time"
 )
@@ -272,11 +272,13 @@ func (database *pgStore) loadASN(ctx context.Context, records []ip2location.ASNR
 				}
 				cancel()
 				batch = pgx.Batch{}
-				log.Debugf("ASN Progress: %d/%d (%.0f%%)", recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100)
+				database.logger.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
+					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	log.Debugf("Loaded %d ASN4 records in %s", len(records), time.Since(t0).String())
+	database.logger.Info("Loaded ASN4 records",
+		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
 
@@ -301,11 +303,13 @@ func (database *pgStore) loadLocation(ctx context.Context, records []ip2location
 				}
 				cancel()
 				batch = pgx.Batch{}
-				log.Debugf("Location4 Progress: %d/%d (%.0f%%)", recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100)
+				database.logger.Debug(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
+					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	log.Debugf("Loaded %d Location4 records in %s", len(records), time.Since(t0).String())
+	database.logger.Debug("Loaded Location4 records",
+		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
 
@@ -332,11 +336,13 @@ func (database *pgStore) loadProxies(ctx context.Context, records []ip2location.
 				}
 				cancel()
 				batch = pgx.Batch{}
-				log.Debugf("Proxy Progress: %d/%d (%.0f%%)", recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100)
+				database.logger.Debug(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
+					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	log.Debugf("Loaded %d Proxy records in %s", len(records), time.Since(t0).String())
+	database.logger.Debug("Loaded Proxy records",
+		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
 

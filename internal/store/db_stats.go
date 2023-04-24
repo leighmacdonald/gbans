@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -44,7 +44,7 @@ func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) erro
 			// Use match end time
 			endTime = s.TimeEnd
 		}
-		if errPlayerExec := database.QueryRow(ctx, pq, match.MatchID, s.SteamId, s.Team, s.TimeStart, endTime, s.Kills, s.Assists, s.Deaths, s.Dominations, s.Dominated, s.Revenges, s.Damage, s.DamageTaken, s.Healing, s.HealingTaken, s.HealthPacks, s.BackStabs, s.HeadShots, s.Airshots, s.Captures, s.Shots, s.Extinguishes, s.Hits, s.BuildingDestroyed, s.BuildingDestroyed).Scan(&s.MatchPlayerSumID); errPlayerExec != nil {
+		if errPlayerExec := database.QueryRow(ctx, pq, match.MatchID, s.SteamId, s.Team, s.TimeStart, endTime, s.Kills, s.Assists, s.Deaths, s.Dominations, s.Dominated, s.Revenges, s.Damage, s.DamageTaken, s.Healing, s.HealingTaken, s.HealthPacks, s.BackStabs, s.HeadShots, s.AirShots, s.Captures, s.Shots, s.Extinguishes, s.Hits, s.BuildingDestroyed, s.BuildingDestroyed).Scan(&s.MatchPlayerSumID); errPlayerExec != nil {
 			return errors.Wrapf(errPlayerExec, "Failed to write player sum")
 		}
 	}
@@ -126,7 +126,7 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 }
 
 func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
-	m := model.NewMatch(-1, "")
+	m := model.NewMatch(database.logger, -1, "")
 	m.MatchID = matchId
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
 	if errMatch := database.QueryRow(ctx, qm, matchId).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
@@ -149,7 +149,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 	defer playerRows.Close()
 	for playerRows.Next() {
 		s := model.MatchPlayerSum{MatchPlayerSumID: matchId}
-		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamId, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.Airshots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
+		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamId, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.AirShots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
 		m.PlayerSums = append(m.PlayerSums, &s)
@@ -230,7 +230,7 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 	if errQuery := database.conn.QueryRow(ctx, q).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
-		log.Errorf("Failed to fetch stats: %v", errQuery)
+		database.logger.Error("Failed to fetch stats", zap.Error(errQuery))
 		return Err(errQuery)
 	}
 	return nil

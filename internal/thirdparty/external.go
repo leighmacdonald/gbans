@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"os"
@@ -39,22 +38,22 @@ func containsIP(ip net.IP) bool {
 }
 
 // Import is used to download and load block lists into memory
-func Import(list config.BanList) error {
+func Import(list config.BanList) (int, error) {
 	if !golib.Exists(config.Net.CachePath) {
 		if errMkDir := os.MkdirAll(config.Net.CachePath, 0755); errMkDir != nil {
-			log.Fatalf("Failed to create cache dir (%s): %v", config.Net.CachePath, errMkDir)
+			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", config.Net.CachePath, errMkDir)
 		}
 	}
 	filePath := path.Join(config.Net.CachePath, list.Name)
 	maxAge, errParseDuration := config.ParseDuration(config.Net.MaxAge)
 	if errParseDuration != nil {
-		return errors.Wrapf(errParseDuration, "Failed to parse cache max age")
+		return 0, errors.Wrapf(errParseDuration, "Failed to parse cache max age")
 	}
 	expired := false
 	if golib.Exists(filePath) {
 		fileInfo, errStat := os.Stat(filePath)
 		if errStat != nil {
-			return errors.Wrapf(errStat, "Failed to stat cached file")
+			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
 		if config.Now().Sub(fileInfo.ModTime()) > maxAge {
 			expired = true
@@ -64,19 +63,18 @@ func Import(list config.BanList) error {
 	}
 	if expired {
 		if errDownload := download(list.URL, filePath); errDownload != nil {
-			return errors.Wrapf(errDownload, "Failed to download net ban list")
+			return 0, errors.Wrapf(errDownload, "Failed to download net ban list")
 		}
 	}
 	body, errReadFile := os.ReadFile(filePath)
 	if errReadFile != nil {
-		return errReadFile
+		return 0, errReadFile
 	}
 	count, errLoadBody := load(body, list.Type)
 	if errLoadBody != nil {
-		return errors.Wrapf(errLoadBody, "Failed to load list")
+		return 0, errors.Wrapf(errLoadBody, "Failed to load list")
 	}
-	log.WithFields(log.Fields{"count": count, "list": list.Name, "type": "steam"}).Debugf("Loaded blocklist")
-	return nil
+	return count, nil
 }
 
 func download(url string, savePath string) error {
@@ -92,11 +90,9 @@ func download(url string, savePath string) error {
 	if errCopy != nil {
 		return errCopy
 	}
-	defer func() {
-		if errClose := response.Body.Close(); errClose != nil {
-			log.Warnf("Failed to close block list response body: %v", errClose)
-		}
-	}()
+	if errClose := response.Body.Close(); errClose != nil {
+		return errClose
+	}
 	return nil
 }
 
