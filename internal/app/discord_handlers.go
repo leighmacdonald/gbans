@@ -573,7 +573,7 @@ func (bot *Discord) onHistoryIP(ctx context.Context, _ *discordgo.Session, inter
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(steamId)
-	if errPersonBySID := bot.app.PersonBySID(ctx, bot.app.store, steamId, &person); errPersonBySID != nil {
+	if errPersonBySID := bot.app.PersonBySID(ctx, steamId, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	ipRecords, errGetPersonIPHist := bot.app.store.GetPersonIPHistory(ctx, steamId, 20)
@@ -698,7 +698,7 @@ func (bot *Discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 		return consts.ErrInvalidSID
 	}
 	person := model.NewPerson(targetSid64)
-	if errPersonBySID := bot.app.PersonBySID(ctx, bot.app.store, targetSid64, &person); errPersonBySID != nil {
+	if errPersonBySID := bot.app.PersonBySID(ctx, targetSid64, &person); errPersonBySID != nil {
 		return errCommandFailed
 	}
 	var playerInfo model.PlayerInfo

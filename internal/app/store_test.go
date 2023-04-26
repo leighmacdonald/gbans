@@ -211,91 +211,39 @@ func TestGetChatHistory(t *testing.T) {
 	//require.Equal(t, "test-2", hist[0].Msg)
 }
 
-func TestFindLogEvents(t *testing.T) {
-	//sid := steamid.SID64(76561198083950960)
-	//sid2 := steamid.SID64(76561198083950961)
-	ctx := context.Background()
-	s := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
-	require.NoError(t, testDatabase.SaveServer(ctx, &s))
-	//s1 := model.Person{
-	//	SteamID: sid,
-	//	PlayerSummary: &steamweb.PlayerSummary{
-	//		PersonaName: "test-name-1",
-	//	},
-	//}
-	//t1 := model.Person{
-	//	SteamID: sid2,
-	//	PlayerSummary: &steamweb.PlayerSummary{
-	//		PersonaName: "test-name-2",
-	//	},
-	//}
-	//logs := []model.ServerEvent{
-	//	{
-	//		Server:    &s,
-	//		Source:    &s1,
-	//		EventType: logparse.Say,
-	//		MetaData:  map[string]any{"msg": "test-1"},
-	//	},
-	//	{
-	//		Server:    &s,
-	//		Source:    &s1,
-	//		EventType: logparse.Say,
-	//		MetaData:  map[string]any{"msg": "test-2"},
-	//	},
-	//	{
-	//		Server: &s,
-	//		Source: &s1,
-	//		Target: &t1,
-	//		Weapon: logparse.Scattergun,
-	//		AttackerPOS: logparse.Pos{
-	//			X: 5,
-	//			Y: -5,
-	//			Z: 15,
-	//		},
-	//		VictimPOS: logparse.Pos{
-	//			X: 10,
-	//			Y: -10,
-	//			Z: 100,
-	//		},
-	//		EventType: logparse.Killed,
-	//	},
-	//}
-	//require.NoError(t, testDatabase.BatchInsertServerLogs(ctx, logs))
-	//serverEvents, errLogs := testDatabase.FindLogEvents(ctx, model.LogQueryOpts{
-	//	LogTypes: []logparse.EventType{logparse.Killed},
-	//})
-	//require.NoError(t, errLogs, "Failed to fetch logs")
-	//require.True(t, len(serverEvents) >= 1, "Log size too small: %d", len(serverEvents))
-	//for _, evt := range serverEvents {
-	//	require.Equal(t, logparse.Killed, evt.EventType)
-	//}
-}
-
 func TestFilters(t *testing.T) {
+	p1 := model.NewPerson(randSID())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	require.NoError(t, testDatabase.SavePerson(ctx, &p1))
 	existingFilters, errGetFilters := testDatabase.GetFilters(context.Background())
 	require.NoError(t, errGetFilters)
 	words := []string{golib.RandomString(10), golib.RandomString(20)}
 	var savedFilters []model.Filter
 	for _, word := range words {
 		filter := model.Filter{
+			IsEnabled: true,
+			IsRegex:   false,
+			AuthorId:  p1.SteamID,
 			Pattern:   word,
+			UpdatedOn: config.Now(),
 			CreatedOn: config.Now(),
 		}
-		require.NoError(t, testDatabase.SaveFilter(context.Background(), &filter), "Failed to insert filter: %s", word)
+		require.NoError(t, testDatabase.SaveFilter(ctx, &filter), "Failed to insert filter: %s", word)
 		require.True(t, filter.FilterID > 0)
 		savedFilters = append(savedFilters, filter)
 	}
-	currentFilters, errGetCurrentFilters := testDatabase.GetFilters(context.Background())
+	currentFilters, errGetCurrentFilters := testDatabase.GetFilters(ctx)
 	require.NoError(t, errGetCurrentFilters)
 	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 	if savedFilters != nil {
-		require.NoError(t, testDatabase.DropFilter(context.Background(), &savedFilters[0]))
+		require.NoError(t, testDatabase.DropFilter(ctx, &savedFilters[0]))
 		var byId model.Filter
-		require.NoError(t, testDatabase.GetFilterByID(context.Background(), savedFilters[1].FilterID, &byId))
+		require.NoError(t, testDatabase.GetFilterByID(ctx, savedFilters[1].FilterID, &byId))
 		require.Equal(t, savedFilters[1].FilterID, byId.FilterID)
 		require.Equal(t, savedFilters[1].Pattern, byId.Pattern)
 	}
-	droppedFilters, errGetDroppedFilters := testDatabase.GetFilters(context.Background())
+	droppedFilters, errGetDroppedFilters := testDatabase.GetFilters(ctx)
 	require.NoError(t, errGetDroppedFilters)
 	require.Equal(t, len(existingFilters)+len(words)-1, len(droppedFilters))
 

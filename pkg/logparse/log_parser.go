@@ -7,6 +7,7 @@ package logparse
 import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -165,7 +166,7 @@ var (
 	}
 )
 
-func ParsePickupItem(hp string, item *PickupItem) bool {
+func parsePickupItem(hp string, item *PickupItem) bool {
 	switch hp {
 	case "ammopack_small":
 		fallthrough
@@ -187,7 +188,7 @@ func ParsePickupItem(hp string, item *PickupItem) bool {
 	return true
 }
 
-func ParseMedigun(gunStr string, gun *Medigun) bool {
+func parseMedigun(gunStr string, gun *MedigunType) bool {
 	switch strings.ToLower(gunStr) {
 	case "medigun":
 		*gun = Uber
@@ -229,7 +230,7 @@ func ParseMedigun(gunStr string, gun *Medigun) bool {
 //	}
 //}
 
-func ParsePlayerClass(classStr string, class *PlayerClass) bool {
+func parsePlayerClass(classStr string, class *PlayerClass) bool {
 	switch strings.ToLower(classStr) {
 	case "scout":
 		*class = Scout
@@ -261,7 +262,7 @@ func ParsePlayerClass(classStr string, class *PlayerClass) bool {
 	return true
 }
 
-func ParseTeam(teamStr string, team *Team) bool {
+func parseTeam(teamStr string, team *Team) bool {
 	switch strings.ToLower(teamStr) {
 	case "red":
 		*team = RED
@@ -320,6 +321,26 @@ func parsePos(posStr string, pos *Pos) bool {
 	return true
 }
 
+func parseSourcePlayer(srcStr string, player *SourcePlayer) bool {
+	ooKV, ok := reSubMatchMap(rxPlayer, "\""+srcStr+"\"")
+	if !ok {
+		return false
+	}
+	player.Name = ooKV["name"].(string)
+	pid, errPid := strconv.ParseInt(ooKV["pid"].(string), 10, 32)
+	if errPid != nil {
+		return false
+	}
+	player.PID = int(pid)
+	var team Team
+	if !parseTeam(ooKV["team"].(string), &team) {
+		return false
+	}
+	player.Team = team
+	player.SID = steamid.SID3ToSID64(steamid.SID3(ooKV["sid"].(string)))
+	return true
+}
+
 func parseDateTime(dateStr string, t *time.Time) bool {
 	parsed, errParseTime := time.Parse("01/02/2006 - 15:04:05", dateStr)
 	if errParseTime != nil {
@@ -350,8 +371,8 @@ func processKV(originalKVMap map[string]any) map[string]any {
 				newKVMap["created_on"] = t
 			}
 		case "medigun":
-			var medigun Medigun
-			if ParseMedigun(value.(string), &medigun) {
+			var medigun MedigunType
+			if parseMedigun(value.(string), &medigun) {
 				newKVMap["medigun"] = medigun
 			}
 		case "crit":
@@ -371,8 +392,8 @@ func processKV(originalKVMap map[string]any) map[string]any {
 			ooKV, ok := reSubMatchMap(rxPlayer, "\""+value.(string)+"\"")
 			if ok {
 				// TODO Make this less static to support >2 targets for events like capping points?
-				for key, val := range ooKV {
-					newKVMap[key+"2"] = val
+				for keyVal, val := range ooKV {
+					newKVMap[keyVal+"2"] = val
 				}
 			}
 		case "address":
@@ -392,15 +413,13 @@ func processKV(originalKVMap map[string]any) map[string]any {
 }
 
 // Results hold the  results of parsing a log line
-//
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Results struct {
-	MsgType EventType
-	Values  map[string]any
+	EventType EventType
+	Event     any
 }
 
 // Parse will parse the log line into a known type and values
-func Parse(logLine string) Results {
+func Parse(logLine string) (*Results, error) {
 	for _, rx := range rxParsers {
 		matchMap, found := reSubMatchMap(rx.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
 		if found {
@@ -411,14 +430,363 @@ func Parse(logLine string) Results {
 			// Temporary values
 			delete(matchMap, "keypairs")
 			delete(matchMap, "")
-			return Results{rx.Type, processKV(matchMap)}
+			values := processKV(matchMap)
+			var (
+				errUnmarshal error
+				event        any
+			)
+			switch rx.Type {
+			case CaptureBlocked:
+				var t CaptureBlockedEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case LogStart:
+				var t LogStartEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case CVAR:
+				var t CVAREvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case RCON:
+				var t RCONEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case Entered:
+				var t EnteredEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case JoinedTeam:
+				var t JoinedTeamEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case ChangeClass:
+				var t ChangeClassEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case SpawnedAs:
+				var t SpawnedAsEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case Suicide:
+				var t SuicideEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case WRoundStart:
+				var t WRoundStartEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case MedicDeath:
+				var t MedicDeathEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case Killed:
+				var t KilledEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case KilledCustom:
+				var t CustomKilledEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case KillAssist:
+				var t KillAssistEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case Healed:
+				var t HealedEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case Extinguished:
+				var t ExtinguishedEvt
+				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = t
+			case PointCaptured:
+				var parsedEvent PointCapturedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Connected:
+				var parsedEvent ConnectedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case KilledObject:
+				var parsedEvent KilledObjectEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case CarryObject:
+				var parsedEvent CarryObjectEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case DetonatedObject:
+				var parsedEvent DetonatedObjectEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case DropObject:
+				var parsedEvent DropObjectEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case BuiltObject:
+				var parsedEvent BuiltObjectEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WRoundWin:
+				var parsedEvent WRoundWinEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WRoundLen:
+				var parsedEvent WRoundLenEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WTeamScore:
+				var parsedEvent WTeamScoreEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Say:
+				var parsedEvent SayEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case SayTeam:
+				var parsedEvent SayTeamEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Domination:
+				var parsedEvent DominationEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Disconnected:
+				var parsedEvent DisconnectedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Revenge:
+				var parsedEvent RevengeEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WRoundOvertime:
+				var parsedEvent WRoundOvertimeEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WGameOver:
+				var parsedEvent WGameOverEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WTeamFinalScore:
+				var parsedEvent WTeamFinalScoreEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case LogStop:
+				var parsedEvent LogStopEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WPaused:
+				var parsedEvent WPausedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WResumed:
+				var parsedEvent WResumedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case FirstHealAfterSpawn:
+				var parsedEvent FirstHealAfterSpawnEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case ChargeReady:
+				var parsedEvent ChargeReadyEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case ChargeDeployed:
+				var parsedEvent ChargeDeployedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case ChargeEnded:
+				var parsedEvent ChargeEndedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case MedicDeathEx:
+				var parsedEvent MedicDeathExEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case LostUberAdv:
+				var parsedEvent LostUberAdvantageEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case EmptyUber:
+				var parsedEvent EmptyUberEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Pickup:
+				var parsedEvent PickupEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case ShotFired:
+				var parsedEvent ShotFiredEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case ShotHit:
+				var parsedEvent ShotHitEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case Damage:
+				var parsedEvent DamageEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case JarateAttack:
+				var parsedEvent JarateAttackEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WMiniRoundWin:
+				var parsedEvent WMiniRoundWinEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WMiniRoundLen:
+				var parsedEvent WMiniRoundLenEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WRoundSetupBegin:
+				var parsedEvent WRoundSetupBeginEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WMiniRoundSelected:
+				var parsedEvent WMiniRoundSelectedEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case WMiniRoundStart:
+				var parsedEvent WMiniRoundStartEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case MilkAttack:
+				var parsedEvent MilkAttackEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			case GasAttack:
+				var parsedEvent GasAttackEvt
+				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+				event = parsedEvent
+			}
+
+			return &Results{rx.Type, event}, nil
 		}
 	}
 	m, found := reSubMatchMap(rxUnhandled, logLine)
 	if found {
-		return Results{IgnoredMsg, processKV(m)}
+		var parsedEvent UnhandledMsgEvt
+		if errUnmarshal := unmarshal(m, &parsedEvent); errUnmarshal != nil {
+			return nil, errUnmarshal
+		}
+		parsedEvent.Message = logLine
+		return &Results{IgnoredMsg, parsedEvent}, nil
 	}
-	return Results{UnknownMsg, map[string]any{"raw": logLine}}
+	return nil, errors.Errorf("Invalid message: %s", logLine)
 }
 
 func decodeTeam() mapstructure.DecodeHookFunc {
@@ -427,7 +795,7 @@ func decodeTeam() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var team Team
-		if !ParseTeam(d.(string), &team) {
+		if !parseTeam(d.(string), &team) {
 			return d, nil
 		}
 		return team, nil
@@ -440,7 +808,7 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var playerClass PlayerClass
-		if !ParsePlayerClass(d.(string), &playerClass) {
+		if !parsePlayerClass(d.(string), &playerClass) {
 			return d, nil
 		}
 		return playerClass, nil
@@ -488,7 +856,7 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 //			return d, nil
 //		}
 //		var m Medigun
-//		if !ParseMedigun(d.(string), &m) {
+//		if !parseMedigun(d.(string), &m) {
 //			return d, nil
 //		}
 //		return m, nil
@@ -501,7 +869,7 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var m PickupItem
-		if !ParsePickupItem(d.(string), &m) {
+		if !parsePickupItem(d.(string), &m) {
 			return d, nil
 		}
 		return m, nil
@@ -534,9 +902,9 @@ func decodeTime() mapstructure.DecodeHookFunc {
 	}
 }
 
-// Unmarshal will transform a map of values into the struct passed in
+// unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
-func Unmarshal(input any, output any) error {
+func unmarshal(input any, output any) error {
 	decoder, errNewDecoder := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			decodeTime(),

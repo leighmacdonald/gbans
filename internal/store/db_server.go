@@ -7,7 +7,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	"net"
 )
 
 var columnsServer = []string{"server_id", "short_name", "name", "address", "port", "rcon", "password",
@@ -195,110 +194,4 @@ func (database *pgStore) DropServer(ctx context.Context, serverID int) error {
 		return errExec
 	}
 	return nil
-}
-
-func (database *pgStore) FindLogEvents(ctx context.Context, opts model.LogQueryOpts) ([]model.ServerEvent, error) {
-	queryBuilder := sb.Select(
-		`l.log_id`,
-		`s.server_id`,
-		`l.event_type`,
-		`l.created_on`,
-		`s.short_name`,
-		`COALESCE(source.steam_id, 0)`,
-		`COALESCE(source.personaname, '')`,
-		`COALESCE(source.avatarfull, '')`,
-		`COALESCE(source.avatar, '')`,
-		`COALESCE(target.steam_id, 0)`,
-		`COALESCE(target.personaname, '')`,
-		`COALESCE(target.avatarfull, '')`,
-		`COALESCE(target.avatar, '')`,
-		`l.weapon`,
-		`l.damage`,
-		`l.healing`,
-		"COALESCE(ST_X(l.attacker_position::geometry), 0)",
-		"COALESCE(ST_Y(l.attacker_position::geometry), 0)",
-		"COALESCE(ST_Z(l.attacker_position::geometry), 0)",
-		"COALESCE(ST_X(l.victim_position::geometry), 0)",
-		"COALESCE(ST_Y(l.victim_position::geometry), 0)",
-		"COALESCE(ST_Z(l.victim_position::geometry), 0)",
-		"COALESCE(ST_X(l.assister_position::geometry), 0)",
-		"COALESCE(ST_Y(l.assister_position::geometry), 0)",
-		"COALESCE(ST_Z(l.assister_position::geometry), 0)",
-		`l.item`,
-		`l.player_class`,
-		`l.player_team`,
-		`l.meta_data`,
-	).
-		From("server_log l").
-		LeftJoin(`server s on s.server_id = l.server_id`).
-		LeftJoin(`person source on source.steam_id = l.source_id`).
-		LeftJoin(`person target on target.steam_id = l.target_id`)
-
-	if opts.Network != "" {
-		_, network, errParseCIDR := net.ParseCIDR(opts.Network)
-		if errParseCIDR != nil {
-			return nil, Err(errParseCIDR)
-		}
-		idsByNet, errIdByNet := database.GetSteamIDsAtIP(ctx, network)
-		if errIdByNet != nil {
-			return nil, Err(errIdByNet)
-		}
-		queryBuilder = queryBuilder.Where(sq.Eq{"l.source_id": idsByNet})
-	}
-	sourceSid64, errSourceSid64 := steamid.StringToSID64(opts.SourceID)
-	if opts.SourceID != "" && errSourceSid64 == nil && sourceSid64.Valid() {
-		queryBuilder = queryBuilder.Where(sq.Eq{"l.source_id": sourceSid64.Int64()})
-	}
-	targetSid64, errTargetSid64 := steamid.StringToSID64(opts.TargetID)
-	if opts.TargetID != "" && errTargetSid64 == nil && targetSid64.Valid() {
-		queryBuilder = queryBuilder.Where(sq.Eq{"l.target_id": targetSid64.Int64()})
-	}
-	if len(opts.Servers) > 0 {
-		queryBuilder = queryBuilder.Where(sq.Eq{"l.server_id": opts.Servers})
-	}
-	if len(opts.LogTypes) > 0 {
-		queryBuilder = queryBuilder.Where(sq.Eq{"l.event_type": opts.LogTypes})
-	}
-
-	if opts.SentBefore != nil {
-		queryBuilder = queryBuilder.Where(sq.Lt{"l.created_on": opts.SentBefore})
-	}
-	if opts.SentAfter != nil {
-		queryBuilder = queryBuilder.Where(sq.Gt{"l.created_on": opts.SentAfter})
-	}
-	if opts.OrderDesc {
-		queryBuilder = queryBuilder.OrderBy("l.created_on DESC")
-	} else {
-		queryBuilder = queryBuilder.OrderBy("l.created_on ASC")
-	}
-	if opts.Limit > 0 {
-		queryBuilder = queryBuilder.Limit(opts.Limit)
-	}
-	query, args, errQueryArgs := queryBuilder.ToSql()
-	if errQueryArgs != nil {
-		return nil, errQueryArgs
-	}
-	rows, errQuery := database.conn.Query(ctx, query, args...)
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
-	defer rows.Close()
-	var events []model.ServerEvent
-	for rows.Next() {
-		event := model.NewServerEvent()
-		if errScan := rows.Scan(
-			&event.LogID, &event.Server.ServerID, &event.EventType, &event.CreatedOn,
-			&event.Server.ServerNameShort,
-			&event.Source.SteamID, &event.Source.PersonaName, &event.Source.AvatarFull, &event.Source.Avatar,
-			&event.Target.SteamID, &event.Target.PersonaName, &event.Target.AvatarFull, &event.Target.Avatar,
-			&event.Weapon, &event.Damage, &event.Healing,
-			&event.AttackerPOS.X, &event.AttackerPOS.Y, &event.AttackerPOS.Z,
-			&event.VictimPOS.X, &event.VictimPOS.Y, &event.VictimPOS.Z,
-			&event.AssisterPOS.X, &event.AssisterPOS.Y, &event.AssisterPOS.Z,
-			&event.Item, &event.PlayerClass, &event.Team, &event.MetaData); errScan != nil {
-			return nil, Err(errScan)
-		}
-		events = append(events, event)
-	}
-	return events, nil
 }

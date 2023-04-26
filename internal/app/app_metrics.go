@@ -100,15 +100,20 @@ func (app *App) logMetricsConsumer() {
 			}
 			switch serverEvent.EventType {
 			case logparse.Damage:
-				damageCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Add(float64(serverEvent.Damage))
+				evt := serverEvent.Event.(logparse.DamageEvt)
+				damageCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Add(float64(evt.Damage))
 			case logparse.Healed:
-				healingCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Add(float64(serverEvent.Damage))
+				//evt := serverEvent.Event.(logparse.HealedEvt)
+				//healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
-				shotFiredCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
+				evt := serverEvent.Event.(logparse.ShotFiredEvt)
+				shotFiredCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
 			case logparse.ShotHit:
-				shotHitCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
+				evt := serverEvent.Event.(logparse.ShotHitEvt)
+				shotHitCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
 			case logparse.Killed:
-				killCounter.With(prometheus.Labels{"weapon": serverEvent.Weapon.String()}).Inc()
+				evt := serverEvent.Event.(logparse.KilledEvt)
+				killCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
 			case logparse.Say:
 				sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
 			case logparse.SayTeam:
@@ -120,7 +125,8 @@ func (app *App) logMetricsConsumer() {
 			case logparse.Disconnected:
 				disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
 			case logparse.SpawnedAs:
-				classCounter.With(prometheus.Labels{"class": serverEvent.PlayerClass.String()}).Inc()
+				evt := serverEvent.Event.(logparse.SpawnedAsEvt)
+				classCounter.With(prometheus.Labels{"class": evt.PlayerClass.String()}).Inc()
 			}
 		}
 	}

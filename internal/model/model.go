@@ -227,24 +227,6 @@ func (f *Filter) Match(value string) bool {
 	return f.Pattern == value
 }
 
-// RawLogEvent represents a full representation of a server log entry including all metadata attached to the log.
-type RawLogEvent struct {
-	LogID     int64              `json:"log_id"`
-	Type      logparse.EventType `json:"event_type"`
-	Event     map[string]string  `json:"event"`
-	Server    Server             `json:"server"`
-	Player1   *Person            `json:"player1"`
-	Player2   *Person            `json:"player2"`
-	Assister  *Person            `json:"assister"`
-	RawEvent  string             `json:"raw_event"`
-	CreatedOn time.Time          `json:"created_on"`
-}
-
-// Unmarshal is just a helper to
-func (e *RawLogEvent) Unmarshal(output any) error {
-	return logparse.Unmarshal(e.Event, output)
-}
-
 type PlayerInfo struct {
 	Player  *ServerStatePlayer
 	Server  *Server

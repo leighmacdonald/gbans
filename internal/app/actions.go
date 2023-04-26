@@ -268,8 +268,8 @@ func findFilteredWordMatch(body string) (string, *model.Filter) {
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func (app *App) PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, person *model.Person) error {
-	if errGetPerson := database.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
+func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *model.Person) error {
+	if errGetPerson := app.store.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
 		return errGetPerson
 	}
 	if person.UpdatedOn == person.CreatedOn || time.Since(person.UpdatedOn) > 15*time.Second {
@@ -281,11 +281,12 @@ func (app *App) PersonBySID(ctx context.Context, database store.Store, sid steam
 		var sum = summary[0]
 		person.PlayerSummary = &sum
 		person.UpdatedOn = config.Now()
-		if errSave := database.SavePerson(ctx, person); errSave != nil {
+		if errSave := app.store.SavePerson(ctx, person); errSave != nil {
 			app.logger.Error("Failed to save updated profile", zap.Error(errSummary))
 			return nil
 		}
-		if errGetPersonBySid64 := database.GetPersonBySteamID(ctx, sid, person); errGetPersonBySid64 != nil && errGetPersonBySid64 != store.ErrNoResult {
+		if errGetPersonBySid64 := app.store.GetPersonBySteamID(ctx, sid, person); errGetPersonBySid64 != nil &&
+			errGetPersonBySid64 != store.ErrNoResult {
 			return errGetPersonBySid64
 		}
 	}

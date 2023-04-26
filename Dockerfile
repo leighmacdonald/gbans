@@ -9,7 +9,7 @@ WORKDIR /build/frontend
 RUN yarn
 RUN yarn build
 
-FROM golang:1.19-alpine as build
+FROM golang:1.20-alpine as build
 WORKDIR /build
 RUN apk add --no-cache make git gcc libc-dev
 COPY go.mod go.sum Makefile main.go ./

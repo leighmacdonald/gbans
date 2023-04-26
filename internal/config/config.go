@@ -279,7 +279,7 @@ var defaultConfig = map[string]any{
 	"general.warning_exceeded_duration":        "168h",
 	"general.use_utc":                          true,
 	"general.server_status_update_freq":        "60s",
-	"general.master_server_status_update_freq": "30s",
+	"general.master_server_status_update_freq": "1m",
 	"general.default_maps":                     []string{"pl_badwater"},
 	"general.demo_root_path":                   "./.demos/",
 	"general.external_url":                     "http://gbans.localhost:6006",

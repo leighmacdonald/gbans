@@ -1,10 +1,7 @@
 package app
 
 import (
-	"context"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -21,11 +18,7 @@ import (
 func TestMatch_Apply(t *testing.T) {
 	// mock?
 	testLogger, _ := zap.NewDevelopment()
-	dbStore, dbErr := store.New(context.Background(), testLogger, config.DB.DSN)
-	if dbErr != nil {
-		t.Errorf("Failed to setup store: %v", dbErr)
-		return
-	}
+
 	p := golib.FindFile(path.Join("test_data", "log_3124689.log"), "gbans")
 	if p == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
@@ -33,7 +26,7 @@ func TestMatch_Apply(t *testing.T) {
 	}
 	body, errRead := os.ReadFile(p)
 	require.NoError(t, errRead)
-	playerStateCache := newPlayerCache(testLogger)
+	//playerStateCache := newPlayerCache(testLogger)
 
 	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
 	m := model.NewMatch(testLogger, 1, "test server")
@@ -43,16 +36,9 @@ func TestMatch_Apply(t *testing.T) {
 			continue
 		}
 		var event model.ServerEvent
-		require.NoError(t, logToServerEvent(context.Background(),
-			testLogger,
-			testServer,
-			line,
-			dbStore,
-			playerStateCache,
-			&event,
-		), "Failed to create ServerEvent")
-		if err := m.Apply(event); err != nil && !errors.Is(err, model.ErrIgnored) {
-			t.Errorf("Failed to Apply: %v", err)
+		require.NoError(t, logToServerEvent(testServer, line, &event), "Failed to create ServerEvent")
+		if err := m.Apply(event.Results); err != nil && !errors.Is(err, model.ErrIgnored) {
+			t.Errorf("Failed to Apply: %v [%d] %v", err, event.EventType, event.EventType)
 		}
 	}
 
@@ -68,7 +54,7 @@ func TestMatch_Apply(t *testing.T) {
 	getPS := func(m model.Match, sid steamid.SID64) *model.MatchPlayerSum {
 		ps, err := m.PlayerSums.GetBySteamId(sid)
 		if err != nil {
-			t.Fatalf("Failed to fetch player sum")
+			t.Fatalf("Failed to fetch player sum [%d]: %v", sid, err)
 		}
 		return ps
 	}
@@ -121,7 +107,7 @@ func TestMatch_Apply(t *testing.T) {
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	//}
 	//for _, ms := range match3124689.MedicSums {
-	//	require.Equal(t, map[logparse.Medigun]int{logparse.Uber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
+	//	require.Equal(t, map[logparse.Medigun]int{logparse.HadUber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
 	//		getMS(m, ms.SteamId).Charges, "Charges incorrect %v", getName(ms.SteamId))
 	//}
 
@@ -133,7 +119,6 @@ func TestMatch_Apply(t *testing.T) {
 
 // https://logs.tf/3124689
 func testMatch() (model.Match, map[string]steamid.SID64) {
-
 	match := model.Match{
 		Title:   "Qixalite Booking: RED vs BLU",
 		MapName: "koth_cascade_rc2",
@@ -158,7 +143,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:         0,
 				HeadShots:         0,
 				AirShots:          0,
-				Captures:          3,
+				Captures:          nil,
 				Classes:           []logparse.PlayerClass{logparse.Scout},
 				Healing:           370,
 			},
@@ -177,7 +162,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    1,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     754,
 			},
@@ -196,7 +181,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     481,
 			},
@@ -215,7 +200,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     436,
 			},
@@ -234,7 +219,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1187,
 			},
@@ -253,7 +238,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   8,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Sniper},
 				Healing:     686,
 			},
@@ -271,7 +256,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     17708,
 			},
@@ -290,7 +275,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   4,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Sniper, logparse.Engineer},
 				Healing:     395,
 			},
@@ -309,7 +294,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   9,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Spy, logparse.Pyro},
 				Healing:     456,
 			},
@@ -328,7 +313,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   9,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Spy},
 				Healing:     546,
 			},
@@ -347,7 +332,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   9,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Scout},
 				Healing:     1036,
 			},
@@ -366,7 +351,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    1,
-				Captures:    2,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Soldier},
 				Healing:     1313,
 			},
@@ -385,7 +370,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    2,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Pyro},
 				Healing:     553,
 			},
@@ -403,7 +388,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Demo},
 				Healing:     0,
 			},
@@ -422,7 +407,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    3,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Heavy},
 				Healing:     1216,
 			},
@@ -441,7 +426,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    4,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Scout},
 				Healing:     922,
 			},
@@ -459,7 +444,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Medic},
 				Healing:     19762,
 			},
@@ -477,7 +462,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   18,
 				AirShots:    0,
-				Captures:    1,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Sniper},
 				Healing:     101,
 			},
@@ -495,7 +480,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				BackStabs:   0,
 				HeadShots:   0,
 				AirShots:    0,
-				Captures:    0,
+				Captures:    nil,
 				Classes:     []logparse.PlayerClass{logparse.Spy},
 				Healing:     57,
 			},
@@ -504,7 +489,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 			{
 				SteamId: 76561198113244106,
 				Healing: 17368,
-				Charges: map[logparse.Medigun]int{
+				Charges: map[logparse.MedigunType]int{
 					logparse.Uber: 4,
 				},
 				Drops:               2,
@@ -520,7 +505,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 			{
 				SteamId: 76561198082713023,
 				Healing: 19545,
-				Charges: map[logparse.Medigun]int{
+				Charges: map[logparse.MedigunType]int{
 					logparse.Uber: 6,
 				},
 				Drops:               1,

@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/stretchr/testify/require"
+	"strings"
 	"testing"
 )
 
@@ -14,7 +15,13 @@ func TestFilter_Match(t *testing.T) {
 		CreatedOn: config.Now(),
 	}
 	filter.Init()
-	require.True(t, filter.Match("super pooooooper"))
+	matched := false
+	for _, word := range strings.Split("super pooooooper", " ") {
+		if filter.Match(word) {
+			matched = true
+		}
+	}
+	require.True(t, matched)
 }
 
 //

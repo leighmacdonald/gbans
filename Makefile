@@ -4,6 +4,7 @@ TAGGED_IMAGE = ghcr.io/leighmacdonald/gbans:$(BRANCH)
 
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
+GO_FLAGS = -trimpath
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
 all: frontend sourcemod build
@@ -87,7 +88,7 @@ lint_imports:
 	test -z $(goimports -e -d . | tee /dev/stderr)
 
 lint_cyclo:
-	gocyclo -over 50 .
+	gocyclo -ignore "log_parser" -over 50 .
 
 lint_golint:
 	golint -set_exit_status $(go list -tags ci ./...)
@@ -110,7 +111,7 @@ docker_test_postgres:
 
 docker_test:
 	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --force-recreate --renew-anon-volumes --exit-code-from gbans-test --remove-orphans gbans-test
+	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --build --force-recreate --renew-anon-volumes --abort-on-container-exit --exit-code-from gbans-test --remove-orphans gbans-test
 
 image_latest:
 	@docker build -t leighmacdonald/gbans:latest .

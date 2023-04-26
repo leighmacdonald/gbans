@@ -169,7 +169,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 	}
 	defer medicRows.Close()
 	for medicRows.Next() {
-		ms := model.MatchMedicSum{MatchId: matchId, Charges: map[logparse.Medigun]int{
+		ms := model.MatchMedicSum{MatchId: matchId, Charges: map[logparse.MedigunType]int{
 			logparse.Uber:       0,
 			logparse.Kritzkrieg: 0,
 			logparse.Vaccinator: 0,

@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"net"
@@ -36,7 +35,6 @@ const (
 // instances
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
-	ctx       context.Context
 	logger    *zap.Logger
 	udpAddr   *net.UDPAddr
 	database  store.Store
@@ -44,14 +42,13 @@ type remoteSrcdsLogSource struct {
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(ctx context.Context, logger *zap.Logger, listenAddr string, database store.Store) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(logger *zap.Logger, listenAddr string, database store.Store) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", listenAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
 	return &remoteSrcdsLogSource{
 		RWMutex:   &sync.RWMutex{},
-		ctx:       ctx,
 		logger:    logger,
 		udpAddr:   udpAddr,
 		database:  database,
@@ -60,9 +57,9 @@ func newRemoteSrcdsLogSource(ctx context.Context, logger *zap.Logger, listenAddr
 	}, nil
 }
 
-func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
+func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 	newServers := map[int]string{}
-	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*5)
+	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
@@ -78,29 +75,29 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets() {
 	remoteSrc.logger.Debug("Updated secret mappings")
 }
 
-func (remoteSrc *remoteSrcdsLogSource) addLogAddress(addr string) {
-	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*10)
+func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr string) {
+	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to add log addr", zap.Error(errServers))
 		return
 	}
-	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
+	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
 	defer cancelQuery()
 	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_add %s", addr))
 	remoteSrc.logger.Info("Added udp log address", zap.String("addr", addr))
 }
 
-func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
-	serversCtx, cancelServers := context.WithTimeout(remoteSrc.ctx, time.Second*10)
+func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, addr string) {
+	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
 	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to del log addr", zap.Error(errServers))
 		return
 	}
-	queryCtx, cancelQuery := context.WithTimeout(remoteSrc.ctx, time.Second*20)
+	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
 	defer cancelQuery()
 	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_del %s", addr))
 	remoteSrc.logger.Debug("Removed log address", zap.String("addr", addr))
@@ -109,7 +106,7 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(addr string) {
 // start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
+func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, database store.Store) {
 	type newMsg struct {
 		source int64
 		body   string
@@ -126,10 +123,10 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 	}()
 	//msgId := 0
 	msgIngressChan := make(chan newMsg)
-	remoteSrc.updateSecrets()
+	remoteSrc.updateSecrets(ctx)
 	if config.Debug.AddRCONLogAddress != "" {
-		remoteSrc.addLogAddress(config.Debug.AddRCONLogAddress)
-		defer remoteSrc.removeLogAddress(config.Debug.AddRCONLogAddress)
+		remoteSrc.addLogAddress(ctx, config.Debug.AddRCONLogAddress)
+		defer remoteSrc.removeLogAddress(ctx, config.Debug.AddRCONLogAddress)
 	}
 	running := true
 	count := uint64(0)
@@ -175,15 +172,15 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			}
 		}
 	}()
-	pc := newPlayerCache(remoteSrc.logger)
+	//pc := newPlayerCache(remoteSrc.logger)
 	ticker := time.NewTicker(remoteSrc.frequency)
 	//errCount := 0
 	for {
 		select {
-		case <-remoteSrc.ctx.Done():
+		case <-ctx.Done():
 			running = false
 		case <-ticker.C:
-			remoteSrc.updateSecrets()
+			remoteSrc.updateSecrets(ctx)
 			//remoteSrc.updateDNS()
 		case logPayload := <-msgIngressChan:
 			var serverName string
@@ -196,13 +193,12 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 			}
 			serverName = serverNameValue
 			var server model.Server
-			if errServer := database.GetServerByName(remoteSrc.ctx, serverName, &server); errServer != nil {
+			if errServer := database.GetServerByName(ctx, serverName, &server); errServer != nil {
 				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 				continue
 			}
 			var serverEvent model.ServerEvent
-			if errLogServerEvent := logToServerEvent(remoteSrc.ctx, remoteSrc.logger, server, logPayload.body,
-				database, pc, &serverEvent); errLogServerEvent != nil {
+			if errLogServerEvent := logToServerEvent(server, logPayload.body, &serverEvent); errLogServerEvent != nil {
 				remoteSrc.logger.Debug("Failed to create ServerEvent", zap.Error(errLogServerEvent))
 				continue
 			}
@@ -212,168 +208,26 @@ func (remoteSrc *remoteSrcdsLogSource) start(database store.Store) {
 	}
 }
 
-func logToServerEvent(ctx context.Context, logger *zap.Logger, server model.Server, msg string, db store.Store,
-	playerStateCache *playerCache, event *model.ServerEvent) error {
-	var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
-		if sid == "BOT" {
-			player.SteamID = logparse.BotSid
-			name, ok := results.Values[nameKey]
-			if !ok {
-				return errors.New("Failed to parse bot name")
-			}
-			player.PersonaName = name.(string)
-			return nil
-		} else {
-			return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
-		}
+func logToServerEvent(server model.Server, msg string, event *model.ServerEvent) error {
+	//var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
+	//	if sid == "BOT" {
+	//		panic("fixme")
+	//		//player.SteamID = logparse.BotSid
+	//		//name, ok := results.Values[nameKey]
+	//		//if !ok {
+	//		//	return errors.New("Failed to parse bot name")
+	//		//}
+	//		//player.PersonaName = name.(string)
+	//		return nil
+	//	} else {
+	//		return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
+	//	}
+	//}
+	parseResult, errParse := logparse.Parse(msg)
+	if errParse != nil {
+		return errParse
 	}
-
-	parseResult := logparse.Parse(msg)
 	event.Server = server
-	event.EventType = parseResult.MsgType
-
-	playerSource := model.NewPerson(0)
-	sid1, sid1Found := parseResult.Values["sid"]
-	if sid1Found {
-		if sourceErr := resultToSource(sid1.(string), parseResult, "name", &playerSource); sourceErr != nil {
-			return sourceErr
-		}
-		event.Source = playerSource
-	}
-	playerTarget := model.NewPerson(0)
-	sid2, sid2Found := parseResult.Values["sid2"]
-	if sid2Found {
-		if sourceErr := resultToSource(sid2.(string), parseResult, "name2", &playerTarget); sourceErr != nil {
-			return sourceErr
-		}
-		event.Target = playerTarget
-	}
-	aposValue, aposFound := parseResult.Values["attacker_position"]
-	if aposFound {
-		var attackerPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(aposValue.(string), &attackerPosition); errParsePOS != nil {
-			logger.Warn("Failed to parse attacker position", zap.Error(errParsePOS))
-		}
-		event.AttackerPOS = attackerPosition
-		delete(parseResult.Values, "attacker_position")
-	}
-	vposValue, vposFound := parseResult.Values["victim_position"]
-	if vposFound {
-		var victimPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(vposValue.(string), &victimPosition); errParsePOS != nil {
-			logger.Warn("Failed to parse victim position", zap.Error(errParsePOS))
-		}
-		event.VictimPOS = victimPosition
-		delete(parseResult.Values, "victim_position")
-	}
-	asValue, asFound := parseResult.Values["assister_position"]
-	if asFound {
-		var assisterPosition logparse.Pos
-		if errParsePOS := logparse.ParsePOS(asValue.(string), &assisterPosition); errParsePOS != nil {
-			logger.Warn("Failed to parse assister position", zap.Error(errParsePOS))
-		}
-		event.AssisterPOS = assisterPosition
-		delete(parseResult.Values, "assister_position")
-	}
-
-	critType, critTypeFound := parseResult.Values["crit"]
-	if critTypeFound {
-		event.Crit = critType.(logparse.CritType)
-		delete(parseResult.Values, "crit")
-	}
-
-	weapon := logparse.UnknownWeapon
-	weaponValue, weaponFound := parseResult.Values["weapon"]
-	if weaponFound {
-		weapon = logparse.ParseWeapon(weaponValue.(string))
-	}
-	event.Weapon = weapon
-
-	var class logparse.PlayerClass
-	classValue, classFound := parseResult.Values["class"]
-	if classFound {
-		if !logparse.ParsePlayerClass(classValue.(string), &class) {
-			class = logparse.Spectator
-		}
-		delete(parseResult.Values, "class")
-	} else if event.Source.SteamID != 0 {
-		class = playerStateCache.getClass(event.Source.SteamID)
-	}
-	event.PlayerClass = class
-
-	var damage int64
-	dmgValue, dmgFound := parseResult.Values["damage"]
-	if dmgFound {
-		parsedDamage, errParseDamage := strconv.ParseInt(dmgValue.(string), 10, 32)
-		if errParseDamage != nil {
-			logger.Warn("failed to parse damage value", zap.Error(errParseDamage))
-		}
-		damage = parsedDamage
-		delete(parseResult.Values, "damage")
-	}
-	event.Damage = damage
-
-	var realDamage int64
-	realDmgValue, realDmgFound := parseResult.Values["realdamage"]
-	if realDmgFound {
-		parsedRealDamage, errParseRealDamage := strconv.ParseInt(realDmgValue.(string), 10, 32)
-		if errParseRealDamage != nil {
-			logger.Warn("failed to parse damage value", zap.Error(errParseRealDamage))
-		}
-		realDamage = parsedRealDamage
-		delete(parseResult.Values, "realdamage")
-	}
-	event.RealDamage = realDamage
-
-	var item logparse.PickupItem
-	itemValue, itemFound := parseResult.Values["item"]
-	if itemFound {
-		if !logparse.ParsePickupItem(itemValue.(string), &item) {
-			item = 0
-		}
-	}
-	event.Item = item
-	var team logparse.Team
-	teamValue, teamFound := parseResult.Values["team"]
-	if teamFound {
-		if !logparse.ParseTeam(teamValue.(string), &team) {
-			team = 0
-		}
-	} else {
-		if event.Source.SteamID.Valid() {
-			team = playerStateCache.getTeam(event.Source.SteamID)
-		}
-	}
-	event.Team = team
-
-	healingValue, healingFound := parseResult.Values["healing"]
-	if healingFound {
-		healingP, errParseHealing := strconv.ParseInt(healingValue.(string), 10, 32)
-		if errParseHealing != nil {
-			logger.Warn("failed to parse healing value", zap.Error(errParseHealing))
-		}
-		event.Healing = healingP
-	}
-
-	createdOnValue, createdOnFound := parseResult.Values["created_on"]
-	if !createdOnFound {
-		event.CreatedOn = config.Now()
-	} else {
-		event.CreatedOn = createdOnValue.(time.Time)
-	}
-	// Remove keys that get mapped to actual schema columns
-	for _, key := range []string{
-		"created_on", "item", "weapon", "healing",
-		"name", "pid", "sid", "team",
-		"name2", "pid2", "sid2", "team2"} {
-		delete(parseResult.Values, key)
-	}
-	event.MetaData = parseResult.Values
-	switch parseResult.MsgType {
-	case logparse.SpawnedAs:
-		playerStateCache.setClass(event.Source.SteamID, event.PlayerClass)
-	case logparse.JoinedTeam:
-		playerStateCache.setTeam(event.Source.SteamID, event.Team)
-	}
+	event.Results = parseResult
 	return nil
 }

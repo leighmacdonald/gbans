@@ -101,13 +101,16 @@ const (
 type Team int
 
 const (
-	SPEC Team = iota
+	UNASSIGNED Team = iota
+	SPEC
 	RED
 	BLU
 )
 
 func (t Team) String() string {
 	switch t {
+	case UNASSIGNED:
+		return "UNASSIGNED"
 	case RED:
 		return "RED"
 	case BLU:
@@ -214,14 +217,14 @@ func (pc PlayerClass) String() string {
 	}[pc]
 }
 
-// Medigun holds which medigun a player was using
+// MedigunType holds which medigun a player was using
 //
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
-type Medigun int
+type MedigunType int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	Uber Medigun = iota
+	Uber MedigunType = iota
 	Kritzkrieg
 	Vaccinator
 	QuickFix
@@ -354,6 +357,11 @@ const (
 	Wrench
 	Sapper
 	JarBased
+	PanicAttack
+	PDAEngineer
+	TFMedigun
+	TFFlameThrower
+	Dispenser
 )
 
 func (w Weapon) String() string {
@@ -450,6 +458,8 @@ var weaponNames = map[Weapon]string{
 	Natascha:             "natascha",
 	NecroSmasher:         "necro_smasher",
 	Original:             "quake_rl",
+	PanicAttack:          "panic_attack",
+	PDAEngineer:          "pda_engineer",
 	PepPistol:            "pep_pistol",
 	Phlog:                "phlogistinator",
 	Pistol:               "pistol",
@@ -498,6 +508,10 @@ var weaponNames = map[Weapon]string{
 	Wrangler:             "wrangler_kill",
 	WrapAssassin:         "wrap_assassin",
 	Wrench:               "wrench",
+	// Special weapons
+	TFMedigun:      "tf_weapon_medigun", // When used to extinguish
+	TFFlameThrower: "tf_weapon_flamethrower",
+	Dispenser:      "dispenser",
 }
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers,GoUnusedGlobalVariable

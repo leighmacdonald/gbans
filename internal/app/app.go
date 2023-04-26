@@ -244,95 +244,107 @@ func (app *App) warnWorker() {
 					}
 				}
 			case newWarn := <-app.warningChan:
-				steamId := newWarn.ServerEvent.Source.SteamID
-				if !steamId.Valid() {
+				evt := newWarn.ServerEvent.Event.(logparse.SayEvt)
+				if !evt.SID.Valid() {
 					continue
 				}
-				if newWarn.ServerEvent.Server.ServerID != 408 {
-					continue
+				newWarn.MatchedFilter.TriggerCount++
+				if errSave := app.store.SaveFilter(app.ctx, newWarn.MatchedFilter); errSave != nil {
+					app.logger.Error("Failed to update filter trigger count", zap.Error(errSave))
 				}
 				app.logger.Info("User triggered word filter",
 					zap.String("matched", newWarn.Matched),
 					zap.String("message", newWarn.Message),
 					zap.Int64("filter_id", newWarn.MatchedFilter.FilterID))
-				_, found := warnings[steamId]
-				if !found {
-					warnings[steamId] = []userWarning{}
+				var person model.Person
+				if personErr := app.PersonBySID(app.ctx, evt.SID, &person); personErr != nil {
+					app.logger.Error("Failed to get person for warning", zap.Error(personErr))
+					continue
 				}
-				warnings[steamId] = append(warnings[steamId], newWarn.userWarning)
+				if newWarn.MatchedFilter.IsEnabled {
+					_, found := warnings[evt.SID]
+					if !found {
+						warnings[evt.SID] = []userWarning{}
+					}
+					warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
+				}
+
+				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[evt.SID]), config.General.WarningLimit)
+				if !newWarn.MatchedFilter.IsEnabled {
+					title = "[DISABLED] Language Warning"
+				}
 				warnNotice := &discordgo.MessageEmbed{
-					URL:   config.ExtURL("/profiles/%d", steamId),
+					URL:   config.ExtURL("/profiles/%d", evt.SID),
 					Type:  discordgo.EmbedTypeRich,
-					Title: fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[steamId]), config.General.WarningLimit),
-					Color: int(orange),
-					Image: &discordgo.MessageEmbedImage{URL: newWarn.ServerEvent.Source.AvatarFull},
+					Title: title,
+					Color: int(green),
+					Image: &discordgo.MessageEmbedImage{URL: person.AvatarFull},
 				}
 				addField(warnNotice, app.logger, "Matched", newWarn.Matched)
 				addField(warnNotice, app.logger, "Message", newWarn.userWarning.Message)
-				if len(warnings[steamId]) > config.General.WarningLimit {
-					app.logger.Info("Warn limit exceeded",
-						zap.Int64("sid64", steamId.Int64()),
-						zap.Int("count", len(warnings[steamId])))
-					var errBan error
-					var banSteam model.BanSteam
-					if errNewBan := NewBanSteam(model.StringSID(config.General.Owner.String()),
-						model.StringSID(steamId.String()),
-						model.Duration(config.General.WarningExceededDurationValue),
-						newWarn.WarnReason,
-						"",
-						"Automatic warning ban",
-						model.System,
-						0,
-						model.NoComm,
-						&banSteam); errNewBan != nil {
-						app.logger.Error("Failed to create warning ban", zap.Error(errNewBan))
-						continue
-					}
-					switch config.General.WarningExceededAction {
-					case config.Gag:
-						banSteam.BanType = model.NoComm
-						errBan = app.BanSteam(app.ctx, &banSteam)
-					case config.Ban:
-						banSteam.BanType = model.Banned
-						errBan = app.BanSteam(app.ctx, &banSteam)
-					case config.Kick:
-						var playerInfo model.PlayerInfo
-						errBan = app.Kick(app.ctx, model.System, model.StringSID(steamId.String()),
-							model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
-					}
-					if errBan != nil {
-						app.logger.Error("Failed to apply warning action",
-							zap.Error(errBan),
-							zap.String("action", string(config.General.WarningExceededAction)))
-					}
-					addField(warnNotice, app.logger, "Name", newWarn.ServerEvent.Source.PersonaName)
-					expIn := "Permanent"
-					expAt := "Permanent"
-					if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
-						expIn = config.FmtDuration(banSteam.ValidUntil)
-						expAt = config.FmtTimeShort(banSteam.ValidUntil)
-					}
-					addField(warnNotice, app.logger, "Expires In", expIn)
-					addField(warnNotice, app.logger, "Expires At", expAt)
-				} else {
-					msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
-						"Further offenses will result in mutes/bans", len(warnings[steamId]))
-					if errPSay := app.PSay(app.ctx, 0, model.StringSID(steamId.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
-						app.logger.Error("Failed to send user warning psay message", zap.Error(errPSay))
+				if newWarn.MatchedFilter.IsEnabled {
+					if len(warnings[evt.SID]) > config.General.WarningLimit {
+						app.logger.Info("Warn limit exceeded",
+							zap.Int64("sid64", evt.SID.Int64()),
+							zap.Int("count", len(warnings[evt.SID])))
+						var errBan error
+						var banSteam model.BanSteam
+						if errNewBan := NewBanSteam(model.StringSID(config.General.Owner.String()),
+							model.StringSID(evt.SID.String()),
+							model.Duration(config.General.WarningExceededDurationValue),
+							newWarn.WarnReason,
+							"",
+							"Automatic warning ban",
+							model.System,
+							0,
+							model.NoComm,
+							&banSteam); errNewBan != nil {
+							app.logger.Error("Failed to create warning ban", zap.Error(errNewBan))
+							continue
+						}
+						switch config.General.WarningExceededAction {
+						case config.Gag:
+							banSteam.BanType = model.NoComm
+							errBan = app.BanSteam(app.ctx, &banSteam)
+						case config.Ban:
+							banSteam.BanType = model.Banned
+							errBan = app.BanSteam(app.ctx, &banSteam)
+						case config.Kick:
+							var playerInfo model.PlayerInfo
+							errBan = app.Kick(app.ctx, model.System, model.StringSID(evt.SID.String()),
+								model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
+						}
+						if errBan != nil {
+							app.logger.Error("Failed to apply warning action",
+								zap.Error(errBan),
+								zap.String("action", string(config.General.WarningExceededAction)))
+						}
+						addField(warnNotice, app.logger, "Name", person.PersonaName)
+						expIn := "Permanent"
+						expAt := "Permanent"
+						if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
+							expIn = config.FmtDuration(banSteam.ValidUntil)
+							expAt = config.FmtTimeShort(banSteam.ValidUntil)
+						}
+						addField(warnNotice, app.logger, "Expires In", expIn)
+						addField(warnNotice, app.logger, "Expires At", expAt)
+					} else {
+						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
+							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
+						if errPSay := app.PSay(app.ctx, 0, model.StringSID(evt.SID.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
+							app.logger.Error("Failed to send user warning psay message", zap.Error(errPSay))
+						}
 					}
 				}
 				addField(warnNotice, app.logger, "Pattern", newWarn.MatchedFilter.Pattern)
-				addFieldsSteamID(warnNotice, app.logger, steamId)
+				addFieldsSteamID(warnNotice, app.logger, evt.SID)
 				addFieldInt64Inline(warnNotice, app.logger, "Filter ID", newWarn.MatchedFilter.FilterID)
 				addFieldInline(warnNotice, app.logger, "Server", newWarn.ServerEvent.Server.ServerNameShort)
 				app.sendDiscordPayload(discordPayload{
 					channelId: config.Discord.ModLogChannelId,
 					embed:     warnNotice,
 				})
-				newWarn.MatchedFilter.TriggerCount++
-				if errSave := app.store.SaveFilter(app.ctx, newWarn.MatchedFilter); errSave != nil {
-					app.logger.Error("Failed to update filter trigger count", zap.Error(errSave))
-				}
+
 			case <-app.ctx.Done():
 				return
 			}
@@ -344,17 +356,21 @@ func (app *App) warnWorker() {
 	for {
 		select {
 		case serverEvent := <-eventChan:
-			msg, found := serverEvent.MetaData["msg"].(string)
-			if !found {
+			evt, ok := serverEvent.Event.(logparse.SayEvt)
+			if !ok {
+				app.logger.Error("Got invalid type?")
 				continue
 			}
-			matchedWord, matchedFilter := findFilteredWordMatch(msg)
+			if evt.Msg == "" {
+				continue
+			}
+			matchedWord, matchedFilter := findFilteredWordMatch(evt.Msg)
 			if matchedFilter != nil {
 				app.warningChan <- newUserWarning{
 					ServerEvent: serverEvent,
 					userWarning: userWarning{
 						WarnReason:    model.Language,
-						Message:       msg,
+						Message:       evt.Msg,
 						Matched:       matchedWord,
 						MatchedFilter: matchedFilter,
 						CreatedOn:     config.Now(),
@@ -388,7 +404,7 @@ func (app *App) matchSummarizer() {
 				matches[evt.Server.ServerID] = model.NewMatch(app.logger, evt.Server.ServerID, evt.Server.ServerNameLong)
 			}
 			// Apply the update before any secondary side effects trigger
-			if errApply := match.Apply(evt); errApply != nil {
+			if errApply := match.Apply(evt.Results); errApply != nil {
 				app.logger.Error("Error applying event",
 					zap.String("server", evt.Server.ServerNameShort),
 					zap.Error(errApply))
@@ -459,19 +475,19 @@ func (app *App) playerMessageWriter() {
 			case logparse.Say:
 				fallthrough
 			case logparse.SayTeam:
-				body := evt.GetValueString("msg")
-				if body == "" {
+				e := evt.Event.(logparse.SayEvt)
+				if e.Msg == "" {
 					app.logger.Warn("Empty person message body, skipping")
 					continue
 				}
 				msg := model.PersonMessage{
-					SteamId:     evt.Source.SteamID,
-					PersonaName: evt.Source.PersonaName,
+					SteamId:     e.SID,
+					PersonaName: e.Name,
 					ServerName:  evt.Server.ServerNameLong,
 					ServerId:    evt.Server.ServerID,
-					Body:        body,
+					Body:        e.Msg,
 					Team:        evt.EventType == logparse.SayTeam,
-					CreatedOn:   evt.CreatedOn,
+					CreatedOn:   e.CreatedOn,
 				}
 				lCtx, cancel := context.WithTimeout(app.ctx, time.Second*5)
 				if errChat := app.store.AddChatHistory(lCtx, &msg); errChat != nil {
@@ -495,24 +511,24 @@ func (app *App) playerConnectionWriter() {
 		case <-app.ctx.Done():
 			return
 		case evt := <-serverEventChan:
-			addr := evt.GetValueString("address")
-			if addr == "" {
+			e := evt.Event.(logparse.ConnectedEvt)
+			if e.Address == "" {
 				app.logger.Warn("Empty person message body, skipping")
 				continue
 			}
-			parsedAddr := net.ParseIP(addr)
+			parsedAddr := net.ParseIP(e.Address)
 			if parsedAddr == nil {
-				app.logger.Warn("Received invalid address", zap.String("addr", addr))
+				app.logger.Warn("Received invalid address", zap.String("addr", e.Address))
 				continue
 			}
-			msg := model.PersonConnection{
+			conn := model.PersonConnection{
 				IPAddr:      parsedAddr,
-				SteamId:     evt.Source.SteamID,
-				PersonaName: evt.Source.PersonaName,
-				CreatedOn:   evt.CreatedOn,
+				SteamId:     e.SID,
+				PersonaName: e.Name,
+				CreatedOn:   e.CreatedOn,
 			}
 			lCtx, cancel := context.WithTimeout(app.ctx, time.Second*5)
-			if errChat := app.store.AddConnectionHistory(lCtx, &msg); errChat != nil {
+			if errChat := app.store.AddConnectionHistory(lCtx, &conn); errChat != nil {
 				app.logger.Error("Failed to add connection history", zap.Error(errChat))
 			}
 			cancel()
@@ -542,7 +558,7 @@ func (app *App) logReader() {
 			}
 		}()
 	}
-	playerStateCache := newPlayerCache(app.logger)
+	//playerStateCache := newPlayerCache(app.logger)
 	for {
 		select {
 		case logFile := <-app.logFileChan:
@@ -551,12 +567,13 @@ func (app *App) logReader() {
 			unknown := 0
 			ignored := 0
 			for _, logLine := range logFile.Lines {
-				var serverEvent model.ServerEvent
-				if errLogServerEvent := logToServerEvent(app.ctx, app.logger, logFile.Server, logLine, app.store,
-					playerStateCache, &serverEvent); errLogServerEvent != nil {
-					app.logger.Error("Failed to parse log line", zap.Error(errLogServerEvent))
-					failed++
+				parseResult, errParse := logparse.Parse(logLine)
+				if errParse != nil {
 					continue
+				}
+				serverEvent := model.ServerEvent{
+					Server:  logFile.Server,
+					Results: parseResult,
 				}
 				if serverEvent.EventType == logparse.IgnoredMsg {
 					ignored++
@@ -602,7 +619,7 @@ func (app *App) initWorkers() {
 	if errDuration != nil {
 		app.logger.Fatal("Failed to parse server_status_update_freq", zap.Error(errDuration))
 	}
-	masterUpdateFreq, errParseMasterUpdateFreq := time.ParseDuration(config.General.ServerStatusUpdateFreq)
+	masterUpdateFreq, errParseMasterUpdateFreq := time.ParseDuration(config.General.MasterServerStatusUpdateFreq)
 	if errParseMasterUpdateFreq != nil {
 		app.logger.Fatal("Failed to parse master_server_status_update_freq", zap.Error(errParseMasterUpdateFreq))
 	}
@@ -630,11 +647,11 @@ func (app *App) initWorkers() {
 
 // UDP log sink
 func (app *App) initLogSrc() {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.ctx, app.logger, config.Log.SrcdsLogAddr, app.store)
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.logger, config.Log.SrcdsLogAddr, app.store)
 	if errLogSrc != nil {
 		app.logger.Fatal("Failed to setup udp log src", zap.Error(errLogSrc))
 	}
-	logSrc.start(app.store)
+	logSrc.start(app.ctx, app.store)
 }
 
 func (app *App) sendUserNotification(pl notificationPayload) {

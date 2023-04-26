@@ -6,28 +6,21 @@ import (
 )
 
 // EmptyEvt is the base event for all other events. It just contains a timestamp.
-//
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type EmptyEvt struct {
 	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
-type UnhandledMsgEvt EmptyEvt
+type UnhandledMsgEvt struct {
+	EmptyEvt
+	Message string
+}
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
-type EnteredEvt EmptyEvt
-
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WRoundStartEvt EmptyEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WRoundOvertimeEvt EmptyEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WPausedEvt EmptyEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WResumedEvt EmptyEvt
 
 type WRoundSetupBeginEvt EmptyEvt
@@ -58,11 +51,16 @@ type TargetPlayer struct {
 	Bot2  bool          `json:"bot2"`
 }
 
-type LogStartEvt struct {
-	File    string `json:"file"`
-	Game    string `json:"game"`
-	Version string `json:"version"`
+type EnteredEvt struct {
 	EmptyEvt
+	SourcePlayer
+}
+
+type LogStartEvt struct {
+	EmptyEvt
+	File    string `json:"file" mapstructure:"file"`
+	Game    string `json:"game" mapstructure:"game"`
+	Version string `json:"version" mapstructure:"version"`
 }
 
 // LogStopEvt is the server shutting down the map and closing the log
@@ -70,37 +68,40 @@ type LogStopEvt EmptyEvt
 
 // CVAREvt is emitted on a cvar change
 type CVAREvt struct {
-	CVAR  string `json:"cvar"`
-	Value string `json:"value"`
 	EmptyEvt
+	CVAR  string `json:"cvar" mapstructure:"cvar"`
+	Value string `json:"value" mapstructure:"value"`
 }
 
 // RCONEvt is emitted on a rcon connection executing a command
 type RCONEvt struct {
-	Cmd string `json:"cmd"`
 	EmptyEvt
+	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type JoinedTeamEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Team Team `json:"new_team"`
+	Team Team `json:"new_team" mapstructure:"new_team"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type SpawnedAsEvt struct {
+	EmptyEvt
+	SourcePlayer
+	PlayerClass PlayerClass `json:"class" mapstructure:"class"`
+}
+
 type ChangeClassEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Class PlayerClass `json:"class"`
+	Class PlayerClass `json:"class" mapstructure:"class"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SuicideEvt struct {
 	EmptyEvt
 	SourcePlayer
 	Pos    Pos    `json:"attacker_position" mapstructure:"attacker_position"`
-	Weapon Weapon `json:"weapon"`
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
 type JarateAttackEvt struct {
@@ -116,22 +117,22 @@ type MilkAttackEvt JarateAttackEvt
 
 type GasAttackEvt JarateAttackEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type ExtinguishedEvt JarateAttackEvt
+
 type MedicDeathEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	Healing int `json:"healing"`
-	Uber    int `json:"uber"`
+	Healing int  `json:"healing" mapstructure:"healing"`
+	HadUber bool `json:"ubercharge" mapstructure:"ubercharge"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type MedicDeathExEvt struct {
-	UberPct int `json:"uber_pct"`
 	EmptyEvt
+	SourcePlayer
+	UberPct int `json:"uberpct" mapstructure:"uberpct"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KilledEvt struct {
 	EmptyEvt
 	SourcePlayer
@@ -141,7 +142,6 @@ type KilledEvt struct {
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CustomKilledEvt struct {
 	EmptyEvt
 	SourcePlayer
@@ -152,7 +152,6 @@ type CustomKilledEvt struct {
 	Weapon     Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KillAssistEvt struct {
 	EmptyEvt
 	SourcePlayer
@@ -162,12 +161,16 @@ type KillAssistEvt struct {
 	VPos  Pos `json:"victim_position" mapstructure:"victim_position"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type SourcePlayerPosition struct {
+	SourcePlayer
+	Pos
+}
+
 type PointCapturedEvt struct {
-	Team       Team   `json:"team"`
-	CP         int    `json:"cp"`
-	CPName     string `json:"cp_name"`
-	NumCappers int    `json:"num_cappers"`
+	Team       Team   `json:"team" mapstructure:"team"`
+	CP         int    `json:"cp" mapstructure:"cp"`
+	CPName     string `json:"cpname" mapstructure:"cpname"`
+	NumCappers int    `json:"numcappers" mapstructure:"numcappers"`
 	Player1    string `json:"player1" mapstructure:"player1"`
 	Position1  Pos    `json:"position1"  mapstructure:"position1"`
 	Player2    string `json:"player2" mapstructure:"player2"`
@@ -181,86 +184,112 @@ type PointCapturedEvt struct {
 	EmptyEvt
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
+	var captors []SourcePlayerPosition
+	for i := 0; i < e.NumCappers; i++ {
+		var ps string
+		var pos Pos
+		switch i {
+		case 0:
+			ps = e.Player1
+			pos = e.Position1
+		case 1:
+			ps = e.Player2
+			pos = e.Position2
+		case 2:
+			ps = e.Player3
+			pos = e.Position3
+		case 3:
+			ps = e.Player4
+			pos = e.Position4
+		case 4:
+			ps = e.Player5
+			pos = e.Position5
+		default:
+			continue
+		}
+		var src SourcePlayer
+		if !parseSourcePlayer(ps, &src) {
+			continue
+		}
+
+		captors = append(captors, SourcePlayerPosition{
+			SourcePlayer: src,
+			Pos:          pos,
+		})
+
+	}
+	return captors
+}
+
 type ConnectedEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Address string `json:"address"`
-	Port    int    `json:"port"`
+	Address string `json:"address" mapstructure:"address"`
+	Port    int    `json:"port" mapstructure:"port"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DisconnectedEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Reason string `json:"reason"`
+	Reason string `json:"reason" mapstructure:"reason"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type KilledObjectEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	Object string `json:"object"`
-	Weapon Weapon `json:"weapon"`
+	Object string `json:"object" mapstructure:"object"`
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 	APos   Pos    `json:"attacker_position"  mapstructure:"attacker_position"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CarryObjectEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Object string `json:"object"`
+	Object string `json:"object" mapstructure:"object"`
 	Pos    Pos    `json:"position"  mapstructure:"position"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DropObjectEvt CarryObjectEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type BuiltObjectEvt CarryObjectEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
+type DetonatedObjectEvt CarryObjectEvt
+
 type WRoundWinEvt struct {
-	Winner Team `json:"winner"`
 	EmptyEvt
+	Winner Team `json:"winner" mapstructure:"winner"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WRoundLenEvt struct {
-	Length float64 `json:"seconds" mapstructure:"seconds"`
 	EmptyEvt
+	Length float64 `json:"seconds" mapstructure:"seconds"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WTeamScoreEvt struct {
+	EmptyEvt
 	Team    Team `json:"team" mapstructure:"team"`
 	Score   int  `json:"score" mapstructure:"score"`
 	Players int  `json:"players" mapstructure:"players"`
-	EmptyEvt
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SayEvt struct {
 	EmptyEvt
 	SourcePlayer `json:"source"`
-	Msg          string `json:"msg"`
+	Msg          string `json:"msg" mapstructure:"msg"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type SayTeamEvt SayEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DominationEvt struct {
 	EmptyEvt
 	SourcePlayer `json:"source"`
 	TargetPlayer `json:"target"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type RevengeEvt DominationEvt
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type CaptureBlockedEvt struct {
 	EmptyEvt
 	SourcePlayer
@@ -269,97 +298,85 @@ type CaptureBlockedEvt struct {
 	Pos    Pos    `json:"position" mapstructure:"position"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type FirstHealAfterSpawnEvt struct {
 	EmptyEvt
 	SourcePlayer
-	HealTime float32 `json:"time" mapstructure:"time"`
+	HealTime float64 `json:"time" mapstructure:"time"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeReadyEvt struct {
 	EmptyEvt
 	SourcePlayer
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeDeployedEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Medigun Medigun `json:"medigun" mapstructure:"medigun"`
+	Medigun MedigunType `json:"medigun" mapstructure:"medigun"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ChargeEndedEvt struct {
 	EmptyEvt
 	SourcePlayer
 	Duration float32 `json:"duration" mapstructure:"duration"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type LostUberAdvantageEvt struct {
 	EmptyEvt
 	SourcePlayer
 	AdvTime int `json:"time" mapstructure:"time"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type EmptyUberEvt struct {
 	EmptyEvt
 	SourcePlayer
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type PickupEvt struct {
 	EmptyEvt
 	SourcePlayer
 	Item    PickupItem
-	Healing int `json:"healing" mapstructure:"healing"`
+	Healing int64 `json:"healing" mapstructure:"healing"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ShotFiredEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Weapon Weapon `json:"weapon"`
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type ShotHitEvt struct {
 	EmptyEvt
 	SourcePlayer
-	Weapon Weapon `json:"weapon"`
+	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type DamageEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	Damage     int      `json:"damage"`
-	RealDamage int      `json:"real_damage"`
-	Weapon     Weapon   `json:"weapon"`
-	Healing    int      `json:"healing,omitempty"` // On ubersaw
-	Crit       CritType `json:"crit"`
+	Damage     int64    `json:"damage" mapstructure:"damage"`
+	RealDamage int64    `json:"realdamage" mapstructure:"realdamage"`
+	Weapon     Weapon   `json:"weapon" mapstructure:"weapon"`
+	Healing    int64    `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
+	Crit       CritType `json:"crit" mapstructure:"crit"`
+	AirShot    bool     `json:"airshot" mapstructure:"airshot"` // 1/0
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type HealedEvt struct {
 	EmptyEvt
 	SourcePlayer
 	TargetPlayer
-	Healing int `json:"healing,omitempty"` // On ubersaw
+	Healing int64 `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WGameOverEvt struct {
-	Reason string `json:"reason"`
 	EmptyEvt
+	Reason string `json:"reason" mapstructure:"reason"`
 }
 
-//goland:noinspection GoUnnecessarilyExportedIdentifiers
 type WTeamFinalScoreEvt struct {
-	Score   int `json:"score"`
-	Players int `json:"players"`
 	EmptyEvt
+	Score   int `json:"score" mapstructure:"score"`
+	Players int `json:"players" mapstructure:"players"`
 }
