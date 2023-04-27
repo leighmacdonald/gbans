@@ -9,7 +9,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 
 export const discordRequiredValidator = yup
     .boolean()
-    .label('Is discord required')
+    .label('Is discordutil required')
     .required();
 
 export const DiscordRequiredField = ({

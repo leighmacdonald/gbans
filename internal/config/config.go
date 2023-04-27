@@ -5,7 +5,7 @@
 // Env variables will override the config values. They can all be set using the same format as shown to
 // map to the correct config keys:
 //
-//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
+//	export discordutil.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
 package config
@@ -202,7 +202,7 @@ var (
 )
 
 // Read reads in config file and ENV variables if set.
-func Read(cfgFiles ...string) (string, error) {
+func Read() (string, error) {
 	// Find home directory.
 	home, errHomeDir := homedir.Dir()
 	if errHomeDir != nil {
@@ -211,18 +211,18 @@ func Read(cfgFiles ...string) (string, error) {
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
 	viper.SetConfigName("gbans")
+	viper.SetConfigType("yml")
 	viper.SetEnvPrefix("gbans")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
-	for _, cfgFile := range cfgFiles {
-		viper.SetConfigFile(cfgFile)
-		if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
-			return "", errors.Errorf("Failed to read config file: %s", cfgFile)
-		}
+
+	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
+		return "", errors.Wrapf(errReadConfig, "Failed to read config file")
 	}
+
 	var root rootConfig
 	if errUnmarshal := viper.Unmarshal(&root); errUnmarshal != nil {
-		return "", errors.Errorf("Invalid config file format: %v", errUnmarshal)
+		return "", errors.Wrap(errUnmarshal, "Invalid config file format")
 	}
 	if strings.HasPrefix(root.DB.DSN, "pgx://") {
 		root.DB.DSN = strings.Replace(root.DB.DSN, "pgx://", "postgres://", 1)

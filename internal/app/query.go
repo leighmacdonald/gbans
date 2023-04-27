@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -16,14 +16,14 @@ import (
 	"time"
 )
 
-func (app *App) ServerState() model.ServerStateCollection {
+func (app *App) ServerState() state.ServerStateCollection {
 	app.serverStateMu.RLock()
-	state := app.serverState
+	s := app.serverState
 	app.serverStateMu.RUnlock()
-	sort.Slice(state, func(i, j int) bool {
-		return state[i].NameShort < state[j].NameShort
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].NameShort < s[j].NameShort
 	})
-	return state
+	return s
 }
 
 // Find will attempt to match an input string to a steam id and if connected, a
@@ -36,11 +36,11 @@ func (app *App) ServerState() model.ServerStateCollection {
 // actively connected
 //
 // TODO cleanup this mess
-func (app *App) Find(ctx context.Context, playerStr model.StringSID, ip string, playerInfo *model.PlayerInfo) error {
+func (app *App) Find(ctx context.Context, playerStr store.StringSID, ip string, playerInfo *state.PlayerInfo) error {
 	var (
-		result = &model.PlayerInfo{
-			Player: &model.ServerStatePlayer{},
-			Server: &model.Server{},
+		result = &state.PlayerInfo{
+			Player: &state.ServerStatePlayer{},
+			Server: &store.Server{},
 		}
 		err      error
 		inGame   = false
@@ -81,12 +81,12 @@ func (app *App) Find(ctx context.Context, playerStr model.StringSID, ip string, 
 	return nil
 }
 
-func (app *App) findPlayerByName(ctx context.Context, name string, playerInfo *model.PlayerInfo) error {
-	for _, state := range app.ServerState() {
-		for _, player := range state.Players {
+func (app *App) findPlayerByName(ctx context.Context, name string, playerInfo *state.PlayerInfo) error {
+	for _, currentState := range app.ServerState() {
+		for _, player := range currentState.Players {
 			if strings.Contains(strings.ToLower(player.Name), strings.ToLower(name)) {
-				var server model.Server
-				if errGetServerByName := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServerByName != nil {
+				var server store.Server
+				if errGetServerByName := app.store.GetServerByName(ctx, currentState.NameShort, &server); errGetServerByName != nil {
 					return errGetServerByName
 				}
 				playerInfo.Valid = true
@@ -100,12 +100,12 @@ func (app *App) findPlayerByName(ctx context.Context, name string, playerInfo *m
 	return consts.ErrUnknownID
 }
 
-func (app *App) findPlayerBySID(ctx context.Context, sid steamid.SID64, playerInfo *model.PlayerInfo) error {
-	for _, state := range app.ServerState() {
-		for _, player := range state.Players {
+func (app *App) findPlayerBySID(ctx context.Context, sid steamid.SID64, playerInfo *state.PlayerInfo) error {
+	for _, currentState := range app.ServerState() {
+		for _, player := range currentState.Players {
 			if player.SID == sid {
-				var server model.Server
-				if errGetServer := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
+				var server store.Server
+				if errGetServer := app.store.GetServerByName(ctx, currentState.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -119,12 +119,12 @@ func (app *App) findPlayerBySID(ctx context.Context, sid steamid.SID64, playerIn
 	return consts.ErrUnknownID
 }
 
-func (app *App) findPlayerByIP(ctx context.Context, ip net.IP, playerInfo *model.PlayerInfo) error {
-	for _, state := range app.ServerState() {
-		for _, player := range state.Players {
+func (app *App) findPlayerByIP(ctx context.Context, ip net.IP, playerInfo *state.PlayerInfo) error {
+	for _, currentState := range app.ServerState() {
+		for _, player := range currentState.Players {
 			if ip.Equal(player.IP) {
-				var server model.Server
-				if errGetServer := app.store.GetServerByName(ctx, state.NameShort, &server); errGetServer != nil {
+				var server store.Server
+				if errGetServer := app.store.GetServerByName(ctx, currentState.NameShort, &server); errGetServer != nil {
 					return errGetServer
 				}
 				playerInfo.Valid = true
@@ -140,13 +140,13 @@ func (app *App) findPlayerByIP(ctx context.Context, ip net.IP, playerInfo *model
 
 // FindPlayerByCIDR  looks for a player with a ip intersecting with the cidr range
 // TODO Support matching multiple people and not just the first found
-func (app *App) FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet, playerInfo *model.PlayerInfo) error {
-	for _, state := range app.ServerState() {
-		for _, player := range state.Players {
+func (app *App) FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet, playerInfo *state.PlayerInfo) error {
+	for _, currentState := range app.ServerState() {
+		for _, player := range currentState.Players {
 			if ipNet.Contains(player.IP) {
 				localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-				var server model.Server
-				if errGetServer := app.store.GetServerByName(localCtx, state.NameShort, &server); errGetServer != nil {
+				var server store.Server
+				if errGetServer := app.store.GetServerByName(localCtx, currentState.NameShort, &server); errGetServer != nil {
 					cancel()
 					return errGetServer
 				}
@@ -161,10 +161,9 @@ func (app *App) FindPlayerByCIDR(ctx context.Context, ipNet *net.IPNet, playerIn
 	return consts.ErrUnknownID
 }
 
-// getOrCreateProfileBySteamID functions the same as GetOrCreatePersonBySteamID except
-// that it will also query the steam webapi to fetch and load the extra Player summary info
-func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore, sid steamid.SID64, person *model.Person) error {
-	if errGetPerson := database.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
+// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
+func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
+	if errGetPerson := app.store.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}
 	if person.IsNew || config.Now().Sub(person.UpdatedOnSteam) > time.Minute*60 {
@@ -192,7 +191,7 @@ func getOrCreateProfileBySteamID(ctx context.Context, database store.PersonStore
 		person.UpdatedOnSteam = config.Now()
 	}
 	person.SteamID = sid
-	if errSavePerson := database.SavePerson(ctx, person); errSavePerson != nil {
+	if errSavePerson := app.store.SavePerson(ctx, person); errSavePerson != nil {
 		return errors.Wrapf(errSavePerson, "Failed to save person")
 	}
 	return nil

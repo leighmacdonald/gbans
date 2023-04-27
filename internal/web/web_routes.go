@@ -1,11 +1,11 @@
-package app
+package web
 
 import (
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
@@ -74,7 +74,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
-		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord"}
+		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discordutil"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{
@@ -140,12 +140,12 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(web.logger, web.app.store, model.PUser))
+		authed := authedGrp.Use(web.authMiddleware(store.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
 			web.wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
 
-		authed.GET("/api/auth/discord", web.onOAuthDiscordCallback())
+		authed.GET("/api/auth/discordutil", web.onOAuthDiscordCallback())
 		authed.GET("/api/current_profile", web.onAPICurrentProfile())
 		authed.GET("/api/current_profile/notifications", web.onAPICurrentProfileNotifications())
 		authed.POST("/api/report", web.onAPIPostReportCreate())
@@ -169,7 +169,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(web.logger, web.app.store, model.PEditor))
+		editorRoute := editorGrp.Use(web.authMiddleware(store.PEditor))
 		editorRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug())
 		editorRoute.POST("/api/news", web.onAPIPostNewsCreate())
 		editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate())
@@ -183,7 +183,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(web.logger, web.app.store, model.PModerator))
+		modRoute := modGrp.Use(web.authMiddleware(store.PModerator))
 		modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState())
 		modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections())
 		modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages())
@@ -208,7 +208,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(web.logger, web.app.store, model.PAdmin))
+		adminRoute := adminGrp.Use(web.authMiddleware(store.PAdmin))
 		adminRoute.POST("/api/servers", web.onAPIPostServer())
 		adminRoute.POST("/api/servers/:server_id", web.onAPIPostServerUpdate())
 		adminRoute.DELETE("/api/servers/:server_id", web.onAPIPostServerDelete())

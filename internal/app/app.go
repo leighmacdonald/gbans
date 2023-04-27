@@ -4,7 +4,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/internal/web"
+	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"go.uber.org/zap"
 	"gopkg.in/mxpv/patreon-go.v1"
@@ -26,7 +30,7 @@ import (
 )
 
 type App struct {
-	logFileChan chan *LogFilePayload
+	logFileChan chan *model.LogFilePayload
 	logger      *zap.Logger
 	// Current known state of the servers rcon status command
 	serverStateStatus   map[string]extra.Status
@@ -36,11 +40,11 @@ type App struct {
 	serverStateA2SMu   *sync.RWMutex
 	masterServerList   []model.ServerLocation
 	masterServerListMu *sync.RWMutex
-	discordSendMsg     chan discordPayload
+	discordSendMsg     chan discordutil.Payload
 	warningChan        chan newUserWarning
-	notificationChan   chan notificationPayload
+	notificationChan   chan model.NotificationPayload
 	serverStateMu      *sync.RWMutex
-	serverState        model.ServerStateCollection
+	serverState        state.ServerStateCollection
 
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
@@ -59,33 +63,28 @@ var (
 )
 
 type userWarning struct {
-	WarnReason    model.Reason
+	WarnReason    store.Reason
 	Message       string
 	Matched       string
-	MatchedFilter *model.Filter
+	MatchedFilter *store.Filter
 	CreatedOn     time.Time
-}
-
-type discordPayload struct {
-	channelId string
-	embed     *discordgo.MessageEmbed
 }
 
 func New(ctx context.Context, logger *zap.Logger) *App {
 	app := App{
 		logger:               logger,
-		logFileChan:          make(chan *LogFilePayload, 10),
+		logFileChan:          make(chan *model.LogFilePayload, 10),
 		serverStateStatus:    map[string]extra.Status{},
 		serverStateStatusMu:  &sync.RWMutex{},
 		serverStateA2S:       map[string]a2s.ServerInfo{},
 		serverStateA2SMu:     &sync.RWMutex{},
 		masterServerList:     []model.ServerLocation{},
 		masterServerListMu:   &sync.RWMutex{},
-		discordSendMsg:       make(chan discordPayload, 5),
+		discordSendMsg:       make(chan discordutil.Payload, 5),
 		warningChan:          make(chan newUserWarning),
-		notificationChan:     make(chan notificationPayload, 5),
+		notificationChan:     make(chan model.NotificationPayload, 5),
 		serverStateMu:        &sync.RWMutex{},
-		serverState:          model.ServerStateCollection{},
+		serverState:          state.ServerStateCollection{},
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
 		patreonMu:            &sync.RWMutex{},
@@ -100,18 +99,18 @@ func firstTimeSetup(ctx context.Context, logger *zap.Logger, db store.Store) err
 	}
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-	var owner model.Person
+	var owner store.Person
 	if errRootUser := db.GetPersonBySteamID(localCtx, config.General.Owner, &owner); errRootUser != nil {
 		if !errors.Is(errRootUser, store.ErrNoResult) {
 			return errors.Wrapf(errRootUser, "Failed first time setup")
 		}
 		logger.Info("Performing initial setup")
-		newOwner := model.NewPerson(config.General.Owner)
-		newOwner.PermissionLevel = model.PAdmin
+		newOwner := store.NewPerson(config.General.Owner)
+		newOwner.PermissionLevel = store.PAdmin
 		if errSave := db.SavePerson(localCtx, &newOwner); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create admin user")
 		}
-		newsEntry := model.NewsEntry{
+		newsEntry := store.NewsEntry{
 			Title:       "Welcome to gbans",
 			BodyMD:      "This is an *example* **news** entry.",
 			IsPublished: true,
@@ -121,7 +120,7 @@ func firstTimeSetup(ctx context.Context, logger *zap.Logger, db store.Store) err
 		if errSave := db.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create sample news entry")
 		}
-		server := model.NewServer("server-1", "127.0.0.1", 27015)
+		server := store.NewServer("server-1", "127.0.0.1", 27015)
 		server.CC = "jp"
 		server.RCON = "example_rcon"
 		server.Latitude = 35.652832
@@ -143,6 +142,43 @@ func firstTimeSetup(ctx context.Context, logger *zap.Logger, db store.Store) err
 		}
 	}
 	return nil
+}
+
+func (app *App) Store() store.Store {
+	return app.store
+}
+
+func (app *App) Logger() *zap.Logger {
+	return app.logger
+}
+
+func (app *App) Ctx() context.Context {
+	return app.ctx
+}
+
+func (app *App) LogFileChan() chan *model.LogFilePayload {
+	return app.logFileChan
+}
+
+func (app *App) PatreonPledges() []patreon.Pledge {
+	app.patreonMu.RLock()
+	pledges := app.patreonPledges
+	//users := web.app.patreonUsers
+	app.patreonMu.RUnlock()
+	return pledges
+}
+
+func (app *App) MasterServerList() []model.ServerLocation {
+	app.masterServerListMu.RLock()
+	defer app.masterServerListMu.RUnlock()
+	return app.masterServerList
+}
+
+func (app *App) PatreonCampaigns() []patreon.Campaign {
+	app.patreonMu.RLock()
+	campaigns := app.patreonCampaigns
+	app.patreonMu.RUnlock()
+	return campaigns
 }
 
 // Start is the main application entry point
@@ -167,7 +203,7 @@ func (app *App) Start() error {
 		app.patreon = patreonClient
 	}
 
-	webService, errWeb := NewWeb(app)
+	webService, errWeb := web.NewWeb(app)
 	if errWeb != nil {
 		return errors.Wrapf(errWeb, "Failed to setup web")
 	}
@@ -198,12 +234,12 @@ func (app *App) Start() error {
 		}
 		app.logger.Info("Loaded filter list", zap.Int("count", len(wordFilters)))
 	}
-	if errSend := app.sendNotification(notificationPayload{
-		minPerms: model.PAdmin,
-		sids:     nil,
-		severity: model.SeverityInfo,
-		message:  "App start",
-		link:     "",
+	if errSend := app.sendNotification(model.NotificationPayload{
+		MinPerms: store.PAdmin,
+		Sids:     nil,
+		Severity: store.SeverityInfo,
+		Message:  "App start",
+		Link:     "",
 	}); errSend != nil {
 		app.logger.Error("Failed to send notification", zap.Error(errSend))
 	}
@@ -256,7 +292,7 @@ func (app *App) warnWorker() {
 					zap.String("matched", newWarn.Matched),
 					zap.String("message", newWarn.Message),
 					zap.Int64("filter_id", newWarn.MatchedFilter.FilterID))
-				var person model.Person
+				var person store.Person
 				if personErr := app.PersonBySID(app.ctx, evt.SID, &person); personErr != nil {
 					app.logger.Error("Failed to get person for warning", zap.Error(personErr))
 					continue
@@ -277,72 +313,72 @@ func (app *App) warnWorker() {
 					URL:   config.ExtURL("/profiles/%d", evt.SID),
 					Type:  discordgo.EmbedTypeRich,
 					Title: title,
-					Color: int(green),
+					Color: int(discordutil.Green),
 					Image: &discordgo.MessageEmbedImage{URL: person.AvatarFull},
 				}
-				addField(warnNotice, app.logger, "Matched", newWarn.Matched)
-				addField(warnNotice, app.logger, "Message", newWarn.userWarning.Message)
+				discordutil.AddField(warnNotice, app.logger, "Matched", newWarn.Matched)
+				discordutil.AddField(warnNotice, app.logger, "Message", newWarn.userWarning.Message)
 				if newWarn.MatchedFilter.IsEnabled {
 					if len(warnings[evt.SID]) > config.General.WarningLimit {
 						app.logger.Info("Warn limit exceeded",
 							zap.Int64("sid64", evt.SID.Int64()),
 							zap.Int("count", len(warnings[evt.SID])))
 						var errBan error
-						var banSteam model.BanSteam
-						if errNewBan := NewBanSteam(model.StringSID(config.General.Owner.String()),
-							model.StringSID(evt.SID.String()),
-							model.Duration(config.General.WarningExceededDurationValue),
+						var banSteam store.BanSteam
+						if errNewBan := store.NewBanSteam(store.StringSID(config.General.Owner.String()),
+							store.StringSID(evt.SID.String()),
+							store.Duration(config.General.WarningExceededDurationValue),
 							newWarn.WarnReason,
 							"",
 							"Automatic warning ban",
-							model.System,
+							store.System,
 							0,
-							model.NoComm,
+							store.NoComm,
 							&banSteam); errNewBan != nil {
 							app.logger.Error("Failed to create warning ban", zap.Error(errNewBan))
 							continue
 						}
 						switch config.General.WarningExceededAction {
 						case config.Gag:
-							banSteam.BanType = model.NoComm
+							banSteam.BanType = store.NoComm
 							errBan = app.BanSteam(app.ctx, &banSteam)
 						case config.Ban:
-							banSteam.BanType = model.Banned
+							banSteam.BanType = store.Banned
 							errBan = app.BanSteam(app.ctx, &banSteam)
 						case config.Kick:
-							var playerInfo model.PlayerInfo
-							errBan = app.Kick(app.ctx, model.System, model.StringSID(evt.SID.String()),
-								model.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
+							var playerInfo state.PlayerInfo
+							errBan = app.Kick(app.ctx, store.System, store.StringSID(evt.SID.String()),
+								store.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
 						}
 						if errBan != nil {
 							app.logger.Error("Failed to apply warning action",
 								zap.Error(errBan),
 								zap.String("action", string(config.General.WarningExceededAction)))
 						}
-						addField(warnNotice, app.logger, "Name", person.PersonaName)
+						discordutil.AddField(warnNotice, app.logger, "Name", person.PersonaName)
 						expIn := "Permanent"
 						expAt := "Permanent"
 						if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
 							expIn = config.FmtDuration(banSteam.ValidUntil)
 							expAt = config.FmtTimeShort(banSteam.ValidUntil)
 						}
-						addField(warnNotice, app.logger, "Expires In", expIn)
-						addField(warnNotice, app.logger, "Expires At", expAt)
+						discordutil.AddField(warnNotice, app.logger, "Expires In", expIn)
+						discordutil.AddField(warnNotice, app.logger, "Expires At", expAt)
 					} else {
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
-						if errPSay := app.PSay(app.ctx, 0, model.StringSID(evt.SID.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
+						if errPSay := app.PSay(app.ctx, 0, store.StringSID(evt.SID.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
 							app.logger.Error("Failed to send user warning psay message", zap.Error(errPSay))
 						}
 					}
 				}
-				addField(warnNotice, app.logger, "Pattern", newWarn.MatchedFilter.Pattern)
-				addFieldsSteamID(warnNotice, app.logger, evt.SID)
-				addFieldInt64Inline(warnNotice, app.logger, "Filter ID", newWarn.MatchedFilter.FilterID)
-				addFieldInline(warnNotice, app.logger, "Server", newWarn.ServerEvent.Server.ServerNameShort)
-				app.sendDiscordPayload(discordPayload{
-					channelId: config.Discord.ModLogChannelId,
-					embed:     warnNotice,
+				discordutil.AddField(warnNotice, app.logger, "Pattern", newWarn.MatchedFilter.Pattern)
+				discordutil.AddFieldsSteamID(warnNotice, app.logger, evt.SID)
+				discordutil.AddFieldInt64Inline(warnNotice, app.logger, "Filter ID", newWarn.MatchedFilter.FilterID)
+				discordutil.AddFieldInline(warnNotice, app.logger, "Server", newWarn.ServerEvent.Server.ServerNameShort)
+				app.SendDiscordPayload(discordutil.Payload{
+					ChannelId: config.Discord.ModLogChannelId,
+					Embed:     warnNotice,
 				})
 
 			case <-app.ctx.Done():
@@ -369,7 +405,7 @@ func (app *App) warnWorker() {
 				app.warningChan <- newUserWarning{
 					ServerEvent: serverEvent,
 					userWarning: userWarning{
-						WarnReason:    model.Language,
+						WarnReason:    store.Language,
 						Message:       evt.Msg,
 						Matched:       matchedWord,
 						MatchedFilter: matchedFilter,
@@ -388,9 +424,9 @@ func (app *App) matchSummarizer() {
 	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
 		app.logger.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
-	matches := map[int]model.Match{}
+	matches := map[int]logparse.Match{}
 
-	var curServer model.Server
+	var curServer store.Server
 	for {
 		select {
 		case evt := <-eventChan:
@@ -401,7 +437,7 @@ func (app *App) matchSummarizer() {
 			}
 			if evt.EventType == logparse.LogStart {
 				app.logger.Info("New match created (new game)", zap.String("server", evt.Server.ServerNameShort))
-				matches[evt.Server.ServerID] = model.NewMatch(app.logger, evt.Server.ServerID, evt.Server.ServerNameLong)
+				matches[evt.Server.ServerID] = logparse.NewMatch(app.logger, evt.Server.ServerID, evt.Server.ServerNameLong)
 			}
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt.Results); errApply != nil {
@@ -413,7 +449,7 @@ func (app *App) matchSummarizer() {
 			case logparse.LogStop:
 				fallthrough
 			case logparse.WGameOver:
-				go func(completeMatch model.Match) {
+				go func(completeMatch logparse.Match) {
 					if errSave := app.store.MatchSave(app.ctx, &completeMatch); errSave != nil {
 						app.logger.Error("Failed to save match",
 							zap.String("server", evt.Server.ServerNameShort), zap.Error(errSave))
@@ -429,12 +465,12 @@ func (app *App) matchSummarizer() {
 	}
 }
 
-func sendDiscordMatchResults(app *App, server model.Server, match model.Match) {
+func sendDiscordMatchResults(app *App, server store.Server, match logparse.Match) {
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
 		Description: "Match results",
-		Color:       int(green),
+		Color:       int(discordutil.Green),
 		URL:         config.ExtURL("/log/%d", match.MatchID),
 	}
 	redScore := 0
@@ -446,15 +482,15 @@ func sendDiscordMatchResults(app *App, server model.Server, match model.Match) {
 
 	found := 0
 	for _, teamStats := range match.TeamSums {
-		addFieldInline(embed, app.logger, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
-		addFieldInline(embed, app.logger, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
-		addFieldInline(embed, app.logger, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
+		discordutil.AddFieldInline(embed, app.logger, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
+		discordutil.AddFieldInline(embed, app.logger, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
+		discordutil.AddFieldInline(embed, app.logger, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
 		found++
 	}
-	addFieldInline(embed, app.logger, "Red Score", fmt.Sprintf("%d", redScore))
-	addFieldInline(embed, app.logger, "Blu Score", fmt.Sprintf("%d", bluScore))
-	addFieldInline(embed, app.logger, "Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes()))
-	app.sendDiscordPayload(discordPayload{channelId: config.Discord.LogChannelID, embed: embed})
+	discordutil.AddFieldInline(embed, app.logger, "Red Score", fmt.Sprintf("%d", redScore))
+	discordutil.AddFieldInline(embed, app.logger, "Blu Score", fmt.Sprintf("%d", bluScore))
+	discordutil.AddFieldInline(embed, app.logger, "Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes()))
+	app.SendDiscordPayload(discordutil.Payload{ChannelId: config.Discord.LogChannelID, Embed: embed})
 }
 
 func (app *App) playerMessageWriter() {
@@ -480,7 +516,7 @@ func (app *App) playerMessageWriter() {
 					app.logger.Warn("Empty person message body, skipping")
 					continue
 				}
-				msg := model.PersonMessage{
+				msg := store.PersonMessage{
 					SteamId:     e.SID,
 					PersonaName: e.Name,
 					ServerName:  evt.Server.ServerNameLong,
@@ -521,7 +557,7 @@ func (app *App) playerConnectionWriter() {
 				app.logger.Warn("Received invalid address", zap.String("addr", e.Address))
 				continue
 			}
-			conn := model.PersonConnection{
+			conn := store.PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamId:     e.SID,
 				PersonaName: e.Name,
@@ -534,12 +570,6 @@ func (app *App) playerConnectionWriter() {
 			cancel()
 		}
 	}
-}
-
-type LogFilePayload struct {
-	Server model.Server
-	Lines  []string
-	Map    string
 }
 
 // logReader is the fan-out orchestrator for game log events
@@ -654,7 +684,7 @@ func (app *App) initLogSrc() {
 	logSrc.start(app.ctx, app.store)
 }
 
-func (app *App) sendUserNotification(pl notificationPayload) {
+func (app *App) SendUserNotification(pl model.NotificationPayload) {
 	select {
 	case app.notificationChan <- pl:
 	default:
@@ -662,9 +692,9 @@ func (app *App) sendUserNotification(pl notificationPayload) {
 	}
 }
 
-func (app *App) initDiscord(ctx context.Context, botSendMessageChan chan discordPayload) {
+func (app *App) initDiscord(ctx context.Context, botSendMessageChan chan discordutil.Payload) {
 	if config.Discord.Token != "" {
-		session, sessionErr := NewDiscord(app)
+		session, sessionErr := discord.NewDiscord(app)
 		if sessionErr != nil {
 			app.logger.Fatal("Failed to setup session", zap.Error(sessionErr))
 		}
@@ -678,7 +708,7 @@ func (app *App) initDiscord(ctx context.Context, botSendMessageChan chan discord
 						app.logger.Warn("Skipped payload for unconnected discord")
 						continue
 					}
-					if errSend := session.SendEmbed(payload.channelId, payload.embed); errSend != nil {
+					if errSend := session.SendEmbed(payload.ChannelId, payload.Embed); errSend != nil {
 						app.logger.Error("Failed to send discord payload", zap.Error(errSend))
 					}
 				}

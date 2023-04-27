@@ -470,7 +470,9 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                         }
                                                     />
                                                     <Route
-                                                        path={'/login/discord'}
+                                                        path={
+                                                            '/login/discordutil'
+                                                        }
                                                         element={
                                                             <ErrorBoundary>
                                                                 <PrivateRoute

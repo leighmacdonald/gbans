@@ -5,33 +5,35 @@ import (
 	"time"
 )
 
-// EmptyEvt is the base event for all other events. It just contains a timestamp.
-type EmptyEvt struct {
+// TimeStamp is the base event for all other events. It just contains a timestamp.
+type TimeStamp struct {
 	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
 }
 
-type UnhandledMsgEvt struct {
-	EmptyEvt
+type IgnoredMsgEvt struct {
+	TimeStamp
 	Message string
 }
 
-type WRoundStartEvt EmptyEvt
+type UnknownMsgEvt IgnoredMsgEvt
 
-type WRoundOvertimeEvt EmptyEvt
+type WRoundStartEvt TimeStamp
 
-type WPausedEvt EmptyEvt
+type WRoundOvertimeEvt TimeStamp
 
-type WResumedEvt EmptyEvt
+type WPausedEvt TimeStamp
 
-type WRoundSetupBeginEvt EmptyEvt
+type WResumedEvt TimeStamp
 
-type WMiniRoundSelectedEvt EmptyEvt
+type WRoundSetupBeginEvt TimeStamp
 
-type WMiniRoundStartEvt EmptyEvt
+type WMiniRoundSelectedEvt TimeStamp
 
-type WMiniRoundWinEvt EmptyEvt
+type WMiniRoundStartEvt TimeStamp
 
-type WMiniRoundLenEvt EmptyEvt
+type WMiniRoundWinEvt TimeStamp
+
+type WMiniRoundLenEvt TimeStamp
 
 // SourcePlayer represents the player who initiated the event
 type SourcePlayer struct {
@@ -52,60 +54,60 @@ type TargetPlayer struct {
 }
 
 type EnteredEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 }
 
 type LogStartEvt struct {
-	EmptyEvt
+	TimeStamp
 	File    string `json:"file" mapstructure:"file"`
 	Game    string `json:"game" mapstructure:"game"`
 	Version string `json:"version" mapstructure:"version"`
 }
 
 // LogStopEvt is the server shutting down the map and closing the log
-type LogStopEvt EmptyEvt
+type LogStopEvt TimeStamp
 
 // CVAREvt is emitted on a cvar change
 type CVAREvt struct {
-	EmptyEvt
+	TimeStamp
 	CVAR  string `json:"cvar" mapstructure:"cvar"`
 	Value string `json:"value" mapstructure:"value"`
 }
 
 // RCONEvt is emitted on a rcon connection executing a command
 type RCONEvt struct {
-	EmptyEvt
+	TimeStamp
 	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
 type JoinedTeamEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Team Team `json:"new_team" mapstructure:"new_team"`
 }
 
 type SpawnedAsEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	PlayerClass PlayerClass `json:"class" mapstructure:"class"`
 }
 
 type ChangeClassEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Class PlayerClass `json:"class" mapstructure:"class"`
 }
 
 type SuicideEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Pos    Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
 type JarateAttackEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
@@ -120,7 +122,7 @@ type GasAttackEvt JarateAttackEvt
 type ExtinguishedEvt JarateAttackEvt
 
 type MedicDeathEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	Healing int  `json:"healing" mapstructure:"healing"`
@@ -128,13 +130,13 @@ type MedicDeathEvt struct {
 }
 
 type MedicDeathExEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	UberPct int `json:"uberpct" mapstructure:"uberpct"`
 }
 
 type KilledEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	APos   Pos    `json:"attacker_position" mapstructure:"attacker_position"`
@@ -143,7 +145,7 @@ type KilledEvt struct {
 }
 
 type CustomKilledEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	APos       Pos    `json:"attacker_position" mapstructure:"attacker_position"`
@@ -153,7 +155,7 @@ type CustomKilledEvt struct {
 }
 
 type KillAssistEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	ASPos Pos `json:"assister_pos"  mapstructure:"assister_position"`
@@ -167,6 +169,7 @@ type SourcePlayerPosition struct {
 }
 
 type PointCapturedEvt struct {
+	TimeStamp
 	Team       Team   `json:"team" mapstructure:"team"`
 	CP         int    `json:"cp" mapstructure:"cp"`
 	CPName     string `json:"cpname" mapstructure:"cpname"`
@@ -181,7 +184,6 @@ type PointCapturedEvt struct {
 	Position4  Pos    `json:"position4"  mapstructure:"position4"`
 	Player5    string `json:"player5" mapstructure:"player5"`
 	Position5  Pos    `json:"position5"  mapstructure:"position5"`
-	EmptyEvt
 }
 
 func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
@@ -212,31 +214,29 @@ func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
 		if !parseSourcePlayer(ps, &src) {
 			continue
 		}
-
 		captors = append(captors, SourcePlayerPosition{
 			SourcePlayer: src,
 			Pos:          pos,
 		})
-
 	}
 	return captors
 }
 
 type ConnectedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Address string `json:"address" mapstructure:"address"`
 	Port    int    `json:"port" mapstructure:"port"`
 }
 
 type DisconnectedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Reason string `json:"reason" mapstructure:"reason"`
 }
 
 type KilledObjectEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	Object string `json:"object" mapstructure:"object"`
@@ -245,7 +245,7 @@ type KilledObjectEvt struct {
 }
 
 type CarryObjectEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Object string `json:"object" mapstructure:"object"`
 	Pos    Pos    `json:"position"  mapstructure:"position"`
@@ -257,25 +257,30 @@ type BuiltObjectEvt CarryObjectEvt
 
 type DetonatedObjectEvt CarryObjectEvt
 
+type WIntermissionWinLimitEvt struct {
+	TimeStamp
+	Team Team `json:"team" mapstructure:"team"`
+}
+
 type WRoundWinEvt struct {
-	EmptyEvt
+	TimeStamp
 	Winner Team `json:"winner" mapstructure:"winner"`
 }
 
 type WRoundLenEvt struct {
-	EmptyEvt
+	TimeStamp
 	Length float64 `json:"seconds" mapstructure:"seconds"`
 }
 
 type WTeamScoreEvt struct {
-	EmptyEvt
+	TimeStamp
 	Team    Team `json:"team" mapstructure:"team"`
 	Score   int  `json:"score" mapstructure:"score"`
 	Players int  `json:"players" mapstructure:"players"`
 }
 
 type SayEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer `json:"source"`
 	Msg          string `json:"msg" mapstructure:"msg"`
 }
@@ -283,7 +288,7 @@ type SayEvt struct {
 type SayTeamEvt SayEvt
 
 type DominationEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer `json:"source"`
 	TargetPlayer `json:"target"`
 }
@@ -291,7 +296,7 @@ type DominationEvt struct {
 type RevengeEvt DominationEvt
 
 type CaptureBlockedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	CP     int    `json:"cp" mapstructure:"cp"`
 	CPName string `json:"cpname" mapstructure:"cpname"`
@@ -299,60 +304,60 @@ type CaptureBlockedEvt struct {
 }
 
 type FirstHealAfterSpawnEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	HealTime float64 `json:"time" mapstructure:"time"`
 }
 
 type ChargeReadyEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 }
 
 type ChargeDeployedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Medigun MedigunType `json:"medigun" mapstructure:"medigun"`
 }
 
 type ChargeEndedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Duration float32 `json:"duration" mapstructure:"duration"`
 }
 
 type LostUberAdvantageEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	AdvTime int `json:"time" mapstructure:"time"`
 }
 
 type EmptyUberEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 }
 
 type PickupEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Item    PickupItem
 	Healing int64 `json:"healing" mapstructure:"healing"`
 }
 
 type ShotFiredEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
 type ShotHitEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
 type DamageEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	Damage     int64    `json:"damage" mapstructure:"damage"`
@@ -364,19 +369,19 @@ type DamageEvt struct {
 }
 
 type HealedEvt struct {
-	EmptyEvt
+	TimeStamp
 	SourcePlayer
 	TargetPlayer
 	Healing int64 `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
 }
 
 type WGameOverEvt struct {
-	EmptyEvt
+	TimeStamp
 	Reason string `json:"reason" mapstructure:"reason"`
 }
 
 type WTeamFinalScoreEvt struct {
-	EmptyEvt
+	TimeStamp
 	Score   int `json:"score" mapstructure:"score"`
 	Players int `json:"players" mapstructure:"players"`
 }

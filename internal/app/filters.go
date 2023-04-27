@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"sync"
 )
 
 var (
-	wordFilters   []model.Filter
+	wordFilters   []store.Filter
 	wordFiltersMu *sync.RWMutex
 )
 
@@ -15,7 +15,7 @@ func init() {
 }
 
 // importFilteredWords loads the supplied word list into memory
-func importFilteredWords(filters []model.Filter) {
+func importFilteredWords(filters []store.Filter) {
 	wordFiltersMu.Lock()
 	defer wordFiltersMu.Unlock()
 	wordFilters = filters

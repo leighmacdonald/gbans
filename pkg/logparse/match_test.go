@@ -1,8 +1,6 @@
-package app
+package logparse
 
 import (
-	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
@@ -28,17 +26,17 @@ func TestMatch_Apply(t *testing.T) {
 	require.NoError(t, errRead)
 	//playerStateCache := newPlayerCache(testLogger)
 
-	testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
-	m := model.NewMatch(testLogger, 1, "test server")
+	//testServer := model.NewServer("tst-1", "test-1.localhost", 27015)
+	m := NewMatch(testLogger, 1, "test server")
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {
 			continue
 		}
-		var event model.ServerEvent
-		require.NoError(t, logToServerEvent(testServer, line, &event), "Failed to create ServerEvent")
-		if err := m.Apply(event.Results); err != nil && !errors.Is(err, model.ErrIgnored) {
-			t.Errorf("Failed to Apply: %v [%d] %v", err, event.EventType, event.EventType)
+		result, errResult := Parse(line)
+		require.NoError(t, errResult)
+		if err := m.Apply(result); err != nil && !errors.Is(err, ErrIgnored) {
+			t.Errorf("Failed to Apply: %v [%d] %v", err, result.EventType, line)
 		}
 	}
 
@@ -51,7 +49,7 @@ func TestMatch_Apply(t *testing.T) {
 		}
 		return "???"
 	}
-	getPS := func(m model.Match, sid steamid.SID64) *model.MatchPlayerSum {
+	getPS := func(m Match, sid steamid.SID64) *MatchPlayerSum {
 		ps, err := m.PlayerSums.GetBySteamId(sid)
 		if err != nil {
 			t.Fatalf("Failed to fetch player sum [%d]: %v", sid, err)
@@ -89,7 +87,7 @@ func TestMatch_Apply(t *testing.T) {
 	//		m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
 	//}
 
-	getMS := func(m model.Match, sid steamid.SID64) *model.MatchMedicSum {
+	getMS := func(m Match, sid steamid.SID64) *MatchMedicSum {
 		ms, err := m.MedicSums.GetBySteamId(sid)
 		if err != nil {
 			t.Fatalf("Failed to fetch player sum")
@@ -118,14 +116,14 @@ func TestMatch_Apply(t *testing.T) {
 }
 
 // https://logs.tf/3124689
-func testMatch() (model.Match, map[string]steamid.SID64) {
-	match := model.Match{
+func testMatch() (Match, map[string]steamid.SID64) {
+	match := Match{
 		Title:   "Qixalite Booking: RED vs BLU",
 		MapName: "koth_cascade_rc2",
-		PlayerSums: []*model.MatchPlayerSum{
+		PlayerSums: []*MatchPlayerSum{
 			{
 				SteamId:           76561198164892406,
-				Team:              logparse.BLU,
+				Team:              BLU,
 				TimeStart:         &time.Time{},
 				TimeEnd:           &time.Time{},
 				Dominations:       0,
@@ -144,12 +142,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:         0,
 				AirShots:          0,
 				Captures:          nil,
-				Classes:           []logparse.PlayerClass{logparse.Scout},
+				Classes:           []PlayerClass{Scout},
 				Healing:           370,
 			},
 			{
 				SteamId:     76561198057150173,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       9,
@@ -163,12 +161,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    1,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Soldier},
+				Classes:     []PlayerClass{Soldier},
 				Healing:     754,
 			},
 			{
 				SteamId:     76561198126692772,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       13,
@@ -182,12 +180,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Pyro},
+				Classes:     []PlayerClass{Pyro},
 				Healing:     481,
 			},
 			{
 				SteamId:     76561198036671190,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       13,
@@ -201,12 +199,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Demo},
+				Classes:     []PlayerClass{Demo},
 				Healing:     436,
 			},
 			{
 				SteamId:     76561198084686835,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       18,
@@ -220,12 +218,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Heavy},
+				Classes:     []PlayerClass{Heavy},
 				Healing:     1187,
 			},
 			{
 				SteamId:     76561198061174192,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       3,
@@ -239,12 +237,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   8,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Sniper},
+				Classes:     []PlayerClass{Engineer, Sniper},
 				Healing:     686,
 			},
 			{
 				SteamId:     76561198113244106,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       4,
@@ -257,12 +255,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Medic},
+				Classes:     []PlayerClass{Medic},
 				Healing:     17708,
 			},
 			{
 				SteamId:     76561198423392803,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       7,
@@ -276,12 +274,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   4,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Sniper, logparse.Engineer},
+				Classes:     []PlayerClass{Sniper, Engineer},
 				Healing:     395,
 			},
 			{
 				SteamId:     76561198051884373,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       13,
@@ -295,12 +293,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Spy, logparse.Pyro},
+				Classes:     []PlayerClass{Spy, Pyro},
 				Healing:     456,
 			},
 			{
 				SteamId:     76561198087442614,
-				Team:        logparse.BLU,
+				Team:        BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       12,
@@ -314,12 +312,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Spy},
+				Classes:     []PlayerClass{Spy},
 				Healing:     546,
 			},
 			{
 				SteamId:     76561198043171944,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       28,
@@ -333,12 +331,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Scout},
+				Classes:     []PlayerClass{Scout},
 				Healing:     1036,
 			},
 			{
 				SteamId:     76561198809011070,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       26,
@@ -352,12 +350,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    1,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Soldier},
+				Classes:     []PlayerClass{Soldier},
 				Healing:     1313,
 			},
 			{
 				SteamId:     76561198271399587,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       9,
@@ -371,12 +369,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Pyro},
+				Classes:     []PlayerClass{Pyro},
 				Healing:     553,
 			},
 			{
 				SteamId:     76561198096251579,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       7,
@@ -389,12 +387,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Demo},
+				Classes:     []PlayerClass{Demo},
 				Healing:     0,
 			},
 			{
 				SteamId:     76561198383642609,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       15,
@@ -408,12 +406,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Heavy},
+				Classes:     []PlayerClass{Heavy},
 				Healing:     1216,
 			},
 			{
 				SteamId:     76561198050517054,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       18,
@@ -427,12 +425,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Engineer, logparse.Scout},
+				Classes:     []PlayerClass{Engineer, Scout},
 				Healing:     922,
 			},
 			{
 				SteamId:     76561198082713023,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       1,
@@ -445,12 +443,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Medic},
+				Classes:     []PlayerClass{Medic},
 				Healing:     19762,
 			},
 			{
 				SteamId:     76561199050447792,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       18,
@@ -463,12 +461,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   18,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Sniper},
+				Classes:     []PlayerClass{Sniper},
 				Healing:     101,
 			},
 			{
 				SteamId:     76561198073709029,
-				Team:        logparse.RED,
+				Team:        RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
 				Kills:       0,
@@ -481,16 +479,16 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				HeadShots:   0,
 				AirShots:    0,
 				Captures:    nil,
-				Classes:     []logparse.PlayerClass{logparse.Spy},
+				Classes:     []PlayerClass{Spy},
 				Healing:     57,
 			},
 		},
-		MedicSums: []*model.MatchMedicSum{
+		MedicSums: []*MatchMedicSum{
 			{
 				SteamId: 76561198113244106,
 				Healing: 17368,
-				Charges: map[logparse.MedigunType]int{
-					logparse.Uber: 4,
+				Charges: map[MedigunType]int{
+					Uber: 4,
 				},
 				Drops:               2,
 				AvgTimeToBuild:      42,
@@ -500,13 +498,13 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MajorAdvLost:        1,
 				BiggestAdvLost:      39,
 				DeathAfterCharge:    0,
-				HealTargets:         []*model.MatchClassSums{},
+				HealTargets:         []*MatchClassSums{},
 			},
 			{
 				SteamId: 76561198082713023,
 				Healing: 19545,
-				Charges: map[logparse.MedigunType]int{
-					logparse.Uber: 6,
+				Charges: map[MedigunType]int{
+					Uber: 6,
 				},
 				Drops:               1,
 				AvgTimeToBuild:      40,
@@ -516,12 +514,12 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MajorAdvLost:        0,
 				BiggestAdvLost:      0,
 				DeathAfterCharge:    1,
-				HealTargets:         []*model.MatchClassSums{},
+				HealTargets:         []*MatchClassSums{},
 			},
 		},
-		TeamSums: []*model.MatchTeamSum{
+		TeamSums: []*MatchTeamSum{
 			{
-				Team:      logparse.RED,
+				Team:      RED,
 				Kills:     122,
 				Damage:    40201,
 				Charges:   6,
@@ -530,7 +528,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MidFights: 2,
 			},
 			{
-				Team:      logparse.BLU,
+				Team:      BLU,
 				Kills:     104,
 				Damage:    45512,
 				Charges:   4,
@@ -539,10 +537,10 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				MidFights: 1,
 			},
 		},
-		Rounds: []*model.MatchRoundSum{
+		Rounds: []*MatchRoundSum{
 			{
 				Length: 313 * time.Second,
-				Score: model.TeamScores{
+				Score: TeamScores{
 					Red: 1,
 					Blu: 0,
 				},
@@ -552,11 +550,11 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				UbersRed:  2,
 				DamageBlu: 10605,
 				DamageRed: 12805,
-				MidFight:  logparse.RED,
+				MidFight:  RED,
 			},
 			{
 				Length: 378 * time.Second,
-				Score: model.TeamScores{
+				Score: TeamScores{
 					Red: 2,
 					Blu: 0,
 				},
@@ -566,11 +564,11 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				UbersRed:  3,
 				DamageBlu: 15266,
 				DamageRed: 18102,
-				MidFight:  logparse.BLU,
+				MidFight:  BLU,
 			},
 			{
 				Length: 325 * time.Second,
-				Score: model.TeamScores{
+				Score: TeamScores{
 					Red: 3,
 					Blu: 0,
 				},
@@ -580,10 +578,10 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				UbersRed:  1,
 				DamageBlu: 15258,
 				DamageRed: 12677,
-				MidFight:  logparse.RED,
+				MidFight:  RED,
 			},
 		},
-		ClassKills: []*model.MatchClassSums{
+		ClassKills: []*MatchClassSums{
 			{
 				SteamId:  76561198113244106,
 				Scout:    0,
@@ -801,7 +799,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		ClassKillsAssists: []*model.MatchClassSums{
+		ClassKillsAssists: []*MatchClassSums{
 			{
 				SteamId:  76561198113244106,
 				Scout:    1,
@@ -1019,7 +1017,7 @@ func testMatch() (model.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 		},
-		ClassDeaths: []*model.MatchClassSums{
+		ClassDeaths: []*MatchClassSums{
 			{
 				SteamId:  76561198113244106,
 				Scout:    2,

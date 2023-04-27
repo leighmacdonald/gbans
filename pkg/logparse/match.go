@@ -1,11 +1,10 @@
-package model
+package logparse
 
 import (
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -35,7 +34,7 @@ func NewMatch(logger *zap.Logger, serverId int, serverName string) Match {
 type MatchRoundSums []*MatchRoundSum
 type MatchTeamSums []*MatchTeamSum
 
-func (mps MatchTeamSums) GetByTeam(team logparse.Team) (*MatchTeamSum, error) {
+func (mps MatchTeamSums) GetByTeam(team Team) (*MatchTeamSum, error) {
 	for _, m := range mps {
 		if m.Team == team {
 			return m, nil
@@ -120,7 +119,7 @@ type Match struct {
 	ClassDeaths       MatchPlayerClassSums
 	Chat              []MatchChat
 	CreatedOn         time.Time
-	Players           People
+	//Players           store.People // REMOVE dep
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch    bool // We ignore most events until Round_Start event
 	inRound    bool
@@ -137,7 +136,7 @@ type MatchChat struct {
 }
 
 type MatchWeaponSum struct {
-	Weapon    logparse.Weapon
+	Weapon    Weapon
 	MatchId   int
 	SteamId   steamid.SID64
 	Kills     int
@@ -150,13 +149,13 @@ type MatchWeaponSum struct {
 	BackStabs int
 }
 
-func NewMatchWeaponSum(steamId steamid.SID64, weapon logparse.Weapon) MatchWeaponSum {
+func NewMatchWeaponSum(steamId steamid.SID64, weapon Weapon) MatchWeaponSum {
 	return MatchWeaponSum{SteamId: steamId, Weapon: weapon}
 }
 
 type MatchWeaponSums []*MatchWeaponSum
 
-func (match *Match) GetWeaponSum(steamId steamid.SID64, weapon logparse.Weapon) *MatchWeaponSum {
+func (match *Match) GetWeaponSum(steamId steamid.SID64, weapon Weapon) *MatchWeaponSum {
 	p := match.getPlayer(steamId)
 	for _, existingWeapon := range p.Weapons {
 		if existingWeapon.Weapon == weapon {
@@ -201,55 +200,55 @@ func (match *Match) TopPlayers() []MatchPlayerSum {
 
 // Apply is used to apply incoming event changes to the current match state
 // This is not threadsafe at all
-func (match *Match) Apply(result *logparse.Results) error {
+func (match *Match) Apply(result *Results) error {
 	// This first switch is used for events that can happen at any point in time during a game without
 	// having effects on things like player stats.
 	switch result.EventType {
-	case logparse.MapLoad:
+	case MapLoad:
 		return nil
-	case logparse.Say:
-		evt := result.Event.(logparse.SayEvt)
+	case Say:
+		evt := result.Event.(SayEvt)
 		match.addChat(evt.SID, evt.Name, evt.Msg, false, evt.CreatedOn)
 		return nil
-	case logparse.SayTeam:
-		evt := result.Event.(logparse.SayTeamEvt)
+	case SayTeam:
+		evt := result.Event.(SayTeamEvt)
 		match.addChat(evt.SID, evt.Name, evt.Msg, true, evt.CreatedOn)
 		return nil
-	case logparse.JoinedTeam:
-		evt := result.Event.(logparse.JoinedTeamEvt)
+	case JoinedTeam:
+		evt := result.Event.(JoinedTeamEvt)
 		match.joinTeam(evt.SID, evt.Team)
 		return nil
-	case logparse.IgnoredMsg:
+	case IgnoredMsg:
 		return ErrIgnored
-	case logparse.UnknownMsg:
+	case UnknownMsg:
 		return ErrUnhandled
-	case logparse.WRoundStart:
+	case WRoundStart:
 		match.roundStart()
 		return nil
-	case logparse.WGameOver:
+	case WGameOver:
 		match.gameOver()
-	case logparse.WMiniRoundStart:
+	case WMiniRoundStart:
 		match.roundStart()
-	case logparse.WRoundOvertime:
+	case WRoundOvertime:
 		match.overtime()
 		return nil
-	case logparse.WRoundLen:
-	case logparse.WRoundWin:
-		match.roundWin(result.Event.(logparse.WRoundWinEvt).Winner)
+	case WRoundLen:
+	case WRoundWin:
+		match.roundWin(result.Event.(WRoundWinEvt).Winner)
 		return nil
 
-	case logparse.Connected:
-		evt := result.Event.(logparse.ConnectedEvt)
+	case Connected:
+		evt := result.Event.(ConnectedEvt)
 		match.connected(evt.SID)
 		return nil
 
-	case logparse.Entered:
-		evt := result.Event.(logparse.EnteredEvt)
+	case Entered:
+		evt := result.Event.(EnteredEvt)
 		match.entered(evt.SID)
 		return nil
 
-	case logparse.Disconnected:
-		evt := result.Event.(logparse.DisconnectedEvt)
+	case Disconnected:
+		evt := result.Event.(DisconnectedEvt)
 		match.disconnected(evt.SID)
 		return nil
 	}
@@ -259,124 +258,124 @@ func (match *Match) Apply(result *logparse.Results) error {
 	}
 	// These remaining events deal with handling the actual player stats during live rounds.
 	switch result.EventType {
-	case logparse.PointCaptured:
-		evt := result.Event.(logparse.PointCapturedEvt)
+	case PointCaptured:
+		evt := result.Event.(PointCapturedEvt)
 		match.pointCapture(evt.Team, evt.CP, evt.CPName, evt.Players())
 
-	case logparse.CaptureBlocked:
-		evt := result.Event.(logparse.CaptureBlockedEvt)
-		match.pointCaptureBlocked(evt.CP, evt.CPName, logparse.SourcePlayerPosition{
+	case CaptureBlocked:
+		evt := result.Event.(CaptureBlockedEvt)
+		match.pointCaptureBlocked(evt.CP, evt.CPName, SourcePlayerPosition{
 			SourcePlayer: evt.SourcePlayer,
 			Pos:          evt.Pos,
 		})
 
-	case logparse.SpawnedAs:
-		evt := result.Event.(logparse.SpawnedAsEvt)
+	case SpawnedAs:
+		evt := result.Event.(SpawnedAsEvt)
 		match.addClass(evt.SID, evt.PlayerClass)
-	case logparse.ChangeClass:
-		evt := result.Event.(logparse.ChangeClassEvt)
+	case ChangeClass:
+		evt := result.Event.(ChangeClassEvt)
 		match.addClass(evt.SID, evt.Class)
 
-	case logparse.ShotFired:
-		match.shotFired(result.Event.(logparse.ShotFiredEvt).SID)
+	case ShotFired:
+		match.shotFired(result.Event.(ShotFiredEvt).SID)
 
-	case logparse.ShotHit:
-		match.shotHit(result.Event.(logparse.ShotHitEvt).SID)
+	case ShotHit:
+		match.shotHit(result.Event.(ShotHitEvt).SID)
 
-	case logparse.MedicDeath:
-		evt := result.Event.(logparse.MedicDeathEvt)
+	case MedicDeath:
+		evt := result.Event.(MedicDeathEvt)
 		if evt.HadUber {
 			// TODO record source player stat
 			match.drop(evt.SID2, evt.Team)
 		}
 
-	case logparse.EmptyUber:
-		_ = result.Event.(logparse.EmptyUberEvt)
+	case EmptyUber:
+		_ = result.Event.(EmptyUberEvt)
 
-	case logparse.ChargeDeployed:
-		evt := result.Event.(logparse.ChargeDeployedEvt)
+	case ChargeDeployed:
+		evt := result.Event.(ChargeDeployedEvt)
 		match.medicCharge(evt.SID, evt.Medigun, evt.Team)
 
-	case logparse.ChargeEnded:
-		_ = result.Event.(logparse.ChargeEndedEvt)
+	case ChargeEnded:
+		_ = result.Event.(ChargeEndedEvt)
 
-	case logparse.ChargeReady:
-		_ = result.Event.(logparse.ChargeReadyEvt)
+	case ChargeReady:
+		_ = result.Event.(ChargeReadyEvt)
 
-	case logparse.LostUberAdv:
-		evt := result.Event.(logparse.LostUberAdvantageEvt)
+	case LostUberAdv:
+		evt := result.Event.(LostUberAdvantageEvt)
 		match.medicLostAdv(evt.SID, evt.AdvTime)
 
-	case logparse.MedicDeathEx:
-		evt := result.Event.(logparse.MedicDeathExEvt)
+	case MedicDeathEx:
+		evt := result.Event.(MedicDeathExEvt)
 		match.medicDeath(evt.SID, evt.UberPct)
 
-	case logparse.Domination:
-		evt := result.Event.(logparse.DominationEvt)
+	case Domination:
+		evt := result.Event.(DominationEvt)
 		match.domination(evt.SID, evt.SID2)
 
-	case logparse.Revenge:
-		evt := result.Event.(logparse.RevengeEvt)
+	case Revenge:
+		evt := result.Event.(RevengeEvt)
 		match.revenge(evt.SID)
 
-	case logparse.Damage:
-		evt := result.Event.(logparse.DamageEvt)
+	case Damage:
+		evt := result.Event.(DamageEvt)
 		if match.useRealDmg {
 			match.damage(evt.SID, evt.SID2, evt.RealDamage, evt.Team, evt.AirShot)
 		} else {
 			match.damage(evt.SID, evt.SID2, evt.Damage, evt.Team, evt.AirShot)
 		}
 
-	case logparse.Suicide:
-		evt := result.Event.(logparse.SuicideEvt)
+	case Suicide:
+		evt := result.Event.(SuicideEvt)
 		match.suicide(evt.SID, evt.Weapon)
 
-	case logparse.Killed:
-		evt := result.Event.(logparse.KilledEvt)
+	case Killed:
+		evt := result.Event.(KilledEvt)
 		match.killed(evt.SID, evt.SID2, evt.Team)
 
-	case logparse.KilledCustom:
-		evt := result.Event.(logparse.CustomKilledEvt)
+	case KilledCustom:
+		evt := result.Event.(CustomKilledEvt)
 		match.killedCustom(evt.SID, evt.SID2, evt.CustomKill)
 
-	case logparse.KillAssist:
-		evt := result.Event.(logparse.KillAssistEvt)
+	case KillAssist:
+		evt := result.Event.(KillAssistEvt)
 		match.assist(evt.SID)
 
-	case logparse.Healed:
-		evt := result.Event.(logparse.HealedEvt)
+	case Healed:
+		evt := result.Event.(HealedEvt)
 		match.healed(evt.SID, evt.SID2, evt.Healing)
 
-	case logparse.Extinguished:
-		evt := result.Event.(logparse.ExtinguishedEvt)
+	case Extinguished:
+		evt := result.Event.(ExtinguishedEvt)
 		match.extinguishes(evt.SID)
 
-	case logparse.BuiltObject:
-		evt := result.Event.(logparse.BuiltObjectEvt)
+	case BuiltObject:
+		evt := result.Event.(BuiltObjectEvt)
 		match.builtObject(evt.SID, evt.Object)
 
-	case logparse.KilledObject:
-		evt := result.Event.(logparse.KilledObjectEvt)
+	case KilledObject:
+		evt := result.Event.(KilledObjectEvt)
 		match.killedObject(evt.SID, evt.Object)
 
-	case logparse.CarryObject:
-		evt := result.Event.(logparse.CarryObjectEvt)
+	case CarryObject:
+		evt := result.Event.(CarryObjectEvt)
 		match.carriedObject(evt.SID, evt.Object)
 
-	case logparse.DetonatedObject:
-		evt := result.Event.(logparse.DetonatedObjectEvt)
+	case DetonatedObject:
+		evt := result.Event.(DetonatedObjectEvt)
 		match.detonatedObject(evt.SID, evt.Object)
 
-	case logparse.DropObject:
-		evt := result.Event.(logparse.DropObjectEvt)
+	case DropObject:
+		evt := result.Event.(DropObjectEvt)
 		match.dropObject(evt.SID, evt.Object)
 
-	case logparse.Pickup:
-		evt := result.Event.(logparse.PickupEvt)
+	case Pickup:
+		evt := result.Event.(PickupEvt)
 		match.pickup(evt.SID, evt.Item, evt.Healing)
 
-	case logparse.FirstHealAfterSpawn:
-		evt := result.Event.(logparse.FirstHealAfterSpawnEvt)
+	case FirstHealAfterSpawn:
+		evt := result.Event.(FirstHealAfterSpawnEvt)
 		match.firstHealAfterSpawn(evt.SID, evt.HealTime)
 
 	default:
@@ -413,18 +412,18 @@ func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
 	}
 	ms := &MatchMedicSum{
 		SteamId: sid,
-		Charges: map[logparse.MedigunType]int{
-			logparse.Uber:       0,
-			logparse.Kritzkrieg: 0,
-			logparse.Vaccinator: 0,
-			logparse.QuickFix:   0,
+		Charges: map[MedigunType]int{
+			Uber:       0,
+			Kritzkrieg: 0,
+			Vaccinator: 0,
+			QuickFix:   0,
 		},
 	}
 	match.MedicSums = append(match.MedicSums, ms)
 	return ms
 }
 
-func (match *Match) getTeamSum(team logparse.Team) *MatchTeamSum {
+func (match *Match) getTeamSum(team Team) *MatchTeamSum {
 	m, _ := match.TeamSums.GetByTeam(team)
 	if m != nil {
 		return m
@@ -463,7 +462,7 @@ func (match *Match) roundStart() {
 	}
 }
 
-func (match *Match) roundWin(team logparse.Team) {
+func (match *Match) roundWin(team Team) {
 	round := match.getRound()
 	if round != nil {
 		round.RoundWinner = team
@@ -493,14 +492,14 @@ func (match *Match) entered(_ steamid.SID64) {
 	// TODO care about this?
 }
 
-func (match *Match) addClass(sid steamid.SID64, class logparse.PlayerClass) {
-	if class == logparse.Spectator {
+func (match *Match) addClass(sid steamid.SID64, class PlayerClass) {
+	if class == Spectator {
 		return
 	}
 	playerSum := match.getPlayer(sid)
-	if !fp.Contains[logparse.PlayerClass](playerSum.Classes, class) {
+	if !fp.Contains[PlayerClass](playerSum.Classes, class) {
 		playerSum.Classes = append(playerSum.Classes, class)
-		if class == logparse.Medic {
+		if class == Medic {
 			// Allocate for a new medic
 			match.MedicSums = append(match.MedicSums, newMatchMedicSum(sid))
 		}
@@ -522,7 +521,7 @@ func (match *Match) assist(sid steamid.SID64) {
 	match.getPlayer(sid).Assists++
 }
 
-func (match *Match) joinTeam(sid steamid.SID64, team logparse.Team) {
+func (match *Match) joinTeam(sid steamid.SID64, team Team) {
 	// TODO join a team
 }
 
@@ -569,7 +568,7 @@ func (match *Match) extinguishes(source steamid.SID64) {
 	match.getPlayer(source).Extinguishes++
 }
 
-func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, team logparse.Team, airShot bool) {
+func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, team Team, airShot bool) {
 	match.getPlayer(source).Damage += damage
 	if airShot {
 		match.getPlayer(source).AirShots++
@@ -584,7 +583,7 @@ func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount in
 	//match.getMedicSum(source).Healing += amount
 }
 
-func (match *Match) pointCaptureBlocked(cp int, cpname string, pp logparse.SourcePlayerPosition) {
+func (match *Match) pointCaptureBlocked(cp int, cpname string, pp SourcePlayerPosition) {
 	player := match.getPlayer(pp.SID)
 	player.CapturesBlocked = append(player.CapturesBlocked, PointCaptureBlocked{
 		CP:       cp,
@@ -593,7 +592,7 @@ func (match *Match) pointCaptureBlocked(cp int, cpname string, pp logparse.Sourc
 	})
 }
 
-func (match *Match) pointCapture(team logparse.Team, cp int, cpname string, players []logparse.SourcePlayerPosition) {
+func (match *Match) pointCapture(team Team, cp int, cpname string, players []SourcePlayerPosition) {
 	for _, p := range players {
 		match.getPlayer(p.SID).Captures = append(match.getPlayer(p.SID).Captures, PointCapture{
 			SteamId:  p.SID,
@@ -609,20 +608,20 @@ func (match *Match) pointCapture(team logparse.Team, cp int, cpname string, play
 //	match.getTeamSum(team).MidFights++
 //}
 
-func (match *Match) killed(source steamid.SID64, target steamid.SID64, team logparse.Team) {
+func (match *Match) killed(source steamid.SID64, target steamid.SID64, team Team) {
 	if match.inRound {
 		match.getPlayer(source).Kills++
 		match.getPlayer(target).Deaths++
 		match.getTeamSum(team).Kills++
-		if team == logparse.BLU {
+		if team == BLU {
 			match.getRound().KillsBlu++
-		} else if team == logparse.RED {
+		} else if team == RED {
 			match.getRound().KillsRed++
 		}
 	}
 }
 
-func (match *Match) suicide(source steamid.SID64, weapon logparse.Weapon) {
+func (match *Match) suicide(source steamid.SID64, weapon Weapon) {
 	match.getPlayer(source).Suicides++
 }
 
@@ -630,13 +629,13 @@ func (match *Match) firstHealAfterSpawn(source steamid.SID64, timeUntil float64)
 	match.getMedicSum(source).FirstHealAfterSpawn = append(match.getMedicSum(source).FirstHealAfterSpawn, timeUntil)
 }
 
-func (match *Match) pickup(source steamid.SID64, item logparse.PickupItem, healing int64) {
+func (match *Match) pickup(source steamid.SID64, item PickupItem, healing int64) {
 	switch item {
-	case logparse.ItemHPSmall:
+	case ItemHPSmall:
 		fallthrough
-	case logparse.ItemHPMedium:
+	case ItemHPMedium:
 		fallthrough
-	case logparse.ItemHPLarge:
+	case ItemHPLarge:
 		p := match.getPlayer(source)
 		p.HealthPacks++
 		p.Healing += healing
@@ -659,7 +658,7 @@ func (match *Match) killedCustom(source steamid.SID64, target steamid.SID64, cus
 	match.getPlayer(target).Deaths++
 }
 
-func (match *Match) drop(source steamid.SID64, team logparse.Team) {
+func (match *Match) drop(source steamid.SID64, team Team) {
 	match.getMedicSum(source).Drops++
 	match.getTeamSum(team).Drops++
 }
@@ -670,7 +669,7 @@ func (match *Match) medicDeath(source steamid.SID64, uberPct int) {
 	}
 }
 
-func (match *Match) medicCharge(source steamid.SID64, weapon logparse.MedigunType, team logparse.Team) {
+func (match *Match) medicCharge(source steamid.SID64, weapon MedigunType, team Team) {
 	medicSum := match.getMedicSum(source)
 	_, found := medicSum.Charges[weapon]
 	if !found {
@@ -694,20 +693,20 @@ func (match *Match) medicLostAdv(source steamid.SID64, timeAdv int) {
 type PointCaptureBlocked struct {
 	CP       int
 	CPName   string
-	Position logparse.Pos
+	Position Pos
 }
 
 type PointCapture struct {
 	SteamId  steamid.SID64
 	CP       int
 	CPName   string
-	Position logparse.Pos
+	Position Pos
 }
 
 type MatchPlayerSum struct {
 	MatchPlayerSumID  int
 	SteamId           steamid.SID64
-	Team              logparse.Team
+	Team              Team
 	TimeStart         *time.Time
 	TimeEnd           *time.Time
 	Kills             int
@@ -737,7 +736,7 @@ type MatchPlayerSum struct {
 	BuildingDestroyed int // Opposing team buildings
 	BuildingDropped   int // Buildings destroyed while carrying
 	BuildingCarried   int // Building pickup count
-	Classes           []logparse.PlayerClass
+	Classes           []PlayerClass
 	Weapons           MatchWeaponSums
 }
 
@@ -762,8 +761,8 @@ type MatchRoundSum struct {
 	UbersRed    int
 	DamageBlu   int
 	DamageRed   int
-	RoundWinner logparse.Team
-	MidFight    logparse.Team
+	RoundWinner Team
+	MidFight    Team
 }
 
 type MatchMedicSum struct {
@@ -772,7 +771,7 @@ type MatchMedicSum struct {
 	FirstHealAfterSpawn []float64
 	SteamId             steamid.SID64
 	Healing             int64
-	Charges             map[logparse.MedigunType]int
+	Charges             map[MedigunType]int
 	Drops               int
 	AvgTimeToBuild      int
 	AvgTimeBeforeUse    int
@@ -787,11 +786,11 @@ type MatchMedicSum struct {
 func newMatchMedicSum(steamId steamid.SID64) *MatchMedicSum {
 	return &MatchMedicSum{
 		SteamId: steamId,
-		Charges: map[logparse.MedigunType]int{
-			logparse.Uber:       0,
-			logparse.Kritzkrieg: 0,
-			logparse.Vaccinator: 0,
-			logparse.QuickFix:   0,
+		Charges: map[MedigunType]int{
+			Uber:       0,
+			Kritzkrieg: 0,
+			Vaccinator: 0,
+			QuickFix:   0,
 		},
 	}
 }
@@ -820,7 +819,7 @@ type MatchPlayerClassSums []*MatchClassSums
 type MatchTeamSum struct {
 	MatchTeamId int
 	MatchId     int
-	Team        logparse.Team
+	Team        Team
 	Kills       int
 	Damage      int64
 	Charges     int
@@ -829,7 +828,7 @@ type MatchTeamSum struct {
 	MidFights   int
 }
 
-func newMatchTeamSum(team logparse.Team) *MatchTeamSum {
+func newMatchTeamSum(team Team) *MatchTeamSum {
 	return &MatchTeamSum{
 		Team: team,
 	}

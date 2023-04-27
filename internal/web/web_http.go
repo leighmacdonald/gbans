@@ -1,5 +1,5 @@
 // Package web implements the HTTP and websocket services for the frontend client and backend server.
-package app
+package web
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
 	"net/http"
@@ -16,12 +17,12 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
-type WebHandler interface {
+type Handler interface {
 	ListenAndServe(context.Context) error
 }
 
 type web struct {
-	app        *App
+	app        model.Application
 	logger     *zap.Logger
 	httpServer *http.Server
 	cm         *wsConnectionManager
@@ -54,7 +55,7 @@ func (web *web) bind(ctx *gin.Context, recv any) bool {
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb(app *App) (WebHandler, error) {
+func NewWeb(application model.Application) (Handler, error) {
 	var httpServer *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -62,7 +63,7 @@ func NewWeb(app *App) (WebHandler, error) {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	logger := app.logger.Named("web")
+	logger := application.Logger().Named("web")
 	router := gin.New()
 	router.Use(ErrorHandler(logger), gin.Recovery())
 
@@ -92,8 +93,8 @@ func NewWeb(app *App) (WebHandler, error) {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	cm := newWSConnectionManager(app.ctx, logger)
-	webHandler := web{app: app, logger: logger, httpServer: httpServer, cm: cm}
+	cm := newWSConnectionManager(application.Ctx(), logger)
+	webHandler := web{app: application, logger: logger, httpServer: httpServer, cm: cm}
 	webHandler.setupRouter(router)
 	return &webHandler, nil
 }
@@ -113,7 +114,7 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 // checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers
-func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege model.Privilege) bool {
+func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege store.Privilege) bool {
 	for _, steamId := range allowedSteamIds {
 		if steamId == person.SteamID {
 			return true

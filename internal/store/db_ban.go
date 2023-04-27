@@ -5,14 +5,432 @@ import (
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"net"
 	"time"
 )
 
-func (database *pgStore) DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error {
+type SteamIDProvider interface {
+	SID64() (steamid.SID64, error)
+}
+
+// StringSID defines a user provided steam id in an unknown format
+type StringSID string
+
+func (t StringSID) SID64() (steamid.SID64, error) {
+	// TODO pass ctx, or remove resolve?
+	resolveCtx, cancelResolve := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelResolve()
+	// TODO cache this as it can be a huge hot path
+	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
+	if errResolveSID != nil {
+		return 0, consts.ErrInvalidSID
+	}
+	if !sid64.Valid() {
+		return 0, consts.ErrInvalidSID
+	}
+	return sid64, nil
+}
+
+// Duration defines the length of time the action should be valid for
+// A Duration of 0 will be interpreted as permanent and set to 10 years in the future
+type Duration string
+
+func (value Duration) Value() (time.Duration, error) {
+	duration, errDuration := config.ParseDuration(string(value))
+	if errDuration != nil {
+		return 0, consts.ErrInvalidDuration
+	}
+	if duration < 0 {
+		return 0, consts.ErrInvalidDuration
+	}
+	if duration == 0 {
+		duration = time.Hour * 24 * 365 * 10
+	}
+	return duration, nil
+}
+
+// BanType defines the state of the ban for a user, 0 being no ban
+type BanType int
+
+const (
+	// Unknown means the ban state could not be determined, failing-open to allowing players
+	// to connect.
+	Unknown BanType = iota - 1
+	// OK Ban state is clean
+	OK
+	// NoComm means the player cannot communicate while playing voice + chat
+	NoComm
+	// Banned means the player cannot join the server at all
+	Banned
+)
+
+// Origin defines the origin of the ban or action
+type Origin int
+
+const (
+	// System is an automatic ban triggered by the service
+	System Origin = iota
+	// Bot is a ban using the discordutil bot interface
+	Bot
+	// Web is a ban using the web-ui
+	Web
+	// InGame is a ban using the sourcemod plugin
+	InGame
+)
+
+func (s Origin) String() string {
+	switch s {
+	case System:
+		return "System"
+	case Bot:
+		return "Bot"
+	case Web:
+		return "Web"
+	case InGame:
+		return "In-Game"
+	default:
+		return "Unknown"
+	}
+}
+
+// Reason defined a set of predefined ban reasons
+type Reason int
+
+const (
+	Custom Reason = iota + 1
+	External
+	Cheating
+	Racism
+	Harassment
+	Exploiting
+	WarningsExceeded
+	Spam
+	Language
+	Profile
+	ItemDescriptions
+	BotHost
+)
+
+var reasonStr = map[Reason]string{
+	Custom:           "Custom",
+	External:         "3rd party",
+	Cheating:         "Cheating",
+	Racism:           "Racism",
+	Harassment:       "Person Harassment",
+	Exploiting:       "Exploiting",
+	WarningsExceeded: "Warnings Exceeded",
+	Spam:             "Spam",
+	Language:         "Language",
+	Profile:          "Profile",
+	ItemDescriptions: "Item Name or Descriptions",
+	BotHost:          "BotHost",
+}
+
+func (r Reason) String() string {
+	return reasonStr[r]
+}
+
+type AppealState int
+
+const (
+	Open AppealState = iota
+	Denied
+	Accepted
+	Reduced
+	NoAppeal
+)
+
+type BannedPerson struct {
+	Ban    BanSteam `json:"ban"`
+	Person Person   `json:"person"`
+}
+
+func NewBannedPerson() BannedPerson {
+	banTime := config.Now()
+	return BannedPerson{
+		Ban: BanSteam{
+			BanBase: BanBase{
+				CreatedOn: banTime,
+				UpdatedOn: banTime,
+			},
+		},
+		Person: Person{
+			CreatedOn:     banTime,
+			UpdatedOn:     banTime,
+			PlayerSummary: &steamweb.PlayerSummary{},
+		},
+	}
+}
+
+func newBaseBanOpts(source SteamIDProvider, target StringSID, duration Duration,
+	reason Reason, reasonText string, modNote string, origin Origin,
+	banType BanType, opts *BaseBanOpts) error {
+	sourceSid, errSource := source.SID64()
+	if errSource != nil {
+		return errors.Wrapf(errSource, "Failed to parse source id")
+	}
+	var targetSid = steamid.SID64(0)
+	if string(target) != "0" {
+		newTargetSid, errTargetSid := target.SID64()
+		if errTargetSid != nil {
+			return errors.New("Invalid target id")
+		}
+		targetSid = newTargetSid
+	}
+	if !(banType == Banned || banType == NoComm) {
+		return errors.New("New ban must be ban or nocomm")
+	}
+	durationActual, errDuration := duration.Value()
+	if errDuration != nil {
+		return errors.Wrapf(errDuration, "Unable to determine expiration")
+	}
+	if reason == Custom && reasonText == "" {
+		return errors.New("Custom reason cannot be empty")
+	}
+	opts.TargetId = targetSid
+	opts.SourceId = sourceSid
+	opts.Duration = durationActual
+	opts.ModNote = modNote
+	opts.Reason = reason
+	opts.ReasonText = reasonText
+	opts.Origin = origin
+	opts.Deleted = false
+	opts.BanType = banType
+	opts.IsEnabled = true
+	return nil
+}
+
+func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
+	reason Reason, reasonText string, modNote string, origin Origin, reportId int64, banType BanType,
+	banSteam *BanSteam) error {
+	var opts BanSteamOpts
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	if errBaseOpts != nil {
+		return errBaseOpts
+	}
+	if reportId < 0 {
+		return errors.New("Invalid report ID")
+	}
+	opts.ReportId = reportId
+	banSteam.Apply(opts)
+	banSteam.ReportId = opts.ReportId
+	banSteam.BanID = opts.BanId
+	return nil
+}
+
+func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
+	reason Reason, reasonText string, modNote string, origin Origin, ASNum int64, banType BanType, banASN *BanASN) error {
+	var opts BanASNOpts
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	if errBaseOpts != nil {
+		return errBaseOpts
+	}
+	// Valid public ASN ranges
+	// https://www.iana.org/assignments/as-numbers/as-numbers.xhtml
+	ranges := []struct {
+		start int64
+		end   int64
+	}{
+		{1, 23455},
+		{23457, 64495},
+		{131072, 4199999999},
+	}
+	ok := false
+	for _, r := range ranges {
+		if ASNum >= r.start && ASNum <= r.end {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return errors.New("Invalid asn")
+	}
+	opts.ASNum = ASNum
+	return banASN.Apply(opts)
+}
+
+func NewBanCIDR(source SteamIDProvider, target StringSID, duration Duration,
+	reason Reason, reasonText string, modNote string, origin Origin, cidr string,
+	banType BanType, banCIDR *BanCIDR) error {
+	var opts BanCIDROpts
+	if errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin,
+		banType, &opts.BaseBanOpts); errBaseOpts != nil {
+		return errBaseOpts
+	}
+	_, parsedNetwork, errParse := net.ParseCIDR(cidr)
+	if errParse != nil {
+		return errors.Wrap(errParse, "Failed to parse cidr address")
+	}
+	opts.CIDR = parsedNetwork
+	return banCIDR.Apply(opts)
+}
+
+func NewBanSteamGroup(source SteamIDProvider, target StringSID, duration Duration,
+	reason Reason, reasonText string, modNote string, origin Origin, groupId steamid.GID, groupName string,
+	banType BanType, banGroup *BanGroup) error {
+	var opts BanSteamGroupOpts
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	if errBaseOpts != nil {
+		return errBaseOpts
+	}
+	// TODO validate gid here w/fetch?
+	opts.GroupId = groupId
+	opts.GroupName = groupName
+	return banGroup.Apply(opts)
+}
+
+// BanBase provides a common struct shared between all ban types, it should not be used
+// directly
+type BanBase struct {
+	// SteamID is the steamID of the banned person
+	TargetId steamid.SID64 `json:"target_id,string"`
+	SourceId steamid.SID64 `json:"source_id,string"`
+	// Reason defines the overall ban classification
+	BanType BanType `json:"ban_type"`
+	// Reason defines the overall ban classification
+	Reason Reason `json:"reason"`
+	// ReasonText is returned to the client when kicked trying to join the server
+	ReasonText      string `json:"reason_text"`
+	UnbanReasonText string `json:"unban_reason_text"`
+	// Note is a supplementary note added by admins that is hidden from normal view
+	Note   string `json:"note"`
+	Origin Origin `json:"origin"`
+
+	AppealState AppealState `json:"appeal_state"`
+
+	// Deleted is used for soft-deletes
+	Deleted   bool `json:"deleted"`
+	IsEnabled bool `json:"is_enabled"`
+	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
+	ValidUntil time.Time `json:"valid_until" `
+	CreatedOn  time.Time `json:"created_on"`
+	UpdatedOn  time.Time `json:"updated_on"`
+}
+
+func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
+	banTime := config.Now()
+	banBase.BanType = opts.BanType
+	banBase.SourceId = opts.SourceId
+	banBase.TargetId = opts.TargetId
+	banBase.Reason = opts.Reason
+	banBase.ReasonText = opts.ReasonText
+	banBase.Note = opts.ModNote
+	banBase.Origin = opts.Origin
+	banBase.Deleted = opts.Deleted
+	banBase.IsEnabled = opts.IsEnabled
+	banBase.AppealState = opts.AppealState
+	banBase.CreatedOn = banTime
+	banBase.UpdatedOn = banTime
+	banBase.ValidUntil = banTime.Add(opts.Duration)
+}
+
+// BaseBanOpts defines common ban options that apply to all types to varying degrees
+// It should not be instantiated directly, but instead use one of the composites that build
+// upon it
+type BaseBanOpts struct {
+	TargetId    steamid.SID64 `json:"target_id"`
+	SourceId    steamid.SID64 `json:"source_id"`
+	Duration    time.Duration `json:"duration"`
+	BanType     BanType       `json:"ban_type"`
+	Reason      Reason        `json:"reason"`
+	ReasonText  string        `json:"reason_text"`
+	Origin      Origin        `json:"origin"`
+	ModNote     string        `json:"mod_note"`
+	IsEnabled   bool          `json:"is_enabled"`
+	Deleted     bool          `json:"deleted"`
+	AppealState AppealState   `json:"appeal_state"`
+}
+
+type BanSteamOpts struct {
+	BaseBanOpts `json:"base_ban_opts"`
+	BanId       int64 `json:"ban_id"`
+	ReportId    int64 `json:"report_id"`
+}
+
+type BanSteamGroupOpts struct {
+	BaseBanOpts
+	GroupId   steamid.GID
+	GroupName string
+}
+
+type BanASNOpts struct {
+	BaseBanOpts
+	ASNum int64
+}
+
+type BanCIDROpts struct {
+	BaseBanOpts
+	CIDR *net.IPNet
+}
+
+// BanGroup represents a steam group whose members are banned from connecting
+type BanGroup struct {
+	BanBase
+	BanGroupId int64       `json:"ban_group_id"`
+	GroupId    steamid.GID `json:"group_id,string"`
+	GroupName  string      `json:"group_name"`
+}
+
+func (banGroup *BanGroup) Apply(opts BanSteamGroupOpts) error {
+	banGroup.ApplyBaseOpts(opts.BaseBanOpts)
+	banGroup.GroupName = opts.GroupName
+	banGroup.GroupId = opts.GroupId
+	return nil
+}
+
+type BanASN struct {
+	BanBase
+	BanASNId int64 `json:"ban_asn_id"`
+	ASNum    int64 `json:"as_num"`
+}
+
+func (banASN *BanASN) Apply(opts BanASNOpts) error {
+	banASN.ApplyBaseOpts(opts.BaseBanOpts)
+	banASN.ASNum = opts.ASNum
+	return nil
+}
+
+type BanCIDR struct {
+	BanBase
+	NetID int64      `json:"net_id"`
+	CIDR  *net.IPNet `json:"cidr"`
+}
+
+func (banCIDR *BanCIDR) Apply(opts BanCIDROpts) error {
+	banCIDR.ApplyBaseOpts(opts.BaseBanOpts)
+	banCIDR.CIDR = opts.CIDR
+	return nil
+}
+
+func (banCIDR *BanCIDR) String() string {
+	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", banCIDR.CIDR, banCIDR.Origin, banCIDR.Reason)
+}
+
+type BanSteam struct {
+	BanBase
+	BanID    int64 `db:"ban_id" json:"ban_id"`
+	ReportId int64 `json:"report_id"`
+}
+
+func (banSteam *BanSteam) Apply(opts BanSteamOpts) {
+	banSteam.ApplyBaseOpts(opts.BaseBanOpts)
+	banSteam.ReportId = opts.ReportId
+}
+
+func (banSteam BanSteam) ToURL() string {
+	return config.ExtURL("/ban/%d", banSteam.BanID)
+}
+
+func (banSteam *BanSteam) String() string {
+	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", banSteam.TargetId.Int64(), banSteam.Origin, banSteam.ReasonText, banSteam.BanType)
+}
+
+func (database *pgStore) DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error {
 	if hardDelete {
 		const query = `DELETE FROM ban WHERE ban_id = $1`
 		if errExec := database.Exec(ctx, query, ban.BanID); errExec != nil {
@@ -26,7 +444,7 @@ func (database *pgStore) DropBan(ctx context.Context, ban *model.BanSteam, hardD
 	}
 }
 
-func (database *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, person *model.BannedPerson, deletedOk bool) error {
+func (database *pgStore) getBanByColumn(ctx context.Context, column string, identifier any, person *BannedPerson, deletedOk bool) error {
 	whereClauses := sq.And{
 		sq.Eq{fmt.Sprintf("b.%s", column): identifier},
 	}
@@ -72,24 +490,24 @@ func (database *pgStore) getBanByColumn(ctx context.Context, column string, iden
 	return nil
 }
 
-func (database *pgStore) GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *model.BannedPerson, deletedOk bool) error {
+func (database *pgStore) GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedPerson, deletedOk bool) error {
 	return database.getBanByColumn(ctx, "target_id", sid64, bannedPerson, deletedOk)
 }
 
-func (database *pgStore) GetBanByBanID(ctx context.Context, banID int64, bannedPerson *model.BannedPerson, deletedOk bool) error {
+func (database *pgStore) GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedPerson, deletedOk bool) error {
 	return database.getBanByColumn(ctx, "ban_id", banID, bannedPerson, deletedOk)
 }
 
 // SaveBan will insert or update the ban record
 // New records will have the Ban.BanID set automatically
-func (database *pgStore) SaveBan(ctx context.Context, ban *model.BanSteam) error {
+func (database *pgStore) SaveBan(ctx context.Context, ban *BanSteam) error {
 	// Ensure the foreign keys are satisfied
-	targetPerson := model.NewPerson(ban.TargetId)
+	targetPerson := NewPerson(ban.TargetId)
 	errGetPerson := database.GetOrCreatePersonBySteamID(ctx, ban.TargetId, &targetPerson)
 	if errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get targetPerson for ban")
 	}
-	authorPerson := model.NewPerson(ban.SourceId)
+	authorPerson := NewPerson(ban.SourceId)
 	errGetAuthor := database.GetOrCreatePersonBySteamID(ctx, ban.SourceId, &authorPerson)
 	if errGetAuthor != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get author for ban")
@@ -99,7 +517,7 @@ func (database *pgStore) SaveBan(ctx context.Context, ban *model.BanSteam) error
 		return database.updateBan(ctx, ban)
 	}
 	ban.CreatedOn = ban.UpdatedOn
-	existing := model.NewBannedPerson()
+	existing := NewBannedPerson()
 	errGetBan := database.GetBanBySteamID(ctx, ban.TargetId, &existing, false)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, ErrNoResult) {
@@ -113,7 +531,7 @@ func (database *pgStore) SaveBan(ctx context.Context, ban *model.BanSteam) error
 	return database.insertBan(ctx, ban)
 }
 
-func (database *pgStore) insertBan(ctx context.Context, ban *model.BanSteam) error {
+func (database *pgStore) insertBan(ctx context.Context, ban *BanSteam) error {
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until, 
 		                 created_on, updated_on, origin, report_id, appeal_state)
@@ -128,7 +546,7 @@ func (database *pgStore) insertBan(ctx context.Context, ban *model.BanSteam) err
 	return nil
 }
 
-func (database *pgStore) updateBan(ctx context.Context, ban *model.BanSteam) error {
+func (database *pgStore) updateBan(ctx context.Context, ban *BanSteam) error {
 	const query = `
 		UPDATE ban
 		SET source_id = $2, reason = $3, reason_text = $4, note = $5, valid_until = $6, updated_on = $7, 
@@ -143,21 +561,21 @@ func (database *pgStore) updateBan(ctx context.Context, ban *model.BanSteam) err
 	return nil
 }
 
-func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.BanSteam, error) {
+func (database *pgStore) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 	const q = `
 		SELECT ban_id, target_id, source_id, ban_type, reason, reason_text, note, valid_until, origin, 
 		       created_on, updated_on, deleted, case WHEN report_id is null THEN 0 ELSE report_id END, 
 		       unban_reason_text, is_enabled, appeal_state
 		FROM ban
        	WHERE valid_until < $1 AND deleted = false`
-	var bans []model.BanSteam
+	var bans []BanSteam
 	rows, errQuery := database.Query(ctx, q, config.Now())
 	if errQuery != nil {
 		return nil, errQuery
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var ban model.BanSteam
+		var ban BanSteam
 		if errScan := rows.Scan(&ban.BanID, &ban.TargetId, &ban.SourceId, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportId, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState); errScan != nil {
@@ -168,7 +586,7 @@ func (database *pgStore) GetExpiredBans(ctx context.Context) ([]model.BanSteam, 
 	return bans, nil
 }
 
-func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]model.AppealOverview, error) {
+func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]AppealOverview, error) {
 	const query = `
 	SELECT
 		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.origin,
@@ -196,14 +614,14 @@ func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryF
 	) AND deleted = false
 	`
 
-	var overviews []model.AppealOverview
+	var overviews []AppealOverview
 	rows, errQuery := database.Query(ctx, query)
 	if errQuery != nil {
 		return nil, errQuery
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var ao model.AppealOverview
+		var ao AppealOverview
 		if errScan := rows.Scan(
 			&ao.BanID, &ao.TargetId, &ao.SourceId, &ao.BanType,
 			&ao.Reason, &ao.ReasonText, &ao.Note, &ao.ValidUntil,
@@ -222,7 +640,7 @@ func (database *pgStore) GetAppealsByActivity(ctx context.Context, filter QueryF
 type BansQueryFilter struct {
 	QueryFilter
 	SteamId       steamid.SID64 `json:"steam_id,omitempty"`
-	Reasons       []model.Reason
+	Reasons       []Reason
 	PermanentOnly bool
 }
 
@@ -234,7 +652,7 @@ func NewBansQueryFilter(steamId steamid.SID64) BansQueryFilter {
 }
 
 // GetBansSteam returns all bans that fit the filter criteria passed in
-func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]model.BannedPerson, error) {
+func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
 	qb := sb.Select("b.ban_id as ban_id", "b.target_id as target_id", "b.source_id as source_id",
 		"b.ban_type as ban_type", "b.reason as reason", "b.reason_text as reason_text",
 		"b.note as note", "b.origin as origin", "b.valid_until as valid_until", "b.created_on as created_on",
@@ -277,14 +695,14 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilte
 	if errQueryBuilder != nil {
 		return nil, Err(errQueryBuilder)
 	}
-	var bans []model.BannedPerson
+	var bans []BannedPerson
 	rows, errQuery := database.conn.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := NewBannedPerson()
 		if errScan := rows.Scan(&bannedPerson.Ban.BanID, &bannedPerson.Ban.TargetId, &bannedPerson.Ban.SourceId,
 			&bannedPerson.Ban.BanType, &bannedPerson.Ban.Reason, &bannedPerson.Ban.ReasonText,
 			&bannedPerson.Ban.Note, &bannedPerson.Ban.Origin, &bannedPerson.Ban.ValidUntil,
@@ -306,7 +724,7 @@ func (database *pgStore) GetBansSteam(ctx context.Context, filter BansQueryFilte
 	return bans, nil
 }
 
-func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]model.BanSteam, error) {
+func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error) {
 	query, args, queryErr := sb.
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
@@ -320,14 +738,14 @@ func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilte
 	if queryErr != nil {
 		return nil, Err(queryErr)
 	}
-	var bans []model.BanSteam
+	var bans []BanSteam
 	rows, errQuery := database.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, errQuery
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var ban model.BanSteam
+		var ban BanSteam
 		if errQuery = rows.Scan(&ban.BanID, &ban.TargetId, &ban.SourceId, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportId, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState); errQuery != nil {
@@ -338,14 +756,14 @@ func (database *pgStore) GetBansOlderThan(ctx context.Context, filter QueryFilte
 	return bans, nil
 }
 
-func (database *pgStore) SaveBanMessage(ctx context.Context, message *model.UserMessage) error {
+func (database *pgStore) SaveBanMessage(ctx context.Context, message *UserMessage) error {
 	if message.MessageId > 0 {
 		return database.updateBanMessage(ctx, message)
 	}
 	return database.insertBanMessage(ctx, message)
 }
 
-func (database *pgStore) updateBanMessage(ctx context.Context, message *model.UserMessage) error {
+func (database *pgStore) updateBanMessage(ctx context.Context, message *UserMessage) error {
 	message.UpdatedOn = config.Now()
 	const query = `
 	UPDATE ban_appeal
@@ -368,7 +786,7 @@ func (database *pgStore) updateBanMessage(ctx context.Context, message *model.Us
 	return nil
 }
 
-func (database *pgStore) insertBanMessage(ctx context.Context, message *model.UserMessage) error {
+func (database *pgStore) insertBanMessage(ctx context.Context, message *UserMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
 		ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -393,7 +811,7 @@ func (database *pgStore) insertBanMessage(ctx context.Context, message *model.Us
 	return nil
 }
 
-func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]model.UserMessage, error) {
+func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]UserMessage, error) {
 	const query = `
 	SELECT
 	ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -407,9 +825,9 @@ func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]mod
 		}
 	}
 	defer rows.Close()
-	var messages []model.UserMessage
+	var messages []UserMessage
 	for rows.Next() {
-		var msg model.UserMessage
+		var msg UserMessage
 		if errScan := rows.Scan(
 			&msg.MessageId,
 			&msg.ParentId,
@@ -426,7 +844,7 @@ func (database *pgStore) GetBanMessages(ctx context.Context, banId int64) ([]mod
 	return messages, nil
 }
 
-func (database *pgStore) GetBanMessageById(ctx context.Context, banMessageId int, message *model.UserMessage) error {
+func (database *pgStore) GetBanMessageById(ctx context.Context, banMessageId int, message *UserMessage) error {
 	const query = `
 	SELECT
 	ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -446,7 +864,7 @@ func (database *pgStore) GetBanMessageById(ctx context.Context, banMessageId int
 	return nil
 }
 
-func (database *pgStore) DropBanMessage(ctx context.Context, message *model.UserMessage) error {
+func (database *pgStore) DropBanMessage(ctx context.Context, message *UserMessage) error {
 	const q = `UPDATE ban_appeal SET deleted = true WHERE ban_message_id = $1`
 	if errExec := database.Exec(ctx, q, message.MessageId); errExec != nil {
 		return Err(errExec)
@@ -456,7 +874,7 @@ func (database *pgStore) DropBanMessage(ctx context.Context, message *model.User
 	return nil
 }
 
-func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *model.BanGroup) error {
+func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *BanGroup) error {
 	const q = `
 	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
 	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
@@ -479,7 +897,7 @@ func (database *pgStore) GetBanGroup(ctx context.Context, groupId steamid.GID, b
 			&banGroup.AppealState))
 }
 
-func (database *pgStore) GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *model.BanGroup) error {
+func (database *pgStore) GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *BanGroup) error {
 	const q = `
 	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
 	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
@@ -502,7 +920,7 @@ func (database *pgStore) GetBanGroupById(ctx context.Context, banGroupId int64, 
 			&banGroup.AppealState))
 }
 
-func (database *pgStore) GetBanGroups(ctx context.Context) ([]model.BanGroup, error) {
+func (database *pgStore) GetBanGroups(ctx context.Context) ([]BanGroup, error) {
 	const q = `
 	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
 	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state
@@ -513,9 +931,9 @@ func (database *pgStore) GetBanGroups(ctx context.Context) ([]model.BanGroup, er
 		return nil, Err(errRows)
 	}
 	defer rows.Close()
-	var groups []model.BanGroup
+	var groups []BanGroup
 	for rows.Next() {
-		var group model.BanGroup
+		var group BanGroup
 		if errScan := rows.Scan(&group.BanGroupId,
 			&group.SourceId,
 			&group.TargetId,
@@ -536,14 +954,14 @@ func (database *pgStore) GetBanGroups(ctx context.Context) ([]model.BanGroup, er
 	return groups, nil
 }
 
-func (database *pgStore) SaveBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
+func (database *pgStore) SaveBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	if banGroup.BanGroupId > 0 {
 		return database.updateBanGroup(ctx, banGroup)
 	}
 	return database.insertBanGroup(ctx, banGroup)
 }
 
-func (database *pgStore) insertBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
+func (database *pgStore) insertBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	const q = `
 	INSERT INTO ban_group (source_id, target_id, group_id, group_name, is_enabled, deleted, note,
 	unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state)
@@ -556,7 +974,7 @@ func (database *pgStore) insertBanGroup(ctx context.Context, banGroup *model.Ban
 		Scan(&banGroup.BanGroupId))
 }
 
-func (database *pgStore) updateBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
+func (database *pgStore) updateBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	banGroup.UpdatedOn = config.Now()
 	const q = `
 	UPDATE ban_group
@@ -569,7 +987,7 @@ func (database *pgStore) updateBanGroup(ctx context.Context, banGroup *model.Ban
 			banGroup.Origin, banGroup.UpdatedOn, banGroup.GroupId, banGroup.ValidUntil, banGroup.AppealState))
 }
 
-func (database *pgStore) DropBanGroup(ctx context.Context, banGroup *model.BanGroup) error {
+func (database *pgStore) DropBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	banGroup.IsEnabled = false
 	return database.SaveBanGroup(ctx, banGroup)
 }

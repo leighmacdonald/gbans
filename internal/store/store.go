@@ -5,9 +5,9 @@ package store
 import (
 	"context"
 	"github.com/jackc/pgx/v4"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"io"
@@ -22,111 +22,111 @@ type GenericStore interface {
 }
 
 type AuthStore interface {
-	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *model.PersonAuth) error
-	GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *model.PersonAuth) error
-	SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error
+	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
+	GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *PersonAuth) error
+	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
 	DeletePersonAuth(ctx context.Context, authId int64) error
 	PrunePersonAuth(ctx context.Context) error
 }
 
 type ServerStore interface {
-	GetServer(ctx context.Context, serverID int, server *model.Server) error
-	GetServers(ctx context.Context, includeDisabled bool) ([]model.Server, error)
-	GetServerByName(ctx context.Context, serverName string, server *model.Server) error
-	SaveServer(ctx context.Context, server *model.Server) error
+	GetServer(ctx context.Context, serverID int, server *Server) error
+	GetServers(ctx context.Context, includeDisabled bool) ([]Server, error)
+	GetServerByName(ctx context.Context, serverName string, server *Server) error
+	SaveServer(ctx context.Context, server *Server) error
 	DropServer(ctx context.Context, serverID int) error
 }
 
 type DemoStore interface {
-	GetDemoById(ctx context.Context, demoId int64, demoFile *model.DemoFile) error
-	GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error
-	GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error)
-	SaveDemo(ctx context.Context, d *model.DemoFile) error
-	DropDemo(ctx context.Context, d *model.DemoFile) error
+	GetDemoById(ctx context.Context, demoId int64, demoFile *DemoFile) error
+	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
+	GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error)
+	SaveDemo(ctx context.Context, d *DemoFile) error
+	DropDemo(ctx context.Context, d *DemoFile) error
 	FlushDemos(ctx context.Context) error
 }
 
 type NewsStore interface {
-	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error)
-	GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error
-	GetNewsById(ctx context.Context, newsId int, entry *model.NewsEntry) error
-	SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error
+	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error)
+	GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error
+	GetNewsById(ctx context.Context, newsId int, entry *NewsEntry) error
+	SaveNewsArticle(ctx context.Context, entry *NewsEntry) error
 	DropNewsArticle(ctx context.Context, newsId int) error
 }
 
 type BanStore interface {
-	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, bannedPerson *model.BannedPerson, deletedOk bool) error
-	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *model.BannedPerson, deletedOk bool) error
-	SaveBan(ctx context.Context, ban *model.BanSteam) error
-	DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error
-	GetBansSteam(ctx context.Context, queryFilter BansQueryFilter) ([]model.BannedPerson, error)
-	GetBansOlderThan(ctx context.Context, queryFilter QueryFilter, time time.Time) ([]model.BanSteam, error)
-	GetExpiredBans(ctx context.Context) ([]model.BanSteam, error)
-	GetAppealsByActivity(ctx context.Context, queryFilter QueryFilter) ([]model.AppealOverview, error)
+	GetBanBySteamID(ctx context.Context, steamID steamid.SID64, bannedPerson *BannedPerson, deletedOk bool) error
+	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedPerson, deletedOk bool) error
+	SaveBan(ctx context.Context, ban *BanSteam) error
+	DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error
+	GetBansSteam(ctx context.Context, queryFilter BansQueryFilter) ([]BannedPerson, error)
+	GetBansOlderThan(ctx context.Context, queryFilter QueryFilter, time time.Time) ([]BanSteam, error)
+	GetExpiredBans(ctx context.Context) ([]BanSteam, error)
+	GetAppealsByActivity(ctx context.Context, queryFilter QueryFilter) ([]AppealOverview, error)
 
-	GetBansNet(ctx context.Context) ([]model.BanCIDR, error)
-	GetBanNetById(ctx context.Context, netId int64, banCidr *model.BanCIDR) error
-	GetBanNetByAddress(ctx context.Context, ip net.IP) ([]model.BanCIDR, error)
-	SaveBanNet(ctx context.Context, banNet *model.BanCIDR) error
-	DropBanNet(ctx context.Context, ban *model.BanCIDR) error
-	GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error)
+	GetBansNet(ctx context.Context) ([]BanCIDR, error)
+	GetBanNetById(ctx context.Context, netId int64, banCidr *BanCIDR) error
+	GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error)
+	SaveBanNet(ctx context.Context, banNet *BanCIDR) error
+	DropBanNet(ctx context.Context, ban *BanCIDR) error
+	GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error)
 
-	GetBansASN(ctx context.Context) ([]model.BanASN, error)
-	GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error
-	SaveBanASN(ctx context.Context, banASN *model.BanASN) error
-	DropBanASN(ctx context.Context, ban *model.BanASN) error
-	GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error)
+	GetBansASN(ctx context.Context) ([]BanASN, error)
+	GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error
+	SaveBanASN(ctx context.Context, banASN *BanASN) error
+	DropBanASN(ctx context.Context, ban *BanASN) error
+	GetExpiredASNBans(ctx context.Context) ([]BanASN, error)
 
-	GetBanGroups(ctx context.Context) ([]model.BanGroup, error)
-	GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *model.BanGroup) error
-	GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *model.BanGroup) error
-	SaveBanGroup(ctx context.Context, banGroup *model.BanGroup) error
-	DropBanGroup(ctx context.Context, banGroup *model.BanGroup) error
+	GetBanGroups(ctx context.Context) ([]BanGroup, error)
+	GetBanGroup(ctx context.Context, groupId steamid.GID, banGroup *BanGroup) error
+	GetBanGroupById(ctx context.Context, banGroupId int64, banGroup *BanGroup) error
+	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
+	DropBanGroup(ctx context.Context, banGroup *BanGroup) error
 
-	SaveBanMessage(ctx context.Context, message *model.UserMessage) error
-	DropBanMessage(ctx context.Context, message *model.UserMessage) error
-	GetBanMessages(ctx context.Context, banId int64) ([]model.UserMessage, error)
-	GetBanMessageById(ctx context.Context, banMessageId int, message *model.UserMessage) error
+	SaveBanMessage(ctx context.Context, message *UserMessage) error
+	DropBanMessage(ctx context.Context, message *UserMessage) error
+	GetBanMessages(ctx context.Context, banId int64) ([]UserMessage, error)
+	GetBanMessageById(ctx context.Context, banMessageId int, message *UserMessage) error
 }
 
 type ReportStore interface {
-	SaveReport(ctx context.Context, report *model.Report) error
-	SaveReportMessage(ctx context.Context, message *model.UserMessage) error
-	DropReport(ctx context.Context, report *model.Report) error
-	DropReportMessage(ctx context.Context, message *model.UserMessage) error
-	GetReport(ctx context.Context, reportId int64, report *model.Report) error
-	GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId steamid.SID64, report *model.Report) error
-	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]model.Report, error)
-	GetReportMessages(ctx context.Context, reportId int64) ([]model.UserMessage, error)
-	GetReportMessageById(ctx context.Context, reportMessageId int64, message *model.UserMessage) error
+	SaveReport(ctx context.Context, report *Report) error
+	SaveReportMessage(ctx context.Context, message *UserMessage) error
+	DropReport(ctx context.Context, report *Report) error
+	DropReportMessage(ctx context.Context, message *UserMessage) error
+	GetReport(ctx context.Context, reportId int64, report *Report) error
+	GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId steamid.SID64, report *Report) error
+	GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error)
+	GetReportMessages(ctx context.Context, reportId int64) ([]UserMessage, error)
+	GetReportMessageById(ctx context.Context, reportMessageId int64, message *UserMessage) error
 }
 
 type PersonStore interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
-	SavePerson(ctx context.Context, person *model.Person) error
-	GetServerPermissions(ctx context.Context) ([]model.ServerPermission, error)
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
-	GetPeople(ctx context.Context, qf QueryFilter) (model.People, error)
-	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error)
-	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *model.Person) error
-	GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error
-	GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.Person, error)
-	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit uint64) (model.PersonConnections, error)
-	QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (model.PersonMessages, error)
-	GetPersonMessageById(ctx context.Context, query int64, msg *model.PersonMessage) error
-	AddChatHistory(ctx context.Context, message *model.PersonMessage) error
-	AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error
-	SendNotification(ctx context.Context, targets steamid.SID64, severity model.NotificationSeverity, message string, link string) error
-	GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]model.UserNotification, error)
+	SavePerson(ctx context.Context, person *Person) error
+	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
+	GetPeople(ctx context.Context, qf QueryFilter) (People, error)
+	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, p *Person) error
+	GetPersonByDiscordID(ctx context.Context, discordId string, person *Person) error
+	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
+	GetPersonIPHistory(ctx context.Context, sid steamid.SID64, limit uint64) (PersonConnections, error)
+	QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, error)
+	GetPersonMessageById(ctx context.Context, query int64, msg *PersonMessage) error
+	AddChatHistory(ctx context.Context, message *PersonMessage) error
+	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
+	SendNotification(ctx context.Context, targets steamid.SID64, severity NotificationSeverity, message string, link string) error
+	GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]UserNotification, error)
 	SetNotificationsRead(ctx context.Context, notificationIds []int64) error
-	GetSteamIdsAbove(ctx context.Context, privilege model.Privilege) (steamid.Collection, error)
+	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 }
 
 type FilterStore interface {
-	SaveFilter(ctx context.Context, filter *model.Filter) error
-	DropFilter(ctx context.Context, filter *model.Filter) error
-	GetFilterByID(ctx context.Context, wordId int64, filter *model.Filter) error
-	GetFilters(ctx context.Context) ([]model.Filter, error)
+	SaveFilter(ctx context.Context, filter *Filter) error
+	DropFilter(ctx context.Context, filter *Filter) error
+	GetFilterByID(ctx context.Context, wordId int64, filter *Filter) error
+	GetFilters(ctx context.Context) ([]Filter, error)
 }
 
 type MigrationStore interface {
@@ -134,9 +134,9 @@ type MigrationStore interface {
 }
 
 type MediaStore interface {
-	SaveMedia(ctx context.Context, media *model.Media) error
-	GetMediaByName(ctx context.Context, name string, media *model.Media) error
-	GetMediaById(ctx context.Context, mediaId int, media *model.Media) error
+	SaveMedia(ctx context.Context, media *Media) error
+	GetMediaByName(ctx context.Context, name string, media *Media) error
+	GetMediaById(ctx context.Context, mediaId int, media *Media) error
 }
 
 type WikiStore interface {
@@ -146,14 +146,14 @@ type WikiStore interface {
 }
 
 type StatStore interface {
-	GetStats(ctx context.Context, stats *model.Stats) error
-	MatchSave(ctx context.Context, match *model.Match) error
-	MatchGetById(ctx context.Context, matchId int) (*model.Match, error)
-	Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error)
-	SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats model.LocalTF2StatsSnapshot) error
-	GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]model.LocalTF2StatsSnapshot, error)
-	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error
-	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error)
+	GetStats(ctx context.Context, stats *Stats) error
+	MatchSave(ctx context.Context, match *logparse.Match) error
+	MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error)
+	Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryCollection, error)
+	SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF2StatsSnapshot) error
+	GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2StatsSnapshot, error)
+	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats GlobalTF2StatsSnapshot) error
+	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]GlobalTF2StatsSnapshot, error)
 	BuildGlobalTF2Stats(ctx context.Context) error
 	BuildLocalTF2Stats(ctx context.Context) error
 }

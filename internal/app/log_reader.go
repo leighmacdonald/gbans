@@ -192,7 +192,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, database store
 				continue
 			}
 			serverName = serverNameValue
-			var server model.Server
+			var server store.Server
 			if errServer := database.GetServerByName(ctx, serverName, &server); errServer != nil {
 				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 				continue
@@ -208,7 +208,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, database store
 	}
 }
 
-func logToServerEvent(server model.Server, msg string, event *model.ServerEvent) error {
+func logToServerEvent(server store.Server, msg string, event *model.ServerEvent) error {
 	//var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 	//	if sid == "BOT" {
 	//		panic("fixme")

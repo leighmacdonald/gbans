@@ -1,7 +1,6 @@
 package query
 
 import (
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
@@ -9,8 +8,8 @@ import (
 	"time"
 )
 
-func A2SQueryServer(logger *zap.Logger, server model.Server) (*a2s.ServerInfo, error) {
-	client, errClient := a2s.NewClient(server.Addr(), a2s.TimeoutOption(time.Second*5))
+func A2SQueryServer(logger *zap.Logger, addr string) (*a2s.ServerInfo, error) {
+	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(time.Second*5))
 	if errClient != nil {
 		return nil, errors.Wrapf(errClient, "Failed to create a2s client")
 	}

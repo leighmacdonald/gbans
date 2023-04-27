@@ -49,9 +49,9 @@ func init() {
 	}
 	rootCmd.Version = app.BuildVersion
 	cobra.OnInitialize(func() {
-		if _, errRead := config.Read(cfgFile); errRead != nil {
+		if _, errRead := config.Read(); errRead != nil {
 			fmt.Printf("Failed to read config: %v", errRead)
 		}
 	})
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gbans.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)")
 }

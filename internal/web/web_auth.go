@@ -1,4 +1,4 @@
-package app
+package web
 
 import (
 	"context"
@@ -66,8 +66,8 @@ func (web *web) authServerMiddleWare() gin.HandlerFunc {
 			web.logger.Error("Invalid jwt claim ServerId")
 			return
 		}
-		var server model.Server
-		if errGetServer := web.app.store.GetServer(ctx, claims.ServerId, &server); errGetServer != nil {
+		var server store.Server
+		if errGetServer := web.app.Store().GetServer(ctx, claims.ServerId, &server); errGetServer != nil {
 			web.logger.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
@@ -143,7 +143,7 @@ func (web *web) onOAuthDiscordCallback() gin.HandlerFunc {
 		form := url.Values{}
 		form.Set("client_id", config.Discord.AppID)
 		form.Set("client_secret", config.Discord.AppSecret)
-		form.Set("redirect_uri", config.ExtURL("/login/discord"))
+		form.Set("redirect_uri", config.ExtURL("/login/discordutil"))
 		form.Set("code", code)
 		form.Set("grant_type", "authorization_code")
 		form.Set("scope", "identify")
@@ -188,8 +188,8 @@ func (web *web) onOAuthDiscordCallback() gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		var dp model.Person
-		if errDp := web.app.store.GetPersonByDiscordID(ctx, discordId, &dp); errDp != nil {
+		var dp store.Person
+		if errDp := web.app.Store().GetPersonByDiscordID(ctx, discordId, &dp); errDp != nil {
 			if !errors.Is(errDp, store.ErrNoResult) {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
@@ -200,13 +200,13 @@ func (web *web) onOAuthDiscordCallback() gin.HandlerFunc {
 			return
 		}
 		sid := currentUserProfile(ctx).SteamID
-		var sp model.Person
-		if errPerson := web.app.store.GetPersonBySteamID(ctx, sid, &sp); errPerson != nil {
+		var sp store.Person
+		if errPerson := web.app.PersonBySID(ctx, sid, &sp); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		sp.DiscordID = discordId
-		if errSave := web.app.store.SavePerson(ctx, &sp); errSave != nil {
+		if errSave := web.app.Store().SavePerson(ctx, &sp); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
@@ -251,13 +251,13 @@ func (web *web) onOpenIDCallback() gin.HandlerFunc {
 			ctx.Redirect(302, referralUrl)
 			return
 		}
-		person := model.NewPerson(sid)
-		if errGetProfile := getOrCreateProfileBySteamID(ctx, web.app.store, sid, &person); errGetProfile != nil {
+		person := store.NewPerson(sid)
+		if errGetProfile := web.app.PersonBySID(ctx, sid, &person); errGetProfile != nil {
 			web.logger.Error("Failed to fetch user profile", zap.Error(errGetProfile))
 			ctx.Redirect(302, referralUrl)
 			return
 		}
-		accessToken, refreshToken, errToken := makeTokens(ctx, web.app.store, sid)
+		accessToken, refreshToken, errToken := web.makeTokens(ctx, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralUrl)
 			web.logger.Error("Failed to create access token pair", zap.Error(errToken))
@@ -281,18 +281,18 @@ func (web *web) onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func makeTokens(ctx *gin.Context, database store.AuthStore, sid steamid.SID64) (string, string, error) {
+func (web *web) makeTokens(ctx *gin.Context, sid steamid.SID64) (string, string, error) {
 	accessToken, errJWT := newUserJWT(sid)
 	if errJWT != nil {
 		return "", "", errors.Wrap(errJWT, "Failed to create new access token")
 	}
 	ipAddr := net.ParseIP(ctx.ClientIP())
-	refreshToken := model.NewPersonAuth(sid, ipAddr)
-	if errAuth := database.GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
+	refreshToken := store.NewPersonAuth(sid, ipAddr)
+	if errAuth := web.app.Store().GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
 		if !errors.Is(errAuth, store.ErrNoResult) {
 			return "", "", errors.Wrap(errAuth, "Failed to fetch refresh token")
 		}
-		if createErr := database.SavePersonAuth(ctx, &refreshToken); createErr != nil {
+		if createErr := web.app.Store().SavePersonAuth(ctx, &refreshToken); createErr != nil {
 			return "", "", errors.Wrap(errAuth, "Failed to create new refresh token")
 		}
 	}
@@ -317,12 +317,12 @@ func (web *web) onTokenRefresh() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		var auth model.PersonAuth
-		if authError := web.app.store.GetPersonAuthByRefreshToken(ctx, rt.RefreshToken, &auth); authError != nil {
+		var auth store.PersonAuth
+		if authError := web.app.Store().GetPersonAuthByRefreshToken(ctx, rt.RefreshToken, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, web.app.store, auth.SteamId)
+		newAccessToken, newRefreshToken, errToken := web.makeTokens(ctx, auth.SteamId)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			web.logger.Error("Failed to create access token pair", zap.Error(errToken))
@@ -388,7 +388,7 @@ func newServerJWT(serverId int) (string, error) {
 
 // authMiddleware handles client authentication to the HTTP & websocket api.
 // websocket clients must pass the key as a query parameter called "token"
-func authMiddleware(logger *zap.Logger, database store.Store, level model.Privilege) gin.HandlerFunc {
+func (web *web) authMiddleware(level store.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -403,26 +403,26 @@ func authMiddleware(logger *zap.Logger, database store.Store, level model.Privil
 				return
 			}
 			pcs := strings.Split(hdr.Authorization, " ")
-			if len(pcs) != 2 && level >= model.PUser {
+			if len(pcs) != 2 && level >= store.PUser {
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
 			token = pcs[1]
 		}
-		if level >= model.PUser {
+		if level >= store.PUser {
 			sid, errFromToken := sid64FromJWTToken(token)
 			if errFromToken != nil {
 				if errors.Is(errFromToken, consts.ErrExpired) {
 					ctx.AbortWithStatus(http.StatusUnauthorized)
 					return
 				}
-				logger.Error("Failed to load sid from access token", zap.Error(errFromToken))
+				web.logger.Error("Failed to load sid from access token", zap.Error(errFromToken))
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
-			loggedInPerson := model.NewPerson(sid)
-			if errGetPerson := database.GetPersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
-				logger.Error("Failed to load person during auth", zap.Error(errGetPerson))
+			loggedInPerson := store.NewPerson(sid)
+			if errGetPerson := web.app.PersonBySID(ctx, sid, &loggedInPerson); errGetPerson != nil {
+				web.logger.Error("Failed to load person during auth", zap.Error(errGetPerson))
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
@@ -430,15 +430,15 @@ func authMiddleware(logger *zap.Logger, database store.Store, level model.Privil
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
-			bp := model.NewBannedPerson()
-			if errBan := database.GetBanBySteamID(ctx, sid, &bp, false); errBan != nil {
+			bp := store.NewBannedPerson()
+			if errBan := web.app.Store().GetBanBySteamID(ctx, sid, &bp, false); errBan != nil {
 				if !errors.Is(errBan, store.ErrNoResult) {
-					logger.Error("Failed to fetch authed user ban", zap.Error(errBan))
+					web.logger.Error("Failed to fetch authed user ban", zap.Error(errBan))
 				}
 			}
-			notifications, errNotifications := database.GetPersonNotifications(ctx, sid)
+			notifications, errNotifications := web.app.Store().GetPersonNotifications(ctx, sid)
 			if errNotifications != nil && !errors.Is(errNotifications, store.ErrNoResult) {
-				logger.Error("Failed to fetch user notifications", zap.Error(errNotifications))
+				web.logger.Error("Failed to fetch user notifications", zap.Error(errNotifications))
 			}
 			profile := model.UserProfile{
 				SteamID:         loggedInPerson.SteamID,

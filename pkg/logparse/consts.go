@@ -66,11 +66,12 @@ const (
 	WPaused         EventType = 107
 	WResumed        EventType = 108
 	// WRoundSetupEnd     EventType = 109
-	WMiniRoundWin      EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
-	WMiniRoundLen      EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
-	WMiniRoundSelected EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
-	WMiniRoundStart    EventType = 113 // World triggered "Mini_Round_Start"
-	WRoundSetupBegin   EventType = 114 // World triggered "Round_Setup_Begin"
+	WMiniRoundWin         EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
+	WMiniRoundLen         EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
+	WMiniRoundSelected    EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
+	WMiniRoundStart       EventType = 113 // World triggered "Mini_Round_Start"
+	WRoundSetupBegin      EventType = 114 // World triggered "Round_Setup_Begin"
+	WIntermissionWinLimit EventType = 115 // Team "RED" triggered "Intermission_Win_Limit"
 
 	// Metadata
 

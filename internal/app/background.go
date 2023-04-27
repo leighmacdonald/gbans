@@ -8,8 +8,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
@@ -92,12 +94,12 @@ func (app *App) showReportMeta() {
 		now := config.Now()
 		var m reportMeta
 		for _, report := range reports {
-			if report.ReportStatus == model.ClosedWithAction || report.ReportStatus == model.ClosedWithoutAction {
+			if report.ReportStatus == store.ClosedWithAction || report.ReportStatus == store.ClosedWithoutAction {
 				m.TotalClosed++
 				continue
 			}
 			m.TotalOpen++
-			if report.ReportStatus == model.NeedMoreInfo {
+			if report.ReportStatus == store.NeedMoreInfo {
 				m.NeedInfo++
 			} else {
 				m.Open++
@@ -116,22 +118,22 @@ func (app *App) showReportMeta() {
 			URL:   config.ExtURL("/admin/reports"),
 			Type:  discordgo.EmbedTypeRich,
 			Title: "User Report Stats",
-			Color: int(green),
+			Color: int(discordutil.Green),
 		}
 		if m.OpenWeek > 0 {
-			reportNotice.Color = int(red)
+			reportNotice.Color = int(discordutil.Red)
 		} else if m.Open3Days > 0 {
-			reportNotice.Color = int(orange)
+			reportNotice.Color = int(discordutil.Orange)
 		}
 		reportNotice.Description = "Current Open Report Counts"
 
-		addFieldInline(reportNotice, app.logger, "New", fmt.Sprintf(" %d", m.Open1Day))
-		addFieldInline(reportNotice, app.logger, "Total Open", fmt.Sprintf(" %d", m.TotalOpen))
-		addFieldInline(reportNotice, app.logger, "Total Closed", fmt.Sprintf(" %d", m.TotalClosed))
-		addFieldInline(reportNotice, app.logger, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
-		addFieldInline(reportNotice, app.logger, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
-		addFieldInline(reportNotice, app.logger, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
-		app.sendDiscordPayload(discordPayload{channelId: config.Discord.ReportLogChannelId, embed: reportNotice})
+		discordutil.AddFieldInline(reportNotice, app.logger, "New", fmt.Sprintf(" %d", m.Open1Day))
+		discordutil.AddFieldInline(reportNotice, app.logger, "Total Open", fmt.Sprintf(" %d", m.TotalOpen))
+		discordutil.AddFieldInline(reportNotice, app.logger, "Total Closed", fmt.Sprintf(" %d", m.TotalClosed))
+		discordutil.AddFieldInline(reportNotice, app.logger, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
+		discordutil.AddFieldInline(reportNotice, app.logger, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
+		discordutil.AddFieldInline(reportNotice, app.logger, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
+		app.SendDiscordPayload(discordutil.Payload{ChannelId: config.Discord.ReportLogChannelId, Embed: reportNotice})
 		//sendDiscordPayload(app.discordSendMsg)
 	}
 	time.Sleep(time.Second * 2)
@@ -183,14 +185,6 @@ func (app *App) cleanupTasks() {
 	}
 }
 
-type notificationPayload struct {
-	minPerms model.Privilege
-	sids     steamid.Collection
-	severity model.NotificationSeverity
-	message  string
-	link     string
-}
-
 func (app *App) notificationSender() {
 	for {
 		select {
@@ -236,7 +230,7 @@ func (app *App) profileUpdater() {
 				app.logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
 				continue
 			}
-			person := model.NewPerson(sid)
+			person := store.NewPerson(sid)
 			if errGetPerson := app.store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
 				app.logger.Error("Failed to get person", zap.Error(errGetPerson))
 				continue
@@ -272,9 +266,9 @@ func (app *App) serverA2SStatusUpdater(updateFreq time.Duration) {
 		waitGroup := &sync.WaitGroup{}
 		for _, srv := range servers {
 			waitGroup.Add(1)
-			go func(server model.Server) {
+			go func(server store.Server) {
 				defer waitGroup.Done()
-				newStatus, errA := query.A2SQueryServer(app.logger, server)
+				newStatus, errA := query.A2SQueryServer(app.logger, server.Addr())
 				if errA != nil {
 					app.logger.Debug("Failed to update a2s status", zap.Error(errA))
 					return
@@ -311,11 +305,11 @@ func (app *App) serverRCONStatusUpdater(updateFreq time.Duration) {
 		waitGroup := &sync.WaitGroup{}
 		for _, srv := range servers {
 			waitGroup.Add(1)
-			go func(c context.Context, server model.Server) {
+			go func(c context.Context, server store.Server) {
 				defer waitGroup.Done()
 				newStatus, queryErr := query.GetServerStatus(c, server)
 				if queryErr != nil {
-					app.logger.Error("Failed to query server status", zap.Error(queryErr))
+					//app.logger.Error("Failed to query server status", zap.Error(queryErr))
 					return
 				}
 				app.serverStateStatusMu.Lock()
@@ -343,7 +337,7 @@ func (app *App) serverRCONStatusUpdater(updateFreq time.Duration) {
 // into a ServerState instance
 func (app *App) serverStateRefresher(updateFreq time.Duration) {
 	var refreshState = func() error {
-		var newState model.ServerStateCollection
+		var newState state.ServerStateCollection
 		servers, errServers := app.store.GetServers(app.ctx, false)
 		if errServers != nil {
 			return errors.Errorf("Failed to fetch servers: %v", errServers)
@@ -353,65 +347,65 @@ func (app *App) serverStateRefresher(updateFreq time.Duration) {
 		app.serverStateStatusMu.RLock()
 		defer app.serverStateStatusMu.RUnlock()
 		for _, server := range servers {
-			var state model.ServerState
-			// use existing state for start?
-			state.ServerId = server.ServerID
-			state.Name = server.ServerNameLong
-			state.NameShort = server.ServerNameShort
-			state.Host = server.Address
-			state.Port = server.Port
-			state.Enabled = server.IsEnabled
-			state.Region = server.Region
-			state.CountryCode = server.CC
-			state.Latitude = server.Latitude
-			state.Longitude = server.Longitude
+			var currentState state.ServerState
+			// use existing currentState for start?
+			currentState.ServerId = server.ServerID
+			currentState.Name = server.ServerNameLong
+			currentState.NameShort = server.ServerNameShort
+			currentState.Host = server.Address
+			currentState.Port = server.Port
+			currentState.Enabled = server.IsEnabled
+			currentState.Region = server.Region
+			currentState.CountryCode = server.CC
+			currentState.Latitude = server.Latitude
+			currentState.Longitude = server.Longitude
 			a2sInfo, a2sFound := app.serverStateA2S[server.ServerNameShort]
 			if a2sFound {
 				if a2sInfo.Name != "" {
-					state.Name = a2sInfo.Name
+					currentState.Name = a2sInfo.Name
 				}
-				state.NameA2S = a2sInfo.Name
-				state.Protocol = a2sInfo.Protocol
-				state.Map = a2sInfo.Map
-				state.Folder = a2sInfo.Folder
-				state.Game = a2sInfo.Game
-				state.AppId = a2sInfo.ID
-				state.PlayerCount = int(a2sInfo.Players)
-				state.MaxPlayers = int(a2sInfo.MaxPlayers)
-				state.Bots = int(a2sInfo.Bots)
-				state.ServerType = a2sInfo.ServerType.String()
-				state.ServerOS = a2sInfo.ServerOS.String()
-				state.Password = !a2sInfo.Visibility
-				state.VAC = a2sInfo.VAC
-				state.Version = a2sInfo.Version
+				currentState.NameA2S = a2sInfo.Name
+				currentState.Protocol = a2sInfo.Protocol
+				currentState.Map = a2sInfo.Map
+				currentState.Folder = a2sInfo.Folder
+				currentState.Game = a2sInfo.Game
+				currentState.AppId = a2sInfo.ID
+				currentState.PlayerCount = int(a2sInfo.Players)
+				currentState.MaxPlayers = int(a2sInfo.MaxPlayers)
+				currentState.Bots = int(a2sInfo.Bots)
+				currentState.ServerType = a2sInfo.ServerType.String()
+				currentState.ServerOS = a2sInfo.ServerOS.String()
+				currentState.Password = !a2sInfo.Visibility
+				currentState.VAC = a2sInfo.VAC
+				currentState.Version = a2sInfo.Version
 				if a2sInfo.SourceTV != nil {
-					state.STVPort = a2sInfo.SourceTV.Port
-					state.STVName = a2sInfo.SourceTV.Name
+					currentState.STVPort = a2sInfo.SourceTV.Port
+					currentState.STVName = a2sInfo.SourceTV.Name
 				}
 				if a2sInfo.ExtendedServerInfo != nil {
-					state.SteamID = steamid.SID64(a2sInfo.ExtendedServerInfo.SteamID)
-					state.GameID = a2sInfo.ExtendedServerInfo.GameID
-					state.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
+					currentState.SteamID = steamid.SID64(a2sInfo.ExtendedServerInfo.SteamID)
+					currentState.GameID = a2sInfo.ExtendedServerInfo.GameID
+					currentState.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
 				}
 			}
 			statusInfo, statusFound := app.serverStateStatus[server.ServerNameShort]
 			if statusFound {
-				if state.Name != "" {
-					state.Name = statusInfo.ServerName
+				if currentState.Name != "" {
+					currentState.Name = statusInfo.ServerName
 				}
-				if state.PlayerCount < statusInfo.PlayersCount {
-					state.PlayerCount = statusInfo.PlayersCount
+				if currentState.PlayerCount < statusInfo.PlayersCount {
+					currentState.PlayerCount = statusInfo.PlayersCount
 				}
 				// rcon status doesn't respect sv_visiblemaxplayers (sp?) so this doesn't work well
-				//if state.MaxPlayers < statusInfo.PlayersMax {
-				//	state.MaxPlayers = statusInfo.PlayersMax
+				//if currentState.MaxPlayers < statusInfo.PlayersMax {
+				//	currentState.MaxPlayers = statusInfo.PlayersMax
 				//}
-				if state.Map != "" && state.Map != statusInfo.Map {
-					state.Map = statusInfo.Map
+				if currentState.Map != "" && currentState.Map != statusInfo.Map {
+					currentState.Map = statusInfo.Map
 				}
-				var knownPlayers []model.ServerStatePlayer
+				var knownPlayers []state.ServerStatePlayer
 				for _, player := range statusInfo.Players {
-					var newPlayer model.ServerStatePlayer
+					var newPlayer state.ServerStatePlayer
 					newPlayer.UserID = player.UserID
 					newPlayer.Name = player.Name
 					newPlayer.SID = player.SID
@@ -423,9 +417,9 @@ func (app *App) serverStateRefresher(updateFreq time.Duration) {
 					newPlayer.Port = player.Port
 					knownPlayers = append(knownPlayers, newPlayer)
 				}
-				state.Players = knownPlayers
+				currentState.Players = knownPlayers
 			}
-			newState = append(newState, state)
+			newState = append(newState, currentState)
 		}
 		app.serverStateMu.Lock()
 		app.serverState = newState
@@ -508,10 +502,10 @@ func (app *App) banSweeper() {
 							app.logger.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
 							banType := "Ban"
-							if expiredBan.BanType == model.NoComm {
+							if expiredBan.BanType == store.NoComm {
 								banType = "Mute"
 							}
-							var person model.Person
+							var person store.Person
 							if errPerson := app.store.GetOrCreatePersonBySteamID(app.ctx, expiredBan.TargetId, &person); errPerson != nil {
 								app.logger.Error("Failed to get expired person", zap.Error(errPerson))
 								continue
@@ -637,7 +631,7 @@ func (app *App) localStatUpdater() {
 		case <-buildTicker.C:
 			build()
 		case saveTime := <-saveTicker.C:
-			stats := model.NewLocalTF2Stats()
+			stats := store.NewLocalTF2Stats()
 			stats.CreatedOn = saveTime
 			servers, errServers := app.store.GetServers(app.ctx, false)
 			if errServers != nil {
@@ -695,7 +689,7 @@ func (app *App) localStatUpdater() {
 }
 
 func (app *App) masterServerListUpdater(updateFreq time.Duration) {
-	prevStats := model.NewGlobalTF2Stats()
+	prevStats := store.NewGlobalTF2Stats()
 	locationCache := map[string]ip2location.LatLong{}
 	var build = func() {
 		if errBuild := app.store.BuildGlobalTF2Stats(app.ctx); errBuild != nil {
@@ -713,7 +707,7 @@ func (app *App) masterServerListUpdater(updateFreq time.Duration) {
 			return errors.Wrap(errServers, "Failed to fetch server list")
 		}
 		var communityServers []model.ServerLocation
-		stats := model.NewGlobalTF2Stats()
+		stats := store.NewGlobalTF2Stats()
 		for _, baseServer := range allServers {
 			server := model.ServerLocation{
 				LatLong: ip2location.LatLong{},

@@ -1,27 +1,15 @@
-package app
+package discord
 
 import (
 	"context"
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"sync"
 	"sync/atomic"
-)
-
-const (
-	maxEmbedFields = 25
-	// TODO ensure these
-	//minUsernameChars    = 2
-	//maxUsernameChars    = 32
-	//maxAuthorChars      = 256
-	maxFieldNameChars   = 256
-	maxFieldValueChars  = 1024
-	maxDescriptionChars = 2048
 )
 
 var (
@@ -42,7 +30,7 @@ func (bot *Discord) SendEmbed(channelId string, message *discordgo.MessageEmbed)
 // Discord implements the ChatBot interface for the discord chat platform.
 type Discord struct {
 	session         *discordgo.Session
-	app             *App
+	app             model.Application
 	ctx             context.Context
 	logger          *zap.Logger
 	connectedMu     *sync.RWMutex
@@ -52,11 +40,11 @@ type Discord struct {
 }
 
 // NewDiscord instantiates a new, unconnected, discord instance
-func NewDiscord(app *App) (*Discord, error) {
+func NewDiscord(app model.Application) (*Discord, error) {
 	bot := Discord{
-		ctx:         app.ctx,
+		ctx:         app.Ctx(),
 		app:         app,
-		logger:      app.logger.Named("discord"),
+		logger:      app.Logger().Named("discord"),
 		session:     nil,
 		connectedMu: &sync.RWMutex{},
 		Connected:   atomic.Bool{},
@@ -87,7 +75,7 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	// Immediately connects, so we connect within the Start func
 	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
-		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
+		return errors.Wrapf(errNewSession, "Failed to connect to discordutil. discordutil unavailable")
 	}
 	defer func() {
 		if bot.session != nil {
@@ -121,7 +109,7 @@ func (bot *Discord) Start(ctx context.Context, token string) error {
 	return nil
 }
 
-func (bot *Discord) onReady(s *discordgo.Session, _ *discordgo.Ready) {
+func (bot *Discord) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	bot.Connected.Store(true)
 	bot.logger.Info("Service state changed", zap.String("state", "ready"))
 }
@@ -173,7 +161,7 @@ func (bot *Discord) sendChannelMessage(session *discordgo.Session, channelId str
 	return nil
 }
 
-func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response botResponse) error {
+func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response discordutil.Response) error {
 	if !bot.Connected.Load() {
 		bot.logger.Error("Tried to send message edit to disconnected client")
 		return nil
@@ -184,7 +172,7 @@ func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 	}
 	var embeds []*discordgo.MessageEmbed
 	switch response.MsgType {
-	case mtString:
+	case discordutil.MtString:
 		val, ok := response.Value.(string)
 		if ok && val != "" {
 			edit.Content = &val
@@ -192,7 +180,7 @@ func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 				return errTooLarge
 			}
 		}
-	case mtEmbed:
+	case discordutil.MtEmbed:
 		embeds = append(embeds, response.Value.(*discordgo.MessageEmbed))
 		edit.Embeds = &embeds
 	}
@@ -202,82 +190,6 @@ func (bot *Discord) sendInteractionMessageEdit(session *discordgo.Session, inter
 
 func (bot *Discord) Send(channelId string, message string, wrap bool) error {
 	return bot.sendChannelMessage(bot.session, channelId, message, wrap)
-}
-
-func addFieldInline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
-	addFieldRaw(embed, logger, title, value, true)
-}
-
-func addField(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
-	addFieldRaw(embed, logger, title, value, false)
-}
-
-func addFieldInt64Inline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
-	addField(embed, logger, title, fmt.Sprintf("%d", value))
-}
-
-//func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
-//	addField(embed, logger, title, fmt.Sprintf("%d", value))
-//}
-
-//func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
-//	name := person.PersonaName
-//	if name == "" {
-//		name = person.SteamID.String()
-//	}
-//	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
-//}
-
-func addAuthorProfile(embed *discordgo.MessageEmbed, logger *zap.Logger, person model.UserProfile) {
-	name := person.Name
-	if name == "" {
-		name = person.SteamID.String()
-	}
-	if name == "" {
-		logger.Warn("Value cannot be empty, dropping field", zap.String("field", "name"))
-		return
-	}
-	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
-}
-
-func addLink(embed *discordgo.MessageEmbed, logger *zap.Logger, value model.Linkable) {
-	url := value.ToURL()
-	if len(url) > 0 {
-		addFieldRaw(embed, logger, "Link", url, false)
-	}
-}
-
-func addFieldRaw(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string, inline bool) {
-	if len(embed.Fields) >= maxEmbedFields {
-		logger.Warn("Dropping embed fields. Already at max count", zap.Int("max", maxEmbedFields))
-		return
-	}
-	if len(title) == 0 {
-		logger.Warn("Title cannot be empty, dropping field")
-		return
-	}
-	if len(value) == 0 {
-		logger.Warn("Value cannot be empty, dropping field", zap.String("field", title))
-		return
-	}
-	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-		Name:   truncate(title, maxFieldNameChars),
-		Value:  truncate(value, maxFieldValueChars),
-		Inline: inline,
-	})
-}
-
-func truncate(str string, maxLen int) string {
-	if len(str) > maxLen {
-		return str[:maxLen]
-	}
-	return str
-}
-
-func addFieldsSteamID(embed *discordgo.MessageEmbed, logger *zap.Logger, steamId steamid.SID64) {
-	addFieldInline(embed, logger, "STEAM", string(steamid.SID64ToSID(steamId)))
-	addFieldInline(embed, logger, "STEAM3", string(steamid.SID64ToSID3(steamId)))
-	addFieldInline(embed, logger, "SID64", steamId.String())
 }
 
 // ChatBot defines a interface for communication with 3rd party service bots

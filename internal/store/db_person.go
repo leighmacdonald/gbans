@@ -6,8 +6,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -15,6 +15,195 @@ import (
 	"strings"
 	"time"
 )
+
+type NotificationSeverity int
+
+const (
+	SeverityInfo NotificationSeverity = iota
+	SeverityWarn
+	SeverityError
+)
+
+type UserNotification struct {
+	NotificationId int64                `json:"person_notification_id,string"`
+	SteamId        steamid.SID64        `json:"steam_id,string"`
+	Read           bool                 `json:"read"`
+	Deleted        bool                 `json:"deleted"`
+	Severity       NotificationSeverity `json:"severity"`
+	Message        string               `json:"message"`
+	Link           string               `json:"link"`
+	Count          int                  `json:"count"`
+	CreatedOn      time.Time            `json:"created_on"`
+}
+
+type Person struct {
+	// TODO merge use of steamid & steam_id
+	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
+	CreatedOn        time.Time     `json:"created_on"`
+	UpdatedOn        time.Time     `json:"updated_on"`
+	PermissionLevel  Privilege     `json:"permission_level"`
+	Muted            bool          `json:"muted"`
+	IsNew            bool          `json:"-"`
+	DiscordID        string        `json:"discord_id"`
+	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned  bool          `json:"community_banned"`
+	VACBans          int           `json:"vac_bans"`
+	GameBans         int           `json:"game_bans"`
+	EconomyBan       string        `json:"economy_ban"`
+	DaysSinceLastBan int           `json:"days_since_last_ban"`
+	UpdatedOnSteam   time.Time     `json:"updated_on_steam"`
+	*steamweb.PlayerSummary
+}
+
+func (p *Person) ToURL() string {
+	return config.ExtURL("/profile/%d", p.SteamID.Int64())
+}
+
+// LoggedIn checks for a valid steamID
+func (p *Person) LoggedIn() bool {
+	return p.SteamID.Valid() && p.SteamID.Int64() > 0
+}
+
+// AsTarget checks for a valid steamID
+func (p *Person) AsTarget() StringSID {
+	return StringSID(p.SteamID.String())
+}
+
+// NewPerson allocates a new default person instance
+func NewPerson(sid64 steamid.SID64) Person {
+	t0 := config.Now()
+	return Person{
+		SteamID:          sid64,
+		CreatedOn:        t0,
+		UpdatedOn:        t0,
+		PermissionLevel:  PUser,
+		Muted:            false,
+		IsNew:            true,
+		DiscordID:        "",
+		IPAddr:           nil,
+		CommunityBanned:  false,
+		VACBans:          0,
+		GameBans:         0,
+		EconomyBan:       "none",
+		DaysSinceLastBan: 0,
+		UpdatedOnSteam:   t0,
+		PlayerSummary: &steamweb.PlayerSummary{
+			Steamid: sid64.String(),
+		},
+	}
+}
+
+type People []Person
+
+func (p People) AsMap() map[steamid.SID64]Person {
+	m := map[steamid.SID64]Person{}
+	for _, person := range p {
+		m[person.SteamID] = person
+	}
+	return m
+}
+
+type PersonChat struct {
+	PersonChatId int64
+	SteamId      steamid.SID64
+	ServerId     int
+	TeamChat     bool
+	Message      string
+	CreatedOn    time.Time
+}
+
+// PersonIPRecord holds a composite result of the more relevant ip2location results
+type PersonIPRecord struct {
+	IPAddr      net.IP
+	CreatedOn   time.Time
+	CityName    string
+	CountryName string
+	CountryCode string
+	ASName      string
+	ASNum       int
+	ISP         string
+	UsageType   string
+	Threat      string
+	DomainUsed  string
+}
+
+type AppealOverview struct {
+	BanSteam
+
+	SourceSteamId     steamid.SID64 `json:"source_steam_id"`
+	SourcePersonaName string        `json:"source_persona_name"`
+	SourceAvatar      string        `json:"source_avatar"`
+	SourceAvatarFull  string        `json:"source_avatar_full"`
+
+	TargetSteamId     steamid.SID64 `json:"target_steam_id"`
+	TargetPersonaName string        `json:"target_persona_name"`
+	TargetAvatar      string        `json:"target_avatar"`
+	TargetAvatarFull  string        `json:"target_avatar_full"`
+}
+
+type UserMessage struct {
+	ParentId  int64         `json:"parent_id"`
+	MessageId int64         `json:"message_id"`
+	AuthorId  steamid.SID64 `json:"author_id,string"`
+	Message   string        `json:"contents"`
+	Deleted   bool          `json:"deleted"`
+	CreatedOn time.Time     `json:"created_on"`
+	UpdatedOn time.Time     `json:"updated_on"`
+}
+
+func NewUserMessage(parentId int64, authorId steamid.SID64, message string) UserMessage {
+	return UserMessage{
+		ParentId:  parentId,
+		AuthorId:  authorId,
+		Message:   message,
+		CreatedOn: config.Now(),
+		UpdatedOn: config.Now(),
+	}
+}
+
+type PersonAuth struct {
+	PersonAuthId int64         `json:"person_auth_id"`
+	SteamId      steamid.SID64 `json:"steam_id"`
+	IpAddr       net.IP        `json:"ip_addr"`
+	RefreshToken string        `json:"refresh_token"`
+	CreatedOn    time.Time     `json:"created_on"`
+}
+
+const refreshTokenLen = 80
+
+func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
+	return PersonAuth{
+		PersonAuthId: 0,
+		SteamId:      sid64,
+		IpAddr:       addr,
+		RefreshToken: golib.RandomString(refreshTokenLen),
+		CreatedOn:    config.Now(),
+	}
+}
+
+type PersonConnection struct {
+	PersonConnectionId int64          `json:"person_connection_id"`
+	IPAddr             net.IP         `json:"ip_addr"`
+	SteamId            steamid.SID64  `json:"steam_id,string"`
+	PersonaName        string         `json:"persona_name"`
+	CreatedOn          time.Time      `json:"created_on"`
+	IPInfo             PersonIPRecord `json:"ip_info"`
+}
+
+type PersonConnections []PersonConnection
+
+type PersonMessage struct {
+	PersonMessageId int64         `json:"person_message_id"`
+	SteamId         steamid.SID64 `json:"steam_id,string"`
+	PersonaName     string        `json:"persona_name"`
+	ServerName      string        `json:"server_name"`
+	ServerId        int           `json:"server_id"`
+	Body            string        `json:"body"`
+	Team            bool          `json:"team"`
+	CreatedOn       time.Time     `json:"created_on"`
+}
+
+type PersonMessages []PersonMessage
 
 func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	query, args, errQueryArgs := sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
@@ -28,7 +217,7 @@ func (database *pgStore) DropPerson(ctx context.Context, steamID steamid.SID64) 
 }
 
 // SavePerson will insert or update the person record
-func (database *pgStore) SavePerson(ctx context.Context, person *model.Person) error {
+func (database *pgStore) SavePerson(ctx context.Context, person *Person) error {
 	person.UpdatedOn = config.Now()
 	// FIXME
 	if person.PermissionLevel == 0 {
@@ -41,7 +230,7 @@ func (database *pgStore) SavePerson(ctx context.Context, person *model.Person) e
 	return database.insertPerson(ctx, person)
 }
 
-func (database *pgStore) updatePerson(ctx context.Context, person *model.Person) error {
+func (database *pgStore) updatePerson(ctx context.Context, person *Person) error {
 	person.UpdatedOn = config.Now()
 	const query = `
 		UPDATE person 
@@ -65,7 +254,7 @@ func (database *pgStore) updatePerson(ctx context.Context, person *model.Person)
 	return nil
 }
 
-func (database *pgStore) insertPerson(ctx context.Context, person *model.Person) error {
+func (database *pgStore) insertPerson(ctx context.Context, person *Person) error {
 	query, args, errQueryArgs := sb.
 		Insert("person").
 		Columns("created_on", "updated_on", "steam_id", "communityvisibilitystate", "profilestate",
@@ -103,7 +292,7 @@ var profileColumns = []string{"steam_id", "created_on", "updated_on",
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error {
+func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error {
 	const query = `
     	SELECT p.steam_id,
 			p.created_on,
@@ -160,20 +349,20 @@ func (database *pgStore) GetPersonBySteamID(ctx context.Context, sid64 steamid.S
 }
 
 // TODO search cached people first?
-func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error) {
+func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error) {
 	queryBuilder := sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamIds)})
 	query, args, errQueryArgs := queryBuilder.ToSql()
 	if errQueryArgs != nil {
 		return nil, errQueryArgs
 	}
-	var people model.People
+	var people People
 	rows, errQuery := database.conn.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := model.NewPerson(0)
+		person := NewPerson(0)
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
 			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
@@ -187,7 +376,7 @@ func (database *pgStore) GetPeopleBySteamID(ctx context.Context, steamIds steami
 	return people, nil
 }
 
-func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter) (model.People, error) {
+func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter) (People, error) {
 	queryBuilder := sb.Select(profileColumns...).From("person")
 	if queryFilter.Query != "" {
 		// TODO add lower-cased functional index to avoid tableName scan
@@ -208,14 +397,14 @@ func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter)
 	if errQueryArgs != nil {
 		return nil, errQueryArgs
 	}
-	var people model.People
+	var people People
 	rows, errQuery := database.conn.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := model.NewPerson(0)
+		person := NewPerson(0)
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar,
 			&person.AvatarMedium, &person.AvatarFull, &person.AvatarHash, &person.PersonaState,
@@ -232,11 +421,11 @@ func (database *pgStore) GetPeople(ctx context.Context, queryFilter QueryFilter)
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error {
+func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error {
 	errGetPerson := database.GetPersonBySteamID(ctx, sid64, person)
 	if errGetPerson != nil && Err(errGetPerson) == ErrNoResult {
 		// FIXME
-		newPerson := model.NewPerson(sid64)
+		newPerson := NewPerson(sid64)
 		*person = newPerson
 		return database.SavePerson(ctx, person)
 	}
@@ -244,7 +433,7 @@ func (database *pgStore) GetOrCreatePersonBySteamID(ctx context.Context, sid64 s
 }
 
 // GetPersonByDiscordID returns a person by their discord_id
-func (database *pgStore) GetPersonByDiscordID(ctx context.Context, discordId string, person *model.Person) error {
+func (database *pgStore) GetPersonByDiscordID(ctx context.Context, discordId string, person *Person) error {
 	query, args, errQueryArgs := sb.Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": discordId}).
@@ -266,7 +455,7 @@ func (database *pgStore) GetPersonByDiscordID(ctx context.Context, discordId str
 	return nil
 }
 
-func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.Person, error) {
+func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error) {
 	query, args, errArgs := sb.
 		Select(profileColumns...).
 		From("person").
@@ -276,14 +465,14 @@ func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit uint64) (
 	if errArgs != nil {
 		return nil, Err(errArgs)
 	}
-	var people []model.Person
+	var people []Person
 	rows, errQuery := database.conn.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := model.NewPerson(0)
+		person := NewPerson(0)
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
 			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
@@ -297,7 +486,7 @@ func (database *pgStore) GetExpiredProfiles(ctx context.Context, limit uint64) (
 	return people, nil
 }
 
-func (database *pgStore) AddChatHistory(ctx context.Context, message *model.PersonMessage) error {
+func (database *pgStore) AddChatHistory(ctx context.Context, message *PersonMessage) error {
 	const q = `INSERT INTO person_messages 
     		(steam_id, server_id, body, team, created_on, persona_name) 
 			VALUES ($1, $2, $3, $4, $5, $6)
@@ -310,7 +499,7 @@ func (database *pgStore) AddChatHistory(ctx context.Context, message *model.Pers
 	return nil
 }
 
-func (database *pgStore) GetPersonMessageById(ctx context.Context, personMessageId int64, msg *model.PersonMessage) error {
+func (database *pgStore) GetPersonMessageById(ctx context.Context, personMessageId int64, msg *PersonMessage) error {
 	query, args, errQuery := sb.Select(
 		"m.person_message_id",
 		"m.steam_id",
@@ -349,7 +538,7 @@ type ChatHistoryQueryFilter struct {
 	SentBefore *time.Time `json:"sent_before,omitempty"`
 }
 
-func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (model.PersonMessages, error) {
+func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, error) {
 	qb := sb.Select(
 		"m.person_message_id",
 		"m.steam_id",
@@ -401,9 +590,9 @@ func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistory
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
-	var messages model.PersonMessages
+	var messages PersonMessages
 	for rows.Next() {
-		var message model.PersonMessage
+		var message PersonMessage
 		if errScan := rows.Scan(
 			&message.PersonMessageId,
 			&message.SteamId,
@@ -421,7 +610,7 @@ func (database *pgStore) QueryChatHistory(ctx context.Context, query ChatHistory
 	return messages, nil
 }
 
-func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (model.PersonConnections, error) {
+func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error) {
 	qb := sb.
 		Select(
 			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
@@ -448,9 +637,9 @@ func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.S
 		return nil, Err(errQuery)
 	}
 	defer rows.Close()
-	var connections model.PersonConnections
+	var connections PersonConnections
 	for rows.Next() {
-		var c model.PersonConnection
+		var c PersonConnection
 		if errScan := rows.Scan(&c.PersonaName, &c.PersonConnectionId, &c.SteamId, &c.IPAddr, &c.CreatedOn,
 			&c.IPInfo.CityName, &c.IPInfo.CountryName, &c.IPInfo.CountryCode,
 		); errScan != nil {
@@ -461,7 +650,7 @@ func (database *pgStore) GetPersonIPHistory(ctx context.Context, sid64 steamid.S
 	return connections, nil
 }
 
-func (database *pgStore) AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error {
+func (database *pgStore) AddConnectionHistory(ctx context.Context, conn *PersonConnection) error {
 	const q = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on) 
 		VALUES ($1, $2, $3, $4) RETURNING person_connection_id`
@@ -475,7 +664,7 @@ func (database *pgStore) AddConnectionHistory(ctx context.Context, conn *model.P
 
 var personAuthColumns = []string{"person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on"}
 
-func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *model.PersonAuth) error {
+func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *PersonAuth) error {
 	query, args, errQuery := sb.
 		Select(personAuthColumns...).
 		From("person_auth").
@@ -489,7 +678,7 @@ func (database *pgStore) GetPersonAuth(ctx context.Context, sid64 steamid.SID64,
 		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
-func (database *pgStore) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *model.PersonAuth) error {
+func (database *pgStore) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
 	query, args, errQuery := sb.
 		Select(personAuthColumns...).
 		From("person_auth").
@@ -503,7 +692,7 @@ func (database *pgStore) GetPersonAuthByRefreshToken(ctx context.Context, token 
 		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
-func (database *pgStore) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error {
+func (database *pgStore) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 	query, args, errQuery := sb.
 		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
@@ -538,7 +727,7 @@ func (database *pgStore) PrunePersonAuth(ctx context.Context) error {
 	return Err(database.Exec(ctx, query, args...))
 }
 
-func (database *pgStore) SendNotification(ctx context.Context, targetId steamid.SID64, severity model.NotificationSeverity, message string, link string) error {
+func (database *pgStore) SendNotification(ctx context.Context, targetId steamid.SID64, severity NotificationSeverity, message string, link string) error {
 	query, args, errQuery := sb.
 		Insert("person_notification").
 		Columns("steam_id", "severity", "message", "link", "created_on").
@@ -553,8 +742,8 @@ func (database *pgStore) SendNotification(ctx context.Context, targetId steamid.
 	return nil
 }
 
-func (database *pgStore) GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]model.UserNotification, error) {
-	var notifications []model.UserNotification
+func (database *pgStore) GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]UserNotification, error) {
+	var notifications []UserNotification
 	query, args, errQuery := sb.
 		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
 		From("person_notification").
@@ -570,7 +759,7 @@ func (database *pgStore) GetPersonNotifications(ctx context.Context, steamId ste
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var n model.UserNotification
+		var n UserNotification
 		if errScan := rows.Scan(&n.NotificationId, &n.SteamId, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
 			return notifications, errScan
@@ -592,7 +781,7 @@ func (database *pgStore) SetNotificationsRead(ctx context.Context, notificationI
 	return Err(database.Exec(ctx, query, args...))
 }
 
-func (database *pgStore) GetSteamIdsAbove(ctx context.Context, privilege model.Privilege) (steamid.Collection, error) {
+func (database *pgStore) GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error) {
 	query, args, errQuery := sb.
 		Select("steam_id").
 		From("person").

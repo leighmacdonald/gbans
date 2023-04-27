@@ -6,12 +6,42 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
 )
+
+type DemoFile struct {
+	DemoID          int64                                 `json:"demo_id"`
+	ServerID        int                                   `json:"server_id"`
+	ServerNameShort string                                `json:"server_name_short"`
+	ServerNameLong  string                                `json:"server_name_long"`
+	Title           string                                `json:"title"`
+	Data            []byte                                `json:"-"` // Dont send mega data to frontend by accident
+	CreatedOn       time.Time                             `json:"created_on"`
+	Size            int64                                 `json:"size"`
+	Downloads       int64                                 `json:"downloads"`
+	MapName         string                                `json:"map_name"`
+	Archive         bool                                  `json:"archive"` // When true, will not get auto deleted when flushing old demos
+	Stats           map[steamid.SID64]srcdsup.PlayerStats `json:"stats"`
+}
+
+//func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
+//	size := int64(len(rawData))
+//	if size == 0 {
+//		return DemoFile{}, errors.New("Empty demo")
+//	}
+//	return DemoFile{
+//		ServerID:  serverId,
+//		Title:     title,
+//		Data:      rawData,
+//		CreatedOn: config.Now(),
+//		Size:      size,
+//		Downloads: 0,
+//	}, nil
+//}
 
 func (database *pgStore) FlushDemos(ctx context.Context) error {
 	query, args, errQuery := sb.
@@ -26,7 +56,7 @@ func (database *pgStore) FlushDemos(ctx context.Context) error {
 	return Err(database.Exec(ctx, query, args...))
 }
 
-func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile *model.DemoFile) error {
+func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
@@ -42,7 +72,7 @@ func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile
 	return nil
 }
 
-func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
+func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
@@ -64,8 +94,8 @@ type GetDemosOptions struct {
 	MapName   string `json:"mapName"`
 }
 
-func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]model.DemoFile, error) {
-	var demos []model.DemoFile
+func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
+	var demos []DemoFile
 	qb := sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name").
@@ -100,7 +130,7 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var demoFile model.DemoFile
+		var demoFile DemoFile
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong); errScan != nil {
@@ -111,7 +141,7 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 	return demos, nil
 }
 
-func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (database *pgStore) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
@@ -140,7 +170,7 @@ func (database *pgStore) SaveDemo(ctx context.Context, demoFile *model.DemoFile)
 	return Err(err)
 }
 
-func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (database *pgStore) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Insert(string(tableDemo)).
 		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
@@ -159,7 +189,7 @@ func (database *pgStore) insertDemo(ctx context.Context, demoFile *model.DemoFil
 	return nil
 }
 
-func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (database *pgStore) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Update(string(tableDemo)).
 		Set("title", demoFile.Title).
@@ -180,7 +210,7 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *model.DemoFil
 	return nil
 }
 
-func (database *pgStore) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (database *pgStore) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
 	if errQueryArgs != nil {

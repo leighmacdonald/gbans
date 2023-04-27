@@ -3,12 +3,56 @@ package store
 import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"strings"
+	"time"
 )
+
+const unknownMediaTag = "__unknown__"
+
+var MediaSafeMimeTypesImages = []string{
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+}
+
+func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
+	mtype := mimetype.Detect(content)
+	if !mtype.Is(mime) && mime != unknownMediaTag {
+		// Should never actually happen unless user is trying nefarious stuff.
+		return Media{}, errors.New("Detected mimetype different than provided")
+	}
+	t0 := config.Now()
+	return Media{
+		AuthorId:  author,
+		MimeType:  mtype.String(),
+		Name:      strings.Replace(name, " ", "_", -1),
+		Size:      int64(len(content)),
+		Contents:  content,
+		Deleted:   false,
+		CreatedOn: t0,
+		UpdatedOn: t0,
+	}, nil
+}
+
+type Media struct {
+	MediaId   int           `json:"media_id"`
+	AuthorId  steamid.SID64 `json:"author_id,string"`
+	MimeType  string        `json:"mime_type"`
+	Contents  []byte        `json:"-"`
+	Name      string        `json:"name"`
+	Size      int64         `json:"size"`
+	Deleted   bool          `json:"deleted"`
+	CreatedOn time.Time     `json:"created_on"`
+	UpdatedOn time.Time     `json:"updated_on"`
+}
 
 func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
 	query, args, errQueryArgs := sb.
@@ -60,7 +104,7 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	return nil
 }
 
-func (database *pgStore) SaveMedia(ctx context.Context, media *model.Media) error {
+func (database *pgStore) SaveMedia(ctx context.Context, media *Media) error {
 	const query = `
 		INSERT INTO media (
 		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on
@@ -90,7 +134,7 @@ func (database *pgStore) SaveMedia(ctx context.Context, media *model.Media) erro
 	return nil
 }
 
-func (database *pgStore) GetMediaByName(ctx context.Context, name string, media *model.Media) error {
+func (database *pgStore) GetMediaByName(ctx context.Context, name string, media *Media) error {
 	const query = `
 		SELECT 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
@@ -109,7 +153,7 @@ func (database *pgStore) GetMediaByName(ctx context.Context, name string, media 
 	))
 }
 
-func (database *pgStore) GetMediaById(ctx context.Context, mediaId int, media *model.Media) error {
+func (database *pgStore) GetMediaById(ctx context.Context, mediaId int, media *Media) error {
 	const query = `
 		SELECT 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on

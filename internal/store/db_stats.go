@@ -4,7 +4,6 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -13,9 +12,82 @@ import (
 	"time"
 )
 
-func (database *pgStore) MatchSave(ctx context.Context, match *model.Match) error {
+type LocalTF2StatsSnapshot struct {
+	StatId          int64          `json:"local_stats_players_stat_id"`
+	Players         int            `json:"players"`
+	CapacityFull    int            `json:"capacity_full"`
+	CapacityEmpty   int            `json:"capacity_empty"`
+	CapacityPartial int            `json:"capacity_partial"`
+	MapTypes        map[string]int `json:"map_types"`
+	Servers         map[string]int `json:"servers"`
+	Regions         map[string]int `json:"regions"`
+	CreatedOn       time.Time      `json:"created_on"`
+}
+
+type GlobalTF2StatsSnapshot struct {
+	StatId           int64          `json:"stat_id"`
+	Players          int            `json:"players"`
+	Bots             int            `json:"bots"`
+	Secure           int            `json:"secure"`
+	ServersCommunity int            `json:"servers_community"`
+	ServersTotal     int            `json:"servers_total"`
+	CapacityFull     int            `json:"capacity_full"`
+	CapacityEmpty    int            `json:"capacity_empty"`
+	CapacityPartial  int            `json:"capacity_partial"`
+	MapTypes         map[string]int `json:"map_types"`
+	Regions          map[string]int `json:"regions"`
+	CreatedOn        time.Time      `json:"created_on"`
+}
+
+func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
+	const minSize = 5
+	out := map[string]int{}
+	for k, v := range stats.MapTypes {
+		mapKey := k
+		if v < minSize {
+			mapKey = "unknown"
+		}
+		out[mapKey] = v
+	}
+	return out
+}
+
+func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
+	return GlobalTF2StatsSnapshot{
+		MapTypes:  map[string]int{},
+		Regions:   map[string]int{},
+		CreatedOn: config.Now(),
+	}
+}
+
+func NewLocalTF2Stats() LocalTF2StatsSnapshot {
+	return LocalTF2StatsSnapshot{
+		MapTypes:  map[string]int{},
+		Regions:   map[string]int{},
+		Servers:   map[string]int{},
+		CreatedOn: config.Now(),
+	}
+}
+
+type Stats struct {
+	BansTotal     int `json:"bans"`
+	BansDay       int `json:"bans_day"`
+	BansWeek      int `json:"bans_week"`
+	BansMonth     int `json:"bans_month"`
+	Bans3Month    int `json:"bans_3month"`
+	Bans6Month    int `json:"bans_6month"`
+	BansYear      int `json:"bans_year"`
+	BansCIDRTotal int `json:"bans_cidr"`
+	AppealsOpen   int `json:"appeals_open"`
+	AppealsClosed int `json:"appeals_closed"`
+	FilteredWords int `json:"filtered_words"`
+	ServersAlive  int `json:"servers_alive"`
+	ServersTotal  int `json:"servers_total"`
+}
+
+func (database *pgStore) MatchSave(ctx context.Context, match *logparse.Match) error {
 	for _, p := range match.PlayerSums {
-		var player model.Person
+		var player Person
 		if errPlayer := database.GetOrCreatePersonBySteamID(ctx, p.SteamId, &player); errPlayer != nil {
 			return errors.Wrapf(errPlayer, "Failed to create person")
 		}
@@ -86,7 +158,7 @@ type MatchesQueryOpts struct {
 	TimeEnd   *time.Time    `json:"time_end,omitempty"`
 }
 
-func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (model.MatchSummaryCollection, error) {
+func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryCollection, error) {
 	qb := sb.Select("m.match_id", "m.server_id", "m.map", "m.created_on", "COALESCE(sum(mp.kills), 0)", "COALESCE(sum(mp.assists), 0)", "COALESCE(sum(mp.damage), 0)", "COALESCE(sum(mp.healing), 0)", "COALESCE(sum(mp.airshots), 0)").
 		From("match m").
 		LeftJoin("match_player mp on m.match_id = mp.match_id").
@@ -114,9 +186,9 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 		return nil, errors.Wrapf(errQuery, "Failed to query matches")
 	}
 	defer rows.Close()
-	var matches model.MatchSummaryCollection
+	var matches logparse.MatchSummaryCollection
 	for rows.Next() {
-		var m model.MatchSummary
+		var m logparse.MatchSummary
 		if errScan := rows.Scan(&m.MatchID, &m.ServerId, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
 			return nil, errors.Wrapf(errScan, "Failed to scan match row")
 		}
@@ -125,8 +197,9 @@ func (database *pgStore) Matches(ctx context.Context, opts MatchesQueryOpts) (mo
 	return matches, nil
 }
 
-func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.Match, error) {
-	m := model.NewMatch(database.logger, -1, "")
+func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
+	m := logparse.NewMatch(database.logger, -1, "")
+
 	m.MatchID = matchId
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
 	if errMatch := database.QueryRow(ctx, qm, matchId).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
@@ -148,7 +221,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 	}
 	defer playerRows.Close()
 	for playerRows.Next() {
-		s := model.MatchPlayerSum{MatchPlayerSumID: matchId}
+		s := logparse.MatchPlayerSum{MatchPlayerSumID: matchId}
 		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamId, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.AirShots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
@@ -169,7 +242,7 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 	}
 	defer medicRows.Close()
 	for medicRows.Next() {
-		ms := model.MatchMedicSum{MatchId: matchId, Charges: map[logparse.MedigunType]int{
+		ms := logparse.MatchMedicSum{MatchId: matchId, Charges: map[logparse.MedigunType]int{
 			logparse.Uber:       0,
 			logparse.Kritzkrieg: 0,
 			logparse.Vaccinator: 0,
@@ -197,25 +270,25 @@ func (database *pgStore) MatchGetById(ctx context.Context, matchId int) (*model.
 	}
 	defer teamRows.Close()
 	for teamRows.Next() {
-		ts := model.MatchTeamSum{MatchId: matchId}
+		ts := logparse.MatchTeamSum{MatchId: matchId}
 		if errRow := teamRows.Scan(&ts.MatchTeamId, &ts.Team, &ts.Kills, &ts.Damage, &ts.Charges, &ts.Drops, &ts.Caps, &ts.MidFights); errRow != nil {
 			return nil, errors.Wrapf(errRow, "Failed to scan match medics")
 		}
 		m.TeamSums = append(m.TeamSums, &ts)
 	}
-	var ids steamid.Collection
-	for _, p := range m.PlayerSums {
-		ids = append(ids, p.SteamId)
-	}
-	players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
-	if errPlayers != nil {
-		return nil, errors.Wrapf(errPlayers, "Failed to load players")
-	}
-	m.Players = players
+	//var ids steamid.Collection
+	//for _, p := range m.PlayerSums {
+	//	ids = append(ids, p.SteamId)
+	//}
+	//players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
+	//if errPlayers != nil {
+	//	return nil, errors.Wrapf(errPlayers, "Failed to load players")
+	//}
+	//m.Players = players
 	return &m, nil
 }
 
-func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error {
+func (database *pgStore) GetStats(ctx context.Context, stats *Stats) error {
 	const q = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -239,7 +312,7 @@ func (database *pgStore) GetStats(ctx context.Context, stats *model.Stats) error
 var localStatColumns = []string{"players", "capacity_full", "capacity_empty", "capacity_partial",
 	"map_types", "created_on", "regions", "servers"}
 
-func (database *pgStore) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats model.LocalTF2StatsSnapshot) error {
+func (database *pgStore) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF2StatsSnapshot) error {
 	query, args, errQuery := sb.Insert(statDurationTable(Local, duration)).
 		Columns(localStatColumns...).
 		Values(stats.Players, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial,
@@ -254,7 +327,7 @@ func (database *pgStore) SaveLocalTF2Stats(ctx context.Context, duration StatDur
 var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
 	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
 
-func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats model.GlobalTF2StatsSnapshot) error {
+func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats GlobalTF2StatsSnapshot) error {
 	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
 		Columns(globalStatColumns...).
 		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
@@ -282,15 +355,15 @@ const (
 	Yearly
 )
 
-func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]model.GlobalTF2StatsSnapshot, error) {
+func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]GlobalTF2StatsSnapshot, error) {
 	rows, errExec := database.Query(ctx, query, args...)
 	if errExec != nil {
 		return nil, Err(errExec)
 	}
 	defer rows.Close()
-	var stats []model.GlobalTF2StatsSnapshot
+	var stats []GlobalTF2StatsSnapshot
 	for rows.Next() {
-		var stat model.GlobalTF2StatsSnapshot
+		var stat GlobalTF2StatsSnapshot
 		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.Bots, &stat.Secure, &stat.ServersCommunity, &stat.ServersTotal, &stat.CapacityFull, &stat.CapacityEmpty, &stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -299,15 +372,15 @@ func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, 
 	return stats, nil
 }
 
-func fetchLocalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]model.LocalTF2StatsSnapshot, error) {
+func fetchLocalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]LocalTF2StatsSnapshot, error) {
 	rows, errExec := database.Query(ctx, query, args...)
 	if errExec != nil {
 		return nil, Err(errExec)
 	}
 	defer rows.Close()
-	var stats []model.LocalTF2StatsSnapshot
+	var stats []LocalTF2StatsSnapshot
 	for rows.Next() {
-		var stat model.LocalTF2StatsSnapshot
+		var stat LocalTF2StatsSnapshot
 		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.CapacityFull, &stat.CapacityEmpty,
 			&stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions, &stat.Servers); errScan != nil {
 			return nil, Err(errScan)
@@ -366,8 +439,8 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 		return nil
 	}
 	var (
-		hourlySums           []model.GlobalTF2StatsSnapshot
-		curSums              *model.GlobalTF2StatsSnapshot
+		hourlySums           []GlobalTF2StatsSnapshot
+		curSums              *GlobalTF2StatsSnapshot
 		tempPlayers          []int
 		tempBots             []int
 		tempServersCommunity []int
@@ -386,7 +459,7 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 			curIdx = timeIdx
 		} else if curIdx != timeIdx && curSums != nil {
 			// If the hour index changed, flush the current results out
-			sumStat := model.NewGlobalTF2Stats()
+			sumStat := NewGlobalTF2Stats()
 			sumStat.CreatedOn = curTime
 			sumStat.Players = fp.Avg(tempPlayers)
 			sumStat.Bots = fp.Avg(tempBots)
@@ -415,7 +488,7 @@ func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 			tempMapTypes = map[string][]int{}
 		}
 		if curSums == nil {
-			curSums = &model.GlobalTF2StatsSnapshot{CreatedOn: curTime}
+			curSums = &GlobalTF2StatsSnapshot{CreatedOn: curTime}
 		}
 		tempPlayers = append(tempPlayers, s.Players)
 		tempBots = append(tempBots, s.Bots)
@@ -486,7 +559,7 @@ func statDurationTable(locality StatLocality, duration StatDuration) string {
 	}
 }
 
-func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]model.GlobalTF2StatsSnapshot, error) {
+func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]GlobalTF2StatsSnapshot, error) {
 	table := statDurationTable(Global, duration)
 	if table == "" {
 		return nil, errors.New("Unsupported stat duration")
@@ -505,7 +578,7 @@ func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDur
 	return fetchGlobalTF2Snapshots(ctx, database, query, args)
 }
 
-func (database *pgStore) GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]model.LocalTF2StatsSnapshot, error) {
+func (database *pgStore) GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2StatsSnapshot, error) {
 	table := statDurationTable(Local, duration)
 	if table == "" {
 		return nil, errors.New("Unsupported stat duration")
@@ -543,8 +616,8 @@ func (database *pgStore) BuildLocalTF2Stats(ctx context.Context) error {
 		return nil
 	}
 	var (
-		hourlySums          []model.LocalTF2StatsSnapshot
-		curSums             *model.LocalTF2StatsSnapshot
+		hourlySums          []LocalTF2StatsSnapshot
+		curSums             *LocalTF2StatsSnapshot
 		tempPlayers         []int
 		tempCapacityFull    []int
 		tempCapacityEmpty   []int
@@ -561,7 +634,7 @@ func (database *pgStore) BuildLocalTF2Stats(ctx context.Context) error {
 			curIdx = timeIdx
 		} else if curIdx != timeIdx && curSums != nil {
 			// If the hour index changed, flush the current results out
-			sumStat := model.NewLocalTF2Stats()
+			sumStat := NewLocalTF2Stats()
 			sumStat.CreatedOn = curTime
 			sumStat.Players = fp.Avg(tempPlayers)
 			sumStat.CapacityFull = fp.Avg(tempCapacityFull)
@@ -588,7 +661,7 @@ func (database *pgStore) BuildLocalTF2Stats(ctx context.Context) error {
 			tempServers = map[string][]int{}
 		}
 		if curSums == nil {
-			curSums = &model.LocalTF2StatsSnapshot{CreatedOn: curTime}
+			curSums = &LocalTF2StatsSnapshot{CreatedOn: curTime}
 		}
 		tempPlayers = append(tempPlayers, s.Players)
 		tempCapacityFull = append(tempCapacityFull, s.CapacityFull)

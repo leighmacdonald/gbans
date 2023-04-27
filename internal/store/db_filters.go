@@ -3,11 +3,38 @@ package store
 import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
+	"regexp"
+	"time"
 )
 
-func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) error {
+type Filter struct {
+	FilterID     int64          `json:"filter_id"`
+	AuthorId     steamid.SID64  `json:"author_id"`
+	Pattern      string         `json:"pattern"`
+	IsRegex      bool           `json:"is_regex"`
+	IsEnabled    bool           `json:"is_enabled"`
+	Regex        *regexp.Regexp `json:"-"`
+	TriggerCount int64          `json:"trigger_count"`
+	CreatedOn    time.Time      `json:"created_on"`
+	UpdatedOn    time.Time      `json:"updated_on"`
+}
+
+func (f *Filter) Init() {
+	if f.IsRegex {
+		f.Regex = regexp.MustCompile(f.Pattern)
+	}
+}
+
+func (f *Filter) Match(value string) bool {
+	if f.IsRegex {
+		return f.Regex.MatchString(value)
+	}
+	return f.Pattern == value
+}
+
+func (database *pgStore) SaveFilter(ctx context.Context, filter *Filter) error {
 	if filter.FilterID > 0 {
 		return database.updateFilter(ctx, filter)
 	} else {
@@ -16,7 +43,7 @@ func (database *pgStore) SaveFilter(ctx context.Context, filter *model.Filter) e
 }
 
 // todo squirrel version, it expects sql.db though...
-func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter) error {
+func (database *pgStore) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
@@ -30,7 +57,7 @@ func (database *pgStore) insertFilter(ctx context.Context, filter *model.Filter)
 	return nil
 }
 
-func (database *pgStore) updateFilter(ctx context.Context, filter *model.Filter) error {
+func (database *pgStore) updateFilter(ctx context.Context, filter *Filter) error {
 	query, args, errQuery := sb.Update("filtered_word").
 		Set("author_id", filter.AuthorId).
 		Set("pattern", filter.Pattern).
@@ -50,7 +77,7 @@ func (database *pgStore) updateFilter(ctx context.Context, filter *model.Filter)
 	return nil
 }
 
-func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) error {
+func (database *pgStore) DropFilter(ctx context.Context, filter *Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
 	if errExec := database.Exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
@@ -59,7 +86,7 @@ func (database *pgStore) DropFilter(ctx context.Context, filter *model.Filter) e
 	return nil
 }
 
-func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *model.Filter) error {
+func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *Filter) error {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
@@ -72,7 +99,7 @@ func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *mod
 	return nil
 }
 
-func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error) {
+func (database *pgStore) GetFilters(ctx context.Context) ([]Filter, error) {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on
 		FROM filtered_word`
@@ -80,10 +107,10 @@ func (database *pgStore) GetFilters(ctx context.Context) ([]model.Filter, error)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
-	var filters []model.Filter
+	var filters []Filter
 	defer rows.Close()
 	for rows.Next() {
-		var filter model.Filter
+		var filter Filter
 		if errQuery = rows.Scan(&filter.FilterID, &filter.AuthorId, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
 			return nil, Err(errQuery)

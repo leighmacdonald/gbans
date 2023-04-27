@@ -127,7 +127,7 @@ export const discordLoginURL = () => {
         '?client_id=' +
         window.gbans.discordClientId +
         '&redirect_uri=' +
-        encodeURIComponent(baseUrl() + '/login/discord') +
+        encodeURIComponent(baseUrl() + '/login/discordutil') +
         '&response_type=code' +
         '&scope=identify'
     );

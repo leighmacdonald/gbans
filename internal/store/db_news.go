@@ -4,14 +4,23 @@ import (
 	"context"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"time"
 )
 
-func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
-	var articles []model.NewsEntry
+type NewsEntry struct {
+	NewsId      int       `json:"news_id"`
+	Title       string    `json:"title"`
+	BodyMD      string    `json:"body_md"`
+	IsPublished bool      `json:"is_published"`
+	CreatedOn   time.Time `json:"created_on"`
+	UpdatedOn   time.Time `json:"updated_on"`
+}
+
+func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error) {
+	var articles []NewsEntry
 	builder := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
 		OrderBy("created_on DESC")
@@ -28,7 +37,7 @@ func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUn
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var entry model.NewsEntry
+		var entry NewsEntry
 		if errScan := rows.Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
 			return nil, Err(errScan)
@@ -38,7 +47,7 @@ func (database *pgStore) GetNewsLatest(ctx context.Context, limit int, includeUn
 	return articles, nil
 }
 
-func (database *pgStore) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
+func (database *pgStore) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error {
 	builder := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news")
 	if !includeUnpublished {
@@ -55,7 +64,7 @@ func (database *pgStore) GetNewsLatestArticle(ctx context.Context, includeUnpubl
 	return nil
 }
 
-func (database *pgStore) GetNewsById(ctx context.Context, newsId int, entry *model.NewsEntry) error {
+func (database *pgStore) GetNewsById(ctx context.Context, newsId int, entry *NewsEntry) error {
 	query, args, errQueryArgs := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").Where(sq.Eq{"news_id": newsId}).ToSql()
 	if errQueryArgs != nil {
@@ -68,7 +77,7 @@ func (database *pgStore) GetNewsById(ctx context.Context, newsId int, entry *mod
 	return nil
 }
 
-func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	if entry.NewsId > 0 {
 		return database.updateNewsArticle(ctx, entry)
 	} else {
@@ -76,7 +85,7 @@ func (database *pgStore) SaveNewsArticle(ctx context.Context, entry *model.NewsE
 	}
 }
 
-func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) insertNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	query, args, errQueryArgs := sb.Insert("news").
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
@@ -93,7 +102,7 @@ func (database *pgStore) insertNewsArticle(ctx context.Context, entry *model.New
 	return nil
 }
 
-func (database *pgStore) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (database *pgStore) updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	query, args, errQueryArgs := sb.Update("news").
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).

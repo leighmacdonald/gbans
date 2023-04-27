@@ -3,8 +3,7 @@ package query
 
 import (
 	"context"
-	"fmt"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/pkg/errors"
@@ -16,7 +15,7 @@ import (
 
 // ExecRCON executes the given command against the server provided. It returns the command
 // output.
-func ExecRCON(ctx context.Context, server model.Server, cmd string) (string, error) {
+func ExecRCON(ctx context.Context, server store.Server, cmd string) (string, error) {
 	execCtx, cancelExec := context.WithTimeout(ctx, time.Second*15)
 	defer cancelExec()
 	console, errDial := rcon.Dial(execCtx, server.Addr(), server.RCON, time.Second*10)
@@ -31,19 +30,18 @@ func ExecRCON(ctx context.Context, server model.Server, cmd string) (string, err
 }
 
 // RCON is used to execute rcon commands against multiple servers
-func RCON(ctx context.Context, logger *zap.Logger, servers []model.Server, commands ...string) map[string]string {
+func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
 	rwMutex := &sync.RWMutex{}
 	timeout := time.Second * 10
 	waitGroup := &sync.WaitGroup{}
 	for _, server := range servers {
 		waitGroup.Add(1)
-		go func(server model.Server) {
+		go func(server store.Server) {
 			defer waitGroup.Done()
 			rconCtx, cancelExec := context.WithTimeout(ctx, time.Second*20)
 			defer cancelExec()
-			addr := fmt.Sprintf("%s:%d", server.Address, server.Port)
-			conn, errDial := rcon.Dial(rconCtx, addr, server.RCON, timeout)
+			conn, errDial := rcon.Dial(rconCtx, server.Addr(), server.RCON, timeout)
 			if errDial != nil {
 				logger.Error("Failed to connect to server", zap.String("name", server.ServerNameShort), zap.Error(errDial))
 				return
@@ -64,7 +62,7 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []model.Server, comma
 }
 
 // GetServerStatus fetches and parses status output for the server
-func GetServerStatus(ctx context.Context, server model.Server) (extra.Status, error) {
+func GetServerStatus(ctx context.Context, server store.Server) (extra.Status, error) {
 	rconCtx, cancelRcon := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRcon()
 	resp, errRcon := ExecRCON(rconCtx, server, "status")

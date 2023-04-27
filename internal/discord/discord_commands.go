@@ -1,4 +1,4 @@
-package app
+package discord
 
 import (
 	"bytes"
@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -124,8 +125,8 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		Required:    true,
 	}
 	var reasons []*discordgo.ApplicationCommandOptionChoice
-	for _, r := range []model.Reason{model.External, model.Cheating, model.Racism, model.Harassment, model.Exploiting,
-		model.WarningsExceeded, model.Spam, model.Language, model.Profile, model.ItemDescriptions, model.BotHost, model.Custom,
+	for _, r := range []store.Reason{store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
+		store.WarningsExceeded, store.Spam, store.Language, store.Profile, store.ItemDescriptions, store.BotHost, store.Custom,
 	} {
 		reasons = append(reasons, &discordgo.ApplicationCommandOptionChoice{
 			Name:  r.String(),
@@ -488,35 +489,22 @@ func registerCommandPermissions(ctx context.Context, perms []permissionRequest) 
 	defer cancelReq()
 	req, errNewReq := http.NewRequestWithContext(reqCtx, "PUT", permUrl, bytes.NewReader(body))
 	if errNewReq != nil {
-		return errors.Wrapf(errNewReq, "Failed to create http request for discord permissions")
+		return errors.Wrapf(errNewReq, "Failed to create http request for discordutil permissions")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
 	resp, errDo := httpClient.Do(req)
 	if errDo != nil {
-		return errors.Wrapf(errDo, "Failed to perform http request for discord permissions")
+		return errors.Wrapf(errDo, "Failed to perform http request for discordutil permissions")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrapf(errDo, "Error response code trying to perform http request for discord permissions: %d", resp.StatusCode)
+		return errors.Wrapf(errDo, "Error response code trying to perform http request for discordutil permissions: %d", resp.StatusCode)
 	}
 	return nil
 }
 
-type responseMsgType int
-
-const (
-	mtString responseMsgType = iota
-	mtEmbed
-	//mtImage
-)
-
-type botResponse struct {
-	MsgType responseMsgType
-	Value   any
-}
-
 type botCommandHandler func(ctx context.Context, s *discordgo.Session,
-	m *discordgo.InteractionCreate, r *botResponse) error
+	m *discordgo.InteractionCreate, r *discordutil.Response) error
 
 const (
 	discordMaxMsgLen  = 2000
@@ -528,7 +516,7 @@ const (
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
 func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	command := botCmd(interaction.ApplicationCommandData().Name)
-	response := botResponse{MsgType: mtString}
+	response := discordutil.Response{MsgType: discordutil.MtString}
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
@@ -539,7 +527,7 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 				Content: "Calculating numberwang...",
 			},
 		}); errRespond != nil {
-			respErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
+			discordutil.RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
 				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
@@ -549,7 +537,7 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 		defer cancelCommand()
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
-			respErr(&response, errHandleCommand.Error())
+			discordutil.RespErr(&response, errHandleCommand.Error())
 			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
 				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
