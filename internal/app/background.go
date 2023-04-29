@@ -6,19 +6,14 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/discordutil"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net"
-	"strings"
 	"sync"
 	"time"
 )
@@ -255,190 +250,6 @@ func (app *App) profileUpdater() {
 	}
 }
 
-func (app *App) serverA2SStatusUpdater(updateFreq time.Duration) {
-	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
-		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
-		defer cancel()
-		servers, errGetServers := localDb.GetServers(cancelCtx, false)
-		if errGetServers != nil {
-			return errors.Wrapf(errGetServers, "Failed to get servers")
-		}
-		waitGroup := &sync.WaitGroup{}
-		for _, srv := range servers {
-			waitGroup.Add(1)
-			go func(server store.Server) {
-				defer waitGroup.Done()
-				newStatus, errA := query.A2SQueryServer(app.logger, server.Addr())
-				if errA != nil {
-					app.logger.Debug("Failed to update a2s status", zap.Error(errA))
-					return
-				}
-				app.serverStateA2SMu.Lock()
-				app.serverStateA2S[server.ServerNameShort] = *newStatus
-				app.serverStateA2SMu.Unlock()
-			}(srv)
-		}
-		waitGroup.Wait()
-		return nil
-	}
-	ticker := time.NewTicker(updateFreq)
-	for {
-		select {
-		case <-app.ctx.Done():
-			return
-		case <-ticker.C:
-			if errUpdate := updateStatus(app.ctx, app.store); errUpdate != nil {
-				app.logger.Error("Error trying to updateStatus server status state", zap.Error(errUpdate))
-			}
-		}
-	}
-}
-
-func (app *App) serverRCONStatusUpdater(updateFreq time.Duration) {
-	var updateStatus = func(localCtx context.Context, localDb store.ServerStore) error {
-		cancelCtx, cancel := context.WithTimeout(localCtx, updateFreq/2)
-		defer cancel()
-		servers, errGetServers := localDb.GetServers(cancelCtx, false)
-		if errGetServers != nil {
-			return errors.Wrapf(errGetServers, "Failed to get servers")
-		}
-		waitGroup := &sync.WaitGroup{}
-		for _, srv := range servers {
-			waitGroup.Add(1)
-			go func(c context.Context, server store.Server) {
-				defer waitGroup.Done()
-				newStatus, queryErr := query.GetServerStatus(c, server)
-				if queryErr != nil {
-					//app.logger.Error("Failed to query server status", zap.Error(queryErr))
-					return
-				}
-				app.serverStateStatusMu.Lock()
-				app.serverStateStatus[server.ServerNameShort] = newStatus
-				app.serverStateStatusMu.Unlock()
-			}(cancelCtx, srv)
-		}
-		waitGroup.Wait()
-		return nil
-	}
-	ticker := time.NewTicker(updateFreq)
-	for {
-		select {
-		case <-app.ctx.Done():
-			return
-		case <-ticker.C:
-			if errUpdate := updateStatus(app.ctx, app.store); errUpdate != nil {
-				app.logger.Error("Error trying to updateStatus server status state", zap.Error(errUpdate))
-			}
-		}
-	}
-}
-
-// serverStateRefresher periodically compiles and caches the current known db, rcon & a2s server state
-// into a ServerState instance
-func (app *App) serverStateRefresher(updateFreq time.Duration) {
-	var refreshState = func() error {
-		var newState state.ServerStateCollection
-		servers, errServers := app.store.GetServers(app.ctx, false)
-		if errServers != nil {
-			return errors.Errorf("Failed to fetch servers: %v", errServers)
-		}
-		app.serverStateA2SMu.RLock()
-		defer app.serverStateA2SMu.RUnlock()
-		app.serverStateStatusMu.RLock()
-		defer app.serverStateStatusMu.RUnlock()
-		for _, server := range servers {
-			var currentState state.ServerState
-			// use existing currentState for start?
-			currentState.ServerId = server.ServerID
-			currentState.Name = server.ServerNameLong
-			currentState.NameShort = server.ServerNameShort
-			currentState.Host = server.Address
-			currentState.Port = server.Port
-			currentState.Enabled = server.IsEnabled
-			currentState.Region = server.Region
-			currentState.CountryCode = server.CC
-			currentState.Latitude = server.Latitude
-			currentState.Longitude = server.Longitude
-			a2sInfo, a2sFound := app.serverStateA2S[server.ServerNameShort]
-			if a2sFound {
-				if a2sInfo.Name != "" {
-					currentState.Name = a2sInfo.Name
-				}
-				currentState.NameA2S = a2sInfo.Name
-				currentState.Protocol = a2sInfo.Protocol
-				currentState.Map = a2sInfo.Map
-				currentState.Folder = a2sInfo.Folder
-				currentState.Game = a2sInfo.Game
-				currentState.AppId = a2sInfo.ID
-				currentState.PlayerCount = int(a2sInfo.Players)
-				currentState.MaxPlayers = int(a2sInfo.MaxPlayers)
-				currentState.Bots = int(a2sInfo.Bots)
-				currentState.ServerType = a2sInfo.ServerType.String()
-				currentState.ServerOS = a2sInfo.ServerOS.String()
-				currentState.Password = !a2sInfo.Visibility
-				currentState.VAC = a2sInfo.VAC
-				currentState.Version = a2sInfo.Version
-				if a2sInfo.SourceTV != nil {
-					currentState.STVPort = a2sInfo.SourceTV.Port
-					currentState.STVName = a2sInfo.SourceTV.Name
-				}
-				if a2sInfo.ExtendedServerInfo != nil {
-					currentState.SteamID = steamid.SID64(a2sInfo.ExtendedServerInfo.SteamID)
-					currentState.GameID = a2sInfo.ExtendedServerInfo.GameID
-					currentState.Keywords = strings.Split(a2sInfo.ExtendedServerInfo.Keywords, ",")
-				}
-			}
-			statusInfo, statusFound := app.serverStateStatus[server.ServerNameShort]
-			if statusFound {
-				if currentState.Name != "" {
-					currentState.Name = statusInfo.ServerName
-				}
-				if currentState.PlayerCount < statusInfo.PlayersCount {
-					currentState.PlayerCount = statusInfo.PlayersCount
-				}
-				// rcon status doesn't respect sv_visiblemaxplayers (sp?) so this doesn't work well
-				//if currentState.MaxPlayers < statusInfo.PlayersMax {
-				//	currentState.MaxPlayers = statusInfo.PlayersMax
-				//}
-				if currentState.Map != "" && currentState.Map != statusInfo.Map {
-					currentState.Map = statusInfo.Map
-				}
-				var knownPlayers []state.ServerStatePlayer
-				for _, player := range statusInfo.Players {
-					var newPlayer state.ServerStatePlayer
-					newPlayer.UserID = player.UserID
-					newPlayer.Name = player.Name
-					newPlayer.SID = player.SID
-					newPlayer.ConnectedTime = player.ConnectedTime
-					newPlayer.State = player.State
-					newPlayer.Ping = player.Ping
-					newPlayer.Loss = player.Loss
-					newPlayer.IP = player.IP
-					newPlayer.Port = player.Port
-					knownPlayers = append(knownPlayers, newPlayer)
-				}
-				currentState.Players = knownPlayers
-			}
-			newState = append(newState, currentState)
-		}
-		app.serverStateMu.Lock()
-		app.serverState = newState
-		app.serverStateMu.Unlock()
-		return nil
-	}
-	ticker := time.NewTicker(updateFreq)
-	for {
-		select {
-		case <-app.ctx.Done():
-			return
-		case <-ticker.C:
-			if errUpdate := refreshState(); errUpdate != nil {
-				app.logger.Error("Failed to refreshState server state: %v", zap.Error(errUpdate))
-			}
-		}
-	}
-}
-
 func (app *App) patreonUpdater() {
 	updateTimer := time.NewTicker(time.Hour * 1)
 	if app.patreon == nil {
@@ -481,6 +292,42 @@ func (app *App) patreonUpdater() {
 		}
 	}
 
+}
+func (app *App) updateStateServerList() error {
+	servers, errServers := app.store.GetServers(app.ctx, false)
+	if errServers != nil {
+		return errServers
+	}
+	var sc []state.ServerConfig
+	for _, server := range servers {
+		sc = append(sc, state.NewServerConfig(app.logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)), server.ServerID, server.ServerNameShort, server.Addr(), server.RCON))
+	}
+	state.SetServers(sc)
+	return nil
+}
+
+func (app *App) stateUpdater(statusUpdateFreq time.Duration, materUpdateFreq time.Duration) {
+	logger := app.logger.Named("state")
+	errChan := make(chan error)
+	go func() {
+		if errUpdate := app.updateStateServerList(); errUpdate != nil {
+			logger.Error("Failed to update list", zap.Error(errUpdate))
+		}
+		if errStart := state.Start(app.ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
+			logger.Error("start returned error", zap.Error(errStart))
+		}
+	}()
+	stateTicker := time.NewTicker(statusUpdateFreq)
+	for {
+		select {
+		case err := <-errChan:
+			logger.Error("error updating state", zap.Error(err))
+		case <-stateTicker.C:
+			if errUpdate := app.updateStateServerList(); errUpdate != nil {
+				logger.Error("Failed to update list", zap.Error(errUpdate))
+			}
+		}
+	}
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
@@ -559,55 +406,6 @@ func (app *App) banSweeper() {
 	}
 }
 
-func guessMapType(mapName string) string {
-	mapName = strings.TrimPrefix(mapName, "workshop/")
-	pieces := strings.SplitN(mapName, "_", 2)
-	if len(pieces) == 1 {
-		return "unknown"
-	} else {
-		return strings.ToLower(pieces[0])
-	}
-}
-
-type SvRegion int
-
-const (
-	RegionNaEast SvRegion = iota
-	RegionNAWest
-	RegionSouthAmerica
-	RegionEurope
-	RegionAsia
-	RegionAustralia
-	RegionMiddleEast
-	RegionAfrica
-	RegionWorld SvRegion = 255
-)
-
-func SteamRegionIdString(region SvRegion) string {
-	switch region {
-	case RegionNaEast:
-		return "ne"
-	case RegionNAWest:
-		return "nw"
-	case RegionSouthAmerica:
-		return "sa"
-	case RegionEurope:
-		return "eu"
-	case RegionAsia:
-		return "as"
-	case RegionAustralia:
-		return "au"
-	case RegionMiddleEast:
-		return "me"
-	case RegionAfrica:
-		return "af"
-	case RegionWorld:
-		fallthrough
-	default:
-		return "wd"
-	}
-}
-
 func (app *App) localStatUpdater() {
 	var build = func() {
 		if errBuild := app.store.BuildLocalTF2Stats(app.ctx); errBuild != nil {
@@ -663,7 +461,7 @@ func (app *App) localStatUpdater() {
 				}
 				stats.Regions[ss.Region] += ss.PlayerCount
 
-				mapType := guessMapType(ss.Map)
+				mapType := state.GuessMapType(ss.Map)
 				_, mapTypeFound := stats.MapTypes[mapType]
 				if !mapTypeFound {
 					stats.MapTypes[mapType] = 0
@@ -680,117 +478,6 @@ func (app *App) localStatUpdater() {
 			app.serverStateMu.RUnlock()
 			if errSave := app.store.SaveLocalTF2Stats(app.ctx, store.Live, stats); errSave != nil {
 				app.logger.Error("Failed to save local stats state", zap.Error(errSave))
-				continue
-			}
-		case <-app.ctx.Done():
-			return
-		}
-	}
-}
-
-func (app *App) masterServerListUpdater(updateFreq time.Duration) {
-	prevStats := store.NewGlobalTF2Stats()
-	locationCache := map[string]ip2location.LatLong{}
-	var build = func() {
-		if errBuild := app.store.BuildGlobalTF2Stats(app.ctx); errBuild != nil {
-			app.logger.Error("Error building stats", zap.Error(errBuild))
-			return
-		}
-	}
-
-	var update = func() error {
-		allServers, errServers := steamweb.GetServerList(map[string]string{
-			"appid":     "440",
-			"dedicated": "1",
-		})
-		if errServers != nil {
-			return errors.Wrap(errServers, "Failed to fetch server list")
-		}
-		var communityServers []model.ServerLocation
-		stats := store.NewGlobalTF2Stats()
-		for _, baseServer := range allServers {
-			server := model.ServerLocation{
-				LatLong: ip2location.LatLong{},
-				Server:  baseServer,
-			}
-			hostParts := strings.SplitN(server.Addr, ":", 2)
-			ipAddr := hostParts[0]
-			_, found := locationCache[ipAddr]
-			if !found {
-				var locRecord ip2location.LocationRecord
-				ip := net.ParseIP(ipAddr)
-				if errLocation := app.store.GetLocationRecord(app.ctx, ip, &locRecord); errLocation != nil {
-					continue
-				}
-				locationCache[ipAddr] = locRecord.LatLong
-			}
-			server.LatLong = locationCache[ipAddr]
-			stats.ServersTotal++
-			stats.Players += server.Players
-			stats.Bots += server.Bots
-			if server.MaxPlayers > 0 && server.Players >= server.MaxPlayers {
-				stats.CapacityFull++
-			} else if server.Players == 0 {
-				stats.CapacityEmpty++
-			} else {
-				stats.CapacityPartial++
-			}
-			if server.Secure {
-				stats.Secure++
-			}
-			region := SteamRegionIdString(SvRegion(server.Region))
-			_, regionFound := stats.Regions[region]
-			if !regionFound {
-				stats.Regions[region] = 0
-			}
-			stats.Regions[region] += server.Players
-			mapType := guessMapType(server.Map)
-			_, mapTypeFound := stats.MapTypes[mapType]
-			if !mapTypeFound {
-				stats.MapTypes[mapType] = 0
-			}
-			stats.MapTypes[mapType]++
-			if strings.Contains(server.Gametype, "valve") ||
-				!server.Dedicated ||
-				!server.Secure {
-				stats.ServersCommunity++
-				continue
-			}
-			communityServers = append(communityServers, server)
-		}
-		app.masterServerListMu.Lock()
-		app.masterServerList = communityServers
-		app.masterServerListMu.Unlock()
-		prevStats = stats
-		return nil
-	}
-	build()
-	_ = update()
-	updateTicker := time.NewTicker(updateFreq)
-	// Fetch new stats every 30 minutes
-	saveTicker, errSaveTicker := cronticker.NewTicker("0 */30 * * * *")
-	if errSaveTicker != nil {
-		app.logger.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
-		return
-	}
-	// Rebuild stats every hour
-	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
-	if errBuildTicker != nil {
-		app.logger.Fatal("Invalid build ticker cron format", zap.Error(errBuildTicker))
-		return
-	}
-	for {
-		select {
-		case <-updateTicker.C:
-			if errUpdate := update(); errUpdate != nil {
-				app.logger.Error("Failed to update master server state", zap.Error(errUpdate))
-			}
-		case <-buildTicker.C:
-			build()
-		case saveTime := <-saveTicker.C:
-			prevStats.CreatedOn = saveTime
-			if errSave := app.store.SaveGlobalTF2Stats(app.ctx, store.Live, prevStats); errSave != nil {
-				app.logger.Error("Failed to save global stats state", zap.Error(errSave))
 				continue
 			}
 		case <-app.ctx.Done():

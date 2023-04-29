@@ -152,9 +152,6 @@ type StatStore interface {
 	Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryCollection, error)
 	SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF2StatsSnapshot) error
 	GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2StatsSnapshot, error)
-	SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats GlobalTF2StatsSnapshot) error
-	GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]GlobalTF2StatsSnapshot, error)
-	BuildGlobalTF2Stats(ctx context.Context) error
 	BuildLocalTF2Stats(ctx context.Context) error
 }
 

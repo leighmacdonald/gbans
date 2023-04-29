@@ -9,7 +9,7 @@ import (
 )
 
 func A2SQueryServer(logger *zap.Logger, addr string) (*a2s.ServerInfo, error) {
-	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(time.Second*5))
+	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(time.Second*10))
 	if errClient != nil {
 		return nil, errors.Wrapf(errClient, "Failed to create a2s client")
 	}

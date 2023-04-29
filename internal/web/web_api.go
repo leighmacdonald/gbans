@@ -260,10 +260,11 @@ func (web *web) onAPIPostPingMod() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		var playerInfo state.PlayerInfo
-		errFind := web.app.Find(ctx, store.StringSID(req.SteamID.String()), "", &playerInfo)
-		if errFind != nil {
-			web.logger.Error("Failed to find player on /mod call", zap.Error(errFind))
+		players, found := state.Find(state.FindOpts{SteamID: req.SteamID})
+		if !found {
+			web.logger.Error("Failed to find player on /mod call")
+			responseErr(ctx, http.StatusFailedDependency, nil)
+			return
 		}
 		//name := req.SteamID.String()
 		//if playerInfo.InGame {
@@ -275,17 +276,16 @@ func (web *web) onAPIPostPingMod() gin.HandlerFunc {
 		}
 		embed := discordutil.RespOk(nil, "New User Report")
 		embed.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
-		if playerInfo.Player != nil && playerInfo.Player.Name != "" {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-				Name:   "Reporter",
-				Value:  playerInfo.Player.Name,
-				Inline: true,
-			})
-		}
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:   "Reporter",
+			Value:  players[0].Player.Name,
+			Inline: true,
+		})
+
 		if req.SteamID.String() != "" {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "ReporterSID",
-				Value:  req.SteamID.String(),
+				Value:  players[0].Player.SID.String(),
 				Inline: true,
 			})
 		}
@@ -847,7 +847,7 @@ func (web *web) onAPIGetPrometheusHosts() gin.HandlerFunc {
 // onAPIGetServerStates returns the current known cached server state
 func (web *web) onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		responseOK(ctx, http.StatusOK, web.app.ServerState())
+		responseOK(ctx, http.StatusOK, state.State())
 	}
 }
 
@@ -2666,8 +2666,8 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		return dist
 	}
 
-	var filterGameTypes = func(servers []model.ServerLocation, gameTypes []string) []model.ServerLocation {
-		var valid []model.ServerLocation
+	var filterGameTypes = func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
+		var valid []state.ServerLocation
 		for _, server := range servers {
 			serverTypes := strings.Split(server.Gametype, ",")
 			for _, gt := range gameTypes {
@@ -2680,8 +2680,8 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterMaps = func(servers []model.ServerLocation, mapNames []string) []model.ServerLocation {
-		var valid []model.ServerLocation
+	var filterMaps = func(servers []state.ServerLocation, mapNames []string) []state.ServerLocation {
+		var valid []state.ServerLocation
 		for _, server := range servers {
 			for _, mapName := range mapNames {
 				if util.GlobString(mapName, server.Map) {
@@ -2693,8 +2693,8 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterPlayersMin = func(servers []model.ServerLocation, minimum int) []model.ServerLocation {
-		var valid []model.ServerLocation
+	var filterPlayersMin = func(servers []state.ServerLocation, minimum int) []state.ServerLocation {
+		var valid []state.ServerLocation
 		for _, server := range servers {
 			if server.Players >= minimum {
 				valid = append(valid, server)
@@ -2704,8 +2704,8 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterPlayersMax = func(servers []model.ServerLocation, maximum int) []model.ServerLocation {
-		var valid []model.ServerLocation
+	var filterPlayersMax = func(servers []state.ServerLocation, maximum int) []state.ServerLocation {
+		var valid []state.ServerLocation
 		for _, server := range servers {
 			if server.Players <= maximum {
 				valid = append(valid, server)
@@ -2726,7 +2726,7 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		filtered := web.app.MasterServerList()
+		filtered := state.MasterServerList()
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)
 		}
@@ -2770,7 +2770,7 @@ func (web *web) onAPIGetTF2Stats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		source, sourceFound := ctx.GetQuery("source")
 		if !sourceFound {
-			responseErr(ctx, http.StatusInternalServerError, []store.GlobalTF2StatsSnapshot{})
+			responseErr(ctx, http.StatusInternalServerError, []state.GlobalTF2StatsSnapshot{})
 			return
 		}
 		durationStr, errDuration := ctx.GetQuery("duration")
@@ -2792,13 +2792,13 @@ func (web *web) onAPIGetTF2Stats() gin.HandlerFunc {
 				return
 			}
 			responseOK(ctx, http.StatusOK, fp.Reverse(localStats))
-		case "global":
-			gStats, errGetStats := web.app.Store().GetGlobalTF2Stats(ctx, duration)
-			if errGetStats != nil {
-				responseErr(ctx, http.StatusInternalServerError, nil)
-				return
-			}
-			responseOK(ctx, http.StatusOK, fp.Reverse(gStats))
+		//case "global":
+		//	gStats, errGetStats := web.app.Store().GetGlobalTF2Stats(ctx, duration)
+		//	if errGetStats != nil {
+		//		responseErr(ctx, http.StatusInternalServerError, nil)
+		//		return
+		//	}
+		//	responseOK(ctx, http.StatusOK, fp.Reverse(gStats))
 		default:
 			responseErr(ctx, http.StatusBadRequest, nil)
 		}

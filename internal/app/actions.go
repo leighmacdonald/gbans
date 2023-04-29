@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	gerrors "errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -10,12 +11,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/discordutil"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"strings"
 )
+
+var ErrNoUserFound = errors.New("No user found")
+var ErrInvalidAuthorSID = errors.New("Invalid author steam id")
+var ErrInvalidTargetSID = errors.New("Invalid author steam id")
 
 func (app *App) SendDiscordPayload(payload discordutil.Payload) {
 	app.logger.Debug("Sending discordutil payload",
@@ -30,81 +34,54 @@ func (app *App) SendDiscordPayload(payload discordutil.Payload) {
 	}
 }
 
-// Kick will kick the steam id from whatever server it is connected to.
-func (app *App) Kick(ctx context.Context, origin store.Origin, target store.StringSID, author store.StringSID,
-	reason store.Reason, playerInfo *state.PlayerInfo) error {
-	authorSid64, errAid := author.SID64()
-	if errAid != nil {
-		return errAid
+// OnFindExec is a helper function used to execute rcon commands against any players found in the query
+func (app *App) OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(info state.PlayerServerInfo) string) error {
+	players, found := state.Find(findOpts)
+	if !found {
+		return ErrNoUserFound
 	}
-	// kick the user if they currently are playing on a server
-	var foundPI state.PlayerInfo
-	if errFind := app.Find(ctx, target, "", &foundPI); errFind != nil {
-		return errFind
-	}
-	if foundPI.Valid && foundPI.InGame {
-		_, errExecRCON := query.ExecRCON(ctx, *foundPI.Server, fmt.Sprintf("sm_kick #%d %s", foundPI.Player.UserID, reason))
-		if errExecRCON != nil {
-			app.logger.Error("Failed to kick user after ban", zap.Error(errExecRCON))
-			return errExecRCON
+	var err error
+	for _, player := range players {
+		var server store.Server
+		if errServer := app.store.GetServer(ctx, player.ServerId, &server); errServer != nil {
+			err = gerrors.Join(err, errServer)
+			continue
 		}
-		app.logger.Info("User Kicked", zap.String("origin", origin.String()),
-			zap.String("target", string(target)), zap.String("author", util.SanitizeLog(authorSid64.String())))
+		cmd := onFoundCmd(player)
+		_, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, cmd)
+		if errExecRCON != nil {
+			err = gerrors.Join(err, errExecRCON)
+			continue
+		}
 	}
-	if playerInfo != nil {
-		*playerInfo = foundPI
-	}
+	return err
+}
 
-	return nil
+// Kick will kick the steam id from whatever server it is connected to.
+func (app *App) Kick(ctx context.Context, origin store.Origin, target steamid.SID64, author steamid.SID64, reason store.Reason) error {
+	if !author.Valid() {
+		return ErrInvalidAuthorSID
+	}
+	if !target.Valid() {
+		return ErrInvalidTargetSID
+	}
+	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
+		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason)
+	})
 }
 
 // Silence will gag & mute a player
-func (app *App) Silence(ctx context.Context, origin store.Origin, target store.StringSID, author store.StringSID,
-	reason store.Reason, playerInfo *state.PlayerInfo) error {
-	_, errAid := author.SID64()
-	if errAid != nil {
-		return errAid
+func (app *App) Silence(ctx context.Context, origin store.Origin, target steamid.SID64, author steamid.SID64,
+	reason store.Reason) error {
+	if !author.Valid() {
+		return ErrInvalidAuthorSID
 	}
-	// kick the user if they currently are playing on a server
-	var foundPI state.PlayerInfo
-	if errFind := app.Find(ctx, target, "", &foundPI); errFind != nil {
-		return errFind
+	if !target.Valid() {
+		return ErrInvalidTargetSID
 	}
-	if foundPI.Valid && foundPI.InGame {
-		_, errExecRCON := query.ExecRCON(
-			ctx,
-			*foundPI.Server,
-			fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(foundPI.Player.SID), reason),
-		)
-		if errExecRCON != nil {
-			app.logger.Error("Failed to kick user after ban", zap.Error(errExecRCON))
-			return errExecRCON
-		}
-	}
-	if playerInfo != nil {
-		*playerInfo = foundPI
-	}
-
-	return nil
-}
-
-// SetSteam is used to associate a discordutil user with either steam id. This is used
-// instead of requiring users to link their steam account to discordutil itself. It also
-// means the bot does not require more privileged intents.
-func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error {
-	newPerson := store.NewPerson(sid64)
-	if errGetPerson := app.store.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
-		return consts.ErrInvalidSID
-	}
-	if (newPerson.DiscordID) != "" {
-		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
-	}
-	newPerson.DiscordID = discordId
-	if errSavePerson := app.store.SavePerson(ctx, &newPerson); errSavePerson != nil {
-		return consts.ErrInternal
-	}
-	app.logger.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordId))
-	return nil
+	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
+	})
 }
 
 // Say is used to send a message to the server via sm_say
@@ -114,7 +91,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 		return errors.Errorf("Failed to fetch server: %s", serverName)
 	}
 	msg := fmt.Sprintf(`sm_say %s`, message)
-	rconResponse, errExecRCON := query.ExecRCON(ctx, server, msg)
+	rconResponse, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, msg)
 	if errExecRCON != nil {
 		return errExecRCON
 	}
@@ -153,33 +130,34 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 }
 
 // PSay is used to send a private message to a player
-func (app *App) PSay(ctx context.Context, author steamid.SID64, target store.StringSID, message string, server *store.Server) error {
-	var actualServer *store.Server
-	if server != nil {
-		actualServer = server
-	} else {
-		var playerInfo state.PlayerInfo
-		// TODO check resp
-		_ = app.Find(ctx, target, "", &playerInfo)
-		if !playerInfo.Valid || !playerInfo.InGame {
-			return consts.ErrUnknownID
-		}
-		actualServer = playerInfo.Server
+func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, message string) error {
+	if !author.Valid() {
+		return ErrInvalidAuthorSID
 	}
-	sid, errSid := target.SID64()
-	if errSid != nil {
-		return errSid
+	if !target.Valid() {
+		return ErrInvalidTargetSID
 	}
-	msg := fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(sid), message)
-	_, errExecRCON := query.ExecRCON(ctx, *actualServer, msg)
-	if errExecRCON != nil {
-		return errors.Errorf("Failed to exec psay command: %v", errExecRCON)
+	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
+		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
+	})
+}
+
+// SetSteam is used to associate a discordutil user with either steam id. This is used
+// instead of requiring users to link their steam account to discordutil itself. It also
+// means the bot does not require more privileged intents.
+func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error {
+	newPerson := store.NewPerson(sid64)
+	if errGetPerson := app.store.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
+		return consts.ErrInvalidSID
 	}
-	app.logger.Info("Private message sent",
-		zap.Int64("author", author.Int64()),
-		zap.String("message", message),
-		zap.String("server", server.ServerNameShort),
-		zap.Int64("target", sid.Int64()))
+	if (newPerson.DiscordID) != "" {
+		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
+	}
+	newPerson.DiscordID = discordId
+	if errSavePerson := app.store.SavePerson(ctx, &newPerson); errSavePerson != nil {
+		return consts.ErrInternal
+	}
+	app.logger.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordId))
 	return nil
 }
 

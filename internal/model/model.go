@@ -4,10 +4,8 @@ package model
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
 	"time"
 )
 
@@ -28,11 +26,6 @@ type BDIds struct {
 		} `json:"last_seen"`
 	} `json:"players"`
 	Version int `json:"version"`
-}
-
-type ServerLocation struct {
-	ip2location.LatLong
-	steamweb.Server
 }
 
 type SimplePerson struct {

@@ -6,7 +6,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/discordutil"
@@ -14,6 +13,7 @@ import (
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"net"
 	"strconv"
 )
 
@@ -84,17 +84,17 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
 		if errKick := app.Kick(ctx, store.System,
-			store.StringSID(banSteam.TargetId.String()),
-			store.StringSID(banSteam.SourceId.String()),
-			banSteam.Reason, nil); errKick != nil {
+			banSteam.TargetId,
+			banSteam.SourceId,
+			banSteam.Reason); errKick != nil {
 			app.logger.Error("Failed to kick player", zap.Error(errKick),
 				zap.Int64("sid64", banSteam.TargetId.Int64()))
 		}
 	} else if banSteam.BanType == store.NoComm {
 		if errSilence := app.Silence(ctx, store.System,
-			store.StringSID(banSteam.TargetId.String()),
-			store.StringSID(banSteam.SourceId.String()),
-			banSteam.Reason, nil); errSilence != nil {
+			banSteam.TargetId,
+			banSteam.SourceId,
+			banSteam.Reason); errSilence != nil {
 			app.logger.Error("Failed to silence player", zap.Error(errSilence),
 				zap.Int64("sid64", banSteam.TargetId.Int64()))
 		}
@@ -137,20 +137,17 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	if errSaveBanNet := app.store.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
 		return errSaveBanNet
 	}
-	go func() {
-		var playerInfo state.PlayerInfo
-		if errFindPI := app.FindPlayerByCIDR(ctx, banNet.CIDR, &playerInfo); errFindPI != nil {
+	go func(n *net.IPNet, reason store.Reason) {
+		foundPlayers, found := state.Find(state.FindOpts{CIDR: banNet.CIDR})
+		if !found {
 			return
 		}
-		if playerInfo.Player != nil && playerInfo.Server != nil {
-			_, errExecRCON := query.ExecRCON(ctx, *playerInfo.Server,
-				fmt.Sprintf(`gb_kick "#%s" %s`, string(steamid.SID64ToSID(playerInfo.Player.SID)), banNet.Reason))
-			if errExecRCON != nil {
-				app.logger.Error("Failed to query for ban request", zap.Error(errExecRCON))
-				return
+		for _, player := range foundPlayers {
+			if errKick := app.Kick(ctx, store.System, player.Player.SID, banNet.SourceId, reason); errKick != nil {
+				app.logger.Error("Failed to kick player", zap.Error(errKick))
 			}
 		}
-	}()
+	}(banNet.CIDR, banNet.Reason)
 
 	return nil
 }

@@ -24,42 +24,6 @@ type LocalTF2StatsSnapshot struct {
 	CreatedOn       time.Time      `json:"created_on"`
 }
 
-type GlobalTF2StatsSnapshot struct {
-	StatId           int64          `json:"stat_id"`
-	Players          int            `json:"players"`
-	Bots             int            `json:"bots"`
-	Secure           int            `json:"secure"`
-	ServersCommunity int            `json:"servers_community"`
-	ServersTotal     int            `json:"servers_total"`
-	CapacityFull     int            `json:"capacity_full"`
-	CapacityEmpty    int            `json:"capacity_empty"`
-	CapacityPartial  int            `json:"capacity_partial"`
-	MapTypes         map[string]int `json:"map_types"`
-	Regions          map[string]int `json:"regions"`
-	CreatedOn        time.Time      `json:"created_on"`
-}
-
-func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
-	const minSize = 5
-	out := map[string]int{}
-	for k, v := range stats.MapTypes {
-		mapKey := k
-		if v < minSize {
-			mapKey = "unknown"
-		}
-		out[mapKey] = v
-	}
-	return out
-}
-
-func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
-	return GlobalTF2StatsSnapshot{
-		MapTypes:  map[string]int{},
-		Regions:   map[string]int{},
-		CreatedOn: config.Now(),
-	}
-}
-
 func NewLocalTF2Stats() LocalTF2StatsSnapshot {
 	return LocalTF2StatsSnapshot{
 		MapTypes:  map[string]int{},
@@ -324,19 +288,19 @@ func (database *pgStore) SaveLocalTF2Stats(ctx context.Context, duration StatDur
 	return Err(database.Exec(ctx, query, args...))
 }
 
-var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
-	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
-
-func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats GlobalTF2StatsSnapshot) error {
-	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
-		Columns(globalStatColumns...).
-		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
-		ToSql()
-	if errQuery != nil {
-		return errQuery
-	}
-	return Err(database.Exec(ctx, query, args...))
-}
+//var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
+//	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
+//
+//func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats state.GlobalTF2StatsSnapshot) error {
+//	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
+//		Columns(globalStatColumns...).
+//		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
+//		ToSql()
+//	if errQuery != nil {
+//		return errQuery
+//	}
+//	return Err(database.Exec(ctx, query, args...))
+//}
 
 type StatLocality int
 
@@ -355,22 +319,22 @@ const (
 	Yearly
 )
 
-func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]GlobalTF2StatsSnapshot, error) {
-	rows, errExec := database.Query(ctx, query, args...)
-	if errExec != nil {
-		return nil, Err(errExec)
-	}
-	defer rows.Close()
-	var stats []GlobalTF2StatsSnapshot
-	for rows.Next() {
-		var stat GlobalTF2StatsSnapshot
-		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.Bots, &stat.Secure, &stat.ServersCommunity, &stat.ServersTotal, &stat.CapacityFull, &stat.CapacityEmpty, &stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions); errScan != nil {
-			return nil, Err(errScan)
-		}
-		stats = append(stats, stat)
-	}
-	return stats, nil
-}
+//func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]state.GlobalTF2StatsSnapshot, error) {
+//	rows, errExec := database.Query(ctx, query, args...)
+//	if errExec != nil {
+//		return nil, Err(errExec)
+//	}
+//	defer rows.Close()
+//	var stats []state.GlobalTF2StatsSnapshot
+//	for rows.Next() {
+//		var stat state.GlobalTF2StatsSnapshot
+//		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.Bots, &stat.Secure, &stat.ServersCommunity, &stat.ServersTotal, &stat.CapacityFull, &stat.CapacityEmpty, &stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions); errScan != nil {
+//			return nil, Err(errScan)
+//		}
+//		stats = append(stats, stat)
+//	}
+//	return stats, nil
+//}
 
 func fetchLocalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]LocalTF2StatsSnapshot, error) {
 	rows, errExec := database.Query(ctx, query, args...)
@@ -419,122 +383,122 @@ func currentHourlyTime() time.Time {
 //}
 
 //type statIndexFunc = func(t time.Time) (time.Time, int)
-
-func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
-	maxDate := currentHourlyTime()
-	query, args, errQuery := sb.
-		Select(fp.Prepend(globalStatColumns, "stat_id")...).
-		From(statDurationTable(Global, Live)).
-		Where(sq.Lt{"created_on": maxDate}). // Ignore any results until a full hour has passed
-		OrderBy("created_on").
-		ToSql()
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-	stats, errStats := fetchGlobalTF2Snapshots(ctx, database, query, args)
-	if errStats != nil {
-		return errStats
-	}
-	if len(stats) == 0 {
-		return nil
-	}
-	var (
-		hourlySums           []GlobalTF2StatsSnapshot
-		curSums              *GlobalTF2StatsSnapshot
-		tempPlayers          []int
-		tempBots             []int
-		tempServersCommunity []int
-		tempServersTotal     []int
-		tempCapacityFull     []int
-		tempCapacityEmpty    []int
-		tempCapacityPartial  []int
-	)
-	tempMapTypes := map[string][]int{}
-	tempRegions := map[string][]int{}
-	curIdx := 0
-	for _, s := range stats {
-		// Group & sum hourly as the minimum granularity
-		curTime, timeIdx := HourlyIndex(s.CreatedOn)
-		if curIdx == 0 {
-			curIdx = timeIdx
-		} else if curIdx != timeIdx && curSums != nil {
-			// If the hour index changed, flush the current results out
-			sumStat := NewGlobalTF2Stats()
-			sumStat.CreatedOn = curTime
-			sumStat.Players = fp.Avg(tempPlayers)
-			sumStat.Bots = fp.Avg(tempBots)
-			sumStat.ServersCommunity = fp.Avg(tempServersCommunity)
-			sumStat.ServersTotal = fp.Avg(tempServersTotal)
-			sumStat.CapacityFull = fp.Avg(tempCapacityFull)
-			sumStat.CapacityEmpty = fp.Avg(tempCapacityEmpty)
-			sumStat.CapacityPartial = fp.Avg(tempCapacityPartial)
-			for k := range tempMapTypes {
-				sumStat.MapTypes[k] = fp.Avg(tempMapTypes[k])
-			}
-			for k := range tempRegions {
-				sumStat.Regions[k] = fp.Avg(tempRegions[k])
-			}
-			hourlySums = append(hourlySums, sumStat)
-			curSums = nil
-			curIdx = timeIdx
-			tempPlayers = nil
-			tempBots = nil
-			tempServersCommunity = nil
-			tempServersTotal = nil
-			tempCapacityFull = nil
-			tempCapacityEmpty = nil
-			tempCapacityPartial = nil
-			tempRegions = map[string][]int{}
-			tempMapTypes = map[string][]int{}
-		}
-		if curSums == nil {
-			curSums = &GlobalTF2StatsSnapshot{CreatedOn: curTime}
-		}
-		tempPlayers = append(tempPlayers, s.Players)
-		tempBots = append(tempBots, s.Bots)
-		tempServersCommunity = append(tempServersCommunity, s.ServersCommunity)
-		tempServersTotal = append(tempServersTotal, s.ServersTotal)
-		tempCapacityFull = append(tempCapacityFull, s.CapacityFull)
-		tempCapacityEmpty = append(tempCapacityEmpty, s.CapacityEmpty)
-		tempCapacityPartial = append(tempCapacityPartial, s.CapacityPartial)
-		for k, v := range s.MapTypes {
-			_, found := tempMapTypes[k]
-			if !found {
-				tempMapTypes[k] = []int{}
-			}
-			tempMapTypes[k] = append(tempMapTypes[k], v)
-		}
-		for k, v := range s.Regions {
-			_, found := tempRegions[k]
-			if !found {
-				tempRegions[k] = []int{}
-			}
-			tempRegions[k] = append(tempRegions[k], v)
-		}
-	}
-	for _, hourly := range hourlySums {
-		if errSave := database.SaveGlobalTF2Stats(ctx, Hourly, hourly); errSave != nil {
-			if errors.Is(errSave, ErrDuplicate) {
-				continue
-			}
-			return errSave
-		}
-	}
-
-	var statIds []int64
-	for _, s := range stats {
-		statIds = append(statIds, s.StatId)
-	}
-	// Delete old entries
-	delQuery, delArgs, delQueryErr := sb.
-		Delete(statDurationTable(Global, Live)).
-		Where(sq.Eq{"stat_id": statIds}).
-		ToSql()
-	if delQueryErr != nil {
-		return Err(delQueryErr)
-	}
-	return database.Exec(ctx, delQuery, delArgs...)
-}
+//
+//func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
+//	maxDate := currentHourlyTime()
+//	query, args, errQuery := sb.
+//		Select(fp.Prepend(globalStatColumns, "stat_id")...).
+//		From(statDurationTable(Global, Live)).
+//		Where(sq.Lt{"created_on": maxDate}). // Ignore any results until a full hour has passed
+//		OrderBy("created_on").
+//		ToSql()
+//	if errQuery != nil {
+//		return Err(errQuery)
+//	}
+//	stats, errStats := fetchGlobalTF2Snapshots(ctx, database, query, args)
+//	if errStats != nil {
+//		return errStats
+//	}
+//	if len(stats) == 0 {
+//		return nil
+//	}
+//	var (
+//		hourlySums           []state.GlobalTF2StatsSnapshot
+//		curSums              *state.GlobalTF2StatsSnapshot
+//		tempPlayers          []int
+//		tempBots             []int
+//		tempServersCommunity []int
+//		tempServersTotal     []int
+//		tempCapacityFull     []int
+//		tempCapacityEmpty    []int
+//		tempCapacityPartial  []int
+//	)
+//	tempMapTypes := map[string][]int{}
+//	tempRegions := map[string][]int{}
+//	curIdx := 0
+//	for _, s := range stats {
+//		// Group & sum hourly as the minimum granularity
+//		curTime, timeIdx := HourlyIndex(s.CreatedOn)
+//		if curIdx == 0 {
+//			curIdx = timeIdx
+//		} else if curIdx != timeIdx && curSums != nil {
+//			// If the hour index changed, flush the current results out
+//			sumStat := state.NewGlobalTF2Stats()
+//			sumStat.CreatedOn = curTime
+//			sumStat.Players = fp.Avg(tempPlayers)
+//			sumStat.Bots = fp.Avg(tempBots)
+//			sumStat.ServersCommunity = fp.Avg(tempServersCommunity)
+//			sumStat.ServersTotal = fp.Avg(tempServersTotal)
+//			sumStat.CapacityFull = fp.Avg(tempCapacityFull)
+//			sumStat.CapacityEmpty = fp.Avg(tempCapacityEmpty)
+//			sumStat.CapacityPartial = fp.Avg(tempCapacityPartial)
+//			for k := range tempMapTypes {
+//				sumStat.MapTypes[k] = fp.Avg(tempMapTypes[k])
+//			}
+//			for k := range tempRegions {
+//				sumStat.Regions[k] = fp.Avg(tempRegions[k])
+//			}
+//			hourlySums = append(hourlySums, sumStat)
+//			curSums = nil
+//			curIdx = timeIdx
+//			tempPlayers = nil
+//			tempBots = nil
+//			tempServersCommunity = nil
+//			tempServersTotal = nil
+//			tempCapacityFull = nil
+//			tempCapacityEmpty = nil
+//			tempCapacityPartial = nil
+//			tempRegions = map[string][]int{}
+//			tempMapTypes = map[string][]int{}
+//		}
+//		if curSums == nil {
+//			curSums = &state.GlobalTF2StatsSnapshot{CreatedOn: curTime}
+//		}
+//		tempPlayers = append(tempPlayers, s.Players)
+//		tempBots = append(tempBots, s.Bots)
+//		tempServersCommunity = append(tempServersCommunity, s.ServersCommunity)
+//		tempServersTotal = append(tempServersTotal, s.ServersTotal)
+//		tempCapacityFull = append(tempCapacityFull, s.CapacityFull)
+//		tempCapacityEmpty = append(tempCapacityEmpty, s.CapacityEmpty)
+//		tempCapacityPartial = append(tempCapacityPartial, s.CapacityPartial)
+//		for k, v := range s.MapTypes {
+//			_, found := tempMapTypes[k]
+//			if !found {
+//				tempMapTypes[k] = []int{}
+//			}
+//			tempMapTypes[k] = append(tempMapTypes[k], v)
+//		}
+//		for k, v := range s.Regions {
+//			_, found := tempRegions[k]
+//			if !found {
+//				tempRegions[k] = []int{}
+//			}
+//			tempRegions[k] = append(tempRegions[k], v)
+//		}
+//	}
+//	for _, hourly := range hourlySums {
+//		if errSave := database.SaveGlobalTF2Stats(ctx, Hourly, hourly); errSave != nil {
+//			if errors.Is(errSave, ErrDuplicate) {
+//				continue
+//			}
+//			return errSave
+//		}
+//	}
+//
+//	var statIds []int64
+//	for _, s := range stats {
+//		statIds = append(statIds, s.StatId)
+//	}
+//	// Delete old entries
+//	delQuery, delArgs, delQueryErr := sb.
+//		Delete(statDurationTable(Global, Live)).
+//		Where(sq.Eq{"stat_id": statIds}).
+//		ToSql()
+//	if delQueryErr != nil {
+//		return Err(delQueryErr)
+//	}
+//	return database.Exec(ctx, delQuery, delArgs...)
+//}
 
 func statDurationTable(locality StatLocality, duration StatDuration) string {
 	switch locality {
@@ -559,24 +523,25 @@ func statDurationTable(locality StatLocality, duration StatDuration) string {
 	}
 }
 
-func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]GlobalTF2StatsSnapshot, error) {
-	table := statDurationTable(Global, duration)
-	if table == "" {
-		return nil, errors.New("Unsupported stat duration")
-	}
-	qb := sb.Select(fp.Prepend(globalStatColumns, "stat_id")...).
-		From(table).
-		OrderBy("created_on desc")
-	switch duration {
-	case Hourly:
-		qb = qb.Limit(24 * 7)
-	}
-	query, args, errQuery := qb.ToSql()
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
-	return fetchGlobalTF2Snapshots(ctx, database, query, args)
-}
+//
+//func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]state.GlobalTF2StatsSnapshot, error) {
+//	table := statDurationTable(Global, duration)
+//	if table == "" {
+//		return nil, errors.New("Unsupported stat duration")
+//	}
+//	qb := sb.Select(fp.Prepend(globalStatColumns, "stat_id")...).
+//		From(table).
+//		OrderBy("created_on desc")
+//	switch duration {
+//	case Hourly:
+//		qb = qb.Limit(24 * 7)
+//	}
+//	query, args, errQuery := qb.ToSql()
+//	if errQuery != nil {
+//		return nil, Err(errQuery)
+//	}
+//	return fetchGlobalTF2Snapshots(ctx, database, query, args)
+//}
 
 func (database *pgStore) GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2StatsSnapshot, error) {
 	table := statDurationTable(Local, duration)

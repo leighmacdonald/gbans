@@ -23,28 +23,19 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	"github.com/rumblefrog/go-a2s"
 )
 
 type App struct {
 	logFileChan chan *model.LogFilePayload
 	logger      *zap.Logger
-	// Current known state of the servers rcon status command
-	serverStateStatus   map[string]extra.Status
-	serverStateStatusMu *sync.RWMutex
-	// Current known state of the servers a2s server info query
-	serverStateA2S     map[string]a2s.ServerInfo
-	serverStateA2SMu   *sync.RWMutex
-	masterServerList   []model.ServerLocation
-	masterServerListMu *sync.RWMutex
-	discordSendMsg     chan discordutil.Payload
-	warningChan        chan newUserWarning
-	notificationChan   chan model.NotificationPayload
-	serverStateMu      *sync.RWMutex
-	serverState        state.ServerStateCollection
+
+	discordSendMsg   chan discordutil.Payload
+	warningChan      chan newUserWarning
+	notificationChan chan model.NotificationPayload
+	serverStateMu    *sync.RWMutex
+	serverState      state.ServerStateCollection
 
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
@@ -74,12 +65,6 @@ func New(ctx context.Context, logger *zap.Logger) *App {
 	app := App{
 		logger:               logger,
 		logFileChan:          make(chan *model.LogFilePayload, 10),
-		serverStateStatus:    map[string]extra.Status{},
-		serverStateStatusMu:  &sync.RWMutex{},
-		serverStateA2S:       map[string]a2s.ServerInfo{},
-		serverStateA2SMu:     &sync.RWMutex{},
-		masterServerList:     []model.ServerLocation{},
-		masterServerListMu:   &sync.RWMutex{},
 		discordSendMsg:       make(chan discordutil.Payload, 5),
 		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan model.NotificationPayload, 5),
@@ -166,12 +151,6 @@ func (app *App) PatreonPledges() []patreon.Pledge {
 	//users := web.app.patreonUsers
 	app.patreonMu.RUnlock()
 	return pledges
-}
-
-func (app *App) MasterServerList() []model.ServerLocation {
-	app.masterServerListMu.RLock()
-	defer app.masterServerListMu.RUnlock()
-	return app.masterServerList
 }
 
 func (app *App) PatreonCampaigns() []patreon.Campaign {
@@ -346,9 +325,7 @@ func (app *App) warnWorker() {
 							banSteam.BanType = store.Banned
 							errBan = app.BanSteam(app.ctx, &banSteam)
 						case config.Kick:
-							var playerInfo state.PlayerInfo
-							errBan = app.Kick(app.ctx, store.System, store.StringSID(evt.SID.String()),
-								store.StringSID(config.General.Owner.String()), newWarn.WarnReason, &playerInfo)
+							errBan = app.Kick(app.ctx, store.System, evt.SID, config.General.Owner, newWarn.WarnReason)
 						}
 						if errBan != nil {
 							app.logger.Error("Failed to apply warning action",
@@ -367,7 +344,7 @@ func (app *App) warnWorker() {
 					} else {
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
-						if errPSay := app.PSay(app.ctx, 0, store.StringSID(evt.SID.String()), msg, &newWarn.ServerEvent.Server); errPSay != nil {
+						if errPSay := app.PSay(app.ctx, 0, evt.SID, msg); errPSay != nil {
 							app.logger.Error("Failed to send user warning psay message", zap.Error(errPSay))
 						}
 					}
@@ -645,19 +622,8 @@ func initFilters(ctx context.Context, database store.FilterStore) error {
 }
 
 func (app *App) initWorkers() {
-	statusUpdateFreq, errDuration := time.ParseDuration(config.General.ServerStatusUpdateFreq)
-	if errDuration != nil {
-		app.logger.Fatal("Failed to parse server_status_update_freq", zap.Error(errDuration))
-	}
-	masterUpdateFreq, errParseMasterUpdateFreq := time.ParseDuration(config.General.MasterServerStatusUpdateFreq)
-	if errParseMasterUpdateFreq != nil {
-		app.logger.Fatal("Failed to parse master_server_status_update_freq", zap.Error(errParseMasterUpdateFreq))
-	}
 	go app.patreonUpdater()
 	go app.banSweeper()
-	go app.serverA2SStatusUpdater(statusUpdateFreq)
-	go app.serverRCONStatusUpdater(statusUpdateFreq)
-	go app.serverStateRefresher(statusUpdateFreq)
 	go app.profileUpdater()
 	go app.warnWorker()
 	go app.logReader()
@@ -668,11 +634,11 @@ func (app *App) initWorkers() {
 	go app.playerConnectionWriter()
 	go app.steamGroupMembershipUpdater()
 	go app.localStatUpdater()
-	go app.masterServerListUpdater(masterUpdateFreq)
 	go app.cleanupTasks()
 	go app.showReportMeta()
 	go app.notificationSender()
 	go app.demoCleaner()
+	go app.stateUpdater(time.Second*30, time.Second*60)
 }
 
 // UDP log sink

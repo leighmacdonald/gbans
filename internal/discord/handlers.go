@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+	gerrors "errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -51,26 +52,34 @@ func (bot *Discord) onFind(ctx context.Context, _ *discordgo.Session, i *discord
 	r *discordutil.Response) error {
 	opts := optionMap(i.ApplicationCommandData().Options)
 	userIdentifier := store.StringSID(opts[OptUserIdentifier].StringValue())
-	playerInfo := state.NewPlayerInfo()
-	if errFind := bot.app.Find(ctx, userIdentifier, "", &playerInfo); errFind != nil {
-		return errCommandFailed
+	sid, errSid := userIdentifier.SID64()
+	if errSid != nil {
+		return consts.ErrInvalidSID
 	}
-	if !playerInfo.Valid || !playerInfo.InGame {
+	playerInfo := state.NewPlayerInfo()
+	players, found := state.Find(state.FindOpts{SteamID: sid})
+	if !found {
 		return consts.ErrUnknownID
 	}
-	resp := discordutil.RespOk(r, "Player Found")
-	person := store.NewPerson(playerInfo.SteamID)
-	if errGetProfile := bot.app.PersonBySID(ctx, playerInfo.SteamID, &person); errGetProfile != nil {
-		return errors.Wrapf(errGetProfile, "Failed to get profile: %d", playerInfo.SteamID)
+	for _, player := range players {
+		var server store.Server
+		if errServer := bot.app.Store().GetServer(ctx, player.ServerId, &server); errServer != nil {
+			return errServer
+		}
+		person := store.NewPerson(player.Player.SID)
+		if errPerson := bot.app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
+			return errPerson
+		}
+		resp := discordutil.RespOk(r, "Player Found")
+		resp.Type = discordgo.EmbedTypeRich
+		resp.Image = &discordgo.MessageEmbedImage{URL: person.AvatarFull}
+		resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
+		resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SID.Int64())
+		resp.Title = playerInfo.Player.Name
+		discordutil.AddFieldInline(resp, bot.logger, "Server", server.ServerNameShort)
+		discordutil.AddFieldsSteamID(resp, bot.logger, playerInfo.Player.SID)
+		discordutil.AddField(resp, bot.logger, "Connect", fmt.Sprintf("steam://connect/%s", server.Addr()))
 	}
-	resp.Type = discordgo.EmbedTypeRich
-	resp.Image = &discordgo.MessageEmbedImage{URL: person.AvatarFull}
-	resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
-	resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SID.Int64())
-	resp.Title = playerInfo.Player.Name
-	discordutil.AddFieldInline(resp, bot.logger, "Server", playerInfo.Server.ServerNameShort)
-	discordutil.AddFieldsSteamID(resp, bot.logger, playerInfo.Player.SID)
-	discordutil.AddField(resp, bot.logger, "Connect", fmt.Sprintf("steam://connect/%s:%d", playerInfo.Server.Address, playerInfo.Server.Port))
 	return nil
 }
 
@@ -86,12 +95,9 @@ func (bot *Discord) onMute(ctx context.Context, _ *discordgo.Session, interactio
 	reason = store.Reason(reasonValueOpt.IntValue())
 	duration := store.Duration(opts[OptDuration].StringValue())
 	modNote := opts[OptNote].StringValue()
-	author := store.NewPerson(0)
-	if errGetAuthor := bot.app.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {
-		if errGetAuthor == store.ErrNoResult {
-			return errors.New("Must set steam id. See /set_steam")
-		}
-		return errors.New("Error fetching author info")
+	author, errAuthor := bot.getDiscordAuthor(ctx, interaction)
+	if errAuthor != nil {
+		return errAuthor
 	}
 	var banSteam store.BanSteam
 	if errOpts := store.NewBanSteam(
@@ -175,6 +181,12 @@ func (bot *Discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 	target := store.StringSID(opts[OptUserIdentifier].StringValue())
 	reason := store.Reason(opts[OptBanReason].IntValue())
 	cidr := opts[OptCIDR].StringValue()
+
+	_, network, errParseCIDR := net.ParseCIDR(cidr)
+	if errParseCIDR != nil {
+		return errors.Wrap(errParseCIDR, "Invalid CIDR")
+	}
+
 	duration := store.Duration(opts[OptDuration].StringValue())
 	modNote := opts[OptNote].StringValue()
 	author := store.NewPerson(0)
@@ -203,23 +215,15 @@ func (bot *Discord) onBanIP(ctx context.Context, _ *discordgo.Session,
 	if errBanNet := bot.app.BanCIDR(ctx, &banCIDR); errBanNet != nil {
 		return errBanNet
 	}
-
-	go func(cidrValue string) {
-		_, network, errParseCIDR := net.ParseCIDR(cidrValue)
-		if errParseCIDR != nil {
-			return
+	players, found := state.Find(state.FindOpts{CIDR: network})
+	if !found {
+		return nil
+	}
+	for _, player := range players {
+		if errKick := bot.app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+			bot.logger.Error("Failed to perform kick", zap.Error(errKick))
 		}
-		var playerInfo state.PlayerInfo
-		errFindPlayer := bot.app.FindPlayerByCIDR(ctx, network, &playerInfo)
-		if errFindPlayer != nil {
-			return
-		}
-		if playerInfo.Valid && playerInfo.InGame {
-			if resp, err7 := query.ExecRCON(ctx, *playerInfo.Server, fmt.Sprintf("sm_kick %s", playerInfo.Player.Name)); err7 != nil {
-				bot.logger.Debug(resp)
-			}
-		}
-	}(cidr)
+	}
 	discordutil.RespOk(response, "IP ban created successfully")
 	return nil
 }
@@ -232,12 +236,9 @@ func (bot *Discord) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	reason := store.Reason(opts[OptBanReason].IntValue())
 	modNote := opts[OptNote].StringValue()
 	duration := store.Duration(opts[OptDuration].StringValue())
-	author := store.NewPerson(0)
-	if errGetAuthor := bot.app.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetAuthor != nil {
-		if errGetAuthor == store.ErrNoResult {
-			return errors.New("Must set steam id. See /set_steam")
-		}
-		return errors.New("Error fetching author info")
+	author, errAuthor := bot.getDiscordAuthor(ctx, interaction)
+	if errAuthor != nil {
+		return errAuthor
 	}
 	var banSteam store.BanSteam
 	if errOpts := store.NewBanSteam(
@@ -626,8 +627,7 @@ func (bot *Discord) onUnbanASN(ctx context.Context, _ *discordgo.Session, intera
 	return nil
 }
 
-func (bot *Discord) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	response *discordutil.Response) error {
+func (bot *Discord) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discordutil.Response) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	target := store.StringSID(opts[OptUserIdentifier].StringValue())
 	reason := store.Reason(opts[OptBanReason].IntValue())
@@ -635,23 +635,25 @@ func (bot *Discord) onKick(ctx context.Context, _ *discordgo.Session, interactio
 	if errTarget != nil {
 		return consts.ErrInvalidSID
 	}
-	person := store.NewPerson(targetSid64)
-	if errPersonBySID := bot.app.PersonBySID(ctx, targetSid64, &person); errPersonBySID != nil {
-		return errCommandFailed
+	author, errAuthor := bot.getDiscordAuthor(ctx, interaction)
+	if errAuthor != nil {
+		return errAuthor
 	}
-	var playerInfo state.PlayerInfo
-	errKick := bot.app.Kick(ctx, store.Bot, target, "", reason, &playerInfo)
-	if errKick != nil {
-		return errCommandFailed
+	players, found := state.Find(state.FindOpts{SteamID: targetSid64})
+	if !found {
+		return nil
 	}
-	if playerInfo.Server != nil && playerInfo.Server.ServerID > 0 {
+	var err error
+	for _, player := range players {
+		if errKick := bot.app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+			err = gerrors.Join(err, errKick)
+			continue
+		}
 		embed := discordutil.RespOk(response, "User Kicked")
 		discordutil.AddFieldsSteamID(embed, bot.logger, targetSid64)
-		discordutil.AddField(embed, bot.logger, "NameShort", playerInfo.Player.Name)
-	} else {
-		return errors.New("User not found")
+		discordutil.AddField(embed, bot.logger, "NameShort", player.Player.Name)
 	}
-	return nil
+	return err
 }
 
 func (bot *Discord) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
@@ -687,7 +689,15 @@ func (bot *Discord) onPSay(ctx context.Context, _ *discordgo.Session, interactio
 	opts := optionMap(interaction.ApplicationCommandData().Options)
 	player := store.StringSID(opts[OptUserIdentifier].StringValue())
 	msg := opts[OptMessage].StringValue()
-	if errPSay := bot.app.PSay(ctx, 0, player, msg, nil); errPSay != nil {
+	playerSid, errPlayerSid := player.SID64()
+	if errPlayerSid != nil {
+		return errPlayerSid
+	}
+	author, errAuthor := bot.getDiscordAuthor(ctx, interaction)
+	if errAuthor != nil {
+		return errAuthor
+	}
+	if errPSay := bot.app.PSay(ctx, author.SteamID, playerSid, msg); errPSay != nil {
 		return errCommandFailed
 	}
 	embed := discordutil.RespOk(response, "Sent private message successfully")
@@ -722,7 +732,7 @@ func mapRegion(region string) string {
 
 func (bot *Discord) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
 	response *discordutil.Response) error {
-	currentState := bot.app.ServerState().ByRegion()
+	currentState := state.State().ByRegion()
 	stats := map[string]float64{}
 	used, total := 0, 0
 	embed := discordutil.RespOk(response, "Current Server Populations")
@@ -780,7 +790,7 @@ func (bot *Discord) onPlayers(ctx context.Context, _ *discordgo.Session, interac
 		return errCommandFailed
 	}
 	var currentState state.ServerState
-	serverStates := bot.app.ServerState()
+	serverStates := state.State()
 	if !serverStates.ByName(server.ServerNameShort, &currentState) {
 		return consts.ErrUnknownID
 	}
@@ -868,24 +878,34 @@ func (bot *Discord) onFilter(ctx context.Context, session *discordgo.Session, in
 	}
 }
 
+func (bot *Discord) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (store.Person, error) {
+	author := store.NewPerson(0)
+	if errPersonByDiscordID := bot.app.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
+		if errPersonByDiscordID == store.ErrNoResult {
+			return author, errors.New("Must set steam id. See /set_steam")
+		}
+		return author, errors.New("Error fetching author info")
+	}
+	return author, nil
+}
+
 func (bot *Discord) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discordutil.Response) error {
 	opts := optionMap(interaction.ApplicationCommandData().Options[0].Options)
 	pattern := opts["pattern"].StringValue()
 	isRegex := opts["is_regex"].BoolValue()
-	author := store.NewPerson(0)
-	if errPersonByDiscordID := bot.app.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
-		if errPersonByDiscordID == store.ErrNoResult {
-			return errors.New("Must set steam id. See /set_steam")
-		}
-		return errors.New("Error fetching author info")
-	}
+
 	if isRegex {
 		_, rxErr := regexp.Compile(pattern)
 		if rxErr != nil {
 			return errors.Errorf("Invalid regular expression: %v", rxErr)
 		}
 	}
+	author, errAuthor := bot.getDiscordAuthor(ctx, interaction)
+	if errAuthor != nil {
+		return errAuthor
+	}
+
 	filter := store.Filter{
 		AuthorId:  author.SteamID,
 		Pattern:   pattern,
