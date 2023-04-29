@@ -22,6 +22,7 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
+	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
 	"math"
 	"net"
@@ -2684,7 +2685,7 @@ func (web *web) onAPIPostServerQuery() gin.HandlerFunc {
 		var valid []state.ServerLocation
 		for _, server := range servers {
 			for _, mapName := range mapNames {
-				if util.GlobString(mapName, server.Map) {
+				if glob.Glob(mapName, server.Map) {
 					valid = append(valid, server)
 					break
 				}

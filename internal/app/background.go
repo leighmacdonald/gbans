@@ -298,7 +298,7 @@ func (app *App) updateStateServerList() error {
 	if errServers != nil {
 		return errServers
 	}
-	var sc []state.ServerConfig
+	var sc []*state.ServerConfig
 	for _, server := range servers {
 		sc = append(sc, state.NewServerConfig(app.logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)), server.ServerID, server.ServerNameShort, server.Addr(), server.RCON))
 	}
@@ -309,24 +309,21 @@ func (app *App) updateStateServerList() error {
 func (app *App) stateUpdater(statusUpdateFreq time.Duration, materUpdateFreq time.Duration) {
 	logger := app.logger.Named("state")
 	errChan := make(chan error)
+	if errUpdate := app.updateStateServerList(); errUpdate != nil {
+		logger.Error("Failed to update list", zap.Error(errUpdate))
+	}
 	go func() {
-		if errUpdate := app.updateStateServerList(); errUpdate != nil {
-			logger.Error("Failed to update list", zap.Error(errUpdate))
-		}
-		if errStart := state.Start(app.ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
-			logger.Error("start returned error", zap.Error(errStart))
-		}
-	}()
-	stateTicker := time.NewTicker(statusUpdateFreq)
-	for {
-		select {
-		case err := <-errChan:
-			logger.Error("error updating state", zap.Error(err))
-		case <-stateTicker.C:
-			if errUpdate := app.updateStateServerList(); errUpdate != nil {
-				logger.Error("Failed to update list", zap.Error(errUpdate))
+		for {
+			select {
+			case <-app.ctx.Done():
+				return
+			case <-errChan:
+				//logger.Error("server state update returned error", zap.Error(err))
 			}
 		}
+	}()
+	if errStart := state.Start(app.ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
+		logger.Error("start returned error", zap.Error(errStart))
 	}
 }
 

@@ -638,7 +638,7 @@ func (app *App) initWorkers() {
 	go app.showReportMeta()
 	go app.notificationSender()
 	go app.demoCleaner()
-	go app.stateUpdater(time.Second*30, time.Second*60)
+	go app.stateUpdater(time.Second*30, time.Second*180)
 }
 
 // UDP log sink

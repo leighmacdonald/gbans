@@ -79,27 +79,27 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 	return results, nil
 }
 
-func sendListRequest(c *net.UDPConn, ipStart string, filter string, regionCode Region) ([]*ServerEndpoint, error) {
+func sendListRequest(conn *net.UDPConn, ipStart string, filter string, regionCode Region) ([]*ServerEndpoint, error) {
 	const queryHeader byte = 0x31
-	var b bytes.Buffer
-	b.WriteByte(queryHeader)
-	b.WriteByte(byte(regionCode))
-	b.WriteString(ipStart)
-	b.WriteString(filter)
-	_, errWrite := c.Write(b.Bytes())
+	var buf bytes.Buffer
+	buf.WriteByte(queryHeader)
+	buf.WriteByte(byte(regionCode))
+	buf.WriteString(ipStart)
+	buf.WriteString(filter)
+	_, errWrite := conn.Write(buf.Bytes())
 	if errWrite != nil {
 		return nil, errors.Wrap(errWrite, "Failed to write udp bytes")
 	}
 	buffer := make([]byte, 1600)
-	if errDeadLine := c.SetReadDeadline(time.Now().Add(time.Second)); errDeadLine != nil {
+	if errDeadLine := conn.SetReadDeadline(time.Now().Add(time.Second)); errDeadLine != nil {
 		return nil, errDeadLine
 	}
-	n, _, errRead := c.ReadFromUDP(buffer)
+	readCount, _, errRead := conn.ReadFromUDP(buffer)
 	if errRead != nil {
 		return nil, errors.Wrap(errWrite, "Failed to read udp bytes")
 	}
 	const structSize int = 6
-	if n%structSize > 0 {
+	if readCount%structSize > 0 {
 		return nil, errors.New("Query list response has a length which is not multiple of 6")
 	}
 	var endpoints []*ServerEndpoint
@@ -107,7 +107,7 @@ func sendListRequest(c *net.UDPConn, ipStart string, filter string, regionCode R
 	if !bytes.Equal(replyHeader, buffer[0:structSize]) {
 		return nil, errors.New("Query list response header is malformed")
 	}
-	res := buffer[structSize:n]
+	res := buffer[structSize:readCount]
 	count := len(res)
 	i := 0
 	for count > 0 {

@@ -3,12 +3,12 @@ package state
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
+	"github.com/rumblefrog/go-a2s"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
 	"net"
@@ -22,7 +22,7 @@ var (
 	serverStates     map[int]ServerState
 	stateMu          sync.RWMutex
 	masterServerList []ServerLocation
-	serverConfigs    []ServerConfig
+	serverConfigs    []*ServerConfig
 )
 
 func init() {
@@ -176,22 +176,20 @@ func State() ServerStateCollection {
 	return coll
 }
 
-func updateServers(ctx context.Context, errChan chan error) {
+func updateServers(ctx context.Context) {
 	wg := &sync.WaitGroup{}
 	results := map[int]ServerState{}
 	resultsMu := &sync.RWMutex{}
 	for _, config := range serverConfigs {
 		wg.Add(1)
-		go func(cfg ServerConfig) {
+		go func(cfg *ServerConfig) {
 			defer wg.Done()
-			var ns ServerState
-			errFetch := cfg.fetch(ctx, &ns)
+			newState, errFetch := cfg.fetch(ctx)
 			if errFetch != nil {
-				errChan <- errFetch
-				return
+				cfg.logger.Error("Failed to update", zap.Error(errFetch))
 			}
 			resultsMu.Lock()
-			results[ns.ServerId] = ns
+			results[cfg.ServerId] = newState
 			resultsMu.Unlock()
 		}(config)
 	}
@@ -199,11 +197,10 @@ func updateServers(ctx context.Context, errChan chan error) {
 	stateMu.Lock()
 	serverStates = results
 	stateMu.Unlock()
-
 }
 
 func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq time.Duration, errChan chan error) error {
-	statusUpdateTicker := time.NewTicker(msListUpdateFreq)
+	statusUpdateTicker := time.NewTicker(statusUpdateFreq)
 	mlUpdateTicker := time.NewTicker(msListUpdateFreq)
 
 	for {
@@ -212,7 +209,7 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 			updateMSL(errChan)
 		case <-statusUpdateTicker.C:
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*20)
-			updateServers(localCtx, errChan)
+			updateServers(localCtx)
 			cancel()
 		case <-ctx.Done():
 			return nil
@@ -220,13 +217,13 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 	}
 }
 
-func NewServerConfig(logger *zap.Logger, serverId int, nameShort string, address string, password string) ServerConfig {
-	return ServerConfig{
+func NewServerConfig(logger *zap.Logger, serverId int, nameShort string, address string, password string) *ServerConfig {
+	return &ServerConfig{
 		ServerId:           serverId,
 		NameShort:          nameShort,
 		Address:            address,
 		Password:           password,
-		conn:               nil,
+		rcon:               nil,
 		lastRconConnection: time.Time{},
 		logger:             logger,
 	}
@@ -237,21 +234,40 @@ type ServerConfig struct {
 	NameShort          string
 	Address            string
 	Password           string
-	conn               *rcon.RemoteConsole
+	rcon               *rcon.RemoteConsole
+	a2sConn            *a2s.Client
 	lastRconConnection time.Time
 	logger             *zap.Logger
 }
 
-func (config *ServerConfig) fetch(ctx context.Context, newState *ServerState) error {
+func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	var err error
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	mu := &sync.RWMutex{}
+	stateMu.RLock()
+	newState, found := serverStates[config.ServerId]
+	stateMu.RUnlock()
+	if !found {
+		newState = ServerState{}
+	}
 	go func() {
 		defer wg.Done()
-		result, errQuery := query.A2SQueryServer(config.logger, config.Address)
+		if config.a2sConn == nil {
+			client, errClient := a2s.NewClient(config.Address, a2s.TimeoutOption(time.Second*10))
+			if errClient != nil {
+				config.logger.Error("Failed to create a2s client")
+				return
+			}
+			config.a2sConn = client
+		}
+		result, errQuery := config.a2sConn.QueryInfo()
 		if errQuery != nil {
 			err = errors.Join(err, errQuery)
+			if config.a2sConn != nil {
+				_ = config.a2sConn.Close()
+				config.a2sConn = nil
+			}
 			return
 		}
 		mu.Lock()
@@ -282,19 +298,23 @@ func (config *ServerConfig) fetch(ctx context.Context, newState *ServerState) er
 	}()
 	go func() {
 		defer wg.Done()
-		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+		localCtx, cancel := context.WithTimeout(ctx, time.Second*20)
 		defer cancel()
-		if config.conn == nil {
-			console, errDial := rcon.Dial(localCtx, config.Address, config.Password, time.Second*10)
+		if config.rcon == nil {
+			console, errDial := rcon.Dial(localCtx, config.Address, config.Password, time.Second*20)
 			if errDial != nil {
 				err = errors.Join(err, errDial)
 				return
 			}
-			config.conn = console
+			config.rcon = console
 		}
-		if config.conn != nil {
-			resp, errRcon := config.conn.Exec("status")
+		if config.rcon != nil {
+			resp, errRcon := config.rcon.Exec("status")
 			if errRcon != nil {
+				if config.rcon != nil {
+					_ = config.rcon.Close()
+					config.rcon = nil
+				}
 				err = errors.Join(err, errRcon)
 				return
 			}
@@ -329,10 +349,10 @@ func (config *ServerConfig) fetch(ctx context.Context, newState *ServerState) er
 
 	}()
 	wg.Wait()
-	return err
+	return newState, err
 }
 
-func SetServers(configs []ServerConfig) {
+func SetServers(configs []*ServerConfig) {
 	stateMu.Lock()
 	defer stateMu.Unlock()
 	serverConfigs = configs
