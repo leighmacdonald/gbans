@@ -3,12 +3,20 @@ package app
 import (
 	"fmt"
 	"github.com/leighmacdonald/bd/pkg/util"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
 )
 
 func MustCreateLogger(logFile string) *zap.Logger {
-	loggingConfig := zap.NewProductionConfig()
+	var loggingConfig zap.Config
+	if config.General.Mode == config.ReleaseMode {
+		loggingConfig = zap.NewProductionConfig()
+	} else {
+		loggingConfig = zap.NewDevelopmentConfig()
+		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
 	if logFile != "" {
 		if util.Exists(logFile) {
 			if err := os.Remove(logFile); err != nil {
