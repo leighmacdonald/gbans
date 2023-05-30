@@ -8,7 +8,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -16,31 +15,31 @@ import (
 	"time"
 )
 
-type botCmd string
+type Cmd string
 
 const (
-	cmdBan         botCmd = "ban"
-	cmdFind        botCmd = "find"
-	cmdMute        botCmd = "mute"
-	cmdCheck       botCmd = "check"
-	cmdCheckIp     botCmd = "checkip"
-	cmdUnban       botCmd = "unban"
-	cmdKick        botCmd = "kick"
-	cmdPlayers     botCmd = "players"
-	cmdPSay        botCmd = "psay"
-	cmdCSay        botCmd = "csay"
-	cmdSay         botCmd = "say"
-	cmdServers     botCmd = "servers"
-	cmdSetSteam    botCmd = "set_steam"
-	cmdStats       botCmd = "stats"
-	cmdStatsGlobal botCmd = "global"
-	cmdStatsPlayer botCmd = "player"
-	cmdStatsServer botCmd = "server"
-	cmdHistory     botCmd = "history"
-	cmdHistoryIP   botCmd = "ip"
-	cmdHistoryChat botCmd = "chat"
-	cmdFilter      botCmd = "filter"
-	cmdLog         botCmd = "log"
+	CmdBan         Cmd = "ban"
+	CmdFind        Cmd = "find"
+	cmdMute        Cmd = "mute"
+	CmdCheck       Cmd = "check"
+	cmdCheckIp     Cmd = "checkip"
+	cmdUnban       Cmd = "unban"
+	CmdKick        Cmd = "kick"
+	cmdPlayers     Cmd = "players"
+	cmdPSay        Cmd = "psay"
+	CmdCSay        Cmd = "csay"
+	cmdSay         Cmd = "say"
+	cmdServers     Cmd = "servers"
+	cmdSetSteam    Cmd = "set_steam"
+	cmdStats       Cmd = "stats"
+	cmdStatsGlobal Cmd = "global"
+	cmdStatsPlayer Cmd = "player"
+	cmdStatsServer Cmd = "server"
+	CmdHistory     Cmd = "history"
+	CmdHistoryIP   Cmd = "ip"
+	CmdHistoryChat Cmd = "chat"
+	CmdFilter      Cmd = "filter"
+	CmdLog         Cmd = "log"
 )
 
 //type subCommandKey string
@@ -69,7 +68,7 @@ const (
 	OptCIDR             = "cidr"
 )
 
-func (bot *Discord) botRegisterSlashCommands() error {
+func botRegisterSlashCommands(ctx context.Context) error {
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptUserIdentifier,
@@ -143,14 +142,14 @@ func (bot *Discord) botRegisterSlashCommands() error {
 	}
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
-			Name:        string(cmdLog),
+			Name:        string(CmdLog),
 			Description: "Show a match log summary",
 			Options: []*discordgo.ApplicationCommandOption{
 				optMatchId,
 			},
 		},
 		{
-			Name:        string(cmdFind),
+			Name:        string(CmdFind),
 			Description: "Find a user on any of the servers",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
@@ -173,7 +172,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID: config.Discord.AppID,
-			Name:          string(cmdCheck),
+			Name:          string(CmdCheck),
 			Description:   "Get ban status for a steam id",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
@@ -188,7 +187,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 			},
 		},
 		{
-			Name:        string(cmdKick),
+			Name:        string(CmdKick),
 			Description: "Kick a user from any server they are playing on",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
@@ -211,7 +210,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 			},
 		},
 		{
-			Name:        string(cmdCSay),
+			Name:        string(CmdCSay),
 			Description: "Send a centered message to the whole server",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -253,11 +252,11 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID: config.Discord.AppID,
-			Name:          string(cmdHistory),
+			Name:          string(CmdHistory),
 			Description:   "Query user history",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(cmdHistoryIP),
+					Name:        string(CmdHistoryIP),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get the ip history",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -265,7 +264,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 					},
 				},
 				{
-					Name:        string(cmdHistoryChat),
+					Name:        string(CmdHistoryChat),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get the chat history of the user",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -397,7 +396,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID: config.Discord.AppID,
-			Name:          string(cmdFilter),
+			Name:          string(CmdFilter),
 			Description:   "Manage and test global word filters",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -446,16 +445,19 @@ func (bot *Discord) botRegisterSlashCommands() error {
 	for _, roleId := range config.Discord.ModRoleIDs {
 		modPerms = append(modPerms, &discordgo.ApplicationCommandPermissions{
 			ID:         roleId,
-			Type:       1,
+			Type:       discordgo.ApplicationCommandPermissionTypeRole,
 			Permission: true,
 		})
 	}
+	panic("check")
+	session.ApplicationCommandBulkOverwrite(config.Discord.AppID, config.Discord.GuildID, slashCommands)
+
 	// NOTE
 	// We are manually calling the API to set permissions as this is not yet a feature for the discordgo library
 	// This should be removed whenever support gets merged
 	var perms []permissionRequest
 	for _, cmd := range slashCommands {
-		command, errC := bot.session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
+		command, errC := session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
 		if errC != nil {
 			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
 		}
@@ -467,7 +469,7 @@ func (bot *Discord) botRegisterSlashCommands() error {
 		}
 	}
 
-	return registerCommandPermissions(bot.ctx, perms)
+	return registerCommandPermissions(ctx, perms)
 }
 
 type permissionRequest struct {
@@ -503,8 +505,8 @@ func registerCommandPermissions(ctx context.Context, perms []permissionRequest) 
 	return nil
 }
 
-type botCommandHandler func(ctx context.Context, s *discordgo.Session,
-	m *discordgo.InteractionCreate, r *discordutil.Response) error
+type CommandHandler func(ctx context.Context, s *discordgo.Session,
+	m *discordgo.InteractionCreate, r *Response) error
 
 const (
 	discordMaxMsgLen  = 2000
@@ -514,10 +516,10 @@ const (
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	command := botCmd(interaction.ApplicationCommandData().Name)
-	response := discordutil.Response{MsgType: discordutil.MtString}
-	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
+func onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	command := Cmd(interaction.ApplicationCommandData().Name)
+	response := Response{MsgType: MtString}
+	if handler, handlerFound := commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
@@ -527,27 +529,27 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 				Content: "Calculating numberwang...",
 			},
 		}); errRespond != nil {
-			discordutil.RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
-			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
+			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
+			if errSendInteraction := sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+				logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
 			return
 		}
-		commandCtx, cancelCommand := context.WithTimeout(bot.ctx, time.Second*30)
+		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
 		defer cancelCommand()
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
-			discordutil.RespErr(&response, errHandleCommand.Error())
-			if errSendInteraction := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
+			RespErr(&response, errHandleCommand.Error())
+			if errSendInteraction := sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+				logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
-			bot.logger.Error("User command error", zap.Error(errHandleCommand))
+			logger.Error("User command error", zap.Error(errHandleCommand))
 			return
 		}
-		if sendSendResponse := bot.sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
-			bot.logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
+		if sendSendResponse := sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
+			logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
 		} else {
-			bot.logger.Debug("Sent message embed")
+			logger.Debug("Sent message embed")
 		}
 	}
 }

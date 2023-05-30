@@ -26,10 +26,10 @@ func MustCreateLogger(logFile string) *zap.Logger {
 		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, logFile)
 		//loggingConfig.Level.SetLevel(zap.DebugLevel)
 	}
-	logger, errLogger := loggingConfig.Build()
+	l, errLogger := loggingConfig.Build()
 	if errLogger != nil {
 		fmt.Printf("Failed to create logger: %v\n", errLogger)
 		os.Exit(1)
 	}
-	return logger.Named("gb")
+	return l.Named("gb")
 }

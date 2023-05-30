@@ -1,4 +1,4 @@
-package discordutil
+package discord
 
 import (
 	"fmt"
@@ -99,19 +99,19 @@ func RespOk(response *Response, title string) *discordgo.MessageEmbed {
 	return embed
 }
 
-func AddFieldInline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
-	AddFieldRaw(embed, logger, title, value, true)
+func AddFieldInline(embed *discordgo.MessageEmbed, title string, value string) {
+	AddFieldRaw(embed, title, value, true)
 }
 
-func AddField(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string) {
-	AddFieldRaw(embed, logger, title, value, false)
+func AddField(embed *discordgo.MessageEmbed, title string, value string) {
+	AddFieldRaw(embed, title, value, false)
 }
 
-func AddFieldInt64Inline(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
-	AddField(embed, logger, title, fmt.Sprintf("%d", value))
+func AddFieldInt64Inline(embed *discordgo.MessageEmbed, title string, value int64) {
+	AddField(embed, title, fmt.Sprintf("%d", value))
 }
 
-func AddAuthorProfile(embed *discordgo.MessageEmbed, logger *zap.Logger, sid steamid.SID64, name string, url string) {
+func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name string, url string) {
 	if name == "" {
 		name = sid.String()
 	}
@@ -138,19 +138,19 @@ type Linkable interface {
 	ToURL() string
 }
 
-func AddFieldsSteamID(embed *discordgo.MessageEmbed, logger *zap.Logger, steamId steamid.SID64) {
-	AddFieldInline(embed, logger, "STEAM", string(steamid.SID64ToSID(steamId)))
-	AddFieldInline(embed, logger, "STEAM3", string(steamid.SID64ToSID3(steamId)))
-	AddFieldInline(embed, logger, "SID64", steamId.String())
+func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
+	AddFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamId)))
+	AddFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
+	AddFieldInline(embed, "SID64", steamId.String())
 }
-func AddLink(embed *discordgo.MessageEmbed, logger *zap.Logger, value Linkable) {
+func AddLink(embed *discordgo.MessageEmbed, value Linkable) {
 	url := value.ToURL()
 	if len(url) > 0 {
-		AddFieldRaw(embed, logger, "Link", url, false)
+		AddFieldRaw(embed, "Link", url, false)
 	}
 }
 
-func AddFieldRaw(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value string, inline bool) {
+func AddFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
 	if len(embed.Fields) >= maxEmbedFields {
 		logger.Warn("Dropping embed fields. Already at max count", zap.Int("max", maxEmbedFields))
 		return

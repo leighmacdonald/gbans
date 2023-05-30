@@ -34,30 +34,30 @@ func (f *Filter) Match(value string) bool {
 	return f.Pattern == value
 }
 
-func (database *pgStore) SaveFilter(ctx context.Context, filter *Filter) error {
+func SaveFilter(ctx context.Context, filter *Filter) error {
 	if filter.FilterID > 0 {
-		return database.updateFilter(ctx, filter)
+		return updateFilter(ctx, filter)
 	} else {
-		return database.insertFilter(ctx, filter)
+		return insertFilter(ctx, filter)
 	}
 }
 
 // todo squirrel version, it expects sql.db though...
-func (database *pgStore) insertFilter(ctx context.Context, filter *Filter) error {
+func insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
-	if errQuery := database.QueryRow(ctx, query, filter.AuthorId, filter.Pattern,
+	if errQuery := QueryRow(ctx, query, filter.AuthorId, filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
 	}
-	database.logger.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
+	logger.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func (database *pgStore) updateFilter(ctx context.Context, filter *Filter) error {
+func updateFilter(ctx context.Context, filter *Filter) error {
 	query, args, errQuery := sb.Update("filtered_word").
 		Set("author_id", filter.AuthorId).
 		Set("pattern", filter.Pattern).
@@ -70,28 +70,28 @@ func (database *pgStore) updateFilter(ctx context.Context, filter *Filter) error
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if err := database.Exec(ctx, query, args...); err != nil {
+	if err := Exec(ctx, query, args...); err != nil {
 		return Err(err)
 	}
-	database.logger.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
+	logger.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func (database *pgStore) DropFilter(ctx context.Context, filter *Filter) error {
+func DropFilter(ctx context.Context, filter *Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
-	if errExec := database.Exec(ctx, query, filter.FilterID); errExec != nil {
+	if errExec := Exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
 	}
-	database.logger.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
+	logger.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *Filter) error {
+func GetFilterByID(ctx context.Context, wordId int64, f *Filter) error {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
 		WHERE filter_id = $1`
-	if errQuery := database.QueryRow(ctx, query, wordId).Scan(&f.FilterID, &f.AuthorId, &f.Pattern,
+	if errQuery := QueryRow(ctx, query, wordId).Scan(&f.FilterID, &f.AuthorId, &f.Pattern,
 		&f.IsRegex, &f.IsEnabled, &f.TriggerCount, &f.CreatedOn, &f.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -99,11 +99,11 @@ func (database *pgStore) GetFilterByID(ctx context.Context, wordId int64, f *Fil
 	return nil
 }
 
-func (database *pgStore) GetFilters(ctx context.Context) ([]Filter, error) {
+func GetFilters(ctx context.Context) ([]Filter, error) {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on
 		FROM filtered_word`
-	rows, errQuery := database.Query(ctx, query)
+	rows, errQuery := Query(ctx, query)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

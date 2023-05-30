@@ -363,7 +363,7 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 	return handler(cm, client, payload)
 }
 
-func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfile) {
+func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfile) {
 	//webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
@@ -374,26 +374,26 @@ func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model
 	//}
 	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		web.logger.Error("Failed to upgrade websocket", zap.Error(err))
+		logger.Error("Failed to upgrade websocket", zap.Error(err))
 		return
 	}
-	web.logger.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
+	logger.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
 	// New user connection
 	// TODO track between connections so they can resume their session upon dc
-	client := newWsClient(r.Context(), web.logger, conn, user)
+	client := newWsClient(r.Context(), logger, conn, user)
 
 	go client.writer()
 
-	if errJoin := web.cm.join(client); errJoin != nil {
-		web.logger.Error("Failed to join client pool", zap.Error(errJoin))
+	if errJoin := cm.join(client); errJoin != nil {
+		logger.Error("Failed to join client pool", zap.Error(errJoin))
 		return
 	}
 
 	defer func() {
-		if errLeave := web.cm.leave(client); errLeave != nil {
-			web.logger.Error("Error dropping client", zap.Error(errLeave))
+		if errLeave := cm.leave(client); errLeave != nil {
+			logger.Error("Error dropping client", zap.Error(errLeave))
 		}
-		web.logger.Debug("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
+		logger.Debug("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
 	}()
 	type wsRequest struct {
 		MsgType wsMsgType       `json:"msg_type"`
@@ -405,18 +405,18 @@ func (web *web) wsConnHandler(w http.ResponseWriter, r *http.Request, user model
 		if errRead := conn.ReadJSON(&basePayload); errRead != nil {
 			wsErr, ok := errRead.(*websocket.CloseError)
 			if !ok {
-				web.logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
+				logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
 			} else {
 				switch wsErr.Code {
 				case websocket.CloseGoingAway:
 					// remove client
 				}
 			}
-			_ = web.cm.leave(client)
+			_ = cm.leave(client)
 			return
 		}
-		if errHandle := web.cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {
-			web.logger.Error("Failed to handle ws message", zap.Error(errHandle))
+		if errHandle := cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {
+			logger.Error("Failed to handle ws message", zap.Error(errHandle))
 			client.send(basePayload.MsgType+1, false, wsMsgErrorResponse{
 				Error: errHandle.Error(),
 			})

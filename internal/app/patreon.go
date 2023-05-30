@@ -1,8 +1,9 @@
-package thirdparty
+package app
 
 import (
 	"context"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -16,8 +17,8 @@ type PatreonStore interface {
 }
 
 // NewPatreonClient https://www.patreon.com/portal/registration/register-clients
-func NewPatreonClient(ctx context.Context, logger *zap.Logger, database PatreonStore) (*patreon.Client, error) {
-	cat, crt, errAuth := database.GetPatreonAuth(ctx)
+func NewPatreonClient(ctx context.Context) (*patreon.Client, error) {
+	cat, crt, errAuth := store.GetPatreonAuth(ctx)
 	if errAuth != nil || cat == "" || crt == "" {
 		// Attempt to use config file values as the initial source if we have nothing saved.
 		// These are only used once as they are dynamically updated and stored
@@ -45,7 +46,7 @@ func NewPatreonClient(ctx context.Context, logger *zap.Logger, database PatreonS
 	tc := oAuthConfig.Client(context.Background(), tok)
 	client := patreon.NewClient(tc)
 
-	if errUpdate := updateToken(ctx, database, oAuthConfig, tok); errUpdate != nil {
+	if errUpdate := updateToken(ctx, oAuthConfig, tok); errUpdate != nil {
 		return nil, errUpdate
 	}
 	// litmus test
@@ -58,7 +59,7 @@ func NewPatreonClient(ctx context.Context, logger *zap.Logger, database PatreonS
 		for {
 			select {
 			case <-t0.C:
-				if errUpdate := updateToken(ctx, database, oAuthConfig, tok); errUpdate != nil {
+				if errUpdate := updateToken(ctx, oAuthConfig, tok); errUpdate != nil {
 					logger.Error("Failed to update patreon token", zap.Error(errUpdate))
 				}
 			case <-ctx.Done():
@@ -69,13 +70,13 @@ func NewPatreonClient(ctx context.Context, logger *zap.Logger, database PatreonS
 	return client, nil
 }
 
-func updateToken(ctx context.Context, database PatreonStore, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
+func updateToken(ctx context.Context, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
 	tokSrc := oAuthConfig.TokenSource(ctx, tok)
 	newToken, errToken := tokSrc.Token()
 	if errToken != nil {
 		return errors.Wrap(errToken, "Failed to get oath token")
 	}
-	if saveTokenErr := database.SetPatreonAuth(ctx, newToken.AccessToken, newToken.RefreshToken); saveTokenErr != nil {
+	if saveTokenErr := store.SetPatreonAuth(ctx, newToken.AccessToken, newToken.RefreshToken); saveTokenErr != nil {
 		return errors.Wrap(errToken, "Failed to save new oath token")
 	}
 	*tok = *newToken

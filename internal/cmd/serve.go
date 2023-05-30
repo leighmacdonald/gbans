@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -21,10 +24,27 @@ var serveCmd = &cobra.Command{
 				fmt.Printf("Failed to sync log: %v\n", errSync)
 			}
 		}()
-		gbans := app.New(rootCtx, rootLogger)
-		if errApp := gbans.Start(); errApp != nil {
-			rootLogger.Error("Application error", zap.Error(errApp))
+		if errConnect := store.Init(rootCtx, rootLogger, ""); errConnect != nil {
+			rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 		}
+		defer func() {
+			if errClose := store.Close(); errClose != nil {
+				rootLogger.Error("Failed to close database cleanly")
+			}
+		}()
+
+		app.Init(rootCtx, rootLogger)
+
+		errWeb := web.Setup(rootLogger)
+		if errWeb != nil {
+			rootLogger.Fatal("Failed to setup web", zap.Error(errWeb))
+		}
+		web.Start(rootCtx)
+
+		if errDiscord := discord.Start(rootCtx, rootLogger); errDiscord != nil {
+			rootLogger.Error("Failed to initialize discord", zap.Error(errDiscord))
+		}
+
 	},
 }
 

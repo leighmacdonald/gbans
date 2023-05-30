@@ -86,7 +86,7 @@ var columnsServer = []string{"server_id", "short_name", "name", "address", "port
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"latitude", "longitude", "deleted", "log_secret"}
 
-func (database *pgStore) GetServer(ctx context.Context, serverID int, server *Server) error {
+func GetServer(ctx context.Context, serverID int, server *Server) error {
 	query, args, errQuery := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
@@ -94,7 +94,7 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int, server *Se
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if errRow := database.conn.QueryRow(ctx, query, args...).
+	if errRow := QueryRow(ctx, query, args...).
 		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
@@ -105,7 +105,7 @@ func (database *pgStore) GetServer(ctx context.Context, serverID int, server *Se
 	return nil
 }
 
-func (database *pgStore) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
+func GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	query, args, errQuery := sb.
 		Select("steam_id", "permission_level").From("person").
 		Where(sq.GtOrEq{"permission_level": PReserved}).
@@ -114,7 +114,7 @@ func (database *pgStore) GetServerPermissions(ctx context.Context) ([]ServerPerm
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
-	rows, errRows := database.Query(ctx, query, args...)
+	rows, errRows := Query(ctx, query, args...)
 	if errRows != nil {
 		return nil, Err(errRows)
 	}
@@ -148,7 +148,7 @@ func (database *pgStore) GetServerPermissions(ctx context.Context) ([]ServerPerm
 	return perms, nil
 }
 
-func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) ([]Server, error) {
+func GetServers(ctx context.Context, includeDisabled bool) ([]Server, error) {
 	var servers []Server
 	queryBuilder := sb.Select(columnsServer...).From(string(tableServer))
 	cond := sq.And{sq.Eq{"deleted": false}}
@@ -160,7 +160,7 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
-	rows, errQueryExec := database.conn.Query(ctx, query, args...)
+	rows, errQueryExec := Query(ctx, query, args...)
 	if errQueryExec != nil {
 		return []Server{}, errQueryExec
 	}
@@ -181,7 +181,7 @@ func (database *pgStore) GetServers(ctx context.Context, includeDisabled bool) (
 	return servers, nil
 }
 
-func (database *pgStore) GetServerByName(ctx context.Context, serverName string, server *Server) error {
+func GetServerByName(ctx context.Context, serverName string, server *Server) error {
 	query, args, errQueryArgs := sb.Select(columnsServer...).
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
@@ -189,7 +189,7 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	return Err(database.conn.QueryRow(ctx, query, args...).
+	return Err(QueryRow(ctx, query, args...).
 		Scan(
 			&server.ServerID,
 			&server.ServerNameShort,
@@ -203,16 +203,16 @@ func (database *pgStore) GetServerByName(ctx context.Context, serverName string,
 }
 
 // SaveServer updates or creates the server data in the database
-func (database *pgStore) SaveServer(ctx context.Context, server *Server) error {
+func SaveServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = config.Now()
 	if server.ServerID > 0 {
-		return database.updateServer(ctx, server)
+		return updateServer(ctx, server)
 	}
 	server.CreatedOn = config.Now()
-	return database.insertServer(ctx, server)
+	return insertServer(ctx, server)
 }
 
-func (database *pgStore) insertServer(ctx context.Context, server *Server) error {
+func insertServer(ctx context.Context, server *Server) error {
 	const query = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on, 
@@ -220,7 +220,7 @@ func (database *pgStore) insertServer(ctx context.Context, server *Server) error
 			deleted, log_secret) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
-	err := database.conn.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Address, server.Port,
+	err := QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
@@ -230,7 +230,7 @@ func (database *pgStore) insertServer(ctx context.Context, server *Server) error
 	return nil
 }
 
-func (database *pgStore) updateServer(ctx context.Context, server *Server) error {
+func updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = config.Now()
 	query, args, errQueryArgs := sb.Update(string(tableServer)).
 		Set("short_name", server.ServerNameShort).
@@ -254,15 +254,15 @@ func (database *pgStore) updateServer(ctx context.Context, server *Server) error
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+	if errExec := Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update server")
 	}
 	return nil
 }
 
-func (database *pgStore) DropServer(ctx context.Context, serverID int) error {
+func DropServer(ctx context.Context, serverID int) error {
 	const query = `UPDATE server set deleted = true WHERE server_id = $1`
-	if _, errExec := database.conn.Exec(ctx, query, serverID); errExec != nil {
+	if errExec := Exec(ctx, query, serverID); errExec != nil {
 		return errExec
 	}
 	return nil

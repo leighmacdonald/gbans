@@ -37,13 +37,12 @@ type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	logger    *zap.Logger
 	udpAddr   *net.UDPAddr
-	database  store.Store
 	secretMap map[int]string
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger, listenAddr string, database store.Store) (*remoteSrcdsLogSource, error) {
-	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", listenAddr)
+func newRemoteSrcdsLogSource(logger *zap.Logger) (*remoteSrcdsLogSource, error) {
+	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", config.Log.SrcdsLogAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
@@ -51,7 +50,6 @@ func newRemoteSrcdsLogSource(logger *zap.Logger, listenAddr string, database sto
 		RWMutex:   &sync.RWMutex{},
 		logger:    logger,
 		udpAddr:   udpAddr,
-		database:  database,
 		secretMap: map[int]string{},
 		frequency: time.Minute * 5,
 	}, nil
@@ -61,7 +59,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 	newServers := map[int]string{}
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
 	defer cancelServers()
-	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
+	servers, errServers := store.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to update DNS", zap.Error(errServers))
 		return
@@ -78,7 +76,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr string) {
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
-	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
+	servers, errServers := store.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to add log addr", zap.Error(errServers))
 		return
@@ -92,7 +90,7 @@ func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr s
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, addr string) {
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
-	servers, errServers := remoteSrc.database.GetServers(serversCtx, false)
+	servers, errServers := store.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to del log addr", zap.Error(errServers))
 		return
@@ -106,7 +104,7 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, add
 // start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, database store.Store) {
+func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	type newMsg struct {
 		source int64
 		body   string
@@ -193,7 +191,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, database store
 			}
 			serverName = serverNameValue
 			var server store.Server
-			if errServer := database.GetServerByName(ctx, serverName, &server); errServer != nil {
+			if errServer := store.GetServerByName(ctx, serverName, &server); errServer != nil {
 				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 				continue
 			}

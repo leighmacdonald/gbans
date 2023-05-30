@@ -38,7 +38,7 @@ type jsConfig struct {
 	DiscordLinkId   string `json:"discordLinkId"`
 }
 
-func (web *web) setupRouter(engine *gin.Engine) {
+func setupRouter(engine *gin.Engine) {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
@@ -61,7 +61,7 @@ func (web *web) setupRouter(engine *gin.Engine) {
 	}
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
 	if errStaticPath != nil {
-		web.logger.Fatal("Invalid static path", zap.Error(errStaticPath))
+		logger.Fatal("Invalid static path", zap.Error(errStaticPath))
 	}
 
 	engine.StaticFS("/dist", http.Dir(absStaticPath))
@@ -84,134 +84,134 @@ func (web *web) setupRouter(engine *gin.Engine) {
 			})
 		})
 	}
-	engine.GET("/auth/callback", web.onOpenIDCallback())
-	engine.GET("/api/auth/logout", web.onGetLogout())
-	engine.POST("/api/auth/refresh", web.onTokenRefresh())
+	engine.GET("/auth/callback", onOpenIDCallback())
+	engine.GET("/api/auth/logout", onGetLogout())
+	engine.POST("/api/auth/refresh", onTokenRefresh())
 
-	engine.GET("/export/bans/tf2bd", web.onAPIExportBansTF2BD())
-	engine.GET("/export/sourcemod/admins_simple.ini", web.onAPIExportSourcemodSimpleAdmins())
-	engine.GET("/export/bans/valve/steamid", web.onAPIExportBansValveSteamId())
-	engine.GET("/export/bans/valve/network", web.onAPIExportBansValveIP())
+	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD())
+	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins())
+	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamId())
+	engine.GET("/export/bans/valve/network", onAPIExportBansValveIP())
 	engine.GET("/metrics", prometheusHandler())
 
-	engine.GET("/api/profile", web.onAPIProfile())
-	engine.GET("/api/servers/state", web.onAPIGetServerStates())
-	engine.GET("/api/stats", web.onAPIGetStats())
-	engine.GET("/api/competitive", web.onAPIGetCompHist())
+	engine.GET("/api/profile", onAPIProfile())
+	engine.GET("/api/servers/state", onAPIGetServerStates())
+	engine.GET("/api/stats", onAPIGetStats())
+	engine.GET("/api/competitive", onAPIGetCompHist())
 
-	engine.GET("/api/players", web.onAPIGetPlayers())
-	engine.GET("/api/wiki/slug/*slug", web.onAPIGetWikiSlug())
-	engine.GET("/api/log/:match_id", web.onAPIGetMatch())
-	engine.POST("/api/logs", web.onAPIGetMatches())
-	engine.GET("/media/:media_id", web.onGetMediaById())
-	engine.POST("/api/news_latest", web.onAPIGetNewsLatest())
-	engine.POST("/api/server_query", web.onAPIPostServerQuery())
-	engine.GET("/api/server_stats", web.onAPIGetTF2Stats())
+	engine.GET("/api/players", onAPIGetPlayers())
+	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug())
+	engine.GET("/api/log/:match_id", onAPIGetMatch())
+	engine.POST("/api/logs", onAPIGetMatches())
+	engine.GET("/media/:media_id", onGetMediaById())
+	engine.POST("/api/news_latest", onAPIGetNewsLatest())
+	engine.POST("/api/server_query", onAPIPostServerQuery())
+	engine.GET("/api/server_stats", onAPIGetTF2Stats())
 
-	engine.POST("/api/demos", web.onAPIPostDemosQuery())
-	engine.GET("/demos/name/:demo_name", web.onAPIGetDemoDownloadByName())
-	engine.GET("/demos/:demo_id", web.onAPIGetDemoDownload())
+	engine.POST("/api/demos", onAPIPostDemosQuery())
+	engine.GET("/demos/name/:demo_name", onAPIGetDemoDownloadByName())
+	engine.GET("/demos/:demo_id", onAPIGetDemoDownload())
 
 	// Service discovery endpoints
-	engine.GET("/api/sd/prometheus/hosts", web.onAPIGetPrometheusHosts())
-	engine.GET("/api/sd/ansible/hosts", web.onAPIGetPrometheusHosts())
+	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts())
+	engine.GET("/api/sd/ansible/hosts", onAPIGetPrometheusHosts())
 
 	// Game server plugin routes
-	engine.POST("/api/server/auth", web.onSAPIPostServerAuth())
-	engine.POST("/api/resolve_profile", web.onAPIGetResolveProfile())
+	engine.POST("/api/server/auth", onSAPIPostServerAuth())
+	engine.POST("/api/resolve_profile", onAPIGetResolveProfile())
 
-	engine.GET("/api/patreon/campaigns", web.onAPIGetPatreonCampaigns())
-	engine.GET("/api/patreon/pledges", web.onAPIGetPatreonPledges())
+	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns())
+	engine.GET("/api/patreon/pledges", onAPIGetPatreonPledges())
 
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request
-		serverAuth := srvGrp.Use(web.authServerMiddleWare())
-		serverAuth.GET("/api/server/admins", web.onAPIGetServerAdmins())
-		serverAuth.POST("/api/ping_mod", web.onAPIPostPingMod())
-		serverAuth.POST("/api/check", web.onAPIPostServerCheck())
-		serverAuth.POST("/api/demo", web.onAPIPostDemo())
-		serverAuth.POST("/api/log", web.onAPIPostLog())
+		serverAuth := srvGrp.Use(authServerMiddleWare())
+		serverAuth.GET("/api/server/admins", onAPIGetServerAdmins())
+		serverAuth.POST("/api/ping_mod", onAPIPostPingMod())
+		serverAuth.POST("/api/check", onAPIPostServerCheck())
+		serverAuth.POST("/api/demo", onAPIPostDemo())
+		serverAuth.POST("/api/log", onAPIPostLog())
 		// Duplicated since we need to authenticate via server middleware
-		serverAuth.POST("/api/sm/bans/steam/create", web.onAPIPostBanSteamCreate())
-		serverAuth.POST("/api/sm/report/create", web.onAPIPostReportCreate())
+		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate())
+		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate())
 	}
 
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(web.authMiddleware(store.PUser))
+		authed := authedGrp.Use(authMiddleware(store.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
-			web.wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
+			wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
 
-		authed.GET("/api/auth/discordutil", web.onOAuthDiscordCallback())
-		authed.GET("/api/current_profile", web.onAPICurrentProfile())
-		authed.GET("/api/current_profile/notifications", web.onAPICurrentProfileNotifications())
-		authed.POST("/api/report", web.onAPIPostReportCreate())
-		authed.GET("/api/report/:report_id", web.onAPIGetReport())
-		authed.POST("/api/reports", web.onAPIGetReports())
-		authed.POST("/api/report_status/:report_id", web.onAPISetReportStatus())
-		authed.POST("/api/media", web.onAPISaveMedia())
+		authed.GET("/api/auth/discordutil", onOAuthDiscordCallback())
+		authed.GET("/api/current_profile", onAPICurrentProfile())
+		authed.GET("/api/current_profile/notifications", onAPICurrentProfileNotifications())
+		authed.POST("/api/report", onAPIPostReportCreate())
+		authed.GET("/api/report/:report_id", onAPIGetReport())
+		authed.POST("/api/reports", onAPIGetReports())
+		authed.POST("/api/report_status/:report_id", onAPISetReportStatus())
+		authed.POST("/api/media", onAPISaveMedia())
 
-		authed.GET("/api/report/:report_id/messages", web.onAPIGetReportMessages())
-		authed.POST("/api/report/:report_id/messages", web.onAPIPostReportMessage())
-		authed.POST("/api/report/message/:report_message_id", web.onAPIEditReportMessage())
-		authed.DELETE("/api/report/message/:report_message_id", web.onAPIDeleteReportMessage())
+		authed.GET("/api/report/:report_id/messages", onAPIGetReportMessages())
+		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage())
+		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage())
+		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage())
 
-		authed.GET("/api/bans/steam/:ban_id", web.onAPIGetBanByID())
-		authed.GET("/api/bans/:ban_id/messages", web.onAPIGetBanMessages())
-		authed.POST("/api/bans/:ban_id/messages", web.onAPIPostBanMessage())
-		authed.POST("/api/bans/message/:ban_message_id", web.onAPIEditBanMessage())
-		authed.DELETE("/api/bans/message/:ban_message_id", web.onAPIDeleteBanMessage())
+		authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID())
+		authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages())
+		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage())
+		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage())
+		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage())
 	}
 
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(web.authMiddleware(store.PEditor))
-		editorRoute.POST("/api/wiki/slug", web.onAPISaveWikiSlug())
-		editorRoute.POST("/api/news", web.onAPIPostNewsCreate())
-		editorRoute.POST("/api/news/:news_id", web.onAPIPostNewsUpdate())
-		editorRoute.POST("/api/news_all", web.onAPIGetNewsAll())
-		editorRoute.GET("/api/filters", web.onAPIGetWordFilters())
-		editorRoute.POST("/api/filters", web.onAPIPostWordFilter())
-		editorRoute.DELETE("/api/filters/:word_id", web.onAPIDeleteWordFilter())
-		editorRoute.POST("/api/filter_match", web.onAPIPostWordMatch())
+		editorRoute := editorGrp.Use(authMiddleware(store.PEditor))
+		editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug())
+		editorRoute.POST("/api/news", onAPIPostNewsCreate())
+		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate())
+		editorRoute.POST("/api/news_all", onAPIGetNewsAll())
+		editorRoute.GET("/api/filters", onAPIGetWordFilters())
+		editorRoute.POST("/api/filters", onAPIPostWordFilter())
+		editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter())
+		editorRoute.POST("/api/filter_match", onAPIPostWordMatch())
 	}
 
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(web.authMiddleware(store.PModerator))
-		modRoute.POST("/api/report/:report_id/state", web.onAPIPostBanState())
-		modRoute.GET("/api/connections/:steam_id", web.onAPIGetPersonConnections())
-		modRoute.GET("/api/messages/:steam_id", web.onAPIGetPersonMessages())
-		modRoute.GET("/api/message/:person_message_id/context", web.onAPIGetMessageContext())
-		modRoute.POST("/api/messages", web.onAPIQueryMessages())
-		modRoute.POST("/api/appeals", web.onAPIGetAppeals())
-		modRoute.POST("/api/bans/steam", web.onAPIGetBansSteam())
-		modRoute.POST("/api/bans/steam/create", web.onAPIPostBanSteamCreate())
-		modRoute.DELETE("/api/bans/steam/:ban_id", web.onAPIPostBanDelete())
-		modRoute.POST("/api/bans/steam/:ban_id/status", web.onAPIPostSetBanAppealStatus())
-		modRoute.POST("/api/bans/cidr/create", web.onAPIPostBansCIDRCreate())
-		modRoute.POST("/api/bans/cidr", web.onAPIGetBansCIDR())
-		modRoute.DELETE("/api/bans/cidr/:net_id", web.onAPIDeleteBansCIDR())
-		modRoute.POST("/api/bans/asn/create", web.onAPIPostBansASNCreate())
-		modRoute.POST("/api/bans/asn", web.onAPIGetBansASN())
-		modRoute.DELETE("/api/bans/asn/:asn_id", web.onAPIDeleteBansASN())
-		modRoute.POST("/api/bans/group/create", web.onAPIPostBansGroupCreate())
-		modRoute.POST("/api/bans/group", web.onAPIGetBansGroup())
-		modRoute.DELETE("/api/bans/group/:ban_group_id", web.onAPIDeleteBansGroup())
+		modRoute := modGrp.Use(authMiddleware(store.PModerator))
+		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState())
+		modRoute.GET("/api/connections/:steam_id", onAPIGetPersonConnections())
+		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages())
+		modRoute.GET("/api/message/:person_message_id/context", onAPIGetMessageContext())
+		modRoute.POST("/api/messages", onAPIQueryMessages())
+		modRoute.POST("/api/appeals", onAPIGetAppeals())
+		modRoute.POST("/api/bans/steam", onAPIGetBansSteam())
+		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate())
+		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete())
+		modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus())
+		modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate())
+		modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR())
+		modRoute.DELETE("/api/bans/cidr/:net_id", onAPIDeleteBansCIDR())
+		modRoute.POST("/api/bans/asn/create", onAPIPostBansASNCreate())
+		modRoute.POST("/api/bans/asn", onAPIGetBansASN())
+		modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN())
+		modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate())
+		modRoute.POST("/api/bans/group", onAPIGetBansGroup())
+		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup())
 	}
 
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(web.authMiddleware(store.PAdmin))
-		adminRoute.POST("/api/servers", web.onAPIPostServer())
-		adminRoute.POST("/api/servers/:server_id", web.onAPIPostServerUpdate())
-		adminRoute.DELETE("/api/servers/:server_id", web.onAPIPostServerDelete())
-		adminRoute.GET("/api/servers", web.onAPIGetServers())
+		adminRoute := adminGrp.Use(authMiddleware(store.PAdmin))
+		adminRoute.POST("/api/servers", onAPIPostServer())
+		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate())
+		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete())
+		adminRoute.GET("/api/servers", onAPIGetServers())
 	}
 }

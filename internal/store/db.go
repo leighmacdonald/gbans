@@ -14,8 +14,8 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"net/http"
@@ -31,6 +31,8 @@ var (
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	//go:embed migrations
 	migrations embed.FS
+	conn       *pgxpool.Pool
+	logger     *zap.Logger
 )
 
 type tableName string
@@ -74,61 +76,55 @@ func NewQueryFilter(query string) QueryFilter {
 }
 
 // New sets up underlying required services.
-func New(ctx context.Context, logger *zap.Logger, dsn string) (Store, error) {
-	dbLogger := logger.Named("store")
+func Init(ctx context.Context, l *zap.Logger, dsn string) error {
+	logger = l.Named("store")
 	cfg, errConfig := pgxpool.ParseConfig(dsn)
 	if errConfig != nil {
-		return nil, errors.Errorf("Unable to parse config: %v", errConfig)
+		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
-	newDatabase := pgStore{}
 	if config.DB.AutoMigrate {
-		if errMigrate := newDatabase.Migrate(MigrateUp); errMigrate != nil {
+		if errMigrate := Migrate(MigrateUp); errMigrate != nil {
 			if errMigrate.Error() == "no change" {
-				dbLogger.Info("Migration at latest version")
+				logger.Info("Migration at latest version")
 			} else {
-				return nil, errors.Errorf("Could not migrate schema: %v", errMigrate)
+				return errors.Errorf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
-			dbLogger.Info("Migration completed successfully")
+			logger.Info("Migration completed successfully")
 		}
 	}
 	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
 	if errConnectConfig != nil {
-		return nil, errors.Wrap(errConnectConfig, "Failed to connect to database")
+		return errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
-	return &pgStore{conn: dbConn, logger: dbLogger}, nil
+	conn = dbConn
+	return nil
 }
 
-// pgStore implements Store against a postgresql database
-type pgStore struct {
-	conn   *pgxpool.Pool
-	logger *zap.Logger
-}
-
-func (database *pgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	rows, err := database.conn.Query(ctx, query, args...)
+func Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	rows, err := conn.Query(ctx, query, args...)
 	return rows, Err(err)
 }
 
-func (database *pgStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	return database.conn.QueryRow(ctx, query, args...)
+func QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	return conn.QueryRow(ctx, query, args...)
 }
 
-func (database *pgStore) Exec(ctx context.Context, query string, args ...any) error {
-	_, err := database.conn.Exec(ctx, query, args...)
+func Exec(ctx context.Context, query string, args ...any) error {
+	_, err := conn.Exec(ctx, query, args...)
 	return Err(err)
 }
 
 // Close will close the underlying database connection if it exists
-func (database *pgStore) Close() error {
-	if database.conn != nil {
-		database.conn.Close()
+func Close() error {
+	if conn != nil {
+		conn.Close()
 	}
 	return nil
 }
 
-func (database *pgStore) truncateTable(ctx context.Context, table tableName) error {
-	if _, errExec := database.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
+func truncateTable(ctx context.Context, table tableName) error {
+	if _, errExec := conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
 		return Err(errExec)
 	}
 	return nil
@@ -169,7 +165,7 @@ const (
 )
 
 // Migrate database schema
-func (database *pgStore) Migrate(action MigrationAction) error {
+func Migrate(action MigrationAction) error {
 	instance, errOpen := sql.Open("pgx", config.DB.DSN)
 	if errOpen != nil {
 		return errors.Wrapf(errOpen, "Failed to open database for migration")
@@ -186,7 +182,7 @@ func (database *pgStore) Migrate(action MigrationAction) error {
 	if errMigrate != nil {
 		return errors.Wrapf(errMigrate, "failed to create migration driver")
 	}
-	defer util.LogClose(database.logger, driver)
+	defer util.LogCloser(driver, logger)
 	source, errHttpFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHttpFS != nil {
 		return errHttpFS

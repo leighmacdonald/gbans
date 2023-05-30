@@ -77,11 +77,3 @@ type LogFilePayload struct {
 	Lines  []string
 	Map    string
 }
-
-type NotificationPayload struct {
-	MinPerms store.Privilege
-	Sids     steamid.Collection
-	Severity store.NotificationSeverity
-	Message  string
-	Link     string
-}

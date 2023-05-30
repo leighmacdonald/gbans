@@ -17,16 +17,12 @@ import (
 	"time"
 )
 
-var (
-	testDatabase Store
-)
-
 func TestMain(testMain *testing.M) {
-	logger := zap.NewNop()
+	logger = zap.NewNop()
 
-	tearDown := func(database Store) {
+	tearDown := func() {
 		q := `select 'drop table "' || tablename || '" cascade;' from pg_tables where schemaname = 'public';`
-		if errMigrate := database.Exec(context.Background(), q); errMigrate != nil {
+		if errMigrate := Exec(context.Background(), q); errMigrate != nil {
 			logger.Error("Failed to migrate database down", zap.Error(errMigrate))
 			os.Exit(2)
 		}
@@ -36,11 +32,13 @@ func TestMain(testMain *testing.M) {
 	config.General.Mode = config.TestMode
 	testCtx := context.Background()
 
+	Setup()
 	dbStore, dbErr := New(testCtx, logger, config.DB.DSN)
 	if dbErr != nil {
 		logger.Error("Failed to setup store", zap.Error(dbErr))
 		return
 	}
+	conn = dbStore
 	tearDown(dbStore)
 	defer util.LogClose(logger, dbStore)
 	rc := testMain.Run()

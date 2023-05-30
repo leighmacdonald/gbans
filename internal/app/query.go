@@ -12,8 +12,8 @@ import (
 )
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
-	if errGetPerson := app.store.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
+func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
+	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}
 	if person.IsNew || config.Now().Sub(person.UpdatedOnSteam) > time.Minute*60 {
@@ -41,7 +41,7 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 		person.UpdatedOnSteam = config.Now()
 	}
 	person.SteamID = sid
-	if errSavePerson := app.store.SavePerson(ctx, person); errSavePerson != nil {
+	if errSavePerson := store.SavePerson(ctx, person); errSavePerson != nil {
 		return errors.Wrapf(errSavePerson, "Failed to save person")
 	}
 	return nil

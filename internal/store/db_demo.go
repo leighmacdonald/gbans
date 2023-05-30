@@ -43,7 +43,7 @@ type DemoFile struct {
 //	}, nil
 //}
 
-func (database *pgStore) FlushDemos(ctx context.Context) error {
+func FlushDemos(ctx context.Context) error {
 	query, args, errQuery := sb.
 		Delete("demo").
 		Where(sq.And{
@@ -53,10 +53,10 @@ func (database *pgStore) FlushDemos(ctx context.Context) error {
 	if errQuery != nil {
 		return errQuery
 	}
-	return Err(database.Exec(ctx, query, args...))
+	return Err(Exec(ctx, query, args...))
 }
 
-func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile *DemoFile) error {
+func GetDemoById(ctx context.Context, demoId int64, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
@@ -65,14 +65,14 @@ func (database *pgStore) GetDemoById(ctx context.Context, demoId int64, demoFile
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
+	if errQuery := QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
 }
 
-func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
+func GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
@@ -81,7 +81,7 @@ func (database *pgStore) GetDemoByName(ctx context.Context, demoName string, dem
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
+	if errQuery := QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -94,7 +94,7 @@ type GetDemosOptions struct {
 	MapName   string `json:"mapName"`
 }
 
-func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
+func GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
 	var demos []DemoFile
 	qb := sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
@@ -124,7 +124,7 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 	if errQueryArgs != nil {
 		return nil, Err(errQueryArgs)
 	}
-	rows, errQuery := database.conn.Query(ctx, query, args...)
+	rows, errQuery := Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -141,7 +141,7 @@ func (database *pgStore) GetDemos(ctx context.Context, opts GetDemosOptions) ([]
 	return demos, nil
 }
 
-func (database *pgStore) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
+func SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
@@ -155,7 +155,7 @@ func (database *pgStore) SaveDemo(ctx context.Context, demoFile *DemoFile) error
 		return errors.Wrap(queryErr, "Failed to select reports")
 	}
 	var count int
-	if errScan := database.QueryRow(ctx, query, args...).Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
+	if errScan := QueryRow(ctx, query, args...).Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
 		return Err(errScan)
 	}
 	if count > 0 {
@@ -163,14 +163,14 @@ func (database *pgStore) SaveDemo(ctx context.Context, demoFile *DemoFile) error
 	}
 	var err error
 	if demoFile.DemoID > 0 {
-		err = database.updateDemo(ctx, demoFile)
+		err = updateDemo(ctx, demoFile)
 	} else {
-		err = database.insertDemo(ctx, demoFile)
+		err = insertDemo(ctx, demoFile)
 	}
 	return Err(err)
 }
 
-func (database *pgStore) insertDemo(ctx context.Context, demoFile *DemoFile) error {
+func insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Insert(string(tableDemo)).
 		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
@@ -181,15 +181,15 @@ func (database *pgStore) insertDemo(ctx context.Context, demoFile *DemoFile) err
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
+	errQuery := QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	database.logger.Info("New demo saved", zap.String("name", demoFile.Title))
+	logger.Info("New demo saved", zap.String("name", demoFile.Title))
 	return nil
 }
 
-func (database *pgStore) updateDemo(ctx context.Context, demoFile *DemoFile) error {
+func updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Update(string(tableDemo)).
 		Set("title", demoFile.Title).
@@ -203,23 +203,23 @@ func (database *pgStore) updateDemo(ctx context.Context, demoFile *DemoFile) err
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+	if errExec := Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	database.logger.Info("Demo updated", zap.String("name", demoFile.Title))
+	logger.Info("Demo updated", zap.String("name", demoFile.Title))
 	return nil
 }
 
-func (database *pgStore) DropDemo(ctx context.Context, demoFile *DemoFile) error {
+func DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+	if errExec := Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	demoFile.DemoID = 0
-	database.logger.Info("Demo deleted:", zap.String("name", demoFile.Title))
+	logger.Info("Demo deleted:", zap.String("name", demoFile.Title))
 	return nil
 }

@@ -6,10 +6,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/discordutil"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb"
 	"github.com/pkg/errors"
@@ -18,10 +17,10 @@ import (
 	"time"
 )
 
-func (app *App) IsSteamGroupBanned(steamId steamid.SID64) bool {
-	app.bannedGroupMembersMu.RLock()
-	defer app.bannedGroupMembersMu.RUnlock()
-	for _, groupMembers := range app.bannedGroupMembers {
+func IsSteamGroupBanned(steamId steamid.SID64) bool {
+	bannedGroupMembersMu.RLock()
+	defer bannedGroupMembersMu.RUnlock()
+	for _, groupMembers := range bannedGroupMembers {
 		for _, member := range groupMembers {
 			if steamId == member {
 				return true
@@ -31,26 +30,26 @@ func (app *App) IsSteamGroupBanned(steamId steamid.SID64) bool {
 	return false
 }
 
-func (app *App) steamGroupMembershipUpdater() {
+func steamGroupMembershipUpdater(ctx context.Context) {
 	var update = func() {
-		localCtx, cancel := context.WithTimeout(app.ctx, time.Second*120)
+		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
 		total := 0
 		for _, gid := range config.General.BannedSteamGroupIds {
 			members, errMembers := steamweb.GetGroupMembers(localCtx, gid)
 			if errMembers != nil {
-				app.logger.Warn("Failed to fetch group members", zap.Error(errMembers))
+				logger.Warn("Failed to fetch group members", zap.Error(errMembers))
 				cancel()
 				continue
 			}
 			newMap[gid] = members
 			total += len(members)
 		}
-		app.bannedGroupMembersMu.Lock()
-		app.bannedGroupMembers = newMap
-		app.bannedGroupMembersMu.Unlock()
+		bannedGroupMembersMu.Lock()
+		bannedGroupMembers = newMap
+		bannedGroupMembersMu.Unlock()
 		cancel()
-		app.logger.Debug("Updated group member ban list", zap.Int("count", total))
+		logger.Debug("Updated group member ban list", zap.Int("count", total))
 	}
 	update()
 	ticker := time.NewTicker(time.Minute * 15)
@@ -58,14 +57,14 @@ func (app *App) steamGroupMembershipUpdater() {
 		select {
 		case <-ticker.C:
 			update()
-		case <-app.ctx.Done():
-			app.logger.Debug("steamGroupMembershipUpdater shutting down")
+		case <-ctx.Done():
+			logger.Debug("steamGroupMembershipUpdater shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) showReportMeta() {
+func showReportMeta(ctx context.Context) {
 	type reportMeta struct {
 		TotalOpen   int
 		TotalClosed int
@@ -77,13 +76,13 @@ func (app *App) showReportMeta() {
 		OpenNew     int
 	}
 	var showReports = func() {
-		reports, errReports := app.store.GetReports(app.ctx, store.AuthorQueryFilter{
+		reports, errReports := store.GetReports(ctx, store.AuthorQueryFilter{
 			QueryFilter: store.QueryFilter{
 				Limit: 0,
 			},
 		})
 		if errReports != nil {
-			app.logger.Error("failed to fetch reports for report metadata", zap.Error(errReports))
+			logger.Error("failed to fetch reports for report metadata", zap.Error(errReports))
 			return
 		}
 		now := config.Now()
@@ -113,22 +112,22 @@ func (app *App) showReportMeta() {
 			URL:   config.ExtURL("/admin/reports"),
 			Type:  discordgo.EmbedTypeRich,
 			Title: "User Report Stats",
-			Color: int(discordutil.Green),
+			Color: int(discord.Green),
 		}
 		if m.OpenWeek > 0 {
-			reportNotice.Color = int(discordutil.Red)
+			reportNotice.Color = int(discord.Red)
 		} else if m.Open3Days > 0 {
-			reportNotice.Color = int(discordutil.Orange)
+			reportNotice.Color = int(discord.Orange)
 		}
 		reportNotice.Description = "Current Open Report Counts"
 
-		discordutil.AddFieldInline(reportNotice, app.logger, "New", fmt.Sprintf(" %d", m.Open1Day))
-		discordutil.AddFieldInline(reportNotice, app.logger, "Total Open", fmt.Sprintf(" %d", m.TotalOpen))
-		discordutil.AddFieldInline(reportNotice, app.logger, "Total Closed", fmt.Sprintf(" %d", m.TotalClosed))
-		discordutil.AddFieldInline(reportNotice, app.logger, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
-		discordutil.AddFieldInline(reportNotice, app.logger, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
-		discordutil.AddFieldInline(reportNotice, app.logger, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
-		app.SendDiscordPayload(discordutil.Payload{ChannelId: config.Discord.ReportLogChannelId, Embed: reportNotice})
+		discord.AddFieldInline(reportNotice, "New", fmt.Sprintf(" %d", m.Open1Day))
+		discord.AddFieldInline(reportNotice, "Total Open", fmt.Sprintf(" %d", m.TotalOpen))
+		discord.AddFieldInline(reportNotice, "Total Closed", fmt.Sprintf(" %d", m.TotalClosed))
+		discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
+		discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
+		discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
+		discord.SendPayload(discord.Payload{ChannelId: config.Discord.ReportLogChannelId, Embed: reportNotice})
 		//sendDiscordPayload(app.discordSendMsg)
 	}
 	time.Sleep(time.Second * 2)
@@ -138,58 +137,58 @@ func (app *App) showReportMeta() {
 		select {
 		case <-ticker.C:
 			showReports()
-		case <-app.ctx.Done():
-			app.logger.Debug("showReportMeta shutting down")
+		case <-ctx.Done():
+			logger.Debug("showReportMeta shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) demoCleaner() {
+func demoCleaner(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour * 24)
 	var update = func() {
-		if err := app.store.FlushDemos(app.ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
-			app.logger.Error("Error pruning expired refresh tokens", zap.Error(err))
+		if err := store.FlushDemos(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+			logger.Error("Error pruning expired refresh tokens", zap.Error(err))
 		}
-		app.logger.Info("Old demos flushed")
+		logger.Info("Old demos flushed")
 	}
 	update()
 	for {
 		select {
 		case <-ticker.C:
 			update()
-		case <-app.ctx.Done():
-			app.logger.Debug("profileUpdater shutting down")
+		case <-ctx.Done():
+			logger.Debug("profileUpdater shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) cleanupTasks() {
+func cleanupTasks(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour * 24)
 	for {
 		select {
 		case <-ticker.C:
-			if err := app.store.PrunePersonAuth(app.ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
-				app.logger.Error("Error pruning expired refresh tokens", zap.Error(err))
+			if err := store.PrunePersonAuth(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+				logger.Error("Error pruning expired refresh tokens", zap.Error(err))
 			}
-		case <-app.ctx.Done():
-			app.logger.Debug("profileUpdater shutting down")
+		case <-ctx.Done():
+			logger.Debug("profileUpdater shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) notificationSender() {
+func notificationSender(ctx context.Context) {
 	for {
 		select {
-		case notification := <-app.notificationChan:
+		case notification := <-notificationChan:
 			go func() {
-				if errSend := app.sendNotification(notification); errSend != nil {
-					app.logger.Error("Failed to send user notification", zap.Error(errSend))
+				if errSend := sendNotification(ctx, notification); errSend != nil {
+					logger.Error("Failed to send user notification", zap.Error(errSend))
 				}
 			}()
-		case <-app.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -197,13 +196,13 @@ func (app *App) notificationSender() {
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func (app *App) profileUpdater() {
+func profileUpdater(ctx context.Context) {
 	var update = func() {
-		localCtx, cancel := context.WithTimeout(app.ctx, time.Second*10)
+		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
-		people, errGetExpired := app.store.GetExpiredProfiles(localCtx, 100)
+		people, errGetExpired := store.GetExpiredProfiles(localCtx, 100)
 		if errGetExpired != nil {
-			app.logger.Error("Failed to get expired profiles", zap.Error(errGetExpired))
+			logger.Error("Failed to get expired profiles", zap.Error(errGetExpired))
 			return
 		}
 		if len(people) == 0 {
@@ -215,24 +214,24 @@ func (app *App) profileUpdater() {
 		}
 		summaries, errSummaries := steamweb.PlayerSummaries(sids)
 		if errSummaries != nil {
-			app.logger.Error("Failed to get player summaries", zap.Error(errSummaries))
+			logger.Error("Failed to get player summaries", zap.Error(errSummaries))
 			return
 		}
 		for _, summary := range summaries {
 			// TODO batch update upserts
 			sid, errSid := steamid.SID64FromString(summary.Steamid)
 			if errSid != nil {
-				app.logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
+				logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
 				continue
 			}
 			person := store.NewPerson(sid)
-			if errGetPerson := app.store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
-				app.logger.Error("Failed to get person", zap.Error(errGetPerson))
+			if errGetPerson := store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
+				logger.Error("Failed to get person", zap.Error(errGetPerson))
 				continue
 			}
 			person.PlayerSummary = &summary
-			if errSavePerson := app.store.SavePerson(localCtx, &person); errSavePerson != nil {
-				app.logger.Error("Failed to save person", zap.Error(errSavePerson))
+			if errSavePerson := store.SavePerson(localCtx, &person); errSavePerson != nil {
+				logger.Error("Failed to save person", zap.Error(errSavePerson))
 				continue
 			}
 		}
@@ -243,34 +242,34 @@ func (app *App) profileUpdater() {
 		select {
 		case <-ticker.C:
 			update()
-		case <-app.ctx.Done():
-			app.logger.Debug("profileUpdater shutting down")
+		case <-ctx.Done():
+			logger.Debug("profileUpdater shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) patreonUpdater() {
+func patreonUpdater(ctx context.Context) {
 	updateTimer := time.NewTicker(time.Hour * 1)
-	if app.patreon == nil {
+	if patreonClient == nil {
 		return
 	}
 	var update = func() {
-		newCampaigns, errCampaigns := thirdparty.PatreonGetTiers(app.patreon)
+		newCampaigns, errCampaigns := PatreonGetTiers(patreonClient)
 		if errCampaigns != nil {
-			app.logger.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
+			logger.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
 			return
 		}
-		newPledges, newUsers, errPledges := thirdparty.PatreonGetPledges(app.patreon)
+		newPledges, newUsers, errPledges := PatreonGetPledges(patreonClient)
 		if errPledges != nil {
-			app.logger.Error("Failed to refresh pledges", zap.Error(errPledges))
+			logger.Error("Failed to refresh pledges", zap.Error(errPledges))
 			return
 		}
-		app.patreonMu.Lock()
-		app.patreonCampaigns = newCampaigns
-		app.patreonPledges = newPledges
-		app.patreonUsers = newUsers
-		app.patreonMu.Unlock()
+		patreonMu.Lock()
+		patreonCampaigns = newCampaigns
+		patreonPledges = newPledges
+		patreonUsers = newUsers
+		patreonMu.Unlock()
 		cents := 0
 		totalCents := 0
 		for _, p := range newPledges {
@@ -279,7 +278,7 @@ func (app *App) patreonUpdater() {
 				totalCents += *p.Attributes.TotalHistoricalAmountCents
 			}
 		}
-		app.logger.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
+		logger.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
 			zap.Int("current_cents", cents), zap.Int("total_cents", totalCents))
 	}
 	update()
@@ -287,48 +286,48 @@ func (app *App) patreonUpdater() {
 		select {
 		case <-updateTimer.C:
 			update()
-		case <-app.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
 
 }
-func (app *App) updateStateServerList() error {
-	servers, errServers := app.store.GetServers(app.ctx, false)
+func updateStateServerList(ctx context.Context) error {
+	servers, errServers := store.GetServers(ctx, false)
 	if errServers != nil {
 		return errServers
 	}
 	var sc []*state.ServerConfig
 	for _, server := range servers {
-		sc = append(sc, state.NewServerConfig(app.logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)), server.ServerID, server.ServerNameShort, server.Addr(), server.RCON))
+		sc = append(sc, state.NewServerConfig(logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)), server.ServerID, server.ServerNameShort, server.Addr(), server.RCON))
 	}
 	state.SetServers(sc)
 	return nil
 }
 
-func (app *App) stateUpdater(statusUpdateFreq time.Duration, materUpdateFreq time.Duration) {
-	logger := app.logger.Named("state")
+func stateUpdater(ctx context.Context, statusUpdateFreq time.Duration, materUpdateFreq time.Duration) {
+	log := logger.Named("state")
 	errChan := make(chan error)
-	if errUpdate := app.updateStateServerList(); errUpdate != nil {
-		logger.Error("Failed to update list", zap.Error(errUpdate))
+	if errUpdate := updateStateServerList(ctx); errUpdate != nil {
+		log.Error("Failed to update list", zap.Error(errUpdate))
 	}
 	go func() {
 		for {
 			select {
-			case <-app.ctx.Done():
+			case <-ctx.Done():
 				return
 			case <-errChan:
 				//logger.Error("server state update returned error", zap.Error(err))
 			}
 		}
 	}()
-	if errStart := state.Start(app.ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
+	if errStart := state.Start(ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
 		logger.Error("start returned error", zap.Error(errStart))
 	}
 }
 
 // banSweeper periodically will query the database for expired bans and remove them.
-func (app *App) banSweeper() {
+func banSweeper(ctx context.Context) {
 	ticker := time.NewTicker(time.Minute)
 	for {
 		select {
@@ -337,28 +336,28 @@ func (app *App) banSweeper() {
 			waitGroup.Add(3)
 			go func() {
 				defer waitGroup.Done()
-				expiredBans, errExpiredBans := app.store.GetExpiredBans(app.ctx)
+				expiredBans, errExpiredBans := store.GetExpiredBans(ctx)
 				if errExpiredBans != nil && !errors.Is(errExpiredBans, store.ErrNoResult) {
-					app.logger.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
+					logger.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
 				} else {
 					for _, expiredBan := range expiredBans {
-						if errDrop := app.store.DropBan(app.ctx, &expiredBan, false); errDrop != nil {
-							app.logger.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
+						if errDrop := store.DropBan(ctx, &expiredBan, false); errDrop != nil {
+							logger.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
 							banType := "Ban"
 							if expiredBan.BanType == store.NoComm {
 								banType = "Mute"
 							}
 							var person store.Person
-							if errPerson := app.store.GetOrCreatePersonBySteamID(app.ctx, expiredBan.TargetId, &person); errPerson != nil {
-								app.logger.Error("Failed to get expired person", zap.Error(errPerson))
+							if errPerson := store.GetOrCreatePersonBySteamID(ctx, expiredBan.TargetId, &person); errPerson != nil {
+								logger.Error("Failed to get expired person", zap.Error(errPerson))
 								continue
 							}
 							name := person.PersonaName
 							if name == "" {
 								name = person.SteamID.String()
 							}
-							app.logger.Info("Ban expired", zap.String("type", banType),
+							logger.Info("Ban expired", zap.String("type", banType),
 								zap.String("reason", expiredBan.Reason.String()),
 								zap.Int64("sid64", expiredBan.TargetId.Int64()), zap.String("name", name))
 						}
@@ -367,57 +366,57 @@ func (app *App) banSweeper() {
 			}()
 			go func() {
 				defer waitGroup.Done()
-				expiredNetBans, errExpiredNetBans := app.store.GetExpiredNetBans(app.ctx)
+				expiredNetBans, errExpiredNetBans := store.GetExpiredNetBans(ctx)
 				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, store.ErrNoResult) {
-					app.logger.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
+					logger.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
 				} else {
 					for _, expiredNetBan := range expiredNetBans {
-						if errDropBanNet := app.store.DropBanNet(app.ctx, &expiredNetBan); errDropBanNet != nil {
-							app.logger.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
+						if errDropBanNet := store.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil {
+							logger.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
 						} else {
-							app.logger.Info("CIDR ban expired", zap.String("cidr", expiredNetBan.String()))
+							logger.Info("CIDR ban expired", zap.String("cidr", expiredNetBan.String()))
 						}
 					}
 				}
 			}()
 			go func() {
 				defer waitGroup.Done()
-				expiredASNBans, errExpiredASNBans := app.store.GetExpiredASNBans(app.ctx)
+				expiredASNBans, errExpiredASNBans := store.GetExpiredASNBans(ctx)
 				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, store.ErrNoResult) {
-					app.logger.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
+					logger.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
 				} else {
 					for _, expiredASNBan := range expiredASNBans {
-						if errDropASN := app.store.DropBanASN(app.ctx, &expiredASNBan); errDropASN != nil {
-							app.logger.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
+						if errDropASN := store.DropBanASN(ctx, &expiredASNBan); errDropASN != nil {
+							logger.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
 						} else {
-							app.logger.Info("ASN ban expired", zap.Int64("ban_id", expiredASNBan.BanASNId))
+							logger.Info("ASN ban expired", zap.Int64("ban_id", expiredASNBan.BanASNId))
 						}
 					}
 				}
 			}()
 			waitGroup.Wait()
-		case <-app.ctx.Done():
-			app.logger.Debug("banSweeper shutting down")
+		case <-ctx.Done():
+			logger.Debug("banSweeper shutting down")
 			return
 		}
 	}
 }
 
-func (app *App) localStatUpdater() {
+func localStatUpdater(ctx context.Context) {
 	var build = func() {
-		if errBuild := app.store.BuildLocalTF2Stats(app.ctx); errBuild != nil {
-			app.logger.Error("Error building local stats", zap.Error(errBuild))
+		if errBuild := store.BuildLocalTF2Stats(ctx); errBuild != nil {
+			logger.Error("Error building local stats", zap.Error(errBuild))
 		}
 	}
 	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
 	if errSaveTicker != nil {
-		app.logger.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
+		logger.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
 		return
 	}
 	// Rebuild stats every hour
 	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
 	if errBuildTicker != nil {
-		app.logger.Fatal("Invalid build ticker cron format", zap.Error(errBuildTicker))
+		logger.Fatal("Invalid build ticker cron format", zap.Error(errBuildTicker))
 		return
 	}
 	build()
@@ -428,9 +427,9 @@ func (app *App) localStatUpdater() {
 		case saveTime := <-saveTicker.C:
 			stats := store.NewLocalTF2Stats()
 			stats.CreatedOn = saveTime
-			servers, errServers := app.store.GetServers(app.ctx, false)
+			servers, errServers := store.GetServers(ctx, false)
 			if errServers != nil {
-				app.logger.Error("Failed to fetch servers to build local cache", zap.Error(errServers))
+				logger.Error("Failed to fetch servers to build local cache", zap.Error(errServers))
 				continue
 			}
 			serverNameMap := map[string]string{}
@@ -442,12 +441,12 @@ func (app *App) localStatUpdater() {
 				}
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
 			}
-			app.serverStateMu.RLock()
-			for _, ss := range app.serverState {
+			serverStateMu.RLock()
+			for _, ss := range serverState {
 				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
 				serverName, nameFound := serverNameMap[sn]
 				if !nameFound {
-					app.logger.Error("Cannot find server name", zap.String("name", serverName))
+					logger.Error("Cannot find server name", zap.String("name", serverName))
 					continue
 				}
 				stats.Servers[serverName] = ss.PlayerCount
@@ -472,12 +471,12 @@ func (app *App) localStatUpdater() {
 					stats.CapacityPartial++
 				}
 			}
-			app.serverStateMu.RUnlock()
-			if errSave := app.store.SaveLocalTF2Stats(app.ctx, store.Live, stats); errSave != nil {
-				app.logger.Error("Failed to save local stats state", zap.Error(errSave))
+			serverStateMu.RUnlock()
+			if errSave := store.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
+				logger.Error("Failed to save local stats state", zap.Error(errSave))
 				continue
 			}
-		case <-app.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}

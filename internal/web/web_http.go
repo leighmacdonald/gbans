@@ -17,37 +17,33 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
-type Handler interface {
-	ListenAndServe(context.Context) error
-}
-
-type web struct {
-	app        model.Application
+var (
 	logger     *zap.Logger
 	httpServer *http.Server
 	cm         *wsConnectionManager
-}
+)
 
-func (web *web) ListenAndServe(ctx context.Context) error {
-	web.logger.Info("Service status changed", zap.String("state", "ready"))
-	defer web.logger.Info("Service status changed", zap.String("state", "stopped"))
+func Start(ctx context.Context) error {
+	cm = newWSConnectionManager(ctx, logger)
+	logger.Info("Service status changed", zap.String("state", "ready"))
+	defer logger.Info("Service status changed", zap.String("state", "stopped"))
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		if errShutdown := web.httpServer.Shutdown(shutdownCtx); errShutdown != nil {
-			web.logger.Error("Error shutting down http service", zap.Error(errShutdown))
+		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil {
+			logger.Error("Error shutting down http service", zap.Error(errShutdown))
 		}
 	}()
-	return web.httpServer.ListenAndServe()
+	return httpServer.ListenAndServe()
 }
 
-func (web *web) bind(ctx *gin.Context, recv any) bool {
+func bind(ctx *gin.Context, recv any) bool {
 	if errBind := ctx.BindJSON(&recv); errBind != nil {
 		responseErr(ctx, http.StatusBadRequest, gin.H{
 			"error": "Invalid request parameters",
 		})
-		web.logger.Error("Invalid request", zap.Error(errBind))
+		logger.Error("Invalid request", zap.Error(errBind))
 		return false
 	}
 	return true
@@ -55,19 +51,19 @@ func (web *web) bind(ctx *gin.Context, recv any) bool {
 
 // NewWeb sets up the router and starts the API HTTP handlers
 // This function blocks on the context
-func NewWeb(application model.Application) (Handler, error) {
-	var httpServer *http.Server
+func Setup(l *zap.Logger) error {
+	var srv *http.Server
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	logger := application.Logger().Named("web")
+	logger = l.Named("web")
 	router := gin.New()
 	router.Use(ErrorHandler(logger), gin.Recovery())
 
-	httpServer = &http.Server{
+	srv = &http.Server{
 		Addr:           config.HTTP.Addr(),
 		Handler:        router,
 		ReadTimeout:    10 * time.Second,
@@ -93,10 +89,9 @@ func NewWeb(application model.Application) (Handler, error) {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	cm := newWSConnectionManager(application.Ctx(), logger)
-	webHandler := web{app: application, logger: logger, httpServer: httpServer, cm: cm}
-	webHandler.setupRouter(router)
-	return &webHandler, nil
+	httpServer = srv
+	setupRouter(router)
+	return nil
 }
 
 func currentUserProfile(ctx *gin.Context) model.UserProfile {

@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (database *pgStore) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
+func SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
 	query, args, errQuery := sb.
 		Update("patreon_auth").
 		Set("creator_access_token", accessToken).
@@ -13,10 +13,10 @@ func (database *pgStore) SetPatreonAuth(ctx context.Context, accessToken string,
 	if errQuery != nil {
 		return errors.Wrap(errQuery, "Failed to create patreon auth update query")
 	}
-	return Err(database.Exec(ctx, query, args...))
+	return Err(Exec(ctx, query, args...))
 }
 
-func (database *pgStore) GetPatreonAuth(ctx context.Context) (string, string, error) {
+func GetPatreonAuth(ctx context.Context) (string, string, error) {
 	query, args, errQuery := sb.
 		Select("creator_access_token", "creator_refresh_token").From("patreon_auth").ToSql()
 	if errQuery != nil {
@@ -26,7 +26,7 @@ func (database *pgStore) GetPatreonAuth(ctx context.Context) (string, string, er
 		creatorAccessToken  string
 		creatorRefreshToken string
 	)
-	if errScan := database.QueryRow(ctx, query, args...).Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
+	if errScan := QueryRow(ctx, query, args...).Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
 		return "", "", errors.Wrap(errQuery, "Failed to query patreon auth")
 	}
 	return creatorAccessToken, creatorRefreshToken, nil

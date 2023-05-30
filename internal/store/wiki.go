@@ -54,7 +54,7 @@ type Media struct {
 	UpdatedOn time.Time     `json:"updated_on"`
 }
 
-func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
+func GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
 	query, args, errQueryArgs := sb.
 		Select("slug", "body_md", "revision", "created_on", "updated_on").
 		From("wiki").
@@ -65,14 +65,14 @@ func (database *pgStore) GetWikiPageBySlug(ctx context.Context, slug string, pag
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := database.conn.QueryRow(ctx, query, args...).Scan(&page.Slug, &page.BodyMD, &page.Revision,
+	if errQuery := QueryRow(ctx, query, args...).Scan(&page.Slug, &page.BodyMD, &page.Revision,
 		&page.CreatedOn, &page.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
 }
 
-func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
+func DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 	query, args, errQueryArgs := sb.
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug}).
@@ -80,14 +80,14 @@ func (database *pgStore) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	if _, errExec := database.conn.Exec(ctx, query, args...); errExec != nil {
+	if errExec := Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	database.logger.Info("Wiki slug deleted", zap.String("slug", slug))
+	logger.Info("Wiki slug deleted", zap.String("slug", slug))
 	return nil
 }
 
-func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
+func SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	query, args, errQueryArgs := sb.
 		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on").
@@ -96,15 +96,15 @@ func (database *pgStore) SaveWikiPage(ctx context.Context, page *wiki.Page) erro
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	_, errQueryRow := database.conn.Exec(ctx, query, args...)
+	errQueryRow := Exec(ctx, query, args...)
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
-	database.logger.Info("Wiki page saved", zap.String("slug", util.SanitizeLog(page.Slug)))
+	logger.Info("Wiki page saved", zap.String("slug", util.SanitizeLog(page.Slug)))
 	return nil
 }
 
-func (database *pgStore) SaveMedia(ctx context.Context, media *Media) error {
+func SaveMedia(ctx context.Context, media *Media) error {
 	const query = `
 		INSERT INTO media (
 		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on
@@ -112,7 +112,7 @@ func (database *pgStore) SaveMedia(ctx context.Context, media *Media) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING media_id
 	`
-	if errQuery := database.conn.QueryRow(ctx, query,
+	if errQuery := QueryRow(ctx, query,
 		media.AuthorId,
 		media.MimeType,
 		media.Name,
@@ -124,7 +124,7 @@ func (database *pgStore) SaveMedia(ctx context.Context, media *Media) error {
 	).Scan(&media.MediaId); errQuery != nil {
 		return Err(errQuery)
 	}
-	database.logger.Info("Wiki media created",
+	logger.Info("Wiki media created",
 		zap.Int("wiki_media_id", media.MediaId),
 		zap.Int64("author_id", media.AuthorId.Int64()),
 		zap.String("name", util.SanitizeLog(media.Name)),
@@ -134,13 +134,13 @@ func (database *pgStore) SaveMedia(ctx context.Context, media *Media) error {
 	return nil
 }
 
-func (database *pgStore) GetMediaByName(ctx context.Context, name string, media *Media) error {
+func GetMediaByName(ctx context.Context, name string, media *Media) error {
 	const query = `
 		SELECT 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND name = $1`
-	return Err(database.conn.QueryRow(ctx, query, name).Scan(
+	return Err(QueryRow(ctx, query, name).Scan(
 		&media.MediaId,
 		&media.AuthorId,
 		&media.Name,
@@ -153,13 +153,13 @@ func (database *pgStore) GetMediaByName(ctx context.Context, name string, media 
 	))
 }
 
-func (database *pgStore) GetMediaById(ctx context.Context, mediaId int, media *Media) error {
+func GetMediaById(ctx context.Context, mediaId int, media *Media) error {
 	const query = `
 		SELECT 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND media_id = $1`
-	return Err(database.conn.QueryRow(ctx, query, mediaId).Scan(
+	return Err(QueryRow(ctx, query, mediaId).Scan(
 		&media.MediaId,
 		&media.AuthorId,
 		&media.Name,
