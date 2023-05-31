@@ -1,17 +1,13 @@
 package discord
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net/http"
 	"time"
 )
 
@@ -69,6 +65,9 @@ const (
 )
 
 func botRegisterSlashCommands(ctx context.Context) error {
+	dmPerms := false
+	modPerms := int64(discordgo.PermissionBanMembers)
+	userPerms := int64(discordgo.PermissionViewChannel)
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptUserIdentifier,
@@ -132,7 +131,6 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			Value: r,
 		})
 	}
-	enabledDefault := true
 	optBanReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
 		Name:        OptBanReason,
@@ -149,15 +147,19 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:        string(CmdFind),
-			Description: "Find a user on any of the servers",
+			Name:                     string(CmdFind),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Find a user on any of the servers",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 			},
 		},
 		{
-			Name:        string(cmdMute),
-			Description: "Mute a player",
+			Name:                     string(cmdMute),
+			Description:              "Mute a player",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 				optDuration,
@@ -171,47 +173,59 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          string(CmdCheck),
-			Description:   "Get ban status for a steam id",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(CmdCheck),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Get ban status for a steam id",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          string(cmdCheckIp),
-			Description:   "Check if a ip is banned",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(cmdCheckIp),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Check if a ip is banned",
 			Options: []*discordgo.ApplicationCommandOption{
 				optIpAddr,
 			},
 		},
 		{
-			Name:        string(CmdKick),
-			Description: "Kick a user from any server they are playing on",
+			Name:                     string(CmdKick),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Kick a user from any server they are playing on",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 				optBanReason,
 			},
 		},
 		{
-			Name:        string(cmdPlayers),
-			Description: "Show a table of the current players on the server",
+			Name:                     string(cmdPlayers),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Show a table of the current players on the server",
 			Options: []*discordgo.ApplicationCommandOption{
 				optServerID,
 			},
 		},
 		{
-			Name:        string(cmdPSay),
-			Description: "Privately message a player",
+			Name:                     string(cmdPSay),
+			Description:              "Privately message a player",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 				optMessage,
 			},
 		},
 		{
-			Name:        string(CmdCSay),
-			Description: "Send a centered message to the whole server",
+			Name:                     string(CmdCSay),
+			Description:              "Send a centered message to the whole server",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
@@ -223,17 +237,19 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:        string(cmdSay),
-			Description: "Send a console message to the whole server",
+			Name:                     string(cmdSay),
+			Description:              "Send a console message to the whole server",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				optServerID,
 				optMessage,
 			},
 		},
 		{
-			Name:              string(cmdServers),
-			Description:       "Show the high level status of all servers",
-			DefaultPermission: &enabledDefault,
+			Name:                     string(cmdServers),
+			Description:              "Show the high level status of all servers",
+			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionBoolean,
@@ -243,17 +259,21 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          string(cmdSetSteam),
-			Description:   "Set your steam ID so gbans can link your account to discord",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(cmdSetSteam),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Set your steam ID so gbans can link your account to discord",
 			Options: []*discordgo.ApplicationCommandOption{
 				optUserID,
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          string(CmdHistory),
-			Description:   "Query user history",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(CmdHistory),
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
+			Description:              "Query user history",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        string(CmdHistoryIP),
@@ -274,9 +294,11 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          OptBan,
-			Description:   "Manage steam, ip and ASN bans",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     OptBan,
+			Description:              "Manage steam, ip and ASN bans",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        OptSteam,
@@ -336,9 +358,11 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          "unban",
-			Description:   "Manage steam, ip and ASN bans",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     "unban",
+			Description:              "Manage steam, ip and ASN bans",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        OptSteam,
@@ -365,10 +389,11 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID:     config.Discord.AppID,
-			Name:              string(cmdStats),
-			Description:       "Query stats",
-			DefaultPermission: &enabledDefault,
+
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(cmdStats),
+			Description:              "Query stats",
+			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        string(cmdStatsPlayer),
@@ -395,9 +420,11 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			ApplicationID: config.Discord.AppID,
-			Name:          string(CmdFilter),
-			Description:   "Manage and test global word filters",
+			ApplicationID:            config.Discord.AppID,
+			Name:                     string(CmdFilter),
+			Description:              "Manage and test global word filters",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "add",
@@ -426,7 +453,8 @@ func botRegisterSlashCommands(ctx context.Context) error {
 					},
 				},
 				{
-					Name:        "check",
+					Name: "check",
+
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Check if a string has a matching filter",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -441,67 +469,12 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 	}
-	var modPerms []*discordgo.ApplicationCommandPermissions
-	for _, roleId := range config.Discord.ModRoleIDs {
-		modPerms = append(modPerms, &discordgo.ApplicationCommandPermissions{
-			ID:         roleId,
-			Type:       discordgo.ApplicationCommandPermissionTypeRole,
-			Permission: true,
-		})
-	}
-	panic("check")
-	session.ApplicationCommandBulkOverwrite(config.Discord.AppID, config.Discord.GuildID, slashCommands)
 
-	// NOTE
-	// We are manually calling the API to set permissions as this is not yet a feature for the discordgo library
-	// This should be removed whenever support gets merged
-	var perms []permissionRequest
-	for _, cmd := range slashCommands {
-		command, errC := session.ApplicationCommandCreate(config.Discord.AppID, config.Discord.GuildID, cmd)
-		if errC != nil {
-			return errors.Wrapf(errC, "Failed to register command: %s", cmd.Name)
-		}
-		if command.DefaultPermission != nil && !*command.DefaultPermission && len(modPerms) > 0 {
-			perms = append(perms, permissionRequest{
-				ID:          command.ID,
-				Permissions: modPerms,
-			})
-		}
+	_, errBulk := session.ApplicationCommandBulkOverwrite(config.Discord.AppID, config.Discord.GuildID, slashCommands)
+	if errBulk != nil {
+		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
 
-	return registerCommandPermissions(ctx, perms)
-}
-
-type permissionRequest struct {
-	ID          string                                     `json:"id"`
-	Permissions []*discordgo.ApplicationCommandPermissions `json:"permissions"`
-}
-
-// registerCommandPermissions is used to additionally apply further restrictions to
-// application commands that discordgo itself does not support yet.
-// FIXME I suspect this is not required anymore
-func registerCommandPermissions(ctx context.Context, perms []permissionRequest) error {
-	httpClient := util.NewHTTPClient()
-	body, errUnmarshal := json.Marshal(perms)
-	if errUnmarshal != nil {
-		return errors.Wrapf(errUnmarshal, "Failed to set command permissions")
-	}
-	permUrl := fmt.Sprintf("https://discord.com/api/v8/applications/%s/guilds/%s/commands/permissions", config.Discord.AppID, config.Discord.GuildID)
-	reqCtx, cancelReq := context.WithTimeout(ctx, time.Second*10)
-	defer cancelReq()
-	req, errNewReq := http.NewRequestWithContext(reqCtx, "PUT", permUrl, bytes.NewReader(body))
-	if errNewReq != nil {
-		return errors.Wrapf(errNewReq, "Failed to create http request for discordutil permissions")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bot %s", config.Discord.Token))
-	resp, errDo := httpClient.Do(req)
-	if errDo != nil {
-		return errors.Wrapf(errDo, "Failed to perform http request for discordutil permissions")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return errors.Wrapf(errDo, "Error response code trying to perform http request for discordutil permissions: %d", resp.StatusCode)
-	}
 	return nil
 }
 

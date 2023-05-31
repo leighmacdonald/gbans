@@ -164,7 +164,10 @@ func sendInteractionMessageEdit(session *discordgo.Session, interaction *discord
 }
 
 func SendPayload(payload Payload) error {
-	panic("x")
+	if !connected.Load() {
+		return nil
+	}
+
 	return nil
 }
 
