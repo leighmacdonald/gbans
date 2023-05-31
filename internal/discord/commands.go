@@ -16,21 +16,21 @@ type Cmd string
 const (
 	CmdBan         Cmd = "ban"
 	CmdFind        Cmd = "find"
-	cmdMute        Cmd = "mute"
+	CmdMute        Cmd = "mute"
 	CmdCheck       Cmd = "check"
-	cmdCheckIp     Cmd = "checkip"
-	cmdUnban       Cmd = "unban"
+	CmdCheckIp     Cmd = "checkip"
+	CmdUnban       Cmd = "unban"
 	CmdKick        Cmd = "kick"
 	cmdPlayers     Cmd = "players"
-	cmdPSay        Cmd = "psay"
+	CmdPSay        Cmd = "psay"
 	CmdCSay        Cmd = "csay"
-	cmdSay         Cmd = "say"
-	cmdServers     Cmd = "servers"
-	cmdSetSteam    Cmd = "set_steam"
-	cmdStats       Cmd = "stats"
-	cmdStatsGlobal Cmd = "global"
-	cmdStatsPlayer Cmd = "player"
-	cmdStatsServer Cmd = "server"
+	CmdSay         Cmd = "say"
+	CmdServers     Cmd = "servers"
+	CmdSetSteam    Cmd = "set_steam"
+	CmdStats       Cmd = "stats"
+	CmdStatsGlobal Cmd = "global"
+	CmdStatsPlayer Cmd = "player"
+	CmdStatsServer Cmd = "server"
 	CmdHistory     Cmd = "history"
 	CmdHistoryIP   Cmd = "ip"
 	CmdHistoryChat Cmd = "chat"
@@ -64,7 +64,7 @@ const (
 	OptCIDR             = "cidr"
 )
 
-func botRegisterSlashCommands(ctx context.Context) error {
+func botRegisterSlashCommands() error {
 	dmPerms := false
 	modPerms := int64(discordgo.PermissionBanMembers)
 	userPerms := int64(discordgo.PermissionViewChannel)
@@ -156,7 +156,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:                     string(cmdMute),
+			Name:                     string(CmdMute),
 			Description:              "Mute a player",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -184,7 +184,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 		},
 		{
 			ApplicationID:            config.Discord.AppID,
-			Name:                     string(cmdCheckIp),
+			Name:                     string(CmdCheckIp),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Check if a ip is banned",
@@ -212,7 +212,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:                     string(cmdPSay),
+			Name:                     string(CmdPSay),
 			Description:              "Privately message a player",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -237,7 +237,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:                     string(cmdSay),
+			Name:                     string(CmdSay),
 			Description:              "Send a console message to the whole server",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -247,7 +247,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 			},
 		},
 		{
-			Name:                     string(cmdServers),
+			Name:                     string(CmdServers),
 			Description:              "Show the high level status of all servers",
 			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
@@ -260,7 +260,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 		},
 		{
 			ApplicationID:            config.Discord.AppID,
-			Name:                     string(cmdSetSteam),
+			Name:                     string(CmdSetSteam),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Set your steam ID so gbans can link your account to discord",
@@ -391,12 +391,12 @@ func botRegisterSlashCommands(ctx context.Context) error {
 		{
 
 			ApplicationID:            config.Discord.AppID,
-			Name:                     string(cmdStats),
+			Name:                     string(CmdStats),
 			Description:              "Query stats",
 			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(cmdStatsPlayer),
+					Name:        string(CmdStatsPlayer),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get a players stats",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -404,7 +404,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 					},
 				},
 				{
-					Name:        string(cmdStatsServer),
+					Name:        string(CmdStatsServer),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get a servers stats",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -412,7 +412,7 @@ func botRegisterSlashCommands(ctx context.Context) error {
 					},
 				},
 				{
-					Name:        string(cmdStatsGlobal),
+					Name:        string(CmdStatsGlobal),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get a global stats",
 					Options:     []*discordgo.ApplicationCommandOption{},
@@ -490,7 +490,8 @@ const (
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
 func onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	command := Cmd(interaction.ApplicationCommandData().Name)
+	data := interaction.ApplicationCommandData()
+	command := Cmd(data.Name)
 	response := Response{MsgType: MtString}
 	if handler, handlerFound := commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
@@ -503,7 +504,7 @@ func onInteractionCreate(session *discordgo.Session, interaction *discordgo.Inte
 			},
 		}); errRespond != nil {
 			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
-			if errSendInteraction := sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+			if errSendInteraction := sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
 				logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
 			return
@@ -513,13 +514,13 @@ func onInteractionCreate(session *discordgo.Session, interaction *discordgo.Inte
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
 			RespErr(&response, errHandleCommand.Error())
-			if errSendInteraction := sendInteractionMessageEdit(session, interaction.Interaction, response); errSendInteraction != nil {
+			if errSendInteraction := sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
 				logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
 			logger.Error("User command error", zap.Error(errHandleCommand))
 			return
 		}
-		if sendSendResponse := sendInteractionMessageEdit(session, interaction.Interaction, response); sendSendResponse != nil {
+		if sendSendResponse := sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
 			logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
 		} else {
 			logger.Debug("Sent message embed")

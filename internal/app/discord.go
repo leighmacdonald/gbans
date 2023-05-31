@@ -26,7 +26,26 @@ import (
 
 func registerDiscordHandlers() error {
 	cmdMap := map[discord.Cmd]discord.CommandHandler{
-		discord.CmdBan: onBan,
+		discord.CmdBan:     onBan,
+		discord.CmdCheck:   onCheck,
+		discord.CmdCSay:    onCheck,
+		discord.CmdFilter:  onFilter,
+		discord.CmdFind:    onFind,
+		discord.CmdHistory: onHistory,
+		discord.CmdKick:    onKick,
+		discord.CmdLog:     onLog,
+		discord.CmdMute:    onMute,
+		//discord.CmdCheckIp: onCheckIp,
+		discord.CmdPSay:     onPSay,
+		discord.CmdSay:      onPSay,
+		discord.CmdServers:  onServers,
+		discord.CmdSetSteam: onSetSteam,
+		discord.CmdUnban:    onUnban,
+		//discord.CmdStats: onServers,
+		//discord.CmdStatsGlobal: onServers,
+		//discord.CmdStatsPlayer: onServers,
+		//discord.CmdStatsServer: ,
+
 	}
 	for k, v := range cmdMap {
 		if errRegister := discord.RegisterHandler(k, v); errRegister != nil {
@@ -34,6 +53,12 @@ func registerDiscordHandlers() error {
 		}
 	}
 	return nil
+}
+
+func init() {
+	if errRegister := registerDiscordHandlers(); errRegister != nil {
+		panic(errRegister.Error())
+	}
 }
 
 func onBan(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
