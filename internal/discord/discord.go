@@ -1,12 +1,13 @@
 package discord
 
 import (
-	"context"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"sync/atomic"
+	"time"
 )
 
 var (
@@ -45,7 +46,13 @@ func SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
 	return nil
 }
 
-func Start(ctx context.Context, l *zap.Logger) error {
+func Shutdown() {
+	if session != nil {
+		util.LogCloser(session, logger)
+	}
+}
+
+func Start(l *zap.Logger) error {
 	logger = l.Named("discord")
 
 	// Immediately connects, so we connect within the Start func
@@ -60,27 +67,30 @@ func Start(ctx context.Context, l *zap.Logger) error {
 			}
 		}
 	}()
-
-	botSession.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	botSession.AddHandler(onReady)
-	botSession.AddHandler(onConnect)
-	botSession.AddHandler(onDisconnect)
-	botSession.AddHandler(onInteractionCreate)
-
-	botSession.Identify.Intents |= discordgo.IntentsGuildMessages
-	botSession.Identify.Intents |= discordgo.IntentMessageContent
-	botSession.Identify.Intents |= discordgo.IntentGuildMembers
 	//botSession.Identify.Intents |= discordgo.IntentGuildPresences
+	session = botSession
 
+	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	session.AddHandler(onReady)
+	session.AddHandler(onConnect)
+	session.AddHandler(onDisconnect)
+	session.AddHandler(onInteractionCreate)
+
+	session.Identify.Intents |= discordgo.IntentsGuildMessages
+	session.Identify.Intents |= discordgo.IntentMessageContent
+	session.Identify.Intents |= discordgo.IntentGuildMembers
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		if errRegister := botRegisterSlashCommands(); errRegister != nil {
+			logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
+		}
+	}()
 	// Open a websocket connection to discord and begin listening.
-	if errSessionOpen := botSession.Open(); errSessionOpen != nil {
+	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
 
-	session = botSession
-	if errRegister := botRegisterSlashCommands(ctx); errRegister != nil {
-		logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
-	}
 	return nil
 }
 
@@ -136,31 +146,30 @@ func sendChannelMessage(session *discordgo.Session, channelId string, msg string
 	return nil
 }
 
-func sendInteractionMessageEdit(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
+func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
 	if !connected.Load() {
-		logger.Error("Tried to send message edit to disconnected client")
+		logger.Fatal("Tried to send message edit to disconnected client?")
 		return nil
 	}
-	edit := &discordgo.WebhookEdit{
-		Embeds:          nil,
-		AllowedMentions: nil,
+	edit := &discordgo.InteractionResponseData{
+		Content: "hi",
 	}
-	var embeds []*discordgo.MessageEmbed
 	switch response.MsgType {
 	case MtString:
 		val, ok := response.Value.(string)
 		if ok && val != "" {
-			edit.Content = &val
-			if len(*edit.Content) > discordMaxMsgLen {
+			edit.Content = val
+			if len(edit.Content) > discordMaxMsgLen {
 				return ErrTooLarge
 			}
 		}
 	case MtEmbed:
-		embeds = append(embeds, response.Value.(*discordgo.MessageEmbed))
-		edit.Embeds = &embeds
+		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))
 	}
-	_, errResp := session.InteractionResponseEdit(interaction, edit)
-	return errResp
+	_, err := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
+		Embeds: &edit.Embeds,
+	})
+	return err
 }
 
 func SendPayload(payload Payload) error {
