@@ -49,10 +49,8 @@ func bind(ctx *gin.Context, recv any) bool {
 	return true
 }
 
-// NewWeb sets up the router and starts the API HTTP handlers
-// This function blocks on the context
-func Setup(l *zap.Logger) error {
-	var srv *http.Server
+// Init sets up the router and starts the API HTTP handlers
+func Init(l *zap.Logger) error {
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
@@ -60,12 +58,9 @@ func Setup(l *zap.Logger) error {
 	}
 
 	logger = l.Named("web")
-	router := gin.New()
-	router.Use(ErrorHandler(logger), gin.Recovery())
-
-	srv = &http.Server{
+	httpServer = &http.Server{
 		Addr:           config.HTTP.Addr(),
-		Handler:        router,
+		Handler:        createRouter(),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
@@ -89,8 +84,7 @@ func Setup(l *zap.Logger) error {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
-	httpServer = srv
-	setupRouter(router)
+
 	return nil
 }
 

@@ -126,8 +126,8 @@ func PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, messa
 	})
 }
 
-// SetSteam is used to associate a discordutil user with either steam id. This is used
-// instead of requiring users to link their steam account to discordutil itself. It also
+// SetSteam is used to associate a discord user with either steam id. This is used
+// instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
 func SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error {
 	newPerson := store.NewPerson(sid64)

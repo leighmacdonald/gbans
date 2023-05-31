@@ -79,6 +79,7 @@ func RespErr(response *Response, message string) {
 // RespOk will set up and allocate a base successful response embed that can be
 // further customized
 func RespOk(response *Response, title string) *discordgo.MessageEmbed {
+
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       title,

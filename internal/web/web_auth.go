@@ -144,7 +144,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		form := url.Values{}
 		form.Set("client_id", config.Discord.AppID)
 		form.Set("client_secret", config.Discord.AppSecret)
-		form.Set("redirect_uri", config.ExtURL("/login/discordutil"))
+		form.Set("redirect_uri", config.ExtURL("/login/discord"))
 		form.Set("code", code)
 		form.Set("grant_type", "authorization_code")
 		form.Set("scope", "identify")

@@ -750,7 +750,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 	return nil
 }
 
-//func (bot *discordutil) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	switch interaction.Data.Options[0].Name {
 //	case string(cmdStatsPlayer):
 //		return bot.onStatsPlayer(ctx, session, interaction, response)
@@ -763,7 +763,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	}
 //}
 //
-//func (bot *discordutil) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	target := model.Target(interaction.Data.Options[0].Options[0].Value.(string))
 //	sid, errSid := target.SID64()
 //	if errSid != nil {
@@ -804,7 +804,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	return nil
 //}
 //
-//func (bot *discordutil) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+//func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	serverIdStr := interaction.Data.Options[0].Options[0].Value.(string)
 //	var (
 //		server model.Server
@@ -831,7 +831,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	return nil
 //}
 //
-//func (bot *discordutil) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
+//func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
 //	var stats model.GlobalStats
 //	errStats := bot.database.GetGlobalStats(ctx, &stats)
 //	if errStats != nil {

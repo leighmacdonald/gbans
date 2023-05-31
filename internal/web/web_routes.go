@@ -38,7 +38,10 @@ type jsConfig struct {
 	DiscordLinkId   string `json:"discordLinkId"`
 }
 
-func setupRouter(engine *gin.Engine) {
+func createRouter() *gin.Engine {
+	engine := gin.New()
+	engine.Use(ErrorHandler(logger), gin.Recovery())
+
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
@@ -74,7 +77,7 @@ func setupRouter(engine *gin.Engine) {
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
-		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discordutil"}
+		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord"}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{
@@ -145,7 +148,7 @@ func setupRouter(engine *gin.Engine) {
 			wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
 
-		authed.GET("/api/auth/discordutil", onOAuthDiscordCallback())
+		authed.GET("/api/auth/discord", onOAuthDiscordCallback())
 		authed.GET("/api/current_profile", onAPICurrentProfile())
 		authed.GET("/api/current_profile/notifications", onAPICurrentProfileNotifications())
 		authed.POST("/api/report", onAPIPostReportCreate())
@@ -214,4 +217,6 @@ func setupRouter(engine *gin.Engine) {
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete())
 		adminRoute.GET("/api/servers", onAPIGetServers())
 	}
+
+	return engine
 }

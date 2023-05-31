@@ -75,10 +75,10 @@ func NewQueryFilter(query string) QueryFilter {
 	}
 }
 
-// New sets up underlying required services.
-func Init(ctx context.Context, l *zap.Logger, dsn string) error {
+// Init sets up underlying required services.
+func Init(ctx context.Context, l *zap.Logger) error {
 	logger = l.Named("store")
-	cfg, errConfig := pgxpool.ParseConfig(dsn)
+	cfg, errConfig := pgxpool.ParseConfig(config.DB.DSN)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}

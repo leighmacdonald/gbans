@@ -31,7 +31,7 @@ var netUpdateCmd = &cobra.Command{
 		}()
 		connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancelConn()
-		errStore := store.Init(connCtx, rootLogger, config.DB.DSN)
+		errStore := store.Init(connCtx, rootLogger)
 		if errStore != nil {
 			rootLogger.Fatal("Failed to initialize database connection", zap.Error(errStore))
 		}

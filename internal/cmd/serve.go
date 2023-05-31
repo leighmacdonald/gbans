@@ -9,6 +9,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // serveCmd represents the serve command
@@ -17,14 +20,18 @@ var serveCmd = &cobra.Command{
 	Short: "Starts the gbans service",
 	Long:  `Start the main gbans application`,
 	Run: func(cmd *cobra.Command, args []string) {
-		rootCtx := context.Background()
-		rootLogger := app.MustCreateLogger("")
+		rootCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		logFile := ""
+		rootLogger := app.MustCreateLogger(logFile)
 		defer func() {
-			if errSync := rootLogger.Sync(); errSync != nil {
-				fmt.Printf("Failed to sync log: %v\n", errSync)
+			if logFile != "" {
+				if errSync := rootLogger.Sync(); errSync != nil {
+					fmt.Printf("Failed to sync log: %v\n", errSync)
+				}
 			}
 		}()
-		if errConnect := store.Init(rootCtx, rootLogger, ""); errConnect != nil {
+		if errConnect := store.Init(rootCtx, rootLogger); errConnect != nil {
 			rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 		}
 		defer func() {
@@ -33,18 +40,23 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
-		app.Init(rootCtx, rootLogger)
+		if errApp := app.Init(rootCtx, rootLogger); errApp != nil {
+			rootLogger.Fatal("Failed to init app", zap.Error(errApp))
+		}
 
-		errWeb := web.Setup(rootLogger)
+		errWeb := web.Init(rootLogger)
 		if errWeb != nil {
 			rootLogger.Fatal("Failed to setup web", zap.Error(errWeb))
 		}
-		web.Start(rootCtx)
 
-		if errDiscord := discord.Start(rootCtx, rootLogger); errDiscord != nil {
+		if errDiscord := discord.Start(rootLogger); errDiscord != nil {
 			rootLogger.Error("Failed to initialize discord", zap.Error(errDiscord))
 		}
-
+		defer discord.Shutdown()
+		if errWeb := web.Start(rootCtx); errWeb != nil {
+			rootLogger.Error("Web returned error", zap.Error(errWeb))
+		}
+		<-rootCtx.Done()
 	},
 }
 

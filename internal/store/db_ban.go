@@ -75,7 +75,7 @@ type Origin int
 const (
 	// System is an automatic ban triggered by the service
 	System Origin = iota
-	// Bot is a ban using the discordutil bot interface
+	// Bot is a ban using the discord bot interface
 	Bot
 	// Web is a ban using the web-ui
 	Web

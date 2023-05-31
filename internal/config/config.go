@@ -5,7 +5,7 @@
 // Env variables will override the config values. They can all be set using the same format as shown to
 // map to the correct config keys:
 //
-//	export discordutil.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
+//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
 package config

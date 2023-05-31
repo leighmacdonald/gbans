@@ -48,12 +48,12 @@ word_filter:
     - https://raw.githubusercontent.com/RobertJGabriel/Google-profanity-words/master/list.txt
 
 discord:
-  # Enable optional discordutil integration
+  # Enable optional discord integration
   enabled: false
   app_id: 11111111111111111
   guild_id: 111111111111111111
   link_id:
-  # Your discordutil bot token
+  # Your discord bot token
   # See: https://discord.com/developers/applications
   token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   mod_role_ids: [1111111111111111, 2222222222222222222]

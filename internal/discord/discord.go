@@ -36,16 +36,6 @@ func RegisterHandler(cmd Cmd, handler CommandHandler) error {
 	return nil
 }
 
-func SendEmbed(channelId string, message *discordgo.MessageEmbed) error {
-	if session == nil {
-		return nil
-	}
-	if _, errSend := session.ChannelMessageSendEmbed(channelId, message); errSend != nil {
-		return errSend
-	}
-	return nil
-}
-
 func Shutdown() {
 	if session != nil {
 		util.LogCloser(session, logger)
@@ -58,7 +48,7 @@ func Start(l *zap.Logger) error {
 	// Immediately connects, so we connect within the Start func
 	botSession, errNewSession := discordgo.New("Bot " + config.Discord.Token)
 	if errNewSession != nil {
-		return errors.Wrapf(errNewSession, "Failed to connect to discordutil. discordutil unavailable")
+		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
 	defer func() {
 		if botSession != nil {
@@ -176,12 +166,8 @@ func SendPayload(payload Payload) error {
 	if !connected.Load() {
 		return nil
 	}
-
-	return nil
-}
-
-func Send(channelId string, message string, wrap bool) error {
-	return sendChannelMessage(session, channelId, message, wrap)
+	_, errSend := session.ChannelMessageSendEmbed(payload.ChannelId, payload.Embed)
+	return errSend
 }
 
 // LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int)
