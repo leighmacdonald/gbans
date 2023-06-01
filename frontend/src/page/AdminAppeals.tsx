@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import { PersonCell } from '../component/PersonCell';
 
-export const AdminAppeals = (): JSX.Element => {
+export const AdminAppeals = () => {
     const [appeals, setAppeals] = useState<AppealOverview[]>([]);
 
     useEffect(() => {

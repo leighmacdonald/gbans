@@ -103,7 +103,7 @@
 //     );
 // };
 //
-// export const QuickPlayPage = (): JSX.Element => {
+// export const QuickPlayPage = () => {
 //     const maxLobbyMembers = 6;
 //     const [allServers, setAllServers] = useState<SlimServer[]>([]);
 //     const [minPlayers, setMinPlayers] = useState<number>(0);

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { writeAccessToken, writeRefreshToken } from '../api';

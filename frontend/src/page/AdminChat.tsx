@@ -40,7 +40,7 @@ const anyServer: Server = {
     created_on: new Date()
 };
 
-export const AdminChat = (): JSX.Element => {
+export const AdminChat = () => {
     const [messages, setMessages] = useState<PersonMessage[]>([]);
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);

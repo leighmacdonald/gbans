@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import { Heading } from './Heading';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';

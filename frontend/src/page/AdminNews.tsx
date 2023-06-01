@@ -19,7 +19,7 @@ import { TabPanel } from '../component/TabPanel';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
-export const AdminNews = (): JSX.Element => {
+export const AdminNews = () => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
     const { sendFlash } = useUserFlashCtx();
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {

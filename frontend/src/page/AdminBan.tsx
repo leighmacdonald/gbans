@@ -45,7 +45,7 @@ import {
     isPermanentBan
 } from '../component/DataTableRelativeDateField';
 
-export const AdminBan = (): JSX.Element => {
+export const AdminBan = () => {
     const theme = useTheme();
     const [bans, setBans] = useState<IAPIBanRecordProfile[]>([]);
     const [banGroups, setBanGroups] = useState<IAPIBanGroupRecord[]>([]);

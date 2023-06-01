@@ -9,7 +9,7 @@ import Paper from '@mui/material/Paper';
 import { apiGetStats, DatabaseStats } from '../api';
 import { logErr } from '../util/errors';
 
-export const StatsPanel = (): JSX.Element => {
+export const StatsPanel = () => {
     const [stats, setStats] = React.useState<DatabaseStats>({
         bans: 0,
         appeals_closed: 0,

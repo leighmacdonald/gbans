@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { STVListVIew } from '../component/STVListVIew';

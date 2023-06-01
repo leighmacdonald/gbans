@@ -111,7 +111,7 @@ export const ServerStats = () => {
     );
 };
 
-export const Servers = (): JSX.Element => {
+export const Servers = () => {
     const [servers, setServers] = useState<ServerState[]>([]);
     const [pos, setPos] = useState<LatLngLiteral>({
         lat: 42.434719,

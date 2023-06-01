@@ -1,6 +1,5 @@
+import React, { FC, JSX } from 'react';
 import useTheme from '@mui/material/styles/useTheme';
-import { FC } from 'react';
-import React from 'react';
 import { tf2Fonts } from '../theme';
 import Grid from '@mui/material/Grid';
 

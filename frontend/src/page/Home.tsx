@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import Grid from '@mui/material/Grid';
 import { NewsView } from '../component/NewsView';
 import Stack from '@mui/material/Stack';

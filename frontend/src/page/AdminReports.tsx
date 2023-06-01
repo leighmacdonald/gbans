@@ -1,6 +1,6 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import React, { useEffect, useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import {
     apiGetReports,
@@ -23,7 +23,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import { PersonCell } from '../component/PersonCell';
 
-export const AdminReports = (): JSX.Element => {
+export const AdminReports = () => {
     const [reports, setReports] = useState<ReportWithAuthor[]>([]);
     const [filterStatus, setFilterStatus] = useState(ReportStatus.Opened);
     const navigate = useNavigate();

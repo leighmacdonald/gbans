@@ -40,10 +40,7 @@ interface FilterTestFieldProps {
     isRegex: boolean;
 }
 
-const FilterTestField = ({
-    pattern,
-    isRegex
-}: FilterTestFieldProps): JSX.Element => {
+const FilterTestField = ({ pattern, isRegex }: FilterTestFieldProps) => {
     const [testString, setTestString] = useState<string>('');
     const [matched, setMatched] = useState(false);
     const [validPattern, setValidPattern] = useState(false);
@@ -102,7 +99,7 @@ const FilterEditModal = ({
     filterId,
     defaultPattern = '',
     defaultIsRegex = false
-}: FilterEditModalProps): JSX.Element => {
+}: FilterEditModalProps) => {
     const [isRegex, setIsRegex] = useState<boolean>(defaultIsRegex);
     const [pattern, setPattern] = useState<string>(defaultPattern);
     const handleClose = () => setOpen(false);

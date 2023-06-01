@@ -24,7 +24,7 @@ import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import LinkIcon from '@mui/icons-material/Link';
 import Box from '@mui/material/Box';
 
-export const Profile = (): JSX.Element => {
+export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const { currentUser } = useCurrentUserCtx();

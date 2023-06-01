@@ -16,7 +16,7 @@ import { PugLobbyView } from './PugLobbyView';
 import { encode, MsgType, wsValue } from '../api/ws';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
-export const PugPage = (): JSX.Element => {
+export const PugPage = () => {
     const [lobby, setLobby] = useState<Nullable<PugLobby>>(null);
     const [lobbies, setLobbies] = useState<PugLobby[]>([]);
     const [messages, setMessages] = useState<wsMsgTypePugUserMessageResponse[]>(

@@ -17,7 +17,7 @@ import Paper from '@mui/material/Paper';
 import { Heading } from '../component/Heading';
 import { logErr } from '../util/errors';
 
-export const MatchPage = (): JSX.Element => {
+export const MatchPage = () => {
     const navigate = useNavigate();
     const [match, setMatch] = useState<Match>();
     const [loading, setLoading] = React.useState<boolean>(true);

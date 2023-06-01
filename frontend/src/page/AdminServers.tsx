@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteServerModal } from '../component/DeleteServerModal';
 
-export const AdminServers = (): JSX.Element => {
+export const AdminServers = () => {
     const [open, setOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [servers, setServers] = useState<Server[]>([]);

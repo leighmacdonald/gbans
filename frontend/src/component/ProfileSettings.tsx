@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';

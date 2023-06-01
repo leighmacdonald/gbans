@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';

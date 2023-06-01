@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Chip from '@mui/material/Chip';
 import Tab from '@mui/material/Tab';

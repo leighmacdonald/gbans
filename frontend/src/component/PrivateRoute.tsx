@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, JSX } from 'react';
 import { RouteProps } from 'react-router';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { Login } from '../page/Login';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, JSX } from 'react';
 import { renderMarkdown } from '../api/wiki';
 import Stack from '@mui/material/Stack';
 import { FileUploadModal } from './FileUploadModal';
