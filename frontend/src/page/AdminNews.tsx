@@ -30,9 +30,7 @@ export const AdminNews = (): JSX.Element => {
         news_id: 0,
         body_md: '',
         is_published: false,
-        title: '',
-        created_on: '',
-        updated_on: ''
+        title: ''
     });
     const onSave = useCallback(() => {
         apiNewsSave(selectedNewsEntry)

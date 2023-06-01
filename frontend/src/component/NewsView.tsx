@@ -34,6 +34,9 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
             {(articles || [])
                 ?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage)
                 .map((article) => {
+                    if (!article.created_on || !article.updated_on) {
+                        return null;
+                    }
                     return (
                         <Paper elevation={1} key={`news_` + article.news_id}>
                             <SplitHeading
