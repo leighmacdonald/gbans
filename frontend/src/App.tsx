@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import ThemeProvider from '@mui/material/styles/ThemeProvider';
@@ -23,7 +23,10 @@ import {
     readAccessToken,
     UserProfile,
     writeAccessToken,
-    writeRefreshToken
+    writeRefreshToken,
+    UserNotification,
+    NotificationsQuery,
+    apiGetNotifications
 } from './api';
 import { AdminBan } from './page/AdminBan';
 import { TopBar } from './component/TopBar';
@@ -52,6 +55,7 @@ import { PugPage } from './pug/PugPage';
 import { UserInit } from './component/UserInit';
 import { STVPage } from './page/STVPage';
 import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
+import { logErr } from './util/errors';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -61,6 +65,18 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
+    const [notifications, setNotifications] = useState<UserNotification[]>([]);
+
+    useEffect(() => {
+        const query: NotificationsQuery = {};
+        apiGetNotifications(query)
+            .then((resp) => {
+                if (resp.result) {
+                    setNotifications(resp.result);
+                }
+            })
+            .catch(logErr);
+    }, [currentUser.steam_id]);
 
     const saveUser = (profile: UserProfile) => {
         setCurrentUser(profile);
@@ -123,7 +139,9 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                 getToken: readAccessToken,
                 setToken: writeAccessToken,
                 getRefreshToken: readRefreshToken,
-                setRefreshToken: writeRefreshToken
+                setRefreshToken: writeRefreshToken,
+                setNotifications: setNotifications,
+                notifications: notifications
             }}
         >
             <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>

@@ -150,7 +150,7 @@ func createRouter() *gin.Engine {
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback())
 		authed.GET("/api/current_profile", onAPICurrentProfile())
-		authed.GET("/api/current_profile/notifications", onAPICurrentProfileNotifications())
+		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications())
 		authed.POST("/api/report", onAPIPostReportCreate())
 		authed.GET("/api/report/:report_id", onAPIGetReport())
 		authed.POST("/api/reports", onAPIGetReports())

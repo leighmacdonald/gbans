@@ -121,7 +121,7 @@ var reasonStr = map[Reason]string{
 	External:         "3rd party",
 	Cheating:         "Cheating",
 	Racism:           "Racism",
-	Harassment:       "Person Harassment",
+	Harassment:       "Personal Harassment",
 	Exploiting:       "Exploiting",
 	WarningsExceeded: "Warnings Exceeded",
 	Spam:             "Spam",

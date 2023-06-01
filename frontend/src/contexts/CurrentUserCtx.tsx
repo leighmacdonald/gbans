@@ -3,6 +3,7 @@ import {
     PermissionLevel,
     readAccessToken,
     userKey,
+    UserNotification,
     UserProfile,
     writeAccessToken,
     writeRefreshToken
@@ -29,6 +30,8 @@ export type CurrentUser = {
     setToken: (token: string) => void;
     getRefreshToken: () => string;
     setRefreshToken: (token: string) => void;
+    setNotifications: (notifs: UserNotification[]) => void;
+    notifications: UserNotification[];
 };
 
 export const CurrentUserCtx = createContext<CurrentUser>({
@@ -43,7 +46,11 @@ export const CurrentUserCtx = createContext<CurrentUser>({
     getToken: readAccessToken,
     setToken: writeAccessToken,
     getRefreshToken: readAccessToken,
-    setRefreshToken: writeRefreshToken
+    setRefreshToken: writeRefreshToken,
+    setNotifications: () => {
+        return null;
+    },
+    notifications: []
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

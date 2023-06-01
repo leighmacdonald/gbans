@@ -40,7 +40,6 @@ export interface UserProfile extends TimeStamped {
     avatarfull: string;
     ban_id: number;
     muted: boolean;
-    notifications?: UserNotification[];
 }
 
 export interface Person extends UserProfile {
@@ -198,4 +197,14 @@ export const apiGetMessages = async (opts: MessageQuery) => {
         };
     });
     return resp;
+};
+
+export type NotificationsQuery = QueryFilter<UserNotification>;
+
+export const apiGetNotifications = async (opts: NotificationsQuery) => {
+    return await apiCall<UserNotification[]>(
+        `/api/current_profile/notifications`,
+        'POST',
+        opts
+    );
 };

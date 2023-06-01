@@ -55,7 +55,7 @@ interface menuRoute {
 
 export const TopBar = () => {
     const navigate = useNavigate();
-    const { currentUser } = useCurrentUserCtx();
+    const { currentUser, notifications } = useCurrentUserCtx();
     const user = currentUser;
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
@@ -369,9 +369,9 @@ export const TopBar = () => {
                                 <IconButton color={'inherit'}>
                                     <Badge
                                         badgeContent={
-                                            (
-                                                currentUser.notifications ?? []
-                                            ).filter((n) => !n.read).length
+                                            (notifications ?? []).filter(
+                                                (n) => !n.read
+                                            ).length
                                         }
                                     >
                                         <MailIcon />

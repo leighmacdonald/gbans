@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import { UserProfile } from '../api';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';

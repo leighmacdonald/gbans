@@ -739,6 +739,11 @@ func SendNotification(ctx context.Context, targetId steamid.SID64, severity Noti
 	return nil
 }
 
+type NotificationQuery struct {
+	QueryFilter
+	SteamID steamid.SID64 `json:"steam_id,string"`
+}
+
 func GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]UserNotification, error) {
 	var notifications []UserNotification
 	query, args, errQuery := sb.

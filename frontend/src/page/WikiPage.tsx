@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, JSX } from 'react';
 import Grid from '@mui/material/Grid';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';

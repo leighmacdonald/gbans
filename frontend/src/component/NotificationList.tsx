@@ -3,10 +3,10 @@ import { DataTable, RowsPerPage } from './DataTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 export const NotificationList = () => {
-    const { currentUser } = useCurrentUserCtx();
+    const { notifications } = useCurrentUserCtx();
     return (
         <DataTable
-            rows={currentUser.notifications || []}
+            rows={notifications}
             defaultSortColumn={'person_notification_id'}
             rowsPerPage={RowsPerPage.Fifty}
             columns={[

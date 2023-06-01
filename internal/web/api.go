@@ -915,6 +915,7 @@ func onAPICurrentProfileNotifications() gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, notifications)
 	}
 }
+
 func onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userProfile := currentUserProfile(ctx)

@@ -437,10 +437,6 @@ func authMiddleware(level store.Privilege) gin.HandlerFunc {
 					logger.Error("Failed to fetch authed user ban", zap.Error(errBan))
 				}
 			}
-			notifications, errNotifications := store.GetPersonNotifications(ctx, sid)
-			if errNotifications != nil && !errors.Is(errNotifications, store.ErrNoResult) {
-				logger.Error("Failed to fetch user notifications", zap.Error(errNotifications))
-			}
 			profile := model.UserProfile{
 				SteamID:         loggedInPerson.SteamID,
 				CreatedOn:       loggedInPerson.CreatedOn,
@@ -452,7 +448,6 @@ func authMiddleware(level store.Privilege) gin.HandlerFunc {
 				AvatarFull:      loggedInPerson.AvatarFull,
 				Muted:           loggedInPerson.Muted,
 				BanID:           bp.Ban.BanID,
-				Notifications:   notifications,
 			}
 			ctx.Set(ctxKeyUserProfile, profile)
 		}
