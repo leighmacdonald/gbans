@@ -21,7 +21,7 @@ const (
 	CmdCheckIp     Cmd = "checkip"
 	CmdUnban       Cmd = "unban"
 	CmdKick        Cmd = "kick"
-	cmdPlayers     Cmd = "players"
+	CmdPlayers     Cmd = "players"
 	CmdPSay        Cmd = "psay"
 	CmdCSay        Cmd = "csay"
 	CmdSay         Cmd = "say"
@@ -203,7 +203,7 @@ func botRegisterSlashCommands() error {
 			},
 		},
 		{
-			Name:                     string(cmdPlayers),
+			Name:                     string(CmdPlayers),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Show a table of the current players on the server",

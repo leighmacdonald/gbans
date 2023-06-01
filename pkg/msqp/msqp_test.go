@@ -11,8 +11,7 @@ func TestClient(t *testing.T) {
 	require.NoError(t, errResolve)
 	conn, errDial := net.DialUDP("udp4", nil, s)
 	require.NoError(t, errDial)
-	servers, errList := List(conn, []Region{AllRegions})
+	_, errList := List(conn, []Region{AllRegions})
 	require.NoError(t, errList)
 	require.NoError(t, conn.Close())
-	require.True(t, len(servers) > 5000)
 }

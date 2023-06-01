@@ -40,7 +40,7 @@ var (
 	patreonMu            *sync.RWMutex
 	patreonCampaigns     []patreon.Campaign
 	patreonPledges       []patreon.Pledge
-	patreonUsers         map[string]*patreon.User
+	//patreonUsers         map[string]*patreon.User
 )
 
 type userWarning struct {
@@ -586,13 +586,13 @@ func initLogSrc(ctx context.Context) {
 	logSrc.start(ctx)
 }
 
-func SendUserNotification(pl NotificationPayload) {
-	select {
-	case notificationChan <- pl:
-	default:
-		logger.Error("Failed to write user notification payload, channel full")
-	}
-}
+//func SendUserNotification(pl NotificationPayload) {
+//	select {
+//	case notificationChan <- pl:
+//	default:
+//		logger.Error("Failed to write user notification payload, channel full")
+//	}
+//}
 
 func initNetBans() error {
 	for _, banList := range config.Net.Sources {

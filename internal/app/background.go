@@ -260,7 +260,7 @@ func patreonUpdater(ctx context.Context) {
 			logger.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
 			return
 		}
-		newPledges, newUsers, errPledges := PatreonGetPledges(patreonClient)
+		newPledges, _, errPledges := PatreonGetPledges(patreonClient)
 		if errPledges != nil {
 			logger.Error("Failed to refresh pledges", zap.Error(errPledges))
 			return
@@ -268,7 +268,7 @@ func patreonUpdater(ctx context.Context) {
 		patreonMu.Lock()
 		patreonCampaigns = newCampaigns
 		patreonPledges = newPledges
-		patreonUsers = newUsers
+		//patreonUsers = newUsers
 		patreonMu.Unlock()
 		cents := 0
 		totalCents := 0

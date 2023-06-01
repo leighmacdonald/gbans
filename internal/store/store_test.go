@@ -34,7 +34,7 @@ func TestMain(testMain *testing.M) {
 	}
 	config.General.Mode = config.TestMode
 	testCtx := context.Background()
-	if dbErr := Init(testCtx, logger, config.DB.DSN); dbErr != nil {
+	if dbErr := Init(testCtx, logger); dbErr != nil {
 		logger.Fatal("Failed to setup store", zap.Error(dbErr))
 	}
 	defer tearDown()

@@ -2115,7 +2115,7 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusCreated, entry)
-		discord.SendPayload(discord.Payload{
+		go discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ModLogChannelId,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Created",

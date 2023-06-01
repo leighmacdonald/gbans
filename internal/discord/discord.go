@@ -118,23 +118,23 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	logger.Info("Service state changed", zap.String("state", "disconnected"))
 }
 
-func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
-	if !connected.Load() {
-		logger.Error("Tried to send message to disconnected client")
-		return nil
-	}
-	if wrap {
-		msg = discordMsgWrapper + msg + discordMsgWrapper
-	}
-	if len(msg) > discordMaxMsgLen {
-		return ErrTooLarge
-	}
-	_, errChannelMessageSend := session.ChannelMessageSend(channelId, msg)
-	if errChannelMessageSend != nil {
-		return errors.Wrapf(errChannelMessageSend, "Failed sending success (paged) response for interaction")
-	}
-	return nil
-}
+//func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
+//	if !connected.Load() {
+//		logger.Error("Tried to send message to disconnected client")
+//		return nil
+//	}
+//	if wrap {
+//		msg = discordMsgWrapper + msg + discordMsgWrapper
+//	}
+//	if len(msg) > discordMaxMsgLen {
+//		return ErrTooLarge
+//	}
+//	_, errChannelMessageSend := session.ChannelMessageSend(channelId, msg)
+//	if errChannelMessageSend != nil {
+//		return errors.Wrapf(errChannelMessageSend, "Failed sending success (paged) response for interaction")
+//	}
+//	return nil
+//}
 
 func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
 	if !connected.Load() {
@@ -162,12 +162,13 @@ func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.
 	return err
 }
 
-func SendPayload(payload Payload) error {
+func SendPayload(payload Payload) {
 	if !connected.Load() {
-		return nil
+		return
 	}
-	_, errSend := session.ChannelMessageSendEmbed(payload.ChannelId, payload.Embed)
-	return errSend
+	if _, errSend := session.ChannelMessageSendEmbed(payload.ChannelId, payload.Embed); errSend != nil {
+		logger.Error("Failed to send discord payload", zap.Error(errSend))
+	}
 }
 
 // LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int)
