@@ -13,6 +13,7 @@ func MustCreateLogger(logFile string) *zap.Logger {
 	var loggingConfig zap.Config
 	if config.General.Mode == config.ReleaseMode {
 		loggingConfig = zap.NewProductionConfig()
+		loggingConfig.DisableCaller = true
 	} else {
 		loggingConfig = zap.NewDevelopmentConfig()
 		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder

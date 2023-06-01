@@ -5,8 +5,8 @@ export interface NewsEntry {
     title: string;
     body_md: string;
     is_published: boolean;
-    created_on: string;
-    updated_on: string;
+    created_on?: string;
+    updated_on?: string;
 }
 
 export const apiGetNewsLatest = async () =>
