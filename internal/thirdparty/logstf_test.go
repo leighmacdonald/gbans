@@ -9,7 +9,7 @@ import (
 
 func TestLogsTFOverview(t *testing.T) {
 	tfResult1, errTFOverview1 := LogsTFOverview(context.Background(), 76561198084134025)
-	if errors.Is(context.DeadlineExceeded, errTFOverview1) {
+	if errors.Is(errTFOverview1, context.DeadlineExceeded) {
 		t.Skip("Skipping test, network unreachable.")
 		return
 	}
@@ -17,7 +17,7 @@ func TestLogsTFOverview(t *testing.T) {
 	require.True(t, tfResult1.Total > 100)
 
 	tfResult2, errTFOverview2 := LogsTFOverview(context.Background(), 123456)
-	if errors.Is(context.DeadlineExceeded, errTFOverview2) {
+	if errors.Is(errTFOverview2, context.DeadlineExceeded) {
 		t.Skip("Skipping test, network unreachable.")
 		return
 	}
