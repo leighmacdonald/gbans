@@ -299,7 +299,9 @@ func updateStateServerList(ctx context.Context) error {
 	}
 	var sc []*state.ServerConfig
 	for _, server := range servers {
-		sc = append(sc, state.NewServerConfig(logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)), server.ServerID, server.ServerNameShort, server.Addr(), server.RCON))
+		sc = append(sc, state.NewServerConfig(logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)),
+			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Addr(), server.RCON, server.Latitude,
+			server.Longitude, server.Region, server.CC))
 	}
 	state.SetServers(sc)
 	return nil
@@ -311,16 +313,7 @@ func stateUpdater(ctx context.Context, statusUpdateFreq time.Duration, materUpda
 	if errUpdate := updateStateServerList(ctx); errUpdate != nil {
 		log.Error("Failed to update list", zap.Error(errUpdate))
 	}
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-errChan:
-				//logger.Error("server state update returned error", zap.Error(err))
-			}
-		}
-	}()
+
 	if errStart := state.Start(ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
 		logger.Error("start returned error", zap.Error(errStart))
 	}

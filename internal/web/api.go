@@ -870,19 +870,21 @@ func onAPIGetServerStates() gin.HandlerFunc {
 		var ss []BaseServer
 		for _, srv := range ns {
 			ss = append(ss, BaseServer{
-				Host:       srv.Host,
-				Port:       srv.Port,
-				Name:       srv.Name,
-				NameShort:  srv.NameShort,
-				Region:     srv.Region,
-				Players:    srv.PlayerCount,
-				MaxPlayers: srv.MaxPlayers,
-				Bots:       srv.Bots,
-				Map:        srv.Map,
-				GameTypes:  []string{},
-				Latitude:   lat,
-				Longitude:  lon,
-				Distance:   distance(srv.Latitude, srv.Longitude, lat, lon),
+				Host:        srv.Host,
+				Port:        srv.Port,
+				Name:        srv.Name,
+				NameShort:   srv.NameShort,
+				Region:      srv.Region,
+				CountryCode: srv.CountryCode,
+				ServerId:    srv.ServerId,
+				Players:     srv.PlayerCount,
+				MaxPlayers:  srv.MaxPlayers,
+				Bots:        srv.Bots,
+				Map:         srv.Map,
+				GameTypes:   []string{},
+				Latitude:    srv.Latitude,
+				Longitude:   srv.Longitude,
+				Distance:    distance(srv.Latitude, srv.Longitude, lat, lon),
 			})
 		}
 		sort.SliceStable(ss, func(i, j int) bool {
@@ -1522,8 +1524,8 @@ type serverUpdateRequest struct {
 	Port          int     `json:"port"`
 	ReservedSlots int     `json:"reserved_slots"`
 	RCON          string  `json:"rcon"`
-	Lat           float32 `json:"lat"`
-	Lon           float32 `json:"lon"`
+	Lat           float64 `json:"lat"`
+	Lon           float64 `json:"lon"`
 	CC            string  `json:"cc"`
 	DefaultMap    string  `json:"default_map"`
 	Region        string  `json:"region"`

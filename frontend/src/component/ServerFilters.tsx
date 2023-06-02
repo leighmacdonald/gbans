@@ -11,7 +11,6 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import styled from '@mui/system/styled';
 import { uniq } from 'lodash-es';
-import { getDistance } from '../util/gis';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { Heading } from './Heading';
 
@@ -91,30 +90,20 @@ export const ServerFilters = () => {
     }, [customRange, filterByRegion, selectedRegion, showOpenOnly]);
 
     useEffect(() => {
-        let s = servers
-            .map((srv) => {
-                return {
-                    ...srv,
-                    distance: getDistance(pos, {
-                        lat: srv.latitude,
-                        lng: srv.longitude
-                    })
-                };
-            })
-            .sort((a, b) => {
-                // Sort by position if we have a non-default position.
-                // otherwise, sort by server name
-                if (pos.lat !== 42.434719) {
-                    if (a.distance > b.distance) {
-                        return 1;
-                    }
-                    if (a.distance < b.distance) {
-                        return -1;
-                    }
-                    return 0;
+        let s = servers.sort((a, b) => {
+            // Sort by position if we have a non-default position.
+            // otherwise, sort by server name
+            if (pos.lat !== 0) {
+                if (a.distance > b.distance) {
+                    return 1;
                 }
-                return ('' + a.name_short).localeCompare(b.name_short);
-            });
+                if (a.distance < b.distance) {
+                    return -1;
+                }
+                return 0;
+            }
+            return ('' + a.name_short).localeCompare(b.name_short);
+        });
         if (!filterByRegion && !selectedRegion.includes('any')) {
             s = s.filter((srv) => selectedRegion.includes(srv.region));
         }
@@ -124,13 +113,7 @@ export const ServerFilters = () => {
             );
         }
         if (filterByRegion && customRange && customRange > 0) {
-            s = s.filter(
-                (srv) =>
-                    getDistance(pos, {
-                        lat: srv.latitude,
-                        lng: srv.longitude
-                    }) < customRange
-            );
+            s = s.filter((srv) => srv.distance < customRange);
         }
         setSelectedServers(s);
         saveFilterState();

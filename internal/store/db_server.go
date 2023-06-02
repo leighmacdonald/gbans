@@ -51,8 +51,8 @@ type Server struct {
 	Deleted   bool    `json:"deleted"`
 	Region    string  `json:"region"`
 	CC        string  `json:"cc"`
-	Latitude  float32 `json:"latitude"`
-	Longitude float32 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 	LogSecret int     `json:"log_secret"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`

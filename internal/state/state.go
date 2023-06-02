@@ -217,23 +217,33 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 	}
 }
 
-func NewServerConfig(logger *zap.Logger, serverId int, nameShort string, address string, password string) *ServerConfig {
+func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort string, address string, password string, lat float64, long float64, region string, cc string) *ServerConfig {
 	return &ServerConfig{
 		ServerId:           serverId,
+		Name:               name,
 		NameShort:          nameShort,
 		Address:            address,
 		Password:           password,
+		Lat:                lat,
+		Long:               long,
 		rcon:               nil,
 		lastRconConnection: time.Time{},
 		logger:             logger,
+		Region:             region,
+		CC:                 cc,
 	}
 }
 
 type ServerConfig struct {
 	ServerId           int
+	Name               string
 	NameShort          string
 	Address            string
 	Password           string
+	Lat                float64
+	Long               float64
+	Region             string
+	CC                 string
 	rcon               *rcon.RemoteConsole
 	a2sConn            *a2s.Client
 	lastRconConnection time.Time
@@ -249,8 +259,14 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	newState, found := serverStates[config.ServerId]
 	stateMu.RUnlock()
 	if !found {
-		newState = ServerState{}
+		newState = ServerState{
+			Region:      config.Region,
+			CountryCode: config.CC,
+			Latitude:    config.Lat,
+			Longitude:   config.Long,
+		}
 	}
+
 	go func() {
 		defer wg.Done()
 		if config.a2sConn == nil {
