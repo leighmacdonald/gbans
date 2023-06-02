@@ -860,14 +860,11 @@ func getDefaultFloat64(s string, def float64) float64 {
 func onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
-		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), 87.6160)
+		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 		//region := ctx.GetHeader("cf-region-code")
 		ns := state.State()
 		var ss []BaseServer
 		for _, srv := range ns {
-			if !srv.Enabled {
-				continue
-			}
 			ss = append(ss, BaseServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
