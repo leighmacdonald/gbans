@@ -2,6 +2,7 @@ import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos, TimeStamped } from './common';
 import SteamID from 'steamid';
+import { LatLngLiteral } from 'leaflet';
 
 export interface BaseServer {
     server_id: number;
@@ -137,8 +138,13 @@ export const findLogs = async (opts: LogQueryOpts) => {
     );
 };
 
+interface UserServers {
+    servers: BaseServer[];
+    lat_long: LatLngLiteral;
+}
+
 export const apiGetServerStates = async () =>
-    await apiCall<BaseServer[]>(`/api/servers/state`, 'GET');
+    await apiCall<UserServers>(`/api/servers/state`, 'GET');
 
 export interface SaveServerOpts {
     server_name_short: string;

@@ -114,8 +114,8 @@ export const ServerStats = () => {
 export const Servers = () => {
     const [servers, setServers] = useState<BaseServer[]>([]);
     const [pos, setPos] = useState<LatLngLiteral>({
-        lat: 42.434719,
-        lng: 42.434719
+        lat: 0.0,
+        lng: 0.0
     });
     const [customRange, setCustomRange] = useState<number>(500);
     const [selectedServers, setSelectedServers] = useState<BaseServer[]>([]);
@@ -139,12 +139,11 @@ export const Servers = () => {
                 .then((response) => {
                     if (!response.status || !response.result) {
                         restart(nextExpiry());
-                        console.log('no servers');
                         return;
                     }
                     console.log('y');
                     setServers(
-                        (response.result || []).map((srv) => {
+                        (response.result.servers || []).map((srv) => {
                             return {
                                 ...srv,
                                 distance: getDistance(pos, {
@@ -154,6 +153,10 @@ export const Servers = () => {
                             };
                         })
                     );
+                    if (pos.lat == 0) {
+                        setPos(response.result.lat_long);
+                    }
+
                     restart(nextExpiry());
                 })
                 .catch(() => {

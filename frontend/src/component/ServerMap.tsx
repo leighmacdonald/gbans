@@ -6,7 +6,6 @@ import * as markerIcon from 'leaflet/dist/images/marker-icon.png';
 import * as markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import L from 'leaflet';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
-import { logErr } from '../util/errors';
 
 // Workaround for leaflet not loading icons properly in react
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -18,47 +17,11 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow.default
 });
 
-const UserPosition = () => {
-    const map = useMap();
-    const { setPos } = useMapStateCtx();
-
-    useEffect(() => {
-        const defPos = { lat: 42.434719, lng: -83.985001 };
-        try {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const userPos = {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude
-                        };
-                        map.setView(userPos, 3);
-                        setPos(userPos);
-                    },
-                    () => {
-                        map.setView(defPos, 4);
-                        setPos(defPos);
-                    }
-                );
-            } else {
-                map.setView(defPos);
-                setPos(defPos);
-            }
-        } catch (e) {
-            map.setView(defPos);
-            setPos(defPos);
-            logErr(e);
-        }
-    }, [map, setPos]);
-
-    return null;
-};
-
 export const ServerMarkers = () => {
     const { servers } = useMapStateCtx();
     const d = useMemo(
         () =>
-            (servers || []).map((s) => {
+            (servers || []).map((s, i) => {
                 //const dis = getDistance(pos, { lat: s.latitude, lng: s.longitude }) / 1000;
                 return (
                     <Circle
@@ -68,7 +31,7 @@ export const ServerMarkers = () => {
                         }}
                         radius={50000}
                         color={'green'}
-                        key={s.name_short}
+                        key={s.name_short + `${i}`}
                     />
                 );
             }),
@@ -89,6 +52,7 @@ const UserPositionMarker = () => {
 };
 
 export const UserPingRadius = () => {
+    const map = useMap();
     const { pos, customRange, filterByRegion } = useMapStateCtx();
     const baseOpts = { color: 'green', opacity: 0.1, interactive: true };
     const markers = [
@@ -96,6 +60,13 @@ export const UserPingRadius = () => {
         { ...baseOpts, radius: 1500000, color: 'yellow' },
         { ...baseOpts, radius: 500000, color: 'green' }
     ];
+
+    useEffect(() => {
+        if (pos.lat != 0 && pos.lng != 0) {
+            map.setView(pos, 3);
+        }
+    }, [map, pos]);
+
     const c = useMemo(() => {
         return (
             filterByRegion && (
@@ -140,7 +111,6 @@ export const ServerMap = () => {
                 attribution={'© OpenStreetMap contributors '}
             />
 
-            <UserPosition />
             <UserPingRadius />
             <ServerMarkers />
             <UserPositionMarker />

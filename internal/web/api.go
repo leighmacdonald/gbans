@@ -858,6 +858,10 @@ func getDefaultFloat64(s string, def float64) float64 {
 
 // onAPIGetServerStates returns the current known cached server state
 func onAPIGetServerStates() gin.HandlerFunc {
+	type UserServers struct {
+		Servers []BaseServer        `json:"servers"`
+		LatLong ip2location.LatLong `json:"lat_long"`
+	}
 	return func(ctx *gin.Context) {
 		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
@@ -884,7 +888,13 @@ func onAPIGetServerStates() gin.HandlerFunc {
 		sort.SliceStable(ss, func(i, j int) bool {
 			return ss[i].Distance < ss[j].Distance
 		})
-		responseOK(ctx, http.StatusOK, ss)
+		responseOK(ctx, http.StatusOK, UserServers{
+			Servers: ss,
+			LatLong: ip2location.LatLong{
+				Latitude:  lat,
+				Longitude: lon,
+			},
+		})
 	}
 }
 
