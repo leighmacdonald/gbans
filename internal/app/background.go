@@ -300,7 +300,7 @@ func updateStateServerList(ctx context.Context) error {
 	var sc []*state.ServerConfig
 	for _, server := range servers {
 		sc = append(sc, state.NewServerConfig(logger.Named(fmt.Sprintf("state-%s", server.ServerNameShort)),
-			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Addr(), server.RCON, server.Latitude,
+			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Address, server.Port, server.RCON, server.Latitude,
 			server.Longitude, server.Region, server.CC))
 	}
 	state.SetServers(sc)

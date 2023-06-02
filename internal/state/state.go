@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
@@ -217,12 +218,13 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 	}
 }
 
-func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort string, address string, password string, lat float64, long float64, region string, cc string) *ServerConfig {
+func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort string, address string, port int, password string, lat float64, long float64, region string, cc string) *ServerConfig {
 	return &ServerConfig{
 		ServerId:           serverId,
 		Name:               name,
 		NameShort:          nameShort,
-		Address:            address,
+		Host:               address,
+		Port:               port,
 		Password:           password,
 		Lat:                lat,
 		Long:               long,
@@ -238,7 +240,8 @@ type ServerConfig struct {
 	ServerId           int
 	Name               string
 	NameShort          string
-	Address            string
+	Host               string
+	Port               int
 	Password           string
 	Lat                float64
 	Long               float64
@@ -248,6 +251,10 @@ type ServerConfig struct {
 	a2sConn            *a2s.Client
 	lastRconConnection time.Time
 	logger             *zap.Logger
+}
+
+func (config *ServerConfig) addr() string {
+	return fmt.Sprintf("%s:%d", config.Host, config.Port)
 }
 
 func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
@@ -260,6 +267,8 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	stateMu.RUnlock()
 	if !found {
 		newState = ServerState{
+			Host:        config.Host,
+			Port:        config.Port,
 			Region:      config.Region,
 			CountryCode: config.CC,
 			Latitude:    config.Lat,
@@ -270,7 +279,7 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	go func() {
 		defer wg.Done()
 		if config.a2sConn == nil {
-			client, errClient := a2s.NewClient(config.Address, a2s.TimeoutOption(time.Second*10))
+			client, errClient := a2s.NewClient(config.addr(), a2s.TimeoutOption(time.Second*10))
 			if errClient != nil {
 				config.logger.Error("Failed to create a2s client")
 				return
@@ -317,7 +326,7 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*20)
 		defer cancel()
 		if config.rcon == nil {
-			console, errDial := rcon.Dial(localCtx, config.Address, config.Password, time.Second*20)
+			console, errDial := rcon.Dial(localCtx, config.addr(), config.Password, time.Second*20)
 			if errDial != nil {
 				err = errors.Join(err, errDial)
 				return
