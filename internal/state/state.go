@@ -91,8 +91,8 @@ type ServerState struct {
 	Enabled     bool      `json:"enabled"`
 	Region      string    `json:"region"`
 	CountryCode string    `json:"cc"`
-	Latitude    float32   `json:"latitude"`
-	Longitude   float32   `json:"longitude"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
 	Reserved    int       `json:"reserved"`
 	LastUpdate  time.Time `json:"last_update"`
 	// A2S

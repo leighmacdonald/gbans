@@ -120,7 +120,7 @@ export const ServerFilters = () => {
         }
         if (showOpenOnly) {
             s = s.filter(
-                (srv) => (srv?.players?.length || 0) < (srv?.max_players || 32)
+                (srv) => (srv?.players || 0) < (srv?.max_players || 32)
             );
         }
         if (filterByRegion && customRange && customRange > 0) {

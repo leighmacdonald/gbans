@@ -4,7 +4,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
-import { apiGetServerStates, ServerState } from '../api';
+import { apiGetServerStates, BaseServer } from '../api';
 import { logErr } from '../util/errors';
 
 export interface ServerSelectProps {
@@ -12,7 +12,7 @@ export interface ServerSelectProps {
 }
 
 export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
-    const [servers, setServers] = useState<ServerState[]>();
+    const [servers, setServers] = useState<BaseServer[]>();
     const [selectedServers, setSelectedServers] = useState<number[]>([0]);
 
     useEffect(() => {

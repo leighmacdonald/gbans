@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import noop from 'lodash-es/noop';
 import { LatLngLiteral } from 'leaflet';
-import { ServerState } from '../api';
+import { BaseServer } from '../api';
 
 export type MapState = {
     pos: LatLngLiteral;
@@ -10,11 +10,11 @@ export type MapState = {
     customRange: number;
     setCustomRange: (radius: number) => void;
 
-    servers: ServerState[];
-    setServers: (servers: ServerState[]) => void;
+    servers: BaseServer[];
+    setServers: (servers: BaseServer[]) => void;
 
-    selectedServers: ServerState[];
-    setSelectedServers: (servers: ServerState[]) => void;
+    selectedServers: BaseServer[];
+    setSelectedServers: (servers: BaseServer[]) => void;
 
     filterByRegion: boolean;
     setFilterByRegion: (enable: boolean) => void;

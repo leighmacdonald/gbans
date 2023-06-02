@@ -845,10 +845,49 @@ func onAPIGetPrometheusHosts() gin.HandlerFunc {
 	}
 }
 
+func getDefaultFloat64(s string, def float64) float64 {
+	if s != "" {
+		l, errLat := strconv.ParseFloat(s, 64)
+		if errLat != nil {
+			return def
+		}
+		return l
+	}
+	return def
+}
+
 // onAPIGetServerStates returns the current known cached server state
 func onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		responseOK(ctx, http.StatusOK, state.State())
+		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
+		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), 87.6160)
+		//region := ctx.GetHeader("cf-region-code")
+		ns := state.State()
+		var ss []BaseServer
+		for _, srv := range ns {
+			if !srv.Enabled {
+				continue
+			}
+			ss = append(ss, BaseServer{
+				Host:       srv.Host,
+				Port:       srv.Port,
+				Name:       srv.Name,
+				NameShort:  srv.NameShort,
+				Region:     srv.Region,
+				Players:    srv.PlayerCount,
+				MaxPlayers: srv.MaxPlayers,
+				Bots:       srv.Bots,
+				Map:        srv.Map,
+				GameTypes:  []string{},
+				Latitude:   lat,
+				Longitude:  lon,
+				Distance:   distance(srv.Latitude, srv.Longitude, lat, lon),
+			})
+		}
+		sort.SliceStable(ss, func(i, j int) bool {
+			return ss[i].Distance < ss[j].Distance
+		})
+		responseOK(ctx, http.StatusOK, ss)
 	}
 }
 
@@ -2625,6 +2664,40 @@ func onAPIEditBanMessage() gin.HandlerFunc {
 	}
 }
 
+type BaseServer struct {
+	ServerId    int      `json:"server_id"`
+	Host        string   `json:"host"`
+	Port        int      `json:"port"`
+	Name        string   `json:"name"`
+	NameShort   string   `json:"name_short"`
+	Region      string   `json:"region"`
+	CountryCode string   `json:"cc"`
+	Players     int      `json:"players"`
+	MaxPlayers  int      `json:"max_players"`
+	Bots        int      `json:"bots"`
+	Map         string   `json:"map"`
+	GameTypes   []string `json:"game_types"`
+	Latitude    float64  `json:"latitude"`
+	Longitude   float64  `json:"longitude"`
+	Distance    float64  `json:"distance"`
+}
+
+var distance = func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+	radianLat1 := math.Pi * lat1 / 180
+	radianLat2 := math.Pi * lat2 / 180
+	theta := lng1 - lng2
+	radianTheta := math.Pi * theta / 180
+	dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
+	if dist > 1 {
+		dist = 1
+	}
+	dist = math.Acos(dist)
+	dist = dist * 180 / math.Pi
+	dist = dist * 60 * 1.1515
+	dist = dist * 1.609344 // convert to km
+	return dist
+}
+
 func onAPIPostServerQuery() gin.HandlerFunc {
 	type masterQueryRequest struct {
 		// ctf,payload,cp,mvm,pd,passtime,mannpower,koth
@@ -2637,36 +2710,6 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		Location   []float64 `json:"location,omitempty"`
 		Name       string    `json:"name,omitempty"`
 		HasBots    bool      `json:"has_bots,omitempty"`
-	}
-
-	type slimServer struct {
-		Addr       string   `json:"addr"`
-		Name       string   `json:"name"`
-		Region     int      `json:"region"`
-		Players    int      `json:"players"`
-		MaxPlayers int      `json:"max_players"`
-		Bots       int      `json:"bots"`
-		Map        string   `json:"map"`
-		GameTypes  []string `json:"game_types"`
-		Latitude   float64  `json:"latitude"`
-		Longitude  float64  `json:"longitude"`
-		Distance   float64  `json:"distance"`
-	}
-
-	var distance = func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
-		radianLat1 := math.Pi * lat1 / 180
-		radianLat2 := math.Pi * lat2 / 180
-		theta := lng1 - lng2
-		radianTheta := math.Pi * theta / 180
-		dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
-		if dist > 1 {
-			dist = 1
-		}
-		dist = math.Acos(dist)
-		dist = dist * 180 / math.Pi
-		dist = dist * 60 * 1.1515
-		dist = dist * 1.609344 // convert to km
-		return dist
 	}
 
 	var filterGameTypes = func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
@@ -2742,16 +2785,17 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		if req.PlayersMax > 0 {
 			filtered = filterPlayersMax(filtered, req.PlayersMax)
 		}
-		var slim []slimServer
+		var slim []BaseServer
 		for _, server := range filtered {
 			dist := distance(server.Latitude, server.Longitude, record.LatLong.Latitude, record.LatLong.Longitude)
 			if dist <= 0 || dist > 5000 {
 				continue
 			}
-			slim = append(slim, slimServer{
-				Addr:       fmt.Sprintf("%s:%d", server.Addr, server.Gameport),
-				Name:       server.Name,
-				Region:     server.Region,
+			slim = append(slim, BaseServer{
+				Host: server.Addr,
+				Port: server.Gameport,
+				Name: server.Name,
+				//Region:     server.Region,
 				Players:    server.Players,
 				MaxPlayers: server.MaxPlayers,
 				Bots:       server.Bots,

@@ -3,28 +3,34 @@ import { Person } from './profile';
 import { apiCall, Pos, TimeStamped } from './common';
 import SteamID from 'steamid';
 
-export interface ServerState {
+export interface BaseServer {
     server_id: number;
-    name: string;
-    name_short: string;
     host: string;
     port: number;
-    enabled: boolean;
+    name: string;
+    name_short: string;
     region: string;
     cc: string;
+    players: number;
+    max_players: number;
+    bots: number;
+    map: string;
+    game_types: string[];
     latitude: number;
     longitude: number;
+    distance: number; // calculated on load
+}
+
+export interface ServerState extends BaseServer {
+    enabled: boolean;
     reserved: number;
     last_update: string;
     name_a2s: string;
     protocol: number;
-    map: string;
     folder: string;
     game: string;
     app_id: number;
     player_count: number;
-    max_players: number;
-    bots: number;
     server_type: string;
     server_os: string;
     password: boolean;
@@ -35,8 +41,6 @@ export interface ServerState {
     game_id: number;
     stv_port: number;
     stv_name: string;
-    players: ServerStatePlayer[];
-    distance?: number;
 }
 
 export interface ServerStatePlayer {
@@ -134,7 +138,7 @@ export const findLogs = async (opts: LogQueryOpts) => {
 };
 
 export const apiGetServerStates = async () =>
-    await apiCall<ServerState[]>(`/api/servers/state`, 'GET');
+    await apiCall<BaseServer[]>(`/api/servers/state`, 'GET');
 
 export interface SaveServerOpts {
     server_name_short: string;

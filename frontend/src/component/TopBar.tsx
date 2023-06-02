@@ -366,7 +366,12 @@ export const TopBar = () => {
                             </Tooltip>
                             {currentUser.permission_level >=
                                 PermissionLevel.Admin && (
-                                <IconButton color={'inherit'}>
+                                <IconButton
+                                    color={'inherit'}
+                                    onClick={() => {
+                                        loadRoute('/notifications');
+                                    }}
+                                >
                                     <Badge
                                         badgeContent={
                                             (notifications ?? []).filter(

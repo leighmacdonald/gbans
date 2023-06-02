@@ -101,7 +101,7 @@ export const ServerList = () => {
                     {
                         label: 'Players',
                         tooltip: 'Current Players',
-                        sortKey: 'player_count',
+                        sortKey: 'players',
                         sortable: true,
                         renderer: (obj, value) => {
                             return (

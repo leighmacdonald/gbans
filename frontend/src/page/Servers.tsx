@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import { ServerMap } from '../component/ServerMap';
-import { apiGetServerStates, ServerState } from '../api';
+import { apiGetServerStates, BaseServer } from '../api';
 import { LatLngLiteral } from 'leaflet';
 import { MapStateCtx, useMapStateCtx } from '../contexts/MapStateCtx';
 import Stack from '@mui/material/Stack';
@@ -39,14 +39,14 @@ function LinearProgressWithLabel(
 export const ServerStats = () => {
     const { servers } = useMapStateCtx();
     const cap = servers.length * 24;
-    const use = sum(servers.map((value) => value?.players?.length || 0));
+    const use = sum(servers.map((value) => value?.players || 0));
     const regions = servers.reduce((acc, cv) => {
         if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
             acc[cv.region] = [];
         }
         acc[cv.region].push(cv);
         return acc;
-    }, {} as Record<string, ServerState[]>);
+    }, {} as Record<string, BaseServer[]>);
     const keys = Object.keys(regions);
     keys.sort();
     if (servers.length === 0) {
@@ -82,7 +82,7 @@ export const ServerStats = () => {
                             (Object.prototype.hasOwnProperty.call(regions, v) &&
                                 regions[v]) ||
                             []
-                        ).map((value) => value?.players?.length || 0)
+                        ).map((value) => value?.players || 0)
                     );
                     const pMax = sum(
                         (
@@ -112,13 +112,13 @@ export const ServerStats = () => {
 };
 
 export const Servers = () => {
-    const [servers, setServers] = useState<ServerState[]>([]);
+    const [servers, setServers] = useState<BaseServer[]>([]);
     const [pos, setPos] = useState<LatLngLiteral>({
         lat: 42.434719,
         lng: 42.434719
     });
     const [customRange, setCustomRange] = useState<number>(500);
-    const [selectedServers, setSelectedServers] = useState<ServerState[]>([]);
+    const [selectedServers, setSelectedServers] = useState<BaseServer[]>([]);
     const [filterByRegion, setFilterByRegion] = useState<boolean>(false);
     const [showOpenOnly, setShowOpenOnly] = useState<boolean>(false);
     const [selectedRegion, setSelectedRegion] = useState<string>('any');
@@ -138,25 +138,25 @@ export const Servers = () => {
             apiGetServerStates()
                 .then((response) => {
                     if (!response.status || !response.result) {
+                        restart(nextExpiry());
+                        console.log('no servers');
                         return;
                     }
+                    console.log('y');
                     setServers(
-                        (response.result || [])
-                            .filter((s) => s.enabled) // Shouldn't actually happen
-                            .map((srv) => {
-                                return {
-                                    ...srv,
-                                    distance: getDistance(pos, {
-                                        lat: srv.latitude,
-                                        lng: srv.longitude
-                                    })
-                                };
-                            })
+                        (response.result || []).map((srv) => {
+                            return {
+                                ...srv,
+                                distance: getDistance(pos, {
+                                    lat: srv.latitude,
+                                    lng: srv.longitude
+                                })
+                            };
+                        })
                     );
                     restart(nextExpiry());
                 })
-                .catch((e) => {
-                    alert(`Failed to load server: ${e}`);
+                .catch(() => {
                     restart(nextExpiry());
                 });
         }
