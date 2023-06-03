@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"sync/atomic"
-	"time"
 )
 
 var (
@@ -16,9 +15,9 @@ var (
 )
 
 var (
-	logger    *zap.Logger
-	session   *discordgo.Session
-	connected atomic.Bool
+	logger  *zap.Logger
+	session *discordgo.Session
+	isReady atomic.Bool
 	//ctx             context.Context
 	commandHandlers map[Cmd]CommandHandler
 )
@@ -50,13 +49,6 @@ func Start(l *zap.Logger) error {
 	if errNewSession != nil {
 		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
-	defer func() {
-		if botSession != nil {
-			if errDisc := botSession.Close(); errDisc != nil {
-				logger.Error("Failed to cleanly shutdown discord", zap.Error(errDisc))
-			}
-		}
-	}()
 	//botSession.Identify.Intents |= discordgo.IntentGuildPresences
 	session = botSession
 
@@ -70,23 +62,21 @@ func Start(l *zap.Logger) error {
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 
-	go func() {
-		time.Sleep(3 * time.Second)
-		if errRegister := botRegisterSlashCommands(); errRegister != nil {
-			logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
-		}
-	}()
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
+	}
+
+	if errRegister := botRegisterSlashCommands(); errRegister != nil {
+		logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
 	return nil
 }
 
 func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	connected.Store(true)
 	logger.Info("Service state changed", zap.String("state", "ready"))
+	isReady.Store(true)
 }
 
 func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -113,13 +103,13 @@ func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
 }
 
 func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	connected.Store(false)
+	isReady.Store(false)
 
 	logger.Info("Service state changed", zap.String("state", "disconnected"))
 }
 
 //func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
-//	if !connected.Load() {
+//	if !isReady.Load() {
 //		logger.Error("Tried to send message to disconnected client")
 //		return nil
 //	}
@@ -137,8 +127,7 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 //}
 
 func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
-	if !connected.Load() {
-		logger.Fatal("Tried to send message edit to disconnected client?")
+	if !isReady.Load() {
 		return nil
 	}
 	edit := &discordgo.InteractionResponseData{
@@ -163,7 +152,7 @@ func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.
 }
 
 func SendPayload(payload Payload) {
-	if !connected.Load() {
+	if !isReady.Load() {
 		return
 	}
 	if _, errSend := session.ChannelMessageSendEmbed(payload.ChannelId, payload.Embed); errSend != nil {
