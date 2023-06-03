@@ -474,7 +474,7 @@ func botRegisterSlashCommands() error {
 	if errBulk != nil {
 		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
-
+	logger.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
 	return nil
 }
 

@@ -37,8 +37,24 @@ func RegisterHandler(cmd Cmd, handler CommandHandler) error {
 
 func Shutdown() {
 	if session != nil {
-		util.LogCloser(session, logger)
+		defer util.LogCloser(session, logger)
+		botUnregisterSlashCommands()
 	}
+}
+
+func botUnregisterSlashCommands() {
+	registeredCommands, err := session.ApplicationCommands(session.State.User.ID, config.Discord.GuildID)
+	if err != nil {
+		logger.Error("Could not fetch registered commands", zap.Error(err))
+		return
+	}
+	for _, v := range registeredCommands {
+		if errDel := session.ApplicationCommandDelete(session.State.User.ID, config.Discord.GuildID, v.ID); errDel != nil {
+			logger.Error("Cannot delete command", zap.String("name", v.Name), zap.Error(err))
+			return
+		}
+	}
+	logger.Info("Unregistered discord commands", zap.Int("count", len(registeredCommands)))
 }
 
 func Start(l *zap.Logger) error {
@@ -66,7 +82,7 @@ func Start(l *zap.Logger) error {
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
-
+	botUnregisterSlashCommands()
 	if errRegister := botRegisterSlashCommands(); errRegister != nil {
 		logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}

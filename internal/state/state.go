@@ -262,6 +262,7 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	mu := &sync.RWMutex{}
+	errMu := sync.RWMutex{}
 	stateMu.RLock()
 	newState, found := serverStates[config.ServerId]
 	stateMu.RUnlock()
@@ -288,7 +289,9 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 		}
 		result, errQuery := config.a2sConn.QueryInfo()
 		if errQuery != nil {
+			errMu.Lock()
 			err = errors.Join(err, errQuery)
+			errMu.Unlock()
 			if config.a2sConn != nil {
 				_ = config.a2sConn.Close()
 				config.a2sConn = nil
@@ -328,7 +331,9 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 		if config.rcon == nil {
 			console, errDial := rcon.Dial(localCtx, config.addr(), config.Password, time.Second*20)
 			if errDial != nil {
+				errMu.Lock()
 				err = errors.Join(err, errDial)
+				errMu.Unlock()
 				return
 			}
 			config.rcon = console
