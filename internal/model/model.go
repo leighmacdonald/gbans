@@ -3,6 +3,7 @@ package model
 
 import (
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -37,16 +38,16 @@ type SimplePerson struct {
 
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
-	SteamID         steamid.SID64   `db:"steam_id" json:"steam_id,string"`
-	CreatedOn       time.Time       `json:"created_on"`
-	UpdatedOn       time.Time       `json:"updated_on"`
-	PermissionLevel store.Privilege `json:"permission_level"`
-	DiscordID       string          `json:"discord_id"`
-	Name            string          `json:"name"`
-	Avatar          string          `json:"avatar"`
-	AvatarFull      string          `json:"avatarfull"`
-	BanID           int64           `json:"ban_id"`
-	Muted           bool            `json:"muted"`
+	SteamID         steamid.SID64    `db:"steam_id" json:"steam_id,string"`
+	CreatedOn       time.Time        `json:"created_on"`
+	UpdatedOn       time.Time        `json:"updated_on"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+	DiscordID       string           `json:"discord_id"`
+	Name            string           `json:"name"`
+	Avatar          string           `json:"avatar"`
+	AvatarFull      string           `json:"avatarfull"`
+	BanID           int64            `json:"ban_id"`
+	Muted           bool             `json:"muted"`
 }
 
 func (p UserProfile) ToURL() string {
@@ -60,7 +61,7 @@ func NewUserProfile(sid64 steamid.SID64) UserProfile {
 		SteamID:         sid64,
 		CreatedOn:       t0,
 		UpdatedOn:       t0,
-		PermissionLevel: store.PUser,
+		PermissionLevel: consts.PUser,
 		Name:            "Guest",
 	}
 }

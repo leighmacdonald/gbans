@@ -3,7 +3,6 @@ package app
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
@@ -86,7 +85,7 @@ func init() {
 // logMetricsConsumer processes incoming log events and updated any associated metrics
 func logMetricsConsumer(ctx context.Context) {
 	eventChan := make(chan model.ServerEvent)
-	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
+	if errRegister := Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		logger.Error("Failed to register event consumer", zap.Error(errRegister))
 		return
 	}

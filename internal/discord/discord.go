@@ -1,11 +1,8 @@
 package discord
 
 import (
-	"context"
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -23,12 +20,21 @@ var (
 	isReady atomic.Bool
 	//ctx             context.Context
 	commandHandlers map[Cmd]CommandHandler
+
+	onReadyUser      func()
+	onDisconnectUser func()
 )
 
 func init() {
 	commandHandlers = map[Cmd]CommandHandler{}
 }
 
+func SetOnReady(fn func()) {
+	onReadyUser = fn
+}
+func SetOnDisconnect(fn func()) {
+	onDisconnectUser = fn
+}
 func RegisterHandler(cmd Cmd, handler CommandHandler) error {
 	_, found := commandHandlers[cmd]
 	if found {
@@ -95,13 +101,9 @@ func Start(l *zap.Logger) error {
 func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	logger.Info("Service state changed", zap.String("state", "ready"))
 	isReady.Store(true)
-	app.SendNotification(context.TODO(), app.NotificationPayload{
-		MinPerms: store.PAdmin,
-		Sids:     nil,
-		Severity: store.SeverityInfo,
-		Message:  "Discord connected",
-		Link:     "",
-	})
+	if onReadyUser != nil {
+		onReadyUser()
+	}
 }
 
 func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -131,6 +133,9 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	isReady.Store(false)
 
 	logger.Info("Service state changed", zap.String("state", "disconnected"))
+	if onDisconnectUser != nil {
+		onDisconnectUser()
+	}
 }
 
 //func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {

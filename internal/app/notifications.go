@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -13,16 +14,16 @@ import (
 )
 
 type NotificationPayload struct {
-	MinPerms store.Privilege
+	MinPerms consts.Privilege
 	Sids     steamid.Collection
-	Severity store.NotificationSeverity
+	Severity consts.NotificationSeverity
 	Message  string
 	Link     string
 }
 
 func SendNotification(ctx context.Context, notification NotificationPayload) error {
 	// Collect all required ids
-	if notification.MinPerms >= store.PUser {
+	if notification.MinPerms >= consts.PUser {
 		sids, errIds := store.GetSteamIdsAbove(ctx, notification.MinPerms)
 		if errIds != nil {
 			return errors.Wrap(errIds, "Failed to fetch steamids for notification")

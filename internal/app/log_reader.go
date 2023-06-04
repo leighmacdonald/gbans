@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -201,7 +200,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 
-			event.Emit(serverEvent)
+			Emit(serverEvent)
 		}
 	}
 }

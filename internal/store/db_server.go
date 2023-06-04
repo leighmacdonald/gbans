@@ -5,6 +5,7 @@ import (
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"net"
@@ -12,9 +13,9 @@ import (
 )
 
 type ServerPermission struct {
-	SteamId         steamid.SID `json:"steam_id"`
-	PermissionLevel Privilege   `json:"permission_level"`
-	Flags           string      `json:"flags"`
+	SteamId         steamid.SID      `json:"steam_id"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+	Flags           string           `json:"flags"`
 }
 
 func NewServer(name string, address string, port int) Server {
@@ -108,7 +109,7 @@ func GetServer(ctx context.Context, serverID int, server *Server) error {
 func GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	query, args, errQuery := sb.
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": PReserved}).
+		Where(sq.GtOrEq{"permission_level": consts.PReserved}).
 		OrderBy("permission_level desc").
 		ToSql()
 	if errQuery != nil {
@@ -123,20 +124,20 @@ func GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	for rows.Next() {
 		var (
 			sid  steamid.SID64
-			perm Privilege
+			perm consts.Privilege
 		)
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
 			return nil, Err(errScan)
 		}
 		flags := ""
 		switch perm {
-		case PReserved:
+		case consts.PReserved:
 			flags = "a"
-		case PEditor:
+		case consts.PEditor:
 			flags = "aj"
-		case PModerator:
+		case consts.PModerator:
 			flags = "abcdegjk"
-		case PAdmin:
+		case consts.PAdmin:
 			flags = "z"
 		}
 		perms = append(perms, ServerPermission{

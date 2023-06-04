@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/event"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -75,7 +75,7 @@ func firstTimeSetup(ctx context.Context) error {
 		}
 		logger.Info("Performing initial setup")
 		newOwner := store.NewPerson(config.General.Owner)
-		newOwner.PermissionLevel = store.PAdmin
+		newOwner.PermissionLevel = consts.PAdmin
 		if errSave := store.SavePerson(localCtx, &newOwner); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create admin user")
 		}
@@ -134,6 +134,15 @@ func Init(ctx context.Context, l *zap.Logger) error {
 		logger.Fatal("Failed to do first time setup", zap.Error(setupErr))
 	}
 
+	discord.SetOnReady(func() {
+		_ = SendNotification(context.TODO(), NotificationPayload{
+			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected"})
+	})
+	discord.SetOnDisconnect(func() {
+		_ = SendNotification(context.TODO(), NotificationPayload{
+			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord disconnected"})
+	})
+
 	pc, errPatreon := NewPatreonClient(ctx)
 	if errPatreon == nil {
 		patreonClient = pc
@@ -159,8 +168,6 @@ func Init(ctx context.Context, l *zap.Logger) error {
 		logger.Info("Loaded filter list", zap.Int("count", len(wordFilters)))
 	}
 
-	// Start & block, listening on the HTTP server
-
 	return nil
 }
 
@@ -174,7 +181,7 @@ type newUserWarning struct {
 func warnWorker(ctx context.Context) {
 	warnings := map[steamid.SID64][]userWarning{}
 	eventChan := make(chan model.ServerEvent)
-	if errRegister := event.Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
+	if errRegister := Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
 		logger.Fatal("Failed to register event reader", zap.Error(errRegister))
 	}
 	ticker := time.NewTicker(1 * time.Second)
@@ -333,7 +340,7 @@ func warnWorker(ctx context.Context) {
 
 func matchSummarizer(ctx context.Context) {
 	eventChan := make(chan model.ServerEvent)
-	if errReg := event.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
+	if errReg := Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
 		logger.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
 	matches := map[int]logparse.Match{}
@@ -407,7 +414,7 @@ func sendDiscordMatchResults(server store.Server, match logparse.Match) {
 
 func playerMessageWriter(ctx context.Context) {
 	serverEventChan := make(chan model.ServerEvent)
-	if errRegister := event.Consume(serverEventChan, []logparse.EventType{
+	if errRegister := Consume(serverEventChan, []logparse.EventType{
 		logparse.Say,
 		logparse.SayTeam,
 	}); errRegister != nil {
@@ -450,7 +457,7 @@ func playerMessageWriter(ctx context.Context) {
 
 func playerConnectionWriter(ctx context.Context) {
 	serverEventChan := make(chan model.ServerEvent)
-	if errRegister := event.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
+	if errRegister := Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
 		logger.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 		return
 	}
@@ -528,7 +535,7 @@ func logReader(ctx context.Context) {
 						}
 					}
 				}
-				event.Emit(serverEvent)
+				Emit(serverEvent)
 				emitted++
 			}
 			logger.Debug("Completed emitting logfile events",

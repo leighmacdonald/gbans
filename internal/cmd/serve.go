@@ -48,7 +48,6 @@ var serveCmd = &cobra.Command{
 		if errWeb != nil {
 			rootLogger.Fatal("Failed to setup web", zap.Error(errWeb))
 		}
-
 		if errDiscord := discord.Start(rootLogger); errDiscord != nil {
 			rootLogger.Error("Failed to initialize discord", zap.Error(errDiscord))
 		}

@@ -5,7 +5,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
@@ -143,7 +143,7 @@ func createRouter() *gin.Engine {
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(store.PUser))
+		authed := authedGrp.Use(authMiddleware(consts.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
 			wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
@@ -172,7 +172,7 @@ func createRouter() *gin.Engine {
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(store.PEditor))
+		editorRoute := editorGrp.Use(authMiddleware(consts.PEditor))
 		editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug())
 		editorRoute.POST("/api/news", onAPIPostNewsCreate())
 		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate())
@@ -186,7 +186,7 @@ func createRouter() *gin.Engine {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(store.PModerator))
+		modRoute := modGrp.Use(authMiddleware(consts.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState())
 		modRoute.GET("/api/connections/:steam_id", onAPIGetPersonConnections())
 		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages())
@@ -211,7 +211,7 @@ func createRouter() *gin.Engine {
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(store.PAdmin))
+		adminRoute := adminGrp.Use(authMiddleware(consts.PAdmin))
 		adminRoute.POST("/api/servers", onAPIPostServer())
 		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate())
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete())

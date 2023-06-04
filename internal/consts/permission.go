@@ -1,4 +1,12 @@
-package store
+package consts
+
+type NotificationSeverity int
+
+const (
+	SeverityInfo NotificationSeverity = iota
+	SeverityWarn
+	SeverityError
+)
 
 type Privilege uint8
 

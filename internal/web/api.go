@@ -647,11 +647,11 @@ func onAPIPostServerCheck() gin.HandlerFunc {
 		Name     string      `json:"name,omitempty"`
 	}
 	type checkResponse struct {
-		ClientID        int             `json:"client_id"`
-		SteamID         steamid.SID     `json:"steam_id"`
-		BanType         store.BanType   `json:"ban_type"`
-		PermissionLevel store.Privilege `json:"permission_level"`
-		Msg             string          `json:"msg"`
+		ClientID        int              `json:"client_id"`
+		SteamID         steamid.SID      `json:"steam_id"`
+		BanType         store.BanType    `json:"ban_type"`
+		PermissionLevel consts.Privilege `json:"permission_level"`
+		Msg             string           `json:"msg"`
 	}
 	return func(ctx *gin.Context) {
 		var request checkRequest
@@ -1020,7 +1020,7 @@ func onAPIExportBansValveIP() gin.HandlerFunc {
 
 func onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := store.GetSteamIdsAbove(ctx, store.PReserved)
+		privilegedIds, errPrivilegedIds := store.GetSteamIdsAbove(ctx, consts.PReserved)
 		if errPrivilegedIds != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
@@ -1037,13 +1037,13 @@ func onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 		for _, player := range players {
 			perms := ""
 			switch player.PermissionLevel {
-			case store.PAdmin:
+			case consts.PAdmin:
 				perms = "z"
-			case store.PModerator:
+			case consts.PModerator:
 				perms = "abcdefgjk"
-			case store.PEditor:
+			case consts.PEditor:
 				perms = "ak"
-			case store.PReserved:
+			case consts.PReserved:
 				perms = "a"
 			}
 			bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
@@ -1323,7 +1323,7 @@ func onAPIGetBanByID() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.Person.SteamID}, store.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.Person.SteamID}, consts.PModerator) {
 			return
 		}
 		loadBanMeta(&bannedPerson)
@@ -1849,7 +1849,7 @@ func onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, store.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
 			return
 		}
 		var message editMessage
@@ -1904,7 +1904,7 @@ func onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, store.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -1992,7 +1992,7 @@ func onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceId, report.TargetId}, store.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceId, report.TargetId}, consts.PModerator) {
 			return
 		}
 
@@ -2102,7 +2102,7 @@ func onAPIGetReport() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceId}, store.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceId}, consts.PModerator) {
 			responseErr(ctx, http.StatusUnauthorized, nil)
 			return
 		}
@@ -2488,7 +2488,7 @@ func onAPIGetBanMessages() gin.HandlerFunc {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetId, banPerson.Ban.SourceId}, store.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetId, banPerson.Ban.SourceId}, consts.PModerator) {
 			return
 		}
 		banMessages, errGetBanMessages := store.GetBanMessages(ctx, banId)
@@ -2534,7 +2534,7 @@ func onAPIDeleteBanMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, store.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -2587,7 +2587,7 @@ func onAPIPostBanMessage() gin.HandlerFunc {
 			return
 		}
 		userProfile := currentUserProfile(ctx)
-		if bp.Ban.AppealState != store.Open && userProfile.PermissionLevel < store.PModerator {
+		if bp.Ban.AppealState != store.Open && userProfile.PermissionLevel < consts.PModerator {
 			responseErr(ctx, http.StatusForbidden, nil)
 			logger.Warn("User tried to bypass posting restriction",
 				zap.Int64("ban_id", bp.Ban.BanID), zap.Int64("steam_id", bp.Person.SteamID.Int64()))
@@ -2637,7 +2637,7 @@ func onAPIEditBanMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, store.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
 			return
 		}
 		var message editMessage

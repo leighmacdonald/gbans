@@ -1,7 +1,7 @@
 // Package event implements an event dispatcher for incoming log events. It sends the
 // messages to the registered matching event reader channels that have been registered for the
 // event type.
-package event
+package app
 
 import (
 	"github.com/leighmacdonald/gbans/internal/model"

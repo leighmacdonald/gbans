@@ -389,7 +389,7 @@ func newServerJWT(serverId int) (string, error) {
 
 // authMiddleware handles client authentication to the HTTP & websocket api.
 // websocket clients must pass the key as a query parameter called "token"
-func authMiddleware(level store.Privilege) gin.HandlerFunc {
+func authMiddleware(level consts.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -404,13 +404,13 @@ func authMiddleware(level store.Privilege) gin.HandlerFunc {
 				return
 			}
 			pcs := strings.Split(hdr.Authorization, " ")
-			if len(pcs) != 2 && level >= store.PUser {
+			if len(pcs) != 2 && level >= consts.PUser {
 				ctx.AbortWithStatus(http.StatusForbidden)
 				return
 			}
 			token = pcs[1]
 		}
-		if level >= store.PUser {
+		if level >= consts.PUser {
 			sid, errFromToken := sid64FromJWTToken(token)
 			if errFromToken != nil {
 				if errors.Is(errFromToken, consts.ErrExpired) {

@@ -16,42 +16,34 @@ import (
 	"time"
 )
 
-type NotificationSeverity int
-
-const (
-	SeverityInfo NotificationSeverity = iota
-	SeverityWarn
-	SeverityError
-)
-
 type UserNotification struct {
-	NotificationId int64                `json:"person_notification_id"`
-	SteamId        steamid.SID64        `json:"steam_id,string"`
-	Read           bool                 `json:"read"`
-	Deleted        bool                 `json:"deleted"`
-	Severity       NotificationSeverity `json:"severity"`
-	Message        string               `json:"message"`
-	Link           string               `json:"link"`
-	Count          int                  `json:"count"`
-	CreatedOn      time.Time            `json:"created_on"`
+	NotificationId int64                       `json:"person_notification_id"`
+	SteamId        steamid.SID64               `json:"steam_id,string"`
+	Read           bool                        `json:"read"`
+	Deleted        bool                        `json:"deleted"`
+	Severity       consts.NotificationSeverity `json:"severity"`
+	Message        string                      `json:"message"`
+	Link           string                      `json:"link"`
+	Count          int                         `json:"count"`
+	CreatedOn      time.Time                   `json:"created_on"`
 }
 
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SID64 `db:"steam_id" json:"steam_id,string"`
-	CreatedOn        time.Time     `json:"created_on"`
-	UpdatedOn        time.Time     `json:"updated_on"`
-	PermissionLevel  Privilege     `json:"permission_level"`
-	Muted            bool          `json:"muted"`
-	IsNew            bool          `json:"-"`
-	DiscordID        string        `json:"discord_id"`
-	IPAddr           net.IP        `json:"-"` // TODO Allow json for admins endpoints
-	CommunityBanned  bool          `json:"community_banned"`
-	VACBans          int           `json:"vac_bans"`
-	GameBans         int           `json:"game_bans"`
-	EconomyBan       string        `json:"economy_ban"`
-	DaysSinceLastBan int           `json:"days_since_last_ban"`
-	UpdatedOnSteam   time.Time     `json:"updated_on_steam"`
+	SteamID          steamid.SID64    `db:"steam_id" json:"steam_id,string"`
+	CreatedOn        time.Time        `json:"created_on"`
+	UpdatedOn        time.Time        `json:"updated_on"`
+	PermissionLevel  consts.Privilege `json:"permission_level"`
+	Muted            bool             `json:"muted"`
+	IsNew            bool             `json:"-"`
+	DiscordID        string           `json:"discord_id"`
+	IPAddr           net.IP           `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned  bool             `json:"community_banned"`
+	VACBans          int              `json:"vac_bans"`
+	GameBans         int              `json:"game_bans"`
+	EconomyBan       string           `json:"economy_ban"`
+	DaysSinceLastBan int              `json:"days_since_last_ban"`
+	UpdatedOnSteam   time.Time        `json:"updated_on_steam"`
 	*steamweb.PlayerSummary
 }
 
@@ -76,7 +68,7 @@ func NewPerson(sid64 steamid.SID64) Person {
 		SteamID:          sid64,
 		CreatedOn:        t0,
 		UpdatedOn:        t0,
-		PermissionLevel:  PUser,
+		PermissionLevel:  consts.PUser,
 		Muted:            false,
 		IsNew:            true,
 		DiscordID:        "",
@@ -724,7 +716,7 @@ func PrunePersonAuth(ctx context.Context) error {
 	return Err(Exec(ctx, query, args...))
 }
 
-func SendNotification(ctx context.Context, targetId steamid.SID64, severity NotificationSeverity, message string, link string) error {
+func SendNotification(ctx context.Context, targetId steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
 	query, args, errQuery := sb.
 		Insert("person_notification").
 		Columns("steam_id", "severity", "message", "link", "created_on").
@@ -783,7 +775,7 @@ func SetNotificationsRead(ctx context.Context, notificationIds []int64) error {
 	return Err(Exec(ctx, query, args...))
 }
 
-func GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error) {
+func GetSteamIdsAbove(ctx context.Context, privilege consts.Privilege) (steamid.Collection, error) {
 	query, args, errQuery := sb.
 		Select("steam_id").
 		From("person").
