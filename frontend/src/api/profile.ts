@@ -20,7 +20,7 @@ enum NotificationSeverity {
 }
 
 export interface UserNotification {
-    person_notification_id: string;
+    person_notification_id: number;
     steam_id: SteamID;
     read: boolean;
     deleted: boolean;
@@ -28,7 +28,7 @@ export interface UserNotification {
     message: string;
     link: string;
     count: number;
-    created_on: Date;
+    created_on: string;
 }
 
 export interface UserProfile extends TimeStamped {

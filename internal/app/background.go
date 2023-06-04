@@ -184,7 +184,7 @@ func notificationSender(ctx context.Context) {
 		select {
 		case notification := <-notificationChan:
 			go func() {
-				if errSend := sendNotification(ctx, notification); errSend != nil {
+				if errSend := SendNotification(ctx, notification); errSend != nil {
 					logger.Error("Failed to send user notification", zap.Error(errSend))
 				}
 			}()

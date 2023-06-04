@@ -128,7 +128,6 @@ func PatreonCampaigns() []patreon.Campaign {
 	return campaigns
 }
 
-// Start is the main application entry point
 func Init(ctx context.Context, l *zap.Logger) error {
 	logger = l.Named("gbans")
 	if setupErr := firstTimeSetup(ctx); setupErr != nil {

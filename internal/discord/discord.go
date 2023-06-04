@@ -1,8 +1,11 @@
 package discord
 
 import (
+	"context"
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -82,7 +85,6 @@ func Start(l *zap.Logger) error {
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
-	botUnregisterSlashCommands()
 	if errRegister := botRegisterSlashCommands(); errRegister != nil {
 		logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
@@ -93,6 +95,13 @@ func Start(l *zap.Logger) error {
 func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	logger.Info("Service state changed", zap.String("state", "ready"))
 	isReady.Store(true)
+	app.SendNotification(context.TODO(), app.NotificationPayload{
+		MinPerms: store.PAdmin,
+		Sids:     nil,
+		Severity: store.SeverityInfo,
+		Message:  "Discord connected",
+		Link:     "",
+	})
 }
 
 func onConnect(session *discordgo.Session, _ *discordgo.Connect) {

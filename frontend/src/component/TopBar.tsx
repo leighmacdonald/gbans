@@ -40,12 +40,16 @@ import { useNavigate } from 'react-router-dom';
 import { Flashes } from './Flashes';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { handleOnLogin, PermissionLevel } from '../api';
+import { handleOnLogin, PermissionLevel, UserNotification } from '../api';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import Link from '@mui/material/Link';
 import Badge from '@mui/material/Badge';
 import MailIcon from '@mui/icons-material/Mail';
+import {
+    NotificationsProvider,
+    useNotifications
+} from '../contexts/NotificationsCtx';
 
 interface menuRoute {
     to: string;
@@ -55,8 +59,8 @@ interface menuRoute {
 
 export const TopBar = () => {
     const navigate = useNavigate();
-    const { currentUser, notifications } = useCurrentUserCtx();
-    const user = currentUser;
+    const { currentUser } = useCurrentUserCtx();
+    const { notifications } = useNotifications();
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
@@ -115,7 +119,7 @@ export const TopBar = () => {
             }
             // { to: '/stats', text: 'Stats', icon: <BarChartIcon sx={{ color: '#fff' }} /> },
         ];
-        if (user.ban_id <= 0) {
+        if (currentUser.ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
@@ -127,14 +131,14 @@ export const TopBar = () => {
             text: 'Wiki',
             icon: <ArticleIcon sx={topColourOpts} />
         });
-        if (user.ban_id <= 0) {
+        if (currentUser.ban_id <= 0) {
             items.push({
                 to: '/report',
                 text: 'Report',
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (user.permission_level >= PermissionLevel.Admin) {
+        if (currentUser.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/pug',
                 text: 'PUGs',
@@ -146,20 +150,20 @@ export const TopBar = () => {
                 icon: <QueryStatsIcon sx={topColourOpts} />
             });
         }
-        if (user.ban_id > 0) {
+        if (currentUser.ban_id > 0) {
             items.push({
-                to: `/ban/${user.ban_id}`,
+                to: `/ban/${currentUser.ban_id}`,
                 text: 'Appeal',
                 icon: <SupportIcon sx={topColourOpts} />
             });
         }
         return items;
-    }, [user.ban_id, user.permission_level, topColourOpts]);
+    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
             {
-                to: `/profile/${user?.steam_id}`,
+                to: `/profile/${currentUser?.steam_id}`,
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
@@ -170,12 +174,12 @@ export const TopBar = () => {
                 icon: <ExitToAppIcon sx={colourOpts} />
             }
         ],
-        [colourOpts, user?.steam_id]
+        [colourOpts, currentUser?.steam_id]
     );
 
     const adminItems: menuRoute[] = useMemo(() => {
         const items: menuRoute[] = [];
-        if (user.permission_level >= PermissionLevel.Editor) {
+        if (currentUser.permission_level >= PermissionLevel.Editor) {
             items.push({
                 to: '/admin/filters',
                 text: 'Filtered Words',
@@ -187,7 +191,7 @@ export const TopBar = () => {
                 icon: <BarChartIcon sx={colourOpts} />
             });
         }
-        if (user.permission_level >= PermissionLevel.Moderator) {
+        if (currentUser.permission_level >= PermissionLevel.Moderator) {
             items.push({
                 to: '/admin/ban',
                 text: 'Ban Player/Net',
@@ -214,7 +218,7 @@ export const TopBar = () => {
                 icon: <NewspaperIcon sx={colourOpts} />
             });
         }
-        if (user.permission_level >= PermissionLevel.Admin) {
+        if (currentUser.permission_level >= PermissionLevel.Admin) {
             items.push({
                 to: '/admin/people',
                 text: 'People',
@@ -237,7 +241,7 @@ export const TopBar = () => {
             });
         }
         return items;
-    }, [colourOpts, user.permission_level]);
+    }, [colourOpts, currentUser.permission_level]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -267,8 +271,8 @@ export const TopBar = () => {
     }, [theme.palette.mode]);
 
     const validSteamId = useMemo(() => {
-        return user?.steam_id.isValidIndividual();
-    }, [user?.steam_id]);
+        return currentUser?.steam_id.isValidIndividual();
+    }, [currentUser?.steam_id]);
 
     return (
         <AppBar position="sticky">
@@ -366,22 +370,25 @@ export const TopBar = () => {
                             </Tooltip>
                             {currentUser.permission_level >=
                                 PermissionLevel.Admin && (
-                                <IconButton
-                                    color={'inherit'}
-                                    onClick={() => {
-                                        loadRoute('/notifications');
-                                    }}
-                                >
-                                    <Badge
-                                        badgeContent={
-                                            (notifications ?? []).filter(
-                                                (n) => !n.read
-                                            ).length
-                                        }
+                                <NotificationsProvider>
+                                    <IconButton
+                                        color={'inherit'}
+                                        onClick={() => {
+                                            loadRoute('/notifications');
+                                        }}
                                     >
-                                        <MailIcon />
-                                    </Badge>
-                                </IconButton>
+                                        <Badge
+                                            badgeContent={
+                                                (notifications ?? []).filter(
+                                                    (n: UserNotification) =>
+                                                        !n.read
+                                                ).length
+                                            }
+                                        >
+                                            <MailIcon />
+                                        </Badge>
+                                    </IconButton>
+                                </NotificationsProvider>
                             )}
                             {!currentUser ||
                                 (!validSteamId && (
@@ -399,44 +406,46 @@ export const TopBar = () => {
                                         </Button>
                                     </Tooltip>
                                 ))}
-                            {user && validSteamId && adminItems.length > 0 && (
-                                <>
-                                    <Tooltip title="Mod/Admin">
-                                        <IconButton
-                                            color={'inherit'}
-                                            onClick={handleOpenAdminMenu}
+                            {currentUser &&
+                                validSteamId &&
+                                adminItems.length > 0 && (
+                                    <>
+                                        <Tooltip title="Mod/Admin">
+                                            <IconButton
+                                                color={'inherit'}
+                                                onClick={handleOpenAdminMenu}
+                                            >
+                                                <SettingsIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Menu
+                                            sx={{ mt: '45px' }}
+                                            id="menu-appbar"
+                                            anchorEl={anchorElAdmin}
+                                            anchorOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            keepMounted
+                                            transformOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            open={Boolean(anchorElAdmin)}
+                                            onClose={handleCloseAdminMenu}
                                         >
-                                            <SettingsIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Menu
-                                        sx={{ mt: '45px' }}
-                                        id="menu-appbar"
-                                        anchorEl={anchorElAdmin}
-                                        anchorOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        keepMounted
-                                        transformOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        open={Boolean(anchorElAdmin)}
-                                        onClose={handleCloseAdminMenu}
-                                    >
-                                        {adminItems.map((value) => {
-                                            return renderLinkedMenuItem(
-                                                value.text,
-                                                value.to,
-                                                value.icon
-                                            );
-                                        })}
-                                    </Menu>
-                                </>
-                            )}
+                                            {adminItems.map((value) => {
+                                                return renderLinkedMenuItem(
+                                                    value.text,
+                                                    value.to,
+                                                    value.icon
+                                                );
+                                            })}
+                                        </Menu>
+                                    </>
+                                )}
 
-                            {user && validSteamId && (
+                            {currentUser && validSteamId && (
                                 <>
                                     <Tooltip title="User Settings">
                                         <IconButton
@@ -444,8 +453,8 @@ export const TopBar = () => {
                                             sx={{ p: 0 }}
                                         >
                                             <Avatar
-                                                alt={user.name}
-                                                src={user.avatar}
+                                                alt={currentUser.name}
+                                                src={currentUser.avatar}
                                             />
                                         </IconButton>
                                     </Tooltip>

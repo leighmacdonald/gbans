@@ -25,7 +25,7 @@ const (
 )
 
 type UserNotification struct {
-	NotificationId int64                `json:"person_notification_id,string"`
+	NotificationId int64                `json:"person_notification_id"`
 	SteamId        steamid.SID64        `json:"steam_id,string"`
 	Read           bool                 `json:"read"`
 	Deleted        bool                 `json:"deleted"`

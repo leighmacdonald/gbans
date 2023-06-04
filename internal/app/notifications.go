@@ -20,7 +20,7 @@ type NotificationPayload struct {
 	Link     string
 }
 
-func sendNotification(ctx context.Context, notification NotificationPayload) error {
+func SendNotification(ctx context.Context, notification NotificationPayload) error {
 	// Collect all required ids
 	if notification.MinPerms >= store.PUser {
 		sids, errIds := store.GetSteamIdsAbove(ctx, notification.MinPerms)

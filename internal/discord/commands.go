@@ -482,8 +482,7 @@ type CommandHandler func(ctx context.Context, s *discordgo.Session,
 	m *discordgo.InteractionCreate, r *Response) error
 
 const (
-	discordMaxMsgLen  = 2000
-	discordMsgWrapper = "```"
+	discordMaxMsgLen = 2000
 )
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
@@ -497,12 +496,13 @@ func onInteractionCreate(session *discordgo.Session, interaction *discordgo.Inte
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
 		// very short timeout windows, ~2-3 seconds.
-		if errRespond := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		initialResponse := &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Calculating numberwang...",
 			},
-		}); errRespond != nil {
+		}
+		if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
 			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
 			if errSendInteraction := sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
 				logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
@@ -522,8 +522,6 @@ func onInteractionCreate(session *discordgo.Session, interaction *discordgo.Inte
 		}
 		if sendSendResponse := sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
 			logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
-		} else {
-			logger.Debug("Sent message embed")
 		}
 	}
 }

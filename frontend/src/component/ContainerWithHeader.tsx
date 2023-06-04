@@ -18,6 +18,7 @@ interface ContainerWithHeaderProps {
     spacing?: number;
     elevation?: number;
     marginTop?: number;
+    padding?: number;
 }
 
 export const ContainerWithHeader = ({
@@ -28,14 +29,15 @@ export const ContainerWithHeader = ({
     align = 'flex-start',
     spacing = 2,
     elevation = 1,
-    marginTop = 2
+    marginTop = 0,
+    padding = 1
 }: ContainerWithHeaderProps) => {
     return (
         <Paper elevation={elevation}>
             <Heading iconLeft={iconLeft} iconRight={iconRight} align={align}>
                 {title}
             </Heading>
-            <Stack spacing={spacing} sx={{ marginTop }}>
+            <Stack spacing={spacing} sx={{ marginTop }} padding={padding}>
                 {children}
             </Stack>
         </Paper>
