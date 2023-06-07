@@ -134,7 +134,7 @@ func Init(ctx context.Context, l *zap.Logger) error {
 		logger.Fatal("Failed to do first time setup", zap.Error(setupErr))
 	}
 
-	discord.SetOnReady(func() {
+	discord.SetOnConnect(func() {
 		_ = SendNotification(context.TODO(), NotificationPayload{
 			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected"})
 	})

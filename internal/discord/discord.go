@@ -21,7 +21,7 @@ var (
 	//ctx             context.Context
 	commandHandlers map[Cmd]CommandHandler
 
-	onReadyUser      func()
+	onConnectUser    func()
 	onDisconnectUser func()
 )
 
@@ -29,8 +29,8 @@ func init() {
 	commandHandlers = map[Cmd]CommandHandler{}
 }
 
-func SetOnReady(fn func()) {
-	onReadyUser = fn
+func SetOnConnect(fn func()) {
+	onConnectUser = fn
 }
 func SetOnDisconnect(fn func()) {
 	onDisconnectUser = fn
@@ -101,9 +101,6 @@ func Start(l *zap.Logger) error {
 func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	logger.Info("Service state changed", zap.String("state", "ready"))
 	isReady.Store(true)
-	if onReadyUser != nil {
-		onReadyUser()
-	}
 }
 
 func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
@@ -127,6 +124,9 @@ func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
 		logger.Error("Failed to update status complex", zap.Error(errUpdateStatus))
 	}
 	logger.Info("Service state changed", zap.String("state", "connected"))
+	if onConnectUser != nil {
+		onConnectUser()
+	}
 }
 
 func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
