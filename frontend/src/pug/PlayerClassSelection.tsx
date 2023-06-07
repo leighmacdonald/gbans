@@ -11,7 +11,7 @@ import Container from '@mui/material/Container';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+// import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 export interface PlayerClassSelectionProps {
     reverse?: boolean;
@@ -60,12 +60,7 @@ export const PlayerClassSelection = ({
                     sx={{ height: '100%' }}
                     variant={'outlined'}
                 >
-                    <Button
-                        {...(!reverse
-                            ? { startIcon: <ChevronLeftIcon /> }
-                            : { endIcon: <ChevronRightIcon /> })}
-                        fullWidth
-                    >
+                    <Button startIcon={<ChevronLeftIcon />} fullWidth>
                         Join Slot
                     </Button>
                 </ButtonGroup>

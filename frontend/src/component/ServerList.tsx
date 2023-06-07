@@ -124,7 +124,7 @@ export const ServerList = () => {
                                     )} khu`}
                                 >
                                     <Typography variant={'caption'}>
-                                        {`${obj.distance}km`}
+                                        {`${obj.distance.toFixed(0)}km`}
                                     </Typography>
                                 </Tooltip>
                             );

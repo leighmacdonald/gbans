@@ -45,7 +45,7 @@ const DetailRow = ({ heading, value }: { heading: string; value: string }) => {
 const LobbyDetailsView = ({ lobby }: { lobby: Nullable<PugLobby> }) => {
     return (
         <ContainerWithHeader title={'Lobby Settings'}>
-            {lobby ? (
+            {lobby != null ? (
                 <Stack padding={1}>
                     <DetailRow heading={'Lobby ID'} value={lobby.lobbyId} />
                     <DetailRow
