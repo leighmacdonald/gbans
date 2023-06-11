@@ -230,6 +230,7 @@ func profileUpdater(ctx context.Context) {
 				continue
 			}
 			person.PlayerSummary = &summary
+			person.UpdatedOnSteam = config.Now()
 			if errSavePerson := store.SavePerson(localCtx, &person); errSavePerson != nil {
 				logger.Error("Failed to save person", zap.Error(errSavePerson))
 				continue
