@@ -566,7 +566,7 @@ func initFilters(ctx context.Context) error {
 func initWorkers(ctx context.Context) {
 	go patreonUpdater(ctx)
 	go banSweeper(ctx)
-	go profileUpdater(ctx)
+	//go profileUpdater(ctx)
 	go warnWorker(ctx)
 	go logReader(ctx)
 	go initLogSrc(ctx)

@@ -196,59 +196,59 @@ func notificationSender(ctx context.Context) {
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-func profileUpdater(ctx context.Context) {
-	var update = func() {
-		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-		defer cancel()
-		people, errGetExpired := store.GetExpiredProfiles(localCtx, 100)
-		if errGetExpired != nil {
-			logger.Error("Failed to get expired profiles", zap.Error(errGetExpired))
-			return
-		}
-		if len(people) == 0 {
-			return
-		}
-		var sids steamid.Collection
-		for _, person := range people {
-			sids = append(sids, person.SteamID)
-		}
-		summaries, errSummaries := steamweb.PlayerSummaries(sids)
-		if errSummaries != nil {
-			logger.Error("Failed to get player summaries", zap.Error(errSummaries))
-			return
-		}
-		for _, summary := range summaries {
-			// TODO batch update upserts
-			sid, errSid := steamid.SID64FromString(summary.Steamid)
-			if errSid != nil {
-				logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
-				continue
-			}
-			person := store.NewPerson(sid)
-			if errGetPerson := store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
-				logger.Error("Failed to get person", zap.Error(errGetPerson))
-				continue
-			}
-			person.PlayerSummary = &summary
-			person.UpdatedOnSteam = config.Now()
-			if errSavePerson := store.SavePerson(localCtx, &person); errSavePerson != nil {
-				logger.Error("Failed to save person", zap.Error(errSavePerson))
-				continue
-			}
-		}
-	}
-	update()
-	ticker := time.NewTicker(time.Second * 60)
-	for {
-		select {
-		case <-ticker.C:
-			update()
-		case <-ctx.Done():
-			logger.Debug("profileUpdater shutting down")
-			return
-		}
-	}
-}
+//func profileUpdater(ctx context.Context) {
+//	var update = func() {
+//		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+//		defer cancel()
+//		people, errGetExpired := store.GetExpiredProfiles(localCtx, 100)
+//		if errGetExpired != nil {
+//			logger.Error("Failed to get expired profiles", zap.Error(errGetExpired))
+//			return
+//		}
+//		if len(people) == 0 {
+//			return
+//		}
+//		var sids steamid.Collection
+//		for _, person := range people {
+//			sids = append(sids, person.SteamID)
+//		}
+//		summaries, errSummaries := steamweb.PlayerSummaries(sids)
+//		if errSummaries != nil {
+//			logger.Error("Failed to get player summaries", zap.Error(errSummaries))
+//			return
+//		}
+//		for _, summary := range summaries {
+//			// TODO batch update upserts
+//			sid, errSid := steamid.SID64FromString(summary.Steamid)
+//			if errSid != nil {
+//				logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
+//				continue
+//			}
+//			person := store.NewPerson(sid)
+//			if errGetPerson := store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
+//				logger.Error("Failed to get person", zap.Error(errGetPerson))
+//				continue
+//			}
+//			person.PlayerSummary = &summary
+//			person.UpdatedOnSteam = config.Now()
+//			if errSavePerson := store.SavePerson(localCtx, &person); errSavePerson != nil {
+//				logger.Error("Failed to save person", zap.Error(errSavePerson))
+//				continue
+//			}
+//		}
+//	}
+//	update()
+//	ticker := time.NewTicker(time.Second * 60)
+//	for {
+//		select {
+//		case <-ticker.C:
+//			update()
+//		case <-ctx.Done():
+//			logger.Debug("profileUpdater shutting down")
+//			return
+//		}
+//	}
+//}
 
 func patreonUpdater(ctx context.Context) {
 	updateTimer := time.NewTicker(time.Hour * 1)
