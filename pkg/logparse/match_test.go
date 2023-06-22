@@ -57,29 +57,29 @@ func TestMatch_Apply(t *testing.T) {
 	}
 	// Player sum values
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Kills,
-			getPS(m, ps.SteamId).Kills, "Kills incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Kills,
+			getPS(m, ps.SteamID).Kills, "Kills incorrect %v", getName(ps.SteamID))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Deaths,
-			getPS(m, ps.SteamId).Deaths, "Deaths incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Deaths,
+			getPS(m, ps.SteamID).Deaths, "Deaths incorrect %v", getName(ps.SteamID))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Damage,
-			getPS(m, ps.SteamId).Damage, "Damage incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Damage,
+			getPS(m, ps.SteamID).Damage, "Damage incorrect %v", getName(ps.SteamID))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Healing,
-			getPS(m, ps.SteamId).Healing, "Healing incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Healing,
+			getPS(m, ps.SteamID).Healing, "Healing incorrect %v", getName(ps.SteamID))
 	}
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Dominations,
-			getPS(m, ps.SteamId).Dominations, "Dominations incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Dominations,
+			getPS(m, ps.SteamID).Dominations, "Dominations incorrect %v", getName(ps.SteamID))
 	}
 
 	for _, ps := range match3124689.PlayerSums {
-		require.Equal(t, getPS(match3124689, ps.SteamId).Revenges,
-			getPS(m, ps.SteamId).Revenges, "Revenges incorrect %v", getName(ps.SteamId))
+		require.Equal(t, getPS(match3124689, ps.SteamID).Revenges,
+			getPS(m, ps.SteamID).Revenges, "Revenges incorrect %v", getName(ps.SteamID))
 	}
 	// for sid := range match3124689.playerSums {
 	//	require.Equal(t, match3124689.playerSums[sid].Classes,
@@ -96,8 +96,8 @@ func TestMatch_Apply(t *testing.T) {
 
 	// Medic sums
 	for _, ms := range match3124689.MedicSums {
-		require.Equal(t, getMS(match3124689, ms.SteamId).Drops,
-			getMS(m, ms.SteamId).Drops, "Drops incorrect %v", getName(ms.SteamId))
+		require.Equal(t, getMS(match3124689, ms.SteamID).Drops,
+			getMS(m, ms.SteamID).Drops, "Drops incorrect %v", getName(ms.SteamID))
 	}
 	// for sid := range match3124689.medicSums {
 	//	require.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
@@ -105,7 +105,7 @@ func TestMatch_Apply(t *testing.T) {
 	//}
 	//for _, ms := range match3124689.MedicSums {
 	//	require.Equal(t, map[logparse.Medigun]int{logparse.HadUber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
-	//		getMS(m, ms.SteamId).Charges, "Charges incorrect %v", getName(ms.SteamId))
+	//		getMS(m, ms.SteamID).Charges, "Charges incorrect %v", getName(ms.SteamID))
 	//}
 
 	// for team := range match3124689.teamSums {
@@ -115,13 +115,15 @@ func TestMatch_Apply(t *testing.T) {
 }
 
 // https://logs.tf/3124689
+//
+//nolint:funlen,maintidx
 func testMatch() (logparse.Match, map[string]steamid.SID64) {
 	match := logparse.Match{
 		Title:   "Qixalite Booking: RED vs BLU",
 		MapName: "koth_cascade_rc2",
 		PlayerSums: []*logparse.MatchPlayerSum{
 			{
-				SteamId:           76561198164892406,
+				SteamID:           76561198164892406,
 				Team:              logparse.BLU,
 				TimeStart:         &time.Time{},
 				TimeEnd:           &time.Time{},
@@ -145,7 +147,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:           370,
 			},
 			{
-				SteamId:     76561198057150173,
+				SteamID:     76561198057150173,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -164,7 +166,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     754,
 			},
 			{
-				SteamId:     76561198126692772,
+				SteamID:     76561198126692772,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -183,7 +185,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     481,
 			},
 			{
-				SteamId:     76561198036671190,
+				SteamID:     76561198036671190,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -202,7 +204,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     436,
 			},
 			{
-				SteamId:     76561198084686835,
+				SteamID:     76561198084686835,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -221,7 +223,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     1187,
 			},
 			{
-				SteamId:     76561198061174192,
+				SteamID:     76561198061174192,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -240,7 +242,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     686,
 			},
 			{
-				SteamId:     76561198113244106,
+				SteamID:     76561198113244106,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -258,7 +260,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     17708,
 			},
 			{
-				SteamId:     76561198423392803,
+				SteamID:     76561198423392803,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -277,7 +279,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     395,
 			},
 			{
-				SteamId:     76561198051884373,
+				SteamID:     76561198051884373,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -296,7 +298,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     456,
 			},
 			{
-				SteamId:     76561198087442614,
+				SteamID:     76561198087442614,
 				Team:        logparse.BLU,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -315,7 +317,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     546,
 			},
 			{
-				SteamId:     76561198043171944,
+				SteamID:     76561198043171944,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -334,7 +336,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     1036,
 			},
 			{
-				SteamId:     76561198809011070,
+				SteamID:     76561198809011070,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -353,7 +355,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     1313,
 			},
 			{
-				SteamId:     76561198271399587,
+				SteamID:     76561198271399587,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -372,7 +374,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     553,
 			},
 			{
-				SteamId:     76561198096251579,
+				SteamID:     76561198096251579,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -390,7 +392,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     0,
 			},
 			{
-				SteamId:     76561198383642609,
+				SteamID:     76561198383642609,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -409,7 +411,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     1216,
 			},
 			{
-				SteamId:     76561198050517054,
+				SteamID:     76561198050517054,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -428,7 +430,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     922,
 			},
 			{
-				SteamId:     76561198082713023,
+				SteamID:     76561198082713023,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -446,7 +448,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     19762,
 			},
 			{
-				SteamId:     76561199050447792,
+				SteamID:     76561199050447792,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -464,7 +466,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Healing:     101,
 			},
 			{
-				SteamId:     76561198073709029,
+				SteamID:     76561198073709029,
 				Team:        logparse.RED,
 				TimeStart:   &time.Time{},
 				TimeEnd:     &time.Time{},
@@ -484,7 +486,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 		},
 		MedicSums: []*logparse.MatchMedicSum{
 			{
-				SteamId: 76561198113244106,
+				SteamID: 76561198113244106,
 				Healing: 17368,
 				Charges: map[logparse.MedigunType]int{
 					logparse.Uber: 4,
@@ -500,7 +502,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				HealTargets:         []*logparse.MatchClassSums{},
 			},
 			{
-				SteamId: 76561198082713023,
+				SteamID: 76561198082713023,
 				Healing: 19545,
 				Charges: map[logparse.MedigunType]int{
 					logparse.Uber: 6,

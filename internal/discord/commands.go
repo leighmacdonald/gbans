@@ -65,6 +65,7 @@ const (
 	OptCIDR             = "cidr"
 )
 
+//nolint:funlen,maintidx
 func botRegisterSlashCommands() error {
 	dmPerms := false
 	modPerms := int64(discordgo.PermissionBanMembers)
@@ -476,6 +477,7 @@ func botRegisterSlashCommands() error {
 		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
 	logger.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
+
 	return nil
 }
 

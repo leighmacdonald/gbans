@@ -18,10 +18,10 @@ var (
 	ErrUnhandled = errors.New("Unhandled msg")
 )
 
-func NewMatch(logger *zap.Logger, serverId int, serverName string) Match {
+func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 	return Match{
-		logger:            logger.Named(fmt.Sprintf("match-%d", serverId)),
-		ServerId:          serverId,
+		logger:            logger.Named(fmt.Sprintf("match-%d", serverID)),
+		ServerId:          serverID,
 		Title:             serverName,
 		PlayerSums:        MatchPlayerSums{},
 		MedicSums:         []*MatchMedicSum{},
@@ -52,7 +52,7 @@ type MatchMedicSums []*MatchMedicSum
 
 func (mps MatchMedicSums) GetBySteamId(steamId steamid.SID64) (*MatchMedicSum, error) {
 	for _, m := range mps {
-		if m.SteamId == steamId {
+		if m.SteamID == steamId {
 			return m, nil
 		}
 	}
@@ -63,7 +63,7 @@ type MatchPlayerSums []*MatchPlayerSum
 
 func (mps MatchPlayerSums) GetBySteamId(steamId steamid.SID64) (*MatchPlayerSum, error) {
 	for _, m := range mps {
-		if m.SteamId == steamId {
+		if m.SteamID == steamId {
 			return m, nil
 		}
 	}
@@ -396,7 +396,7 @@ func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
 		if errors.Is(err, consts.ErrUnknownID) {
 			t0 := config.Now()
 			ps := &MatchPlayerSum{
-				SteamId:   sid,
+				SteamID:   sid,
 				TimeStart: &t0,
 			}
 			if match.inMatch {
@@ -416,7 +416,7 @@ func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
 		return m
 	}
 	ms := &MatchMedicSum{
-		SteamId: sid,
+		SteamID: sid,
 		Charges: map[MedigunType]int{
 			Uber:       0,
 			Kritzkrieg: 0,
@@ -526,7 +526,7 @@ func (match *Match) assist(sid steamid.SID64) {
 	match.getPlayer(sid).Assists++
 }
 
-func (match *Match) joinTeam(sid steamid.SID64, team Team) {
+func (match *Match) joinTeam(_ steamid.SID64, _ Team) {
 	// TODO join a team
 }
 
@@ -549,23 +549,23 @@ func (match *Match) revenge(source steamid.SID64) {
 	match.getPlayer(source).Revenges++
 }
 
-func (match *Match) builtObject(source steamid.SID64, object string) {
+func (match *Match) builtObject(source steamid.SID64, _ string) {
 	match.getPlayer(source).BuildingBuilt++
 }
 
-func (match *Match) killedObject(source steamid.SID64, object string) {
+func (match *Match) killedObject(source steamid.SID64, _ string) {
 	match.getPlayer(source).BuildingDestroyed++
 }
 
-func (match *Match) dropObject(source steamid.SID64, object string) {
+func (match *Match) dropObject(source steamid.SID64, _ string) {
 	match.getPlayer(source).BuildingDropped++
 }
 
-func (match *Match) carriedObject(source steamid.SID64, object string) {
+func (match *Match) carriedObject(source steamid.SID64, _ string) {
 	match.getPlayer(source).BuildingCarried++
 }
 
-func (match *Match) detonatedObject(source steamid.SID64, object string) {
+func (match *Match) detonatedObject(source steamid.SID64, _ string) {
 	match.getPlayer(source).BuildingDetonated++
 }
 
@@ -600,7 +600,7 @@ func (match *Match) pointCaptureBlocked(cp int, cpname string, pp SourcePlayerPo
 func (match *Match) pointCapture(team Team, cp int, cpname string, players []SourcePlayerPosition) {
 	for _, p := range players {
 		match.getPlayer(p.SID).Captures = append(match.getPlayer(p.SID).Captures, PointCapture{
-			SteamId:  p.SID,
+			SteamID:  p.SID,
 			CP:       cp,
 			CPName:   cpname,
 			Position: p.Pos,
@@ -626,7 +626,7 @@ func (match *Match) killed(source steamid.SID64, target steamid.SID64, team Team
 	}
 }
 
-func (match *Match) suicide(source steamid.SID64, weapon Weapon) {
+func (match *Match) suicide(source steamid.SID64, _ Weapon) {
 	match.getPlayer(source).Suicides++
 }
 
@@ -635,7 +635,7 @@ func (match *Match) firstHealAfterSpawn(source steamid.SID64, timeUntil float64)
 }
 
 func (match *Match) pickup(source steamid.SID64, item PickupItem, healing int64) {
-	switch item {
+	switch item { //nolint:exhaustive
 	case ItemHPSmall:
 		fallthrough
 	case ItemHPMedium:
@@ -702,7 +702,7 @@ type PointCaptureBlocked struct {
 }
 
 type PointCapture struct {
-	SteamId  steamid.SID64
+	SteamID  steamid.SID64
 	CP       int
 	CPName   string
 	Position Pos
@@ -710,7 +710,7 @@ type PointCapture struct {
 
 type MatchPlayerSum struct {
 	MatchPlayerSumID  int
-	SteamId           steamid.SID64
+	SteamID           steamid.SID64
 	Team              Team
 	TimeStart         *time.Time
 	TimeEnd           *time.Time
@@ -771,10 +771,10 @@ type MatchRoundSum struct {
 }
 
 type MatchMedicSum struct {
-	MatchMedicId        int
-	MatchId             int
+	MatchMedicID        int
+	MatchID             int
 	FirstHealAfterSpawn []float64
-	SteamId             steamid.SID64
+	SteamID             steamid.SID64
 	Healing             int64
 	Charges             map[MedigunType]int
 	Drops               int
@@ -790,7 +790,7 @@ type MatchMedicSum struct {
 
 func newMatchMedicSum(steamId steamid.SID64) *MatchMedicSum {
 	return &MatchMedicSum{
-		SteamId: steamId,
+		SteamID: steamId,
 		Charges: map[MedigunType]int{
 			Uber:       0,
 			Kritzkrieg: 0,

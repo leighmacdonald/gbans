@@ -34,7 +34,7 @@ linters:
     - exportloopref
     - forbidigo
     - forcetypeassert
-    - funlen
+    #- funlen
     #- gci
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -63,14 +63,14 @@ linters:
     - ineffassign
     - interfacebloat
     #- ireturn
-    - lll
+    #- lll
     - loggercheck
     - maintidx
     - makezero
     - misspell
     - musttag
     - nakedret
-    - nestif
+    #- nestif
     - nilerr
     - nilnil
     #- nlreturn

@@ -53,7 +53,7 @@ type Stats struct {
 func MatchSave(ctx context.Context, match *logparse.Match) error {
 	for _, p := range match.PlayerSums {
 		var player Person
-		if errPlayer := GetOrCreatePersonBySteamID(ctx, p.SteamId, &player); errPlayer != nil {
+		if errPlayer := GetOrCreatePersonBySteamID(ctx, p.SteamID, &player); errPlayer != nil {
 			return errors.Wrapf(errPlayer, "Failed to create person")
 		}
 	}
@@ -81,7 +81,7 @@ func MatchSave(ctx context.Context, match *logparse.Match) error {
 			// Use match end time
 			endTime = s.TimeEnd
 		}
-		if errPlayerExec := QueryRow(ctx, pq, match.MatchID, s.SteamId, s.Team, s.TimeStart, endTime, s.Kills, s.Assists, s.Deaths, s.Dominations, s.Dominated, s.Revenges, s.Damage, s.DamageTaken, s.Healing, s.HealingTaken, s.HealthPacks, s.BackStabs, s.HeadShots, s.AirShots, s.Captures, s.Shots, s.Extinguishes, s.Hits, s.BuildingDestroyed, s.BuildingDestroyed).Scan(&s.MatchPlayerSumID); errPlayerExec != nil {
+		if errPlayerExec := QueryRow(ctx, pq, match.MatchID, s.SteamID, s.Team, s.TimeStart, endTime, s.Kills, s.Assists, s.Deaths, s.Dominations, s.Dominated, s.Revenges, s.Damage, s.DamageTaken, s.Healing, s.HealingTaken, s.HealthPacks, s.BackStabs, s.HeadShots, s.AirShots, s.Captures, s.Shots, s.Extinguishes, s.Hits, s.BuildingDestroyed, s.BuildingDestroyed).Scan(&s.MatchPlayerSumID); errPlayerExec != nil {
 			return errors.Wrapf(errPlayerExec, "Failed to write player sum")
 		}
 	}
@@ -96,7 +96,7 @@ func MatchSave(ctx context.Context, match *logparse.Match) error {
 		for _, mg := range s.Charges {
 			charges += mg
 		}
-		if errMedExec := QueryRow(ctx, mq, match.MatchID, s.SteamId, s.Healing, charges, s.Drops, s.AvgTimeToBuild, s.AvgTimeBeforeUse, s.NearFullChargeDeath, s.AvgUberLength, s.DeathAfterCharge, s.MajorAdvLost, s.BiggestAdvLost).Scan(&s.MatchMedicId); errMedExec != nil {
+		if errMedExec := QueryRow(ctx, mq, match.MatchID, s.SteamID, s.Healing, charges, s.Drops, s.AvgTimeToBuild, s.AvgTimeBeforeUse, s.NearFullChargeDeath, s.AvgUberLength, s.DeathAfterCharge, s.MajorAdvLost, s.BiggestAdvLost).Scan(&s.MatchMedicID); errMedExec != nil {
 			return errors.Wrapf(errMedExec, "Failed to write medic sum")
 		}
 	}
@@ -187,7 +187,7 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 	defer playerRows.Close()
 	for playerRows.Next() {
 		s := logparse.MatchPlayerSum{MatchPlayerSumID: matchId}
-		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamId, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.AirShots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
+		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamID, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.AirShots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
 		m.PlayerSums = append(m.PlayerSums, &s)
@@ -207,14 +207,14 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 	}
 	defer medicRows.Close()
 	for medicRows.Next() {
-		ms := logparse.MatchMedicSum{MatchId: matchId, Charges: map[logparse.MedigunType]int{
+		ms := logparse.MatchMedicSum{MatchID: matchId, Charges: map[logparse.MedigunType]int{
 			logparse.Uber:       0,
 			logparse.Kritzkrieg: 0,
 			logparse.Vaccinator: 0,
 			logparse.QuickFix:   0,
 		}}
 		charges := 0
-		if errRow := medicRows.Scan(&ms.MatchMedicId, &ms.SteamId, &ms.Healing, &charges, &ms.Drops, &ms.AvgTimeToBuild, &ms.AvgTimeBeforeUse, &ms.NearFullChargeDeath, &ms.AvgUberLength, &ms.DeathAfterCharge, &ms.MajorAdvLost, &ms.BiggestAdvLost); errRow != nil {
+		if errRow := medicRows.Scan(&ms.MatchMedicID, &ms.SteamID, &ms.Healing, &charges, &ms.Drops, &ms.AvgTimeToBuild, &ms.AvgTimeBeforeUse, &ms.NearFullChargeDeath, &ms.AvgUberLength, &ms.DeathAfterCharge, &ms.MajorAdvLost, &ms.BiggestAdvLost); errRow != nil {
 			return nil, errors.Wrapf(errMedQuery, "Failed to scan match medics")
 		}
 		// FIXME all charges are counted as uber for now
@@ -243,7 +243,7 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 	}
 	// var ids steamid.Collection
 	//for _, p := range m.PlayerSums {
-	//	ids = append(ids, p.SteamId)
+	//	ids = append(ids, p.SteamID)
 	//}
 	//players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
 	//if errPlayers != nil {

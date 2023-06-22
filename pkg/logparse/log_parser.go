@@ -329,7 +329,12 @@ func ParseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 	if !ok {
 		return false
 	}
-	player.Name = ooKV["name"].(string)
+	nameVal, nameOk := ooKV["name"].(string)
+	if !nameOk {
+		return false
+	}
+	player.Name = nameVal
+
 	pidVal, pidOk := ooKV["pid"].(string)
 	if !pidOk {
 		return false
@@ -380,20 +385,24 @@ func ParseKVs(stringVal string, out map[string]any) bool {
 
 func processKV(originalKVMap map[string]any) map[string]any {
 	newKVMap := map[string]any{}
-	for key, value := range originalKVMap {
+	for key, origValue := range originalKVMap {
+		value, ok := origValue.(string)
+		if !ok {
+			continue
+		}
 		switch key {
 		case "created_on":
 			var t time.Time
-			if ParseDateTime(value.(string), &t) {
+			if ParseDateTime(value, &t) {
 				newKVMap["created_on"] = t
 			}
 		case "medigun":
 			var medigun MedigunType
-			if parseMedigun(value.(string), &medigun) {
+			if parseMedigun(value, &medigun) {
 				newKVMap["medigun"] = medigun
 			}
 		case "crit":
-			switch value.(string) {
+			switch value {
 			case "crit":
 				newKVMap["crit"] = Crit
 			case "mini":
@@ -403,10 +412,10 @@ func processKV(originalKVMap map[string]any) map[string]any {
 			}
 		case "reason":
 			// Some reasons get output with a newline, so it gets these uneven line endings
-			reason := value.(string)
+			reason := value
 			newKVMap["reason"] = strings.TrimSuffix(reason, `")`)
 		case "objectowner":
-			ooKV, ok := reSubMatchMap(rxPlayer, "\""+value.(string)+"\"")
+			ooKV, ok := reSubMatchMap(rxPlayer, "\""+value+"\"")
 			if ok {
 				// TODO Make this less static to support >2 targets for events like capping points?
 				for keyVal, val := range ooKV {
@@ -415,7 +424,7 @@ func processKV(originalKVMap map[string]any) map[string]any {
 			}
 		case "address":
 			// Split newKVMap client port for easier queries
-			pieces := strings.Split(value.(string), ":")
+			pieces := strings.Split(value, ":")
 			if len(pieces) != 2 {
 				newKVMap[key] = value
 				continue
@@ -436,6 +445,8 @@ type Results struct {
 }
 
 // Parse will parse the log line into a known type and values.
+//
+//nolint:gocognit
 func Parse(logLine string) (*Results, error) {
 	for _, rx := range rxParsers {
 		matchMap, found := reSubMatchMap(rx.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
@@ -823,9 +834,14 @@ func decodeTeam() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var team Team
-		if !parseTeam(d.(string), &team) {
+		teamVal, ok := d.(string)
+		if !ok {
 			return d, nil
 		}
+		if !parseTeam(teamVal, &team) {
+			return d, nil
+		}
+
 		return team, nil
 	}
 }
@@ -836,7 +852,11 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var playerClass PlayerClass
-		if !parsePlayerClass(d.(string), &playerClass) {
+		pcVal, ok := d.(string)
+		if !ok {
+			return d, nil
+		}
+		if !parsePlayerClass(pcVal, &playerClass) {
 			return d, nil
 		}
 		return playerClass, nil
@@ -849,9 +869,14 @@ func decodePos() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var pos Pos
-		if !ParsePos(d.(string), &pos) {
+		posVal, ok := d.(string)
+		if !ok {
 			return d, nil
 		}
+		if !ParsePos(posVal, &pos) {
+			return d, nil
+		}
+
 		return pos, nil
 	}
 }
@@ -864,13 +889,17 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		if d.(string) == "BOT" {
-			return BotSid, nil
-		}
-		if !strings.HasPrefix(d.(string), "[U") {
+		sidVal, ok := d.(string)
+		if !ok {
 			return d, nil
 		}
-		sid64 := steamid.SID3ToSID64(steamid.SID3(d.(string)))
+		if sidVal == "BOT" {
+			return BotSid, nil
+		}
+		if !strings.HasPrefix(sidVal, "[U") {
+			return d, nil
+		}
+		sid64 := steamid.SID3ToSID64(steamid.SID3(sidVal))
 		if !sid64.Valid() {
 			return d, nil
 		}
@@ -897,9 +926,14 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var m PickupItem
-		if !parsePickupItem(d.(string), &m) {
+		itemVal, ok := d.(string)
+		if !ok {
 			return d, nil
 		}
+		if !parsePickupItem(itemVal, &m) {
+			return d, nil
+		}
+
 		return m, nil
 	}
 }
@@ -909,7 +943,11 @@ func decodeWeapon() mapstructure.DecodeHookFunc {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		w := ParseWeapon(d.(string))
+		weapVal, ok := d.(string)
+		if !ok {
+			return d, nil
+		}
+		w := ParseWeapon(weapVal)
 		if w != UnknownWeapon {
 			return w, nil
 		}
@@ -923,9 +961,14 @@ func decodeTime() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var t0 time.Time
-		if ParseDateTime(d.(string), &t0) {
+		dateVal, ok := d.(string)
+		if !ok {
+			return d, nil
+		}
+		if ParseDateTime(dateVal, &t0) {
 			return t0, nil
 		}
+
 		return d, nil
 	}
 }

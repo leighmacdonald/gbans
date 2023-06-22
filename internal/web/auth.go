@@ -148,7 +148,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		form.Set("code", code)
 		form.Set("grant_type", "authorization_code")
 		form.Set("scope", "identify")
-		req, errReq := http.NewRequestWithContext(ctx, "POST", "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
+		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 		if errReq != nil {
 			return "", errReq
 		}

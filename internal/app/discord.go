@@ -894,7 +894,7 @@ func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.Int
 	desc := "`Top players\n" +
 		"N. K:D dmg heal sid\n"
 	for i, player := range top {
-		desc += fmt.Sprintf("%d %d:%d %d %d %s\n", i+1, player.Kills, player.Deaths, player.Damage, player.Healing, player.SteamId.String())
+		desc += fmt.Sprintf("%d %d:%d %d %d %s\n", i+1, player.Kills, player.Deaths, player.Damage, player.Healing, player.SteamID.String())
 		if i == 9 {
 			break
 		}
