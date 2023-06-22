@@ -3,13 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"time"
 )
 
 var netCmd = &cobra.Command{

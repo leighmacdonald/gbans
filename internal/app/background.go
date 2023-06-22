@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -13,8 +16,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 func IsSteamGroupBanned(steamId steamid.SID64) bool {
@@ -31,7 +32,7 @@ func IsSteamGroupBanned(steamId steamid.SID64) bool {
 }
 
 func steamGroupMembershipUpdater(ctx context.Context) {
-	var update = func() {
+	update := func() {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
 		total := 0
@@ -75,7 +76,7 @@ func showReportMeta(ctx context.Context) {
 		OpenWeek    int
 		OpenNew     int
 	}
-	var showReports = func() {
+	showReports := func() {
 		reports, errReports := store.GetReports(ctx, store.AuthorQueryFilter{
 			QueryFilter: store.QueryFilter{
 				Limit: 0,
@@ -128,7 +129,7 @@ func showReportMeta(ctx context.Context) {
 		discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
 		discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
 		discord.SendPayload(discord.Payload{ChannelId: config.Discord.ReportLogChannelId, Embed: reportNotice})
-		//sendDiscordPayload(app.discordSendMsg)
+		// sendDiscordPayload(app.discordSendMsg)
 	}
 	time.Sleep(time.Second * 2)
 	showReports()
@@ -146,7 +147,7 @@ func showReportMeta(ctx context.Context) {
 
 func demoCleaner(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour * 24)
-	var update = func() {
+	update := func() {
 		if err := store.FlushDemos(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
 			logger.Error("Error pruning expired refresh tokens", zap.Error(err))
 		}
@@ -255,7 +256,7 @@ func patreonUpdater(ctx context.Context) {
 	if patreonClient == nil {
 		return
 	}
-	var update = func() {
+	update := func() {
 		newCampaigns, errCampaigns := PatreonGetTiers(patreonClient)
 		if errCampaigns != nil {
 			logger.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
@@ -269,7 +270,7 @@ func patreonUpdater(ctx context.Context) {
 		patreonMu.Lock()
 		patreonCampaigns = newCampaigns
 		patreonPledges = newPledges
-		//patreonUsers = newUsers
+		// patreonUsers = newUsers
 		patreonMu.Unlock()
 		cents := 0
 		totalCents := 0
@@ -291,8 +292,8 @@ func patreonUpdater(ctx context.Context) {
 			return
 		}
 	}
-
 }
+
 func updateStateServerList(ctx context.Context) error {
 	servers, errServers := store.GetServers(ctx, false)
 	if errServers != nil {
@@ -397,7 +398,7 @@ func banSweeper(ctx context.Context) {
 }
 
 func localStatUpdater(ctx context.Context) {
-	var build = func() {
+	build := func() {
 		if errBuild := store.BuildLocalTF2Stats(ctx); errBuild != nil {
 			logger.Error("Error building local stats", zap.Error(errBuild))
 		}

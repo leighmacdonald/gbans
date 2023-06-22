@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/leighmacdonald/gbans/internal/store"
 	"sync"
+
+	"github.com/leighmacdonald/gbans/internal/store"
 )
 
 var (

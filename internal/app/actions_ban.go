@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -13,8 +16,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net"
-	"strconv"
 )
 
 // BanSteam will ban the steam id from all servers. Players are immediately kicked from servers
@@ -36,7 +37,7 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
 
-	var updateAppealState = func(reportId int64) error {
+	updateAppealState := func(reportId int64) error {
 		var report store.Report
 		if errReport := store.GetReport(ctx, reportId, &report); errReport != nil {
 			return errors.Wrap(errReport, "Failed to get associated report for ban")

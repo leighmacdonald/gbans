@@ -3,12 +3,13 @@ package store_test
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"math/rand"
 	"net"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/store"
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/golib"

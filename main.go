@@ -1,6 +1,5 @@
 /*
 Copyright © 2020 Leigh MacDonald <leigh.macdonald@gmail.com>
-
 */
 package main
 

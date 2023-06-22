@@ -2,11 +2,12 @@ package app
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 func MustCreateLogger(logFile string) *zap.Logger {
@@ -25,7 +26,7 @@ func MustCreateLogger(logFile string) *zap.Logger {
 			}
 		}
 		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, logFile)
-		//loggingConfig.Level.SetLevel(zap.DebugLevel)
+		// loggingConfig.Level.SetLevel(zap.DebugLevel)
 	}
 	l, errLogger := loggingConfig.Build()
 	if errLogger != nil {

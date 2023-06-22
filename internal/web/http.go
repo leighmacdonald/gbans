@@ -4,14 +4,15 @@ package web
 import (
 	"context"
 	"crypto/tls"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 const ctxKeyUserProfile = "user_profile"
@@ -30,7 +31,7 @@ func Start(ctx context.Context) error {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil {
+		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
 			logger.Error("Error shutting down http service", zap.Error(errShutdown))
 		}
 	}()

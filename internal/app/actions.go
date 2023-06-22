@@ -4,6 +4,8 @@ import (
 	"context"
 	gerrors "errors"
 	"fmt"
+	"strings"
+
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/state"
@@ -11,12 +13,13 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"strings"
 )
 
-var ErrNoUserFound = errors.New("No user found")
-var ErrInvalidAuthorSID = errors.New("Invalid author steam id")
-var ErrInvalidTargetSID = errors.New("Invalid author steam id")
+var (
+	ErrNoUserFound      = errors.New("No user found")
+	ErrInvalidAuthorSID = errors.New("Invalid author steam id")
+	ErrInvalidTargetSID = errors.New("Invalid author steam id")
+)
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query
 func OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(info state.PlayerServerInfo) string) error {
@@ -56,7 +59,8 @@ func Kick(ctx context.Context, _ store.Origin, target steamid.SID64, author stea
 
 // Silence will gag & mute a player
 func Silence(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64,
-	reason store.Reason) error {
+	reason store.Reason,
+) error {
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
 	}

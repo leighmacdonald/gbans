@@ -208,7 +208,7 @@ func newBaseBanOpts(source SteamIDProvider, target StringSID, duration Duration,
 }
 
 func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
-	reason Reason, reasonText string, modNote string, origin Origin, reportId int64, banType BanType,
+	reason Reason, reasonText string, modNote string, origin Origin, reportID int64, banType BanType,
 	banSteam *BanSteam,
 ) error {
 	var opts BanSteamOpts
@@ -216,10 +216,10 @@ func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
-	if reportId < 0 {
+	if reportID < 0 {
 		return errors.New("Invalid report ID")
 	}
-	opts.ReportId = reportId
+	opts.ReportId = reportID
 	banSteam.Apply(opts)
 	banSteam.ReportId = opts.ReportId
 	banSteam.BanID = opts.BanId
@@ -227,7 +227,7 @@ func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
 }
 
 func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
-	reason Reason, reasonText string, modNote string, origin Origin, ASNum int64, banType BanType, banASN *BanASN,
+	reason Reason, reasonText string, modNote string, origin Origin, asNum int64, banType BanType, banASN *BanASN,
 ) error {
 	var opts BanASNOpts
 	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
@@ -246,7 +246,7 @@ func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
 	}
 	ok := false
 	for _, r := range ranges {
-		if ASNum >= r.start && ASNum <= r.end {
+		if asNum >= r.start && asNum <= r.end {
 			ok = true
 			break
 		}
@@ -254,7 +254,7 @@ func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
 	if !ok {
 		return errors.New("Invalid asn")
 	}
-	opts.ASNum = ASNum
+	opts.ASNum = asNum
 	return banASN.Apply(opts)
 }
 
@@ -592,7 +592,7 @@ func GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 	return bans, nil
 }
 
-func GetAppealsByActivity(ctx context.Context, filter QueryFilter) ([]AppealOverview, error) {
+func GetAppealsByActivity(ctx context.Context, _ QueryFilter) ([]AppealOverview, error) {
 	const query = `
 	SELECT
 		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.origin,

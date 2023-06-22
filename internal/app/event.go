@@ -4,9 +4,10 @@
 package app
 
 import (
+	"sync"
+
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"sync"
 )
 
 var (

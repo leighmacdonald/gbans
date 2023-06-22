@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"gopkg.in/mxpv/patreon-go.v1"
-	"time"
 )
 
 type PatreonStore interface {
@@ -43,7 +44,7 @@ func NewPatreonClient(ctx context.Context) (*patreon.Client, error) {
 		Expiry: time.Now().Add(1 * time.Hour),
 	}
 
-	tc := oAuthConfig.Client(context.Background(), tok)
+	tc := oAuthConfig.Client(ctx, tok)
 	client := patreon.NewClient(tc)
 
 	if errUpdate := updateToken(ctx, oAuthConfig, tok); errUpdate != nil {

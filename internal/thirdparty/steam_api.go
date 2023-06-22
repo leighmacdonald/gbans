@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
+	"github.com/pkg/errors"
 )
 
 const steamQueryMaxResults = 100

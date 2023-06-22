@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -9,7 +11,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"time"
 )
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
@@ -27,12 +28,12 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 			person.PlayerSummary = &s
 		} else {
 			logger.Warn("Failed to update profile summary", zap.Error(errSummaries), zap.Int64("sid", sid.Int64()))
-			//return errors.Errorf("Failed to fetch Player summary for %d", sid)
+			// return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
 		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
 			logger.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
-			//return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
+			// return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
 		} else {
 			person.CommunityBanned = vac[0].CommunityBanned
 			person.VACBans = vac[0].NumberOfVACBans

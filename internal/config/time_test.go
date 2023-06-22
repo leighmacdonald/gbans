@@ -1,8 +1,7 @@
-package config
+package config_test
 
 import (
-	"testing"
-
+	"github.com/leighmacdonald/gbans/internal/config"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -43,7 +42,7 @@ func TestParseDuration(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		d, errParseDuration := ParseDuration(test.input)
+		d, errParseDuration := config.ParseDuration(test.input)
 		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
 		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
 	}

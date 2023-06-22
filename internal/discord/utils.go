@@ -12,8 +12,8 @@ const (
 	maxEmbedFields = 25
 	// TODO ensure these
 
-	//maxUsernameChars    = 32
-	//maxAuthorChars      = 256.
+	// maxUsernameChars    = 32
+	// maxAuthorChars      = 256.
 	maxFieldNameChars   = 256
 	maxFieldValueChars  = 1024
 	maxDescriptionChars = 2048

@@ -4,6 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/leighmacdonald/gbans/internal/app"
@@ -16,13 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/yohcop/openid-go"
 	"go.uber.org/zap"
-	"io"
-	"net"
-	"net/http"
-	"net/url"
-	"regexp"
-	"strings"
-	"time"
 )
 
 // noOpDiscoveryCache implements the DiscoveryCache interface and doesn't cache anything.
@@ -36,8 +37,10 @@ func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
 }
 
-var nonceStore = openid.NewSimpleNonceStore()
-var discoveryCache = &noOpDiscoveryCache{}
+var (
+	nonceStore     = openid.NewSimpleNonceStore()
+	discoveryCache = &noOpDiscoveryCache{}
+)
 
 func authServerMiddleWare() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -118,7 +121,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		PremiumType      int         `json:"premium_type"`
 	}
 
-	var fetchDiscordId = func(ctx context.Context, accessToken string) (string, error) {
+	fetchDiscordId := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
 			return "", errReq
@@ -140,7 +143,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		return details.ID, nil
 	}
 
-	var fetchToken = func(ctx context.Context, code string) (string, error) {
+	fetchToken := func(ctx context.Context, code string) (string, error) {
 		form := url.Values{}
 		form.Set("client_id", config.Discord.AppID)
 		form.Set("client_secret", config.Discord.AppSecret)

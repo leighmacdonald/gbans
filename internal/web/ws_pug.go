@@ -3,6 +3,8 @@ package web
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/mm"
@@ -10,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"sync"
 )
 
 type classMapping map[string]steamid.SID64
@@ -64,6 +65,7 @@ func (lobby *pugLobby) id() string {
 	defer lobby.RUnlock()
 	return lobby.LobbyId
 }
+
 func (lobby *pugLobby) joinSlot(client *wsClient, slot string) error {
 	lobby.Lock()
 	defer lobby.Unlock()

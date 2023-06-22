@@ -2,16 +2,17 @@ package logparse_test
 
 import (
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestMatch_Apply(t *testing.T) {

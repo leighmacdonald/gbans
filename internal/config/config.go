@@ -12,6 +12,10 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -19,9 +23,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"os"
-	"strings"
-	"time"
 )
 
 // BanListType is the type or source of a ban list.

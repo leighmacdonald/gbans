@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -11,9 +15,6 @@ import (
 	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net/http"
-	"sync"
-	"time"
 )
 
 type wsMsgType int
@@ -27,7 +28,7 @@ const (
 	wsMsgTypePugJoinLobbyResponse   = 1005
 	wsMsgTypePugUserMessageRequest  = 1006
 	wsMsgTypePugUserMessageResponse = 1007
-	//wsMsgTypePugLobbyListStatesRequest  = 1008
+	// wsMsgTypePugLobbyListStatesRequest  = 1008
 	wsMsgTypePugLobbyListStatesResponse = 1009
 	wsMsgTypePugJoinSlotRequest         = 1010
 	//wsMsgTypePugJoinSlotResponse        = 1011
@@ -86,7 +87,6 @@ type wsClient struct {
 	logger   *zap.Logger
 	socket   *websocket.Conn
 	User     model.UserProfile `json:"user"`
-	ctx      context.Context
 	lobbies  []LobbyService
 }
 
@@ -123,12 +123,10 @@ func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
 	default:
 		client.logger.Error("Cannot send client ws payload: channel full")
 	}
-
 }
 
-func newWsClient(ctx context.Context, logger *zap.Logger, socket *websocket.Conn, user model.UserProfile) *wsClient {
+func newWsClient(logger *zap.Logger, socket *websocket.Conn, user model.UserProfile) *wsClient {
 	return &wsClient{
-		ctx:      ctx,
 		logger:   logger.Named(fmt.Sprintf("ws-%d", user.SteamID.Int64())),
 		socket:   socket,
 		User:     user,
@@ -145,8 +143,6 @@ func (client *wsClient) writer() {
 				return
 			}
 			client.logger.Debug("Wrote client payload", zap.Int("msg_type", int(payload.MsgType)))
-		case <-client.ctx.Done():
-			return
 		}
 	}
 }
@@ -389,7 +385,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfil
 	logger.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
 	// New user connection
 	// TODO track between connections so they can resume their session upon dc
-	client := newWsClient(r.Context(), logger, conn, user)
+	client := newWsClient(logger, conn, user)
 
 	go client.writer()
 
@@ -412,7 +408,8 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfil
 	for {
 		var basePayload wsRequest
 		if errRead := conn.ReadJSON(&basePayload); errRead != nil {
-			wsErr, ok := errRead.(*websocket.CloseError)
+			var wsErr *websocket.CloseError
+			ok := errors.Is(errRead, wsErr)
 			if !ok {
 				logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
 			} else {

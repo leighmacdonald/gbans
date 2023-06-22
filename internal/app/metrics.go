@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
@@ -104,8 +105,8 @@ func logMetricsConsumer(ctx context.Context) {
 					damageCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Add(float64(evt.Damage))
 				}
 			case logparse.Healed:
-				//evt := serverEvent.Event.(logparse.HealedEvt)
-				//healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
+				// evt := serverEvent.Event.(logparse.HealedEvt)
+				// healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
 				if evt, ok := serverEvent.Event.(logparse.ShotFiredEvt); ok {
 					shotFiredCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()

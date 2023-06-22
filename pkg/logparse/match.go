@@ -688,7 +688,6 @@ func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage in
 func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount int64) {
 	match.getPlayer(source).Healing += amount
 	match.getPlayer(target).HealingTaken += amount
-
 }
 
 func (match *Match) pointCaptureBlocked(cp int, cpname string, pp SourcePlayerPosition) {

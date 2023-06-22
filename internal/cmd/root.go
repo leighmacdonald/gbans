@@ -19,10 +19,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var cfgFile string

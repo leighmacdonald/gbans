@@ -4,6 +4,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -18,10 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/mxpv/patreon-go.v1"
-	"net"
-	"os"
-	"sync"
-	"time"
 )
 
 var (
@@ -40,7 +41,7 @@ var (
 	patreonMu            *sync.RWMutex
 	patreonCampaigns     []patreon.Campaign
 	patreonPledges       []patreon.Pledge
-	//patreonUsers         map[string]*patreon.User
+	// patreonUsers         map[string]*patreon.User
 )
 
 type userWarning struct {
@@ -116,7 +117,7 @@ func firstTimeSetup(ctx context.Context) error {
 func PatreonPledges() []patreon.Pledge {
 	patreonMu.RLock()
 	pledges := patreonPledges
-	//users := web.app.patreonUsers
+	// users := web.app.patreonUsers
 	patreonMu.RUnlock()
 	return pledges
 }
@@ -136,11 +137,13 @@ func Init(ctx context.Context, l *zap.Logger) error {
 
 	discord.SetOnConnect(func() {
 		_ = SendNotification(context.TODO(), NotificationPayload{
-			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected"})
+			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected",
+		})
 	})
 	discord.SetOnDisconnect(func() {
 		_ = SendNotification(context.TODO(), NotificationPayload{
-			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord disconnected"})
+			MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord disconnected",
+		})
 	})
 
 	pc, errPatreon := NewPatreonClient(ctx)
@@ -516,7 +519,7 @@ func logReader(ctx context.Context) {
 			}
 		}()
 	}
-	//playerStateCache := newPlayerCache(app.logger)
+	// playerStateCache := newPlayerCache(app.logger)
 	for {
 		select {
 		case logFile := <-logFileChan:

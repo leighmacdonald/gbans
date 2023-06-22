@@ -29,7 +29,7 @@ linters:
     - errname
     - errorlint
     - execinquery
-    - exhaustive
+    #- exhaustive
     #- exhaustruct
     - exportloopref
     - forbidigo
@@ -79,11 +79,11 @@ linters:
     - nonamedreturns
     - nosprintfhostport
     #- paralleltest
-    - prealloc
+    #- prealloc
     - predeclared
-    - promlinter
+    #- promlinter
     - reassign
-    - revive
+    #- revive
     - rowserrcheck
     - sqlclosecheck
     #- staticcheck

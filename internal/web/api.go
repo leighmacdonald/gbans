@@ -4,6 +4,15 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math"
+	"net"
+	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/app"
@@ -23,14 +32,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
-	"math"
-	"net"
-	"net/http"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // apiResponse represents the common high level response of all api responses. All child data is
@@ -865,7 +866,7 @@ func onAPIGetServerStates() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
-		//region := ctx.GetHeader("cf-region-code")
+		// region := ctx.GetHeader("cf-region-code")
 		ns := state.State()
 		var ss []BaseServer
 		for _, srv := range ns {
@@ -1298,7 +1299,6 @@ func onAPIGetStats() gin.HandlerFunc {
 }
 
 func loadBanMeta(_ *store.BannedPerson) {
-
 }
 
 func onAPIGetBanByID() gin.HandlerFunc {
@@ -1630,7 +1630,6 @@ func onAPIPostServer() gin.HandlerFunc {
 		logger.Info("Server config created",
 			zap.Int("server_id", server.ServerID),
 			zap.String("name", server.ServerNameShort))
-
 	}
 }
 
@@ -1828,7 +1827,8 @@ func onAPIPostReportMessage() gin.HandlerFunc {
 		discord.AddLink(embed, report)
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
-			Embed:     embed})
+			Embed:     embed,
+		})
 	}
 }
 
@@ -1887,7 +1887,8 @@ func onAPIEditReportMessage() gin.HandlerFunc {
 		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.AvatarFull}
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ModLogChannelId,
-			Embed:     embed})
+			Embed:     embed,
+		})
 	}
 }
 
@@ -1926,8 +1927,8 @@ func onAPIDeleteReportMessage() gin.HandlerFunc {
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ModLogChannelId,
-			Embed:     embed})
-
+			Embed:     embed,
+		})
 	}
 }
 
@@ -2172,7 +2173,8 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 			ChannelId: config.Discord.ModLogChannelId,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Created",
-				Description: fmt.Sprintf("News Posted: %s", entry.Title)},
+				Description: fmt.Sprintf("News Posted: %s", entry.Title),
+			},
 		})
 	}
 }
@@ -2206,9 +2208,9 @@ func onAPIPostNewsUpdate() gin.HandlerFunc {
 			ChannelId: config.Discord.ModLogChannelId,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Updated",
-				Description: fmt.Sprintf("News Updated: %s", entry.Title)},
+				Description: fmt.Sprintf("News Updated: %s", entry.Title),
+			},
 		})
-
 	}
 }
 
@@ -2434,7 +2436,8 @@ func onAPIGetMessageContext() gin.HandlerFunc {
 			ServerId:    message.ServerId,
 			SentAfter:   &after,
 			SentBefore:  &before,
-			QueryFilter: store.QueryFilter{}})
+			QueryFilter: store.QueryFilter{},
+		})
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			logger.Error("Failed to query chat history",
 				zap.Error(errChat), zap.Int64("person_message_id", messageId))
@@ -2461,7 +2464,8 @@ func onAPIGetPersonMessages() gin.HandlerFunc {
 			SteamId: steamId.String(),
 			QueryFilter: store.QueryFilter{
 				Limit: 1000,
-			}})
+			},
+		})
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			logger.Error("Failed to query chat history",
 				zap.Error(errChat), zap.Int64("sid64", steamId.Int64()))
@@ -2556,8 +2560,8 @@ func onAPIDeleteBanMessage() gin.HandlerFunc {
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
-			Embed:     embed})
-
+			Embed:     embed,
+		})
 	}
 }
 
@@ -2616,8 +2620,8 @@ func onAPIPostBanMessage() gin.HandlerFunc {
 			userProfile.SteamID, userProfile.Name, userProfile.ToURL())
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
-			Embed:     embed})
-
+			Embed:     embed,
+		})
 	}
 }
 
@@ -2672,8 +2676,8 @@ func onAPIEditBanMessage() gin.HandlerFunc {
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
-			Embed:     embed})
-
+			Embed:     embed,
+		})
 	}
 }
 
@@ -2725,7 +2729,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		HasBots    bool      `json:"has_bots,omitempty"`
 	}
 
-	var filterGameTypes = func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
+	filterGameTypes := func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
 		var valid []state.ServerLocation
 		for _, server := range servers {
 			serverTypes := strings.Split(server.GameType, ",")
@@ -2739,7 +2743,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterMaps = func(servers []state.ServerLocation, mapNames []string) []state.ServerLocation {
+	filterMaps := func(servers []state.ServerLocation, mapNames []string) []state.ServerLocation {
 		var valid []state.ServerLocation
 		for _, server := range servers {
 			for _, mapName := range mapNames {
@@ -2752,7 +2756,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterPlayersMin = func(servers []state.ServerLocation, minimum int) []state.ServerLocation {
+	filterPlayersMin := func(servers []state.ServerLocation, minimum int) []state.ServerLocation {
 		var valid []state.ServerLocation
 		for _, server := range servers {
 			if server.Players >= minimum {
@@ -2763,7 +2767,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 		return valid
 	}
 
-	var filterPlayersMax = func(servers []state.ServerLocation, maximum int) []state.ServerLocation {
+	filterPlayersMax := func(servers []state.ServerLocation, maximum int) []state.ServerLocation {
 		var valid []state.ServerLocation
 		for _, server := range servers {
 			if server.Players <= maximum {
@@ -2808,7 +2812,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 				Host: server.Addr,
 				Port: server.GamePort,
 				Name: server.Name,
-				//Region:     server.Region,
+				// Region:     server.Region,
 				Players:    server.Players,
 				MaxPlayers: server.MaxPlayers,
 				Bots:       server.Bots,
@@ -2852,7 +2856,7 @@ func onAPIGetTF2Stats() gin.HandlerFunc {
 				return
 			}
 			responseOK(ctx, http.StatusOK, fp.Reverse(localStats))
-		//case "global":
+		// case "global":
 		//	gStats, errGetStats := web.app.Store().GetGlobalTF2Stats(ctx, duration)
 		//	if errGetStats != nil {
 		//		responseErr(ctx, http.StatusInternalServerError, nil)
@@ -2879,7 +2883,6 @@ func onAPIGetPatreonPledges() gin.HandlerFunc {
 	//	CreatedAt time.Time
 	//}
 	return func(ctx *gin.Context) {
-
 		//var basic []basicPledge
 		//for _, p := range pledges {
 		//	t0 := config.Now()

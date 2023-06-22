@@ -3,6 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
@@ -10,11 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 type srcdsPacket byte
@@ -118,7 +119,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			remoteSrc.logger.Error("Failed to close connection cleanly", zap.Error(errConnClose))
 		}
 	}()
-	//msgId := 0
+	// msgId := 0
 	msgIngressChan := make(chan newMsg)
 	remoteSrc.updateSecrets(ctx)
 	if config.Debug.AddRCONLogAddress != "" {
@@ -169,16 +170,16 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			}
 		}
 	}()
-	//pc := newPlayerCache(remoteSrc.logger)
+	// pc := newPlayerCache(remoteSrc.logger)
 	ticker := time.NewTicker(remoteSrc.frequency)
-	//errCount := 0
+	// errCount := 0
 	for {
 		select {
 		case <-ctx.Done():
 			running = false
 		case <-ticker.C:
 			remoteSrc.updateSecrets(ctx)
-			//remoteSrc.updateDNS()
+			// remoteSrc.updateDNS()
 		case logPayload := <-msgIngressChan:
 			var serverName string
 			remoteSrc.RLock()

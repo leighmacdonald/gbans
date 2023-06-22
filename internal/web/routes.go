@@ -1,6 +1,9 @@
 package web
 
 import (
+	"net/http"
+	"path/filepath"
+
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -8,8 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"net/http"
-	"path/filepath"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -77,7 +78,8 @@ func createRouter() *gin.Engine {
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
-		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications"}
+		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications",
+	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{

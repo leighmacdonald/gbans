@@ -619,7 +619,7 @@ func GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) 
 		From("person_connections pc").
 		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
 
-		//Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
+		// Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
 		OrderBy("1").
 		Limit(limit)
 	qb = qb.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
