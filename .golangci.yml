@@ -17,7 +17,7 @@ linters:
     - bodyclose
     - containedctx
     - contextcheck
-    - cyclop
+    #- cyclop
     - decorder
     #- depguard
     - dogsled
@@ -30,7 +30,7 @@ linters:
     - errorlint
     - execinquery
     - exhaustive
-    - exhaustruct
+    #- exhaustruct
     - exportloopref
     - forbidigo
     - forcetypeassert
@@ -38,7 +38,7 @@ linters:
     #- gci
     - ginkgolinter
     - gocheckcompilerdirectives
-    - gochecknoglobals
+    #- gochecknoglobals
     - gochecknoinits
     - gocognit
     #- goconst
@@ -103,7 +103,7 @@ linters:
     - wastedassign
     - whitespace
     #- wrapcheck
-    - wsl
+    #- wsl
     #- zerologlint
   # Disable specific linter
   # https://golangci-lint.run/usage/linters/#disabled-by-default

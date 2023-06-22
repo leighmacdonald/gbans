@@ -40,7 +40,8 @@ var netUpdateCmd = &cobra.Command{
 				rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 			}
 		}()
-		if errUpdate := ip2location.Update(config.Net.CachePath, config.Net.IP2Location.Token); errUpdate != nil {
+		ctx := context.Background()
+		if errUpdate := ip2location.Update(ctx, config.Net.CachePath, config.Net.IP2Location.Token); errUpdate != nil {
 			rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
 		}
 		blockListData, errRead := ip2location.Read(config.Net.CachePath)

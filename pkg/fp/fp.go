@@ -8,9 +8,10 @@ type Number interface {
 }
 
 // Uniq will return a unique list of value from the input list.
-func Uniq[T comparable](input []T) (output []T) {
+func Uniq[T comparable](input []T) []T {
+	var output []T
 	if len(input) == 0 {
-		return
+		return output
 	}
 	output = append(output, input[0])
 	for _, v := range input {
@@ -25,7 +26,8 @@ func Uniq[T comparable](input []T) (output []T) {
 			output = append(output, v)
 		}
 	}
-	return
+
+	return output
 }
 
 func Contains[T comparable](input []T, value T) bool {

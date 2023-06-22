@@ -330,17 +330,29 @@ func ParseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 		return false
 	}
 	player.Name = ooKV["name"].(string)
-	pid, errPid := strconv.ParseInt(ooKV["pid"].(string), 10, 32)
+	pidVal, pidOk := ooKV["pid"].(string)
+	if !pidOk {
+		return false
+	}
+	pid, errPid := strconv.ParseInt(pidVal, 10, 32)
 	if errPid != nil {
 		return false
 	}
 	player.PID = int(pid)
 	var team Team
-	if !parseTeam(ooKV["team"].(string), &team) {
+	teamVal, teamOk := ooKV["team"].(string)
+	if !teamOk {
+		return false
+	}
+	if !parseTeam(teamVal, &team) {
 		return false
 	}
 	player.Team = team
-	player.SID = steamid.SID3ToSID64(steamid.SID3(ooKV["sid"].(string)))
+	sidStr, sidOk := ooKV["sid"].(string)
+	if !sidOk {
+		return false
+	}
+	player.SID = steamid.SID3ToSID64(steamid.SID3(sidStr))
 	return true
 }
 

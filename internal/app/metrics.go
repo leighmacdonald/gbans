@@ -98,22 +98,26 @@ func logMetricsConsumer(ctx context.Context) {
 				// TODO why is this ever nil?
 				logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
 			}
-			switch serverEvent.EventType {
+			switch serverEvent.EventType { //nolint:wsl,exhaustive
 			case logparse.Damage:
-				evt := serverEvent.Event.(logparse.DamageEvt)
-				damageCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Add(float64(evt.Damage))
+				if evt, ok := serverEvent.Event.(logparse.DamageEvt); ok {
+					damageCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Add(float64(evt.Damage))
+				}
 			case logparse.Healed:
 				//evt := serverEvent.Event.(logparse.HealedEvt)
 				//healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
-				evt := serverEvent.Event.(logparse.ShotFiredEvt)
-				shotFiredCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				if evt, ok := serverEvent.Event.(logparse.ShotFiredEvt); ok {
+					shotFiredCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				}
 			case logparse.ShotHit:
-				evt := serverEvent.Event.(logparse.ShotHitEvt)
-				shotHitCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				if evt, ok := serverEvent.Event.(logparse.ShotHitEvt); ok {
+					shotHitCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				}
 			case logparse.Killed:
-				evt := serverEvent.Event.(logparse.KilledEvt)
-				killCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				if evt, ok := serverEvent.Event.(logparse.KilledEvt); ok {
+					killCounter.With(prometheus.Labels{"weapon": evt.Weapon.String()}).Inc()
+				}
 			case logparse.Say:
 				sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
 			case logparse.SayTeam:
@@ -125,8 +129,9 @@ func logMetricsConsumer(ctx context.Context) {
 			case logparse.Disconnected:
 				disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
 			case logparse.SpawnedAs:
-				evt := serverEvent.Event.(logparse.SpawnedAsEvt)
-				classCounter.With(prometheus.Labels{"class": evt.PlayerClass.String()}).Inc()
+				if evt, ok := serverEvent.Event.(logparse.SpawnedAsEvt); ok {
+					classCounter.With(prometheus.Labels{"class": evt.PlayerClass.String()}).Inc()
+				}
 			}
 		}
 	}

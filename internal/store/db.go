@@ -134,7 +134,7 @@ func truncateTable(ctx context.Context, table tableName) error {
 // Err is used to wrap common database errors in owr own error types.
 func Err(rootError error) error {
 	if rootError == nil {
-		return rootError
+		return nil
 	}
 	var pgErr *pgconn.PgError
 	if errors.As(rootError, &pgErr) {

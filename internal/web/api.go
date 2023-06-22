@@ -1036,7 +1036,7 @@ func onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 		})
 		bld := strings.Builder{}
 		for _, player := range players {
-			perms := ""
+			var perms string
 			switch player.PermissionLevel {
 			case consts.PAdmin:
 				perms = "z"
@@ -1047,7 +1047,10 @@ func onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 			case consts.PReserved:
 				perms = "a"
 			}
-			bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
+			logger.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
+			if perms != "" {
+				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
+			}
 		}
 		ctx.String(http.StatusOK, bld.String())
 	}

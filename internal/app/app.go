@@ -150,7 +150,7 @@ func Init(ctx context.Context, l *zap.Logger) error {
 
 	// Load in the external network block / ip ban lists to memory if enabled
 	if config.Net.Enabled {
-		if errNetBans := initNetBans(); errNetBans != nil {
+		if errNetBans := initNetBans(ctx); errNetBans != nil {
 			return errors.Wrap(errNetBans, "Failed to load net bans")
 		}
 	} else {
@@ -600,9 +600,9 @@ func initLogSrc(ctx context.Context) {
 //	}
 //}
 
-func initNetBans() error {
+func initNetBans(ctx context.Context) error {
 	for _, banList := range config.Net.Sources {
-		if _, errImport := thirdparty.Import(banList); errImport != nil {
+		if _, errImport := thirdparty.Import(ctx, banList); errImport != nil {
 			return errImport
 		}
 	}

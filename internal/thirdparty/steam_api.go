@@ -35,7 +35,7 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
 	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 	defer cancelRequest()
-	req, errReq := http.NewRequestWithContext(requestCtx, "GET", u, nil)
+	req, errReq := http.NewRequestWithContext(requestCtx, http.MethodGet, u, nil)
 	if errReq != nil {
 		return nil, errors.Wrap(errReq, "Failed to create new request")
 	}

@@ -4,6 +4,7 @@ package ip2location
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"database/sql/driver"
 	"encoding/binary"
 	"encoding/csv"
@@ -220,23 +221,36 @@ func (ll LatLong) String() string {
 
 // Update will fetch a new geoip database from maxmind and install it, uncompressed,
 // into the configured geodb_path defined in the configuration file.
-func Update(outputPath string, apiKey string) error {
+func Update(ctx context.Context, outputPath string, apiKey string) error {
 	type dlParam struct {
 		dbName   string
 		fileName string
 	}
+
 	downloadDatabase := func(params dlParam) error {
-		resp, errGet := http.Get(fmt.Sprintf(geoDownloadURL, apiKey, params.dbName))
+		client := &http.Client{
+			Timeout: time.Minute * 5,
+		}
+
+		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(geoDownloadURL, apiKey, params.dbName), nil)
+		if reqErr != nil {
+			return reqErr
+		}
+
+		resp, errGet := client.Do(req)
 		if errGet != nil {
 			return errors.Wrap(errGet, "Failed to downloaded geoip db")
 		}
+
 		body, errReadAll := io.ReadAll(resp.Body)
 		if errReadAll != nil {
 			return errReadAll
 		}
+
 		if errCloseBody := resp.Body.Close(); errCloseBody != nil {
 			return errCloseBody
 		}
+
 		return extractZip(body, outputPath, params.fileName)
 	}
 	if apiKey == "" {
