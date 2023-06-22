@@ -1,8 +1,9 @@
 package config_test
 
 import (
-	"github.com/leighmacdonald/gbans/internal/config"
 	"testing"
+
+	"github.com/leighmacdonald/gbans/internal/config"
 
 	"github.com/stretchr/testify/require"
 )
