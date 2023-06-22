@@ -52,7 +52,7 @@ func authServerMiddleWare() gin.HandlerFunc {
 		claims := &serverAuthClaims{}
 		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, getTokenKey)
 		if errParseClaims != nil {
-			if errParseClaims == jwt.ErrSignatureInvalid {
+			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				logger.Error("jwt signature invalid!", zap.Error(errParseClaims))
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 				return
@@ -65,13 +65,13 @@ func authServerMiddleWare() gin.HandlerFunc {
 			logger.Error("Invalid jwt token parsed")
 			return
 		}
-		if claims.ServerId <= 0 {
+		if claims.ServerID <= 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			logger.Error("Invalid jwt claim ServerId")
+			logger.Error("Invalid jwt claim server")
 			return
 		}
 		var server store.Server
-		if errGetServer := store.GetServer(ctx, claims.ServerId, &server); errGetServer != nil {
+		if errGetServer := store.GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
 			logger.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
@@ -326,7 +326,7 @@ func onTokenRefresh() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, auth.SteamId)
+		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, auth.SteamID)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			logger.Error("Failed to create access token pair", zap.Error(errToken))
@@ -350,7 +350,7 @@ type personAuthClaims struct {
 }
 
 type serverAuthClaims struct {
-	ServerId int `json:"server_id"`
+	ServerID int `json:"server_id"`
 	jwt.StandardClaims
 }
 
@@ -373,10 +373,10 @@ func newUserJWT(steamID steamid.SID64) (string, error) {
 	return signedToken, nil
 }
 
-func newServerJWT(serverId int) (string, error) {
+func newServerJWT(serverID int) (string, error) {
 	t0 := config.Now()
 	claims := &serverAuthClaims{
-		ServerId: serverId,
+		ServerID: serverID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
 			IssuedAt:  t0.Unix(),
@@ -391,7 +391,7 @@ func newServerJWT(serverId int) (string, error) {
 }
 
 // authMiddleware handles client authentication to the HTTP & websocket api.
-// websocket clients must pass the key as a query parameter called "token"
+// websocket clients must pass the key as a query parameter called "token".
 func authMiddleware(level consts.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
@@ -465,7 +465,8 @@ func sid64FromJWTToken(token string) (steamid.SID64, error) {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 			return 0, consts.ErrAuthentication
 		}
-		e, ok := errParseClaims.(*jwt.ValidationError)
+		var e *jwt.ValidationError
+		ok := errors.Is(errParseClaims, e)
 		if ok && e.Errors == jwt.ValidationErrorExpired {
 			return 0, consts.ErrExpired
 		}

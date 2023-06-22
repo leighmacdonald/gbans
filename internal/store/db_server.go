@@ -14,7 +14,7 @@ import (
 )
 
 type ServerPermission struct {
-	SteamId         steamid.SID      `json:"steam_id"`
+	SteamID         steamid.SID      `json:"steam_id"`
 	PermissionLevel consts.Privilege `json:"permission_level"`
 	Flags           string           `json:"flags"`
 }
@@ -63,10 +63,10 @@ type Server struct {
 }
 
 func (s Server) IP() (net.IP, error) {
-	parsedIp := net.ParseIP(s.Address)
-	if parsedIp != nil {
+	parsedIP := net.ParseIP(s.Address)
+	if parsedIP != nil {
 		// We already have an ip
-		return parsedIp, nil
+		return parsedIP, nil
 	}
 	// TODO proper timeout for ctx
 	ips, errResolve := net.DefaultResolver.LookupIP(context.Background(), "ip4", s.Address)
@@ -144,7 +144,7 @@ func GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 			flags = "z"
 		}
 		perms = append(perms, ServerPermission{
-			SteamId:         steamid.SID64ToSID(sid),
+			SteamID:         steamid.SID64ToSID(sid),
 			PermissionLevel: perm,
 			Flags:           flags,
 		})

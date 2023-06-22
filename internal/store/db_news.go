@@ -12,7 +12,7 @@ import (
 )
 
 type NewsEntry struct {
-	NewsId      int       `json:"news_id"`
+	NewsID      int       `json:"news_id"`
 	Title       string    `json:"title"`
 	BodyMD      string    `json:"body_md"`
 	IsPublished bool      `json:"is_published"`
@@ -39,7 +39,7 @@ func GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]N
 	defer rows.Close()
 	for rows.Next() {
 		var entry NewsEntry
-		if errScan := rows.Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -58,20 +58,20 @@ func GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *N
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := QueryRow(ctx, query, args...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+	if errQuery := QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
 }
 
-func GetNewsById(ctx context.Context, newsId int, entry *NewsEntry) error {
+func GetNewsById(ctx context.Context, newsID int, entry *NewsEntry) error {
 	query, args, errQueryArgs := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
-		From("news").Where(sq.Eq{"news_id": newsId}).ToSql()
+		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errQuery := QueryRow(ctx, query, args...).Scan(&entry.NewsId, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+	if errQuery := QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -79,7 +79,7 @@ func GetNewsById(ctx context.Context, newsId int, entry *NewsEntry) error {
 }
 
 func SaveNewsArticle(ctx context.Context, entry *NewsEntry) error {
-	if entry.NewsId > 0 {
+	if entry.NewsID > 0 {
 		return updateNewsArticle(ctx, entry)
 	} else {
 		return insertNewsArticle(ctx, entry)
@@ -95,7 +95,7 @@ func insertNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	errQueryRow := QueryRow(ctx, query, args...).Scan(&entry.NewsId)
+	errQueryRow := QueryRow(ctx, query, args...).Scan(&entry.NewsID)
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
@@ -109,7 +109,7 @@ func updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).
 		Set("updated_on", config.Now()).
-		Where(sq.Eq{"news_id": entry.NewsId}).
+		Where(sq.Eq{"news_id": entry.NewsID}).
 		ToSql()
 	if errQueryArgs != nil {
 		return errQueryArgs
@@ -121,14 +121,14 @@ func updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	return nil
 }
 
-func DropNewsArticle(ctx context.Context, newsId int) error {
-	query, args, errQueryArgs := sb.Delete("news").Where(sq.Eq{"news_id": newsId}).ToSql()
+func DropNewsArticle(ctx context.Context, newsID int) error {
+	query, args, errQueryArgs := sb.Delete("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
 	if errExec := Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
-	logger.Info("News deleted", zap.Int("news_id", newsId))
+	logger.Info("News deleted", zap.Int("news_id", newsID))
 	return nil
 }

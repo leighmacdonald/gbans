@@ -19,7 +19,7 @@ import (
 
 type UserNotification struct {
 	NotificationId int64                       `json:"person_notification_id"`
-	SteamId        steamid.SID64               `json:"steam_id,string"`
+	SteamID        steamid.SID64               `json:"steam_id,string"`
 	Read           bool                        `json:"read"`
 	Deleted        bool                        `json:"deleted"`
 	Severity       consts.NotificationSeverity `json:"severity"`
@@ -97,9 +97,9 @@ func (p People) AsMap() map[steamid.SID64]Person {
 }
 
 type PersonChat struct {
-	PersonChatId int64
-	SteamId      steamid.SID64
-	ServerId     int
+	PersonChatID int64
+	SteamID      steamid.SID64
+	ServerID     int
 	TeamChat     bool
 	Message      string
 	CreatedOn    time.Time
@@ -123,31 +123,31 @@ type PersonIPRecord struct {
 type AppealOverview struct {
 	BanSteam
 
-	SourceSteamId     steamid.SID64 `json:"source_steam_id"`
+	SourceSteamID     steamid.SID64 `json:"source_steam_id"`
 	SourcePersonaName string        `json:"source_persona_name"`
 	SourceAvatar      string        `json:"source_avatar"`
 	SourceAvatarFull  string        `json:"source_avatar_full"`
 
-	TargetSteamId     steamid.SID64 `json:"target_steam_id"`
+	TargetSteamID     steamid.SID64 `json:"target_steam_id"`
 	TargetPersonaName string        `json:"target_persona_name"`
 	TargetAvatar      string        `json:"target_avatar"`
 	TargetAvatarFull  string        `json:"target_avatar_full"`
 }
 
 type UserMessage struct {
-	ParentId  int64         `json:"parent_id"`
-	MessageId int64         `json:"message_id"`
-	AuthorId  steamid.SID64 `json:"author_id,string"`
+	ParentID  int64         `json:"parent_id"`
+	MessageID int64         `json:"message_id"`
+	AuthorID  steamid.SID64 `json:"author_id,string"`
 	Message   string        `json:"contents"`
 	Deleted   bool          `json:"deleted"`
 	CreatedOn time.Time     `json:"created_on"`
 	UpdatedOn time.Time     `json:"updated_on"`
 }
 
-func NewUserMessage(parentId int64, authorId steamid.SID64, message string) UserMessage {
+func NewUserMessage(parentID int64, authorId steamid.SID64, message string) UserMessage {
 	return UserMessage{
-		ParentId:  parentId,
-		AuthorId:  authorId,
+		ParentID:  parentID,
+		AuthorID:  authorId,
 		Message:   message,
 		CreatedOn: config.Now(),
 		UpdatedOn: config.Now(),
@@ -155,9 +155,9 @@ func NewUserMessage(parentId int64, authorId steamid.SID64, message string) User
 }
 
 type PersonAuth struct {
-	PersonAuthId int64         `json:"person_auth_id"`
-	SteamId      steamid.SID64 `json:"steam_id"`
-	IpAddr       net.IP        `json:"ip_addr"`
+	PersonAuthID int64         `json:"person_auth_id"`
+	SteamID      steamid.SID64 `json:"steam_id"`
+	IPAddr       net.IP        `json:"ip_addr"`
 	RefreshToken string        `json:"refresh_token"`
 	CreatedOn    time.Time     `json:"created_on"`
 }
@@ -166,18 +166,18 @@ const refreshTokenLen = 80
 
 func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
 	return PersonAuth{
-		PersonAuthId: 0,
-		SteamId:      sid64,
-		IpAddr:       addr,
+		PersonAuthID: 0,
+		SteamID:      sid64,
+		IPAddr:       addr,
 		RefreshToken: golib.RandomString(refreshTokenLen),
 		CreatedOn:    config.Now(),
 	}
 }
 
 type PersonConnection struct {
-	PersonConnectionId int64          `json:"person_connection_id"`
+	PersonConnectionID int64          `json:"person_connection_id"`
 	IPAddr             net.IP         `json:"ip_addr"`
-	SteamId            steamid.SID64  `json:"steam_id,string"`
+	SteamID            steamid.SID64  `json:"steam_id,string"`
 	PersonaName        string         `json:"persona_name"`
 	CreatedOn          time.Time      `json:"created_on"`
 	IPInfo             PersonIPRecord `json:"ip_info"`
@@ -186,11 +186,11 @@ type PersonConnection struct {
 type PersonConnections []PersonConnection
 
 type PersonMessage struct {
-	PersonMessageId int64         `json:"person_message_id"`
-	SteamId         steamid.SID64 `json:"steam_id,string"`
+	PersonMessageID int64         `json:"person_message_id"`
+	SteamID         steamid.SID64 `json:"steam_id,string"`
 	PersonaName     string        `json:"persona_name"`
 	ServerName      string        `json:"server_name"`
-	ServerId        int           `json:"server_id"`
+	ServerID        int           `json:"server_id"`
 	Body            string        `json:"body"`
 	Team            bool          `json:"team"`
 	CreatedOn       time.Time     `json:"created_on"`
@@ -418,7 +418,7 @@ func GetPeople(ctx context.Context, queryFilter QueryFilter) (People, error) {
 // does not exist.
 func GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error {
 	errGetPerson := GetPersonBySteamID(ctx, sid64, person)
-	if errGetPerson != nil && Err(errGetPerson) == ErrNoResult {
+	if errGetPerson != nil && errors.Is(Err(errGetPerson), ErrNoResult) {
 		// FIXME
 		newPerson := NewPerson(sid64)
 		*person = newPerson
@@ -428,10 +428,10 @@ func GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person
 }
 
 // GetPersonByDiscordID returns a person by their discord_id.
-func GetPersonByDiscordID(ctx context.Context, discordId string, person *Person) error {
+func GetPersonByDiscordID(ctx context.Context, discordID string, person *Person) error {
 	query, args, errQueryArgs := sb.Select(profileColumns...).
 		From("person").
-		Where(sq.Eq{"discord_id": discordId}).
+		Where(sq.Eq{"discord_id": discordID}).
 		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
@@ -486,15 +486,15 @@ func AddChatHistory(ctx context.Context, message *PersonMessage) error {
     		(steam_id, server_id, body, team, created_on, persona_name) 
 			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING person_message_id`
-	if errScan := QueryRow(ctx, q, message.SteamId, message.ServerId, message.Body, message.Team,
+	if errScan := QueryRow(ctx, q, message.SteamID, message.ServerID, message.Body, message.Team,
 		message.CreatedOn, message.PersonaName).
-		Scan(&message.PersonMessageId); errScan != nil {
+		Scan(&message.PersonMessageID); errScan != nil {
 		return Err(errScan)
 	}
 	return nil
 }
 
-func GetPersonMessageById(ctx context.Context, personMessageId int64, msg *PersonMessage) error {
+func GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *PersonMessage) error {
 	query, args, errQuery := sb.Select(
 		"m.person_message_id",
 		"m.steam_id",
@@ -506,15 +506,15 @@ func GetPersonMessageById(ctx context.Context, personMessageId int64, msg *Perso
 		"s.short_name").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id").
-		Where(sq.Eq{"m.person_message_id": personMessageId}).
+		Where(sq.Eq{"m.person_message_id": personMessageID}).
 		ToSql()
 	if errQuery != nil {
 		return errors.Wrap(errQuery, "Failed to create query")
 	}
 	return Err(QueryRow(ctx, query, args...).
-		Scan(&msg.PersonMessageId,
-			&msg.SteamId,
-			&msg.ServerId,
+		Scan(&msg.PersonMessageID,
+			&msg.SteamID,
+			&msg.ServerID,
 			&msg.Body,
 			&msg.Team,
 			&msg.CreatedOn,
@@ -526,9 +526,9 @@ type ChatHistoryQueryFilter struct {
 	QueryFilter
 	// TODO Index this string query
 	PersonaName string `json:"persona_name,omitempty"`
-	SteamId     string `json:"steam_id,omitempty"`
+	SteamID     string `json:"steam_id,omitempty"`
 	// TODO Index this body query
-	ServerId   int        `json:"server_id,omitempty"`
+	ServerID   int        `json:"server_id,omitempty"`
 	SentAfter  *time.Time `json:"sent_after,omitempty"`
 	SentBefore *time.Time `json:"sent_before,omitempty"`
 }
@@ -558,11 +558,11 @@ func QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (Person
 			qb = qb.OrderBy(query.OrderBy + " ASC")
 		}
 	}
-	if query.ServerId > 0 {
-		qb = qb.Where(sq.Eq{"m.server_id": query.ServerId})
+	if query.ServerID > 0 {
+		qb = qb.Where(sq.Eq{"m.server_id": query.ServerID})
 	}
-	if query.SteamId != "" {
-		qb = qb.Where(sq.Eq{"m.steam_id": query.SteamId})
+	if query.SteamID != "" {
+		qb = qb.Where(sq.Eq{"m.steam_id": query.SteamID})
 	}
 	if query.PersonaName != "" {
 		qb = qb.Where(sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
@@ -589,9 +589,9 @@ func QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (Person
 	for rows.Next() {
 		var message PersonMessage
 		if errScan := rows.Scan(
-			&message.PersonMessageId,
-			&message.SteamId,
-			&message.ServerId,
+			&message.PersonMessageID,
+			&message.SteamID,
+			&message.ServerID,
 			&message.Body,
 			&message.Team,
 			&message.CreatedOn,
@@ -635,7 +635,7 @@ func GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) 
 	var connections PersonConnections
 	for rows.Next() {
 		var c PersonConnection
-		if errScan := rows.Scan(&c.PersonaName, &c.PersonConnectionId, &c.SteamId, &c.IPAddr, &c.CreatedOn,
+		if errScan := rows.Scan(&c.PersonaName, &c.PersonConnectionID, &c.SteamID, &c.IPAddr, &c.CreatedOn,
 			&c.IPInfo.CityName, &c.IPInfo.CountryName, &c.IPInfo.CountryCode,
 		); errScan != nil {
 			return nil, Err(errScan)
@@ -649,8 +649,8 @@ func AddConnectionHistory(ctx context.Context, conn *PersonConnection) error {
 	const q = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on) 
 		VALUES ($1, $2, $3, $4) RETURNING person_connection_id`
-	if errQuery := QueryRow(ctx, q, conn.SteamId, conn.IPAddr, conn.PersonaName, conn.CreatedOn).
-		Scan(&conn.PersonConnectionId); errQuery != nil {
+	if errQuery := QueryRow(ctx, q, conn.SteamID, conn.IPAddr, conn.PersonaName, conn.CreatedOn).
+		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
@@ -668,7 +668,7 @@ func GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth
 		return Err(errQuery)
 	}
 	return Err(QueryRow(ctx, query, args...).
-		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
+		Scan(&auth.PersonAuthID, &auth.SteamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
 func GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
@@ -681,26 +681,26 @@ func GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *Person
 		return Err(errQuery)
 	}
 	return Err(QueryRow(ctx, query, args...).
-		Scan(&auth.PersonAuthId, &auth.SteamId, &auth.IpAddr, &auth.RefreshToken, &auth.CreatedOn))
+		Scan(&auth.PersonAuthID, &auth.SteamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
 
 func SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 	query, args, errQuery := sb.
 		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
-		Values(auth.SteamId, auth.IpAddr.String(), auth.RefreshToken, auth.CreatedOn).
+		Values(auth.SteamID, auth.IPAddr.String(), auth.RefreshToken, auth.CreatedOn).
 		Suffix("RETURNING \"person_auth_id\"").
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	return Err(QueryRow(ctx, query, args...).Scan(&auth.PersonAuthId))
+	return Err(QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
-func DeletePersonAuth(ctx context.Context, authId int64) error {
+func DeletePersonAuth(ctx context.Context, authID int64) error {
 	query, args, errQuery := sb.
 		Delete("person_auth").
-		Where(sq.Eq{"person_auth_id": authId}).
+		Where(sq.Eq{"person_auth_id": authID}).
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
@@ -719,11 +719,11 @@ func PrunePersonAuth(ctx context.Context) error {
 	return Err(Exec(ctx, query, args...))
 }
 
-func SendNotification(ctx context.Context, targetId steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
+func SendNotification(ctx context.Context, targetID steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
 	query, args, errQuery := sb.
 		Insert("person_notification").
 		Columns("steam_id", "severity", "message", "link", "created_on").
-		Values(targetId, severity, message, link, config.Now()).
+		Values(targetID, severity, message, link, config.Now()).
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
@@ -739,12 +739,12 @@ type NotificationQuery struct {
 	SteamID steamid.SID64 `json:"steam_id,string"`
 }
 
-func GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]UserNotification, error) {
+func GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserNotification, error) {
 	var notifications []UserNotification
 	query, args, errQuery := sb.
 		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
 		From("person_notification").
-		Where(sq.And{sq.Eq{"steam_id": steamId}, sq.Eq{"deleted": false}}).
+		Where(sq.And{sq.Eq{"steam_id": steamID}, sq.Eq{"deleted": false}}).
 		OrderBy("person_notification_id desc").
 		ToSql()
 	if errQuery != nil {
@@ -757,7 +757,7 @@ func GetPersonNotifications(ctx context.Context, steamId steamid.SID64) ([]UserN
 	defer rows.Close()
 	for rows.Next() {
 		var n UserNotification
-		if errScan := rows.Scan(&n.NotificationId, &n.SteamId, &n.Read, &n.Deleted,
+		if errScan := rows.Scan(&n.NotificationId, &n.SteamID, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
 			return notifications, errScan
 		}

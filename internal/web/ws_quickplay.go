@@ -9,7 +9,7 @@ package web
 //
 //type qpLobby struct {
 //	*sync.RWMutex
-//	LobbyId  string          `json:"lobby_id"`
+//	LobbyID  string          `json:"lobby_id"`
 //	Clients  wsClients       `json:"clients"`
 //	Messages []wsUserMessage `json:"messages"`
 //	Leader   *wsClient       `json:"leader"`
@@ -19,7 +19,7 @@ package web
 //	return &qpLobby{
 //		Leader:   creator,
 //		RWMutex:  &sync.RWMutex{},
-//		LobbyId:  lobbyId,
+//		LobbyID:  lobbyId,
 //		Clients:  wsClients{creator},
 //		Messages: []wsUserMessage{},
 //	}
@@ -34,7 +34,7 @@ package web
 //func (lobby *qpLobby) id() string {
 //	lobby.RLock()
 //	defer lobby.RUnlock()
-//	return lobby.LobbyId
+//	return lobby.LobbyID
 //}
 //
 //func (lobby *qpLobby) join(client *wsClient) error {
@@ -94,7 +94,7 @@ package web
 //	client.send <- wsRequest{
 //		wsMsgTypeJoinLobbySuccess,
 //		wsMsgJoinedLobbySuccess{
-//			LobbyId: lobby.id(),
+//			LobbyID: lobby.id(),
 //		},
 //	}
 //}

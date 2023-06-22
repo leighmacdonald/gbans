@@ -12,7 +12,7 @@ import (
 
 type Filter struct {
 	FilterID     int64          `json:"filter_id"`
-	AuthorId     steamid.SID64  `json:"author_id"`
+	AuthorID     steamid.SID64  `json:"author_id"`
 	Pattern      string         `json:"pattern"`
 	IsRegex      bool           `json:"is_regex"`
 	IsEnabled    bool           `json:"is_enabled"`
@@ -49,7 +49,7 @@ func insertFilter(ctx context.Context, filter *Filter) error {
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
-	if errQuery := QueryRow(ctx, query, filter.AuthorId, filter.Pattern,
+	if errQuery := QueryRow(ctx, query, filter.AuthorID, filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
@@ -60,7 +60,7 @@ func insertFilter(ctx context.Context, filter *Filter) error {
 
 func updateFilter(ctx context.Context, filter *Filter) error {
 	query, args, errQuery := sb.Update("filtered_word").
-		Set("author_id", filter.AuthorId).
+		Set("author_id", filter.AuthorID).
 		Set("pattern", filter.Pattern).
 		Set("is_regex", filter.IsRegex).
 		Set("is_enabled", filter.IsEnabled).
@@ -87,12 +87,12 @@ func DropFilter(ctx context.Context, filter *Filter) error {
 	return nil
 }
 
-func GetFilterByID(ctx context.Context, wordId int64, f *Filter) error {
+func GetFilterByID(ctx context.Context, wordID int64, f *Filter) error {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
 		WHERE filter_id = $1`
-	if errQuery := QueryRow(ctx, query, wordId).Scan(&f.FilterID, &f.AuthorId, &f.Pattern,
+	if errQuery := QueryRow(ctx, query, wordID).Scan(&f.FilterID, &f.AuthorID, &f.Pattern,
 		&f.IsRegex, &f.IsEnabled, &f.TriggerCount, &f.CreatedOn, &f.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -112,7 +112,7 @@ func GetFilters(ctx context.Context) ([]Filter, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var filter Filter
-		if errQuery = rows.Scan(&filter.FilterID, &filter.AuthorId, &filter.Pattern, &filter.IsRegex,
+		if errQuery = rows.Scan(&filter.FilterID, &filter.AuthorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
 			return nil, Err(errQuery)
 		}

@@ -167,7 +167,7 @@ func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMes
 		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 		return errUnmarshal
 	}
-	lobby, findErr := cm.findLobby(req.LobbyId)
+	lobby, findErr := cm.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}

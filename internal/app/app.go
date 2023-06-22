@@ -192,13 +192,13 @@ func warnWorker(ctx context.Context) {
 		for {
 			select {
 			case now := <-ticker.C:
-				for steamId := range warnings {
-					for warnIdx, warning := range warnings[steamId] {
+				for steamID := range warnings {
+					for warnIdx, warning := range warnings[steamID] {
 						if now.Sub(warning.CreatedOn) > config.General.WarningTimeout {
-							if len(warnings[steamId]) > 1 {
-								warnings[steamId] = append(warnings[steamId][:warnIdx], warnings[steamId][warnIdx+1])
+							if len(warnings[steamID]) > 1 {
+								warnings[steamID] = append(warnings[steamID][:warnIdx], warnings[steamID][warnIdx+1])
 							} else {
-								delete(warnings, steamId)
+								delete(warnings, steamID)
 							}
 						}
 					}
@@ -445,10 +445,10 @@ func playerMessageWriter(ctx context.Context) {
 					continue
 				}
 				msg := store.PersonMessage{
-					SteamId:     e.SID,
+					SteamID:     e.SID,
 					PersonaName: e.Name,
 					ServerName:  evt.Server.ServerNameLong,
-					ServerId:    evt.Server.ServerID,
+					ServerID:    evt.Server.ServerID,
 					Body:        e.Msg,
 					Team:        evt.EventType == logparse.SayTeam,
 					CreatedOn:   e.CreatedOn,
@@ -490,7 +490,7 @@ func playerConnectionWriter(ctx context.Context) {
 			}
 			conn := store.PersonConnection{
 				IPAddr:      parsedAddr,
-				SteamId:     e.SID,
+				SteamID:     e.SID,
 				PersonaName: e.Name,
 				CreatedOn:   e.CreatedOn,
 			}

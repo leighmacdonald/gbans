@@ -581,7 +581,7 @@ func onAPIPostBanSteamCreate() gin.HandlerFunc {
 		}
 		if errBan := app.BanSteam(ctx, &banSteam); errBan != nil {
 			logger.Error("Failed to ban steam profile",
-				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetId.Int64()))
+				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetID.Int64()))
 			if errors.Is(errBan, store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, "Duplicate ban")
 				return
@@ -699,7 +699,7 @@ func onAPIPostServerCheck() gin.HandlerFunc {
 		resp.PermissionLevel = person.PermissionLevel
 		if errAddHist := store.AddConnectionHistory(ctx, &store.PersonConnection{
 			IPAddr:      request.IP,
-			SteamId:     steamid.SIDToSID64(request.SteamID),
+			SteamID:     steamid.SIDToSID64(request.SteamID),
 			PersonaName: request.Name,
 			CreatedOn:   config.Now(),
 			IPInfo:      store.PersonIPRecord{},
@@ -1090,7 +1090,7 @@ func onAPIExportBansTF2BD() gin.HandlerFunc {
 		for _, ban := range filtered {
 			out.Players = append(out.Players, thirdparty.Players{
 				Attributes: []string{"cheater"},
-				Steamid:    ban.Ban.TargetId.Int64(),
+				Steamid:    ban.Ban.TargetID.Int64(),
 				LastSeen: thirdparty.LastSeen{
 					PlayerName: ban.Person.PersonaName,
 					Time:       int(ban.Ban.UpdatedOn.Unix()),
@@ -1248,7 +1248,7 @@ func onAPIPostWordFilter() gin.HandlerFunc {
 		} else {
 			profile := currentUserProfile(ctx)
 			newFilter := store.Filter{
-				AuthorId:  profile.SteamID,
+				AuthorID:  profile.SteamID,
 				Pattern:   filter.Pattern,
 				CreatedOn: now,
 				UpdatedOn: now,
@@ -1695,7 +1695,7 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 				return
 			}
 		}
-		if existing.ReportId > 0 {
+		if existing.ReportID > 0 {
 			responseErrUser(ctx, http.StatusConflict, nil,
 				"Must resolve existing report for user before creating another")
 			return
@@ -1703,10 +1703,10 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 
 		// TODO encapsulate all operations in single tx
 		report := store.NewReport()
-		report.SourceId = sourceId
+		report.SourceID = sourceId
 		report.ReportStatus = store.Opened
 		report.Description = newReport.Description
-		report.TargetId = targetId
+		report.TargetID = targetId
 		report.Reason = newReport.Reason
 		report.ReasonText = newReport.ReasonText
 		parts := strings.Split(newReport.DemoName, "/")
@@ -1726,7 +1726,7 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 			currentUser.SteamID, currentUser.Name, currentUser.ToURL())
 		name := personSource.PersonaName
 		if name == "" {
-			name = report.TargetId.String()
+			name = report.TargetID.String()
 		}
 		discord.AddField(embed, "Subject", name)
 		discord.AddField(embed, "Reason", report.Reason.String())
@@ -1737,7 +1737,7 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 			discord.AddField(embed, "Demo", config.ExtURL("/demos/name/%s", report.DemoName))
 			discord.AddField(embed, "Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 		}
-		discord.AddFieldsSteamID(embed, report.TargetId)
+		discord.AddFieldsSteamID(embed, report.TargetID)
 		discord.AddLink(embed, report)
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
@@ -1823,7 +1823,7 @@ func onAPIPostReportMessage() gin.HandlerFunc {
 			Title:       "New report message posted",
 			Description: msg.Message,
 		}
-		discord.AddField(embed, "Author", report.SourceId.String())
+		discord.AddField(embed, "Author", report.SourceID.String())
 		discord.AddLink(embed, report)
 		discord.SendPayload(discord.Payload{
 			ChannelId: config.Discord.ReportLogChannelId,
@@ -1853,7 +1853,7 @@ func onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
 			return
 		}
 		var message editMessage
@@ -1882,7 +1882,7 @@ func onAPIEditReportMessage() gin.HandlerFunc {
 			Description: message.Message,
 		}
 		discord.AddField(embed, "Old Message", existing.Message)
-		discord.AddField(embed, "Report Link", config.ExtURL("/report/%d", existing.ParentId))
+		discord.AddField(embed, "Report Link", config.ExtURL("/report/%d", existing.ParentID))
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.AvatarFull}
 		discord.SendPayload(discord.Payload{
@@ -1909,7 +1909,7 @@ func onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -1971,12 +1971,12 @@ func onAPISetReportStatus() gin.HandlerFunc {
 		}
 		responseOK(c, http.StatusAccepted, nil)
 		logger.Info("Report status changed",
-			zap.Int64("report_id", report.ReportId),
+			zap.Int64("report_id", report.ReportID),
 			zap.String("from_status", original.String()),
 			zap.String("to_status", report.ReportStatus.String()))
 		panic("xxx")
 		//discord.SendDiscord(model.NotificationPayload{
-		//	Sids:     steamid.Collection{report.SourceId},
+		//	Sids:     steamid.Collection{report.SourceID},
 		//	Severity: store.SeverityInfo,
 		//	Message:  "Report status updated",
 		//	Link:     report.ToURL(),
@@ -1997,7 +1997,7 @@ func onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceId, report.TargetId}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, consts.PModerator) {
 			return
 		}
 
@@ -2008,7 +2008,7 @@ func onAPIGetReportMessages() gin.HandlerFunc {
 		}
 		var ids steamid.Collection
 		for _, msg := range reportMessages {
-			ids = append(ids, msg.AuthorId)
+			ids = append(ids, msg.AuthorID)
 		}
 		authors, authorsErr := store.GetPeopleBySteamID(ctx, ids)
 		if authorsErr != nil {
@@ -2019,7 +2019,7 @@ func onAPIGetReportMessages() gin.HandlerFunc {
 		var authorMessages []AuthorMessage
 		for _, message := range reportMessages {
 			authorMessages = append(authorMessages, AuthorMessage{
-				Author:  authorsMap[message.AuthorId],
+				Author:  authorsMap[message.AuthorID],
 				Message: message,
 			})
 		}
@@ -2055,7 +2055,7 @@ func onAPIGetReports() gin.HandlerFunc {
 		}
 		var authorIds steamid.Collection
 		for _, report := range reports {
-			authorIds = append(authorIds, report.SourceId)
+			authorIds = append(authorIds, report.SourceID)
 		}
 		authors, errAuthors := store.GetPeopleBySteamID(ctx, fp.Uniq[steamid.SID64](authorIds))
 		if errAuthors != nil {
@@ -2066,7 +2066,7 @@ func onAPIGetReports() gin.HandlerFunc {
 
 		var subjectIds steamid.Collection
 		for _, report := range reports {
-			subjectIds = append(subjectIds, report.TargetId)
+			subjectIds = append(subjectIds, report.TargetID)
 		}
 		subjects, errSubjects := store.GetPeopleBySteamID(ctx, fp.Uniq[steamid.SID64](subjectIds))
 		if errSubjects != nil {
@@ -2077,13 +2077,13 @@ func onAPIGetReports() gin.HandlerFunc {
 
 		for _, report := range reports {
 			userReports = append(userReports, reportWithAuthor{
-				Author:  authorMap[report.SourceId],
+				Author:  authorMap[report.SourceID],
 				Report:  report,
-				Subject: subjectMap[report.TargetId],
+				Subject: subjectMap[report.TargetID],
 			})
 		}
 		sort.SliceStable(userReports, func(i, j int) bool {
-			return userReports[i].Report.ReportId > userReports[j].Report.ReportId
+			return userReports[i].Report.ReportID > userReports[j].Report.ReportID
 		})
 		responseOK(ctx, http.StatusOK, userReports)
 	}
@@ -2107,12 +2107,12 @@ func onAPIGetReport() gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceId}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, consts.PModerator) {
 			responseErr(ctx, http.StatusUnauthorized, nil)
 			return
 		}
 
-		if errAuthor := app.PersonBySID(ctx, report.Report.SourceId, &report.Author); errAuthor != nil {
+		if errAuthor := app.PersonBySID(ctx, report.Report.SourceID, &report.Author); errAuthor != nil {
 			if store.Err(errAuthor) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -2121,7 +2121,7 @@ func onAPIGetReport() gin.HandlerFunc {
 			logger.Error("Failed to load report author", zap.Error(errAuthor))
 			return
 		}
-		if errSubject := app.PersonBySID(ctx, report.Report.TargetId, &report.Subject); errSubject != nil {
+		if errSubject := app.PersonBySID(ctx, report.Report.TargetID, &report.Subject); errSubject != nil {
 			if store.Err(errSubject) == store.ErrNoResult {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -2352,7 +2352,7 @@ func onAPIGetMatch() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		match, errMatch := store.MatchGetById(ctx, matchId)
+		match, errMatch := store.MatchGetByID(ctx, matchId)
 		if errMatch != nil {
 			if errors.Is(errMatch, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
@@ -2401,7 +2401,7 @@ func onAPIQueryMessages() gin.HandlerFunc {
 		chat, errChat := store.QueryChatHistory(ctx, query)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			logger.Error("Failed to query chat history",
-				zap.Error(errChat), zap.String("sid", query.SteamId))
+				zap.Error(errChat), zap.String("sid", query.SteamID))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
@@ -2421,7 +2421,7 @@ func onAPIGetMessageContext() gin.HandlerFunc {
 			return
 		}
 		var message store.PersonMessage
-		if errMsg := store.GetPersonMessageById(ctx, messageId, &message); errMsg != nil {
+		if errMsg := store.GetPersonMessageByID(ctx, messageId, &message); errMsg != nil {
 			if errors.Is(errMsg, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)
 				return
@@ -2433,7 +2433,7 @@ func onAPIGetMessageContext() gin.HandlerFunc {
 		before := message.CreatedOn.Add(time.Hour)
 		// TODO paging
 		chat, errChat := store.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
-			ServerId:    message.ServerId,
+			ServerID:    message.ServerID,
 			SentAfter:   &after,
 			SentBefore:  &before,
 			QueryFilter: store.QueryFilter{},
@@ -2461,7 +2461,7 @@ func onAPIGetPersonMessages() gin.HandlerFunc {
 		}
 		// TODO paging
 		chat, errChat := store.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
-			SteamId: steamId.String(),
+			SteamID: steamId.String(),
 			QueryFilter: store.QueryFilter{
 				Limit: 1000,
 			},
@@ -2496,7 +2496,7 @@ func onAPIGetBanMessages() gin.HandlerFunc {
 			responseErr(ctx, http.StatusNotFound, nil)
 			return
 		}
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetId, banPerson.Ban.SourceId}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetID, banPerson.Ban.SourceID}, consts.PModerator) {
 			return
 		}
 		banMessages, errGetBanMessages := store.GetBanMessages(ctx, banId)
@@ -2506,7 +2506,7 @@ func onAPIGetBanMessages() gin.HandlerFunc {
 		}
 		var ids steamid.Collection
 		for _, msg := range banMessages {
-			ids = append(ids, msg.AuthorId)
+			ids = append(ids, msg.AuthorID)
 		}
 		authors, authorsErr := store.GetPeopleBySteamID(ctx, ids)
 		if authorsErr != nil {
@@ -2517,7 +2517,7 @@ func onAPIGetBanMessages() gin.HandlerFunc {
 		var authorMessages []AuthorBanMessage
 		for _, message := range banMessages {
 			authorMessages = append(authorMessages, AuthorBanMessage{
-				Author:  authorsMap[message.AuthorId],
+				Author:  authorsMap[message.AuthorID],
 				Message: message,
 			})
 		}
@@ -2542,7 +2542,7 @@ func onAPIDeleteBanMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
 			return
 		}
 		existing.Deleted = true
@@ -2645,7 +2645,7 @@ func onAPIEditBanMessage() gin.HandlerFunc {
 			return
 		}
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorId}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
 			return
 		}
 		var message editMessage

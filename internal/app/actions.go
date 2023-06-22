@@ -21,7 +21,7 @@ var (
 	ErrInvalidTargetSID = errors.New("Invalid author steam id")
 )
 
-// OnFindExec is a helper function used to execute rcon commands against any players found in the query
+// OnFindExec is a helper function used to execute rcon commands against any players found in the query.
 func OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(info state.PlayerServerInfo) string) error {
 	players, found := state.Find(findOpts)
 	if !found {
@@ -57,7 +57,7 @@ func Kick(ctx context.Context, _ store.Origin, target steamid.SID64, author stea
 	})
 }
 
-// Silence will gag & mute a player
+// Silence will gag & mute a player.
 func Silence(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64,
 	reason store.Reason,
 ) error {
@@ -72,7 +72,7 @@ func Silence(ctx context.Context, _ store.Origin, target steamid.SID64, author s
 	})
 }
 
-// Say is used to send a message to the server via sm_say
+// Say is used to send a message to the server via sm_say.
 func Say(ctx context.Context, author steamid.SID64, serverName string, message string) error {
 	var server store.Server
 	if errGetServer := store.GetServerByName(ctx, serverName, &server); errGetServer != nil {
@@ -91,7 +91,7 @@ func Say(ctx context.Context, author steamid.SID64, serverName string, message s
 	return nil
 }
 
-// CSay is used to send a centered message to the server via sm_csay
+// CSay is used to send a centered message to the server via sm_csay.
 func CSay(ctx context.Context, author steamid.SID64, serverName string, message string) error {
 	var (
 		servers []store.Server
@@ -117,7 +117,7 @@ func CSay(ctx context.Context, author steamid.SID64, serverName string, message 
 	return nil
 }
 
-// PSay is used to send a private message to a player
+// PSay is used to send a private message to a player.
 func PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, message string) error {
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
@@ -133,7 +133,7 @@ func PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, messa
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the bot does not require more privileged intents.
-func SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error {
+func SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
 	newPerson := store.NewPerson(sid64)
 	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
@@ -141,18 +141,18 @@ func SetSteam(ctx context.Context, sid64 steamid.SID64, discordId string) error 
 	if (newPerson.DiscordID) != "" {
 		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
 	}
-	newPerson.DiscordID = discordId
+	newPerson.DiscordID = discordID
 	if errSavePerson := store.SavePerson(ctx, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
-	logger.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordId))
+	logger.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
 	return nil
 }
 
-// FilterAdd creates a new chat filter using a regex pattern
+// FilterAdd creates a new chat filter using a regex pattern.
 func FilterAdd(ctx context.Context, filter *store.Filter) error {
 	if errSave := store.SaveFilter(ctx, filter); errSave != nil {
-		if errSave == store.ErrDuplicate {
+		if errors.Is(errSave, store.ErrDuplicate) {
 			return store.ErrDuplicate
 		}
 		logger.Error("Error saving filter word", zap.Error(errSave))
@@ -166,10 +166,10 @@ func FilterAdd(ctx context.Context, filter *store.Filter) error {
 	return nil
 }
 
-// FilterDel removed and existing chat filter
-func FilterDel(ctx context.Context, filterId int64) (bool, error) {
+// FilterDel removed and existing chat filter.
+func FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	var filter store.Filter
-	if errGetFilter := store.GetFilterByID(ctx, filterId, &filter); errGetFilter != nil {
+	if errGetFilter := store.GetFilterByID(ctx, filterID, &filter); errGetFilter != nil {
 		return false, errGetFilter
 	}
 	if errDropFilter := store.DropFilter(ctx, &filter); errDropFilter != nil {
@@ -178,7 +178,7 @@ func FilterDel(ctx context.Context, filterId int64) (bool, error) {
 	wordFiltersMu.Lock()
 	var valid []store.Filter
 	for _, f := range wordFilters {
-		if f.FilterID == filterId {
+		if f.FilterID == filterID {
 			continue
 		}
 		valid = append(valid, f)
@@ -188,7 +188,7 @@ func FilterDel(ctx context.Context, filterId int64) (bool, error) {
 	return true, nil
 }
 
-// FilterCheck can be used to check if a phrase will match any filters
+// FilterCheck can be used to check if a phrase will match any filters.
 func FilterCheck(message string) []store.Filter {
 	if message == "" {
 		return nil
@@ -227,7 +227,7 @@ func findFilteredWordMatch(body string) (string, *store.Filter) {
 }
 
 //// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
-//func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *model.Person) error {
+// func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *model.Person) error {
 //	if errGetPerson := app.store.GetPersonBySteamID(ctx, sid, person); errGetPerson != nil && errGetPerson != store.ErrNoResult {
 //		return errGetPerson
 //	}

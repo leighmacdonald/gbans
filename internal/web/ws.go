@@ -136,14 +136,12 @@ func newWsClient(logger *zap.Logger, socket *websocket.Conn, user model.UserProf
 
 func (client *wsClient) writer() {
 	for {
-		select {
-		case payload := <-client.sendChan:
-			if errSend := client.socket.WriteJSON(payload); errSend != nil {
-				client.logger.Error("Failed to send json payload", zap.Error(errSend))
-				return
-			}
-			client.logger.Debug("Wrote client payload", zap.Int("msg_type", int(payload.MsgType)))
+		payload := <-client.sendChan
+		if errSend := client.socket.WriteJSON(payload); errSend != nil {
+			client.logger.Error("Failed to send json payload", zap.Error(errSend))
+			return
 		}
+		client.logger.Debug("Wrote client payload", zap.Int("msg_type", int(payload.MsgType)))
 	}
 }
 
@@ -162,7 +160,7 @@ type wsValue struct {
 }
 
 type wsJoinLobbyRequest struct {
-	LobbyId string `json:"lobby_id"`
+	LobbyID string `json:"lobby_id"`
 }
 
 type wsJoinLobbyResponse struct {

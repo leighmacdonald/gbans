@@ -99,16 +99,16 @@ func TestReport(t *testing.T) {
 	var target store.Person
 	require.NoError(t, store.GetOrCreatePersonBySteamID(context.TODO(), steamid.RandSID64(), &target))
 	report := store.NewReport()
-	report.SourceId = author.SteamID
-	report.TargetId = target.SteamID
+	report.SourceID = author.SteamID
+	report.TargetID = target.SteamID
 	report.Description = golib.RandomString(120)
 	require.NoError(t, store.SaveReport(context.TODO(), &report))
 
-	msg1 := store.NewUserMessage(report.ReportId, author.SteamID, golib.RandomString(100))
-	msg2 := store.NewUserMessage(report.ReportId, author.SteamID, golib.RandomString(100))
+	msg1 := store.NewUserMessage(report.ReportID, author.SteamID, golib.RandomString(100))
+	msg2 := store.NewUserMessage(report.ReportID, author.SteamID, golib.RandomString(100))
 	require.NoError(t, store.SaveReportMessage(context.Background(), &msg1))
 	require.NoError(t, store.SaveReportMessage(context.Background(), &msg2))
-	msgs, msgsErr := store.GetReportMessages(context.Background(), report.ReportId)
+	msgs, msgsErr := store.GetReportMessages(context.Background(), report.ReportID)
 	require.NoError(t, msgsErr)
 	require.Equal(t, 2, len(msgs))
 	require.NoError(t, store.DropReport(context.Background(), &report))
@@ -136,7 +136,7 @@ func TestBanNet(t *testing.T) {
 func TestBan(t *testing.T) {
 	banEqual := func(ban1, ban2 *store.BanSteam) {
 		require.Equal(t, ban1.BanID, ban2.BanID)
-		require.Equal(t, ban1.SourceId, ban2.SourceId)
+		require.Equal(t, ban1.SourceID, ban2.SourceID)
 		require.Equal(t, ban1.Reason, ban2.Reason)
 		require.Equal(t, ban1.ReasonText, ban2.ReasonText)
 		require.Equal(t, ban1.BanType, ban2.BanType)
@@ -169,7 +169,7 @@ func TestBan(t *testing.T) {
 	b1duplicate.BanID = 0
 	require.True(t, errors.Is(store.SaveBan(ctx, &b1duplicate), store.ErrDuplicate), "Was able to add duplicate ban")
 
-	b1Fetched.Ban.SourceId = 76561198057999536
+	b1Fetched.Ban.SourceID = 76561198057999536
 	b1Fetched.Ban.ReasonText = "test reason"
 	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
 	b1Fetched.Ban.Note = "test note"
@@ -181,7 +181,7 @@ func TestBan(t *testing.T) {
 
 	require.NoError(t, store.DropBan(ctx, &banSteam, false), "Failed to drop ban")
 	vb := store.NewBannedPerson()
-	errMissing := store.GetBanBySteamID(ctx, banSteam.TargetId, &vb, false)
+	errMissing := store.GetBanBySteamID(ctx, banSteam.TargetID, &vb, false)
 	require.Error(t, errMissing)
 	require.True(t, errors.Is(errMissing, store.ErrNoResult))
 }
@@ -252,7 +252,7 @@ func TestFilters(t *testing.T) {
 		filter := store.Filter{
 			IsEnabled: true,
 			IsRegex:   false,
-			AuthorId:  p1.SteamID,
+			AuthorID:  p1.SteamID,
 			Pattern:   word,
 			UpdatedOn: config.Now(),
 			CreatedOn: config.Now(),

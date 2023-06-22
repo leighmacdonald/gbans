@@ -21,15 +21,15 @@ import (
 // BanSteam will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
 func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
-	if !banSteam.TargetId.Valid() {
+	if !banSteam.TargetID.Valid() {
 		return errors.Wrap(consts.ErrInvalidSID, "Invalid target steam id")
 	}
 	existing := store.NewBannedPerson()
-	errGetExistingBan := store.GetBanBySteamID(ctx, banSteam.TargetId, &existing, false)
+	errGetExistingBan := store.GetBanBySteamID(ctx, banSteam.TargetID, &existing, false)
 	if existing.Ban.BanID > 0 {
 		return store.ErrDuplicate
 	}
-	if errGetExistingBan != nil && errGetExistingBan != store.ErrNoResult {
+	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, store.ErrNoResult) {
 		return errors.Wrapf(errGetExistingBan, "Failed to get ban")
 	}
 
@@ -70,12 +70,12 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 			colour = int(discord.Red)
 		}
 		banNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", banSteam.TargetId),
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", banSteam.TargetID),
 			Type:  discordgo.EmbedTypeRich,
 			Title: title,
 			Color: colour,
 		}
-		discord.AddFieldsSteamID(banNotice, banSteam.TargetId)
+		discord.AddFieldsSteamID(banNotice, banSteam.TargetID)
 		expIn := "Permanent"
 		expAt := "Permanent"
 		if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
@@ -89,26 +89,26 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
 		if errKick := Kick(ctx, store.System,
-			banSteam.TargetId,
-			banSteam.SourceId,
+			banSteam.TargetID,
+			banSteam.SourceID,
 			banSteam.Reason); errKick != nil {
 			logger.Error("Failed to kick player", zap.Error(errKick),
-				zap.Int64("sid64", banSteam.TargetId.Int64()))
+				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 	} else if banSteam.BanType == store.NoComm {
 		if errSilence := Silence(ctx, store.System,
-			banSteam.TargetId,
-			banSteam.SourceId,
+			banSteam.TargetID,
+			banSteam.SourceID,
 			banSteam.Reason); errSilence != nil {
 			logger.Error("Failed to silence player", zap.Error(errSilence),
-				zap.Int64("sid64", banSteam.TargetId.Int64()))
+				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 	}
 
 	return nil
 }
 
-// BanASN will ban all network ranges associated with the requested ASN
+// BanASN will ban all network ranges associated with the requested ASN.
 func BanASN(ctx context.Context, banASN *store.BanASN) error {
 	var existing store.BanASN
 	if errGetExistingBan := store.GetBanASN(ctx, banASN.ASNum, &existing); errGetExistingBan != nil {
@@ -142,13 +142,13 @@ func BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	if errSaveBanNet := store.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
 		return errSaveBanNet
 	}
-	go func(n *net.IPNet, reason store.Reason) {
+	go func(_ *net.IPNet, reason store.Reason) {
 		foundPlayers, found := state.Find(state.FindOpts{CIDR: banNet.CIDR})
 		if !found {
 			return
 		}
 		for _, player := range foundPlayers {
-			if errKick := Kick(ctx, store.System, player.Player.SID, banNet.SourceId, reason); errKick != nil {
+			if errKick := Kick(ctx, store.System, player.Player.SID, banNet.SourceID, reason); errKick != nil {
 				logger.Error("Failed to kick player", zap.Error(errKick))
 			}
 		}
@@ -177,7 +177,7 @@ func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, erro
 	bannedPerson := store.NewBannedPerson()
 	errGetBan := store.GetBanBySteamID(ctx, target, &bannedPerson, false)
 	if errGetBan != nil {
-		if errGetBan == store.ErrNoResult {
+		if errors.Is(errGetBan, store.ErrNoResult) {
 			return false, nil
 		}
 		return false, errGetBan
@@ -190,7 +190,7 @@ func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, erro
 	logger.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
 
 	unbanNotice := &discordgo.MessageEmbed{
-		URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.TargetId),
+		URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.TargetID),
 		Type:  discordgo.EmbedTypeRich,
 		Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
 		Color: int(discord.Green),
@@ -206,7 +206,7 @@ func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, erro
 	return true, nil
 }
 
-// UnbanASN will remove an existing ASN ban
+// UnbanASN will remove an existing ASN ban.
 func UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	asNum, errConv := strconv.ParseInt(asnNum, 10, 64)
 	if errConv != nil {

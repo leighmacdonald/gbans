@@ -344,7 +344,7 @@ func banSweeper(ctx context.Context) {
 								banType = "Mute"
 							}
 							var person store.Person
-							if errPerson := store.GetOrCreatePersonBySteamID(ctx, expiredBan.TargetId, &person); errPerson != nil {
+							if errPerson := store.GetOrCreatePersonBySteamID(ctx, expiredBan.TargetID, &person); errPerson != nil {
 								logger.Error("Failed to get expired person", zap.Error(errPerson))
 								continue
 							}
@@ -354,7 +354,7 @@ func banSweeper(ctx context.Context) {
 							}
 							logger.Info("Ban expired", zap.String("type", banType),
 								zap.String("reason", expiredBan.Reason.String()),
-								zap.Int64("sid64", expiredBan.TargetId.Int64()), zap.String("name", name))
+								zap.Int64("sid64", expiredBan.TargetID.Int64()), zap.String("name", name))
 						}
 					}
 				}

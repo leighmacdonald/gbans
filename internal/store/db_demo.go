@@ -57,11 +57,11 @@ func FlushDemos(ctx context.Context) error {
 	return Err(Exec(ctx, query, args...))
 }
 
-func GetDemoById(ctx context.Context, demoId int64, demoFile *DemoFile) error {
+func GetDemoById(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").
-		Where(sq.Eq{"demo_id": demoId}).
+		Where(sq.Eq{"demo_id": demoID}).
 		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
@@ -90,7 +90,7 @@ func GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) err
 }
 
 type GetDemosOptions struct {
-	SteamId   string `json:"steamId"`
+	SteamID   string `json:"steamId"`
 	ServerIds []int  `json:"serverIds"`
 	MapName   string `json:"mapName"`
 }
@@ -107,8 +107,8 @@ func GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
 	if opts.MapName != "" {
 		qb = qb.Where(sq.Eq{"map_name": opts.MapName})
 	}
-	if opts.SteamId != "" {
-		sid64, errSid := steamid.SID64FromString(opts.SteamId)
+	if opts.SteamID != "" {
+		sid64, errSid := steamid.SID64FromString(opts.SteamID)
 		if errSid != nil {
 			return nil, consts.ErrInvalidSID
 		}

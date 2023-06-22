@@ -36,7 +36,7 @@ func GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState); errScan != nil {
+			&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		nets = append(nets, banNet)
@@ -44,16 +44,16 @@ func GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
 	return nets, nil
 }
 
-func GetBanNetById(ctx context.Context, netId int64, banNet *BanCIDR) error {
+func GetBanNetById(ctx context.Context, netID int64, banNet *BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE deleted = false AND net_id = $1`
-	return Err(QueryRow(ctx, query, netId).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+	return Err(QueryRow(ctx, query, netID).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 		&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 		&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-		&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState))
+		&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState))
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
@@ -74,7 +74,7 @@ func GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId, &banNet.AppealState); errScan != nil {
+			&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 		nets = append(nets, banNet)
@@ -96,8 +96,8 @@ func updateBanNet(ctx context.Context, banNet *BanCIDR) error {
 		Set("note", banNet.Note).
 		Set("unban_reason_text", banNet.UnbanReasonText).
 		Set("is_enabled", banNet.IsEnabled).
-		Set("target_id", banNet.TargetId).
-		Set("source_id", banNet.SourceId).
+		Set("target_id", banNet.TargetID).
+		Set("source_id", banNet.SourceID).
 		Set("appeal_state", banNet.AppealState).
 		Where(sq.Eq{"net_id": banNet.NetID}).
 		ToSql()
@@ -114,7 +114,7 @@ func insertBanNet(ctx context.Context, banNet *BanCIDR) error {
 			"deleted", "note", "unban_reason_text", "is_enabled", "target_id", "source_id", "appeal_state").
 		Values(banNet.CIDR, banNet.Origin, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ReasonText,
 			banNet.ValidUntil, banNet.Deleted, banNet.Note, banNet.UnbanReasonText, banNet.IsEnabled,
-			banNet.TargetId, banNet.SourceId, banNet.AppealState).
+			banNet.TargetID, banNet.SourceID, banNet.AppealState).
 		Suffix("RETURNING net_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -158,7 +158,7 @@ func GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 		var banNet BanCIDR
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin, &banNet.CreatedOn,
 			&banNet.UpdatedOn, &banNet.ReasonText, &banNet.ValidUntil, &banNet.Deleted, &banNet.Note,
-			&banNet.UnbanReasonText, &banNet.IsEnabled, &banNet.TargetId, &banNet.SourceId,
+			&banNet.UnbanReasonText, &banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID,
 			&banNet.Reason, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -181,7 +181,7 @@ func GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var banASN BanASN
-		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.SourceId, &banASN.TargetId,
+		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.SourceID, &banASN.TargetID,
 			&banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn, &banASN.Deleted,
 			&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText, &banASN.AppealState); errScan != nil {
 			return nil, errScan
@@ -376,7 +376,7 @@ func GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error {
 		FROM ban_asn 
 		WHERE deleted = false AND as_num = $1`
 	if errQuery := QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
-		&banASN.SourceId, &banASN.TargetId, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
+		&banASN.SourceID, &banASN.TargetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
 		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
 		&banASN.AppealState); errQuery != nil {
 		return Err(errQuery)
@@ -399,7 +399,7 @@ func GetBansASN(ctx context.Context) ([]BanASN, error) {
 	for rows.Next() {
 		var r BanASN
 		if errQuery := rows.Scan(&r.BanASNId, &r.ASNum, &r.Origin,
-			&r.SourceId, &r.TargetId, &r.ReasonText, &r.ValidUntil, &r.CreatedOn,
+			&r.SourceID, &r.TargetID, &r.ReasonText, &r.ValidUntil, &r.CreatedOn,
 			&r.UpdatedOn, &r.Deleted, &r.Reason, &r.IsEnabled, &r.UnbanReasonText,
 			&r.AppealState); errQuery != nil {
 			return nil, Err(errQuery)
@@ -418,8 +418,8 @@ func SaveBanASN(ctx context.Context, banASN *BanASN) error {
 				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, 
 				unban_reason_text = $12, appeal_state = $13
 			WHERE ban_asn_id = $1`
-		return Err(Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceId,
-			banASN.TargetId, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
+		return Err(Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
+			banASN.TargetID, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
 			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
 	}
 	const queryInsert = `
@@ -427,7 +427,7 @@ func SaveBanASN(ctx context.Context, banASN *BanASN) error {
 		                     reason_text, is_enabled, deleted, unban_reason_text, appeal_state)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING ban_asn_id`
-	return Err(QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceId, banASN.TargetId,
+	return Err(QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID, banASN.TargetID,
 		banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
 		banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState).Scan(&banASN.BanASNId))
 }

@@ -32,9 +32,9 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 	}
 	t0 := config.Now()
 	return Media{
-		AuthorId:  author,
+		AuthorID:  author,
 		MimeType:  mtype.String(),
-		Name:      strings.Replace(name, " ", "_", -1),
+		Name:      strings.ReplaceAll(name, " ", "_"),
 		Size:      int64(len(content)),
 		Contents:  content,
 		Deleted:   false,
@@ -44,8 +44,8 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 }
 
 type Media struct {
-	MediaId   int           `json:"media_id"`
-	AuthorId  steamid.SID64 `json:"author_id,string"`
+	MediaID   int           `json:"media_id"`
+	AuthorID  steamid.SID64 `json:"author_id,string"`
 	MimeType  string        `json:"mime_type"`
 	Contents  []byte        `json:"-"`
 	Name      string        `json:"name"`
@@ -114,7 +114,7 @@ func SaveMedia(ctx context.Context, media *Media) error {
 		RETURNING media_id
 	`
 	if errQuery := QueryRow(ctx, query,
-		media.AuthorId,
+		media.AuthorID,
 		media.MimeType,
 		media.Name,
 		media.Contents,
@@ -122,12 +122,12 @@ func SaveMedia(ctx context.Context, media *Media) error {
 		media.Deleted,
 		media.CreatedOn,
 		media.UpdatedOn,
-	).Scan(&media.MediaId); errQuery != nil {
+	).Scan(&media.MediaID); errQuery != nil {
 		return Err(errQuery)
 	}
 	logger.Info("Wiki media created",
-		zap.Int("wiki_media_id", media.MediaId),
-		zap.Int64("author_id", media.AuthorId.Int64()),
+		zap.Int("wiki_media_id", media.MediaID),
+		zap.Int64("author_id", media.AuthorID.Int64()),
 		zap.String("name", util.SanitizeLog(media.Name)),
 		zap.Int64("size", media.Size),
 		zap.String("mime", util.SanitizeLog(media.MimeType)),
@@ -142,8 +142,8 @@ func GetMediaByName(ctx context.Context, name string, media *Media) error {
 		FROM media
 		WHERE deleted = false AND name = $1`
 	return Err(QueryRow(ctx, query, name).Scan(
-		&media.MediaId,
-		&media.AuthorId,
+		&media.MediaID,
+		&media.AuthorID,
 		&media.Name,
 		&media.Size,
 		&media.MimeType,
@@ -161,8 +161,8 @@ func GetMediaById(ctx context.Context, mediaId int, media *Media) error {
 		FROM media
 		WHERE deleted = false AND media_id = $1`
 	return Err(QueryRow(ctx, query, mediaId).Scan(
-		&media.MediaId,
-		&media.AuthorId,
+		&media.MediaID,
+		&media.AuthorID,
 		&media.Name,
 		&media.Size,
 		&media.MimeType,

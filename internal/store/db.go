@@ -184,9 +184,9 @@ func Migrate(action MigrationAction) error {
 		return errors.Wrapf(errMigrate, "failed to create migration driver")
 	}
 	defer util.LogCloser(driver, logger)
-	source, errHttpFS := httpfs.New(http.FS(migrations), "migrations")
-	if errHttpFS != nil {
-		return errHttpFS
+	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
+	if errHTTPFS != nil {
+		return errHTTPFS
 	}
 	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx", driver)
 	if errMigrateInstance != nil {

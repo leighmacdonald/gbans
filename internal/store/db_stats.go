@@ -14,7 +14,7 @@ import (
 )
 
 type LocalTF2StatsSnapshot struct {
-	StatId          int64          `json:"local_stats_players_stat_id"`
+	StatID          int64          `json:"local_stats_players_stat_id"`
 	Players         int            `json:"players"`
 	CapacityFull    int            `json:"capacity_full"`
 	CapacityEmpty   int            `json:"capacity_empty"`
@@ -117,7 +117,7 @@ func MatchSave(ctx context.Context, match *logparse.Match) error {
 type MatchesQueryOpts struct {
 	QueryFilter
 	SteamID   steamid.SID64 `json:"steam_id"`
-	ServerId  int           `json:"server_id"`
+	ServerID  int           `json:"server_id"`
 	Map       string        `json:"map"`
 	TimeStart *time.Time    `json:"time_start,omitempty"`
 	TimeEnd   *time.Time    `json:"time_end,omitempty"`
@@ -162,12 +162,12 @@ func Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryC
 	return matches, nil
 }
 
-func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
+func MatchGetByID(ctx context.Context, matchID int) (*logparse.Match, error) {
 	m := logparse.NewMatch(logger, -1, "")
 
-	m.MatchID = matchId
+	m.MatchID = matchID
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
-	if errMatch := QueryRow(ctx, qm, matchId).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
+	if errMatch := QueryRow(ctx, qm, matchID).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
 		return nil, errors.Wrapf(errMatch, "Failed to load root match")
 	}
 	const qp = `
@@ -180,13 +180,13 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 		    match_player
 		WHERE 
 		    match_id = $1`
-	playerRows, errPlayer := Query(ctx, qp, matchId)
+	playerRows, errPlayer := Query(ctx, qp, matchID)
 	if errPlayer != nil {
 		return nil, errors.Wrapf(errPlayer, "Failed to query match players")
 	}
 	defer playerRows.Close()
 	for playerRows.Next() {
-		s := logparse.MatchPlayerSum{MatchPlayerSumID: matchId}
+		s := logparse.MatchPlayerSum{MatchPlayerSumID: matchID}
 		if errRow := playerRows.Scan(&s.MatchPlayerSumID, &s.SteamID, &s.Team, &s.TimeStart, &s.TimeEnd, &s.Kills, &s.Assists, &s.Deaths, &s.Dominations, &s.Dominated, &s.Revenges, &s.Damage, &s.DamageTaken, &s.Healing, &s.HealingTaken, &s.HealthPacks, &s.BackStabs, &s.HeadShots, &s.AirShots, &s.Captures, &s.Shots, &s.Extinguishes, &s.Hits, &s.BuildingBuilt, &s.BuildingDestroyed, &s.KDRatio, &s.KADRatio); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
@@ -201,13 +201,13 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 		    match_medic
 		WHERE 
 		    match_id = $1`
-	medicRows, errMedQuery := Query(ctx, qMed, matchId)
+	medicRows, errMedQuery := Query(ctx, qMed, matchID)
 	if errMedQuery != nil && !errors.Is(errMedQuery, ErrNoResult) {
 		return nil, errors.Wrapf(errMedQuery, "Failed to query match medics")
 	}
 	defer medicRows.Close()
 	for medicRows.Next() {
-		ms := logparse.MatchMedicSum{MatchID: matchId, Charges: map[logparse.MedigunType]int{
+		ms := logparse.MatchMedicSum{MatchID: matchID, Charges: map[logparse.MedigunType]int{
 			logparse.Uber:       0,
 			logparse.Kritzkrieg: 0,
 			logparse.Vaccinator: 0,
@@ -229,13 +229,13 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 		    match_team 
 		WHERE 
 		    match_id = $1`
-	teamRows, errTeamQuery := Query(ctx, qTeam, matchId)
+	teamRows, errTeamQuery := Query(ctx, qTeam, matchID)
 	if errTeamQuery != nil && !errors.Is(errTeamQuery, ErrNoResult) {
 		return nil, errors.Wrapf(errMedQuery, "Failed to query match medics")
 	}
 	defer teamRows.Close()
 	for teamRows.Next() {
-		ts := logparse.MatchTeamSum{MatchId: matchId}
+		ts := logparse.MatchTeamSum{MatchId: matchID}
 		if errRow := teamRows.Scan(&ts.MatchTeamId, &ts.Team, &ts.Kills, &ts.Damage, &ts.Charges, &ts.Drops, &ts.Caps, &ts.MidFights); errRow != nil {
 			return nil, errors.Wrapf(errRow, "Failed to scan match medics")
 		}
@@ -331,7 +331,7 @@ const (
 //	var stats []state.GlobalTF2StatsSnapshot
 //	for rows.Next() {
 //		var stat state.GlobalTF2StatsSnapshot
-//		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.Bots, &stat.Secure, &stat.ServersCommunity, &stat.ServersTotal, &stat.CapacityFull, &stat.CapacityEmpty, &stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions); errScan != nil {
+//		if errScan := rows.Scan(&stat.StatID, &stat.Players, &stat.Bots, &stat.Secure, &stat.ServersCommunity, &stat.ServersTotal, &stat.CapacityFull, &stat.CapacityEmpty, &stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions); errScan != nil {
 //			return nil, Err(errScan)
 //		}
 //		stats = append(stats, stat)
@@ -348,7 +348,7 @@ func fetchLocalTF2Snapshots(ctx context.Context, query string, args []any) ([]Lo
 	var stats []LocalTF2StatsSnapshot
 	for rows.Next() {
 		var stat LocalTF2StatsSnapshot
-		if errScan := rows.Scan(&stat.StatId, &stat.Players, &stat.CapacityFull, &stat.CapacityEmpty,
+		if errScan := rows.Scan(&stat.StatID, &stat.Players, &stat.CapacityFull, &stat.CapacityEmpty,
 			&stat.CapacityPartial, &stat.MapTypes, &stat.CreatedOn, &stat.Regions, &stat.Servers); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -490,7 +490,7 @@ func currentHourlyTime() time.Time {
 //
 //	var statIds []int64
 //	for _, s := range stats {
-//		statIds = append(statIds, s.StatId)
+//		statIds = append(statIds, s.StatID)
 //	}
 //	// Delete old entries
 //	delQuery, delArgs, delQueryErr := sb.
@@ -668,7 +668,7 @@ func BuildLocalTF2Stats(ctx context.Context) error {
 
 	var statIds []int64
 	for _, s := range stats {
-		statIds = append(statIds, s.StatId)
+		statIds = append(statIds, s.StatID)
 	}
 	// Delete old entries
 	delQuery, delArgs, delQueryErr := sb.
