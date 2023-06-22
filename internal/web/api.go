@@ -753,7 +753,7 @@ func onAPIPostServerCheck() gin.HandlerFunc {
 			return
 		}
 		resp.BanType = bannedPerson.Ban.BanType
-		reason := ""
+		var reason string
 		if bannedPerson.Ban.Reason == store.Custom && bannedPerson.Ban.ReasonText != "" {
 			reason = bannedPerson.Ban.ReasonText
 		} else if bannedPerson.Ban.Reason == store.Custom && bannedPerson.Ban.ReasonText == "" {
@@ -999,6 +999,7 @@ func onAPIExportBansValveSteamId() gin.HandlerFunc {
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
 	}
 }
+
 func onAPIExportBansValveIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, errBans := store.GetBansNet(ctx)

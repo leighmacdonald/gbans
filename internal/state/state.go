@@ -132,7 +132,8 @@ type ServerState struct {
 	// Tags that describe the game according to the server (for future use.)
 	Keywords []string `json:"keywords"`
 	Edicts   []int    `json:"edicts"`
-	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits. The earlier AppID could have been truncated as it was forced into 16-bit storage.
+	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits.
+	// The earlier AppID could have been truncated as it was forced into 16-bit storage.
 	GameID uint64 `json:"game_id"` // Needed?
 	// Spectator port number for SourceTV.
 	STVPort uint16 `json:"stv_port"`
@@ -176,23 +177,24 @@ func State() ServerStateCollection {
 	stateMu.RLock()
 	defer stateMu.RUnlock()
 
-	var coll ServerStateCollection
+	coll := make(ServerStateCollection, len(serverStates))
 
-	for _, state := range serverStates {
-		coll = append(coll, state)
+	for index, state := range serverStates {
+		coll[index] = state
 	}
 
 	return coll
 }
 
 func updateServers(ctx context.Context) {
-	wg := &sync.WaitGroup{}
+	waitGroup := &sync.WaitGroup{}
 	results := map[int]ServerState{}
 	resultsMu := &sync.RWMutex{}
+
 	for _, config := range serverConfigs {
-		wg.Add(1)
+		waitGroup.Add(1)
 		go func(cfg *ServerConfig) {
-			defer wg.Done()
+			defer waitGroup.Done()
 			newState, errFetch := cfg.fetch(ctx)
 			if errFetch != nil {
 				cfg.logger.Error("Failed to update", zap.Error(errFetch))
@@ -202,7 +204,9 @@ func updateServers(ctx context.Context) {
 			resultsMu.Unlock()
 		}(config)
 	}
-	wg.Wait()
+
+	waitGroup.Wait()
+
 	stateMu.Lock()
 	serverStates = results
 	stateMu.Unlock()
@@ -287,8 +291,6 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 			CountryCode: config.CC,
 			Latitude:    config.Lat,
 			Longitude:   config.Long,
-			Reserved:    0,
-			LastUpdate:  time.Time{},
 		}
 	}
 

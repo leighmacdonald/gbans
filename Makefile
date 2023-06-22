@@ -76,7 +76,7 @@ check_deps:
 check: lint_golangci static lint_ts
 
 lint_golangci:
-	golangci-lint run --timeout 3m
+	golangci-lint run --timeout 3m ./...
 
 fix: fmt
 	golangci-lint run --fix
