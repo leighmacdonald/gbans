@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/rumblefrog/go-a2s"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
@@ -207,7 +207,7 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 	for {
 		select {
 		case <-mlUpdateTicker.C:
-			updateMSL(errChan)
+			updateMSL(ctx, errChan)
 		case <-statusUpdateTicker.C:
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*20)
 			updateServers(localCtx)
@@ -432,8 +432,8 @@ func SteamRegionIdString(region SvRegion) string {
 		return "wd"
 	}
 }
-func updateMSL(errChan chan error) {
-	allServers, errServers := steamweb.GetServerList(map[string]string{
+func updateMSL(ctx context.Context, errChan chan error) {
+	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
 		"appid":     "440",
 		"dedicated": "1",
 	})
@@ -473,7 +473,7 @@ func updateMSL(errChan chan error) {
 			stats.MapTypes[mapType] = 0
 		}
 		stats.MapTypes[mapType]++
-		if strings.Contains(server.Gametype, "valve") ||
+		if strings.Contains(server.GameType, "valve") ||
 			!server.Dedicated ||
 			!server.Secure {
 			stats.ServersCommunity++

@@ -12,7 +12,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"os"
 	"strings"

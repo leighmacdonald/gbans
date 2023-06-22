@@ -259,7 +259,7 @@ func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.I
 		discord.AddFieldInline(embed, "Com. Ban", "true")
 	}
 	if player.EconomyBan != "" {
-		discord.AddFieldInline(embed, "Econ Ban", player.EconomyBan)
+		discord.AddFieldInline(embed, "Econ Ban", string(player.EconomyBan))
 	}
 	if len(oldBans) > 0 {
 		numMutes, numBans := 0, 0

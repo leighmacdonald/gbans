@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -64,7 +64,7 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 
 const chunkSize = 100
 
-func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, error) {
+func FetchSummaries(ctx context.Context, steamIDs steamid.Collection) ([]steamweb.PlayerSummary, error) {
 	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerSummary
@@ -78,7 +78,7 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, erro
 			total := uint64(len(steamIDs) - i)
 			maxResultsCount := golib.UMin64(steamQueryMaxResults, total)
 			ids := steamIDs[i : i+int(maxResultsCount)]
-			summaries, errSummaries := steamweb.PlayerSummaries(ids)
+			summaries, errSummaries := steamweb.PlayerSummaries(ctx, ids)
 			if errSummaries != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
@@ -93,7 +93,7 @@ func FetchSummaries(steamIDs steamid.Collection) ([]steamweb.PlayerSummary, erro
 	return results, nil
 }
 
-func FetchPlayerBans(steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
+func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
 	waitGroup := &sync.WaitGroup{}
 	var (
 		results   []steamweb.PlayerBanState
@@ -108,7 +108,7 @@ func FetchPlayerBans(steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error
 			maxResults := golib.UMin64(steamQueryMaxResults, total)
 			ids := steamIDs[i : i+int(maxResults)]
 
-			bans, errGetPlayerBans := steamweb.GetPlayerBans(ids)
+			bans, errGetPlayerBans := steamweb.GetPlayerBans(ctx, ids)
 			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}

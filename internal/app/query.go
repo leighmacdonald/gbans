@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
@@ -18,7 +18,7 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}
 	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24 {
-		summaries, errSummaries := steamweb.PlayerSummaries(steamid.Collection{sid})
+		summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{sid})
 		if errSummaries != nil {
 			return errors.Wrapf(errSummaries, "Failed to get Player summary: %v", errSummaries)
 		}
@@ -29,7 +29,7 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 			logger.Warn("Failed to update profile summary", zap.Error(errSummaries), zap.Int64("sid", sid.Int64()))
 			//return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
-		vac, errBans := thirdparty.FetchPlayerBans(steamid.Collection{sid})
+		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
 			logger.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
 			//return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
@@ -37,7 +37,7 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 			person.CommunityBanned = vac[0].CommunityBanned
 			person.VACBans = vac[0].NumberOfVACBans
 			person.GameBans = vac[0].NumberOfGameBans
-			person.EconomyBan = vac[0].EconomyBan
+			person.EconomyBan = steamweb.EconBanNone
 			person.CommunityBanned = vac[0].CommunityBanned
 			person.DaysSinceLastBan = vac[0].DaysSinceLastBan
 		}

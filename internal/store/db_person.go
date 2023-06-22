@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"net"
 	"strings"
@@ -30,20 +30,20 @@ type UserNotification struct {
 
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SID64    `db:"steam_id" json:"steam_id,string"`
-	CreatedOn        time.Time        `json:"created_on"`
-	UpdatedOn        time.Time        `json:"updated_on"`
-	PermissionLevel  consts.Privilege `json:"permission_level"`
-	Muted            bool             `json:"muted"`
-	IsNew            bool             `json:"-"`
-	DiscordID        string           `json:"discord_id"`
-	IPAddr           net.IP           `json:"-"` // TODO Allow json for admins endpoints
-	CommunityBanned  bool             `json:"community_banned"`
-	VACBans          int              `json:"vac_bans"`
-	GameBans         int              `json:"game_bans"`
-	EconomyBan       string           `json:"economy_ban"`
-	DaysSinceLastBan int              `json:"days_since_last_ban"`
-	UpdatedOnSteam   time.Time        `json:"updated_on_steam"`
+	SteamID          steamid.SID64         `db:"steam_id" json:"steam_id,string"`
+	CreatedOn        time.Time             `json:"created_on"`
+	UpdatedOn        time.Time             `json:"updated_on"`
+	PermissionLevel  consts.Privilege      `json:"permission_level"`
+	Muted            bool                  `json:"muted"`
+	IsNew            bool                  `json:"-"`
+	DiscordID        string                `json:"discord_id"`
+	IPAddr           net.IP                `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned  bool                  `json:"community_banned"`
+	VACBans          int                   `json:"vac_bans"`
+	GameBans         int                   `json:"game_bans"`
+	EconomyBan       steamweb.EconBanState `json:"economy_ban"`
+	DaysSinceLastBan int                   `json:"days_since_last_ban"`
+	UpdatedOnSteam   time.Time             `json:"updated_on_steam"`
 	*steamweb.PlayerSummary
 }
 
@@ -80,7 +80,7 @@ func NewPerson(sid64 steamid.SID64) Person {
 		DaysSinceLastBan: 0,
 		UpdatedOnSteam:   t0,
 		PlayerSummary: &steamweb.PlayerSummary{
-			Steamid: sid64.String(),
+			SteamID: sid64,
 		},
 	}
 }

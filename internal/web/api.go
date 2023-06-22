@@ -19,7 +19,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/leighmacdonald/steamweb"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
@@ -888,7 +888,7 @@ func onAPIGetServerStates() gin.HandlerFunc {
 			})
 		}
 		sort.SliceStable(ss, func(i, j int) bool {
-			return ss[i].Distance < ss[j].Distance
+			return ss[i].NameShort < ss[j].NameShort
 		})
 		responseOK(ctx, http.StatusOK, UserServers{
 			Servers: ss,
@@ -1128,7 +1128,7 @@ func onAPIProfile() gin.HandlerFunc {
 			return
 		}
 		// TODO add ctx to steamweb lib
-		friends, errFetchSummaries := thirdparty.FetchSummaries(friendIDs)
+		friends, errFetchSummaries := thirdparty.FetchSummaries(ctx, friendIDs)
 		if errFetchSummaries != nil {
 			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
 			return
@@ -2724,7 +2724,7 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 	var filterGameTypes = func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
 		var valid []state.ServerLocation
 		for _, server := range servers {
-			serverTypes := strings.Split(server.Gametype, ",")
+			serverTypes := strings.Split(server.GameType, ",")
 			for _, gt := range gameTypes {
 				if fp.Contains(serverTypes, gt) {
 					valid = append(valid, server)
@@ -2802,14 +2802,14 @@ func onAPIPostServerQuery() gin.HandlerFunc {
 			}
 			slim = append(slim, BaseServer{
 				Host: server.Addr,
-				Port: server.Gameport,
+				Port: server.GamePort,
 				Name: server.Name,
 				//Region:     server.Region,
 				Players:    server.Players,
 				MaxPlayers: server.MaxPlayers,
 				Bots:       server.Bots,
 				Map:        server.Map,
-				GameTypes:  strings.Split(server.Gametype, ","),
+				GameTypes:  strings.Split(server.GameType, ","),
 				Latitude:   server.Latitude,
 				Longitude:  server.Longitude,
 				Distance:   dist,
