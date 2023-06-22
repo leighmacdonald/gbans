@@ -49,7 +49,7 @@ func TestMatch_Apply(t *testing.T) {
 		return "???"
 	}
 	getPS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchPlayerSum {
-		ps, err := m.PlayerSums.GetBySteamId(sid)
+		ps, err := m.PlayerSums.GetBySteamID(sid)
 		if err != nil {
 			t.Fatalf("Failed to fetch player sum [%d]: %v", sid, err)
 		}
@@ -87,7 +87,7 @@ func TestMatch_Apply(t *testing.T) {
 	//}
 
 	getMS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchMedicSum {
-		ms, err := m.MedicSums.GetBySteamId(sid)
+		ms, err := m.MedicSums.GetBySteamID(sid)
 		if err != nil {
 			t.Fatalf("Failed to fetch player sum")
 		}

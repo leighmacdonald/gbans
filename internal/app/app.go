@@ -201,7 +201,10 @@ func warnWorker(ctx context.Context) {
 					}
 				}
 			case newWarn := <-warningChan:
-				evt := newWarn.ServerEvent.Event.(logparse.SayEvt)
+				evt, ok := newWarn.ServerEvent.Event.(logparse.SayEvt)
+				if !ok {
+					continue
+				}
 				if !evt.SID.Valid() {
 					continue
 				}
@@ -430,7 +433,10 @@ func playerMessageWriter(ctx context.Context) {
 			case logparse.Say:
 				fallthrough
 			case logparse.SayTeam:
-				e := evt.Event.(logparse.SayEvt)
+				e, ok := evt.Event.(logparse.SayEvt)
+				if !ok {
+					continue
+				}
 				if e.Msg == "" {
 					logger.Warn("Empty person message body, skipping")
 					continue
@@ -466,7 +472,10 @@ func playerConnectionWriter(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-serverEventChan:
-			e := evt.Event.(logparse.ConnectedEvt)
+			e, ok := evt.Event.(logparse.ConnectedEvt)
+			if !ok {
+				continue
+			}
 			if e.Address == "" {
 				logger.Warn("Empty person message body, skipping")
 				continue
@@ -566,7 +575,7 @@ func initFilters(ctx context.Context) error {
 func initWorkers(ctx context.Context) {
 	go patreonUpdater(ctx)
 	go banSweeper(ctx)
-	//go profileUpdater(ctx)
+	// go profileUpdater(ctx)
 	go warnWorker(ctx)
 	go logReader(ctx)
 	go initLogSrc(ctx)

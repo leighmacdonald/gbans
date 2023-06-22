@@ -176,7 +176,11 @@ func sendInteractionResponse(session *discordgo.Session, interaction *discordgo.
 			}
 		}
 	case MtEmbed:
-		edit.Embeds = append(edit.Embeds, response.Value.(*discordgo.MessageEmbed))
+		embed, ok := response.Value.(*discordgo.MessageEmbed)
+		if !ok {
+			return errors.New("Failed to cast MessageEmbed")
+		}
+		edit.Embeds = append(edit.Embeds, embed)
 	}
 	_, err := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
 		Embeds: &edit.Embeds,

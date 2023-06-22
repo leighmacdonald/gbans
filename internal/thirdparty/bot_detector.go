@@ -39,13 +39,21 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 		var id steamid.SID64
 		switch player.Steamid.(type) {
 		case string:
-			parsedSid64, errParseSid64 := steamid.StringToSID64(player.Steamid.(string))
+			sidVal, ok := player.Steamid.(string)
+			if !ok {
+				continue
+			}
+			parsedSid64, errParseSid64 := steamid.StringToSID64(sidVal)
 			if errParseSid64 != nil {
 				return nil, errParseSid64
 			}
 			id = parsedSid64
 		case float64:
-			id = steamid.SID64(player.Steamid.(float64))
+			sidVal, ok := player.Steamid.(float64)
+			if !ok {
+				continue
+			}
+			id = steamid.SID64(sidVal)
 		}
 		if !id.Valid() {
 			continue

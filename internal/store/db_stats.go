@@ -154,7 +154,7 @@ func Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryC
 	var matches logparse.MatchSummaryCollection
 	for rows.Next() {
 		var m logparse.MatchSummary
-		if errScan := rows.Scan(&m.MatchID, &m.ServerId, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
+		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
 			return nil, errors.Wrapf(errScan, "Failed to scan match row")
 		}
 		matches = append(matches, &m)

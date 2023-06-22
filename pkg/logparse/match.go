@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	ErrIgnored   = errors.New("Ignored msg")
-	ErrUnhandled = errors.New("Unhandled msg")
+	ErrIgnored     = errors.New("Ignored msg")
+	ErrUnhandled   = errors.New("Unhandled msg")
+	ErrInvalidType = errors.New("Invalid Type")
 )
 
 func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
@@ -50,7 +51,7 @@ func (mps MatchTeamSums) GetByTeam(team Team) (*MatchTeamSum, error) {
 
 type MatchMedicSums []*MatchMedicSum
 
-func (mps MatchMedicSums) GetBySteamId(steamId steamid.SID64) (*MatchMedicSum, error) {
+func (mps MatchMedicSums) GetBySteamID(steamId steamid.SID64) (*MatchMedicSum, error) {
 	for _, m := range mps {
 		if m.SteamID == steamId {
 			return m, nil
@@ -61,7 +62,7 @@ func (mps MatchMedicSums) GetBySteamId(steamId steamid.SID64) (*MatchMedicSum, e
 
 type MatchPlayerSums []*MatchPlayerSum
 
-func (mps MatchPlayerSums) GetBySteamId(steamId steamid.SID64) (*MatchPlayerSum, error) {
+func (mps MatchPlayerSums) GetBySteamID(steamId steamid.SID64) (*MatchPlayerSum, error) {
 	for _, m := range mps {
 		if m.SteamID == steamId {
 			return m, nil
@@ -133,7 +134,7 @@ type Match struct {
 }
 
 type MatchChat struct {
-	SteamId   steamid.SID64
+	SteamID   steamid.SID64
 	Name      string
 	Message   string
 	Team      bool
@@ -142,8 +143,8 @@ type MatchChat struct {
 
 type MatchWeaponSum struct {
 	Weapon    Weapon
-	MatchId   int
-	SteamId   steamid.SID64
+	MatchID   int
+	SteamID   steamid.SID64
 	Kills     int
 	Deaths    int
 	Damage    int64
@@ -155,7 +156,7 @@ type MatchWeaponSum struct {
 }
 
 func NewMatchWeaponSum(steamId steamid.SID64, weapon Weapon) MatchWeaponSum {
-	return MatchWeaponSum{SteamId: steamId, Weapon: weapon}
+	return MatchWeaponSum{SteamID: steamId, Weapon: weapon}
 }
 
 type MatchWeaponSums []*MatchWeaponSum
@@ -174,7 +175,7 @@ func (match *Match) GetWeaponSum(steamId steamid.SID64, weapon Weapon) *MatchWea
 
 type MatchSummary struct {
 	MatchID     int       `json:"match_id"`
-	ServerId    int       `json:"server_id"`
+	ServerID    int       `json:"server_id"`
 	MapName     string    `json:"map_name"`
 	CreatedOn   time.Time `json:"created_on"`
 	PlayerCount int       `json:"player_count"`
@@ -188,9 +189,9 @@ type MatchSummary struct {
 type MatchSummaryCollection []*MatchSummary
 
 func (match *Match) playerSlice() []MatchPlayerSum {
-	var players []MatchPlayerSum
-	for _, p := range match.PlayerSums {
-		players = append(players, *p)
+	players := make([]MatchPlayerSum, len(match.PlayerSums))
+	for index, p := range match.PlayerSums {
+		players[index] = *p
 	}
 	return players
 }
@@ -212,15 +213,24 @@ func (match *Match) Apply(result *Results) error {
 	case MapLoad:
 		return nil
 	case Say:
-		evt := result.Event.(SayEvt)
+		evt, ok := result.Event.(SayEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.addChat(evt.SID, evt.Name, evt.Msg, false, evt.CreatedOn)
 		return nil
 	case SayTeam:
-		evt := result.Event.(SayTeamEvt)
+		evt, ok := result.Event.(SayTeamEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.addChat(evt.SID, evt.Name, evt.Msg, true, evt.CreatedOn)
 		return nil
 	case JoinedTeam:
-		evt := result.Event.(JoinedTeamEvt)
+		evt, ok := result.Event.(JoinedTeamEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.joinTeam(evt.SID, evt.Team)
 		return nil
 	case IgnoredMsg:
@@ -239,21 +249,34 @@ func (match *Match) Apply(result *Results) error {
 		return nil
 	case WRoundLen:
 	case WRoundWin:
-		match.roundWin(result.Event.(WRoundWinEvt).Winner)
+		evt, ok := result.Event.(WRoundWinEvt)
+		if !ok {
+			return ErrInvalidType
+		}
+		match.roundWin(evt.Winner)
 		return nil
 
 	case Connected:
-		evt := result.Event.(ConnectedEvt)
+		evt, ok := result.Event.(ConnectedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.connected(evt.SID)
 		return nil
 
 	case Entered:
-		evt := result.Event.(EnteredEvt)
+		evt, ok := result.Event.(EnteredEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.entered(evt.SID)
 		return nil
 
 	case Disconnected:
-		evt := result.Event.(DisconnectedEvt)
+		evt, ok := result.Event.(DisconnectedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.disconnected(evt.SID)
 		return nil
 	}
@@ -264,67 +287,108 @@ func (match *Match) Apply(result *Results) error {
 	// These remaining events deal with handling the actual player stats during live rounds.
 	switch result.EventType {
 	case PointCaptured:
-		evt := result.Event.(PointCapturedEvt)
+		evt, ok := result.Event.(PointCapturedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.pointCapture(evt.Team, evt.CP, evt.CPName, evt.Players())
 
 	case CaptureBlocked:
-		evt := result.Event.(CaptureBlockedEvt)
+		evt, ok := result.Event.(CaptureBlockedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.pointCaptureBlocked(evt.CP, evt.CPName, SourcePlayerPosition{
 			SourcePlayer: evt.SourcePlayer,
 			Pos:          evt.Pos,
 		})
 
 	case SpawnedAs:
-		evt := result.Event.(SpawnedAsEvt)
+		evt, ok := result.Event.(SpawnedAsEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.addClass(evt.SID, evt.PlayerClass)
 	case ChangeClass:
-		evt := result.Event.(ChangeClassEvt)
+		evt, ok := result.Event.(ChangeClassEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.addClass(evt.SID, evt.Class)
 
 	case ShotFired:
-		match.shotFired(result.Event.(ShotFiredEvt).SID)
+		evt, ok := result.Event.(ShotFiredEvt)
+		if !ok {
+			return ErrInvalidType
+		}
+		match.shotFired(evt.SID)
 
 	case ShotHit:
-		match.shotHit(result.Event.(ShotHitEvt).SID)
+		evt, ok := result.Event.(ShotHitEvt)
+		if !ok {
+			return ErrInvalidType
+		}
+		match.shotHit(evt.SID)
 
 	case MedicDeath:
-		evt := result.Event.(MedicDeathEvt)
+		evt, ok := result.Event.(MedicDeathEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		if evt.HadUber {
 			// TODO record source player stat
 			match.drop(evt.SID2, evt.Team)
 		}
 
 	case EmptyUber:
-		_ = result.Event.(EmptyUberEvt)
+		_, _ = result.Event.(EmptyUberEvt)
 
 	case ChargeDeployed:
-		evt := result.Event.(ChargeDeployedEvt)
+		evt, ok := result.Event.(ChargeDeployedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.medicCharge(evt.SID, evt.Medigun, evt.Team)
 
 	case ChargeEnded:
-		_ = result.Event.(ChargeEndedEvt)
+		_, _ = result.Event.(ChargeEndedEvt)
 
 	case ChargeReady:
-		_ = result.Event.(ChargeReadyEvt)
+		_, _ = result.Event.(ChargeReadyEvt)
 
 	case LostUberAdv:
-		evt := result.Event.(LostUberAdvantageEvt)
+		evt, ok := result.Event.(LostUberAdvantageEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.medicLostAdv(evt.SID, evt.AdvTime)
 
 	case MedicDeathEx:
-		evt := result.Event.(MedicDeathExEvt)
+		evt, ok := result.Event.(MedicDeathExEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.medicDeath(evt.SID, evt.UberPct)
 
 	case Domination:
-		evt := result.Event.(DominationEvt)
+		evt, ok := result.Event.(DominationEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.domination(evt.SID, evt.SID2)
 
 	case Revenge:
-		evt := result.Event.(RevengeEvt)
+		evt, ok := result.Event.(RevengeEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.revenge(evt.SID)
 
 	case Damage:
-		evt := result.Event.(DamageEvt)
+		evt, ok := result.Event.(DamageEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		if match.useRealDmg {
 			match.damage(evt.SID, evt.SID2, evt.RealDamage, evt.Team, evt.AirShot)
 		} else {
@@ -332,55 +396,94 @@ func (match *Match) Apply(result *Results) error {
 		}
 
 	case Suicide:
-		evt := result.Event.(SuicideEvt)
+		evt, ok := result.Event.(SuicideEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.suicide(evt.SID, evt.Weapon)
 
 	case Killed:
-		evt := result.Event.(KilledEvt)
+		evt, ok := result.Event.(KilledEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.killed(evt.SID, evt.SID2, evt.Team)
 
 	case KilledCustom:
-		evt := result.Event.(CustomKilledEvt)
+		evt, ok := result.Event.(CustomKilledEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.killedCustom(evt.SID, evt.SID2, evt.CustomKill)
 
 	case KillAssist:
-		evt := result.Event.(KillAssistEvt)
+		evt, ok := result.Event.(KillAssistEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.assist(evt.SID)
 
 	case Healed:
-		evt := result.Event.(HealedEvt)
+		evt, ok := result.Event.(HealedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.healed(evt.SID, evt.SID2, evt.Healing)
 
 	case Extinguished:
-		evt := result.Event.(ExtinguishedEvt)
+		evt, ok := result.Event.(ExtinguishedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.extinguishes(evt.SID)
 
 	case BuiltObject:
-		evt := result.Event.(BuiltObjectEvt)
+		evt, ok := result.Event.(BuiltObjectEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.builtObject(evt.SID, evt.Object)
 
 	case KilledObject:
-		evt := result.Event.(KilledObjectEvt)
+		evt, ok := result.Event.(KilledObjectEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.killedObject(evt.SID, evt.Object)
 
 	case CarryObject:
-		evt := result.Event.(CarryObjectEvt)
+		evt, ok := result.Event.(CarryObjectEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.carriedObject(evt.SID, evt.Object)
 
 	case DetonatedObject:
-		evt := result.Event.(DetonatedObjectEvt)
+		evt, ok := result.Event.(DetonatedObjectEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.detonatedObject(evt.SID, evt.Object)
 
 	case DropObject:
-		evt := result.Event.(DropObjectEvt)
+		evt, ok := result.Event.(DropObjectEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.dropObject(evt.SID, evt.Object)
 
 	case Pickup:
-		evt := result.Event.(PickupEvt)
+		evt, ok := result.Event.(PickupEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.pickup(evt.SID, evt.Item, evt.Healing)
 
 	case FirstHealAfterSpawn:
-		evt := result.Event.(FirstHealAfterSpawnEvt)
+		evt, ok := result.Event.(FirstHealAfterSpawnEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 		match.firstHealAfterSpawn(evt.SID, evt.HealTime)
 
 	default:
@@ -391,7 +494,7 @@ func (match *Match) Apply(result *Results) error {
 }
 
 func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
-	m, err := match.PlayerSums.GetBySteamId(sid)
+	m, err := match.PlayerSums.GetBySteamID(sid)
 	if err != nil {
 		if errors.Is(err, consts.ErrUnknownID) {
 			t0 := config.Now()
@@ -411,7 +514,7 @@ func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
 }
 
 func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
-	m, _ := match.MedicSums.GetBySteamId(sid)
+	m, _ := match.MedicSums.GetBySteamID(sid)
 	if m != nil {
 		return m
 	}
@@ -532,7 +635,7 @@ func (match *Match) joinTeam(_ steamid.SID64, _ Team) {
 
 func (match *Match) addChat(sid steamid.SID64, name string, message string, team bool, created time.Time) {
 	match.Chat = append(match.Chat, MatchChat{
-		SteamId:   sid,
+		SteamID:   sid,
 		Name:      name,
 		Message:   message,
 		Team:      team,

@@ -43,6 +43,7 @@ func TestMain(testMain *testing.M) {
 	}
 	defer tearDown()
 	rc := testMain.Run()
+
 	os.Exit(rc)
 }
 
@@ -88,7 +89,7 @@ func TestServer(t *testing.T) {
 }
 
 func randIP() string {
-	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))
+	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255)) //nolint:gosec
 }
 
 func TestReport(t *testing.T) {
@@ -184,12 +185,8 @@ func TestBan(t *testing.T) {
 	require.True(t, errors.Is(errMissing, store.ErrNoResult))
 }
 
-func TestFilteredWords(t *testing.T) {
-	//
-}
-
 func randSID() steamid.SID64 {
-	return steamid.SID64(76561197960265728 + rand.Int63n(100000000))
+	return steamid.SID64(76561197960265728 + rand.Int63n(100000000)) //nolint:gosec
 }
 
 func TestPerson(t *testing.T) {
@@ -209,7 +206,6 @@ func TestPerson(t *testing.T) {
 }
 
 func TestGetChatHistory(t *testing.T) {
-
 	ctx := context.Background()
 	s := store.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
 	require.NoError(t, store.SaveServer(ctx, &s))

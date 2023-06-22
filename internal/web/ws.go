@@ -93,7 +93,11 @@ type wsClient struct {
 func (client *wsClient) currentPugLobby() (*pugLobby, bool) {
 	for _, lobby := range client.lobbies {
 		if lobby.lobbyType() == lobbyTypePug {
-			return lobby.(*pugLobby), true
+			lobbyVal, ok := lobby.(*pugLobby)
+			if !ok {
+				return nil, false
+			}
+			return lobbyVal, true
 		}
 	}
 	return nil, false
@@ -205,7 +209,12 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 	lobbies := []*pugLobby{}
 	cm.RLock()
 	for _, l := range cm.lobbies {
-		lobbies = append(lobbies, l.(*pugLobby))
+		lobbyVal, ok := l.(*pugLobby)
+		if !ok {
+			logger.Warn("Failed to cast publobby")
+			continue
+		}
+		lobbies = append(lobbies, lobbyVal)
 	}
 	cm.RUnlock()
 	return lobbies
