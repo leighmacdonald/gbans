@@ -13,7 +13,7 @@ vet:
 	@go vet . ./...
 
 fmt:
-	@go fmt . ./...
+	gofumpt -l -w .
 
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
@@ -70,28 +70,16 @@ testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 check_deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
-	go install golang.org/x/tools/cmd/goimports@latest
-	go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
-	go install golang.org/x/lint/golint@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 
-check: lint_golangci lint_vet lint_imports lint_cyclo lint_golint static lint_ts
+check: lint_golangci static lint_ts
 
 lint_golangci:
 	golangci-lint run --timeout 3m
 
-lint_vet:
-	go vet -tags ci ./...
-
-lint_imports:
-	test -z $(goimports -e -d . | tee /dev/stderr)
-
-lint_cyclo:
-	gocyclo -ignore "log_parser" -over 50 .
-
-lint_golint:
-	golint -set_exit_status $(go list -tags ci ./...)
+fix: fmt
+	golangci-lint run --fix
 
 lint_ts:
 	cd frontend && yarn run eslint:check

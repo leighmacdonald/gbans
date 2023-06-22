@@ -888,7 +888,7 @@ func onAPIGetServerStates() gin.HandlerFunc {
 			})
 		}
 		sort.SliceStable(ss, func(i, j int) bool {
-			return ss[i].NameShort < ss[j].NameShort
+			return ss[i].Name < ss[j].Name
 		})
 		responseOK(ctx, http.StatusOK, UserServers{
 			Servers: ss,

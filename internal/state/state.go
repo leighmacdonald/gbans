@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v2/extra"
@@ -12,14 +17,10 @@ import (
 	"github.com/rumblefrog/go-a2s"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
-	"net"
-	"strings"
-	"sync"
-	"time"
 )
 
 var (
-	// Current known state of the servers rcon status command
+	// Current known state of the servers rcon status command.
 	serverStates     map[int]ServerState
 	stateMu          sync.RWMutex
 	masterServerList []ServerLocation
@@ -37,21 +38,25 @@ func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	for _, server := range c {
 		if strings.EqualFold(server.NameShort, name) {
 			*state = server
+
 			return true
 		}
 	}
+
 	return false
 }
 
 func (c ServerStateCollection) ByRegion() map[string][]ServerState {
 	rm := map[string][]ServerState{}
-	for serverId, server := range c {
+	for serverID, server := range c {
 		_, exists := rm[server.Region]
 		if !exists {
 			rm[server.Region] = []ServerState{}
 		}
-		rm[server.Region] = append(rm[server.Region], c[serverId])
+
+		rm[server.Region] = append(rm[server.Region], c[serverID])
 	}
+
 	return rm
 }
 
@@ -170,10 +175,13 @@ func NewPlayerInfo() PlayerServerInfo {
 func State() ServerStateCollection {
 	stateMu.RLock()
 	defer stateMu.RUnlock()
+
 	var coll ServerStateCollection
+
 	for _, state := range serverStates {
 		coll = append(coll, state)
 	}
+
 	return coll
 }
 
@@ -228,11 +236,12 @@ func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort st
 		Password:           password,
 		Lat:                lat,
 		Long:               long,
-		rcon:               nil,
-		lastRconConnection: time.Time{},
-		logger:             logger,
 		Region:             region,
 		CC:                 cc,
+		rcon:               nil,
+		a2sConn:            nil,
+		lastRconConnection: time.Time{},
+		logger:             logger,
 	}
 }
 
@@ -268,12 +277,18 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	stateMu.RUnlock()
 	if !found {
 		newState = ServerState{
+			ServerId:    config.ServerId,
+			NameShort:   config.NameShort,
+			Name:        config.Name,
 			Host:        config.Host,
 			Port:        config.Port,
+			Enabled:     true,
 			Region:      config.Region,
 			CountryCode: config.CC,
 			Latitude:    config.Lat,
 			Longitude:   config.Long,
+			Reserved:    0,
+			LastUpdate:  time.Time{},
 		}
 	}
 
@@ -376,7 +391,6 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 			}
 			newState.Players = players
 		}
-
 	}()
 	wg.Wait()
 	return newState, err
@@ -385,12 +399,14 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 func SetServers(configs []*ServerConfig) {
 	stateMu.Lock()
 	defer stateMu.Unlock()
+
 	serverConfigs = configs
 }
 
 func MasterServerList() []ServerLocation {
 	stateMu.RLock()
 	defer stateMu.RUnlock()
+
 	return masterServerList
 }
 
@@ -432,6 +448,7 @@ func SteamRegionIdString(region SvRegion) string {
 		return "wd"
 	}
 }
+
 func updateMSL(ctx context.Context, errChan chan error) {
 	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
 		"appid":     "440",

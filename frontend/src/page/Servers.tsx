@@ -140,7 +140,6 @@ export const Servers = () => {
                         restart(nextExpiry());
                         return;
                     }
-                    console.log('y');
                     setServers(response.result.servers || []);
                     if (pos.lat == 0) {
                         setPos(response.result.lat_long);

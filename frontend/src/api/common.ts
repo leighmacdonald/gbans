@@ -22,6 +22,7 @@ export interface apiResponse<T> {
     resp: Response;
     result?: T;
 }
+
 /**
  * All api requests are handled through this interface.
  *
@@ -67,7 +68,7 @@ export const apiCall = async <
         u.port = '6006';
     }
     const resp = await fetch(u, opts);
-    if (resp.status == 401 && !isRefresh && refresh != '') {
+    if (resp.status == 401 && !isRefresh && refresh != '' && token != '') {
         // Try and refresh the token once
         if ((await refreshToken()) != '') {
             // Successful token refresh, make a single recursive retry
