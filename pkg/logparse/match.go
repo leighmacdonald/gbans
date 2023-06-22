@@ -2,18 +2,21 @@ package logparse
 
 import (
 	"fmt"
+	"sort"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"sort"
-	"time"
 )
 
-var ErrIgnored = errors.New("Ignored msg")
-var ErrUnhandled = errors.New("Unhandled msg")
+var (
+	ErrIgnored   = errors.New("Ignored msg")
+	ErrUnhandled = errors.New("Unhandled msg")
+)
 
 func NewMatch(logger *zap.Logger, serverId int, serverName string) Match {
 	return Match{
@@ -31,8 +34,10 @@ func NewMatch(logger *zap.Logger, serverId int, serverName string) Match {
 	}
 }
 
-type MatchRoundSums []*MatchRoundSum
-type MatchTeamSums []*MatchTeamSum
+type (
+	MatchRoundSums []*MatchRoundSum
+	MatchTeamSums  []*MatchTeamSum
+)
 
 func (mps MatchTeamSums) GetByTeam(team Team) (*MatchTeamSum, error) {
 	for _, m := range mps {
@@ -119,7 +124,7 @@ type Match struct {
 	ClassDeaths       MatchPlayerClassSums
 	Chat              []MatchChat
 	CreatedOn         time.Time
-	//Players           store.People // REMOVE dep
+
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch    bool // We ignore most events until Round_Start event
 	inRound    bool
@@ -199,7 +204,7 @@ func (match *Match) TopPlayers() []MatchPlayerSum {
 }
 
 // Apply is used to apply incoming event changes to the current match state
-// This is not threadsafe at all
+// This is not threadsafe at all.
 func (match *Match) Apply(result *Results) error {
 	// This first switch is used for events that can happen at any point in time during a game without
 	// having effects on things like player stats.
@@ -580,7 +585,7 @@ func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage in
 func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount int64) {
 	match.getPlayer(source).Healing += amount
 	match.getPlayer(target).HealingTaken += amount
-	//match.getMedicSum(source).Healing += amount
+
 }
 
 func (match *Match) pointCaptureBlocked(cp int, cpname string, pp SourcePlayerPosition) {
@@ -604,7 +609,7 @@ func (match *Match) pointCapture(team Team, cp int, cpname string, players []Sou
 	match.getTeamSum(team).Caps++
 }
 
-//func (match *Match) midFight(team logparse.Team) {
+// func (match *Match) midFight(team logparse.Team) {
 //	match.getTeamSum(team).MidFights++
 //}
 

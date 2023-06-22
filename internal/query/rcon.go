@@ -3,13 +3,14 @@ package query
 
 import (
 	"context"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"strings"
-	"sync"
-	"time"
 )
 
 // ExecRCON executes the given command against the server provided. It returns the command
@@ -28,7 +29,7 @@ func ExecRCON(ctx context.Context, addr string, password string, cmd string) (st
 	return resp, nil
 }
 
-// RCON is used to execute rcon commands against multiple servers
+// RCON is used to execute rcon commands against multiple servers.
 func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, commands ...string) map[string]string {
 	responses := make(map[string]string)
 	rwMutex := &sync.RWMutex{}
@@ -61,7 +62,7 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 }
 
 // sanitizeRCONCommand is a very basic check for injection of additional commands
-// using `;` as a command separator. This will just return the first part of the command
+// using `;` as a command separator. This will just return the first part of the command.
 func sanitizeRCONCommand(s string) string {
 	p := strings.SplitN(s, ";", 1)
 	return p[0]

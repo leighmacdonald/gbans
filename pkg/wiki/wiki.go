@@ -3,14 +3,15 @@
 package wiki
 
 import (
+	"time"
+
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/microcosm-cc/bluemonday"
-	"time"
 )
 
-// RootSlug is the top-most (index) page of the wiki
+// RootSlug is the top-most (index) page of the wiki.
 const RootSlug = "home"
 
 type Page struct {

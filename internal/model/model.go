@@ -2,12 +2,13 @@
 package model
 
 import (
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"time"
 )
 
 type BDIds struct {
@@ -54,7 +55,7 @@ func (p UserProfile) ToURL() string {
 	return config.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
-// NewUserProfile allocates a new default person instance
+// NewUserProfile allocates a new default person instance.
 func NewUserProfile(sid64 steamid.SID64) UserProfile {
 	t0 := config.Now()
 	return UserProfile{
@@ -66,7 +67,7 @@ func NewUserProfile(sid64 steamid.SID64) UserProfile {
 	}
 }
 
-// ServerEvent is a flat struct encapsulating a parsed log event
+// ServerEvent is a flat struct encapsulating a parsed log event.
 type ServerEvent struct {
 	Server store.Server
 	*logparse.Results

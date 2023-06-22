@@ -37,10 +37,10 @@ func containsIP(ip net.IP) bool {
 	return false
 }
 
-// Import is used to download and load block lists into memory
+// Import is used to download and load block lists into memory.
 func Import(list config.BanList) (int, error) {
 	if !golib.Exists(config.Net.CachePath) {
-		if errMkDir := os.MkdirAll(config.Net.CachePath, 0755); errMkDir != nil {
+		if errMkDir := os.MkdirAll(config.Net.CachePath, 0o755); errMkDir != nil {
 			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", config.Net.CachePath, errMkDir)
 		}
 	}

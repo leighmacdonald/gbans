@@ -7,18 +7,19 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/pkg/errors"
 	"net"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const masterBrowserHost = "hl2master.steampowered.com:27011"
 
-// Region defines a part of the world where servers are located
+// Region defines a part of the world where servers are located.
 type Region uint8
 
 const (
-	// USEastCoast : United States - East Coast
+	// USEastCoast : United States - East Coast.
 	USEastCoast  Region = 0x00
 	USWestCoast  Region = 0x01
 	SouthAmerica Region = 0x02
@@ -67,7 +68,7 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 			}
 			lastIp = r[len(r)-1].String()
 			firstRequest = false
-			//if lastIp == endIp {
+			// if lastIp == endIp {
 			//	fmt.Println("Got EOL")
 			//}
 		}
@@ -103,7 +104,7 @@ func sendListRequest(conn *net.UDPConn, ipStart string, filter string, regionCod
 		return nil, errors.New("Query list response has a length which is not multiple of 6")
 	}
 	var endpoints []*ServerEndpoint
-	var replyHeader = []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x66, 0x0A}
+	replyHeader := []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x66, 0x0A}
 	if !bytes.Equal(replyHeader, buffer[0:structSize]) {
 		return nil, errors.New("Query list response header is malformed")
 	}

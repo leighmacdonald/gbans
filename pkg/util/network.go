@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// NewHTTPClient allocates a preconfigured *http.Client
+// NewHTTPClient allocates a preconfigured *http.Client.
 func NewHTTPClient() *http.Client {
 	c := &http.Client{
 		Timeout: time.Second * 10,

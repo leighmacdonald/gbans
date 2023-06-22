@@ -7,7 +7,7 @@ type Number interface {
 	constraints.Integer | constraints.Float
 }
 
-// Uniq will return a unique list of value from the input list
+// Uniq will return a unique list of value from the input list.
 func Uniq[T comparable](input []T) (output []T) {
 	if len(input) == 0 {
 		return

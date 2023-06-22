@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -24,7 +25,7 @@ func init() {
 
 // ParseDuration works exactly like time.ParseDuration except that
 // it supports durations longer than hours
-// Formats: s, m, h, d, w, M, y
+// Formats: s, m, h, d, w, M, y.
 func ParseDuration(durationString string) (time.Duration, error) {
 	if durationString == "0" {
 		return 0, nil
@@ -60,7 +61,7 @@ func ParseDuration(durationString string) (time.Duration, error) {
 
 // Now returns the current time in the configured format of the application runtime
 //
-// All calls to time.Now() should use this instead to ensure consistency
+// All calls to time.Now() should use this instead to ensure consistency.
 func Now() time.Time {
 	if General.UseUTC {
 		return time.Now().UTC()
@@ -68,18 +69,18 @@ func Now() time.Time {
 	return time.Now()
 }
 
-// DefaultExpiration returns the default expiration time delta from Now()
+// DefaultExpiration returns the default expiration time delta from Now().
 func DefaultExpiration() time.Time {
 	return Now().AddDate(expirationYears, 0, 0)
 }
 
-// FmtTimeShort returns a common format for time display
+// FmtTimeShort returns a common format for time display.
 func FmtTimeShort(t time.Time) string {
 	return t.Format("Mon Jan 2 15:04:05 MST 2006")
 }
 
 // FmtDuration calculates and returns a string for duration differences. This handles
-// values larger than a day unlike the stdlib in functionalities
+// values larger than a day unlike the stdlib in functionalities.
 func FmtDuration(t time.Time) string {
 	year, month, day, hour, minute, _ := diff(t, Now())
 	var pieces []string

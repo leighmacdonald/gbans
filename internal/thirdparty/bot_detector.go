@@ -2,6 +2,7 @@ package thirdparty
 
 import (
 	"encoding/json"
+
 	"github.com/leighmacdonald/steamid/v2/steamid"
 )
 

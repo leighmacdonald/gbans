@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"net/http"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
@@ -18,16 +21,14 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 var (
-	// ErrNoResult is returned on successful queries which return no rows
+	// ErrNoResult is returned on successful queries which return no rows.
 	ErrNoResult = errors.New("No results found")
-	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted
+	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted.
 	ErrDuplicate = errors.New("Duplicate entity")
-	// Use $ for pg based queries
+	// Use $ for pg based queries.
 	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	//go:embed migrations
 	migrations embed.FS
@@ -41,12 +42,12 @@ const (
 	tableNetLocation tableName = "net_location"
 	tableNetProxy    tableName = "net_proxy"
 	tableNetASN      tableName = "net_asn"
-	//tablePersonIP    tableName = "person_ip"
+
 	tableServer tableName = "server"
 	tableDemo   tableName = "demo"
 )
 
-// QueryFilter provides a structure for common query parameters
+// QueryFilter provides a structure for common query parameters.
 type QueryFilter struct {
 	Offset   uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
 	Limit    uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
@@ -115,7 +116,7 @@ func Exec(ctx context.Context, query string, args ...any) error {
 	return Err(err)
 }
 
-// Close will close the underlying database connection if it exists
+// Close will close the underlying database connection if it exists.
 func Close() error {
 	if conn != nil {
 		conn.Close()
@@ -130,7 +131,7 @@ func truncateTable(ctx context.Context, table tableName) error {
 	return nil
 }
 
-// Err is used to wrap common database errors in owr own error types
+// Err is used to wrap common database errors in owr own error types.
 func Err(rootError error) error {
 	if rootError == nil {
 		return rootError
@@ -150,21 +151,21 @@ func Err(rootError error) error {
 	return rootError
 }
 
-// MigrationAction is the type of migration to perform
+// MigrationAction is the type of migration to perform.
 type MigrationAction int
 
 const (
-	// MigrateUp Fully upgrades the schema
+	// MigrateUp Fully upgrades the schema.
 	MigrateUp = iota
-	// MigrateDn Fully downgrades the schema
+	// MigrateDn Fully downgrades the schema.
 	MigrateDn
-	// MigrateUpOne Upgrade the schema by one revision
+	// MigrateUpOne Upgrade the schema by one revision.
 	MigrateUpOne
-	// MigrateDownOne Downgrade the schema by one revision
+	// MigrateDownOne Downgrade the schema by one revision.
 	MigrateDownOne
 )
 
-// Migrate database schema
+// Migrate database schema.
 func Migrate(action MigrationAction) error {
 	instance, errOpen := sql.Open("pgx", config.DB.DSN)
 	if errOpen != nil {

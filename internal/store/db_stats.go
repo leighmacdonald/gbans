@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -9,7 +11,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"time"
 )
 
 type LocalTF2StatsSnapshot struct {
@@ -240,7 +241,7 @@ func MatchGetById(ctx context.Context, matchId int) (*logparse.Match, error) {
 		}
 		m.TeamSums = append(m.TeamSums, &ts)
 	}
-	//var ids steamid.Collection
+	// var ids steamid.Collection
 	//for _, p := range m.PlayerSums {
 	//	ids = append(ids, p.SteamId)
 	//}
@@ -273,8 +274,10 @@ func GetStats(ctx context.Context, stats *Stats) error {
 	return nil
 }
 
-var localStatColumns = []string{"players", "capacity_full", "capacity_empty", "capacity_partial",
-	"map_types", "created_on", "regions", "servers"}
+var localStatColumns = []string{
+	"players", "capacity_full", "capacity_empty", "capacity_partial",
+	"map_types", "created_on", "regions", "servers",
+}
 
 func SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF2StatsSnapshot) error {
 	query, args, errQuery := sb.Insert(statDurationTable(Local, duration)).
@@ -288,7 +291,7 @@ func SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF
 	return Err(Exec(ctx, query, args...))
 }
 
-//var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
+// var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
 //	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
 //
 //func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats state.GlobalTF2StatsSnapshot) error {
@@ -319,7 +322,7 @@ const (
 	Yearly
 )
 
-//func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]state.GlobalTF2StatsSnapshot, error) {
+// func fetchGlobalTF2Snapshots(ctx context.Context, database Store, query string, args []any) ([]state.GlobalTF2StatsSnapshot, error) {
 //	rows, errExec := database.Query(ctx, query, args...)
 //	if errExec != nil {
 //		return nil, Err(errExec)
@@ -367,7 +370,7 @@ func DailyIndex(t time.Time) (time.Time, int) {
 	return curTime, curDay
 }
 
-// currentHourlyTime calculates the absolute start of the current hour
+// currentHourlyTime calculates the absolute start of the current hour.
 func currentHourlyTime() time.Time {
 	now := config.Now()
 	year, mon, day := now.Date()
@@ -376,13 +379,13 @@ func currentHourlyTime() time.Time {
 }
 
 // currentDailyTime calculates the absolute start of the current day
-//func currentDailyTime() time.Time {
+// func currentDailyTime() time.Time {
 //	now := config.Now()
 //	year, mon, day := now.Date()
 //	return time.Date(year, mon, day, 0, 0, 0, 0, now.Location())
 //}
 
-//type statIndexFunc = func(t time.Time) (time.Time, int)
+// type statIndexFunc = func(t time.Time) (time.Time, int)
 //
 //func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 //	maxDate := currentHourlyTime()
@@ -524,7 +527,7 @@ func statDurationTable(locality StatLocality, duration StatDuration) string {
 }
 
 //
-//func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]state.GlobalTF2StatsSnapshot, error) {
+// func (database *pgStore) GetGlobalTF2Stats(ctx context.Context, duration StatDuration) ([]state.GlobalTF2StatsSnapshot, error) {
 //	table := statDurationTable(Global, duration)
 //	if table == "" {
 //		return nil, errors.New("Unsupported stat duration")

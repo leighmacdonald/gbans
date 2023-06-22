@@ -1,12 +1,13 @@
 package discord
 
 import (
+	"sync/atomic"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"sync/atomic"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	logger  *zap.Logger
 	session *discordgo.Session
 	isReady atomic.Bool
-	//ctx             context.Context
+
 	commandHandlers map[Cmd]CommandHandler
 
 	onConnectUser    func()
@@ -32,9 +33,11 @@ func init() {
 func SetOnConnect(fn func()) {
 	onConnectUser = fn
 }
+
 func SetOnDisconnect(fn func()) {
 	onDisconnectUser = fn
 }
+
 func RegisterHandler(cmd Cmd, handler CommandHandler) error {
 	_, found := commandHandlers[cmd]
 	if found {
@@ -74,7 +77,7 @@ func Start(l *zap.Logger) error {
 	if errNewSession != nil {
 		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
-	//botSession.Identify.Intents |= discordgo.IntentGuildPresences
+
 	session = botSession
 
 	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
@@ -138,7 +141,7 @@ func onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	}
 }
 
-//func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
+// func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
 //	if !isReady.Load() {
 //		logger.Error("Tried to send message to disconnected client")
 //		return nil
@@ -190,7 +193,7 @@ func SendPayload(payload Payload) {
 	}
 }
 
-// LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int)
+// LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int).
 type LevelColors struct {
 	Debug int
 	Info  int
@@ -199,7 +202,7 @@ type LevelColors struct {
 	Fatal int
 }
 
-// DefaultLevelColors is a struct of the default colors used
+// DefaultLevelColors is a struct of the default colors used.
 var DefaultLevelColors = LevelColors{
 	Debug: 10170623,
 	Info:  3581519,

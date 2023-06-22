@@ -2,11 +2,12 @@ package store
 
 import (
 	"context"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
-	"time"
 )
 
 type ReportStatus int
@@ -215,7 +216,7 @@ func GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error) {
 	if opts.Limit > 0 {
 		builder = builder.Limit(opts.Limit)
 	}
-	//if opts.OrderBy != "" {
+	// if opts.OrderBy != "" {
 	//	if opts.SortDesc {
 	//		builder = builder.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
 	//	} else {
@@ -256,7 +257,7 @@ func GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error) {
 	return reports, nil
 }
 
-// GetReportBySteamId returns any open report for the user by the author
+// GetReportBySteamId returns any open report for the user by the author.
 func GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId steamid.SID64, report *Report) error {
 	const query = `
 		SELECT 
@@ -285,6 +286,7 @@ func GetReportBySteamId(ctx context.Context, authorId steamid.SID64, steamId ste
 	}
 	return nil
 }
+
 func GetReport(ctx context.Context, reportId int64, report *Report) error {
 	const query = `
 		SELECT 

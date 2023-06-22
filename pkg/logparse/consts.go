@@ -2,21 +2,22 @@ package logparse
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-// EventType defines a known, parsable message type
+// EventType defines a known, parsable message type.
 type EventType int
 
 const (
-	// IgnoredMsg is used for messages we are ignoring
+	// IgnoredMsg is used for messages we are ignoring.
 	IgnoredMsg EventType = 0
-	// UnknownMsg is for any unexpected message formats
+	// UnknownMsg is for any unexpected message formats.
 	UnknownMsg EventType = 1
 
-	// Live player actions
+	// Live player actions.
 
 	Say                 EventType = 10
 	SayTeam             EventType = 11
@@ -54,7 +55,7 @@ const (
 	GasAttack           EventType = 54
 	KilledCustom                  = 55
 
-	// World events not attached to specific players
+	// World events not attached to specific players.
 
 	WRoundOvertime  EventType = 100
 	WRoundStart     EventType = 101
@@ -65,7 +66,7 @@ const (
 	WGameOver       EventType = 106
 	WPaused         EventType = 107
 	WResumed        EventType = 108
-	// WRoundSetupEnd     EventType = 109
+	// WRoundSetupEnd     EventType = 109.
 	WMiniRoundWin         EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
 	WMiniRoundLen         EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
 	WMiniRoundSelected    EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
@@ -73,7 +74,7 @@ const (
 	WRoundSetupBegin      EventType = 114 // World triggered "Round_Setup_Begin"
 	WIntermissionWinLimit EventType = 115 // Team "RED" triggered "Intermission_Win_Limit"
 
-	// Metadata
+	// Metadata.
 
 	LogStart         EventType = 1000
 	LogStop          EventType = 1001
@@ -98,7 +99,7 @@ const (
 	Crit
 )
 
-// Team represents a players team, or spectator state
+// Team represents a players team, or spectator state.
 type Team int
 
 const (
@@ -132,7 +133,7 @@ func (t Team) Opponent() Team {
 	}
 }
 
-// Pos is a position in 3D space
+// Pos is a position in 3D space.
 type Pos struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
@@ -140,12 +141,12 @@ type Pos struct {
 }
 
 // Encode returns a ST_MakePointM
-// Uses ESPG 4326 (WSG-84)
+// Uses ESPG 4326 (WSG-84).
 func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }
 
-// ParsePOS parses a players 3d position
+// ParsePOS parses a players 3d position.
 func ParsePOS(s string, p *Pos) error {
 	pcs := strings.Split(s, " ")
 	if len(pcs) != 3 {
@@ -382,7 +383,7 @@ func ParseWeapon(s string) Weapon {
 	return UnknownWeapon
 }
 
-// weaponNames defines string versions for all known weapons
+// weaponNames defines string versions for all known weapons.
 var weaponNames = map[Weapon]string{
 	UnknownWeapon:         "unknown",
 	AiFlamethrower:        "ai_flamethrower",
@@ -660,7 +661,7 @@ var Weapons = map[PlayerClass][]Weapon{
 	},
 }
 
-//var backStabWeapons = []Weapon{
+// var backStabWeapons = []Weapon{
 //	BigEarner,
 //	EternalReward,
 //	BlackRose,
@@ -681,6 +682,6 @@ var Weapons = map[PlayerClass][]Weapon{
 //	TheClassic,
 //}
 
-//func IsCritWeapon(weapon Weapon) bool {
+// func IsCritWeapon(weapon Weapon) bool {
 //	return fp.Contains[Weapon](backStabWeapons, weapon)
 //}

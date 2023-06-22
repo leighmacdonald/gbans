@@ -5,13 +5,14 @@
 package logparse
 
 import (
-	"github.com/leighmacdonald/steamid/v2/steamid"
-	"github.com/mitchellh/mapstructure"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/mitchellh/mapstructure"
 )
 
 type parserType struct {
@@ -21,9 +22,9 @@ type parserType struct {
 
 var (
 	rxKVPairs = regexp.MustCompile(`\((?P<key>.+?)\s+"(?P<value>.+?)"\)`)
-	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>"
+	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>".
 	rxPlayer = regexp.MustCompile(`"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"`)
-	//rxSkipped      = regexp.MustCompile(`("undefined"$)`)
+
 	rxUnhandled             = regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+`)
 	rxLogStart              = regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`)
 	rxLogStop               = regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`)
@@ -94,7 +95,7 @@ var (
 	rxJunkMetaPlugin        = regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+\[META]`)
 	rxSteamAuth             = regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+STEAMAUTH: (?P<reason>.+?)$`)
 
-	// Map matching regex to known event types
+	// Map matching regex to known event types.
 	rxParsers = []parserType{
 		{rxLogStart, LogStart},
 		{rxLogStop, LogStop},
@@ -206,7 +207,7 @@ func parseMedigun(gunStr string, gun *MedigunType) bool {
 }
 
 //
-//func playerClassStr(cls PlayerClass) string {
+// func playerClassStr(cls PlayerClass) string {
 //	switch cls {
 //	case Scout:
 //		return "Scout"
@@ -285,21 +286,22 @@ func parseTeam(teamStr string, team *Team) bool {
 	return true
 }
 
-func reSubMatchMap(r *regexp.Regexp, str string) (map[string]any, bool) {
-	match := r.FindStringSubmatch(str)
+func reSubMatchMap(regex *regexp.Regexp, str string) (map[string]any, bool) {
+	match := regex.FindStringSubmatch(str)
 	subMatchMap := make(map[string]any)
 	if match == nil {
 		return nil, false
 	}
-	for i, name := range r.SubexpNames() {
+	for i, name := range regex.SubexpNames() {
 		if i != 0 {
 			subMatchMap[name] = match[i]
 		}
 	}
+
 	return subMatchMap, true
 }
 
-func parsePos(posStr string, pos *Pos) bool {
+func ParsePos(posStr string, pos *Pos) bool {
 	pieces := strings.SplitN(posStr, " ", 3)
 	if len(pieces) != 3 {
 		return false
@@ -322,7 +324,7 @@ func parsePos(posStr string, pos *Pos) bool {
 	return true
 }
 
-func parseSourcePlayer(srcStr string, player *SourcePlayer) bool {
+func ParseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 	ooKV, ok := reSubMatchMap(rxPlayer, "\""+srcStr+"\"")
 	if !ok {
 		return false
@@ -342,17 +344,19 @@ func parseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 	return true
 }
 
-func parseDateTime(dateStr string, t *time.Time) bool {
+func ParseDateTime(dateStr string, t *time.Time) bool {
 	parsed, errParseTime := time.Parse("01/02/2006 - 15:04:05", dateStr)
 	if errParseTime != nil {
 		return false
 	}
+
 	*t = parsed
+
 	return true
 }
 
-func parseKVs(s string, out map[string]any) bool {
-	m := rxKVPairs.FindAllStringSubmatch(s, 10)
+func ParseKVs(stringVal string, out map[string]any) bool {
+	m := rxKVPairs.FindAllStringSubmatch(stringVal, 10)
 	if len(m) == 0 {
 		return false
 	}
@@ -368,7 +372,7 @@ func processKV(originalKVMap map[string]any) map[string]any {
 		switch key {
 		case "created_on":
 			var t time.Time
-			if parseDateTime(value.(string), &t) {
+			if ParseDateTime(value.(string), &t) {
 				newKVMap["created_on"] = t
 			}
 		case "medigun":
@@ -413,20 +417,20 @@ func processKV(originalKVMap map[string]any) map[string]any {
 	return newKVMap
 }
 
-// Results hold the  results of parsing a log line
+// Results hold the  results of parsing a log line.
 type Results struct {
 	EventType EventType
 	Event     any
 }
 
-// Parse will parse the log line into a known type and values
+// Parse will parse the log line into a known type and values.
 func Parse(logLine string) (*Results, error) {
 	for _, rx := range rxParsers {
 		matchMap, found := reSubMatchMap(rx.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
 		if found {
 			value, ok := matchMap["keypairs"].(string)
 			if ok {
-				parseKVs(value, matchMap)
+				ParseKVs(value, matchMap)
 			}
 			// Temporary values
 			delete(matchMap, "keypairs")
@@ -833,14 +837,14 @@ func decodePos() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var pos Pos
-		if !parsePos(d.(string), &pos) {
+		if !ParsePos(d.(string), &pos) {
 			return d, nil
 		}
 		return pos, nil
 	}
 }
 
-// BotSid Special internal SID used to track bots internally
+// BotSid Special internal SID used to track bots internally.
 const BotSid = 807
 
 func decodeSID3() mapstructure.DecodeHookFunc {
@@ -862,7 +866,7 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 	}
 }
 
-//func decodeMedigun() mapstructure.DecodeHookFunc {
+// func decodeMedigun() mapstructure.DecodeHookFunc {
 //	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 //		if f.Kind() != reflect.String {
 //			return d, nil
@@ -907,7 +911,7 @@ func decodeTime() mapstructure.DecodeHookFunc {
 			return d, nil
 		}
 		var t0 time.Time
-		if parseDateTime(d.(string), &t0) {
+		if ParseDateTime(d.(string), &t0) {
 			return t0, nil
 		}
 		return d, nil
@@ -924,7 +928,7 @@ func unmarshal(input any, output any) error {
 			decodePlayerClass(),
 			decodePos(),
 			decodeSID3(),
-			//decodeMedigun(),
+
 			decodePickupItem(),
 			decodeWeapon(),
 		),

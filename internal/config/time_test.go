@@ -1,8 +1,11 @@
 package config
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseDuration(t *testing.T) {
@@ -30,7 +33,8 @@ func TestParseDuration(t *testing.T) {
 			"3w",
 			"504h0m0s",
 		},
-		{"3M",
+		{
+			"3M",
 			"2232h0m0s",
 		},
 		{

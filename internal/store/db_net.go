@@ -3,6 +3,9 @@ package store
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -10,8 +13,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net"
-	"time"
 )
 
 // GetBanNetByAddress returns the BanCIDR matching intersecting the supplied ip.

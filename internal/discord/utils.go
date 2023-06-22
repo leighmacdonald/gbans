@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
@@ -10,9 +11,9 @@ import (
 const (
 	maxEmbedFields = 25
 	// TODO ensure these
-	//minUsernameChars    = 2
+
 	//maxUsernameChars    = 32
-	//maxAuthorChars      = 256
+	//maxAuthorChars      = 256.
 	maxFieldNameChars   = 256
 	maxFieldValueChars  = 1024
 	maxDescriptionChars = 2048
@@ -43,7 +44,6 @@ type ResponseMsgType int
 const (
 	MtString ResponseMsgType = iota
 	MtEmbed
-	//MtImage
 )
 
 type Response struct {
@@ -56,7 +56,7 @@ type Payload struct {
 	Embed     *discordgo.MessageEmbed
 }
 
-// RespErr creates a common error message embed
+// RespErr creates a common error message embed.
 func RespErr(response *Response, message string) {
 	response.Value = &discordgo.MessageEmbed{
 		URL:      "",
@@ -77,9 +77,8 @@ func RespErr(response *Response, message string) {
 }
 
 // RespOk will set up and allocate a base successful response embed that can be
-// further customized
+// further customized.
 func RespOk(response *Response, title string) *discordgo.MessageEmbed {
-
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       title,
@@ -123,11 +122,11 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 	embed.Author = &discordgo.MessageEmbedAuthor{URL: url, Name: name}
 }
 
-//func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
+// func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
 //	AddField(embed, logger, title, fmt.Sprintf("%d", value))
 //}
 
-//func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
+// func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
 //	name := person.PersonaName
 //	if name == "" {
 //		name = person.SteamID.String()
@@ -144,6 +143,7 @@ func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
 	AddFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
 	AddFieldInline(embed, "SID64", steamId.String())
 }
+
 func AddLink(embed *discordgo.MessageEmbed, value Linkable) {
 	url := value.ToURL()
 	if len(url) > 0 {

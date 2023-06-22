@@ -1,9 +1,10 @@
 package msqp
 
 import (
-	"github.com/stretchr/testify/require"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestClient(t *testing.T) {

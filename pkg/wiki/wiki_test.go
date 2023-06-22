@@ -1,13 +1,14 @@
-package wiki
+package wiki_test
 
 import (
+	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestWiki(t *testing.T) {
-	root := Page{Slug: RootSlug}
+	root := wiki.Page{Slug: wiki.RootSlug}
 	root.BodyMD = `
 # Title
 

@@ -1,8 +1,9 @@
 package util
 
 import (
-	"go.uber.org/zap"
 	"io"
+
+	"go.uber.org/zap"
 )
 
 func LogCloser(closer io.Closer, logger *zap.Logger) {

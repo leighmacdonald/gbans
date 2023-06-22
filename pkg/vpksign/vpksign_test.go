@@ -2,8 +2,11 @@ package vpksign
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSign(t *testing.T) {

@@ -3,6 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"net"
+	"strings"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -11,9 +15,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
-	"net"
-	"strings"
-	"time"
 )
 
 type UserNotification struct {
@@ -51,17 +52,17 @@ func (p *Person) ToURL() string {
 	return config.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
-// LoggedIn checks for a valid steamID
+// LoggedIn checks for a valid steamID.
 func (p *Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
-// AsTarget checks for a valid steamID
+// AsTarget checks for a valid steamID.
 func (p *Person) AsTarget() StringSID {
 	return StringSID(p.SteamID.String())
 }
 
-// NewPerson allocates a new default person instance
+// NewPerson allocates a new default person instance.
 func NewPerson(sid64 steamid.SID64) Person {
 	t0 := config.Now()
 	return Person{
@@ -104,7 +105,7 @@ type PersonChat struct {
 	CreatedOn    time.Time
 }
 
-// PersonIPRecord holds a composite result of the more relevant ip2location results
+// PersonIPRecord holds a composite result of the more relevant ip2location results.
 type PersonIPRecord struct {
 	IPAddr      net.IP
 	CreatedOn   time.Time
@@ -208,7 +209,7 @@ func DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	return nil
 }
 
-// SavePerson will insert or update the person record
+// SavePerson will insert or update the person record.
 func SavePerson(ctx context.Context, person *Person) error {
 	person.UpdatedOn = config.Now()
 	// FIXME
@@ -274,13 +275,15 @@ func insertPerson(ctx context.Context, person *Person) error {
 	return nil
 }
 
-// "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban"
-var profileColumns = []string{"steam_id", "created_on", "updated_on",
+// "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban".
+var profileColumns = []string{
+	"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
 	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
-	"muted"}
+	"muted",
+}
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
@@ -424,7 +427,7 @@ func GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person
 	return errGetPerson
 }
 
-// GetPersonByDiscordID returns a person by their discord_id
+// GetPersonByDiscordID returns a person by their discord_id.
 func GetPersonByDiscordID(ctx context.Context, discordId string, person *Person) error {
 	query, args, errQueryArgs := sb.Select(profileColumns...).
 		From("person").
@@ -615,7 +618,7 @@ func GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) 
 			"coalesce(loc.country_code, '')").
 		From("person_connections pc").
 		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
-		//Join("LEFT JOIN net_asn asn ON pc.ip_addr <@ asn.ip_range").
+
 		//Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
 		OrderBy("1").
 		Limit(limit)

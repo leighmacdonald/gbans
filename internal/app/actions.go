@@ -42,7 +42,7 @@ func OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(in
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(ctx context.Context, origin store.Origin, target steamid.SID64, author steamid.SID64, reason store.Reason) error {
+func Kick(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64, reason store.Reason) error {
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
 	}
@@ -55,7 +55,7 @@ func Kick(ctx context.Context, origin store.Origin, target steamid.SID64, author
 }
 
 // Silence will gag & mute a player
-func Silence(ctx context.Context, origin store.Origin, target steamid.SID64, author steamid.SID64,
+func Silence(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64,
 	reason store.Reason) error {
 	if !author.Valid() {
 		return ErrInvalidAuthorSID

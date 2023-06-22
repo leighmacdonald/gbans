@@ -1,8 +1,9 @@
 package logparse
 
 import (
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"time"
+
+	"github.com/leighmacdonald/steamid/v2/steamid"
 )
 
 // TimeStamp is the base event for all other events. It just contains a timestamp.
@@ -35,7 +36,7 @@ type WMiniRoundWinEvt TimeStamp
 
 type WMiniRoundLenEvt TimeStamp
 
-// SourcePlayer represents the player who initiated the event
+// SourcePlayer represents the player who initiated the event.
 type SourcePlayer struct {
 	Name string        `json:"name"`
 	PID  int           `json:"pid"`
@@ -44,7 +45,7 @@ type SourcePlayer struct {
 	Bot  bool          `json:"bot"`
 }
 
-// TargetPlayer maps the common secondary player values name_2
+// TargetPlayer maps the common secondary player values name_2.
 type TargetPlayer struct {
 	Name2 string        `json:"name2"`
 	PID2  int           `json:"pid2"`
@@ -65,17 +66,17 @@ type LogStartEvt struct {
 	Version string `json:"version" mapstructure:"version"`
 }
 
-// LogStopEvt is the server shutting down the map and closing the log
+// LogStopEvt is the server shutting down the map and closing the log.
 type LogStopEvt TimeStamp
 
-// CVAREvt is emitted on a cvar change
+// CVAREvt is emitted on a cvar change.
 type CVAREvt struct {
 	TimeStamp
 	CVAR  string `json:"cvar" mapstructure:"cvar"`
 	Value string `json:"value" mapstructure:"value"`
 }
 
-// RCONEvt is emitted on a rcon connection executing a command
+// RCONEvt is emitted on a rcon connection executing a command.
 type RCONEvt struct {
 	TimeStamp
 	Cmd string `json:"cmd" mapstructure:"cmd"`
@@ -211,7 +212,7 @@ func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
 			continue
 		}
 		var src SourcePlayer
-		if !parseSourcePlayer(ps, &src) {
+		if !ParseSourcePlayer(ps, &src) {
 			continue
 		}
 		captors = append(captors, SourcePlayerPosition{

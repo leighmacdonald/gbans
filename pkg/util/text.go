@@ -3,9 +3,10 @@ package util
 
 import (
 	"fmt"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"strings"
 	"unicode"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // StringChunkDelimited is used to split a multiline string into strings with a max size defined as chunkSize.

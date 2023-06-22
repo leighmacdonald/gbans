@@ -2,11 +2,12 @@ package store
 
 import (
 	"context"
+	"regexp"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"go.uber.org/zap"
-	"regexp"
-	"time"
 )
 
 type Filter struct {

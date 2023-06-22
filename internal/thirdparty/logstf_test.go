@@ -1,4 +1,4 @@
-package thirdparty
+package thirdparty_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 func TestLogsTFOverview(t *testing.T) {
 	// Fails too frequently due to gh actions network timeouts...
-	//tfResult1, errTFOverview1 := LogsTFOverview(context.Background(), 76561198084134025)
+	// tfResult1, errTFOverview1 := LogsTFOverview(context.Background(), 76561198084134025)
 	//if errors.Is(errTFOverview1, context.DeadlineExceeded) {
 	//	t.Skip("Skipping test, network unreachable.")
 	//	return

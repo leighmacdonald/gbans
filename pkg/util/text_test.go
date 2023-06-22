@@ -1,8 +1,11 @@
 package util
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestStringChunkDelimited(t *testing.T) {

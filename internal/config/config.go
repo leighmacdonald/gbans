@@ -12,34 +12,33 @@ package config
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/pkg/errors"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"os"
+	"strings"
+	"time"
 )
 
-// BanListType is the type or source of a ban list
+// BanListType is the type or source of a ban list.
 type BanListType string
 
 const (
-	// CIDR formatted list
+	// CIDR formatted list.
 	CIDR BanListType = "cidr"
-	// ValveNet is the srcds network ban list format
+	// ValveNet is the srcds network ban list format.
 	ValveNet BanListType = "valve_net"
-	// ValveSID is the srcds steamid ban list format
+	// ValveSID is the srcds steamid ban list format.
 	ValveSID BanListType = "valve_steamid"
-	// TF2BD sources ban list
+	// TF2BD sources ban list.
 	TF2BD BanListType = "tf2bd"
 )
 
-// BanList holds details to load a ban lost
+// BanList holds details to load a ban lost.
 type BanList struct {
 	URL  string      `mapstructure:"url"`
 	Name string      `mapstructure:"name"`
@@ -90,7 +89,7 @@ type httpConfig struct {
 	CorsOrigins           []string `mapstructure:"cors_origins"`
 }
 
-// Addr returns the address in host:port format
+// Addr returns the address in host:port format.
 func (h httpConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", h.Host, h.Port)
 }
@@ -98,15 +97,15 @@ func (h httpConfig) Addr() string {
 type runMode string
 
 const (
-	// ReleaseMode is production mode, minimal logging
+	// ReleaseMode is production mode, minimal logging.
 	ReleaseMode runMode = "release"
-	// DebugMode has much more logging and uses non-embedded assets
+	// DebugMode has much more logging and uses non-embedded assets.
 	DebugMode runMode = "debug"
-	// TestMode is for unit tests
+	// TestMode is for unit tests.
 	TestMode runMode = "test"
 )
 
-// String returns the string value of the runMode
+// String returns the string value of the runMode.
 func (rm runMode) String() string {
 	return string(rm)
 }
@@ -188,7 +187,7 @@ type ip2location struct {
 	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
 }
 
-// Default config values. Anything defined in the config or env will override them
+// Default config values. Anything defined in the config or env will override them.
 var (
 	General generalConfig
 	HTTP    httpConfig
@@ -236,7 +235,7 @@ func Read() (string, error) {
 	if errWarningDuration != nil {
 		warningDuration = time.Hour * 24 * 7
 	}
-	if errDemoRoot := os.MkdirAll(root.General.DemoRootPath, 0775); errDemoRoot != nil {
+	if errDemoRoot := os.MkdirAll(root.General.DemoRootPath, 0o775); errDemoRoot != nil {
 		return "", errors.Errorf("Failed to create demo_root_path: %v", errDemoRoot)
 	}
 	root.General.WarningExceededDuration = warningDuration

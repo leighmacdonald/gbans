@@ -1,12 +1,13 @@
 package thirdparty
 
 import (
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"net"
 	"strings"
+
+	"github.com/leighmacdonald/steamid/v2/steamid"
 )
 
-// parseValveSID parses the format: banid 0 STEAM_0:1:16683555
+// parseValveSID parses the format: banid 0 STEAM_0:1:16683555.
 func parseValveSID(src []byte) (steamid.Collection, error) {
 	var steamIds steamid.Collection
 	for _, line := range strings.Split(string(src), "\r\n") {
@@ -23,7 +24,7 @@ func parseValveSID(src []byte) (steamid.Collection, error) {
 	return steamIds, nil
 }
 
-// parseValveNet parses the format: addip 0 89.229.79.121
+// parseValveNet parses the format: addip 0 89.229.79.121.
 func parseValveNet(src []byte) ([]*net.IPNet, error) {
 	var valveNetworks []*net.IPNet
 	for _, line := range strings.Split(string(src), "\r\n") {

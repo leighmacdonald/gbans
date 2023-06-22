@@ -741,13 +741,15 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[discord.OptMessage].StringValue()
 	matches := FilterCheck(message)
-	title := ""
+	var title string
 	if len(matches) == 0 {
 		title = "No Match Found"
 	} else {
 		title = "Matched Found"
 	}
+
 	discord.RespOk(response, title)
+
 	return nil
 }
 

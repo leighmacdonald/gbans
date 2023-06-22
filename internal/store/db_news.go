@@ -2,12 +2,13 @@ package store
 
 import (
 	"context"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"time"
 )
 
 type NewsEntry struct {

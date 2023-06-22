@@ -3,12 +3,13 @@ package discord
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"time"
 )
 
 type Cmd string
@@ -38,7 +39,7 @@ const (
 	CmdLog         Cmd = "log"
 )
 
-//type subCommandKey string
+// type subCommandKey string
 //
 //const (
 //	CmdBan     = "ban"
@@ -86,7 +87,7 @@ func botRegisterSlashCommands() error {
 		Description: "Short server name",
 		Required:    true,
 	}
-	//optReason := &discordgo.ApplicationCommandOption{
+	// optReason := &discordgo.ApplicationCommandOption{
 	//	Type:        discordgo.ApplicationCommandOptionString,
 	//	Name:        "reason",
 	//	Description: "Reason for the ban (shown to users on kick)",
@@ -123,7 +124,8 @@ func botRegisterSlashCommands() error {
 		Required:    true,
 	}
 	var reasons []*discordgo.ApplicationCommandOptionChoice
-	for _, r := range []store.Reason{store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
+	for _, r := range []store.Reason{
+		store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
 		store.WarningsExceeded, store.Spam, store.Language, store.Profile, store.ItemDescriptions, store.BotHost, store.Custom,
 	} {
 		reasons = append(reasons, &discordgo.ApplicationCommandOptionChoice{
@@ -389,7 +391,6 @@ func botRegisterSlashCommands() error {
 			},
 		},
 		{
-
 			ApplicationID:            config.Discord.AppID,
 			Name:                     string(CmdStats),
 			Description:              "Query stats",

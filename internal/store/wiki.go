@@ -2,6 +2,9 @@ package store
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -10,8 +13,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 const unknownMediaTag = "__unknown__"

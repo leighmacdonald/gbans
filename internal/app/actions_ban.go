@@ -35,6 +35,7 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	if errSave := store.SaveBan(ctx, banSteam); errSave != nil {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
+
 	var updateAppealState = func(reportId int64) error {
 		var report store.Report
 		if errReport := store.GetReport(ctx, reportId, &report); errReport != nil {
@@ -44,13 +45,16 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		if errSaveReport := store.SaveReport(ctx, &report); errSaveReport != nil {
 			return errors.Wrap(errSaveReport, "Failed to update report state")
 		}
+
 		return nil
 	}
+
 	// Close the report if the ban was attached to one
 	if banSteam.ReportId > 0 {
 		if errRep := updateAppealState(banSteam.ReportId); errRep != nil {
 			return errRep
 		}
+
 		logger.Info("Report state set to closed", zap.Int64("report_id", banSteam.ReportId))
 	}
 

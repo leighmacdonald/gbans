@@ -3,6 +3,9 @@ package store
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -10,15 +13,13 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net"
-	"time"
 )
 
 type SteamIDProvider interface {
 	SID64() (steamid.SID64, error)
 }
 
-// StringSID defines a user provided steam id in an unknown format
+// StringSID defines a user provided steam id in an unknown format.
 type StringSID string
 
 func (t StringSID) SID64() (steamid.SID64, error) {
@@ -37,7 +38,7 @@ func (t StringSID) SID64() (steamid.SID64, error) {
 }
 
 // Duration defines the length of time the action should be valid for
-// A Duration of 0 will be interpreted as permanent and set to 10 years in the future
+// A Duration of 0 will be interpreted as permanent and set to 10 years in the future.
 type Duration string
 
 func (value Duration) Value() (time.Duration, error) {
@@ -54,32 +55,32 @@ func (value Duration) Value() (time.Duration, error) {
 	return duration, nil
 }
 
-// BanType defines the state of the ban for a user, 0 being no ban
+// BanType defines the state of the ban for a user, 0 being no ban.
 type BanType int
 
 const (
 	// Unknown means the ban state could not be determined, failing-open to allowing players
 	// to connect.
 	Unknown BanType = iota - 1
-	// OK Ban state is clean
+	// OK Ban state is clean.
 	OK
-	// NoComm means the player cannot communicate while playing voice + chat
+	// NoComm means the player cannot communicate while playing voice + chat.
 	NoComm
-	// Banned means the player cannot join the server at all
+	// Banned means the player cannot join the server at all.
 	Banned
 )
 
-// Origin defines the origin of the ban or action
+// Origin defines the origin of the ban or action.
 type Origin int
 
 const (
-	// System is an automatic ban triggered by the service
+	// System is an automatic ban triggered by the service.
 	System Origin = iota
-	// Bot is a ban using the discord bot interface
+	// Bot is a ban using the discord bot interface.
 	Bot
-	// Web is a ban using the web-ui
+	// Web is a ban using the web-ui.
 	Web
-	// InGame is a ban using the sourcemod plugin
+	// InGame is a ban using the sourcemod plugin.
 	InGame
 )
 
@@ -98,7 +99,7 @@ func (s Origin) String() string {
 	}
 }
 
-// Reason defined a set of predefined ban reasons
+// Reason defined a set of predefined ban reasons.
 type Reason int
 
 const (
@@ -169,12 +170,13 @@ func NewBannedPerson() BannedPerson {
 
 func newBaseBanOpts(source SteamIDProvider, target StringSID, duration Duration,
 	reason Reason, reasonText string, modNote string, origin Origin,
-	banType BanType, opts *BaseBanOpts) error {
+	banType BanType, opts *BaseBanOpts,
+) error {
 	sourceSid, errSource := source.SID64()
 	if errSource != nil {
 		return errors.Wrapf(errSource, "Failed to parse source id")
 	}
-	var targetSid = steamid.SID64(0)
+	targetSid := steamid.SID64(0)
 	if string(target) != "0" {
 		newTargetSid, errTargetSid := target.SID64()
 		if errTargetSid != nil {
@@ -207,7 +209,8 @@ func newBaseBanOpts(source SteamIDProvider, target StringSID, duration Duration,
 
 func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, reportId int64, banType BanType,
-	banSteam *BanSteam) error {
+	banSteam *BanSteam,
+) error {
 	var opts BanSteamOpts
 	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
@@ -224,7 +227,8 @@ func NewBanSteam(source SteamIDProvider, target StringSID, duration Duration,
 }
 
 func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
-	reason Reason, reasonText string, modNote string, origin Origin, ASNum int64, banType BanType, banASN *BanASN) error {
+	reason Reason, reasonText string, modNote string, origin Origin, ASNum int64, banType BanType, banASN *BanASN,
+) error {
 	var opts BanASNOpts
 	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
@@ -256,7 +260,8 @@ func NewBanASN(source SteamIDProvider, target StringSID, duration Duration,
 
 func NewBanCIDR(source SteamIDProvider, target StringSID, duration Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, cidr string,
-	banType BanType, banCIDR *BanCIDR) error {
+	banType BanType, banCIDR *BanCIDR,
+) error {
 	var opts BanCIDROpts
 	if errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin,
 		banType, &opts.BaseBanOpts); errBaseOpts != nil {
@@ -272,7 +277,8 @@ func NewBanCIDR(source SteamIDProvider, target StringSID, duration Duration,
 
 func NewBanSteamGroup(source SteamIDProvider, target StringSID, duration Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, groupId steamid.GID, groupName string,
-	banType BanType, banGroup *BanGroup) error {
+	banType BanType, banGroup *BanGroup,
+) error {
 	var opts BanSteamGroupOpts
 	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
@@ -285,7 +291,7 @@ func NewBanSteamGroup(source SteamIDProvider, target StringSID, duration Duratio
 }
 
 // BanBase provides a common struct shared between all ban types, it should not be used
-// directly
+// directly.
 type BanBase struct {
 	// SteamID is the steamID of the banned person
 	TargetId steamid.SID64 `json:"target_id,string"`
@@ -331,7 +337,7 @@ func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
 
 // BaseBanOpts defines common ban options that apply to all types to varying degrees
 // It should not be instantiated directly, but instead use one of the composites that build
-// upon it
+// upon it.
 type BaseBanOpts struct {
 	TargetId    steamid.SID64 `json:"target_id"`
 	SourceId    steamid.SID64 `json:"source_id"`
@@ -368,7 +374,7 @@ type BanCIDROpts struct {
 	CIDR *net.IPNet
 }
 
-// BanGroup represents a steam group whose members are banned from connecting
+// BanGroup represents a steam group whose members are banned from connecting.
 type BanGroup struct {
 	BanBase
 	BanGroupId int64       `json:"ban_group_id"`
@@ -499,7 +505,7 @@ func GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedPerson,
 }
 
 // SaveBan will insert or update the ban record
-// New records will have the Ban.BanID set automatically
+// New records will have the Ban.BanID set automatically.
 func SaveBan(ctx context.Context, ban *BanSteam) error {
 	// Ensure the foreign keys are satisfied
 	targetPerson := NewPerson(ban.TargetId)
@@ -651,7 +657,7 @@ func NewBansQueryFilter(steamId steamid.SID64) BansQueryFilter {
 	}
 }
 
-// GetBansSteam returns all bans that fit the filter criteria passed in
+// GetBansSteam returns all bans that fit the filter criteria passed in.
 func GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
 	qb := sb.Select("b.ban_id as ban_id", "b.target_id as target_id", "b.source_id as source_id",
 		"b.ban_type as ban_type", "b.reason as reason", "b.reason_text as reason_text",

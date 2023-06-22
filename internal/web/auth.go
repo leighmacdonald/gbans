@@ -119,7 +119,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 	}
 
 	var fetchDiscordId = func(ctx context.Context, accessToken string) (string, error) {
-		req, errReq := http.NewRequestWithContext(ctx, "GET", "https://discord.com/api/users/@me", nil)
+		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
 			return "", errReq
 		}

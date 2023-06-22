@@ -1,8 +1,9 @@
 package mm
 
 import (
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -36,6 +37,8 @@ func addTeamPrefixes(keys ...string) []string {
 	return out
 }
 
-var ClassMappingKeysHL = addTeamPrefixes("scout", "soldier", "pyro", "demoman", "heavyweapons", "engineer", "medic", "sniper", "spy")
-var ClassMappingKeysSixes = addTeamPrefixes("scout_pocket", "scout_flank", "soldier_pocket", "soldier_roamer", "demoman", "medic")
-var ClassMappingKeysUltiduo = addTeamPrefixes("soldier", "medic")
+var (
+	ClassMappingKeysHL      = addTeamPrefixes("scout", "soldier", "pyro", "demoman", "heavyweapons", "engineer", "medic", "sniper", "spy")
+	ClassMappingKeysSixes   = addTeamPrefixes("scout_pocket", "scout_flank", "soldier_pocket", "soldier_roamer", "demoman", "medic")
+	ClassMappingKeysUltiduo = addTeamPrefixes("soldier", "medic")
+)

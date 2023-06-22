@@ -8,8 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/csv"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/pkg/errors"
 	"io"
 	"math/big"
 	"net"
@@ -21,6 +19,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -36,7 +37,7 @@ const (
 	geoDatabaseLocation6     = "DB5LITECSVIPV6"
 	geoDatabaseLocationFile6 = "IP2LOCATION-LITE-DB5.IPV6.CSV"
 
-	// No ipv6 for proxy
+	// No ipv6 for proxy.
 	geoDatabaseProxy     = "PX10LITECSV"
 	geoDatabaseProxyFile = "IP2PROXY-LITE-PX10.CSV"
 )
@@ -168,7 +169,7 @@ type LatLong struct {
 	Longitude float64 `json:"lng"`
 }
 
-// Location provides a container and some helper functions for location data
+// Location provides a container and some helper functions for location data.
 type Location struct {
 	ISOCode string
 	LatLong LatLong
@@ -178,12 +179,12 @@ type Location struct {
 	AS string
 }
 
-// Value implements the driver.Valuer interface for our custom type
+// Value implements the driver.Valuer interface for our custom type.
 func (ll *LatLong) Value() (driver.Value, error) {
 	return fmt.Sprintf("POINT(%s)", ll.String()), nil
 }
 
-// Scan implements the sql.Scanner interface for conversion to our custom type
+// Scan implements the sql.Scanner interface for conversion to our custom type.
 func (ll *LatLong) Scan(value any) error {
 	// Should be more strictly to check this type.
 	llStrB, ok := value.([]byte)
@@ -212,7 +213,7 @@ func (ll *LatLong) Scan(value any) error {
 	return nil
 }
 
-// String returns a comma separated lat long pair string
+// String returns a comma separated lat long pair string.
 func (ll LatLong) String() string {
 	return fmt.Sprintf("POINT(%f %f)", ll.Latitude, ll.Longitude)
 }
@@ -270,11 +271,9 @@ func Update(outputPath string, apiKey string) error {
 }
 
 // New opens the .mmdb file for querying and sets up the ellipsoid configuration for more accurate
-// geo queries
+// geo queries.
 func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
-	var (
-		records []ASNRecord
-	)
+	var records []ASNRecord
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
 		return nil, errOpen
@@ -339,7 +338,8 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 			LatLong: LatLong{
 				util.StringToFloat64(recordLine[6], 0),
 				util.StringToFloat64(recordLine[7], 0),
-			}})
+			},
+		})
 	}
 	return records, nil
 }
@@ -363,7 +363,6 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], false)
 		if errParseToIP != nil {
 			return nil, errors.Wrap(errParseToIP, "Failed to parse ip record")
-
 		}
 		asn := int64(0)
 		if recordLine[10] != "-" {

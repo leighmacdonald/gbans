@@ -2,8 +2,9 @@ package thirdparty
 
 import (
 	"context"
-	"github.com/leighmacdonald/steamid/v2/steamid"
 	"sync"
+
+	"github.com/leighmacdonald/steamid/v2/steamid"
 )
 
 type CompHist struct {
@@ -26,7 +27,7 @@ func FetchCompHist(ctx context.Context, sid steamid.SID64, hist *CompHist) error
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		//var rglProf RGLProfile
+		// var rglProf RGLProfile
 		//if errGetRGL := GetRGLProfile(ctx, sid, &rglProf); errGetRGL != nil {
 		//	return
 		//}

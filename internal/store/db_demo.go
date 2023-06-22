@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -10,7 +12,6 @@ import (
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"time"
 )
 
 type DemoFile struct {
@@ -28,7 +29,7 @@ type DemoFile struct {
 	Stats           map[steamid.SID64]srcdsup.PlayerStats `json:"stats"`
 }
 
-//func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
+// func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
 //	size := int64(len(rawData))
 //	if size == 0 {
 //		return DemoFile{}, errors.New("Empty demo")

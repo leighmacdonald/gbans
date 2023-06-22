@@ -3,13 +3,14 @@ package store
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/pkg/errors"
-	"net"
-	"time"
 )
 
 type ServerPermission struct {
@@ -83,9 +84,11 @@ func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
 }
 
-var columnsServer = []string{"server_id", "short_name", "name", "address", "port", "rcon", "password",
+var columnsServer = []string{
+	"server_id", "short_name", "name", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-	"latitude", "longitude", "deleted", "log_secret"}
+	"latitude", "longitude", "deleted", "log_secret",
+}
 
 func GetServer(ctx context.Context, serverID int, server *Server) error {
 	query, args, errQuery := sb.Select(columnsServer...).
@@ -203,7 +206,7 @@ func GetServerByName(ctx context.Context, serverName string, server *Server) err
 			&server.Deleted, &server.LogSecret))
 }
 
-// SaveServer updates or creates the server data in the database
+// SaveServer updates or creates the server data in the database.
 func SaveServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = config.Now()
 	if server.ServerID > 0 {
