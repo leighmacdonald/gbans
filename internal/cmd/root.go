@@ -12,7 +12,7 @@
 // server delete
 // server list
 // server update
-// unban asn - Unban a ASN
+// unban asn - Unban an ASN
 // unban cidr - Unban a CIDR network or IP
 // unban steam - Unban a steam profile
 package cmd
@@ -24,32 +24,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
-
 // rootCmd represents the base command when called without any subcommands.
-var rootCmd = &cobra.Command{
-	Use:   "gbans",
-	Short: "",
-	Long:  ``,
+func rootCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "gbans",
+		Short: "",
+		Long:  ``,
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	setupCLI()
-	if errExecute := rootCmd.Execute(); errExecute != nil {
+	cmd := setupRootCmd()
+	if errExecute := cmd.Execute(); errExecute != nil {
 		os.Exit(1)
 	}
 }
 
-func setupCLI() {
+func setupRootCmd() *cobra.Command {
 	if app.BuildVersion == "" {
 		app.BuildVersion = "master"
 	}
-	rootCmd.Version = app.BuildVersion
+	root := rootCmd()
+	root.Version = app.BuildVersion
 	nc := netCmd()
 	nc.AddCommand(netUpdateCmd())
-	rootCmd.AddCommand(nc)
-	rootCmd.AddCommand(serveCmd())
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)")
+	root.AddCommand(nc)
+	root.AddCommand(serveCmd())
+	//root.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)")
+	return root
 }
