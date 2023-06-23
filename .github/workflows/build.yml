@@ -8,7 +8,7 @@ jobs:
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install modules
         working-directory: ./frontend
@@ -22,26 +22,28 @@ jobs:
         working-directory: ./frontend
         run: yarn run eslint:check
 
-#  lint-golangci:
-#    runs-on: ubuntu-20.04
-#    steps:
-#      - uses: actions/setup-go@v4
-#        with:
-#          go-version: '1.20'
-#          cache: false
-#      - uses: actions/checkout@v3
-#      - name: golangci-lint
-#        uses: golangci/golangci-lint-action@v3
-#        with:
-#          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-#          version: v1.53
-#      - run: make lint_golangci
+  lint-golangci:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+          cache: false
+
+      - uses: actions/checkout@v3
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: 'latest'
+
+      - run: make lint_golangci
 
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: 'stable'
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - uses: actions/checkout@v3
       - run: make static
@@ -56,7 +58,7 @@ jobs:
         language: [ 'go', 'javascript' ]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -66,24 +68,16 @@ jobs:
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
 
-      # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
-      #    and modify them (or add more) to build your code if your project
-      #    uses a compiled language
-
-      #- run: |
-      #   make bootstrap
-      #   make release
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
   docker-test:
-    needs: [lint-ts, lint-codeql, staticcheck] # TODO readd lint-golangci,
+    needs: [lint-ts, lint-golangci, lint-codeql, staticcheck]
     runs-on: ubuntu-20.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Build the docker-compose stack
         run: make docker_test
@@ -94,7 +88,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
