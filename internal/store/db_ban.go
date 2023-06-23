@@ -427,8 +427,8 @@ func (banSteam *BanSteam) Apply(opts BanSteamOpts) {
 	banSteam.ReportID = opts.ReportID
 }
 
-func (banSteam BanSteam) ToURL() string {
-	return config.ExtURL("/ban/%d", banSteam.BanID)
+func (banSteam BanSteam) ToURL(conf *config.Config) string {
+	return conf.ExtURL("/ban/%d", banSteam.BanID)
 }
 
 func (banSteam *BanSteam) String() string {

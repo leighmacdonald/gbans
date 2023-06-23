@@ -48,8 +48,8 @@ type Person struct {
 	*steamweb.PlayerSummary
 }
 
-func (p *Person) ToURL() string {
-	return config.ExtURL("/profile/%d", p.SteamID.Int64())
+func (p *Person) ToURL(conf *config.Config) string {
+	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
 // LoggedIn checks for a valid steamID.

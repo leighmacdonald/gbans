@@ -31,12 +31,12 @@ func IsSteamGroupBanned(steamID steamid.SID64) bool {
 	return false
 }
 
-func steamGroupMembershipUpdater(ctx context.Context) {
+func steamGroupMembershipUpdater(ctx context.Context, conf *config.Config) {
 	update := func() {
 		localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 		newMap := map[steamid.GID]steamid.Collection{}
 		total := 0
-		for _, gid := range config.General.BannedSteamGroupIds {
+		for _, gid := range conf.General.BannedSteamGroupIds {
 			members, errMembers := steamweb.GetGroupMembers(localCtx, gid)
 			if errMembers != nil {
 				logger.Warn("Failed to fetch group members", zap.Error(errMembers))
@@ -65,7 +65,7 @@ func steamGroupMembershipUpdater(ctx context.Context) {
 	}
 }
 
-func showReportMeta(ctx context.Context) {
+func showReportMeta(ctx context.Context, conf *config.Config) {
 	type reportMeta struct {
 		TotalOpen   int
 		TotalClosed int
@@ -111,7 +111,7 @@ func showReportMeta(ctx context.Context) {
 			}
 		}
 		reportNotice := &discordgo.MessageEmbed{
-			URL:   config.ExtURL("/admin/reports"),
+			URL:   conf.ExtURL("/admin/reports"),
 			Type:  discordgo.EmbedTypeRich,
 			Title: "User Report Stats",
 			Color: int(discord.Green),
@@ -129,7 +129,7 @@ func showReportMeta(ctx context.Context) {
 		discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
 		discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
 		discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
-		discord.SendPayload(discord.Payload{ChannelID: config.Discord.ReportLogChannelID, Embed: reportNotice})
+		discord.SendPayload(discord.Payload{ChannelID: conf.Discord.ReportLogChannelID, Embed: reportNotice})
 		// sendDiscordPayload(app.discordSendMsg)
 	}
 	time.Sleep(time.Second * 2)
@@ -181,12 +181,12 @@ func cleanupTasks(ctx context.Context) {
 	}
 }
 
-func notificationSender(ctx context.Context) {
+func notificationSender(ctx context.Context, conf *config.Config) {
 	for {
 		select {
 		case notification := <-notificationChan:
 			go func() {
-				if errSend := SendNotification(ctx, notification); errSend != nil {
+				if errSend := SendNotification(ctx, conf, notification); errSend != nil {
 					logger.Error("Failed to send user notification", zap.Error(errSend))
 				}
 			}()

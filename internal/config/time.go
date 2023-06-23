@@ -63,10 +63,7 @@ func ParseDuration(durationString string) (time.Duration, error) {
 //
 // All calls to time.Now() should use this instead to ensure consistency.
 func Now() time.Time {
-	if General.UseUTC {
-		return time.Now().UTC()
-	}
-	return time.Now()
+	return time.Now().UTC()
 }
 
 // DefaultExpiration returns the default expiration time delta from Now().

@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -41,8 +40,8 @@ type remoteSrcdsLogSource struct {
 	frequency time.Duration
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger) (*remoteSrcdsLogSource, error) {
-	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", config.Log.SrcdsLogAddr)
+func newRemoteSrcdsLogSource(logger *zap.Logger, logAddr string) (*remoteSrcdsLogSource, error) {
+	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
@@ -104,7 +103,7 @@ func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, add
 // start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
+func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context, logAddr string) {
 	type newMsg struct {
 		source int64
 		body   string
@@ -122,9 +121,9 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	// msgId := 0
 	msgIngressChan := make(chan newMsg)
 	remoteSrc.updateSecrets(ctx)
-	if config.Debug.AddRCONLogAddress != "" {
-		remoteSrc.addLogAddress(ctx, config.Debug.AddRCONLogAddress)
-		defer remoteSrc.removeLogAddress(ctx, config.Debug.AddRCONLogAddress)
+	if logAddr != "" {
+		remoteSrc.addLogAddress(ctx, logAddr)
+		defer remoteSrc.removeLogAddress(ctx, logAddr)
 	}
 	running := true
 	count := uint64(0)

@@ -10,27 +10,27 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func MustCreateLogger(logFile string) *zap.Logger {
+func MustCreateLogger(conf *config.Config) *zap.Logger {
 	var loggingConfig zap.Config
-	if config.General.Mode == config.ReleaseMode {
+	if conf.General.Mode == config.ReleaseMode {
 		loggingConfig = zap.NewProductionConfig()
 		loggingConfig.DisableCaller = true
 	} else {
 		loggingConfig = zap.NewDevelopmentConfig()
 		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
-	if logFile != "" {
-		if util.Exists(logFile) {
-			if err := os.Remove(logFile); err != nil {
+	if conf.Log.File != "" {
+		if util.Exists(conf.Log.File) {
+			if err := os.Remove(conf.Log.File); err != nil {
 				panic(fmt.Sprintf("Failed to remove log file: %v", err))
 			}
 		}
-		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, logFile)
+		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, conf.Log.File)
 		// loggingConfig.Level.SetLevel(zap.DebugLevel)
 	}
 	l, errLogger := loggingConfig.Build()
 	if errLogger != nil {
-		os.Exit(1)
+		panic("Failed to create log config")
 	}
 	return l.Named("gb")
 }

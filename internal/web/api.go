@@ -248,7 +248,7 @@ func onAPIGetServerAdmins() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostPingMod() gin.HandlerFunc {
+func onAPIPostPingMod(conf *config.Config) gin.HandlerFunc {
 	type pingReq struct {
 		ServerName string        `json:"server_name"`
 		Name       string        `json:"name"`
@@ -273,7 +273,7 @@ func onAPIPostPingMod() gin.HandlerFunc {
 		// 	name = fmt.Sprintf("%s (%s)", name, playerInfo.Player.Name)
 		// }
 		var roleStrings []string
-		for _, roleID := range config.Discord.ModRoleIDs {
+		for _, roleID := range conf.Discord.ModRoleIDs {
 			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", roleID))
 		}
 		embed := discord.RespOk(nil, "New User Report")
@@ -298,7 +298,7 @@ func onAPIPostPingMod() gin.HandlerFunc {
 				Inline: true,
 			})
 		}
-		for _, chanID := range config.Discord.ModChannels {
+		for _, chanID := range conf.Discord.ModChannels {
 			discord.SendPayload(discord.Payload{ChannelID: chanID, Embed: embed})
 		}
 		responseOK(ctx, http.StatusOK, gin.H{
@@ -370,7 +370,7 @@ func onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBanDelete() gin.HandlerFunc {
+func onAPIPostBanDelete(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := getInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
@@ -387,7 +387,7 @@ func onAPIPostBanDelete() gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, "Failed to query")
 			return
 		}
-		changed, errSave := app.Unban(ctx, bp.Person.SteamID, req.UnbanReasonText)
+		changed, errSave := app.Unban(ctx, conf, bp.Person.SteamID, req.UnbanReasonText)
 		if errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, "Failed to unban")
 			return
@@ -536,7 +536,7 @@ func onAPIPostBansCIDRCreate() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBanSteamCreate() gin.HandlerFunc {
+func onAPIPostBanSteamCreate(conf *config.Config) gin.HandlerFunc {
 	type apiBanRequest struct {
 		SourceID   store.StringSID `json:"source_id"`
 		TargetID   store.StringSID `json:"target_id"`
@@ -579,7 +579,7 @@ func onAPIPostBanSteamCreate() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, "Failed to parse options")
 			return
 		}
-		if errBan := app.BanSteam(ctx, &banSteam); errBan != nil {
+		if errBan := app.BanSteam(ctx, conf, &banSteam); errBan != nil {
 			logger.Error("Failed to ban steam profile",
 				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetID.Int64()))
 			if errors.Is(errBan, store.ErrDuplicate) {
@@ -593,7 +593,7 @@ func onAPIPostBanSteamCreate() gin.HandlerFunc {
 	}
 }
 
-func onSAPIPostServerAuth() gin.HandlerFunc {
+func onSAPIPostServerAuth(conf *config.Config) gin.HandlerFunc {
 	type authReq struct {
 		ServerName string `json:"server_name"`
 		Key        string `json:"key"`
@@ -623,7 +623,7 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 				zap.String("server", util.SanitizeLog(request.ServerName)))
 			return
 		}
-		accessToken, errToken := newServerJWT(server.ServerID)
+		accessToken, errToken := newServerJWT(server.ServerID, conf.HTTP.CookieKey)
 		if errToken != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			logger.Error("Failed to create new server access token", zap.Error(errToken))
@@ -640,7 +640,7 @@ func onSAPIPostServerAuth() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostServerCheck() gin.HandlerFunc {
+func onAPIPostServerCheck(conf *config.Config) gin.HandlerFunc {
 	type checkRequest struct {
 		ClientID int         `json:"client_id"`
 		SteamID  steamid.SID `json:"steam_id"`
@@ -763,7 +763,7 @@ func onAPIPostServerCheck() gin.HandlerFunc {
 		default:
 			reason = bannedPerson.Ban.Reason.String()
 		}
-		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(),
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(conf),
 			bannedPerson.Ban.ValidUntil.Sub(config.Now()).Round(time.Minute).String())
 		responseOK(ctx, http.StatusOK, resp)
 		if resp.BanType == store.NoComm {
@@ -1058,7 +1058,7 @@ func onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	}
 }
 
-func onAPIExportBansTF2BD() gin.HandlerFunc {
+func onAPIExportBansTF2BD(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
 		bans, errBans := store.GetBansSteam(ctx, store.BansQueryFilter{
@@ -1081,10 +1081,10 @@ func onAPIExportBansTF2BD() gin.HandlerFunc {
 		out := thirdparty.TF2BDSchema{
 			Schema: "https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json",
 			FileInfo: thirdparty.FileInfo{
-				Authors:     []string{config.General.SiteName},
+				Authors:     []string{conf.General.SiteName},
 				Description: "Players permanently banned for cheating",
-				Title:       fmt.Sprintf("%s Cheater List", config.General.SiteName),
-				UpdateURL:   config.ExtURL("/export/bans/tf2bd"),
+				Title:       fmt.Sprintf("%s Cheater List", conf.General.SiteName),
+				UpdateURL:   conf.ExtURL("/export/bans/tf2bd"),
 			},
 			Players: []thirdparty.Players{},
 		}
@@ -1634,7 +1634,7 @@ func onAPIPostServer() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostReportCreate() gin.HandlerFunc {
+func onAPIPostReportCreate(conf *config.Config) gin.HandlerFunc {
 	type createReport struct {
 		SourceID    store.StringSID `json:"source_id"`
 		TargetID    store.StringSID `json:"target_id"`
@@ -1722,9 +1722,9 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 
 		embed := discord.RespOk(nil, "New user report created")
 		embed.Description = report.Description
-		embed.URL = report.ToURL()
+		embed.URL = report.ToURL(conf)
 		discord.AddAuthorProfile(embed,
-			currentUser.SteamID, currentUser.Name, currentUser.ToURL())
+			currentUser.SteamID, currentUser.Name, currentUser.ToURL(conf))
 		name := personSource.PersonaName
 		if name == "" {
 			name = report.TargetID.String()
@@ -1735,13 +1735,13 @@ func onAPIPostReportCreate() gin.HandlerFunc {
 			discord.AddField(embed, "Custom Reason", report.ReasonText)
 		}
 		if report.DemoName != "" {
-			discord.AddField(embed, "Demo", config.ExtURL("/demos/name/%s", report.DemoName))
+			discord.AddField(embed, "Demo", conf.ExtURL("/demos/name/%s", report.DemoName))
 			discord.AddField(embed, "Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 		}
 		discord.AddFieldsSteamID(embed, report.TargetID)
-		discord.AddLink(embed, report)
+		discord.AddLink(embed, conf, report)
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ReportLogChannelID,
+			ChannelID: conf.Discord.ReportLogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -1782,7 +1782,7 @@ func getIntParam(ctx *gin.Context, key string) (int, error) {
 	return util.StringToInt(valueStr), nil
 }
 
-func onAPIPostReportMessage() gin.HandlerFunc {
+func onAPIPostReportMessage(conf *config.Config) gin.HandlerFunc {
 	type req struct {
 		Message string `json:"message"`
 	}
@@ -1825,15 +1825,15 @@ func onAPIPostReportMessage() gin.HandlerFunc {
 			Description: msg.Message,
 		}
 		discord.AddField(embed, "Author", report.SourceID.String())
-		discord.AddLink(embed, report)
+		discord.AddLink(embed, conf, report)
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ReportLogChannelID,
+			ChannelID: conf.Discord.ReportLogChannelID,
 			Embed:     embed,
 		})
 	}
 }
 
-func onAPIEditReportMessage() gin.HandlerFunc {
+func onAPIEditReportMessage(conf *config.Config) gin.HandlerFunc {
 	type editMessage struct {
 		Message string `json:"body_md"`
 	}
@@ -1883,17 +1883,17 @@ func onAPIEditReportMessage() gin.HandlerFunc {
 			Description: message.Message,
 		}
 		discord.AddField(embed, "Old Message", existing.Message)
-		discord.AddField(embed, "Report Link", config.ExtURL("/report/%d", existing.ParentID))
+		discord.AddField(embed, "Report Link", conf.ExtURL("/report/%d", existing.ParentID))
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.AvatarFull}
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ModLogChannelID,
+			ChannelID: conf.Discord.ModLogChannelID,
 			Embed:     embed,
 		})
 	}
 }
 
-func onAPIDeleteReportMessage() gin.HandlerFunc {
+func onAPIDeleteReportMessage(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
@@ -1927,7 +1927,7 @@ func onAPIDeleteReportMessage() gin.HandlerFunc {
 		}
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ModLogChannelID,
+			ChannelID: conf.Discord.ModLogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2157,7 +2157,7 @@ func onAPIGetNewsAll() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostNewsCreate() gin.HandlerFunc {
+func onAPIPostNewsCreate(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var entry store.NewsEntry
 		if errBind := ctx.BindJSON(&entry); errBind != nil {
@@ -2170,7 +2170,7 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 		}
 		responseOK(ctx, http.StatusCreated, entry)
 		go discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ModLogChannelID,
+			ChannelID: conf.Discord.ModLogChannelID,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Created",
 				Description: fmt.Sprintf("News Posted: %s", entry.Title),
@@ -2179,7 +2179,7 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostNewsUpdate() gin.HandlerFunc {
+func onAPIPostNewsUpdate(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsID, errID := getIntParam(ctx, "news_id")
 		if errID != nil {
@@ -2205,7 +2205,7 @@ func onAPIPostNewsUpdate() gin.HandlerFunc {
 		}
 		responseOK(ctx, http.StatusAccepted, entry)
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ModLogChannelID,
+			ChannelID: conf.Discord.ModLogChannelID,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Updated",
 				Description: fmt.Sprintf("News Updated: %s", entry.Title),
@@ -2525,7 +2525,7 @@ func onAPIGetBanMessages() gin.HandlerFunc {
 	}
 }
 
-func onAPIDeleteBanMessage() gin.HandlerFunc {
+func onAPIDeleteBanMessage(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banMessageID, errID := getIntParam(ctx, "ban_message_id")
 		if errID != nil || banMessageID == 0 {
@@ -2559,13 +2559,13 @@ func onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ReportLogChannelID,
+			ChannelID: conf.Discord.ReportLogChannelID,
 			Embed:     embed,
 		})
 	}
 }
 
-func onAPIPostBanMessage() gin.HandlerFunc {
+func onAPIPostBanMessage(conf *config.Config) gin.HandlerFunc {
 	type req struct {
 		Message string `json:"message"`
 	}
@@ -2614,18 +2614,18 @@ func onAPIPostBanMessage() gin.HandlerFunc {
 			Description: msg.Message,
 			Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: userProfile.AvatarFull},
 			Color:       discord.DefaultLevelColors.Info,
-			URL:         config.ExtURL("/ban/%d", banID),
+			URL:         conf.ExtURL("/ban/%d", banID),
 		}
 		discord.AddAuthorProfile(embed,
-			userProfile.SteamID, userProfile.Name, userProfile.ToURL())
+			userProfile.SteamID, userProfile.Name, userProfile.ToURL(conf))
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ReportLogChannelID,
+			ChannelID: conf.Discord.ReportLogChannelID,
 			Embed:     embed,
 		})
 	}
 }
 
-func onAPIEditBanMessage() gin.HandlerFunc {
+func onAPIEditBanMessage(conf *config.Config) gin.HandlerFunc {
 	type editMessage struct {
 		Message string `json:"body_md"`
 	}
@@ -2675,7 +2675,7 @@ func onAPIEditBanMessage() gin.HandlerFunc {
 
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		discord.SendPayload(discord.Payload{
-			ChannelID: config.Discord.ReportLogChannelID,
+			ChannelID: conf.Discord.ReportLogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2699,7 +2699,7 @@ type BaseServer struct {
 	Distance    float64  `json:"distance"`
 }
 
-var distance = func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
 	radianLat1 := math.Pi * lat1 / 180
 	radianLat2 := math.Pi * lat2 / 180
 	theta := lng1 - lng2

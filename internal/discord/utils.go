@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/config"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/steamid/v2/steamid"
@@ -133,7 +134,7 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 // }
 
 type Linkable interface {
-	ToURL() string
+	ToURL(config *config.Config) string
 }
 
 func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamID steamid.SID64) {
@@ -142,8 +143,8 @@ func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamID steamid.SID64) {
 	AddFieldInline(embed, "SID64", steamID.String())
 }
 
-func AddLink(embed *discordgo.MessageEmbed, value Linkable) {
-	url := value.ToURL()
+func AddLink(embed *discordgo.MessageEmbed, conf *config.Config, value Linkable) {
+	url := value.ToURL(conf)
 	if len(url) > 0 {
 		AddFieldRaw(embed, "Link", url, false)
 	}

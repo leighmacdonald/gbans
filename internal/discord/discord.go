@@ -1,10 +1,10 @@
 package discord
 
 import (
+	"github.com/leighmacdonald/gbans/internal/config"
 	"sync/atomic"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -47,21 +47,21 @@ func RegisterHandler(cmd Cmd, handler CommandHandler) error {
 	return nil
 }
 
-func Shutdown() {
+func Shutdown(guildID string) {
 	if session != nil {
 		defer util.LogCloser(session, logger)
-		botUnregisterSlashCommands()
+		botUnregisterSlashCommands(guildID)
 	}
 }
 
-func botUnregisterSlashCommands() {
-	registeredCommands, err := session.ApplicationCommands(session.State.User.ID, config.Discord.GuildID)
+func botUnregisterSlashCommands(guildID string) {
+	registeredCommands, err := session.ApplicationCommands(session.State.User.ID, guildID)
 	if err != nil {
 		logger.Error("Could not fetch registered commands", zap.Error(err))
 		return
 	}
 	for _, v := range registeredCommands {
-		if errDel := session.ApplicationCommandDelete(session.State.User.ID, config.Discord.GuildID, v.ID); errDel != nil {
+		if errDel := session.ApplicationCommandDelete(session.State.User.ID, guildID, v.ID); errDel != nil {
 			logger.Error("Cannot delete command", zap.String("name", v.Name), zap.Error(err))
 			return
 		}
@@ -69,11 +69,11 @@ func botUnregisterSlashCommands() {
 	logger.Info("Unregistered discord commands", zap.Int("count", len(registeredCommands)))
 }
 
-func Start(l *zap.Logger) error {
+func Start(l *zap.Logger, conf *config.Config) error {
 	logger = l.Named("discord")
 
 	// Immediately connects, so we connect within the Start func
-	botSession, errNewSession := discordgo.New("Bot " + config.Discord.Token)
+	botSession, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
 		return errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
@@ -82,9 +82,9 @@ func Start(l *zap.Logger) error {
 
 	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
 	session.AddHandler(onReady)
-	session.AddHandler(onConnect)
+	session.AddHandler(makeOnConnect(conf.General.ExternalURL))
 	session.AddHandler(onDisconnect)
-	session.AddHandler(onInteractionCreate)
+	session.AddHandler(makeOnInteractionCreate(conf))
 
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
 	session.Identify.Intents |= discordgo.IntentMessageContent
@@ -94,7 +94,7 @@ func Start(l *zap.Logger) error {
 	if errSessionOpen := session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
-	if errRegister := botRegisterSlashCommands(); errRegister != nil {
+	if errRegister := botRegisterSlashCommands(conf.Discord.AppID, conf.Discord.GuildID); errRegister != nil {
 		logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
@@ -106,29 +106,31 @@ func onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	isReady.Store(true)
 }
 
-func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
-	status := discordgo.UpdateStatusData{
-		IdleSince: nil,
-		Activities: []*discordgo.Activity{
-			{
-				Name:     "Cheeseburgers",
-				Type:     discordgo.ActivityTypeListening,
-				URL:      config.General.ExternalURL,
-				State:    "state field",
-				Details:  "Blah",
-				Instance: true,
-				Flags:    1 << 0,
+func makeOnConnect(externalURL string) func(session *discordgo.Session, _ *discordgo.Connect) {
+	return func(session *discordgo.Session, _ *discordgo.Connect) {
+		status := discordgo.UpdateStatusData{
+			IdleSince: nil,
+			Activities: []*discordgo.Activity{
+				{
+					Name:     "Cheeseburgers",
+					Type:     discordgo.ActivityTypeListening,
+					URL:      externalURL,
+					State:    "state field",
+					Details:  "Blah",
+					Instance: true,
+					Flags:    1 << 0,
+				},
 			},
-		},
-		AFK:    false,
-		Status: "https://github.com/leighmacdonald/gbans",
-	}
-	if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
-		logger.Error("Failed to update status complex", zap.Error(errUpdateStatus))
-	}
-	logger.Info("Service state changed", zap.String("state", "connected"))
-	if onConnectUser != nil {
-		onConnectUser()
+			AFK:    false,
+			Status: "https://github.com/leighmacdonald/gbans",
+		}
+		if errUpdateStatus := session.UpdateStatusComplex(status); errUpdateStatus != nil {
+			logger.Error("Failed to update status complex", zap.Error(errUpdateStatus))
+		}
+		logger.Info("Service state changed", zap.String("state", "connected"))
+		if onConnectUser != nil {
+			onConnectUser()
+		}
 	}
 }
 

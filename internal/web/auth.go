@@ -42,7 +42,7 @@ var (
 	discoveryCache = &noOpDiscoveryCache{}
 )
 
-func authServerMiddleWare() gin.HandlerFunc {
+func authServerMiddleWare(cookieKey string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
@@ -50,7 +50,7 @@ func authServerMiddleWare() gin.HandlerFunc {
 			return
 		}
 		claims := &serverAuthClaims{}
-		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, getTokenKey)
+		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, makeGetTokenKey(cookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				logger.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -96,7 +96,7 @@ func referral(ctx *gin.Context) string {
 	return referralURL
 }
 
-func onOAuthDiscordCallback() gin.HandlerFunc {
+func onOAuthDiscordCallback(conf *config.Config) gin.HandlerFunc {
 	client := util.NewHTTPClient()
 	type accessTokenResp struct {
 		AccessToken  string `json:"access_token"`
@@ -147,9 +147,9 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 
 	fetchToken := func(ctx context.Context, code string) (string, error) {
 		form := url.Values{}
-		form.Set("client_id", config.Discord.AppID)
-		form.Set("client_secret", config.Discord.AppSecret)
-		form.Set("redirect_uri", config.ExtURL("/login/discord"))
+		form.Set("client_id", conf.Discord.AppID)
+		form.Set("client_secret", conf.Discord.AppSecret)
+		form.Set("redirect_uri", conf.ExtURL("/login/discord"))
 		form.Set("code", code)
 		form.Set("grant_type", "authorization_code")
 		form.Set("scope", "identify")
@@ -224,13 +224,13 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 	}
 }
 
-func onOpenIDCallback() gin.HandlerFunc {
+func onOpenIDCallback(conf *config.Config) gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(ctx *gin.Context) {
 		var idStr string
 		referralURL := referral(ctx)
-		fullURL := config.General.ExternalURL + ctx.Request.URL.String()
-		if config.Debug.SkipOpenIDValidation {
+		fullURL := conf.General.ExternalURL + ctx.Request.URL.String()
+		if conf.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
@@ -265,7 +265,7 @@ func onOpenIDCallback() gin.HandlerFunc {
 			ctx.Redirect(302, referralURL)
 			return
 		}
-		accessToken, refreshToken, errToken := makeTokens(ctx, sid)
+		accessToken, refreshToken, errToken := makeTokens(ctx, conf.HTTP.CookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			logger.Error("Failed to create access token pair", zap.Error(errToken))
@@ -289,8 +289,8 @@ func onOpenIDCallback() gin.HandlerFunc {
 	}
 }
 
-func makeTokens(ctx *gin.Context, sid steamid.SID64) (string, string, error) {
-	accessToken, errJWT := newUserJWT(sid)
+func makeTokens(ctx *gin.Context, cookieKey string, sid steamid.SID64) (string, string, error) {
+	accessToken, errJWT := newUserJWT(sid, cookieKey)
 	if errJWT != nil {
 		return "", "", errors.Wrap(errJWT, "Failed to create new access token")
 	}
@@ -307,13 +307,15 @@ func makeTokens(ctx *gin.Context, sid steamid.SID64) (string, string, error) {
 	return accessToken, refreshToken.RefreshToken, nil
 }
 
-func getTokenKey(_ *jwt.Token) (any, error) {
-	return []byte(config.HTTP.CookieKey), nil
+func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
+	return func(_ *jwt.Token) (any, error) {
+		return []byte(cookieKey), nil
+	}
 }
 
 // onTokenRefresh handles generating new token pairs to access the api
 // NOTE: All error code paths must return 401 (Unauthorized).
-func onTokenRefresh() gin.HandlerFunc {
+func onTokenRefresh(conf *config.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var rt userToken
 		if errBind := ctx.BindJSON(&rt); errBind != nil {
@@ -330,7 +332,7 @@ func onTokenRefresh() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, auth.SteamID)
+		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, conf.HTTP.CookieKey, auth.SteamID)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			logger.Error("Failed to create access token pair", zap.Error(errToken))
@@ -360,7 +362,7 @@ type serverAuthClaims struct {
 
 const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
 
-func newUserJWT(steamID steamid.SID64) (string, error) {
+func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
 	t0 := config.Now()
 	claims := &personAuthClaims{
 		SteamID: steamID.Int64(),
@@ -370,14 +372,14 @@ func newUserJWT(steamID steamid.SID64) (string, error) {
 		},
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, errSigned := tokenWithClaims.SignedString([]byte(config.HTTP.CookieKey))
+	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 	if errSigned != nil {
 		return "", errors.Wrap(errSigned, "Failed create signed string")
 	}
 	return signedToken, nil
 }
 
-func newServerJWT(serverID int) (string, error) {
+func newServerJWT(serverID int, cookieKey string) (string, error) {
 	t0 := config.Now()
 	claims := &serverAuthClaims{
 		ServerID: serverID,
@@ -387,7 +389,7 @@ func newServerJWT(serverID int) (string, error) {
 		},
 	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, errSigned := tokenWithClaims.SignedString([]byte(config.HTTP.CookieKey))
+	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 	if errSigned != nil {
 		return "", errors.Wrap(errSigned, "Failed create signed string")
 	}
@@ -396,7 +398,7 @@ func newServerJWT(serverID int) (string, error) {
 
 // authMiddleware handles client authentication to the HTTP & websocket api.
 // websocket clients must pass the key as a query parameter called "token".
-func authMiddleware(level consts.Privilege) gin.HandlerFunc {
+func authMiddleware(conf *config.Config, level consts.Privilege) gin.HandlerFunc {
 	type header struct {
 		Authorization string `header:"Authorization"`
 	}
@@ -418,7 +420,7 @@ func authMiddleware(level consts.Privilege) gin.HandlerFunc {
 			token = pcs[1]
 		}
 		if level >= consts.PUser {
-			sid, errFromToken := sid64FromJWTToken(token)
+			sid, errFromToken := sid64FromJWTToken(token, conf.HTTP.CookieKey)
 			if errFromToken != nil {
 				if errors.Is(errFromToken, consts.ErrExpired) {
 					ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -462,9 +464,9 @@ func authMiddleware(level consts.Privilege) gin.HandlerFunc {
 	}
 }
 
-func sid64FromJWTToken(token string) (steamid.SID64, error) {
+func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 	claims := &personAuthClaims{}
-	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, getTokenKey)
+	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, makeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 			return 0, consts.ErrAuthentication

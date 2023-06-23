@@ -39,16 +39,16 @@ type jsConfig struct {
 	DiscordLinkID   string `json:"discordLinkId"`
 }
 
-func createRouter() *gin.Engine {
+func createRouter(conf *config.Config) *gin.Engine {
 	engine := gin.New()
 	engine.Use(ErrorHandler(logger), gin.Recovery())
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = config.HTTP.CorsOrigins
+	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = []string{"*"}
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = false
-	if config.General.Mode != config.TestMode {
+	if conf.General.Mode != config.TestMode {
 		engine.Use(cors.New(corsConfig))
 	}
 	if !registered {
@@ -59,7 +59,7 @@ func createRouter() *gin.Engine {
 		engine.Use(prom.Instrument())
 		registered = true
 	}
-	staticPath := config.HTTP.StaticPath
+	staticPath := conf.HTTP.StaticPath
 	if staticPath == "" {
 		staticPath = "./dist"
 	}
@@ -83,17 +83,17 @@ func createRouter() *gin.Engine {
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{
-				SiteName:        config.General.SiteName,
-				DiscordClientID: config.Discord.AppID,
-				DiscordLinkID:   config.Discord.LinkID,
+				SiteName:        conf.General.SiteName,
+				DiscordClientID: conf.Discord.AppID,
+				DiscordLinkID:   conf.Discord.LinkID,
 			})
 		})
 	}
-	engine.GET("/auth/callback", onOpenIDCallback())
+	engine.GET("/auth/callback", onOpenIDCallback(conf))
 	engine.GET("/api/auth/logout", onGetLogout())
-	engine.POST("/api/auth/refresh", onTokenRefresh())
+	engine.POST("/api/auth/refresh", onTokenRefresh(conf))
 
-	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD())
+	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(conf))
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins())
 	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID())
 	engine.GET("/export/bans/valve/network", onAPIExportBansValveIP())
@@ -122,7 +122,7 @@ func createRouter() *gin.Engine {
 	engine.GET("/api/sd/ansible/hosts", onAPIGetPrometheusHosts())
 
 	// Game server plugin routes
-	engine.POST("/api/server/auth", onSAPIPostServerAuth())
+	engine.POST("/api/server/auth", onSAPIPostServerAuth(conf))
 	engine.POST("/api/resolve_profile", onAPIGetResolveProfile())
 
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns())
@@ -131,53 +131,53 @@ func createRouter() *gin.Engine {
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request
-		serverAuth := srvGrp.Use(authServerMiddleWare())
+		serverAuth := srvGrp.Use(authServerMiddleWare(conf.HTTP.CookieKey))
 		serverAuth.GET("/api/server/admins", onAPIGetServerAdmins())
-		serverAuth.POST("/api/ping_mod", onAPIPostPingMod())
-		serverAuth.POST("/api/check", onAPIPostServerCheck())
+		serverAuth.POST("/api/ping_mod", onAPIPostPingMod(conf))
+		serverAuth.POST("/api/check", onAPIPostServerCheck(conf))
 		serverAuth.POST("/api/demo", onAPIPostDemo())
 		serverAuth.POST("/api/log", onAPIPostLog())
 		// Duplicated since we need to authenticate via server middleware
-		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate())
-		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate())
+		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate(conf))
+		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(conf))
 	}
 
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(consts.PUser))
+		authed := authedGrp.Use(authMiddleware(conf, consts.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
 			wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
 		})
 
-		authed.GET("/api/auth/discord", onOAuthDiscordCallback())
+		authed.GET("/api/auth/discord", onOAuthDiscordCallback(conf))
 		authed.GET("/api/current_profile", onAPICurrentProfile())
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications())
-		authed.POST("/api/report", onAPIPostReportCreate())
+		authed.POST("/api/report", onAPIPostReportCreate(conf))
 		authed.GET("/api/report/:report_id", onAPIGetReport())
 		authed.POST("/api/reports", onAPIGetReports())
 		authed.POST("/api/report_status/:report_id", onAPISetReportStatus())
 		authed.POST("/api/media", onAPISaveMedia())
 
 		authed.GET("/api/report/:report_id/messages", onAPIGetReportMessages())
-		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage())
-		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage())
-		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage())
+		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(conf))
+		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage(conf))
+		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage(conf))
 
 		authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID())
 		authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages())
-		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage())
-		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage())
-		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage())
+		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(conf))
+		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(conf))
+		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(conf))
 	}
 
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(consts.PEditor))
+		editorRoute := editorGrp.Use(authMiddleware(conf, consts.PEditor))
 		editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug())
-		editorRoute.POST("/api/news", onAPIPostNewsCreate())
-		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate())
+		editorRoute.POST("/api/news", onAPIPostNewsCreate(conf))
+		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(conf))
 		editorRoute.POST("/api/news_all", onAPIGetNewsAll())
 		editorRoute.GET("/api/filters", onAPIGetWordFilters())
 		editorRoute.POST("/api/filters", onAPIPostWordFilter())
@@ -188,7 +188,7 @@ func createRouter() *gin.Engine {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(consts.PModerator))
+		modRoute := modGrp.Use(authMiddleware(conf, consts.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState())
 		modRoute.GET("/api/connections/:steam_id", onAPIGetPersonConnections())
 		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages())
@@ -196,8 +196,8 @@ func createRouter() *gin.Engine {
 		modRoute.POST("/api/messages", onAPIQueryMessages())
 		modRoute.POST("/api/appeals", onAPIGetAppeals())
 		modRoute.POST("/api/bans/steam", onAPIGetBansSteam())
-		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate())
-		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete())
+		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(conf))
+		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(conf))
 		modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus())
 		modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate())
 		modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR())
@@ -213,7 +213,7 @@ func createRouter() *gin.Engine {
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(consts.PAdmin))
+		adminRoute := adminGrp.Use(authMiddleware(conf, consts.PAdmin))
 		adminRoute.POST("/api/servers", onAPIPostServer())
 		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate())
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete())

@@ -63,55 +63,55 @@ func init() {
 	}
 }
 
-func onBan(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onBan(ctx context.Context, conf *config.Config, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	name := interaction.ApplicationCommandData().Options[0].Name
 	switch name {
 	case "steam":
-		return onBanSteam(ctx, session, interaction, response)
+		return onBanSteam(ctx, conf, session, interaction, response)
 	case "ip":
-		return onBanIP(ctx, session, interaction, response)
+		return onBanIP(ctx, conf, session, interaction, response)
 	case "asn":
-		return onBanASN(ctx, session, interaction, response)
+		return onBanASN(ctx, conf, session, interaction, response)
 	default:
 		logger.Error("Invalid ban type selected", zap.String("type", name))
 		return discord.ErrCommandFailed
 	}
 }
 
-func onUnban(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onUnban(ctx context.Context, conf *config.Config, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "steam":
-		return onUnbanSteam(ctx, session, interaction, response)
+		return onUnbanSteam(ctx, conf, session, interaction, response)
 	case "ip":
 		return discord.ErrCommandFailed
 		// return bot.onUnbanIP(ctx, session, interaction, response)
 	case "asn":
-		return onUnbanASN(ctx, session, interaction, response)
+		return onUnbanASN(ctx, conf, session, interaction, response)
 	default:
 		return discord.ErrCommandFailed
 	}
 }
 
-func onFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onFilter(ctx context.Context, conf *config.Config, session *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "add":
-		return onFilterAdd(ctx, session, interaction, response)
+		return onFilterAdd(ctx, conf, session, interaction, response)
 	case "del":
-		return onFilterDel(ctx, session, interaction, response)
+		return onFilterDel(ctx, conf, session, interaction, response)
 	case "check":
-		return onFilterCheck(ctx, session, interaction, response)
+		return onFilterCheck(ctx, conf, session, interaction, response)
 	default:
 		return discord.ErrCommandFailed
 	}
 }
 
-func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
+func onCheck(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -181,7 +181,7 @@ func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.I
 				}
 			}
 		}
-		discord.AddLink(embed, ban.Ban)
+		discord.AddLink(embed, conf, ban.Ban)
 	}
 	banStateStr := "no"
 	if banned {
@@ -321,7 +321,7 @@ func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.I
 	return nil
 }
 
-func onHistory(ctx context.Context, session *discordgo.Session,
+func onHistory(ctx context.Context, conf *config.Config, session *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	switch interaction.ApplicationCommandData().Name {
@@ -408,7 +408,7 @@ func createDiscordBanEmbed(ban store.BanSteam, response *discord.Response) *disc
 	return embed
 }
 
-func onSetSteam(ctx context.Context, _ *discordgo.Session,
+func onSetSteam(ctx context.Context, conf *config.Config, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -425,7 +425,7 @@ func onSetSteam(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func onUnbanSteam(ctx context.Context, _ *discordgo.Session,
+func onUnbanSteam(ctx context.Context, conf *config.Config, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -434,7 +434,7 @@ func onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
-	found, errUnban := Unban(ctx, steamID, reason)
+	found, errUnban := Unban(ctx, conf, steamID, reason)
 	if errUnban != nil {
 		return errUnban
 	}
@@ -446,7 +446,7 @@ func onUnbanSteam(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onUnbanASN(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -489,7 +489,7 @@ func getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCre
 	return author, nil
 }
 
-func onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+func onKick(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	target := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 	reason := store.Reason(opts[discord.OptBanReason].IntValue())
@@ -518,7 +518,7 @@ func onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	return err
 }
 
-func onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onSay(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -533,7 +533,7 @@ func onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.Int
 	return nil
 }
 
-func onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onCSay(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -548,7 +548,7 @@ func onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	return nil
 }
 
-func onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onPSay(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -594,14 +594,14 @@ func mapRegion(region string) string {
 	}
 }
 
-func onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
+func onServers(_ context.Context, conf *config.Config, _ *discordgo.Session, _ *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	currentState := state.State().ByRegion()
 	stats := map[string]float64{}
 	used, total := 0, 0
 	embed := discord.RespOk(response, "Current Server Populations")
-	embed.URL = config.ExtURL("/servers")
+	embed.URL = conf.ExtURL("/servers")
 	var regionNames []string
 	for k := range currentState {
 		regionNames = append(regionNames, k)
@@ -643,7 +643,7 @@ func onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.Interaction
 	return nil
 }
 
-func onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onPlayers(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -699,7 +699,7 @@ func onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo
 	return nil
 }
 
-func onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onFilterAdd(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -733,7 +733,7 @@ func onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discord
 	return nil
 }
 
-func onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onFilterDel(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -752,7 +752,7 @@ func onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discord
 	return nil
 }
 
-func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onFilterCheck(_ context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -872,7 +872,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	return nil
 // }
 
-func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onLog(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -890,7 +890,7 @@ func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.Int
 	}
 	embed := discord.RespOk(response, fmt.Sprintf("%s - %s", server.ServerNameShort, match.MapName))
 	embed.Color = int(discord.Green)
-	embed.URL = config.ExtURL("/match/%d", match.MatchID)
+	embed.URL = conf.ExtURL("/match/%d", match.MatchID)
 
 	redScore := 0
 	bluScore := 0
@@ -922,7 +922,7 @@ func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.Int
 	return nil
 }
 
-func onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
+func onFind(ctx context.Context, conf *config.Config, _ *discordgo.Session, i *discordgo.InteractionCreate,
 	r *discord.Response,
 ) error {
 	opts := discord.OptionMap(i.ApplicationCommandData().Options)
@@ -958,7 +958,7 @@ func onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionC
 	return nil
 }
 
-func onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onMute(ctx context.Context, conf *config.Config, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	r *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -990,7 +990,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := BanSteam(ctx, &banSteam); errBan != nil {
+	if errBan := BanSteam(ctx, conf, &banSteam); errBan != nil {
 		return errBan
 	}
 	response := discord.RespOk(r, "Player muted successfully")
@@ -998,7 +998,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	return nil
 }
 
-func onBanASN(ctx context.Context, _ *discordgo.Session,
+func onBanASN(ctx context.Context, conf *config.Config, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -1052,7 +1052,7 @@ func onBanASN(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-func onBanIP(ctx context.Context, _ *discordgo.Session,
+func onBanIP(ctx context.Context, conf *config.Config, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -1107,7 +1107,7 @@ func onBanIP(ctx context.Context, _ *discordgo.Session,
 }
 
 // onBanSteam !ban <id> <duration> [reason].
-func onBanSteam(ctx context.Context, _ *discordgo.Session,
+func onBanSteam(ctx context.Context, conf *config.Config, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -1134,7 +1134,7 @@ func onBanSteam(ctx context.Context, _ *discordgo.Session,
 	); errOpts != nil {
 		return errors.Wrapf(errOpts, "Failed to parse options")
 	}
-	if errBan := BanSteam(ctx, &banSteam); errBan != nil {
+	if errBan := BanSteam(ctx, conf, &banSteam); errBan != nil {
 		if errors.Is(errBan, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
 		}

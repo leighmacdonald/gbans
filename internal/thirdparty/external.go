@@ -43,14 +43,14 @@ func containsIP(ip net.IP) bool {
 }
 
 // Import is used to download and load block lists into memory.
-func Import(ctx context.Context, list config.BanList) (int, error) {
-	if !golib.Exists(config.Net.CachePath) {
-		if errMkDir := os.MkdirAll(config.Net.CachePath, 0o755); errMkDir != nil {
-			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", config.Net.CachePath, errMkDir)
+func Import(ctx context.Context, list config.BanList, cachePath string, maxAge string) (int, error) {
+	if !golib.Exists(cachePath) {
+		if errMkDir := os.MkdirAll(cachePath, 0o755); errMkDir != nil {
+			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", cachePath, errMkDir)
 		}
 	}
-	filePath := path.Join(config.Net.CachePath, list.Name)
-	maxAge, errParseDuration := config.ParseDuration(config.Net.MaxAge)
+	filePath := path.Join(cachePath, list.Name)
+	maxAgeDuration, errParseDuration := config.ParseDuration(maxAge)
 	if errParseDuration != nil {
 		return 0, errors.Wrapf(errParseDuration, "Failed to parse cache max age")
 	}
@@ -60,7 +60,7 @@ func Import(ctx context.Context, list config.BanList) (int, error) {
 		if errStat != nil {
 			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
-		if config.Now().Sub(fileInfo.ModTime()) > maxAge {
+		if config.Now().Sub(fileInfo.ModTime()) > maxAgeDuration {
 			expired = true
 		}
 	} else {

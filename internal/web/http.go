@@ -38,8 +38,8 @@ func Start(ctx context.Context) error {
 	return httpServer.ListenAndServe()
 }
 
-func bind(ctx *gin.Context, recv any) bool {
-	if errBind := ctx.BindJSON(&recv); errBind != nil {
+func bind(ctx *gin.Context, target any) bool {
+	if errBind := ctx.BindJSON(&target); errBind != nil {
 		responseErr(ctx, http.StatusBadRequest, gin.H{
 			"error": "Invalid request parameters",
 		})
@@ -50,8 +50,8 @@ func bind(ctx *gin.Context, recv any) bool {
 }
 
 // Init sets up the router and starts the API HTTP handlers.
-func Init(l *zap.Logger) error {
-	if config.General.Mode == config.ReleaseMode {
+func Init(l *zap.Logger, conf *config.Config) error {
+	if conf.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
@@ -59,13 +59,13 @@ func Init(l *zap.Logger) error {
 
 	logger = l.Named("web")
 	httpServer = &http.Server{
-		Addr:           config.HTTP.Addr(),
-		Handler:        createRouter(),
+		Addr:           conf.HTTP.Addr(),
+		Handler:        createRouter(conf),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	if config.HTTP.TLS {
+	if conf.HTTP.TLS {
 		tlsVar := &tls.Config{
 			// Only use curves which have assembly implementations
 			CurvePreferences: []tls.CurveID{

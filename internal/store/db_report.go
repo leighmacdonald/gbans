@@ -51,8 +51,8 @@ type Report struct {
 	UpdatedOn time.Time `json:"updated_on"`
 }
 
-func (report Report) ToURL() string {
-	return config.ExtURL("/report/%d", report.ReportID)
+func (report Report) ToURL(conf *config.Config) string {
+	return conf.ExtURL("/report/%d", report.ReportID)
 }
 
 func NewReport() Report {

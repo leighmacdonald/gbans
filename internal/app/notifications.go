@@ -22,7 +22,7 @@ type NotificationPayload struct {
 	Link     string
 }
 
-func SendNotification(ctx context.Context, notification NotificationPayload) error {
+func SendNotification(ctx context.Context, conf *config.Config, notification NotificationPayload) error {
 	// Collect all required ids
 	if notification.MinPerms >= consts.PUser {
 		sids, errIds := store.GetSteamIdsAbove(ctx, notification.MinPerms)
@@ -49,7 +49,7 @@ func SendNotification(ctx context.Context, notification NotificationPayload) err
 				Description: pl.Message,
 			}
 			if pl.Link != "" {
-				embed.URL = config.ExtURL(pl.Link)
+				embed.URL = conf.ExtURL(pl.Link)
 			}
 			discord.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
 		}

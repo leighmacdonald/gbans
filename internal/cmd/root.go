@@ -18,11 +18,9 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
 	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -38,20 +36,20 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	setupCLI()
 	if errExecute := rootCmd.Execute(); errExecute != nil {
 		os.Exit(1)
 	}
 }
 
-func init() {
+func setupCLI() {
 	if app.BuildVersion == "" {
 		app.BuildVersion = "master"
 	}
 	rootCmd.Version = app.BuildVersion
-	cobra.OnInitialize(func() {
-		if _, errRead := config.Read(); errRead != nil {
-			log.Printf("Failed to read config: %v", errRead)
-		}
-	})
+	nc := netCmd()
+	nc.AddCommand(netUpdateCmd())
+	rootCmd.AddCommand(nc)
+	rootCmd.AddCommand(serveCmd())
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)")
 }

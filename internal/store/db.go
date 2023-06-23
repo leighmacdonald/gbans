@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -77,14 +76,14 @@ func NewQueryFilter(query string) QueryFilter {
 }
 
 // Init sets up underlying required services.
-func Init(ctx context.Context, l *zap.Logger) error {
+func Init(ctx context.Context, l *zap.Logger, dsn string, autoMigrate bool) error {
 	logger = l.Named("store")
-	cfg, errConfig := pgxpool.ParseConfig(config.DB.DSN)
+	cfg, errConfig := pgxpool.ParseConfig(dsn)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
-	if config.DB.AutoMigrate {
-		if errMigrate := Migrate(MigrateUp); errMigrate != nil {
+	if autoMigrate {
+		if errMigrate := Migrate(MigrateUp, dsn); errMigrate != nil {
 			if errMigrate.Error() == "no change" {
 				logger.Info("Migration at latest version")
 			} else {
@@ -166,8 +165,8 @@ const (
 )
 
 // Migrate database schema.
-func Migrate(action MigrationAction) error {
-	instance, errOpen := sql.Open("pgx", config.DB.DSN)
+func Migrate(action MigrationAction, dsn string) error {
+	instance, errOpen := sql.Open("pgx", dsn)
 	if errOpen != nil {
 		return errors.Wrapf(errOpen, "Failed to open database for migration")
 	}

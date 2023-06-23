@@ -51,8 +51,8 @@ type UserProfile struct {
 	Muted           bool             `json:"muted"`
 }
 
-func (p UserProfile) ToURL() string {
-	return config.ExtURL("/profile/%d", p.SteamID.Int64())
+func (p UserProfile) ToURL(conf *config.Config) string {
+	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
 // NewUserProfile allocates a new default person instance.

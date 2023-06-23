@@ -18,18 +18,18 @@ type PatreonStore interface {
 }
 
 // NewPatreonClient https://www.patreon.com/portal/registration/register-clients
-func NewPatreonClient(ctx context.Context) (*patreon.Client, error) {
+func NewPatreonClient(ctx context.Context, conf *config.Config) (*patreon.Client, error) {
 	cat, crt, errAuth := store.GetPatreonAuth(ctx)
 	if errAuth != nil || cat == "" || crt == "" {
 		// Attempt to use config file values as the initial source if we have nothing saved.
 		// These are only used once as they are dynamically updated and stored
 		// in the database for subsequent retrievals
-		cat = config.Patreon.CreatorAccessToken
-		crt = config.Patreon.CreatorRefreshToken
+		cat = conf.Patreon.CreatorAccessToken
+		crt = conf.Patreon.CreatorRefreshToken
 	}
 	oAuthConfig := oauth2.Config{
-		ClientID:     config.Patreon.ClientID,
-		ClientSecret: config.Patreon.ClientSecret,
+		ClientID:     conf.Patreon.ClientID,
+		ClientSecret: conf.Patreon.ClientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,
 			TokenURL: patreon.AccessTokenURL,

@@ -20,7 +20,7 @@ import (
 
 // BanSteam will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of config.DefaultExpiration() will be used.
-func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
+func BanSteam(ctx context.Context, conf *config.Config, banSteam *store.BanSteam) error {
 	if !banSteam.TargetID.Valid() {
 		return errors.Wrap(consts.ErrInvalidSID, "Invalid target steam id")
 	}
@@ -84,7 +84,7 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		}
 		discord.AddField(banNotice, "Expires In", expIn)
 		discord.AddField(banNotice, "Expires At", expAt)
-		discord.SendPayload(discord.Payload{ChannelID: config.Discord.PublicLogChannelID, Embed: banNotice})
+		discord.SendPayload(discord.Payload{ChannelID: conf.Discord.PublicLogChannelID, Embed: banNotice})
 	}()
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
@@ -173,7 +173,7 @@ func BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) error {
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, error) {
+func Unban(ctx context.Context, conf *config.Config, target steamid.SID64, reason string) (bool, error) {
 	bannedPerson := store.NewBannedPerson()
 	errGetBan := store.GetBanBySteamID(ctx, target, &bannedPerson, false)
 	if errGetBan != nil {
@@ -199,7 +199,7 @@ func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, erro
 	discord.AddField(unbanNotice, "Reason", reason)
 
 	discord.SendPayload(discord.Payload{
-		ChannelID: config.Discord.ModLogChannelID,
+		ChannelID: conf.Discord.ModLogChannelID,
 		Embed:     unbanNotice,
 	})
 
