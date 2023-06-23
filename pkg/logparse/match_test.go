@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
+//nolint:cyclop
 func TestMatch_Apply(t *testing.T) {
 	// mock?
 	testLogger, _ := zap.NewDevelopment()
@@ -85,7 +86,7 @@ func TestMatch_Apply(t *testing.T) {
 	// for sid := range match3124689.playerSums {
 	//	require.Equal(t, match3124689.playerSums[sid].Classes,
 	//		m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
-	//}
+	// }
 
 	getMS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchMedicSum {
 		ms, err := m.MedicSums.GetBySteamID(sid)
@@ -103,16 +104,16 @@ func TestMatch_Apply(t *testing.T) {
 	// for sid := range match3124689.medicSums {
 	//	require.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
-	//}
-	//for _, ms := range match3124689.MedicSums {
+	// }
+	// for _, ms := range match3124689.MedicSums {
 	//	require.Equal(t, map[logparse.Medigun]int{logparse.HadUber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
 	//		getMS(m, ms.SteamID).Charges, "Charges incorrect %v", getName(ms.SteamID))
-	//}
+	// }
 
 	// for team := range match3124689.teamSums {
 	//	require.Equal(t, match3124689.teamSums[team].Kills,
 	//		m.teamSums[team].Kills, "[Team] Kills incorrect %v", team)
-	//}
+	// }
 }
 
 // https://logs.tf/3124689
@@ -585,7 +586,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 		},
 		ClassKills: []*logparse.MatchClassSums{
 			{
-				SteamId:  76561198113244106,
+				SteamID:  76561198113244106,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,
@@ -597,7 +598,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561199050447792,
+				SteamID:  76561199050447792,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     2,
@@ -609,7 +610,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198383642609,
+				SteamID:  76561198383642609,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     1,
@@ -621,7 +622,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561198423392803,
+				SteamID:  76561198423392803,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -633,7 +634,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198061174192,
+				SteamID:  76561198061174192,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -645,7 +646,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198082713023,
+				SteamID:  76561198082713023,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,
@@ -657,7 +658,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198096251579,
+				SteamID:  76561198096251579,
 				Scout:    2,
 				Soldier:  1,
 				Pyro:     1,
@@ -669,7 +670,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198084686835,
+				SteamID:  76561198084686835,
 				Scout:    7,
 				Soldier:  1,
 				Pyro:     1,
@@ -681,7 +682,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198043171944,
+				SteamID:  76561198043171944,
 				Scout:    1,
 				Soldier:  7,
 				Pyro:     0,
@@ -693,7 +694,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      4,
 			},
 			{
-				SteamId:  76561198087442614,
+				SteamID:  76561198087442614,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     2,
@@ -705,7 +706,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198050517054,
+				SteamID:  76561198050517054,
 				Scout:    0,
 				Soldier:  6,
 				Pyro:     2,
@@ -717,7 +718,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198051884373,
+				SteamID:  76561198051884373,
 				Scout:    4,
 				Soldier:  0,
 				Pyro:     1,
@@ -729,7 +730,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198057150173,
+				SteamID:  76561198057150173,
 				Scout:    2,
 				Soldier:  0,
 				Pyro:     1,
@@ -741,7 +742,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198036671190,
+				SteamID:  76561198036671190,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     3,
@@ -753,7 +754,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198126692772,
+				SteamID:  76561198126692772,
 				Scout:    1,
 				Soldier:  4,
 				Pyro:     0,
@@ -765,7 +766,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198271399587,
+				SteamID:  76561198271399587,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     1,
@@ -777,7 +778,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198809011070,
+				SteamID:  76561198809011070,
 				Scout:    4,
 				Soldier:  3,
 				Pyro:     2,
@@ -789,7 +790,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561198164892406,
+				SteamID:  76561198164892406,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     1,
@@ -803,7 +804,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 		},
 		ClassKillsAssists: []*logparse.MatchClassSums{
 			{
-				SteamId:  76561198113244106,
+				SteamID:  76561198113244106,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     1,
@@ -815,7 +816,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561199050447792,
+				SteamID:  76561199050447792,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     2,
@@ -827,7 +828,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198383642609,
+				SteamID:  76561198383642609,
 				Scout:    2,
 				Soldier:  6,
 				Pyro:     1,
@@ -839,7 +840,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      4,
 			},
 			{
-				SteamId:  76561198423392803,
+				SteamID:  76561198423392803,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -851,7 +852,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198061174192,
+				SteamID:  76561198061174192,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     1,
@@ -863,7 +864,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198082713023,
+				SteamID:  76561198082713023,
 				Scout:    1,
 				Soldier:  3,
 				Pyro:     2,
@@ -875,7 +876,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561198096251579,
+				SteamID:  76561198096251579,
 				Scout:    3,
 				Soldier:  2,
 				Pyro:     1,
@@ -887,7 +888,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198084686835,
+				SteamID:  76561198084686835,
 				Scout:    7,
 				Soldier:  1,
 				Pyro:     1,
@@ -899,7 +900,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198043171944,
+				SteamID:  76561198043171944,
 				Scout:    2,
 				Soldier:  8,
 				Pyro:     1,
@@ -911,7 +912,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      4,
 			},
 			{
-				SteamId:  76561198087442614,
+				SteamID:  76561198087442614,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     2,
@@ -923,7 +924,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198050517054,
+				SteamID:  76561198050517054,
 				Scout:    1,
 				Soldier:  6,
 				Pyro:     6,
@@ -935,7 +936,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      4,
 			},
 			{
-				SteamId:  76561198051884373,
+				SteamID:  76561198051884373,
 				Scout:    4,
 				Soldier:  1,
 				Pyro:     1,
@@ -947,7 +948,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198057150173,
+				SteamID:  76561198057150173,
 				Scout:    3,
 				Soldier:  0,
 				Pyro:     1,
@@ -959,7 +960,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198036671190,
+				SteamID:  76561198036671190,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     4,
@@ -971,7 +972,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198126692772,
+				SteamID:  76561198126692772,
 				Scout:    3,
 				Soldier:  5,
 				Pyro:     0,
@@ -983,7 +984,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      5,
 			},
 			{
-				SteamId:  76561198271399587,
+				SteamID:  76561198271399587,
 				Scout:    3,
 				Soldier:  3,
 				Pyro:     2,
@@ -995,7 +996,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      5,
 			},
 			{
-				SteamId:  76561198809011070,
+				SteamID:  76561198809011070,
 				Scout:    4,
 				Soldier:  4,
 				Pyro:     2,
@@ -1007,7 +1008,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561198164892406,
+				SteamID:  76561198164892406,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     3,
@@ -1021,7 +1022,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 		},
 		ClassDeaths: []*logparse.MatchClassSums{
 			{
-				SteamId:  76561198113244106,
+				SteamID:  76561198113244106,
 				Scout:    2,
 				Soldier:  3,
 				Pyro:     0,
@@ -1033,7 +1034,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561199050447792,
+				SteamID:  76561199050447792,
 				Scout:    1,
 				Soldier:  2,
 				Pyro:     1,
@@ -1045,7 +1046,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198383642609,
+				SteamID:  76561198383642609,
 				Scout:    4,
 				Soldier:  1,
 				Pyro:     0,
@@ -1057,7 +1058,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198423392803,
+				SteamID:  76561198423392803,
 				Scout:    7,
 				Soldier:  5,
 				Pyro:     1,
@@ -1069,7 +1070,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198061174192,
+				SteamID:  76561198061174192,
 				Scout:    4,
 				Soldier:  5,
 				Pyro:     0,
@@ -1081,7 +1082,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198082713023,
+				SteamID:  76561198082713023,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     1,
@@ -1093,7 +1094,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198096251579,
+				SteamID:  76561198096251579,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     4,
@@ -1105,7 +1106,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      5,
 			},
 			{
-				SteamId:  76561198084686835,
+				SteamID:  76561198084686835,
 				Scout:    2,
 				Soldier:  0,
 				Pyro:     0,
@@ -1117,7 +1118,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198043171944,
+				SteamID:  76561198043171944,
 				Scout:    0,
 				Soldier:  2,
 				Pyro:     3,
@@ -1129,7 +1130,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198087442614,
+				SteamID:  76561198087442614,
 				Scout:    5,
 				Soldier:  3,
 				Pyro:     1,
@@ -1141,7 +1142,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198050517054,
+				SteamID:  76561198050517054,
 				Scout:    2,
 				Soldier:  2,
 				Pyro:     2,
@@ -1153,7 +1154,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198051884373,
+				SteamID:  76561198051884373,
 				Scout:    3,
 				Soldier:  1,
 				Pyro:     3,
@@ -1165,7 +1166,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198057150173,
+				SteamID:  76561198057150173,
 				Scout:    7,
 				Soldier:  3,
 				Pyro:     3,
@@ -1177,7 +1178,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198036671190,
+				SteamID:  76561198036671190,
 				Scout:    2,
 				Soldier:  1,
 				Pyro:     2,
@@ -1189,7 +1190,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      3,
 			},
 			{
-				SteamId:  76561198126692772,
+				SteamID:  76561198126692772,
 				Scout:    0,
 				Soldier:  1,
 				Pyro:     0,
@@ -1201,7 +1202,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      1,
 			},
 			{
-				SteamId:  76561198271399587,
+				SteamID:  76561198271399587,
 				Scout:    1,
 				Soldier:  1,
 				Pyro:     0,
@@ -1213,7 +1214,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198809011070,
+				SteamID:  76561198809011070,
 				Scout:    1,
 				Soldier:  0,
 				Pyro:     4,
@@ -1225,7 +1226,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      0,
 			},
 			{
-				SteamId:  76561198164892406,
+				SteamID:  76561198164892406,
 				Scout:    1,
 				Soldier:  4,
 				Pyro:     1,
@@ -1237,7 +1238,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 				Spy:      2,
 			},
 			{
-				SteamId:  76561198073709029,
+				SteamID:  76561198073709029,
 				Scout:    0,
 				Soldier:  0,
 				Pyro:     0,

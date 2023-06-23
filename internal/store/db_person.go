@@ -18,7 +18,7 @@ import (
 )
 
 type UserNotification struct {
-	NotificationId int64                       `json:"person_notification_id"`
+	NotificationID int64                       `json:"person_notification_id"`
 	SteamID        steamid.SID64               `json:"steam_id,string"`
 	Read           bool                        `json:"read"`
 	Deleted        bool                        `json:"deleted"`
@@ -144,10 +144,10 @@ type UserMessage struct {
 	UpdatedOn time.Time     `json:"updated_on"`
 }
 
-func NewUserMessage(parentID int64, authorId steamid.SID64, message string) UserMessage {
+func NewUserMessage(parentID int64, authorID steamid.SID64, message string) UserMessage {
 	return UserMessage{
 		ParentID:  parentID,
-		AuthorID:  authorId,
+		AuthorID:  authorID,
 		Message:   message,
 		CreatedOn: config.Now(),
 		UpdatedOn: config.Now(),
@@ -757,7 +757,7 @@ func GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserN
 	defer rows.Close()
 	for rows.Next() {
 		var n UserNotification
-		if errScan := rows.Scan(&n.NotificationId, &n.SteamID, &n.Read, &n.Deleted,
+		if errScan := rows.Scan(&n.NotificationID, &n.SteamID, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
 			return notifications, errScan
 		}

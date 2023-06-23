@@ -21,9 +21,9 @@ import (
 type srcdsPacket byte
 
 const (
-	// Normal log messages (unsupported)
+	// Normal log messages (unsupported).
 	s2aLogString srcdsPacket = 0x52
-	// Sent when using sv_logsecret
+	// Sent when using sv_logsecret.
 	s2aLogString2 srcdsPacket = 0x53
 )
 
@@ -32,7 +32,7 @@ const (
 //
 // On, start and every hour after, a new sv_logsecret value for every instance is randomly generated and
 // assigned remotely over rcon. This allows us to associate certain semi secret id's with specific server
-// instances
+// instances.
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	logger    *zap.Logger
@@ -207,7 +207,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 }
 
 func logToServerEvent(server store.Server, msg string, event *model.ServerEvent) error {
-	//var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
+	// var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 	//	if sid == "BOT" {
 	//		panic("fixme")
 	//		//player.SteamID = logparse.BotSid
@@ -220,7 +220,7 @@ func logToServerEvent(server store.Server, msg string, event *model.ServerEvent)
 	//	} else {
 	//		return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
 	//	}
-	//}
+	// }
 	parseResult, errParse := logparse.Parse(msg)
 	if errParse != nil {
 		return errParse

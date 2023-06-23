@@ -28,11 +28,11 @@ func FetchCompHist(ctx context.Context, sid steamid.SID64, hist *CompHist) error
 	go func() {
 		defer waitGroup.Done()
 		// var rglProf RGLProfile
-		//if errGetRGL := GetRGLProfile(ctx, sid, &rglProf); errGetRGL != nil {
+		// if errGetRGL := GetRGLProfile(ctx, sid, &rglProf); errGetRGL != nil {
 		//	return
-		//}
-		//hist.RGLDiv = rglProf.Division
-		//hist.RGLTeam = rglProf.Team
+		// }
+		// hist.RGLDiv = rglProf.Division
+		// hist.RGLTeam = rglProf.Team
 	}()
 	waitGroup.Wait()
 	return nil

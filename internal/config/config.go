@@ -72,7 +72,7 @@ type dbConfig struct {
 
 type patreonConfig struct {
 	Enabled             bool   `mapstructure:"enabled"`
-	ClientId            string `mapstructure:"client_id"`
+	ClientID            string `mapstructure:"client_id"`
 	ClientSecret        string `mapstructure:"client_secret"`
 	CreatorAccessToken  string `mapstructure:"creator_access_token"`
 	CreatorRefreshToken string `mapstructure:"creator_refresh_token"`
@@ -134,7 +134,7 @@ type generalConfig struct {
 	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	DemoRootPath                 string        `mapstructure:"demo_root_path"`
-	ExternalUrl                  string        `mapstructure:"external_url"`
+	ExternalURL                  string        `mapstructure:"external_url"`
 	BannedSteamGroupIds          []steamid.GID `mapstructure:"banned_steam_group_ids"`
 	BannedServersAddresses       []string      `mapstructure:"banned_server_addresses"`
 }
@@ -143,7 +143,7 @@ type discordConfig struct {
 	Enabled                bool     `mapstructure:"enabled"`
 	AppID                  string   `mapstructure:"app_id"`
 	AppSecret              string   `mapstructure:"app_secret"`
-	LinkId                 string   `mapstructure:"link_id"`
+	LinkID                 string   `mapstructure:"link_id"`
 	Token                  string   `mapstructure:"token"`
 	ModRoleIDs             []string `mapstructure:"mod_role_ids"`
 	GuildID                string   `mapstructure:"guild_id"`
@@ -152,9 +152,9 @@ type discordConfig struct {
 	ModChannels            []string `mapstructure:"mod_channel_ids"`
 	LogChannelID           string   `mapstructure:"log_channel_id"`
 	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
-	PublicLogChannelId     string   `mapstructure:"public_log_channel_id"`
-	ModLogChannelId        string   `mapstructure:"mod_log_channel_id"`
-	ReportLogChannelId     string   `mapstructure:"report_log_channel_id"`
+	PublicLogChannelID     string   `mapstructure:"public_log_channel_id"`
+	ModLogChannelID        string   `mapstructure:"mod_log_channel_id"`
+	ReportLogChannelID     string   `mapstructure:"report_log_channel_id"`
 }
 
 type logConfig struct {
@@ -340,5 +340,5 @@ func init() {
 }
 
 func ExtURL(path string, args ...any) string {
-	return strings.TrimRight(General.ExternalUrl, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+	return strings.TrimRight(General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }

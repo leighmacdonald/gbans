@@ -30,7 +30,6 @@ func MustCreateLogger(logFile string) *zap.Logger {
 	}
 	l, errLogger := loggingConfig.Build()
 	if errLogger != nil {
-		fmt.Printf("Failed to create logger: %v\n", errLogger)
 		os.Exit(1)
 	}
 	return l.Named("gb")

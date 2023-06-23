@@ -44,7 +44,7 @@ func GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
 	return nets, nil
 }
 
-func GetBanNetById(ctx context.Context, netID int64, banNet *BanCIDR) error {
+func GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state

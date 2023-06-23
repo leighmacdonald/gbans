@@ -28,7 +28,7 @@ func NewPatreonClient(ctx context.Context) (*patreon.Client, error) {
 		crt = config.Patreon.CreatorRefreshToken
 	}
 	oAuthConfig := oauth2.Config{
-		ClientID:     config.Patreon.ClientId,
+		ClientID:     config.Patreon.ClientID,
 		ClientSecret: config.Patreon.ClientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,
@@ -100,7 +100,7 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 	if len(campaignResponse.Data) == 0 {
 		return nil, nil, errors.New("No campaign returned")
 	}
-	campaignId := campaignResponse.Data[0].ID
+	campaignID := campaignResponse.Data[0].ID
 
 	cursor := ""
 	page := 1
@@ -109,7 +109,7 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 	users := make(map[string]*patreon.User)
 
 	for {
-		pledgesResponse, errFetch := client.FetchPledges(campaignId,
+		pledgesResponse, errFetch := client.FetchPledges(campaignID,
 			patreon.WithPageSize(25),
 			patreon.WithCursor(cursor))
 		if errFetch != nil {

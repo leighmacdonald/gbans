@@ -1,6 +1,3 @@
-// Package event implements an event dispatcher for incoming log events. It sends the
-// messages to the registered matching event reader channels that have been registered for the
-// event type.
 package app
 
 import (
@@ -12,7 +9,7 @@ import (
 
 var (
 	// Each log event can have any number of channels associated with them
-	// Events are sent to all channels in a fan-out style
+	// Events are sent to all channels in a fan-out style.
 	logEventReaders   map[logparse.EventType][]chan model.ServerEvent
 	logEventReadersMu *sync.RWMutex
 )
@@ -22,7 +19,7 @@ func init() {
 	logEventReadersMu = &sync.RWMutex{}
 }
 
-// Consume will register a channel to receive new log events as they come in
+// Consume will register a channel to receive new log events as they come in.
 func Consume(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()
@@ -62,7 +59,7 @@ func removeChan(channels []chan model.ServerEvent, serverEventChan chan model.Se
 	return newChannels
 }
 
-// UnregisterConsumer will remove the channel from any matching event readers
+// UnregisterConsumer will remove the channel from any matching event readers.
 func UnregisterConsumer(serverEventChan chan model.ServerEvent) error {
 	logEventReadersMu.Lock()
 	defer logEventReadersMu.Unlock()

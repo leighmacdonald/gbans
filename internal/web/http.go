@@ -49,7 +49,7 @@ func bind(ctx *gin.Context, recv any) bool {
 	return true
 }
 
-// Init sets up the router and starts the API HTTP handlers
+// Init sets up the router and starts the API HTTP handlers.
 func Init(l *zap.Logger) error {
 	if config.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -102,10 +102,10 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 
 // checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
-// Error responses are handled by this function, no further action needs to take place in the handlers
+// Error responses are handled by this function, no further action needs to take place in the handlers.
 func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege consts.Privilege) bool {
-	for _, steamId := range allowedSteamIds {
-		if steamId == person.SteamID {
+	for _, steamID := range allowedSteamIds {
+		if steamID == person.SteamID {
 			return true
 		}
 	}

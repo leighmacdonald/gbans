@@ -62,14 +62,14 @@ type Server struct {
 	UpdatedOn      time.Time `db:"updated_on" json:"updated_on"`
 }
 
-func (s Server) IP() (net.IP, error) {
+func (s Server) IP(ctx context.Context) (net.IP, error) {
 	parsedIP := net.ParseIP(s.Address)
 	if parsedIP != nil {
 		// We already have an ip
 		return parsedIP, nil
 	}
 	// TODO proper timeout for ctx
-	ips, errResolve := net.DefaultResolver.LookupIP(context.Background(), "ip4", s.Address)
+	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
 	if errResolve != nil || len(ips) == 0 {
 		return nil, errors.Wrap(errResolve, "Could not resolve address")
 	}

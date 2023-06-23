@@ -105,7 +105,8 @@ func FmtDuration(t time.Time) string {
 	return strings.Join(pieces, " ")
 }
 
-func diff(from, to time.Time) (year, month, day, hour, min, sec int) {
+func diff(from, to time.Time) (int, int, int, int, int, int) {
+	var year, month, day, hour, min, sec int
 	if from.Location() != to.Location() {
 		to = to.In(from.Location())
 	}
@@ -149,5 +150,5 @@ func diff(from, to time.Time) (year, month, day, hour, min, sec int) {
 		year--
 	}
 
-	return
+	return year, month, day, hour, min, sec
 }

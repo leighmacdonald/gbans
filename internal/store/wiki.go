@@ -25,15 +25,15 @@ var MediaSafeMimeTypesImages = []string{
 }
 
 func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
-	mtype := mimetype.Detect(content)
-	if !mtype.Is(mime) && mime != unknownMediaTag {
+	mType := mimetype.Detect(content)
+	if !mType.Is(mime) && mime != unknownMediaTag {
 		// Should never actually happen unless user is trying nefarious stuff.
 		return Media{}, errors.New("Detected mimetype different than provided")
 	}
 	t0 := config.Now()
 	return Media{
 		AuthorID:  author,
-		MimeType:  mtype.String(),
+		MimeType:  mType.String(),
 		Name:      strings.ReplaceAll(name, " ", "_"),
 		Size:      int64(len(content)),
 		Contents:  content,
@@ -154,13 +154,13 @@ func GetMediaByName(ctx context.Context, name string, media *Media) error {
 	))
 }
 
-func GetMediaById(ctx context.Context, mediaId int, media *Media) error {
+func GetMediaByID(ctx context.Context, mediaID int, media *Media) error {
 	const query = `
 		SELECT 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND media_id = $1`
-	return Err(QueryRow(ctx, query, mediaId).Scan(
+	return Err(QueryRow(ctx, query, mediaID).Scan(
 		&media.MediaID,
 		&media.AuthorID,
 		&media.Name,

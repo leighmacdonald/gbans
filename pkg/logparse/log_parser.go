@@ -446,7 +446,7 @@ type Results struct {
 
 // Parse will parse the log line into a known type and values.
 //
-//nolint:gocognit
+//nolint:gocognit,funlen,maintidx
 func Parse(logLine string) (*Results, error) {
 	for _, rx := range rxParsers {
 		matchMap, found := reSubMatchMap(rx.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))

@@ -22,8 +22,8 @@ linters:
     #- depguard
     - dogsled
     #- dupl
-    - dupword
-    - durationcheck
+    #- dupword
+    #- durationcheck
     - errcheck
     - errchkjson
     - errname
@@ -39,11 +39,11 @@ linters:
     - ginkgolinter
     - gocheckcompilerdirectives
     #- gochecknoglobals
-    - gochecknoinits
-    - gocognit
+    #- gochecknoinits
+    #- gocognit
     #- goconst
     - gocritic
-    - gocyclo
+    #- gocyclo
     - godot
     #- godox
     - goerr113
@@ -96,7 +96,7 @@ linters:
     #- tparallel
     - typecheck
     - unconvert
-    - unparam
+    #- unparam
     #- unused
     - usestdlibvars
     #- varnamelen

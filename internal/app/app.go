@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	// BuildVersion holds the current git revision, as of build time
+	// BuildVersion holds the current git revision, as of build time.
 	BuildVersion = "master"
 
 	logFileChan          chan *model.LogFilePayload
@@ -41,7 +41,6 @@ var (
 	patreonMu            *sync.RWMutex
 	patreonCampaigns     []patreon.Campaign
 	patreonPledges       []patreon.Pledge
-	// patreonUsers         map[string]*patreon.User
 )
 
 type userWarning struct {
@@ -180,7 +179,7 @@ type newUserWarning struct {
 	userWarning
 }
 
-// warnWorker handles tracking and applying warnings based on incoming events
+// warnWorker handles tracking and applying warnings based on incoming events.
 func warnWorker(ctx context.Context) {
 	warnings := map[steamid.SID64][]userWarning{}
 	eventChan := make(chan model.ServerEvent)
@@ -252,7 +251,7 @@ func warnWorker(ctx context.Context) {
 							zap.Int("count", len(warnings[evt.SID])))
 						var errBan error
 						var banSteam store.BanSteam
-						if errNewBan := store.NewBanSteam(store.StringSID(config.General.Owner.String()),
+						if errNewBan := store.NewBanSteam(ctx, store.StringSID(config.General.Owner.String()),
 							store.StringSID(evt.SID.String()),
 							store.Duration(config.General.WarningExceededDurationValue),
 							newWarn.WarnReason,
@@ -302,7 +301,7 @@ func warnWorker(ctx context.Context) {
 				discord.AddFieldInt64Inline(warnNotice, "Filter ID", newWarn.MatchedFilter.FilterID)
 				discord.AddFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerNameShort)
 				discord.SendPayload(discord.Payload{
-					ChannelId: config.Discord.ModLogChannelId,
+					ChannelID: config.Discord.ModLogChannelID,
 					Embed:     warnNotice,
 				})
 
@@ -415,7 +414,7 @@ func sendDiscordMatchResults(server store.Server, match logparse.Match) {
 	discord.AddFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
 	discord.AddFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
 	discord.AddFieldInline(embed, "Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes()))
-	discord.SendPayload(discord.Payload{ChannelId: config.Discord.LogChannelID, Embed: embed})
+	discord.SendPayload(discord.Payload{ChannelID: config.Discord.LogChannelID, Embed: embed})
 }
 
 func playerMessageWriter(ctx context.Context) {
@@ -504,7 +503,7 @@ func playerConnectionWriter(ctx context.Context) {
 }
 
 // logReader is the fan-out orchestrator for game log events
-// Registering receivers can be accomplished with RegisterLogEventReader
+// Registering receivers can be accomplished with RegisterLogEventReader.
 func logReader(ctx context.Context) {
 	var file *os.File
 	if config.Debug.WriteUnhandledLogEvents {
@@ -595,7 +594,7 @@ func initWorkers(ctx context.Context) {
 	go stateUpdater(ctx, time.Second*30, time.Second*180)
 }
 
-// UDP log sink
+// UDP log sink.
 func initLogSrc(ctx context.Context) {
 	logSrc, errLogSrc := newRemoteSrcdsLogSource(logger)
 	if errLogSrc != nil {
@@ -604,13 +603,13 @@ func initLogSrc(ctx context.Context) {
 	logSrc.start(ctx)
 }
 
-//func SendUserNotification(pl NotificationPayload) {
+// func SendUserNotification(pl NotificationPayload) {
 //	select {
 //	case notificationChan <- pl:
 //	default:
 //		logger.Error("Failed to write user notification payload, channel full")
 //	}
-//}
+// }
 
 func initNetBans(ctx context.Context) error {
 	for _, banList := range config.Net.Sources {
@@ -626,7 +625,7 @@ func initNetBans(ctx context.Context) error {
 //
 // This function will replace the discord member id value in the target field with
 // the found SteamID, if any.
-//func validateLink(ctx context.Context, database store.Store, sourceID action.Author, target *action.Author) error {
+// func validateLink(ctx context.Context, database store.Store, sourceID action.Author, target *action.Author) error {
 //	var p model.Person
 //	if errGetPerson := database.GetPersonByDiscordID(ctx, string(sourceID), &p); errGetPerson != nil {
 //		if errGetPerson == store.ErrNoResult {
@@ -636,4 +635,4 @@ func initNetBans(ctx context.Context) error {
 //	}
 //	*target = action.Author(p.SteamID.String())
 //	return nil
-//}
+// }

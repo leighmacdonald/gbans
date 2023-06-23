@@ -77,7 +77,7 @@ func Find(opts FindOpts) (PlayerInfoCollection, bool) {
 				(opts.Name != "" && glob.Glob(opts.Name, player.Name)) ||
 				(opts.IP != nil && opts.IP.Equal(player.IP)) ||
 				(opts.CIDR != nil && opts.CIDR.Contains(player.IP)) {
-				found = append(found, PlayerServerInfo{Player: player, ServerId: sid})
+				found = append(found, PlayerServerInfo{Player: player, ServerID: sid})
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func Find(opts FindOpts) (PlayerInfoCollection, bool) {
 // by admins.
 type ServerState struct {
 	// Database
-	ServerId    int       `json:"server_id"`
+	ServerID    int       `json:"server_id"`
 	NameShort   string    `json:"name_short"`
 	Name        string    `json:"name"`
 	Host        string    `json:"host"`
@@ -109,7 +109,7 @@ type ServerState struct {
 	// Full name of the game.
 	Game string `json:"game"`
 	// Steam Application ID of game.
-	AppId uint16 `json:"app_id"`
+	AppID uint16 `json:"app_id"`
 	// Number of players on the server.
 	PlayerCount int `json:"player_count"`
 	// Maximum number of players the server reports it can hold.
@@ -158,7 +158,7 @@ type ServerStatePlayer struct {
 
 type PlayerServerInfo struct {
 	Player   ServerStatePlayer
-	ServerId int
+	ServerID int
 }
 
 type PlayerInfoCollection []PlayerServerInfo
@@ -200,7 +200,7 @@ func updateServers(ctx context.Context) {
 				cfg.logger.Error("Failed to update", zap.Error(errFetch))
 			}
 			resultsMu.Lock()
-			results[cfg.ServerId] = newState
+			results[cfg.ServerID] = newState
 			resultsMu.Unlock()
 		}(config)
 	}
@@ -230,9 +230,9 @@ func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq
 	}
 }
 
-func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort string, address string, port int, password string, lat float64, long float64, region string, cc string) *ServerConfig {
+func NewServerConfig(logger *zap.Logger, serverID int, name string, nameShort string, address string, port int, password string, lat float64, long float64, region string, cc string) *ServerConfig {
 	return &ServerConfig{
-		ServerId:           serverId,
+		ServerID:           serverID,
 		Name:               name,
 		NameShort:          nameShort,
 		Host:               address,
@@ -250,7 +250,7 @@ func NewServerConfig(logger *zap.Logger, serverId int, name string, nameShort st
 }
 
 type ServerConfig struct {
-	ServerId           int
+	ServerID           int
 	Name               string
 	NameShort          string
 	Host               string
@@ -277,11 +277,11 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	mu := &sync.RWMutex{}
 	errMu := sync.RWMutex{}
 	stateMu.RLock()
-	newState, found := serverStates[config.ServerId]
+	newState, found := serverStates[config.ServerID]
 	stateMu.RUnlock()
 	if !found {
 		newState = ServerState{
-			ServerId:    config.ServerId,
+			ServerID:    config.ServerID,
 			NameShort:   config.NameShort,
 			Name:        config.Name,
 			Host:        config.Host,
@@ -322,7 +322,7 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 		newState.Map = result.Map
 		newState.Folder = result.Folder
 		newState.Game = result.Game
-		newState.AppId = result.ID
+		newState.AppID = result.ID
 		newState.PlayerCount = int(result.Players)
 		newState.MaxPlayers = int(result.MaxPlayers)
 		newState.Bots = int(result.Bots)
@@ -426,7 +426,7 @@ const (
 	RegionWorld SvRegion = 255
 )
 
-func SteamRegionIdString(region SvRegion) string {
+func SteamRegionIDString(region SvRegion) string {
 	switch region {
 	case RegionNaEast:
 		return "ne"
@@ -470,17 +470,18 @@ func updateMSL(ctx context.Context, errChan chan error) {
 		stats.ServersTotal++
 		stats.Players += server.Players
 		stats.Bots += server.Bots
-		if server.MaxPlayers > 0 && server.Players >= server.MaxPlayers {
+		switch {
+		case server.MaxPlayers > 0 && server.Players >= server.MaxPlayers:
 			stats.CapacityFull++
-		} else if server.Players == 0 {
+		case server.Players == 0:
 			stats.CapacityEmpty++
-		} else {
+		default:
 			stats.CapacityPartial++
 		}
 		if server.Secure {
 			stats.Secure++
 		}
-		region := SteamRegionIdString(SvRegion(server.Region))
+		region := SteamRegionIDString(SvRegion(server.Region))
 		_, regionFound := stats.Regions[region]
 		if !regionFound {
 			stats.Regions[region] = 0
@@ -516,7 +517,7 @@ func GuessMapType(mapName string) string {
 }
 
 type GlobalTF2StatsSnapshot struct {
-	StatId           int64          `json:"stat_id"`
+	StatID           int64          `json:"stat_id"`
 	Players          int            `json:"players"`
 	Bots             int            `json:"bots"`
 	Secure           int            `json:"secure"`

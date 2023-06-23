@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -257,8 +258,8 @@ func GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error) {
 	return reports, nil
 }
 
-// GetReportBySteamId returns any open report for the user by the author.
-func GetReportBySteamId(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error {
+// GetReportBySteamID returns any open report for the user by the author.
+func GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error {
 	const query = `
 		SELECT 
 		   r.report_id, r.author_id, r.reported_id, r.report_status, r.description, 
@@ -326,7 +327,7 @@ func GetReportMessages(ctx context.Context, reportID int64) ([]UserMessage, erro
 		ORDER BY created_on`
 	rows, errQuery := Query(ctx, query, reportID)
 	if errQuery != nil {
-		if Err(errQuery) == ErrNoResult {
+		if errors.Is(Err(errQuery), ErrNoResult) {
 			return nil, nil
 		}
 	}
@@ -350,7 +351,7 @@ func GetReportMessages(ctx context.Context, reportID int64) ([]UserMessage, erro
 	return messages, nil
 }
 
-func GetReportMessageById(ctx context.Context, reportMessageID int64, message *UserMessage) error {
+func GetReportMessageByID(ctx context.Context, reportMessageID int64, message *UserMessage) error {
 	const query = `
 		SELECT 
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on

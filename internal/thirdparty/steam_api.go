@@ -1,4 +1,3 @@
-// Package steam is used for communicating with the steam api using the steamweb package.
 package thirdparty
 
 import (
@@ -45,6 +44,9 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 	if errDo != nil {
 		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
 	}
+	defer func() {
+		_ = req.Body.Close()
+	}()
 	body, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
 		return nil, errors.Wrap(errRead, "Failed to read response body")

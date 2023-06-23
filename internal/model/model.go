@@ -31,7 +31,7 @@ type BDIds struct {
 }
 
 type SimplePerson struct {
-	SteamId     steamid.SID64 `json:"steam_id"`
+	SteamID     steamid.SID64 `json:"steam_id"`
 	PersonaName string        `json:"persona_name"`
 	Avatar      string        `json:"avatar"`
 	AvatarFull  string        `json:"avatar_full"`
@@ -58,6 +58,7 @@ func (p UserProfile) ToURL() string {
 // NewUserProfile allocates a new default person instance.
 func NewUserProfile(sid64 steamid.SID64) UserProfile {
 	t0 := config.Now()
+
 	return UserProfile{
 		SteamID:         sid64,
 		CreatedOn:       t0,

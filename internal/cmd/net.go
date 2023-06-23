@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/app"
@@ -26,9 +25,7 @@ var netUpdateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		rootLogger := app.MustCreateLogger("")
 		defer func() {
-			if errSync := rootLogger.Sync(); errSync != nil {
-				fmt.Printf("Failed to sync log: %v\n", errSync)
-			}
+			_ = rootLogger.Sync()
 		}()
 		connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancelConn()

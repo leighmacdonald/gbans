@@ -89,11 +89,11 @@ func onGetLogout() gin.HandlerFunc {
 }
 
 func referral(ctx *gin.Context) string {
-	referralUrl, found := ctx.GetQuery("return_url")
+	referralURL, found := ctx.GetQuery("return_url")
 	if !found {
-		referralUrl = "/"
+		referralURL = "/"
 	}
-	return referralUrl
+	return referralURL
 }
 
 func onOAuthDiscordCallback() gin.HandlerFunc {
@@ -121,7 +121,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		PremiumType      int         `json:"premium_type"`
 	}
 
-	fetchDiscordId := func(ctx context.Context, accessToken string) (string, error) {
+	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
 			return "", errReq
@@ -131,14 +131,16 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		if errResp != nil {
 			return "", errResp
 		}
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 		b, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
 			return "", errBody
 		}
-		defer util.LogCloser(resp.Body, logger)
 		var details discordUserDetail
-		if errJson := json.Unmarshal(b, &details); errJson != nil {
-			return "", errJson
+		if errJSON := json.Unmarshal(b, &details); errJSON != nil {
+			return "", errJSON
 		}
 		return details.ID, nil
 	}
@@ -160,14 +162,16 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		if errResp != nil {
 			return "", errResp
 		}
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 		body, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
 			return "", errBody
 		}
-		defer util.LogCloser(resp.Body, logger)
 		var atr accessTokenResp
-		if errJson := json.Unmarshal(body, &atr); errJson != nil {
-			return "", errJson
+		if errJSON := json.Unmarshal(body, &atr); errJSON != nil {
+			return "", errJSON
 		}
 		return atr.AccessToken, nil
 	}
@@ -183,17 +187,17 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		discordId, errId := fetchDiscordId(ctx, token)
-		if errId != nil {
+		discordID, errID := fetchDiscordID(ctx, token)
+		if errID != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		if discordId == "" {
+		if discordID == "" {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		var dp store.Person
-		if errDp := store.GetPersonByDiscordID(ctx, discordId, &dp); errDp != nil {
+		if errDp := store.GetPersonByDiscordID(ctx, discordID, &dp); errDp != nil {
 			if !errors.Is(errDp, store.ErrNoResult) {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 				return
@@ -209,14 +213,14 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
-		sp.DiscordID = discordId
+		sp.DiscordID = discordID
 		if errSave := store.SavePerson(ctx, &sp); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			return
 		}
 		responseOK(ctx, http.StatusInternalServerError, nil)
 		logger.Info("Discord account linked successfully",
-			zap.String("discord_id", discordId), zap.Int64("sid64", sid.Int64()))
+			zap.String("discord_id", discordID), zap.Int64("sid64", sid.Int64()))
 	}
 }
 
@@ -224,14 +228,14 @@ func onOpenIDCallback() gin.HandlerFunc {
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(ctx *gin.Context) {
 		var idStr string
-		referralUrl := referral(ctx)
-		fullURL := config.General.ExternalUrl + ctx.Request.URL.String()
+		referralURL := referral(ctx)
+		fullURL := config.General.ExternalURL + ctx.Request.URL.String()
 		if config.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
 				logger.Error("Failed to parse url", zap.Error(errParse))
-				ctx.Redirect(302, referralUrl)
+				ctx.Redirect(302, referralURL)
 				return
 			}
 			idStr = values.Query().Get("openid.identity")
@@ -239,45 +243,45 @@ func onOpenIDCallback() gin.HandlerFunc {
 			id, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
 				logger.Error("Error verifying openid auth response", zap.Error(errVerify))
-				ctx.Redirect(302, referralUrl)
+				ctx.Redirect(302, referralURL)
 				return
 			}
 			idStr = id
 		}
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
-			ctx.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralURL)
 			return
 		}
 		sid, errDecodeSid := steamid.SID64FromString(match[1])
 		if errDecodeSid != nil {
 			logger.Error("Received invalid steamid", zap.Error(errDecodeSid))
-			ctx.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralURL)
 			return
 		}
 		person := store.NewPerson(sid)
 		if errGetProfile := app.PersonBySID(ctx, sid, &person); errGetProfile != nil {
 			logger.Error("Failed to fetch user profile", zap.Error(errGetProfile))
-			ctx.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralURL)
 			return
 		}
 		accessToken, refreshToken, errToken := makeTokens(ctx, sid)
 		if errToken != nil {
-			ctx.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralURL)
 			logger.Error("Failed to create access token pair", zap.Error(errToken))
 			return
 		}
-		parsedUrl, errParse := url.Parse("/login/success")
+		parsedURL, errParse := url.Parse("/login/success")
 		if errParse != nil {
-			ctx.Redirect(302, referralUrl)
+			ctx.Redirect(302, referralURL)
 			return
 		}
-		query := parsedUrl.Query()
+		query := parsedURL.Query()
 		query.Set("refresh", refreshToken)
 		query.Set("token", accessToken)
-		query.Set("next_url", referralUrl)
-		parsedUrl.RawQuery = query.Encode()
-		ctx.Redirect(302, parsedUrl.String())
+		query.Set("next_url", referralURL)
+		parsedURL.RawQuery = query.Encode()
+		ctx.Redirect(302, parsedURL.String())
 		logger.Info("User logged in",
 			zap.Int64("sid64", sid.Int64()),
 			zap.String("name", person.PersonaName),
@@ -308,7 +312,7 @@ func getTokenKey(_ *jwt.Token) (any, error) {
 }
 
 // onTokenRefresh handles generating new token pairs to access the api
-// NOTE: All error code paths must return 401 (Unauthorized)
+// NOTE: All error code paths must return 401 (Unauthorized).
 func onTokenRefresh() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var rt userToken

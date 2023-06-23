@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,9 +26,7 @@ var serveCmd = &cobra.Command{
 		rootLogger := app.MustCreateLogger(logFile)
 		defer func() {
 			if logFile != "" {
-				if errSync := rootLogger.Sync(); errSync != nil {
-					fmt.Printf("Failed to sync log: %v\n", errSync)
-				}
+				_ = rootLogger.Sync()
 			}
 		}()
 		if errConnect := store.Init(rootCtx, rootLogger); errConnect != nil {

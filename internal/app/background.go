@@ -18,12 +18,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func IsSteamGroupBanned(steamId steamid.SID64) bool {
+func IsSteamGroupBanned(steamID steamid.SID64) bool {
 	bannedGroupMembersMu.RLock()
 	defer bannedGroupMembersMu.RUnlock()
 	for _, groupMembers := range bannedGroupMembers {
 		for _, member := range groupMembers {
-			if steamId == member {
+			if steamID == member {
 				return true
 			}
 		}
@@ -99,13 +99,14 @@ func showReportMeta(ctx context.Context) {
 			} else {
 				m.Open++
 			}
-			if now.Sub(report.CreatedOn) > time.Hour*24*7 {
+			switch {
+			case now.Sub(report.CreatedOn) > time.Hour*24*7:
 				m.OpenWeek++
-			} else if now.Sub(report.CreatedOn) > time.Hour*24*3 {
+			case now.Sub(report.CreatedOn) > time.Hour*24*3:
 				m.Open3Days++
-			} else if now.Sub(report.CreatedOn) > time.Hour*24 {
+			case now.Sub(report.CreatedOn) > time.Hour*24:
 				m.Open1Day++
-			} else {
+			default:
 				m.OpenNew++
 			}
 		}
@@ -128,7 +129,7 @@ func showReportMeta(ctx context.Context) {
 		discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
 		discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
 		discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
-		discord.SendPayload(discord.Payload{ChannelId: config.Discord.ReportLogChannelId, Embed: reportNotice})
+		discord.SendPayload(discord.Payload{ChannelID: config.Discord.ReportLogChannelID, Embed: reportNotice})
 		// sendDiscordPayload(app.discordSendMsg)
 	}
 	time.Sleep(time.Second * 2)
@@ -197,7 +198,7 @@ func notificationSender(ctx context.Context) {
 
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
 // The 100 oldest profiles are updated on each execution
-//func profileUpdater(ctx context.Context) {
+// func profileUpdater(ctx context.Context) {
 //	var update = func() {
 //		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 //		defer cancel()
@@ -249,7 +250,7 @@ func notificationSender(ctx context.Context) {
 //			return
 //		}
 //	}
-//}
+// }
 
 func patreonUpdater(ctx context.Context) {
 	updateTimer := time.NewTicker(time.Hour * 1)
@@ -336,7 +337,7 @@ func banSweeper(ctx context.Context) {
 					logger.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
 				} else {
 					for _, expiredBan := range expiredBans {
-						if errDrop := store.DropBan(ctx, &expiredBan, false); errDrop != nil {
+						if errDrop := store.DropBan(ctx, &expiredBan, false); errDrop != nil { //nolint:gosec
 							logger.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
 							banType := "Ban"
@@ -366,7 +367,7 @@ func banSweeper(ctx context.Context) {
 					logger.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
 				} else {
 					for _, expiredNetBan := range expiredNetBans {
-						if errDropBanNet := store.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil {
+						if errDropBanNet := store.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil { //nolint:gosec
 							logger.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
 						} else {
 							logger.Info("CIDR ban expired", zap.String("cidr", expiredNetBan.String()))
@@ -381,7 +382,7 @@ func banSweeper(ctx context.Context) {
 					logger.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
 				} else {
 					for _, expiredASNBan := range expiredASNBans {
-						if errDropASN := store.DropBanASN(ctx, &expiredASNBan); errDropASN != nil {
+						if errDropASN := store.DropBanASN(ctx, &expiredASNBan); errDropASN != nil { //nolint:gosec
 							logger.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
 						} else {
 							logger.Info("ASN ban expired", zap.Int64("ban_id", expiredASNBan.BanASNId))
@@ -430,8 +431,8 @@ func localStatUpdater(ctx context.Context) {
 			serverNameMap := map[string]string{}
 			for _, server := range servers {
 				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerNameShort
-				ipAddr, errIp := server.IP()
-				if errIp != nil {
+				ipAddr, errIP := server.IP(ctx)
+				if errIP != nil {
 					continue
 				}
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
@@ -458,11 +459,12 @@ func localStatUpdater(ctx context.Context) {
 					stats.MapTypes[mapType] = 0
 				}
 				stats.MapTypes[mapType] += ss.PlayerCount
-				if ss.PlayerCount >= ss.MaxPlayers && ss.MaxPlayers > 0 {
+				switch {
+				case ss.PlayerCount >= ss.MaxPlayers && ss.MaxPlayers > 0:
 					stats.CapacityFull++
-				} else if ss.PlayerCount == 0 {
+				case ss.PlayerCount == 0:
 					stats.CapacityEmpty++
-				} else {
+				default:
 					stats.CapacityPartial++
 				}
 			}

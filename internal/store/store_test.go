@@ -23,6 +23,7 @@ var logger *zap.Logger
 
 func TestMain(testMain *testing.M) {
 	logger = zap.NewNop()
+	var returnCode int
 
 	tearDown := func() {
 		defer func() { _ = store.Close() }()
@@ -31,6 +32,7 @@ func TestMain(testMain *testing.M) {
 			logger.Error("Failed to migrate database down", zap.Error(errMigrate))
 			os.Exit(2)
 		}
+		os.Exit(returnCode)
 	}
 
 	_, errConfig := config.Read()
@@ -42,10 +44,10 @@ func TestMain(testMain *testing.M) {
 	if dbErr := store.Init(testCtx, logger); dbErr != nil {
 		logger.Fatal("Failed to setup store", zap.Error(dbErr))
 	}
-	defer tearDown()
-	rc := testMain.Run()
 
-	os.Exit(rc)
+	defer tearDown()
+
+	returnCode = testMain.Run()
 }
 
 func TestServer(t *testing.T) {
@@ -115,14 +117,15 @@ func TestReport(t *testing.T) {
 }
 
 func TestBanNet(t *testing.T) {
+	bgCtx := context.Background()
 	banNetEqual := func(b1, b2 store.BanCIDR) {
 		require.Equal(t, b1.Reason, b2.Reason)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(bgCtx, time.Second*10)
 	defer cancel()
 	rip := randIP()
 	var banCidr store.BanCIDR
-	require.NoError(t, store.NewBanCIDR(store.StringSID("76561198003911389"),
+	require.NoError(t, store.NewBanCIDR(ctx, store.StringSID("76561198003911389"),
 		"76561198044052046", "10m", store.Custom,
 		"custom reason", "", store.System, fmt.Sprintf("%s/32", rip), store.Banned, &banCidr))
 	require.NoError(t, store.SaveBanNet(ctx, &banCidr))
@@ -134,6 +137,7 @@ func TestBanNet(t *testing.T) {
 }
 
 func TestBan(t *testing.T) {
+	bgCtx := context.Background()
 	banEqual := func(ban1, ban2 *store.BanSteam) {
 		require.Equal(t, ban1.BanID, ban2.BanID)
 		require.Equal(t, ban1.SourceID, ban2.SourceID)
@@ -147,11 +151,12 @@ func TestBan(t *testing.T) {
 		require.Equal(t, ban1.CreatedOn.Unix(), ban2.CreatedOn.Unix())
 		require.Equal(t, ban1.UpdatedOn.Unix(), ban2.UpdatedOn.Unix())
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	ctx, cancel := context.WithTimeout(bgCtx, time.Second*20)
 	defer cancel()
 
 	var banSteam store.BanSteam
 	require.NoError(t, store.NewBanSteam(
+		ctx,
 		store.StringSID("76561198003911389"),
 		"76561198044052046",
 		"1M",
@@ -208,15 +213,15 @@ func TestPerson(t *testing.T) {
 
 func TestGetChatHistory(t *testing.T) {
 	ctx := context.Background()
-	s := store.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535))
+	s := store.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535)) //nolint:gosec
 	require.NoError(t, store.SaveServer(ctx, &s))
 	// player := model.Person{
 	//	SteamID: sid,
 	//	PlayerSummary: &steamweb.PlayerSummary{
 	//		PersonaName: "test-name",
 	//	},
-	//}
-	//logs := []model.ServerEvent{
+	// }
+	// logs := []model.ServerEvent{
 	//	{
 	//		Server:    &s,
 	//		Source:    &player,
@@ -231,12 +236,12 @@ func TestGetChatHistory(t *testing.T) {
 	//		MetaData:  map[string]any{"msg": "test-2"},
 	//		CreatedOn: config.Now(),
 	//	},
-	//}
-	//require.NoError(t, testDatabase.BatchInsertServerLogs(ctx, logs))
-	//hist, errHist := testDatabase.GetChatHistory(ctx, sid, 100)
-	//require.NoError(t, errHist, "Failed to fetch chat history")
-	//require.True(t, len(hist) >= 2, "History size too small: %d", len(hist))
-	//require.Equal(t, "test-2", hist[0].Msg)
+	// }
+	// require.NoError(t, testDatabase.BatchInsertServerLogs(ctx, logs))
+	// hist, errHist := testDatabase.GetChatHistory(ctx, sid, 100)
+	// require.NoError(t, errHist, "Failed to fetch chat history")
+	// require.True(t, len(hist) >= 2, "History size too small: %d", len(hist))
+	// require.Equal(t, "test-2", hist[0].Msg)
 }
 
 func TestFilters(t *testing.T) {
@@ -266,10 +271,10 @@ func TestFilters(t *testing.T) {
 	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 	if savedFilters != nil {
 		require.NoError(t, store.DropFilter(ctx, &savedFilters[0]))
-		var byId store.Filter
-		require.NoError(t, store.GetFilterByID(ctx, savedFilters[1].FilterID, &byId))
-		require.Equal(t, savedFilters[1].FilterID, byId.FilterID)
-		require.Equal(t, savedFilters[1].Pattern, byId.Pattern)
+		var byID store.Filter
+		require.NoError(t, store.GetFilterByID(ctx, savedFilters[1].FilterID, &byID))
+		require.Equal(t, savedFilters[1].FilterID, byID.FilterID)
+		require.Equal(t, savedFilters[1].Pattern, byID.Pattern)
 	}
 	droppedFilters, errGetDroppedFilters := store.GetFilters(ctx)
 	require.NoError(t, errGetDroppedFilters)
@@ -277,12 +282,13 @@ func TestFilters(t *testing.T) {
 }
 
 func TestBanASN(t *testing.T) {
+	ctx := context.Background()
 	var author store.Person
-	require.NoError(t, store.GetOrCreatePersonBySteamID(context.TODO(), steamid.SID64(76561198083950960), &author))
+	require.NoError(t, store.GetOrCreatePersonBySteamID(ctx, steamid.SID64(76561198083950960), &author))
 	var banASN store.BanASN
-	require.NoError(t, store.NewBanASN(
+	require.NoError(t, store.NewBanASN(ctx,
 		store.StringSID(author.SteamID.String()), "0",
-		"10m", store.Cheating, "", "", store.System, rand.Int63n(23455), store.Banned, &banASN))
+		"10m", store.Cheating, "", "", store.System, rand.Int63n(23455), store.Banned, &banASN)) //nolint:gosec
 
 	require.NoError(t, store.SaveBanASN(context.Background(), &banASN))
 	require.True(t, banASN.BanASNId > 0)
@@ -295,8 +301,10 @@ func TestBanASN(t *testing.T) {
 }
 
 func TestBanGroup(t *testing.T) {
+	ctx := context.Background()
 	var banGroup store.BanGroup
 	require.NoError(t, store.NewBanSteamGroup(
+		ctx,
 		store.StringSID("76561198083950960"),
 		"0",
 		"10m",
@@ -304,16 +312,16 @@ func TestBanGroup(t *testing.T) {
 		"",
 		"",
 		store.System,
-		steamid.GID(int64(103000000000000000)+int64(rand.Int())),
+		steamid.GID(int64(103000000000000000)+int64(rand.Int())), //nolint:gosec
 		golib.RandomString(10),
 		store.Banned,
 		&banGroup))
 	require.NoError(t, store.SaveBanGroup(context.TODO(), &banGroup))
-	require.True(t, banGroup.BanGroupId > 0)
+	require.True(t, banGroup.BanGroupID > 0)
 	var bgB store.BanGroup
-	require.NoError(t, store.GetBanGroup(context.TODO(), banGroup.GroupId, &bgB))
-	require.EqualValues(t, banGroup.BanGroupId, bgB.BanGroupId)
+	require.NoError(t, store.GetBanGroup(context.TODO(), banGroup.GroupID, &bgB))
+	require.EqualValues(t, banGroup.BanGroupID, bgB.BanGroupID)
 	require.NoError(t, store.DropBanGroup(context.TODO(), &banGroup))
 	var bgDeleted store.BanGroup
-	require.EqualError(t, store.ErrNoResult, store.GetBanGroup(context.TODO(), banGroup.GroupId, &bgDeleted).Error())
+	require.EqualError(t, store.ErrNoResult, store.GetBanGroup(context.TODO(), banGroup.GroupID, &bgDeleted).Error())
 }

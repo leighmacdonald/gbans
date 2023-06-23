@@ -36,7 +36,7 @@ func registerDiscordHandlers() error {
 		discord.CmdKick:    onKick,
 		discord.CmdLog:     onLog,
 		discord.CmdMute:    onMute,
-		// discord.CmdCheckIp: onCheckIp,
+		// discord.CmdCheckIP: onCheckIp,
 		discord.CmdPlayers:  onPlayers,
 		discord.CmdPSay:     onPSay,
 		discord.CmdSay:      onSay,
@@ -111,7 +111,7 @@ func onFilter(ctx context.Context, session *discordgo.Session, interaction *disc
 	}
 }
 
-func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -365,7 +365,7 @@ func onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discord
 }
 
 //
-//func (bot *Discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+// func (bot *Discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	steamId, errResolveSID := ResolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
 //	if errResolveSID != nil {
 //		return consts.ErrInvalidSID
@@ -388,7 +388,7 @@ func onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discord
 //	embed := respOk(response, fmt.Sprintf("Chat History of: %s", person.PersonaName))
 //	embed.Description = strings.Join(lines, "\n")
 //	return nil
-//}
+// }
 
 func createDiscordBanEmbed(ban store.BanSteam, response *discord.Response) *discordgo.MessageEmbed {
 	embed := discord.RespOk(response, "User Banned")
@@ -493,7 +493,7 @@ func onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	target := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 	reason := store.Reason(opts[discord.OptBanReason].IntValue())
-	targetSid64, errTarget := target.SID64()
+	targetSid64, errTarget := target.SID64(ctx)
 	if errTarget != nil {
 		return consts.ErrInvalidSID
 	}
@@ -554,7 +554,7 @@ func onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	player := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 	msg := opts[discord.OptMessage].StringValue()
-	playerSid, errPlayerSid := player.SID64()
+	playerSid, errPlayerSid := player.SID64(ctx)
 	if errPlayerSid != nil {
 		return errPlayerSid
 	}
@@ -571,7 +571,6 @@ func onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 	return nil
 }
 
-// TODO dont hard code this
 func mapRegion(region string) string {
 	switch region {
 	case "asia":
@@ -771,7 +770,7 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 	return nil
 }
 
-//func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+// func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	switch interaction.Data.Options[0].Name {
 //	case string(cmdStatsPlayer):
 //		return bot.onStatsPlayer(ctx, session, interaction, response)
@@ -782,9 +781,9 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	default:
 //		return errCommandFailed
 //	}
-//}
+// }
 //
-//func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+// func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	target := model.Target(interaction.Data.Options[0].Options[0].Value.(string))
 //	sid, errSid := target.SID64()
 //	if errSid != nil {
@@ -823,9 +822,9 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
 //	return nil
-//}
+// }
 //
-//func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
+// func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //	serverIdStr := interaction.Data.Options[0].Options[0].Value.(string)
 //	var (
 //		server model.Server
@@ -850,9 +849,9 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
 //	return nil
-//}
+// }
 //
-//func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
+// func (bot *discord) onStatsGlobal(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, response *botResponse) error {
 //	var stats model.GlobalStats
 //	errStats := bot.database.GetGlobalStats(ctx, &stats)
 //	if errStats != nil {
@@ -871,13 +870,13 @@ func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discord
 //	addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //	addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
 //	return nil
-//}
+// }
 
 func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-	matchID := opts[discord.OptMatchId].IntValue()
+	matchID := opts[discord.OptMatchID].IntValue()
 	if matchID <= 0 {
 		return discord.ErrCommandFailed
 	}
@@ -886,7 +885,7 @@ func onLog(ctx context.Context, _ *discordgo.Session, interaction *discordgo.Int
 		return discord.ErrCommandFailed
 	}
 	var server store.Server
-	if errServer := store.GetServer(ctx, match.ServerId, &server); errServer != nil {
+	if errServer := store.GetServer(ctx, match.ServerID, &server); errServer != nil {
 		return discord.ErrCommandFailed
 	}
 	embed := discord.RespOk(response, fmt.Sprintf("%s - %s", server.ServerNameShort, match.MapName))
@@ -928,7 +927,7 @@ func onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionC
 ) error {
 	opts := discord.OptionMap(i.ApplicationCommandData().Options)
 	userIdentifier := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
-	sid, errSid := userIdentifier.SID64()
+	sid, errSid := userIdentifier.SID64(ctx)
 	if errSid != nil {
 		return consts.ErrInvalidSID
 	}
@@ -939,7 +938,7 @@ func onFind(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionC
 	}
 	for _, player := range players {
 		var server store.Server
-		if errServer := store.GetServer(ctx, player.ServerId, &server); errServer != nil {
+		if errServer := store.GetServer(ctx, player.ServerID, &server); errServer != nil {
 			return errServer
 		}
 		person := store.NewPerson(player.Player.SID)
@@ -977,7 +976,7 @@ func onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.In
 		return errAuthor
 	}
 	var banSteam store.BanSteam
-	if errOpts := store.NewBanSteam(
+	if errOpts := store.NewBanSteam(ctx,
 		store.StringSID(author.SteamID.String()),
 		playerID,
 		duration,
@@ -1010,7 +1009,7 @@ func onBanASN(ctx context.Context, _ *discordgo.Session,
 	modNote := opts[discord.OptNote].StringValue()
 	author := store.NewPerson(0)
 	if errGetPersonByDiscordID := store.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
-		if errGetPersonByDiscordID == store.ErrNoResult {
+		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
 			return errors.New("Must set steam id. See /set_steam")
 		}
 		return errors.New("Error fetching author info")
@@ -1027,7 +1026,7 @@ func onBanASN(ctx context.Context, _ *discordgo.Session,
 		return errors.New("Error fetching asn asnRecords")
 	}
 	var banASN store.BanASN
-	if errOpts := store.NewBanASN(
+	if errOpts := store.NewBanASN(ctx,
 		store.StringSID(author.SteamID.String()),
 		targetID,
 		duration,
@@ -1077,7 +1076,7 @@ func onBanIP(ctx context.Context, _ *discordgo.Session,
 	}
 
 	var banCIDR store.BanCIDR
-	if errOpts := store.NewBanCIDR(
+	if errOpts := store.NewBanCIDR(ctx,
 		store.StringSID(author.SteamID.String()),
 		target,
 		duration,
@@ -1107,7 +1106,7 @@ func onBanIP(ctx context.Context, _ *discordgo.Session,
 	return nil
 }
 
-// onBanSteam !ban <id> <duration> [reason]
+// onBanSteam !ban <id> <duration> [reason].
 func onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate, response *discord.Response,
 ) error {
@@ -1121,7 +1120,7 @@ func onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return errAuthor
 	}
 	var banSteam store.BanSteam
-	if errOpts := store.NewBanSteam(
+	if errOpts := store.NewBanSteam(ctx,
 		store.StringSID(author.SteamID.String()),
 		store.StringSID(target),
 		duration,

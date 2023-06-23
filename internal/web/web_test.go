@@ -1,14 +1,14 @@
 package web_test
 
-//func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
+// func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
 //	w := httptest.NewRecorder()
 //	r.ServeHTTP(w, req)
 //	if !f(w) {
 //		t.Fail()
 //	}
-//}
+// }
 //
-//func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRecorder) bool) {
+// func testResponse(t *testing.T, unit httpTestUnit, f func(w *httptest.ResponseRecorder) bool) {
 //	e := gin.New()
 //	web.New()
 //	web.SetupRouter(e, logPayloadChan)
@@ -17,27 +17,27 @@ package web_test
 //	if !f(w) {
 //		t.Fail()
 //	}
-//}
+// }
 
-//func newTestReq(method string, route string, body any, token string) *http.Request {
+// func newTestReq(method string, route string, body any, token string) *http.Request {
 //	b, _ := json.Marshal(body)
 //	req, _ := http.NewRequest(method, route, bytes.NewReader(b))
 //	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 //	return req
-//}
+// }
 
-//type httpTestResult struct {
+// type httpTestResult struct {
 //	Code int
 //	Body any
-//}
+// }
 
-//type httpTestUnit struct {
+// type httpTestUnit struct {
 //	r *http.Request
 //	e httpTestResult
 //	m string
-//}
+// }
 
-//func createToken(sid steamid.SID64, pr model.Privilege) string {
+// func createToken(sid steamid.SID64, pr model.Privilege) string {
 //	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 //	defer cancel()
 //	p, _ := store.GetOrCreatePersonBySteamID(ctx, sid)
@@ -45,10 +45,10 @@ package web_test
 //	_ = store.SavePerson(ctx, p)
 //	token, _ := web.newUserJWT(p.SteamID)
 //	return token
-//}
+// }
 //
 
-//func TestAPICheck(t *testing.T) {
+// func TestAPICheck(t *testing.T) {
 //	e := gin.New()
 //	setupRouter(e, logPayloadChan)
 //	req := newTestReq("POST", "/api/check", web.CheckRequest{
@@ -60,9 +60,9 @@ package web_test
 //	w := httptest.NewRecorder()
 //	e.ServeHTTP(w, req)
 //	require.Equal(t, http.StatusForbidden, w.Code)
-//}
+// }
 
-//func TestOnAPIPostBan(t *testing.T) {
+// func TestOnAPIPostBan(t *testing.T) {
 //	type req struct {
 //		// TODO replace string with SID64 when steam package gets fixed
 //		SteamID    string        `json:"steam_id"`
@@ -97,9 +97,9 @@ package web_test
 //			"Failed to successfully handle duplicate ban creation"},
 //	}
 //	testUnits(t, units)
-//}
+// }
 //
-//func TestAPIGetServers(t *testing.T) {
+// func TestAPIGetServers(t *testing.T) {
 //	e := gin.New()
 //	web.SetupRouter(e, logPayloadChan)
 //	req, _ := http.NewRequest("GET", "/api/servers", nil)
@@ -113,9 +113,9 @@ package web_test
 //		require.NoError(t, json.Unmarshal(b, &r), "Failed to unmarshall body")
 //		return true
 //	})
-//}
+// }
 //
-//func testUnits(t *testing.T, testCases []httpTestUnit) {
+// func testUnits(t *testing.T, testCases []httpTestUnit) {
 //	for _, unit := range testCases {
 //		testResponse(t, unit, func(w *httptest.ResponseRecorder) bool {
 //			if unit.e.Code > 0 {
@@ -125,9 +125,9 @@ package web_test
 //			return false
 //		})
 //	}
-//}
+// }
 //
-//func TestAuthMiddleware(t *testing.T) {
+// func TestAuthMiddleware(t *testing.T) {
 //	s := model.Server{
 //		ServerNameShort:     golib.RandomString(10),
 //		Token:          "",
@@ -153,9 +153,9 @@ package web_test
 //	wOK := httptest.NewRecorder()
 //	e.ServeHTTP(wOK, reqOK)
 //	require.Equal(t, http.StatusOK, wOK.Code)
-//}
+// }
 //
-//func TestWebSocketClient(t *testing.T) {
+// func TestWebSocketClient(t *testing.T) {
 //	e := gin.New()
 //	web.SetupRouter(e, logPayloadChan)
 //	s := httptest.NewServer(e)
@@ -201,4 +201,4 @@ package web_test
 //
 //	checkResp(t, web.AuthType, web.SocketAuthReq{}, web.AuthFailType, web.WSErrRes{Error: "Auth invalid"})
 //
-//}
+// }

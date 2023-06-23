@@ -22,7 +22,7 @@ var (
 func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 	return Match{
 		logger:            logger.Named(fmt.Sprintf("match-%d", serverID)),
-		ServerId:          serverID,
+		ServerID:          serverID,
 		Title:             serverName,
 		PlayerSums:        MatchPlayerSums{},
 		MedicSums:         []*MatchMedicSum{},
@@ -51,9 +51,9 @@ func (mps MatchTeamSums) GetByTeam(team Team) (*MatchTeamSum, error) {
 
 type MatchMedicSums []*MatchMedicSum
 
-func (mps MatchMedicSums) GetBySteamID(steamId steamid.SID64) (*MatchMedicSum, error) {
+func (mps MatchMedicSums) GetBySteamID(steamID steamid.SID64) (*MatchMedicSum, error) {
 	for _, m := range mps {
-		if m.SteamID == steamId {
+		if m.SteamID == steamID {
 			return m, nil
 		}
 	}
@@ -62,9 +62,9 @@ func (mps MatchMedicSums) GetBySteamID(steamId steamid.SID64) (*MatchMedicSum, e
 
 type MatchPlayerSums []*MatchPlayerSum
 
-func (mps MatchPlayerSums) GetBySteamID(steamId steamid.SID64) (*MatchPlayerSum, error) {
+func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*MatchPlayerSum, error) {
 	for _, m := range mps {
-		if m.SteamID == steamId {
+		if m.SteamID == steamID {
 			return m, nil
 		}
 	}
@@ -113,7 +113,7 @@ func (mps MatchPlayerSums) GetBySteamID(steamId steamid.SID64) (*MatchPlayerSum,
 type Match struct {
 	logger            *zap.Logger
 	MatchID           int
-	ServerId          int
+	ServerID          int
 	Title             string
 	MapName           string
 	PlayerSums        MatchPlayerSums
@@ -155,20 +155,20 @@ type MatchWeaponSum struct {
 	BackStabs int
 }
 
-func NewMatchWeaponSum(steamId steamid.SID64, weapon Weapon) MatchWeaponSum {
-	return MatchWeaponSum{SteamID: steamId, Weapon: weapon}
+func NewMatchWeaponSum(steamID steamid.SID64, weapon Weapon) MatchWeaponSum {
+	return MatchWeaponSum{SteamID: steamID, Weapon: weapon}
 }
 
 type MatchWeaponSums []*MatchWeaponSum
 
-func (match *Match) GetWeaponSum(steamId steamid.SID64, weapon Weapon) *MatchWeaponSum {
-	p := match.getPlayer(steamId)
+func (match *Match) GetWeaponSum(steamID steamid.SID64, weapon Weapon) *MatchWeaponSum {
+	p := match.getPlayer(steamID)
 	for _, existingWeapon := range p.Weapons {
 		if existingWeapon.Weapon == weapon {
 			return existingWeapon
 		}
 	}
-	newWeapon := NewMatchWeaponSum(steamId, weapon)
+	newWeapon := NewMatchWeaponSum(steamID, weapon)
 	p.Weapons = append(p.Weapons, &newWeapon)
 	return &newWeapon
 }
@@ -183,7 +183,7 @@ type MatchSummary struct {
 	Assists     int       `json:"assists"`
 	Damage      int       `json:"damage"`
 	Healing     int       `json:"healing"`
-	Airshots    int       `json:"airshots"`
+	AirShots    int       `json:"airshots"`
 }
 
 type MatchSummaryCollection []*MatchSummary
@@ -206,7 +206,7 @@ func (match *Match) TopPlayers() []MatchPlayerSum {
 
 // Apply is used to apply incoming event changes to the current match state
 // This is not threadsafe at all.
-func (match *Match) Apply(result *Results) error {
+func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	// This first switch is used for events that can happen at any point in time during a game without
 	// having effects on things like player stats.
 	switch result.EventType {
@@ -690,21 +690,21 @@ func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount in
 	match.getPlayer(target).HealingTaken += amount
 }
 
-func (match *Match) pointCaptureBlocked(cp int, cpname string, pp SourcePlayerPosition) {
+func (match *Match) pointCaptureBlocked(cp int, cpName string, pp SourcePlayerPosition) {
 	player := match.getPlayer(pp.SID)
 	player.CapturesBlocked = append(player.CapturesBlocked, PointCaptureBlocked{
 		CP:       cp,
-		CPName:   cpname,
+		CPName:   cpName,
 		Position: pp.Pos,
 	})
 }
 
-func (match *Match) pointCapture(team Team, cp int, cpname string, players []SourcePlayerPosition) {
+func (match *Match) pointCapture(team Team, cp int, cpName string, players []SourcePlayerPosition) {
 	for _, p := range players {
 		match.getPlayer(p.SID).Captures = append(match.getPlayer(p.SID).Captures, PointCapture{
 			SteamID:  p.SID,
 			CP:       cp,
-			CPName:   cpname,
+			CPName:   cpName,
 			Position: p.Pos,
 		})
 	}
@@ -890,9 +890,9 @@ type MatchMedicSum struct {
 	HealTargets         MatchPlayerClassSums
 }
 
-func newMatchMedicSum(steamId steamid.SID64) *MatchMedicSum {
+func newMatchMedicSum(steamID steamid.SID64) *MatchMedicSum {
 	return &MatchMedicSum{
-		SteamID: steamId,
+		SteamID: steamID,
 		Charges: map[MedigunType]int{
 			Uber:       0,
 			Kritzkrieg: 0,
@@ -903,7 +903,7 @@ func newMatchMedicSum(steamId steamid.SID64) *MatchMedicSum {
 }
 
 type MatchClassSums struct {
-	SteamId  steamid.SID64
+	SteamID  steamid.SID64
 	Scout    int
 	Soldier  int
 	Pyro     int
@@ -924,8 +924,8 @@ func (classSum *MatchClassSums) Sum() int {
 type MatchPlayerClassSums []*MatchClassSums
 
 type MatchTeamSum struct {
-	MatchTeamId int
-	MatchId     int
+	MatchTeamID int
+	MatchID     int
 	Team        Team
 	Kills       int
 	Damage      int64

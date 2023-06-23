@@ -31,19 +31,19 @@ const (
 	// wsMsgTypePugLobbyListStatesRequest  = 1008
 	wsMsgTypePugLobbyListStatesResponse = 1009
 	wsMsgTypePugJoinSlotRequest         = 1010
-	//wsMsgTypePugJoinSlotResponse        = 1011
+	// wsMsgTypePugJoinSlotResponse        = 1011
 	//
-	//// Quickplay
-	//wsMsgTypeQPCreateLobbyRequest  = 2000
-	//wsMsgTypeQPCreateLobbyResponse = 2001
-	//wsMsgTypeQPLeaveLobbyRequest   = 2002
-	//wsMsgTypeQPLeaveLobbyResponse  = 2003
-	//wsMsgTypeQPJoinLobbyRequest    = 2004
-	//wsMsgTypeQPJoinLobbyResponse   = 2005
-	//wsMsgTypeQPUserMessageRequest  = 2006
-	//wsMsgTypeQPUserMessageResponse = 2007
+	// // Quickplay
+	// wsMsgTypeQPCreateLobbyRequest  = 2000
+	// wsMsgTypeQPCreateLobbyResponse = 2001
+	// wsMsgTypeQPLeaveLobbyRequest   = 2002
+	// wsMsgTypeQPLeaveLobbyResponse  = 2003
+	// wsMsgTypeQPJoinLobbyRequest    = 2004
+	// wsMsgTypeQPJoinLobbyResponse   = 2005
+	// wsMsgTypeQPUserMessageRequest  = 2006
+	// wsMsgTypeQPUserMessageResponse = 2007
 	//
-	//wsMsgTypeErrResponse = 10000
+	// wsMsgTypeErrResponse = 10000
 )
 
 const tokenLen = 6
@@ -54,12 +54,10 @@ var webSocketUpgrader = websocket.Upgrader{
 }
 
 var (
-	ErrInvalidLobbyId  = errors.New("Invalid lobby id")
+	ErrInvalidLobbyID  = errors.New("Invalid lobby id")
 	ErrDuplicateClient = errors.New("Duplicate client")
 	ErrUnknownClient   = errors.New("Unknown client")
-	ErrEmptyLobby      = errors.New("Trying to leave empty lobby")
 	ErrLobbyNotEmpty   = errors.New("Lobby is not empty")
-	ErrInvalidHandler  = errors.New("Invalid handler")
 	ErrSlotInvalid     = errors.New("Slot invalid")
 )
 
@@ -185,7 +183,7 @@ type wsMsgErrorResponse struct {
 }
 
 type wsJoinLobbySlotRequest struct {
-	LobbyId string `json:"lobby_id"`
+	LobbyID string `json:"lobby_id"`
 	Slot    string `json:"slot"`
 }
 
@@ -243,19 +241,21 @@ func newWSConnectionManager(ctx context.Context, logger *zap.Logger) *wsConnecti
 			}
 		}
 	}(&connManager)
+
 	return &connManager
 }
 
-func (cm *wsConnectionManager) findLobby(lobbyId string) (LobbyService, error) {
-	if !lobbyIdValid(lobbyId) {
-		return nil, ErrInvalidLobbyId
+func (cm *wsConnectionManager) findLobby(lobbyID string) (LobbyService, error) {
+	if !lobbyIDValid(lobbyID) {
+		return nil, ErrInvalidLobbyID
 	}
 	cm.RLock()
 	defer cm.RUnlock()
-	lobby, found := cm.lobbies[lobbyId]
+	lobby, found := cm.lobbies[lobbyID]
 	if !found {
-		return nil, ErrInvalidLobbyId
+		return nil, ErrInvalidLobbyID
 	}
+
 	return lobby, nil
 }
 
@@ -270,21 +270,18 @@ type createLobbyOpts struct {
 func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobbyOpts) (*pugLobby, error) {
 	cm.Lock()
 	defer cm.Unlock()
-	lobbyId := golib.RandomString(tokenLen)
-	_, found := cm.lobbies[lobbyId]
+	lobbyID := golib.RandomString(tokenLen)
+	_, found := cm.lobbies[lobbyID]
 	if found {
 		return nil, errors.New("Failed to create unique lobby")
 	}
-	lobby, errLobby := newPugLobby(cm.logger, client, lobbyId, opts)
-	if errLobby != nil {
-		return nil, errLobby
-	}
-	cm.lobbies[lobbyId] = lobby
-	cm.logger.Info("Pug lobby created", zap.String("lobby_id", lobbyId))
+	lobby := newPugLobby(cm.logger, client, lobbyID, opts)
+	cm.lobbies[lobbyID] = lobby
+	cm.logger.Info("Pug lobby created", zap.String("lobby_id", lobbyID))
 	return lobby, nil
 }
 
-//func (cm *wsConnectionManager) createQPLobby(client *wsClient) (LobbyService, error) {
+// func (cm *wsConnectionManager) createQPLobby(client *wsClient) (LobbyService, error) {
 //	cm.Lock()
 //	defer cm.Unlock()
 //	lobbyId := golib.RandomString(tokenLen)
@@ -296,20 +293,20 @@ func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobby
 //	cm.lobbies[lobbyId] = lobby
 //	cm.logger.Info("Lobby created")
 //	return lobby, nil
-//}
+// }
 
-func (cm *wsConnectionManager) removeLobby(lobbyId string) error {
+func (cm *wsConnectionManager) removeLobby(lobbyID string) error {
 	cm.Lock()
 	defer cm.Unlock()
-	lobby, found := cm.lobbies[lobbyId]
+	lobby, found := cm.lobbies[lobbyID]
 	if !found {
-		return ErrInvalidLobbyId
+		return ErrInvalidLobbyID
 	}
 	if lobby.clientCount() > 0 {
 		return ErrLobbyNotEmpty
 	}
-	delete(cm.lobbies, lobbyId)
-	cm.logger.Info("Pug lobby deleted", zap.String("lobby_id", lobbyId))
+	delete(cm.lobbies, lobbyID)
+	cm.logger.Info("Pug lobby deleted", zap.String("lobby_id", lobbyID))
 	return nil
 }
 
@@ -322,8 +319,8 @@ func (cm *wsConnectionManager) join(client *wsClient) error {
 	return nil
 }
 
-func lobbyIdValid(lobbyId string) bool {
-	return len(lobbyId) == tokenLen
+func lobbyIDValid(lobbyID string) bool {
+	return len(lobbyID) == tokenLen
 }
 
 func (cm *wsConnectionManager) leave(client *wsClient) error {
@@ -340,7 +337,7 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 	return nil
 }
 
-//func (cm *wsConnectionManager) newLobbyId() string {
+// func (cm *wsConnectionManager) newLobbyId() string {
 //	valid := false
 //	loops := 0
 //	const maxLoops = 100
@@ -355,7 +352,7 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 //		panic("Could not generate unique lobby id")
 //	}
 //	return lobbyId
-//}
+// }
 
 func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType, payload json.RawMessage) error {
 	// TODO split out into map and register handlers instead of mega switch
@@ -367,14 +364,14 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 }
 
 func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfile) {
-	//webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
+	// webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
 	//	if !allowed {
 	//		web.logger.Error("Invalid websocket origin", zap.Error(origin))
 	//	}
 	//	return allowed
-	//}
+	// }
 	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("Failed to upgrade websocket", zap.Error(err))
@@ -411,10 +408,10 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfil
 			if !ok {
 				logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
 			} else {
-				switch wsErr.Code {
-				case websocket.CloseGoingAway:
-					// remove client
-				}
+				// switch wsErr.Code {
+				// case websocket.CloseGoingAway:
+				//	// remove client
+				// }
 			}
 			_ = cm.leave(client)
 			return

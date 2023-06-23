@@ -113,7 +113,7 @@ func onConnect(session *discordgo.Session, _ *discordgo.Connect) {
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      config.General.ExternalUrl,
+				URL:      config.General.ExternalURL,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,
@@ -192,7 +192,7 @@ func SendPayload(payload Payload) {
 	if !isReady.Load() {
 		return
 	}
-	if _, errSend := session.ChannelMessageSendEmbed(payload.ChannelId, payload.Embed); errSend != nil {
+	if _, errSend := session.ChannelMessageSendEmbed(payload.ChannelID, payload.Embed); errSend != nil {
 		logger.Error("Failed to send discord payload", zap.Error(errSend))
 	}
 }

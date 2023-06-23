@@ -58,7 +58,7 @@ func MatchSave(ctx context.Context, match *logparse.Match) error {
 		}
 	}
 	const q = `INSERT INTO match (server_id, map, created_on, title) VALUES ($1, $2, $3, $4) RETURNING match_id`
-	if errMatch := QueryRow(ctx, q, match.ServerId, match.MapName, match.CreatedOn, match.Title).
+	if errMatch := QueryRow(ctx, q, match.ServerID, match.MapName, match.CreatedOn, match.Title).
 		Scan(&match.MatchID); errMatch != nil {
 		return errors.Wrapf(errMatch, "Failed to setup match")
 	}
@@ -107,7 +107,7 @@ func MatchSave(ctx context.Context, match *logparse.Match) error {
 	RETURNING match_team_id`
 	// FIXME team value unset
 	for i, s := range match.TeamSums {
-		if errTeamExec := QueryRow(ctx, tq, match.MatchID, i+1, s.Kills, s.Damage, s.Charges, s.Drops, s.Caps, s.MidFights).Scan(&s.MatchTeamId); errTeamExec != nil {
+		if errTeamExec := QueryRow(ctx, tq, match.MatchID, i+1, s.Kills, s.Damage, s.Charges, s.Drops, s.Caps, s.MidFights).Scan(&s.MatchTeamID); errTeamExec != nil {
 			return errors.Wrapf(errTeamExec, "Failed to write team sum")
 		}
 	}
@@ -154,7 +154,7 @@ func Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.MatchSummaryC
 	var matches logparse.MatchSummaryCollection
 	for rows.Next() {
 		var m logparse.MatchSummary
-		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
+		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.AirShots); errScan != nil {
 			return nil, errors.Wrapf(errScan, "Failed to scan match row")
 		}
 		matches = append(matches, &m)
@@ -167,7 +167,7 @@ func MatchGetByID(ctx context.Context, matchID int) (*logparse.Match, error) {
 
 	m.MatchID = matchID
 	const qm = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
-	if errMatch := QueryRow(ctx, qm, matchID).Scan(&m.ServerId, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
+	if errMatch := QueryRow(ctx, qm, matchID).Scan(&m.ServerID, &m.MapName, &m.Title, &m.CreatedOn); errMatch != nil {
 		return nil, errors.Wrapf(errMatch, "Failed to load root match")
 	}
 	const qp = `
@@ -235,21 +235,21 @@ func MatchGetByID(ctx context.Context, matchID int) (*logparse.Match, error) {
 	}
 	defer teamRows.Close()
 	for teamRows.Next() {
-		ts := logparse.MatchTeamSum{MatchId: matchID}
-		if errRow := teamRows.Scan(&ts.MatchTeamId, &ts.Team, &ts.Kills, &ts.Damage, &ts.Charges, &ts.Drops, &ts.Caps, &ts.MidFights); errRow != nil {
+		ts := logparse.MatchTeamSum{MatchID: matchID}
+		if errRow := teamRows.Scan(&ts.MatchTeamID, &ts.Team, &ts.Kills, &ts.Damage, &ts.Charges, &ts.Drops, &ts.Caps, &ts.MidFights); errRow != nil {
 			return nil, errors.Wrapf(errRow, "Failed to scan match medics")
 		}
 		m.TeamSums = append(m.TeamSums, &ts)
 	}
 	// var ids steamid.Collection
-	//for _, p := range m.PlayerSums {
-	//	ids = append(ids, p.SteamID)
-	//}
-	//players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
-	//if errPlayers != nil {
-	//	return nil, errors.Wrapf(errPlayers, "Failed to load players")
-	//}
-	//m.Players = players
+	// for _, p := range m.PlayerSums {
+	// 	ids = append(ids, p.SteamID)
+	// }
+	// players, errPlayers := database.GetPeopleBySteamID(ctx, ids)
+	// if errPlayers != nil {
+	// 	return nil, errors.Wrapf(errPlayers, "Failed to load players")
+	// }
+	// m.Players = players
 	return &m, nil
 }
 
@@ -294,7 +294,7 @@ func SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF
 // var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
 //	"capacity_full", "capacity_empty", "capacity_partial", "map_types", "created_on", "regions"}
 //
-//func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats state.GlobalTF2StatsSnapshot) error {
+// func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats state.GlobalTF2StatsSnapshot) error {
 //	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
 //		Columns(globalStatColumns...).
 //		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
@@ -303,7 +303,7 @@ func SaveLocalTF2Stats(ctx context.Context, duration StatDuration, stats LocalTF
 //		return errQuery
 //	}
 //	return Err(database.Exec(ctx, query, args...))
-//}
+// }
 
 type StatLocality int
 
@@ -383,11 +383,11 @@ func currentHourlyTime() time.Time {
 //	now := config.Now()
 //	year, mon, day := now.Date()
 //	return time.Date(year, mon, day, 0, 0, 0, 0, now.Location())
-//}
+// }
 
 // type statIndexFunc = func(t time.Time) (time.Time, int)
 //
-//func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
+// func (database *pgStore) BuildGlobalTF2Stats(ctx context.Context) error {
 //	maxDate := currentHourlyTime()
 //	query, args, errQuery := sb.
 //		Select(fp.Prepend(globalStatColumns, "stat_id")...).
@@ -501,7 +501,7 @@ func currentHourlyTime() time.Time {
 //		return Err(delQueryErr)
 //	}
 //	return database.Exec(ctx, delQuery, delArgs...)
-//}
+// }
 
 func statDurationTable(locality StatLocality, duration StatDuration) string {
 	switch locality {
@@ -544,7 +544,7 @@ func statDurationTable(locality StatLocality, duration StatDuration) string {
 //		return nil, Err(errQuery)
 //	}
 //	return fetchGlobalTF2Snapshots(ctx, database, query, args)
-//}
+// }
 
 func GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2StatsSnapshot, error) {
 	table := statDurationTable(Local, duration)
@@ -554,8 +554,7 @@ func GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([]LocalTF2Sta
 	qb := sb.Select(fp.Prepend(localStatColumns, "stat_id")...).
 		From(table).
 		OrderBy("created_on desc")
-	switch duration {
-	case Hourly:
+	if duration == Hourly {
 		qb = qb.Limit(24 * 7)
 	}
 	query, args, errQuery := qb.ToSql()

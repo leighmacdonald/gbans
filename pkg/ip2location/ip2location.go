@@ -10,6 +10,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -215,7 +216,7 @@ func (ll *LatLong) Scan(value any) error {
 }
 
 // String returns a comma separated lat long pair string.
-func (ll LatLong) String() string {
+func (ll *LatLong) String() string {
 	return fmt.Sprintf("POINT(%f %f)", ll.Latitude, ll.Longitude)
 }
 
@@ -276,7 +277,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 				}
 			}
 			if errDownload := downloadDatabase(param); errDownload != nil {
-				fmt.Printf("Failed to download geo database: %v", errDownload)
+				log.Printf("Failed to download geo database: %v", errDownload)
 			}
 		}(param)
 	}
@@ -295,7 +296,7 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 	reader := csv.NewReader(asnFile)
 	for {
 		recordLine, errReadLine := reader.Read()
-		if errReadLine == io.EOF {
+		if errors.Is(errReadLine, io.EOF) {
 			break
 		}
 		if errReadLine != nil {
@@ -331,7 +332,7 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 	reader := csv.NewReader(asnFile)
 	for {
 		recordLine, errReadLine := reader.Read()
-		if errReadLine == io.EOF {
+		if errors.Is(errReadLine, io.EOF) {
 			break
 		}
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
@@ -367,7 +368,7 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 	reader := csv.NewReader(asnFile)
 	for {
 		recordLine, errReadRecordLine := reader.Read()
-		if errReadRecordLine == io.EOF {
+		if errors.Is(errReadRecordLine, io.EOF) {
 			break
 		}
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], false)
@@ -449,12 +450,9 @@ func extractZip(data []byte, dest string, filename string) error {
 			return errOpen
 		}
 		defer func() {
-			if errClose := readCloser.Close(); errClose != nil {
-				fmt.Printf("failed to close zip: %v", errClose)
-			}
+			_ = readCloser.Close()
 		}()
-
-		filePath := filepath.Join(dest, zipFile.Name)
+		filePath := filepath.Join(dest, zipFile.Name) //nolint:gosec
 		if strings.Contains(filePath, "..") {
 			return errors.New("Insecure zip extraction detected")
 		}
@@ -470,19 +468,15 @@ func extractZip(data []byte, dest string, filename string) error {
 			if errOpenFile != nil {
 				return errOpenFile
 			}
-			defer func() {
-				if errClose := fo.Close(); errClose != nil {
-					fmt.Printf("error closing open zip file: %v", errClose)
-				}
-			}()
-
-			_, errNewReader = io.Copy(fo, readCloser)
+			defer func() { _ = fo.Close() }()
+			_, errNewReader = io.Copy(fo, readCloser) //nolint:gosec
 			if errNewReader != nil {
 				return errNewReader
 			}
 		}
 		return nil
 	}
+
 	for _, readerFile := range zipReader.File {
 		if readerFile.Name == filename {
 			errExtractFile := extractAndWriteFile(readerFile)
@@ -492,6 +486,7 @@ func extractZip(data []byte, dest string, filename string) error {
 			break
 		}
 	}
+
 	return nil
 }
 

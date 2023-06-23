@@ -65,7 +65,7 @@ func GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *N
 	return nil
 }
 
-func GetNewsById(ctx context.Context, newsID int, entry *NewsEntry) error {
+func GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error {
 	query, args, errQueryArgs := sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {

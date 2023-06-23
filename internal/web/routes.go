@@ -35,8 +35,8 @@ func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 // jsConfig contains all the variables that we inject into the frontend at runtime
 type jsConfig struct {
 	SiteName        string `json:"siteName"`
-	DiscordClientId string `json:"discordClientId"`
-	DiscordLinkId   string `json:"discordLinkId"`
+	DiscordClientID string `json:"discordClientId"`
+	DiscordLinkID   string `json:"discordLinkId"`
 }
 
 func createRouter() *gin.Engine {
@@ -84,8 +84,8 @@ func createRouter() *gin.Engine {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{
 				SiteName:        config.General.SiteName,
-				DiscordClientId: config.Discord.AppID,
-				DiscordLinkId:   config.Discord.LinkId,
+				DiscordClientID: config.Discord.AppID,
+				DiscordLinkID:   config.Discord.LinkID,
 			})
 		})
 	}
@@ -95,7 +95,7 @@ func createRouter() *gin.Engine {
 
 	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD())
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins())
-	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamId())
+	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID())
 	engine.GET("/export/bans/valve/network", onAPIExportBansValveIP())
 	engine.GET("/metrics", prometheusHandler())
 
@@ -108,7 +108,7 @@ func createRouter() *gin.Engine {
 	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug())
 	engine.GET("/api/log/:match_id", onAPIGetMatch())
 	engine.POST("/api/logs", onAPIGetMatches())
-	engine.GET("/media/:media_id", onGetMediaById())
+	engine.GET("/media/:media_id", onGetMediaByID())
 	engine.POST("/api/news_latest", onAPIGetNewsLatest())
 	engine.POST("/api/server_query", onAPIPostServerQuery())
 	engine.GET("/api/server_stats", onAPIGetTF2Stats())

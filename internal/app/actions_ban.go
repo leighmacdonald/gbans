@@ -51,12 +51,12 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	}
 
 	// Close the report if the ban was attached to one
-	if banSteam.ReportId > 0 {
-		if errRep := updateAppealState(banSteam.ReportId); errRep != nil {
+	if banSteam.ReportID > 0 {
+		if errRep := updateAppealState(banSteam.ReportID); errRep != nil {
 			return errRep
 		}
 
-		logger.Info("Report state set to closed", zap.Int64("report_id", banSteam.ReportId))
+		logger.Info("Report state set to closed", zap.Int64("report_id", banSteam.ReportID))
 	}
 
 	go func() {
@@ -84,7 +84,7 @@ func BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		}
 		discord.AddField(banNotice, "Expires In", expIn)
 		discord.AddField(banNotice, "Expires At", expAt)
-		discord.SendPayload(discord.Payload{ChannelId: config.Discord.PublicLogChannelId, Embed: banNotice})
+		discord.SendPayload(discord.Payload{ChannelID: config.Discord.PublicLogChannelID, Embed: banNotice})
 	}()
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
@@ -129,13 +129,13 @@ func BanASN(ctx context.Context, banASN *store.BanASN) error {
 // If duration is 0, the value of config.DefaultExpiration() will be used.
 func BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	// TODO
-	//_, err2 := store.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
-	//if err2 != nil && err2 != store.ErrNoResult {
+	// _, err2 := store.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
+	// if err2 != nil && err2 != store.ErrNoResult {
 	//	return "", errCommandFailed
-	//}
-	//if err2 == nil {
+	// }
+	// if err2 == nil {
 	//	return "", consts.ErrDuplicateBan
-	//}
+	// }
 	if banNet.CIDR == nil {
 		return errors.New("CIDR unset")
 	}
@@ -158,14 +158,14 @@ func BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 }
 
 func BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) error {
-	members, membersErr := steamweb.GetGroupMembers(ctx, banGroup.GroupId)
+	members, membersErr := steamweb.GetGroupMembers(ctx, banGroup.GroupID)
 	if membersErr != nil {
 		return errors.Wrapf(membersErr, "Failed to validate group")
 	}
 	if errSaveBanGroup := store.SaveBanGroup(ctx, banGroup); errSaveBanGroup != nil {
 		return errSaveBanGroup
 	}
-	logger.Info("Steam group banned", zap.Int64("gid64", banGroup.GroupId.Int64()),
+	logger.Info("Steam group banned", zap.Int64("gid64", banGroup.GroupID.Int64()),
 		zap.Int("members", len(members)))
 	return nil
 }
@@ -199,7 +199,7 @@ func Unban(ctx context.Context, target steamid.SID64, reason string) (bool, erro
 	discord.AddField(unbanNotice, "Reason", reason)
 
 	discord.SendPayload(discord.Payload{
-		ChannelId: config.Discord.ModLogChannelId,
+		ChannelID: config.Discord.ModLogChannelID,
 		Embed:     unbanNotice,
 	})
 

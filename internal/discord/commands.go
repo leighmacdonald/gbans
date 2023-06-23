@@ -19,7 +19,7 @@ const (
 	CmdFind        Cmd = "find"
 	CmdMute        Cmd = "mute"
 	CmdCheck       Cmd = "check"
-	CmdCheckIp     Cmd = "checkip"
+	CmdCheckIP     Cmd = "checkip"
 	CmdUnban       Cmd = "unban"
 	CmdKick        Cmd = "kick"
 	CmdPlayers     Cmd = "players"
@@ -41,11 +41,11 @@ const (
 
 // type subCommandKey string
 //
-//const (
+// const (
 //	CmdBan     = "ban"
 //	CmdFilter  = "filter"
 //	CmdHistory = "history"
-//)
+// )
 
 type optionKey string
 
@@ -56,7 +56,7 @@ const (
 	OptDuration         = "duration"
 	OptASN              = "asn"
 	OptIP               = "ip"
-	OptMatchId          = "match_id"
+	OptMatchID          = "match_id"
 	OptBanReason        = "ban_reason"
 	OptUnbanReason      = "unban_reason"
 	OptBan              = "ban"
@@ -112,15 +112,15 @@ func botRegisterSlashCommands() error {
 		Description: "An Autonomous System (AS) is a group of one or more IP prefixes run by one or more network operators",
 		Required:    true,
 	}
-	optIpAddr := &discordgo.ApplicationCommandOption{
+	optIPAddr := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptIP,
 		Description: "IP address to check",
 		Required:    true,
 	}
-	optMatchId := &discordgo.ApplicationCommandOption{
+	optMatchID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
-		Name:        OptMatchId,
+		Name:        OptMatchID,
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
 	}
@@ -146,7 +146,7 @@ func botRegisterSlashCommands() error {
 			Name:        string(CmdLog),
 			Description: "Show a match log summary",
 			Options: []*discordgo.ApplicationCommandOption{
-				optMatchId,
+				optMatchID,
 			},
 		},
 		{
@@ -187,12 +187,12 @@ func botRegisterSlashCommands() error {
 		},
 		{
 			ApplicationID:            config.Discord.AppID,
-			Name:                     string(CmdCheckIp),
+			Name:                     string(CmdCheckIP),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Check if a ip is banned",
 			Options: []*discordgo.ApplicationCommandOption{
-				optIpAddr,
+				optIPAddr,
 			},
 		},
 		{

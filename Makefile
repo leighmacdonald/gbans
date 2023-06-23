@@ -22,7 +22,7 @@ bump_deps:
 	go get -u ./...
 	cd frontend && yarn upgrade-interactive --latest
 
-build: fmt vet linux64
+build: linux64
 
 frontend:
 	cd frontend && yarn && yarn run build

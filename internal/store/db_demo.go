@@ -57,7 +57,7 @@ func FlushDemos(ctx context.Context) error {
 	return Err(Exec(ctx, query, args...))
 }
 
-func GetDemoById(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	query, args, errQueryArgs := sb.
 		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
 		From("demo").

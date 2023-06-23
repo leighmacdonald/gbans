@@ -43,7 +43,7 @@ func SendNotification(ctx context.Context, notification NotificationPayload) err
 		}
 	}
 	go func(ids []string, pl NotificationPayload) {
-		for _, discordId := range ids {
+		for _, discordID := range ids {
 			embed := &discordgo.MessageEmbed{
 				Title:       "Notification",
 				Description: pl.Message,
@@ -51,7 +51,7 @@ func SendNotification(ctx context.Context, notification NotificationPayload) err
 			if pl.Link != "" {
 				embed.URL = config.ExtURL(pl.Link)
 			}
-			discord.SendPayload(discord.Payload{ChannelId: discordId, Embed: embed})
+			discord.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
 		}
 	}(discordIds, notification)
 

@@ -30,7 +30,7 @@ func OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(in
 	var err error
 	for _, player := range players {
 		var server store.Server
-		if errServer := store.GetServer(ctx, player.ServerId, &server); errServer != nil {
+		if errServer := store.GetServer(ctx, player.ServerID, &server); errServer != nil {
 			err = gerrors.Join(err, errServer)
 			continue
 		}

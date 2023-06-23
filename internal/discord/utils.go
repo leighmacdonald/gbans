@@ -10,8 +10,6 @@ import (
 
 const (
 	maxEmbedFields = 25
-	// TODO ensure these
-
 	// maxUsernameChars    = 32
 	// maxAuthorChars      = 256.
 	maxFieldNameChars   = 256
@@ -52,7 +50,7 @@ type Response struct {
 }
 
 type Payload struct {
-	ChannelId string
+	ChannelID string
 	Embed     *discordgo.MessageEmbed
 }
 
@@ -124,7 +122,7 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 
 // func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
 //	AddField(embed, logger, title, fmt.Sprintf("%d", value))
-//}
+// }
 
 // func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
 //	name := person.PersonaName
@@ -132,16 +130,16 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 //		name = person.SteamID.String()
 //	}
 //	embed.Author = &discordgo.MessageEmbedAuthor{URL: person.ToURL(), Name: name}
-//}
+// }
 
 type Linkable interface {
 	ToURL() string
 }
 
-func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamId steamid.SID64) {
-	AddFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamId)))
-	AddFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamId)))
-	AddFieldInline(embed, "SID64", steamId.String())
+func AddFieldsSteamID(embed *discordgo.MessageEmbed, steamID steamid.SID64) {
+	AddFieldInline(embed, "STEAM", string(steamid.SID64ToSID(steamID)))
+	AddFieldInline(embed, "STEAM3", string(steamid.SID64ToSID3(steamID)))
+	AddFieldInline(embed, "SID64", steamID.String())
 }
 
 func AddLink(embed *discordgo.MessageEmbed, value Linkable) {

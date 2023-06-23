@@ -20,7 +20,7 @@ type pugLobby struct {
 	*sync.RWMutex
 	logger    *zap.Logger
 	Leader    *wsClient                `json:"leader"`
-	LobbyId   string                   `json:"lobbyId"`
+	LobbyID   string                   `json:"lobbyId"`
 	Clients   wsClients                `json:"clients"`
 	Messages  []pugUserMessageResponse `json:"messages"`
 	Options   createLobbyOpts          `json:"options"`
@@ -32,12 +32,12 @@ func (lobby *pugLobby) lobbyType() LobbyType {
 	return lobbyTypePug
 }
 
-func newPugLobby(logger *zap.Logger, creator *wsClient, id string, opts createLobbyOpts) (*pugLobby, error) {
+func newPugLobby(logger *zap.Logger, creator *wsClient, id string, opts createLobbyOpts) *pugLobby {
 	lobby := &pugLobby{
 		logger:   logger.Named(fmt.Sprintf("lobby-%s", id)),
 		Leader:   creator,
 		RWMutex:  &sync.RWMutex{},
-		LobbyId:  id,
+		LobbyID:  id,
 		Clients:  wsClients{creator},
 		Messages: []pugUserMessageResponse{},
 		Options:  opts,
@@ -51,7 +51,7 @@ func newPugLobby(logger *zap.Logger, creator *wsClient, id string, opts createLo
 		lobby.ClassKeys = mm.ClassMappingKeysUltiduo
 	}
 	creator.lobbies = append(creator.lobbies, lobby)
-	return lobby, nil
+	return lobby
 }
 
 func (lobby *pugLobby) clientCount() int {
@@ -63,7 +63,7 @@ func (lobby *pugLobby) clientCount() int {
 func (lobby *pugLobby) id() string {
 	lobby.RLock()
 	defer lobby.RUnlock()
-	return lobby.LobbyId
+	return lobby.LobbyID
 }
 
 func (lobby *pugLobby) joinSlot(client *wsClient, slot string) error {
@@ -88,7 +88,7 @@ func (lobby *pugLobby) join(client *wsClient) error {
 	}
 	lobby.Clients = append(lobby.Clients, client)
 	client.lobbies = append(client.lobbies, lobby)
-	lobby.logger.Info("User joined lobby", zap.String("lobby", lobby.LobbyId),
+	lobby.logger.Info("User joined lobby", zap.String("lobby", lobby.LobbyID),
 		zap.Int("clients", len(lobby.Clients)), zap.Bool("leader", len(lobby.Clients) == 1))
 	if len(lobby.Clients) == 1 {
 		return lobby.promote(client)
@@ -116,11 +116,11 @@ func (lobby *pugLobby) leave(client *wsClient) error {
 	}
 	lobby.RUnlock()
 	lobby.broadcast(wsMsgTypePugLeaveLobbyResponse, true, struct {
-		LobbyId string `json:"lobby_id"`
-		SteamId string `json:"steam_id"`
+		LobbyID string `json:"lobby_id"`
+		SteamID string `json:"steam_id"`
 	}{
-		LobbyId: lobby.id(),
-		SteamId: client.User.SteamID.String(),
+		LobbyID: lobby.id(),
+		SteamID: client.User.SteamID.String(),
 	},
 	)
 	lobby.Clients = fp.Remove(lobby.Clients, client)
@@ -147,13 +147,13 @@ func (lobby *pugLobby) sendUserMessage(client *wsClient, msg lobbyUserMessageReq
 func leavePugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
 	lobby, found := client.currentPugLobby()
 	if !found {
-		return ErrInvalidLobbyId
+		return ErrInvalidLobbyID
 	}
 	if errLeave := lobby.leave(client); errLeave != nil {
 		return errLeave
 	}
 	if lobby.clientCount() == 0 {
-		if errRemove := cm.removeLobby(lobby.LobbyId); errRemove != nil {
+		if errRemove := cm.removeLobby(lobby.LobbyID); errRemove != nil {
 			cm.logger.Error("Failed to remove empty lobby", zap.Error(errRemove))
 			return nil
 		}
@@ -183,7 +183,7 @@ func joinPugLobbySlot(cm *wsConnectionManager, client *wsClient, payload json.Ra
 		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 		return errUnmarshal
 	}
-	lobby, findErr := cm.findLobby(req.LobbyId)
+	lobby, findErr := cm.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}
@@ -212,7 +212,7 @@ func sendPugUserMessage(cm *wsConnectionManager, client *wsClient, payload json.
 	}
 	lobby, found := client.currentPugLobby()
 	if !found {
-		return ErrInvalidLobbyId
+		return ErrInvalidLobbyID
 	}
 	lobby.sendUserMessage(client, req)
 	return nil
