@@ -51,7 +51,7 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 		return nil, errors.Wrapf(errGet, "Failed to query logstf")
 	}
 	defer func() {
-		_ = req.Body.Close()
+		_ = response.Body.Close()
 	}()
 	body, errReadBody := io.ReadAll(response.Body)
 	if errReadBody != nil {

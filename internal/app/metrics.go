@@ -83,7 +83,7 @@ func init() {
 	}
 }
 
-// logMetricsConsumer processes incoming log events and updated any associated metrics
+// logMetricsConsumer processes incoming log events and updated any associated metrics.
 func logMetricsConsumer(ctx context.Context) {
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {

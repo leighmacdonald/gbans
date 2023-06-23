@@ -858,7 +858,7 @@ func getDefaultFloat64(s string, def float64) float64 {
 	return def
 }
 
-// onAPIGetServerStates returns the current known cached server state
+// onAPIGetServerStates returns the current known cached server state.
 func onAPIGetServerStates() gin.HandlerFunc {
 	type UserServers struct {
 		Servers []BaseServer        `json:"servers"`

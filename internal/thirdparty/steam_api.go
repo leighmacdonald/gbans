@@ -45,7 +45,7 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
 	}
 	defer func() {
-		_ = req.Body.Close()
+		_ = resp.Body.Close()
 	}()
 	body, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {

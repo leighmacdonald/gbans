@@ -28,10 +28,10 @@ const (
 	wsMsgTypePugJoinLobbyResponse   = 1005
 	wsMsgTypePugUserMessageRequest  = 1006
 	wsMsgTypePugUserMessageResponse = 1007
-	// wsMsgTypePugLobbyListStatesRequest  = 1008
+	// wsMsgTypePugLobbyListStatesRequest  = 1008.
 	wsMsgTypePugLobbyListStatesResponse = 1009
 	wsMsgTypePugJoinSlotRequest         = 1010
-	// wsMsgTypePugJoinSlotResponse        = 1011
+	// wsMsgTypePugJoinSlotResponse        = 1011.
 	//
 	// // Quickplay
 	// wsMsgTypeQPCreateLobbyRequest  = 2000
@@ -43,7 +43,7 @@ const (
 	// wsMsgTypeQPUserMessageRequest  = 2006
 	// wsMsgTypeQPUserMessageResponse = 2007
 	//
-	// wsMsgTypeErrResponse = 10000
+	// wsMsgTypeErrResponse = 10000.
 )
 
 const tokenLen = 6
@@ -68,7 +68,7 @@ const (
 	lobbyTypePug
 )
 
-// LobbyService provides common interface for interacting with multiple lobby types
+// LobbyService provides common interface for interacting with multiple lobby types.
 type LobbyService interface {
 	lobbyType() LobbyType
 	join(client *wsClient) error

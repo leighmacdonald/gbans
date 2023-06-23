@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// serveCmd represents the serve command
+// serveCmd represents the serve command.
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the gbans service",

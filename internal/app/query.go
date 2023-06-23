@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date
+// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
 func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
 	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)

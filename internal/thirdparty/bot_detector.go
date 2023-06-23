@@ -36,29 +36,21 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 	}
 	var steamIds steamid.Collection
 	for _, player := range bdSchema.Players {
-		var id steamid.SID64
-		switch player.Steamid.(type) {
+		var steamID steamid.SID64
+		switch sidValue := player.Steamid.(type) {
 		case string:
-			sidVal, ok := player.Steamid.(string)
-			if !ok {
-				continue
-			}
-			parsedSid64, errParseSid64 := steamid.StringToSID64(sidVal)
+			parsedSid64, errParseSid64 := steamid.StringToSID64(sidValue)
 			if errParseSid64 != nil {
 				return nil, errParseSid64
 			}
-			id = parsedSid64
+			steamID = parsedSid64
 		case float64:
-			sidVal, ok := player.Steamid.(float64)
-			if !ok {
-				continue
-			}
-			id = steamid.SID64(sidVal)
+			steamID = steamid.SID64(sidValue)
 		}
-		if !id.Valid() {
+		if !steamID.Valid() {
 			continue
 		}
-		steamIds = append(steamIds, id)
+		steamIds = append(steamIds, steamID)
 	}
 	return steamIds, nil
 }
