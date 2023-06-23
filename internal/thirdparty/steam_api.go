@@ -2,19 +2,12 @@ package thirdparty
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"sync"
-	"sync/atomic"
-	"time"
-
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
+	"sync"
+	"sync/atomic"
 )
 
 const steamQueryMaxResults = 100
@@ -30,37 +23,13 @@ type getFriendListResponse struct {
 }
 
 func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection, error) {
-	const baseURL = "https://api.steampowered.com/ISteamUser" +
-		"/GetFriendList/v0001/?key=%s&steamid=%d&relationship=all&format=json"
-	u := fmt.Sprintf(baseURL, config.General.SteamKey, sid64)
-	requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
-	defer cancelRequest()
-	req, errReq := http.NewRequestWithContext(requestCtx, http.MethodGet, u, nil)
-	if errReq != nil {
-		return nil, errors.Wrap(errReq, "Failed to create new request")
-	}
-	c := &http.Client{Timeout: time.Second * 5}
-	resp, errDo := c.Do(req)
-	if errDo != nil {
-		return nil, errors.Wrap(errDo, "Failed to fetch friends list")
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	body, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		return nil, errors.Wrap(errRead, "Failed to read response body")
-	}
-	var flr getFriendListResponse
-	if errUnmarshal := json.Unmarshal(body, &flr); errUnmarshal != nil {
-		return nil, errors.Wrap(errUnmarshal, "Failed to decode response body")
+	friends, errFriends := steamweb.GetFriendList(ctx, sid64)
+	if errFriends != nil {
+		return nil, errors.Wrap(errFriends, "Failed to fetch friends list")
 	}
 	var fl steamid.Collection
-	for _, friend := range flr.FriendsList.Friends {
-		sid, errSid := steamid.SID64FromString(friend.Steamid)
-		if errSid == nil {
-			fl = append(fl, sid)
-		}
+	for _, friend := range friends {
+		fl = append(fl, friend.SteamID)
 	}
 	return fl, nil
 }
