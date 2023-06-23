@@ -177,12 +177,10 @@ func State() ServerStateCollection {
 	stateMu.RLock()
 	defer stateMu.RUnlock()
 
-	coll := make(ServerStateCollection, len(serverStates))
-
-	for index, state := range serverStates {
-		coll[index] = state
+	var coll ServerStateCollection
+	for _, state := range serverStates {
+		coll = append(coll, state)
 	}
-
 	return coll
 }
 
