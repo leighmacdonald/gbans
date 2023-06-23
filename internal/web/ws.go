@@ -407,12 +407,13 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfil
 			ok := errors.Is(errRead, wsErr)
 			if !ok {
 				logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
-			} else {
-				// switch wsErr.Code {
-				// case websocket.CloseGoingAway:
-				//	// remove client
-				// }
 			}
+			// else {
+			// switch wsErr.Code {
+			// case websocket.CloseGoingAway:
+			//	// remove client
+			// }
+			// }
 			_ = cm.leave(client)
 			return
 		}
