@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"path/filepath"
 
@@ -39,7 +40,8 @@ type jsConfig struct {
 	DiscordLinkID   string `json:"discordLinkId"`
 }
 
-func createRouter(conf *config.Config) *gin.Engine {
+//nolint:contextcheck
+func createRouter(ctx context.Context, conf *config.Config) *gin.Engine {
 	engine := gin.New()
 	engine.Use(ErrorHandler(logger), gin.Recovery())
 
@@ -142,12 +144,14 @@ func createRouter(conf *config.Config) *gin.Engine {
 		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(conf))
 	}
 
+	cm := newWSConnectionManager(ctx, logger)
+
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(conf, consts.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
-			wsConnHandler(c.Writer, c.Request, currentUserProfile(c))
+			wsConnHandler(c.Writer, c.Request, cm, currentUserProfile(c))
 		})
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(conf))

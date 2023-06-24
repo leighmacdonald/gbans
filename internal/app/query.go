@@ -14,8 +14,8 @@ import (
 )
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
-func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
-	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
+func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
+	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
 	}
 	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24 {
@@ -27,12 +27,12 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 			s := summaries[0]
 			person.PlayerSummary = &s
 		} else {
-			logger.Warn("Failed to update profile summary", zap.Error(errSummaries), zap.Int64("sid", sid.Int64()))
+			app.log.Warn("Failed to update profile summary", zap.Error(errSummaries), zap.Int64("sid", sid.Int64()))
 			// return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
 		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
-			logger.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
+			app.log.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
 			// return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
 		} else {
 			person.CommunityBanned = vac[0].CommunityBanned
@@ -45,7 +45,7 @@ func PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) e
 		person.UpdatedOnSteam = config.Now()
 	}
 	person.SteamID = sid
-	if errSavePerson := store.SavePerson(ctx, person); errSavePerson != nil {
+	if errSavePerson := app.db.SavePerson(ctx, person); errSavePerson != nil {
 		return errors.Wrapf(errSavePerson, "Failed to save person")
 	}
 	return nil

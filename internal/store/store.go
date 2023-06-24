@@ -27,12 +27,9 @@ var (
 	ErrNoResult = errors.New("No results found")
 	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted.
 	ErrDuplicate = errors.New("Duplicate entity")
-	// Use $ for pg based queries.
-	sb = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
 	//go:embed migrations
 	migrations embed.FS
-	conn       *pgxpool.Pool
-	logger     *zap.Logger
 )
 
 type tableName string
@@ -45,6 +42,25 @@ const (
 	tableServer tableName = "server"
 	tableDemo   tableName = "demo"
 )
+
+type Store struct {
+	conn *pgxpool.Pool
+	log  *zap.Logger
+	// Use $ for pg based queries.
+	sb          sq.StatementBuilderType
+	dsn         string
+	autoMigrate bool
+	migrated    bool
+}
+
+func New(rootLogger *zap.Logger, dsn string, autoMigrate bool) *Store {
+	return &Store{
+		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		log:         rootLogger.Named("store"),
+		dsn:         dsn,
+		autoMigrate: autoMigrate,
+	}
+}
 
 // QueryFilter provides a structure for common query parameters.
 type QueryFilter struct {
@@ -75,56 +91,55 @@ func NewQueryFilter(query string) QueryFilter {
 	}
 }
 
-// Init sets up underlying required services.
-func Init(ctx context.Context, l *zap.Logger, dsn string, autoMigrate bool) error {
-	logger = l.Named("store")
-	cfg, errConfig := pgxpool.ParseConfig(dsn)
+// Connect sets up underlying required services.
+func (db *Store) Connect(ctx context.Context) error {
+	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
-	if autoMigrate {
-		if errMigrate := Migrate(MigrateUp, dsn); errMigrate != nil {
+	if db.autoMigrate && !db.migrated {
+		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
 			if errMigrate.Error() == "no change" {
-				logger.Info("Migration at latest version")
+				db.log.Info("Migration at latest version")
 			} else {
 				return errors.Errorf("Could not migrate schema: %v", errMigrate)
 			}
 		} else {
-			logger.Info("Migration completed successfully")
+			db.log.Info("Migration completed successfully")
 		}
 	}
 	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
 	if errConnectConfig != nil {
 		return errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
-	conn = dbConn
+	db.conn = dbConn
 	return nil
 }
 
-func Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	rows, err := conn.Query(ctx, query, args...)
+func (db *Store) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	rows, err := db.conn.Query(ctx, query, args...)
 	return rows, Err(err)
 }
 
-func QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	return conn.QueryRow(ctx, query, args...)
+func (db *Store) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	return db.conn.QueryRow(ctx, query, args...)
 }
 
-func Exec(ctx context.Context, query string, args ...any) error {
-	_, err := conn.Exec(ctx, query, args...)
+func (db *Store) exec(ctx context.Context, query string, args ...any) error {
+	_, err := db.conn.Exec(ctx, query, args...)
 	return Err(err)
 }
 
 // Close will close the underlying database connection if it exists.
-func Close() error {
-	if conn != nil {
-		conn.Close()
+func (db *Store) Close() error {
+	if db.conn != nil {
+		db.conn.Close()
 	}
 	return nil
 }
 
-func truncateTable(ctx context.Context, table tableName) error {
-	if _, errExec := conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
+func (db *Store) truncateTable(ctx context.Context, table tableName) error {
+	if _, errExec := db.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
 		return Err(errExec)
 	}
 	return nil
@@ -164,8 +179,11 @@ const (
 	MigrateDownOne
 )
 
-// Migrate database schema.
-func Migrate(action MigrationAction, dsn string) error {
+// migrate database schema.
+func (db *Store) migrate(action MigrationAction, dsn string) error {
+	defer func() {
+		db.migrated = true
+	}()
 	instance, errOpen := sql.Open("pgx", dsn)
 	if errOpen != nil {
 		return errors.Wrapf(errOpen, "Failed to open database for migration")
@@ -182,7 +200,7 @@ func Migrate(action MigrationAction, dsn string) error {
 	if errMigrate != nil {
 		return errors.Wrapf(errMigrate, "failed to create migration driver")
 	}
-	defer util.LogCloser(driver, logger)
+	defer util.LogCloser(driver, db.log)
 	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHTTPFS != nil {
 		return errHTTPFS

@@ -2,6 +2,10 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -9,9 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // serveCmd represents the serve command.
@@ -36,27 +37,38 @@ func serveCmd() *cobra.Command {
 					_ = rootLogger.Sync()
 				}
 			}()
-			if errConnect := store.Init(rootCtx, rootLogger, conf.DB.DSN, conf.DB.AutoMigrate); errConnect != nil {
+
+			db := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
+			if errConnect := db.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}
+
 			defer func() {
-				if errClose := store.Close(); errClose != nil {
+				if errClose := db.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly")
 				}
 			}()
 
-			if errApp := app.Init(rootCtx, rootLogger, &conf); errApp != nil {
-				rootLogger.Fatal("Failed to init app", zap.Error(errApp))
-			}
-
 			if errWeb := web.Init(rootLogger, &conf); errWeb != nil {
 				rootLogger.Fatal("Failed to setup web", zap.Error(errWeb))
 			}
-			if errDiscord := discord.Start(rootLogger, &conf); errDiscord != nil {
-				rootLogger.Error("Failed to initialize discord", zap.Error(errDiscord))
+			bot, errBot := discord.New(rootLogger, &conf)
+			if errBot != nil {
+				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
-			defer discord.Shutdown(conf.Discord.GuildID)
-			if errWebStart := web.Start(rootCtx); errWebStart != nil {
+
+			application := app.New(bot)
+
+			if errInit := application.Init(rootCtx); errInit != nil {
+				rootLogger.Fatal("Failed to init app", zap.Error(errInit))
+			}
+
+			if errDiscord := bot.Start(rootLogger, &conf); errDiscord != nil {
+				rootLogger.Error("Failed to start discord", zap.Error(errDiscord))
+			}
+
+			defer bot.Shutdown(conf.Discord.GuildID)
+			if errWebStart := web.Start(rootCtx, &conf); errWebStart != nil {
 				rootLogger.Error("Web returned error", zap.Error(errWebStart))
 			}
 			<-rootCtx.Done()

@@ -360,12 +360,16 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 					_ = config.rcon.Close()
 					config.rcon = nil
 				}
+				errMu.Lock()
 				err = errors.Join(err, errRcon)
+				errMu.Unlock()
 				return
 			}
 			status, errParse := extra.ParseStatus(resp, true)
 			if errParse != nil {
+				errMu.Lock()
 				err = errors.Join(err, errParse)
+				errMu.Unlock()
 				return
 			}
 			mu.Lock()

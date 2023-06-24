@@ -35,31 +35,31 @@ func (f *Filter) Match(value string) bool {
 	return f.Pattern == value
 }
 
-func SaveFilter(ctx context.Context, filter *Filter) error {
+func (db *Store) SaveFilter(ctx context.Context, filter *Filter) error {
 	if filter.FilterID > 0 {
-		return updateFilter(ctx, filter)
+		return db.updateFilter(ctx, filter)
 	} else {
-		return insertFilter(ctx, filter)
+		return db.insertFilter(ctx, filter)
 	}
 }
 
 // todo squirrel version, it expects sql.db though...
-func insertFilter(ctx context.Context, filter *Filter) error {
+func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
-	if errQuery := QueryRow(ctx, query, filter.AuthorID, filter.Pattern,
+	if errQuery := db.QueryRow(ctx, query, filter.AuthorID, filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
 	}
-	logger.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
+	db.log.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func updateFilter(ctx context.Context, filter *Filter) error {
-	query, args, errQuery := sb.Update("filtered_word").
+func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
+	query, args, errQuery := db.sb.Update("filtered_word").
 		Set("author_id", filter.AuthorID).
 		Set("pattern", filter.Pattern).
 		Set("is_regex", filter.IsRegex).
@@ -71,28 +71,28 @@ func updateFilter(ctx context.Context, filter *Filter) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if err := Exec(ctx, query, args...); err != nil {
+	if err := db.exec(ctx, query, args...); err != nil {
 		return Err(err)
 	}
-	logger.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
+	db.log.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func DropFilter(ctx context.Context, filter *Filter) error {
+func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
-	if errExec := Exec(ctx, query, filter.FilterID); errExec != nil {
+	if errExec := db.exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
 	}
-	logger.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
+	db.log.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
 	return nil
 }
 
-func GetFilterByID(ctx context.Context, wordID int64, f *Filter) error {
+func (db *Store) GetFilterByID(ctx context.Context, wordID int64, f *Filter) error {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
 		WHERE filter_id = $1`
-	if errQuery := QueryRow(ctx, query, wordID).Scan(&f.FilterID, &f.AuthorID, &f.Pattern,
+	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&f.FilterID, &f.AuthorID, &f.Pattern,
 		&f.IsRegex, &f.IsEnabled, &f.TriggerCount, &f.CreatedOn, &f.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -100,11 +100,11 @@ func GetFilterByID(ctx context.Context, wordID int64, f *Filter) error {
 	return nil
 }
 
-func GetFilters(ctx context.Context) ([]Filter, error) {
+func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on
 		FROM filtered_word`
-	rows, errQuery := Query(ctx, query)
+	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

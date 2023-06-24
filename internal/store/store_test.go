@@ -19,10 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
-var logger *zap.Logger
-
 func TestMain(testMain *testing.M) {
-	logger = zap.NewNop()
+	logger, _ := zap.NewDevelopment()
 	var returnCode int
 
 	tearDown := func() {
@@ -34,14 +32,14 @@ func TestMain(testMain *testing.M) {
 		}
 		os.Exit(returnCode)
 	}
-
-	_, errConfig := config.Read()
+	var conf config.Config
+	errConfig := config.Read(&conf)
 	if errConfig != nil {
 		return
 	}
-	config.General.Mode = config.TestMode
+	conf.General.Mode = config.TestMode
 	testCtx := context.Background()
-	if dbErr := store.Init(testCtx, logger); dbErr != nil {
+	if dbErr := store.Init(testCtx, logger, conf.DB.DSN, conf.DB.AutoMigrate); dbErr != nil {
 		logger.Fatal("Failed to setup store", zap.Error(dbErr))
 	}
 

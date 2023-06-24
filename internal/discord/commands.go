@@ -3,7 +3,6 @@ package discord
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -66,7 +65,7 @@ const (
 )
 
 //nolint:funlen,maintidx
-func botRegisterSlashCommands(appID string, guildID string) error {
+func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 	dmPerms := false
 	modPerms := int64(discordgo.PermissionBanMembers)
 	userPerms := int64(discordgo.PermissionViewChannel)
@@ -472,63 +471,59 @@ func botRegisterSlashCommands(appID string, guildID string) error {
 		},
 	}
 
-	_, errBulk := session.ApplicationCommandBulkOverwrite(appID, guildID, slashCommands)
+	_, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, guildID, slashCommands)
 	if errBulk != nil {
 		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
-	logger.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
+	bot.logger.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
 
 	return nil
 }
 
-type CommandHandler func(ctx context.Context, conf *config.Config, s *discordgo.Session,
-	m *discordgo.InteractionCreate, r *Response) error
+type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *Response) error
 
 const (
 	discordMaxMsgLen = 2000
 )
 
-func makeOnInteractionCreate(conf *config.Config) func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	return func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-		data := interaction.ApplicationCommandData()
-		command := Cmd(data.Name)
-		response := Response{MsgType: MtString}
-		if handler, handlerFound := commandHandlers[command]; handlerFound {
-			// sendPreResponse should be called for any commands that call external services or otherwise
-			// could not return a response instantly. discord will time out commands that don't respond within a
-			// very short timeout windows, ~2-3 seconds.
-			initialResponse := &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Calculating numberwang...",
-				},
-			}
-			if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
-				RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
-				if errSendInteraction := sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-					logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
-				}
-				return
-			}
-			commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
-			defer cancelCommand()
-			if errHandleCommand := handler(commandCtx, conf, session, interaction, &response); errHandleCommand != nil {
-				// TODO User facing errors only
-				RespErr(&response, errHandleCommand.Error())
-				if errSendInteraction := sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-					logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
-				}
-				logger.Error("User command error", zap.Error(errHandleCommand))
-				return
-			}
-			if sendSendResponse := sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
-				logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
-			}
-		}
-	}
-
-}
-
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
+
+func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	data := interaction.ApplicationCommandData()
+	command := Cmd(data.Name)
+	response := Response{MsgType: MtString}
+	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
+		// sendPreResponse should be called for any commands that call external services or otherwise
+		// could not return a response instantly. discord will time out commands that don't respond within a
+		// very short timeout windows, ~2-3 seconds.
+		initialResponse := &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Calculating numberwang...",
+			},
+		}
+		if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
+			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
+			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
+				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
+			}
+			return
+		}
+		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
+		defer cancelCommand()
+		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
+			// TODO User facing errors only
+			RespErr(&response, errHandleCommand.Error())
+			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
+				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
+			}
+			bot.logger.Error("User command error", zap.Error(errHandleCommand))
+			return
+		}
+		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
+			bot.logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
+		}
+	}
+}

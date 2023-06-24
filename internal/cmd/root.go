@@ -52,6 +52,6 @@ func setupRootCmd() *cobra.Command {
 	nc.AddCommand(netUpdateCmd())
 	root.AddCommand(nc)
 	root.AddCommand(serveCmd())
-	//root.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)")
+	// root.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)").
 	return root
 }

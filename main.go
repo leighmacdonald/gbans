@@ -1,5 +1,5 @@
 /*
-Copyright © 2020 Leigh MacDonald <leigh.macdonald@gmail.com>
+Copyright © 2020-2023 Leigh MacDonald <leigh.macdonald@gmail.com>
 */
 package main
 

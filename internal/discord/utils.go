@@ -2,20 +2,19 @@ package discord
 
 import (
 	"fmt"
+
 	"github.com/leighmacdonald/gbans/internal/config"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/steamid/v2/steamid"
-	"go.uber.org/zap"
 )
 
 const (
 	maxEmbedFields = 25
 	// maxUsernameChars    = 32
 	// maxAuthorChars      = 256.
-	maxFieldNameChars   = 256
-	maxFieldValueChars  = 1024
-	maxDescriptionChars = 2048
+	maxFieldNameChars  = 256
+	maxFieldValueChars = 1024
 )
 
 type Colour int
@@ -115,7 +114,6 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 		name = sid.String()
 	}
 	if name == "" {
-		logger.Warn("Value cannot be empty, dropping field", zap.String("field", "name"))
 		return
 	}
 	embed.Author = &discordgo.MessageEmbedAuthor{URL: url, Name: name}
@@ -152,15 +150,12 @@ func AddLink(embed *discordgo.MessageEmbed, conf *config.Config, value Linkable)
 
 func AddFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inline bool) {
 	if len(embed.Fields) >= maxEmbedFields {
-		logger.Warn("Dropping embed fields. Already at max count", zap.Int("max", maxEmbedFields))
 		return
 	}
 	if len(title) == 0 {
-		logger.Warn("Title cannot be empty, dropping field")
 		return
 	}
 	if len(value) == 0 {
-		logger.Warn("Value cannot be empty, dropping field", zap.String("field", title))
 		return
 	}
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{

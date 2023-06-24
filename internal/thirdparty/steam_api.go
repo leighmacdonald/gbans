@@ -2,12 +2,13 @@ package thirdparty
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
+
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v2/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
-	"sync"
-	"sync/atomic"
 )
 
 const steamQueryMaxResults = 100

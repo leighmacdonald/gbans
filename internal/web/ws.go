@@ -48,9 +48,11 @@ const (
 
 const tokenLen = 6
 
-var webSocketUpgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+func newWebSocketUpgrader() websocket.Upgrader {
+	return websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
 }
 
 var (
@@ -363,7 +365,7 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 	return handler(cm, client, payload)
 }
 
-func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfile) {
+func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManager, user model.UserProfile) {
 	// webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
@@ -372,7 +374,8 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, user model.UserProfil
 	//	}
 	//	return allowed
 	// }
-	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
+	upgrader := newWebSocketUpgrader()
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error("Failed to upgrade websocket", zap.Error(err))
 		return

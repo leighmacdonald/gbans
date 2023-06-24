@@ -250,7 +250,7 @@ func setDefaultConfigValues() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	var defaultConfig = map[string]any{
+	defaultConfig := map[string]any{
 		"general.site_name":                        "gbans",
 		"general.steam_key":                        "",
 		"general.mode":                             "release",

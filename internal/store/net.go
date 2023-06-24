@@ -19,14 +19,14 @@ import (
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
+func (db *Store) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE $1 <<= cidr AND deleted = false AND is_enabled = true`
 	var nets []BanCIDR
-	rows, errQuery := Query(ctx, query, ip.String())
+	rows, errQuery := db.Query(ctx, query, ip.String())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -44,27 +44,27 @@ func GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, error) {
 	return nets, nil
 }
 
-func GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error {
+func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE deleted = false AND net_id = $1`
-	return Err(QueryRow(ctx, query, netID).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+	return Err(db.QueryRow(ctx, query, netID).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 		&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 		&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
 		&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState))
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
-func GetBansNet(ctx context.Context) ([]BanCIDR, error) {
+func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state 
 		FROM ban_net
 		WHERE deleted = false`
 	var nets []BanCIDR
-	rows, errQuery := Query(ctx, query)
+	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -82,9 +82,9 @@ func GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 	return nets, nil
 }
 
-func updateBanNet(ctx context.Context, banNet *BanCIDR) error {
+func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
 	banNet.UpdatedOn = config.Now()
-	query, args, errQueryArgs := sb.
+	query, args, errQueryArgs := db.sb.
 		Update("ban_net").
 		Set("cidr", banNet.CIDR).
 		Set("origin", banNet.Origin).
@@ -104,11 +104,11 @@ func updateBanNet(ctx context.Context, banNet *BanCIDR) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	return Err(Exec(ctx, query, args...))
+	return Err(db.exec(ctx, query, args...))
 }
 
-func insertBanNet(ctx context.Context, banNet *BanCIDR) error {
-	query, args, errQueryArgs := sb.
+func (db *Store) insertBanNet(ctx context.Context, banNet *BanCIDR) error {
+	query, args, errQueryArgs := db.sb.
 		Insert("ban_net").
 		Columns("cidr", "origin", "created_on", "updated_on", "reason", "reason_text", "valid_until",
 			"deleted", "note", "unban_reason_text", "is_enabled", "target_id", "source_id", "appeal_state").
@@ -120,36 +120,36 @@ func insertBanNet(ctx context.Context, banNet *BanCIDR) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	return Err(QueryRow(ctx, query, args...).Scan(&banNet.NetID))
+	return Err(db.QueryRow(ctx, query, args...).Scan(&banNet.NetID))
 }
 
-func SaveBanNet(ctx context.Context, banNet *BanCIDR) error {
+func (db *Store) SaveBanNet(ctx context.Context, banNet *BanCIDR) error {
 	if banNet.NetID > 0 {
-		return updateBanNet(ctx, banNet)
+		return db.updateBanNet(ctx, banNet)
 	}
-	return insertBanNet(ctx, banNet)
+	return db.insertBanNet(ctx, banNet)
 }
 
-func DropBanNet(ctx context.Context, banNet *BanCIDR) error {
-	query, args, errQueryArgs := sb.Delete("ban_net").Where(sq.Eq{"net_id": banNet.NetID}).ToSql()
+func (db *Store) DropBanNet(ctx context.Context, banNet *BanCIDR) error {
+	query, args, errQueryArgs := db.sb.Delete("ban_net").Where(sq.Eq{"net_id": banNet.NetID}).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errExec := Exec(ctx, query, args...); errExec != nil {
+	if errExec := db.exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	banNet.NetID = 0
 	return nil
 }
 
-func GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
+func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason_text, valid_until, deleted, note, 
 		       unban_reason_text, is_enabled, target_id, source_id, reason, appeal_state
 		FROM ban_net
 		WHERE valid_until < $1`
 	var bans []BanCIDR
-	rows, errQuery := Query(ctx, query, config.Now())
+	rows, errQuery := db.Query(ctx, query, config.Now())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -167,14 +167,14 @@ func GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 	return bans, nil
 }
 
-func GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
+func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn
 		WHERE valid_until < $1 AND deleted = false`
 	var bans []BanASN
-	rows, errQuery := conn.Query(ctx, query, config.Now())
+	rows, errQuery := db.conn.Query(ctx, query, config.Now())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -191,12 +191,12 @@ func GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 	return bans, nil
 }
 
-func GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+func (db *Store) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
 	const query = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 
 		FROM net_asn
 		WHERE as_num = $1`
-	rows, errQuery := conn.Query(ctx, query, asNum)
+	rows, errQuery := db.conn.Query(ctx, query, asNum)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -212,38 +212,38 @@ func GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecord
 	return records, nil
 }
 
-func GetASNRecordByIP(ctx context.Context, ip net.IP, asnRecord *ip2location.ASNRecord) error {
+func (db *Store) GetASNRecordByIP(ctx context.Context, ip net.IP, asnRecord *ip2location.ASNRecord) error {
 	const query = `
 		SELECT ip_from, ip_to, cidr, as_num, as_name 
 		FROM net_asn
 		WHERE $1::inet <@ ip_range
 		LIMIT 1`
-	if errQuery := conn.QueryRow(ctx, query, ip.String()).
+	if errQuery := db.conn.QueryRow(ctx, query, ip.String()).
 		Scan(&asnRecord.IPFrom, &asnRecord.IPTo, &asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
 }
 
-func GetLocationRecord(ctx context.Context, ip net.IP, r *ip2location.LocationRecord) error {
+func (db *Store) GetLocationRecord(ctx context.Context, ip net.IP, r *ip2location.LocationRecord) error {
 	const query = `
 		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
 		WHERE ip_range @> $1::inet`
-	if errQuery := QueryRow(ctx, query, ip.String()).
+	if errQuery := db.QueryRow(ctx, query, ip.String()).
 		Scan(&r.IPFrom, &r.IPTo, &r.CountryCode, &r.CountryName, &r.RegionName, &r.CityName, &r.LatLong.Latitude, &r.LatLong.Longitude); errQuery != nil {
 		return Err(errQuery)
 	}
 	return nil
 }
 
-func GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.ProxyRecord) error {
+func (db *Store) GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.ProxyRecord) error {
 	const query = `
 		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
 		WHERE $1::inet <@ ip_range`
-	if errQuery := QueryRow(ctx, query, ip.String()).
+	if errQuery := db.QueryRow(ctx, query, ip.String()).
 		Scan(&proxyRecord.IPFrom, &proxyRecord.IPTo, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
 		return Err(errQuery)
@@ -251,9 +251,9 @@ func GetProxyRecord(ctx context.Context, ip net.IP, proxyRecord *ip2location.Pro
 	return nil
 }
 
-func loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
+func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	t0 := config.Now()
-	if errTruncate := truncateTable(ctx, tableNetASN); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, tableNetASN); errTruncate != nil {
 		return errTruncate
 	}
 	const query = `
@@ -265,26 +265,26 @@ func loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				batchResults := conn.SendBatch(c, &batch)
+				batchResults := db.conn.SendBatch(c, &batch)
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 					return errCloseBatch
 				}
 				cancel()
 				batch = pgx.Batch{}
-				logger.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
+				db.log.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	logger.Info("Loaded ASN4 records",
+	db.log.Info("Loaded ASN4 records",
 		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
 
-func loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
+func (db *Store) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
 	t0 := config.Now()
-	if errTruncate := truncateTable(ctx, tableNetLocation); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, tableNetLocation); errTruncate != nil {
 		return errTruncate
 	}
 	const query = `
@@ -296,26 +296,26 @@ func loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ b
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				batchResults := conn.SendBatch(c, &batch)
+				batchResults := db.conn.SendBatch(c, &batch)
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 					return errCloseBatch
 				}
 				cancel()
 				batch = pgx.Batch{}
-				logger.Debug(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
+				db.log.Debug(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	logger.Debug("Loaded Location4 records",
+	db.log.Debug("Loaded Location4 records",
 		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
 
-func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
+func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
 	t0 := config.Now()
-	if errTruncate := truncateTable(ctx, tableNetProxy); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, tableNetProxy); errTruncate != nil {
 		return errTruncate
 	}
 	const query = `
@@ -329,19 +329,19 @@ func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool)
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				batchResults := conn.SendBatch(c, &batch)
+				batchResults := db.conn.SendBatch(c, &batch)
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 					return errCloseBatch
 				}
 				cancel()
 				batch = pgx.Batch{}
-				logger.Debug(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
+				db.log.Debug(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
-	logger.Debug("Loaded Proxy records",
+	db.log.Debug("Loaded Proxy records",
 		zap.Int("count", len(records)), zap.Duration("duration", time.Since(t0)))
 	return nil
 }
@@ -350,32 +350,32 @@ func loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool)
 //
 // Note that this can take a while on slower machines. For reference, it takes
 // about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
+func (db *Store) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
 	if len(blockListData.Proxies) > 0 {
-		if errProxies := loadProxies(ctx, blockListData.Proxies, false); errProxies != nil {
+		if errProxies := db.loadProxies(ctx, blockListData.Proxies, false); errProxies != nil {
 			return errProxies
 		}
 	}
 	if len(blockListData.Locations4) > 0 {
-		if errLocation := loadLocation(ctx, blockListData.Locations4, false); errLocation != nil {
+		if errLocation := db.loadLocation(ctx, blockListData.Locations4, false); errLocation != nil {
 			return errLocation
 		}
 	}
 	if len(blockListData.ASN4) > 0 {
-		if errASN := loadASN(ctx, blockListData.ASN4); errASN != nil {
+		if errASN := db.loadASN(ctx, blockListData.ASN4); errASN != nil {
 			return errASN
 		}
 	}
 	return nil
 }
 
-func GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error {
+func (db *Store) GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
 		WHERE deleted = false AND as_num = $1`
-	if errQuery := QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
+	if errQuery := db.QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
 		&banASN.SourceID, &banASN.TargetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
 		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
 		&banASN.AppealState); errQuery != nil {
@@ -384,13 +384,13 @@ func GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error {
 	return nil
 }
 
-func GetBansASN(ctx context.Context) ([]BanASN, error) {
+func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
 		WHERE deleted = false`
-	rows, errRows := Query(ctx, query)
+	rows, errRows := db.Query(ctx, query)
 	if errRows != nil {
 		return nil, Err(errRows)
 	}
@@ -409,7 +409,7 @@ func GetBansASN(ctx context.Context) ([]BanASN, error) {
 	return records, nil
 }
 
-func SaveBanASN(ctx context.Context, banASN *BanASN) error {
+func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
 	banASN.UpdatedOn = config.Now()
 	if banASN.BanASNId > 0 {
 		const queryUpdate = `
@@ -418,7 +418,7 @@ func SaveBanASN(ctx context.Context, banASN *BanASN) error {
 				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, 
 				unban_reason_text = $12, appeal_state = $13
 			WHERE ban_asn_id = $1`
-		return Err(Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
+		return Err(db.exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
 			banASN.TargetID, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
 			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
 	}
@@ -427,17 +427,17 @@ func SaveBanASN(ctx context.Context, banASN *BanASN) error {
 		                     reason_text, is_enabled, deleted, unban_reason_text, appeal_state)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING ban_asn_id`
-	return Err(QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID, banASN.TargetID,
+	return Err(db.QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID, banASN.TargetID,
 		banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
 		banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState).Scan(&banASN.BanASNId))
 }
 
-func DropBanASN(ctx context.Context, banASN *BanASN) error {
+func (db *Store) DropBanASN(ctx context.Context, banASN *BanASN) error {
 	banASN.Deleted = true
-	return SaveBanASN(ctx, banASN)
+	return db.SaveBanASN(ctx, banASN)
 }
 
-func GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error) {
+func (db *Store) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error) {
 	const query = `
 		SELECT DISTINCT source_id
 		FROM server_log
@@ -445,7 +445,7 @@ func GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection,
 	if ipNet == nil {
 		return nil, errors.New("Invalid address")
 	}
-	rows, errQuery := Query(ctx, fmt.Sprintf(query, ipNet.String()))
+	rows, errQuery := db.Query(ctx, fmt.Sprintf(query, ipNet.String()))
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

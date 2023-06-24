@@ -15,13 +15,9 @@ const (
 )
 
 var (
-	reDuration         *regexp.Regexp
+	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
 	errInvalidDuration = errors.New("Invalid duration")
 )
-
-func init() {
-	reDuration = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
-}
 
 // ParseDuration works exactly like time.ParseDuration except that
 // it supports durations longer than hours

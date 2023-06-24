@@ -17,16 +17,12 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
-var (
-	logger     *zap.Logger
-	httpServer *http.Server
-	cm         *wsConnectionManager
-)
+var logger *zap.Logger
 
-func Start(ctx context.Context) error {
-	cm = newWSConnectionManager(ctx, logger)
+func Start(ctx context.Context, conf *config.Config) error {
 	logger.Info("Service status changed", zap.String("state", "ready"))
 	defer logger.Info("Service status changed", zap.String("state", "stopped"))
+	httpServer := newHTTPServer(ctx, conf)
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -49,18 +45,10 @@ func bind(ctx *gin.Context, target any) bool {
 	return true
 }
 
-// Init sets up the router and starts the API HTTP handlers.
-func Init(l *zap.Logger, conf *config.Config) error {
-	if conf.General.Mode == config.ReleaseMode {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
-	}
-
-	logger = l.Named("web")
-	httpServer = &http.Server{
+func newHTTPServer(ctx context.Context, conf *config.Config) *http.Server {
+	httpServer := &http.Server{
 		Addr:           conf.HTTP.Addr(),
-		Handler:        createRouter(conf),
+		Handler:        createRouter(ctx, conf),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
@@ -84,6 +72,17 @@ func Init(l *zap.Logger, conf *config.Config) error {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
+	return httpServer
+}
+
+// Init sets up the router and starts the API HTTP handlers.
+func Init(l *zap.Logger, conf *config.Config) error {
+	if conf.General.Mode == config.ReleaseMode {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+	logger = l.Named("web")
 
 	return nil
 }

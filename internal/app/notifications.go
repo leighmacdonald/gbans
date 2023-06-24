@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -14,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+type NotificationHandler struct{}
+
 type NotificationPayload struct {
 	MinPerms consts.Privilege
 	Sids     steamid.Collection
@@ -22,17 +23,17 @@ type NotificationPayload struct {
 	Link     string
 }
 
-func SendNotification(ctx context.Context, conf *config.Config, notification NotificationPayload) error {
+func (app *App) SendNotification(ctx context.Context, notification NotificationPayload) error {
 	// Collect all required ids
 	if notification.MinPerms >= consts.PUser {
-		sids, errIds := store.GetSteamIdsAbove(ctx, notification.MinPerms)
+		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
 		if errIds != nil {
 			return errors.Wrap(errIds, "Failed to fetch steamids for notification")
 		}
 		notification.Sids = append(notification.Sids, sids...)
 	}
 	uniqueIds := fp.Uniq(notification.Sids)
-	people, errPeople := store.GetPeopleBySteamID(ctx, uniqueIds)
+	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
 	if errPeople != nil && !errors.Is(errPeople, store.ErrNoResult) {
 		return errors.Wrap(errPeople, "Failed to fetch people for notification")
 	}
@@ -49,18 +50,18 @@ func SendNotification(ctx context.Context, conf *config.Config, notification Not
 				Description: pl.Message,
 			}
 			if pl.Link != "" {
-				embed.URL = conf.ExtURL(pl.Link)
+				embed.URL = app.conf.ExtURL(pl.Link)
 			}
-			discord.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
+			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
 		}
 	}(discordIds, notification)
 
 	// Broadcast to
 	for _, sid := range uniqueIds {
 		// Todo, prep stmt at least.
-		if errSend := store.SendNotification(ctx, sid, notification.Severity,
+		if errSend := app.db.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {
-			logger.Error("Failed to send notification", zap.Error(errSend))
+			app.log.Error("Failed to send notification", zap.Error(errSend))
 			break
 		}
 	}
