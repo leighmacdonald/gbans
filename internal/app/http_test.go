@@ -1,4 +1,4 @@
-package web_test
+package app_test
 
 // func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder) bool) {
 //	w := httptest.NewRecorder()

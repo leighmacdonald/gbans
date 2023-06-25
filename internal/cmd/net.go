@@ -36,12 +36,12 @@ func netUpdateCmd() *cobra.Command {
 			}()
 			connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancelConn()
-			errStore := store.Init(connCtx, rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
-			if errStore != nil {
-				rootLogger.Fatal("Failed to initialize database connection", zap.Error(errStore))
+			db := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
+			if errConnect := db.Connect(connCtx); errConnect != nil {
+				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
 			defer func() {
-				if errClose := store.Close(); errClose != nil {
+				if errClose := db.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
@@ -55,7 +55,7 @@ func netUpdateCmd() *cobra.Command {
 			}
 			updateCtx, cancelUpdate := context.WithTimeout(context.Background(), time.Minute*30)
 			defer cancelUpdate()
-			if errInsert := store.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
+			if errInsert := db.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 			}
 		},

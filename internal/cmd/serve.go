@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/web"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -20,7 +19,7 @@ func serveCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",
 		Short: "Starts the gbans service",
-		Long:  `Start the main gbans application`,
+		Long:  `Starts the main gbans application`,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
@@ -49,26 +48,23 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			if errWeb := web.Init(rootLogger, &conf); errWeb != nil {
-				rootLogger.Fatal("Failed to setup web", zap.Error(errWeb))
-			}
 			bot, errBot := discord.New(rootLogger, &conf)
 			if errBot != nil {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			application := app.New(bot)
+			application := app.New(&conf, db, bot, rootLogger)
 
 			if errInit := application.Init(rootCtx); errInit != nil {
 				rootLogger.Fatal("Failed to init app", zap.Error(errInit))
 			}
 
-			if errDiscord := bot.Start(rootLogger, &conf); errDiscord != nil {
+			if errDiscord := bot.Start(); errDiscord != nil {
 				rootLogger.Error("Failed to start discord", zap.Error(errDiscord))
 			}
 
 			defer bot.Shutdown(conf.Discord.GuildID)
-			if errWebStart := web.Start(rootCtx, &conf); errWebStart != nil {
+			if errWebStart := application.StartHTTP(rootCtx); errWebStart != nil {
 				rootLogger.Error("Web returned error", zap.Error(errWebStart))
 			}
 			<-rootCtx.Done()

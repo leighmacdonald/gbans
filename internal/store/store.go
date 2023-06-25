@@ -56,7 +56,7 @@ type Store struct {
 func New(rootLogger *zap.Logger, dsn string, autoMigrate bool) *Store {
 	return &Store{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
-		log:         rootLogger.Named("store"),
+		log:         rootLogger.Named("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 	}

@@ -1,8 +1,6 @@
 package discord
 
 import (
-	"sync/atomic"
-
 	"github.com/leighmacdonald/gbans/internal/config"
 
 	"github.com/bwmarrin/discordgo"
@@ -20,7 +18,7 @@ type Bot struct {
 	logger           *zap.Logger
 	conf             *config.Config
 	session          *discordgo.Session
-	isReady          atomic.Bool
+	isReady          bool
 	onConnectUser    func()
 	onDisconnectUser func()
 	commandHandlers  map[Cmd]CommandHandler
@@ -41,7 +39,7 @@ func New(l *zap.Logger, conf *config.Config) (*Bot, error) {
 		conf:            conf,
 		logger:          l.Named("discord"),
 		session:         session,
-		isReady:         atomic.Bool{},
+		isReady:         false,
 		commandHandlers: map[Cmd]CommandHandler{},
 	}
 	bot.session.AddHandler(bot.onReady)
@@ -91,12 +89,12 @@ func (bot *Bot) botUnregisterSlashCommands(guildID string) {
 	bot.logger.Info("Unregistered discord commands", zap.Int("count", len(registeredCommands)))
 }
 
-func (bot *Bot) Start(l *zap.Logger, conf *config.Config) error {
+func (bot *Bot) Start() error {
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
-	if errRegister := bot.botRegisterSlashCommands(conf.Discord.AppID, conf.Discord.GuildID); errRegister != nil {
+	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID, bot.conf.Discord.GuildID); errRegister != nil {
 		bot.logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
@@ -105,10 +103,10 @@ func (bot *Bot) Start(l *zap.Logger, conf *config.Config) error {
 
 func (bot *Bot) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
 	bot.logger.Info("Service state changed", zap.String("state", "ready"))
-	bot.isReady.Store(true)
+	bot.isReady = true
 }
 
-func (bot *Bot) onConnect(_ *discordgo.Connect) {
+func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 	status := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{
@@ -135,7 +133,7 @@ func (bot *Bot) onConnect(_ *discordgo.Connect) {
 }
 
 func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	bot.isReady.Store(false)
+	bot.isReady = false
 
 	bot.logger.Info("Service state changed", zap.String("state", "disconnected"))
 	if bot.onDisconnectUser != nil {
@@ -162,7 +160,7 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 //}
 
 func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
-	if !bot.isReady.Load() {
+	if !bot.isReady {
 		return nil
 	}
 	edit := &discordgo.InteractionResponseData{
@@ -191,7 +189,7 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 }
 
 func (bot *Bot) SendPayload(payload Payload) {
-	if !bot.isReady.Load() {
+	if !bot.isReady {
 		return
 	}
 	if _, errSend := bot.session.ChannelMessageSendEmbed(payload.ChannelID, payload.Embed); errSend != nil {

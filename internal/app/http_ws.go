@@ -1,10 +1,11 @@
-package web
+package app
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 
@@ -205,7 +206,7 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 	for _, l := range cm.lobbies {
 		lobbyVal, ok := l.(*pugLobby)
 		if !ok {
-			logger.Warn("Failed to cast publobby")
+			cm.logger.Warn("Failed to cast publobby")
 			continue
 		}
 		lobbies = append(lobbies, lobbyVal)
@@ -365,7 +366,7 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 	return handler(cm, client, payload)
 }
 
-func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManager, user model.UserProfile) {
+func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManager, user model.UserProfile, logger *zap.Logger) {
 	// webSocketUpgrader.CheckOrigin = func(r *http.Request) bool {
 	//	origin := r.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)
@@ -374,29 +375,30 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 	//	}
 	//	return allowed
 	// }
+	log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	upgrader := newWebSocketUpgrader()
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Error("Failed to upgrade websocket", zap.Error(err))
+		log.Error("Failed to upgrade websocket", zap.Error(err))
 		return
 	}
-	logger.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
+	log.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
 	// New user connection
 	// TODO track between connections so they can resume their session upon dc
-	client := newWsClient(logger, conn, user)
+	client := newWsClient(log, conn, user)
 
 	go client.writer()
 
 	if errJoin := cm.join(client); errJoin != nil {
-		logger.Error("Failed to join client pool", zap.Error(errJoin))
+		log.Error("Failed to join client pool", zap.Error(errJoin))
 		return
 	}
 
 	defer func() {
 		if errLeave := cm.leave(client); errLeave != nil {
-			logger.Error("Error dropping client", zap.Error(errLeave))
+			log.Error("Error dropping client", zap.Error(errLeave))
 		}
-		logger.Debug("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
+		log.Debug("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
 	}()
 	type wsRequest struct {
 		MsgType wsMsgType       `json:"msg_type"`
@@ -409,7 +411,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 			var wsErr *websocket.CloseError
 			ok := errors.Is(errRead, wsErr)
 			if !ok {
-				logger.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
+				log.Error("Unhandled error trying to write ws payload", zap.Error(errRead))
 			}
 			// else {
 			// switch wsErr.Code {
@@ -421,7 +423,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 			return
 		}
 		if errHandle := cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {
-			logger.Error("Failed to handle ws message", zap.Error(errHandle))
+			log.Error("Failed to handle ws message", zap.Error(errHandle))
 			client.send(basePayload.MsgType+1, false, wsMsgErrorResponse{
 				Error: errHandle.Error(),
 			})

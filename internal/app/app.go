@@ -48,12 +48,15 @@ type App struct {
 	wordFilters          *wordFilters
 }
 
-func New(bot *discord.Bot) *App {
+func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	eb := newEventBroadcaster()
 
-	application := &App{
+	application := App{
 		bot:                  bot,
 		eb:                   eb,
+		db:                   db,
+		conf:                 conf,
+		log:                  logger,
 		logFileChan:          make(chan *model.LogFilePayload, 10),
 		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan NotificationPayload, 5),
