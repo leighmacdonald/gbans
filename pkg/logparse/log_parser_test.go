@@ -79,6 +79,8 @@ func testLogLine(t *testing.T, line string, expected any) {
 }
 
 func TestParseLogStartEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: Log file started (file "logs/L0221034.log") (game "/home/tf2server/serverfiles/tf") (version "6300758")`, logparse.LogStartEvt{
 		TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 		File:      "logs/L0221034.log", Game: "/home/tf2server/serverfiles/tf", Version: "6300758",
@@ -86,6 +88,8 @@ func TestParseLogStartEvt(t *testing.T) {
 }
 
 func TestParseCVAREvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: server_cvar: "sm_nextmap" "pl_frontier_final"`, logparse.CVAREvt{
 		TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 		CVAR:      "sm_nextmap", Value: "pl_frontier_final",
@@ -93,6 +97,8 @@ func TestParseCVAREvt(t *testing.T) {
 }
 
 func TestParseRCONEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: rcon from "23.239.22.163:42004": command "status"`,
 		logparse.RCONEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -101,6 +107,8 @@ func TestParseRCONEvt(t *testing.T) {
 }
 
 func TestParseEnteredEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><>" Entered the game`,
 		logparse.EnteredEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -109,6 +117,8 @@ func TestParseEnteredEvt(t *testing.T) {
 }
 
 func TestParseJoinedTeamEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><Unassigned>" joined team "Red"`,
 		logparse.JoinedTeamEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -118,6 +128,8 @@ func TestParseJoinedTeamEvt(t *testing.T) {
 }
 
 func TestParseChangeClassEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><Red>" changed role to "scout"`,
 		logparse.ChangeClassEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -133,6 +145,8 @@ func TestParseChangeClassEvt(t *testing.T) {
 }
 
 func TestParseSuicideEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Dzefersons14<8><[U:1:1080653073]><Blue>" committed suicide with "world" (attacker_position "-1189 2513 -423")`,
 		logparse.SuicideEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -151,6 +165,8 @@ func TestParseSuicideEvt(t *testing.T) {
 }
 
 func TestParseWRoundStartEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Round_Start"`,
 		logparse.WRoundStartEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -158,6 +174,8 @@ func TestParseWRoundStartEvt(t *testing.T) {
 }
 
 func TestParseMedicDeathEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "medic_death" against "Dzefersons14<8><[U:1:1080653073]><Blue>" (healing "135") (ubercharge "0")`,
 		logparse.MedicDeathEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -177,6 +195,8 @@ func TestParseMedicDeathEvt(t *testing.T) {
 }
 
 func TestParseKilledEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "brass_beast" (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`,
 		logparse.KilledEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -198,6 +218,8 @@ func TestParseKilledEvt(t *testing.T) {
 }
 
 func TestParseCustomKilledEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" killed "Dzefersons14<8><[U:1:1080653073]><Blue>" with "spy_cicle" (customkill "backstab") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`,
 		logparse.CustomKilledEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -211,6 +233,8 @@ func TestParseCustomKilledEvt(t *testing.T) {
 }
 
 func TestParseKillAssistEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><Red>" triggered "kill assist" against "Dzefersons14<8><[U:1:1080653073]><Blue>" (assister_position "-476 154 -254") (attacker_position "217 -54 -302") (victim_position "203 -2 -319")`,
 		logparse.KillAssistEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -226,6 +250,8 @@ func TestParseKillAssistEvt(t *testing.T) {
 }
 
 func TestParsePointCapturedEvt(t *testing.T) {
+	t.Parallel()
+
 	evt := logparse.PointCapturedEvt{
 		TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 		Team:      logparse.RED, CP: 0, CPName: "#koth_viaduct_cap", NumCappers: 2,
@@ -241,6 +267,8 @@ func TestParsePointCapturedEvt(t *testing.T) {
 }
 
 func TestParseConnectedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "amogus gaming<13><[U:1:1089803558]><>" Connected, address "139.47.95.130:47949"`,
 		logparse.ConnectedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -258,6 +286,8 @@ func TestParseConnectedEvt(t *testing.T) {
 //}
 
 func TestParseKilledObjectEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "killedobject" (object "OBJ_SENTRYGUN") (weapon "obj_attachment_sapper") (objectowner "idk<9><[U:1:1170132017]><Blue>") (attacker_position "2 -579 -255")`,
 		logparse.KilledObjectEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -279,6 +309,8 @@ func TestParseKilledObjectEvt(t *testing.T) {
 }
 
 func TestParseCarryObjectEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "idk<9><[U:1:1170132017]><Blue>" triggered "player_carryobject" (object "OBJ_SENTRYGUN") (position "1074 -2279 -423")`,
 		logparse.CarryObjectEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -288,6 +320,8 @@ func TestParseCarryObjectEvt(t *testing.T) {
 }
 
 func TestParseDropObjectEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "idk<9><[U:1:1170132017]><Blue>" triggered "player_dropobject" (object "OBJ_SENTRYGUN") (position "339 -419 -255")`,
 		logparse.DropObjectEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -297,6 +331,8 @@ func TestParseDropObjectEvt(t *testing.T) {
 }
 
 func TestParseBuiltObjectEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "idk<9><[U:1:1170132017]><Blue>" triggered "player_builtobject" (object "OBJ_SENTRYGUN") (position "880 -152 -255")`,
 		logparse.BuiltObjectEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -307,6 +343,8 @@ func TestParseBuiltObjectEvt(t *testing.T) {
 }
 
 func TestParseWRoundWinEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Round_Win" (winner "Red")`,
 		logparse.WRoundWinEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -315,6 +353,8 @@ func TestParseWRoundWinEvt(t *testing.T) {
 }
 
 func TestParseWRoundLenEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Round_Length" (seconds "398.10")`,
 		logparse.WRoundLenEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -323,6 +363,8 @@ func TestParseWRoundLenEvt(t *testing.T) {
 }
 
 func TestParseWTeamScoreEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "Red" current score "1" with "2" players`,
 		logparse.WTeamScoreEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -331,6 +373,8 @@ func TestParseWTeamScoreEvt(t *testing.T) {
 }
 
 func TestParseSayEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><Red>" say "gg"`,
 		logparse.SayEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -340,6 +384,8 @@ func TestParseSayEvt(t *testing.T) {
 }
 
 func TestParseWIntermissionWinLimitEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "RED" triggered "Intermission_Win_Limit"`,
 		logparse.WIntermissionWinLimitEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -348,6 +394,8 @@ func TestParseWIntermissionWinLimitEvt(t *testing.T) {
 }
 
 func TestParseSayTeamEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" say_team "gg"`,
 		logparse.SayTeamEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -357,6 +405,8 @@ func TestParseSayTeamEvt(t *testing.T) {
 }
 
 func TestParseDominationEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" triggered "Domination" against "Dzefersons14<8><[U:1:1080653073]><Blue>"`,
 		logparse.DominationEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -366,6 +416,8 @@ func TestParseDominationEvt(t *testing.T) {
 }
 
 func TestParseDisconnectedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Cybermorphic<15><[U:1:901503117]><Unassigned>" Disconnected (reason "Disconnect by user.")`,
 		logparse.DisconnectedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -382,6 +434,8 @@ func TestParseDisconnectedEvt(t *testing.T) {
 }
 
 func TestParseRevengeEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Dzefersons14<8><[U:1:1080653073]><Blue>" triggered "Revenge" against "Desmos Calculator<10><[U:1:1132396177]><Red>"`,
 		logparse.RevengeEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -391,6 +445,8 @@ func TestParseRevengeEvt(t *testing.T) {
 }
 
 func TestParseWRoundOvertimeEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Round_Overtime"`,
 		logparse.WRoundOvertimeEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -398,6 +454,8 @@ func TestParseWRoundOvertimeEvt(t *testing.T) {
 }
 
 func TestParseCaptureBlockedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "potato<16><[U:1:385661040]><Red>" triggered "captureblocked" (cp "0") (cpname "#koth_viaduct_cap") (position "-163 324 -272")`,
 		logparse.CaptureBlockedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -410,6 +468,8 @@ func TestParseCaptureBlockedEvt(t *testing.T) {
 }
 
 func TestParseWGameOverEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Game_Over" reason "Reached Win Limit"`,
 		logparse.WGameOverEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -418,6 +478,8 @@ func TestParseWGameOverEvt(t *testing.T) {
 }
 
 func TestParseWTeamFinalScoreEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "Red" final score "2" with "3" players`,
 		logparse.WTeamFinalScoreEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -427,6 +489,8 @@ func TestParseWTeamFinalScoreEvt(t *testing.T) {
 }
 
 func TestParseLogStopEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: Log file closed.`,
 		logparse.LogStopEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -434,6 +498,8 @@ func TestParseLogStopEvt(t *testing.T) {
 }
 
 func TestParseWPausedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Game_Paused"`,
 		logparse.WPausedEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -441,6 +507,8 @@ func TestParseWPausedEvt(t *testing.T) {
 }
 
 func TestParseWResumedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Game_Unpaused"`,
 		logparse.WResumedEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -448,6 +516,8 @@ func TestParseWResumedEvt(t *testing.T) {
 }
 
 func TestParseFirstHealAfterSpawnEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "SCOTTY T<27><[U:1:97282856]><Blue>" triggered "first_heal_after_spawn" (time "1.6")`,
 		logparse.FirstHealAfterSpawnEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -456,6 +526,8 @@ func TestParseFirstHealAfterSpawnEvt(t *testing.T) {
 }
 
 func TestParseChargeReadyEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "wonder<7><[U:1:34284979]><Red>" triggered "chargeready"`,
 		logparse.ChargeReadyEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -464,6 +536,8 @@ func TestParseChargeReadyEvt(t *testing.T) {
 }
 
 func TestParseChargeDeployedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "wonder<7><[U:1:34284979]><Red>" triggered "chargedeployed" (medigun "medigun")`,
 		logparse.ChargeDeployedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -473,6 +547,8 @@ func TestParseChargeDeployedEvt(t *testing.T) {
 }
 
 func TestParseChargeEndedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "wonder<7><[U:1:34284979]><Red>" triggered "chargeended" (duration "7.5")`,
 		logparse.ChargeEndedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -482,6 +558,8 @@ func TestParseChargeEndedEvt(t *testing.T) {
 }
 
 func TestParseMedicDeathExEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "wonder<7><[U:1:34284979]><Red>" triggered "medic_death_ex" (uberpct "32")`,
 		logparse.MedicDeathExEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -491,6 +569,8 @@ func TestParseMedicDeathExEvt(t *testing.T) {
 }
 
 func TestParseLostUberAdvantageEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "SEND HELP<16><[U:1:84528002]><Blue>" triggered "lost_uber_advantage" (time "44")`,
 		logparse.LostUberAdvantageEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -500,6 +580,8 @@ func TestParseLostUberAdvantageEvt(t *testing.T) {
 }
 
 func TestParseEmptyUberEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Kwq<9><[U:1:96748980]><Blue>" triggered "empty_uber"`,
 		logparse.EmptyUberEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -508,6 +590,8 @@ func TestParseEmptyUberEvt(t *testing.T) {
 }
 
 func TestParsePickupEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "g о а т z<13><[U:1:41435165]><Red>" picked up item "ammopack_small"`,
 		logparse.PickupEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -525,6 +609,8 @@ func TestParsePickupEvt(t *testing.T) {
 }
 
 func TestParseShotFiredEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "rad<6><[U:1:57823119]><Red>" triggered "shot_fired" (weapon "syringegun_medic")`,
 		logparse.ShotFiredEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -534,15 +620,19 @@ func TestParseShotFiredEvt(t *testing.T) {
 }
 
 func TestParseShotHitEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "z/<14><[U:1:66656848]><Blue>" triggered "shot_hit" (weapon "blackbox")`,
 		logparse.ShotHitEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer: logparse.SourcePlayer{Name: "z/", PID: 14, SID: steamid.New("[U:1:57823119]"), Team: logparse.BLU},
+			SourcePlayer: logparse.SourcePlayer{Name: "z/", PID: 14, SID: steamid.New("[U:1:66656848]"), Team: logparse.BLU},
 			Weapon:       logparse.Blackbox,
 		})
 }
 
 func TestParseDamageEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "rad<6><[U:1:57823119]><Red>" triggered "damage" against "z/<14><[U:1:66656848]><Blue>" (damage "11") (weapon "syringegun_medic")`,
 		logparse.DamageEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -574,6 +664,8 @@ func TestParseDamageEvt(t *testing.T) {
 }
 
 func TestParseJarateAttackEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Banfield<2796><[U:1:958890744]><Blue>" triggered "jarate_attack" against "Legs™<2818><[U:1:42871337]><Red>" with "tf_weapon_jar" (attacker_position "1881 -1521 264") (victim_position "1729 -301 457")`,
 		logparse.JarateAttackEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -586,6 +678,8 @@ func TestParseJarateAttackEvt(t *testing.T) {
 }
 
 func TestParseWMiniRoundWinEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Win" (winner "Blue") (round "round_b")`,
 		logparse.WMiniRoundWinEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -593,6 +687,8 @@ func TestParseWMiniRoundWinEvt(t *testing.T) {
 }
 
 func TestParseWMiniRoundLenEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Length" (seconds "340.62")`,
 		logparse.WMiniRoundLenEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -600,6 +696,8 @@ func TestParseWMiniRoundLenEvt(t *testing.T) {
 }
 
 func TestParsWRoundSetupBeginEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Round_Setup_Begin"`,
 		logparse.WRoundSetupBeginEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -607,6 +705,8 @@ func TestParsWRoundSetupBeginEvt(t *testing.T) {
 }
 
 func TestParseWMiniRoundSelectedEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Selected" (round "Round_A")`,
 		logparse.WMiniRoundSelectedEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -614,6 +714,8 @@ func TestParseWMiniRoundSelectedEvt(t *testing.T) {
 }
 
 func TestParseWMiniRoundStartEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Start"`,
 		logparse.WMiniRoundStartEvt{
 			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
@@ -621,6 +723,8 @@ func TestParseWMiniRoundStartEvt(t *testing.T) {
 }
 
 func TestParseMilkAttackEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "✪lil vandal<2953><[U:1:178417727]><Blue>" triggered "milk_attack" against "Darth Jar Jar<2965><[U:1:209106507]><Red>" with "tf_weapon_jar" (attacker_position "-1040 -854 128") (victim_position "-1516 -382 128")`,
 		logparse.MilkAttackEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -633,6 +737,8 @@ func TestParseMilkAttackEvt(t *testing.T) {
 }
 
 func TestParseGasAttackEvt(t *testing.T) {
+	t.Parallel()
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "UnEpic<6760><[U:1:132169058]><Blue>" triggered "gas_attack" against "Johnny Blaze<6800><[U:1:33228413]><Red>" with "tf_weapon_jar" (attacker_position "-4539 2731 156") (victim_position "-4384 1527 128")`,
 		logparse.GasAttackEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
@@ -645,6 +751,8 @@ func TestParseGasAttackEvt(t *testing.T) {
 }
 
 func TestParseKVs(t *testing.T) {
+	t.Parallel()
+
 	m1 := map[string]any{}
 	require.True(t, logparse.ParseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
 	require.Equal(t, map[string]any{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
