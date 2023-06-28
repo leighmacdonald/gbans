@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 // ResolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout.

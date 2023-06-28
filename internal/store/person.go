@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/golib"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 )
@@ -343,7 +343,6 @@ func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, pe
 	return nil
 }
 
-// TODO search cached people first?
 func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error) {
 	queryBuilder := db.sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamIds)})
 	query, args, errQueryArgs := queryBuilder.ToSql()
@@ -357,7 +356,7 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := NewPerson(0)
+		person := NewPerson("")
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
 			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
@@ -399,7 +398,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := NewPerson(0)
+		person := NewPerson("")
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar,
 			&person.AvatarMedium, &person.AvatarFull, &person.AvatarHash, &person.PersonaState,
@@ -467,7 +466,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 	}
 	defer rows.Close()
 	for rows.Next() {
-		person := NewPerson(0)
+		person := NewPerson("")
 		if errScan := rows.Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
 			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
 			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,

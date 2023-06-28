@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type CompHist struct {

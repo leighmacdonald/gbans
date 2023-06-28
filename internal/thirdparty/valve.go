@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 // parseValveSID parses the format: banid 0 STEAM_0:1:16683555.

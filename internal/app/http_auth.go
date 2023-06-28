@@ -20,7 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"github.com/yohcop/openid-go"
 	"go.uber.org/zap"
@@ -356,7 +356,7 @@ type userToken struct {
 }
 
 type personAuthClaims struct {
-	SteamID int64 `json:"steam_id"`
+	SteamID steamid.SID64 `json:"steam_id"`
 	jwt.StandardClaims
 }
 
@@ -370,7 +370,7 @@ const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
 func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
 	t0 := config.Now()
 	claims := &personAuthClaims{
-		SteamID: steamID.Int64(),
+		SteamID: steamID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
 			IssuedAt:  t0.Unix(),
@@ -475,21 +475,20 @@ func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, makeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return 0, consts.ErrAuthentication
+			return "", consts.ErrAuthentication
 		}
 		var e *jwt.ValidationError
 		ok := errors.Is(errParseClaims, e)
 		if ok && e.Errors == jwt.ValidationErrorExpired {
-			return 0, consts.ErrExpired
+			return "", consts.ErrExpired
 		}
-		return 0, consts.ErrAuthentication
+		return "", consts.ErrAuthentication
 	}
 	if !tkn.Valid {
-		return 0, consts.ErrAuthentication
+		return "", consts.ErrAuthentication
 	}
-	sid := steamid.SID64(claims.SteamID)
-	if !sid.Valid() {
-		return 0, consts.ErrAuthentication
+	if !claims.SteamID.Valid() {
+		return "", consts.ErrAuthentication
 	}
-	return sid, nil
+	return claims.SteamID, nil
 }

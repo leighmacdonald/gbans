@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/mitchellh/mapstructure"
 )
 

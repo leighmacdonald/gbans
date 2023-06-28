@@ -3,7 +3,7 @@ package logparse
 import (
 	"time"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 // TimeStamp is the base event for all other events. It just contains a timestamp.

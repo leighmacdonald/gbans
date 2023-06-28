@@ -3,7 +3,7 @@ package thirdparty
 import (
 	"encoding/json"
 
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type FileInfo struct {
@@ -36,17 +36,7 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 	}
 	var steamIds steamid.Collection
 	for _, player := range bdSchema.Players {
-		var steamID steamid.SID64
-		switch sidValue := player.Steamid.(type) {
-		case string:
-			parsedSid64, errParseSid64 := steamid.StringToSID64(sidValue)
-			if errParseSid64 != nil {
-				return nil, errParseSid64
-			}
-			steamID = parsedSid64
-		case float64:
-			steamID = steamid.SID64(sidValue)
-		}
+		steamID := steamid.New(player.Steamid)
 		if !steamID.Valid() {
 			continue
 		}

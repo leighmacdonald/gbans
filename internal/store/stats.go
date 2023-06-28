@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -131,7 +131,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.M
 	if opts.Map != "" {
 		qb = qb.Where(sq.Eq{"m.map_name": opts.Map})
 	}
-	if opts.SteamID > 0 {
+	if opts.SteamID.Valid() {
 		qb = qb.Where(sq.Eq{"mp.steam_id": opts.SteamID})
 	}
 	if opts.SortDesc {

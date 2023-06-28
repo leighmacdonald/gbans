@@ -11,8 +11,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
-	"github.com/leighmacdonald/steamid/v2/extra"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/extra"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/rumblefrog/go-a2s"
 	"github.com/ryanuber/go-glob"

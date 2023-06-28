@@ -7,7 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/steamid/v2/steamid"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +58,7 @@ func (report Report) ToURL(conf *config.Config) string {
 func NewReport() Report {
 	return Report{
 		ReportID:     0,
-		SourceID:     0,
+		SourceID:     "",
 		Description:  "",
 		ReportStatus: 0,
 		CreatedOn:    config.Now(),
@@ -203,7 +203,7 @@ type ReportQueryFilter struct {
 func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error) {
 	var conditions sq.And
 	conditions = append(conditions, sq.Eq{"deleted": opts.Deleted})
-	if opts.AuthorID > 0 {
+	if opts.AuthorID.Valid() {
 		conditions = append(conditions, sq.Eq{"author_id": opts.AuthorID})
 	}
 	builder := db.sb.
