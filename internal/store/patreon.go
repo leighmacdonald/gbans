@@ -14,7 +14,7 @@ func (db *Store) SetPatreonAuth(ctx context.Context, accessToken string, refresh
 	if errQuery != nil {
 		return errors.Wrap(errQuery, "Failed to create patreon auth update query")
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) GetPatreonAuth(ctx context.Context) (string, string, error) {

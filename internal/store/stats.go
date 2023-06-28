@@ -288,7 +288,7 @@ func (db *Store) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, s
 	if errQuery != nil {
 		return errQuery
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 // var globalStatColumns = []string{"players", "bots", "secure", "servers_community", "servers_total",
@@ -302,7 +302,7 @@ func (db *Store) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, s
 //	if errQuery != nil {
 //		return errQuery
 //	}
-//	return Err(database.exec(ctx, query, args...))
+//	return Err(database.Exec(ctx, query, args...))
 // }
 
 type StatLocality int
@@ -500,7 +500,7 @@ func currentHourlyTime() time.Time {
 //	if delQueryErr != nil {
 //		return Err(delQueryErr)
 //	}
-//	return database.exec(ctx, delQuery, delArgs...)
+//	return database.Exec(ctx, delQuery, delArgs...)
 // }
 
 func statDurationTable(locality StatLocality, duration StatDuration) string {
@@ -677,5 +677,5 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 	if delQueryErr != nil {
 		return Err(delQueryErr)
 	}
-	return db.exec(ctx, delQuery, delArgs...)
+	return db.Exec(ctx, delQuery, delArgs...)
 }

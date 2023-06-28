@@ -103,7 +103,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
             deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10
         WHERE report_id = $11`
-	return Err(db.exec(ctx, q, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
+	return Err(db.Exec(ctx, q, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
 		report.DemoName, report.DemoTick, report.ReportID))
 }
@@ -129,7 +129,7 @@ func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) 
 		SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
 		WHERE report_message_id = $1
 	`
-	if errQuery := db.exec(ctx, query,
+	if errQuery := db.Exec(ctx, query,
 		message.MessageID,
 		message.Deleted,
 		message.AuthorID,
@@ -172,7 +172,7 @@ func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) 
 
 func (db *Store) DropReport(ctx context.Context, report *Report) error {
 	const q = `UPDATE report SET deleted = true WHERE report_id = $1`
-	if errExec := db.exec(ctx, q, report.ReportID); errExec != nil {
+	if errExec := db.Exec(ctx, q, report.ReportID); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Report deleted", zap.Int64("report_id", report.ReportID))
@@ -182,7 +182,7 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 
 func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) error {
 	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = $1`
-	if errExec := db.exec(ctx, q, message.Message); errExec != nil {
+	if errExec := db.Exec(ctx, q, message.Message); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.MessageID))

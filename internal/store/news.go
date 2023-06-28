@@ -114,7 +114,7 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update article")
 	}
 	db.log.Info("News article updated", zap.String("title", util.SanitizeLog(entry.Title)))
@@ -126,7 +126,7 @@ func (db *Store) DropNewsArticle(ctx context.Context, newsID int) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("News deleted", zap.Int("news_id", newsID))

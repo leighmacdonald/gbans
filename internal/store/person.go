@@ -203,7 +203,7 @@ func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	return nil
@@ -234,7 +234,7 @@ func (db *Store) updatePerson(ctx context.Context, person *Person) error {
 		    community_banned = $19, vac_bans = $20, game_bans = $21, economy_ban = $22, days_since_last_ban = $23,
 			updated_on_steam = $24, muted = $25
 		WHERE steam_id = $1`
-	if errExec := db.exec(ctx, query, person.SteamID, person.UpdatedOn,
+	if errExec := db.Exec(ctx, query, person.SteamID, person.UpdatedOn,
 		person.PlayerSummary.CommunityVisibilityState, person.PlayerSummary.ProfileState,
 		person.PlayerSummary.PersonaName, person.PlayerSummary.ProfileURL, person.PlayerSummary.Avatar,
 		person.PlayerSummary.AvatarMedium, person.PlayerSummary.AvatarFull, person.PlayerSummary.AvatarHash,
@@ -267,7 +267,7 @@ func (db *Store) insertPerson(ctx context.Context, person *Person) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	errExec := db.exec(ctx, query, args...)
+	errExec := db.Exec(ctx, query, args...)
 	if errExec != nil {
 		return Err(errExec)
 	}
@@ -289,8 +289,7 @@ var profileColumns = []string{
 // is not known.
 func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error {
 	const query = `
-    	SELECT p.steam_id,
-			p.created_on,
+    	SELECT p.created_on,
 			p.updated_on,
 			p.communityvisibilitystate,
 			p.profilestate,
@@ -330,16 +329,20 @@ func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, pe
 	}
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
-	errQuery := db.QueryRow(ctx, query, sid64.Int64()).Scan(&person.SteamID, &person.CreatedOn,
-		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
-		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
-		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
-		&person.LocCityID, &person.PermissionLevel, &person.DiscordID /*&person.IPAddr,*/, &person.CommunityBanned,
-		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
-		&person.Muted)
+	person.SteamID = sid64
+	errQuery := db.
+		QueryRow(ctx, query, sid64.Int64()).
+		Scan(&person.CreatedOn,
+			&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
+			&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
+			&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
+			&person.LocCityID, &person.PermissionLevel, &person.DiscordID /*&person.IPAddr,*/, &person.CommunityBanned,
+			&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
+			&person.Muted)
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -704,7 +707,7 @@ func (db *Store) DeletePersonAuth(ctx context.Context, authID int64) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) PrunePersonAuth(ctx context.Context) error {
@@ -715,7 +718,7 @@ func (db *Store) PrunePersonAuth(ctx context.Context) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
@@ -727,7 +730,7 @@ func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, s
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	return nil
@@ -774,7 +777,7 @@ func (db *Store) SetNotificationsRead(ctx context.Context, notificationIds []int
 	if errQuery != nil {
 		return errQuery
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privilege) (steamid.Collection, error) {

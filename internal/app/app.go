@@ -67,17 +67,21 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		patreonMu:            &sync.RWMutex{},
 		wordFilters:          newWordFilters(),
 	}
-	application.registerDiscordHandlers()
-	//bot.SetOnConnect(func() {
+
+	if errReg := application.registerDiscordHandlers(); errReg != nil {
+		panic(errReg)
+	}
+
+	// bot.SetOnConnect(func() {
 	//	_ = SendNotification(ctx, &conf, app.NotificationPayload{
 	//		MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected",
 	//	})
-	//})
-	//bot.SetOnDisconnect(func() {
+	// })
+	// bot.SetOnDisconnect(func() {
 	//	_ = SendNotification(ctx, &conf, app.NotificationPayload{
 	//		MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord disconnected",
 	//	})
-	//})
+	// })
 
 	return application
 }
@@ -306,7 +310,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) {
 					} else {
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
-						if errPSay := app.PSay(ctx, 0, evt.SID, msg); errPSay != nil {
+						if errPSay := app.PSay(ctx, "", evt.SID, msg); errPSay != nil {
 							log.Error("Failed to send user warning psay message", zap.Error(errPSay))
 						}
 					}

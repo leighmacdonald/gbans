@@ -104,7 +104,7 @@ func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) insertBanNet(ctx context.Context, banNet *BanCIDR) error {
@@ -135,7 +135,7 @@ func (db *Store) DropBanNet(ctx context.Context, banNet *BanCIDR) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	banNet.NetID = 0
@@ -418,7 +418,7 @@ func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
 				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, 
 				unban_reason_text = $12, appeal_state = $13
 			WHERE ban_asn_id = $1`
-		return Err(db.exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
+		return Err(db.Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
 			banASN.TargetID, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
 			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
 	}

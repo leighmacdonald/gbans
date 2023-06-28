@@ -258,7 +258,7 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update server")
 	}
 	return nil
@@ -266,7 +266,7 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 
 func (db *Store) DropServer(ctx context.Context, serverID int) error {
 	const query = `UPDATE server set deleted = true WHERE server_id = $1`
-	if errExec := db.exec(ctx, query, serverID); errExec != nil {
+	if errExec := db.Exec(ctx, query, serverID); errExec != nil {
 		return errExec
 	}
 	return nil

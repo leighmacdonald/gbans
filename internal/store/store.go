@@ -125,7 +125,7 @@ func (db *Store) QueryRow(ctx context.Context, query string, args ...any) pgx.Ro
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
-func (db *Store) exec(ctx context.Context, query string, args ...any) error {
+func (db *Store) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := db.conn.Exec(ctx, query, args...)
 	return Err(err)
 }

@@ -1078,7 +1078,7 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 		// TODO limit / make specialized query since this returns all results
 		bans, errBans := app.db.GetBansSteam(ctx, store.BansQueryFilter{
 			QueryFilter: store.QueryFilter{},
-			SteamID:     0,
+			SteamID:     "",
 		})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
@@ -1780,11 +1780,11 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
 	i, errGetParam := getInt64Param(c, key)
 	if errGetParam != nil {
-		return 0, errGetParam
+		return "", errGetParam
 	}
-	sid := steamid.SID64(i)
+	sid := steamid.New(i)
 	if !sid.Valid() {
-		return 0, consts.ErrInvalidSID
+		return "", consts.ErrInvalidSID
 	}
 	return sid, nil
 }

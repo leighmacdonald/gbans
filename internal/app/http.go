@@ -80,11 +80,11 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return model.NewUserProfile(0)
+		return model.NewUserProfile("")
 	}
 	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
-		return model.NewUserProfile(0)
+		return model.NewUserProfile("")
 	}
 	return person
 }

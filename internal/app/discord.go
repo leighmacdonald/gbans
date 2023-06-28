@@ -170,12 +170,12 @@ func makeOnCheck(app *App) discord.CommandHandler {
 			}
 			expiry = ban.Ban.ValidUntil
 			createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
-			if ban.Ban.SourceID > 0 {
+			if ban.Ban.SourceID.Valid() {
 				if errGetProfile := app.PersonBySID(ctx, ban.Ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
 					author = &discordgo.MessageEmbedAuthor{
-						URL:     fmt.Sprintf("https://steamcommunity.com/profiles/%d", authorProfile.SteamID),
+						URL:     fmt.Sprintf("https://steamcommunity.com/profiles/%s", authorProfile.SteamID),
 						Name:    fmt.Sprintf("<@%s>", authorProfile.DiscordID),
 						IconURL: authorProfile.Avatar,
 					}
@@ -482,7 +482,7 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 }
 
 func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discordgo.InteractionCreate) (store.Person, error) {
-	author := store.NewPerson(0)
+	author := store.NewPerson("")
 	if errPersonByDiscordID := db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, store.ErrNoResult) {
 			return author, errors.New("Must set steam id. See /set_steam")
@@ -528,7 +528,7 @@ func makeOnSay(app *App) discord.CommandHandler {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		server := opts[discord.OptServerIdentifier].StringValue()
 		msg := opts[discord.OptMessage].StringValue()
-		if errSay := app.Say(ctx, 0, server, msg); errSay != nil {
+		if errSay := app.Say(ctx, "", server, msg); errSay != nil {
 			return discord.ErrCommandFailed
 		}
 		embed := discord.RespOk(response, "Sent center message successfully")
@@ -545,7 +545,7 @@ func makeOnCSay(app *App) discord.CommandHandler {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		server := opts[discord.OptServerIdentifier].StringValue()
 		msg := opts[discord.OptMessage].StringValue()
-		if errCSay := app.CSay(ctx, 0, server, msg); errCSay != nil {
+		if errCSay := app.CSay(ctx, "", server, msg); errCSay != nil {
 			return discord.ErrCommandFailed
 		}
 		embed := discord.RespOk(response, "Sent console message successfully")
@@ -697,7 +697,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 				if asn.ASNum > 0 {
 					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", asn.ASNum)
 				}
-				rows = append(rows, fmt.Sprintf("%s`%d` %s`%3dms` [%s](https://steamcommunity.com/profiles/%d)%s",
+				rows = append(rows, fmt.Sprintf("%s`%s` %s`%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
 					flag, player.SID, asStr, player.Ping, player.Name, player.SID, proxyStr))
 			}
 			embed.Description = strings.Join(rows, "\n")
@@ -1017,7 +1017,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 	reason := store.Reason(opts[discord.OptBanReason].IntValue())
 	targetID := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 	modNote := opts[discord.OptNote].StringValue()
-	author := store.NewPerson(0)
+	author := store.NewPerson("")
 	if errGetPersonByDiscordID := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
 			return errors.New("Must set steam id. See /set_steam")
@@ -1077,7 +1077,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 
 	duration := store.Duration(opts[discord.OptDuration].StringValue())
 	modNote := opts[discord.OptNote].StringValue()
-	author := store.NewPerson(0)
+	author := store.NewPerson("")
 	if errGetPerson := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errors.Is(errGetPerson, store.ErrNoResult) {
 			return errors.New("Must set steam id. See /set_steam")

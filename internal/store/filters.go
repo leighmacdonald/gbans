@@ -71,7 +71,7 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if err := db.exec(ctx, query, args...); err != nil {
+	if err := db.Exec(ctx, query, args...); err != nil {
 		return Err(err)
 	}
 	db.log.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
@@ -80,7 +80,7 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 
 func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
-	if errExec := db.exec(ctx, query, filter.FilterID); errExec != nil {
+	if errExec := db.Exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))

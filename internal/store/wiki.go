@@ -81,7 +81,7 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Wiki slug deleted", zap.String("slug", slug))
@@ -97,7 +97,7 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	if errQueryArgs != nil {
 		return errQueryArgs
 	}
-	errQueryRow := db.exec(ctx, query, args...)
+	errQueryRow := db.Exec(ctx, query, args...)
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}

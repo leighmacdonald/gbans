@@ -334,7 +334,7 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 			newState.STVName = result.SourceTV.Name
 		}
 		if result.ExtendedServerInfo != nil {
-			newState.SteamID = steamid.SID64(result.ExtendedServerInfo.SteamID)
+			newState.SteamID = steamid.New(result.ExtendedServerInfo.SteamID)
 			newState.GameID = result.ExtendedServerInfo.GameID
 			newState.Keywords = strings.Split(result.ExtendedServerInfo.Keywords, ",")
 		}

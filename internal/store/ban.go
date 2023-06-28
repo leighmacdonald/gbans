@@ -28,10 +28,10 @@ func (t StringSID) SID64(ctx context.Context) (steamid.SID64, error) {
 	// TODO cache this as it can be a huge hot path
 	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
 	if errResolveSID != nil {
-		return 0, consts.ErrInvalidSID
+		return "", consts.ErrInvalidSID
 	}
 	if !sid64.Valid() {
-		return 0, consts.ErrInvalidSID
+		return "", consts.ErrInvalidSID
 	}
 	return sid64, nil
 }
@@ -175,7 +175,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 	if errSource != nil {
 		return errors.Wrapf(errSource, "Failed to parse source id")
 	}
-	targetSid := steamid.SID64(0)
+	targetSid := steamid.New(0)
 	if string(target) != "0" {
 		newTargetSid, errTargetSid := target.SID64(ctx)
 		if errTargetSid != nil {
@@ -438,7 +438,7 @@ func (banSteam *BanSteam) String() string {
 func (db *Store) DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error {
 	if hardDelete {
 		const query = `DELETE FROM ban WHERE ban_id = $1`
-		if errExec := db.exec(ctx, query, ban.BanID); errExec != nil {
+		if errExec := db.Exec(ctx, query, ban.BanID); errExec != nil {
 			return Err(errExec)
 		}
 		ban.BanID = 0
@@ -558,7 +558,7 @@ func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
 			origin = $8, ban_type = $9, deleted = $10, report_id = case WHEN $11 = 0 THEN null ELSE $11 END, 
 			unban_reason_text = $12, is_enabled = $13, target_id = $14, appeal_state = $15
 		WHERE ban_id = $1`
-	if errExec := db.exec(ctx, query, ban.BanID, ban.SourceID, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
+	if errExec := db.Exec(ctx, query, ban.BanID, ban.SourceID, ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
 		ban.UpdatedOn, ban.Origin, ban.BanType, ban.Deleted, ban.ReportID, ban.UnbanReasonText, ban.IsEnabled,
 		ban.TargetID, ban.AppealState); errExec != nil {
 		return Err(errExec)
@@ -775,7 +775,7 @@ func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) err
 	SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
 	WHERE ban_message_id = $1
 	`
-	if errQuery := db.exec(ctx, query,
+	if errQuery := db.Exec(ctx, query,
 		message.MessageID,
 		message.Deleted,
 		message.AuthorID,
@@ -871,7 +871,7 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 
 func (db *Store) DropBanMessage(ctx context.Context, message *UserMessage) error {
 	const q = `UPDATE ban_appeal SET deleted = true WHERE ban_message_id = $1`
-	if errExec := db.exec(ctx, q, message.MessageID); errExec != nil {
+	if errExec := db.Exec(ctx, q, message.MessageID); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Appeal message deleted", zap.Int64("ban_message_id", message.MessageID))
@@ -985,7 +985,7 @@ func (db *Store) updateBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	SET source_id = $2, target_id = $3, group_name = $4, is_enabled = $5, deleted = $6, note = $7, unban_reason_text = $8,
 	origin = $9, updated_on = $10, group_id = $11, valid_until = $12, appeal_state = $13
 	WHERE ban_group_id = $1`
-	return Err(db.exec(ctx, q, banGroup.BanGroupID, banGroup.SourceID, banGroup.TargetID,
+	return Err(db.Exec(ctx, q, banGroup.BanGroupID, banGroup.SourceID, banGroup.TargetID,
 		banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText,
 		banGroup.Origin, banGroup.UpdatedOn, banGroup.GroupID, banGroup.ValidUntil, banGroup.AppealState))
 }

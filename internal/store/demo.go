@@ -54,7 +54,7 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 	if errQuery != nil {
 		return errQuery
 	}
-	return Err(db.exec(ctx, query, args...))
+	return Err(db.Exec(ctx, query, args...))
 }
 
 func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
@@ -204,7 +204,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Demo updated", zap.String("name", demoFile.Title))
@@ -217,7 +217,7 @@ func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
-	if errExec := db.exec(ctx, query, args...); errExec != nil {
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 	demoFile.DemoID = 0
