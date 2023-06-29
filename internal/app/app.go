@@ -539,6 +539,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 			}
 		}()
 	}
+	parser := logparse.New()
 	// playerStateCache := newPlayerCache(app.logger)
 	for {
 		select {
@@ -548,7 +549,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 			unknown := 0
 			ignored := 0
 			for _, logLine := range logFile.Lines {
-				parseResult, errParse := logparse.Parse(logLine)
+				parseResult, errParse := parser.Parse(logLine)
 				if errParse != nil {
 					continue
 				}

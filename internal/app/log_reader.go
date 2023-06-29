@@ -175,6 +175,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			}
 		}
 	}()
+	parser := logparse.New()
 	// pc := newPlayerCache(remoteSrc.logger)
 	ticker := time.NewTicker(remoteSrc.frequency)
 	// errCount := 0
@@ -201,7 +202,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 			var serverEvent model.ServerEvent
-			if errLogServerEvent := logToServerEvent(server, logPayload.body, &serverEvent); errLogServerEvent != nil {
+			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &serverEvent); errLogServerEvent != nil {
 				remoteSrc.logger.Debug("Failed to create ServerEvent", zap.Error(errLogServerEvent))
 				continue
 			}
@@ -211,7 +212,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	}
 }
 
-func logToServerEvent(server store.Server, msg string, event *model.ServerEvent) error {
+func logToServerEvent(parser *logparse.LogParser, server store.Server, msg string, event *model.ServerEvent) error {
 	// var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 	//	if sid == "BOT" {
 	//		panic("fixme")
@@ -226,7 +227,7 @@ func logToServerEvent(server store.Server, msg string, event *model.ServerEvent)
 	//		return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
 	//	}
 	// }
-	parseResult, errParse := logparse.Parse(msg)
+	parseResult, errParse := parser.Parse(msg)
 	if errParse != nil {
 		return errParse
 	}

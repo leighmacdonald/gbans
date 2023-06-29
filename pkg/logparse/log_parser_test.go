@@ -39,9 +39,10 @@ func TestParseFile(t *testing.T) {
 	if e != nil {
 		t.Fatalf("Failed to open test file: %s", p)
 	}
+	parser := logparse.New()
 	results := make(map[int]*logparse.Results)
 	for i, line := range strings.Split(string(f), "\n") {
-		v, err := logparse.Parse(line)
+		v, err := parser.Parse(line)
 		require.NoError(t, err)
 		results[i] = v
 	}
@@ -73,7 +74,8 @@ func TestParseUnhandledMsgEvt(t *testing.T) {
 func testLogLine(t *testing.T, line string, expected any) {
 	t.Helper()
 
-	value1, err := logparse.Parse(line)
+	parser := logparse.New()
+	value1, err := parser.Parse(line)
 	require.NoError(t, err, "Failed to parse log line: %s", line)
 	require.EqualValues(t, expected, value1.Event, "Value mismatch")
 }
@@ -753,12 +755,14 @@ func TestParseGasAttackEvt(t *testing.T) {
 func TestParseKVs(t *testing.T) {
 	t.Parallel()
 
+	parser := logparse.New()
+
 	m1 := map[string]any{}
-	require.True(t, logparse.ParseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
+	require.True(t, parser.ParseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
 	require.Equal(t, map[string]any{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
 
 	m2 := map[string]any{}
-	require.True(t, logparse.ParseKVs(`L 01/16/2022 - 21:24:11: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, m2))
+	require.True(t, parser.ParseKVs(`L 01/16/2022 - 21:24:11: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, m2))
 	require.Equal(t, map[string]any{
 		"cp":         "0",
 		"cpname":     "#koth_viaduct_cap",

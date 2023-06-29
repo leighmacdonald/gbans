@@ -1,13 +1,5 @@
 package logparse
 
-import (
-	"fmt"
-	"strconv"
-	"strings"
-
-	"github.com/pkg/errors"
-)
-
 // EventType defines a known, parsable message type.
 type EventType int
 
@@ -131,43 +123,6 @@ func (t Team) Opponent() Team {
 	default:
 		return SPEC
 	}
-}
-
-// Pos is a position in 3D space.
-type Pos struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
-}
-
-// Encode returns a ST_MakePointM
-// Uses ESPG 4326 (WSG-84).
-func (p *Pos) Encode() string {
-	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
-}
-
-// ParsePOS parses a players 3d position.
-func ParsePOS(s string, p *Pos) error {
-	pcs := strings.Split(s, " ")
-	if len(pcs) != 3 {
-		return errors.Errorf("Invalid position: %s", s)
-	}
-	xv, ex := strconv.ParseFloat(pcs[0], 64)
-	if ex != nil {
-		return ex
-	}
-	yv, ey := strconv.ParseFloat(pcs[1], 64)
-	if ey != nil {
-		return ey
-	}
-	zv, ez := strconv.ParseFloat(pcs[2], 64)
-	if ez != nil {
-		return ez
-	}
-	p.X = xv
-	p.Y = yv
-	p.Z = zv
-	return nil
 }
 
 // PickupItem is used for
@@ -384,7 +339,7 @@ func ParseWeapon(s string) Weapon {
 }
 
 // weaponNames defines string versions for all known weapons.
-var weaponNames = map[Weapon]string{
+var weaponNames = map[Weapon]string{ //nolint:gochecknoglobals
 	UnknownWeapon:         "unknown",
 	AiFlamethrower:        "ai_flamethrower",
 	Airstrike:             "airstrike",

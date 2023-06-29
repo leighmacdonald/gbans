@@ -28,13 +28,15 @@ func TestMatch_Apply(t *testing.T) {
 	body, errRead := os.ReadFile(p)
 	require.NoError(t, errRead)
 
+	parser := logparse.New()
+
 	m := logparse.NewMatch(testLogger, 1, "test server")
 	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {
 			continue
 		}
-		result, errResult := logparse.Parse(line)
+		result, errResult := parser.Parse(line)
 		require.NoError(t, errResult)
 		if err := m.Apply(result); err != nil && !errors.Is(err, logparse.ErrIgnored) {
 			t.Errorf("Failed to Apply: %v [%d] %v", err, result.EventType, line)
