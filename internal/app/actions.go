@@ -86,7 +86,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 	msg := fmt.Sprintf(`sm_say %s`, message)
 	rconResponse, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, msg)
 	if errExecRCON != nil {
-		return errExecRCON
+		return errors.Wrapf(errExecRCON, "Failed to exec say command")
 	}
 	responsePieces := strings.Split(rconResponse, "\n")
 	if len(responsePieces) < 2 {
@@ -180,11 +180,11 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	var filter store.Filter
 	if errGetFilter := app.db.GetFilterByID(ctx, filterID, &filter); errGetFilter != nil {
-		return false, errGetFilter
+		return false, errors.Wrap(errGetFilter, "Failed to get filter")
 	}
 
 	if errDropFilter := app.db.DropFilter(ctx, &filter); errDropFilter != nil {
-		return false, errDropFilter
+		return false, errors.Wrapf(errDropFilter, "Failed to drop filter")
 	}
 
 	app.wordFilters.Lock()

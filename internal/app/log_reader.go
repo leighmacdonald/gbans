@@ -240,8 +240,9 @@ func logToServerEvent(parser *logparse.LogParser, server store.Server, msg strin
 	// }
 	parseResult, errParse := parser.Parse(msg)
 	if errParse != nil {
-		return errParse
+		return errors.Wrapf(errParse, "Failed to parse log message")
 	}
+
 	event.Server = server
 	event.Results = parseResult
 

@@ -54,7 +54,7 @@ func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store,
 	// litmus test
 	_, errFetchTest := client.FetchUser()
 	if errFetchTest != nil {
-		return nil, errFetchTest
+		return nil, errors.Wrap(errFetchTest, "Failed to fetch patreon user")
 	}
 	go func() {
 		t0 := time.NewTicker(time.Minute * 60)
@@ -88,9 +88,9 @@ func updateToken(ctx context.Context, db *store.Store, oAuthConfig oauth2.Config
 }
 
 func PatreonGetTiers(client *patreon.Client) ([]patreon.Campaign, error) {
-	campaigns, campaignsErr := client.FetchCampaign()
-	if campaignsErr != nil {
-		return nil, campaignsErr
+	campaigns, errCampaigns := client.FetchCampaign()
+	if errCampaigns != nil {
+		return nil, errors.Wrap(errCampaigns, "Failed to fetch campaign")
 	}
 
 	return campaigns.Data, nil
@@ -117,7 +117,7 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 			patreon.WithPageSize(25),
 			patreon.WithCursor(cursor))
 		if errFetch != nil {
-			return nil, nil, errFetch
+			return nil, nil, errors.Wrap(errFetch, "Failed to fetch current pledges")
 		}
 
 		for _, item := range pledgesResponse.Included.Items {

@@ -73,7 +73,7 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 	}
 	body, errReadFile := os.ReadFile(filePath)
 	if errReadFile != nil {
-		return 0, errReadFile
+		return 0, errors.Wrapf(errReadFile, "Failed to read file")
 	}
 	count, errLoadBody := load(body, list.Type)
 	if errLoadBody != nil {
@@ -87,22 +87,22 @@ func download(ctx context.Context, url string, savePath string) error {
 	client := util.NewHTTPClient()
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
-		return errReq
+		return errors.Wrapf(errReq, "Failed to create request")
 	}
 	response, errQuery := client.Do(req)
 	if errQuery != nil {
-		return errQuery
+		return errors.Wrapf(errQuery, "Failed to perform request")
 	}
 	outFile, errCreate := os.Create(savePath)
 	if errCreate != nil {
-		return errQuery
+		return errors.Wrapf(errQuery, "Failed to create output file")
 	}
 	_, errCopy := io.Copy(outFile, response.Body)
 	if errCopy != nil {
-		return errCopy
+		return errors.Wrapf(errCopy, "Failed to copy response body")
 	}
 	if errClose := response.Body.Close(); errClose != nil {
-		return errClose
+		return errors.Wrapf(errClose, "Failed to close response")
 	}
 
 	return nil

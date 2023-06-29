@@ -1274,10 +1274,14 @@ func (p *LogParser) unmarshal(input any, output any) error {
 		Squash:           true,
 	})
 	if errNewDecoder != nil {
-		return errNewDecoder
+		return errors.Wrap(errNewDecoder, "Failed to create decoder")
 	}
 
-	return decoder.Decode(input)
+	if errDecode := decoder.Decode(input); errDecode != nil {
+		return errors.Wrap(errDecode, "Failed to decode unmarshal input")
+	}
+
+	return nil
 }
 
 // Pos is a position in 3D space.
@@ -1302,17 +1306,17 @@ func ParsePOS(s string, p *Pos) error {
 
 	xv, ex := strconv.ParseFloat(pcs[0], 64)
 	if ex != nil {
-		return ex
+		return errors.Wrap(ex, "Failed to parse x position")
 	}
 
 	yv, ey := strconv.ParseFloat(pcs[1], 64)
 	if ey != nil {
-		return ey
+		return errors.Wrap(ey, "Failed to parse t position")
 	}
 
 	zv, ez := strconv.ParseFloat(pcs[2], 64)
 	if ez != nil {
-		return ez
+		return errors.Wrap(ez, "Failed to parse z position")
 	}
 
 	p.X = xv

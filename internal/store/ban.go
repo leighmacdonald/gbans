@@ -600,7 +600,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 		if errScan := rows.Scan(&ban.BanID, &ban.TargetID, &ban.SourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrap(errScan, "Failed to load ban")
 		}
 		bans = append(bans, ban)
 	}
@@ -652,7 +652,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, _ QueryFilter) ([]App
 			&ao.SourceSteamID, &ao.SourcePersonaName, &ao.SourceAvatar, &ao.SourceAvatarFull,
 			&ao.TargetSteamID, &ao.TargetPersonaName, &ao.TargetAvatar, &ao.TargetAvatarFull,
 		); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrap(errScan, "Failed to scan appeal overview")
 		}
 		overviews = append(overviews, ao)
 	}
@@ -773,7 +773,7 @@ func (db *Store) GetBansOlderThan(ctx context.Context, filter QueryFilter, since
 		if errQuery = rows.Scan(&ban.BanID, &ban.TargetID, &ban.SourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState); errQuery != nil {
-			return nil, errQuery
+			return nil, errors.Wrap(errQuery, "Failed to scan ban")
 		}
 		bans = append(bans, ban)
 	}

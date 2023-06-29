@@ -176,14 +176,14 @@ func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMes
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
 		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
-		return errUnmarshal
+		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
 	lobby, findErr := cm.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}
 	if errJoin := lobby.join(client); errJoin != nil {
-		return errJoin
+		return errors.Wrap(errJoin, "Failed to join lobby")
 	}
 
 	return nil
@@ -194,14 +194,17 @@ func joinPugLobbySlot(cm *wsConnectionManager, client *wsClient, payload json.Ra
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
 		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
-		return errUnmarshal
+		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
 	lobby, findErr := cm.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}
+	if errJoin := lobby.joinSlot(client, req.Slot); errJoin != nil {
+		return errors.Wrap(errJoin, "Failed to join lobby slot")
+	}
 
-	return lobby.joinSlot(client, req.Slot)
+	return nil
 }
 
 func createPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
@@ -209,7 +212,7 @@ func createPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawM
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
 		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
-		return errUnmarshal
+		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
 	lobby, errCreate := cm.createPugLobby(client, req)
 	if errCreate != nil {

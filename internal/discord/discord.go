@@ -192,11 +192,14 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 		}
 		edit.Embeds = append(edit.Embeds, embed)
 	}
-	_, err := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
+	_, errResponseEdit := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
 		Embeds: &edit.Embeds,
 	})
+	if errResponseEdit != nil {
+		return errors.Wrap(errResponseEdit, "Failed to send interaction edit")
+	}
 
-	return err
+	return nil
 }
 
 func (bot *Bot) SendPayload(payload Payload) {

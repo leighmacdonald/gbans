@@ -1002,7 +1002,7 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 func queryFilterFromContext(ctx *gin.Context) (store.QueryFilter, error) {
 	var queryFilter store.QueryFilter
 	if errBind := ctx.BindUri(&queryFilter); errBind != nil {
-		return queryFilter, errBind
+		return queryFilter, errors.Wrap(errBind, "Failed to bind URI parameters")
 	}
 
 	return queryFilter, nil

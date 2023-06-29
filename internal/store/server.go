@@ -178,7 +178,7 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 			&server.Deleted, &server.LogSecret); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrap(errScan, "Failed to scan server")
 		}
 		servers = append(servers, server)
 	}

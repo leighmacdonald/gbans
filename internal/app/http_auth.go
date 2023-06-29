@@ -141,23 +141,23 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
-			return "", errReq
+			return "", errors.Wrap(errReq, "Failed to create new request")
 		}
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return "", errResp
+			return "", errors.Wrap(errResp, "Failed to perform http request")
 		}
 		defer func() {
 			_ = resp.Body.Close()
 		}()
 		b, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
-			return "", errBody
+			return "", errors.Wrap(errBody, "Failed to read response body")
 		}
 		var details discordUserDetail
 		if errJSON := json.Unmarshal(b, &details); errJSON != nil {
-			return "", errJSON
+			return "", errors.Wrap(errJSON, "Failed to unmarshal response")
 		}
 
 		return details.ID, nil
@@ -173,23 +173,23 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		form.Set("scope", "identify")
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 		if errReq != nil {
-			return "", errReq
+			return "", errors.Wrap(errReq, "Failed to create new request")
 		}
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return "", errResp
+			return "", errors.Wrap(errResp, "Failed to perform http request")
 		}
 		defer func() {
 			_ = resp.Body.Close()
 		}()
 		body, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
-			return "", errBody
+			return "", errors.Wrap(errBody, "Failed to read response body")
 		}
 		var atr accessTokenResp
 		if errJSON := json.Unmarshal(body, &atr); errJSON != nil {
-			return "", errJSON
+			return "", errors.Wrap(errJSON, "Failed to decode response body")
 		}
 
 		return atr.AccessToken, nil

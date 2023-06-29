@@ -52,7 +52,7 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 			sq.Lt{"created_on": config.Now().Add(-(time.Hour * 24 * 14))},
 		}).ToSql()
 	if errQuery != nil {
-		return errQuery
+		return errors.Wrap(errQuery, "Failed to create query")
 	}
 
 	return Err(db.Exec(ctx, query, args...))

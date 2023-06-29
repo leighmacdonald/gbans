@@ -321,7 +321,7 @@ func (app *App) patreonUpdater(ctx context.Context) {
 func (app *App) updateStateServerList(ctx context.Context) error {
 	servers, errServers := app.db.GetServers(ctx, false)
 	if errServers != nil {
-		return errServers
+		return errors.Wrap(errServers, "Failed to load servers")
 	}
 	sc := make([]*state.ServerConfig, len(servers))
 	for index, server := range servers {

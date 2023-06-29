@@ -51,7 +51,7 @@ func (app *App) registerDiscordHandlers() error {
 	}
 	for k, v := range cmdMap {
 		if errRegister := app.bot.RegisterHandler(k, v); errRegister != nil {
-			return errRegister
+			return errors.Wrap(errRegister, "Failed to register discord command")
 		}
 	}
 
@@ -579,7 +579,7 @@ func makeOnPSay(app *App) discord.CommandHandler {
 		msg := opts[discord.OptMessage].StringValue()
 		playerSid, errPlayerSid := player.SID64(ctx)
 		if errPlayerSid != nil {
-			return errPlayerSid
+			return errors.Wrap(errPlayerSid, "Failed to get player sid")
 		}
 		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 		if errAuthor != nil {
@@ -969,7 +969,7 @@ func makeOnFind(app *App) discord.CommandHandler {
 		for _, player := range players {
 			var server store.Server
 			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
-				return errServer
+				return errors.Wrapf(errServer, "Failed to get server")
 			}
 			person := store.NewPerson(player.Player.SID)
 			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {

@@ -74,7 +74,7 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 		Where(sq.Eq{"slug": slug}).
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrap(errQueryArgs, "Failed to generate query")
 	}
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
@@ -91,7 +91,7 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn).
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrap(errQueryArgs, "Failed to generate query")
 	}
 	errQueryRow := db.Exec(ctx, query, args...)
 	if errQueryRow != nil {

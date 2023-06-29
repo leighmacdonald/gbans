@@ -42,9 +42,9 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet,
-		fmt.Sprintf("https://logs.tf/api/v1/log?player=%d", sid.Int64()), nil)
+		fmt.Sprintf("https://logs.tf/api/v1/log?player=%s", sid), nil)
 	if reqErr != nil {
-		return nil, reqErr
+		return nil, errors.Wrap(reqErr, "Failed to create request")
 	}
 	response, errGet := httpClient.Do(req)
 	if errGet != nil {

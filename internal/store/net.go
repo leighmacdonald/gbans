@@ -192,7 +192,7 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.SourceID, &banASN.TargetID,
 			&banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn, &banASN.Deleted,
 			&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText, &banASN.AppealState); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrap(errScan, "Failed to scan asn ban")
 		}
 		bans = append(bans, banASN)
 	}
@@ -282,7 +282,7 @@ func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) e
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errCloseBatch
+					return errors.Wrapf(errCloseBatch, "Failed to close asn batch")
 				}
 				cancel()
 				batch = pgx.Batch{}
@@ -315,7 +315,7 @@ func (db *Store) loadLocation(ctx context.Context, records []ip2location.Locatio
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errCloseBatch
+					return errors.Wrapf(errCloseBatch, "Failed to send location batch update query")
 				}
 				cancel()
 				batch = pgx.Batch{}
@@ -350,7 +350,7 @@ func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRec
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errCloseBatch
+					return errors.Wrapf(errCloseBatch, "Faield to close proxy batch")
 				}
 				cancel()
 				batch = pgx.Batch{}

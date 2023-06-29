@@ -117,7 +117,7 @@ func (app *App) BanASN(ctx context.Context, banASN *store.BanASN) error {
 		}
 	}
 	if errSave := app.db.SaveBanASN(ctx, banASN); errSave != nil {
-		return errSave
+		return errors.Wrap(errSave, "Failed to save ban")
 	}
 	// TODO Kick all current players matching
 	return nil
@@ -140,7 +140,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 		return errors.New("CIDR unset")
 	}
 	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
-		return errSaveBanNet
+		return errors.Wrapf(errSaveBanNet, "Failed to save ban net")
 	}
 	go func(_ *net.IPNet, reason store.Reason) {
 		foundPlayers, found := app.serverState.Find(state.FindOpts{CIDR: banNet.CIDR})
@@ -163,7 +163,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) err
 		return errors.Wrapf(membersErr, "Failed to validate group")
 	}
 	if errSaveBanGroup := app.db.SaveBanGroup(ctx, banGroup); errSaveBanGroup != nil {
-		return errSaveBanGroup
+		return errors.Wrapf(errSaveBanGroup, "Failed to save banned group")
 	}
 	app.log.Info("Steam group banned", zap.Int64("gid64", banGroup.GroupID.Int64()),
 		zap.Int("members", len(members)))
@@ -182,7 +182,7 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 			return false, nil
 		}
 
-		return false, errGetBan
+		return false, errors.Wrapf(errGetBan, "Failed to get ban")
 	}
 	bannedPerson.Ban.Deleted = true
 	bannedPerson.Ban.UnbanReasonText = reason
@@ -212,16 +212,16 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	asNum, errConv := strconv.ParseInt(asnNum, 10, 64)
 	if errConv != nil {
-		return false, errConv
+		return false, errors.Wrapf(errConv, "Failed to parse int")
 	}
 	var banASN store.BanASN
 	if errGetBanASN := app.db.GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
-		return false, errGetBanASN
+		return false, errors.Wrapf(errGetBanASN, "Failed to get asn ban")
 	}
 	if errDrop := app.db.DropBanASN(ctx, &banASN); errDrop != nil {
 		app.log.Error("Failed to drop ASN ban", zap.Error(errDrop))
 
-		return false, errDrop
+		return false, errors.Wrap(errDrop, "Failed to drop asn ban")
 	}
 	app.log.Info("ASN unbanned", zap.Int64("ASN", asNum))
 

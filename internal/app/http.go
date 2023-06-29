@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +35,12 @@ func (app *App) StartHTTP(ctx context.Context) error {
 		}
 	}()
 
-	return httpServer.ListenAndServe()
+	errServe := httpServer.ListenAndServe()
+	if errServe != nil {
+		return errors.Wrap(errServe, "HTTP listener returned error")
+	}
+
+	return nil
 }
 
 func bind(ctx *gin.Context, target any) bool {

@@ -290,7 +290,7 @@ func (db *Store) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, s
 			stats.MapTypes, stats.CreatedOn, stats.Regions, stats.Servers).
 		ToSql()
 	if errQuery != nil {
-		return errQuery
+		return errors.Wrapf(errQuery, "Failed to create query")
 	}
 
 	return Err(db.Exec(ctx, query, args...))

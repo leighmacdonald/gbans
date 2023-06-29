@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/pkg/errors"
 )
 
 type FileInfo struct {
@@ -32,17 +33,17 @@ type TF2BDSchema struct {
 func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 	var bdSchema TF2BDSchema
 	if errUnmarshal := json.Unmarshal(data, &bdSchema); errUnmarshal != nil {
-		return nil, errUnmarshal
+		return nil, errors.Wrap(errUnmarshal, "Failed to unmarshal tf2bd schema")
 	}
 
-	steamIds := make([]steamid.SID64, len(bdSchema.Players))
-	for index, player := range bdSchema.Players {
+	var steamIds []steamid.SID64 //nolint:prealloc
+	for _, player := range bdSchema.Players {
 		steamID := steamid.New(player.Steamid)
 		if !steamID.Valid() {
 			continue
 		}
 
-		steamIds[index] = steamID
+		steamIds = append(steamIds, steamID)
 	}
 
 	return steamIds, nil

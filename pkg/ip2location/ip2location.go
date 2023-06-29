@@ -50,6 +50,7 @@ const PUB ProxyType = "PUB"
 
 type ThreatType string
 
+// nolint
 const (
 	ThreatUnknown           ThreatType = "-"
 	ThreatSpam              ThreatType = "SPAM"
@@ -62,6 +63,7 @@ const (
 
 type UsageType string
 
+// nolint
 const (
 	UsageContentDeliveryNetwork UsageType = "CDN"
 	UsageISPFixedMobile         UsageType = "ISP/MOB"
@@ -237,7 +239,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 
 		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(geoDownloadURL, apiKey, params.dbName), nil)
 		if reqErr != nil {
-			return reqErr
+			return errors.Wrap(reqErr, "Failed to create request")
 		}
 
 		resp, errGet := client.Do(req)
@@ -247,11 +249,11 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 
 		body, errReadAll := io.ReadAll(resp.Body)
 		if errReadAll != nil {
-			return errReadAll
+			return errors.Wrap(errReadAll, "Failed to read response body")
 		}
 
 		if errCloseBody := resp.Body.Close(); errCloseBody != nil {
-			return errCloseBody
+			return errors.Wrap(errCloseBody, "Failed to close response body")
 		}
 
 		return extractZip(body, outputPath, params.fileName)
@@ -294,7 +296,7 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 	var records []ASNRecord
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errOpen
+		return nil, errors.Wrap(errOpen, "Failed to open asn file for reading")
 	}
 	reader := csv.NewReader(asnFile)
 	for {
@@ -331,7 +333,7 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 	var records []LocationRecord
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errOpen
+		return nil, errors.Wrap(errOpen, "Failed to ope location records for reading")
 	}
 	reader := csv.NewReader(asnFile)
 	for {
@@ -368,7 +370,7 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 	var records []ProxyRecord
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errOpen
+		return nil, errors.Wrap(errOpen, "Failed to open proxy records for reading")
 	}
 	reader := csv.NewReader(asnFile)
 	for {
@@ -430,7 +432,7 @@ func parseIpv6Int(s string) (net.IP, error) {
 func parseIpv4Int(s string) (net.IP, error) {
 	n, errParseInt := strconv.ParseUint(s, 10, 32)
 	if errParseInt != nil {
-		return nil, errParseInt
+		return nil, errors.Wrap(errParseInt, "Failed to parse ipv4 int")
 	}
 	nn := uint32(n)
 	ip := make(net.IP, 4)
@@ -450,13 +452,13 @@ func stringInt2ip(ipString string, ipv6 bool) (net.IP, error) {
 func extractZip(data []byte, dest string, filename string) error {
 	zipReader, errNewReader := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if errNewReader != nil {
-		return errNewReader
+		return errors.Wrap(errNewReader, "Failed to create new zip reader")
 	}
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(zipFile *zip.File) error {
 		readCloser, errOpen := zipFile.Open()
 		if errOpen != nil {
-			return errOpen
+			return errors.Wrap(errOpen, "Failed to open zip file")
 		}
 		defer func() {
 			_ = readCloser.Close()
@@ -467,20 +469,20 @@ func extractZip(data []byte, dest string, filename string) error {
 		}
 		if zipFile.FileInfo().IsDir() {
 			if errM := os.MkdirAll(filePath, zipFile.Mode()); errM != nil {
-				return errM
+				return errors.Wrap(errM, "Failed to make destination directory")
 			}
 		} else {
 			if errMkDir := os.MkdirAll(filepath.Dir(filePath), zipFile.Mode()); errMkDir != nil {
-				return errMkDir
+				return errors.Wrap(errMkDir, "Failed to make destination directory")
 			}
 			fo, errOpenFile := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, zipFile.Mode())
 			if errOpenFile != nil {
-				return errOpenFile
+				return errors.Wrap(errOpen, "Failed to open output file")
 			}
 			defer func() { _ = fo.Close() }()
 			_, errNewReader = io.Copy(fo, readCloser) //nolint:gosec
 			if errNewReader != nil {
-				return errNewReader
+				return errors.Wrap(errNewReader, "Failed to copy content to output file")
 			}
 		}
 

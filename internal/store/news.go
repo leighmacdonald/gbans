@@ -96,7 +96,7 @@ func (db *Store) insertNewsArticle(ctx context.Context, entry *NewsEntry) error 
 		Suffix("RETURNING news_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	errQueryRow := db.QueryRow(ctx, query, args...).Scan(&entry.NewsID)
 	if errQueryRow != nil {
@@ -116,7 +116,7 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 		Where(sq.Eq{"news_id": entry.NewsID}).
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update article")
@@ -129,7 +129,7 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 func (db *Store) DropNewsArticle(ctx context.Context, newsID int) error {
 	query, args, errQueryArgs := db.sb.Delete("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)

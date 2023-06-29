@@ -606,7 +606,7 @@ func (app *App) initFilters(ctx context.Context) error {
 			return nil
 		}
 
-		return errGetFilters
+		return errors.Wrap(errGetFilters, "Failed to fetch filters")
 	}
 	app.wordFilters.importFilteredWords(words)
 
@@ -653,7 +653,7 @@ func (app *App) initLogSrc(ctx context.Context) {
 func initNetBans(ctx context.Context, conf *config.Config) error {
 	for _, banList := range conf.NetBans.Sources {
 		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, conf.NetBans.MaxAge); errImport != nil {
-			return errImport
+			return errors.Wrap(errImport, "Failed to import net bans")
 		}
 	}
 

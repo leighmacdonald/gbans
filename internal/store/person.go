@@ -203,7 +203,7 @@ type PersonMessages []PersonMessage
 func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	query, args, errQueryArgs := db.sb.Delete("person").Where(sq.Eq{"steam_id": steamID}).ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
@@ -270,7 +270,7 @@ func (db *Store) insertPerson(ctx context.Context, person *Person) error {
 			person.Muted).
 		ToSql()
 	if errQueryArgs != nil {
-		return errQueryArgs
+		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	errExec := db.Exec(ctx, query, args...)
 	if errExec != nil {
@@ -356,7 +356,7 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 	queryBuilder := db.sb.Select(profileColumns...).From("person").Where(sq.Eq{"steam_id": fp.Uniq[steamid.SID64](steamIds)})
 	query, args, errQueryArgs := queryBuilder.ToSql()
 	if errQueryArgs != nil {
-		return nil, errQueryArgs
+		return nil, errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	var people People
 	rows, errQuery := db.Query(ctx, query, args...)
@@ -372,7 +372,7 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID,
 			&person.CommunityBanned, &person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 			&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrapf(errScan, "Failedto scan person")
 		}
 		people = append(people, person)
 	}
@@ -399,7 +399,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 	}
 	query, args, errQueryArgs := queryBuilder.ToSql()
 	if errQueryArgs != nil {
-		return nil, errQueryArgs
+		return nil, errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 	var people People
 	rows, errQuery := db.Query(ctx, query, args...)
@@ -416,7 +416,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 			&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 			&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 			&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrapf(errScan, "Failed to scan person")
 		}
 		people = append(people, person)
 	}
@@ -784,7 +784,7 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 		var n UserNotification
 		if errScan := rows.Scan(&n.NotificationID, &n.SteamID, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
-			return notifications, errScan
+			return notifications, errors.Wrapf(errScan, "Failed to scan notification")
 		}
 		notifications = append(notifications, n)
 	}
@@ -799,7 +799,7 @@ func (db *Store) SetNotificationsRead(ctx context.Context, notificationIds []int
 		Where(sq.Eq{"person_notification_id": notificationIds}).
 		ToSql()
 	if errQuery != nil {
-		return errQuery
+		return errors.Wrapf(errQuery, "Failed to create query")
 	}
 
 	return Err(db.Exec(ctx, query, args...))
@@ -812,7 +812,7 @@ func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privileg
 		Where(sq.GtOrEq{"permission_level": privilege}).
 		ToSql()
 	if errQuery != nil {
-		return nil, errQuery
+		return nil, errors.Wrapf(errQuery, "Failed to create query")
 	}
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
@@ -823,7 +823,7 @@ func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privileg
 	for rows.Next() {
 		var sid steamid.SID64
 		if errScan := rows.Scan(&sid); errScan != nil {
-			return nil, errScan
+			return nil, errors.Wrapf(errScan, "Failed to scan steam id")
 		}
 		ids = append(ids, sid)
 	}
