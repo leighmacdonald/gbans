@@ -170,8 +170,8 @@ func (r ASNRecords) Hosts() uint32 {
 }
 
 type LatLong struct {
-	Latitude  float64 `json:"lat"`
-	Longitude float64 `json:"lng"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 // Location provides a container and some helper functions for location data.

@@ -117,7 +117,7 @@ func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroad
 		case serverEvent := <-eventChan:
 			if serverEvent.Server.ServerID == 0 {
 				// TODO why is this ever nil?
-				mc.logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
+				mc.logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			}
 			switch serverEvent.EventType { //nolint:wsl,exhaustive
 			case logparse.Damage:
@@ -144,14 +144,14 @@ func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroad
 			case logparse.SayTeam:
 				mc.sayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
 			case logparse.RCON:
-				mc.rconCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
+				mc.rconCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Connected:
-				mc.connectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
+				mc.connectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Disconnected:
-				mc.disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerNameShort}).Inc()
+				mc.disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.SpawnedAs:
 				if evt, ok := serverEvent.Event.(logparse.SpawnedAsEvt); ok {
-					mc.classCounter.With(prometheus.Labels{"class": evt.PlayerClass.String()}).Inc()
+					mc.classCounter.With(prometheus.Labels{"class": evt.Class.String()}).Inc()
 				}
 			}
 		}

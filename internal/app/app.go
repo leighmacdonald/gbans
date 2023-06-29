@@ -323,7 +323,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) {
 				discord.AddField(warnNotice, "Pattern", newWarn.MatchedFilter.Pattern)
 				discord.AddFieldsSteamID(warnNotice, evt.SID)
 				discord.AddFieldInt64Inline(warnNotice, "Filter ID", newWarn.MatchedFilter.FilterID)
-				discord.AddFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerNameShort)
+				discord.AddFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerName)
 				app.bot.SendPayload(discord.Payload{
 					ChannelID: conf.Discord.ModLogChannelID,
 					Embed:     warnNotice,
@@ -386,13 +386,13 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				continue
 			}
 			if evt.EventType == logparse.LogStart {
-				log.Info("New match created (new game)", zap.String("server", evt.Server.ServerNameShort))
+				log.Info("New match created (new game)", zap.String("server", evt.Server.ServerName))
 				matches[evt.Server.ServerID] = logparse.NewMatch(log, evt.Server.ServerID, evt.Server.ServerNameLong)
 			}
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt.Results); errApply != nil {
 				log.Error("Error applying event",
-					zap.String("server", evt.Server.ServerNameShort),
+					zap.String("server", evt.Server.ServerName),
 					zap.Error(errApply))
 			}
 			switch evt.EventType {
@@ -402,7 +402,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				go func(completeMatch logparse.Match) {
 					if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
 						log.Error("Failed to save match",
-							zap.String("server", evt.Server.ServerNameShort), zap.Error(errSave))
+							zap.String("server", evt.Server.ServerName), zap.Error(errSave))
 					} else {
 						sendDiscordMatchResults(curServer, completeMatch, app.conf, app.bot)
 					}
@@ -418,7 +418,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *config.Config, bot *discord.Bot) {
 	embed := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
-		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerNameShort, match.MapName),
+		Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerName, match.MapName),
 		Description: "Match results",
 		Color:       int(discord.Green),
 		URL:         conf.ExtURL("/log/%d", match.MatchID),

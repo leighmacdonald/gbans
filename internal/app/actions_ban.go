@@ -148,7 +148,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 			return
 		}
 		for _, player := range foundPlayers {
-			if errKick := app.Kick(ctx, store.System, player.Player.SID, banNet.SourceID, reason); errKick != nil {
+			if errKick := app.Kick(ctx, store.System, player.Player.SteamID, banNet.SourceID, reason); errKick != nil {
 				app.log.Error("Failed to kick player", zap.Error(errKick))
 			}
 		}

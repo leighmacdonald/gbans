@@ -111,14 +111,14 @@ export const Home = (): JSX.Element => {
                         SourceTV
                     </Button>
 
-                    {window.gbans.discordLinkId != '' && (
+                    {window.gbans.discord_link_id != '' && (
                         <Button
                             component={Link}
                             startIcon={<MarkUnreadChatAltIcon />}
                             fullWidth
                             color={'primary'}
                             variant={'contained'}
-                            href={`https://discord.gg/${window.gbans.discordLinkId}`}
+                            href={`https://discord.gg/${window.gbans.discord_link_id}`}
                         >
                             Join Discord
                         </Button>

@@ -64,17 +64,17 @@ func New(rootLogger *zap.Logger, dsn string, autoMigrate bool) *Store {
 
 // QueryFilter provides a structure for common query parameters.
 type QueryFilter struct {
-	Offset   uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
-	Limit    uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
-	SortDesc bool   `json:"desc,omitempty" uri:"desc"`
-	Query    string `json:"query,omitempty" uri:"query"`
-	OrderBy  string `json:"order_by,omitempty" uri:"order_by"`
-	Deleted  bool   `json:"deleted,omitempty" uri:"deleted"`
+	Offset  uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
+	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
+	Desc    bool   `json:"desc,omitempty" uri:"desc"`
+	Query   string `json:"query,omitempty" uri:"query"`
+	OrderBy string `json:"order_by,omitempty" uri:"order_by"`
+	Deleted bool   `json:"deleted,omitempty" uri:"deleted"`
 }
 
 func (queryFilter *QueryFilter) orderString() string {
 	dir := "DESC"
-	if !queryFilter.SortDesc {
+	if !queryFilter.Desc {
 		dir = "ASC"
 	}
 
@@ -83,12 +83,12 @@ func (queryFilter *QueryFilter) orderString() string {
 
 func NewQueryFilter(query string) QueryFilter {
 	return QueryFilter{
-		Limit:    1000,
-		Offset:   0,
-		SortDesc: true,
-		OrderBy:  "created_on",
-		Query:    query,
-		Deleted:  false,
+		Limit:   1000,
+		Offset:  0,
+		Desc:    true,
+		OrderBy: "created_on",
+		Query:   query,
+		Deleted: false,
 	}
 }
 

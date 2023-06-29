@@ -15,9 +15,9 @@ export interface DemoFile {
 }
 
 export interface demoFilters {
-    steamId: string;
-    mapName: string;
-    serverIds: number[];
+    steam_id: string;
+    map_name: string;
+    server_ids: number[];
 }
 
 export const apiGetDemos = async (opts: demoFilters) => {

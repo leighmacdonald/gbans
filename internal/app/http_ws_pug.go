@@ -20,12 +20,12 @@ type pugLobby struct {
 	*sync.RWMutex
 	logger    *zap.Logger
 	Leader    *wsClient                `json:"leader"`
-	LobbyID   string                   `json:"lobbyId"`
+	LobbyID   string                   `json:"lobby_id"`
 	Clients   wsClients                `json:"clients"`
 	Messages  []pugUserMessageResponse `json:"messages"`
 	Options   createLobbyOpts          `json:"options"`
 	Classes   classMapping             `json:"classes"`
-	ClassKeys []string                 `json:"classKeys"`
+	ClassKeys []string                 `json:"class_keys"`
 }
 
 func (lobby *pugLobby) lobbyType() LobbyType {

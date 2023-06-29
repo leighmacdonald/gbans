@@ -702,7 +702,7 @@ func (db *Store) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]Ba
 		qb = qb.Where(sq.Eq{"b.target_id": filter.SteamID.Int64()})
 	}
 	if filter.OrderBy != "" {
-		if filter.SortDesc {
+		if filter.Desc {
 			qb = qb.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
 		} else {
 			qb = qb.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
@@ -801,7 +801,7 @@ func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) err
 		message.Deleted,
 		message.AuthorID,
 		message.UpdatedOn,
-		message.Message,
+		message.Contents,
 	); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -824,7 +824,7 @@ func (db *Store) insertBanMessage(ctx context.Context, message *UserMessage) err
 	if errQuery := db.QueryRow(ctx, query,
 		message.ParentID,
 		message.AuthorID,
-		message.Message,
+		message.Contents,
 		message.Deleted,
 		message.CreatedOn,
 		message.UpdatedOn,
@@ -860,7 +860,7 @@ func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage
 			&msg.MessageID,
 			&msg.ParentID,
 			&msg.AuthorID,
-			&msg.Message,
+			&msg.Contents,
 			&msg.Deleted,
 			&msg.CreatedOn,
 			&msg.UpdatedOn,
@@ -883,7 +883,7 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 		&message.MessageID,
 		&message.ParentID,
 		&message.AuthorID,
-		&message.Message,
+		&message.Contents,
 		&message.Deleted,
 		&message.CreatedOn,
 		&message.UpdatedOn,

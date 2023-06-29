@@ -325,8 +325,8 @@ func (app *App) updateStateServerList(ctx context.Context) error {
 	}
 	sc := make([]*state.ServerConfig, len(servers))
 	for index, server := range servers {
-		sc[index] = state.NewServerConfig(app.log.Named(fmt.Sprintf("state-%s", server.ServerNameShort)),
-			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Address, server.Port, server.RCON, server.Latitude,
+		sc[index] = state.NewServerConfig(app.log.Named(fmt.Sprintf("state-%s", server.ServerName)),
+			server.ServerID, server.ServerNameLong, server.ServerName, server.Address, server.Port, server.RCON, server.Latitude,
 			server.Longitude, server.Region, server.CC)
 	}
 	app.serverState.SetServers(sc)
@@ -461,12 +461,12 @@ func (app *App) localStatUpdater(ctx context.Context) {
 			}
 			serverNameMap := map[string]string{}
 			for _, server := range servers {
-				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerNameShort
+				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerName
 				ipAddr, errIP := server.IP(ctx)
 				if errIP != nil {
 					continue
 				}
-				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
+				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerName
 			}
 			currentState := app.serverState.State()
 			for _, ss := range currentState {

@@ -7,9 +7,9 @@ import { PaletteMode } from '@mui/material';
 declare global {
     interface Window {
         gbans: {
-            siteName: string;
-            discordClientId: string;
-            discordLinkId: string;
+            site_name: string;
+            discord_client_id: string;
+            discord_link_id: string;
         };
     }
 }

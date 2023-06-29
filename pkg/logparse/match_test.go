@@ -112,7 +112,7 @@ func TestMatch_Apply(t *testing.T) {
 	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	// }
 	// for _, ms := range match3124689.MedicSums {
-	//	require.Equal(t, map[logparse.Medigun]int{logparse.HadUber: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
+	//	require.Equal(t, map[logparse.Medigun]int{logparse.Ubercharge: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
 	//		getMS(m, ms.SteamID).Charges, "Charges incorrect %v", getName(ms.SteamID))
 	// }
 

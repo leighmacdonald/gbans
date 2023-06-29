@@ -320,7 +320,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		if req.SteamID.String() != "" {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "ReporterSID",
-				Value:  players[0].Player.SID.String(),
+				Value:  players[0].Player.SteamID.String(),
 				Inline: true,
 			})
 		}
@@ -715,7 +715,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusOK, authResp{Status: true, Token: accessToken})
-		log.Info("Server authenticated successfully", zap.String("server", server.ServerNameShort))
+		log.Info("Server authenticated successfully", zap.String("server", server.ServerName))
 	}
 }
 
@@ -969,21 +969,21 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 		var ss []BaseServer
 		for _, srv := range ns {
 			ss = append(ss, BaseServer{
-				Host:        srv.Host,
-				Port:        srv.Port,
-				Name:        srv.Name,
-				NameShort:   srv.NameShort,
-				Region:      srv.Region,
-				CountryCode: srv.CountryCode,
-				ServerID:    srv.ServerID,
-				Players:     srv.PlayerCount,
-				MaxPlayers:  srv.MaxPlayers,
-				Bots:        srv.Bots,
-				Map:         srv.Map,
-				GameTypes:   []string{},
-				Latitude:    srv.Latitude,
-				Longitude:   srv.Longitude,
-				Distance:    distance(srv.Latitude, srv.Longitude, lat, lon),
+				Host:       srv.Host,
+				Port:       srv.Port,
+				Name:       srv.Name,
+				NameShort:  srv.NameShort,
+				Region:     srv.Region,
+				CC:         srv.CC,
+				ServerID:   srv.ServerID,
+				Players:    srv.PlayerCount,
+				MaxPlayers: srv.MaxPlayers,
+				Bots:       srv.Bots,
+				Map:        srv.Map,
+				GameTypes:  []string{},
+				Latitude:   srv.Latitude,
+				Longitude:  srv.Longitude,
+				Distance:   distance(srv.Latitude, srv.Longitude, lat, lon),
 			})
 		}
 		sort.SliceStable(ss, func(i, j int) bool {
@@ -1686,18 +1686,18 @@ func onAPIGetServers(app *App) gin.HandlerFunc {
 }
 
 type serverUpdateRequest struct {
-	Name          string  `json:"server_name"`
-	NameShort     string  `json:"server_name_short"`
-	Host          string  `json:"host"`
-	Port          int     `json:"port"`
-	ReservedSlots int     `json:"reserved_slots"`
-	RCON          string  `json:"rcon"`
-	Lat           float64 `json:"lat"`
-	Lon           float64 `json:"lon"`
-	CC            string  `json:"cc"`
-	DefaultMap    string  `json:"default_map"`
-	Region        string  `json:"region"`
-	IsEnabled     bool    `json:"is_enabled"`
+	ServerName      string  `json:"server_name"`
+	ServerNameShort string  `json:"server_name_short"`
+	Host            string  `json:"host"`
+	Port            int     `json:"port"`
+	ReservedSlots   int     `json:"reserved_slots"`
+	RCON            string  `json:"rcon"`
+	Lat             float64 `json:"lat"`
+	Lon             float64 `json:"lon"`
+	CC              string  `json:"cc"`
+	DefaultMap      string  `json:"default_map"`
+	Region          string  `json:"region"`
+	IsEnabled       bool    `json:"is_enabled"`
 }
 
 func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
@@ -1724,8 +1724,8 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 
 			return
 		}
-		server.ServerNameShort = serverReq.NameShort
-		server.ServerNameLong = serverReq.Name
+		server.ServerName = serverReq.ServerNameShort
+		server.ServerNameLong = serverReq.ServerName
 		server.Address = serverReq.Host
 		server.Port = serverReq.Port
 		server.ReservedSlots = serverReq.ReservedSlots
@@ -1745,7 +1745,7 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, server)
 		log.Info("Server config updated",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerNameShort))
+			zap.String("name", server.ServerName))
 	}
 }
 
@@ -1775,7 +1775,7 @@ func onAPIPostServerDelete(app *App) gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, server)
 		log.Info("Server config deleted",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerNameShort))
+			zap.String("name", server.ServerName))
 	}
 }
 
@@ -1790,8 +1790,8 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 
 			return
 		}
-		server := store.NewServer(serverReq.NameShort, serverReq.Host, serverReq.Port)
-		server.ServerNameLong = serverReq.Name
+		server := store.NewServer(serverReq.ServerNameShort, serverReq.Host, serverReq.Port)
+		server.ServerNameLong = serverReq.ServerName
 		server.ReservedSlots = serverReq.ReservedSlots
 		server.RCON = serverReq.RCON
 		server.Latitude = serverReq.Lat
@@ -1808,7 +1808,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 		responseOK(ctx, http.StatusOK, server)
 		log.Info("Server config created",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerNameShort))
+			zap.String("name", server.ServerName))
 	}
 }
 
@@ -2022,7 +2022,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "New report message posted",
-			Description: msg.Message,
+			Description: msg.Contents,
 		}
 		discord.AddField(embed, "Author", report.SourceID.String())
 		discord.AddLink(embed, app.conf, report)
@@ -2035,7 +2035,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 	type editMessage struct {
-		Message string `json:"body_md"`
+		BodyMD string `json:"body_md"`
 	}
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -2068,17 +2068,17 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 
 			return
 		}
-		if message.Message == "" {
+		if message.BodyMD == "" {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
 			return
 		}
-		if message.Message == existing.Message {
+		if message.BodyMD == existing.Contents {
 			responseErr(ctx, http.StatusConflict, nil)
 
 			return
 		}
-		existing.Message = message.Message
+		existing.Contents = message.BodyMD
 		if errSave := app.db.SaveReportMessage(ctx, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to save report message", zap.Error(errSave))
@@ -2089,12 +2089,12 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "New report message edited",
-			Description: message.Message,
+			Description: message.BodyMD,
 		}
-		discord.AddField(embed, "Old Message", existing.Message)
+		discord.AddField(embed, "Old Message", existing.Contents)
 		discord.AddField(embed, "Report Link", app.conf.ExtURL("/report/%d", existing.ParentID))
 		discord.AddField(embed, "Author", curUser.SteamID.String())
-		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.AvatarFull}
+		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.Avatarfull}
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.ModLogChannelID,
 			Embed:     embed,
@@ -2138,7 +2138,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "User report message deleted",
-			Description: existing.Message,
+			Description: existing.Contents,
 		}
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		app.bot.SendPayload(discord.Payload{
@@ -2861,7 +2861,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "User appeal message deleted",
-			Description: existing.Message,
+			Description: existing.Contents,
 		}
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		app.bot.SendPayload(discord.Payload{
@@ -2926,8 +2926,8 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "New ban appeal message posted",
-			Description: msg.Message,
-			Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: userProfile.AvatarFull},
+			Description: msg.Contents,
+			Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: userProfile.Avatarfull},
 			Color:       app.bot.ColourLevels.Info,
 			URL:         app.conf.ExtURL("/ban/%d", banID),
 		}
@@ -2942,7 +2942,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 
 func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 	type editMessage struct {
-		Message string `json:"body_md"`
+		BodyMD string `json:"body_md"`
 	}
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -2974,21 +2974,21 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 
 			return
 		}
-		if message.Message == "" {
+		if message.BodyMD == "" {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
 			return
 		}
-		if message.Message == existing.Message {
+		if message.BodyMD == existing.Contents {
 			responseErr(ctx, http.StatusConflict, nil)
 
 			return
 		}
 		embed := &discordgo.MessageEmbed{
 			Title:       "Ban appeal message edited",
-			Description: util.DiffString(existing.Message, message.Message),
+			Description: util.DiffString(existing.Contents, message.BodyMD),
 		}
-		existing.Message = message.Message
+		existing.Contents = message.BodyMD
 		if errSave := app.db.SaveBanMessage(ctx, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
@@ -3006,21 +3006,21 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 }
 
 type BaseServer struct {
-	ServerID    int      `json:"server_id"`
-	Host        string   `json:"host"`
-	Port        int      `json:"port"`
-	Name        string   `json:"name"`
-	NameShort   string   `json:"name_short"`
-	Region      string   `json:"region"`
-	CountryCode string   `json:"cc"`
-	Players     int      `json:"players"`
-	MaxPlayers  int      `json:"max_players"`
-	Bots        int      `json:"bots"`
-	Map         string   `json:"map"`
-	GameTypes   []string `json:"game_types"`
-	Latitude    float64  `json:"latitude"`
-	Longitude   float64  `json:"longitude"`
-	Distance    float64  `json:"distance"`
+	ServerID   int      `json:"server_id"`
+	Host       string   `json:"host"`
+	Port       int      `json:"port"`
+	Name       string   `json:"name"`
+	NameShort  string   `json:"name_short"`
+	Region     string   `json:"region"`
+	CC         string   `json:"cc"`
+	Players    int      `json:"players"`
+	MaxPlayers int      `json:"max_players"`
+	Bots       int      `json:"bots"`
+	Map        string   `json:"map"`
+	GameTypes  []string `json:"game_types"`
+	Latitude   float64  `json:"latitude"`
+	Longitude  float64  `json:"longitude"`
+	Distance   float64  `json:"distance"`
 }
 
 func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {

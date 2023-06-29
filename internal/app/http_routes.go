@@ -37,9 +37,9 @@ func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 
 // jsConfig contains all the variables that we inject into the frontend at runtime.
 type jsConfig struct {
-	SiteName        string `json:"siteName"`
-	DiscordClientID string `json:"discordClientId"`
-	DiscordLinkID   string `json:"discordLinkId"`
+	SiteName        string `json:"site_name"`
+	DiscordClientID string `json:"discord_client_id"`
+	DiscordLinkID   string `json:"discord_link_id"`
 }
 
 //nolint:contextcheck

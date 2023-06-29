@@ -457,7 +457,7 @@ func parseMedigun(gunStr string, gun *MedigunType) bool {
 }
 
 //
-// func playerClassStr(cls PlayerClass) string {
+// func playerClassStr(cls Class) string {
 //	switch cls {
 //	case Scout:
 //		return "Scout"

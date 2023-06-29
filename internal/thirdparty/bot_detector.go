@@ -25,7 +25,7 @@ type Players struct {
 }
 
 type TF2BDSchema struct {
-	Schema   string    `json:"$schema"`
+	Schema   string    `json:"$schema"` //nolint:tagliatelle
 	FileInfo FileInfo  `json:"file_info"`
 	Players  []Players `json:"players"`
 }

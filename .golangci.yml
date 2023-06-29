@@ -88,7 +88,7 @@ linters:
     - sqlclosecheck
     #- staticcheck
     - stylecheck
-    #- tagliatelle
+    - tagliatelle
     - tenv
     - testableexamples
     - testpackage

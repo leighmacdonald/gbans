@@ -72,7 +72,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 		return
 	}
 	for _, server := range servers {
-		newServers[server.LogSecret] = server.ServerNameShort
+		newServers[server.LogSecret] = server.ServerName
 	}
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()

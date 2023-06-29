@@ -73,7 +73,7 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 	}
 
 	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
-		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), store.ReasonString(reason))
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SteamID), store.ReasonString(reason))
 	})
 }
 

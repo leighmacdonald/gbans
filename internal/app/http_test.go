@@ -129,7 +129,7 @@ package app_test
 //
 // func TestAuthMiddleware(t *testing.T) {
 //	s := model.Server{
-//		ServerNameShort:     golib.RandomString(10),
+//		ServerName:     golib.RandomString(10),
 //		Token:          "",
 //		ServerAddress:        "localhost",
 //		Port:           27015,

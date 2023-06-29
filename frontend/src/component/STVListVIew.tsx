@@ -34,7 +34,11 @@ export const STVListVIew = () => {
 
     const reload = useCallback(() => {
         setIsLoading(true);
-        apiGetDemos({ steamId, mapName, serverIds })
+        apiGetDemos({
+            steam_id: steamId,
+            map_name: mapName,
+            server_ids: serverIds
+        })
             .then((response) => {
                 setDemos(response.result ?? []);
             })

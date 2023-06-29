@@ -18,15 +18,15 @@ import (
 )
 
 type UserNotification struct {
-	NotificationID int64                       `json:"person_notification_id"`
-	SteamID        steamid.SID64               `json:"steam_id,string"`
-	Read           bool                        `json:"read"`
-	Deleted        bool                        `json:"deleted"`
-	Severity       consts.NotificationSeverity `json:"severity"`
-	Message        string                      `json:"message"`
-	Link           string                      `json:"link"`
-	Count          int                         `json:"count"`
-	CreatedOn      time.Time                   `json:"created_on"`
+	PersonNotificationID int64                       `json:"person_notification_id"`
+	SteamID              steamid.SID64               `json:"steam_id,string"`
+	Read                 bool                        `json:"read"`
+	Deleted              bool                        `json:"deleted"`
+	Severity             consts.NotificationSeverity `json:"severity"`
+	Message              string                      `json:"message"`
+	Link                 string                      `json:"link"`
+	Count                int                         `json:"count"`
+	CreatedOn            time.Time                   `json:"created_on"`
 }
 
 type Person struct {
@@ -140,7 +140,7 @@ type UserMessage struct {
 	ParentID  int64         `json:"parent_id"`
 	MessageID int64         `json:"message_id"`
 	AuthorID  steamid.SID64 `json:"author_id,string"`
-	Message   string        `json:"contents"`
+	Contents  string        `json:"contents"`
 	Deleted   bool          `json:"deleted"`
 	CreatedOn time.Time     `json:"created_on"`
 	UpdatedOn time.Time     `json:"updated_on"`
@@ -150,7 +150,7 @@ func NewUserMessage(parentID int64, authorID steamid.SID64, message string) User
 	return UserMessage{
 		ParentID:  parentID,
 		AuthorID:  authorID,
-		Message:   message,
+		Contents:  message,
 		CreatedOn: config.Now(),
 		UpdatedOn: config.Now(),
 	}
@@ -568,7 +568,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		qb = qb.Limit(query.Limit)
 	}
 	if query.OrderBy != "" {
-		if query.SortDesc {
+		if query.Desc {
 			qb = qb.OrderBy(query.OrderBy + " DESC")
 		} else {
 			qb = qb.OrderBy(query.OrderBy + " ASC")
@@ -782,7 +782,7 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 	defer rows.Close()
 	for rows.Next() {
 		var n UserNotification
-		if errScan := rows.Scan(&n.NotificationID, &n.SteamID, &n.Read, &n.Deleted,
+		if errScan := rows.Scan(&n.PersonNotificationID, &n.SteamID, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
 			return notifications, errors.Wrapf(errScan, "Failed to scan notification")
 		}

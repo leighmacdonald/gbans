@@ -186,7 +186,7 @@ type MatchSummary struct {
 	Assists     int       `json:"assists"`
 	Damage      int       `json:"damage"`
 	Healing     int       `json:"healing"`
-	AirShots    int       `json:"airshots"`
+	Airshots    int       `json:"airshots"`
 }
 
 type MatchSummaryCollection []*MatchSummary
@@ -238,7 +238,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.joinTeam(evt.SID, evt.Team)
+		match.joinTeam(evt.SID, evt.NewTeam)
 
 		return nil
 	case IgnoredMsg:
@@ -305,16 +305,16 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.pointCapture(evt.Team, evt.CP, evt.CPName, evt.Players())
+		match.pointCapture(evt.Team, evt.CP, evt.Cpname, evt.Players())
 
 	case CaptureBlocked:
 		evt, ok := result.Event.(CaptureBlockedEvt)
 		if !ok {
 			return ErrInvalidType
 		}
-		match.pointCaptureBlocked(evt.CP, evt.CPName, SourcePlayerPosition{
+		match.pointCaptureBlocked(evt.CP, evt.Cpname, SourcePlayerPosition{
 			SourcePlayer: evt.SourcePlayer,
-			Pos:          evt.Pos,
+			Pos:          evt.Position,
 		})
 
 	case SpawnedAs:
@@ -322,7 +322,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.addClass(evt.SID, evt.PlayerClass)
+		match.addClass(evt.SID, evt.Class)
 	case ChangeClass:
 		evt, ok := result.Event.(ChangeClassEvt)
 		if !ok {
@@ -349,7 +349,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		if evt.HadUber {
+		if evt.Ubercharge {
 			// TODO record source player stat
 			match.drop(evt.SID2, evt.Team)
 		}
@@ -375,14 +375,14 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.medicLostAdv(evt.SID, evt.AdvTime)
+		match.medicLostAdv(evt.SID, evt.Time)
 
 	case MedicDeathEx:
 		evt, ok := result.Event.(MedicDeathExEvt)
 		if !ok {
 			return ErrInvalidType
 		}
-		match.medicDeath(evt.SID, evt.UberPct)
+		match.medicDeath(evt.SID, evt.Uberpct)
 
 	case Domination:
 		evt, ok := result.Event.(DominationEvt)
@@ -404,9 +404,9 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		if match.useRealDmg {
-			match.damage(evt.SID, evt.SID2, evt.RealDamage, evt.Team, evt.AirShot)
+			match.damage(evt.SID, evt.SID2, evt.Realdamage, evt.Team, evt.Airshot)
 		} else {
-			match.damage(evt.SID, evt.SID2, evt.Damage, evt.Team, evt.AirShot)
+			match.damage(evt.SID, evt.SID2, evt.Damage, evt.Team, evt.Airshot)
 		}
 
 	case Suicide:
@@ -428,7 +428,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.killedCustom(evt.SID, evt.SID2, evt.CustomKill)
+		match.killedCustom(evt.SID, evt.SID2, evt.Customkill)
 
 	case KillAssist:
 		evt, ok := result.Event.(KillAssistEvt)
@@ -498,7 +498,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
-		match.firstHealAfterSpawn(evt.SID, evt.HealTime)
+		match.firstHealAfterSpawn(evt.SID, evt.Time)
 
 	default:
 		return errors.New("Unhandled apply event")

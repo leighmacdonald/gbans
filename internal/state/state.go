@@ -73,7 +73,7 @@ func (c *ServerStateCollector) Find(opts FindOpts) (PlayerInfoCollection, bool) 
 	var found PlayerInfoCollection
 	for sid, server := range c.serverStates {
 		for _, player := range server.Players {
-			if (opts.SteamID.Valid() && player.SID == opts.SteamID) ||
+			if (opts.SteamID.Valid() && player.SteamID == opts.SteamID) ||
 				(opts.Name != "" && glob.Glob(opts.Name, player.Name)) ||
 				(opts.IP != nil && opts.IP.Equal(player.IP)) ||
 				(opts.CIDR != nil && opts.CIDR.Contains(player.IP)) {
@@ -90,18 +90,18 @@ func (c *ServerStateCollector) Find(opts FindOpts) (PlayerInfoCollection, bool) 
 // by admins.
 type ServerState struct {
 	// Database
-	ServerID    int       `json:"server_id"`
-	NameShort   string    `json:"name_short"`
-	Name        string    `json:"name"`
-	Host        string    `json:"host"`
-	Port        int       `json:"port"`
-	Enabled     bool      `json:"enabled"`
-	Region      string    `json:"region"`
-	CountryCode string    `json:"cc"`
-	Latitude    float64   `json:"latitude"`
-	Longitude   float64   `json:"longitude"`
-	Reserved    int       `json:"reserved"`
-	LastUpdate  time.Time `json:"last_update"`
+	ServerID   int       `json:"server_id"`
+	NameShort  string    `json:"name_short"`
+	Name       string    `json:"name"`
+	Host       string    `json:"host"`
+	Port       int       `json:"port"`
+	Enabled    bool      `json:"enabled"`
+	Region     string    `json:"region"`
+	CC         string    `json:"cc"`
+	Latitude   float64   `json:"latitude"`
+	Longitude  float64   `json:"longitude"`
+	Reserved   int       `json:"reserved"`
+	LastUpdate time.Time `json:"last_update"`
 	// A2S
 	Protocol uint8  `json:"protocol"`
 	Map      string `json:"map"`
@@ -116,7 +116,7 @@ type ServerState struct {
 	// Maximum number of players the server reports it can hold.
 	MaxPlayers int `json:"max_players"`
 	// Number of bots on the server.
-	Bots int `json:"Bots"`
+	Bots int `json:"bots"`
 	// Indicates the type of server
 	// Rag Doll Kung Fu servers always return 0 for "Server type."
 	ServerType string `json:"server_type"`
@@ -148,7 +148,7 @@ type ServerState struct {
 type ServerStatePlayer struct {
 	UserID        int           `json:"user_id"`
 	Name          string        `json:"name"`
-	SID           steamid.SID64 `json:"steam_id"`
+	SteamID       steamid.SID64 `json:"steam_id"`
 	ConnectedTime time.Duration `json:"connected_time"`
 	State         string        `json:"state"`
 	Ping          int           `json:"ping"`
@@ -274,16 +274,16 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 	c.RUnlock()
 	if !found {
 		newState = &ServerState{
-			ServerID:    config.ServerID,
-			NameShort:   config.NameShort,
-			Name:        config.Name,
-			Host:        config.Host,
-			Port:        config.Port,
-			Enabled:     true,
-			Region:      config.Region,
-			CountryCode: config.CC,
-			Latitude:    config.Lat,
-			Longitude:   config.Long,
+			ServerID:  config.ServerID,
+			NameShort: config.NameShort,
+			Name:      config.Name,
+			Host:      config.Host,
+			Port:      config.Port,
+			Enabled:   true,
+			Region:    config.Region,
+			CC:        config.CC,
+			Latitude:  config.Lat,
+			Longitude: config.Long,
 		}
 	}
 
@@ -384,7 +384,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 				players = append(players, ServerStatePlayer{
 					UserID:        p.UserID,
 					Name:          p.Name,
-					SID:           p.SID,
+					SteamID:       p.SID,
 					ConnectedTime: p.ConnectedTime,
 					State:         p.State,
 					Ping:          p.Ping,

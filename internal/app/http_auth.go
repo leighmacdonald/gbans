@@ -391,8 +391,8 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 }
 
 type userToken struct {
-	AccessToken  string `json:"accessToken,omitempty"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"access_token,omitempty"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type personAuthClaims struct {
@@ -509,7 +509,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				DiscordID:       loggedInPerson.DiscordID,
 				Name:            loggedInPerson.PersonaName,
 				Avatar:          loggedInPerson.Avatar,
-				AvatarFull:      loggedInPerson.AvatarFull,
+				Avatarfull:      loggedInPerson.AvatarFull,
 				Muted:           loggedInPerson.Muted,
 				BanID:           bp.Ban.BanID,
 			}

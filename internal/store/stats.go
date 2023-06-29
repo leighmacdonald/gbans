@@ -14,7 +14,7 @@ import (
 )
 
 type LocalTF2StatsSnapshot struct {
-	StatID          int64          `json:"local_stats_players_stat_id"`
+	StatID          int64          `json:"stat_id"`
 	Players         int            `json:"players"`
 	CapacityFull    int            `json:"capacity_full"`
 	CapacityEmpty   int            `json:"capacity_empty"`
@@ -35,14 +35,14 @@ func NewLocalTF2Stats() LocalTF2StatsSnapshot {
 }
 
 type Stats struct {
-	BansTotal     int `json:"bans"`
+	BansTotal     int `json:"bans_total"`
 	BansDay       int `json:"bans_day"`
 	BansWeek      int `json:"bans_week"`
 	BansMonth     int `json:"bans_month"`
-	Bans3Month    int `json:"bans_3month"`
-	Bans6Month    int `json:"bans_6month"`
+	Bans3Month    int `json:"bans3_month"`
+	Bans6Month    int `json:"bans6_month"`
 	BansYear      int `json:"bans_year"`
-	BansCIDRTotal int `json:"bans_cidr"`
+	BansCIDRTotal int `json:"bans_cidr_total"`
 	AppealsOpen   int `json:"appeals_open"`
 	AppealsClosed int `json:"appeals_closed"`
 	FilteredWords int `json:"filtered_words"`
@@ -135,7 +135,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.M
 	if opts.SteamID.Valid() {
 		qb = qb.Where(sq.Eq{"mp.steam_id": opts.SteamID})
 	}
-	if opts.SortDesc {
+	if opts.Desc {
 		qb = qb.OrderBy("m.match_id DESC")
 	} else {
 		qb = qb.OrderBy("m.match_id ASC")
@@ -155,7 +155,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.M
 	var matches logparse.MatchSummaryCollection
 	for rows.Next() {
 		var m logparse.MatchSummary
-		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.AirShots); errScan != nil {
+		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
 			return nil, errors.Wrapf(errScan, "Failed to scan match row")
 		}
 		matches = append(matches, &m)

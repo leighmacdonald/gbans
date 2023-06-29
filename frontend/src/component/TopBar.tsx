@@ -288,7 +288,7 @@ export const TopBar = () => {
                             ...tf2Fonts
                         }}
                     >
-                        {window.gbans.siteName || 'gbans'}
+                        {window.gbans.site_name || 'gbans'}
                     </Typography>
 
                     <Box
@@ -342,7 +342,7 @@ export const TopBar = () => {
                             display: { xs: 'flex', md: 'none' }
                         }}
                     >
-                        {window.gbans.siteName || 'gbans'}
+                        {window.gbans.site_name || 'gbans'}
                     </Typography>
                     <Box
                         sx={{

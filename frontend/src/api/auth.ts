@@ -6,8 +6,8 @@ export const tokenKey = 'token';
 export const userKey = 'user';
 
 export interface UserToken {
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
 }
 
 export const refreshToken = async () => {
@@ -16,21 +16,21 @@ export const refreshToken = async () => {
             '/api/auth/refresh',
             'POST',
             {
-                refreshToken: readRefreshToken()
+                refresh_token: readRefreshToken()
             } as UserToken,
             true
         );
         if (
             !resp.status ||
-            !resp.result?.accessToken ||
-            !resp.result?.refreshToken
+            !resp.result?.access_token ||
+            !resp.result?.refresh_token
         ) {
             logErr('Failed to refresh auth token');
             return '';
         }
-        writeAccessToken(resp.result?.accessToken);
-        writeRefreshToken(resp.result?.refreshToken);
-        return resp.result?.accessToken;
+        writeAccessToken(resp.result?.access_token);
+        writeRefreshToken(resp.result?.refresh_token);
+        return resp.result?.access_token;
     } catch (e) {
         logErr(e);
         return '';
@@ -125,7 +125,7 @@ export const discordLoginURL = () => {
     return (
         'https://discord.com/oauth2/authorize' +
         '?client_id=' +
-        window.gbans.discordClientId +
+        window.gbans.discord_client_id +
         '&redirect_uri=' +
         encodeURIComponent(baseUrl() + '/login/discord') +
         '&response_type=code' +

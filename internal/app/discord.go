@@ -363,7 +363,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 			continue
 		}
 		// TODO Join query for connections and geoip lookup data
-		// addField(embed, ipRecord.IPAddr.String(), fmt.Sprintf("%s %s %s %s %s %s %s %s", config.FmtTimeShort(ipRecord.CreatedOn), ipRecord.CountryCode,
+		// addField(embed, ipRecord.IPAddr.String(), fmt.Sprintf("%s %s %s %s %s %s %s %s", config.FmtTimeShort(ipRecord.CreatedOn), ipRecord.CC,
 		//	ipRecord.CityName, ipRecord.ASName, ipRecord.ISP, ipRecord.UsageType, ipRecord.Threat, ipRecord.DomainUsed))
 		// lastIP = ipRecord.IPAddr
 	}
@@ -524,7 +524,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 		}
 		var err error
 		for _, player := range players {
-			if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+			if errKick := app.Kick(ctx, store.Bot, player.Player.SteamID, author.SteamID, reason); errKick != nil {
 				err = gerrors.Join(err, errKick)
 
 				continue
@@ -684,11 +684,11 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 			return discord.ErrCommandFailed
 		}
 		var currentState state.ServerState
-		if !app.serverState.ByName(server.ServerNameShort, &currentState) {
+		if !app.serverState.ByName(server.ServerName, &currentState) {
 			return consts.ErrUnknownID
 		}
 		var rows []string
-		embed := discord.RespOk(response, fmt.Sprintf("Current Players: %s", server.ServerNameShort))
+		embed := discord.RespOk(response, fmt.Sprintf("Current Players: %s", server.ServerName))
 		if len(currentState.Players) > 0 {
 			sort.SliceStable(currentState.Players, func(i, j int) bool {
 				return currentState.Players[i].Name < currentState.Players[j].Name
@@ -717,7 +717,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", asn.ASNum)
 				}
 				rows = append(rows, fmt.Sprintf("%s`%s` %s`%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
-					flag, player.SID, asStr, player.Ping, player.Name, player.SID, proxyStr))
+					flag, player.SteamID, asStr, player.Ping, player.Name, player.SteamID, proxyStr))
 			}
 			embed.Description = strings.Join(rows, "\n")
 		} else {
@@ -869,7 +869,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		if stats.Hits > 0 && stats.Shots > 0 {
 //			acc = float64(stats.Hits) / float64(stats.Shots) * 100
 //		}
-//		embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerNameShort))
+//		embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerName))
 //		addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 //		addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 //		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
@@ -915,7 +915,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 		if errServer := app.db.GetServer(ctx, match.ServerID, &server); errServer != nil {
 			return discord.ErrCommandFailed
 		}
-		embed := discord.RespOk(response, fmt.Sprintf("%s - %s", server.ServerNameShort, match.MapName))
+		embed := discord.RespOk(response, fmt.Sprintf("%s - %s", server.ServerName, match.MapName))
 		embed.Color = int(discord.Green)
 		embed.URL = app.conf.ExtURL("/match/%d", match.MatchID)
 
@@ -971,18 +971,18 @@ func makeOnFind(app *App) discord.CommandHandler {
 			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
 				return errors.Wrapf(errServer, "Failed to get server")
 			}
-			person := store.NewPerson(player.Player.SID)
-			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
+			person := store.NewPerson(player.Player.SteamID)
+			if errPerson := app.PersonBySID(ctx, player.Player.SteamID, &person); errPerson != nil {
 				return errPerson
 			}
 			resp := discord.RespOk(r, "Player Found")
 			resp.Type = discordgo.EmbedTypeRich
 			resp.Image = &discordgo.MessageEmbedImage{URL: person.AvatarFull}
 			resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
-			resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SID.Int64())
+			resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SteamID.Int64())
 			resp.Title = playerInfo.Player.Name
-			discord.AddFieldInline(resp, "Server", server.ServerNameShort)
-			discord.AddFieldsSteamID(resp, playerInfo.Player.SID)
+			discord.AddFieldInline(resp, "Server", server.ServerName)
+			discord.AddFieldsSteamID(resp, playerInfo.Player.SteamID)
 			discord.AddField(resp, "Connect", fmt.Sprintf("steam://connect/%s", server.Addr()))
 		}
 
@@ -1138,7 +1138,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil
 	}
 	for _, player := range players {
-		if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+		if errKick := app.Kick(ctx, store.Bot, player.Player.SteamID, author.SteamID, reason); errKick != nil {
 			app.log.Error("Failed to perform kick", zap.Error(errKick))
 		}
 	}

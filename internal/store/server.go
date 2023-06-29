@@ -21,25 +21,25 @@ type ServerPermission struct {
 
 func NewServer(name string, address string, port int) Server {
 	return Server{
-		ServerNameShort: name,
-		Address:         address,
-		Port:            port,
-		RCON:            "",
-		ReservedSlots:   0,
-		Password:        "",
-		IsEnabled:       true,
-		TokenCreatedOn:  time.Unix(0, 0),
-		CreatedOn:       config.Now(),
-		UpdatedOn:       config.Now(),
+		ServerName:     name,
+		Address:        address,
+		Port:           port,
+		RCON:           "",
+		ReservedSlots:  0,
+		Password:       "",
+		IsEnabled:      true,
+		TokenCreatedOn: time.Unix(0, 0),
+		CreatedOn:      config.Now(),
+		UpdatedOn:      config.Now(),
 	}
 }
 
 type Server struct {
 	// Auto generated id
 	ServerID int `db:"server_id" json:"server_id"`
-	// ServerNameShort is a short reference name for the server eg: us-1
-	ServerNameShort string `db:"short_name" json:"server_name"`
-	ServerNameLong  string `db:"server_name_long" json:"server_name_long"`
+	// ServerName is a short reference name for the server eg: us-1
+	ServerName     string `json:"server_name"`
+	ServerNameLong string `json:"server_name_long"`
 	// Address is the ip of the server
 	Address string `db:"address" json:"address"`
 	// Port is the port of the server
@@ -100,7 +100,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 		return Err(errQuery)
 	}
 	if errRow := db.QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
+		Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 			&server.Latitude, &server.Longitude,
@@ -174,7 +174,7 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 	defer rows.Close()
 	for rows.Next() {
 		var server Server
-		if errScan := rows.Scan(&server.ServerID, &server.ServerNameShort, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
+		if errScan := rows.Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 			&server.Deleted, &server.LogSecret); errScan != nil {
@@ -201,7 +201,7 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(
 			&server.ServerID,
-			&server.ServerNameShort,
+			&server.ServerName,
 			&server.ServerNameLong,
 			&server.Address,
 			&server.Port,
@@ -230,7 +230,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 			deleted, log_secret) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
-	err := db.QueryRow(ctx, query, server.ServerNameShort, server.ServerNameLong, server.Address, server.Port,
+	err := db.QueryRow(ctx, query, server.ServerName, server.ServerNameLong, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
@@ -244,7 +244,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = config.Now()
 	query, args, errQueryArgs := db.sb.Update(string(tableServer)).
-		Set("short_name", server.ServerNameShort).
+		Set("short_name", server.ServerName).
 		Set("name", server.ServerNameLong).
 		Set("address", server.Address).
 		Set("port", server.Port).

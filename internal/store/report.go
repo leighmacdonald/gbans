@@ -138,7 +138,7 @@ func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) 
 		message.Deleted,
 		message.AuthorID,
 		message.UpdatedOn,
-		message.Message,
+		message.Contents,
 	); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -161,7 +161,7 @@ func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) 
 	if errQuery := db.QueryRow(ctx, query,
 		message.ParentID,
 		message.AuthorID,
-		message.Message,
+		message.Contents,
 		message.Deleted,
 		message.CreatedOn,
 		message.UpdatedOn,
@@ -189,7 +189,7 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 
 func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) error {
 	const q = `UPDATE report_message SET deleted = true WHERE report_message_id = $1`
-	if errExec := db.Exec(ctx, q, message.Message); errExec != nil {
+	if errExec := db.Exec(ctx, q, message.Contents); errExec != nil {
 		return Err(errExec)
 	}
 	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.MessageID))
@@ -226,7 +226,7 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 		builder = builder.Limit(opts.Limit)
 	}
 	// if opts.OrderBy != "" {
-	//	if opts.SortDesc {
+	//	if opts.Desc {
 	//		builder = builder.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
 	//	} else {
 	//		builder = builder.OrderBy(fmt.Sprintf("%s ASC", opts.OrderBy))
@@ -350,7 +350,7 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 			&msg.MessageID,
 			&msg.ParentID,
 			&msg.AuthorID,
-			&msg.Message,
+			&msg.Contents,
 			&msg.Deleted,
 			&msg.CreatedOn,
 			&msg.UpdatedOn,
@@ -374,7 +374,7 @@ func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64
 			&message.MessageID,
 			&message.ParentID,
 			&message.AuthorID,
-			&message.Message,
+			&message.Contents,
 			&message.Deleted,
 			&message.CreatedOn,
 			&message.UpdatedOn,

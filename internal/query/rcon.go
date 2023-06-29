@@ -44,17 +44,17 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 			defer cancelExec()
 			conn, errDial := rcon.Dial(rconCtx, server.Addr(), server.RCON, timeout)
 			if errDial != nil {
-				logger.Error("Failed to connect to server", zap.String("name", server.ServerNameShort), zap.Error(errDial))
+				logger.Error("Failed to connect to server", zap.String("name", server.ServerName), zap.Error(errDial))
 
 				return
 			}
 			for _, command := range commands {
 				resp, errExec := conn.Exec(sanitizeRCONCommand(command))
 				if errExec != nil {
-					logger.Error("Failed to exec rcon command", zap.String("name", server.ServerNameShort), zap.Error(errExec))
+					logger.Error("Failed to exec rcon command", zap.String("name", server.ServerName), zap.Error(errExec))
 				}
 				rwMutex.Lock()
-				responses[server.ServerNameShort] = resp
+				responses[server.ServerName] = resp
 				rwMutex.Unlock()
 			}
 		}(server)

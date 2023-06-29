@@ -93,9 +93,9 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 }
 
 type GetDemosOptions struct {
-	SteamID   string `json:"steamId"`
-	ServerIds []int  `json:"serverIds"`
-	MapName   string `json:"mapName"`
+	SteamID   string `json:"steam_id"`
+	ServerIds []int  `json:"server_ids"`
+	MapName   string `json:"map_name"`
 }
 
 func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {

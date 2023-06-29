@@ -18,7 +18,7 @@ type BDIds struct {
 		Title       string   `json:"title"`
 		UpdateURL   string   `json:"update_url"`
 	} `json:"file_info"`
-	Schema  string `json:"$schema"`
+	Schema  string `json:"$schema"` //nolint:tagliatelle
 	Players []struct {
 		Steamid    int64    `json:"steamid"`
 		Attributes []string `json:"attributes"`
@@ -46,7 +46,7 @@ type UserProfile struct {
 	DiscordID       string           `json:"discord_id"`
 	Name            string           `json:"name"`
 	Avatar          string           `json:"avatar"`
-	AvatarFull      string           `json:"avatarfull"`
+	Avatarfull      string           `json:"avatarfull"`
 	BanID           int64            `json:"ban_id"`
 	Muted           bool             `json:"muted"`
 }
