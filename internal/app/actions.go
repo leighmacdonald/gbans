@@ -23,7 +23,7 @@ var (
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
 func (app *App) OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(info state.PlayerServerInfo) string) error {
-	players, found := state.Find(findOpts)
+	players, found := app.serverState.Find(findOpts)
 	if !found {
 		return ErrNoUserFound
 	}

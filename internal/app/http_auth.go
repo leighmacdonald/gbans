@@ -37,52 +37,61 @@ func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
 }
 
-var (
-	nonceStore     = openid.NewSimpleNonceStore()
-	discoveryCache = &noOpDiscoveryCache{}
-)
-
 func authServerMiddleWare(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
 		claims := &serverAuthClaims{}
+
 		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, makeGetTokenKey(app.conf.HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
 				ctx.AbortWithStatus(http.StatusUnauthorized)
+
 				return
 			}
+
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+
 			return
 		}
+
 		if !parsedToken.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("Invalid jwt token parsed")
+
 			return
 		}
+
 		if claims.ServerID <= 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("Invalid jwt claim server")
+
 			return
 		}
+
 		var server store.Server
 		if errGetServer := app.db.GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
+
 			return
 		}
+
 		ctx.Next()
 	}
 }
 
 func onGetLogout(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
 		// TODO Logout key / mark as invalid manually
 		log.Error("onGetLogout Unimplemented")
@@ -95,6 +104,7 @@ func referral(ctx *gin.Context) string {
 	if !found {
 		referralURL = "/"
 	}
+
 	return referralURL
 }
 
@@ -121,6 +131,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		MfaEnabled       bool        `json:"mfa_enabled"`
 		PremiumType      int         `json:"premium_type"`
 	}
+
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	client := util.NewHTTPClient()
 
@@ -228,6 +239,8 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 }
 
 func onOpenIDCallback(app *App) gin.HandlerFunc {
+	nonceStore := openid.NewSimpleNonceStore()
+	discoveryCache := &noOpDiscoveryCache{}
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 	return func(ctx *gin.Context) {

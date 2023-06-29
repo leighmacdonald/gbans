@@ -320,7 +320,7 @@ func (app *App) updateStateServerList(ctx context.Context) error {
 			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Address, server.Port, server.RCON, server.Latitude,
 			server.Longitude, server.Region, server.CC))
 	}
-	state.SetServers(sc)
+	app.serverState.SetServers(sc)
 	return nil
 }
 
@@ -331,7 +331,7 @@ func (app *App) stateUpdater(ctx context.Context, statusUpdateFreq time.Duration
 		log.Error("Failed to update list", zap.Error(errUpdate))
 	}
 
-	if errStart := state.Start(ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
+	if errStart := app.serverState.Start(ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
 		log.Error("start returned error", zap.Error(errStart))
 	}
 }
@@ -453,8 +453,8 @@ func (app *App) localStatUpdater(ctx context.Context) {
 				}
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerNameShort
 			}
-			app.serverStateMu.RLock()
-			for _, ss := range app.serverState {
+			currentState := app.serverState.State()
+			for _, ss := range currentState {
 				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
 				serverName, nameFound := serverNameMap[sn]
 				if !nameFound {
@@ -484,7 +484,6 @@ func (app *App) localStatUpdater(ctx context.Context) {
 					stats.CapacityPartial++
 				}
 			}
-			app.serverStateMu.RUnlock()
 			if errSave := app.db.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
 				log.Error("Failed to save local stats state", zap.Error(errSave))
 				continue

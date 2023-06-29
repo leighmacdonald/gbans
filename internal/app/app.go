@@ -26,7 +26,7 @@ import (
 )
 
 // BuildVersion holds the current git revision, as of build time.
-var BuildVersion = "master"
+var BuildVersion = "master" //nolint:gochecknoglobals
 
 type App struct {
 	conf                 *config.Config
@@ -36,8 +36,7 @@ type App struct {
 	logFileChan          chan *model.LogFilePayload
 	warningChan          chan newUserWarning
 	notificationChan     chan NotificationPayload
-	serverStateMu        *sync.RWMutex
-	serverState          state.ServerStateCollection
+	serverState          *state.ServerStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreonClient        *patreon.Client
@@ -57,11 +56,10 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		db:                   db,
 		conf:                 conf,
 		log:                  logger,
+		serverState:          state.NewServerStateCollector(),
 		logFileChan:          make(chan *model.LogFilePayload, 10),
 		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan NotificationPayload, 5),
-		serverStateMu:        &sync.RWMutex{},
-		serverState:          state.ServerStateCollection{},
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
 		patreonMu:            &sync.RWMutex{},

@@ -101,7 +101,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/metrics", prometheusHandler())
 
 	engine.GET("/api/profile", onAPIProfile(app))
-	engine.GET("/api/servers/state", onAPIGetServerStates())
+	engine.GET("/api/servers/state", onAPIGetServerStates(app))
 	engine.GET("/api/stats", onAPIGetStats(app))
 	engine.GET("/api/competitive", onAPIGetCompHist())
 

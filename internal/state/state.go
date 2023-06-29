@@ -19,25 +19,25 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	// Current known state of the servers rcon status command.
-	serverStates     map[int]ServerState
-	stateMu          sync.RWMutex
+type ServerStateCollector struct {
+	sync.RWMutex
+	serverStates     map[int]*ServerState
 	masterServerList []ServerLocation
 	serverConfigs    []*ServerConfig
-)
-
-func init() {
-	serverStates = map[int]ServerState{}
-	masterServerList = []ServerLocation{}
 }
 
-type ServerStateCollection []ServerState
+func NewServerStateCollector() *ServerStateCollector {
+	return &ServerStateCollector{
+		serverStates:     make(map[int]*ServerState),
+		masterServerList: nil,
+		serverConfigs:    nil,
+	}
+}
 
-func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
-	for _, server := range c {
+func (c *ServerStateCollector) ByName(name string, state *ServerState) bool {
+	for _, server := range c.serverStates {
 		if strings.EqualFold(server.NameShort, name) {
-			*state = server
+			*state = *server
 
 			return true
 		}
@@ -46,15 +46,15 @@ func (c ServerStateCollection) ByName(name string, state *ServerState) bool {
 	return false
 }
 
-func (c ServerStateCollection) ByRegion() map[string][]ServerState {
+func (c *ServerStateCollector) ByRegion() map[string][]ServerState {
 	rm := map[string][]ServerState{}
-	for serverID, server := range c {
+	for _, server := range c.serverStates {
 		_, exists := rm[server.Region]
 		if !exists {
 			rm[server.Region] = []ServerState{}
 		}
 
-		rm[server.Region] = append(rm[server.Region], c[serverID])
+		rm[server.Region] = append(rm[server.Region], *server)
 	}
 
 	return rm
@@ -67,11 +67,11 @@ type FindOpts struct {
 	CIDR    *net.IPNet `json:"cidr"`
 }
 
-func Find(opts FindOpts) (PlayerInfoCollection, bool) {
-	stateMu.RLock()
-	defer stateMu.RUnlock()
+func (c *ServerStateCollector) Find(opts FindOpts) (PlayerInfoCollection, bool) {
+	c.RLock()
+	defer c.RUnlock()
 	var found PlayerInfoCollection
-	for sid, server := range serverStates {
+	for sid, server := range c.serverStates {
 		for _, player := range server.Players {
 			if (opts.SteamID.Valid() && player.SID == opts.SteamID) ||
 				(opts.Name != "" && glob.Glob(opts.Name, player.Name)) ||
@@ -173,54 +173,47 @@ func NewPlayerInfo() PlayerServerInfo {
 	}
 }
 
-func State() ServerStateCollection {
-	stateMu.RLock()
-	defer stateMu.RUnlock()
+func (c *ServerStateCollector) State() []ServerState {
+	c.RLock()
+	defer c.RUnlock()
 
-	var coll ServerStateCollection
-	for _, state := range serverStates {
-		coll = append(coll, state)
+	var coll []ServerState
+	for _, state := range c.serverStates {
+		coll = append(coll, *state)
 	}
 	return coll
 }
 
-func updateServers(ctx context.Context) {
+func (c *ServerStateCollector) updateServers(ctx context.Context) {
 	waitGroup := &sync.WaitGroup{}
-	results := map[int]ServerState{}
-	resultsMu := &sync.RWMutex{}
 
-	for _, config := range serverConfigs {
+	for _, config := range c.serverConfigs {
 		waitGroup.Add(1)
 		go func(cfg *ServerConfig) {
 			defer waitGroup.Done()
-			newState, errFetch := cfg.fetch(ctx)
+			newState, errFetch := c.fetch(ctx, cfg)
 			if errFetch != nil {
 				cfg.logger.Error("Failed to update", zap.Error(errFetch))
 			}
-			resultsMu.Lock()
-			results[cfg.ServerID] = newState
-			resultsMu.Unlock()
+			// TODO update not overwrite
+			c.serverStates[cfg.ServerID] = newState
 		}(config)
 	}
 
 	waitGroup.Wait()
-
-	stateMu.Lock()
-	serverStates = results
-	stateMu.Unlock()
 }
 
-func Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq time.Duration, errChan chan error) error {
+func (c *ServerStateCollector) Start(ctx context.Context, statusUpdateFreq time.Duration, msListUpdateFreq time.Duration, errChan chan error) error {
 	statusUpdateTicker := time.NewTicker(statusUpdateFreq)
 	mlUpdateTicker := time.NewTicker(msListUpdateFreq)
 
 	for {
 		select {
 		case <-mlUpdateTicker.C:
-			updateMSL(ctx, errChan)
+			c.updateMSL(ctx, errChan)
 		case <-statusUpdateTicker.C:
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*20)
-			updateServers(localCtx)
+			c.updateServers(localCtx)
 			cancel()
 		case <-ctx.Done():
 			return nil
@@ -268,17 +261,17 @@ func (config *ServerConfig) addr() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
 }
 
-func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
+func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) (*ServerState, error) {
 	var err error
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	mu := &sync.RWMutex{}
 	errMu := sync.RWMutex{}
-	stateMu.RLock()
-	newState, found := serverStates[config.ServerID]
-	stateMu.RUnlock()
+	c.RLock()
+	newState, found := c.serverStates[config.ServerID]
+	c.RUnlock()
 	if !found {
-		newState = ServerState{
+		newState = &ServerState{
 			ServerID:    config.ServerID,
 			NameShort:   config.NameShort,
 			Name:        config.Name,
@@ -400,18 +393,18 @@ func (config *ServerConfig) fetch(ctx context.Context) (ServerState, error) {
 	return newState, err
 }
 
-func SetServers(configs []*ServerConfig) {
-	stateMu.Lock()
-	defer stateMu.Unlock()
+func (c *ServerStateCollector) SetServers(configs []*ServerConfig) {
+	c.Lock()
+	defer c.Unlock()
 
-	serverConfigs = configs
+	c.serverConfigs = configs
 }
 
-func MasterServerList() []ServerLocation {
-	stateMu.RLock()
-	defer stateMu.RUnlock()
+func (c *ServerStateCollector) MasterServerList() []ServerLocation {
+	c.RLock()
+	defer c.RUnlock()
 
-	return masterServerList
+	return c.masterServerList
 }
 
 type SvRegion int
@@ -453,7 +446,7 @@ func SteamRegionIDString(region SvRegion) string {
 	}
 }
 
-func updateMSL(ctx context.Context, errChan chan error) {
+func (c *ServerStateCollector) updateMSL(ctx context.Context, errChan chan error) {
 	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
 		"appid":     "440",
 		"dedicated": "1",
@@ -503,9 +496,9 @@ func updateMSL(ctx context.Context, errChan chan error) {
 		}
 		communityServers = append(communityServers, server)
 	}
-	stateMu.Lock()
-	masterServerList = communityServers
-	stateMu.Unlock()
+	c.Lock()
+	c.masterServerList = communityServers
+	c.Unlock()
 }
 
 func GuessMapType(mapName string) string {

@@ -70,7 +70,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 			colour = int(discord.Red)
 		}
 		banNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", banSteam.TargetID),
+			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID),
 			Type:  discordgo.EmbedTypeRich,
 			Title: title,
 			Color: colour,
@@ -143,7 +143,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 		return errSaveBanNet
 	}
 	go func(_ *net.IPNet, reason store.Reason) {
-		foundPlayers, found := state.Find(state.FindOpts{CIDR: banNet.CIDR})
+		foundPlayers, found := app.serverState.Find(state.FindOpts{CIDR: banNet.CIDR})
 		if !found {
 			return
 		}
@@ -190,7 +190,7 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 	app.log.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
 
 	unbanNotice := &discordgo.MessageEmbed{
-		URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%d", bannedPerson.Ban.TargetID),
+		URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%s", bannedPerson.Ban.TargetID),
 		Type:  discordgo.EmbedTypeRich,
 		Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
 		Color: int(discord.Green),

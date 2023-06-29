@@ -268,7 +268,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		players, found := state.Find(state.FindOpts{SteamID: req.SteamID})
+		players, found := app.serverState.Find(state.FindOpts{SteamID: req.SteamID})
 		if !found {
 			log.Error("Failed to find player on /mod call")
 			responseErr(ctx, http.StatusFailedDependency, nil)
@@ -872,7 +872,7 @@ func getDefaultFloat64(s string, def float64) float64 {
 }
 
 // onAPIGetServerStates returns the current known cached server state.
-func onAPIGetServerStates() gin.HandlerFunc {
+func onAPIGetServerStates(app *App) gin.HandlerFunc {
 	type UserServers struct {
 		Servers []BaseServer        `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
@@ -881,7 +881,7 @@ func onAPIGetServerStates() gin.HandlerFunc {
 		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 		// region := ctx.GetHeader("cf-region-code")
-		ns := state.State()
+		ns := app.serverState.State()
 		var ss []BaseServer
 		for _, srv := range ns {
 			ss = append(ss, BaseServer{
@@ -2833,7 +2833,7 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusBadRequest, nil)
 			return
 		}
-		filtered := state.MasterServerList()
+		filtered := app.serverState.MasterServerList()
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)
 		}

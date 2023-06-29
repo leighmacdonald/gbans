@@ -505,7 +505,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 		if errAuthor != nil {
 			return errAuthor
 		}
-		players, found := state.Find(state.FindOpts{SteamID: targetSid64})
+		players, found := app.serverState.Find(state.FindOpts{SteamID: targetSid64})
 		if !found {
 			return nil
 		}
@@ -605,7 +605,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
 		response *discord.Response,
 	) error {
-		currentState := state.State().ByRegion()
+		currentState := app.serverState.ByRegion()
 		stats := map[string]float64{}
 		used, total := 0, 0
 		embed := discord.RespOk(response, "Current Server Populations")
@@ -664,8 +664,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 			return discord.ErrCommandFailed
 		}
 		var currentState state.ServerState
-		serverStates := state.State()
-		if !serverStates.ByName(server.ServerNameShort, &currentState) {
+		if !app.serverState.ByName(server.ServerNameShort, &currentState) {
 			return consts.ErrUnknownID
 		}
 		var rows []string
@@ -939,7 +938,7 @@ func makeOnFind(app *App) discord.CommandHandler {
 			return consts.ErrInvalidSID
 		}
 		playerInfo := state.NewPlayerInfo()
-		players, found := state.Find(state.FindOpts{SteamID: sid})
+		players, found := app.serverState.Find(state.FindOpts{SteamID: sid})
 		if !found {
 			return consts.ErrUnknownID
 		}
@@ -1103,7 +1102,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	if errBanNet := app.BanCIDR(ctx, &banCIDR); errBanNet != nil {
 		return errBanNet
 	}
-	players, found := state.Find(state.FindOpts{CIDR: network})
+	players, found := app.serverState.Find(state.FindOpts{CIDR: network})
 	if !found {
 		return nil
 	}
