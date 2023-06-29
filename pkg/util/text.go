@@ -16,7 +16,7 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 		return []string{data}
 	}
 	var results []string
-	var curPieces []string
+	var curPieces []string //nolint:prealloc
 	var curSize int
 	sepChar := "\n"
 	if len(sep) > 0 {
@@ -36,6 +36,7 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 			results = append(results, strings.TrimSuffix(strings.Join(curPieces, sepChar), sepChar))
 		}
 	}
+
 	return results
 }
 
@@ -43,12 +44,14 @@ func SanitizeLog(s string) string {
 	for _, char := range []string{"\n", "\r"} {
 		s = strings.ReplaceAll(s, char, "")
 	}
+
 	return s
 }
 
 func DiffString(s1, s2 string) string {
 	dmp := diffmatchpatch.New()
 	diffs := dmp.DiffPrettyText(dmp.DiffMain(s1, s2, true))
+
 	return fmt.Sprintf("```diff\n%s```", diffs)
 }
 
@@ -57,6 +60,7 @@ func ASCIISafe(input string) string {
 		if r > unicode.MaxASCII {
 			return -1
 		}
+
 		return r
 	}, input)
 }

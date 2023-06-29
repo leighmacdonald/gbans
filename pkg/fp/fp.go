@@ -19,6 +19,7 @@ func Uniq[T comparable](input []T) []T {
 		for _, known := range output {
 			if v == known {
 				found = true
+
 				break
 			}
 		}
@@ -36,17 +37,20 @@ func Contains[T comparable](input []T, value T) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 func Remove[T comparable](input []T, value T) []T {
-	var newValues []T
+	var newValues []T //nolint:prealloc
 	for _, existingValue := range input {
 		if value == existingValue {
 			continue
 		}
+
 		newValues = append(newValues, existingValue)
 	}
+
 	return newValues
 }
 
@@ -54,16 +58,7 @@ func Prepend[T comparable](input []T, value T) []T {
 	return append([]T{value}, input...)
 }
 
-func Max[T Number](numbers []T) T {
-	var max T
-	for _, curValue := range numbers {
-		if curValue > max {
-			max = curValue
-		}
-	}
-	return max
-}
-
+//nolint:ireturn
 func Avg[T Number](numbers []T) T {
 	var sum T
 	var count T
@@ -71,12 +66,15 @@ func Avg[T Number](numbers []T) T {
 		sum += curValue
 		count++
 	}
+
 	return sum / count
 }
 
+//nolint:ireturn
 func Reverse[S ~[]E, E any](s S) S {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
+
 	return s
 }

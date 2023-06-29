@@ -45,6 +45,7 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 		}
 		articles = append(articles, entry)
 	}
+
 	return articles, nil
 }
 
@@ -62,6 +63,7 @@ func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bo
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -75,6 +77,7 @@ func (db *Store) GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) 
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -100,6 +103,7 @@ func (db *Store) insertNewsArticle(ctx context.Context, entry *NewsEntry) error 
 		return Err(errQueryRow)
 	}
 	db.log.Info("New article saved", zap.String("title", util.SanitizeLog(entry.Title)))
+
 	return nil
 }
 
@@ -118,6 +122,7 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 		return errors.Wrapf(errExec, "Failed to update article")
 	}
 	db.log.Info("News article updated", zap.String("title", util.SanitizeLog(entry.Title)))
+
 	return nil
 }
 
@@ -130,5 +135,6 @@ func (db *Store) DropNewsArticle(ctx context.Context, newsID int) error {
 		return Err(errExec)
 	}
 	db.log.Info("News deleted", zap.Int("news_id", newsID))
+
 	return nil
 }

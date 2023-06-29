@@ -54,6 +54,7 @@ func (app *App) registerDiscordHandlers() error {
 			return errRegister
 		}
 	}
+
 	return nil
 }
 
@@ -127,6 +128,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		if errGetBanBySID := app.db.GetBanBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, store.ErrNoResult) {
 				app.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
+
 				return discord.ErrCommandFailed
 			}
 		}
@@ -144,6 +146,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, store.ErrNoResult) {
 				app.log.Error("Failed to get ban nets by addr", zap.Error(errGetBanNet))
+
 				return discord.ErrCommandFailed
 			}
 		}
@@ -318,6 +321,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: player.Avatar}
 		embed.Video = nil
 		embed.Author = author
+
 		return nil
 	}
 }
@@ -364,6 +368,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		// lastIP = ipRecord.IPAddr
 	}
 	embed.Description = "IP history (20 max)"
+
 	return nil
 }
 
@@ -408,6 +413,7 @@ func createDiscordBanEmbed(ban store.BanSteam, response *discord.Response) *disc
 		discord.AddField(embed, "Expires In", config.FmtDuration(ban.ValidUntil))
 		discord.AddField(embed, "Expires At", config.FmtTimeShort(ban.ValidUntil))
 	}
+
 	return embed
 }
 
@@ -426,6 +432,7 @@ func makeOnSetSteam(app *App) discord.CommandHandler {
 		}
 		embed := discord.RespOk(response, "Steam Account Linked")
 		embed.Description = "Your steam and discord accounts are now linked"
+
 		return nil
 	}
 }
@@ -446,6 +453,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 	}
 	embed := discord.RespOk(response, "User Unbanned Successfully")
 	discord.AddFieldsSteamID(embed, steamID)
+
 	return nil
 }
 
@@ -459,6 +467,7 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 		if errors.Is(errUnbanASN, store.ErrNoResult) {
 			return errors.New("Ban for ASN does not exist")
 		}
+
 		return discord.ErrCommandFailed
 	}
 	if !banExisted {
@@ -473,11 +482,13 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
 			return errors.New("No asnNetworks found matching ASN")
 		}
+
 		return errors.New("Error fetching asn asnNetworks")
 	}
 	embed := discord.RespOk(response, "ASN Networks Unbanned Successfully")
 	discord.AddField(embed, "ASN", asNumStr)
 	discord.AddField(embed, "Hosts", fmt.Sprintf("%d", asnNetworks.Hosts()))
+
 	return nil
 }
 
@@ -487,8 +498,10 @@ func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discord
 		if errors.Is(errPersonByDiscordID, store.ErrNoResult) {
 			return author, errors.New("Must set steam id. See /set_steam")
 		}
+
 		return author, errors.New("Error fetching author info")
 	}
+
 	return author, nil
 }
 
@@ -513,12 +526,14 @@ func makeOnKick(app *App) discord.CommandHandler {
 		for _, player := range players {
 			if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
 				err = gerrors.Join(err, errKick)
+
 				continue
 			}
 			embed := discord.RespOk(response, "User Kicked")
 			discord.AddFieldsSteamID(embed, targetSid64)
 			discord.AddField(embed, "NameShort", player.Player.Name)
 		}
+
 		return err
 	}
 }
@@ -534,6 +549,7 @@ func makeOnSay(app *App) discord.CommandHandler {
 		embed := discord.RespOk(response, "Sent center message successfully")
 		discord.AddField(embed, "Server", server)
 		discord.AddField(embed, "Message", msg)
+
 		return nil
 	}
 }
@@ -551,6 +567,7 @@ func makeOnCSay(app *App) discord.CommandHandler {
 		embed := discord.RespOk(response, "Sent console message successfully")
 		discord.AddField(embed, "Server", server)
 		discord.AddField(embed, "Message", msg)
+
 		return nil
 	}
 }
@@ -574,6 +591,7 @@ func makeOnPSay(app *App) discord.CommandHandler {
 		embed := discord.RespOk(response, "Sent private message successfully")
 		discord.AddField(embed, "Player", string(player))
 		discord.AddField(embed, "Message", msg)
+
 		return nil
 	}
 }
@@ -648,6 +666,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 		if total == 0 {
 			discord.RespErr(response, "No server currentState available")
 		}
+
 		return nil
 	}
 }
@@ -661,6 +680,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 			if errors.Is(errGetServer, store.ErrNoResult) {
 				return errors.New("Invalid server name")
 			}
+
 			return discord.ErrCommandFailed
 		}
 		var currentState state.ServerState
@@ -703,6 +723,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 		} else {
 			embed.Description = "No players :("
 		}
+
 		return nil
 	}
 }
@@ -738,6 +759,7 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	}
 	embed := discord.RespOk(response, "Filter Created Successfully")
 	embed.Description = filter.Pattern
+
 	return nil
 }
 
@@ -757,6 +779,7 @@ func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		return discord.ErrCommandFailed
 	}
 	discord.RespOk(response, "Filter Deleted Successfully")
+
 	return nil
 }
 
@@ -923,6 +946,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 		}
 		desc += "`"
 		embed.Description = desc
+
 		return nil
 	}
 }
@@ -961,6 +985,7 @@ func makeOnFind(app *App) discord.CommandHandler {
 			discord.AddFieldsSteamID(resp, playerInfo.Player.SID)
 			discord.AddField(resp, "Connect", fmt.Sprintf("steam://connect/%s", server.Addr()))
 		}
+
 		return nil
 	}
 }
@@ -989,7 +1014,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 			playerID,
 			duration,
 			reason,
-			reason.String(),
+			store.ReasonString(reason),
 			modNote,
 			store.Bot,
 			0,
@@ -1003,6 +1028,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 		}
 		response := discord.RespOk(r, "Player muted successfully")
 		discord.AddFieldsSteamID(response, banSteam.TargetID)
+
 		return nil
 	}
 }
@@ -1021,6 +1047,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
 			return errors.New("Must set steam id. See /set_steam")
 		}
+
 		return errors.New("Error fetching author info")
 	}
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
@@ -1032,6 +1059,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
 			return errors.New("No asnRecords found matching ASN")
 		}
+
 		return errors.New("Error fetching asn asnRecords")
 	}
 	var banASN store.BanASN
@@ -1040,7 +1068,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		targetID,
 		duration,
 		reason,
-		reason.String(),
+		store.ReasonString(reason),
 		modNote,
 		store.Bot,
 		asNum,
@@ -1053,11 +1081,13 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		if errors.Is(errBanASN, store.ErrDuplicate) {
 			return errors.New("Duplicate ASN ban")
 		}
+
 		return discord.ErrCommandFailed
 	}
 	resp := discord.RespOk(response, "ASN BanSteam Created Successfully")
 	discord.AddField(resp, "ASNum", asNumStr)
 	discord.AddField(resp, "Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts()))
+
 	return nil
 }
 
@@ -1081,6 +1111,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		if errors.Is(errGetPerson, store.ErrNoResult) {
 			return errors.New("Must set steam id. See /set_steam")
 		}
+
 		return errors.New("Error fetching author info")
 	}
 
@@ -1090,7 +1121,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		target,
 		duration,
 		reason,
-		reason.String(),
+		store.ReasonString(reason),
 		modNote,
 		store.Bot,
 		cidr,
@@ -1112,6 +1143,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		}
 	}
 	discord.RespOk(response, "IP ban created successfully")
+
 	return nil
 }
 
@@ -1134,7 +1166,7 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		store.StringSID(target),
 		duration,
 		reason,
-		reason.String(),
+		store.ReasonString(reason),
 		modNote,
 		store.Bot,
 		0,
@@ -1147,8 +1179,10 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		if errors.Is(errBan, store.ErrDuplicate) {
 			return errors.New("Duplicate ban")
 		}
+
 		return discord.ErrCommandFailed
 	}
 	createDiscordBanEmbed(banSteam, response)
+
 	return nil
 }

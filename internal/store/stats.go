@@ -111,6 +111,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errors.Wrapf(errTeamExec, "Failed to write team sum")
 		}
 	}
+
 	return nil
 }
 
@@ -159,6 +160,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) (logparse.M
 		}
 		matches = append(matches, &m)
 	}
+
 	return matches, nil
 }
 
@@ -269,12 +271,14 @@ func (db *Store) GetStats(ctx context.Context, stats *Stats) error {
 	if errQuery := db.QueryRow(ctx, q).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
 		db.log.Error("Failed to fetch stats", zap.Error(errQuery))
+
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
-var localStatColumns = []string{
+var localStatColumns = []string{ //nolint:gochecknoglobals
 	"players", "capacity_full", "capacity_empty", "capacity_partial",
 	"map_types", "created_on", "regions", "servers",
 }
@@ -288,6 +292,7 @@ func (db *Store) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, s
 	if errQuery != nil {
 		return errQuery
 	}
+
 	return Err(db.Exec(ctx, query, args...))
 }
 
@@ -354,6 +359,7 @@ func (db *Store) fetchLocalTF2Snapshots(ctx context.Context, query string, args 
 		}
 		stats = append(stats, stat)
 	}
+
 	return stats, nil
 }
 
@@ -361,12 +367,14 @@ func HourlyIndex(t time.Time) (time.Time, int) {
 	curYear, curMon, curDay := t.Date()
 	curHour, _, _ := t.Clock()
 	curTime := time.Date(curYear, curMon, curDay, curHour, 0, 0, 0, t.Location())
+
 	return curTime, curHour
 }
 
 func DailyIndex(t time.Time) (time.Time, int) {
 	curYear, curMon, curDay := t.Date()
 	curTime := time.Date(curYear, curMon, curDay, 0, 0, 0, 0, t.Location())
+
 	return curTime, curDay
 }
 
@@ -375,6 +383,7 @@ func currentHourlyTime() time.Time {
 	now := config.Now()
 	year, mon, day := now.Date()
 	hour, _, _ := now.Clock()
+
 	return time.Date(year, mon, day, hour, 0, 0, 0, now.Location())
 }
 
@@ -561,6 +570,7 @@ func (db *Store) GetLocalTF2Stats(ctx context.Context, duration StatDuration) ([
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
+
 	return db.fetchLocalTF2Snapshots(ctx, query, args)
 }
 
@@ -582,7 +592,7 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 	if len(stats) == 0 {
 		return nil
 	}
-	var (
+	var ( //nolint:prealloc
 		hourlySums          []LocalTF2StatsSnapshot
 		curSums             *LocalTF2StatsSnapshot
 		tempPlayers         []int
@@ -661,13 +671,14 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 			if errors.Is(errSave, ErrDuplicate) {
 				continue
 			}
+
 			return errSave
 		}
 	}
 
-	var statIds []int64
-	for _, s := range stats {
-		statIds = append(statIds, s.StatID)
+	statIds := make([]int64, len(stats))
+	for index, s := range stats {
+		statIds[index] = s.StatID
 	}
 	// Delete old entries
 	delQuery, delArgs, delQueryErr := db.sb.
@@ -677,5 +688,6 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 	if delQueryErr != nil {
 		return Err(delQueryErr)
 	}
+
 	return db.Exec(ctx, delQuery, delArgs...)
 }

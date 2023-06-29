@@ -35,7 +35,7 @@ linters:
     - forbidigo
     - forcetypeassert
     #- funlen
-    #- gci
+    - gci
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecknoglobals
@@ -62,7 +62,7 @@ linters:
     - importas
     - ineffassign
     - interfacebloat
-    #- ireturn
+    - ireturn
     #- lll
     - loggercheck
     - maintidx
@@ -73,15 +73,15 @@ linters:
     #- nestif
     - nilerr
     - nilnil
-    #- nlreturn
+    - nlreturn
     - noctx
     #- nolintlint
     - nonamedreturns
     - nosprintfhostport
     #- paralleltest
-    #- prealloc
+    - prealloc
     - predeclared
-    #- promlinter
+    - promlinter
     - reassign
     #- revive
     - rowserrcheck

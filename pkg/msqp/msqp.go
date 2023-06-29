@@ -77,6 +77,7 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 	for _, v := range dedupeMap {
 		results = append(results, v)
 	}
+
 	return results, nil
 }
 
@@ -117,5 +118,6 @@ func sendListRequest(conn *net.UDPConn, ipStart string, filter string, regionCod
 		i++
 		endpoints = append(endpoints, endpoint)
 	}
+
 	return endpoints, nil
 }

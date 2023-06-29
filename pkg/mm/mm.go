@@ -34,6 +34,7 @@ func addTeamPrefixes(keys ...string) []string {
 			out = append(out, strings.Join([]string{t, key}, "_"))
 		}
 	}
+
 	return out
 }
 

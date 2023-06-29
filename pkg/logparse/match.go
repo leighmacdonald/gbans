@@ -46,6 +46,7 @@ func (mps MatchTeamSums) GetByTeam(team Team) (*MatchTeamSum, error) {
 			return m, nil
 		}
 	}
+
 	return nil, consts.ErrInvalidTeam
 }
 
@@ -57,6 +58,7 @@ func (mps MatchMedicSums) GetBySteamID(steamID steamid.SID64) (*MatchMedicSum, e
 			return m, nil
 		}
 	}
+
 	return nil, consts.ErrInvalidSID
 }
 
@@ -170,6 +172,7 @@ func (match *Match) GetWeaponSum(steamID steamid.SID64, weapon Weapon) *MatchWea
 	}
 	newWeapon := NewMatchWeaponSum(steamID, weapon)
 	p.Weapons = append(p.Weapons, &newWeapon)
+
 	return &newWeapon
 }
 
@@ -193,6 +196,7 @@ func (match *Match) playerSlice() []MatchPlayerSum {
 	for index, p := range match.PlayerSums {
 		players[index] = *p
 	}
+
 	return players
 }
 
@@ -201,6 +205,7 @@ func (match *Match) TopPlayers() []MatchPlayerSum {
 	sort.SliceStable(players, func(i, j int) bool {
 		return players[i].Kills > players[j].Kills
 	})
+
 	return players
 }
 
@@ -218,6 +223,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.addChat(evt.SID, evt.Name, evt.Msg, false, evt.CreatedOn)
+
 		return nil
 	case SayTeam:
 		evt, ok := result.Event.(SayTeamEvt)
@@ -225,6 +231,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.addChat(evt.SID, evt.Name, evt.Msg, true, evt.CreatedOn)
+
 		return nil
 	case JoinedTeam:
 		evt, ok := result.Event.(JoinedTeamEvt)
@@ -232,6 +239,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.joinTeam(evt.SID, evt.Team)
+
 		return nil
 	case IgnoredMsg:
 		return ErrIgnored
@@ -239,6 +247,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		return ErrUnhandled
 	case WRoundStart:
 		match.roundStart()
+
 		return nil
 	case WGameOver:
 		match.gameOver()
@@ -246,6 +255,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		match.roundStart()
 	case WRoundOvertime:
 		match.overtime()
+
 		return nil
 	case WRoundLen:
 	case WRoundWin:
@@ -254,6 +264,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.roundWin(evt.Winner)
+
 		return nil
 
 	case Connected:
@@ -262,6 +273,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.connected(evt.SID)
+
 		return nil
 
 	case Entered:
@@ -270,6 +282,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.entered(evt.SID)
+
 		return nil
 
 	case Disconnected:
@@ -278,6 +291,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 		match.disconnected(evt.SID)
+
 		return nil
 	}
 
@@ -507,9 +521,11 @@ func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
 				ps.touch()
 			}
 			match.PlayerSums = append(match.PlayerSums, ps)
+
 			return ps
 		}
 	}
+
 	return m
 }
 
@@ -528,6 +544,7 @@ func (match *Match) getMedicSum(sid steamid.SID64) *MatchMedicSum {
 		},
 	}
 	match.MedicSums = append(match.MedicSums, ms)
+
 	return ms
 }
 
@@ -538,6 +555,7 @@ func (match *Match) getTeamSum(team Team) *MatchTeamSum {
 	}
 	ts := newMatchTeamSum(team)
 	match.TeamSums = append(match.TeamSums, ts)
+
 	return ts
 }
 
@@ -545,6 +563,7 @@ func (match *Match) getRound() *MatchRoundSum {
 	if match.curRound == -1 {
 		return nil
 	}
+
 	return match.Rounds[match.curRound]
 }
 

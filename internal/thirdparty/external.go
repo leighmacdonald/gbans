@@ -1,4 +1,4 @@
-// Package external implements functionality for communicating and parsing external or 3rd party data sources.
+// Package thirdparty implements functionality for communicating and parsing external or 3rd party data sources.
 package thirdparty
 
 import (
@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	networks []*net.IPNet
-	steamids []steamid.SID64
+	networks []*net.IPNet    //nolint:gochecknoglobals
+	steamids []steamid.SID64 //nolint:gochecknoglobals
 )
 
 func containsSID(sid steamid.SID64) bool {
@@ -79,6 +79,7 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 	if errLoadBody != nil {
 		return 0, errors.Wrapf(errLoadBody, "Failed to load list")
 	}
+
 	return count, nil
 }
 
@@ -103,6 +104,7 @@ func download(ctx context.Context, url string, savePath string) error {
 	if errClose := response.Body.Close(); errClose != nil {
 		return errClose
 	}
+
 	return nil
 }
 
@@ -149,6 +151,7 @@ func addNets(networks []*net.IPNet) int {
 			count++
 		}
 	}
+
 	return count
 }
 
@@ -160,11 +163,12 @@ func addSIDs(steamIds steamid.Collection) int {
 			count++
 		}
 	}
+
 	return count
 }
 
 func parseCIDR(src []byte) ([]*net.IPNet, error) {
-	var nets []*net.IPNet
+	var nets []*net.IPNet //nolint:prealloc
 	for _, line := range strings.Split(string(src), "\n") {
 		if line == "" {
 			continue
@@ -175,5 +179,6 @@ func parseCIDR(src []byte) ([]*net.IPNet, error) {
 		}
 		nets = append(nets, ipNet)
 	}
+
 	return nets, nil
 }

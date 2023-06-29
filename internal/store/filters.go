@@ -32,6 +32,7 @@ func (f *Filter) Match(value string) bool {
 	if f.IsRegex {
 		return f.Regex.MatchString(value)
 	}
+
 	return f.Pattern == value
 }
 
@@ -55,6 +56,7 @@ func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 		return Err(errQuery)
 	}
 	db.log.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
+
 	return nil
 }
 
@@ -75,6 +77,7 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 		return Err(err)
 	}
 	db.log.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
+
 	return nil
 }
 
@@ -84,6 +87,7 @@ func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 		return Err(errExec)
 	}
 	db.log.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
+
 	return nil
 }
 
@@ -97,6 +101,7 @@ func (db *Store) GetFilterByID(ctx context.Context, wordID int64, f *Filter) err
 		return Err(errQuery)
 	}
 	f.Init()
+
 	return nil
 }
 
@@ -119,5 +124,6 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 		filter.Init()
 		filters = append(filters, filter)
 	}
+
 	return filters, nil
 }

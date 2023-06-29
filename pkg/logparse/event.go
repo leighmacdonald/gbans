@@ -220,6 +220,7 @@ func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
 			Pos:          pos,
 		})
 	}
+
 	return captors
 }
 

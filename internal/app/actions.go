@@ -32,15 +32,18 @@ func (app *App) OnFindExec(ctx context.Context, findOpts state.FindOpts, onFound
 		var server store.Server
 		if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
 			err = gerrors.Join(err, errServer)
+
 			continue
 		}
 		cmd := onFoundCmd(player)
 		_, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, cmd)
 		if errExecRCON != nil {
 			err = gerrors.Join(err, errExecRCON)
+
 			continue
 		}
 	}
+
 	return err
 }
 
@@ -52,8 +55,9 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
+
 	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
-		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason)
+		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, store.ReasonString(reason))
 	})
 }
 
@@ -67,8 +71,9 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
+
 	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
-		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), store.ReasonString(reason))
 	})
 }
 
@@ -88,6 +93,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 		return errors.Errorf("Invalid response")
 	}
 	app.log.Info("Server message sent", zap.Int64("author", author.Int64()), zap.String("msg", message))
+
 	return nil
 }
 
@@ -114,6 +120,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 	_ = query.RCON(ctx, app.log, servers, msg)
 	app.log.Info("Server center message sent", zap.Int64("author", author.Int64()),
 		zap.String("msg", message), zap.Int("servers", len(servers)))
+
 	return nil
 }
 
@@ -125,6 +132,7 @@ func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.S
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
+
 	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
 	})
@@ -146,6 +154,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 		return consts.ErrInternal
 	}
 	app.log.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
+
 	return nil
 }
 
@@ -156,6 +165,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 			return store.ErrDuplicate
 		}
 		app.log.Error("Error saving filter word", zap.Error(errSave))
+
 		return consts.ErrInternal
 	}
 	filter.Init()
@@ -172,19 +182,24 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	if errGetFilter := app.db.GetFilterByID(ctx, filterID, &filter); errGetFilter != nil {
 		return false, errGetFilter
 	}
+
 	if errDropFilter := app.db.DropFilter(ctx, &filter); errDropFilter != nil {
 		return false, errDropFilter
 	}
+
 	app.wordFilters.Lock()
-	var valid []store.Filter
+	defer app.wordFilters.Unlock()
+
+	var valid []store.Filter //nolint:prealloc
 	for _, f := range app.wordFilters.wordFilters {
 		if f.FilterID == filterID {
 			continue
 		}
 		valid = append(valid, f)
 	}
+
 	app.wordFilters.wordFilters = valid
-	app.wordFilters.Unlock()
+
 	return true, nil
 }
 
@@ -204,5 +219,6 @@ func (app *App) FilterCheck(message string) []store.Filter {
 			}
 		}
 	}
+
 	return found
 }

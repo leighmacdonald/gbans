@@ -77,6 +77,7 @@ func (queryFilter *QueryFilter) orderString() string {
 	if !queryFilter.SortDesc {
 		dir = "ASC"
 	}
+
 	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
@@ -113,20 +114,25 @@ func (db *Store) Connect(ctx context.Context) error {
 		return errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
 	db.conn = dbConn
+
 	return nil
 }
 
+//nolint:ireturn
 func (db *Store) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
 	rows, err := db.conn.Query(ctx, query, args...)
+
 	return rows, Err(err)
 }
 
+//nolint:ireturn
 func (db *Store) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
 func (db *Store) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := db.conn.Exec(ctx, query, args...)
+
 	return Err(err)
 }
 
@@ -135,6 +141,7 @@ func (db *Store) Close() error {
 	if db.conn != nil {
 		db.conn.Close()
 	}
+
 	return nil
 }
 
@@ -142,6 +149,7 @@ func (db *Store) truncateTable(ctx context.Context, table tableName) error {
 	if _, errExec := db.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
 		return Err(errExec)
 	}
+
 	return nil
 }
 
@@ -162,6 +170,7 @@ func Err(rootError error) error {
 	if rootError.Error() == "no rows in result set" {
 		return ErrNoResult
 	}
+
 	return rootError
 }
 
@@ -209,6 +218,7 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	if errMigrateInstance != nil {
 		return errors.Wrapf(errMigrateInstance, "Failed to migrator up")
 	}
+
 	switch action {
 	case MigrateUpOne:
 		return migrator.Steps(1)

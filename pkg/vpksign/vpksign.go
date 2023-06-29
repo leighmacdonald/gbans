@@ -12,6 +12,7 @@ func call(ctx context.Context, vpkBinRoot string, args ...string) (*exec.Cmd, er
 	if errEnv := os.Setenv("LD_LIBRARY_PATH", vpkBinRoot); errEnv != nil {
 		return nil, errEnv
 	}
+
 	return exec.CommandContext(ctx, bin, args...), nil
 }
 
@@ -24,5 +25,6 @@ func Sign(ctx context.Context, vpkBinRoot string, inputFilePath string, privateK
 	if errOut != nil {
 		return errCmd
 	}
+
 	return nil
 }

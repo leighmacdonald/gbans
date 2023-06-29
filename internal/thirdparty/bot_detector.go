@@ -34,13 +34,16 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 	if errUnmarshal := json.Unmarshal(data, &bdSchema); errUnmarshal != nil {
 		return nil, errUnmarshal
 	}
-	var steamIds steamid.Collection
-	for _, player := range bdSchema.Players {
+
+	steamIds := make([]steamid.SID64, len(bdSchema.Players))
+	for index, player := range bdSchema.Players {
 		steamID := steamid.New(player.Steamid)
 		if !steamID.Valid() {
 			continue
 		}
-		steamIds = append(steamIds, steamID)
+
+		steamIds[index] = steamID
 	}
+
 	return steamIds, nil
 }

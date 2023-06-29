@@ -32,5 +32,6 @@ func MustCreateLogger(conf *config.Config) *zap.Logger {
 	if errLogger != nil {
 		panic("Failed to create log config")
 	}
+
 	return l.Named("gb")
 }

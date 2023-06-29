@@ -4,7 +4,7 @@ import requests
 
 
 def upload():
-    with open("../test_data/log_3124689.log", 'r') as f:
+    with open("../testdata/log_3124689.log", 'r') as f:
         data = f.read()
     url = "http://localhost:6006/api/log"
     pv = {

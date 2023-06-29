@@ -17,6 +17,7 @@ import (
 
 func prometheusHandler() gin.HandlerFunc {
 	h := promhttp.Handler()
+
 	return func(ctx *gin.Context) {
 		h.ServeHTTP(ctx.Writer, ctx.Request)
 	}
@@ -24,6 +25,7 @@ func prometheusHandler() gin.HandlerFunc {
 
 func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(c *gin.Context) {
 		c.Next()
 
@@ -103,7 +105,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/profile", onAPIProfile(app))
 	engine.GET("/api/servers/state", onAPIGetServerStates(app))
 	engine.GET("/api/stats", onAPIGetStats(app))
-	engine.GET("/api/competitive", onAPIGetCompHist())
 
 	engine.GET("/api/players", onAPIGetPlayers(app))
 	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))

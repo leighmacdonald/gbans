@@ -48,5 +48,6 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 	if errSavePerson := app.db.SavePerson(ctx, person); errSavePerson != nil {
 		return errors.Wrapf(errSavePerson, "Failed to save person")
 	}
+
 	return nil
 }

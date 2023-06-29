@@ -93,6 +93,7 @@ func (db *Store) insertReport(ctx context.Context, report *Report) error {
 	db.log.Info("Report saved",
 		zap.Int64("report_id", report.ReportID),
 		zap.Int64("author_id", report.SourceID.Int64()))
+
 	return nil
 }
 
@@ -103,6 +104,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
             deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10
         WHERE report_id = $11`
+
 	return Err(db.Exec(ctx, q, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
 		report.DemoName, report.DemoTick, report.ReportID))
@@ -112,6 +114,7 @@ func (db *Store) SaveReport(ctx context.Context, report *Report) error {
 	if report.ReportID > 0 {
 		return db.updateReport(ctx, report)
 	}
+
 	return db.insertReport(ctx, report)
 }
 
@@ -119,6 +122,7 @@ func (db *Store) SaveReportMessage(ctx context.Context, message *UserMessage) er
 	if message.MessageID > 0 {
 		return db.updateReportMessage(ctx, message)
 	}
+
 	return db.insertReportMessage(ctx, message)
 }
 
@@ -142,6 +146,7 @@ func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) 
 		zap.Int64("report_id", message.ParentID),
 		zap.Int64("message_id", message.MessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
+
 	return nil
 }
 
@@ -167,6 +172,7 @@ func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) 
 		zap.Int64("report_id", message.ParentID),
 		zap.Int64("message_id", message.MessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
+
 	return nil
 }
 
@@ -177,6 +183,7 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 	}
 	db.log.Info("Report deleted", zap.Int64("report_id", report.ReportID))
 	report.Deleted = true
+
 	return nil
 }
 
@@ -187,6 +194,7 @@ func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) er
 	}
 	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.MessageID))
 	message.Deleted = true
+
 	return nil
 }
 
@@ -255,6 +263,7 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 		}
 		reports = append(reports, report)
 	}
+
 	return reports, nil
 }
 
@@ -285,6 +294,7 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 		); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -315,6 +325,7 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 		); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -348,6 +359,7 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 		}
 		messages = append(messages, msg)
 	}
+
 	return messages, nil
 }
 

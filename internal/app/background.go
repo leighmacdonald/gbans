@@ -28,6 +28,7 @@ func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -51,6 +52,7 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 				if errMembers != nil {
 					log.Warn("Failed to fetch group members", zap.Error(errMembers))
 					cancel()
+
 					continue
 				}
 				newMap[gid] = members
@@ -63,6 +65,7 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 			log.Debug("Updated group member ban list", zap.Int("count", total))
 		case <-ctx.Done():
 			log.Debug("steamGroupMembershipUpdater shutting down")
+
 			return
 		}
 	}
@@ -98,6 +101,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			})
 			if errReports != nil {
 				app.log.Error("failed to fetch reports for report metadata", zap.Error(errReports))
+
 				return
 			}
 			now := config.Now()
@@ -105,6 +109,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			for _, report := range reports {
 				if report.ReportStatus == store.ClosedWithAction || report.ReportStatus == store.ClosedWithoutAction {
 					m.TotalClosed++
+
 					continue
 				}
 				m.TotalOpen++
@@ -147,6 +152,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
+
 			return
 		}
 	}
@@ -168,6 +174,7 @@ func demoCleaner(ctx context.Context, db *store.Store, logger *zap.Logger) {
 			update()
 		case <-ctx.Done():
 			log.Debug("profileUpdater shutting down")
+
 			return
 		}
 	}
@@ -175,6 +182,7 @@ func demoCleaner(ctx context.Context, db *store.Store, logger *zap.Logger) {
 
 func cleanupTasks(ctx context.Context, db *store.Store, logger *zap.Logger) {
 	log := logger.Named("cleanupTasks")
+	defer log.Debug("profileUpdater shutting down")
 	ticker := time.NewTicker(time.Hour * 24)
 	for {
 		select {
@@ -183,7 +191,6 @@ func cleanupTasks(ctx context.Context, db *store.Store, logger *zap.Logger) {
 				log.Error("Error pruning expired refresh tokens", zap.Error(err))
 			}
 		case <-ctx.Done():
-			log.Debug("profileUpdater shutting down")
 			return
 		}
 	}
@@ -281,11 +288,13 @@ func (app *App) patreonUpdater(ctx context.Context) {
 			newCampaigns, errCampaigns := PatreonGetTiers(app.patreonClient)
 			if errCampaigns != nil {
 				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
+
 				return
 			}
 			newPledges, _, errPledges := PatreonGetPledges(app.patreonClient)
 			if errPledges != nil {
 				log.Error("Failed to refresh pledges", zap.Error(errPledges))
+
 				return
 			}
 			app.patreonMu.Lock()
@@ -314,13 +323,14 @@ func (app *App) updateStateServerList(ctx context.Context) error {
 	if errServers != nil {
 		return errServers
 	}
-	var sc []*state.ServerConfig
-	for _, server := range servers {
-		sc = append(sc, state.NewServerConfig(app.log.Named(fmt.Sprintf("state-%s", server.ServerNameShort)),
+	sc := make([]*state.ServerConfig, len(servers))
+	for index, server := range servers {
+		sc[index] = state.NewServerConfig(app.log.Named(fmt.Sprintf("state-%s", server.ServerNameShort)),
 			server.ServerID, server.ServerNameLong, server.ServerNameShort, server.Address, server.Port, server.RCON, server.Latitude,
-			server.Longitude, server.Region, server.CC))
+			server.Longitude, server.Region, server.CC)
 	}
 	app.serverState.SetServers(sc)
+
 	return nil
 }
 
@@ -362,6 +372,7 @@ func (app *App) banSweeper(ctx context.Context) {
 							var person store.Person
 							if errPerson := app.db.GetOrCreatePersonBySteamID(ctx, expiredBan.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired person", zap.Error(errPerson))
+
 								continue
 							}
 							name := person.PersonaName
@@ -369,7 +380,7 @@ func (app *App) banSweeper(ctx context.Context) {
 								name = person.SteamID.String()
 							}
 							log.Info("Ban expired", zap.String("type", banType),
-								zap.String("reason", expiredBan.Reason.String()),
+								zap.String("reason", store.ReasonString(expiredBan.Reason)),
 								zap.Int64("sid64", expiredBan.TargetID.Int64()), zap.String("name", name))
 						}
 					}
@@ -408,6 +419,7 @@ func (app *App) banSweeper(ctx context.Context) {
 			waitGroup.Wait()
 		case <-ctx.Done():
 			log.Debug("banSweeper shutting down")
+
 			return
 		}
 	}
@@ -423,12 +435,14 @@ func (app *App) localStatUpdater(ctx context.Context) {
 	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
 	if errSaveTicker != nil {
 		log.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
+
 		return
 	}
 	// Rebuild stats every hour
 	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
 	if errBuildTicker != nil {
 		log.Fatal("Invalid build ticker cron format", zap.Error(errBuildTicker))
+
 		return
 	}
 	build()
@@ -442,6 +456,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 			servers, errServers := app.db.GetServers(ctx, false)
 			if errServers != nil {
 				log.Error("Failed to fetch servers to build local cache", zap.Error(errServers))
+
 				continue
 			}
 			serverNameMap := map[string]string{}
@@ -459,6 +474,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 				serverName, nameFound := serverNameMap[sn]
 				if !nameFound {
 					log.Error("Cannot find server name", zap.String("name", serverName))
+
 					continue
 				}
 				stats.Servers[serverName] = ss.PlayerCount
@@ -486,6 +502,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 			}
 			if errSave := app.db.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
 				log.Error("Failed to save local stats state", zap.Error(errSave))
+
 				continue
 			}
 		case <-ctx.Done():

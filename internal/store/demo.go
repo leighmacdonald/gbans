@@ -54,6 +54,7 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 	if errQuery != nil {
 		return errQuery
 	}
+
 	return Err(db.Exec(ctx, query, args...))
 }
 
@@ -70,6 +71,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFi
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -86,6 +88,7 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -139,6 +142,7 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 		}
 		demos = append(demos, demoFile)
 	}
+
 	return demos, nil
 }
 
@@ -168,6 +172,7 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	} else {
 		err = db.insertDemo(ctx, demoFile)
 	}
+
 	return Err(err)
 }
 
@@ -187,6 +192,7 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 		return Err(errQuery)
 	}
 	db.log.Info("New demo saved", zap.String("name", demoFile.Title))
+
 	return nil
 }
 
@@ -208,6 +214,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 		return Err(errExec)
 	}
 	db.log.Info("Demo updated", zap.String("name", demoFile.Title))
+
 	return nil
 }
 
@@ -222,5 +229,6 @@ func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	}
 	demoFile.DemoID = 0
 	db.log.Info("Demo deleted:", zap.String("name", demoFile.Title))
+
 	return nil
 }

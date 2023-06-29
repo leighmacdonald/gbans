@@ -12,10 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 )
 
 type parserType struct {
@@ -650,6 +649,7 @@ func (p *LogParser) ParseKVs(stringVal string, out map[string]any) bool {
 	for mv := range m {
 		out[m[mv][1]] = m[mv][2]
 	}
+
 	return true
 }
 
@@ -697,6 +697,7 @@ func (p *LogParser) processKV(originalKVMap map[string]any) map[string]any {
 			pieces := strings.Split(value, ":")
 			if len(pieces) != 2 {
 				newKVMap[key] = value
+
 				continue
 			}
 			newKVMap["address"] = pieces[0]
@@ -1089,6 +1090,7 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 			return nil, errUnmarshal
 		}
 		parsedEvent.Message = logLine
+
 		return &Results{IgnoredMsg, parsedEvent}, nil
 	}
 	var parsedEvent UnknownMsgEvt
@@ -1096,10 +1098,11 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 		return nil, errUnmarshal
 	}
 	parsedEvent.Message = logLine
+
 	return &Results{UnknownMsg, parsedEvent}, nil
 }
 
-func (p *LogParser) decodeTeam() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeTeam() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1117,7 +1120,7 @@ func (p *LogParser) decodeTeam() mapstructure.DecodeHookFunc {
 	}
 }
 
-func (p *LogParser) decodePlayerClass() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePlayerClass() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1130,11 +1133,12 @@ func (p *LogParser) decodePlayerClass() mapstructure.DecodeHookFunc {
 		if !parsePlayerClass(pcVal, &playerClass) {
 			return d, nil
 		}
+
 		return playerClass, nil
 	}
 }
 
-func (p *LogParser) decodePos() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePos() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1155,7 +1159,7 @@ func (p *LogParser) decodePos() mapstructure.DecodeHookFunc {
 // BotSid Special internal SID used to track bots internally.
 const BotSid = 807
 
-func (p *LogParser) decodeSID3() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeSID3() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1174,6 +1178,7 @@ func (p *LogParser) decodeSID3() mapstructure.DecodeHookFunc {
 		if !sid64.Valid() {
 			return d, nil
 		}
+
 		return sid64, nil
 	}
 }
@@ -1191,7 +1196,7 @@ func (p *LogParser) decodeSID3() mapstructure.DecodeHookFunc {
 //	}
 //}
 
-func (p *LogParser) decodePickupItem() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePickupItem() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1212,7 +1217,7 @@ func (p *LogParser) decodePickupItem() mapstructure.DecodeHookFunc {
 	}
 }
 
-func (p *LogParser) decodeWeapon() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeWeapon() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1232,7 +1237,7 @@ func (p *LogParser) decodeWeapon() mapstructure.DecodeHookFunc {
 	}
 }
 
-func (p *LogParser) decodeTime() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeTime() func(f reflect.Type, t reflect.Type, d any) (any, error) {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -1271,6 +1276,7 @@ func (p *LogParser) unmarshal(input any, output any) error {
 	if errNewDecoder != nil {
 		return errNewDecoder
 	}
+
 	return decoder.Decode(input)
 }
 

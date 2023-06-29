@@ -11,5 +11,6 @@ import (
 func ResolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
+
 	return steamid.ResolveSID64(localCtx, sidStr)
 }

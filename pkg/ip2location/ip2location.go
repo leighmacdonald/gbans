@@ -163,6 +163,7 @@ func (r ASNRecords) Hosts() uint32 {
 	for _, n := range r {
 		total += util.IP2Int(*n.IPTo) - util.IP2Int(*n.IPFrom)
 	}
+
 	return total
 }
 
@@ -212,6 +213,7 @@ func (ll *LatLong) Scan(value any) error {
 	}
 	ll.Longitude = lon
 	ll.Latitude = lat
+
 	return nil
 }
 
@@ -282,6 +284,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 		}(param)
 	}
 	waitGroup.Wait()
+
 	return exitErr
 }
 
@@ -320,6 +323,7 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 		}
 		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]})
 	}
+
 	return records, nil
 }
 
@@ -356,6 +360,7 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 			},
 		})
 	}
+
 	return records, nil
 }
 
@@ -409,6 +414,7 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 			Threat:      ThreatType(recordLine[13]),
 		})
 	}
+
 	return records, nil
 }
 
@@ -417,6 +423,7 @@ func parseIpv6Int(s string) (net.IP, error) {
 	intIPv6.SetString(s, 10)
 	ip := intIPv6.Bytes()
 	var a net.IP = ip
+
 	return a, nil
 }
 
@@ -428,6 +435,7 @@ func parseIpv4Int(s string) (net.IP, error) {
 	nn := uint32(n)
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, nn)
+
 	return ip, nil
 }
 
@@ -435,6 +443,7 @@ func stringInt2ip(ipString string, ipv6 bool) (net.IP, error) {
 	if ipv6 {
 		return parseIpv6Int(ipString)
 	}
+
 	return parseIpv4Int(ipString)
 }
 
@@ -474,6 +483,7 @@ func extractZip(data []byte, dest string, filename string) error {
 				return errNewReader
 			}
 		}
+
 		return nil
 	}
 
@@ -483,6 +493,7 @@ func extractZip(data []byte, dest string, filename string) error {
 			if errExtractFile != nil {
 				return errExtractFile
 			}
+
 			break
 		}
 	}
@@ -502,6 +513,7 @@ func Read(root string) (*BlockListData, error) {
 	var files [][]string
 	errWalkPath := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		files = append(files, []string{path, info.Name()})
+
 		return nil
 	})
 	if errWalkPath != nil {
@@ -519,6 +531,7 @@ func Read(root string) (*BlockListData, error) {
 				records, errReadASN := readASNRecords(filePaths[0], false)
 				if errReadASN != nil {
 					errs = append(errs, errors.Wrapf(errReadASN, "Failed to load %s", filePaths[0]))
+
 					return
 				}
 				data.ASN4 = records
@@ -526,6 +539,7 @@ func Read(root string) (*BlockListData, error) {
 				records, errReadASN := readASNRecords(filePaths[0], true)
 				if errReadASN != nil {
 					errs = append(errs, errors.Wrapf(errReadASN, "Failed to load %s", filePaths[0]))
+
 					return
 				}
 				data.ASN6 = records
@@ -533,6 +547,7 @@ func Read(root string) (*BlockListData, error) {
 				records, errReadLocation := readLocationRecords(filePaths[0], false)
 				if errReadLocation != nil {
 					errs = append(errs, errors.Wrapf(errReadLocation, "Failed to load %s", filePaths[0]))
+
 					return
 				}
 				data.Locations4 = records
@@ -540,6 +555,7 @@ func Read(root string) (*BlockListData, error) {
 				records, errReadLocation := readLocationRecords(filePaths[0], true)
 				if errReadLocation != nil {
 					errs = append(errs, errors.Wrapf(errReadLocation, "Failed to load %s", filePaths[0]))
+
 					return
 				}
 				data.Locations6 = records
@@ -547,6 +563,7 @@ func Read(root string) (*BlockListData, error) {
 				records, errReadProxy := readProxyRecords(filePaths[0])
 				if errReadProxy != nil {
 					errs = append(errs, errors.Wrapf(errReadProxy, "Failed to load %s", filePaths[0]))
+
 					return
 				}
 				data.Proxies = records
@@ -557,5 +574,6 @@ func Read(root string) (*BlockListData, error) {
 	if len(errs) != 0 {
 		return nil, errs[0]
 	}
+
 	return &data, nil
 }

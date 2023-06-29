@@ -73,6 +73,7 @@ func (s Server) IP(ctx context.Context) (net.IP, error) {
 	if errResolve != nil || len(ips) == 0 {
 		return nil, errors.Wrap(errResolve, "Could not resolve address")
 	}
+
 	return ips[0], nil
 }
 
@@ -84,7 +85,7 @@ func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
 }
 
-var columnsServer = []string{
+var columnsServer = []string{ //nolint:gochecknoglobals
 	"server_id", "short_name", "name", "address", "port", "rcon", "password",
 	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 	"latitude", "longitude", "deleted", "log_secret",
@@ -106,6 +107,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 			&server.Deleted, &server.LogSecret); errRow != nil {
 		return Err(errRow)
 	}
+
 	return nil
 }
 
@@ -149,6 +151,7 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 			Flags:           flags,
 		})
 	}
+
 	return perms, nil
 }
 
@@ -182,6 +185,7 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 	if rows.Err() != nil {
 		return nil, Err(rows.Err())
 	}
+
 	return servers, nil
 }
 
@@ -193,6 +197,7 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(
 			&server.ServerID,
@@ -213,6 +218,7 @@ func (db *Store) SaveServer(ctx context.Context, server *Server) error {
 		return db.updateServer(ctx, server)
 	}
 	server.CreatedOn = config.Now()
+
 	return db.insertServer(ctx, server)
 }
 
@@ -231,6 +237,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 	if err != nil {
 		return Err(err)
 	}
+
 	return nil
 }
 
@@ -261,6 +268,7 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update server")
 	}
+
 	return nil
 }
 
@@ -269,5 +277,6 @@ func (db *Store) DropServer(ctx context.Context, serverID int) error {
 	if errExec := db.Exec(ctx, query, serverID); errExec != nil {
 		return errExec
 	}
+
 	return nil
 }

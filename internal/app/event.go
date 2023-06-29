@@ -32,6 +32,7 @@ func (eb *eventBroadcaster) Consume(serverEventChan chan model.ServerEvent, msgT
 		}
 		eb.logEventReaders[msgType] = append(eb.logEventReaders[msgType], serverEventChan)
 	}
+
 	return nil
 }
 
@@ -58,6 +59,7 @@ func (eb *eventBroadcaster) removeChan(channels []chan model.ServerEvent, server
 			newChannels = append(newChannels, channel)
 		}
 	}
+
 	return newChannels
 }
 
@@ -68,5 +70,6 @@ func (eb *eventBroadcaster) UnregisterConsumer(serverEventChan chan model.Server
 	for eType, eventReaders := range eb.logEventReaders {
 		eb.logEventReaders[eType] = eb.removeChan(eventReaders, serverEventChan)
 	}
+
 	return nil
 }

@@ -61,5 +61,6 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 	if errUnmarshal := json.Unmarshal(body, &logsTFResult); errUnmarshal != nil {
 		return nil, errors.Wrapf(errGet, "Failed to unmarshal logstf body")
 	}
+
 	return &logsTFResult, nil
 }

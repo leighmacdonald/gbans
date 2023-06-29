@@ -123,15 +123,17 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
 	}
-	var reasons []*discordgo.ApplicationCommandOptionChoice
-	for _, r := range []store.Reason{
+
+	reasonCollection := []store.Reason{
 		store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
 		store.WarningsExceeded, store.Spam, store.Language, store.Profile, store.ItemDescriptions, store.BotHost, store.Custom,
-	} {
-		reasons = append(reasons, &discordgo.ApplicationCommandOptionChoice{
-			Name:  r.String(),
+	}
+	reasons := make([]*discordgo.ApplicationCommandOptionChoice, len(reasonCollection))
+	for index, r := range reasonCollection {
+		reasons[index] = &discordgo.ApplicationCommandOptionChoice{
+			Name:  store.ReasonString(r),
 			Value: r,
-		})
+		}
 	}
 	optBanReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
@@ -509,6 +511,7 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
 				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
+
 			return
 		}
 		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
@@ -520,6 +523,7 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
 			bot.logger.Error("User command error", zap.Error(errHandleCommand))
+
 			return
 		}
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {

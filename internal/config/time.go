@@ -52,6 +52,7 @@ func ParseDuration(durationString string) (time.Duration, error) {
 	case "y":
 		return day * 365 * value, nil
 	}
+
 	return 0, errInvalidDuration
 }
 
@@ -95,6 +96,7 @@ func FmtDuration(t time.Time) string {
 	if len(pieces) == 0 {
 		return "~now"
 	}
+
 	return strings.Join(pieces, " ")
 }
 

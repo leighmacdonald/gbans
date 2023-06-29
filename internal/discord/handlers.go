@@ -13,6 +13,7 @@ func OptionMap(options []*discordgo.ApplicationCommandInteractionDataOption) Com
 	for _, opt := range options {
 		optionM[optionKey(opt.Name)] = opt
 	}
+
 	return optionM
 }
 
@@ -25,5 +26,6 @@ func (opts CommandOptions) String(key optionKey) string {
 	if !ok {
 		return ""
 	}
+
 	return val
 }

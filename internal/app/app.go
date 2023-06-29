@@ -141,6 +141,7 @@ func firstTimeSetup(ctx context.Context, conf *config.Config, db *store.Store) e
 			return errors.Wrap(errSave, "Failed to create sample wiki entry")
 		}
 	}
+
 	return nil
 }
 
@@ -149,6 +150,7 @@ func (app *App) PatreonPledges() []patreon.Pledge {
 	pledges := app.patreonPledges
 	// users := web.app.patreonUsers
 	app.patreonMu.RUnlock()
+
 	return pledges
 }
 
@@ -156,6 +158,7 @@ func (app *App) PatreonCampaigns() []patreon.Campaign {
 	app.patreonMu.RLock()
 	campaigns := app.patreonCampaigns
 	app.patreonMu.RUnlock()
+
 	return campaigns
 }
 
@@ -240,6 +243,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) {
 				var person store.Person
 				if personErr := app.PersonBySID(ctx, evt.SID, &person); personErr != nil {
 					log.Error("Failed to get person for warning", zap.Error(personErr))
+
 					continue
 				}
 				if newWarn.MatchedFilter.IsEnabled {
@@ -281,6 +285,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) {
 							store.NoComm,
 							&banSteam); errNewBan != nil {
 							log.Error("Failed to create warning ban", zap.Error(errNewBan))
+
 							continue
 						}
 						switch conf.General.WarningExceededAction {
@@ -338,6 +343,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) {
 			evt, ok := serverEvent.Event.(logparse.SayEvt)
 			if !ok {
 				log.Error("Got invalid type?")
+
 				continue
 			}
 			if evt.Msg == "" {
@@ -445,6 +451,7 @@ func playerMessageWriter(ctx context.Context, eb *eventBroadcaster, logger *zap.
 		logparse.SayTeam,
 	}); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
+
 		return
 	}
 	for {
@@ -462,6 +469,7 @@ func playerMessageWriter(ctx context.Context, eb *eventBroadcaster, logger *zap.
 				}
 				if e.Msg == "" {
 					log.Warn("Empty person message body, skipping")
+
 					continue
 				}
 				msg := store.PersonMessage{
@@ -489,6 +497,7 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, db *store
 	serverEventChan := make(chan model.ServerEvent)
 	if errRegister := eb.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
+
 		return
 	}
 	for {
@@ -502,11 +511,13 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, db *store
 			}
 			if e.Address == "" {
 				log.Warn("Empty person message body, skipping")
+
 				continue
 			}
 			parsedAddr := net.ParseIP(e.Address)
 			if parsedAddr == nil {
 				log.Warn("Received invalid address", zap.String("addr", e.Address))
+
 				continue
 			}
 			conn := store.PersonConnection{
@@ -561,6 +572,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 				}
 				if serverEvent.EventType == logparse.IgnoredMsg {
 					ignored++
+
 					continue
 				} else if serverEvent.EventType == logparse.UnknownMsg {
 					unknown++
@@ -578,6 +590,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 				zap.Int("unknown", unknown), zap.Int("ignored", ignored))
 		case <-ctx.Done():
 			log.Debug("logReader shutting down")
+
 			return
 		}
 	}
@@ -592,9 +605,11 @@ func (app *App) initFilters(ctx context.Context) error {
 		if errors.Is(errGetFilters, store.ErrNoResult) {
 			return nil
 		}
+
 		return errGetFilters
 	}
 	app.wordFilters.importFilteredWords(words)
+
 	return nil
 }
 
@@ -641,6 +656,7 @@ func initNetBans(ctx context.Context, conf *config.Config) error {
 			return errImport
 		}
 	}
+
 	return nil
 }
 

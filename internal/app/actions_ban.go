@@ -167,6 +167,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) err
 	}
 	app.log.Info("Steam group banned", zap.Int64("gid64", banGroup.GroupID.Int64()),
 		zap.Int("members", len(members)))
+
 	return nil
 }
 
@@ -180,6 +181,7 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 		if errors.Is(errGetBan, store.ErrNoResult) {
 			return false, nil
 		}
+
 		return false, errGetBan
 	}
 	bannedPerson.Ban.Deleted = true
@@ -218,8 +220,10 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	}
 	if errDrop := app.db.DropBanASN(ctx, &banASN); errDrop != nil {
 		app.log.Error("Failed to drop ASN ban", zap.Error(errDrop))
+
 		return false, errDrop
 	}
 	app.log.Info("ASN unbanned", zap.Int64("ASN", asNum))
+
 	return true, nil
 }

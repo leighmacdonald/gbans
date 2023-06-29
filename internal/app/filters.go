@@ -41,5 +41,6 @@ func (f *wordFilters) findFilteredWordMatch(body string) (string, *store.Filter)
 			}
 		}
 	}
+
 	return "", nil
 }

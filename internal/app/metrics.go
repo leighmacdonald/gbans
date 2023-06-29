@@ -29,54 +29,54 @@ type metricCollector struct {
 func newMetricCollector() *metricCollector {
 	mc := &metricCollector{
 		logEventCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_log_events", Help: "Total log events ingested"},
+			prometheus.CounterOpts{Name: "gbans_game_log_events_total", Help: "Total log events ingested"},
 			[]string{"server_name"}),
 
 		sayCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_chat", Help: "Total chat messages sent"},
+			prometheus.CounterOpts{Name: "gbans_game_chat_total", Help: "Total chat messages sent"},
 			[]string{"team_say"}),
 
 		damageCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_damage", Help: "Total (real)damage dealt"},
+			prometheus.CounterOpts{Name: "gbans_game_damage_total", Help: "Total (real)damage dealt"},
 			[]string{"weapon"}),
 
 		healingCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_healing", Help: "Total (real)healing"},
+			prometheus.CounterOpts{Name: "gbans_game_healing_total", Help: "Total (real)healing"},
 			[]string{"weapon"}),
 
 		killCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_kills", Help: "Total kills"},
+			prometheus.CounterOpts{Name: "gbans_game_kills_total", Help: "Total kills"},
 			[]string{"weapon"}),
 
 		shotFiredCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_shot_fired", Help: "Total shots fired"},
+			prometheus.CounterOpts{Name: "gbans_game_shot_fired_total", Help: "Total shots fired"},
 			[]string{"weapon"}),
 
 		shotHitCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_game_shot_hit", Help: "Total shots hit"},
+			prometheus.CounterOpts{Name: "gbans_game_shot_hit_total", Help: "Total shots hit"},
 			[]string{"weapon"}),
 
 		playerCounter: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{Name: "gbans_player_count", Help: "Players on a server"}, []string{"server_name"}),
 
 		mapCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_map_played", Help: "Map played"},
+			prometheus.CounterOpts{Name: "gbans_map_played_total", Help: "Map played"},
 			[]string{"map"}),
 
 		rconCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_rcon", Help: "Total rcon commands executed"},
+			prometheus.CounterOpts{Name: "gbans_rcon_total", Help: "Total rcon commands executed"},
 			[]string{"server_name"}),
 
 		connectedCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_player_connected", Help: "Player connects"},
+			prometheus.CounterOpts{Name: "gbans_player_connected_total", Help: "Player connects"},
 			[]string{"server_name"}),
 
 		disconnectedCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_player_disconnected", Help: "Player disconnects"},
+			prometheus.CounterOpts{Name: "gbans_player_disconnected_total", Help: "Player disconnects"},
 			[]string{"server_name"}),
 
 		classCounter: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "gbans_player_class", Help: "Player class"},
+			prometheus.CounterOpts{Name: "gbans_player_class_total", Help: "Player class"},
 			[]string{"class"}),
 	}
 	for _, m := range []prometheus.Collector{
@@ -96,6 +96,7 @@ func newMetricCollector() *metricCollector {
 	} {
 		_ = prometheus.Register(m)
 	}
+
 	return mc
 }
 
@@ -105,9 +106,10 @@ func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroad
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
+
 		return
 	}
-	parser := logparse.New()
+	parser := logparse.NewWeaponParser()
 	for {
 		select {
 		case <-ctx.Done():
@@ -120,22 +122,22 @@ func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroad
 			switch serverEvent.EventType { //nolint:wsl,exhaustive
 			case logparse.Damage:
 				if evt, ok := serverEvent.Event.(logparse.DamageEvt); ok {
-					mc.damageCounter.With(prometheus.Labels{"weapon": parser.WeaponName(evt.Weapon)}).Add(float64(evt.Damage))
+					mc.damageCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Add(float64(evt.Damage))
 				}
 			case logparse.Healed:
 				// evt := serverEvent.Event.(logparse.HealedEvt)
 				// healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
 				if evt, ok := serverEvent.Event.(logparse.ShotFiredEvt); ok {
-					mc.shotFiredCounter.With(prometheus.Labels{"weapon": parser.WeaponName(evt.Weapon)}).Inc()
+					mc.shotFiredCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.ShotHit:
 				if evt, ok := serverEvent.Event.(logparse.ShotHitEvt); ok {
-					mc.shotHitCounter.With(prometheus.Labels{"weapon": parser.WeaponName(evt.Weapon)}).Inc()
+					mc.shotHitCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Killed:
 				if evt, ok := serverEvent.Event.(logparse.KilledEvt); ok {
-					mc.killCounter.With(prometheus.Labels{"weapon": parser.WeaponName(evt.Weapon)}).Inc()
+					mc.killCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Say:
 				mc.sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()

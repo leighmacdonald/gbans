@@ -98,9 +98,11 @@ func (client *wsClient) currentPugLobby() (*pugLobby, bool) {
 			if !ok {
 				return nil, false
 			}
+
 			return lobbyVal, true
 		}
 	}
+
 	return nil, false
 }
 
@@ -140,6 +142,7 @@ func (client *wsClient) writer() {
 		payload := <-client.sendChan
 		if errSend := client.socket.WriteJSON(payload); errSend != nil {
 			client.logger.Error("Failed to send json payload", zap.Error(errSend))
+
 			return
 		}
 		client.logger.Debug("Wrote client payload", zap.Int("msg_type", int(payload.MsgType)))
@@ -207,11 +210,13 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 		lobbyVal, ok := l.(*pugLobby)
 		if !ok {
 			cm.logger.Warn("Failed to cast publobby")
+
 			continue
 		}
 		lobbies = append(lobbies, lobbyVal)
 	}
 	cm.RUnlock()
+
 	return lobbies
 }
 
@@ -248,6 +253,7 @@ func newWSConnectionManager(ctx context.Context, logger *zap.Logger) *wsConnecti
 	return &connManager
 }
 
+//nolint:ireturn
 func (cm *wsConnectionManager) findLobby(lobbyID string) (LobbyService, error) {
 	if !lobbyIDValid(lobbyID) {
 		return nil, ErrInvalidLobbyID
@@ -281,6 +287,7 @@ func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobby
 	lobby := newPugLobby(cm.logger, client, lobbyID, opts)
 	cm.lobbies[lobbyID] = lobby
 	cm.logger.Info("Pug lobby created", zap.String("lobby_id", lobbyID))
+
 	return lobby, nil
 }
 
@@ -310,6 +317,7 @@ func (cm *wsConnectionManager) removeLobby(lobbyID string) error {
 	}
 	delete(cm.lobbies, lobbyID)
 	cm.logger.Info("Pug lobby deleted", zap.String("lobby_id", lobbyID))
+
 	return nil
 }
 
@@ -319,6 +327,7 @@ func (cm *wsConnectionManager) join(client *wsClient) error {
 	cm.Unlock()
 	cm.logger.Info("New client connection", zap.Int64("sid64", client.User.SteamID.Int64()))
 	sendPugLobbyListStates(cm, client, nil)
+
 	return nil
 }
 
@@ -337,6 +346,7 @@ func (cm *wsConnectionManager) leave(client *wsClient) error {
 	}
 	cm.connections = fp.Remove(cm.connections, client)
 	cm.logger.Info("Client disconnected", zap.Int64("sid64", client.User.SteamID.Int64()))
+
 	return nil
 }
 
@@ -363,6 +373,7 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 	if !handlerFound {
 		return errors.New("Unhandled message type")
 	}
+
 	return handler(cm, client, payload)
 }
 
@@ -380,6 +391,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Failed to upgrade websocket", zap.Error(err))
+
 		return
 	}
 	log.Debug("New connection", zap.String("addr", conn.LocalAddr().String()))
@@ -391,6 +403,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 
 	if errJoin := cm.join(client); errJoin != nil {
 		log.Error("Failed to join client pool", zap.Error(errJoin))
+
 		return
 	}
 
@@ -420,6 +433,7 @@ func wsConnHandler(w http.ResponseWriter, r *http.Request, cm *wsConnectionManag
 			// }
 			// }
 			_ = cm.leave(client)
+
 			return
 		}
 		if errHandle := cm.handleMessage(client, basePayload.MsgType, basePayload.Payload); errHandle != nil {

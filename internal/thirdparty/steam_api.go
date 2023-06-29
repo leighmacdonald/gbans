@@ -13,16 +13,6 @@ import (
 
 const steamQueryMaxResults = 100
 
-type getFriendListResponse struct {
-	FriendsList struct {
-		Friends []struct {
-			Steamid      string `json:"steamid"`
-			Relationship string `json:"relationship"`
-			FriendSince  int    `json:"friend_since"`
-		} `json:"friends"`
-	} `json:"friendslist"`
-}
-
 func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection, error) {
 	friends, errFriends := steamweb.GetFriendList(ctx, sid64)
 	if errFriends != nil {
@@ -32,6 +22,7 @@ func FetchFriends(ctx context.Context, sid64 steamid.SID64) (steamid.Collection,
 	for _, friend := range friends {
 		fl = append(fl, friend.SteamID)
 	}
+
 	return fl, nil
 }
 
@@ -63,6 +54,7 @@ func FetchSummaries(ctx context.Context, steamIDs steamid.Collection) ([]steamwe
 	if hasErr > 0 {
 		return nil, errors.New("Failed to fetch all friends")
 	}
+
 	return results, nil
 }
 
@@ -93,5 +85,6 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.
 	if hasErr > 0 {
 		return nil, errors.New("Failed to fetch all friends")
 	}
+
 	return results, nil
 }

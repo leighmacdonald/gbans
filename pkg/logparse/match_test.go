@@ -20,9 +20,10 @@ func TestMatch_Apply(t *testing.T) {
 	// mock?
 	testLogger, _ := zap.NewDevelopment()
 
-	p := golib.FindFile(path.Join("test_data", "log_3124689.log"), "gbans")
+	p := golib.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
 	if p == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
+
 		return
 	}
 	body, errRead := os.ReadFile(p)
@@ -50,6 +51,7 @@ func TestMatch_Apply(t *testing.T) {
 				return name
 			}
 		}
+
 		return "???"
 	}
 	getPS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchPlayerSum {
@@ -57,6 +59,7 @@ func TestMatch_Apply(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to fetch player sum [%s]: %v", sid, err)
 		}
+
 		return ps
 	}
 	// Player sum values
@@ -1254,6 +1257,7 @@ func testMatch() (logparse.Match, map[string]steamid.SID64) {
 			},
 		},
 	}
+
 	return match, map[string]steamid.SID64{
 		"var":                steamid.New(76561198164892406),
 		"para":               steamid.New(76561198057150173),

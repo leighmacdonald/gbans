@@ -81,6 +81,7 @@ func (c *ServerStateCollector) Find(opts FindOpts) (PlayerInfoCollection, bool) 
 			}
 		}
 	}
+
 	return found, false
 }
 
@@ -177,10 +178,11 @@ func (c *ServerStateCollector) State() []ServerState {
 	c.RLock()
 	defer c.RUnlock()
 
-	var coll []ServerState
-	for _, state := range c.serverStates {
-		coll = append(coll, *state)
+	coll := make([]ServerState, len(c.serverStates))
+	for index, state := range c.serverStates {
+		coll[index] = *state
 	}
+
 	return coll
 }
 
@@ -291,6 +293,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 			client, errClient := a2s.NewClient(config.addr(), a2s.TimeoutOption(time.Second*10))
 			if errClient != nil {
 				config.logger.Error("Failed to create a2s client")
+
 				return
 			}
 			config.a2sConn = client
@@ -304,6 +307,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 				_ = config.a2sConn.Close()
 				config.a2sConn = nil
 			}
+
 			return
 		}
 		mu.Lock()
@@ -342,6 +346,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 				errMu.Lock()
 				err = errors.Join(err, errDial)
 				errMu.Unlock()
+
 				return
 			}
 			config.rcon = console
@@ -356,6 +361,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 				errMu.Lock()
 				err = errors.Join(err, errRcon)
 				errMu.Unlock()
+
 				return
 			}
 			status, errParse := extra.ParseStatus(resp, true)
@@ -363,6 +369,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 				errMu.Lock()
 				err = errors.Join(err, errParse)
 				errMu.Unlock()
+
 				return
 			}
 			mu.Lock()
@@ -390,6 +397,7 @@ func (c *ServerStateCollector) fetch(ctx context.Context, config *ServerConfig) 
 		}
 	}()
 	wg.Wait()
+
 	return newState, err
 }
 
@@ -453,11 +461,12 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context, errChan chan error
 	})
 	if errServers != nil {
 		errChan <- errServers
+
 		return
 	}
-	var communityServers []ServerLocation
+	communityServers := make([]ServerLocation, len(allServers))
 	stats := NewGlobalTF2Stats()
-	for _, baseServer := range allServers {
+	for index, baseServer := range allServers {
 		server := ServerLocation{
 			LatLong: ip2location.LatLong{},
 			Server:  baseServer,
@@ -492,9 +501,10 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context, errChan chan error
 			!server.Dedicated ||
 			!server.Secure {
 			stats.ServersCommunity++
+
 			continue
 		}
-		communityServers = append(communityServers, server)
+		communityServers[index] = server
 	}
 	c.Lock()
 	c.masterServerList = communityServers
@@ -536,6 +546,7 @@ func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
 		}
 		out[mapKey] = v
 	}
+
 	return out
 }
 

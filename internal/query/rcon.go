@@ -26,6 +26,7 @@ func ExecRCON(ctx context.Context, addr string, password string, cmd string) (st
 	if errExec != nil {
 		return "", errors.Errorf("Failed to exec command: %v", errExec)
 	}
+
 	return resp, nil
 }
 
@@ -44,6 +45,7 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 			conn, errDial := rcon.Dial(rconCtx, server.Addr(), server.RCON, timeout)
 			if errDial != nil {
 				logger.Error("Failed to connect to server", zap.String("name", server.ServerNameShort), zap.Error(errDial))
+
 				return
 			}
 			for _, command := range commands {
@@ -58,6 +60,7 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 		}(server)
 	}
 	waitGroup.Wait()
+
 	return responses
 }
 
@@ -65,5 +68,6 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 // using `;` as a command separator. This will just return the first part of the command.
 func sanitizeRCONCommand(s string) string {
 	p := strings.SplitN(s, ";", 1)
+
 	return p[0]
 }

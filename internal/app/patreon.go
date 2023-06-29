@@ -69,6 +69,7 @@ func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store,
 			}
 		}
 	}()
+
 	return client, nil
 }
 
@@ -82,6 +83,7 @@ func updateToken(ctx context.Context, db *store.Store, oAuthConfig oauth2.Config
 		return errors.Wrap(errToken, "Failed to save new oath token")
 	}
 	*tok = *newToken
+
 	return nil
 }
 
@@ -90,6 +92,7 @@ func PatreonGetTiers(client *patreon.Client) ([]patreon.Campaign, error) {
 	if campaignsErr != nil {
 		return nil, campaignsErr
 	}
+
 	return campaigns.Data, nil
 }
 
@@ -132,5 +135,6 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 		cursor = nextLink
 		page++
 	}
+
 	return out, users, nil
 }

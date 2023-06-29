@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-
 	"github.com/stretchr/testify/require"
 )
 

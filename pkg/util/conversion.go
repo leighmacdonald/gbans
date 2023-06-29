@@ -12,6 +12,7 @@ func StringToFloat64(numericString string, defaultValue float64) float64 {
 	if errParseFloat != nil {
 		return defaultValue
 	}
+
 	return value
 }
 
@@ -25,5 +26,6 @@ func StringToInt(desired string) int {
 	if parsed > 0 && parsed <= math.MaxInt32 {
 		return parsed
 	}
+
 	return DefaultIntAllocate
 }

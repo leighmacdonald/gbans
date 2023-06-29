@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/pkg/vpksign"
-
 	"github.com/stretchr/testify/require"
 )
 

@@ -65,6 +65,7 @@ func (p *Person) AsTarget() StringSID {
 // NewPerson allocates a new default person instance.
 func NewPerson(sid64 steamid.SID64) Person {
 	t0 := config.Now()
+
 	return Person{
 		SteamID:          sid64,
 		CreatedOn:        t0,
@@ -93,6 +94,7 @@ func (p People) AsMap() map[steamid.SID64]Person {
 	for _, person := range p {
 		m[person.SteamID] = person
 	}
+
 	return m
 }
 
@@ -206,6 +208,7 @@ func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+
 	return nil
 }
 
@@ -220,6 +223,7 @@ func (db *Store) SavePerson(ctx context.Context, person *Person) error {
 		return db.updatePerson(ctx, person)
 	}
 	person.CreatedOn = person.UpdatedOn
+
 	return db.insertPerson(ctx, person)
 }
 
@@ -244,6 +248,7 @@ func (db *Store) updatePerson(ctx context.Context, person *Person) error {
 		person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam, person.Muted); errExec != nil {
 		return Err(errExec)
 	}
+
 	return nil
 }
 
@@ -272,11 +277,12 @@ func (db *Store) insertPerson(ctx context.Context, person *Person) error {
 		return Err(errExec)
 	}
 	person.IsNew = false
+
 	return nil
 }
 
 // "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban".
-var profileColumns = []string{
+var profileColumns = []string{ //nolint:gochecknoglobals
 	"steam_id", "created_on", "updated_on",
 	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
@@ -370,6 +376,7 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 		}
 		people = append(people, person)
 	}
+
 	return people, nil
 }
 
@@ -413,6 +420,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 		}
 		people = append(people, person)
 	}
+
 	return people, nil
 }
 
@@ -424,8 +432,10 @@ func (db *Store) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.S
 		// FIXME
 		newPerson := NewPerson(sid64)
 		*person = newPerson
+
 		return db.SavePerson(ctx, person)
 	}
+
 	return errGetPerson
 }
 
@@ -449,6 +459,7 @@ func (db *Store) GetPersonByDiscordID(ctx context.Context, discordID string, per
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -480,6 +491,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 		}
 		people = append(people, person)
 	}
+
 	return people, nil
 }
 
@@ -493,6 +505,7 @@ func (db *Store) AddChatHistory(ctx context.Context, message *PersonMessage) err
 		Scan(&message.PersonMessageID); errScan != nil {
 		return Err(errScan)
 	}
+
 	return nil
 }
 
@@ -513,6 +526,7 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 	if errQuery != nil {
 		return errors.Wrap(errQuery, "Failed to create query")
 	}
+
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(&msg.PersonMessageID,
 			&msg.SteamID,
@@ -604,6 +618,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		}
 		messages = append(messages, message)
 	}
+
 	return messages, nil
 }
 
@@ -644,6 +659,7 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 		}
 		connections = append(connections, c)
 	}
+
 	return connections, nil
 }
 
@@ -655,10 +671,11 @@ func (db *Store) AddConnectionHistory(ctx context.Context, conn *PersonConnectio
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
-var personAuthColumns = []string{"person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on"}
+var personAuthColumns = []string{"person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on"} //nolint:gochecknoglobals
 
 func (db *Store) GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr net.IP, auth *PersonAuth) error {
 	query, args, errQuery := db.sb.
@@ -669,6 +686,7 @@ func (db *Store) GetPersonAuth(ctx context.Context, sid64 steamid.SID64, ipAddr 
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(&auth.PersonAuthID, &auth.SteamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
@@ -682,6 +700,7 @@ func (db *Store) GetPersonAuthByRefreshToken(ctx context.Context, token string, 
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(&auth.PersonAuthID, &auth.SteamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn))
 }
@@ -696,6 +715,7 @@ func (db *Store) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return Err(db.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
@@ -707,6 +727,7 @@ func (db *Store) DeletePersonAuth(ctx context.Context, authID int64) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return Err(db.Exec(ctx, query, args...))
 }
 
@@ -718,6 +739,7 @@ func (db *Store) PrunePersonAuth(ctx context.Context) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return Err(db.Exec(ctx, query, args...))
 }
 
@@ -733,6 +755,7 @@ func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, s
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+
 	return nil
 }
 
@@ -765,6 +788,7 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 		}
 		notifications = append(notifications, n)
 	}
+
 	return notifications, nil
 }
 
@@ -777,6 +801,7 @@ func (db *Store) SetNotificationsRead(ctx context.Context, notificationIds []int
 	if errQuery != nil {
 		return errQuery
 	}
+
 	return Err(db.Exec(ctx, query, args...))
 }
 
@@ -802,5 +827,6 @@ func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privileg
 		}
 		ids = append(ids, sid)
 	}
+
 	return ids, nil
 }

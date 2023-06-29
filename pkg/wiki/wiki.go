@@ -34,10 +34,12 @@ func (page *Page) NewRevision() Page {
 
 func (page *Page) Render() []byte {
 	unsafeHTML := markdown.ToHTML([]byte(page.BodyMD), NewParser(), nil)
+
 	return bluemonday.UGCPolicy().SanitizeBytes(unsafeHTML)
 }
 
 func NewParser() *parser.Parser {
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.Tables
+
 	return parser.NewWithExtensions(extensions)
 }

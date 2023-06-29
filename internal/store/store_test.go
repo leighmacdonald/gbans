@@ -9,9 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/store"
-
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -164,7 +163,7 @@ func TestBan(t *testing.T) {
 		"76561198044052046",
 		"1M",
 		store.Cheating,
-		store.Cheating.String(),
+		store.ReasonString(store.Cheating),
 		"Mod Note",
 		store.System, 0, store.Banned, &banSteam), "Failed to create ban opts")
 
@@ -255,8 +254,8 @@ func TestFilters(t *testing.T) {
 	existingFilters, errGetFilters := testDD.GetFilters(context.Background())
 	require.NoError(t, errGetFilters)
 	words := []string{golib.RandomString(10), golib.RandomString(20)}
-	var savedFilters []store.Filter
-	for _, word := range words {
+	savedFilters := make([]store.Filter, len(words))
+	for index, word := range words {
 		filter := store.Filter{
 			IsEnabled: true,
 			IsRegex:   false,
@@ -267,18 +266,18 @@ func TestFilters(t *testing.T) {
 		}
 		require.NoError(t, testDD.SaveFilter(ctx, &filter), "Failed to insert filter: %s", word)
 		require.True(t, filter.FilterID > 0)
-		savedFilters = append(savedFilters, filter)
+		savedFilters[index] = filter
 	}
 	currentFilters, errGetCurrentFilters := testDD.GetFilters(ctx)
 	require.NoError(t, errGetCurrentFilters)
 	require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
-	if savedFilters != nil {
-		require.NoError(t, testDD.DropFilter(ctx, &savedFilters[0]))
-		var byID store.Filter
-		require.NoError(t, testDD.GetFilterByID(ctx, savedFilters[1].FilterID, &byID))
-		require.Equal(t, savedFilters[1].FilterID, byID.FilterID)
-		require.Equal(t, savedFilters[1].Pattern, byID.Pattern)
-	}
+
+	require.NoError(t, testDD.DropFilter(ctx, &savedFilters[0]))
+	var byID store.Filter
+	require.NoError(t, testDD.GetFilterByID(ctx, savedFilters[1].FilterID, &byID))
+	require.Equal(t, savedFilters[1].FilterID, byID.FilterID)
+	require.Equal(t, savedFilters[1].Pattern, byID.Pattern)
+
 	droppedFilters, errGetDroppedFilters := testDD.GetFilters(ctx)
 	require.NoError(t, errGetDroppedFilters)
 	require.Equal(t, len(existingFilters)+len(words)-1, len(droppedFilters))

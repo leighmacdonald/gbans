@@ -3,9 +3,8 @@ package discord
 import (
 	"fmt"
 
-	"github.com/leighmacdonald/gbans/internal/config"
-
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -100,6 +99,7 @@ func RespOk(response *Response, title string) *discordgo.MessageEmbed {
 		response.MsgType = MtEmbed
 		response.Value = embed
 	}
+
 	return embed
 }
 
@@ -175,5 +175,6 @@ func truncate(str string, maxLen int) string {
 	if len(str) > maxLen {
 		return str[:maxLen]
 	}
+
 	return str
 }

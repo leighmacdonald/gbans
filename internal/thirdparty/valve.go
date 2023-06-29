@@ -21,12 +21,13 @@ func parseValveSID(src []byte) (steamid.Collection, error) {
 		}
 		steamIds = append(steamIds, sid64)
 	}
+
 	return steamIds, nil
 }
 
 // parseValveNet parses the format: addip 0 89.229.79.121.
 func parseValveNet(src []byte) ([]*net.IPNet, error) {
-	var valveNetworks []*net.IPNet
+	var valveNetworks []*net.IPNet //nolint:prealloc
 	for _, line := range strings.Split(string(src), "\r\n") {
 		pieces := strings.SplitN(line, " ", 3)
 		if len(pieces) != 3 {
@@ -38,5 +39,6 @@ func parseValveNet(src []byte) ([]*net.IPNet, error) {
 		}
 		valveNetworks = append(valveNetworks, network)
 	}
+
 	return valveNetworks, nil
 }

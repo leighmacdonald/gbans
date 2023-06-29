@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
-
 	"github.com/stretchr/testify/require"
 )
 

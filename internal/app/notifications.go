@@ -62,8 +62,10 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 		if errSend := app.db.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {
 			app.log.Error("Failed to send notification", zap.Error(errSend))
+
 			break
 		}
 	}
+
 	return nil
 }

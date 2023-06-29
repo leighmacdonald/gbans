@@ -1,9 +1,8 @@
 package discord
 
 import (
-	"github.com/leighmacdonald/gbans/internal/config"
-
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -22,6 +21,7 @@ type Bot struct {
 	onConnectUser    func()
 	onDisconnectUser func()
 	commandHandlers  map[Cmd]CommandHandler
+	ColourLevels     LevelColors
 }
 
 func New(l *zap.Logger, conf *config.Config) (*Bot, error) {
@@ -41,6 +41,13 @@ func New(l *zap.Logger, conf *config.Config) (*Bot, error) {
 		session:         session,
 		isReady:         false,
 		commandHandlers: map[Cmd]CommandHandler{},
+		ColourLevels: LevelColors{
+			Debug: 10170623,
+			Info:  3581519,
+			Warn:  14327864,
+			Error: 13631488,
+			Fatal: 13631488,
+		},
 	}
 	bot.session.AddHandler(bot.onReady)
 	bot.session.AddHandler(bot.onConnect)
@@ -64,6 +71,7 @@ func (bot *Bot) RegisterHandler(cmd Cmd, handler CommandHandler) error {
 		return errors.New("Duplicate command")
 	}
 	bot.commandHandlers[cmd] = handler
+
 	return nil
 }
 
@@ -78,11 +86,13 @@ func (bot *Bot) botUnregisterSlashCommands(guildID string) {
 	registeredCommands, err := bot.session.ApplicationCommands(bot.session.State.User.ID, guildID)
 	if err != nil {
 		bot.logger.Error("Could not fetch registered commands", zap.Error(err))
+
 		return
 	}
 	for _, v := range registeredCommands {
 		if errDel := bot.session.ApplicationCommandDelete(bot.session.State.User.ID, guildID, v.ID); errDel != nil {
 			bot.logger.Error("Cannot delete command", zap.String("name", v.Name), zap.Error(err))
+
 			return
 		}
 	}
@@ -185,6 +195,7 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 	_, err := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
 		Embeds: &edit.Embeds,
 	})
+
 	return err
 }
 
@@ -204,13 +215,4 @@ type LevelColors struct {
 	Warn  int
 	Error int
 	Fatal int
-}
-
-// DefaultLevelColors is a struct of the default colors used.
-var DefaultLevelColors = LevelColors{
-	Debug: 10170623,
-	Info:  3581519,
-	Warn:  14327864,
-	Error: 13631488,
-	Fatal: 13631488,
 }

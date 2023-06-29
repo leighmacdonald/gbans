@@ -17,13 +17,6 @@ import (
 
 const unknownMediaTag = "__unknown__"
 
-var MediaSafeMimeTypesImages = []string{
-	"image/gif",
-	"image/jpeg",
-	"image/png",
-	"image/webp",
-}
-
 func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
 	mType := mimetype.Detect(content)
 	if !mType.Is(mime) && mime != unknownMediaTag {
@@ -31,6 +24,7 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 		return Media{}, errors.New("Detected mimetype different than provided")
 	}
 	t0 := config.Now()
+
 	return Media{
 		AuthorID:  author,
 		MimeType:  mType.String(),
@@ -70,6 +64,7 @@ func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.
 		&page.CreatedOn, &page.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	return nil
 }
 
@@ -85,6 +80,7 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 		return Err(errExec)
 	}
 	db.log.Info("Wiki slug deleted", zap.String("slug", slug))
+
 	return nil
 }
 
@@ -102,6 +98,7 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 		return Err(errQueryRow)
 	}
 	db.log.Info("Wiki page saved", zap.String("slug", util.SanitizeLog(page.Slug)))
+
 	return nil
 }
 
@@ -132,6 +129,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 		zap.Int64("size", media.Size),
 		zap.String("mime", util.SanitizeLog(media.MimeType)),
 	)
+
 	return nil
 }
 
@@ -141,6 +139,7 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND name = $1`
+
 	return Err(db.QueryRow(ctx, query, name).Scan(
 		&media.MediaID,
 		&media.AuthorID,
@@ -160,6 +159,7 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND media_id = $1`
+
 	return Err(db.QueryRow(ctx, query, mediaID).Scan(
 		&media.MediaID,
 		&media.AuthorID,

@@ -1,4 +1,3 @@
-// Package web implements the HTTP and websocket services for the frontend client and backend server.
 package app
 
 import (
@@ -34,6 +33,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 			app.log.Error("Error shutting down http service", zap.Error(errShutdown))
 		}
 	}()
+
 	return httpServer.ListenAndServe()
 }
 
@@ -42,8 +42,10 @@ func bind(ctx *gin.Context, target any) bool {
 		responseErr(ctx, http.StatusBadRequest, gin.H{
 			"error": "Invalid request parameters",
 		})
+
 		return false
 	}
+
 	return true
 }
 
@@ -74,6 +76,7 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 		}
 		httpServer.TLSConfig = tlsVar
 	}
+
 	return httpServer
 }
 
@@ -86,6 +89,7 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	if !ok {
 		return model.NewUserProfile("")
 	}
+
 	return person
 }
 
@@ -102,5 +106,6 @@ func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds 
 		return true
 	}
 	responseErrUser(ctx, http.StatusUnauthorized, nil, consts.ErrPermissionDenied.Error())
+
 	return false
 }
