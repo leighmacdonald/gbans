@@ -464,9 +464,9 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context, errChan chan error
 
 		return
 	}
-	communityServers := make([]ServerLocation, len(allServers))
+	var communityServers []ServerLocation //nolint:prealloc
 	stats := NewGlobalTF2Stats()
-	for index, baseServer := range allServers {
+	for _, baseServer := range allServers {
 		server := ServerLocation{
 			LatLong: ip2location.LatLong{},
 			Server:  baseServer,
@@ -504,7 +504,7 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context, errChan chan error
 
 			continue
 		}
-		communityServers[index] = server
+		communityServers = append(communityServers, server)
 	}
 	c.Lock()
 	c.masterServerList = communityServers
