@@ -16,7 +16,7 @@ import (
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
 func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
-		return errors.Wrapf(errGetPerson, "Failed to get person instance: %d", sid)
+		return errors.Wrapf(errGetPerson, "Failed to get person instance: %s", sid)
 	}
 	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24 {
 		summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{sid})

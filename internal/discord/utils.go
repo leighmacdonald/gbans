@@ -15,6 +15,10 @@ const (
 	// maxAuthorChars      = 256.
 	maxFieldNameChars  = 256
 	maxFieldValueChars = 1024
+
+	iconURL      = "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128"
+	providerURL  = "https://github.com/leighmacdonald/gbans"
+	providerName = "gbans"
 )
 
 type Colour int
@@ -23,18 +27,6 @@ const (
 	Green  Colour = 3066993
 	Orange Colour = 15105570
 	Red    Colour = 10038562
-)
-
-var (
-	defaultProvider = discordgo.MessageEmbedProvider{
-		URL:  "https://github.com/leighmacdonald/gbans",
-		Name: "gbans",
-	}
-	defaultFooter = discordgo.MessageEmbedFooter{
-		Text:         "gbans",
-		IconURL:      "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128",
-		ProxyIconURL: "",
-	}
 )
 
 type ResponseMsgType int
@@ -57,11 +49,14 @@ type Payload struct {
 // RespErr creates a common error message embed.
 func RespErr(response *Response, message string) {
 	response.Value = &discordgo.MessageEmbed{
-		URL:      "",
-		Type:     discordgo.EmbedTypeRich,
-		Title:    "Command Error",
-		Color:    int(Red),
-		Provider: &defaultProvider,
+		URL:   "",
+		Type:  discordgo.EmbedTypeRich,
+		Title: "Command Error",
+		Color: int(Red),
+		Provider: &discordgo.MessageEmbedProvider{
+			URL:  providerURL,
+			Name: providerName,
+		},
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Message",
@@ -69,7 +64,11 @@ func RespErr(response *Response, message string) {
 				Inline: false,
 			},
 		},
-		Footer: &defaultFooter,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:         providerName,
+			IconURL:      iconURL,
+			ProxyIconURL: "",
+		},
 	}
 	response.MsgType = MtEmbed
 }
@@ -82,13 +81,20 @@ func RespOk(response *Response, title string) *discordgo.MessageEmbed {
 		Title:       title,
 		Description: "",
 		Color:       int(Green),
-		Footer:      &defaultFooter,
-		Image:       nil,
-		Thumbnail:   nil,
-		Video:       nil,
-		Provider:    &defaultProvider,
-		Author:      nil,
-		Fields:      nil,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:         providerName,
+			IconURL:      iconURL,
+			ProxyIconURL: "",
+		},
+		Image:     nil,
+		Thumbnail: nil,
+		Video:     nil,
+		Provider: &discordgo.MessageEmbedProvider{
+			URL:  providerURL,
+			Name: providerName,
+		},
+		Author: nil,
+		Fields: nil,
 	}
 	if response != nil {
 		response.MsgType = MtEmbed

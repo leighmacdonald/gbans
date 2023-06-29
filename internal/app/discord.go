@@ -110,7 +110,7 @@ func makeOnFilter(app *App) discord.CommandHandler {
 	}
 }
 
-func makeOnCheck(app *App) discord.CommandHandler {
+func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 		response *discord.Response,
 	) error {

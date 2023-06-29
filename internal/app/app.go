@@ -45,6 +45,7 @@ type App struct {
 	patreonPledges       []patreon.Pledge
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
+	mc                   *metricCollector
 }
 
 func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Logger) App {
@@ -64,6 +65,7 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		bannedGroupMembersMu: &sync.RWMutex{},
 		patreonMu:            &sync.RWMutex{},
 		wordFilters:          newWordFilters(),
+		mc:                   newMetricCollector(),
 	}
 
 	if errReg := application.registerDiscordHandlers(); errReg != nil {
@@ -603,7 +605,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.warnWorker(ctx, app.conf)
 	go app.logReader(ctx, app.conf.Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)
-	go logMetricsConsumer(ctx, app.eb, app.log)
+	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer(ctx)
 	go playerMessageWriter(ctx, app.eb, app.log, app.db)
 	go playerConnectionWriter(ctx, app.eb, app.db, app.log)

@@ -29,6 +29,310 @@ type LogParser struct {
 	rxPlayer    *regexp.Regexp
 	rxUnhandled *regexp.Regexp
 	rxParsers   []parserType
+	weapons     *WeaponParser
+}
+
+type WeaponParser struct {
+	weapons     map[PlayerClass][]Weapon
+	weaponNames map[Weapon]string
+}
+
+func (w *WeaponParser) Name(weapon Weapon) string {
+	name, found := w.weaponNames[weapon]
+	if !found {
+		return w.weaponNames[UnknownWeapon]
+	}
+
+	return name
+}
+
+func (w *WeaponParser) Parse(s string) Weapon {
+	for weaponName, v := range w.weaponNames {
+		if v == s {
+			return weaponName
+		}
+	}
+
+	return UnknownWeapon
+}
+
+func NewWeaponParser() *WeaponParser {
+	return &WeaponParser{
+		weaponNames: map[Weapon]string{
+			UnknownWeapon:         "unknown",
+			AiFlamethrower:        "ai_flamethrower",
+			Airstrike:             "airstrike",
+			Ambassador:            "ambassador",
+			Amputator:             "amputator",
+			Atomizer:              "atomizer",
+			AwperHand:             "awper_hand",
+			Backburner:            "backburner",
+			BackScratcher:         "back_scratcher",
+			Bat:                   "bat",
+			BazaarBargain:         "bazaar_bargain",
+			BigEarner:             "big_earner",
+			Blackbox:              "blackbox",
+			BlackRose:             "black_rose",
+			Blutsauger:            "blutsauger",
+			Bonesaw:               "bonesaw",
+			Bottle:                "bottle",
+			BrassBeast:            "brass_beast",
+			Bushwacka:             "bushwacka",
+			Caber:                 "ullapool_caber",
+			Club:                  "club",
+			ConscientiousObjector: "nonnonviolent_protest",
+			CowMangler:            "cow_mangler",
+			Crossbow:              "crusaders_crossbow",
+			// TODO add remaining deflects
+			DeflectPromode:       "deflect_promode",
+			DeflectRocket:        "deflect_rocket",
+			Degreaser:            "degreaser",
+			DemoKatana:           "demokatana",
+			Detonator:            "detonator",
+			DiamondBack:          "diamondback",
+			DirectHit:            "direct_hit",
+			DisciplinaryAction:   "disciplinary_action",
+			DragonsFury:          "dragons_fury",
+			DragonsFuryBonus:     "dragons_fury_bonus",
+			Enforcer:             "enforcer",
+			EscapePlan:           "unique_pickaxe_escape",
+			EternalReward:        "eternal_reward",
+			FamilyBusiness:       "family_business",
+			Fists:                "fists",
+			FistsOfSteel:         "steel_fists",
+			FlameThrower:         "flamethrower",
+			FlareGun:             "flaregun",
+			ForceANature:         "force_a_nature",
+			FrontierJustice:      "frontier_justice",
+			FryingPan:            "fryingpan",
+			Gunslinger:           "robot_arm",
+			GunslingerCombo:      "robot_arm_combo_kill",
+			GunslingerTaunt:      "robot_arm_blender_kill",
+			HamShank:             "ham_shank",
+			HotHand:              "hot_hand",
+			Huntsman:             "tf_projectile_arrow",
+			IronBomber:           "iron_bomber",
+			IronCurtain:          "iron_curtain",
+			Jag:                  "wrench_jag",
+			JarBased:             "tf_weapon_jar",
+			Knife:                "knife",
+			Kukri:                "tribalkukri",
+			Kunai:                "kunai",
+			Letranger:            "letranger",
+			LibertyLauncher:      "liberty_launcher",
+			LockNLoad:            "loch_n_load",
+			LongHeatmaker:        "long_heatmaker",
+			LooseCannon:          "loose_cannon",
+			LooseCannonImpact:    "loose_cannon_impact",
+			Lugermorph:           "maxgun",
+			Machina:              "machina",
+			MachinaPen:           "player_penetration",
+			MarketGardener:       "market_gardener",
+			Maul:                 "the_maul",
+			MiniGun:              "minigun",
+			MiniSentry:           "obj_minisentry",
+			Natascha:             "natascha",
+			NecroSmasher:         "necro_smasher",
+			Original:             "quake_rl",
+			PanicAttack:          "panic_attack",
+			PDAEngineer:          "pda_engineer",
+			PepPistol:            "pep_pistol",
+			Phlog:                "phlogistinator",
+			Pistol:               "pistol",
+			PistolScout:          "pistol_scout",
+			Powerjack:            "powerjack",
+			ProjectilePipe:       "tf_projectile_pipe",
+			ProjectilePipeRemote: "tf_projectile_pipe_remote",
+			ProjectileRocket:     "tf_projectile_rocket",
+			ProRifle:             "pro_rifle", // heatmaker?
+			ProSMG:               "pro_smg",   // carbine?
+			ProtoSyringe:         "proto_syringe",
+			Quickiebomb:          "quickiebomb_launcher",
+			Rainblower:           "rainblower",
+			RescueRanger:         "rescue_ranger",
+			ReserveShooter:       "reserve_shooter",
+			Revolver:             "revolver",
+			Sandman:              "sandman",
+			Sapper:               "obj_attachment_sapper",
+			Scattergun:           "scattergun",
+			ScorchShot:           "scorch_shot",
+			ScottishResistance:   "sticky_resistance",
+			Sentry1:              "obj_sentrygun",
+			Sentry2:              "obj_sentrygun2",
+			Sentry3:              "obj_sentrygun3",
+			SharpDresser:         "sharp_dresser",
+			ShootingStar:         "shooting_star",
+			ShortStop:            "shortstop",
+			ShotgunPrimary:       "shotgun_primary",
+			ShotgunPyro:          "shotgun_pyro",
+			ShotgunSoldier:       "shotgun_soldier",
+			Sledgehammer:         "sledgehammer",
+			SMG:                  "smg",
+			SniperRifle:          "sniperrifle",
+			SodaPopper:           "soda_popper",
+			Spycicle:             "spy_cicle",
+			SydneySleeper:        "sydney_sleeper",
+			SyringeGun:           "syringegun_medic",
+			TauntMedic:           "taunt_medic",
+			Telefrag:             "telefrag",
+			TheClassic:           "the_classic",
+			Tomislav:             "tomislav",
+			Ubersaw:              "ubersaw",
+			WarriorsSpirit:       "warrior_spirit",
+			WidowMaker:           "widowmaker",
+			World:                "world",
+			Wrangler:             "wrangler_kill",
+			WrapAssassin:         "wrap_assassin",
+			Wrench:               "wrench",
+			// Special weapons
+			TFMedigun:      "tf_weapon_medigun", // When used to extinguish
+			TFFlameThrower: "tf_weapon_flamethrower",
+			Dispenser:      "dispenser",
+		},
+		weapons: map[PlayerClass][]Weapon{
+			Multi: {
+				ConscientiousObjector,
+				FryingPan,
+				HamShank,
+				Lugermorph,
+				NecroSmasher,
+				Pistol,
+				ReserveShooter,
+				Telefrag,
+				World,
+				JarBased, // reflect?
+			},
+			Scout: {
+				Atomizer,
+				Bat,
+				ForceANature,
+				PepPistol,
+				PistolScout,
+				Sandman,
+				Scattergun,
+				ShortStop,
+				SodaPopper,
+				WrapAssassin,
+			},
+			Soldier: {
+				Airstrike,
+				Blackbox,
+				CowMangler,
+				DirectHit,
+				DisciplinaryAction,
+				EscapePlan,
+				LibertyLauncher,
+				MarketGardener,
+				Original,
+				ProjectileRocket,
+				ShotgunSoldier,
+			},
+			Pyro: {
+				AiFlamethrower,
+				Backburner,
+				BackScratcher,
+				DeflectPromode,
+				DeflectRocket,
+				Degreaser,
+				Detonator,
+				DragonsFury,
+				DragonsFuryBonus,
+				FlameThrower,
+				FlareGun,
+				HotHand,
+				Maul,
+				Phlog,
+				Powerjack,
+				Rainblower,
+				ScorchShot,
+				ShotgunPyro,
+				Sledgehammer,
+			},
+			Demo: {
+				Bottle,
+				Caber,
+				DemoKatana,
+				IronBomber,
+				LockNLoad,
+				LooseCannon,
+				LooseCannonImpact,
+				ProjectilePipe,
+				ProjectilePipeRemote,
+				Quickiebomb,
+				ScottishResistance,
+			},
+			Heavy: {
+				BrassBeast,
+				FamilyBusiness,
+				Fists,
+				FistsOfSteel,
+				IronCurtain,
+				LongHeatmaker,
+				MiniGun,
+				Natascha,
+				Tomislav,
+				WarriorsSpirit,
+			},
+			Engineer: {
+				FrontierJustice,
+				Gunslinger,
+				GunslingerCombo,
+				GunslingerTaunt,
+				Jag,
+				MiniSentry,
+				RescueRanger,
+				Sentry1,
+				Sentry2,
+				Sentry3,
+				ShotgunPrimary,
+				WidowMaker,
+				Wrangler,
+				Wrench,
+			},
+			Medic: {
+				Amputator,
+				Blutsauger,
+				Bonesaw,
+				Crossbow,
+				ProtoSyringe,
+				SyringeGun,
+				TauntMedic,
+				Ubersaw,
+			},
+			Sniper: {
+				AwperHand,
+				BazaarBargain,
+				Bushwacka,
+				Club,
+				Huntsman,
+				Kukri,
+				Machina,
+				MachinaPen,
+				ProRifle,
+				ProSMG,
+				ShootingStar,
+				SMG,
+				SniperRifle,
+				SydneySleeper,
+				TheClassic,
+			},
+			Spy: {
+				Ambassador,
+				BigEarner,
+				BlackRose,
+				DiamondBack,
+				Enforcer,
+				EternalReward,
+				Knife,
+				Kunai,
+				Letranger,
+				Revolver,
+				Sapper,
+				SharpDresser,
+				Spycicle,
+			},
+		},
+	}
 }
 
 func New() *LogParser {
@@ -37,7 +341,9 @@ func New() *LogParser {
 		// Common player id format eg: "Name<382><STEAM_0:1:22649331><>".
 		rxUnhandled: regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+`),
 		rxPlayer:    regexp.MustCompile(`"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"`),
+		weapons:     NewWeaponParser(),
 		// Map matching regex to known event types.
+		//nolint:lll
 		rxParsers: []parserType{
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`), LogStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`), LogStop},
@@ -130,6 +436,7 @@ func parsePickupItem(hp string, item *PickupItem) bool {
 	default:
 		return false
 	}
+
 	return true
 }
 
@@ -146,6 +453,7 @@ func parseMedigun(gunStr string, gun *MedigunType) bool {
 	default:
 		return false
 	}
+
 	return true
 }
 
@@ -204,6 +512,7 @@ func parsePlayerClass(classStr string, class *PlayerClass) bool {
 	default:
 		return false
 	}
+
 	return true
 }
 
@@ -226,15 +535,17 @@ func parseTeam(teamStr string, team *Team) bool {
 	default:
 		return false
 	}
+
 	return true
 }
 
 func reSubMatchMap(regex *regexp.Regexp, str string) (map[string]any, bool) {
 	match := regex.FindStringSubmatch(str)
-	subMatchMap := make(map[string]any)
 	if match == nil {
 		return nil, false
 	}
+
+	subMatchMap := make(map[string]any)
 	for i, name := range regex.SubexpNames() {
 		if i != 0 {
 			subMatchMap[name] = match[i]
@@ -249,21 +560,26 @@ func ParsePos(posStr string, pos *Pos) bool {
 	if len(pieces) != 3 {
 		return false
 	}
+
 	x, errParseX := strconv.ParseFloat(pieces[0], 64)
 	if errParseX != nil {
 		return false
 	}
+
 	y, errParseY := strconv.ParseFloat(pieces[1], 64)
 	if errParseY != nil {
 		return false
 	}
+
 	z, errParseZ := strconv.ParseFloat(pieces[2], 64)
 	if errParseZ != nil {
 		return false
 	}
+
 	pos.X = x
 	pos.Y = y
 	pos.Z = z
+
 	return true
 }
 
@@ -273,35 +589,45 @@ func ParseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 	if !ok {
 		return false
 	}
+
 	nameVal, nameOk := ooKV["name"].(string)
 	if !nameOk {
 		return false
 	}
+
 	player.Name = nameVal
 
 	pidVal, pidOk := ooKV["pid"].(string)
 	if !pidOk {
 		return false
 	}
+
 	pid, errPid := strconv.ParseInt(pidVal, 10, 32)
 	if errPid != nil {
 		return false
 	}
+
 	player.PID = int(pid)
 	var team Team
+
 	teamVal, teamOk := ooKV["team"].(string)
 	if !teamOk {
 		return false
 	}
+
 	if !parseTeam(teamVal, &team) {
 		return false
 	}
+
 	player.Team = team
+
 	sidStr, sidOk := ooKV["sid"].(string)
 	if !sidOk {
 		return false
 	}
+
 	player.SID = steamid.SID3ToSID64(steamid.SID3(sidStr))
+
 	return true
 }
 
@@ -330,8 +656,8 @@ func (p *LogParser) ParseKVs(stringVal string, out map[string]any) bool {
 func (p *LogParser) processKV(originalKVMap map[string]any) map[string]any {
 	newKVMap := map[string]any{}
 	for key, origValue := range originalKVMap {
-		value, ok := origValue.(string)
-		if !ok {
+		value, castOk := origValue.(string)
+		if !castOk {
 			continue
 		}
 		switch key {
@@ -359,8 +685,8 @@ func (p *LogParser) processKV(originalKVMap map[string]any) map[string]any {
 			reason := value
 			newKVMap["reason"] = strings.TrimSuffix(reason, `")`)
 		case "objectowner":
-			ooKV, ok := reSubMatchMap(p.rxPlayer, "\""+value+"\"")
-			if ok {
+			ooKV, matchOk := reSubMatchMap(p.rxPlayer, "\""+value+"\"")
+			if matchOk {
 				// TODO Make this less static to support >2 targets for events like capping points?
 				for keyVal, val := range ooKV {
 					newKVMap[keyVal+"2"] = val
@@ -379,6 +705,7 @@ func (p *LogParser) processKV(originalKVMap map[string]any) map[string]any {
 			newKVMap[key] = value
 		}
 	}
+
 	return newKVMap
 }
 
@@ -410,343 +737,343 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 			switch rx.Type {
 			case CaptureBlocked:
 				var t CaptureBlockedEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case LogStart:
 				var t LogStartEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case CVAR:
 				var t CVAREvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case RCON:
 				var t RCONEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case Entered:
 				var t EnteredEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case JoinedTeam:
 				var t JoinedTeamEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case ChangeClass:
 				var t ChangeClassEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case SpawnedAs:
 				var t SpawnedAsEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case Suicide:
 				var t SuicideEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case WRoundStart:
 				var t WRoundStartEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case MedicDeath:
 				var t MedicDeathEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case Killed:
 				var t KilledEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case KilledCustom:
 				var t CustomKilledEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case KillAssist:
 				var t KillAssistEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case Healed:
 				var t HealedEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case Extinguished:
 				var t ExtinguishedEvt
-				if errUnmarshal = unmarshal(values, &t); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = t
 			case PointCaptured:
 				var parsedEvent PointCapturedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Connected:
 				var parsedEvent ConnectedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case KilledObject:
 				var parsedEvent KilledObjectEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case CarryObject:
 				var parsedEvent CarryObjectEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case DetonatedObject:
 				var parsedEvent DetonatedObjectEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case DropObject:
 				var parsedEvent DropObjectEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case BuiltObject:
 				var parsedEvent BuiltObjectEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WRoundWin:
 				var parsedEvent WRoundWinEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WRoundLen:
 				var parsedEvent WRoundLenEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WTeamScore:
 				var parsedEvent WTeamScoreEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Say:
 				var parsedEvent SayEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case SayTeam:
 				var parsedEvent SayTeamEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Domination:
 				var parsedEvent DominationEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Disconnected:
 				var parsedEvent DisconnectedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Revenge:
 				var parsedEvent RevengeEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WRoundOvertime:
 				var parsedEvent WRoundOvertimeEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WGameOver:
 				var parsedEvent WGameOverEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WTeamFinalScore:
 				var parsedEvent WTeamFinalScoreEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case LogStop:
 				var parsedEvent LogStopEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WPaused:
 				var parsedEvent WPausedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WResumed:
 				var parsedEvent WResumedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WIntermissionWinLimit:
 				var parsedEvent WIntermissionWinLimitEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case FirstHealAfterSpawn:
 				var parsedEvent FirstHealAfterSpawnEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case ChargeReady:
 				var parsedEvent ChargeReadyEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case ChargeDeployed:
 				var parsedEvent ChargeDeployedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case ChargeEnded:
 				var parsedEvent ChargeEndedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case MedicDeathEx:
 				var parsedEvent MedicDeathExEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case LostUberAdv:
 				var parsedEvent LostUberAdvantageEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case EmptyUber:
 				var parsedEvent EmptyUberEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Pickup:
 				var parsedEvent PickupEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case ShotFired:
 				var parsedEvent ShotFiredEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case ShotHit:
 				var parsedEvent ShotHitEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case Damage:
 				var parsedEvent DamageEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case JarateAttack:
 				var parsedEvent JarateAttackEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WMiniRoundWin:
 				var parsedEvent WMiniRoundWinEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WMiniRoundLen:
 				var parsedEvent WMiniRoundLenEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WRoundSetupBegin:
 				var parsedEvent WRoundSetupBeginEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WMiniRoundSelected:
 				var parsedEvent WMiniRoundSelectedEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case WMiniRoundStart:
 				var parsedEvent WMiniRoundStartEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case MilkAttack:
 				var parsedEvent MilkAttackEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
 			case GasAttack:
 				var parsedEvent GasAttackEvt
-				if errUnmarshal = unmarshal(values, &parsedEvent); errUnmarshal != nil {
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 				event = parsedEvent
@@ -758,21 +1085,21 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 	m, found := reSubMatchMap(p.rxUnhandled, logLine)
 	if found {
 		var parsedEvent IgnoredMsgEvt
-		if errUnmarshal := unmarshal(m, &parsedEvent); errUnmarshal != nil {
+		if errUnmarshal := p.unmarshal(m, &parsedEvent); errUnmarshal != nil {
 			return nil, errUnmarshal
 		}
 		parsedEvent.Message = logLine
 		return &Results{IgnoredMsg, parsedEvent}, nil
 	}
 	var parsedEvent UnknownMsgEvt
-	if errUnmarshal := unmarshal(m, &parsedEvent); errUnmarshal != nil {
+	if errUnmarshal := p.unmarshal(m, &parsedEvent); errUnmarshal != nil {
 		return nil, errUnmarshal
 	}
 	parsedEvent.Message = logLine
 	return &Results{UnknownMsg, parsedEvent}, nil
 }
 
-func decodeTeam() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeTeam() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -790,7 +1117,7 @@ func decodeTeam() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decodePlayerClass() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePlayerClass() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -807,7 +1134,7 @@ func decodePlayerClass() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decodePos() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePos() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -828,7 +1155,7 @@ func decodePos() mapstructure.DecodeHookFunc {
 // BotSid Special internal SID used to track bots internally.
 const BotSid = 807
 
-func decodeSID3() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeSID3() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -864,16 +1191,19 @@ func decodeSID3() mapstructure.DecodeHookFunc {
 //	}
 //}
 
-func decodePickupItem() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodePickupItem() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
+
 		var m PickupItem
+
 		itemVal, ok := d.(string)
 		if !ok {
 			return d, nil
 		}
+
 		if !parsePickupItem(itemVal, &m) {
 			return d, nil
 		}
@@ -882,24 +1212,27 @@ func decodePickupItem() mapstructure.DecodeHookFunc {
 	}
 }
 
-func decodeWeapon() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeWeapon() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
 		}
-		weapVal, ok := d.(string)
+
+		weaponString, ok := d.(string)
 		if !ok {
 			return d, nil
 		}
-		w := ParseWeapon(weapVal)
-		if w != UnknownWeapon {
-			return w, nil
+
+		weapon := p.weapons.Parse(weaponString)
+		if weapon != UnknownWeapon {
+			return weapon, nil
 		}
+
 		return d, nil
 	}
 }
 
-func decodeTime() mapstructure.DecodeHookFunc {
+func (p *LogParser) decodeTime() mapstructure.DecodeHookFunc {
 	return func(f reflect.Type, t reflect.Type, d any) (any, error) {
 		if f.Kind() != reflect.String {
 			return d, nil
@@ -919,17 +1252,17 @@ func decodeTime() mapstructure.DecodeHookFunc {
 
 // unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
-func unmarshal(input any, output any) error {
+func (p *LogParser) unmarshal(input any, output any) error {
 	decoder, errNewDecoder := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			decodeTime(),
-			decodeTeam(),
-			decodePlayerClass(),
-			decodePos(),
-			decodeSID3(),
+			p.decodeTime(),
+			p.decodeTeam(),
+			p.decodePlayerClass(),
+			p.decodePos(),
+			p.decodeSID3(),
 
-			decodePickupItem(),
-			decodeWeapon(),
+			p.decodePickupItem(),
+			p.decodeWeapon(),
 		),
 		Result:           output,
 		WeaklyTypedInput: true, // Lets us do str -> int easily
