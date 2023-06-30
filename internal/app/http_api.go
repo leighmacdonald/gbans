@@ -294,7 +294,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 
 			return
 		}
-		players, found := app.serverState.Find(state.FindOpts{SteamID: req.SteamID})
+		players, found := app.Find(FindOpts{SteamID: req.SteamID})
 		if !found {
 			log.Error("Failed to find player on /mod call")
 			responseErr(ctx, http.StatusFailedDependency, nil)
@@ -320,7 +320,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		if req.SteamID.String() != "" {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:   "ReporterSID",
-				Value:  players[0].Player.SteamID.String(),
+				Value:  players[0].Player.SID.String(),
 				Inline: true,
 			})
 		}
@@ -965,7 +965,7 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 		lat := getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 		lon := getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 		// region := ctx.GetHeader("cf-region-code")
-		ns := app.serverState.State()
+		ns := app.state()
 		var ss []BaseServer
 		for _, srv := range ns {
 			ss = append(ss, BaseServer{
@@ -3005,24 +3005,6 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 	}
 }
 
-type BaseServer struct {
-	ServerID   int      `json:"server_id"`
-	Host       string   `json:"host"`
-	Port       int      `json:"port"`
-	Name       string   `json:"name"`
-	NameShort  string   `json:"name_short"`
-	Region     string   `json:"region"`
-	CC         string   `json:"cc"`
-	Players    int      `json:"players"`
-	MaxPlayers int      `json:"max_players"`
-	Bots       int      `json:"bots"`
-	Map        string   `json:"map"`
-	GameTypes  []string `json:"game_types"`
-	Latitude   float64  `json:"latitude"`
-	Longitude  float64  `json:"longitude"`
-	Distance   float64  `json:"distance"`
-}
-
 func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
 	radianLat1 := math.Pi * lat1 / 180
 	radianLat2 := math.Pi * lat2 / 180
@@ -3124,7 +3106,9 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 
 			return
 		}
-		filtered := app.serverState.MasterServerList()
+		app.stateMu.RLock()
+		filtered := app.msl
+		app.stateMu.RUnlock()
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)
 		}

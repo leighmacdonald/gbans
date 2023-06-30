@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -19,8 +20,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
+	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
+	"github.com/rumblefrog/go-a2s"
 	"go.uber.org/zap"
 	"gopkg.in/mxpv/patreon-go.v1"
 )
@@ -36,7 +39,7 @@ type App struct {
 	logFileChan          chan *model.LogFilePayload
 	warningChan          chan newUserWarning
 	notificationChan     chan NotificationPayload
-	serverState          *state.ServerStateCollector
+	stateCollector       *state.ServerStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreonClient        *patreon.Client
@@ -46,6 +49,9 @@ type App struct {
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
 	mc                   *metricCollector
+	serverState          map[int]ServerDetails
+	msl                  []state.ServerLocation
+	stateMu              *sync.RWMutex
 }
 
 func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Logger) App {
@@ -57,7 +63,6 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		db:                   db,
 		conf:                 conf,
 		log:                  logger,
-		serverState:          state.NewServerStateCollector(),
 		logFileChan:          make(chan *model.LogFilePayload, 10),
 		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan NotificationPayload, 5),
@@ -66,11 +71,18 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		patreonMu:            &sync.RWMutex{},
 		wordFilters:          newWordFilters(),
 		mc:                   newMetricCollector(),
+		serverState:          map[int]ServerDetails{},
+		stateMu:              &sync.RWMutex{},
 	}
 
 	if errReg := application.registerDiscordHandlers(); errReg != nil {
 		panic(errReg)
 	}
+
+	application.stateCollector = state.NewServerStateCollector(logger,
+		application.onA2SUpdate,
+		application.onPlayerUpdate,
+		application.onMSLUpdate)
 
 	// bot.SetOnConnect(func() {
 	//	_ = SendNotification(ctx, &conf, app.NotificationPayload{
@@ -84,6 +96,75 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 	// })
 
 	return application
+}
+
+func (app *App) onPlayerUpdate(serverID int, newState extra.Status) {
+	app.stateMu.Lock()
+	defer app.stateMu.Unlock()
+	server := app.serverState[serverID]
+	server.PlayersCount = newState.PlayersCount
+	server.PlayersMax = newState.PlayersMax
+	if newState.ServerName != "" && newState.ServerName != server.Name {
+		server.Name = newState.ServerName
+	}
+	server.Version = newState.Version
+	server.Edicts = newState.Edicts
+	server.Tags = newState.Tags
+	if newState.Map != "" && newState.Map != server.Map {
+		server.Map = newState.Map
+	}
+	server.Players = newState.Players
+	app.serverState[serverID] = server
+}
+
+func (app *App) onA2SUpdate(serverID int, newState *a2s.ServerInfo) {
+	app.stateMu.Lock()
+	defer app.stateMu.Unlock()
+	server := app.serverState[serverID]
+	if newState.Map != "" && newState.Map != server.Map {
+		server.Map = newState.Map
+	}
+	if newState.Name != "" && newState.Name != server.Name {
+		server.Name = newState.Name
+	}
+	server.Protocol = newState.Protocol
+	server.Folder = newState.Folder
+	server.Game = newState.Game
+	server.AppID = newState.ID
+	server.PlayersCount = int(newState.MaxPlayers)
+	server.PlayersMax = int(newState.MaxPlayers)
+	server.Bots = int(newState.Bots)
+	server.ServerType = newState.ServerType.String()
+	server.ServerOS = newState.ServerOS.String()
+	server.VAC = newState.VAC
+	server.Version = newState.Version
+	if newState.SourceTV != nil {
+		server.STVPort = newState.SourceTV.Port
+		server.STVName = newState.SourceTV.Name
+	}
+	app.serverState[serverID] = server
+}
+
+func (app *App) onMSLUpdate(newState []state.ServerLocation) {
+	app.stateMu.Lock()
+	defer app.stateMu.Unlock()
+	app.msl = newState
+}
+
+func (app *App) state() ServerDetailsCollection {
+	app.stateMu.RLock()
+	defer app.stateMu.RUnlock()
+
+	var curState []ServerDetails //nolint:prealloc
+	for _, s := range app.serverState {
+		curState = append(curState, s)
+	}
+
+	sort.SliceStable(curState, func(i, j int) bool {
+		return curState[i].Name < curState[j].Name
+	})
+
+	return curState
 }
 
 type userWarning struct {
@@ -630,7 +711,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.showReportMeta(ctx)
 	go app.notificationSender(ctx)
 	go demoCleaner(ctx, app.db, app.log)
-	go app.stateUpdater(ctx, time.Second*30, time.Second*180)
+	go app.stateUpdater(ctx)
 }
 
 // UDP log sink.

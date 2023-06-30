@@ -17,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/query"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -518,13 +517,13 @@ func makeOnKick(app *App) discord.CommandHandler {
 		if errAuthor != nil {
 			return errAuthor
 		}
-		players, found := app.serverState.Find(state.FindOpts{SteamID: targetSid64})
+		players, found := app.Find(FindOpts{SteamID: targetSid64})
 		if !found {
 			return nil
 		}
 		var err error
 		for _, player := range players {
-			if errKick := app.Kick(ctx, store.Bot, player.Player.SteamID, author.SteamID, reason); errKick != nil {
+			if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
 				err = gerrors.Join(err, errKick)
 
 				continue
@@ -623,7 +622,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
 		response *discord.Response,
 	) error {
-		currentState := app.serverState.ByRegion()
+		currentState := app.state().ByRegion()
 		stats := map[string]float64{}
 		used, total := 0, 0
 		embed := discord.RespOk(response, "Current Server Populations")
@@ -683,8 +682,8 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 
 			return discord.ErrCommandFailed
 		}
-		var currentState state.ServerState
-		if !app.serverState.ByName(server.ServerName, &currentState) {
+		currentState, found := app.state().ByName(server.ServerName)
+		if !found {
 			return consts.ErrUnknownID
 		}
 		var rows []string
@@ -717,7 +716,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", asn.ASNum)
 				}
 				rows = append(rows, fmt.Sprintf("%s`%s` %s`%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
-					flag, player.SteamID, asStr, player.Ping, player.Name, player.SteamID, proxyStr))
+					flag, player.SID, asStr, player.Ping, player.Name, player.SID, proxyStr))
 			}
 			embed.Description = strings.Join(rows, "\n")
 		} else {
@@ -961,8 +960,7 @@ func makeOnFind(app *App) discord.CommandHandler {
 		if errSid != nil {
 			return consts.ErrInvalidSID
 		}
-		playerInfo := state.NewPlayerInfo()
-		players, found := app.serverState.Find(state.FindOpts{SteamID: sid})
+		players, found := app.Find(FindOpts{SteamID: sid})
 		if !found {
 			return consts.ErrUnknownID
 		}
@@ -971,18 +969,18 @@ func makeOnFind(app *App) discord.CommandHandler {
 			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
 				return errors.Wrapf(errServer, "Failed to get server")
 			}
-			person := store.NewPerson(player.Player.SteamID)
-			if errPerson := app.PersonBySID(ctx, player.Player.SteamID, &person); errPerson != nil {
+			person := store.NewPerson(player.Player.SID)
+			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
 				return errPerson
 			}
 			resp := discord.RespOk(r, "Player Found")
 			resp.Type = discordgo.EmbedTypeRich
 			resp.Image = &discordgo.MessageEmbedImage{URL: person.AvatarFull}
 			resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
-			resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", playerInfo.Player.SteamID.Int64())
-			resp.Title = playerInfo.Player.Name
+			resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64())
+			resp.Title = player.Player.Name
 			discord.AddFieldInline(resp, "Server", server.ServerName)
-			discord.AddFieldsSteamID(resp, playerInfo.Player.SteamID)
+			discord.AddFieldsSteamID(resp, player.Player.SID)
 			discord.AddField(resp, "Connect", fmt.Sprintf("steam://connect/%s", server.Addr()))
 		}
 
@@ -1133,12 +1131,12 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	if errBanNet := app.BanCIDR(ctx, &banCIDR); errBanNet != nil {
 		return errBanNet
 	}
-	players, found := app.serverState.Find(state.FindOpts{CIDR: network})
+	players, found := app.Find(FindOpts{CIDR: network})
 	if !found {
 		return nil
 	}
 	for _, player := range players {
-		if errKick := app.Kick(ctx, store.Bot, player.Player.SteamID, author.SteamID, reason); errKick != nil {
+		if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
 			app.log.Error("Failed to perform kick", zap.Error(errKick))
 		}
 	}

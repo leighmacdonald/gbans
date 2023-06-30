@@ -100,11 +100,7 @@ func (db *Store) Connect(ctx context.Context) error {
 	}
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
-			if errMigrate.Error() == "no change" {
-				db.log.Info("Migration at latest version")
-			} else {
-				return errors.Errorf("Could not migrate schema: %v", errMigrate)
-			}
+			return errors.Errorf("Could not migrate schema: %v", errMigrate)
 		} else {
 			db.log.Info("Migration completed successfully")
 		}
@@ -240,7 +236,9 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	if errMigration != nil {
-		return errors.Wrapf(errMigration, "Failed to perform migration")
+		if errMigration.Error() != "no change" {
+			return errors.Wrapf(errMigration, "Failed to perform migration")
+		}
 	}
 
 	return nil

@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -143,12 +142,12 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 		return errors.Wrapf(errSaveBanNet, "Failed to save ban net")
 	}
 	go func(_ *net.IPNet, reason store.Reason) {
-		foundPlayers, found := app.serverState.Find(state.FindOpts{CIDR: banNet.CIDR})
+		foundPlayers, found := app.Find(FindOpts{CIDR: banNet.CIDR})
 		if !found {
 			return
 		}
 		for _, player := range foundPlayers {
-			if errKick := app.Kick(ctx, store.System, player.Player.SteamID, banNet.SourceID, reason); errKick != nil {
+			if errKick := app.Kick(ctx, store.System, player.Player.SID, banNet.SourceID, reason); errKick != nil {
 				app.log.Error("Failed to kick player", zap.Error(errKick))
 			}
 		}

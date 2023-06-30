@@ -318,31 +318,62 @@ func (app *App) patreonUpdater(ctx context.Context) {
 	}
 }
 
-func (app *App) updateStateServerList(ctx context.Context) error {
-	servers, errServers := app.db.GetServers(ctx, false)
-	if errServers != nil {
-		return errors.Wrap(errServers, "Failed to load servers")
-	}
-	sc := make([]*state.ServerConfig, len(servers))
-	for index, server := range servers {
-		sc[index] = state.NewServerConfig(app.log.Named(fmt.Sprintf("state-%s", server.ServerName)),
-			server.ServerID, server.ServerNameLong, server.ServerName, server.Address, server.Port, server.RCON, server.Latitude,
-			server.Longitude, server.Region, server.CC)
-	}
-	app.serverState.SetServers(sc)
-
-	return nil
-}
-
-func (app *App) stateUpdater(ctx context.Context, statusUpdateFreq time.Duration, materUpdateFreq time.Duration) {
+func (app *App) stateUpdater(ctx context.Context) {
 	log := app.log.Named("state")
-	errChan := make(chan error)
-	if errUpdate := app.updateStateServerList(ctx); errUpdate != nil {
-		log.Error("Failed to update list", zap.Error(errUpdate))
-	}
+	trigger := make(chan any)
+	updateTicker := time.NewTicker(time.Minute * 30)
 
-	if errStart := app.serverState.Start(ctx, statusUpdateFreq, materUpdateFreq, errChan); errStart != nil {
-		log.Error("start returned error", zap.Error(errStart))
+	var localCtx context.Context
+	var cancel context.CancelFunc
+
+	defer cancel()
+	go func() {
+		trigger <- true
+	}()
+	for {
+		select {
+		case <-updateTicker.C:
+			trigger <- true
+		case <-trigger:
+			if cancel != nil {
+				cancel()
+			}
+			localCtx, cancel = context.WithCancel(ctx)
+
+			servers, errServers := app.db.GetServers(ctx, false)
+			if errServers != nil {
+				log.Error("Failed to fetch servers, cannot update state", zap.Error(errServers))
+
+				continue
+			}
+
+			app.stateMu.Lock()
+			var configs []state.ServerConfig
+			sd := map[int]ServerDetails{}
+			for _, s := range servers {
+				configs = append(configs, state.NewServerConfig(s.ServerID, s.ServerName, s.Address, s.Port, s.Password))
+				sd[s.ServerID] = ServerDetails{
+					ServerID:  s.ServerID,
+					NameShort: s.ServerName,
+					Name:      s.ServerNameLong,
+					Host:      s.Address,
+					Port:      s.Port,
+					Enabled:   s.IsEnabled,
+					Region:    s.Region,
+					CC:        s.CC,
+					Latitude:  s.Latitude,
+					Longitude: s.Longitude,
+					Reserved:  s.ReservedSlots,
+				}
+			}
+			app.serverState = sd
+			app.stateMu.Unlock()
+			go app.stateCollector.Start(localCtx, configs)
+		case <-ctx.Done():
+			cancel()
+
+			return
+		}
 	}
 }
 
@@ -468,7 +499,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 				}
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerName
 			}
-			currentState := app.serverState.State()
+			currentState := app.state()
 			for _, ss := range currentState {
 				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
 				serverName, nameFound := serverNameMap[sn]

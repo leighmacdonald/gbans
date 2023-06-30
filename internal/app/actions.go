@@ -8,7 +8,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/query"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -22,8 +21,8 @@ var (
 )
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
-func (app *App) OnFindExec(ctx context.Context, findOpts state.FindOpts, onFoundCmd func(info state.PlayerServerInfo) string) error {
-	players, found := app.serverState.Find(findOpts)
+func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
+	players, found := app.Find(findOpts)
 	if !found {
 		return ErrNoUserFound
 	}
@@ -56,7 +55,7 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 		return ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
+	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, store.ReasonString(reason))
 	})
 }
@@ -72,8 +71,8 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 		return ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
-		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SteamID), store.ReasonString(reason))
+	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), store.ReasonString(reason))
 	})
 }
 
@@ -133,7 +132,7 @@ func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.S
 		return ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, state.FindOpts{SteamID: target}, func(info state.PlayerServerInfo) string {
+	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
 	})
 }
