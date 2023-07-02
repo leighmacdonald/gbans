@@ -754,14 +754,14 @@ func (db *Store) GetPersonAuthByRefreshToken(ctx context.Context, token string, 
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	var steamId int64
+	var steamID int64
 	errRow := db.QueryRow(ctx, query, args...).
-		Scan(&auth.PersonAuthID, &steamId, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn)
+		Scan(&auth.PersonAuthID, &steamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn)
 	if errRow != nil {
 		return Err(errRow)
 	}
 
-	auth.SteamID = steamid.New(steamId)
+	auth.SteamID = steamid.New(steamID)
 
 	return nil
 }
@@ -843,8 +843,8 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 	defer rows.Close()
 	for rows.Next() {
 		var n UserNotification
-		var steamId int64
-		if errScan := rows.Scan(&n.PersonNotificationID, &steamId, &n.Read, &n.Deleted,
+		var steamID int64
+		if errScan := rows.Scan(&n.PersonNotificationID, &steamID, &n.Read, &n.Deleted,
 			&n.Severity, &n.Message, &n.Link, &n.Count, &n.CreatedOn); errScan != nil {
 			return notifications, errors.Wrapf(errScan, "Failed to scan notification")
 		}

@@ -151,7 +151,7 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		&media.CreatedOn,
 		&media.UpdatedOn,
 	); errRow != nil {
-		return errRow
+		return Err(errRow)
 	}
 
 	media.AuthorID = steamid.New(authorID)

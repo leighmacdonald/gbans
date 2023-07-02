@@ -25,7 +25,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rumblefrog/go-a2s"
 	"go.uber.org/zap"
-	"gopkg.in/mxpv/patreon-go.v1"
 )
 
 // BuildVersion holds the current git revision, as of build time.
@@ -42,10 +41,7 @@ type App struct {
 	stateCollector       *state.ServerStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
-	patreonClient        *patreon.Client
-	patreonMu            *sync.RWMutex
-	patreonCampaigns     []patreon.Campaign
-	patreonPledges       []patreon.Pledge
+	patreon              *PatreonManager
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
 	mc                   *metricCollector
@@ -54,13 +50,13 @@ type App struct {
 	stateMu              *sync.RWMutex
 }
 
-func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Logger) App {
+func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	eb := newEventBroadcaster()
 
 	application := App{
 		bot:                  bot,
 		eb:                   eb,
-		db:                   db,
+		db:                   database,
 		conf:                 conf,
 		log:                  logger,
 		logFileChan:          make(chan *model.LogFilePayload, 10),
@@ -68,7 +64,7 @@ func New(conf *config.Config, db *store.Store, bot *discord.Bot, logger *zap.Log
 		notificationChan:     make(chan NotificationPayload, 5),
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
-		patreonMu:            &sync.RWMutex{},
+		patreon:              NewPatreonManager(logger, conf, database),
 		wordFilters:          newWordFilters(),
 		mc:                   newMetricCollector(),
 		serverState:          map[int]ServerDetails{},
@@ -226,30 +222,9 @@ func firstTimeSetup(ctx context.Context, conf *config.Config, db *store.Store) e
 	return nil
 }
 
-func (app *App) PatreonPledges() []patreon.Pledge {
-	app.patreonMu.RLock()
-	pledges := app.patreonPledges
-	// users := web.app.patreonUsers
-	app.patreonMu.RUnlock()
-
-	return pledges
-}
-
-func (app *App) PatreonCampaigns() []patreon.Campaign {
-	app.patreonMu.RLock()
-	campaigns := app.patreonCampaigns
-	app.patreonMu.RUnlock()
-
-	return campaigns
-}
-
 func (app *App) Init(ctx context.Context) error {
 	if setupErr := firstTimeSetup(ctx, app.conf, app.db); setupErr != nil {
 		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
-	}
-	pc, errPatreon := NewPatreonClient(ctx, app.conf, app.db, app.log)
-	if errPatreon == nil {
-		app.patreonClient = pc
 	}
 
 	// Load in the external network block / ip ban lists to memory if enabled
@@ -695,7 +670,7 @@ func (app *App) initFilters(ctx context.Context) error {
 }
 
 func (app *App) startWorkers(ctx context.Context) {
-	go app.patreonUpdater(ctx)
+	go app.patreon.updater(ctx)
 	go app.banSweeper(ctx)
 	// go profileUpdater(ctx)
 	go app.warnWorker(ctx, app.conf)

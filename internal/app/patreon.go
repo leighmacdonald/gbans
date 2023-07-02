@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -17,20 +18,39 @@ type PatreonStore interface {
 	GetPatreonAuth(ctx context.Context) (string, string, error)
 }
 
-// NewPatreonClient https://www.patreon.com/portal/registration/register-clients
-func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store, logger *zap.Logger) (*patreon.Client, error) {
-	log := logger.Named("patreonClient")
-	cat, crt, errAuth := db.GetPatreonAuth(ctx)
+type PatreonManager struct {
+	patreonClient    *patreon.Client
+	patreonMu        *sync.RWMutex
+	patreonCampaigns []patreon.Campaign
+	patreonPledges   []patreon.Pledge
+	log              *zap.Logger
+	conf             *config.Config
+	db               *store.Store
+}
+
+func NewPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *PatreonManager {
+	return &PatreonManager{
+		log:       logger.Named("patreon"),
+		conf:      conf,
+		db:        db,
+		patreonMu: &sync.RWMutex{},
+	}
+}
+
+// Start https://www.patreon.com/portal/registration/register-clients
+func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
+	log := p.log.Named("patreonClient")
+	cat, crt, errAuth := p.db.GetPatreonAuth(ctx)
 	if errAuth != nil || cat == "" || crt == "" {
 		// Attempt to use config file values as the initial source if we have nothing saved.
 		// These are only used once as they are dynamically updated and stored
 		// in the database for subsequent retrievals
-		cat = conf.Patreon.CreatorAccessToken
-		crt = conf.Patreon.CreatorRefreshToken
+		cat = p.conf.Patreon.CreatorAccessToken
+		crt = p.conf.Patreon.CreatorRefreshToken
 	}
 	oAuthConfig := oauth2.Config{
-		ClientID:     conf.Patreon.ClientID,
-		ClientSecret: conf.Patreon.ClientSecret,
+		ClientID:     p.conf.Patreon.ClientID,
+		ClientSecret: p.conf.Patreon.ClientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,
 			TokenURL: patreon.AccessTokenURL,
@@ -46,13 +66,13 @@ func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store,
 	}
 
 	tc := oAuthConfig.Client(ctx, tok)
-	client := patreon.NewClient(tc)
 
-	if errUpdate := updateToken(ctx, db, oAuthConfig, tok); errUpdate != nil {
+	p.patreonClient = patreon.NewClient(tc)
+	if errUpdate := updateToken(ctx, p.db, oAuthConfig, tok); errUpdate != nil {
 		return nil, errUpdate
 	}
 	// litmus test
-	_, errFetchTest := client.FetchUser()
+	_, errFetchTest := p.patreonClient.FetchUser()
 	if errFetchTest != nil {
 		return nil, errors.Wrap(errFetchTest, "Failed to fetch patreon user")
 	}
@@ -61,7 +81,7 @@ func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store,
 		for {
 			select {
 			case <-t0.C:
-				if errUpdate := updateToken(ctx, db, oAuthConfig, tok); errUpdate != nil {
+				if errUpdate := updateToken(ctx, p.db, oAuthConfig, tok); errUpdate != nil {
 					log.Error("Failed to update patreon token", zap.Error(errUpdate))
 				}
 			case <-ctx.Done():
@@ -70,7 +90,7 @@ func NewPatreonClient(ctx context.Context, conf *config.Config, db *store.Store,
 		}
 	}()
 
-	return client, nil
+	return p.patreonClient, nil
 }
 
 func updateToken(ctx context.Context, db *store.Store, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
@@ -87,8 +107,8 @@ func updateToken(ctx context.Context, db *store.Store, oAuthConfig oauth2.Config
 	return nil
 }
 
-func PatreonGetTiers(client *patreon.Client) ([]patreon.Campaign, error) {
-	campaigns, errCampaigns := client.FetchCampaign()
+func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
+	campaigns, errCampaigns := p.patreonClient.FetchCampaign()
 	if errCampaigns != nil {
 		return nil, errors.Wrap(errCampaigns, "Failed to fetch campaign")
 	}
@@ -96,8 +116,8 @@ func PatreonGetTiers(client *patreon.Client) ([]patreon.Campaign, error) {
 	return campaigns.Data, nil
 }
 
-func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*patreon.User, error) {
-	campaignResponse, err := client.FetchCampaign()
+func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
+	campaignResponse, err := p.patreonClient.FetchCampaign()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to fetch campaign")
 	}
@@ -113,7 +133,7 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 	users := make(map[string]*patreon.User)
 
 	for {
-		pledgesResponse, errFetch := client.FetchPledges(campaignID,
+		pledgesResponse, errFetch := p.patreonClient.FetchPledges(campaignID,
 			patreon.WithPageSize(25),
 			patreon.WithCursor(cursor))
 		if errFetch != nil {
@@ -137,4 +157,54 @@ func PatreonGetPledges(client *patreon.Client) ([]patreon.Pledge, map[string]*pa
 	}
 
 	return out, users, nil
+}
+
+func (p *PatreonManager) updater(ctx context.Context) {
+	log := p.log.Named("patreon")
+	updateTimer := time.NewTicker(time.Hour * 1)
+	if p.patreonClient == nil {
+		return
+	}
+	updateChan := make(chan any)
+
+	go func() {
+		updateChan <- true
+	}()
+
+	for {
+		select {
+		case <-updateTimer.C:
+			updateChan <- true
+		case <-updateChan:
+			newCampaigns, errCampaigns := p.Tiers()
+			if errCampaigns != nil {
+				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
+
+				return
+			}
+			newPledges, _, errPledges := p.Pledges()
+			if errPledges != nil {
+				log.Error("Failed to refresh pledges", zap.Error(errPledges))
+
+				return
+			}
+			p.patreonMu.Lock()
+			p.patreonCampaigns = newCampaigns
+			p.patreonPledges = newPledges
+			// patreonUsers = newUsers
+			p.patreonMu.Unlock()
+			cents := 0
+			totalCents := 0
+			for _, pledge := range newPledges {
+				cents += pledge.Attributes.AmountCents
+				if pledge.Attributes.TotalHistoricalAmountCents != nil {
+					totalCents += *pledge.Attributes.TotalHistoricalAmountCents
+				}
+			}
+			log.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
+				zap.Int("current_cents", cents), zap.Int("total_cents", totalCents))
+		case <-ctx.Done():
+			return
+		}
+	}
 }

@@ -268,56 +268,6 @@ func (app *App) notificationSender(ctx context.Context) {
 //	}
 // }
 
-func (app *App) patreonUpdater(ctx context.Context) {
-	log := app.log.Named("patreon")
-	updateTimer := time.NewTicker(time.Hour * 1)
-	if app.patreonClient == nil {
-		return
-	}
-	updateChan := make(chan any)
-
-	go func() {
-		updateChan <- true
-	}()
-
-	for {
-		select {
-		case <-updateTimer.C:
-			updateChan <- true
-		case <-updateChan:
-			newCampaigns, errCampaigns := PatreonGetTiers(app.patreonClient)
-			if errCampaigns != nil {
-				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
-
-				return
-			}
-			newPledges, _, errPledges := PatreonGetPledges(app.patreonClient)
-			if errPledges != nil {
-				log.Error("Failed to refresh pledges", zap.Error(errPledges))
-
-				return
-			}
-			app.patreonMu.Lock()
-			app.patreonCampaigns = newCampaigns
-			app.patreonPledges = newPledges
-			// patreonUsers = newUsers
-			app.patreonMu.Unlock()
-			cents := 0
-			totalCents := 0
-			for _, p := range newPledges {
-				cents += p.Attributes.AmountCents
-				if p.Attributes.TotalHistoricalAmountCents != nil {
-					totalCents += *p.Attributes.TotalHistoricalAmountCents
-				}
-			}
-			log.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
-				zap.Int("current_cents", cents), zap.Int("total_cents", totalCents))
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (app *App) stateUpdater(ctx context.Context) {
 	log := app.log.Named("state")
 	trigger := make(chan any)
