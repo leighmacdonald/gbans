@@ -76,7 +76,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 				go func(conf ServerConfig) {
 					console, errDial := rcon.Dial(ctx, conf.addr(), conf.Password, timeout)
 					if errDial != nil {
-						log.Error("Failed to dial rcon", zap.String("err", errDial.Error()))
+						//log.Error("Failed to dial rcon", zap.String("err", errDial.Error()))
 
 						return
 					}
@@ -94,6 +94,8 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 						return
 					}
 					go c.onUpdateStatus(conf.ServerID, status)
+
+					log.Debug("Updated", zap.String("server", conf.Name))
 				}(serverConfig)
 			}
 		case <-ctx.Done():
@@ -124,12 +126,14 @@ func (c *ServerStateCollector) startA2S(ctx context.Context, configs []ServerCon
 					}()
 					result, errQuery := client.QueryInfo()
 					if errQuery != nil {
-						log.Error("Failed to query a2s server", zap.String("server", conf.Name), zap.String("err", errQuery.Error()))
+
+						//log.Error("Failed to query a2s server", zap.String("server", conf.Name), zap.String("err", errQuery.Error()))
 
 						return
 					}
 
 					go c.onUpdateA2S(conf.ServerID, result)
+					log.Debug("Updated", zap.String("server", conf.Name))
 				}(serverConfig)
 			}
 		case <-ctx.Done():

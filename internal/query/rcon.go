@@ -3,6 +3,7 @@ package query
 
 import (
 	"context"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -40,11 +41,14 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 		waitGroup.Add(1)
 		go func(server store.Server) {
 			defer waitGroup.Done()
-			rconCtx, cancelExec := context.WithTimeout(ctx, time.Second*20)
-			defer cancelExec()
-			conn, errDial := rcon.Dial(rconCtx, server.Addr(), server.RCON, timeout)
+			conn, errDial := rcon.Dial(ctx, server.Addr(), server.RCON, timeout)
 			if errDial != nil {
-				logger.Error("Failed to connect to server", zap.String("name", server.ServerName), zap.Error(errDial))
+				var dnsErr *net.DNSError
+				if errors.Is(errDial, dnsErr) {
+					logger.Error("Failed to lookup DNS for host", zap.String("name", server.ServerName), zap.Error(errDial))
+				}
+
+				//logger.Error("Failed to connect to server", zap.String("name", server.ServerName), zap.Error(errDial))
 
 				return
 			}

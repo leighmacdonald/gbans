@@ -8,7 +8,7 @@
 #endif
 // clang-format on
 
-#define _gbans_globals_included
+#define _gbans_globals_included 
 
 #define PLUGIN_AUTHOR "Leigh MacDonald"
 #define PLUGIN_VERSION "0.0.1"
@@ -17,13 +17,15 @@
 #define MAX_SCORES 256
 
 // clang-format off
-enum struct PlayerInfo {
-    bool authed;
-    char ip[16];
-    int banType;
-    int permissionLevel;
-    char message[256];
+enum struct PlayerInfo
+{
+	bool authed;
+	char ip[16] ;
+	int banType;
+	int permissionLevel;
+	char message[256] ;
 }
+
 // clang-format on
 
 // Globals must all start with g
