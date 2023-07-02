@@ -3194,7 +3194,14 @@ func onAPIGetTF2Stats(app *App) gin.HandlerFunc {
 
 func onAPIGetPatreonCampaigns(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		responseOK(ctx, http.StatusOK, app.PatreonCampaigns())
+		tiers, errTiers := app.patreon.Tiers()
+		if errTiers != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, tiers)
 	}
 }
 
@@ -3218,6 +3225,13 @@ func onAPIGetPatreonPledges(app *App) gin.HandlerFunc {
 		//		CreatedAt: t0,
 		//	})
 		// }
-		responseOK(ctx, http.StatusOK, app.PatreonPledges())
+
+		pledges, _, errPledges := app.patreon.Pledges()
+		if errPledges != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+		responseOK(ctx, http.StatusOK, pledges)
 	}
 }
