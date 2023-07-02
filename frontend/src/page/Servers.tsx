@@ -142,7 +142,10 @@ export const Servers = () => {
                     }
                     setServers(response.result.servers || []);
                     if (pos.lat == 0) {
-                        setPos(response.result.lat_long);
+                        setPos({
+                            lat: response.result.lat_long.latitude,
+                            lng: response.result.lat_long.longitude
+                        });
                     }
 
                     restart(nextExpiry());
