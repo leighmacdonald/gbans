@@ -139,10 +139,10 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND name = $1`
-
-	return Err(db.QueryRow(ctx, query, name).Scan(
+	var authorID int64
+	if errRow := db.QueryRow(ctx, query, name).Scan(
 		&media.MediaID,
-		&media.AuthorID,
+		&authorID,
 		&media.Name,
 		&media.Size,
 		&media.MimeType,
@@ -150,7 +150,13 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		&media.Deleted,
 		&media.CreatedOn,
 		&media.UpdatedOn,
-	))
+	); errRow != nil {
+		return errRow
+	}
+
+	media.AuthorID = steamid.New(authorID)
+
+	return nil
 }
 
 func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) error {
@@ -159,10 +165,10 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND media_id = $1`
-
-	return Err(db.QueryRow(ctx, query, mediaID).Scan(
+	var authorID int64
+	if errRow := db.QueryRow(ctx, query, mediaID).Scan(
 		&media.MediaID,
-		&media.AuthorID,
+		&authorID,
 		&media.Name,
 		&media.Size,
 		&media.MimeType,
@@ -170,5 +176,11 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		&media.Deleted,
 		&media.CreatedOn,
 		&media.UpdatedOn,
-	))
+	); errRow != nil {
+		return Err(errRow)
+	}
+
+	media.AuthorID = steamid.New(authorID)
+
+	return nil
 }

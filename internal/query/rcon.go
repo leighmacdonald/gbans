@@ -48,7 +48,7 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 					logger.Error("Failed to lookup DNS for host", zap.String("name", server.ServerName), zap.Error(errDial))
 				}
 
-				//logger.Error("Failed to connect to server", zap.String("name", server.ServerName), zap.Error(errDial))
+				// logger.Error("Failed to connect to server", zap.String("name", server.ServerName), zap.Error(errDial))
 
 				return
 			}

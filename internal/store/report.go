@@ -244,10 +244,12 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 	var reports []Report
 	for rows.Next() {
 		var report Report
+		var sourceID int64
+		var targetID int64
 		if errScan := rows.Scan(
 			&report.ReportID,
-			&report.SourceID,
-			&report.TargetID,
+			&sourceID,
+			&targetID,
 			&report.ReportStatus,
 			&report.Description,
 			&report.Deleted,
@@ -261,6 +263,10 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 		); errScan != nil {
 			return nil, Err(errScan)
 		}
+
+		report.SourceID = steamid.New(sourceID)
+		report.TargetID = steamid.New(targetID)
+
 		reports = append(reports, report)
 	}
 
@@ -276,11 +282,15 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 		FROM report r
 		LEFT JOIN demo d on r.demo_name = d.title
 		WHERE deleted = false AND reported_id = $1 AND report_status <= $2 AND author_id = $3`
+
+	var sourceID int64
+	var targetID int64
+
 	if errQuery := db.QueryRow(ctx, query, steamID, NeedMoreInfo, authorID).
 		Scan(
 			&report.ReportID,
-			&report.SourceID,
-			&report.TargetID,
+			&sourceID,
+			&targetID,
 			&report.ReportStatus,
 			&report.Description,
 			&report.Deleted,
@@ -294,6 +304,9 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 		); errQuery != nil {
 		return Err(errQuery)
 	}
+
+	report.SourceID = steamid.New(sourceID)
+	report.TargetID = steamid.New(targetID)
 
 	return nil
 }
@@ -307,11 +320,15 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 		FROM report r
 		LEFT JOIN demo d on r.demo_name = d.title
 		WHERE deleted = false AND report_id = $1`
+
+	var sourceID int64
+	var targetID int64
+
 	if errQuery := db.QueryRow(ctx, query, reportID).
 		Scan(
 			&report.ReportID,
-			&report.SourceID,
-			&report.TargetID,
+			&sourceID,
+			&targetID,
 			&report.ReportStatus,
 			&report.Description,
 			&report.Deleted,
@@ -325,6 +342,9 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 		); errQuery != nil {
 		return Err(errQuery)
 	}
+
+	report.SourceID = steamid.New(sourceID)
+	report.TargetID = steamid.New(targetID)
 
 	return nil
 }
@@ -344,12 +364,14 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 	}
 	defer rows.Close()
 	var messages []UserMessage
+
 	for rows.Next() {
 		var msg UserMessage
+		var authorID int64
 		if errScan := rows.Scan(
 			&msg.MessageID,
 			&msg.ParentID,
-			&msg.AuthorID,
+			&authorID,
 			&msg.Contents,
 			&msg.Deleted,
 			&msg.CreatedOn,
@@ -357,6 +379,9 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 		); errScan != nil {
 			return nil, Err(errQuery)
 		}
+
+		msg.AuthorID = steamid.New(authorID)
+
 		messages = append(messages, msg)
 	}
 
@@ -369,11 +394,14 @@ func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64
 		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
 		FROM report_message
 		WHERE report_message_id = $1`
+
+	var authorID int64
+
 	if errQuery := db.QueryRow(ctx, query, reportMessageID).
 		Scan(
 			&message.MessageID,
 			&message.ParentID,
-			&message.AuthorID,
+			&authorID,
 			&message.Contents,
 			&message.Deleted,
 			&message.CreatedOn,
@@ -381,6 +409,8 @@ func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64
 		); errQuery != nil {
 		return Err(errQuery)
 	}
+
+	message.AuthorID = steamid.New(authorID)
 
 	return nil
 }

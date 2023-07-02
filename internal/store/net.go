@@ -33,12 +33,18 @@ func (db *Store) GetBanNetByAddress(ctx context.Context, ip net.IP) ([]BanCIDR, 
 	defer rows.Close()
 	for rows.Next() {
 		var banNet BanCIDR
+		var sourceID int64
+		var targetID int64
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState); errScan != nil {
+			&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
+
+		banNet.SourceID = steamid.New(sourceID)
+		banNet.TargetID = steamid.New(targetID)
+
 		nets = append(nets, banNet)
 	}
 
@@ -52,10 +58,23 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 		FROM ban_net
 		WHERE deleted = false AND net_id = $1`
 
-	return Err(db.QueryRow(ctx, query, netID).Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
-		&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
-		&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-		&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState))
+	var sourceID int64
+	var targetID int64
+
+	errQuery := db.
+		QueryRow(ctx, query, netID).
+		Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
+			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
+			&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState)
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	banNet.SourceID = steamid.New(sourceID)
+	banNet.TargetID = steamid.New(targetID)
+
+	return nil
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
@@ -73,12 +92,18 @@ func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var banNet BanCIDR
+		var sourceID int64
+		var targetID int64
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-			&banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID, &banNet.AppealState); errScan != nil {
+			&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
+
+		banNet.SourceID = steamid.New(sourceID)
+		banNet.TargetID = steamid.New(targetID)
+
 		nets = append(nets, banNet)
 	}
 
@@ -99,8 +124,8 @@ func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
 		Set("note", banNet.Note).
 		Set("unban_reason_text", banNet.UnbanReasonText).
 		Set("is_enabled", banNet.IsEnabled).
-		Set("target_id", banNet.TargetID).
-		Set("source_id", banNet.SourceID).
+		Set("target_id", banNet.TargetID.Int64()).
+		Set("source_id", banNet.SourceID.Int64()).
 		Set("appeal_state", banNet.AppealState).
 		Where(sq.Eq{"net_id": banNet.NetID}).
 		ToSql()
@@ -118,7 +143,7 @@ func (db *Store) insertBanNet(ctx context.Context, banNet *BanCIDR) error {
 			"deleted", "note", "unban_reason_text", "is_enabled", "target_id", "source_id", "appeal_state").
 		Values(banNet.CIDR, banNet.Origin, banNet.CreatedOn, banNet.UpdatedOn, banNet.Reason, banNet.ReasonText,
 			banNet.ValidUntil, banNet.Deleted, banNet.Note, banNet.UnbanReasonText, banNet.IsEnabled,
-			banNet.TargetID, banNet.SourceID, banNet.AppealState).
+			banNet.TargetID.Int64(), banNet.SourceID.Int64(), banNet.AppealState).
 		Suffix("RETURNING net_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -163,12 +188,18 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var banNet BanCIDR
+		var targetID int64
+		var sourceID int64
 		if errScan := rows.Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin, &banNet.CreatedOn,
 			&banNet.UpdatedOn, &banNet.ReasonText, &banNet.ValidUntil, &banNet.Deleted, &banNet.Note,
-			&banNet.UnbanReasonText, &banNet.IsEnabled, &banNet.TargetID, &banNet.SourceID,
+			&banNet.UnbanReasonText, &banNet.IsEnabled, &targetID, &sourceID,
 			&banNet.Reason, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
+
+		banNet.TargetID = steamid.New(targetID)
+		banNet.SourceID = steamid.New(sourceID)
+
 		bans = append(bans, banNet)
 	}
 
@@ -189,11 +220,17 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var banASN BanASN
-		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &banASN.SourceID, &banASN.TargetID,
+		var targetID int64
+		var sourceID int64
+		if errScan := rows.Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &sourceID, &targetID,
 			&banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn, &banASN.Deleted,
 			&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText, &banASN.AppealState); errScan != nil {
 			return nil, errors.Wrap(errScan, "Failed to scan asn ban")
 		}
+
+		banASN.TargetID = steamid.New(targetID)
+		banASN.SourceID = steamid.New(sourceID)
+
 		bans = append(bans, banASN)
 	}
 
@@ -395,12 +432,17 @@ func (db *Store) GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) err
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
 		FROM ban_asn 
 		WHERE deleted = false AND as_num = $1`
+	var targetID int64
+	var sourceID int64
 	if errQuery := db.QueryRow(ctx, query, asNum).Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
-		&banASN.SourceID, &banASN.TargetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
+		&sourceID, &targetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
 		&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
 		&banASN.AppealState); errQuery != nil {
 		return Err(errQuery)
 	}
+
+	banASN.TargetID = steamid.New(targetID)
+	banASN.SourceID = steamid.New(sourceID)
 
 	return nil
 }
@@ -419,12 +461,17 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 	var records []BanASN
 	for rows.Next() {
 		var r BanASN
-		if errQuery := rows.Scan(&r.BanASNId, &r.ASNum, &r.Origin,
-			&r.SourceID, &r.TargetID, &r.ReasonText, &r.ValidUntil, &r.CreatedOn,
-			&r.UpdatedOn, &r.Deleted, &r.Reason, &r.IsEnabled, &r.UnbanReasonText,
-			&r.AppealState); errQuery != nil {
+		var targetID int64
+		var sourceID int64
+
+		if errQuery := rows.Scan(&r.BanASNId, &r.ASNum, &r.Origin, &sourceID, &targetID, &r.ReasonText, &r.ValidUntil,
+			&r.CreatedOn, &r.UpdatedOn, &r.Deleted, &r.Reason, &r.IsEnabled, &r.UnbanReasonText, &r.AppealState); errQuery != nil {
 			return nil, Err(errQuery)
 		}
+
+		r.SourceID = steamid.New(sourceID)
+		r.TargetID = steamid.New(targetID)
+
 		records = append(records, r)
 	}
 
@@ -433,6 +480,7 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 
 func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
 	banASN.UpdatedOn = config.Now()
+
 	if banASN.BanASNId > 0 {
 		const queryUpdate = `
 			UPDATE ban_asn 
@@ -441,9 +489,10 @@ func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
 				unban_reason_text = $12, appeal_state = $13
 			WHERE ban_asn_id = $1`
 
-		return Err(db.Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID,
-			banASN.TargetID, banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
-			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
+		return Err(db.
+			Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(),
+				banASN.TargetID.Int64(), banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
+				banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState))
 	}
 	const queryInsert = `
 		INSERT INTO ban_asn (as_num, origin, source_id, target_id, reason, valid_until, updated_on, created_on, 
@@ -451,9 +500,11 @@ func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING ban_asn_id`
 
-	return Err(db.QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID, banASN.TargetID,
-		banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
-		banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState).Scan(&banASN.BanASNId))
+	return Err(db.
+		QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(), banASN.TargetID.Int64(),
+			banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
+			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState).
+		Scan(&banASN.BanASNId))
 }
 
 func (db *Store) DropBanASN(ctx context.Context, banASN *BanASN) error {
@@ -464,9 +515,9 @@ func (db *Store) DropBanASN(ctx context.Context, banASN *BanASN) error {
 
 func (db *Store) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error) {
 	const query = `
-		SELECT DISTINCT source_id
-		FROM server_log
-		WHERE event_type = 1004 AND (meta_data->>'address')::inet <<= inet '%s';`
+		SELECT DISTINCT c.steam_id
+		FROM person_connections c
+		WHERE ip_addr::inet <<= inet '%s';`
 	if ipNet == nil {
 		return nil, errors.New("Invalid address")
 	}
@@ -477,11 +528,12 @@ func (db *Store) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid
 	defer rows.Close()
 	var ids steamid.Collection
 	for rows.Next() {
-		var sid64 steamid.SID64
+		var sid64 int64
 		if errScan := rows.Scan(&sid64); errScan != nil {
 			return nil, Err(errScan)
 		}
-		ids = append(ids, sid64)
+
+		ids = append(ids, steamid.New(sid64))
 	}
 
 	return ids, nil

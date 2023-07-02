@@ -50,7 +50,7 @@ func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
-	if errQuery := db.QueryRow(ctx, query, filter.AuthorID, filter.Pattern,
+	if errQuery := db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
@@ -62,7 +62,7 @@ func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 
 func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 	query, args, errQuery := db.sb.Update("filtered_word").
-		Set("author_id", filter.AuthorID).
+		Set("author_id", filter.AuthorID.Int64()).
 		Set("pattern", filter.Pattern).
 		Set("is_regex", filter.IsRegex).
 		Set("is_enabled", filter.IsEnabled).
@@ -96,10 +96,14 @@ func (db *Store) GetFilterByID(ctx context.Context, wordID int64, f *Filter) err
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
 		WHERE filter_id = $1`
-	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&f.FilterID, &f.AuthorID, &f.Pattern,
+	var authorID int64
+	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&f.FilterID, &authorID, &f.Pattern,
 		&f.IsRegex, &f.IsEnabled, &f.TriggerCount, &f.CreatedOn, &f.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
+
+	f.AuthorID = steamid.New(authorID)
+
 	f.Init()
 
 	return nil
@@ -117,10 +121,12 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var filter Filter
-		if errQuery = rows.Scan(&filter.FilterID, &filter.AuthorID, &filter.Pattern, &filter.IsRegex,
+		var authorID int64
+		if errQuery = rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
 			return nil, Err(errQuery)
 		}
+		filter.AuthorID = steamid.New(authorID)
 		filter.Init()
 		filters = append(filters, filter)
 	}

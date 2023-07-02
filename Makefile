@@ -70,6 +70,7 @@ testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 check_deps:
+	go install mvdan.cc/gofumpt@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 

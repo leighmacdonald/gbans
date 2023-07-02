@@ -128,7 +128,7 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 	var perms []ServerPermission
 	for rows.Next() {
 		var (
-			sid  steamid.SID64
+			sid  int64
 			perm consts.Privilege
 		)
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
@@ -146,7 +146,7 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 			flags = "z"
 		}
 		perms = append(perms, ServerPermission{
-			SteamID:         steamid.SID64ToSID(sid),
+			SteamID:         steamid.SID64ToSID(steamid.New(sid)),
 			PermissionLevel: perm,
 			Flags:           flags,
 		})
@@ -157,7 +157,9 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 
 func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server, error) {
 	var servers []Server
-	queryBuilder := db.sb.Select(columnsServer...).From(string(tableServer))
+	queryBuilder := db.sb.
+		Select(columnsServer...).
+		From(string(tableServer))
 	cond := sq.And{sq.Eq{"deleted": false}}
 	if !includeDisabled {
 		cond = append(cond, sq.Eq{"is_enabled": true})
@@ -174,10 +176,11 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 	defer rows.Close()
 	for rows.Next() {
 		var server Server
-		if errScan := rows.Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
-			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
-			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-			&server.Deleted, &server.LogSecret); errScan != nil {
+		if errScan := rows.
+			Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
+				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
+				&server.Deleted, &server.LogSecret); errScan != nil {
 			return nil, errors.Wrap(errScan, "Failed to scan server")
 		}
 		servers = append(servers, server)
