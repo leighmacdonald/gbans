@@ -274,6 +274,7 @@ void saveClientScore(int client)
 	// int score = TF2_GetPlayerResourceData(client, TFResource_TotalScore);
 	gScores.SetObject(authId, values);
 }
+
 // TODO track scores for disconnected
 JSON_Object writeMeta()
 {

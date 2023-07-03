@@ -70,6 +70,9 @@ public void onPluginStartCore()
 
 	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
 	HookEvent("player_connect_client", Event_PlayerConnect, EventHookMode_Pre);
+
+	gSvVisibleMaxPlayers = FindConVar("sv_visiblemaxplayers");
+	gHostname = FindConVar("hostname");
 }
 
 
@@ -77,6 +80,7 @@ public void OnConfigsExecuted()
 {
 	setupSTV();
 	refreshToken();
+	CreateTimer(15.0, updateState, _, TIMER_REPEAT);
 }
 
 

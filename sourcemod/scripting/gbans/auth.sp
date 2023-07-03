@@ -116,6 +116,7 @@ void onAdminsReqReceived(bool success, const char[] error, System2HTTPRequest re
 		}
 		CloseHandle(f);
 		ServerCommand("sm_reloadadmins");
+		gbLog("Reloaded admins");
 	}
 	else
 	{

@@ -31,6 +31,9 @@ enum struct PlayerInfo
 // Globals must all start with g
 PlayerInfo gPlayers[MAXPLAYERS + 1];
 
+ConVar gSvVisibleMaxPlayers = null;
+ConVar gHostname = null;
+
 // Core gbans options
 ConVar gPort = null;
 ConVar gHost = null;
