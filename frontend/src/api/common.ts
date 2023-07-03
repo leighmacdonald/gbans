@@ -1,6 +1,5 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
-import { applySteamId } from './profile';
 import { readAccessToken, readRefreshToken, refreshToken } from './auth';
 
 export enum PermissionLevel {
@@ -79,7 +78,7 @@ export const apiCall = async <
         return { status: resp.ok, resp: resp, error: 'Unauthorized' };
     }
     const jsonText = await resp.text();
-    const json: apiResponse<TResponse> = JSON.parse(jsonText, applySteamId);
+    const json: apiResponse<TResponse> = JSON.parse(jsonText);
     if (!resp.ok) {
         return {
             status: resp.ok && json.status,

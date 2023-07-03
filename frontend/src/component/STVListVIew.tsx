@@ -52,7 +52,7 @@ export const STVListVIew = () => {
     }, [reload]);
 
     const loggedIn = useMemo(() => {
-        return currentUser.steam_id.isValidIndividual();
+        return currentUser.steam_id != '';
     }, [currentUser]);
 
     return (
@@ -78,9 +78,7 @@ export const STVListVIew = () => {
                                             setSteamId('');
                                             return;
                                         }
-                                        setSteamId(
-                                            currentUser.steam_id.getSteamID64()
-                                        );
+                                        setSteamId(currentUser.steam_id);
                                     }}
                                 />
                             </FormGroup>

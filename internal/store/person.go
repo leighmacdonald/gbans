@@ -19,7 +19,7 @@ import (
 
 type UserNotification struct {
 	PersonNotificationID int64                       `json:"person_notification_id"`
-	SteamID              steamid.SID64               `json:"steam_id,string"`
+	SteamID              steamid.SID64               `json:"steam_id"`
 	Read                 bool                        `json:"read"`
 	Deleted              bool                        `json:"deleted"`
 	Severity             consts.NotificationSeverity `json:"severity"`
@@ -31,7 +31,7 @@ type UserNotification struct {
 
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SID64         `db:"steam_id" json:"steam_id,string"`
+	SteamID          steamid.SID64         `db:"steam_id" json:"steam_id"`
 	CreatedOn        time.Time             `json:"created_on"`
 	UpdatedOn        time.Time             `json:"updated_on"`
 	PermissionLevel  consts.Privilege      `json:"permission_level"`
@@ -140,7 +140,7 @@ type AppealOverview struct {
 type UserMessage struct {
 	ParentID  int64         `json:"parent_id"`
 	MessageID int64         `json:"message_id"`
-	AuthorID  steamid.SID64 `json:"author_id,string"`
+	AuthorID  steamid.SID64 `json:"author_id"`
 	Contents  string        `json:"contents"`
 	Deleted   bool          `json:"deleted"`
 	CreatedOn time.Time     `json:"created_on"`
@@ -180,7 +180,7 @@ func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
 type PersonConnection struct {
 	PersonConnectionID int64          `json:"person_connection_id"`
 	IPAddr             net.IP         `json:"ip_addr"`
-	SteamID            steamid.SID64  `json:"steam_id,string"`
+	SteamID            steamid.SID64  `json:"steam_id"`
 	PersonaName        string         `json:"persona_name"`
 	CreatedOn          time.Time      `json:"created_on"`
 	IPInfo             PersonIPRecord `json:"ip_info"`
@@ -190,7 +190,7 @@ type PersonConnections []PersonConnection
 
 type PersonMessage struct {
 	PersonMessageID int64         `json:"person_message_id"`
-	SteamID         steamid.SID64 `json:"steam_id,string"`
+	SteamID         steamid.SID64 `json:"steam_id"`
 	PersonaName     string        `json:"persona_name"`
 	ServerName      string        `json:"server_name"`
 	ServerID        int           `json:"server_id"`
@@ -896,7 +896,7 @@ func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, s
 
 type NotificationQuery struct {
 	QueryFilter
-	SteamID steamid.SID64 `json:"steam_id,string"`
+	SteamID steamid.SID64 `json:"steam_id"`
 }
 
 func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserNotification, error) {

@@ -6,7 +6,6 @@ import {
     UserProfile
 } from './profile';
 import { UserMessage } from './report';
-import SteamID from 'steamid';
 import { parseDateTime } from '../util/text';
 import { IpRecord } from '../util/types';
 
@@ -157,8 +156,8 @@ export interface BanBase extends TimeStamped {
     valid_until: Date;
     reason: BanReason;
     reason_text: string;
-    source_id: SteamID;
-    target_id: SteamID;
+    source_id: string;
+    target_id: string;
     deleted: boolean;
     unban_reason_text: string;
     note: string;
@@ -173,19 +172,19 @@ export interface IAPIBanRecord extends BanBase {
 }
 
 export interface SimplePerson {
-    steam_id: SteamID;
+    steam_id: string;
     persona_name: string;
     avatar: string;
     avatar_full: string;
 }
 
 export interface AppealOverview extends IAPIBanRecord {
-    source_steam_id: SteamID;
+    source_steam_id: string;
     source_persona_name: string;
     source_avatar: string;
     source_avatar_full: string;
 
-    target_steam_id: SteamID;
+    target_steam_id: string;
     target_persona_name: string;
     target_avatar: string;
     target_avatar_full: string;
@@ -193,7 +192,7 @@ export interface AppealOverview extends IAPIBanRecord {
 
 export interface IAPIBanGroupRecord extends BanBase {
     ban_group_id: number;
-    group_id: SteamID;
+    group_id: string;
     group_name: string;
 }
 
@@ -228,7 +227,7 @@ export interface IAPIBanRecordProfile extends IAPIBanRecord {
 }
 
 export interface BansQueryFilter extends QueryFilter<IAPIBanRecordProfile> {
-    steam_id?: SteamID;
+    steam_id?: string;
 }
 
 export interface UnbanPayload {
@@ -485,3 +484,18 @@ export const apiSetBanAppealState = async (
     await apiCall(`/api/bans/steam/${ban_id}/status`, 'POST', {
         appeal_state
     });
+
+export interface sbBanRecord {
+    ban_id: number;
+    site_id: number;
+    site_name: string;
+    persona_name: string;
+    steam_id: string;
+    reason: string;
+    duration: number;
+    permanent: string;
+    created_on: string;
+}
+
+export const apiGetSourceBans = async (steam_id: string) =>
+    await apiCall<null, sbBanRecord[]>(`/api/sourcebans/${steam_id}`, 'GET');

@@ -203,7 +203,7 @@ export const AdminChat = () => {
                                         steamIdQueryValue(o.steam_id),
                                     renderer: (row) => (
                                         <Typography variant={'body1'}>
-                                            {row.steam_id.getSteamID64()}
+                                            {row.steam_id}
                                         </Typography>
                                     )
                                 },

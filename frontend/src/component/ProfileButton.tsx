@@ -13,7 +13,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import { createExternalLinks, to } from '../util/history';
 import Box from '@mui/material/Box';
-import SteamID from 'steamid';
 
 export const teamColour = (team: Team): string => {
     switch (team) {
@@ -30,7 +29,7 @@ export interface PersonaNameLabelProps {
     hideLabel?: boolean;
     source: Person;
     team: Team;
-    setFilter: (sid: SteamID) => void;
+    setFilter: (sid: string) => void;
 }
 
 export const ProfileButton = ({

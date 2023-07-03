@@ -62,8 +62,7 @@ export const BanPage = (): JSX.Element => {
         return (
             currentUser.permission_level >= PermissionLevel.Moderator ||
             (ban?.ban.appeal_state == AppealState.Open &&
-                ban?.person.steam_id.getSteamID64() ==
-                    currentUser.steam_id.getSteamID64())
+                ban?.person.steam_id == currentUser.steam_id)
         );
     }, [ban, currentUser]);
 

@@ -5,6 +5,7 @@ import { Nullable } from '../../util/types';
 import { apiGetProfile, PlayerProfile } from '../../api';
 import * as yup from 'yup';
 import { logErr } from '../../util/errors';
+import SteamID from 'steamid';
 
 export const steamIdValidator = yup
     .string()
@@ -17,7 +18,8 @@ export const steamIdValidator = yup
             if (!resp.status || !resp.result) {
                 return false;
             }
-            ctx.parent.value = resp.result.player.steam_id.getSteamID64();
+            const sid = new SteamID(resp.result.player.steam_id);
+            ctx.parent.value = sid.getSteamID64();
             return true;
         } catch (e) {
             logErr(e);

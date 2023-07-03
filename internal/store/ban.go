@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/steamweb/v2"
 	"net"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -324,8 +324,8 @@ func NewBanSteamGroup(ctx context.Context, source SteamIDProvider, target String
 // directly.
 type BanBase struct {
 	// SteamID is the steamID of the banned person
-	TargetID steamid.SID64 `json:"target_id,string"`
-	SourceID steamid.SID64 `json:"source_id,string"`
+	TargetID steamid.SID64 `json:"target_id"`
+	SourceID steamid.SID64 `json:"source_id"`
 	// Reason defines the overall ban classification
 	BanType BanType `json:"ban_type"`
 	// Reason defines the overall ban classification
@@ -408,7 +408,7 @@ type BanCIDROpts struct {
 type BanGroup struct {
 	BanBase
 	BanGroupID int64       `json:"ban_group_id"`
-	GroupID    steamid.GID `json:"group_id,string"`
+	GroupID    steamid.GID `json:"group_id"`
 	GroupName  string      `json:"group_name"`
 }
 

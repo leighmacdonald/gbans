@@ -41,7 +41,7 @@ export const NotificationsProvider = ({
     const { currentUser } = useCurrentUserCtx();
 
     useEffect(() => {
-        if (currentUser.steam_id.isValid()) {
+        if (currentUser.steam_id) {
             const query: NotificationsQuery = {};
             apiGetNotifications(query).then((res) => {
                 if (res.status && res.result) {

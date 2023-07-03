@@ -9,6 +9,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Stack from '@mui/material/Stack';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import DoDisturbIcon from '@mui/icons-material/DoDisturb';
+import SteamID from 'steamid';
 
 export interface LoginFormProps {
     message?: string;
@@ -18,7 +19,8 @@ export const Login = ({ message }: LoginFormProps) => {
     const { currentUser } = useCurrentUserCtx();
 
     const loggedInUser = useMemo(() => {
-        return currentUser.steam_id.isValidIndividual();
+        const sid = new SteamID(currentUser.steam_id);
+        return sid.isValidIndividual();
     }, [currentUser.steam_id]);
 
     return (

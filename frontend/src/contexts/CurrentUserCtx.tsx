@@ -7,7 +7,6 @@ import {
     writeAccessToken,
     writeRefreshToken
 } from '../api';
-import SteamID from 'steamid';
 
 export const GuestProfile: UserProfile = {
     updated_on: new Date(),
@@ -16,7 +15,7 @@ export const GuestProfile: UserProfile = {
     discord_id: '',
     avatar: '',
     avatarfull: '',
-    steam_id: new SteamID(''),
+    steam_id: '',
     ban_id: 0,
     name: 'Guest',
     muted: false

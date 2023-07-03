@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import Stack from '@mui/material/Stack';
 import { apiCreateBanSteam, BanReason, BanType, Duration } from '../api';
 import { Heading } from './Heading';
-import SteamID from 'steamid';
 import * as yup from 'yup';
 import { useFormik } from 'formik';
 import GavelIcon from '@mui/icons-material/Gavel';
@@ -36,7 +35,7 @@ export interface BanModalProps {
     open: boolean;
     setOpen: (open: boolean) => void;
     reportId?: number;
-    steamId?: SteamID;
+    steamId?: string;
 }
 
 interface BanSteamFormValues extends SteamIDInputValue {
@@ -69,7 +68,7 @@ export const BanSteamModal = ({
     const { sendFlash } = useUserFlashCtx();
 
     const isReadOnlySid = useMemo(() => {
-        return !!steamId?.getSteamID64();
+        return !!steamId;
     }, [steamId]);
 
     const formik = useFormik<BanSteamFormValues>({
@@ -79,7 +78,7 @@ export const BanSteamModal = ({
             durationCustom: '',
             note: '',
             reason: BanReason.Cheating,
-            steam_id: steamId?.getSteamID64() ?? '',
+            steam_id: steamId ?? '',
             reasonText: '',
             reportId: reportId
         },

@@ -1,6 +1,5 @@
 import { apiCall, QueryFilter } from './common';
 import { Person } from './profile';
-import SteamID from 'steamid';
 import { parseDateTime } from '../util/text';
 
 export interface CommonStats {
@@ -71,7 +70,7 @@ export const apiGetStats = async () =>
 
 export interface MatchPlayerSum {
     MatchPlayerSumID: number;
-    SteamId: SteamID;
+    SteamId: string;
     Team: number;
     TimeStart?: string;
     TimeEnd?: string;
@@ -103,7 +102,7 @@ export interface MatchPlayerSum {
 export interface MatchMedicSum {
     MatchMedicId: number;
     MatchId: number;
-    SteamId: SteamID;
+    SteamId: string;
     Healing: number;
     Charges: { [key: number]: number };
     Drops: number;
@@ -198,7 +197,7 @@ export const apiGetMatch = async (match_id: number) =>
     await apiCall<Match>(`/api/log/${match_id}`, 'GET');
 
 export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
-    steam_id?: SteamID;
+    steam_id?: string;
     server_id?: number;
     map?: string;
     time_start?: Date;

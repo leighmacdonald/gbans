@@ -3,11 +3,10 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import SteamID from 'steamid';
 import { useNavigate } from 'react-router-dom';
 
 export interface PersonCellProps {
-    steam_id: SteamID;
+    steam_id: string;
     personaname: string;
     avatar: string;
 }

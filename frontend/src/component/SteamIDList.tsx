@@ -9,12 +9,14 @@ import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import { ContainerWithHeader } from './ContainerWithHeader';
 
 export interface SteamIDListProps {
-    steam_id: SteamID;
+    steam_id: string;
 }
 
 export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
+    const sid = new SteamID(steam_id);
+
     return (
         <ContainerWithHeader
             title={'Steam ID'}
@@ -23,9 +25,9 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
         >
             <List dense={true}>
                 {[
-                    [steam_id.getSteamID64(), 'steam64'],
-                    [steam_id.getSteam3RenderedID(), 'steam3'],
-                    [steam_id.getSteam2RenderedID(true), 'steam2']
+                    [sid.getSteamID64(), 'steam64'],
+                    [sid.getSteam3RenderedID(), 'steam3'],
+                    [sid.getSteam2RenderedID(true), 'steam2']
                 ].map((s) => {
                     return (
                         <ListItem

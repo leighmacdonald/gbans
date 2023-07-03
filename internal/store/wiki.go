@@ -40,7 +40,7 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 
 type Media struct {
 	MediaID   int           `json:"media_id"`
-	AuthorID  steamid.SID64 `json:"author_id,string"`
+	AuthorID  steamid.SID64 `json:"author_id"`
 	MimeType  string        `json:"mime_type"`
 	Contents  []byte        `json:"-"`
 	Name      string        `json:"name"`

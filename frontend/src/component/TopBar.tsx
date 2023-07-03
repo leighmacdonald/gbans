@@ -50,6 +50,7 @@ import {
     NotificationsProvider,
     useNotifications
 } from '../contexts/NotificationsCtx';
+import SteamID from 'steamid';
 
 interface menuRoute {
     to: string;
@@ -271,7 +272,16 @@ export const TopBar = () => {
     }, [theme.palette.mode]);
 
     const validSteamId = useMemo(() => {
-        return currentUser?.steam_id.isValidIndividual();
+        try {
+            if (currentUser?.steam_id) {
+                const sid = new SteamID(currentUser?.steam_id);
+                return sid.isValidIndividual();
+            }
+            return false;
+        } catch (e) {
+            console.log(e);
+        }
+        return false;
     }, [currentUser?.steam_id]);
 
     return (

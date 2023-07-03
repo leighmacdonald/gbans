@@ -103,7 +103,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		if errKick := app.Kick(ctx, store.System,
 			banSteam.TargetID,
 			banSteam.SourceID,
-			banSteam.Reason); errKick != nil {
+			banSteam.Reason); errKick != nil && !errors.Is(errKick, ErrNoUserFound) {
 			app.log.Error("Failed to kick player", zap.Error(errKick),
 				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}
@@ -111,7 +111,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		if errSilence := app.Silence(ctx, store.System,
 			banSteam.TargetID,
 			banSteam.SourceID,
-			banSteam.Reason); errSilence != nil {
+			banSteam.Reason); errSilence != nil && !errors.Is(errSilence, ErrNoUserFound) {
 			app.log.Error("Failed to silence player", zap.Error(errSilence),
 				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}

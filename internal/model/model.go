@@ -39,7 +39,7 @@ type SimplePerson struct {
 
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
-	SteamID         steamid.SID64    `db:"steam_id" json:"steam_id,string"`
+	SteamID         steamid.SID64    `json:"steam_id"`
 	CreatedOn       time.Time        `json:"created_on"`
 	UpdatedOn       time.Time        `json:"updated_on"`
 	PermissionLevel consts.Privilege `json:"permission_level"`

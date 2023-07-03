@@ -1,7 +1,6 @@
 import { PickupItem, PlayerClass, Team, Weapon } from './const';
 import { Person } from './profile';
 import { apiCall, Pos, TimeStamped } from './common';
-import SteamID from 'steamid';
 
 export interface BaseServer {
     server_id: number;
@@ -117,7 +116,7 @@ export interface LogQueryOpts {
     limit?: number;
     order_desc?: boolean;
     query?: string;
-    source_id?: SteamID;
+    source_id?: string;
     target_id?: string;
     servers?: number[];
     sent_after?: Date;

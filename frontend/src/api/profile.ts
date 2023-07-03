@@ -1,5 +1,4 @@
 import { apiCall, PermissionLevel, QueryFilter, TimeStamped } from './common';
-import SteamID from 'steamid';
 import { parseDateTime } from '../util/text';
 
 export enum profileState {
@@ -21,7 +20,7 @@ enum NotificationSeverity {
 
 export interface UserNotification {
     person_notification_id: number;
-    steam_id: SteamID;
+    steam_id: string;
     read: boolean;
     deleted: boolean;
     severity: NotificationSeverity;
@@ -32,7 +31,7 @@ export interface UserNotification {
 }
 
 export interface UserProfile extends TimeStamped {
-    steam_id: SteamID;
+    steam_id: string;
     permission_level: PermissionLevel;
     discord_id: string;
     name: string;
@@ -44,7 +43,7 @@ export interface UserProfile extends TimeStamped {
 
 export interface Person extends UserProfile {
     // PlayerSummaries shape
-    steamid: SteamID;
+    steamid: string;
     communityvisibilitystate: communityVisibilityState;
     profilestate: profileState;
     personaname: string;
@@ -75,18 +74,18 @@ export interface PlayerProfile {
     friends?: Person[];
 }
 
-const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
+//const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
 
-export const applySteamId = (key: string, value: unknown) => {
-    if (validSteamIdKeys.includes(key)) {
-        try {
-            return new SteamID(`${value}`);
-        } catch (e) {
-            return new SteamID('');
-        }
-    }
-    return value;
-};
+// export const applySteamId = (key: string, value: unknown) => {
+//     if (validSteamIdKeys.includes(key)) {
+//         try {
+//             return new SteamID(`${value}`);
+//         } catch (e) {
+//             return new SteamID('');
+//         }
+//     }
+//     return value;
+// };
 
 export const apiGetProfile = async (query: string) =>
     await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
@@ -128,7 +127,7 @@ export interface PersonIPRecord {
 export interface PersonConnection {
     connection_id: bigint;
     ip_addr: string;
-    steam_id: SteamID;
+    steam_id: string;
     persona_name: string;
     created_on: Date;
     ip_info: PersonIPRecord;
@@ -136,7 +135,7 @@ export interface PersonConnection {
 
 export interface PersonMessage {
     person_message_id: number;
-    steam_id: SteamID;
+    steam_id: string;
     persona_name: string;
     server_name: string;
     server_id: number;
@@ -145,15 +144,12 @@ export interface PersonMessage {
     created_on: Date;
 }
 
-export const apiGetPersonConnections = async (steam_id: SteamID) =>
-    await apiCall<PersonConnection[]>(
-        `/api/connections/${steam_id.getSteamID64()}`,
-        'GET'
-    );
+export const apiGetPersonConnections = async (steam_id: string) =>
+    await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
 
-export const apiGetPersonMessages = async (steam_id: SteamID) => {
+export const apiGetPersonMessages = async (steam_id: string) => {
     const resp = await apiCall<PersonMessage[]>(
-        `/api/messages/${steam_id.getSteamID64()}`,
+        `/api/messages/${steam_id}`,
         'GET'
     );
     resp.result = resp.result?.map((msg) => {

@@ -88,21 +88,21 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 					console, errDial := rcon.Dial(ctx, conf.addr(), conf.Password, timeout)
 
 					if errDial != nil {
-						log.Error("Failed to dial rcon", zap.String("err", errDial.Error()))
+						log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
 
 						return
 					}
 
 					resp, errRcon := console.Exec("status")
 					if errRcon != nil {
-						log.Error("Failed to exec rcon status", zap.String("server", conf.Name), zap.Error(errRcon))
+						log.Debug("Failed to exec rcon status", zap.String("server", conf.Name), zap.Error(errRcon))
 
 						return
 					}
 
 					status, errParse := extra.ParseStatus(resp, true)
 					if errParse != nil {
-						log.Error("Failed to parse rcon status", zap.Error(errParse))
+						log.Debug("Failed to parse rcon status", zap.Error(errParse))
 
 						return
 					}
