@@ -21,6 +21,7 @@ import (
 func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 	app.bannedGroupMembersMu.RLock()
 	defer app.bannedGroupMembersMu.RUnlock()
+
 	for _, groupMembers := range app.bannedGroupMembers {
 		for _, member := range groupMembers {
 			if steamID == member {
@@ -36,9 +37,11 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 	log := app.log.Named("steamGroupMembership")
 	ticker := time.NewTicker(time.Minute * 15)
 	updateChan := make(chan any)
+
 	go func() {
 		updateChan <- true
 	}()
+
 	for {
 		select {
 		case <-ticker.C:
@@ -47,6 +50,7 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 			newMap := map[steamid.GID]steamid.Collection{}
 			total := 0
+
 			for _, gid := range app.conf.General.BannedSteamGroupIds {
 				members, errMembers := steamweb.GetGroupMembers(localCtx, gid)
 				if errMembers != nil {
@@ -55,9 +59,11 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 
 					continue
 				}
+
 				newMap[gid] = members
 				total += len(members)
 			}
+
 			app.bannedGroupMembersMu.Lock()
 			app.bannedGroupMembers = newMap
 			app.bannedGroupMembersMu.Unlock()
@@ -85,10 +91,12 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 	ticker := time.NewTicker(time.Hour * 24)
 	updateChan := make(chan any)
+
 	go func() {
 		time.Sleep(time.Second * 2)
 		updateChan <- true
 	}()
+
 	for {
 		select {
 		case <-ticker.C:
@@ -104,52 +112,62 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 				return
 			}
-			now := config.Now()
-			var m reportMeta
+
+			var (
+				now  = config.Now()
+				meta reportMeta
+			)
+
 			for _, report := range reports {
 				if report.ReportStatus == store.ClosedWithAction || report.ReportStatus == store.ClosedWithoutAction {
-					m.TotalClosed++
+					meta.TotalClosed++
 
 					continue
 				}
-				m.TotalOpen++
+
+				meta.TotalOpen++
+
 				if report.ReportStatus == store.NeedMoreInfo {
-					m.NeedInfo++
+					meta.NeedInfo++
 				} else {
-					m.Open++
+					meta.Open++
 				}
+
 				switch {
 				case now.Sub(report.CreatedOn) > time.Hour*24*7:
-					m.OpenWeek++
+					meta.OpenWeek++
 				case now.Sub(report.CreatedOn) > time.Hour*24*3:
-					m.Open3Days++
+					meta.Open3Days++
 				case now.Sub(report.CreatedOn) > time.Hour*24:
-					m.Open1Day++
+					meta.Open1Day++
 				default:
-					m.OpenNew++
+					meta.OpenNew++
 				}
 			}
+
 			reportNotice := &discordgo.MessageEmbed{
 				URL:   app.conf.ExtURL("/admin/reports"),
 				Type:  discordgo.EmbedTypeRich,
 				Title: "User Report Stats",
 				Color: int(discord.Green),
 			}
-			if m.OpenWeek > 0 {
+
+			if meta.OpenWeek > 0 {
 				reportNotice.Color = int(discord.Red)
-			} else if m.Open3Days > 0 {
+			} else if meta.Open3Days > 0 {
 				reportNotice.Color = int(discord.Orange)
 			}
+
 			reportNotice.Description = "Current Open Report Counts"
 
-			discord.AddFieldInline(reportNotice, "New", fmt.Sprintf(" %d", m.Open1Day))
-			discord.AddFieldInline(reportNotice, "Total Open", fmt.Sprintf(" %d", m.TotalOpen))
-			discord.AddFieldInline(reportNotice, "Total Closed", fmt.Sprintf(" %d", m.TotalClosed))
-			discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", m.Open1Day))
-			discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", m.Open3Days))
-			discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", m.OpenWeek))
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.ReportLogChannelID, Embed: reportNotice})
+			discord.AddFieldInline(reportNotice, "New", fmt.Sprintf(" %d", meta.Open1Day))
+			discord.AddFieldInline(reportNotice, "Total Open", fmt.Sprintf(" %d", meta.TotalOpen))
+			discord.AddFieldInline(reportNotice, "Total Closed", fmt.Sprintf(" %d", meta.TotalClosed))
+			discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", meta.Open1Day))
+			discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", meta.Open3Days))
+			discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", meta.OpenWeek))
 
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.ReportLogChannelID, Embed: reportNotice})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
@@ -158,20 +176,27 @@ func (app *App) showReportMeta(ctx context.Context) {
 	}
 }
 
-func demoCleaner(ctx context.Context, db *store.Store, logger *zap.Logger) {
-	log := logger.Named("demoCleaner")
-	ticker := time.NewTicker(time.Hour * 24)
-	update := func() {
-		if err := db.FlushDemos(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
-			log.Error("Error pruning expired refresh tokens", zap.Error(err))
-		}
-		log.Info("Old demos flushed")
-	}
-	update()
+func demoCleaner(ctx context.Context, database *store.Store, logger *zap.Logger) {
+	var (
+		log         = logger.Named("demoCleaner")
+		ticker      = time.NewTicker(time.Hour * 24)
+		triggerChan = make(chan any)
+	)
+
+	defer func() {
+		triggerChan <- true
+	}()
+
 	for {
 		select {
 		case <-ticker.C:
-			update()
+			triggerChan <- true
+		case <-triggerChan:
+			if err := database.FlushDemos(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+				log.Error("Error pruning expired refresh tokens", zap.Error(err))
+			}
+
+			log.Info("Old demos flushed")
 		case <-ctx.Done():
 			log.Debug("profileUpdater shutting down")
 
@@ -180,17 +205,21 @@ func demoCleaner(ctx context.Context, db *store.Store, logger *zap.Logger) {
 	}
 }
 
-func cleanupTasks(ctx context.Context, db *store.Store, logger *zap.Logger) {
-	log := logger.Named("cleanupTasks")
-	defer log.Debug("profileUpdater shutting down")
-	ticker := time.NewTicker(time.Hour * 24)
+func cleanupTasks(ctx context.Context, database *store.Store, logger *zap.Logger) {
+	var (
+		log    = logger.Named("cleanupTasks")
+		ticker = time.NewTicker(time.Hour * 24)
+	)
+
 	for {
 		select {
 		case <-ticker.C:
-			if err := db.PrunePersonAuth(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
+			if err := database.PrunePersonAuth(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
 				log.Error("Error pruning expired refresh tokens", zap.Error(err))
 			}
 		case <-ctx.Done():
+			log.Debug("profileUpdater shutting down")
+
 			return
 		}
 	}
@@ -198,6 +227,7 @@ func cleanupTasks(ctx context.Context, db *store.Store, logger *zap.Logger) {
 
 func (app *App) notificationSender(ctx context.Context) {
 	log := app.log.Named("notificationSender")
+
 	for {
 		select {
 		case notification := <-app.notificationChan:
@@ -269,17 +299,20 @@ func (app *App) notificationSender(ctx context.Context) {
 // }
 
 func (app *App) stateUpdater(ctx context.Context) {
-	log := app.log.Named("state")
-	trigger := make(chan any)
-	updateTicker := time.NewTicker(time.Minute * 30)
-
-	var localCtx context.Context
-	var cancel context.CancelFunc
+	var (
+		log          = app.log.Named("state")
+		trigger      = make(chan any)
+		updateTicker = time.NewTicker(time.Minute * 30)
+		localCtx     context.Context
+		cancel       context.CancelFunc
+	)
 
 	defer cancel()
+
 	go func() {
 		trigger <- true
 	}()
+
 	for {
 		select {
 		case <-updateTicker.C:
@@ -288,7 +321,6 @@ func (app *App) stateUpdater(ctx context.Context) {
 			if cancel != nil {
 				cancel()
 			}
-			localCtx, cancel = context.WithCancel(ctx)
 
 			servers, errServers := app.db.GetServers(ctx, false)
 			if errServers != nil {
@@ -298,27 +330,42 @@ func (app *App) stateUpdater(ctx context.Context) {
 			}
 
 			app.stateMu.Lock()
-			var configs []state.ServerConfig
-			sd := map[int]ServerDetails{}
-			for _, s := range servers {
-				configs = append(configs, state.NewServerConfig(s.ServerID, s.ServerName, s.Address, s.Port, s.Password))
-				sd[s.ServerID] = ServerDetails{
-					ServerID:  s.ServerID,
-					NameShort: s.ServerName,
-					Name:      s.ServerNameLong,
-					Host:      s.Address,
-					Port:      s.Port,
-					Enabled:   s.IsEnabled,
-					Region:    s.Region,
-					CC:        s.CC,
-					Latitude:  s.Latitude,
-					Longitude: s.Longitude,
-					Reserved:  s.ReservedSlots,
+
+			var (
+				configs []state.ServerConfig
+				details = map[int]ServerDetails{}
+			)
+
+			for _, server := range servers {
+				configs = append(configs, state.NewServerConfig(server.ServerID, server.ServerName, server.Address, server.Port, server.Password))
+				details[server.ServerID] = ServerDetails{
+					ServerID:  server.ServerID,
+					NameShort: server.ServerName,
+					Name:      server.ServerNameLong,
+					Host:      server.Address,
+					Port:      server.Port,
+					Enabled:   server.IsEnabled,
+					Region:    server.Region,
+					CC:        server.CC,
+					Latitude:  server.Latitude,
+					Longitude: server.Longitude,
+					Reserved:  server.ReservedSlots,
 				}
 			}
-			app.serverState = sd
+
+			app.serverState = details
+
 			app.stateMu.Unlock()
+
+			if cancel != nil {
+				// Stop existing updaters.
+				cancel()
+			}
+
+			localCtx, cancel = context.WithCancel(ctx)
+			// TODO verify stop functionality
 			go app.stateCollector.Start(localCtx, configs)
+
 		case <-ctx.Done():
 			cancel()
 
@@ -329,70 +376,83 @@ func (app *App) stateUpdater(ctx context.Context) {
 
 // banSweeper periodically will query the database for expired bans and remove them.
 func (app *App) banSweeper(ctx context.Context) {
-	log := app.log.Named("banSweeper")
-	ticker := time.NewTicker(time.Minute)
+	var (
+		log    = app.log.Named("banSweeper")
+		ticker = time.NewTicker(time.Minute)
+	)
+
 	for {
 		select {
 		case <-ticker.C:
 			waitGroup := &sync.WaitGroup{}
 			waitGroup.Add(3)
+
 			go func() {
 				defer waitGroup.Done()
+
 				expiredBans, errExpiredBans := app.db.GetExpiredBans(ctx)
 				if errExpiredBans != nil && !errors.Is(errExpiredBans, store.ErrNoResult) {
 					log.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
 				} else {
 					for _, expiredBan := range expiredBans {
-						if errDrop := app.db.DropBan(ctx, &expiredBan, false); errDrop != nil { //nolint:gosec
+						ban := expiredBan
+						if errDrop := app.db.DropBan(ctx, &ban, false); errDrop != nil {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
 							banType := "Ban"
-							if expiredBan.BanType == store.NoComm {
+							if ban.BanType == store.NoComm {
 								banType = "Mute"
 							}
+
 							var person store.Person
-							if errPerson := app.db.GetOrCreatePersonBySteamID(ctx, expiredBan.TargetID, &person); errPerson != nil {
+							if errPerson := app.db.GetOrCreatePersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired person", zap.Error(errPerson))
 
 								continue
 							}
+
 							name := person.PersonaName
 							if name == "" {
 								name = person.SteamID.String()
 							}
+
 							log.Info("Ban expired", zap.String("type", banType),
-								zap.String("reason", store.ReasonString(expiredBan.Reason)),
-								zap.Int64("sid64", expiredBan.TargetID.Int64()), zap.String("name", name))
+								zap.String("reason", store.ReasonString(ban.Reason)),
+								zap.Int64("sid64", ban.TargetID.Int64()), zap.String("name", name))
 						}
 					}
 				}
 			}()
 			go func() {
 				defer waitGroup.Done()
+
 				expiredNetBans, errExpiredNetBans := app.db.GetExpiredNetBans(ctx)
 				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, store.ErrNoResult) {
 					log.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
 				} else {
 					for _, expiredNetBan := range expiredNetBans {
-						if errDropBanNet := app.db.DropBanNet(ctx, &expiredNetBan); errDropBanNet != nil { //nolint:gosec
+						expiredBan := expiredNetBan
+						if errDropBanNet := app.db.DropBanNet(ctx, &expiredBan); errDropBanNet != nil {
 							log.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
 						} else {
-							log.Info("CIDR ban expired", zap.String("cidr", expiredNetBan.String()))
+							log.Info("CIDR ban expired", zap.String("cidr", expiredBan.String()))
 						}
 					}
 				}
 			}()
 			go func() {
 				defer waitGroup.Done()
+
 				expiredASNBans, errExpiredASNBans := app.db.GetExpiredASNBans(ctx)
 				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, store.ErrNoResult) {
 					log.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
 				} else {
 					for _, expiredASNBan := range expiredASNBans {
-						if errDropASN := app.db.DropBanASN(ctx, &expiredASNBan); errDropASN != nil { //nolint:gosec
+						expired := expiredASNBan
+						if errDropASN := app.db.DropBanASN(ctx, &expired); errDropASN != nil {
 							log.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
 						} else {
-							log.Info("ASN ban expired", zap.Int64("ban_id", expiredASNBan.BanASNId))
+							log.Info("ASN ban expired", zap.Int64("ban_id", expired.BanASNId))
 						}
 					}
 				}
@@ -413,12 +473,14 @@ func (app *App) localStatUpdater(ctx context.Context) {
 			log.Error("Error building local stats", zap.Error(errBuild))
 		}
 	}
+
 	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
 	if errSaveTicker != nil {
 		log.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
 
 		return
 	}
+
 	// Rebuild stats every hour
 	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
 	if errBuildTicker != nil {
@@ -426,7 +488,9 @@ func (app *App) localStatUpdater(ctx context.Context) {
 
 		return
 	}
+
 	build()
+
 	for {
 		select {
 		case <-buildTicker.C:
@@ -434,53 +498,66 @@ func (app *App) localStatUpdater(ctx context.Context) {
 		case saveTime := <-saveTicker.C:
 			stats := store.NewLocalTF2Stats()
 			stats.CreatedOn = saveTime
+
 			servers, errServers := app.db.GetServers(ctx, false)
 			if errServers != nil {
 				log.Error("Failed to fetch servers to build local cache", zap.Error(errServers))
 
 				continue
 			}
+
 			serverNameMap := map[string]string{}
 			for _, server := range servers {
 				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerName
+
 				ipAddr, errIP := server.IP(ctx)
 				if errIP != nil {
 					continue
 				}
+
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerName
 			}
+
 			currentState := app.state()
-			for _, ss := range currentState {
-				sn := fmt.Sprintf("%s:%d", ss.Host, ss.Port)
+			for _, curState := range currentState {
+				sn := fmt.Sprintf("%s:%d", curState.Host, curState.Port)
+
 				serverName, nameFound := serverNameMap[sn]
 				if !nameFound {
 					log.Error("Cannot find server name", zap.String("name", serverName))
 
 					continue
 				}
-				stats.Servers[serverName] = ss.PlayerCount
-				stats.Players += ss.PlayerCount
-				_, foundRegion := stats.Regions[ss.Region]
-				if !foundRegion {
-					stats.Regions[ss.Region] = 0
-				}
-				stats.Regions[ss.Region] += ss.PlayerCount
 
-				mapType := state.GuessMapType(ss.Map)
+				stats.Servers[serverName] = curState.PlayerCount
+				stats.Players += curState.PlayerCount
+
+				_, foundRegion := stats.Regions[curState.Region]
+				if !foundRegion {
+					stats.Regions[curState.Region] = 0
+				}
+
+				stats.Regions[curState.Region] += curState.PlayerCount
+
+				mapType := state.GuessMapType(curState.Map)
+
 				_, mapTypeFound := stats.MapTypes[mapType]
 				if !mapTypeFound {
 					stats.MapTypes[mapType] = 0
 				}
-				stats.MapTypes[mapType] += ss.PlayerCount
+
+				stats.MapTypes[mapType] += curState.PlayerCount
+
 				switch {
-				case ss.PlayerCount >= ss.MaxPlayers && ss.MaxPlayers > 0:
+				case curState.PlayerCount >= curState.MaxPlayers && curState.MaxPlayers > 0:
 					stats.CapacityFull++
-				case ss.PlayerCount == 0:
+				case curState.PlayerCount == 0:
 					stats.CapacityEmpty++
 				default:
 					stats.CapacityPartial++
 				}
 			}
+
 			if errSave := app.db.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
 				log.Error("Failed to save local stats state", zap.Error(errSave))
 

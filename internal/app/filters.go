@@ -31,9 +31,12 @@ func (f *wordFilters) findFilteredWordMatch(body string) (string, *store.Filter)
 	if body == "" {
 		return "", nil
 	}
+
 	words := strings.Split(strings.ToLower(body), " ")
+
 	f.RLock()
 	defer f.RUnlock()
+
 	for _, filter := range f.wordFilters {
 		for _, word := range words {
 			if filter.Match(word) {

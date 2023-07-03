@@ -42,6 +42,7 @@ func newPugLobby(logger *zap.Logger, creator *wsClient, id string, opts createLo
 		Messages: []pugUserMessageResponse{},
 		Options:  opts,
 	}
+
 	switch opts.GameType {
 	case mm.Sixes:
 		lobby.ClassKeys = mm.ClassMappingKeysSixes
@@ -50,6 +51,7 @@ func newPugLobby(logger *zap.Logger, creator *wsClient, id string, opts createLo
 	case mm.Ultiduo:
 		lobby.ClassKeys = mm.ClassMappingKeysUltiduo
 	}
+
 	creator.lobbies = append(creator.lobbies, lobby)
 
 	return lobby
@@ -72,13 +74,16 @@ func (lobby *pugLobby) id() string {
 func (lobby *pugLobby) joinSlot(client *wsClient, slot string) error {
 	lobby.Lock()
 	defer lobby.Unlock()
+
 	if !fp.Contains(lobby.ClassKeys, slot) {
 		return ErrSlotInvalid
 	}
+
 	_, found := lobby.Classes[slot]
 	if found {
 		return ErrSlotInvalid
 	}
+
 	lobby.Classes[slot] = client.User.SteamID
 
 	return nil
@@ -87,16 +92,21 @@ func (lobby *pugLobby) joinSlot(client *wsClient, slot string) error {
 func (lobby *pugLobby) join(client *wsClient) error {
 	lobby.Lock()
 	defer lobby.Unlock()
+
 	if slices.Contains(lobby.Clients, client) {
 		return ErrDuplicateClient
 	}
+
 	lobby.Clients = append(lobby.Clients, client)
 	client.lobbies = append(client.lobbies, lobby)
+
 	lobby.logger.Info("User joined lobby", zap.String("lobby", lobby.LobbyID),
 		zap.Int("clients", len(lobby.Clients)), zap.Bool("leader", len(lobby.Clients) == 1))
+
 	if len(lobby.Clients) == 1 {
 		return lobby.promote(client)
 	}
+
 	client.send(
 		wsMsgTypePugJoinLobbyResponse,
 		true,
@@ -130,7 +140,9 @@ func (lobby *pugLobby) leave(client *wsClient) error {
 		SteamID: client.User.SteamID.String(),
 	},
 	)
+
 	lobby.Clients = fp.Remove(lobby.Clients, client)
+
 	client.removeLobby(lobby)
 
 	return nil
@@ -143,26 +155,30 @@ func (lobby *pugLobby) broadcast(msgType wsMsgType, status bool, payload any) {
 func (lobby *pugLobby) sendUserMessage(client *wsClient, msg lobbyUserMessageRequest) {
 	lobby.Lock()
 	defer lobby.Unlock()
+
 	userMessage := pugUserMessageResponse{
 		User:      client.User,
 		Message:   msg.Message,
 		CreatedAt: config.Now(),
 	}
+
 	lobby.Messages = append(lobby.Messages, userMessage)
 	lobby.broadcast(wsMsgTypePugUserMessageResponse, true, userMessage)
 }
 
-func leavePugLobby(cm *wsConnectionManager, client *wsClient, _ json.RawMessage) error {
+func leavePugLobby(connectionManager *wsConnectionManager, client *wsClient, _ json.RawMessage) error {
 	lobby, found := client.currentPugLobby()
 	if !found {
 		return ErrInvalidLobbyID
 	}
+
 	if errLeave := lobby.leave(client); errLeave != nil {
 		return errLeave
 	}
+
 	if lobby.clientCount() == 0 {
-		if errRemove := cm.removeLobby(lobby.LobbyID); errRemove != nil {
-			cm.logger.Error("Failed to remove empty lobby", zap.Error(errRemove))
+		if errRemove := connectionManager.removeLobby(lobby.LobbyID); errRemove != nil {
+			connectionManager.logger.Error("Failed to remove empty lobby", zap.Error(errRemove))
 
 			return nil
 		}
@@ -171,17 +187,19 @@ func leavePugLobby(cm *wsConnectionManager, client *wsClient, _ json.RawMessage)
 	return nil
 }
 
-func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
+func joinPugLobby(connectionManager *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
 	var req wsJoinLobbyRequest
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
-		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
+		connectionManager.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
 		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
-	lobby, findErr := cm.findLobby(req.LobbyID)
+
+	lobby, findErr := connectionManager.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}
+
 	if errJoin := lobby.join(client); errJoin != nil {
 		return errors.Wrap(errJoin, "Failed to join lobby")
 	}
@@ -189,17 +207,19 @@ func joinPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMes
 	return nil
 }
 
-func joinPugLobbySlot(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
+func joinPugLobbySlot(connectionManager *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
 	var req wsJoinLobbySlotRequest
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
-		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
+		connectionManager.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
 		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
-	lobby, findErr := cm.findLobby(req.LobbyID)
+
+	lobby, findErr := connectionManager.findLobby(req.LobbyID)
 	if findErr != nil {
 		return findErr
 	}
+
 	if errJoin := lobby.joinSlot(client, req.Slot); errJoin != nil {
 		return errors.Wrap(errJoin, "Failed to join lobby slot")
 	}
@@ -207,17 +227,19 @@ func joinPugLobbySlot(cm *wsConnectionManager, client *wsClient, payload json.Ra
 	return nil
 }
 
-func createPugLobby(cm *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
+func createPugLobby(connectionManager *wsConnectionManager, client *wsClient, payload json.RawMessage) error {
 	var req createLobbyOpts
 	if errUnmarshal := json.Unmarshal(payload, &req); errUnmarshal != nil {
-		cm.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
+		connectionManager.logger.Error("Failed to unmarshal create request", zap.Error(errUnmarshal))
 
 		return errors.Wrapf(errUnmarshal, "Failed to decode payload")
 	}
-	lobby, errCreate := cm.createPugLobby(client, req)
+
+	lobby, errCreate := connectionManager.createPugLobby(client, req)
 	if errCreate != nil {
 		return errCreate
 	}
+
 	sendPugCreateLobbyResponse(client, lobby)
 
 	return nil
@@ -230,10 +252,12 @@ func sendPugUserMessage(cm *wsConnectionManager, client *wsClient, payload json.
 
 		return errors.New("Invalid request")
 	}
+
 	lobby, found := client.currentPugLobby()
 	if !found {
 		return ErrInvalidLobbyID
 	}
+
 	lobby.sendUserMessage(client, req)
 
 	return nil

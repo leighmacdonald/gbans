@@ -23,6 +23,7 @@ func StringToInt(desired string) int {
 	if err != nil {
 		return DefaultIntAllocate
 	}
+
 	if parsed > 0 && parsed <= math.MaxInt32 {
 		return parsed
 	}

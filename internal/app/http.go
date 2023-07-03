@@ -20,16 +20,22 @@ const ctxKeyUserProfile = "user_profile"
 func (app *App) StartHTTP(ctx context.Context) error {
 	app.log.Info("Service status changed", zap.String("state", "ready"))
 	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
+
 	if app.conf.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
+
 	httpServer := newHTTPServer(ctx, app)
+
 	go func() {
 		<-ctx.Done()
+
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+
 		defer cancel()
+
 		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
 			app.log.Error("Error shutting down http service", zap.Error(errShutdown))
 		}
@@ -63,6 +69,7 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+
 	if app.conf.HTTP.TLS {
 		tlsVar := &tls.Config{
 			// Only use curves which have assembly implementations
@@ -91,6 +98,7 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	if !found {
 		return model.NewUserProfile("")
 	}
+
 	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
 		return model.NewUserProfile("")
@@ -108,9 +116,11 @@ func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds 
 			return true
 		}
 	}
+
 	if person.PermissionLevel >= minPrivilege {
 		return true
 	}
+
 	responseErrUser(ctx, http.StatusUnauthorized, nil, consts.ErrPermissionDenied.Error())
 
 	return false

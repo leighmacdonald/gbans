@@ -98,6 +98,7 @@ func (db *Store) Connect(ctx context.Context) error {
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
+
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
 			return errors.Errorf("Could not migrate schema: %v", errMigrate)
@@ -105,10 +106,12 @@ func (db *Store) Connect(ctx context.Context) error {
 			db.log.Info("Migration completed successfully")
 		}
 	}
+
 	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
 	if errConnectConfig != nil {
 		return errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
+
 	db.conn = dbConn
 
 	return nil
@@ -154,7 +157,9 @@ func Err(rootError error) error {
 	if rootError == nil {
 		return nil
 	}
+
 	var pgErr *pgconn.PgError
+
 	if errors.As(rootError, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
@@ -163,6 +168,7 @@ func Err(rootError error) error {
 			return rootError
 		}
 	}
+
 	if rootError.Error() == "no rows in result set" {
 		return ErrNoResult
 	}
@@ -222,6 +228,7 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	var errMigration error
+
 	switch action {
 	case MigrateUpOne:
 		errMigration = migrator.Steps(1)

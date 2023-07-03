@@ -19,10 +19,12 @@ import (
 func ExecRCON(ctx context.Context, addr string, password string, cmd string) (string, error) {
 	execCtx, cancelExec := context.WithTimeout(ctx, time.Second*15)
 	defer cancelExec()
+
 	console, errDial := rcon.Dial(execCtx, addr, password, time.Second*10)
 	if errDial != nil {
 		return "", errors.Errorf("Failed to dial server: %s (%v)", addr, errDial)
 	}
+
 	resp, errExec := console.Exec(sanitizeRCONCommand(cmd))
 	if errExec != nil {
 		return "", errors.Errorf("Failed to exec command: %v", errExec)
@@ -33,14 +35,19 @@ func ExecRCON(ctx context.Context, addr string, password string, cmd string) (st
 
 // RCON is used to execute rcon commands against multiple servers.
 func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, commands ...string) map[string]string {
-	responses := make(map[string]string)
-	rwMutex := &sync.RWMutex{}
-	timeout := time.Second * 10
-	waitGroup := &sync.WaitGroup{}
+	var (
+		responses = make(map[string]string)
+		rwMutex   = &sync.RWMutex{}
+		timeout   = time.Second * 10
+		waitGroup = &sync.WaitGroup{}
+	)
+
 	for _, server := range servers {
 		waitGroup.Add(1)
+
 		go func(server store.Server) {
 			defer waitGroup.Done()
+
 			conn, errDial := rcon.Dial(ctx, server.Addr(), server.RCON, timeout)
 			if errDial != nil {
 				var dnsErr *net.DNSError
@@ -52,17 +59,20 @@ func RCON(ctx context.Context, logger *zap.Logger, servers []store.Server, comma
 
 				return
 			}
+
 			for _, command := range commands {
 				resp, errExec := conn.Exec(sanitizeRCONCommand(command))
 				if errExec != nil {
 					logger.Error("Failed to exec rcon command", zap.String("name", server.ServerName), zap.Error(errExec))
 				}
+
 				rwMutex.Lock()
 				responses[server.ServerName] = resp
 				rwMutex.Unlock()
 			}
 		}(server)
 	}
+
 	waitGroup.Wait()
 
 	return responses

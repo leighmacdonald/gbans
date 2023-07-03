@@ -49,32 +49,40 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", cachePath, errMkDir)
 		}
 	}
+
 	filePath := path.Join(cachePath, list.Name)
+
 	maxAgeDuration, errParseDuration := config.ParseDuration(maxAge)
 	if errParseDuration != nil {
 		return 0, errors.Wrapf(errParseDuration, "Failed to parse cache max age")
 	}
+
 	expired := false
+
 	if golib.Exists(filePath) {
 		fileInfo, errStat := os.Stat(filePath)
 		if errStat != nil {
 			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
+
 		if config.Now().Sub(fileInfo.ModTime()) > maxAgeDuration {
 			expired = true
 		}
 	} else {
 		expired = true
 	}
+
 	if expired {
 		if errDownload := download(ctx, list.URL, filePath); errDownload != nil {
 			return 0, errors.Wrapf(errDownload, "Failed to download net ban list")
 		}
 	}
+
 	body, errReadFile := os.ReadFile(filePath)
 	if errReadFile != nil {
 		return 0, errors.Wrapf(errReadFile, "Failed to read file")
 	}
+
 	count, errLoadBody := load(body, list.Type)
 	if errLoadBody != nil {
 		return 0, errors.Wrapf(errLoadBody, "Failed to load list")
@@ -85,22 +93,27 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 
 func download(ctx context.Context, url string, savePath string) error {
 	client := util.NewHTTPClient()
+
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
 		return errors.Wrapf(errReq, "Failed to create request")
 	}
+
 	response, errQuery := client.Do(req)
 	if errQuery != nil {
 		return errors.Wrapf(errQuery, "Failed to perform request")
 	}
+
 	outFile, errCreate := os.Create(savePath)
 	if errCreate != nil {
 		return errors.Wrapf(errQuery, "Failed to create output file")
 	}
+
 	_, errCopy := io.Copy(outFile, response.Body)
 	if errCopy != nil {
 		return errors.Wrapf(errCopy, "Failed to copy response body")
 	}
+
 	if errClose := response.Body.Close(); errClose != nil {
 		return errors.Wrapf(errClose, "Failed to close response")
 	}
@@ -145,6 +158,7 @@ func load(src []byte, listType config.BanListType) (int, error) {
 
 func addNets(networks []*net.IPNet) int {
 	count := 0
+
 	for _, network := range networks {
 		if !containsIP(network.IP) {
 			networks = append(networks, network)
@@ -157,6 +171,7 @@ func addNets(networks []*net.IPNet) int {
 
 func addSIDs(steamIds steamid.Collection) int {
 	count := 0
+
 	for _, sid64 := range steamIds {
 		if !containsSID(sid64) {
 			steamids = append(steamids, sid64)
@@ -169,14 +184,17 @@ func addSIDs(steamIds steamid.Collection) int {
 
 func parseCIDR(src []byte) ([]*net.IPNet, error) {
 	var nets []*net.IPNet //nolint:prealloc
+
 	for _, line := range strings.Split(string(src), "\n") {
 		if line == "" {
 			continue
 		}
+
 		_, ipNet, errParseCIDR := net.ParseCIDR(line)
 		if errParseCIDR != nil {
 			continue
 		}
+
 		nets = append(nets, ipNet)
 	}
 

@@ -37,13 +37,13 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			db := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
-			if errConnect := db.Connect(rootCtx); errConnect != nil {
+			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
+			if errConnect := database.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}
 
 			defer func() {
-				if errClose := db.Close(); errClose != nil {
+				if errClose := database.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly")
 				}
 			}()
@@ -53,7 +53,7 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			application := app.New(&conf, db, bot, rootLogger)
+			application := app.New(&conf, database, bot, rootLogger)
 
 			if errInit := application.Init(rootCtx); errInit != nil {
 				rootLogger.Fatal("Failed to init app", zap.Error(errInit))

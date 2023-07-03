@@ -46,8 +46,11 @@ func setupRootCmd() *cobra.Command {
 	if app.BuildVersion == "" {
 		app.BuildVersion = "master"
 	}
+
 	root := rootCmd()
+
 	root.Version = app.BuildVersion
+
 	nc := netCmd()
 	nc.AddCommand(netUpdateCmd())
 	root.AddCommand(nc)

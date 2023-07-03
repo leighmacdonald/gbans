@@ -50,11 +50,13 @@ func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING filter_id`
+
 	if errQuery := db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	db.log.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
@@ -73,9 +75,11 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	if err := db.Exec(ctx, query, args...); err != nil {
 		return Err(err)
 	}
+
 	db.log.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
@@ -86,25 +90,27 @@ func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 	if errExec := db.Exec(ctx, query, filter.FilterID); errExec != nil {
 		return Err(errExec)
 	}
+
 	db.log.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
 }
 
-func (db *Store) GetFilterByID(ctx context.Context, wordID int64, f *Filter) error {
+func (db *Store) GetFilterByID(ctx context.Context, wordID int64, filter *Filter) error {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on 
 		FROM filtered_word 
 		WHERE filter_id = $1`
+
 	var authorID int64
-	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&f.FilterID, &authorID, &f.Pattern,
-		&f.IsRegex, &f.IsEnabled, &f.TriggerCount, &f.CreatedOn, &f.UpdatedOn); errQuery != nil {
+	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&filter.FilterID, &authorID, &filter.Pattern,
+		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
 	}
 
-	f.AuthorID = steamid.New(authorID)
+	filter.AuthorID = steamid.New(authorID)
 
-	f.Init()
+	filter.Init()
 
 	return nil
 }
@@ -113,21 +119,31 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 	const query = `
 		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on
 		FROM filtered_word`
+
 	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
-	var filters []Filter
+
 	defer rows.Close()
+
+	var filters []Filter
+
 	for rows.Next() {
-		var filter Filter
-		var authorID int64
+		var (
+			filter   Filter
+			authorID int64
+		)
+
 		if errQuery = rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
 			return nil, Err(errQuery)
 		}
+
 		filter.AuthorID = steamid.New(authorID)
+
 		filter.Init()
+
 		filters = append(filters, filter)
 	}
 

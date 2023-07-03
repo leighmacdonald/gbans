@@ -95,6 +95,7 @@ func RespOk(response *Response, title string) *discordgo.MessageEmbed {
 		Author: nil,
 		Fields: nil,
 	}
+
 	if response != nil {
 		response.MsgType = MtEmbed
 		response.Value = embed
@@ -119,14 +120,16 @@ func AddAuthorProfile(embed *discordgo.MessageEmbed, sid steamid.SID64, name str
 	if name == "" {
 		name = sid.String()
 	}
+
 	if name == "" {
 		return
 	}
+
 	embed.Author = &discordgo.MessageEmbedAuthor{URL: url, Name: name}
 }
 
-// func addFieldInt64(embed *discordgo.MessageEmbed, logger *zap.Logger, title string, value int64) {
-//	AddField(embed, logger, title, fmt.Sprintf("%d", value))
+// func addFieldInt64(embed *discordgo.MessageEmbed, log *zap.Logger, title string, value int64) {
+//	AddField(embed, log, title, fmt.Sprintf("%d", value))
 // }
 
 // func addAuthor(embed *discordgo.MessageEmbed, person model.Person) {
@@ -158,12 +161,15 @@ func AddFieldRaw(embed *discordgo.MessageEmbed, title string, value string, inli
 	if len(embed.Fields) >= maxEmbedFields {
 		return
 	}
+
 	if len(title) == 0 {
 		return
 	}
+
 	if len(value) == 0 {
 		return
 	}
+
 	embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 		Name:   truncate(title, maxFieldNameChars),
 		Value:  truncate(value, maxFieldValueChars),

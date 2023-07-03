@@ -27,7 +27,7 @@ type metricCollector struct {
 }
 
 func newMetricCollector() *metricCollector {
-	mc := &metricCollector{
+	collector := &metricCollector{
 		logEventCounter: prometheus.NewCounterVec(
 			prometheus.CounterOpts{Name: "gbans_game_log_events_total", Help: "Total log events ingested"},
 			[]string{"server_name"}),
@@ -79,37 +79,40 @@ func newMetricCollector() *metricCollector {
 			prometheus.CounterOpts{Name: "gbans_player_class_total", Help: "Player class"},
 			[]string{"class"}),
 	}
-	for _, m := range []prometheus.Collector{
-		mc.damageCounter,
-		mc.healingCounter,
-		mc.killCounter,
-		mc.shotFiredCounter,
-		mc.shotHitCounter,
-		mc.logEventCounter,
-		mc.sayCounter,
-		mc.playerCounter,
-		mc.mapCounter,
-		mc.rconCounter,
-		mc.connectedCounter,
-		mc.disconnectedCounter,
-		mc.classCounter,
+	for _, metric := range []prometheus.Collector{
+		collector.damageCounter,
+		collector.healingCounter,
+		collector.killCounter,
+		collector.shotFiredCounter,
+		collector.shotHitCounter,
+		collector.logEventCounter,
+		collector.sayCounter,
+		collector.playerCounter,
+		collector.mapCounter,
+		collector.rconCounter,
+		collector.connectedCounter,
+		collector.disconnectedCounter,
+		collector.classCounter,
 	} {
-		_ = prometheus.Register(m)
+		_ = prometheus.Register(metric)
 	}
 
-	return mc
+	return collector
 }
 
 // logMetricsConsumer processes incoming log events and updated any associated metrics.
-func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroadcaster, logger *zap.Logger) {
+func logMetricsConsumer(ctx context.Context, collector *metricCollector, eb *eventBroadcaster, logger *zap.Logger) {
 	log := logger.Named("metricsConsumer")
+
 	eventChan := make(chan model.ServerEvent)
 	if errRegister := eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
 
 		return
 	}
+
 	parser := logparse.NewWeaponParser()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -117,41 +120,41 @@ func logMetricsConsumer(ctx context.Context, mc *metricCollector, eb *eventBroad
 		case serverEvent := <-eventChan:
 			if serverEvent.Server.ServerID == 0 {
 				// TODO why is this ever nil?
-				mc.logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
+				collector.logEventCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			}
 			switch serverEvent.EventType { //nolint:wsl,exhaustive
 			case logparse.Damage:
 				if evt, ok := serverEvent.Event.(logparse.DamageEvt); ok {
-					mc.damageCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Add(float64(evt.Damage))
+					collector.damageCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Add(float64(evt.Damage))
 				}
 			case logparse.Healed:
 				// evt := serverEvent.Event.(logparse.HealedEvt)
 				// healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
 				if evt, ok := serverEvent.Event.(logparse.ShotFiredEvt); ok {
-					mc.shotFiredCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					collector.shotFiredCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.ShotHit:
 				if evt, ok := serverEvent.Event.(logparse.ShotHitEvt); ok {
-					mc.shotHitCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					collector.shotHitCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Killed:
 				if evt, ok := serverEvent.Event.(logparse.KilledEvt); ok {
-					mc.killCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					collector.killCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Say:
-				mc.sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
+				collector.sayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
 			case logparse.SayTeam:
-				mc.sayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
+				collector.sayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
 			case logparse.RCON:
-				mc.rconCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
+				collector.rconCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Connected:
-				mc.connectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
+				collector.connectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.Disconnected:
-				mc.disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
+				collector.disconnectedCounter.With(prometheus.Labels{"server_name": serverEvent.Server.ServerName}).Inc()
 			case logparse.SpawnedAs:
 				if evt, ok := serverEvent.Event.(logparse.SpawnedAsEvt); ok {
-					mc.classCounter.With(prometheus.Labels{"class": evt.Class.String()}).Inc()
+					collector.classCounter.With(prometheus.Labels{"class": evt.Class.String()}).Inc()
 				}
 			}
 		}

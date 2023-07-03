@@ -41,6 +41,7 @@ func NewPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store)
 func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
 	log := p.log.Named("patreonClient")
 	cat, crt, errAuth := p.db.GetPatreonAuth(ctx)
+
 	if errAuth != nil || cat == "" || crt == "" {
 		// Attempt to use config file values as the initial source if we have nothing saved.
 		// These are only used once as they are dynamically updated and stored
@@ -48,6 +49,7 @@ func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
 		cat = p.conf.Patreon.CreatorAccessToken
 		crt = p.conf.Patreon.CreatorRefreshToken
 	}
+
 	oAuthConfig := oauth2.Config{
 		ClientID:     p.conf.Patreon.ClientID,
 		ClientSecret: p.conf.Patreon.ClientSecret,
@@ -76,8 +78,10 @@ func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
 	if errFetchTest != nil {
 		return nil, errors.Wrap(errFetchTest, "Failed to fetch patreon user")
 	}
+
 	go func() {
 		t0 := time.NewTicker(time.Minute * 60)
+
 		for {
 			select {
 			case <-t0.C:
@@ -93,15 +97,18 @@ func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
 	return p.patreonClient, nil
 }
 
-func updateToken(ctx context.Context, db *store.Store, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
+func updateToken(ctx context.Context, database *store.Store, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
 	tokSrc := oAuthConfig.TokenSource(ctx, tok)
+
 	newToken, errToken := tokSrc.Token()
 	if errToken != nil {
 		return errors.Wrap(errToken, "Failed to get oath token")
 	}
-	if saveTokenErr := db.SetPatreonAuth(ctx, newToken.AccessToken, newToken.RefreshToken); saveTokenErr != nil {
+
+	if saveTokenErr := database.SetPatreonAuth(ctx, newToken.AccessToken, newToken.RefreshToken); saveTokenErr != nil {
 		return errors.Wrap(errToken, "Failed to save new oath token")
 	}
+
 	*tok = *newToken
 
 	return nil
@@ -121,16 +128,18 @@ func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to fetch campaign")
 	}
+
 	if len(campaignResponse.Data) == 0 {
 		return nil, nil, errors.New("No campaign returned")
 	}
-	campaignID := campaignResponse.Data[0].ID
 
-	cursor := ""
-	page := 1
-	var out []patreon.Pledge
-	// Get all the users in an easy-to-lookup way
-	users := make(map[string]*patreon.User)
+	var (
+		campaignID = campaignResponse.Data[0].ID
+		cursor     = ""
+		page       = 1
+		out        []patreon.Pledge
+		users      = make(map[string]*patreon.User) // Get all the users in an easy-to-lookup way
+	)
 
 	for {
 		pledgesResponse, errFetch := p.patreonClient.FetchPledges(campaignID,
@@ -145,13 +154,18 @@ func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 			if !ok {
 				continue
 			}
+
 			users[u.ID] = u
 		}
+
 		out = append(out, pledgesResponse.Data...)
+
 		nextLink := pledgesResponse.Links.Next
+
 		if nextLink == "" {
 			break
 		}
+
 		cursor = nextLink
 		page++
 	}
@@ -160,12 +174,15 @@ func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 }
 
 func (p *PatreonManager) updater(ctx context.Context) {
-	log := p.log.Named("patreon")
-	updateTimer := time.NewTicker(time.Hour * 1)
+	var (
+		log         = p.log.Named("patreon")
+		updateTimer = time.NewTicker(time.Hour * 1)
+		updateChan  = make(chan any)
+	)
+
 	if p.patreonClient == nil {
 		return
 	}
-	updateChan := make(chan any)
 
 	go func() {
 		updateChan <- true
@@ -182,25 +199,31 @@ func (p *PatreonManager) updater(ctx context.Context) {
 
 				return
 			}
+
 			newPledges, _, errPledges := p.Pledges()
 			if errPledges != nil {
 				log.Error("Failed to refresh pledges", zap.Error(errPledges))
 
 				return
 			}
+
 			p.patreonMu.Lock()
 			p.patreonCampaigns = newCampaigns
 			p.patreonPledges = newPledges
 			// patreonUsers = newUsers
 			p.patreonMu.Unlock()
+
 			cents := 0
 			totalCents := 0
+
 			for _, pledge := range newPledges {
 				cents += pledge.Attributes.AmountCents
+
 				if pledge.Attributes.TotalHistoricalAmountCents != nil {
 					totalCents += *pledge.Attributes.TotalHistoricalAmountCents
 				}
 			}
+
 			log.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
 				zap.Int("current_cents", cents), zap.Int("total_cents", totalCents))
 		case <-ctx.Done():

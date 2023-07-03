@@ -17,6 +17,7 @@ func TestParseDateTime(t *testing.T) {
 	t.Parallel()
 
 	var t0 time.Time
+
 	require.True(t, logparse.ParseDateTime("02/21/2021 - 06:22:23", &t0))
 	require.Equal(t, time.Date(2021, 2, 21, 6, 22, 23, 0, time.UTC), t0)
 }
@@ -26,6 +27,7 @@ func TestParseSourcePlayer(t *testing.T) {
 
 	// (player1 "var<3><[U:1:204626678]><Blue>") (position1 "194 60 -767")
 	var src logparse.SourcePlayer
+
 	require.True(t, logparse.ParseSourcePlayer("var<3><[U:1:204626678]><Blue>", &src))
 	require.Equal(t, src.SID, steamid.SID3ToSID64("[U:1:204626678]"))
 }
@@ -33,30 +35,40 @@ func TestParseSourcePlayer(t *testing.T) {
 func TestParseFile(t *testing.T) {
 	t.Parallel()
 
-	p := golib.FindFile(path.Join("testdata", "log_1.log"), "gbans")
-	f, e := os.ReadFile(p)
+	logFilePath := golib.FindFile(path.Join("testdata", "log_1.log"), "gbans")
+
+	openFile, e := os.ReadFile(logFilePath)
 	if e != nil {
-		t.Fatalf("Failed to open test file: %s", p)
+		t.Fatalf("Failed to open test file: %s", logFilePath)
 	}
-	parser := logparse.New()
-	results := make(map[int]*logparse.Results)
-	for i, line := range strings.Split(string(f), "\n") {
+
+	var (
+		parser  = logparse.New()
+		results = make(map[int]*logparse.Results)
+	)
+
+	for i, line := range strings.Split(string(openFile), "\n") {
 		v, err := parser.Parse(line)
 		require.NoError(t, err)
+
 		results[i] = v
 	}
+
 	expected := map[logparse.EventType]int{
 		logparse.SayTeam: 6,
 		logparse.Say:     18,
 	}
-	for mt, expectedCount := range expected {
+
+	for event, expectedCount := range expected {
 		found := 0
+
 		for _, result := range results {
-			if result.EventType == mt {
+			if result.EventType == event {
 				found++
 			}
 		}
-		require.Equal(t, expectedCount, found, "Invalid count for type: %v %d/%d", mt, found, expectedCount)
+
+		require.Equal(t, expectedCount, found, "Invalid count for type: %v %d/%d", event, found, expectedCount)
 	}
 }
 
@@ -259,11 +271,14 @@ func TestParsePointCapturedEvt(t *testing.T) {
 		Player1: "Hacksaw<12><[U:1:68745073]><Red>", Position1: logparse.Pos{X: 101, Y: 98, Z: -313},
 		Player2: "El Sur<35><[U:1:423376881]><Red>", Position2: logparse.Pos{X: -95, Y: 152, Z: -767},
 	}
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: NewTeam "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "Hacksaw<12><[U:1:68745073]><Red>") (position1 "101 98 -313") (player2 "El Sur<35><[U:1:423376881]><Red>") (position2 "-95 152 -767")`, evt)
+
 	expectedPlayers := []logparse.SourcePlayerPosition{
 		{SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.RED}, Pos: logparse.Pos{X: 101, Y: 98, Z: -313}},
 		{SourcePlayer: logparse.SourcePlayer{Name: "El Sur", PID: 35, SID: steamid.SID3ToSID64("[U:1:423376881]"), Team: logparse.RED}, Pos: logparse.Pos{X: -95, Y: 152, Z: -767}},
 	}
+
 	require.EqualValues(t, expectedPlayers, evt.Players())
 }
 
@@ -754,14 +769,15 @@ func TestParseGasAttackEvt(t *testing.T) {
 func TestParseKVs(t *testing.T) {
 	t.Parallel()
 
-	parser := logparse.New()
+	var (
+		parser  = logparse.New()
+		keyMapA = map[string]any{}
+		keyMapB = map[string]any{}
+	)
 
-	m1 := map[string]any{}
-	require.True(t, parser.ParseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, m1))
-	require.Equal(t, map[string]any{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, m1)
-
-	m2 := map[string]any{}
-	require.True(t, parser.ParseKVs(`L 01/16/2022 - 21:24:11: NewTeam "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, m2))
+	require.True(t, parser.ParseKVs(`(damage "88") (realdamage "32") (weapon "ubersaw") (healing "110")`, keyMapA))
+	require.Equal(t, map[string]any{"damage": "88", "realdamage": "32", "weapon": "ubersaw", "healing": "110"}, keyMapA)
+	require.True(t, parser.ParseKVs(`L 01/16/2022 - 21:24:11: NewTeam "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "cube elegy<15><[U:1:84002473]><Red>") (position1 "-156 -105 1601") (player2 "bink<24><[U:1:164995715]><Red>") (position2 "57 78 1602")`, keyMapB))
 	require.Equal(t, map[string]any{
 		"cp":         "0",
 		"cpname":     "#koth_viaduct_cap",
@@ -770,5 +786,5 @@ func TestParseKVs(t *testing.T) {
 		"position1":  "-156 -105 1601",
 		"player2":    "bink<24><[U:1:164995715]><Red>",
 		"position2":  "57 78 1602",
-	}, m2)
+	}, keyMapB)
 }

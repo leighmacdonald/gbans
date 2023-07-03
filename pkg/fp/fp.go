@@ -13,18 +13,22 @@ func Uniq[T comparable](input []T) []T {
 	if len(input) == 0 {
 		return output
 	}
+
 	output = append(output, input[0])
-	for _, v := range input {
+
+	for _, value := range input {
 		found := false
+
 		for _, known := range output {
-			if v == known {
+			if value == known {
 				found = true
 
 				break
 			}
 		}
+
 		if !found {
-			output = append(output, v)
+			output = append(output, value)
 		}
 	}
 
@@ -32,8 +36,8 @@ func Uniq[T comparable](input []T) []T {
 }
 
 func Contains[T comparable](input []T, value T) bool {
-	for _, w := range input {
-		if w == value {
+	for _, child := range input {
+		if child == value {
 			return true
 		}
 	}
@@ -43,6 +47,7 @@ func Contains[T comparable](input []T, value T) bool {
 
 func Remove[T comparable](input []T, value T) []T {
 	var newValues []T //nolint:prealloc
+
 	for _, existingValue := range input {
 		if value == existingValue {
 			continue
@@ -60,8 +65,11 @@ func Prepend[T comparable](input []T, value T) []T {
 
 //nolint:ireturn
 func Avg[T Number](numbers []T) T {
-	var sum T
-	var count T
+	var (
+		sum   T
+		count T
+	)
+
 	for _, curValue := range numbers {
 		sum += curValue
 		count++

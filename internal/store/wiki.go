@@ -23,7 +23,8 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 		// Should never actually happen unless user is trying nefarious stuff.
 		return Media{}, errors.New("Detected mimetype different than provided")
 	}
-	t0 := config.Now()
+
+	curTime := config.Now()
 
 	return Media{
 		AuthorID:  author,
@@ -32,8 +33,8 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 		Size:      int64(len(content)),
 		Contents:  content,
 		Deleted:   false,
-		CreatedOn: t0,
-		UpdatedOn: t0,
+		CreatedOn: curTime,
+		UpdatedOn: curTime,
 	}, nil
 }
 
@@ -60,6 +61,7 @@ func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errQuery := db.QueryRow(ctx, query, args...).Scan(&page.Slug, &page.BodyMD, &page.Revision,
 		&page.CreatedOn, &page.UpdatedOn); errQuery != nil {
 		return Err(errQuery)
@@ -73,12 +75,15 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug}).
 		ToSql()
+
 	if errQueryArgs != nil {
 		return errors.Wrap(errQueryArgs, "Failed to generate query")
 	}
+
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+
 	db.log.Info("Wiki slug deleted", zap.String("slug", slug))
 
 	return nil
@@ -93,10 +98,12 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	if errQueryArgs != nil {
 		return errors.Wrap(errQueryArgs, "Failed to generate query")
 	}
+
 	errQueryRow := db.Exec(ctx, query, args...)
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
+
 	db.log.Info("Wiki page saved", zap.String("slug", util.SanitizeLog(page.Slug)))
 
 	return nil
@@ -110,6 +117,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING media_id
 	`
+
 	if errQuery := db.QueryRow(ctx, query,
 		media.AuthorID,
 		media.MimeType,
@@ -122,6 +130,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 	).Scan(&media.MediaID); errQuery != nil {
 		return Err(errQuery)
 	}
+
 	db.log.Info("Wiki media created",
 		zap.Int("wiki_media_id", media.MediaID),
 		zap.Int64("author_id", media.AuthorID.Int64()),
@@ -139,7 +148,9 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND name = $1`
+
 	var authorID int64
+
 	if errRow := db.QueryRow(ctx, query, name).Scan(
 		&media.MediaID,
 		&authorID,
@@ -165,7 +176,9 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
 		FROM media
 		WHERE deleted = false AND media_id = $1`
+
 	var authorID int64
+
 	if errRow := db.QueryRow(ctx, query, mediaID).Scan(
 		&media.MediaID,
 		&authorID,

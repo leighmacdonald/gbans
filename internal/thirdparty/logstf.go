@@ -39,24 +39,30 @@ type LogsTFResult struct {
 // http://logs.tf/api/v1/log?title=X&uploader=Y&player=Z&limit=N&offset=N
 func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, error) {
 	httpClient := util.NewHTTPClient()
+
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
+
 	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet,
 		fmt.Sprintf("https://logs.tf/api/v1/log?player=%s", sid), nil)
 	if reqErr != nil {
 		return nil, errors.Wrap(reqErr, "Failed to create request")
 	}
+
 	response, errGet := httpClient.Do(req)
 	if errGet != nil {
 		return nil, errors.Wrapf(errGet, "Failed to query logstf")
 	}
+
 	defer func() {
 		_ = response.Body.Close()
 	}()
+
 	body, errReadBody := io.ReadAll(response.Body)
 	if errReadBody != nil {
 		return nil, errors.Wrapf(errGet, "Failed to read logstf body")
 	}
+
 	var logsTFResult LogsTFResult
 	if errUnmarshal := json.Unmarshal(body, &logsTFResult); errUnmarshal != nil {
 		return nil, errors.Wrapf(errGet, "Failed to unmarshal logstf body")

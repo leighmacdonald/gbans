@@ -23,11 +23,15 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	if !banSteam.TargetID.Valid() {
 		return errors.Wrap(consts.ErrInvalidSID, "Invalid target steam id")
 	}
+
 	existing := store.NewBannedPerson()
+
 	errGetExistingBan := app.db.GetBanBySteamID(ctx, banSteam.TargetID, &existing, false)
+
 	if existing.Ban.BanID > 0 {
 		return store.ErrDuplicate
 	}
+
 	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, store.ErrNoResult) {
 		return errors.Wrapf(errGetExistingBan, "Failed to get ban")
 	}
@@ -41,6 +45,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		if errReport := app.db.GetReport(ctx, reportId, &report); errReport != nil {
 			return errors.Wrap(errReport, "Failed to get associated report for ban")
 		}
+
 		report.ReportStatus = store.ClosedWithAction
 		if errSaveReport := app.db.SaveReport(ctx, &report); errSaveReport != nil {
 			return errors.Wrap(errSaveReport, "Failed to update report state")
@@ -59,8 +64,11 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 	}
 
 	go func() {
-		var title string
-		var colour int
+		var (
+			title  string
+			colour int
+		)
+
 		if banSteam.BanType == store.NoComm {
 			title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
 			colour = int(discord.Orange)
@@ -68,19 +76,24 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 			title = fmt.Sprintf("User Banned (#%d)", banSteam.BanID)
 			colour = int(discord.Red)
 		}
+
 		banNotice := &discordgo.MessageEmbed{
 			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID),
 			Type:  discordgo.EmbedTypeRich,
 			Title: title,
 			Color: colour,
 		}
+
 		discord.AddFieldsSteamID(banNotice, banSteam.TargetID)
+
 		expIn := "Permanent"
 		expAt := "Permanent"
+
 		if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
 			expIn = config.FmtDuration(banSteam.ValidUntil)
 			expAt = config.FmtTimeShort(banSteam.ValidUntil)
 		}
+
 		discord.AddField(banNotice, "Expires In", expIn)
 		discord.AddField(banNotice, "Expires At", expAt)
 		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: banNotice})
@@ -115,6 +128,7 @@ func (app *App) BanASN(ctx context.Context, banASN *store.BanASN) error {
 			return errors.Wrapf(errGetExistingBan, "Failed trying to fetch existing asn ban")
 		}
 	}
+
 	if errSave := app.db.SaveBanASN(ctx, banASN); errSave != nil {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
@@ -138,14 +152,17 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	if banNet.CIDR == nil {
 		return errors.New("CIDR unset")
 	}
+
 	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
 		return errors.Wrapf(errSaveBanNet, "Failed to save ban net")
 	}
+
 	go func(_ *net.IPNet, reason store.Reason) {
 		foundPlayers, found := app.Find(FindOpts{CIDR: banNet.CIDR})
 		if !found {
 			return
 		}
+
 		for _, player := range foundPlayers {
 			if errKick := app.Kick(ctx, store.System, player.Player.SID, banNet.SourceID, reason); errKick != nil {
 				app.log.Error("Failed to kick player", zap.Error(errKick))
@@ -161,9 +178,11 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) err
 	if membersErr != nil {
 		return errors.Wrapf(membersErr, "Failed to validate group")
 	}
+
 	if errSaveBanGroup := app.db.SaveBanGroup(ctx, banGroup); errSaveBanGroup != nil {
 		return errors.Wrapf(errSaveBanGroup, "Failed to save banned group")
 	}
+
 	app.log.Info("Steam group banned", zap.Int64("gid64", banGroup.GroupID.Int64()),
 		zap.Int("members", len(members)))
 
@@ -176,6 +195,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) err
 func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) (bool, error) {
 	bannedPerson := store.NewBannedPerson()
 	errGetBan := app.db.GetBanBySteamID(ctx, target, &bannedPerson, false)
+
 	if errGetBan != nil {
 		if errors.Is(errGetBan, store.ErrNoResult) {
 			return false, nil
@@ -183,11 +203,14 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 
 		return false, errors.Wrapf(errGetBan, "Failed to get ban")
 	}
+
 	bannedPerson.Ban.Deleted = true
 	bannedPerson.Ban.UnbanReasonText = reason
+
 	if errSaveBan := app.db.SaveBan(ctx, &bannedPerson.Ban); errSaveBan != nil {
 		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
+
 	app.log.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
 
 	unbanNotice := &discordgo.MessageEmbed{
@@ -213,15 +236,18 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	if errConv != nil {
 		return false, errors.Wrapf(errConv, "Failed to parse int")
 	}
+
 	var banASN store.BanASN
 	if errGetBanASN := app.db.GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
 		return false, errors.Wrapf(errGetBanASN, "Failed to get asn ban")
 	}
+
 	if errDrop := app.db.DropBanASN(ctx, &banASN); errDrop != nil {
 		app.log.Error("Failed to drop ASN ban", zap.Error(errDrop))
 
 		return false, errors.Wrap(errDrop, "Failed to drop asn ban")
 	}
+
 	app.log.Info("ASN unbanned", zap.Int64("ASN", asNum))
 
 	return true, nil

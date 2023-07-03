@@ -30,28 +30,35 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 		if errIds != nil {
 			return errors.Wrap(errIds, "Failed to fetch steamids for notification")
 		}
+
 		notification.Sids = append(notification.Sids, sids...)
 	}
+
 	uniqueIds := fp.Uniq(notification.Sids)
+
 	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
 	if errPeople != nil && !errors.Is(errPeople, store.ErrNoResult) {
 		return errors.Wrap(errPeople, "Failed to fetch people for notification")
 	}
+
 	var discordIds []string
+
 	for _, p := range people {
 		if p.DiscordID != "" {
 			discordIds = append(discordIds, p.DiscordID)
 		}
 	}
-	go func(ids []string, pl NotificationPayload) {
+
+	go func(ids []string, payload NotificationPayload) {
 		for _, discordID := range ids {
 			embed := &discordgo.MessageEmbed{
 				Title:       "Notification",
-				Description: pl.Message,
+				Description: payload.Message,
 			}
-			if pl.Link != "" {
-				embed.URL = app.conf.ExtURL(pl.Link)
+			if payload.Link != "" {
+				embed.URL = app.conf.ExtURL(payload.Link)
 			}
+
 			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
 		}
 	}(discordIds, notification)

@@ -32,6 +32,7 @@ type ServerStateCollector struct {
 
 func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUpdateStatus UpdateStatusHandler, onUpdateMSL UpdateMSLHandler) *ServerStateCollector {
 	const statusUpdateFreq = time.Second * 30
+
 	const msListUpdateFreq = time.Minute
 
 	return &ServerStateCollector{
@@ -45,9 +46,12 @@ func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUp
 }
 
 func (c *ServerStateCollector) startMSL(ctx context.Context) {
-	log := c.log.Named("msl_update")
-	mlUpdateTicker := time.NewTicker(c.msListUpdateFreq)
-	var masterServerList []ServerLocation
+	var (
+		log              = c.log.Named("msl_update")
+		mlUpdateTicker   = time.NewTicker(c.msListUpdateFreq)
+		masterServerList []ServerLocation
+	)
+
 	for {
 		select {
 		case <-mlUpdateTicker.C:
@@ -57,7 +61,9 @@ func (c *ServerStateCollector) startMSL(ctx context.Context) {
 
 				continue
 			}
+
 			masterServerList = newMsl
+
 			go c.onUpdateMSL(masterServerList)
 		case <-ctx.Done():
 			return
@@ -67,16 +73,21 @@ func (c *ServerStateCollector) startMSL(ctx context.Context) {
 
 func (c *ServerStateCollector) startStatus(ctx context.Context, configs []ServerConfig) {
 	const timeout = time.Second * 15
-	log := c.log.Named("status_update")
-	statusUpdateTicker := time.NewTicker(c.statusUpdateFreq)
+
+	var (
+		log                = c.log.Named("status_update")
+		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
+	)
+
 	for {
 		select {
 		case <-statusUpdateTicker.C:
 			for _, serverConfig := range configs {
 				go func(conf ServerConfig) {
 					console, errDial := rcon.Dial(ctx, conf.addr(), conf.Password, timeout)
+
 					if errDial != nil {
-						// log.Error("Failed to dial rcon", zap.String("err", errDial.Error()))
+						log.Error("Failed to dial rcon", zap.String("err", errDial.Error()))
 
 						return
 					}
@@ -87,12 +98,14 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 
 						return
 					}
+
 					status, errParse := extra.ParseStatus(resp, true)
 					if errParse != nil {
 						log.Error("Failed to parse rcon status", zap.Error(errParse))
 
 						return
 					}
+
 					go c.onUpdateStatus(conf.ServerID, status)
 
 					log.Debug("Updated", zap.String("server", conf.Name))
@@ -106,8 +119,12 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 
 func (c *ServerStateCollector) startA2S(ctx context.Context, configs []ServerConfig) {
 	const timeout = time.Second * 10
-	log := c.log.Named("a2s_update")
-	a2sTimer := time.NewTicker(c.statusUpdateFreq)
+
+	var (
+		log      = c.log.Named("a2s_update")
+		a2sTimer = time.NewTicker(c.statusUpdateFreq)
+	)
+
 	for {
 		select {
 		case <-a2sTimer.C:
@@ -119,19 +136,22 @@ func (c *ServerStateCollector) startA2S(ctx context.Context, configs []ServerCon
 
 						return
 					}
+
 					defer func() {
 						if errClose := client.Close(); errClose != nil {
 							log.Error("Failed to close a2s conn", zap.String("server", conf.Name), zap.Error(errClose))
 						}
 					}()
+
 					result, errQuery := client.QueryInfo()
 					if errQuery != nil {
-						// log.Error("Failed to query a2s server", zap.String("server", conf.Name), zap.String("err", errQuery.Error()))
+						log.Debug("Failed to query a2s server", zap.String("server", conf.Name), zap.String("err", errQuery.Error()))
 
 						return
 					}
 
 					go c.onUpdateA2S(conf.ServerID, result)
+
 					log.Debug("Updated", zap.String("server", conf.Name))
 				}(serverConfig)
 			}
@@ -213,19 +233,26 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 		"appid":     "440",
 		"dedicated": "1",
 	})
+
 	if errServers != nil {
 		return nil, errors.Wrap(errServers, "Failed to fetch updated list")
 	}
-	var communityServers []ServerLocation //nolint:prealloc
-	stats := NewGlobalTF2Stats()
+
+	var ( //nolint:prealloc
+		communityServers []ServerLocation
+		stats            = NewGlobalTF2Stats()
+	)
+
 	for _, baseServer := range allServers {
 		server := ServerLocation{
 			LatLong: ip2location.LatLong{},
 			Server:  baseServer,
 		}
+
 		stats.ServersTotal++
 		stats.Players += server.Players
 		stats.Bots += server.Bots
+
 		switch {
 		case server.MaxPlayers > 0 && server.Players >= server.MaxPlayers:
 			stats.CapacityFull++
@@ -234,20 +261,27 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 		default:
 			stats.CapacityPartial++
 		}
+
 		if server.Secure {
 			stats.Secure++
 		}
+
 		region := SteamRegionIDString(SvRegion(server.Region))
+
 		_, regionFound := stats.Regions[region]
 		if !regionFound {
 			stats.Regions[region] = 0
 		}
+
 		stats.Regions[region] += server.Players
+
 		mapType := GuessMapType(server.Map)
+
 		_, mapTypeFound := stats.MapTypes[mapType]
 		if !mapTypeFound {
 			stats.MapTypes[mapType] = 0
 		}
+
 		stats.MapTypes[mapType]++
 		if strings.Contains(server.GameType, "valve") ||
 			!server.Dedicated ||
@@ -256,6 +290,7 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 
 			continue
 		}
+
 		communityServers = append(communityServers, server)
 	}
 
@@ -265,11 +300,12 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 func GuessMapType(mapName string) string {
 	mapName = strings.TrimPrefix(mapName, "workshop/")
 	pieces := strings.SplitN(mapName, "_", 2)
+
 	if len(pieces) == 1 {
 		return "unknown"
-	} else {
-		return strings.ToLower(pieces[0])
 	}
+
+	return strings.ToLower(pieces[0])
 }
 
 type GlobalTF2StatsSnapshot struct {
@@ -289,13 +325,16 @@ type GlobalTF2StatsSnapshot struct {
 
 func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
 	const minSize = 5
+
 	out := map[string]int{}
-	for k, v := range stats.MapTypes {
-		mapKey := k
-		if v < minSize {
+
+	for keyKey, value := range stats.MapTypes {
+		mapKey := keyKey
+		if value < minSize {
 			mapKey = "unknown"
 		}
-		out[mapKey] = v
+
+		out[mapKey] = value
 	}
 
 	return out

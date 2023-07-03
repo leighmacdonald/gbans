@@ -43,7 +43,7 @@ type remoteSrcdsLogSource struct {
 	logAddrString string
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger, db *store.Store, logAddr string, eb *eventBroadcaster) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr string, broadcaster *eventBroadcaster) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
@@ -51,8 +51,8 @@ func newRemoteSrcdsLogSource(logger *zap.Logger, db *store.Store, logAddr string
 
 	return &remoteSrcdsLogSource{
 		RWMutex:       &sync.RWMutex{},
-		eb:            eb,
-		db:            db,
+		eb:            broadcaster,
+		db:            database,
 		logger:        logger.Named("srcdsLog"),
 		udpAddr:       udpAddr,
 		secretMap:     map[int]string{},
@@ -64,18 +64,23 @@ func newRemoteSrcdsLogSource(logger *zap.Logger, db *store.Store, logAddr string
 func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 	newServers := map[int]string{}
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
+
 	defer cancelServers()
+
 	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to update DNS", zap.Error(errServers))
 
 		return
 	}
+
 	for _, server := range servers {
 		newServers[server.LogSecret] = server.ServerName
 	}
+
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
+
 	remoteSrc.secretMap = newServers
 	remoteSrc.logger.Debug("Updated secret mappings")
 }
@@ -83,14 +88,17 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr string) {
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
+
 	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to add log addr", zap.Error(errServers))
 
 		return
 	}
+
 	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
 	defer cancelQuery()
+
 	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_add %s", addr))
 	remoteSrc.logger.Info("Added udp log address", zap.String("addr", addr))
 }
@@ -98,14 +106,17 @@ func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr s
 func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, addr string) {
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
 	defer cancelServers()
+
 	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to del log addr", zap.Error(errServers))
 
 		return
 	}
+
 	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
 	defer cancelQuery()
+
 	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_del %s", addr))
 	remoteSrc.logger.Debug("Removed log address", zap.String("addr", addr))
 }
@@ -118,37 +129,46 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 		source int64
 		body   string
 	}
+
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if errListenUDP != nil {
 		remoteSrc.logger.Error("Failed to start log listener", zap.Error(errListenUDP))
 
 		return
 	}
+
 	defer func() {
 		if errConnClose := connection.Close(); errConnClose != nil {
 			remoteSrc.logger.Error("Failed to close connection cleanly", zap.Error(errConnClose))
 		}
 	}()
-	// msgId := 0
-	msgIngressChan := make(chan newMsg)
+
 	remoteSrc.updateSecrets(ctx)
+
 	if remoteSrc.logAddrString != "" {
 		remoteSrc.addLogAddress(ctx, remoteSrc.logAddrString)
 		defer remoteSrc.removeLogAddress(ctx, remoteSrc.logAddrString)
 	}
-	running := true
-	count := uint64(0)
-	insecureCount := uint64(0)
-	errCount := uint64(0)
+
+	var (
+		running        = true
+		count          = uint64(0)
+		insecureCount  = uint64(0)
+		errCount       = uint64(0)
+		msgIngressChan = make(chan newMsg)
+	)
+
 	go func() {
 		for running {
 			buffer := make([]byte, 1024)
+
 			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
 			if errReadUDP != nil {
 				remoteSrc.logger.Warn("UDP log read error", zap.Error(errReadUDP))
 
 				continue
 			}
+
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
 				if insecureCount%10000 == 0 {
@@ -159,6 +179,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				errCount++
 			case s2aLogString2:
 				line := string(buffer)
+
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
 					remoteSrc.logger.Warn("Received malformed log message: Failed to find marker")
@@ -166,6 +187,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 					continue
 				}
+
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 				if errConv != nil {
 					remoteSrc.logger.Error("Received malformed log message: Failed to parse secret",
@@ -174,8 +196,10 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 					continue
 				}
+
 				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
 				count++
+
 				if count%10000 == 0 {
 					remoteSrc.logger.Debug("UDP SRCDS Logger Packets",
 						zap.Uint64("count", count), zap.Uint64("errors", errCount))
@@ -183,10 +207,13 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			}
 		}
 	}()
-	parser := logparse.New()
+
+	var (
+		parser = logparse.New()
+		ticker = time.NewTicker(remoteSrc.frequency)
+	)
 	// pc := newPlayerCache(remoteSrc.logger)
-	ticker := time.NewTicker(remoteSrc.frequency)
-	// errCount := 0
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -196,21 +223,26 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			// remoteSrc.updateDNS()
 		case logPayload := <-msgIngressChan:
 			var serverName string
+
 			remoteSrc.RLock()
 			serverNameValue, found := remoteSrc.secretMap[int(logPayload.source)]
 			remoteSrc.RUnlock()
+
 			if !found {
 				remoteSrc.logger.Error("Rejecting unknown secret log author")
 
 				continue
 			}
+
 			serverName = serverNameValue
+
 			var server store.Server
 			if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server); errServer != nil {
 				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 
 				continue
 			}
+
 			var serverEvent model.ServerEvent
 			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &serverEvent); errLogServerEvent != nil {
 				remoteSrc.logger.Debug("Failed to create ServerEvent", zap.Error(errLogServerEvent))

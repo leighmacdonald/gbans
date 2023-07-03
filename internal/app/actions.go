@@ -26,7 +26,9 @@ func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd fu
 	if !found {
 		return ErrNoUserFound
 	}
+
 	var err error
+
 	for _, player := range players {
 		var server store.Server
 		if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
@@ -34,7 +36,9 @@ func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd fu
 
 			continue
 		}
+
 		cmd := onFoundCmd(player)
+
 		_, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, cmd)
 		if errExecRCON != nil {
 			err = gerrors.Join(err, errExecRCON)
@@ -51,6 +55,7 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
 	}
+
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
@@ -67,6 +72,7 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
 	}
+
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
@@ -82,15 +88,19 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 	if errGetServer := app.db.GetServerByName(ctx, serverName, &server); errGetServer != nil {
 		return errors.Errorf("Failed to fetch server: %s", serverName)
 	}
+
 	msg := fmt.Sprintf(`sm_say %s`, message)
 	rconResponse, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, msg)
+
 	if errExecRCON != nil {
 		return errors.Wrapf(errExecRCON, "Failed to exec say command")
 	}
+
 	responsePieces := strings.Split(rconResponse, "\n")
 	if len(responsePieces) < 2 {
 		return errors.Errorf("Invalid response")
 	}
+
 	app.log.Info("Server message sent", zap.Int64("author", author.Int64()), zap.String("msg", message))
 
 	return nil
@@ -102,6 +112,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 		servers []store.Server
 		err     error
 	)
+
 	if serverName == "*" {
 		servers, err = app.db.GetServers(ctx, false)
 		if err != nil {
@@ -112,11 +123,12 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 		if errS := app.db.GetServerByName(ctx, serverName, &server); errS != nil {
 			return errors.Wrapf(errS, "Failed to fetch server: %s", serverName)
 		}
+
 		servers = append(servers, server)
 	}
-	msg := fmt.Sprintf(`sm_csay %s`, message)
+
 	// TODO check response
-	_ = query.RCON(ctx, app.log, servers, msg)
+	_ = query.RCON(ctx, app.log, servers, fmt.Sprintf(`sm_csay %s`, message))
 	app.log.Info("Server center message sent", zap.Int64("author", author.Int64()),
 		zap.String("msg", message), zap.Int("servers", len(servers)))
 
@@ -128,6 +140,7 @@ func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.S
 	if !author.Valid() {
 		return ErrInvalidAuthorSID
 	}
+
 	if !target.Valid() {
 		return ErrInvalidTargetSID
 	}
@@ -145,13 +158,16 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
+
 	if (newPerson.DiscordID) != "" {
 		return errors.Errorf("Discord account already linked to steam account: %d", newPerson.SteamID.Int64())
 	}
+
 	newPerson.DiscordID = discordID
 	if errSavePerson := app.db.SavePerson(ctx, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
+
 	app.log.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
 
 	return nil
@@ -163,10 +179,12 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 		if errors.Is(errSave, store.ErrDuplicate) {
 			return store.ErrDuplicate
 		}
+
 		app.log.Error("Error saving filter word", zap.Error(errSave))
 
 		return consts.ErrInternal
 	}
+
 	filter.Init()
 	app.wordFilters.Lock()
 	app.wordFilters.wordFilters = append(app.wordFilters.wordFilters, *filter)
@@ -190,10 +208,12 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	defer app.wordFilters.Unlock()
 
 	var valid []store.Filter //nolint:prealloc
+
 	for _, f := range app.wordFilters.wordFilters {
 		if f.FilterID == filterID {
 			continue
 		}
+
 		valid = append(valid, f)
 	}
 
@@ -207,10 +227,14 @@ func (app *App) FilterCheck(message string) []store.Filter {
 	if message == "" {
 		return nil
 	}
+
 	words := strings.Split(strings.ToLower(message), " ")
+
 	app.wordFilters.RLock()
 	defer app.wordFilters.RUnlock()
+
 	var found []store.Filter
+
 	for _, filter := range app.wordFilters.wordFilters {
 		for _, word := range words {
 			if filter.Match(word) {

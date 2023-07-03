@@ -99,7 +99,9 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 	if errQuery != nil {
 		return Err(errQuery)
 	}
-	if errRow := db.QueryRow(ctx, query, args...).
+
+	if errRow := db.
+		QueryRow(ctx, query, args...).
 		Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
@@ -120,21 +122,27 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
+
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
 		return nil, Err(errRows)
 	}
+
 	defer rows.Close()
+
 	var perms []ServerPermission
+
 	for rows.Next() {
 		var (
-			sid  int64
-			perm consts.Privilege
+			sid   int64
+			perm  consts.Privilege
+			flags string
 		)
+
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
 			return nil, Err(errScan)
 		}
-		flags := ""
+
 		switch perm {
 		case consts.PReserved:
 			flags = "a"
@@ -145,6 +153,7 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 		case consts.PAdmin:
 			flags = "z"
 		}
+
 		perms = append(perms, ServerPermission{
 			SteamID:         steamid.SID64ToSID(steamid.New(sid)),
 			PermissionLevel: perm,
@@ -157,23 +166,30 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 
 func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server, error) {
 	var servers []Server
-	queryBuilder := db.sb.
+
+	builder := db.sb.
 		Select(columnsServer...).
 		From(string(tableServer))
 	cond := sq.And{sq.Eq{"deleted": false}}
+
 	if !includeDisabled {
 		cond = append(cond, sq.Eq{"is_enabled": true})
 	}
-	queryBuilder = queryBuilder.Where(cond)
-	query, args, errQuery := queryBuilder.ToSql()
+
+	builder = builder.Where(cond)
+
+	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
+
 	rows, errQueryExec := db.Query(ctx, query, args...)
 	if errQueryExec != nil {
 		return []Server{}, errQueryExec
 	}
+
 	defer rows.Close()
+
 	for rows.Next() {
 		var server Server
 		if errScan := rows.
@@ -183,8 +199,10 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 				&server.Deleted, &server.LogSecret); errScan != nil {
 			return nil, errors.Wrap(errScan, "Failed to scan server")
 		}
+
 		servers = append(servers, server)
 	}
+
 	if rows.Err() != nil {
 		return nil, Err(rows.Err())
 	}
@@ -220,6 +238,7 @@ func (db *Store) SaveServer(ctx context.Context, server *Server) error {
 	if server.ServerID > 0 {
 		return db.updateServer(ctx, server)
 	}
+
 	server.CreatedOn = config.Now()
 
 	return db.insertServer(ctx, server)
@@ -233,6 +252,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 			deleted, log_secret) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
+
 	err := db.QueryRow(ctx, query, server.ServerName, server.ServerNameLong, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
@@ -246,6 +266,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 
 func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = config.Now()
+
 	query, args, errQueryArgs := db.sb.Update(string(tableServer)).
 		Set("short_name", server.ServerName).
 		Set("name", server.ServerNameLong).
@@ -268,6 +289,7 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update server")
 	}

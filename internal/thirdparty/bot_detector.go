@@ -36,7 +36,8 @@ func parseTF2BD(data []byte) ([]steamid.SID64, error) {
 		return nil, errors.Wrap(errUnmarshal, "Failed to unmarshal tf2bd schema")
 	}
 
-	var steamIds []steamid.SID64 //nolint:prealloc
+	var steamIds steamid.Collection //nolint:prealloc
+
 	for _, player := range bdSchema.Players {
 		steamID := steamid.New(player.Steamid)
 		if !steamID.Valid() {

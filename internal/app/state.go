@@ -105,7 +105,9 @@ type FindOpts struct {
 
 func (app *App) Find(opts FindOpts) ([]PlayerServerInfo, bool) {
 	curState := app.state()
+
 	var found []PlayerServerInfo
+
 	for _, server := range curState {
 		for _, player := range server.Players {
 			if (opts.SteamID.Valid() && player.SID == opts.SteamID) ||
@@ -121,17 +123,17 @@ func (app *App) Find(opts FindOpts) ([]PlayerServerInfo, bool) {
 }
 
 func (c ServerDetailsCollection) ByRegion() map[string]ServerDetailsCollection {
-	rm := map[string]ServerDetailsCollection{}
+	serverMap := map[string]ServerDetailsCollection{}
 	for _, server := range c {
-		_, exists := rm[server.Region]
+		_, exists := serverMap[server.Region]
 		if !exists {
-			rm[server.Region] = ServerDetailsCollection{}
+			serverMap[server.Region] = ServerDetailsCollection{}
 		}
 
-		rm[server.Region] = append(rm[server.Region], server)
+		serverMap[server.Region] = append(serverMap[server.Region], server)
 	}
 
-	return rm
+	return serverMap
 }
 
 func (c ServerDetailsCollection) ByName(name string) (ServerDetails, bool) {

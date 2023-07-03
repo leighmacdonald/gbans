@@ -14,7 +14,7 @@ var (
 )
 
 type Bot struct {
-	logger           *zap.Logger
+	log              *zap.Logger
 	conf             *config.Config
 	session          *discordgo.Session
 	isReady          bool
@@ -24,7 +24,7 @@ type Bot struct {
 	ColourLevels     LevelColors
 }
 
-func New(l *zap.Logger, conf *config.Config) (*Bot, error) {
+func New(logger *zap.Logger, conf *config.Config) (*Bot, error) {
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
@@ -37,7 +37,7 @@ func New(l *zap.Logger, conf *config.Config) (*Bot, error) {
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &Bot{
 		conf:            conf,
-		logger:          l.Named("discord"),
+		log:             logger.Named("discord"),
 		session:         session,
 		isReady:         false,
 		commandHandlers: map[Cmd]CommandHandler{},
@@ -70,6 +70,7 @@ func (bot *Bot) RegisterHandler(cmd Cmd, handler CommandHandler) error {
 	if found {
 		return errors.New("Duplicate command")
 	}
+
 	bot.commandHandlers[cmd] = handler
 
 	return nil
@@ -77,7 +78,7 @@ func (bot *Bot) RegisterHandler(cmd Cmd, handler CommandHandler) error {
 
 func (bot *Bot) Shutdown(guildID string) {
 	if bot.session != nil {
-		defer util.LogCloser(bot.session, bot.logger)
+		defer util.LogCloser(bot.session, bot.log)
 		bot.botUnregisterSlashCommands(guildID)
 	}
 }
@@ -85,18 +86,20 @@ func (bot *Bot) Shutdown(guildID string) {
 func (bot *Bot) botUnregisterSlashCommands(guildID string) {
 	registeredCommands, err := bot.session.ApplicationCommands(bot.session.State.User.ID, guildID)
 	if err != nil {
-		bot.logger.Error("Could not fetch registered commands", zap.Error(err))
+		bot.log.Error("Could not fetch registered commands", zap.Error(err))
 
 		return
 	}
+
 	for _, v := range registeredCommands {
 		if errDel := bot.session.ApplicationCommandDelete(bot.session.State.User.ID, guildID, v.ID); errDel != nil {
-			bot.logger.Error("Cannot delete command", zap.String("name", v.Name), zap.Error(err))
+			bot.log.Error("Cannot delete command", zap.String("name", v.Name), zap.Error(err))
 
 			return
 		}
 	}
-	bot.logger.Info("Unregistered discord commands", zap.Int("count", len(registeredCommands)))
+
+	bot.log.Info("Unregistered discord commands", zap.Int("count", len(registeredCommands)))
 }
 
 func (bot *Bot) Start() error {
@@ -104,15 +107,16 @@ func (bot *Bot) Start() error {
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
+
 	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID, bot.conf.Discord.GuildID); errRegister != nil {
-		bot.logger.Error("Failed to register discord slash commands", zap.Error(errRegister))
+		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
 	return nil
 }
 
 func (bot *Bot) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	bot.logger.Info("Service state changed", zap.String("state", "ready"))
+	bot.log.Info("Service state changed", zap.String("state", "ready"))
 	bot.isReady = true
 }
 
@@ -134,9 +138,11 @@ func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
 	if errUpdateStatus := bot.session.UpdateStatusComplex(status); errUpdateStatus != nil {
-		bot.logger.Error("Failed to update status complex", zap.Error(errUpdateStatus))
+		bot.log.Error("Failed to update status complex", zap.Error(errUpdateStatus))
 	}
-	bot.logger.Info("Service state changed", zap.String("state", "connected"))
+
+	bot.log.Info("Service state changed", zap.String("state", "connected"))
+
 	if bot.onConnectUser != nil {
 		bot.onConnectUser()
 	}
@@ -145,7 +151,8 @@ func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.isReady = false
 
-	bot.logger.Info("Service state changed", zap.String("state", "disconnected"))
+	bot.log.Info("Service state changed", zap.String("state", "disconnected"))
+
 	if bot.onDisconnectUser != nil {
 		bot.onDisconnectUser()
 	}
@@ -153,7 +160,7 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 
 // func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
 //	if !isReady.Load() {
-//		logger.Error("Tried to send message to disconnected client")
+//		log.Error("Tried to send message to disconnected client")
 //		return nil
 //	}
 //	if wrap {
@@ -173,9 +180,11 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 	if !bot.isReady {
 		return nil
 	}
+
 	edit := &discordgo.InteractionResponseData{
 		Content: "hi",
 	}
+
 	switch response.MsgType {
 	case MtString:
 		val, ok := response.Value.(string)
@@ -190,11 +199,14 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 		if !ok {
 			return errors.New("Failed to cast MessageEmbed")
 		}
+
 		edit.Embeds = append(edit.Embeds, embed)
 	}
+
 	_, errResponseEdit := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
 		Embeds: &edit.Embeds,
 	})
+
 	if errResponseEdit != nil {
 		return errors.Wrap(errResponseEdit, "Failed to send interaction edit")
 	}
@@ -206,8 +218,9 @@ func (bot *Bot) SendPayload(payload Payload) {
 	if !bot.isReady {
 		return
 	}
+
 	if _, errSend := bot.session.ChannelMessageSendEmbed(payload.ChannelID, payload.Embed); errSend != nil {
-		bot.logger.Error("Failed to send discord payload", zap.Error(errSend))
+		bot.log.Error("Failed to send discord payload", zap.Error(errSend))
 	}
 }
 

@@ -20,31 +20,37 @@ func TestMatch_Apply(t *testing.T) {
 	// mock?
 	testLogger, _ := zap.NewDevelopment()
 
-	p := golib.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
-	if p == "" {
+	testFilePath := golib.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
+	if testFilePath == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
 
 		return
 	}
-	body, errRead := os.ReadFile(p)
+
+	body, errRead := os.ReadFile(testFilePath)
 	require.NoError(t, errRead)
 
-	parser := logparse.New()
+	var (
+		parser   = logparse.New()
+		newMatch = logparse.NewMatch(testLogger, 1, "test server")
+		rows     = strings.Split(string(body), "\n")
+	)
 
-	m := logparse.NewMatch(testLogger, 1, "test server")
-	rows := strings.Split(string(body), "\n")
 	for _, line := range rows {
 		if line == "" {
 			continue
 		}
+
 		result, errResult := parser.Parse(line)
 		require.NoError(t, errResult)
-		if err := m.Apply(result); err != nil && !errors.Is(err, logparse.ErrIgnored) {
+
+		if err := newMatch.Apply(result); err != nil && !errors.Is(err, logparse.ErrIgnored) {
 			t.Errorf("Failed to Apply: %v [%d] %v", err, result.EventType, line)
 		}
 	}
 
 	match3124689, names := testMatch()
+
 	getName := func(sid64 steamid.SID64) string {
 		for name, sid := range names {
 			if sid == sid64 {
@@ -54,6 +60,7 @@ func TestMatch_Apply(t *testing.T) {
 
 		return "???"
 	}
+
 	getPS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchPlayerSum {
 		ps, err := m.PlayerSums.GetBySteamID(sid)
 		if err != nil {
@@ -62,35 +69,41 @@ func TestMatch_Apply(t *testing.T) {
 
 		return ps
 	}
+
 	// Player sum values
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Kills,
-			getPS(m, ps.SteamID).Kills, "Kills incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Kills, "Kills incorrect %v", getName(ps.SteamID))
 	}
+
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Deaths,
-			getPS(m, ps.SteamID).Deaths, "Deaths incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Deaths, "Deaths incorrect %v", getName(ps.SteamID))
 	}
+
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Damage,
-			getPS(m, ps.SteamID).Damage, "Damage incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Damage, "Damage incorrect %v", getName(ps.SteamID))
 	}
+
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Healing,
-			getPS(m, ps.SteamID).Healing, "Healing incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Healing, "Healing incorrect %v", getName(ps.SteamID))
 	}
+
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Dominations,
-			getPS(m, ps.SteamID).Dominations, "Dominations incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Dominations, "Dominations incorrect %v", getName(ps.SteamID))
 	}
 
 	for _, ps := range match3124689.PlayerSums {
 		require.Equal(t, getPS(match3124689, ps.SteamID).Revenges,
-			getPS(m, ps.SteamID).Revenges, "Revenges incorrect %v", getName(ps.SteamID))
+			getPS(newMatch, ps.SteamID).Revenges, "Revenges incorrect %v", getName(ps.SteamID))
 	}
+
 	// for sid := range match3124689.playerSums {
 	//	require.Equal(t, match3124689.playerSums[sid].Classes,
-	//		m.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
+	//		newMatch.playerSums[sid].Classes, "Classes incorrect %v", getName(sid))
 	// }
 
 	getMS := func(m logparse.Match, sid steamid.SID64) *logparse.MatchMedicSum {
@@ -103,23 +116,24 @@ func TestMatch_Apply(t *testing.T) {
 	}
 
 	// Medic sums
-	for _, ms := range match3124689.MedicSums {
-		require.Equal(t, getMS(match3124689, ms.SteamID).Drops,
-			getMS(m, ms.SteamID).Drops, "Drops incorrect %v", getName(ms.SteamID))
-	}
 	// for sid := range match3124689.medicSums {
 	//	require.Equal(t, match3124689.medicSums[sid].NearFullChargeDeath,
-	//		m.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
+	//		newMatch.medicSums[sid].Drops, "NearFullChargeDeath incorrect %v", getName(sid))
 	// }
 	// for _, ms := range match3124689.MedicSums {
 	//	require.Equal(t, map[logparse.Medigun]int{logparse.Ubercharge: 6, logparse.Kritzkrieg: 0, logparse.QuickFix: 0, logparse.Vaccinator: 0},
-	//		getMS(m, ms.SteamID).Charges, "Charges incorrect %v", getName(ms.SteamID))
+	//		getMS(newMatch, ms.SteamID).Charges, "Charges incorrect %v", getName(ms.SteamID))
 	// }
 
 	// for team := range match3124689.teamSums {
 	//	require.Equal(t, match3124689.teamSums[team].Kills,
-	//		m.teamSums[team].Kills, "[Team] Kills incorrect %v", team)
+	//		newMatch.teamSums[team].Kills, "[Team] Kills incorrect %v", team)
 	// }
+
+	for _, ms := range match3124689.MedicSums {
+		require.Equal(t, getMS(match3124689, ms.SteamID).Drops,
+			getMS(newMatch, ms.SteamID).Drops, "Drops incorrect %v", getName(ms.SteamID))
+	}
 }
 
 // https://logs.tf/3124689

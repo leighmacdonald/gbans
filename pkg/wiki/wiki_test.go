@@ -15,7 +15,7 @@ func TestWiki(t *testing.T) {
 - list 1
 - list 2
 `
-	v := root.Render()
+	rendered := root.Render()
 	require.Equal(t,
 		[]byte(`<h1 id="title">Title</h1>
 
@@ -24,6 +24,6 @@ func TestWiki(t *testing.T) {
 <li>list 2</li>
 </ul>
 `),
-		v,
+		rendered,
 		"Invalid markdown output")
 }

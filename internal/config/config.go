@@ -191,8 +191,10 @@ type ip2location struct {
 
 // Read reads in config file and ENV variables if set.
 func Read(conf *Config) error {
-	const defaultWarnDuration = time.Hour * 24 * 7
-	const defaultHTTPTimeout = time.Second * 10
+	const (
+		defaultWarnDuration = time.Hour * 24 * 7
+		defaultHTTPTimeout  = time.Second * 10
+	)
 
 	setDefaultConfigValues()
 
@@ -203,34 +205,44 @@ func Read(conf *Config) error {
 	if errUnmarshal := viper.Unmarshal(conf); errUnmarshal != nil {
 		return errors.Wrap(errUnmarshal, "Invalid config file format")
 	}
+
 	if strings.HasPrefix(conf.DB.DSN, "pgx://") {
 		conf.DB.DSN = strings.Replace(conf.DB.DSN, "pgx://", "postgres://", 1)
 	}
+
 	clientDuration, errClientDuration := ParseDuration(conf.HTTP.ClientTimeout)
 	if errClientDuration != nil {
 		clientDuration = defaultHTTPTimeout
 	}
+
 	conf.HTTP.ClientTimeoutDuration = clientDuration
+
 	warningDuration, errWarningDuration := ParseDuration(conf.General.WarningExceededDurationValue)
 	if errWarningDuration != nil {
 		warningDuration = defaultWarnDuration
 	}
+
 	if errDemoRoot := os.MkdirAll(conf.General.DemoRootPath, 0o775); errDemoRoot != nil {
 		return errors.Wrap(errDemoRoot, "Failed to create demo_root_path")
 	}
+
 	conf.General.WarningExceededDuration = warningDuration
 
 	gin.SetMode(conf.General.Mode.String())
+
 	if errSteam := steamid.SetKey(conf.General.SteamKey); errSteam != nil {
 		return errors.Wrap(errSteam, "Failed to set steamid api key")
 	}
+
 	if errSteamWeb := steamweb.SetKey(conf.General.SteamKey); errSteamWeb != nil {
 		return errors.Wrap(errSteamWeb, "Failed to set steamweb api key")
 	}
+
 	_, errDuration := time.ParseDuration(conf.General.ServerStatusUpdateFreq)
 	if errDuration != nil {
 		return errors.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
 	}
+
 	_, errMaterDuration := time.ParseDuration(conf.General.MasterServerStatusUpdateFreq)
 	if errMaterDuration != nil {
 		return errors.Wrap(errMaterDuration, "Failed to parse mater_server_status_update_freq")
@@ -243,6 +255,7 @@ func setDefaultConfigValues() {
 	if home, errHomeDir := homedir.Dir(); errHomeDir != nil {
 		viper.AddConfigPath(home)
 	}
+
 	viper.AddConfigPath(".")
 	viper.SetConfigName("gbans")
 	viper.SetConfigType("yml")

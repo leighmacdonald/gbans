@@ -22,6 +22,7 @@ func (opts CommandOptions) String(key optionKey) string {
 	if !found {
 		return ""
 	}
+
 	val, ok := root.Value.(string)
 	if !ok {
 		return ""

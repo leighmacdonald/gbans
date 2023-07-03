@@ -24,10 +24,12 @@ func (db *Store) GetPatreonAuth(ctx context.Context) (string, string, error) {
 	if errQuery != nil {
 		return "", "", errors.Wrap(errQuery, "Failed to create patreon auth select query")
 	}
+
 	var (
 		creatorAccessToken  string
 		creatorRefreshToken string
 	)
+
 	if errScan := db.QueryRow(ctx, query, args...).Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
 		return "", "", errors.Wrap(errQuery, "Failed to query patreon auth")
 	}

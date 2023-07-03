@@ -128,13 +128,16 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 		store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
 		store.WarningsExceeded, store.Spam, store.Language, store.Profile, store.ItemDescriptions, store.BotHost, store.Custom,
 	}
+
 	reasons := make([]*discordgo.ApplicationCommandOptionChoice, len(reasonCollection))
+
 	for index, r := range reasonCollection {
 		reasons[index] = &discordgo.ApplicationCommandOptionChoice{
 			Name:  store.ReasonString(r),
 			Value: r,
 		}
 	}
+
 	optBanReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
 		Name:        OptBanReason,
@@ -142,6 +145,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 		Required:    true,
 		Choices:     reasons,
 	}
+
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
 			Name:        string(CmdLog),
@@ -477,7 +481,8 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 	if errBulk != nil {
 		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
-	bot.logger.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
+
+	bot.log.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
 
 	return nil
 }
@@ -493,9 +498,12 @@ const (
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
 
 func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	data := interaction.ApplicationCommandData()
-	command := Cmd(data.Name)
-	response := Response{MsgType: MtString}
+	var (
+		data     = interaction.ApplicationCommandData()
+		command  = Cmd(data.Name)
+		response = Response{MsgType: MtString}
+	)
+
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
 		// sendPreResponse should be called for any commands that call external services or otherwise
 		// could not return a response instantly. discord will time out commands that don't respond within a
@@ -506,28 +514,35 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 				Content: "Calculating numberwang...",
 			},
 		}
+
 		if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
 			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
+
 			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.logger.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
+				bot.log.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
 			}
 
 			return
 		}
+
 		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
 		defer cancelCommand()
+
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
 			// TODO User facing errors only
 			RespErr(&response, errHandleCommand.Error())
+
 			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.logger.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
+				bot.log.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
 			}
-			bot.logger.Error("User command error", zap.Error(errHandleCommand))
+
+			bot.log.Error("User command error", zap.Error(errHandleCommand))
 
 			return
 		}
+
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
-			bot.logger.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
+			bot.log.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
 		}
 	}
 }

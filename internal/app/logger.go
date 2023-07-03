@@ -19,15 +19,18 @@ func MustCreateLogger(conf *config.Config) *zap.Logger {
 		loggingConfig = zap.NewDevelopmentConfig()
 		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
+
 	if conf.Log.File != "" {
 		if util.Exists(conf.Log.File) {
 			if err := os.Remove(conf.Log.File); err != nil {
 				panic(fmt.Sprintf("Failed to remove log file: %v", err))
 			}
 		}
-		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, conf.Log.File)
+
 		// loggingConfig.Level.SetLevel(zap.DebugLevel)
+		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, conf.Log.File)
 	}
+
 	l, errLogger := loggingConfig.Build()
 	if errLogger != nil {
 		panic("Failed to create log config")

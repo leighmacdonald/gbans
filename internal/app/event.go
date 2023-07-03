@@ -25,11 +25,13 @@ func newEventBroadcaster() *eventBroadcaster {
 func (eb *eventBroadcaster) Consume(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
 	eb.logEventReadersMu.Lock()
 	defer eb.logEventReadersMu.Unlock()
+
 	for _, msgType := range msgTypes {
 		_, found := eb.logEventReaders[msgType]
 		if !found {
 			eb.logEventReaders[msgType] = []chan model.ServerEvent{}
 		}
+
 		eb.logEventReaders[msgType] = append(eb.logEventReaders[msgType], serverEventChan)
 	}
 
@@ -43,9 +45,11 @@ func (eb *eventBroadcaster) Emit(serverEvent model.ServerEvent) {
 		eb.logEventReadersMu.RLock()
 		readers, ok := eb.logEventReaders[eventType]
 		eb.logEventReadersMu.RUnlock()
+
 		if !ok {
 			continue
 		}
+
 		for _, reader := range readers {
 			reader <- serverEvent
 		}
@@ -54,6 +58,7 @@ func (eb *eventBroadcaster) Emit(serverEvent model.ServerEvent) {
 
 func (eb *eventBroadcaster) removeChan(channels []chan model.ServerEvent, serverEventChan chan model.ServerEvent) []chan model.ServerEvent {
 	var newChannels []chan model.ServerEvent
+
 	for _, channel := range channels {
 		if channel != serverEventChan {
 			newChannels = append(newChannels, channel)
@@ -67,6 +72,7 @@ func (eb *eventBroadcaster) removeChan(channels []chan model.ServerEvent, server
 func (eb *eventBroadcaster) UnregisterConsumer(serverEventChan chan model.ServerEvent) error {
 	eb.logEventReadersMu.Lock()
 	defer eb.logEventReadersMu.Unlock()
+
 	for eType, eventReaders := range eb.logEventReaders {
 		eb.logEventReaders[eType] = eb.removeChan(eventReaders, serverEventChan)
 	}

@@ -15,24 +15,34 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 	if len(data) <= chunkSize {
 		return []string{data}
 	}
-	var results []string
-	var curPieces []string //nolint:prealloc
-	var curSize int
-	sepChar := "\n"
+
+	var ( //nolint:prealloc
+		results   []string
+		curPieces []string
+		curSize   int
+		sepChar   = "\n"
+	)
+
 	if len(sep) > 0 {
 		sepChar = sep[0]
 	}
+
 	rows := strings.Split(data, sepChar)
-	for i, s := range rows {
-		curLineSize := len(s) + len(sepChar) // account for \n
+
+	for index, row := range rows {
+		curLineSize := len(row) + len(sepChar) // account for \n
 		if curSize+curLineSize >= chunkSize {
 			results = append(results, strings.TrimSuffix(strings.Join(curPieces, sepChar), sepChar))
+
 			curSize = 0
 			curPieces = nil
 		}
-		curPieces = append(curPieces, s)
+
+		curPieces = append(curPieces, row)
+
 		curSize += curLineSize
-		if i+1 == len(rows) {
+
+		if index+1 == len(rows) {
 			results = append(results, strings.TrimSuffix(strings.Join(curPieces, sepChar), sepChar))
 		}
 	}

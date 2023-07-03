@@ -189,32 +189,38 @@ type PointCapturedEvt struct {
 
 func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
 	var captors []SourcePlayerPosition
-	for i := 0; i < e.Numcappers; i++ {
-		var ps string
-		var pos Pos
-		switch i {
+
+	for index := 0; index < e.Numcappers; index++ {
+		var (
+			playerString string
+			pos          Pos
+		)
+
+		switch index {
 		case 0:
-			ps = e.Player1
+			playerString = e.Player1
 			pos = e.Position1
 		case 1:
-			ps = e.Player2
+			playerString = e.Player2
 			pos = e.Position2
 		case 2:
-			ps = e.Player3
+			playerString = e.Player3
 			pos = e.Position3
 		case 3:
-			ps = e.Player4
+			playerString = e.Player4
 			pos = e.Position4
 		case 4:
-			ps = e.Player5
+			playerString = e.Player5
 			pos = e.Position5
 		default:
 			continue
 		}
+
 		var src SourcePlayer
-		if !ParseSourcePlayer(ps, &src) {
+		if !ParseSourcePlayer(playerString, &src) {
 			continue
 		}
+
 		captors = append(captors, SourcePlayerPosition{
 			SourcePlayer: src,
 			Pos:          pos,

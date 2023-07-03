@@ -52,6 +52,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	corsConfig.AllowHeaders = []string{"*"}
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = false
+
 	if app.conf.General.Mode != config.TestMode {
 		engine.Use(cors.New(corsConfig))
 	}
@@ -66,6 +67,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	if staticPath == "" {
 		staticPath = "./dist"
 	}
+
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
 	if errStaticPath != nil {
 		app.log.Fatal("Invalid static path", zap.Error(errStaticPath))
@@ -92,6 +94,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 			})
 		})
 	}
+
 	engine.GET("/auth/callback", onOpenIDCallback(app))
 	engine.GET("/api/auth/logout", onGetLogout(app))
 	engine.POST("/api/auth/refresh", onTokenRefresh(app))
@@ -145,14 +148,14 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		serverAuth.POST("/api/state_update", onAPIPostServerState(app))
 	}
 
-	cm := newWSConnectionManager(ctx, app.log)
+	connectionManager := newWSConnectionManager(ctx, app.log)
 
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(app, consts.PUser))
 		authed.GET("/ws", func(c *gin.Context) {
-			wsConnHandler(c.Writer, c.Request, cm, currentUserProfile(c), app.log)
+			wsConnHandler(c.Writer, c.Request, connectionManager, currentUserProfile(c), app.log)
 		})
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))

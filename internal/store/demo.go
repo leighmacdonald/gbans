@@ -67,6 +67,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFi
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
@@ -84,6 +85,7 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
 		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
@@ -100,39 +102,47 @@ type GetDemosOptions struct {
 
 func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
 	var demos []DemoFile
-	qb := db.sb.
+
+	builder := db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
 		OrderBy("created_on DESC").
 		Limit(1000)
+
 	if opts.MapName != "" {
-		qb = qb.Where(sq.Eq{"map_name": opts.MapName})
+		builder = builder.Where(sq.Eq{"map_name": opts.MapName})
 	}
+
 	if opts.SteamID != "" {
 		sid64, errSid := steamid.SID64FromString(opts.SteamID)
 		if errSid != nil {
 			return nil, consts.ErrInvalidSID
 		}
 		// FIXME Can this be done with normal parameters + sb?
-		qb = qb.Where(fmt.Sprintf("stats @?? '$ ?? (exists (@.\"%d\"))'", sid64.Int64()))
+		builder = builder.Where(fmt.Sprintf("stats @?? '$ ?? (exists (@.\"%d\"))'", sid64.Int64()))
 	}
+
 	if len(opts.ServerIds) > 0 {
 		// 0 = all
 		if opts.ServerIds[0] != 0 {
-			qb = qb.Where(sq.Eq{"d.server_id": opts.ServerIds})
+			builder = builder.Where(sq.Eq{"d.server_id": opts.ServerIds})
 		}
 	}
-	query, args, errQueryArgs := qb.ToSql()
+
+	query, args, errQueryArgs := builder.ToSql()
 	if errQueryArgs != nil {
 		return nil, Err(errQueryArgs)
 	}
+
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
+
 	defer rows.Close()
+
 	for rows.Next() {
 		var demoFile DemoFile
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
@@ -140,6 +150,7 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong); errScan != nil {
 			return nil, Err(errQuery)
 		}
+
 		demos = append(demos, demoFile)
 	}
 
@@ -159,13 +170,16 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	if queryErr != nil {
 		return errors.Wrap(queryErr, "Failed to select reports")
 	}
+
 	var count int
 	if errScan := db.QueryRow(ctx, query, args...).Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
 		return Err(errScan)
 	}
+
 	if count > 0 {
 		demoFile.Archive = true
 	}
+
 	var err error
 	if demoFile.DemoID > 0 {
 		err = db.updateDemo(ctx, demoFile)
@@ -187,10 +201,12 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
 		return Err(errQuery)
 	}
+
 	db.log.Info("New demo saved", zap.String("name", demoFile.Title))
 
 	return nil
@@ -210,9 +226,11 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+
 	db.log.Info("Demo updated", zap.String("name", demoFile.Title))
 
 	return nil
@@ -224,10 +242,13 @@ func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
+
 	if errExec := db.Exec(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
+
 	demoFile.DemoID = 0
+
 	db.log.Info("Demo deleted:", zap.String("name", demoFile.Title))
 
 	return nil
