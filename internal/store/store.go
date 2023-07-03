@@ -15,8 +15,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -107,7 +107,7 @@ func (db *Store) Connect(ctx context.Context) error {
 		}
 	}
 
-	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
+	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)
 	if errConnectConfig != nil {
 		return errors.Wrap(errConnectConfig, "Failed to connect to database")
 	}
