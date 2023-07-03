@@ -2,7 +2,6 @@ import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
 import { Theme } from '@mui/material';
 import { BanReason } from './bans';
-import SteamID from 'steamid';
 
 export enum ReportStatus {
     Any = -1,
@@ -41,8 +40,8 @@ export const reportStatusColour = (rs: ReportStatus, theme: Theme): string => {
 
 export interface Report extends TimeStamped {
     report_id: number;
-    source_id: SteamID;
-    target_id: SteamID;
+    source_id: string;
+    target_id: string;
     description: string;
     report_status: ReportStatus;
     deleted: boolean;
@@ -61,7 +60,7 @@ export interface ReportMessagesResponse {
 export interface UserMessage extends TimeStamped {
     parent_id: number;
     message_id: number;
-    author_id: SteamID;
+    author_id: string;
     contents: string;
     deleted: boolean;
 }

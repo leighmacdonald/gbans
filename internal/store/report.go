@@ -35,8 +35,8 @@ func (status ReportStatus) String() string {
 
 type Report struct {
 	ReportID     int64         `json:"report_id"`
-	SourceID     steamid.SID64 `json:"source_id,string"`
-	TargetID     steamid.SID64 `json:"target_id,string"`
+	SourceID     steamid.SID64 `json:"source_id"`
+	TargetID     steamid.SID64 `json:"target_id"`
 	Description  string        `json:"description"`
 	ReportStatus ReportStatus  `json:"report_status"`
 	Reason       Reason        `json:"reason"`

@@ -29,9 +29,7 @@ export const ReportCreatePage = (): JSX.Element => {
     const navigate = useNavigate();
 
     const canReport = useMemo(() => {
-        return (
-            currentUser.steam_id.isValidIndividual() && currentUser.ban_id == 0
-        );
+        return currentUser.steam_id && currentUser.ban_id == 0;
     }, [currentUser.ban_id, currentUser.steam_id]);
 
     useEffect(() => {

@@ -177,6 +177,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(app))
 		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(app))
 		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(app))
+
+		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(app))
 	}
 
 	editorGrp := engine.Group("/")

@@ -37,7 +37,7 @@ export const ReportForm = (): JSX.Element => {
     const onSave = useCallback(
         (body_md: string) => {
             setBody(body_md);
-            if (!profile || !profile.player.steam_id.isValidIndividual()) {
+            if (!profile || !profile.player.steam_id) {
                 sendFlash('error', 'Invalid steam profile');
                 return;
             }

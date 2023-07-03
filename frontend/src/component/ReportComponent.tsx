@@ -36,6 +36,7 @@ import { PersonMessageTable } from './PersonMessageTable';
 import Link from '@mui/material/Link';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Button from '@mui/material/Button';
+import { SourceBansList } from './SourceBansList';
 
 interface ReportComponentProps {
     report: Report;
@@ -253,7 +254,7 @@ export const ReportComponent = ({
                                         width: '150px',
                                         renderer: (row) => (
                                             <Typography variant={'body1'}>
-                                                {row.source_id.getSteamID64()}
+                                                {row.source_id}
                                             </Typography>
                                         )
                                     },
@@ -321,6 +322,23 @@ export const ReportComponent = ({
                             </Stack>
                         </Paper>
                     )}
+
+                    {currentUser.permission_level >=
+                        PermissionLevel.Moderator && (
+                        <SourceBansList
+                            steam_id={report.source_id}
+                            is_reporter={false}
+                        />
+                    )}
+
+                    {currentUser.permission_level >=
+                        PermissionLevel.Moderator && (
+                        <SourceBansList
+                            steam_id={report.target_id}
+                            is_reporter={true}
+                        />
+                    )}
+
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}

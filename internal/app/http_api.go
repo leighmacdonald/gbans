@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"net/http"
@@ -502,7 +504,7 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   store.StringSID `json:"target_id"`
-		GroupID    steamid.GID     `json:"group_id,string"`
+		GroupID    steamid.GID     `json:"group_id"`
 		BanType    store.BanType   `json:"ban_type"`
 		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
@@ -1407,24 +1409,25 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 			return
 		}
 
-		friendIDs, errFetchFriends := thirdparty.FetchFriends(requestCtx, person.SteamID)
-		if errFetchFriends != nil {
-			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch friends")
-
-			return
-		}
-
-		// TODO add ctx to steamweb lib
-		friends, errFetchSummaries := thirdparty.FetchSummaries(ctx, friendIDs)
-		if errFetchSummaries != nil {
-			responseErr(ctx, http.StatusServiceUnavailable, "Could not fetch summaries")
-
-			return
-		}
-
 		var response resp
+
+		friendList, errFetchFriends := steamweb.GetFriendList(requestCtx, person.SteamID)
+		if errFetchFriends == nil {
+			var friendIDs steamid.Collection
+			for _, friend := range friendList {
+				friendIDs = append(friendIDs, friend.SteamID)
+			}
+
+			// TODO add ctx to steamweb lib
+			friends, errFetchSummaries := steamweb.PlayerSummaries(ctx, friendIDs)
+			if errFetchSummaries != nil {
+				app.log.Warn("Could not fetch summaries", zap.Error(errFetchSummaries))
+			} else {
+				response.Friends = friends
+			}
+		}
+
 		response.Player = &person
-		response.Friends = friends
 
 		responseOK(ctx, http.StatusOK, response)
 	}
@@ -3242,6 +3245,69 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 			Embed:     embed,
 		})
 	}
+}
+
+func onAPIGetSourceBans(_ *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		steamID, errID := getSID64Param(ctx, "steam_id")
+		if errID != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+
+		records, errRecords := getSourceBans(ctx, steamID)
+		if errRecords != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, records)
+	}
+}
+
+type sbBanRecord struct {
+	BanID       int           `json:"ban_id"`
+	SiteName    string        `json:"site_name"`
+	SiteID      int           `json:"site_id"`
+	PersonaName string        `json:"persona_name"`
+	SteamID     steamid.SID64 `json:"steam_id"`
+	Reason      string        `json:"reason"`
+	Duration    time.Duration `json:"duration"`
+	Permanent   bool          `json:"permanent"`
+	CreatedOn   time.Time     `json:"created_on"`
+}
+
+func getSourceBans(ctx context.Context, steamID steamid.SID64) ([]sbBanRecord, error) {
+	client := &http.Client{Timeout: time.Second * 10}
+	url := fmt.Sprintf("https://bd-api.roto.lol/sourcebans/%s", steamID)
+
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if errReq != nil {
+		return nil, errors.Wrap(errReq, "Failed to create request")
+	}
+
+	resp, errResp := client.Do(req)
+	if errResp != nil {
+		return nil, errors.Wrap(errResp, "Failed to perform request")
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	body, errBody := io.ReadAll(resp.Body)
+	if errBody != nil {
+		return nil, errors.Wrap(errBody, "Failed to read body")
+	}
+
+	var records []sbBanRecord
+	if errJSON := json.Unmarshal(body, &records); errJSON != nil {
+		return nil, errors.Wrap(errJSON, "Failed to decode body")
+	}
+
+	return records, nil
 }
 
 func onAPIPostBanMessage(app *App) gin.HandlerFunc {
