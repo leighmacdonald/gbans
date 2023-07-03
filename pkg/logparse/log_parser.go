@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type parserType struct {
+type regexEventMap struct {
 	Rx   *regexp.Regexp
 	Type EventType
 }
@@ -27,7 +27,7 @@ type LogParser struct {
 	// Common player id format eg: "Name<382><STEAM_0:1:22649331><>".
 	rxPlayer    *regexp.Regexp
 	rxUnhandled *regexp.Regexp
-	rxParsers   []parserType
+	rxParsers   []regexEventMap
 	weapons     *WeaponParser
 }
 
@@ -343,7 +343,7 @@ func New() *LogParser {
 		weapons:     NewWeaponParser(),
 		// Map matching regex to known event types.
 		//nolint:lll
-		rxParsers: []parserType{
+		rxParsers: []regexEventMap{
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`), LogStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`), LogStop},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+server_cvar:\s+"(?P<CVAR>.+?)"\s"(?P<value>.+?)"$`), CVAR},

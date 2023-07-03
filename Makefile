@@ -13,6 +13,7 @@ vet:
 	@go vet . ./...
 
 fmt:
+	gci write . --skip-generated -s standard -s default
 	gofumpt -l -w .
 
 build_debug:
@@ -70,6 +71,7 @@ testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 check_deps:
+	go install github.com/daixiang0/gci@latest
 	go install mvdan.cc/gofumpt@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 	go install honnef.co/go/tools/cmd/staticcheck@latest

@@ -105,26 +105,6 @@ linters:
     - wrapcheck
     - wsl
     #- zerologlint
-  # Disable specific linter
-  # https://golangci-lint.run/usage/linters/#disabled-by-default
-  #disable:
-  #  - staticcheck
-  # Enable presets.
-  # https://golangci-lint.run/usage/linters
-#  presets:
-#    - bugs
-#    #- comment
-#    - complexity
-#    #- error
-#    - format
-#    - import
-#    - metalinter
-#    - module
-#    #- performance
-#    - sql
-#    #- style
-#    #- test
-#    #- unused
 
 linters-settings:
   tagliatelle:

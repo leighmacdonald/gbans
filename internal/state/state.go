@@ -31,9 +31,10 @@ type ServerStateCollector struct {
 }
 
 func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUpdateStatus UpdateStatusHandler, onUpdateMSL UpdateMSLHandler) *ServerStateCollector {
-	const statusUpdateFreq = time.Second * 30
-
-	const msListUpdateFreq = time.Minute
+	const (
+		statusUpdateFreq = time.Minute
+		msListUpdateFreq = time.Minute
+	)
 
 	return &ServerStateCollector{
 		log:              logger,

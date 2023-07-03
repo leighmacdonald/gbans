@@ -272,7 +272,7 @@ func TestParsePointCapturedEvt(t *testing.T) {
 		Player2: "El Sur<35><[U:1:423376881]><Red>", Position2: logparse.Pos{X: -95, Y: 152, Z: -767},
 	}
 
-	testLogLine(t, `L 02/21/2021 - 06:22:23: NewTeam "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "Hacksaw<12><[U:1:68745073]><Red>") (position1 "101 98 -313") (player2 "El Sur<35><[U:1:423376881]><Red>") (position2 "-95 152 -767")`, evt)
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "Red" triggered "pointcaptured" (cp "0") (cpname "#koth_viaduct_cap") (numcappers "2") (player1 "Hacksaw<12><[U:1:68745073]><Red>") (position1 "101 98 -313") (player2 "El Sur<35><[U:1:423376881]><Red>") (position2 "-95 152 -767")`, evt)
 
 	expectedPlayers := []logparse.SourcePlayerPosition{
 		{SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.RED}, Pos: logparse.Pos{X: 101, Y: 98, Z: -313}},
@@ -381,7 +381,7 @@ func TestParseWRoundLenEvt(t *testing.T) {
 func TestParseWTeamScoreEvt(t *testing.T) {
 	t.Parallel()
 
-	testLogLine(t, `L 02/21/2021 - 06:22:23: NewTeam "Red" current score "1" with "2" players`,
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "Red" current score "1" with "2" players`,
 		logparse.WTeamScoreEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			Team:      logparse.RED, Score: 1, Players: 2,
@@ -402,7 +402,7 @@ func TestParseSayEvt(t *testing.T) {
 func TestParseWIntermissionWinLimitEvt(t *testing.T) {
 	t.Parallel()
 
-	testLogLine(t, `L 02/21/2021 - 06:22:23: NewTeam "RED" triggered "Intermission_Win_Limit"`,
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "RED" triggered "Intermission_Win_Limit"`,
 		logparse.WIntermissionWinLimitEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			Team:      logparse.RED,
@@ -496,7 +496,7 @@ func TestParseWGameOverEvt(t *testing.T) {
 func TestParseWTeamFinalScoreEvt(t *testing.T) {
 	t.Parallel()
 
-	testLogLine(t, `L 02/21/2021 - 06:22:23: NewTeam "Red" final score "2" with "3" players`,
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Team "Red" final score "2" with "3" players`,
 		logparse.WTeamFinalScoreEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			Score:     2,

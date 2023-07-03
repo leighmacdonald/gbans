@@ -238,7 +238,9 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 
 func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
-		Delete(string(tableDemo)).Where(sq.Eq{"demo_id": demoFile.DemoID}).ToSql()
+		Delete(string(tableDemo)).
+		Where(sq.Eq{"demo_id": demoFile.DemoID}).
+		ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
