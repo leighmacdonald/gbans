@@ -2,7 +2,7 @@
 
 SM_HOME=$(HOME)/sdk/sourcemod-1.11.0/addons/sourcemod
 
-all: fmt build
+all: build
 
 fmt:
 	find scripting/ -not -path "./include/*" -iname gbans.inc -o -iname *.sp -type f -exec sp_format {} \;

@@ -1164,8 +1164,9 @@ func onAPIExportSourcemodSimpleAdmins(app *App) gin.HandlerFunc {
 			case consts.PReserved:
 				perms = "a"
 			}
-			log.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
-			if perms != "" {
+			if perms == "" {
+				log.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
+			} else {
 				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
 			}
 		}
@@ -3233,5 +3234,72 @@ func onAPIGetPatreonPledges(app *App) gin.HandlerFunc {
 			return
 		}
 		responseOK(ctx, http.StatusOK, pledges)
+	}
+}
+
+func serverFromCtx(ctx *gin.Context) int {
+	serverID, ok := ctx.Get("server_id")
+	if !ok {
+		return 0
+	}
+
+	return serverID.(int)
+}
+
+func onAPIPostServerState(app *App) gin.HandlerFunc {
+	type newState struct {
+		Hostname       string `json:"hostname"`
+		ShortName      string `json:"short_name"`
+		CurrentMap     string `json:"current_map"`
+		PlayersReal    int    `json:"players_real"`
+		PlayersTotal   int    `json:"players_total"`
+		PlayersVisible int    `json:"players_visible"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req newState
+		if errBind := ctx.BindJSON(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+		serverID := serverFromCtx(ctx)
+		if serverID == 0 {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		app.stateMu.Lock()
+		defer app.stateMu.Unlock()
+		curState, ok := app.serverState[serverID]
+		if !ok {
+			var server store.Server
+			if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
+				responseErr(ctx, http.StatusNotFound, nil)
+
+				return
+			}
+			curState = ServerDetails{
+				ServerID:  server.ServerID,
+				NameShort: server.ServerName,
+				Name:      server.ServerNameLong,
+				Host:      server.Address,
+				Port:      server.Port,
+				Enabled:   server.IsEnabled,
+				Region:    server.Region,
+				CC:        server.CC,
+				Latitude:  server.Latitude,
+				Longitude: server.Longitude,
+				Reserved:  server.ReservedSlots,
+			}
+		}
+		curState.Host = req.Hostname
+		curState.PlayerCount = req.PlayersReal
+		curState.MaxPlayers = req.PlayersVisible
+		curState.Bots = req.PlayersTotal - req.PlayersReal
+		app.serverState[serverID] = curState
+
+		responseOK(ctx, http.StatusNoContent, "")
 	}
 }

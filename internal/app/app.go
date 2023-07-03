@@ -46,8 +46,8 @@ type App struct {
 	wordFilters          *wordFilters
 	mc                   *metricCollector
 	serverState          map[int]ServerDetails
-	msl                  []state.ServerLocation
 	stateMu              *sync.RWMutex
+	msl                  []state.ServerLocation
 }
 
 func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
@@ -98,8 +98,8 @@ func (app *App) onPlayerUpdate(serverID int, newState extra.Status) {
 	app.stateMu.Lock()
 	defer app.stateMu.Unlock()
 	server := app.serverState[serverID]
-	server.PlayersCount = newState.PlayersCount
-	server.PlayersMax = newState.PlayersMax
+	server.PlayerCount = newState.PlayersCount
+	server.MaxPlayers = newState.PlayersMax
 	if newState.ServerName != "" && newState.ServerName != server.Name {
 		server.Name = newState.ServerName
 	}
@@ -127,8 +127,8 @@ func (app *App) onA2SUpdate(serverID int, newState *a2s.ServerInfo) {
 	server.Folder = newState.Folder
 	server.Game = newState.Game
 	server.AppID = newState.ID
-	server.PlayersCount = int(newState.MaxPlayers)
-	server.PlayersMax = int(newState.MaxPlayers)
+	server.PlayerCount = int(newState.MaxPlayers)
+	server.MaxPlayers = int(newState.MaxPlayers)
 	server.Bots = int(newState.Bots)
 	server.ServerType = newState.ServerType.String()
 	server.ServerOS = newState.ServerOS.String()

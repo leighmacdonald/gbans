@@ -67,9 +67,6 @@ type ServerDetails struct {
 	// Name of the spectator server for SourceTV.
 	STVName string `json:"stv_name"`
 
-	PlayersCount int `json:"players_count"`
-	PlayersMax   int `json:"players_max"`
-
 	Tags    []string       `json:"tags"`
 	Players []extra.Player `json:"players"`
 }

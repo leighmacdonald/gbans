@@ -88,6 +88,8 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 			return
 		}
 
+		ctx.Set("server_id", claims.ServerID)
+
 		ctx.Next()
 	}
 }
