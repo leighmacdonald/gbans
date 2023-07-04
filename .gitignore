@@ -47,3 +47,4 @@ sm
 *.privatekey.vdf
 *.publickey.vdf
 .vscode
+*.smx

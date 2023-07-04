@@ -3784,7 +3784,7 @@ func onAPIPostServerState(app *App) gin.HandlerFunc {
 			}
 		}
 
-		curState.Host = req.Hostname
+		curState.Name = req.Hostname
 		curState.Map = req.CurrentMap
 		curState.PlayerCount = req.PlayersReal
 		curState.MaxPlayers = req.PlayersVisible
