@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
 
@@ -151,7 +152,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	}
 
 	var (
-		running        = true
+		running        = atomic.NewBool(false)
 		count          = uint64(0)
 		insecureCount  = uint64(0)
 		errCount       = uint64(0)
@@ -159,7 +160,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	)
 
 	go func() {
-		for running {
+		for running.Load() {
 			buffer := make([]byte, 1024)
 
 			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
@@ -217,7 +218,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			running = false
+			running.Store(false)
 		case <-ticker.C:
 			remoteSrc.updateSecrets(ctx)
 			// remoteSrc.updateDNS()
