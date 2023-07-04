@@ -327,7 +327,7 @@ export const ReportComponent = ({
                         PermissionLevel.Moderator && (
                         <SourceBansList
                             steam_id={report.source_id}
-                            is_reporter={false}
+                            is_reporter={true}
                         />
                     )}
 
@@ -335,7 +335,7 @@ export const ReportComponent = ({
                         PermissionLevel.Moderator && (
                         <SourceBansList
                             steam_id={report.target_id}
-                            is_reporter={true}
+                            is_reporter={false}
                         />
                     )}
 

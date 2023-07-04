@@ -44,6 +44,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import InfoIcon from '@mui/icons-material/Info';
 import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
+import { SourceBansList } from '../component/SourceBansList';
 
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
@@ -175,6 +176,25 @@ export const BanPage = (): JSX.Element => {
                             </Typography>
                         </ContainerWithHeader>
                     )}
+
+                    {ban &&
+                        currentUser.permission_level >=
+                            PermissionLevel.Moderator && (
+                            <SourceBansList
+                                steam_id={ban?.ban.source_id}
+                                is_reporter={true}
+                            />
+                        )}
+
+                    {ban &&
+                        currentUser.permission_level >=
+                            PermissionLevel.Moderator && (
+                            <SourceBansList
+                                steam_id={ban?.ban.target_id}
+                                is_reporter={false}
+                            />
+                        )}
+
                     {messages.map((m) => (
                         <UserMessageView
                             onSave={onEdit}

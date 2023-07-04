@@ -81,9 +81,11 @@ func (queryFilter *QueryFilter) orderString() string {
 	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
+const maxQuerySize = 1000
+
 func NewQueryFilter(query string) QueryFilter {
 	return QueryFilter{
-		Limit:   1000,
+		Limit:   maxQuerySize,
 		Offset:  0,
 		Desc:    true,
 		OrderBy: "created_on",
@@ -102,9 +104,9 @@ func (db *Store) Connect(ctx context.Context) error {
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
 			return errors.Errorf("Could not migrate schema: %v", errMigrate)
-		} else {
-			db.log.Info("Migration completed successfully")
 		}
+
+		db.log.Info("Migration completed successfully")
 	}
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)
