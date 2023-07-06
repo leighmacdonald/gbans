@@ -822,7 +822,7 @@ func (db *Store) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]Ba
 			steamID      int64
 		)
 
-		if errScan := rows.Scan(&bannedPerson.Ban.BanID, &bannedPerson.Ban.TargetID, &bannedPerson.Ban.SourceID,
+		if errScan := rows.Scan(&bannedPerson.Ban.BanID, &targetID, &sourceID,
 			&bannedPerson.Ban.BanType, &bannedPerson.Ban.Reason, &bannedPerson.Ban.ReasonText,
 			&bannedPerson.Ban.Note, &bannedPerson.Ban.Origin, &bannedPerson.Ban.ValidUntil,
 			&bannedPerson.Ban.CreatedOn, &bannedPerson.Ban.UpdatedOn,

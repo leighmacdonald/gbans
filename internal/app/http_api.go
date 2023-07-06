@@ -1362,7 +1362,7 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 		for _, ban := range filtered {
 			out.Players = append(out.Players, thirdparty.Players{
 				Attributes: []string{"cheater"},
-				Steamid:    ban.Ban.TargetID.Int64(),
+				Steamid:    ban.Ban.TargetID,
 				LastSeen: thirdparty.LastSeen{
 					PlayerName: ban.Person.PersonaName,
 					Time:       int(ban.Ban.UpdatedOn.Unix()),
