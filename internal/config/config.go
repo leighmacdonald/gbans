@@ -140,21 +140,17 @@ type generalConfig struct {
 }
 
 type discordConfig struct {
-	Enabled                bool     `mapstructure:"enabled"`
-	AppID                  string   `mapstructure:"app_id"`
-	AppSecret              string   `mapstructure:"app_secret"`
-	LinkID                 string   `mapstructure:"link_id"`
-	Token                  string   `mapstructure:"token"`
-	ModRoleIDs             []string `mapstructure:"mod_role_ids"`
-	GuildID                string   `mapstructure:"guild_id"`
-	Perms                  int      `mapstructure:"perms"`
-	Prefix                 string   `mapstructure:"prefix"`
-	ModChannels            []string `mapstructure:"mod_channel_ids"`
-	LogChannelID           string   `mapstructure:"log_channel_id"`
-	PublicLogChannelEnable bool     `mapstructure:"public_log_channel_enable"`
-	PublicLogChannelID     string   `mapstructure:"public_log_channel_id"`
-	ModLogChannelID        string   `mapstructure:"mod_log_channel_id"`
-	ReportLogChannelID     string   `mapstructure:"report_log_channel_id"`
+	Enabled                bool   `mapstructure:"enabled"`
+	AppID                  string `mapstructure:"app_id"`
+	AppSecret              string `mapstructure:"app_secret"`
+	LinkID                 string `mapstructure:"link_id"`
+	Token                  string `mapstructure:"token"`
+	GuildID                string `mapstructure:"guild_id"`
+	LogChannelID           string `mapstructure:"log_channel_id"`
+	PublicLogChannelEnable bool   `mapstructure:"public_log_channel_enable"`
+	PublicLogChannelID     string `mapstructure:"public_log_channel_id"`
+	ModPingRoleID          string `mapstructure:"mod_ping_role_id"`
+	UnregisterOnStart      bool   `mapstructure:"unregister_on_start"`
 }
 
 type LogConfig struct {
@@ -301,13 +297,14 @@ func setDefaultConfigValues() {
 		"discord.app_id":                           0,
 		"discord.app_secret":                       "",
 		"discord.token":                            "",
-		"discord.mod_role_ids":                     []string{},
+		"discord.link_id":                          "",
 		"discord.perms":                            125958,
-		"discord.mod_channel_ids":                  []string{},
 		"discord.guild_id":                         "",
 		"discord.public_log_channel_enable":        false,
 		"discord.public_log_channel_id":            "",
-		"discord.report_log_channel_id":            "",
+		"discord.log_channel_id":                   "",
+		"discord.mod_ping_role_id":                 "",
+		"discord.unregister_on_start":              false,
 		"network_bans.enabled":                     false,
 		"network_bans.max_age":                     "1d",
 		"network_bans.cache_path":                  ".cache",

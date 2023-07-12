@@ -223,7 +223,7 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 	discord.AddField(unbanNotice, "Reason", reason)
 
 	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.ModLogChannelID,
+		ChannelID: app.conf.Discord.LogChannelID,
 		Embed:     unbanNotice,
 	})
 

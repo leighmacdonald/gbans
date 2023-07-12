@@ -429,7 +429,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 				discord.AddFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerName)
 
 				app.bot.SendPayload(discord.Payload{
-					ChannelID: conf.Discord.ModLogChannelID,
+					ChannelID: conf.Discord.LogChannelID,
 					Embed:     warnNotice,
 				})
 

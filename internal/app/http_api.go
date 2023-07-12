@@ -333,17 +333,8 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			return
 		}
 
-		// name := req.SteamID.String()
-		// if playerInfo.InGame {
-		// 	name = fmt.Sprintf("%s (%s)", name, playerInfo.Player.Name)
-		// }
-		var roleStrings []string
-		for _, roleID := range app.conf.Discord.ModRoleIDs {
-			roleStrings = append(roleStrings, fmt.Sprintf("<@&%s>", roleID))
-		}
-
 		embed := discord.RespOk(nil, "New User Report")
-		embed.Description = fmt.Sprintf("%s | %s", req.Reason, strings.Join(roleStrings, " "))
+		embed.Description = fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)
 		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Reporter",
 			Value:  players[0].Player.Name,
@@ -366,9 +357,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			})
 		}
 
-		for _, chanID := range app.conf.Discord.ModChannels {
-			app.bot.SendPayload(discord.Payload{ChannelID: chanID, Embed: embed})
-		}
+		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: embed})
 
 		responseOK(ctx, http.StatusOK, gin.H{
 			"client":  req.Client,
@@ -2169,7 +2158,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 		discord.AddLink(embed, app.conf, report)
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ReportLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2279,7 +2268,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		discord.AddLink(embed, app.conf, report)
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ReportLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2359,7 +2348,7 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.Avatarfull}
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ModLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2412,7 +2401,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ModLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -2721,7 +2710,7 @@ func onAPIPostNewsCreate(app *App) gin.HandlerFunc {
 		responseOK(ctx, http.StatusCreated, entry)
 
 		go app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ModLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Created",
 				Description: fmt.Sprintf("News Posted: %s", entry.Title),
@@ -2767,7 +2756,7 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 		responseOK(ctx, http.StatusAccepted, entry)
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ModLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed: &discordgo.MessageEmbed{
 				Title:       "News Updated",
 				Description: fmt.Sprintf("News Updated: %s", entry.Title),
@@ -3230,7 +3219,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 		}
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ReportLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -3372,7 +3361,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			userProfile.SteamID, userProfile.Name, userProfile.ToURL(app.conf))
 
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ReportLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}
@@ -3448,7 +3437,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 
 		discord.AddField(embed, "Author", curUser.SteamID.String())
 		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.ReportLogChannelID,
+			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
 	}

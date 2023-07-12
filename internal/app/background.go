@@ -167,7 +167,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", meta.Open3Days))
 			discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", meta.OpenWeek))
 
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.ModLogChannelID, Embed: reportNotice})
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: reportNotice})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
