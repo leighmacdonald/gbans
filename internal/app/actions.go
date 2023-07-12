@@ -14,17 +14,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrNoUserFound      = errors.New("No user found")
-	ErrInvalidAuthorSID = errors.New("Invalid author steam id")
-	ErrInvalidTargetSID = errors.New("Invalid author steam id")
-)
-
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
 func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
 	players, found := app.Find(findOpts)
 	if !found {
-		return ErrNoUserFound
+		return consts.ErrPlayerNotFound
 	}
 
 	var err error
@@ -53,11 +47,11 @@ func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd fu
 // Kick will kick the steam id from whatever server it is connected to.
 func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64, reason store.Reason) error {
 	if !author.Valid() {
-		return ErrInvalidAuthorSID
+		return consts.ErrInvalidAuthorSID
 	}
 
 	if !target.Valid() {
-		return ErrInvalidTargetSID
+		return consts.ErrInvalidTargetSID
 	}
 
 	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
@@ -70,11 +64,11 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 	reason store.Reason,
 ) error {
 	if !author.Valid() {
-		return ErrInvalidAuthorSID
+		return consts.ErrInvalidAuthorSID
 	}
 
 	if !target.Valid() {
-		return ErrInvalidTargetSID
+		return consts.ErrInvalidTargetSID
 	}
 
 	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
@@ -138,11 +132,11 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 // PSay is used to send a private message to a player.
 func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, message string) error {
 	if !author.Valid() {
-		return ErrInvalidAuthorSID
+		return consts.ErrInvalidAuthorSID
 	}
 
 	if !target.Valid() {
-		return ErrInvalidTargetSID
+		return consts.ErrInvalidTargetSID
 	}
 
 	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {

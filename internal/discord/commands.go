@@ -541,6 +541,12 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 			return
 		}
 
+		if response.Value == nil {
+			response.Value = "Internal error"
+
+			bot.log.Error("Command handler returned empty response", zap.String("command", string(command)))
+		}
+
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
 			bot.log.Error("Failed sending success response for interaction", zap.Error(sendSendResponse))
 		}

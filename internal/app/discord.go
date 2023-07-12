@@ -593,7 +593,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 
 		players, found := app.Find(FindOpts{SteamID: targetSid64})
 		if !found {
-			return nil
+			return consts.ErrPlayerNotFound
 		}
 
 		var err error
@@ -1294,7 +1294,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 
 	players, found := app.Find(FindOpts{CIDR: network})
 	if !found {
-		return nil
+		return consts.ErrPlayerNotFound
 	}
 
 	for _, player := range players {
