@@ -93,7 +93,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 	updateChan := make(chan any)
 
 	go func() {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 20)
 		updateChan <- true
 	}()
 
@@ -110,7 +110,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			if errReports != nil {
 				app.log.Error("failed to fetch reports for report metadata", zap.Error(errReports))
 
-				return
+				continue
 			}
 
 			var (
@@ -167,7 +167,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", meta.Open3Days))
 			discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", meta.OpenWeek))
 
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.ReportLogChannelID, Embed: reportNotice})
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.ModLogChannelID, Embed: reportNotice})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
