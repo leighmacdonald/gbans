@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Select from '@mui/material/Select';
@@ -91,7 +91,7 @@ export const AdminChat = () => {
 
     return (
         <Grid container spacing={2} paddingTop={3}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Paper elevation={1}>
                     <Stack>
                         <Heading>Chat History</Heading>

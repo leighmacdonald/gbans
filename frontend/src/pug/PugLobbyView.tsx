@@ -1,5 +1,5 @@
 import React from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { Heading } from '../component/Heading';
@@ -26,7 +26,7 @@ import { Nullable } from '../util/types';
 const ClassBox = ({ src }: { src: string }) => {
     return (
         <Grid sx={{ height: 70 }} container>
-            <Grid item xs={12} alignItems="center" alignContent={'center'}>
+            <Grid xs={12} alignItems="center" alignContent={'center'}>
                 <Avatar src={src} sx={{ textAlign: 'center' }} />
             </Grid>
         </Grid>
@@ -88,7 +88,7 @@ const LobbyClassSelectionView = () => {
     const { currentUser } = useCurrentUserCtx();
     return (
         <Grid container>
-            <Grid item xs={5}>
+            <Grid xs={5}>
                 <Paper>
                     <Stack spacing={1}>
                         <Heading>RED</Heading>
@@ -104,7 +104,7 @@ const LobbyClassSelectionView = () => {
                     </Stack>
                 </Paper>
             </Grid>
-            <Grid item xs={2}>
+            <Grid xs={2}>
                 <Stack spacing={1}>
                     <Heading>Class</Heading>
                     <ClassBox src={scoutIcon} />
@@ -118,7 +118,7 @@ const LobbyClassSelectionView = () => {
                     <ClassBox src={spyIcon} />
                 </Stack>
             </Grid>
-            <Grid item xs={5}>
+            <Grid xs={5}>
                 <Paper>
                     <Stack spacing={1}>
                         <Heading bgColor={'#395c78'}>BLU</Heading>
@@ -143,10 +143,10 @@ export const PugLobbyView = () => {
     return (
         <Stack spacing={2}>
             <Grid container paddingTop={3} spacing={2}>
-                <Grid item xs={4}>
+                <Grid xs={4}>
                     <LobbyDetailsView lobby={lobby} />
                 </Grid>
-                <Grid item xs={8}>
+                <Grid xs={8}>
                     <ChatView messages={messages} sendMessage={sendMessage} />
                 </Grid>
             </Grid>

@@ -6,7 +6,7 @@ import Switch from '@mui/material/Switch';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import styled from '@mui/system/styled';
@@ -161,10 +161,10 @@ export const ServerFilters = () => {
                     // justifyContent: 'center'
                 }}
             >
-                <Grid item xs={2}>
+                <Grid xs={2}>
                     <Heading>Filters</Heading>
                 </Grid>
-                <Grid item xs>
+                <Grid xs>
                     <FormControlLabel
                         control={
                             <Switch
@@ -176,7 +176,7 @@ export const ServerFilters = () => {
                         label="Open Slots"
                     />
                 </Grid>
-                <Grid item xs>
+                <Grid xs>
                     <FormControl>
                         <InputLabel id="region-selector-label">
                             Region
@@ -198,7 +198,7 @@ export const ServerFilters = () => {
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs>
+                <Grid xs>
                     <FormControlLabel
                         control={
                             <Switch
@@ -210,7 +210,7 @@ export const ServerFilters = () => {
                         label="By Range"
                     />
                 </Grid>
-                <Grid item xs style={{ paddingRight: '2rem' }}>
+                <Grid xs style={{ paddingRight: '2rem' }}>
                     <RangeSlider
                         style={{
                             zIndex: 1000

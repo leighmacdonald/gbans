@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -52,7 +52,7 @@ export const ReportCreatePage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12} md={8}>
+            <Grid xs={12} md={8}>
                 <Stack spacing={2}>
                     {canReport && <ReportForm />}
                     {!canReport && (
@@ -155,7 +155,7 @@ export const ReportCreatePage = (): JSX.Element => {
                     </ContainerWithHeader>
                 </Stack>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid xs={12} md={4}>
                 <ContainerWithHeader
                     title={'Reporting Guide'}
                     iconRight={<InfoIcon />}

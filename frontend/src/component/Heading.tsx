@@ -1,7 +1,7 @@
 import React, { FC, JSX } from 'react';
 import useTheme from '@mui/material/styles/useTheme';
 import { tf2Fonts } from '../theme';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 
 interface HeadingProps {
     children: JSX.Element[] | JSX.Element | string;
@@ -32,17 +32,9 @@ export const Heading: FC<HeadingProps> = ({
                 ...tf2Fonts
             }}
         >
-            {iconLeft && (
-                <Grid item paddingRight={1}>
-                    {iconLeft}
-                </Grid>
-            )}
-            <Grid item>{children}</Grid>
-            {iconRight && (
-                <Grid item paddingLeft={1}>
-                    {iconRight}
-                </Grid>
-            )}
+            {iconLeft && <Grid paddingRight={1}>{iconLeft}</Grid>}
+            <Grid>{children}</Grid>
+            {iconRight && <Grid paddingLeft={1}>{iconRight}</Grid>}
         </Grid>
     );
 };

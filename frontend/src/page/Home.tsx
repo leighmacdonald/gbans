@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import { NewsView } from '../component/NewsView';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -19,10 +19,10 @@ export const Home = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={9}>
+            <Grid xs={9}>
                 <NewsView itemsPerPage={3} />
             </Grid>
-            <Grid item xs={3}>
+            <Grid xs={3}>
                 <Stack spacing={3}>
                     {currentUser.ban_id == 0 ? (
                         <Button

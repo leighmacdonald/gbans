@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Paper from '@mui/material/Paper';
@@ -135,7 +135,7 @@ export const ReportViewPage = (): JSX.Element => {
 
     return (
         <Grid container spacing={2} paddingTop={3}>
-            <Grid item xs={12} md={8}>
+            <Grid xs={12} md={8}>
                 {report && (
                     <ReportComponent
                         report={report.report}
@@ -143,7 +143,7 @@ export const ReportViewPage = (): JSX.Element => {
                     />
                 )}
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid xs={12} md={4}>
                 <Stack spacing={2}>
                     <Paper elevation={1}>
                         <Stack>

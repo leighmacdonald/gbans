@@ -1,4 +1,4 @@
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import React, { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { apiGetAppeals, AppealOverview, BanReason } from '../api';
@@ -25,7 +25,7 @@ export const AdminAppeals = () => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Paper>
                     <Heading>Recent Open Appeal Activity</Heading>
                     <DataTable

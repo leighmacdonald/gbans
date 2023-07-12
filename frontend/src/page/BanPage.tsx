@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     apiCreateBanMessage,
@@ -162,7 +162,7 @@ export const BanPage = (): JSX.Element => {
 
     return (
         <Grid container paddingTop={3} spacing={2}>
-            <Grid item xs={8}>
+            <Grid xs={8}>
                 <Stack spacing={2}>
                     {canPost && messages.length == 0 && (
                         <ContainerWithHeader title={`Ban Appeal #${id}`}>
@@ -229,7 +229,7 @@ export const BanPage = (): JSX.Element => {
                     )}
                 </Stack>
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
                 <Stack spacing={2}>
                     {ban && (
                         <ProfileInfoBox

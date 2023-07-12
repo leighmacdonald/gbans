@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import { PugCreateLobbyForm } from './PugCreateLobbyForm';
 import Typography from '@mui/material/Typography';
 import CardActions from '@mui/material/CardActions';
@@ -24,10 +24,10 @@ export const JoinOrCreateLobby = ({ isReady }: { isReady: boolean }) => {
                 paddingTop={3}
                 spacing={2}
             >
-                <Grid item xs={8}>
+                <Grid xs={8}>
                     <PugLobbyList />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid xs={4}>
                     <Card sx={{ maxWidth: 350 }}>
                         <CardMedia
                             component="img"

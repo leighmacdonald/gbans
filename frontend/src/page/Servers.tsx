@@ -14,7 +14,7 @@ import LinearProgress, {
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { sum } from 'lodash-es';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 
 function LinearProgressWithLabel(
@@ -62,7 +62,7 @@ export const ServerStats = () => {
                 spacing={3}
                 padding={3}
             >
-                <Grid item xs={3} xl={4}>
+                <Grid xs={3} xl={4}>
                     <Typography
                         style={{ display: 'inline' }}
                         variant={'subtitle1'}
@@ -91,7 +91,7 @@ export const ServerStats = () => {
                         ).map((value) => value?.max_players || 24)
                     );
                     return (
-                        <Grid item xs={3} xl={4} key={`stat-${v}`}>
+                        <Grid xs={3} xl={4} key={`stat-${v}`}>
                             <Typography
                                 style={{ display: 'inline' }}
                                 variant={'subtitle1'}

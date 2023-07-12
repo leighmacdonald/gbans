@@ -1,5 +1,5 @@
 import React, { JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { PlayerClass, PlayerClassNames, PlayerStats } from '../api';
 import Paper from '@mui/material/Paper';
@@ -21,10 +21,10 @@ export const InlineStatBlock = ({
 }: InlineStatBlockProps): JSX.Element => {
     return (
         <Grid container spacing={0}>
-            <Grid item>
+            <Grid>
                 <Typography variant={'h2'}>{name}</Typography>
             </Grid>
-            <Grid item>
+            <Grid>
                 <Typography variant={'body1'}>{value}</Typography>
             </Grid>
         </Grid>
@@ -38,7 +38,7 @@ export const ClassStatBlock = ({
     return (
         <Paper>
             <Grid container>
-                <Grid item>
+                <Grid xs={12}>
                     <Avatar
                         alt={PlayerClassNames[player_class]}
                         src={`../icons/class_${PlayerClassNames[player_class]}.png`}
@@ -48,7 +48,7 @@ export const ClassStatBlock = ({
                     </Typography>
                 </Grid>
                 <Grid container>
-                    <Grid item xs={3}>
+                    <Grid xs={3}>
                         <InlineStatBlock name={'Kills'} value={stats.kills} />
                     </Grid>
                 </Grid>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -48,7 +48,7 @@ export const TF2StatsPage = (): JSX.Element => {
 
     return (
         <Grid container paddingTop={3}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Stack spacing={2}>
                     <ContainerWithHeader
                         iconLeft={<SettingsSuggestIcon />}

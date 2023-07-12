@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import { DataTable } from '../component/DataTable';
 import { apiGetServers, Server } from '../api';
@@ -36,7 +36,7 @@ export const AdminServers = () => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <ServerEditorModal
                     setOpen={setOpen}
                     open={open}

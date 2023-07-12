@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
 import { log, logErr } from '../util/errors';
@@ -86,14 +86,14 @@ export const WikiPage = (): JSX.Element => {
     return (
         <Grid container paddingTop={3} spacing={3}>
             {loading && (
-                <Grid item xs={12} alignContent={'center'}>
+                <Grid xs={12} alignContent={'center'}>
                     <Paper elevation={1}>
                         <LoadingSpinner />
                     </Paper>
                 </Grid>
             )}
             {!loading && !editMode && page.revision > 0 && (
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <ContainerWithHeader
                         title={page.slug}
                         iconLeft={<ArticleIcon />}
@@ -112,7 +112,7 @@ export const WikiPage = (): JSX.Element => {
                 </Grid>
             )}
             {!loading && !editMode && page.revision == 0 && (
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <ContainerWithHeader
                         title={'Wiki Entry Not Found'}
                         iconLeft={<ArticleIcon />}
@@ -140,7 +140,7 @@ export const WikiPage = (): JSX.Element => {
                 </Grid>
             )}
             {!loading && editMode && (
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <Paper elevation={1}>
                         <MDEditor
                             initialBodyMDValue={page.body_md}

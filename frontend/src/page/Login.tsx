@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import steamLogo from '../icons/steam_login_lg.png';
 import Link from '@mui/material/Link';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Stack from '@mui/material/Stack';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -30,7 +30,7 @@ export const Login = ({ message }: LoginFormProps) => {
             justifyContent={'center'}
             alignItems={'center'}
         >
-            <Grid item>
+            <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Permission Denied'}
                     iconLeft={<DoDisturbIcon />}

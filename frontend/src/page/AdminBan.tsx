@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -255,7 +255,7 @@ export const AdminBan = () => {
                 </Box>
                 <TabPanel value={value} index={0}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12}>
+                        <Grid xs={12}>
                             <DataTable<IAPIBanRecordProfile>
                                 columns={[
                                     {

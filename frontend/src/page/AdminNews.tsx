@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import { NewsList } from '../component/NewsList';
 import Stack from '@mui/material/Stack';
@@ -54,7 +54,7 @@ export const AdminNews = () => {
 
     return (
         <Grid container spacing={3} paddingTop={3}>
-            <Grid item xs={8}>
+            <Grid xs={8}>
                 <Paper elevation={1}>
                     <Stack spacing={3} padding={3}>
                         <Box color={'primary'}>
@@ -114,7 +114,7 @@ export const AdminNews = () => {
                     </Stack>
                 </Paper>
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
                 <Stack spacing={3}>
                     <ButtonGroup fullWidth>
                         <Button

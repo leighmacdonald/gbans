@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import {
@@ -51,7 +51,7 @@ export const AdminReports = () => {
 
     return (
         <Grid container spacing={2} paddingTop={3}>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Stack spacing={2}>
                     <Stack direction={'row'}>
                         <FormControl sx={{ padding: 2 }}>

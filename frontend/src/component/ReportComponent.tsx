@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
@@ -137,7 +137,7 @@ export const ReportComponent = ({
 
     return (
         <Grid container>
-            <Grid item xs={12}>
+            <Grid xs={12}>
                 <Stack spacing={2}>
                     <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
                         <Box
