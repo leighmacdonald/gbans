@@ -11,17 +11,17 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
+	github.com/gomarkdown/markdown v0.0.0-20230711084535-11b03c0ae6d6
 	github.com/gorilla/websocket v1.5.0
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
-	github.com/jackc/pgx/v5 v5.4.1
+	github.com/jackc/pgx/v5 v5.4.2
 	github.com/krayzpipes/cronticker v0.0.1
 	github.com/leighmacdonald/bd v0.0.10
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.10
 	github.com/leighmacdonald/srcdsup v0.0.0-20221125023417-58782d27aca0
-	github.com/leighmacdonald/steamid/v3 v3.0.3
+	github.com/leighmacdonald/steamid/v3 v3.0.4
 	github.com/leighmacdonald/steamweb/v2 v2.1.1
 	github.com/microcosm-cc/bluemonday v1.0.24
 	github.com/mitchellh/go-homedir v1.1.0
@@ -35,9 +35,10 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.3
 	github.com/yohcop/openid-go v1.0.1
+	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
-	golang.org/x/oauth2 v0.9.0
+	golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+	golang.org/x/oauth2 v0.10.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
 
@@ -97,14 +98,13 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
-	golang.org/x/net v0.11.0 // indirect
+	golang.org/x/arch v0.4.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
