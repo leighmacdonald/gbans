@@ -670,7 +670,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 	return bans, nil
 }
 
-func (db *Store) GetAppealsByActivity(ctx context.Context, _ QueryFilter) ([]AppealOverview, error) {
+func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]AppealOverview, error) {
 	const query = `
 	SELECT
 		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.origin,
@@ -696,6 +696,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, _ QueryFilter) ([]App
 		FROM appeals
 		GROUP BY ban_id
 	) AND deleted = false
+	ORDER BY b.created_on DESC
 	`
 
 	var overviews []AppealOverview
