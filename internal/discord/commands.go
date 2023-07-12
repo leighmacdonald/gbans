@@ -528,22 +528,10 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
 		defer cancelCommand()
 
-		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
+		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil || response.Value == nil {
 			RespErr(&response, errHandleCommand.Error())
 
-			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.log.Error("Failed sending error message for interaction", zap.Error(errSendInteraction))
-			}
-
-			bot.log.Error("User command error", zap.Error(errHandleCommand))
-
-			return
-		}
-
-		if response.Value == nil {
-			response.Value = "Internal error"
-
-			bot.log.Error("Command handler returned empty response", zap.String("command", string(command)))
+			bot.log.Warn("User command error", zap.Error(errHandleCommand))
 		}
 
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {

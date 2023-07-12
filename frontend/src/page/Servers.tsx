@@ -54,6 +54,7 @@ export const ServerStats = () => {
     if (servers.length === 0) {
         return <></>;
     }
+
     return (
         <Container component={Paper}>
             <Grid

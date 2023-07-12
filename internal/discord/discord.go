@@ -108,6 +108,8 @@ func (bot *Bot) Start() error {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
 
+	bot.botUnregisterSlashCommands(bot.conf.Discord.GuildID)
+
 	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID, bot.conf.Discord.GuildID); errRegister != nil {
 		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
