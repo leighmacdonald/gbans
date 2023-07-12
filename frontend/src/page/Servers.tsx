@@ -39,13 +39,16 @@ export const ServerStats = () => {
     const { servers } = useMapStateCtx();
     const cap = servers.length * 24;
     const use = sum(servers.map((value) => value?.players || 0));
-    const regions = servers.reduce((acc, cv) => {
-        if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
-            acc[cv.region] = [];
-        }
-        acc[cv.region].push(cv);
-        return acc;
-    }, {} as Record<string, BaseServer[]>);
+    const regions = servers.reduce(
+        (acc, cv) => {
+            if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
+                acc[cv.region] = [];
+            }
+            acc[cv.region].push(cv);
+            return acc;
+        },
+        {} as Record<string, BaseServer[]>
+    );
     const keys = Object.keys(regions);
     keys.sort();
     if (servers.length === 0) {

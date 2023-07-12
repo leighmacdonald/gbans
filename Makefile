@@ -15,6 +15,7 @@ vet:
 fmt:
 	gci write . --skip-generated -s standard -s default
 	gofumpt -l -w .
+	cd frontend && yarn prettier src/ --write
 
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
@@ -85,7 +86,7 @@ fix: fmt
 	golangci-lint run --fix
 
 lint_ts:
-	cd frontend && yarn run eslint:check
+	cd frontend && yarn run eslint:check && yarn prettier src/ --check
 
 static:
 	staticcheck -go 1.20 ./...

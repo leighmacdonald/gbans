@@ -1,44 +1,36 @@
 {
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaFeatures": {
-      "jsx": true
-    }
-  },
-  "settings": {
-    "react": {
-      "version": "18"
-    }
-  },
-  "plugins": [
-    "prettier",
-    "@typescript-eslint",
-    "no-loops",
-    "jest",
-    "react"
-  ],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier",
-    "plugin:jest/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:react/recommended"
-  ],
-  "rules": {
-    "prettier/prettier": 2,
-    "@typescript-eslint/no-explicit-any": "warn",
-    //"no-console": 2,
-    "no-loops/no-loops": "warn",
-    "react/prop-types": [
-      2,
-      {
-        "ignore": [
-          "children"
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaFeatures": {
+            "jsx": true
+        }
+    },
+    "settings": {
+        "react": {
+            "version": "18"
+        }
+    },
+    "plugins": ["prettier", "@typescript-eslint", "no-loops", "jest", "react"],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
+        "plugin:jest/recommended",
+        "plugin:react-hooks/recommended",
+        "plugin:react/recommended"
+    ],
+    "rules": {
+        "prettier/prettier": 2,
+        "@typescript-eslint/no-explicit-any": "warn",
+        //"no-console": 2,
+        "no-loops/no-loops": "warn",
+        "react/prop-types": [
+            2,
+            {
+                "ignore": ["children"]
+            }
         ]
-      }
-    ]
-  }
+    }
 }
