@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
-import Grid from '@mui/material/Grid';
+import React, { useEffect, useMemo, useState } from 'react';
+import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetProfile, PermissionLevel, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
 import Stack from '@mui/material/Stack';
 import { logErr } from '../util/errors';
-import Paper from '@mui/material/Paper';
-import { FriendList } from '../component/FriendList';
 import { createExternalLinks } from '../util/history';
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
@@ -23,10 +21,12 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import LinkIcon from '@mui/icons-material/Link';
 import Box from '@mui/material/Box';
+import { PageNotFound } from './PageNotFound';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
+    const [error, setError] = useState('');
     const { currentUser } = useCurrentUserCtx();
     const { steam_id } = useParams();
     const { sendFlash } = useUserFlashCtx();
@@ -39,32 +39,38 @@ export const Profile = () => {
         if (!steam_id) {
             return;
         }
-        const id = new SteamID(steam_id);
-        if (!id.isValidIndividual()) {
-            return;
+        try {
+            const id = new SteamID(steam_id);
+            if (!id.isValidIndividual()) {
+                setError('Invalid Steam ID');
+                return;
+            }
+            setLoading(true);
+            apiGetProfile(id.toString())
+                .then((response) => {
+                    if (!response.status || !response.result) {
+                        sendFlash('error', 'Failed to load profile');
+                        return;
+                    }
+                    response && setProfile(response.result);
+                })
+                .catch(logErr)
+                .finally(() => {
+                    setLoading(false);
+                });
+        } catch (e) {
+            setError(`Invalid Steam ID: ${steam_id}`);
+            setLoading(false);
         }
-        setLoading(true);
-        apiGetProfile(id.toString())
-            .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', 'Failed to load profile');
-                    return;
-                }
-                response && setProfile(response.result);
-            })
-            .catch(logErr)
-            .finally(() => {
-                setLoading(false);
-            });
     }, [sendFlash, steam_id]);
 
     const renderedProfile = useMemo(() => {
         if (!profile) {
-            return <></>;
+            return <PageNotFound error={error} />;
         }
         return (
             <>
-                <Grid item xs={8}>
+                <Grid xs={12}>
                     <Stack spacing={3}>
                         <Stack direction={'row'} spacing={3} marginTop={0}>
                             <Box width={'100%'}>
@@ -132,7 +138,6 @@ export const Profile = () => {
                                 ).map((l) => {
                                     return (
                                         <Grid
-                                            item
                                             xs={4}
                                             key={`btn-${l.url}`}
                                             padding={1}
@@ -165,21 +170,14 @@ export const Profile = () => {
                         )}
                     </Stack>
                 </Grid>
-                <Grid item xs={4}>
-                    <Stack spacing={3}>
-                        <Paper elevation={1}>
-                            <FriendList friends={profile?.friends || []} />
-                        </Paper>
-                    </Stack>
-                </Grid>
             </>
         );
-    }, [currentUser.permission_level, matchOpts, profile]);
+    }, [currentUser.permission_level, error, matchOpts, profile]);
 
     return (
         <Grid container paddingTop={3} spacing={3}>
             {loading ? (
-                <Grid item xs={12} alignContent={'center'}>
+                <Grid xs={12} alignContent={'center'}>
                     <LoadingSpinner />
                 </Grid>
             ) : (

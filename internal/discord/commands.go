@@ -529,7 +529,6 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 		defer cancelCommand()
 
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil {
-			// TODO User facing errors only
 			RespErr(&response, errHandleCommand.Error())
 
 			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {

@@ -1380,8 +1380,8 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 	}
 
 	type resp struct {
-		Player  *store.Person            `json:"player"`
-		Friends []steamweb.PlayerSummary `json:"friends"`
+		Player  *store.Person     `json:"player"`
+		Friends []steamweb.Friend `json:"friends"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -1413,18 +1413,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 
 		friendList, errFetchFriends := steamweb.GetFriendList(requestCtx, person.SteamID)
 		if errFetchFriends == nil {
-			var friendIDs steamid.Collection
-			for _, friend := range friendList {
-				friendIDs = append(friendIDs, friend.SteamID)
-			}
-
-			// TODO add ctx to steamweb lib
-			friends, errFetchSummaries := steamweb.PlayerSummaries(ctx, friendIDs)
-			if errFetchSummaries != nil {
-				app.log.Warn("Could not fetch summaries", zap.Error(errFetchSummaries))
-			} else {
-				response.Friends = friends
-			}
+			response.Friends = friendList
 		}
 
 		response.Player = &person
@@ -1663,7 +1652,7 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bans, errBans := app.db.GetAppealsByActivity(ctx, queryFilter)
+		bans, errBans := app.db.GetAppealsByCreatedOn(ctx, queryFilter)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to fetch bans", zap.Error(errBans))

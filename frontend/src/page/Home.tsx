@@ -12,7 +12,6 @@ import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
-import EqualizerIcon from '@mui/icons-material/Equalizer';
 import VideocamIcon from '@mui/icons-material/Videocam';
 
 export const Home = (): JSX.Element => {
@@ -87,17 +86,17 @@ export const Home = (): JSX.Element => {
                         Donate
                     </Button>
 
-                    <Button
-                        startIcon={<EqualizerIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        onClick={() => {
-                            navigate('/global_stats');
-                        }}
-                    >
-                        TF2 Stats
-                    </Button>
+                    {/*<Button*/}
+                    {/*    startIcon={<EqualizerIcon />}*/}
+                    {/*    fullWidth*/}
+                    {/*    color={'primary'}*/}
+                    {/*    variant={'contained'}*/}
+                    {/*    onClick={() => {*/}
+                    {/*        navigate('/global_stats');*/}
+                    {/*    }}*/}
+                    {/*>*/}
+                    {/*    TF2 Stats*/}
+                    {/*</Button>*/}
 
                     <Button
                         startIcon={<VideocamIcon />}
