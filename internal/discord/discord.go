@@ -1,6 +1,8 @@
 package discord
 
 import (
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -109,18 +111,20 @@ func (bot *Bot) Start() error {
 	}
 
 	if bot.conf.Discord.UnregisterOnStart {
-		bot.botUnregisterSlashCommands(bot.conf.Discord.GuildID)
+		bot.botUnregisterSlashCommands("")
 	}
 
-	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID, bot.conf.Discord.GuildID); errRegister != nil {
+	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID); errRegister != nil {
 		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
 	return nil
 }
 
-func (bot *Bot) onReady(_ *discordgo.Session, _ *discordgo.Ready) {
-	bot.log.Info("Service state changed", zap.String("state", "ready"))
+func (bot *Bot) onReady(session *discordgo.Session, _ *discordgo.Ready) {
+	bot.log.Info("Service state changed", zap.String("state", "ready"), zap.String("username",
+		fmt.Sprintf("%v#%v", session.State.User.Username, session.State.User.Discriminator)))
+
 	bot.isReady = true
 }
 
@@ -182,10 +186,10 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 
 func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
 	if !bot.isReady {
-		return nil
+		return errors.New("Bot not ready")
 	}
 
-	edit := &discordgo.InteractionResponseData{
+	resp := &discordgo.InteractionResponseData{
 		Content: "hi",
 	}
 
@@ -193,8 +197,8 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 	case MtString:
 		val, ok := response.Value.(string)
 		if ok && val != "" {
-			edit.Content = val
-			if len(edit.Content) > discordMaxMsgLen {
+			resp.Content = val
+			if len(resp.Content) > discordMaxMsgLen {
 				return ErrTooLarge
 			}
 		}
@@ -204,15 +208,21 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 			return errors.New("Failed to cast MessageEmbed")
 		}
 
-		edit.Embeds = append(edit.Embeds, embed)
+		resp.Embeds = append(resp.Embeds, embed)
 	}
 
-	_, errResponseEdit := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
-		Embeds: &edit.Embeds,
+	_, errResponseErr := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
+		Embeds: &resp.Embeds,
 	})
 
-	if errResponseEdit != nil {
-		return errors.Wrap(errResponseEdit, "Failed to send interaction edit")
+	if errResponseErr != nil {
+		if _, errResp := session.FollowupMessageCreate(interaction, true, &discordgo.WebhookParams{
+			Content: "Something went wrong",
+		}); errResp != nil {
+			return errors.Wrap(errResp, "Failed to send error response")
+		}
+
+		return nil
 	}
 
 	return nil

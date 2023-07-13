@@ -846,8 +846,8 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	response *discord.Response,
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	pattern := opts["pattern"].StringValue()
-	isRegex := opts["is_regex"].BoolValue()
+	pattern := opts[discord.OptPattern].StringValue()
+	isRegex := opts[discord.OptIsRegex].BoolValue()
 
 	if isRegex {
 		_, rxErr := regexp.Compile(pattern)

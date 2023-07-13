@@ -2,7 +2,6 @@ package discord
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -62,10 +61,12 @@ const (
 	OptSteam            = "steam"
 	OptNote             = "note"
 	OptCIDR             = "cidr"
+	OptPattern          = "pattern"
+	OptIsRegex          = "is_regex"
 )
 
 //nolint:funlen,maintidx
-func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
+func (bot *Bot) botRegisterSlashCommands(appID string) error {
 	dmPerms := false
 	modPerms := int64(discordgo.PermissionBanMembers)
 	userPerms := int64(discordgo.PermissionViewChannel)
@@ -439,9 +440,15 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 					Description: "Add a new filtered word",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
+							Type:        discordgo.ApplicationCommandOptionBoolean,
+							Name:        OptIsRegex,
+							Description: "Is the pattern a regular expression?",
+							Required:    true,
+						},
+						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "filter",
-							Description: "Regular expression for matching word(s)",
+							Name:        OptPattern,
+							Description: "Regular expression or word for matching",
 							Required:    true,
 						},
 					},
@@ -460,14 +467,13 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 					},
 				},
 				{
-					Name: "check",
-
+					Name:        "check",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Check if a string has a matching filter",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        "string",
+							Name:        OptMessage,
 							Description: "String to check filters against",
 							Required:    true,
 						},
@@ -477,7 +483,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 		},
 	}
 
-	_, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, guildID, slashCommands)
+	_, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, "", slashCommands)
 	if errBulk != nil {
 		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
 	}
@@ -490,7 +496,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string, guildID string) error {
 type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *Response) error
 
 const (
-	discordMaxMsgLen = 2000
+	discordMaxMsgLen = 4000
 )
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
@@ -516,10 +522,10 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 		}
 
 		if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
-			RespErr(&response, fmt.Sprintf("Error: %s", errRespond.Error()))
-
-			if errSendInteraction := bot.sendInteractionResponse(session, interaction.Interaction, response); errSendInteraction != nil {
-				bot.log.Error("Failed sending error message for pre-interaction", zap.Error(errSendInteraction))
+			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
+				Content: errRespond.Error(),
+			}); errFollow != nil {
+				bot.log.Error("Failed sending error response for interaction", zap.Error(errFollow))
 			}
 
 			return
@@ -529,9 +535,13 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 		defer cancelCommand()
 
 		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil || response.Value == nil {
-			RespErr(&response, errHandleCommand.Error())
+			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
+				Content: errHandleCommand.Error(),
+			}); errFollow != nil {
+				bot.log.Error("Failed sending error response for interaction", zap.Error(errFollow))
+			}
 
-			bot.log.Warn("User command error", zap.Error(errHandleCommand))
+			return
 		}
 
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
