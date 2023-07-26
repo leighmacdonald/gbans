@@ -23,7 +23,6 @@ import (
 	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
-	"github.com/rumblefrog/go-a2s"
 	"go.uber.org/zap"
 )
 
@@ -76,7 +75,6 @@ func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *z
 	}
 
 	application.stateCollector = state.NewServerStateCollector(logger,
-		application.onA2SUpdate,
 		application.onPlayerUpdate,
 		application.onMSLUpdate)
 
@@ -114,39 +112,6 @@ func (app *App) onPlayerUpdate(serverID int, newState extra.Status) {
 	}
 
 	server.Players = newState.Players
-
-	app.serverState[serverID] = server
-}
-
-func (app *App) onA2SUpdate(serverID int, newState *a2s.ServerInfo) {
-	app.stateMu.Lock()
-	defer app.stateMu.Unlock()
-	server := app.serverState[serverID]
-
-	if newState.Map != "" && newState.Map != server.Map {
-		server.Map = newState.Map
-	}
-
-	if newState.Name != "" && newState.Name != server.Name {
-		server.Name = newState.Name
-	}
-
-	server.Protocol = newState.Protocol
-	server.Folder = newState.Folder
-	server.Game = newState.Game
-	server.AppID = newState.ID
-	server.PlayerCount = int(newState.MaxPlayers)
-	server.MaxPlayers = int(newState.MaxPlayers)
-	server.Bots = int(newState.Bots)
-	server.ServerType = newState.ServerType.String()
-	server.ServerOS = newState.ServerOS.String()
-	server.VAC = newState.VAC
-	server.Version = newState.Version
-
-	if newState.SourceTV != nil {
-		server.STVPort = newState.SourceTV.Port
-		server.STVName = newState.SourceTV.Name
-	}
 
 	app.serverState[serverID] = server
 }

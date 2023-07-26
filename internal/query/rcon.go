@@ -1,4 +1,4 @@
-// Package query implements functionality for making RCON and A2S queries
+// Package query implements functionality for making RCON queries
 package query
 
 import (

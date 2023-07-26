@@ -13,19 +13,16 @@ import (
 	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
-	"github.com/rumblefrog/go-a2s"
 	"go.uber.org/zap"
 )
 
 type (
-	UpdateA2SHandler    func(serverID int, newState *a2s.ServerInfo)
 	UpdateStatusHandler func(serverID int, newState extra.Status)
 	UpdateMSLHandler    func(newState []ServerLocation)
 )
 
 type ServerStateCollector struct {
 	log              *zap.Logger
-	onUpdateA2S      UpdateA2SHandler
 	onUpdateStatus   UpdateStatusHandler
 	onUpdateMSL      UpdateMSLHandler
 	statusUpdateFreq time.Duration
@@ -34,7 +31,7 @@ type ServerStateCollector struct {
 	connectionsMu    *sync.RWMutex
 }
 
-func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUpdateStatus UpdateStatusHandler, onUpdateMSL UpdateMSLHandler) *ServerStateCollector {
+func NewServerStateCollector(logger *zap.Logger, onUpdateStatus UpdateStatusHandler, onUpdateMSL UpdateMSLHandler) *ServerStateCollector {
 	const (
 		statusUpdateFreq = time.Minute
 		msListUpdateFreq = time.Minute
@@ -42,7 +39,6 @@ func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUp
 
 	return &ServerStateCollector{
 		log:              logger,
-		onUpdateA2S:      onUpdate,
 		onUpdateStatus:   onUpdateStatus,
 		onUpdateMSL:      onUpdateMSL,
 		statusUpdateFreq: statusUpdateFreq,
@@ -130,7 +126,6 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 
 					addr := conf.addr()
 					connected := false
-					allowed := false
 
 					log := logger.Named(conf.Name)
 
@@ -144,7 +139,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 						connected = controller.connected()
 					}
 
-					allowed = controller.allowedToConnect()
+					allowed := controller.allowedToConnect()
 
 					c.connectionsMu.Unlock()
 
@@ -217,53 +212,8 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 	}
 }
 
-func (c *ServerStateCollector) startA2S(ctx context.Context, configs []ServerConfig) {
-	const timeout = time.Second * 10
-
-	var (
-		log      = c.log.Named("a2s_update")
-		a2sTimer = time.NewTicker(c.statusUpdateFreq)
-	)
-
-	for {
-		select {
-		case <-a2sTimer.C:
-			for _, serverConfig := range configs {
-				go func(conf ServerConfig) {
-					client, errClient := a2s.NewClient(conf.addr(), a2s.SetMaxPacketSize(14000), a2s.TimeoutOption(timeout))
-					if errClient != nil {
-						log.Error("Failed to create a2s client", zap.String("server", conf.Name), zap.Error(errClient))
-
-						return
-					}
-
-					defer func() {
-						if errClose := client.Close(); errClose != nil {
-							log.Error("Failed to close a2s conn", zap.String("server", conf.Name), zap.Error(errClose))
-						}
-					}()
-
-					result, errQuery := client.QueryInfo()
-					if errQuery != nil {
-						log.Debug("Failed to query a2s server", zap.String("server", conf.Name), zap.String("err", errQuery.Error()))
-
-						return
-					}
-
-					go c.onUpdateA2S(conf.ServerID, result)
-
-					log.Debug("Updated", zap.String("server", conf.Name))
-				}(serverConfig)
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (c *ServerStateCollector) Start(ctx context.Context, configs []ServerConfig) {
 	go c.startMSL(ctx)
-	go c.startA2S(ctx, configs)
 	go c.startStatus(ctx, configs)
 }
 
