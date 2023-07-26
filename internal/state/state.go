@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -28,6 +30,8 @@ type ServerStateCollector struct {
 	onUpdateMSL      UpdateMSLHandler
 	statusUpdateFreq time.Duration
 	msListUpdateFreq time.Duration
+	connections      map[string]*rconController
+	connectionsMu    *sync.RWMutex
 }
 
 func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUpdateStatus UpdateStatusHandler, onUpdateMSL UpdateMSLHandler) *ServerStateCollector {
@@ -43,6 +47,8 @@ func NewServerStateCollector(logger *zap.Logger, onUpdate UpdateA2SHandler, onUp
 		onUpdateMSL:      onUpdateMSL,
 		statusUpdateFreq: statusUpdateFreq,
 		msListUpdateFreq: msListUpdateFreq,
+		connections:      map[string]*rconController{},
+		connectionsMu:    &sync.RWMutex{},
 	}
 }
 
@@ -72,37 +78,123 @@ func (c *ServerStateCollector) startMSL(ctx context.Context) {
 	}
 }
 
+type rconController struct {
+	*rcon.RemoteConsole
+	attempts           int
+	lastConnectSuccess time.Time
+	lastConnectAttempt time.Time
+}
+
+func (rc rconController) connected() bool {
+	return rc.RemoteConsole != nil
+}
+
+func (rc rconController) allowedToConnect() bool {
+	const (
+		waitInterval    = time.Minute
+		limitMultiCount = 10
+	)
+
+	if rc.attempts == 0 {
+		return true
+	}
+
+	multi := rc.attempts
+	if multi > limitMultiCount {
+		multi = limitMultiCount
+	}
+
+	return rc.lastConnectAttempt.Add(waitInterval * time.Duration(multi)).Before(time.Now())
+}
+
 func (c *ServerStateCollector) startStatus(ctx context.Context, configs []ServerConfig) {
 	const timeout = time.Second * 15
 
 	var (
-		log                = c.log.Named("status_update")
+		logger             = c.log.Named("status_update")
 		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
 	)
 
 	for {
 		select {
 		case <-statusUpdateTicker.C:
+			waitGroup := &sync.WaitGroup{}
+			startTIme := time.Now()
+			successful := atomic.Int32{}
+
 			for _, serverConfig := range configs {
+				waitGroup.Add(1)
+
 				go func(conf ServerConfig) {
-					console, errDial := rcon.Dial(ctx, conf.addr(), conf.Password, timeout)
+					defer waitGroup.Done()
 
-					if errDial != nil {
-						log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
+					addr := conf.addr()
+					connected := false
+					allowed := false
 
+					log := logger.Named(conf.Name)
+
+					c.connectionsMu.Lock()
+					controller, found := c.connections[addr]
+
+					if !found {
+						controller = &rconController{RemoteConsole: nil, attempts: 0, lastConnectAttempt: time.Now()}
+						c.connections[addr] = controller
+					} else {
+						connected = controller.connected()
+					}
+
+					allowed = controller.allowedToConnect()
+
+					c.connectionsMu.Unlock()
+
+					if !allowed {
+						log.Debug("Delaying connect")
+					}
+
+					if !connected {
+						newConsole, errDial := rcon.Dial(ctx, addr, conf.Password, timeout)
+
+						if errDial != nil {
+							log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
+						}
+
+						c.connectionsMu.Lock()
+						controller.lastConnectAttempt = time.Now()
+
+						if newConsole != nil {
+							controller.lastConnectSuccess = controller.lastConnectAttempt
+							controller.attempts = 0
+							controller.RemoteConsole = newConsole
+							connected = true
+						} else {
+							controller.attempts++
+						}
+						c.connectionsMu.Unlock()
+					}
+
+					if !connected {
 						return
 					}
 
-					resp, errRcon := console.Exec("status")
+					resp, errRcon := controller.Exec("status")
 					if errRcon != nil {
-						log.Debug("Failed to exec rcon status", zap.String("server", conf.Name), zap.Error(errRcon))
+						log.Error("Failed to exec rcon status", zap.String("server", conf.Name), zap.Error(errRcon))
+
+						c.connectionsMu.Lock()
+						if errClose := controller.RemoteConsole.Close(); errClose != nil {
+							log.Error("Failed to close rcon connection", zap.String("server", conf.Name), zap.Error(errClose))
+						}
+
+						controller.RemoteConsole = nil
+						c.connectionsMu.Unlock()
 
 						return
 					}
 
 					status, errParse := extra.ParseStatus(resp, true)
 					if errParse != nil {
-						log.Debug("Failed to parse rcon status", zap.Error(errParse))
+						log.Error("Failed to parse rcon status", zap.Error(errParse))
 
 						return
 					}
@@ -110,7 +202,14 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 					go c.onUpdateStatus(conf.ServerID, status)
 
 					log.Debug("Updated", zap.String("server", conf.Name))
+					successful.Add(1)
 				}(serverConfig)
+
+				waitGroup.Wait()
+				logger.Info("RCON update cycle complete",
+					zap.Int32("success", successful.Load()),
+					zap.Int32("fail", int32(len(configs))-successful.Load()),
+					zap.Duration("duration", time.Since(startTIme)))
 			}
 		case <-ctx.Done():
 			return

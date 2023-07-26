@@ -185,10 +185,6 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 //}
 
 func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
-	if !bot.isReady {
-		return errors.New("Bot not ready")
-	}
-
 	resp := &discordgo.InteractionResponseData{
 		Content: "hi",
 	}

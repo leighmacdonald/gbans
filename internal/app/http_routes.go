@@ -96,31 +96,23 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	}
 
 	engine.GET("/auth/callback", onOpenIDCallback(app))
-	engine.GET("/api/auth/logout", onGetLogout(app))
 	engine.POST("/api/auth/refresh", onTokenRefresh(app))
-
 	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(app))
-	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(app))
-	engine.GET("/export/bans/valve/network", onAPIExportBansValveIP(app))
 	engine.GET("/metrics", prometheusHandler())
 
 	engine.GET("/api/profile", onAPIProfile(app))
 	engine.GET("/api/servers/state", onAPIGetServerStates(app))
 	engine.GET("/api/stats", onAPIGetStats(app))
 
-	engine.GET("/api/players", onAPIGetPlayers(app))
 	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))
-	engine.GET("/api/log/:match_id", onAPIGetMatch(app))
-	engine.POST("/api/logs", onAPIGetMatches(app))
-	engine.GET("/media/:media_id", onGetMediaByID(app))
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(app))
 	engine.POST("/api/server_query", onAPIPostServerQuery(app))
 	engine.GET("/api/server_stats", onAPIGetTF2Stats(app))
 
-	engine.POST("/api/demos", onAPIPostDemosQuery(app))
 	engine.GET("/demos/name/:demo_name", onAPIGetDemoDownloadByName(app))
 	engine.GET("/demos/:demo_id", onAPIGetDemoDownload(app))
+	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts(app))
@@ -128,10 +120,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	// Game server plugin routes
 	engine.POST("/api/server/auth", onSAPIPostServerAuth(app))
-	engine.POST("/api/resolve_profile", onAPIGetResolveProfile(app))
-
-	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
-	engine.GET("/api/patreon/pledges", onAPIGetPatreonPledges(app))
 
 	srvGrp := engine.Group("/")
 	{
@@ -146,6 +134,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate(app))
 		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(app))
 		serverAuth.POST("/api/state_update", onAPIPostServerState(app))
+		serverAuth.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 	}
 
 	connectionManager := newWSConnectionManager(ctx, app.log)
@@ -158,6 +147,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 			wsConnHandler(c.Writer, c.Request, connectionManager, currentUserProfile(c), app.log)
 		})
 
+		authed.GET("/media/:media_id", onGetMediaByID(app))
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))
 		authed.GET("/api/current_profile", onAPICurrentProfile(app))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(app))
@@ -171,14 +161,15 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(app))
 		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage(app))
 		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage(app))
-
+		authed.POST("/api/resolve_profile", onAPIGetResolveProfile(app))
 		authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID(app))
 		authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages(app))
 		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(app))
 		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(app))
 		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(app))
-
+		authed.POST("/api/demos", onAPIPostDemosQuery(app))
 		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(app))
+		authed.GET("/api/auth/logout", onGetLogout(app))
 	}
 
 	editorGrp := engine.Group("/")
@@ -193,6 +184,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		editorRoute.POST("/api/filters", onAPIPostWordFilter(app))
 		editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(app))
 		editorRoute.POST("/api/filter_match", onAPIPostWordMatch(app))
+		editorRoute.GET("/export/bans/valve/network", onAPIExportBansValveIP(app))
+		editorRoute.GET("/api/players", onAPIGetPlayers(app))
 	}
 
 	modGrp := engine.Group("/")
@@ -218,6 +211,9 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(app))
 		modRoute.POST("/api/bans/group", onAPIGetBansGroup(app))
 		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(app))
+		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(app))
+		modRoute.GET("/api/log/:match_id", onAPIGetMatch(app))
+		modRoute.POST("/api/logs", onAPIGetMatches(app))
 	}
 
 	adminGrp := engine.Group("/")

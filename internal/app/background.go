@@ -337,7 +337,7 @@ func (app *App) stateUpdater(ctx context.Context) {
 			)
 
 			for _, server := range servers {
-				configs = append(configs, state.NewServerConfig(server.ServerID, server.ServerName, server.Address, server.Port, server.Password))
+				configs = append(configs, state.NewServerConfig(server.ServerID, server.ServerName, server.Address, server.Port, server.RCON))
 				details[server.ServerID] = ServerDetails{
 					ServerID:  server.ServerID,
 					NameShort: server.ServerName,
