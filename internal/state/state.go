@@ -120,7 +120,9 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 
 			for _, serverConfig := range configs {
 				waitGroup.Add(1)
+
 				startTIme := time.Now()
+
 				go func(conf ServerConfig) {
 					defer waitGroup.Done()
 

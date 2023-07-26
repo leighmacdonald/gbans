@@ -778,6 +778,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 		serverName := opts[discord.OptServerIdentifier].StringValue()
 
 		curState := app.state()
+
 		serverState, found := curState.ByName(strings.ToLower(serverName))
 		if !found {
 			return consts.ErrUnknownID
