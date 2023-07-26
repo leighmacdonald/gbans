@@ -43,11 +43,6 @@ type ServerDetails struct {
 	MaxPlayers int `json:"max_players"`
 	// Number of bots on the server.
 	Bots int `json:"bots"`
-	// Indicates the type of server
-	// Rag Doll Kung Fu servers always return 0 for "Server type."
-	ServerType string `json:"server_type"`
-	// Indicates the operating system of the server
-	ServerOS string `json:"server_os"`
 	// Indicates whether the server requires a password
 	Password bool `json:"password"`
 	// Specifies whether the server uses VAC

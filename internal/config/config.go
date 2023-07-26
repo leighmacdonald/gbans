@@ -12,7 +12,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -133,7 +132,6 @@ type generalConfig struct {
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
-	DemoRootPath                 string        `mapstructure:"demo_root_path"`
 	ExternalURL                  string        `mapstructure:"external_url"`
 	BannedSteamGroupIds          []steamid.GID `mapstructure:"banned_steam_group_ids"`
 	BannedServersAddresses       []string      `mapstructure:"banned_server_addresses"`
@@ -218,10 +216,6 @@ func Read(conf *Config) error {
 		warningDuration = defaultWarnDuration
 	}
 
-	if errDemoRoot := os.MkdirAll(conf.General.DemoRootPath, 0o775); errDemoRoot != nil {
-		return errors.Wrap(errDemoRoot, "Failed to create demo_root_path")
-	}
-
 	conf.General.WarningExceededDuration = warningDuration
 
 	gin.SetMode(conf.General.Mode.String())
@@ -272,7 +266,6 @@ func setDefaultConfigValues() {
 		"general.server_status_update_freq":        "60s",
 		"general.master_server_status_update_freq": "1m",
 		"general.default_maps":                     []string{"pl_badwater"},
-		"general.demo_root_path":                   "./.demos/",
 		"general.external_url":                     "http://gbans.localhost:6006",
 		"general.banned_steam_group_ids":           []steamid.GID{},
 		"general.banned_server_addresses":          []string{},

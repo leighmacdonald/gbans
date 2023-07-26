@@ -777,30 +777,22 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[discord.OptServerIdentifier].StringValue()
 
-		var server store.Server
-		if errGetServer := app.db.GetServerByName(ctx, serverName, &server); errGetServer != nil {
-			if errors.Is(errGetServer, store.ErrNoResult) {
-				return errors.New("Invalid server name")
-			}
-
-			return discord.ErrCommandFailed
-		}
-
-		currentState, found := app.state().ByName(server.ServerName)
+		curState := app.state()
+		serverState, found := curState.ByName(strings.ToLower(serverName))
 		if !found {
 			return consts.ErrUnknownID
 		}
 
 		var rows []string
 
-		embed := discord.RespOk(response, fmt.Sprintf("Current Players: %s", server.ServerName))
+		embed := discord.RespOk(response, fmt.Sprintf("Current Players: %d", len(serverState.Players)))
 
-		if len(currentState.Players) > 0 {
-			sort.SliceStable(currentState.Players, func(i, j int) bool {
-				return currentState.Players[i].Name < currentState.Players[j].Name
+		if len(serverState.Players) > 0 {
+			sort.SliceStable(serverState.Players, func(i, j int) bool {
+				return serverState.Players[i].Name < serverState.Players[j].Name
 			})
 
-			for _, player := range currentState.Players {
+			for _, player := range serverState.Players {
 				var asn ip2location.ASNRecord
 				if errASN := app.db.GetASNRecordByIP(ctx, player.IP, &asn); errASN != nil {
 					// Will fail for LAN ips

@@ -104,7 +104,7 @@ func (rc rconController) allowedToConnect() bool {
 }
 
 func (c *ServerStateCollector) startStatus(ctx context.Context, configs []ServerConfig) {
-	const timeout = time.Second * 15
+	const timeout = time.Second * 6
 
 	var (
 		logger             = c.log.Named("status_update")
@@ -115,12 +115,12 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 		select {
 		case <-statusUpdateTicker.C:
 			waitGroup := &sync.WaitGroup{}
-			startTIme := time.Now()
+
 			successful := atomic.Int32{}
 
 			for _, serverConfig := range configs {
 				waitGroup.Add(1)
-
+				startTIme := time.Now()
 				go func(conf ServerConfig) {
 					defer waitGroup.Done()
 
@@ -201,6 +201,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context, configs []Server
 				}(serverConfig)
 
 				waitGroup.Wait()
+
 				logger.Info("RCON update cycle complete",
 					zap.Int32("success", successful.Load()),
 					zap.Int32("fail", int32(len(configs))-successful.Load()),
