@@ -55,7 +55,7 @@ func (w *WeaponParser) Parse(s string) Weapon {
 	return UnknownWeapon
 }
 
-func NewWeaponParser() *WeaponParser {
+func NewWeaponParser() *WeaponParser { //nolint:maintidx
 	return &WeaponParser{
 		weaponNames: map[Weapon]string{
 			UnknownWeapon:            "unknown",
@@ -143,6 +143,7 @@ func NewWeaponParser() *WeaponParser {
 			PanicAttack:          "panic_attack",
 			PDAEngineer:          "pda_engineer",
 			PepPistol:            "pep_pistol",
+			PersianPersuader:     "persian_persuader",
 			Phlog:                "phlogistinator",
 			Pistol:               "pistol",
 			PistolScout:          "pistol_scout",
@@ -274,6 +275,7 @@ func NewWeaponParser() *WeaponParser {
 				LooseCannon,
 				LooseCannonImpact,
 				NessiesNineIron,
+				PersianPersuader,
 				ProjectilePipe,
 				ProjectilePipeRemote,
 				Quickiebomb,

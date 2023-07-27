@@ -333,6 +333,7 @@ const (
 	BuildingCarriedDestroyed
 	SouthernHospitality
 	BeggarsBazooka
+	PersianPersuader
 )
 
 // var backStabWeapons = []Weapon{
