@@ -94,12 +94,31 @@ func NewQueryFilter(query string) QueryFilter {
 	}
 }
 
+type dbQueryTracer struct {
+	log *zap.SugaredLogger
+}
+
+func (tracer *dbQueryTracer) TraceQueryStart(
+	ctx context.Context,
+	_ *pgx.Conn,
+	data pgx.TraceQueryStartData,
+) context.Context {
+	tracer.log.Infow("Executing command", "sql", data.SQL, "args", data.Args)
+
+	return ctx
+}
+
+func (tracer *dbQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+}
+
 // Connect sets up underlying required services.
 func (db *Store) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
+
+	cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log.Sugar()}
 
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
@@ -147,7 +166,12 @@ func (db *Store) Close() error {
 }
 
 func (db *Store) truncateTable(ctx context.Context, table tableName) error {
-	if _, errExec := db.conn.Exec(ctx, fmt.Sprintf("TRUNCATE %s;", table)); errExec != nil {
+	query, args, errQueryArgs := sq.Delete(string(table)).ToSql()
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
+	}
+
+	if _, errExec := db.Query(ctx, fmt.Sprintf(`BEGIN; %s; COMMIT;`, query), args...); errExec != nil {
 		return Err(errExec)
 	}
 
