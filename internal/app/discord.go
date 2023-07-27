@@ -115,7 +115,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		response *discord.Response,
 	) error {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-		sid, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+		sid, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 
 		if errResolveSID != nil {
 			return consts.ErrInvalidSID
@@ -391,7 +391,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolve := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+	steamID, errResolve := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolve != nil {
 		return consts.ErrInvalidSID
 	}
@@ -426,7 +426,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 
 //
 // func (bot *Discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-//	steamId, errResolveSID := ResolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
+//	steamId, errResolveSID := resolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
 //	if errResolveSID != nil {
 //		return consts.ErrInvalidSID
 //	}
@@ -478,7 +478,7 @@ func makeOnSetSteam(app *App) discord.CommandHandler {
 	) error {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 
-		steamID, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+		steamID, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 		if errResolveSID != nil {
 			return consts.ErrInvalidSID
 		}
@@ -499,7 +499,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[discord.OptUnbanReason].StringValue()
 
-	steamID, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
@@ -592,7 +592,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 		}
 
 		state := app.state.current()
-		players := state.Find(FindOpts{SteamID: targetSid64})
+		players := state.find(findOpts{SteamID: targetSid64})
 
 		if len(players) == 0 {
 			return consts.ErrPlayerNotFound
@@ -780,7 +780,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[discord.OptServerIdentifier].StringValue()
 		state := app.state.current()
-		serverStates := state.ByName(serverName, false)
+		serverStates := state.byName(serverName, false)
 
 		if len(serverStates) != 1 {
 			return ErrUnknownServer
@@ -1090,17 +1090,17 @@ func makeOnFind(app *App) discord.CommandHandler {
 		opts := discord.OptionMap(i.ApplicationCommandData().Options)
 		userIdentifier := opts[discord.OptUserIdentifier].StringValue()
 
-		var findOpts FindOpts
+		var playerFindOpts findOpts
 
 		steamID, errSteamID := steamid.StringToSID64(userIdentifier)
 		if errSteamID != nil {
-			findOpts = FindOpts{Name: userIdentifier}
+			playerFindOpts = findOpts{Name: userIdentifier}
 		} else {
-			findOpts = FindOpts{SteamID: steamID}
+			playerFindOpts = findOpts{SteamID: steamID}
 		}
 
 		state := app.state.current()
-		players := state.Find(findOpts)
+		players := state.find(playerFindOpts)
 
 		if len(players) == 0 {
 			return consts.ErrUnknownID
@@ -1296,7 +1296,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	}
 
 	state := app.state.current()
-	players := state.Find(FindOpts{CIDR: network})
+	players := state.find(findOpts{CIDR: network})
 
 	if len(players) == 0 {
 		return consts.ErrPlayerNotFound

@@ -13,10 +13,10 @@ import (
 )
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
-func (app *App) OnFindExec(_ context.Context, findOpts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
+func (app *App) OnFindExec(_ context.Context, findOpts findOpts, onFoundCmd func(info playerServerInfo) string) error {
 	state := app.state.current()
 
-	players := state.Find(findOpts)
+	players := state.find(findOpts)
 	if len(players) == 0 {
 		return consts.ErrPlayerNotFound
 	}
@@ -51,7 +51,7 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 		return consts.ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
+	return app.OnFindExec(ctx, findOpts{SteamID: target}, func(info playerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, store.ReasonString(reason))
 	})
 }
@@ -68,7 +68,7 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 		return consts.ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
+	return app.OnFindExec(ctx, findOpts{SteamID: target}, func(info playerServerInfo) string {
 		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), store.ReasonString(reason))
 	})
 }
@@ -76,7 +76,7 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 // Say is used to send a message to the server via sm_say.
 func (app *App) Say(_ context.Context, author steamid.SID64, serverName string, message string) error {
 	state := app.state.current()
-	servers := state.ServerIDsByName(serverName, true)
+	servers := state.serverIDsByName(serverName, true)
 
 	if len(servers) == 0 {
 		return ErrUnknownServer
@@ -91,7 +91,7 @@ func (app *App) Say(_ context.Context, author steamid.SID64, serverName string, 
 // CSay is used to send a centered message to the server via sm_csay.
 func (app *App) CSay(_ context.Context, author steamid.SID64, serverName string, message string) error {
 	state := app.state.current()
-	servers := state.ServerIDsByName(serverName, true)
+	servers := state.serverIDsByName(serverName, true)
 
 	if len(servers) == 0 {
 		return ErrUnknownServer
@@ -115,7 +115,7 @@ func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.S
 		return consts.ErrInvalidTargetSID
 	}
 
-	return app.OnFindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
+	return app.OnFindExec(ctx, findOpts{SteamID: target}, func(info playerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
 	})
 }

@@ -17,7 +17,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -553,7 +552,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				}
 			}
 
-			profile := model.UserProfile{
+			profile := userProfile{
 				SteamID:         loggedInPerson.SteamID,
 				CreatedOn:       loggedInPerson.CreatedOn,
 				UpdatedOn:       loggedInPerson.UpdatedOn,

@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -93,15 +92,46 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 	return httpServer
 }
 
-func currentUserProfile(ctx *gin.Context) model.UserProfile {
+// userProfile is the model used in the webui representing the logged-in user.
+type userProfile struct {
+	SteamID         steamid.SID64    `json:"steam_id"`
+	CreatedOn       time.Time        `json:"created_on"`
+	UpdatedOn       time.Time        `json:"updated_on"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+	DiscordID       string           `json:"discord_id"`
+	Name            string           `json:"name"`
+	Avatar          string           `json:"avatar"`
+	Avatarfull      string           `json:"avatarfull"`
+	BanID           int64            `json:"ban_id"`
+	Muted           bool             `json:"muted"`
+}
+
+func (p userProfile) ToURL(conf *config.Config) string {
+	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
+}
+
+// newUserProfile allocates a new default person instance.
+func newUserProfile(sid64 steamid.SID64) userProfile {
+	t0 := config.Now()
+
+	return userProfile{
+		SteamID:         sid64,
+		CreatedOn:       t0,
+		UpdatedOn:       t0,
+		PermissionLevel: consts.PUser,
+		Name:            "Guest",
+	}
+}
+
+func currentUserProfile(ctx *gin.Context) userProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return model.NewUserProfile("")
+		return newUserProfile("")
 	}
 
-	person, ok := maybePerson.(model.UserProfile)
+	person, ok := maybePerson.(userProfile)
 	if !ok {
-		return model.NewUserProfile("")
+		return newUserProfile("")
 	}
 
 	return person
@@ -110,7 +140,7 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 // checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege consts.Privilege) bool {
+func checkPrivilege(ctx *gin.Context, person userProfile, allowedSteamIds steamid.Collection, minPrivilege consts.Privilege) bool {
 	for _, steamID := range allowedSteamIds {
 		if steamID == person.SteamID {
 			return true

@@ -3,33 +3,39 @@ package app
 import (
 	"sync"
 
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
+
+// serverEvent is a flat struct encapsulating a parsed log event.
+type serverEvent struct {
+	Server store.Server
+	*logparse.Results
+}
 
 type eventBroadcaster struct {
 	// Each log event can have any number of channels associated with them
 	// Events are sent to all channels in a fan-out style.
-	logEventReaders   map[logparse.EventType][]chan model.ServerEvent
+	logEventReaders   map[logparse.EventType][]chan serverEvent
 	logEventReadersMu *sync.RWMutex
 }
 
 func newEventBroadcaster() *eventBroadcaster {
 	return &eventBroadcaster{
-		logEventReaders:   map[logparse.EventType][]chan model.ServerEvent{},
+		logEventReaders:   map[logparse.EventType][]chan serverEvent{},
 		logEventReadersMu: &sync.RWMutex{},
 	}
 }
 
 // Consume will register a channel to receive new log events as they come in.
-func (eb *eventBroadcaster) Consume(serverEventChan chan model.ServerEvent, msgTypes []logparse.EventType) error {
+func (eb *eventBroadcaster) Consume(serverEventChan chan serverEvent, msgTypes []logparse.EventType) error {
 	eb.logEventReadersMu.Lock()
 	defer eb.logEventReadersMu.Unlock()
 
 	for _, msgType := range msgTypes {
 		_, found := eb.logEventReaders[msgType]
 		if !found {
-			eb.logEventReaders[msgType] = []chan model.ServerEvent{}
+			eb.logEventReaders[msgType] = []chan serverEvent{}
 		}
 
 		eb.logEventReaders[msgType] = append(eb.logEventReaders[msgType], serverEventChan)
@@ -39,7 +45,7 @@ func (eb *eventBroadcaster) Consume(serverEventChan chan model.ServerEvent, msgT
 }
 
 // Emit is used to send out events to and registered reader channels.
-func (eb *eventBroadcaster) Emit(serverEvent model.ServerEvent) {
+func (eb *eventBroadcaster) Emit(serverEvent serverEvent) {
 	// Ensure we also send to Any handlers for all events.
 	for _, eventType := range []logparse.EventType{serverEvent.EventType, logparse.Any} {
 		eb.logEventReadersMu.RLock()
@@ -56,8 +62,8 @@ func (eb *eventBroadcaster) Emit(serverEvent model.ServerEvent) {
 	}
 }
 
-func (eb *eventBroadcaster) removeChan(channels []chan model.ServerEvent, serverEventChan chan model.ServerEvent) []chan model.ServerEvent {
-	var newChannels []chan model.ServerEvent
+func (eb *eventBroadcaster) removeChan(channels []chan serverEvent, serverEventChan chan serverEvent) []chan serverEvent {
+	var newChannels []chan serverEvent
 
 	for _, channel := range channels {
 		if channel != serverEventChan {
@@ -69,7 +75,7 @@ func (eb *eventBroadcaster) removeChan(channels []chan model.ServerEvent, server
 }
 
 // UnregisterConsumer will remove the channel from any matching event readers.
-func (eb *eventBroadcaster) UnregisterConsumer(serverEventChan chan model.ServerEvent) error {
+func (eb *eventBroadcaster) UnregisterConsumer(serverEventChan chan serverEvent) error {
 	eb.logEventReadersMu.Lock()
 	defer eb.logEventReadersMu.Unlock()
 

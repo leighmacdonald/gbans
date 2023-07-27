@@ -4,7 +4,6 @@ package app
 import (
 	"context"
 
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -104,7 +103,7 @@ func newMetricCollector() *metricCollector {
 func logMetricsConsumer(ctx context.Context, collector *metricCollector, eb *eventBroadcaster, logger *zap.Logger) {
 	log := logger.Named("metricsConsumer")
 
-	eventChan := make(chan model.ServerEvent)
+	eventChan := make(chan serverEvent)
 	if errRegister := eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
 

@@ -162,7 +162,7 @@ package app_test
 //	defer s.Close()
 //	u := "ws" + strings.TrimPrefix(s.URL, "http") + "/ws"
 //
-//	// Start to the server
+//	// start to the server
 //	ws, _, errDialer := websocket.DefaultDialer.Dial(u, nil)
 //	if errDialer != nil {
 //		t.Fatalf("%v", errDialer)

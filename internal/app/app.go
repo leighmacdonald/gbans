@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -31,13 +30,13 @@ type App struct {
 	bot                  *discord.Bot
 	db                   *store.Store
 	log                  *zap.Logger
-	logFileChan          chan *model.LogFilePayload
+	logFileChan          chan *logFilePayload
 	warningChan          chan newUserWarning
 	notificationChan     chan NotificationPayload
-	state                *ServerStateCollector
+	state                *serverStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
-	patreon              *PatreonManager
+	patreon              *patreonManager
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
 	mc                   *metricCollector
@@ -50,7 +49,7 @@ func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *z
 		db:                   database,
 		conf:                 conf,
 		log:                  logger,
-		logFileChan:          make(chan *model.LogFilePayload, 10),
+		logFileChan:          make(chan *logFilePayload, 10),
 		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan NotificationPayload, 5),
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
@@ -153,7 +152,7 @@ func (app *App) Init(ctx context.Context) error {
 		app.log.Warn("External Network ban lists not enabled")
 	}
 
-	// Start the background goroutine workers
+	// start the background goroutine workers
 	app.startWorkers(ctx)
 
 	// Load the filtered word set into memory
@@ -169,7 +168,7 @@ func (app *App) Init(ctx context.Context) error {
 }
 
 type newUserWarning struct {
-	ServerEvent model.ServerEvent
+	ServerEvent serverEvent
 	Message     string
 	userWarning
 }
@@ -179,7 +178,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 	var (
 		log       = app.log.Named("warnWorker")
 		warnings  = map[steamid.SID64][]userWarning{}
-		eventChan = make(chan model.ServerEvent)
+		eventChan = make(chan serverEvent)
 		ticker    = time.NewTicker(1 * time.Second)
 	)
 
@@ -338,8 +337,8 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 
 	for {
 		select {
-		case serverEvent := <-eventChan:
-			evt, ok := serverEvent.Event.(logparse.SayEvt)
+		case newServerEvent := <-eventChan:
+			evt, ok := newServerEvent.Event.(logparse.SayEvt)
 			if !ok {
 				log.Error("Got invalid type?")
 
@@ -353,7 +352,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 			matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(evt.Msg)
 			if matchedFilter != nil {
 				app.warningChan <- newUserWarning{
-					ServerEvent: serverEvent,
+					ServerEvent: newServerEvent,
 					userWarning: userWarning{
 						WarnReason:    store.Language,
 						Message:       evt.Msg,
@@ -372,7 +371,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 func (app *App) matchSummarizer(ctx context.Context) {
 	log := app.log.Named("matchSum")
 
-	eventChan := make(chan model.ServerEvent)
+	eventChan := make(chan serverEvent)
 	if errReg := app.eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
 		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
@@ -459,7 +458,7 @@ func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *co
 func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, logger *zap.Logger, database *store.Store) {
 	var (
 		log             = logger.Named("playerMessageWriter")
-		serverEventChan = make(chan model.ServerEvent)
+		serverEventChan = make(chan serverEvent)
 	)
 
 	if errRegister := broadcaster.Consume(serverEventChan, []logparse.EventType{
@@ -480,25 +479,25 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 			case logparse.Say:
 				fallthrough
 			case logparse.SayTeam:
-				serverEvent, ok := evt.Event.(logparse.SayEvt)
+				newServerEvent, ok := evt.Event.(logparse.SayEvt)
 				if !ok {
 					continue
 				}
 
-				if serverEvent.Msg == "" {
+				if newServerEvent.Msg == "" {
 					log.Warn("Empty person message body, skipping")
 
 					continue
 				}
 
 				msg := store.PersonMessage{
-					SteamID:     serverEvent.SID,
-					PersonaName: serverEvent.Name,
+					SteamID:     newServerEvent.SID,
+					PersonaName: newServerEvent.Name,
 					ServerName:  evt.Server.ServerNameLong,
 					ServerID:    evt.Server.ServerID,
-					Body:        serverEvent.Msg,
+					Body:        newServerEvent.Msg,
 					Team:        evt.EventType == logparse.SayTeam,
-					CreatedOn:   serverEvent.CreatedOn,
+					CreatedOn:   newServerEvent.CreatedOn,
 				}
 
 				lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -517,7 +516,7 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database *store.Store, logger *zap.Logger) {
 	log := logger.Named("playerConnectionWriter")
 
-	serverEventChan := make(chan model.ServerEvent)
+	serverEventChan := make(chan serverEvent)
 	if errRegister := eb.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 
@@ -529,29 +528,29 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database 
 		case <-ctx.Done():
 			return
 		case evt := <-serverEventChan:
-			serverEvent, ok := evt.Event.(logparse.ConnectedEvt)
+			newServerEvent, ok := evt.Event.(logparse.ConnectedEvt)
 			if !ok {
 				continue
 			}
 
-			if serverEvent.Address == "" {
+			if newServerEvent.Address == "" {
 				log.Warn("Empty person message body, skipping")
 
 				continue
 			}
 
-			parsedAddr := net.ParseIP(serverEvent.Address)
+			parsedAddr := net.ParseIP(newServerEvent.Address)
 			if parsedAddr == nil {
-				log.Warn("Received invalid address", zap.String("addr", serverEvent.Address))
+				log.Warn("Received invalid address", zap.String("addr", newServerEvent.Address))
 
 				continue
 			}
 
 			conn := store.PersonConnection{
 				IPAddr:      parsedAddr,
-				SteamID:     serverEvent.SID,
-				PersonaName: serverEvent.Name,
-				CreatedOn:   serverEvent.CreatedOn,
+				SteamID:     newServerEvent.SID,
+				PersonaName: newServerEvent.Name,
+				CreatedOn:   newServerEvent.CreatedOn,
 			}
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -562,6 +561,12 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database 
 			cancel()
 		}
 	}
+}
+
+type logFilePayload struct {
+	Server store.Server
+	Lines  []string
+	Map    string
 }
 
 // logReader is the fan-out orchestrator for game log events
@@ -604,16 +609,16 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 					continue
 				}
 
-				serverEvent := model.ServerEvent{
+				newServerEvent := serverEvent{
 					Server:  logFile.Server,
 					Results: parseResult,
 				}
 
-				if serverEvent.EventType == logparse.IgnoredMsg {
+				if newServerEvent.EventType == logparse.IgnoredMsg {
 					ignored++
 
 					continue
-				} else if serverEvent.EventType == logparse.UnknownMsg {
+				} else if newServerEvent.EventType == logparse.UnknownMsg {
 					unknown++
 					if writeUnhandled {
 						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
@@ -622,7 +627,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 					}
 				}
 
-				app.eb.Emit(serverEvent)
+				app.eb.Emit(newServerEvent)
 				emitted++
 			}
 

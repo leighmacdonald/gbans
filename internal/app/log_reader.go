@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
@@ -201,9 +200,9 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 
-			var serverEvent model.ServerEvent
+			var serverEvent serverEvent
 			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &serverEvent); errLogServerEvent != nil {
-				remoteSrc.logger.Debug("Failed to create ServerEvent", zap.Error(errLogServerEvent))
+				remoteSrc.logger.Debug("Failed to create serverEvent", zap.Error(errLogServerEvent))
 
 				continue
 			}
@@ -213,7 +212,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	}
 }
 
-func logToServerEvent(parser *logparse.LogParser, server store.Server, msg string, event *model.ServerEvent) error {
+func logToServerEvent(parser *logparse.LogParser, server store.Server, msg string, event *serverEvent) error {
 	// var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 	//	if sid == "BOT" {
 	//		panic("fixme")

@@ -23,10 +23,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// ServerDetails contains the entire state for the servers. This
+// serverDetails contains the entire state for the servers. This
 // contains sensitive information and should only be used where needed
 // by admins.
-type ServerDetails struct {
+type serverDetails struct {
 	// Database
 	ServerID      int       `json:"server_id"`
 	NameShort     string    `json:"name_short"`
@@ -80,7 +80,7 @@ type ServerDetails struct {
 	Players []extra.Player `json:"players"`
 }
 
-type BaseServer struct {
+type baseServer struct {
 	ServerID   int      `json:"server_id"`
 	Host       string   `json:"host"`
 	Port       int      `json:"port"`
@@ -100,22 +100,22 @@ type BaseServer struct {
 
 var ErrUnknownServer = errors.New("Unknown server")
 
-type ServerDetailsCollection []ServerDetails
+type serverDetailsCollection []serverDetails
 
-type PlayerServerInfo struct {
+type playerServerInfo struct {
 	Player   extra.Player
 	ServerID int
 }
 
-type FindOpts struct {
+type findOpts struct {
 	Name    string
 	IP      *net.IP
 	SteamID steamid.SID64
 	CIDR    *net.IPNet `json:"cidr"`
 }
 
-func (c *ServerDetailsCollection) Find(opts FindOpts) []PlayerServerInfo {
-	var found []PlayerServerInfo
+func (c *serverDetailsCollection) find(opts findOpts) []playerServerInfo {
+	var found []playerServerInfo
 
 	for _, server := range *c {
 		for _, player := range server.Players {
@@ -149,7 +149,7 @@ func (c *ServerDetailsCollection) Find(opts FindOpts) []PlayerServerInfo {
 			}
 
 			if matched {
-				found = append(found, PlayerServerInfo{Player: player, ServerID: server.ServerID})
+				found = append(found, playerServerInfo{Player: player, ServerID: server.ServerID})
 			}
 		}
 	}
@@ -157,12 +157,12 @@ func (c *ServerDetailsCollection) Find(opts FindOpts) []PlayerServerInfo {
 	return found
 }
 
-func (c *ServerDetailsCollection) sortRegion() map[string]ServerDetailsCollection {
-	serverMap := map[string]ServerDetailsCollection{}
+func (c *serverDetailsCollection) sortRegion() map[string]serverDetailsCollection {
+	serverMap := map[string]serverDetailsCollection{}
 	for _, server := range *c {
 		_, exists := serverMap[server.Region]
 		if !exists {
-			serverMap[server.Region] = ServerDetailsCollection{}
+			serverMap[server.Region] = serverDetailsCollection{}
 		}
 
 		serverMap[server.Region] = append(serverMap[server.Region], server)
@@ -171,8 +171,8 @@ func (c *ServerDetailsCollection) sortRegion() map[string]ServerDetailsCollectio
 	return serverMap
 }
 
-func (c *ServerDetailsCollection) ByName(name string, wildcardOk bool) ServerDetailsCollection {
-	var servers ServerDetailsCollection
+func (c *serverDetailsCollection) byName(name string, wildcardOk bool) serverDetailsCollection {
+	var servers serverDetailsCollection
 
 	if name == "*" && wildcardOk {
 		servers = append(servers, *c...)
@@ -198,19 +198,14 @@ func (c *ServerDetailsCollection) ByName(name string, wildcardOk bool) ServerDet
 	return servers
 }
 
-func (c *ServerDetailsCollection) ServerIDsByName(name string, wildcardOk bool) []int {
+func (c *serverDetailsCollection) serverIDsByName(name string, wildcardOk bool) []int {
 	var servers []int //nolint:prealloc
-	for _, server := range c.ByName(name, wildcardOk) {
+	for _, server := range c.byName(name, wildcardOk) {
 		servers = append(servers, server.ServerID)
 	}
 
 	return servers
 }
-
-type (
-	UpdateStatusHandler func(serverID int, newState extra.Status)
-	UpdateMSLHandler    func(newState []ServerLocation)
-)
 
 type rconController struct {
 	*rcon.RemoteConsole
@@ -248,41 +243,41 @@ func (rc *rconController) allowedToConnect() bool {
 	return rc.lastConnectAttempt.Add(waitInterval * time.Duration(multi)).Before(time.Now())
 }
 
-type ServerStateCollector struct {
+type serverStateCollector struct {
 	log              *zap.Logger
 	statusUpdateFreq time.Duration
 	msListUpdateFreq time.Duration
 	updateTimeout    time.Duration
-	masterServerList []ServerLocation
+	masterServerList []serverLocation
 	connections      map[int]*rconController
 	connectionsMu    *sync.RWMutex
-	serverState      map[int]ServerDetails
+	serverState      map[int]serverDetails
 	stateMu          *sync.RWMutex
-	configs          []ServerConfig
+	configs          []serverConfig
 	maxPlayersRx     *regexp.Regexp
 }
 
-func newServerStateCollector(logger *zap.Logger) *ServerStateCollector {
+func newServerStateCollector(logger *zap.Logger) *serverStateCollector {
 	const (
 		statusUpdateFreq = time.Second * 20
 		msListUpdateFreq = time.Minute * 5
 		updateTimeout    = time.Second * 5
 	)
 
-	return &ServerStateCollector{
+	return &serverStateCollector{
 		log:              logger,
 		statusUpdateFreq: statusUpdateFreq,
 		msListUpdateFreq: msListUpdateFreq,
 		updateTimeout:    updateTimeout,
 		connections:      map[int]*rconController{},
 		connectionsMu:    &sync.RWMutex{},
-		serverState:      map[int]ServerDetails{},
+		serverState:      map[int]serverDetails{},
 		stateMu:          &sync.RWMutex{},
 		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
 	}
 }
 
-func (c *ServerStateCollector) rcon(serverID int, cmd string) (string, error) {
+func (c *serverStateCollector) rcon(serverID int, cmd string) (string, error) {
 	c.connectionsMu.RLock()
 
 	conn, found := c.connections[serverID]
@@ -305,7 +300,7 @@ func (c *ServerStateCollector) rcon(serverID int, cmd string) (string, error) {
 	return resp, nil
 }
 
-func (c *ServerStateCollector) broadcast(serverIDs []int, cmd string) map[int]string {
+func (c *serverStateCollector) broadcast(serverIDs []int, cmd string) map[int]string {
 	results := map[int]string{}
 	waitGroup := sync.WaitGroup{}
 
@@ -329,11 +324,11 @@ func (c *ServerStateCollector) broadcast(serverIDs []int, cmd string) map[int]st
 	return results
 }
 
-func (c *ServerStateCollector) current() ServerDetailsCollection {
+func (c *serverStateCollector) current() serverDetailsCollection {
 	c.stateMu.RLock()
 	defer c.stateMu.RUnlock()
 
-	var curState []ServerDetails //nolint:prealloc
+	var curState []serverDetails //nolint:prealloc
 	for _, s := range c.serverState {
 		curState = append(curState, s)
 	}
@@ -345,7 +340,7 @@ func (c *ServerStateCollector) current() ServerDetailsCollection {
 	return curState
 }
 
-func (c *ServerStateCollector) startMSL(ctx context.Context) {
+func (c *serverStateCollector) startMSL(ctx context.Context) {
 	var (
 		log            = c.log.Named("msl_update")
 		mlUpdateTicker = time.NewTicker(c.msListUpdateFreq)
@@ -370,7 +365,7 @@ func (c *ServerStateCollector) startMSL(ctx context.Context) {
 	}
 }
 
-func (c *ServerStateCollector) onStatusUpdate(conf ServerConfig, newState extra.Status, maxVisible int) {
+func (c *serverStateCollector) onStatusUpdate(conf serverConfig, newState extra.Status, maxVisible int) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -400,11 +395,11 @@ func (c *ServerStateCollector) onStatusUpdate(conf ServerConfig, newState extra.
 	c.serverState[conf.ServerID] = server
 }
 
-func (c *ServerStateCollector) setServerConfigs(configs []ServerConfig) {
+func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
-	var gone []ServerConfig
+	var gone []serverConfig
 
 	for _, exist := range c.configs {
 		exists := false
@@ -428,7 +423,7 @@ func (c *ServerStateCollector) setServerConfigs(configs []ServerConfig) {
 
 	for _, config := range configs {
 		if _, found := c.serverState[config.ServerID]; !found {
-			c.serverState[config.ServerID] = ServerDetails{
+			c.serverState[config.ServerID] = serverDetails{
 				ServerID:      config.ServerID,
 				Name:          config.DefaultHostname,
 				NameShort:     config.Tag,
@@ -456,7 +451,7 @@ type partialStateUpdate struct {
 	PlayersVisible int    `json:"players_visible"`
 }
 
-func (c *ServerStateCollector) updateState(serverID int, update partialStateUpdate) error {
+func (c *serverStateCollector) updateState(serverID int, update partialStateUpdate) error {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -478,7 +473,7 @@ func (c *ServerStateCollector) updateState(serverID int, update partialStateUpda
 	return nil
 }
 
-func (c *ServerStateCollector) controllerRcon(controller *rconController, cmd string) (string, error) {
+func (c *serverStateCollector) controllerRcon(controller *rconController, cmd string) (string, error) {
 	controller.Lock()
 	defer controller.Unlock()
 
@@ -498,7 +493,7 @@ func (c *ServerStateCollector) controllerRcon(controller *rconController, cmd st
 	return resp, nil
 }
 
-func (c *ServerStateCollector) status(controller *rconController) (extra.Status, error) {
+func (c *serverStateCollector) status(controller *rconController) (extra.Status, error) {
 	statusResp, errStatus := c.controllerRcon(controller, "status")
 	if errStatus != nil {
 		return extra.Status{}, errStatus
@@ -514,7 +509,7 @@ func (c *ServerStateCollector) status(controller *rconController) (extra.Status,
 
 const maxPlayersSupported = 101
 
-func (c *ServerStateCollector) maxVisiblePlayers(controller *rconController) (int, error) {
+func (c *serverStateCollector) maxVisiblePlayers(controller *rconController) (int, error) {
 	maxPlayersResp, errMaxPlayers := c.controllerRcon(controller, "sv_visiblemaxplayers")
 	if errMaxPlayers != nil {
 		return 0, errMaxPlayers
@@ -537,7 +532,7 @@ func (c *ServerStateCollector) maxVisiblePlayers(controller *rconController) (in
 	return int(maxPlayers), nil
 }
 
-func (c *ServerStateCollector) startStatus(ctx context.Context) {
+func (c *serverStateCollector) startStatus(ctx context.Context) {
 	var (
 		logger             = c.log.Named("status_update")
 		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
@@ -556,10 +551,10 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 
 			startTIme := time.Now()
 
-			for _, serverConfig := range configs {
+			for _, serverConfigInstance := range configs {
 				waitGroup.Add(1)
 
-				go func(conf ServerConfig) {
+				go func(conf serverConfig) {
 					defer waitGroup.Done()
 
 					log := logger.Named(conf.Tag)
@@ -627,7 +622,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 					c.connectionsMu.Unlock()
 
 					successful.Add(1)
-				}(serverConfig)
+				}(serverConfigInstance)
 			}
 
 			waitGroup.Wait()
@@ -643,7 +638,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 	}
 }
 
-func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation, error) {
+func (c *serverStateCollector) updateMSL(ctx context.Context) ([]serverLocation, error) {
 	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
 		"appid":     "440",
 		"dedicated": "1",
@@ -654,12 +649,12 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 	}
 
 	var ( //nolint:prealloc
-		communityServers []ServerLocation
-		stats            = NewGlobalTF2Stats()
+		communityServers []serverLocation
+		stats            = newGlobalTF2Stats()
 	)
 
 	for _, baseServer := range allServers {
-		server := ServerLocation{
+		server := serverLocation{
 			LatLong: ip2location.LatLong{},
 			Server:  baseServer,
 		}
@@ -712,15 +707,15 @@ func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation,
 	return communityServers, nil
 }
 
-func (c *ServerStateCollector) start(ctx context.Context) {
+func (c *serverStateCollector) start(ctx context.Context) {
 	go c.startMSL(ctx)
 	go c.startStatus(ctx)
 }
 
 func newServerConfig(serverID int, name string, defaultHostname string, address string,
-	port int, rconPassword string, reserved int, cc string, region string, lat float64, long float64,
-) ServerConfig {
-	return ServerConfig{
+	port int, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
+) serverConfig {
+	return serverConfig{
 		ServerID:        serverID,
 		Tag:             name,
 		DefaultHostname: defaultHostname,
@@ -728,14 +723,14 @@ func newServerConfig(serverID int, name string, defaultHostname string, address 
 		Port:            port,
 		RconPassword:    rconPassword,
 		ReservedSlots:   reserved,
-		CC:              cc,
+		CC:              countryCode,
 		Region:          region,
 		Latitude:        lat,
 		Longitude:       long,
 	}
 }
 
-type ServerConfig struct {
+type serverConfig struct {
 	ServerID        int
 	Tag             string
 	DefaultHostname string
@@ -749,7 +744,7 @@ type ServerConfig struct {
 	Longitude       float64
 }
 
-func (config *ServerConfig) addr() string {
+func (config *serverConfig) addr() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
 }
 
@@ -803,7 +798,7 @@ func guessMapType(mapName string) string {
 	return strings.ToLower(pieces[0])
 }
 
-type GlobalTF2StatsSnapshot struct {
+type globalTF2StatsSnapshot struct {
 	StatID           int64          `json:"stat_id"`
 	Players          int            `json:"players"`
 	Bots             int            `json:"bots"`
@@ -818,7 +813,7 @@ type GlobalTF2StatsSnapshot struct {
 	CreatedOn        time.Time      `json:"created_on"`
 }
 
-func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
+func (stats globalTF2StatsSnapshot) trimMapTypes() map[string]int {
 	const minSize = 5
 
 	out := map[string]int{}
@@ -835,15 +830,15 @@ func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
 	return out
 }
 
-func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
-	return GlobalTF2StatsSnapshot{
+func newGlobalTF2Stats() globalTF2StatsSnapshot {
+	return globalTF2StatsSnapshot{
 		MapTypes:  map[string]int{},
 		Regions:   map[string]int{},
 		CreatedOn: time.Now(),
 	}
 }
 
-type ServerLocation struct {
+type serverLocation struct {
 	ip2location.LatLong
 	steamweb.Server
 }

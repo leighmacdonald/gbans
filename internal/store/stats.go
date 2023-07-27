@@ -350,7 +350,7 @@ func (db *Store) SaveLocalTF2Stats(ctx context.Context, duration StatDuration, s
 // func (database *pgStore) SaveGlobalTF2Stats(ctx context.Context, duration StatDuration, stats state.GlobalTF2StatsSnapshot) error {
 //	query, args, errQuery := sb.Insert(statDurationTable(Global, duration)).
 //		Columns(globalStatColumns...).
-//		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.TrimMapTypes(), stats.CreatedOn, stats.Regions).
+//		Values(stats.Players, stats.Bots, stats.Secure, stats.ServersCommunity, stats.ServersTotal, stats.CapacityFull, stats.CapacityEmpty, stats.CapacityPartial, stats.trimMapTypes(), stats.CreatedOn, stats.Regions).
 //		ToSql()
 //	if errQuery != nil {
 //		return errQuery

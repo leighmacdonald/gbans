@@ -56,3 +56,16 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 
 	return nil
 }
+
+// resolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout.
+func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	sid, errResolve := steamid.ResolveSID64(localCtx, sidStr)
+	if errResolve != nil {
+		return "", errors.Wrap(errResolve, "Failed to resolve vanity")
+	}
+
+	return sid, nil
+}

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/mm"
 	"github.com/leighmacdonald/golib"
@@ -86,7 +85,7 @@ type wsClient struct {
 	sendChan chan wsValue
 	logger   *zap.Logger
 	socket   *websocket.Conn
-	User     model.UserProfile `json:"user"`
+	User     userProfile `json:"user"`
 	lobbies  []LobbyService
 }
 
@@ -129,7 +128,7 @@ func (client *wsClient) send(msgType wsMsgType, status bool, payload any) {
 	}
 }
 
-func newWsClient(logger *zap.Logger, socket *websocket.Conn, user model.UserProfile) *wsClient {
+func newWsClient(logger *zap.Logger, socket *websocket.Conn, user userProfile) *wsClient {
 	return &wsClient{
 		logger:   logger.Named(fmt.Sprintf("ws-%d", user.SteamID.Int64())),
 		socket:   socket,
@@ -178,9 +177,9 @@ type wsPugLobbyListStatesResponse struct {
 }
 
 type pugUserMessageResponse struct {
-	User      model.UserProfile `json:"user"`
-	Message   string            `json:"message"`
-	CreatedAt time.Time         `json:"created_at"`
+	User      userProfile `json:"user"`
+	Message   string      `json:"message"`
+	CreatedAt time.Time   `json:"created_at"`
 }
 type lobbyUserMessageRequest struct {
 	Message string `json:"message"`
@@ -397,7 +396,7 @@ func (cm *wsConnectionManager) handleMessage(client *wsClient, msgType wsMsgType
 	return handler(cm, client, payload)
 }
 
-func wsConnHandler(writer http.ResponseWriter, request *http.Request, connectionManager *wsConnectionManager, user model.UserProfile, logger *zap.Logger) {
+func wsConnHandler(writer http.ResponseWriter, request *http.Request, connectionManager *wsConnectionManager, user userProfile, logger *zap.Logger) {
 	// webSocketUpgrader.CheckOrigin = func(request *http.Request) bool {
 	//	origin := request.Header.Get("Origin")
 	//	allowed := fp.Contains(config.HTTP.CorsOrigins, origin)

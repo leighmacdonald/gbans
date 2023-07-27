@@ -322,7 +322,7 @@ func (app *App) stateUpdater(ctx context.Context) {
 				continue
 			}
 
-			var configs []ServerConfig
+			var configs []serverConfig
 			for _, server := range servers {
 				configs = append(configs, newServerConfig(
 					server.ServerID,

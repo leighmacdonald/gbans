@@ -106,7 +106,7 @@ func onAPIPostLog(app *App) gin.HandlerFunc {
 		responseOKUser(ctx, http.StatusCreated, nil, "Log uploaded")
 		// Send the log to the logReader() for actual processing
 		// TODO deal with this potential block
-		// app.LogFileChan <- &model.LogFilePayload{
+		// app.LogFileChan <- &model.logFilePayload{
 		//	Server: server,
 		//	Lines:  logLines,
 		//	Map:    upload.MapName,
@@ -325,7 +325,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		}
 
 		state := app.state.current()
-		players := state.Find(FindOpts{SteamID: req.SteamID})
+		players := state.find(findOpts{SteamID: req.SteamID})
 
 		if len(players) == 0 {
 			log.Error("Failed to find player on /mod call")
@@ -1066,7 +1066,7 @@ func getDefaultFloat64(s string, def float64) float64 {
 // onAPIGetServerStates returns the current known cached server state.
 func onAPIGetServerStates(app *App) gin.HandlerFunc {
 	type UserServers struct {
-		Servers []BaseServer        `json:"servers"`
+		Servers []baseServer        `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
@@ -1076,11 +1076,11 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 			lon = getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
 			curState = app.state.current()
-			servers  []BaseServer
+			servers  []baseServer
 		)
 
 		for _, srv := range curState {
-			servers = append(servers, BaseServer{
+			servers = append(servers, baseServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
 				Name:       srv.Name,
@@ -3478,8 +3478,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		HasBots    bool      `json:"has_bots,omitempty"`
 	}
 
-	filterGameTypes := func(servers []ServerLocation, gameTypes []string) []ServerLocation {
-		var valid []ServerLocation
+	filterGameTypes := func(servers []serverLocation, gameTypes []string) []serverLocation {
+		var valid []serverLocation
 
 		for _, server := range servers {
 			serverTypes := strings.Split(server.GameType, ",")
@@ -3495,8 +3495,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterMaps := func(servers []ServerLocation, mapNames []string) []ServerLocation {
-		var valid []ServerLocation
+	filterMaps := func(servers []serverLocation, mapNames []string) []serverLocation {
+		var valid []serverLocation
 
 		for _, server := range servers {
 			for _, mapName := range mapNames {
@@ -3511,8 +3511,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterPlayersMin := func(servers []ServerLocation, minimum int) []ServerLocation {
-		var valid []ServerLocation
+	filterPlayersMin := func(servers []serverLocation, minimum int) []serverLocation {
+		var valid []serverLocation
 
 		for _, server := range servers {
 			if server.Players >= minimum {
@@ -3525,8 +3525,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterPlayersMax := func(servers []ServerLocation, maximum int) []ServerLocation {
-		var valid []ServerLocation
+	filterPlayersMax := func(servers []serverLocation, maximum int) []serverLocation {
+		var valid []serverLocation
 
 		for _, server := range servers {
 			if server.Players <= maximum {
@@ -3572,7 +3572,7 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 			filtered = filterPlayersMax(filtered, req.PlayersMax)
 		}
 
-		var slim []BaseServer
+		var slim []baseServer
 
 		for _, server := range filtered {
 			dist := distance(server.Latitude, server.Longitude, record.LatLong.Latitude, record.LatLong.Longitude)
@@ -3580,7 +3580,7 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 				continue
 			}
 
-			slim = append(slim, BaseServer{
+			slim = append(slim, baseServer{
 				Host: server.Addr,
 				Port: server.GamePort,
 				Name: server.Name,
@@ -3608,7 +3608,7 @@ func onAPIGetTF2Stats(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		source, sourceFound := ctx.GetQuery("source")
 		if !sourceFound {
-			responseErr(ctx, http.StatusInternalServerError, []GlobalTF2StatsSnapshot{})
+			responseErr(ctx, http.StatusInternalServerError, []globalTF2StatsSnapshot{})
 
 			return
 		}
@@ -3654,7 +3654,7 @@ func onAPIGetTF2Stats(app *App) gin.HandlerFunc {
 
 func onAPIGetPatreonCampaigns(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		tiers, errTiers := app.patreon.Tiers()
+		tiers, errTiers := app.patreon.tiers()
 		if errTiers != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3685,7 +3685,7 @@ func onAPIGetPatreonPledges(app *App) gin.HandlerFunc {
 		//		CreatedAt: t0,
 		//	})
 		// }
-		pledges, _, errPledges := app.patreon.Pledges()
+		pledges, _, errPledges := app.patreon.pledges()
 		if errPledges != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 

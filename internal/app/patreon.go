@@ -13,23 +13,23 @@ import (
 	"gopkg.in/mxpv/patreon-go.v1"
 )
 
-type PatreonStore interface {
+type patreonStore interface {
 	SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error
 	GetPatreonAuth(ctx context.Context) (string, string, error)
 }
 
-type PatreonManager struct {
+type patreonManager struct {
 	patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns []patreon.Campaign
 	patreonPledges   []patreon.Pledge
 	log              *zap.Logger
 	conf             *config.Config
-	db               *store.Store
+	db               patreonStore
 }
 
-func newPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *PatreonManager {
-	return &PatreonManager{
+func newPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *patreonManager {
+	return &patreonManager{
 		log:       logger.Named("patreon"),
 		conf:      conf,
 		db:        db,
@@ -37,8 +37,8 @@ func newPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store)
 	}
 }
 
-// Start https://www.patreon.com/portal/registration/register-clients
-func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
+// start https://www.patreon.com/portal/registration/register-clients
+func (p *patreonManager) start(ctx context.Context) (*patreon.Client, error) {
 	log := p.log.Named("patreonClient")
 	cat, crt, errAuth := p.db.GetPatreonAuth(ctx)
 
@@ -97,7 +97,7 @@ func (p *PatreonManager) Start(ctx context.Context) (*patreon.Client, error) {
 	return p.patreonClient, nil
 }
 
-func updateToken(ctx context.Context, database *store.Store, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
+func updateToken(ctx context.Context, database patreonStore, oAuthConfig oauth2.Config, tok *oauth2.Token) error {
 	tokSrc := oAuthConfig.TokenSource(ctx, tok)
 
 	newToken, errToken := tokSrc.Token()
@@ -114,7 +114,7 @@ func updateToken(ctx context.Context, database *store.Store, oAuthConfig oauth2.
 	return nil
 }
 
-func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
+func (p *patreonManager) tiers() ([]patreon.Campaign, error) {
 	campaigns, errCampaigns := p.patreonClient.FetchCampaign()
 	if errCampaigns != nil {
 		return nil, errors.Wrap(errCampaigns, "Failed to fetch campaign")
@@ -123,7 +123,7 @@ func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
 	return campaigns.Data, nil
 }
 
-func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
+func (p *patreonManager) pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
 	campaignResponse, err := p.patreonClient.FetchCampaign()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to fetch campaign")
@@ -173,7 +173,7 @@ func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 	return out, users, nil
 }
 
-func (p *PatreonManager) updater(ctx context.Context) {
+func (p *patreonManager) updater(ctx context.Context) {
 	var (
 		log         = p.log.Named("patreon")
 		updateTimer = time.NewTicker(time.Hour * 1)
@@ -193,14 +193,14 @@ func (p *PatreonManager) updater(ctx context.Context) {
 		case <-updateTimer.C:
 			updateChan <- true
 		case <-updateChan:
-			newCampaigns, errCampaigns := p.Tiers()
+			newCampaigns, errCampaigns := p.tiers()
 			if errCampaigns != nil {
 				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
 
 				return
 			}
 
-			newPledges, _, errPledges := p.Pledges()
+			newPledges, _, errPledges := p.pledges()
 			if errPledges != nil {
 				log.Error("Failed to refresh pledges", zap.Error(errPledges))
 
