@@ -23,7 +23,7 @@ type Bot struct {
 	commandHandlers   map[Cmd]CommandHandler
 	ColourLevels      LevelColors
 	unregisterOnStart bool
-	appId             string
+	appID             string
 	extURL            string
 }
 
@@ -43,7 +43,7 @@ func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool,
 		session:           session,
 		isReady:           false,
 		unregisterOnStart: unregisterOnStart,
-		appId:             appID,
+		appID:             appID,
 		extURL:            extURL,
 		commandHandlers:   map[Cmd]CommandHandler{},
 		ColourLevels: LevelColors{
@@ -117,7 +117,7 @@ func (bot *Bot) Start() error {
 		bot.botUnregisterSlashCommands("")
 	}
 
-	if errRegister := bot.botRegisterSlashCommands(bot.appId); errRegister != nil {
+	if errRegister := bot.botRegisterSlashCommands(bot.appID); errRegister != nil {
 		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 

@@ -87,7 +87,7 @@ func Import(ctx context.Context, list BanList, cachePath string, maxAge string) 
 			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
 
-		if time.Now().Sub(fileInfo.ModTime()) > maxAgeDuration {
+		if time.Since(fileInfo.ModTime()) > maxAgeDuration {
 			expired = true
 		}
 	} else {

@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-const (
-	expirationYears = 25
-)
-
 // FmtTimeShort returns a common format for time display.
 func FmtTimeShort(t time.Time) string {
 	return t.Format("Mon Jan 2 15:04:05 MST 2006")

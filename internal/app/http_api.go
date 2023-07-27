@@ -951,7 +951,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		}
 
 		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(app.conf.General.ExternalURL),
-			bannedPerson.Ban.ValidUntil.Sub(time.Now()).Round(time.Minute).String())
+			time.Until(bannedPerson.Ban.ValidUntil).Round(time.Minute).String())
 
 		responseOK(ctx, http.StatusOK, resp)
 

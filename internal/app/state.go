@@ -813,22 +813,22 @@ type globalTF2StatsSnapshot struct {
 	CreatedOn        time.Time      `json:"created_on"`
 }
 
-func (stats globalTF2StatsSnapshot) trimMapTypes() map[string]int {
-	const minSize = 5
-
-	out := map[string]int{}
-
-	for keyKey, value := range stats.MapTypes {
-		mapKey := keyKey
-		if value < minSize {
-			mapKey = "unknown"
-		}
-
-		out[mapKey] = value
-	}
-
-	return out
-}
+// func (stats globalTF2StatsSnapshot) trimMapTypes() map[string]int {
+//	const minSize = 5
+//
+//	out := map[string]int{}
+//
+//	for keyKey, value := range stats.MapTypes {
+//		mapKey := keyKey
+//		if value < minSize {
+//			mapKey = "unknown"
+//		}
+//
+//		out[mapKey] = value
+//	}
+//
+//	return out
+// }
 
 func newGlobalTF2Stats() globalTF2StatsSnapshot {
 	return globalTF2StatsSnapshot{
