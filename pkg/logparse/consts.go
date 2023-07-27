@@ -339,7 +339,6 @@ const (
 	BackScatter
 	BigKill
 	ShortCircuitOrb
-
 	BatSpell
 	BoxingGloveSpell
 	Flare
@@ -356,6 +355,8 @@ const (
 	SandmanBall
 	SentryRocket
 	SkeletonSpawnSpell
+	ManMelter
+	CrossbowBolt
 )
 
 // var backStabWeapons = []Weapon{
