@@ -39,7 +39,7 @@ func (f *wordFilters) findFilteredWordMatch(body string) (string, *store.Filter)
 
 	for _, filter := range f.wordFilters {
 		for _, word := range words {
-			if filter.Match(word) {
+			if filter.IsEnabled && filter.Match(word) {
 				return word, &filter
 			}
 		}

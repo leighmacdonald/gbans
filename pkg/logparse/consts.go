@@ -325,6 +325,12 @@ const (
 	BabyFaceBlaster
 	ClaidheamhMor
 	BatOuttaHell
+	FortifiedCompound
+	TheWinger
+	ShortCircuit
+	SplendidScreen
+	NessiesNineIron
+	BuildingCarriedDestroyed
 )
 
 // var backStabWeapons = []Weapon{

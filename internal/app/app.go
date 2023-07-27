@@ -215,11 +215,6 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					log.Error("Failed to update filter trigger count", zap.Error(errSave))
 				}
 
-				log.Info("User triggered word filter",
-					zap.String("matched", newWarn.Matched),
-					zap.String("message", newWarn.Message),
-					zap.Int64("filter_id", newWarn.MatchedFilter.FilterID))
-
 				var person store.Person
 				if personErr := app.PersonBySID(ctx, evt.SID, &person); personErr != nil {
 					log.Error("Failed to get person for warning", zap.Error(personErr))
@@ -227,14 +222,16 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					continue
 				}
 
-				if newWarn.MatchedFilter.IsEnabled {
-					_, found := warnings[evt.SID]
-					if !found {
-						warnings[evt.SID] = []userWarning{}
-					}
-
-					warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
+				if !newWarn.MatchedFilter.IsEnabled {
+					continue
 				}
+
+				_, found := warnings[evt.SID]
+				if !found {
+					warnings[evt.SID] = []userWarning{}
+				}
+
+				warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
 
 				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[evt.SID]), conf.General.WarningLimit)
 				if !newWarn.MatchedFilter.IsEnabled {
