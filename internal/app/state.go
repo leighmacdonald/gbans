@@ -436,6 +436,10 @@ func (c *ServerStateCollector) setServerConfigs(configs []ServerConfig) {
 				Port:          config.Port,
 				RconPassword:  config.RconPassword,
 				ReservedSlots: config.ReservedSlots,
+				CC:            config.CC,
+				Region:        config.Region,
+				Latitude:      config.Latitude,
+				Longitude:     config.Longitude,
 			}
 		}
 	}
@@ -713,15 +717,21 @@ func (c *ServerStateCollector) start(ctx context.Context) {
 	go c.startStatus(ctx)
 }
 
-func newServerConfig(serverID int, name string, defaultHostname string, address string, port int, rconPassword string, reserved int) ServerConfig {
+func newServerConfig(serverID int, name string, defaultHostname string, address string,
+	port int, rconPassword string, reserved int, cc string, region string, lat float64, long float64,
+) ServerConfig {
 	return ServerConfig{
 		ServerID:        serverID,
 		Tag:             name,
+		DefaultHostname: defaultHostname,
 		Host:            address,
 		Port:            port,
 		RconPassword:    rconPassword,
 		ReservedSlots:   reserved,
-		DefaultHostname: defaultHostname,
+		CC:              cc,
+		Region:          region,
+		Latitude:        lat,
+		Longitude:       long,
 	}
 }
 
@@ -733,6 +743,10 @@ type ServerConfig struct {
 	Port            int
 	RconPassword    string
 	ReservedSlots   int
+	CC              string
+	Region          string
+	Latitude        float64
+	Longitude       float64
 }
 
 func (config *ServerConfig) addr() string {

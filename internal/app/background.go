@@ -324,8 +324,19 @@ func (app *App) stateUpdater(ctx context.Context) {
 
 			var configs []ServerConfig
 			for _, server := range servers {
-				configs = append(configs, newServerConfig(server.ServerID, server.ServerName,
-					server.ServerNameLong, server.Address, server.Port, server.RCON, server.ReservedSlots))
+				configs = append(configs, newServerConfig(
+					server.ServerID,
+					server.ServerName,
+					server.ServerNameLong,
+					server.Address,
+					server.Port,
+					server.RCON,
+					server.ReservedSlots,
+					server.CC,
+					server.Region,
+					server.Latitude,
+					server.Longitude,
+				))
 			}
 
 			app.state.setServerConfigs(configs)
