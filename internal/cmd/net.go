@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/app"
@@ -34,9 +35,12 @@ func netUpdateCmd() *cobra.Command {
 			defer func() {
 				_ = rootLogger.Sync()
 			}()
-			connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
+
+			ctx := context.Background()
+
+			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			database := store.New(rootLogger, conf.DB.DSN, false)
+			database := store.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
 			if errConnect := database.Connect(connCtx); errConnect != nil {
@@ -48,7 +52,6 @@ func netUpdateCmd() *cobra.Command {
 				}
 			}()
 
-			ctx := context.Background()
 			if errUpdate := ip2location.Update(ctx, conf.NetBans.CachePath, conf.NetBans.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
 			}
@@ -57,12 +60,15 @@ func netUpdateCmd() *cobra.Command {
 			if errRead != nil {
 				rootLogger.Fatal("Failed to read data", zap.Error(errRead))
 			}
-			updateCtx, cancelUpdate := context.WithTimeout(context.Background(), time.Minute*30)
+			updateCtx, cancelUpdate := context.WithTimeout(ctx, time.Minute*30)
 			defer cancelUpdate()
 			rootLogger.Info("Starting import")
 			if errInsert := database.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 			}
+			rootLogger.Info("Import Complete")
+
+			os.Exit(0)
 		},
 	}
 }

@@ -342,6 +342,10 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 			return nil, errors.Wrap(errParseCIDR, "Failed to parse asn cidr record")
 		}
 
+		if recordLine[3] == "-" {
+			continue
+		}
+
 		asNum, errParseASNum := strconv.ParseUint(recordLine[3], 10, 64)
 		if errParseASNum != nil {
 			return nil, errors.Wrap(errParseCIDR, "Failed to parse as number record")
