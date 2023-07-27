@@ -396,6 +396,7 @@ func TestParseSayEvt(t *testing.T) {
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.RED},
 			Msg:          "gg",
+			Team:         false,
 		})
 }
 
@@ -413,10 +414,11 @@ func TestParseSayTeamEvt(t *testing.T) {
 	t.Parallel()
 
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Desmos Calculator<10><[U:1:1132396177]><Red>" say_team "gg"`,
-		logparse.SayTeamEvt{
+		logparse.SayEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
 			Msg:          "gg",
+			Team:         true,
 		})
 }
 

@@ -49,6 +49,7 @@ export const AdminChat = () => {
     const [messageQuery, setMessageQuery] = useState<string>('');
     const [servers, setServers] = useState<Server[]>([]);
     const [rows, setRows] = useState<PersonMessage[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, setTotalRows] = useState<number>(0);
     const [selectedServer, setSelectedServer] = useState<number>(
         anyServer.server_id

@@ -291,9 +291,8 @@ type SayEvt struct {
 	TimeStamp
 	SourcePlayer `json:"source_player"`
 	Msg          string `json:"msg" mapstructure:"msg"`
+	Team         bool   `json:"team"`
 }
-
-type SayTeamEvt SayEvt
 
 type DominationEvt struct {
 	TimeStamp

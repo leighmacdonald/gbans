@@ -625,7 +625,12 @@ type ChatHistoryQueryFilter struct {
 	SentBefore *time.Time `json:"sent_before,omitempty"`
 }
 
-func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, error) {
+func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, int64, error) {
+	count := db.sb.Select(
+		"count(m.person_message_id) as count").
+		From("person_messages m").
+		LeftJoin("server s on m.server_id = s.server_id")
+
 	builder := db.sb.Select(
 		"m.person_message_id",
 		"m.steam_id",
@@ -639,57 +644,81 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		LeftJoin("server s on m.server_id = s.server_id")
 	if query.Offset > 0 {
 		builder = builder.Offset(query.Offset)
+		count = count.Offset(query.Offset)
 	}
 
 	if query.Limit > 0 {
 		builder = builder.Limit(query.Limit)
+		count = count.Limit(query.Limit)
 	}
 
 	if query.OrderBy != "" {
 		if query.Desc {
 			builder = builder.OrderBy(query.OrderBy + " DESC")
+			count = count.OrderBy(query.OrderBy + " DESC")
 		} else {
 			builder = builder.OrderBy(query.OrderBy + " ASC")
+			count = count.OrderBy(query.OrderBy + " DESC")
 		}
 	}
 
 	if query.ServerID > 0 {
 		builder = builder.Where(sq.Eq{"m.server_id": query.ServerID})
+		count = count.Where(sq.Eq{"m.server_id": query.ServerID})
 	}
 
 	if query.SteamID != "" {
 		sid := steamid.New(query.SteamID)
 		if !sid.Valid() {
-			return nil, errors.Wrap(steamid.ErrInvalidSID, "Invalid steam id in query")
+			return nil, 0, errors.Wrap(steamid.ErrInvalidSID, "Invalid steam id in query")
 		}
 
 		builder = builder.Where(sq.Eq{"m.steam_id": sid.Int64()})
+		count = count.Where(sq.Eq{"m.steam_id": sid.Int64()})
 	}
 
 	if query.PersonaName != "" {
 		builder = builder.Where(sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
+		count = count.Where(sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
 	}
 
 	if query.Query != "" {
 		builder = builder.Where(sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
+		count = count.Where(sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
 	}
 
 	if query.SentBefore != nil {
 		builder = builder.Where(sq.Lt{"m.created_on": query.SentBefore})
+		count = count.Where(sq.Lt{"m.created_on": query.SentBefore})
 	}
 
 	if query.SentAfter != nil {
 		builder = builder.Where(sq.Gt{"m.created_on": query.SentAfter})
+		count = count.Where(sq.Gt{"m.created_on": query.SentAfter})
 	}
 
-	q, a, qErr := builder.ToSql()
-	if qErr != nil {
-		return nil, errors.Wrap(qErr, "Failed to build query")
+	countQuery, countQueryArgs, countQueryErr := count.ToSql()
+	if countQueryErr != nil {
+		return nil, 0, errors.Wrap(countQueryErr, "Failed to build count query")
 	}
 
-	rows, errQuery := db.Query(ctx, q, a...)
+	var totalRows int64
+	if errCount := db.QueryRow(ctx, countQuery, countQueryArgs...).Scan(&totalRows); errCount != nil {
+		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
+	}
+
+	if totalRows == 0 {
+		return PersonMessages{}, 0, nil
+	}
+
+	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
+	if rowsQueryErr != nil {
+		return nil, 0, errors.Wrap(rowsQueryErr, "Failed to build rows query")
+	}
+
+	rows, errQuery := db.Query(ctx, rowsQuery, rowsArgs...)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, totalRows, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -712,7 +741,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			&message.PersonaName,
 			&message.ServerName,
 		); errScan != nil {
-			return nil, Err(errScan)
+			return nil, 0, Err(errScan)
 		}
 
 		message.SteamID = steamid.New(steamID)
@@ -720,7 +749,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		messages = append(messages, message)
 	}
 
-	return messages, nil
+	return messages, totalRows, nil
 }
 
 func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error) {

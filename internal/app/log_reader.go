@@ -107,8 +107,10 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 	remoteSrc.updateSecrets(ctx)
 
+	remoteSrc.logger.Info("Starting log reader", zap.String("listen_addr", remoteSrc.udpAddr.String()))
+
 	var (
-		running        = atomic.NewBool(false)
+		running        = atomic.NewBool(true)
 		count          = uint64(0)
 		insecureCount  = uint64(0)
 		errCount       = uint64(0)
@@ -200,14 +202,14 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 
-			var serverEvent serverEvent
-			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &serverEvent); errLogServerEvent != nil {
+			var event serverEvent
+			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &event); errLogServerEvent != nil {
 				remoteSrc.logger.Debug("Failed to create serverEvent", zap.Error(errLogServerEvent))
 
 				continue
 			}
 
-			remoteSrc.eb.Emit(serverEvent)
+			remoteSrc.eb.Emit(event)
 		}
 	}
 }

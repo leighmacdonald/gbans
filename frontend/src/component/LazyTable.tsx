@@ -33,6 +33,7 @@ export const LazyTable = <T,>({
     rows
 }: LazyTableProps<T>) => {
     const theme = useTheme();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, setPage] = useState(0);
     const [order, setOrder] = useState<Order>(defaultSortOrder);
     const [sortColumn, setSortColumn] = useState<keyof T>(defaultSortColumn);

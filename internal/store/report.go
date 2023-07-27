@@ -92,10 +92,6 @@ func (db *Store) insertReport(ctx context.Context, report *Report) error {
 		return Err(errQuery)
 	}
 
-	db.log.Info("Report saved",
-		zap.Int64("report_id", report.ReportID),
-		zap.Int64("author_id", report.SourceID.Int64()))
-
 	return nil
 }
 

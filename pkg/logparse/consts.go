@@ -321,6 +321,7 @@ const (
 	TFMedigun
 	TFFlameThrower
 	Dispenser
+	TideTurner
 )
 
 // var backStabWeapons = []Weapon{

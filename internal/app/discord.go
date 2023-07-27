@@ -666,12 +666,7 @@ func makeOnPSay(app *App) discord.CommandHandler {
 			return errors.Wrap(errPlayerSid, "Failed to get player sid")
 		}
 
-		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
-		if errAuthor != nil {
-			return errAuthor
-		}
-
-		if errPSay := app.PSay(ctx, author.SteamID, playerSid, msg); errPSay != nil {
+		if errPSay := app.PSay(ctx, playerSid, msg); errPSay != nil {
 			return discord.ErrCommandFailed
 		}
 

@@ -89,7 +89,7 @@ func NewWeaponParser() *WeaponParser {
 			DemoKatana:           "demokatana",
 			Detonator:            "detonator",
 			DiamondBack:          "diamondback",
-			DirectHit:            "direct_hit",
+			DirectHit:            "rocketlauncher_directhit",
 			DisciplinaryAction:   "disciplinary_action",
 			DragonsFury:          "dragons_fury",
 			DragonsFuryBonus:     "dragons_fury_bonus",
@@ -175,6 +175,7 @@ func NewWeaponParser() *WeaponParser {
 			TauntMedic:           "taunt_medic",
 			Telefrag:             "telefrag",
 			TheClassic:           "the_classic",
+			TideTurner:           "tide_turner",
 			Tomislav:             "tomislav",
 			Ubersaw:              "ubersaw",
 			WarriorsSpirit:       "warrior_spirit",
@@ -934,13 +935,15 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 					return nil, errUnmarshal
 				}
 
+				parsedEvent.Team = false
 				event = parsedEvent
 			case SayTeam:
-				var parsedEvent SayTeamEvt
+				var parsedEvent SayEvt
 				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}
 
+				parsedEvent.Team = true
 				event = parsedEvent
 			case Domination:
 				var parsedEvent DominationEvt

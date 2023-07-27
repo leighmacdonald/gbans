@@ -218,22 +218,15 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	switch result.EventType {
 	case MapLoad:
 		return nil
+	case SayTeam:
+		fallthrough
 	case Say:
 		evt, ok := result.Event.(SayEvt)
 		if !ok {
 			return ErrInvalidType
 		}
 
-		match.addChat(evt.SID, evt.Name, evt.Msg, false, evt.CreatedOn)
-
-		return nil
-	case SayTeam:
-		evt, ok := result.Event.(SayTeamEvt)
-		if !ok {
-			return ErrInvalidType
-		}
-
-		match.addChat(evt.SID, evt.Name, evt.Msg, true, evt.CreatedOn)
+		match.addChat(evt.SID, evt.Name, evt.Msg, evt.Team, evt.CreatedOn)
 
 		return nil
 	case JoinedTeam:
