@@ -310,7 +310,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
 
-						if errPSay := app.PSay(ctx, "", evt.SID, msg); errPSay != nil {
+						if errPSay := app.PSay(ctx, evt.SID, msg); errPSay != nil {
 							log.Error("Failed to send user warning psay message", zap.Error(errPSay))
 						}
 					}
@@ -337,7 +337,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 	for {
 		select {
 		case newServerEvent := <-eventChan:
-			evt, ok := newServerEvent.Event.(logparse.SayEvt)
+			evt, ok := newServerEvent.Results.Event.(logparse.SayEvt)
 			if !ok {
 				log.Error("Got invalid type?")
 
@@ -495,7 +495,7 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 					ServerName:  evt.Server.ServerNameLong,
 					ServerID:    evt.Server.ServerID,
 					Body:        newServerEvent.Msg,
-					Team:        evt.EventType == logparse.SayTeam,
+					Team:        newServerEvent.Team,
 					CreatedOn:   newServerEvent.CreatedOn,
 				}
 
@@ -512,11 +512,11 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 	}
 }
 
-func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database *store.Store, logger *zap.Logger) {
-	log := logger.Named("playerConnectionWriter")
+func (app *App) playerConnectionWriter(ctx context.Context) {
+	log := app.log.Named("playerConnectionWriter")
 
 	serverEventChan := make(chan serverEvent)
-	if errRegister := eb.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
+	if errRegister := app.eb.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 
 		return
@@ -545,6 +545,14 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database 
 				continue
 			}
 
+			// Maybe ignore these and wait for connect call to create?
+			var person store.Person
+			if errPerson := app.PersonBySID(ctx, newServerEvent.SID, &person); errPerson != nil {
+				log.Error("Failed to load person", zap.Error(errPerson))
+
+				continue
+			}
+
 			conn := store.PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamID:     newServerEvent.SID,
@@ -553,7 +561,7 @@ func playerConnectionWriter(ctx context.Context, eb *eventBroadcaster, database 
 			}
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			if errChat := database.AddConnectionHistory(lCtx, &conn); errChat != nil {
+			if errChat := app.db.AddConnectionHistory(lCtx, &conn); errChat != nil {
 				log.Error("Failed to add connection history", zap.Error(errChat))
 			}
 
@@ -670,7 +678,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer(ctx)
 	go playerMessageWriter(ctx, app.eb, app.log, app.db)
-	go playerConnectionWriter(ctx, app.eb, app.db, app.log)
+	go app.playerConnectionWriter(ctx)
 	go app.steamGroupMembershipUpdater(ctx)
 	go app.localStatUpdater(ctx)
 	go cleanupTasks(ctx, app.db, app.log)

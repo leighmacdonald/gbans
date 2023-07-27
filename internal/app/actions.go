@@ -106,11 +106,7 @@ func (app *App) CSay(_ context.Context, author steamid.SID64, serverName string,
 }
 
 // PSay is used to send a private message to a player.
-func (app *App) PSay(ctx context.Context, author steamid.SID64, target steamid.SID64, message string) error {
-	if !author.Valid() {
-		return consts.ErrInvalidAuthorSID
-	}
-
+func (app *App) PSay(ctx context.Context, target steamid.SID64, message string) error {
 	if !target.Valid() {
 		return consts.ErrInvalidTargetSID
 	}
