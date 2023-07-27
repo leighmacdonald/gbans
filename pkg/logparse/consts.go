@@ -322,6 +322,9 @@ const (
 	TFFlameThrower
 	Dispenser
 	TideTurner
+	BabyFaceBlaster
+	ClaidheamhMor
+	BatOuttaHell
 )
 
 // var backStabWeapons = []Weapon{

@@ -65,9 +65,11 @@ func NewWeaponParser() *WeaponParser {
 			Amputator:             "amputator",
 			Atomizer:              "atomizer",
 			AwperHand:             "awper_hand",
+			BabyFaceBlaster:       "pep_brawlerblaster",
 			Backburner:            "backburner",
 			BackScratcher:         "back_scratcher",
 			Bat:                   "bat",
+			BatOuttaHell:          "skullbat",
 			BazaarBargain:         "bazaar_bargain",
 			BigEarner:             "big_earner",
 			Blackbox:              "blackbox",
@@ -78,6 +80,7 @@ func NewWeaponParser() *WeaponParser {
 			BrassBeast:            "brass_beast",
 			Bushwacka:             "bushwacka",
 			Caber:                 "ullapool_caber",
+			ClaidheamhMor:         "sword",
 			Club:                  "club",
 			ConscientiousObjector: "nonnonviolent_protest",
 			CowMangler:            "cow_mangler",
@@ -96,7 +99,7 @@ func NewWeaponParser() *WeaponParser {
 			Enforcer:             "enforcer",
 			EscapePlan:           "unique_pickaxe_escape",
 			EternalReward:        "eternal_reward",
-			FamilyBusiness:       "family_business",
+			FamilyBusiness:       "tf_weapon_shotgun_hwg",
 			Fists:                "fists",
 			FistsOfSteel:         "steel_fists",
 			FlameThrower:         "flamethrower",
@@ -191,6 +194,7 @@ func NewWeaponParser() *WeaponParser {
 		},
 		weapons: map[PlayerClass][]Weapon{
 			Multi: {
+				BatOuttaHell,
 				ConscientiousObjector,
 				FryingPan,
 				HamShank,
@@ -204,6 +208,7 @@ func NewWeaponParser() *WeaponParser {
 			},
 			Scout: {
 				Atomizer,
+				BabyFaceBlaster,
 				Bat,
 				ForceANature,
 				PepPistol,
@@ -251,6 +256,7 @@ func NewWeaponParser() *WeaponParser {
 			Demo: {
 				Bottle,
 				Caber,
+				ClaidheamhMor,
 				DemoKatana,
 				IronBomber,
 				LockNLoad,
