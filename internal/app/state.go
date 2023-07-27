@@ -550,10 +550,10 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 			configs := c.configs
 			c.stateMu.RUnlock()
 
+			startTIme := time.Now()
+
 			for _, serverConfig := range configs {
 				waitGroup.Add(1)
-
-				startTIme := time.Now()
 
 				go func(conf ServerConfig) {
 					defer waitGroup.Done()
@@ -573,17 +573,18 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 					connected := controller.connected()
 
 					if !connected && !controller.allowedToConnect() {
-						log.Info("Delaying connect")
+						return
 					}
 
 					if !connected {
-						newConsole, errDial := rcon.Dial(ctx, conf.addr(), conf.RconPassword, c.updateTimeout)
+						dialCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+						newConsole, errDial := rcon.Dial(dialCtx, conf.addr(), conf.RconPassword, c.updateTimeout)
 
 						if errDial != nil {
 							log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
-						} else {
-							log.Info("RCON connected successfully")
 						}
+
+						cancel()
 
 						controller.Lock()
 						controller.lastConnectAttempt = time.Now()
@@ -621,19 +622,17 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 					c.connections[conf.ServerID] = controller
 					c.connectionsMu.Unlock()
 
-					log.Debug("Updated")
 					successful.Add(1)
 				}(serverConfig)
-
-				waitGroup.Wait()
-
-				logger.Info("RCON update cycle complete",
-					zap.Int32("success", successful.Load()),
-					zap.Int32("existing", existing.Load()),
-					zap.Int32("fail", int32(len(configs))-successful.Load()),
-					zap.Duration("duration", time.Since(startTIme)))
-				statusUpdateTicker.Reset(c.statusUpdateFreq)
 			}
+
+			waitGroup.Wait()
+
+			logger.Debug("RCON update cycle complete",
+				zap.Int32("success", successful.Load()),
+				zap.Int32("existing", existing.Load()),
+				zap.Int32("fail", int32(len(configs))-successful.Load()),
+				zap.Duration("duration", time.Since(startTIme)))
 		case <-ctx.Done():
 			return
 		}
