@@ -91,15 +91,6 @@ export const apiCall = async <
 
 export class ValidationException extends Error {}
 
-export interface QueryFilterProps<T> {
-    offset?: number;
-    limit?: number;
-    sort_desc?: boolean;
-    query?: string;
-    order_by?: keyof T;
-    deleted?: boolean;
-}
-
 // Helper
 export const StringIsNumber = (value: unknown) => !isNaN(Number(value));
 

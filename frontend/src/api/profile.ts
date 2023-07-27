@@ -184,14 +184,25 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
     sent_before?: Date;
 }
 
+export interface pagedQueryResults<T> {
+    totalMessages: number;
+    messages: T[];
+}
+
 export const apiGetMessages = async (opts: MessageQuery) => {
-    const resp = await apiCall<PersonMessage[]>(`/api/messages`, 'POST', opts);
-    resp.result = resp.result?.map((msg) => {
-        return {
-            ...msg,
-            created_on: parseDateTime(msg.created_on as unknown as string)
-        };
-    });
+    const resp = await apiCall<pagedQueryResults<PersonMessage>>(
+        `/api/messages`,
+        'POST',
+        opts
+    );
+    if (resp.result?.messages) {
+        resp.result.messages = resp.result.messages.map((msg) => {
+            return {
+                ...msg,
+                created_on: parseDateTime(msg.created_on as unknown as string)
+            };
+        });
+    }
     return resp;
 };
 

@@ -84,6 +84,74 @@ export const defaultRenderer = (
     }
 };
 
+export const createTableHeader = <T,>(
+    columns: HeadingCell<T>[],
+    bgColor: string,
+    setSortColumn: React.Dispatch<React.SetStateAction<keyof T>>,
+    sortColumn: keyof T,
+    order: Order,
+    setOrder: React.Dispatch<React.SetStateAction<Order>>
+) => {
+    return (
+        <TableHead>
+            <TableRow>
+                {columns.map((col) => {
+                    return (
+                        <TableCell
+                            align={col.align ?? 'right'}
+                            key={col.label}
+                            sx={{
+                                width: col?.width ?? 'auto',
+                                '&:hover': col.sortable
+                                    ? {
+                                          cursor: 'pointer'
+                                      }
+                                    : { cursor: 'default' },
+                                backgroundColor: bgColor
+                            }}
+                            onClick={() => {
+                                if (!col.sortable || col.virtual) {
+                                    return;
+                                }
+                                if (col.sortKey === sortColumn) {
+                                    setOrder(order === 'asc' ? 'desc' : 'asc');
+                                } else {
+                                    setSortColumn(col.sortKey as never);
+                                    setOrder('desc');
+                                }
+                            }}
+                        >
+                            <Tooltip
+                                title={
+                                    col.tooltip instanceof Function
+                                        ? col.tooltip()
+                                        : col.tooltip
+                                }
+                                placement={'top'}
+                            >
+                                <Typography
+                                    padding={0}
+                                    sx={{
+                                        textDecoration:
+                                            col.sortKey != sortColumn
+                                                ? 'none'
+                                                : order == 'asc'
+                                                ? 'underline'
+                                                : 'overline'
+                                    }}
+                                    variant={'subtitle2'}
+                                >
+                                    {col.label}
+                                </Typography>
+                            </Tooltip>
+                        </TableCell>
+                    );
+                })}
+            </TableRow>
+        </TableHead>
+    );
+};
+
 const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
     b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 

@@ -2162,6 +2162,8 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     embed,
 		})
+
+		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
 	}
 }
 
@@ -3012,21 +3014,29 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 		}
 
 		// TODO paging
-		chat, errChat := app.db.QueryChatHistory(ctx, query)
+		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, query)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query chat history",
+			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", query.SteamID))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
 
-		if chat == nil {
-			chat = store.PersonMessages{}
+		if messages == nil {
+			messages = store.PersonMessages{}
 		}
 
-		responseOK(ctx, http.StatusOK, chat)
+		responseOK(ctx, http.StatusOK, messageQueryResults{
+			TotalMessages: totalMessages,
+			Messages:      messages,
+		})
 	}
+}
+
+type messageQueryResults struct {
+	TotalMessages int64                 `json:"total_messages"`
+	Messages      []store.PersonMessage `json:"messages"`
 }
 
 func onAPIGetMessageContext(app *App) gin.HandlerFunc {
@@ -3058,7 +3068,7 @@ func onAPIGetMessageContext(app *App) gin.HandlerFunc {
 		before := message.CreatedOn.Add(time.Hour)
 
 		// TODO paging
-		chat, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
+		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
 			ServerID:    message.ServerID,
 			SentAfter:   &after,
 			SentBefore:  &before,
@@ -3066,18 +3076,21 @@ func onAPIGetMessageContext(app *App) gin.HandlerFunc {
 		})
 
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query chat history",
+			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.Int64("person_message_id", messageID))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
 
-		if chat == nil {
-			chat = store.PersonMessages{}
+		if messages == nil {
+			messages = store.PersonMessages{}
 		}
 
-		responseOK(ctx, http.StatusOK, chat)
+		responseOK(ctx, http.StatusOK, messageQueryResults{
+			TotalMessages: totalMessages,
+			Messages:      messages,
+		})
 	}
 }
 
@@ -3094,7 +3107,7 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 		}
 
 		// TODO paging
-		chat, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
+		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
 			SteamID: steamID.String(),
 			QueryFilter: store.QueryFilter{
 				Limit: 1000,
@@ -3102,18 +3115,21 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 		})
 
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query chat history",
+			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.Int64("sid64", steamID.Int64()))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
 
-		if chat == nil {
-			chat = store.PersonMessages{}
+		if messages == nil {
+			messages = store.PersonMessages{}
 		}
 
-		responseOK(ctx, http.StatusOK, chat)
+		responseOK(ctx, http.StatusOK, messageQueryResults{
+			TotalMessages: totalMessages,
+			Messages:      messages,
+		})
 	}
 }
 

@@ -14,11 +14,12 @@ import {
     PersonMessage,
     Server
 } from '../api';
-import { DataTable } from '../component/DataTable';
 import { steamIdQueryValue } from '../util/text';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { Heading } from '../component/Heading';
+import { LazyTable } from '../component/LazyTable';
+import { logErr } from '../util/errors';
 
 const anyServer: Server = {
     server_name: 'Any',
@@ -41,13 +42,14 @@ const anyServer: Server = {
 };
 
 export const AdminChat = () => {
-    const [messages, setMessages] = useState<PersonMessage[]>([]);
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [steamId, setSteamId] = useState<string>('');
     const [nameQuery, setNameQuery] = useState<string>('');
     const [messageQuery, setMessageQuery] = useState<string>('');
     const [servers, setServers] = useState<Server[]>([]);
+    const [rows, setRows] = useState<PersonMessage[]>([]);
+    const [_, setTotalRows] = useState<number>(0);
     const [selectedServer, setSelectedServer] = useState<number>(
         anyServer.server_id
     );
@@ -59,12 +61,9 @@ export const AdminChat = () => {
             }
             setServers([anyServer, ...resp.result]);
         });
-        apiGetMessages({}).then((response) => {
-            setMessages(response.result || []);
-        });
     }, []);
 
-    const onApply = useCallback(() => {
+    const onApply = useCallback(async () => {
         const opts: MessageQuery = {};
         if (selectedServer > 0) {
             opts.server_id = selectedServer;
@@ -84,9 +83,13 @@ export const AdminChat = () => {
         if (endDate) {
             opts.sent_before = endDate;
         }
-        apiGetMessages(opts).then((response) => {
-            setMessages(response.result || []);
-        });
+        try {
+            const resp = await apiGetMessages(opts);
+            setRows(resp.result?.messages || []);
+            setTotalRows(resp.result?.totalMessages || 0);
+        } catch (e) {
+            logErr(e);
+        }
     }, [endDate, messageQuery, nameQuery, selectedServer, startDate, steamId]);
 
     return (
@@ -96,84 +99,112 @@ export const AdminChat = () => {
                     <Stack>
                         <Heading>Chat History</Heading>
 
-                        <Stack direction={'row'} spacing={2} padding={2}>
-                            <TextField
-                                placeholder={'Name'}
-                                onChange={(evt) => {
-                                    setNameQuery(evt.target.value);
-                                }}
-                            ></TextField>
-                            <TextField
-                                placeholder={'Steam ID'}
-                                onChange={(evt) => {
-                                    setSteamId(evt.target.value);
-                                }}
-                            ></TextField>
-                            <TextField
-                                placeholder={'Message'}
-                                onChange={(evt) => {
-                                    setMessageQuery(evt.target.value);
-                                }}
-                            ></TextField>
-                            <Select<number>
-                                value={selectedServer}
-                                onChange={(event) => {
-                                    servers
-                                        .filter(
-                                            (s) =>
-                                                s.server_id ==
-                                                event.target.value
-                                        )
-                                        .map((s) =>
-                                            setSelectedServer(s.server_id)
-                                        );
-                                }}
-                                label={'Server'}
-                            >
-                                {servers.map((server) => {
-                                    return (
-                                        <MenuItem
-                                            value={server.server_id}
-                                            key={server.server_id}
-                                        >
-                                            {server.server_name}
-                                        </MenuItem>
-                                    );
-                                })}
-                            </Select>
-                        </Stack>
-                        <Stack direction={'row'} spacing={2} padding={2}>
-                            <DesktopDatePicker
-                                label="Date Start"
-                                format={'MM/dd/yyyy'}
-                                value={startDate}
-                                onChange={(newValue: Date | null) => {
-                                    setStartDate(newValue);
-                                }}
-                            />
-                            <DesktopDatePicker
-                                label="Date End"
-                                format="MM/dd/yyyy"
-                                value={endDate}
-                                onChange={(newValue: Date | null) => {
-                                    setEndDate(newValue);
-                                }}
-                            />
-                            <ButtonGroup>
-                                <Button
-                                    variant={'contained'}
-                                    color={'success'}
-                                    onClick={onApply}
+                        <Grid
+                            container
+                            padding={2}
+                            spacing={2}
+                            justifyContent={'center'}
+                            alignItems={'center'}
+                        >
+                            <Grid xs={6} md={3}>
+                                <TextField
+                                    fullWidth
+                                    placeholder={'Name'}
+                                    onChange={(evt) => {
+                                        setNameQuery(evt.target.value);
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <TextField
+                                    fullWidth
+                                    placeholder={'Steam ID'}
+                                    onChange={(evt) => {
+                                        setSteamId(evt.target.value);
+                                    }}
+                                ></TextField>
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <TextField
+                                    fullWidth
+                                    placeholder={'Message'}
+                                    onChange={(evt) => {
+                                        setMessageQuery(evt.target.value);
+                                    }}
+                                ></TextField>
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Select<number>
+                                    fullWidth
+                                    value={selectedServer}
+                                    onChange={(event) => {
+                                        servers
+                                            .filter(
+                                                (s) =>
+                                                    s.server_id ==
+                                                    event.target.value
+                                            )
+                                            .map((s) =>
+                                                setSelectedServer(s.server_id)
+                                            );
+                                    }}
+                                    label={'Server'}
                                 >
-                                    Apply
-                                </Button>
-                                <Button variant={'contained'} color={'info'}>
-                                    Reset
-                                </Button>
-                            </ButtonGroup>
-                        </Stack>
+                                    {servers.map((server) => {
+                                        return (
+                                            <MenuItem
+                                                value={server.server_id}
+                                                key={server.server_id}
+                                            >
+                                                {server.server_name}
+                                            </MenuItem>
+                                        );
+                                    })}
+                                </Select>
+                            </Grid>
 
-                        <DataTable
+                            <Grid xs={6} md={3}>
+                                <DesktopDatePicker
+                                    sx={{ width: '100%' }}
+                                    label="Date Start"
+                                    format={'MM/dd/yyyy'}
+                                    value={startDate}
+                                    onChange={(newValue: Date | null) => {
+                                        setStartDate(newValue);
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <DesktopDatePicker
+                                    sx={{ width: '100%' }}
+                                    label="Date End"
+                                    format="MM/dd/yyyy"
+                                    value={endDate}
+                                    onChange={(newValue: Date | null) => {
+                                        setEndDate(newValue);
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs md={3} mdOffset="auto">
+                                <ButtonGroup size={'large'} fullWidth>
+                                    <Button
+                                        variant={'contained'}
+                                        color={'success'}
+                                        onClick={onApply}
+                                    >
+                                        Apply
+                                    </Button>
+                                    <Button
+                                        variant={'contained'}
+                                        color={'info'}
+                                    >
+                                        Reset
+                                    </Button>
+                                </ButtonGroup>
+                            </Grid>
+                        </Grid>
+
+                        <LazyTable<PersonMessage>
                             columns={[
                                 {
                                     label: 'ID',
@@ -222,7 +253,7 @@ export const AdminChat = () => {
                             ]}
                             defaultSortColumn={'created_on'}
                             rowsPerPage={100}
-                            rows={messages}
+                            rows={rows}
                         />
                     </Stack>
                 </Paper>
