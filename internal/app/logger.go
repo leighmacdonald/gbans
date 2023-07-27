@@ -5,14 +5,13 @@ import (
 	"os"
 
 	"github.com/leighmacdonald/bd/pkg/util"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func MustCreateLogger(conf *config.Config) *zap.Logger {
+func MustCreateLogger(conf *Config) *zap.Logger {
 	var loggingConfig zap.Config
-	if conf.General.Mode == config.ReleaseMode {
+	if conf.General.Mode == ReleaseMode {
 		loggingConfig = zap.NewProductionConfig()
 		loggingConfig.DisableCaller = true
 	} else {

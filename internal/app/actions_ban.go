@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -89,9 +89,9 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		expIn := "Permanent"
 		expAt := "Permanent"
 
-		if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
-			expIn = config.FmtDuration(banSteam.ValidUntil)
-			expAt = config.FmtTimeShort(banSteam.ValidUntil)
+		if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+			expIn = FmtDuration(banSteam.ValidUntil)
+			expAt = FmtTimeShort(banSteam.ValidUntil)
 		}
 
 		discord.AddField(banNotice, "Expires In", expIn)

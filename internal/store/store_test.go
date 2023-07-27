@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -25,18 +24,15 @@ func TestMain(testMain *testing.M) {
 
 	var (
 		returnCode int
-		conf       config.Config
 		testCtx    = context.Background()
 	)
 
-	errConfig := config.Read(&conf)
-	if errConfig != nil {
-		return
+	dsn := "postgresql://gbans:gbans@postgres-test:5434/gbans"
+	if envDSN, found := os.LookupEnv("GBANS_DATABASE_DSN"); found && envDSN != "" {
+		dsn = envDSN
 	}
 
-	conf.General.Mode = config.TestMode
-
-	database := store.New(logger, conf.DB.DSN, conf.DB.AutoMigrate, false)
+	database := store.New(logger, dsn, false, false)
 	if dbErr := database.Connect(testCtx); dbErr != nil {
 		logger.Fatal("Failed to setup store", zap.Error(dbErr))
 	}
@@ -58,6 +54,46 @@ func TestMain(testMain *testing.M) {
 
 	returnCode = testMain.Run()
 }
+func TestParseDuration(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"3s",
+			"3s",
+		},
+		{
+			"3m",
+			"3m0s",
+		},
+		{
+			"3h",
+			"3h0m0s",
+		},
+		{
+			"3d",
+			"72h0m0s",
+		},
+		{
+			"3w",
+			"504h0m0s",
+		},
+		{
+			"3M",
+			"2232h0m0s",
+		},
+		{
+			"3y",
+			"26280h0m0s",
+		},
+	}
+	for _, test := range tests {
+		d, errParseDuration := store.ParseDuration(test.input)
+		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
+		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
+	}
+}
 
 func TestServer(t *testing.T) {
 	serverA := store.Server{
@@ -67,9 +103,9 @@ func TestServer(t *testing.T) {
 		RCON:           "test",
 		Password:       "test",
 		IsEnabled:      true,
-		TokenCreatedOn: config.Now(),
-		CreatedOn:      config.Now(),
-		UpdatedOn:      config.Now(),
+		TokenCreatedOn: time.Now(),
+		CreatedOn:      time.Now(),
+		UpdatedOn:      time.Now(),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -210,7 +246,7 @@ func TestBan(t *testing.T) {
 
 	b1Fetched.Ban.SourceID = steamid.New(76561198057999536)
 	b1Fetched.Ban.ReasonText = "test reason"
-	b1Fetched.Ban.ValidUntil = config.Now().Add(time.Minute * 10)
+	b1Fetched.Ban.ValidUntil = time.Now().Add(time.Minute * 10)
 	b1Fetched.Ban.Note = "test note"
 	b1Fetched.Ban.Origin = store.Web
 	require.NoError(t, testDD.SaveBan(ctx, &b1Fetched.Ban), "Failed to edit ban")
@@ -311,8 +347,8 @@ func TestFilters(t *testing.T) {
 			IsRegex:   false,
 			AuthorID:  player1.SteamID,
 			Pattern:   word,
-			UpdatedOn: config.Now(),
-			CreatedOn: config.Now(),
+			UpdatedOn: time.Now(),
+			CreatedOn: time.Now(),
 		}
 
 		require.NoError(t, testDD.SaveFilter(ctx, &filter), "Failed to insert filter: %s", word)

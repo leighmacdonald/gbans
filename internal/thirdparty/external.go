@@ -9,8 +9,9 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -42,8 +43,29 @@ func containsIP(ip net.IP) bool {
 	return false
 }
 
+// BanListType is the type or source of a ban list.
+type BanListType string
+
+const (
+	// CIDR formatted list.
+	CIDR BanListType = "cidr"
+	// ValveNet is the srcds network ban list format.
+	ValveNet BanListType = "valve_net"
+	// ValveSID is the srcds steamid ban list format.
+	ValveSID BanListType = "valve_steamid"
+	// TF2BD sources ban list.
+	TF2BD BanListType = "tf2bd"
+)
+
+// BanList holds details to load a ban lost.
+type BanList struct {
+	URL  string      `mapstructure:"url"`
+	Name string      `mapstructure:"name"`
+	Type BanListType `mapstructure:"type"`
+}
+
 // Import is used to download and load block lists into memory.
-func Import(ctx context.Context, list config.BanList, cachePath string, maxAge string) (int, error) {
+func Import(ctx context.Context, list BanList, cachePath string, maxAge string) (int, error) {
 	if !golib.Exists(cachePath) {
 		if errMkDir := os.MkdirAll(cachePath, 0o755); errMkDir != nil {
 			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", cachePath, errMkDir)
@@ -52,7 +74,7 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 
 	filePath := path.Join(cachePath, list.Name)
 
-	maxAgeDuration, errParseDuration := config.ParseDuration(maxAge)
+	maxAgeDuration, errParseDuration := store.ParseDuration(maxAge)
 	if errParseDuration != nil {
 		return 0, errors.Wrapf(errParseDuration, "Failed to parse cache max age")
 	}
@@ -65,7 +87,7 @@ func Import(ctx context.Context, list config.BanList, cachePath string, maxAge s
 			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
 
-		if config.Now().Sub(fileInfo.ModTime()) > maxAgeDuration {
+		if time.Now().Sub(fileInfo.ModTime()) > maxAgeDuration {
 			expired = true
 		}
 	} else {
@@ -121,30 +143,30 @@ func download(ctx context.Context, url string, savePath string) error {
 	return nil
 }
 
-func load(src []byte, listType config.BanListType) (int, error) {
+func load(src []byte, listType BanListType) (int, error) {
 	switch listType {
-	case config.CIDR:
+	case CIDR:
 		nets, errParseCIDR := parseCIDR(src)
 		if errParseCIDR != nil {
 			return 0, errParseCIDR
 		}
 
 		return addNets(nets), nil
-	case config.ValveNet:
+	case ValveNet:
 		nets, errParseValveNet := parseValveNet(src)
 		if errParseValveNet != nil {
 			return 0, errParseValveNet
 		}
 
 		return addNets(nets), nil
-	case config.ValveSID:
+	case ValveSID:
 		ids, errParseValveSID := parseValveSID(src)
 		if errParseValveSID != nil {
 			return 0, errParseValveSID
 		}
 
 		return addSIDs(ids), nil
-	case config.TF2BD:
+	case TF2BD:
 		ids, errParseBD := parseTF2BD(src)
 		if errParseBD != nil {
 			return 0, errParseBD

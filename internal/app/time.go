@@ -1,78 +1,14 @@
-package config
+package app
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
 	expirationYears = 25
 )
-
-var (
-	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
-	errInvalidDuration = errors.New("Invalid duration")
-)
-
-// ParseDuration works exactly like time.ParseDuration except that
-// it supports durations longer than hours
-// Formats: s, m, h, d, w, M, y.
-func ParseDuration(durationString string) (time.Duration, error) {
-	if durationString == "0" {
-		return 0, nil
-	}
-
-	matchDuration := reDuration.FindStringSubmatch(durationString)
-	if matchDuration == nil {
-		return 0, errInvalidDuration
-	}
-
-	valueInt, errParseInt := strconv.ParseInt(matchDuration[1], 10, 64)
-	if errParseInt != nil {
-		return 0, errInvalidDuration
-	}
-
-	var (
-		value = time.Duration(valueInt)
-		day   = time.Hour * 24
-	)
-
-	switch matchDuration[2] {
-	case "s":
-		return time.Second * value, nil
-	case "m":
-		return time.Minute * value, nil
-	case "h":
-		return time.Hour * value, nil
-	case "d":
-		return day * value, nil
-	case "w":
-		return day * 7 * value, nil
-	case "M":
-		return day * 31 * value, nil
-	case "y":
-		return day * 365 * value, nil
-	}
-
-	return 0, errInvalidDuration
-}
-
-// Now returns the current time in the configured format of the application runtime
-//
-// All calls to time.Now() should use this instead to ensure consistency.
-func Now() time.Time {
-	return time.Now().UTC()
-}
-
-// DefaultExpiration returns the default expiration time delta from Now().
-func DefaultExpiration() time.Time {
-	return Now().AddDate(expirationYears, 0, 0)
-}
 
 // FmtTimeShort returns a common format for time display.
 func FmtTimeShort(t time.Time) string {
@@ -82,7 +18,7 @@ func FmtTimeShort(t time.Time) string {
 // FmtDuration calculates and returns a string for duration differences. This handles
 // values larger than a day unlike the stdlib in functionalities.
 func FmtDuration(t time.Time) string {
-	year, month, day, hour, minute, _ := diff(t, Now())
+	year, month, day, hour, minute, _ := diff(t, time.Now())
 
 	var pieces []string
 

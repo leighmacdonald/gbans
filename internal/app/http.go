@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -20,7 +19,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	app.log.Info("Service status changed", zap.String("state", "ready"))
 	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
 
-	if app.conf.General.Mode == config.ReleaseMode {
+	if app.conf.General.Mode == ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
@@ -106,13 +105,13 @@ type userProfile struct {
 	Muted           bool             `json:"muted"`
 }
 
-func (p userProfile) ToURL(conf *config.Config) string {
+func (p userProfile) ToURL(conf *Config) string {
 	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
 }
 
 // newUserProfile allocates a new default person instance.
 func newUserProfile(sid64 steamid.SID64) userProfile {
-	t0 := config.Now()
+	t0 := time.Now()
 
 	return userProfile{
 		SteamID:         sid64,

@@ -8,7 +8,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -113,7 +112,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			}
 
 			var (
-				now  = config.Now()
+				now  = time.Now()
 				meta reportMeta
 			)
 

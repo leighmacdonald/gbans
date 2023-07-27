@@ -8,7 +8,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -129,7 +128,7 @@ func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 }
 
 func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
-	banNet.UpdatedOn = config.Now()
+	banNet.UpdatedOn = time.Now()
 
 	query, args, errQueryArgs := db.sb.
 		Update("ban_net").
@@ -207,7 +206,7 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 
 	var bans []BanCIDR
 
-	rows, errQuery := db.Query(ctx, query, config.Now())
+	rows, errQuery := db.Query(ctx, query, time.Now())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -247,7 +246,7 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 
 	var bans []BanASN
 
-	rows, errQuery := db.conn.Query(ctx, query, config.Now())
+	rows, errQuery := db.conn.Query(ctx, query, time.Now())
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
@@ -353,7 +352,7 @@ func (db *Store) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord 
 }
 
 func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
-	curTime := config.Now()
+	curTime := time.Now()
 
 	if errTruncate := db.truncateTable(ctx, tableNetASN); errTruncate != nil {
 		return errTruncate
@@ -396,7 +395,7 @@ func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) e
 }
 
 func (db *Store) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
-	curTime := config.Now()
+	curTime := time.Now()
 
 	if errTruncate := db.truncateTable(ctx, tableNetLocation); errTruncate != nil {
 		return errTruncate
@@ -439,7 +438,7 @@ func (db *Store) loadLocation(ctx context.Context, records []ip2location.Locatio
 }
 
 func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
-	curTime := config.Now()
+	curTime := time.Now()
 
 	if errTruncate := db.truncateTable(ctx, tableNetProxy); errTruncate != nil {
 		return errTruncate
@@ -575,7 +574,7 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 }
 
 func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
-	banASN.UpdatedOn = config.Now()
+	banASN.UpdatedOn = time.Now()
 
 	if banASN.BanASNId > 0 {
 		const queryUpdate = `

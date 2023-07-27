@@ -18,7 +18,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -172,7 +171,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			Title:     upload.DemoName,
 			Data:      rawDemo,
 			Size:      int64(len(rawDemo)),
-			CreatedOn: config.Now(),
+			CreatedOn: time.Now(),
 			MapName:   upload.MapName,
 			Stats:     intStats,
 		}
@@ -786,7 +785,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 			return
 		}
 
-		server.TokenCreatedOn = config.Now()
+		server.TokenCreatedOn = time.Now()
 		if errSaveServer := app.db.SaveServer(ctx, &server); errSaveServer != nil {
 			log.Error("Failed to updated server token", zap.Error(errSaveServer))
 			responseErr(ctx, http.StatusInternalServerError, nil)
@@ -873,7 +872,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			IPAddr:      request.IP,
 			SteamID:     steamid.SIDToSID64(request.SteamID),
 			PersonaName: request.Name,
-			CreatedOn:   config.Now(),
+			CreatedOn:   time.Now(),
 			IPInfo:      store.PersonIPRecord{},
 		}); errAddHist != nil {
 			log.Error("Failed to add conn history", zap.Error(errAddHist))
@@ -951,8 +950,8 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			reason = store.ReasonString(bannedPerson.Ban.Reason)
 		}
 
-		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(app.conf),
-			bannedPerson.Ban.ValidUntil.Sub(config.Now()).Round(time.Minute).String())
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(app.conf.General.ExternalURL),
+			bannedPerson.Ban.ValidUntil.Sub(time.Now()).Round(time.Minute).String())
 
 		responseOK(ctx, http.StatusOK, resp)
 
@@ -1520,7 +1519,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			}
 		}
 
-		now := config.Now()
+		now := time.Now()
 
 		if filter.FilterID > 0 {
 			var existingFilter store.Filter
@@ -2134,7 +2133,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 
 		embed := discord.RespOk(nil, "New user report created")
 		embed.Description = report.Description
-		embed.URL = report.ToURL(app.conf)
+		embed.URL = report.ToURL(app.conf.General.ExternalURL)
 		discord.AddAuthorProfile(embed,
 			currentUser.SteamID, currentUser.Name, currentUser.ToURL(app.conf))
 
@@ -2157,7 +2156,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 		}
 
 		discord.AddFieldsSteamID(embed, report.TargetID)
-		discord.AddLink(embed, app.conf, report)
+		discord.AddLink(embed, app.conf.General.ExternalURL, report)
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -2267,7 +2266,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		discord.AddField(embed, "Author", report.SourceID.String())
-		discord.AddLink(embed, app.conf, report)
+		discord.AddLink(embed, app.conf.General.ExternalURL, report)
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -2897,7 +2896,7 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 		var page wiki.Page
 		if errGetWikiSlug := app.db.GetWikiPageBySlug(ctx, request.Slug, &page); errGetWikiSlug != nil {
 			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
-				page.CreatedOn = config.Now()
+				page.CreatedOn = time.Now()
 				page.Revision += 1
 				page.Slug = request.Slug
 			} else {

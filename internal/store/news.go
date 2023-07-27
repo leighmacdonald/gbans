@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -123,7 +122,7 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).
-		Set("updated_on", config.Now()).
+		Set("updated_on", time.Now()).
 		Where(sq.Eq{"news_id": entry.NewsID}).
 		ToSql()
 	if errQueryArgs != nil {

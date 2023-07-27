@@ -15,7 +15,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -448,7 +447,7 @@ type serverAuthClaims struct {
 const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
 
 func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
-	t0 := config.Now()
+	t0 := time.Now()
 	claims := &personAuthClaims{
 		SteamID: steamID,
 		StandardClaims: jwt.StandardClaims{
@@ -467,7 +466,7 @@ func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
 }
 
 func newServerJWT(serverID int, cookieKey string) (string, error) {
-	curTime := config.Now()
+	curTime := time.Now()
 
 	claims := &serverAuthClaims{
 		ServerID: serverID,

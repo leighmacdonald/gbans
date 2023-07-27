@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -194,7 +193,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				}
 			}
 
-			discord.AddLink(embed, app.conf, ban.Ban)
+			discord.AddLink(embed, app.conf.General.ExternalURL, ban.Ban)
 		}
 
 		banStateStr := "no"
@@ -283,7 +282,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		}
 
 		cd := time.Unix(int64(player.TimeCreated), 0)
-		discord.AddFieldInline(embed, "Age", config.FmtDuration(cd))
+		discord.AddFieldInline(embed, "Age", FmtDuration(cd))
 		discord.AddFieldInline(embed, "Private", fmt.Sprintf("%v", player.CommunityVisibilityState == 1))
 		discord.AddFieldsSteamID(embed, player.SteamID)
 
@@ -320,12 +319,12 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 
 		if ban.Ban.BanID > 0 {
 			discord.AddFieldInline(embed, "Reason", reason)
-			discord.AddFieldInline(embed, "Created", config.FmtTimeShort(ban.Ban.CreatedOn))
+			discord.AddFieldInline(embed, "Created", FmtTimeShort(ban.Ban.CreatedOn))
 
 			if time.Until(expiry) > time.Hour*24*365*5 {
 				discord.AddFieldInline(embed, "Expires", "Permanent")
 			} else {
-				discord.AddFieldInline(embed, "Expires", config.FmtDuration(expiry))
+				discord.AddFieldInline(embed, "Expires", FmtDuration(expiry))
 			}
 
 			discord.AddFieldInline(embed, "Author", fmt.Sprintf("<@%s>", authorProfile.DiscordID))
@@ -461,12 +460,12 @@ func createDiscordBanEmbed(ban store.BanSteam, response *discord.Response) *disc
 
 	discord.AddFieldsSteamID(embed, ban.TargetID)
 
-	if ban.ValidUntil.Year()-config.Now().Year() > 5 {
+	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
 		discord.AddField(embed, "Expires In", "Permanent")
 		discord.AddField(embed, "Expires At", "Permanent")
 	} else {
-		discord.AddField(embed, "Expires In", config.FmtDuration(ban.ValidUntil))
-		discord.AddField(embed, "Expires At", config.FmtTimeShort(ban.ValidUntil))
+		discord.AddField(embed, "Expires In", FmtDuration(ban.ValidUntil))
+		discord.AddField(embed, "Expires At", FmtTimeShort(ban.ValidUntil))
 	}
 
 	return embed

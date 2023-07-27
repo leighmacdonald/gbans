@@ -7,7 +7,6 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -28,7 +27,7 @@ func (page *Page) NewRevision() Page {
 		BodyMD:    page.BodyMD,
 		Revision:  page.Revision + 1,
 		CreatedOn: page.CreatedOn,
-		UpdatedOn: config.Now(),
+		UpdatedOn: time.Now(),
 	}
 }
 

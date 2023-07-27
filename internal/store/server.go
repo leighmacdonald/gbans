@@ -7,7 +7,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -29,8 +28,8 @@ func NewServer(name string, address string, port int) Server {
 		Password:       "",
 		IsEnabled:      true,
 		TokenCreatedOn: time.Unix(0, 0),
-		CreatedOn:      config.Now(),
-		UpdatedOn:      config.Now(),
+		CreatedOn:      time.Now(),
+		UpdatedOn:      time.Now(),
 	}
 }
 
@@ -234,12 +233,12 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 
 // SaveServer updates or creates the server data in the database.
 func (db *Store) SaveServer(ctx context.Context, server *Server) error {
-	server.UpdatedOn = config.Now()
+	server.UpdatedOn = time.Now()
 	if server.ServerID > 0 {
 		return db.updateServer(ctx, server)
 	}
 
-	server.CreatedOn = config.Now()
+	server.CreatedOn = time.Now()
 
 	return db.insertServer(ctx, server)
 }
@@ -265,7 +264,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 }
 
 func (db *Store) updateServer(ctx context.Context, server *Server) error {
-	server.UpdatedOn = config.Now()
+	server.UpdatedOn = time.Now()
 
 	query, args, errQueryArgs := db.sb.Update(string(tableServer)).
 		Set("short_name", server.ServerName).

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -16,19 +15,21 @@ var (
 )
 
 type Bot struct {
-	log              *zap.Logger
-	conf             *config.Config
-	session          *discordgo.Session
-	isReady          bool
-	onConnectUser    func()
-	onDisconnectUser func()
-	commandHandlers  map[Cmd]CommandHandler
-	ColourLevels     LevelColors
+	log               *zap.Logger
+	session           *discordgo.Session
+	isReady           bool
+	onConnectUser     func()
+	onDisconnectUser  func()
+	commandHandlers   map[Cmd]CommandHandler
+	ColourLevels      LevelColors
+	unregisterOnStart bool
+	appId             string
+	extURL            string
 }
 
-func New(logger *zap.Logger, conf *config.Config) (*Bot, error) {
+func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool, extURL string) (*Bot, error) {
 	// Immediately connects
-	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
+	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
 		return nil, errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
@@ -38,11 +39,13 @@ func New(logger *zap.Logger, conf *config.Config) (*Bot, error) {
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &Bot{
-		conf:            conf,
-		log:             logger.Named("discord"),
-		session:         session,
-		isReady:         false,
-		commandHandlers: map[Cmd]CommandHandler{},
+		log:               logger.Named("discord"),
+		session:           session,
+		isReady:           false,
+		unregisterOnStart: unregisterOnStart,
+		appId:             appID,
+		extURL:            extURL,
+		commandHandlers:   map[Cmd]CommandHandler{},
 		ColourLevels: LevelColors{
 			Debug: 10170623,
 			Info:  3581519,
@@ -110,11 +113,11 @@ func (bot *Bot) Start() error {
 		return errors.Wrap(errSessionOpen, "Error opening discord connection")
 	}
 
-	if bot.conf.Discord.UnregisterOnStart {
+	if bot.unregisterOnStart {
 		bot.botUnregisterSlashCommands("")
 	}
 
-	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID); errRegister != nil {
+	if errRegister := bot.botRegisterSlashCommands(bot.appId); errRegister != nil {
 		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
 	}
 
@@ -135,7 +138,7 @@ func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      bot.conf.General.ExternalURL,
+				URL:      bot.extURL,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,

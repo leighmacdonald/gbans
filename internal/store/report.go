@@ -3,10 +3,10 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
@@ -51,8 +51,8 @@ type Report struct {
 	UpdatedOn time.Time `json:"updated_on"`
 }
 
-func (report Report) ToURL(conf *config.Config) string {
-	return conf.ExtURL("/report/%d", report.ReportID)
+func (report Report) ToURL(extURL string) string {
+	return fmt.Sprintf("%s/report/%d", extURL, report.ReportID)
 }
 
 func NewReport() Report {
@@ -61,8 +61,8 @@ func NewReport() Report {
 		SourceID:     "",
 		Description:  "",
 		ReportStatus: 0,
-		CreatedOn:    config.Now(),
-		UpdatedOn:    config.Now(),
+		CreatedOn:    time.Now(),
+		UpdatedOn:    time.Now(),
 		DemoTick:     -1,
 		DemoName:     "",
 	}
@@ -106,7 +106,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
             deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10
         WHERE report_id = $11`
 
-	report.UpdatedOn = config.Now()
+	report.UpdatedOn = time.Now()
 
 	return Err(db.Exec(ctx, query, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
@@ -136,7 +136,7 @@ func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) 
 		WHERE report_message_id = $1
 	`
 
-	message.UpdatedOn = config.Now()
+	message.UpdatedOn = time.Now()
 
 	if errQuery := db.Exec(ctx, query,
 		message.MessageID,

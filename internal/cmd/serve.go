@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
@@ -25,8 +24,8 @@ func serveCmd() *cobra.Command {
 			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var conf config.Config
-			if errConfig := config.Read(&conf); errConfig != nil {
+			var conf app.Config
+			if errConfig := app.Read(&conf); errConfig != nil {
 				panic("Failed to read config")
 			}
 
@@ -48,7 +47,8 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			bot, errBot := discord.New(rootLogger, &conf)
+			bot, errBot := discord.New(rootLogger, conf.Discord.Token,
+				conf.Discord.AppID, conf.Discord.UnregisterOnStart, conf.General.ExternalURL)
 			if errBot != nil {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
@@ -67,6 +67,7 @@ func serveCmd() *cobra.Command {
 			if errWebStart := application.StartHTTP(rootCtx); errWebStart != nil {
 				rootLogger.Error("Web returned error", zap.Error(errWebStart))
 			}
+
 			<-rootCtx.Done()
 		},
 	}

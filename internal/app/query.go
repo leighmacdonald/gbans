@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -46,7 +45,7 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 			person.DaysSinceLastBan = vac[0].DaysSinceLastBan
 		}
 
-		person.UpdatedOnSteam = config.Now()
+		person.UpdatedOnSteam = time.Now()
 	}
 
 	person.SteamID = sid

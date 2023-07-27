@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -26,7 +25,7 @@ import (
 var BuildVersion = "master" //nolint:gochecknoglobals
 
 type App struct {
-	conf                 *config.Config
+	conf                 *Config
 	bot                  *discord.Bot
 	db                   *store.Store
 	log                  *zap.Logger
@@ -42,7 +41,7 @@ type App struct {
 	mc                   *metricCollector
 }
 
-func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
+func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	application := App{
 		bot:                  bot,
 		eb:                   newEventBroadcaster(),
@@ -75,7 +74,7 @@ type userWarning struct {
 	CreatedOn     time.Time
 }
 
-func firstTimeSetup(ctx context.Context, conf *config.Config, database *store.Store) error {
+func firstTimeSetup(ctx context.Context, conf *Config, database *store.Store) error {
 	if !conf.General.Owner.Valid() {
 		return errors.New("Configured owner is not a valid steam64")
 	}
@@ -174,7 +173,7 @@ type newUserWarning struct {
 }
 
 // warnWorker handles tracking and applying warnings based on incoming events.
-func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:maintidx
+func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintidx
 	var (
 		log       = app.log.Named("warnWorker")
 		warnings  = map[steamid.SID64][]userWarning{}
@@ -282,13 +281,13 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 						}
 
 						switch conf.General.WarningExceededAction {
-						case config.Gag:
+						case Gag:
 							banSteam.BanType = store.NoComm
 							errBan = app.BanSteam(ctx, &banSteam)
-						case config.Ban:
+						case Ban:
 							banSteam.BanType = store.Banned
 							errBan = app.BanSteam(ctx, &banSteam)
-						case config.Kick:
+						case Kick:
 							errBan = app.Kick(ctx, store.System, evt.SID, conf.General.Owner, newWarn.WarnReason)
 						}
 
@@ -300,9 +299,9 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 
 						discord.AddField(warnNotice, "Name", person.PersonaName)
 
-						if banSteam.ValidUntil.Year()-config.Now().Year() < 5 {
-							expIn = config.FmtDuration(banSteam.ValidUntil)
-							expAt = config.FmtTimeShort(banSteam.ValidUntil)
+						if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+							expIn = FmtDuration(banSteam.ValidUntil)
+							expAt = FmtTimeShort(banSteam.ValidUntil)
 						}
 
 						discord.AddField(warnNotice, "Expires In", expIn)
@@ -358,7 +357,7 @@ func (app *App) warnWorker(ctx context.Context, conf *config.Config) { //nolint:
 						Message:       evt.Msg,
 						Matched:       matchedWord,
 						MatchedFilter: matchedFilter,
-						CreatedOn:     config.Now(),
+						CreatedOn:     time.Now(),
 					},
 				}
 			}
@@ -422,7 +421,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 	}
 }
 
-func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *config.Config, bot *discord.Bot) {
+func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *Config, bot *discord.Bot) {
 	var (
 		embed = &discordgo.MessageEmbed{
 			Type:        discordgo.EmbedTypeRich,
@@ -699,7 +698,7 @@ func (app *App) initLogSrc(ctx context.Context) {
 //	}
 // }
 
-func initNetBans(ctx context.Context, conf *config.Config) error {
+func initNetBans(ctx context.Context, conf *Config) error {
 	for _, banList := range conf.NetBans.Sources {
 		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, conf.NetBans.MaxAge); errImport != nil {
 			return errors.Wrap(errImport, "Failed to import net bans")

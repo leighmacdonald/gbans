@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -49,7 +48,7 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 		Delete("demo").
 		Where(sq.And{
 			sq.Eq{"archive": false},
-			sq.Lt{"created_on": config.Now().Add(-(time.Hour * 24 * 14))},
+			sq.Lt{"created_on": time.Now().Add(-(time.Hour * 24 * 14))},
 		}).ToSql()
 	if errQuery != nil {
 		return errors.Wrap(errQuery, "Failed to create query")

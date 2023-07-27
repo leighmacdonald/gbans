@@ -9,7 +9,6 @@ import (
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -53,7 +52,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	corsConfig.AllowWildcard = true
 	corsConfig.AllowCredentials = false
 
-	if app.conf.General.Mode != config.TestMode {
+	if app.conf.General.Mode != TestMode {
 		engine.Use(cors.New(corsConfig))
 	}
 

@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -24,11 +23,11 @@ type patreonManager struct {
 	patreonCampaigns []patreon.Campaign
 	patreonPledges   []patreon.Pledge
 	log              *zap.Logger
-	conf             *config.Config
+	conf             *Config
 	db               patreonStore
 }
 
-func newPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *patreonManager {
+func newPatreonManager(logger *zap.Logger, conf *Config, db *store.Store) *patreonManager {
 	return &patreonManager{
 		log:       logger.Named("patreon"),
 		conf:      conf,

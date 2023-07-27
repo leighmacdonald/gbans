@@ -8,7 +8,7 @@
 //	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
-package config
+package app
 
 import (
 	"fmt"
@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -23,27 +25,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
-
-// BanListType is the type or source of a ban list.
-type BanListType string
-
-const (
-	// CIDR formatted list.
-	CIDR BanListType = "cidr"
-	// ValveNet is the srcds network ban list format.
-	ValveNet BanListType = "valve_net"
-	// ValveSID is the srcds steamid ban list format.
-	ValveSID BanListType = "valve_steamid"
-	// TF2BD sources ban list.
-	TF2BD BanListType = "tf2bd"
-)
-
-// BanList holds details to load a ban lost.
-type BanList struct {
-	URL  string      `mapstructure:"url"`
-	Name string      `mapstructure:"name"`
-	Type BanListType `mapstructure:"type"`
-}
 
 type filterConfig struct {
 	Enabled     bool `mapstructure:"enabled"`
@@ -168,14 +149,14 @@ type debugConfig struct {
 }
 
 type netBans struct {
-	Enabled     bool        `mapstructure:"enabled"`
-	MaxAge      string      `mapstructure:"max_age"`
-	CachePath   string      `mapstructure:"cache_path"`
-	Sources     []BanList   `mapstructure:"sources"`
-	IP2Location ip2location `mapstructure:"ip2location"`
+	Enabled     bool                 `mapstructure:"enabled"`
+	MaxAge      string               `mapstructure:"max_age"`
+	CachePath   string               `mapstructure:"cache_path"`
+	Sources     []thirdparty.BanList `mapstructure:"sources"`
+	IP2Location ip2locationConf      `mapstructure:"ip2location"`
 }
 
-type ip2location struct {
+type ip2locationConf struct {
 	Enabled      bool   `mapstructure:"enabled"`
 	Token        string `mapstructure:"token"`
 	ASNEnabled   bool   `mapstructure:"asn_enabled"`
@@ -204,14 +185,14 @@ func Read(conf *Config) error {
 		conf.DB.DSN = strings.Replace(conf.DB.DSN, "pgx://", "postgres://", 1)
 	}
 
-	clientDuration, errClientDuration := ParseDuration(conf.HTTP.ClientTimeout)
+	clientDuration, errClientDuration := store.ParseDuration(conf.HTTP.ClientTimeout)
 	if errClientDuration != nil {
 		clientDuration = defaultHTTPTimeout
 	}
 
 	conf.HTTP.ClientTimeoutDuration = clientDuration
 
-	warningDuration, errWarningDuration := ParseDuration(conf.General.WarningExceededDurationValue)
+	warningDuration, errWarningDuration := store.ParseDuration(conf.General.WarningExceededDurationValue)
 	if errWarningDuration != nil {
 		warningDuration = defaultWarnDuration
 	}

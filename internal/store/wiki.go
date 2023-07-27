@@ -7,7 +7,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -24,7 +23,7 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 		return Media{}, errors.New("Detected mimetype different than provided")
 	}
 
-	curTime := config.Now()
+	curTime := time.Now()
 
 	return Media{
 		AuthorID:  author,

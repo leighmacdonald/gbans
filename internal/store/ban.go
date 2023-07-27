@@ -7,7 +7,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -44,7 +43,7 @@ func (t StringSID) SID64(ctx context.Context) (steamid.SID64, error) {
 type Duration string
 
 func (value Duration) Value() (time.Duration, error) {
-	duration, errDuration := config.ParseDuration(string(value))
+	duration, errDuration := ParseDuration(string(value))
 	if errDuration != nil {
 		return 0, consts.ErrInvalidDuration
 	}
@@ -155,7 +154,7 @@ type BannedPerson struct {
 }
 
 func NewBannedPerson() BannedPerson {
-	banTime := config.Now()
+	banTime := time.Now()
 
 	return BannedPerson{
 		Ban: BanSteam{
@@ -349,7 +348,7 @@ type BanBase struct {
 }
 
 func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
-	banTime := config.Now()
+	banTime := time.Now()
 	banBase.BanType = opts.BanType
 	banBase.SourceID = opts.SourceID
 	banBase.TargetID = opts.TargetID
@@ -463,8 +462,8 @@ func (banSteam *BanSteam) Apply(opts BanSteamOpts) {
 }
 
 //goland:noinspection ALL
-func (banSteam BanSteam) ToURL(conf *config.Config) string {
-	return conf.ExtURL("/ban/%d", banSteam.BanID)
+func (banSteam BanSteam) ToURL(extURL string) string {
+	return fmt.Sprintf("%s/ban/%d", extURL, banSteam.BanID)
 }
 
 //goland:noinspection ALL
@@ -496,7 +495,7 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 	if !deletedOk {
 		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
 	} else {
-		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": config.Now()})
+		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
 	}
 
 	builder := db.sb.Select(
@@ -571,7 +570,7 @@ func (db *Store) SaveBan(ctx context.Context, ban *BanSteam) error {
 		return errors.Wrapf(errGetAuthor, "Failed to get author for ban")
 	}
 
-	ban.UpdatedOn = config.Now()
+	ban.UpdatedOn = time.Now()
 	if ban.BanID > 0 {
 		return db.updateBan(ctx, ban)
 	}
@@ -639,7 +638,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 		FROM ban
        	WHERE valid_until < $1 AND deleted = false`
 
-	rows, errQuery := db.Query(ctx, query, config.Now())
+	rows, errQuery := db.Query(ctx, query, time.Now())
 	if errQuery != nil {
 		return nil, errQuery
 	}
@@ -778,7 +777,7 @@ func (db *Store) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]Ba
 	}
 
 	if filter.PermanentOnly {
-		builder = builder.Where(sq.Gt{"valid_until": config.Now()})
+		builder = builder.Where(sq.Gt{"valid_until": time.Now()})
 	}
 
 	if filter.SteamID.Valid() {
@@ -910,7 +909,7 @@ func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) err
 	SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
 	WHERE ban_message_id = $1`
 
-	message.UpdatedOn = config.Now()
+	message.UpdatedOn = time.Now()
 
 	if errQuery := db.Exec(ctx, query,
 		message.MessageID,
@@ -1201,7 +1200,7 @@ func (db *Store) updateBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	origin = $9, updated_on = $10, group_id = $11, valid_until = $12, appeal_state = $13
 	WHERE ban_group_id = $1`
 
-	banGroup.UpdatedOn = config.Now()
+	banGroup.UpdatedOn = time.Now()
 
 	return Err(db.Exec(ctx, query, banGroup.BanGroupID, banGroup.SourceID.Int64(), banGroup.TargetID.Int64(),
 		banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText,

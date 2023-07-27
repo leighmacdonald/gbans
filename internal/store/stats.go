@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -30,7 +29,7 @@ func NewLocalTF2Stats() LocalTF2StatsSnapshot {
 		MapTypes:  map[string]int{},
 		Regions:   map[string]int{},
 		Servers:   map[string]int{},
-		CreatedOn: config.Now(),
+		CreatedOn: time.Now(),
 	}
 }
 
@@ -429,7 +428,7 @@ func HourlyIndex(t time.Time) (time.Time, int) {
 
 // currentHourlyTime calculates the absolute start of the current hour.
 func currentHourlyTime() time.Time {
-	now := config.Now()
+	now := time.Now()
 	year, mon, day := now.Date()
 	hour, _, _ := now.Clock()
 

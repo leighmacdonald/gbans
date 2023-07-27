@@ -5,7 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -30,7 +29,7 @@ func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 		ClassKills:        MatchPlayerClassSums{},
 		ClassKillsAssists: MatchPlayerClassSums{},
 		ClassDeaths:       MatchPlayerClassSums{},
-		CreatedOn:         config.Now(),
+		CreatedOn:         time.Now(),
 		curRound:          -1,
 	}
 }
@@ -543,7 +542,7 @@ func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
 	playerSum, err := match.PlayerSums.GetBySteamID(sid)
 	if err != nil {
 		if errors.Is(err, consts.ErrUnknownID) {
-			t0 := config.Now()
+			t0 := time.Now()
 			newPs := &MatchPlayerSum{
 				SteamID:   sid,
 				TimeStart: &t0,
@@ -623,7 +622,7 @@ func (match *Match) roundStart() {
 
 	for _, playerSum := range match.PlayerSums {
 		if playerSum.TimeStart == nil {
-			*playerSum.TimeStart = config.Now()
+			*playerSum.TimeStart = time.Now()
 		}
 	}
 }
@@ -920,7 +919,7 @@ type MatchPlayerSum struct {
 
 func (playerSum *MatchPlayerSum) touch() {
 	if playerSum.TimeStart == nil {
-		t := config.Now()
+		t := time.Now()
 		playerSum.TimeStart = &t
 	}
 }

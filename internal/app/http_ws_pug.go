@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/mm"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -159,7 +159,7 @@ func (lobby *pugLobby) sendUserMessage(client *wsClient, msg lobbyUserMessageReq
 	userMessage := pugUserMessageResponse{
 		User:      client.User,
 		Message:   msg.Message,
-		CreatedAt: config.Now(),
+		CreatedAt: time.Now(),
 	}
 
 	lobby.Messages = append(lobby.Messages, userMessage)

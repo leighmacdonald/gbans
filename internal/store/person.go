@@ -8,7 +8,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/golib"
@@ -48,8 +47,8 @@ type Person struct {
 	*steamweb.PlayerSummary
 }
 
-func (p *Person) ToURL(conf *config.Config) string {
-	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
+func (p *Person) ToURL(extURL string) string {
+	return fmt.Sprintf("%s/profile/%d", extURL, p.SteamID.Int64())
 }
 
 // LoggedIn checks for a valid steamID.
@@ -64,7 +63,7 @@ func (p *Person) AsTarget() StringSID {
 
 // NewPerson allocates a new default person instance.
 func NewPerson(sid64 steamid.SID64) Person {
-	curTime := config.Now()
+	curTime := time.Now()
 
 	return Person{
 		SteamID:          sid64,
@@ -152,8 +151,8 @@ func NewUserMessage(parentID int64, authorID steamid.SID64, message string) User
 		ParentID:  parentID,
 		AuthorID:  authorID,
 		Contents:  message,
-		CreatedOn: config.Now(),
-		UpdatedOn: config.Now(),
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
 	}
 }
 
@@ -173,7 +172,7 @@ func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
 		SteamID:      sid64,
 		IPAddr:       addr,
 		RefreshToken: golib.RandomString(refreshTokenLen),
-		CreatedOn:    config.Now(),
+		CreatedOn:    time.Now(),
 	}
 }
 
@@ -216,7 +215,7 @@ func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 
 // SavePerson will insert or update the person record.
 func (db *Store) SavePerson(ctx context.Context, person *Person) error {
-	person.UpdatedOn = config.Now()
+	person.UpdatedOn = time.Now()
 	// FIXME
 	if person.PermissionLevel == 0 {
 		person.PermissionLevel = 10
@@ -242,7 +241,7 @@ func (db *Store) updatePerson(ctx context.Context, person *Person) error {
 			updated_on_steam = $24, muted = $25
 		WHERE steam_id = $1`
 
-	person.UpdatedOn = config.Now()
+	person.UpdatedOn = time.Now()
 
 	if errExec := db.
 		Exec(ctx, query, person.SteamID.Int64(), person.UpdatedOn,
@@ -868,7 +867,7 @@ func (db *Store) DeletePersonAuth(ctx context.Context, authID int64) error {
 func (db *Store) PrunePersonAuth(ctx context.Context) error {
 	query, args, errQuery := db.sb.
 		Delete("person_auth").
-		Where(sq.Gt{"created_on + interval '1 month'": config.Now()}).
+		Where(sq.Gt{"created_on + interval '1 month'": time.Now()}).
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
@@ -881,7 +880,7 @@ func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, s
 	query, args, errQuery := db.sb.
 		Insert("person_notification").
 		Columns("steam_id", "severity", "message", "link", "created_on").
-		Values(targetID.Int64(), severity, message, link, config.Now()).
+		Values(targetID.Int64(), severity, message, link, time.Now()).
 		ToSql()
 	if errQuery != nil {
 		return Err(errQuery)
