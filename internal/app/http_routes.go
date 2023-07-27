@@ -113,6 +113,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/demos/:demo_id", onAPIGetDemoDownload(app))
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
 
+	engine.GET("/media/:media_id", onGetMediaByID(app))
+
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts(app))
 	engine.GET("/api/sd/ansible/hosts", onAPIGetPrometheusHosts(app))
@@ -146,7 +148,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 			wsConnHandler(c.Writer, c.Request, connectionManager, currentUserProfile(c), app.log)
 		})
 
-		authed.GET("/media/:media_id", onGetMediaByID(app))
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))
 		authed.GET("/api/current_profile", onAPICurrentProfile(app))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(app))
