@@ -331,6 +331,8 @@ const (
 	SplendidScreen
 	NessiesNineIron
 	BuildingCarriedDestroyed
+	SouthernHospitality
+	BeggarsBazooka
 )
 
 // var backStabWeapons = []Weapon{

@@ -503,7 +503,12 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 
 				cancel()
 
-				log.Debug("Saved user chat message", zap.String("message", msg.Body))
+				log.Debug("Chat message",
+					zap.String("server", evt.Server.ServerName),
+					zap.String("name", newServerEvent.Name),
+					zap.String("steam_id", newServerEvent.SID.String()),
+					zap.Bool("team", msg.Team),
+					zap.String("message", msg.Body))
 			}
 		}
 	}
