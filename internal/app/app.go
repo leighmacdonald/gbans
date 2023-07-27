@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sort"
 	"sync"
 	"time"
 
@@ -15,12 +14,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
-	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -37,24 +34,20 @@ type App struct {
 	logFileChan          chan *model.LogFilePayload
 	warningChan          chan newUserWarning
 	notificationChan     chan NotificationPayload
-	stateCollector       *state.ServerStateCollector
+	state                *ServerStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *PatreonManager
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
 	mc                   *metricCollector
-	serverState          map[int]ServerDetails
-	stateMu              *sync.RWMutex
-	msl                  []state.ServerLocation
+	msl                  []ServerLocation
 }
 
 func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
-	eb := newEventBroadcaster()
-
 	application := App{
 		bot:                  bot,
-		eb:                   eb,
+		eb:                   newEventBroadcaster(),
 		db:                   database,
 		conf:                 conf,
 		log:                  logger,
@@ -63,79 +56,17 @@ func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *z
 		notificationChan:     make(chan NotificationPayload, 5),
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
-		patreon:              NewPatreonManager(logger, conf, database),
+		patreon:              newPatreonManager(logger, conf, database),
 		wordFilters:          newWordFilters(),
 		mc:                   newMetricCollector(),
-		serverState:          map[int]ServerDetails{},
-		stateMu:              &sync.RWMutex{},
+		state:                newServerStateCollector(logger),
 	}
 
 	if errReg := application.registerDiscordHandlers(); errReg != nil {
 		panic(errReg)
 	}
 
-	application.stateCollector = state.NewServerStateCollector(logger,
-		application.onPlayerUpdate,
-		application.onMSLUpdate)
-
-	// bot.SetOnConnect(func() {
-	//	_ = SendNotification(ctx, &conf, app.NotificationPayload{
-	//		MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord connected",
-	//	})
-	// })
-	// bot.SetOnDisconnect(func() {
-	//	_ = SendNotification(ctx, &conf, app.NotificationPayload{
-	//		MinPerms: consts.PAdmin, Severity: consts.SeverityInfo, Message: "Discord disconnected",
-	//	})
-	// })
-
 	return application
-}
-
-func (app *App) onPlayerUpdate(serverID int, newState extra.Status) {
-	app.stateMu.Lock()
-	defer app.stateMu.Unlock()
-	server := app.serverState[serverID]
-	server.PlayerCount = newState.PlayersCount
-	server.MaxPlayers = newState.PlayersMax
-
-	if newState.ServerName != "" && newState.ServerName != server.Name {
-		server.Name = newState.ServerName
-	}
-
-	server.Version = newState.Version
-	server.Edicts = newState.Edicts
-	server.Tags = newState.Tags
-
-	if newState.Map != "" && newState.Map != server.Map {
-		server.Map = newState.Map
-	}
-
-	server.Players = newState.Players
-
-	app.serverState[serverID] = server
-}
-
-func (app *App) onMSLUpdate(newState []state.ServerLocation) {
-	app.stateMu.Lock()
-	defer app.stateMu.Unlock()
-	app.msl = newState
-}
-
-func (app *App) state() ServerDetailsCollection {
-	app.stateMu.RLock()
-	defer app.stateMu.RUnlock()
-
-	var curState []ServerDetails //nolint:prealloc
-	for _, s := range app.serverState {
-		curState = append(curState, s)
-	}
-
-	sort.SliceStable(curState, func(i, j int) bool {
-		return curState[i].Name < curState[j].Name
-	})
-
-	return curState
 }
 
 type userWarning struct {

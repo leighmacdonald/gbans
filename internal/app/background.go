@@ -10,7 +10,6 @@ import (
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -303,11 +302,9 @@ func (app *App) stateUpdater(ctx context.Context) {
 		log          = app.log.Named("state")
 		trigger      = make(chan any)
 		updateTicker = time.NewTicker(time.Minute * 30)
-		localCtx     context.Context
-		cancel       context.CancelFunc
 	)
 
-	defer cancel()
+	go app.state.start(ctx)
 
 	go func() {
 		trigger <- true
@@ -318,10 +315,6 @@ func (app *App) stateUpdater(ctx context.Context) {
 		case <-updateTicker.C:
 			trigger <- true
 		case <-trigger:
-			if cancel != nil {
-				cancel()
-			}
-
 			servers, errServers := app.db.GetServers(ctx, false)
 			if errServers != nil {
 				log.Error("Failed to fetch servers, cannot update state", zap.Error(errServers))
@@ -329,46 +322,14 @@ func (app *App) stateUpdater(ctx context.Context) {
 				continue
 			}
 
-			app.stateMu.Lock()
-
-			var (
-				configs []state.ServerConfig
-				details = map[int]ServerDetails{}
-			)
-
+			var configs []ServerConfig
 			for _, server := range servers {
-				configs = append(configs, state.NewServerConfig(server.ServerID, server.ServerName, server.Address, server.Port, server.RCON))
-				details[server.ServerID] = ServerDetails{
-					ServerID:  server.ServerID,
-					NameShort: server.ServerName,
-					Name:      server.ServerNameLong,
-					Host:      server.Address,
-					Port:      server.Port,
-					Enabled:   server.IsEnabled,
-					Region:    server.Region,
-					CC:        server.CC,
-					Latitude:  server.Latitude,
-					Longitude: server.Longitude,
-					Reserved:  server.ReservedSlots,
-				}
+				configs = append(configs, newServerConfig(server.ServerID, server.ServerName,
+					server.ServerNameLong, server.Address, server.Port, server.RCON, server.ReservedSlots))
 			}
 
-			app.serverState = details
-
-			app.stateMu.Unlock()
-
-			if cancel != nil {
-				// Stop existing updaters.
-				cancel()
-			}
-
-			localCtx, cancel = context.WithCancel(ctx)
-			// TODO verify stop functionality
-			go app.stateCollector.Start(localCtx, configs)
-
+			app.state.setServerConfigs(configs)
 		case <-ctx.Done():
-			cancel()
-
 			return
 		}
 	}
@@ -518,7 +479,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerName
 			}
 
-			currentState := app.state()
+			currentState := app.state.current()
 			for _, curState := range currentState {
 				sn := fmt.Sprintf("%s:%d", curState.Host, curState.Port)
 
@@ -539,7 +500,7 @@ func (app *App) localStatUpdater(ctx context.Context) {
 
 				stats.Regions[curState.Region] += curState.PlayerCount
 
-				mapType := state.GuessMapType(curState.Map)
+				mapType := guessMapType(curState.Map)
 
 				_, mapTypeFound := stats.MapTypes[mapType]
 				if !mapTypeFound {

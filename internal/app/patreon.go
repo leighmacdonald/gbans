@@ -28,7 +28,7 @@ type PatreonManager struct {
 	db               *store.Store
 }
 
-func NewPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *PatreonManager {
+func newPatreonManager(logger *zap.Logger, conf *config.Config, db *store.Store) *PatreonManager {
 	return &PatreonManager{
 		log:       logger.Named("patreon"),
 		conf:      conf,

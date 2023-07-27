@@ -158,8 +158,9 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	}
 
 	go func(_ *net.IPNet, reason store.Reason) {
-		foundPlayers, found := app.Find(FindOpts{CIDR: banNet.CIDR})
-		if !found {
+		state := app.state.current()
+		foundPlayers := state.Find(FindOpts{CIDR: banNet.CIDR})
+		if len(foundPlayers) == 0 {
 			return
 		}
 

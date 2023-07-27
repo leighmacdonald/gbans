@@ -1,13 +1,26 @@
 package app
 
 import (
+	"context"
+	gerrors "errors"
+	"fmt"
 	"net"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
+	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
+	"go.uber.org/zap"
 )
 
 // ServerDetails contains the entire state for the servers. This
@@ -15,20 +28,21 @@ import (
 // by admins.
 type ServerDetails struct {
 	// Database
-	ServerID   int       `json:"server_id"`
-	NameShort  string    `json:"name_short"`
-	Name       string    `json:"name"`
-	Host       string    `json:"host"`
-	Port       int       `json:"port"`
-	Enabled    bool      `json:"enabled"`
-	Region     string    `json:"region"`
-	CC         string    `json:"cc"`
-	Latitude   float64   `json:"latitude"`
-	Longitude  float64   `json:"longitude"`
-	Reserved   int       `json:"reserved"`
-	LastUpdate time.Time `json:"last_update"`
-
-	Protocol uint8 `json:"protocol"`
+	ServerID      int       `json:"server_id"`
+	NameShort     string    `json:"name_short"`
+	Name          string    `json:"name"`
+	Host          string    `json:"host"`
+	Port          int       `json:"port"`
+	Enabled       bool      `json:"enabled"`
+	Region        string    `json:"region"`
+	CC            string    `json:"cc"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	Reserved      int       `json:"reserved"`
+	LastUpdate    time.Time `json:"last_update"`
+	ReservedSlots int       `json:"reserved_slots"`
+	Protocol      uint8     `json:"protocol"`
+	RconPassword  string    `json:"rcon_password"`
 
 	Map string `json:"map"`
 	// Name of the folder containing the game files.
@@ -84,6 +98,8 @@ type BaseServer struct {
 	Distance   float64  `json:"distance"`
 }
 
+var ErrUnknownServer = errors.New("Unknown server")
+
 type ServerDetailsCollection []ServerDetails
 
 type PlayerServerInfo struct {
@@ -98,28 +114,52 @@ type FindOpts struct {
 	CIDR    *net.IPNet `json:"cidr"`
 }
 
-func (app *App) Find(opts FindOpts) ([]PlayerServerInfo, bool) {
-	curState := app.state()
-
+func (c *ServerDetailsCollection) Find(opts FindOpts) []PlayerServerInfo {
 	var found []PlayerServerInfo
 
-	for _, server := range curState {
+	for _, server := range *c {
 		for _, player := range server.Players {
-			if (opts.SteamID.Valid() && player.SID == opts.SteamID) ||
-				(opts.Name != "" && glob.Glob(opts.Name, player.Name)) ||
-				(opts.IP != nil && opts.IP.Equal(player.IP)) ||
-				(opts.CIDR != nil && opts.CIDR.Contains(player.IP)) {
+			matched := false
+			if opts.SteamID.Valid() && player.SID == opts.SteamID {
+				matched = true
+			}
+
+			if opts.Name != "" {
+				queryName := opts.Name
+				if !strings.HasPrefix(queryName, "*") {
+					queryName = "*" + queryName
+				}
+
+				if !strings.HasSuffix(queryName, "*") {
+					queryName += "*"
+				}
+
+				m := glob.Glob(strings.ToLower(queryName), strings.ToLower(player.Name))
+				if m {
+					matched = true
+				}
+			}
+
+			if opts.IP != nil && opts.IP.Equal(player.IP) {
+				matched = true
+			}
+
+			if opts.CIDR != nil && opts.CIDR.Contains(player.IP) {
+				matched = true
+			}
+
+			if matched {
 				found = append(found, PlayerServerInfo{Player: player, ServerID: server.ServerID})
 			}
 		}
 	}
 
-	return found, false
+	return found
 }
 
-func (c ServerDetailsCollection) ByRegion() map[string]ServerDetailsCollection {
+func (c *ServerDetailsCollection) sortRegion() map[string]ServerDetailsCollection {
 	serverMap := map[string]ServerDetailsCollection{}
-	for _, server := range c {
+	for _, server := range *c {
 		_, exists := serverMap[server.Region]
 		if !exists {
 			serverMap[server.Region] = ServerDetailsCollection{}
@@ -131,12 +171,675 @@ func (c ServerDetailsCollection) ByRegion() map[string]ServerDetailsCollection {
 	return serverMap
 }
 
-func (c ServerDetailsCollection) ByName(name string) (ServerDetails, bool) {
-	for _, server := range c {
-		if strings.EqualFold(server.NameShort, name) {
+func (c *ServerDetailsCollection) ByName(name string, wildcardOk bool) ServerDetailsCollection {
+	var servers ServerDetailsCollection
+
+	if name == "*" && wildcardOk {
+		servers = append(servers, *c...)
+	} else {
+		if !strings.HasPrefix(name, "*") {
+			name = "*" + name
+		}
+
+		if !strings.HasSuffix(name, "*") {
+			name += "*"
+		}
+
+		for _, server := range *c {
+			if glob.Glob(strings.ToLower(name), strings.ToLower(server.NameShort)) ||
+				strings.EqualFold(server.NameShort, name) {
+				servers = append(servers, server)
+
+				break
+			}
+		}
+	}
+
+	return servers
+}
+
+func (c *ServerDetailsCollection) ServerIDsByName(name string, wildcardOk bool) []int {
+	var servers []int //nolint:prealloc
+	for _, server := range c.ByName(name, wildcardOk) {
+		servers = append(servers, server.ServerID)
+	}
+
+	return servers
+}
+
+func (c *ServerDetailsCollection) findServerID(serverID int) (ServerDetails, bool) {
+	for _, server := range *c {
+		if server.ServerID == serverID {
 			return server, true
 		}
 	}
 
 	return ServerDetails{}, false
+}
+
+type (
+	UpdateStatusHandler func(serverID int, newState extra.Status)
+	UpdateMSLHandler    func(newState []ServerLocation)
+)
+
+type rconController struct {
+	*rcon.RemoteConsole
+	*sync.RWMutex
+	attempts           int
+	lastConnectSuccess time.Time
+	lastConnectAttempt time.Time
+}
+
+func (rc *rconController) connected() bool {
+	rc.RLock()
+	defer rc.RUnlock()
+
+	return rc.RemoteConsole != nil
+}
+
+func (rc *rconController) allowedToConnect() bool {
+	const (
+		waitInterval    = time.Minute
+		limitMultiCount = 10
+	)
+
+	rc.RLock()
+	defer rc.RUnlock()
+
+	if rc.attempts == 0 || rc.RemoteConsole != nil {
+		return true
+	}
+
+	multi := rc.attempts
+	if multi > limitMultiCount {
+		multi = limitMultiCount
+	}
+
+	return rc.lastConnectAttempt.Add(waitInterval * time.Duration(multi)).Before(time.Now())
+}
+
+type ServerStateCollector struct {
+	log              *zap.Logger
+	statusUpdateFreq time.Duration
+	msListUpdateFreq time.Duration
+	updateTimeout    time.Duration
+	masterServerList []ServerLocation
+	connections      map[int]*rconController
+	connectionsMu    *sync.RWMutex
+	serverState      map[int]ServerDetails
+	stateMu          *sync.RWMutex
+	configs          []ServerConfig
+	maxPlayersRx     *regexp.Regexp
+}
+
+func newServerStateCollector(logger *zap.Logger) *ServerStateCollector {
+	const (
+		statusUpdateFreq = time.Second * 20
+		msListUpdateFreq = time.Minute * 5
+		updateTimeout    = time.Second * 5
+	)
+
+	return &ServerStateCollector{
+		log:              logger,
+		statusUpdateFreq: statusUpdateFreq,
+		msListUpdateFreq: msListUpdateFreq,
+		updateTimeout:    updateTimeout,
+		connections:      map[int]*rconController{},
+		connectionsMu:    &sync.RWMutex{},
+		serverState:      map[int]ServerDetails{},
+		stateMu:          &sync.RWMutex{},
+		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
+	}
+}
+
+func (c *ServerStateCollector) rcon(serverID int, cmd string) (string, error) {
+	c.connectionsMu.RLock()
+
+	conn, found := c.connections[serverID]
+	if !found {
+		c.connectionsMu.RUnlock()
+
+		return "", ErrUnknownServer
+	}
+
+	c.connectionsMu.RUnlock()
+
+	conn.Lock()
+	defer conn.Unlock()
+
+	resp, errExec := conn.Exec(cmd)
+	if errExec != nil {
+		return "", errors.Wrap(errExec, "Failed to perform command")
+	}
+
+	return resp, nil
+}
+
+func (c *ServerStateCollector) broadcast(serverIDs []int, cmd string) map[int]string {
+	results := map[int]string{}
+	waitGroup := sync.WaitGroup{}
+
+	for _, serverID := range serverIDs {
+		waitGroup.Add(1)
+
+		go func(sid int) {
+			defer waitGroup.Done()
+
+			resp, errExec := c.rcon(sid, cmd)
+			if errExec != nil {
+				return
+			}
+
+			results[sid] = resp
+		}(serverID)
+	}
+
+	waitGroup.Wait()
+
+	return results
+}
+
+func (c *ServerStateCollector) current() ServerDetailsCollection {
+	c.stateMu.RLock()
+	defer c.stateMu.RUnlock()
+
+	var curState []ServerDetails //nolint:prealloc
+	for _, s := range c.serverState {
+		curState = append(curState, s)
+	}
+
+	sort.SliceStable(curState, func(i, j int) bool {
+		return curState[i].Name < curState[j].Name
+	})
+
+	return curState
+}
+
+func (c *ServerStateCollector) startMSL(ctx context.Context) {
+	var (
+		log            = c.log.Named("msl_update")
+		mlUpdateTicker = time.NewTicker(c.msListUpdateFreq)
+	)
+
+	for {
+		select {
+		case <-mlUpdateTicker.C:
+			newMsl, errUpdateMsl := c.updateMSL(ctx)
+			if errUpdateMsl != nil {
+				log.Error("Failed to update master server list", zap.Error(errUpdateMsl))
+
+				continue
+			}
+
+			c.stateMu.Lock()
+			c.masterServerList = newMsl
+			c.stateMu.Unlock()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (c *ServerStateCollector) onStatusUpdate(conf ServerConfig, newState extra.Status, maxVisible int) {
+	c.stateMu.Lock()
+	defer c.stateMu.Unlock()
+
+	server := c.serverState[conf.ServerID]
+	server.PlayerCount = newState.PlayersCount
+
+	if maxVisible >= 0 {
+		server.MaxPlayers = maxVisible
+	} else {
+		server.MaxPlayers = newState.PlayersMax
+	}
+
+	if newState.ServerName != "" {
+		server.Name = newState.ServerName
+	}
+
+	server.Version = newState.Version
+	server.Edicts = newState.Edicts
+	server.Tags = newState.Tags
+
+	if newState.Map != "" && newState.Map != server.Map {
+		server.Map = newState.Map
+	}
+
+	server.Players = newState.Players
+
+	c.serverState[conf.ServerID] = server
+}
+
+func (c *ServerStateCollector) setServerConfigs(configs []ServerConfig) {
+	c.stateMu.Lock()
+	defer c.stateMu.Unlock()
+
+	var gone []ServerConfig
+
+	for _, exist := range c.configs {
+		exists := false
+
+		for _, newConf := range configs {
+			if exist.ServerID == newConf.ServerID {
+				exists = true
+
+				break
+			}
+		}
+
+		if !exists {
+			gone = append(gone, exist)
+		}
+	}
+
+	for _, conf := range gone {
+		delete(c.serverState, conf.ServerID)
+	}
+
+	for _, config := range configs {
+		if _, found := c.serverState[config.ServerID]; !found {
+			c.serverState[config.ServerID] = ServerDetails{
+				ServerID:      config.ServerID,
+				Name:          config.DefaultHostname,
+				NameShort:     config.Tag,
+				Host:          config.Host,
+				Port:          config.Port,
+				RconPassword:  config.RconPassword,
+				ReservedSlots: config.ReservedSlots,
+			}
+		}
+	}
+
+	c.configs = configs
+}
+
+type partialStateUpdate struct {
+	Hostname       string `json:"hostname"`
+	ShortName      string `json:"short_name"`
+	CurrentMap     string `json:"current_map"`
+	PlayersReal    int    `json:"players_real"`
+	PlayersTotal   int    `json:"players_total"`
+	PlayersVisible int    `json:"players_visible"`
+}
+
+func (c *ServerStateCollector) updateState(serverID int, update partialStateUpdate) error {
+	c.stateMu.Lock()
+	defer c.stateMu.Unlock()
+
+	curState, ok := c.serverState[serverID]
+	if !ok {
+		return ErrUnknownServer
+	}
+
+	if update.Hostname != "" {
+		curState.Name = update.Hostname
+	}
+
+	curState.Map = update.CurrentMap
+	curState.PlayerCount = update.PlayersReal
+	curState.MaxPlayers = update.PlayersVisible
+	curState.Bots = update.PlayersTotal - update.PlayersReal
+	c.serverState[serverID] = curState
+
+	return nil
+}
+
+func (c *ServerStateCollector) controllerRcon(controller *rconController, cmd string) (string, error) {
+	controller.Lock()
+	defer controller.Unlock()
+
+	resp, errRcon := controller.Exec(cmd)
+
+	if errRcon != nil {
+		err := errors.Wrapf(errRcon, "Failed to exec rcon command: %s", cmd)
+		if errClose := controller.RemoteConsole.Close(); errClose != nil {
+			err = gerrors.Join(err, errors.Wrap(errClose, "Failed to close rcon connection"))
+		}
+
+		controller.RemoteConsole = nil
+
+		return "", err
+	}
+
+	return resp, nil
+}
+
+func (c *ServerStateCollector) status(controller *rconController) (extra.Status, error) {
+	statusResp, errStatus := c.controllerRcon(controller, "status")
+	if errStatus != nil {
+		return extra.Status{}, errStatus
+	}
+
+	status, errParse := extra.ParseStatus(statusResp, true)
+	if errParse != nil {
+		return extra.Status{}, errors.Wrap(errParse, "Failed to parse status response")
+	}
+
+	return status, nil
+}
+
+const maxPlayersSupported = 101
+
+func (c *ServerStateCollector) maxVisiblePlayers(controller *rconController) (int, error) {
+	maxPlayersResp, errMaxPlayers := c.controllerRcon(controller, "sv_visiblemaxplayers")
+	if errMaxPlayers != nil {
+		return 0, errMaxPlayers
+	}
+
+	matches := c.maxPlayersRx.FindStringSubmatch(maxPlayersResp)
+	if matches == nil || len(matches) != 2 {
+		return 0, errors.New("Failed to parse sv_visiblemaxplayers response")
+	}
+
+	maxPlayers, errCast := strconv.ParseInt(matches[1], 10, 32)
+	if errCast != nil {
+		return 0, errors.Wrap(errCast, "Failed to cast max players value")
+	}
+
+	if maxPlayers > maxPlayersSupported {
+		maxPlayers = -1
+	}
+
+	return int(maxPlayers), nil
+}
+
+func (c *ServerStateCollector) startStatus(ctx context.Context) {
+	var (
+		logger             = c.log.Named("status_update")
+		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
+	)
+
+	for {
+		select {
+		case <-statusUpdateTicker.C:
+			waitGroup := &sync.WaitGroup{}
+			successful := atomic.Int32{}
+			existing := atomic.Int32{}
+
+			c.stateMu.RLock()
+			configs := c.configs
+			c.stateMu.RUnlock()
+
+			for _, serverConfig := range configs {
+				waitGroup.Add(1)
+
+				startTIme := time.Now()
+
+				go func(conf ServerConfig) {
+					defer waitGroup.Done()
+
+					log := logger.Named(conf.Tag)
+
+					c.connectionsMu.Lock()
+
+					controller, found := c.connections[conf.ServerID]
+					if !found {
+						controller = &rconController{RWMutex: &sync.RWMutex{}, RemoteConsole: nil, attempts: 0, lastConnectAttempt: time.Now()}
+						c.connections[conf.ServerID] = controller
+					}
+
+					c.connectionsMu.Unlock()
+
+					connected := controller.connected()
+
+					if !connected && !controller.allowedToConnect() {
+						log.Info("Delaying connect")
+					}
+
+					if !connected {
+						newConsole, errDial := rcon.Dial(ctx, conf.addr(), conf.RconPassword, c.updateTimeout)
+
+						if errDial != nil {
+							log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
+						} else {
+							log.Info("RCON connected successfully")
+						}
+
+						controller.Lock()
+						controller.lastConnectAttempt = time.Now()
+
+						if newConsole != nil {
+							controller.lastConnectSuccess = controller.lastConnectAttempt
+							controller.attempts = 0
+							controller.RemoteConsole = newConsole
+							connected = true
+						} else {
+							controller.attempts++
+						}
+						controller.Unlock()
+					} else {
+						existing.Add(1)
+					}
+
+					if !connected {
+						return
+					}
+
+					status, errStatus := c.status(controller)
+					if errStatus != nil {
+						return
+					}
+
+					maxVisible, errMaxVisible := c.maxVisiblePlayers(controller)
+					if errMaxVisible != nil {
+					}
+
+					c.onStatusUpdate(conf, status, maxVisible)
+
+					c.connectionsMu.Lock()
+					c.connections[conf.ServerID] = controller
+					c.connectionsMu.Unlock()
+
+					log.Debug("Updated")
+					successful.Add(1)
+				}(serverConfig)
+
+				waitGroup.Wait()
+
+				logger.Info("RCON update cycle complete",
+					zap.Int32("success", successful.Load()),
+					zap.Int32("existing", existing.Load()),
+					zap.Int32("fail", int32(len(configs))-successful.Load()),
+					zap.Duration("duration", time.Since(startTIme)))
+				statusUpdateTicker.Reset(c.statusUpdateFreq)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (c *ServerStateCollector) updateMSL(ctx context.Context) ([]ServerLocation, error) {
+	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
+		"appid":     "440",
+		"dedicated": "1",
+	})
+
+	if errServers != nil {
+		return nil, errors.Wrap(errServers, "Failed to fetch updated list")
+	}
+
+	var ( //nolint:prealloc
+		communityServers []ServerLocation
+		stats            = NewGlobalTF2Stats()
+	)
+
+	for _, baseServer := range allServers {
+		server := ServerLocation{
+			LatLong: ip2location.LatLong{},
+			Server:  baseServer,
+		}
+
+		stats.ServersTotal++
+		stats.Players += server.Players
+		stats.Bots += server.Bots
+
+		switch {
+		case server.MaxPlayers > 0 && server.Players >= server.MaxPlayers:
+			stats.CapacityFull++
+		case server.Players == 0:
+			stats.CapacityEmpty++
+		default:
+			stats.CapacityPartial++
+		}
+
+		if server.Secure {
+			stats.Secure++
+		}
+
+		region := SteamRegionIDString(SvRegion(server.Region))
+
+		_, regionFound := stats.Regions[region]
+		if !regionFound {
+			stats.Regions[region] = 0
+		}
+
+		stats.Regions[region] += server.Players
+
+		mapType := guessMapType(server.Map)
+
+		_, mapTypeFound := stats.MapTypes[mapType]
+		if !mapTypeFound {
+			stats.MapTypes[mapType] = 0
+		}
+
+		stats.MapTypes[mapType]++
+		if strings.Contains(server.GameType, "valve") ||
+			!server.Dedicated ||
+			!server.Secure {
+			stats.ServersCommunity++
+
+			continue
+		}
+
+		communityServers = append(communityServers, server)
+	}
+
+	return communityServers, nil
+}
+
+func (c *ServerStateCollector) start(ctx context.Context) {
+	go c.startMSL(ctx)
+	go c.startStatus(ctx)
+}
+
+func newServerConfig(serverID int, name string, defaultHostname string, address string, port int, rconPassword string, reserved int) ServerConfig {
+	return ServerConfig{
+		ServerID:        serverID,
+		Tag:             name,
+		Host:            address,
+		Port:            port,
+		RconPassword:    rconPassword,
+		ReservedSlots:   reserved,
+		DefaultHostname: defaultHostname,
+	}
+}
+
+type ServerConfig struct {
+	ServerID        int
+	Tag             string
+	DefaultHostname string
+	Host            string
+	Port            int
+	RconPassword    string
+	ReservedSlots   int
+}
+
+func (config *ServerConfig) addr() string {
+	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+}
+
+type SvRegion int
+
+const (
+	RegionNaEast SvRegion = iota
+	RegionNAWest
+	RegionSouthAmerica
+	RegionEurope
+	RegionAsia
+	RegionAustralia
+	RegionMiddleEast
+	RegionAfrica
+	RegionWorld SvRegion = 255
+)
+
+func SteamRegionIDString(region SvRegion) string {
+	switch region {
+	case RegionNaEast:
+		return "ne"
+	case RegionNAWest:
+		return "nw"
+	case RegionSouthAmerica:
+		return "sa"
+	case RegionEurope:
+		return "eu"
+	case RegionAsia:
+		return "as"
+	case RegionAustralia:
+		return "au"
+	case RegionMiddleEast:
+		return "me"
+	case RegionAfrica:
+		return "af"
+	case RegionWorld:
+		fallthrough
+	default:
+		return "wd"
+	}
+}
+
+func guessMapType(mapName string) string {
+	mapName = strings.TrimPrefix(mapName, "workshop/")
+	pieces := strings.SplitN(mapName, "_", 2)
+
+	if len(pieces) == 1 {
+		return "unknown"
+	}
+
+	return strings.ToLower(pieces[0])
+}
+
+type GlobalTF2StatsSnapshot struct {
+	StatID           int64          `json:"stat_id"`
+	Players          int            `json:"players"`
+	Bots             int            `json:"bots"`
+	Secure           int            `json:"secure"`
+	ServersCommunity int            `json:"servers_community"`
+	ServersTotal     int            `json:"servers_total"`
+	CapacityFull     int            `json:"capacity_full"`
+	CapacityEmpty    int            `json:"capacity_empty"`
+	CapacityPartial  int            `json:"capacity_partial"`
+	MapTypes         map[string]int `json:"map_types"`
+	Regions          map[string]int `json:"regions"`
+	CreatedOn        time.Time      `json:"created_on"`
+}
+
+func (stats GlobalTF2StatsSnapshot) TrimMapTypes() map[string]int {
+	const minSize = 5
+
+	out := map[string]int{}
+
+	for keyKey, value := range stats.MapTypes {
+		mapKey := keyKey
+		if value < minSize {
+			mapKey = "unknown"
+		}
+
+		out[mapKey] = value
+	}
+
+	return out
+}
+
+func NewGlobalTF2Stats() GlobalTF2StatsSnapshot {
+	return GlobalTF2StatsSnapshot{
+		MapTypes:  map[string]int{},
+		Regions:   map[string]int{},
+		CreatedOn: time.Now(),
+	}
+}
+
+type ServerLocation struct {
+	ip2location.LatLong
+	steamweb.Server
 }

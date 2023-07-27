@@ -21,7 +21,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -325,15 +324,17 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			return
 		}
 
-		players, found := app.Find(FindOpts{SteamID: req.SteamID})
-		if !found {
+		state := app.state.current()
+		players := state.Find(FindOpts{SteamID: req.SteamID})
+
+		if len(players) == 0 {
 			log.Error("Failed to find player on /mod call")
 			responseErr(ctx, http.StatusFailedDependency, nil)
 
 			return
 		}
 
-		embed := discord.RespOk(nil, "New User Report")
+		embed := discord.RespOk(nil, "New User In-Game Report")
 		embed.Description = fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)
 		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Reporter",
@@ -387,8 +388,9 @@ func onAPIPostBanState(app *App) gin.HandlerFunc {
 
 			return
 		}
-		// app.bot.SendPayload(discord.Payload{ChannelID: "", Embed: nil})
-	} //nolint:wsl
+
+		go app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: nil})
+	}
 }
 
 type apiUnbanRequest struct {
@@ -1073,7 +1075,7 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 			lat = getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 			lon = getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
-			curState = app.state()
+			curState = app.state.current()
 			servers  []BaseServer
 		)
 
@@ -3476,8 +3478,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		HasBots    bool      `json:"has_bots,omitempty"`
 	}
 
-	filterGameTypes := func(servers []state.ServerLocation, gameTypes []string) []state.ServerLocation {
-		var valid []state.ServerLocation
+	filterGameTypes := func(servers []ServerLocation, gameTypes []string) []ServerLocation {
+		var valid []ServerLocation
 
 		for _, server := range servers {
 			serverTypes := strings.Split(server.GameType, ",")
@@ -3493,8 +3495,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterMaps := func(servers []state.ServerLocation, mapNames []string) []state.ServerLocation {
-		var valid []state.ServerLocation
+	filterMaps := func(servers []ServerLocation, mapNames []string) []ServerLocation {
+		var valid []ServerLocation
 
 		for _, server := range servers {
 			for _, mapName := range mapNames {
@@ -3509,8 +3511,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterPlayersMin := func(servers []state.ServerLocation, minimum int) []state.ServerLocation {
-		var valid []state.ServerLocation
+	filterPlayersMin := func(servers []ServerLocation, minimum int) []ServerLocation {
+		var valid []ServerLocation
 
 		for _, server := range servers {
 			if server.Players >= minimum {
@@ -3523,8 +3525,8 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 		return valid
 	}
 
-	filterPlayersMax := func(servers []state.ServerLocation, maximum int) []state.ServerLocation {
-		var valid []state.ServerLocation
+	filterPlayersMax := func(servers []ServerLocation, maximum int) []ServerLocation {
+		var valid []ServerLocation
 
 		for _, server := range servers {
 			if server.Players <= maximum {
@@ -3552,9 +3554,7 @@ func onAPIPostServerQuery(app *App) gin.HandlerFunc {
 			return
 		}
 
-		app.stateMu.RLock()
-		filtered := app.msl
-		app.stateMu.RUnlock()
+		filtered := app.state.masterServerList
 
 		if len(req.GameTypes) > 0 {
 			filtered = filterGameTypes(filtered, req.GameTypes)
@@ -3608,7 +3608,7 @@ func onAPIGetTF2Stats(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		source, sourceFound := ctx.GetQuery("source")
 		if !sourceFound {
-			responseErr(ctx, http.StatusInternalServerError, []state.GlobalTF2StatsSnapshot{})
+			responseErr(ctx, http.StatusInternalServerError, []GlobalTF2StatsSnapshot{})
 
 			return
 		}
@@ -3620,7 +3620,7 @@ func onAPIGetTF2Stats(app *App) gin.HandlerFunc {
 			return
 		}
 
-		intValue, errParse := strconv.ParseInt(durationStr, 10, 64)
+		intValue, errParse := strconv.ParseInt(durationStr, 10, 32)
 		if errParse != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3711,17 +3711,8 @@ func serverFromCtx(ctx *gin.Context) int {
 }
 
 func onAPIPostServerState(app *App) gin.HandlerFunc {
-	type newState struct {
-		Hostname       string `json:"hostname"`
-		ShortName      string `json:"short_name"`
-		CurrentMap     string `json:"current_map"`
-		PlayersReal    int    `json:"players_real"`
-		PlayersTotal   int    `json:"players_total"`
-		PlayersVisible int    `json:"players_visible"`
-	}
-
 	return func(ctx *gin.Context) {
-		var req newState
+		var req partialStateUpdate
 		if errBind := ctx.BindJSON(&req); errBind != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
@@ -3735,39 +3726,11 @@ func onAPIPostServerState(app *App) gin.HandlerFunc {
 			return
 		}
 
-		app.stateMu.Lock()
-		defer app.stateMu.Unlock()
+		if errUpdate := app.state.updateState(serverID, req); errUpdate != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
 
-		curState, ok := app.serverState[serverID]
-		if !ok {
-			var server store.Server
-			if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
-				responseErr(ctx, http.StatusNotFound, nil)
-
-				return
-			}
-
-			curState = ServerDetails{
-				ServerID:  server.ServerID,
-				NameShort: server.ServerName,
-				Name:      server.ServerNameLong,
-				Host:      server.Address,
-				Port:      server.Port,
-				Enabled:   server.IsEnabled,
-				Region:    server.Region,
-				CC:        server.CC,
-				Latitude:  server.Latitude,
-				Longitude: server.Longitude,
-				Reserved:  server.ReservedSlots,
-			}
+			return
 		}
-
-		curState.Name = req.Hostname
-		curState.Map = req.CurrentMap
-		curState.PlayerCount = req.PlayersReal
-		curState.MaxPlayers = req.PlayersVisible
-		curState.Bots = req.PlayersTotal - req.PlayersReal
-		app.serverState[serverID] = curState
 
 		responseOK(ctx, http.StatusNoContent, "")
 	}

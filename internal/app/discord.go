@@ -16,10 +16,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -35,7 +35,7 @@ func (app *App) registerDiscordHandlers() error {
 		discord.CmdKick:    makeOnKick(app),
 		discord.CmdLog:     makeOnLog(app),
 		discord.CmdMute:    makeOnMute(app),
-		// discord.CmdCheckIP: onCheckIp,
+		// discord.CmdCheckIP:  onCheckIp,
 		discord.CmdPlayers:  makeOnPlayers(app),
 		discord.CmdPSay:     makeOnPSay(app),
 		discord.CmdSay:      makeOnSay(app),
@@ -115,7 +115,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		response *discord.Response,
 	) error {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-		sid, errResolveSID := query.ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+		sid, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 
 		if errResolveSID != nil {
 			return consts.ErrInvalidSID
@@ -391,7 +391,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 ) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolve := query.ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+	steamID, errResolve := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolve != nil {
 		return consts.ErrInvalidSID
 	}
@@ -478,7 +478,7 @@ func makeOnSetSteam(app *App) discord.CommandHandler {
 	) error {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 
-		steamID, errResolveSID := query.ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+		steamID, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 		if errResolveSID != nil {
 			return consts.ErrInvalidSID
 		}
@@ -499,7 +499,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[discord.OptUnbanReason].StringValue()
 
-	steamID, errResolveSID := query.ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := ResolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
 		return consts.ErrInvalidSID
 	}
@@ -591,8 +591,10 @@ func makeOnKick(app *App) discord.CommandHandler {
 			return errAuthor
 		}
 
-		players, found := app.Find(FindOpts{SteamID: targetSid64})
-		if !found {
+		state := app.state.current()
+		players := state.Find(FindOpts{SteamID: targetSid64})
+
+		if len(players) == 0 {
 			return consts.ErrPlayerNotFound
 		}
 
@@ -711,7 +713,8 @@ func makeOnServers(app *App) discord.CommandHandler {
 		response *discord.Response,
 	) error {
 		var (
-			currentState = app.state().ByRegion()
+			state        = app.state.current()
+			currentState = state.sortRegion()
 			stats        = map[string]float64{}
 			used, total  = 0, 0
 			embed        = discord.RespOk(response, "Current Server Populations")
@@ -776,17 +779,18 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[discord.OptServerIdentifier].StringValue()
+		state := app.state.current()
+		serverStates := state.ByName(serverName, false)
 
-		curState := app.state()
-
-		serverState, found := curState.ByName(strings.ToLower(serverName))
-		if !found {
-			return consts.ErrUnknownID
+		if len(serverStates) != 1 {
+			return ErrUnknownServer
 		}
+
+		serverState := serverStates[0]
 
 		var rows []string
 
-		embed := discord.RespOk(response, fmt.Sprintf("Current Players: %d", len(serverState.Players)))
+		embed := discord.RespOk(response, fmt.Sprintf("%s Current Players: %d / %d", serverState.Name, len(serverState.Players), serverState.MaxPlayers))
 
 		if len(serverState.Players) > 0 {
 			sort.SliceStable(serverState.Players, func(i, j int) bool {
@@ -1084,15 +1088,21 @@ func makeOnFind(app *App) discord.CommandHandler {
 		response *discord.Response,
 	) error {
 		opts := discord.OptionMap(i.ApplicationCommandData().Options)
-		userIdentifier := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
+		userIdentifier := opts[discord.OptUserIdentifier].StringValue()
 
-		sid, errSid := userIdentifier.SID64(ctx)
-		if errSid != nil {
-			return consts.ErrInvalidSID
+		var findOpts FindOpts
+
+		steamID, errSteamID := steamid.StringToSID64(userIdentifier)
+		if errSteamID != nil {
+			findOpts = FindOpts{Name: userIdentifier}
+		} else {
+			findOpts = FindOpts{SteamID: steamID}
 		}
 
-		players, found := app.Find(FindOpts{SteamID: sid})
-		if !found {
+		state := app.state.current()
+		players := state.Find(findOpts)
+
+		if len(players) == 0 {
 			return consts.ErrUnknownID
 		}
 
@@ -1285,8 +1295,10 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		return errBanNet
 	}
 
-	players, found := app.Find(FindOpts{CIDR: network})
-	if !found {
+	state := app.state.current()
+	players := state.Find(FindOpts{CIDR: network})
+
+	if len(players) == 0 {
 		return consts.ErrPlayerNotFound
 	}
 

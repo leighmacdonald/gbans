@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
@@ -86,42 +84,6 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 	remoteSrc.logger.Debug("Updated secret mappings")
 }
 
-func (remoteSrc *remoteSrcdsLogSource) addLogAddress(ctx context.Context, addr string) {
-	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
-	defer cancelServers()
-
-	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
-	if errServers != nil {
-		remoteSrc.logger.Error("Failed to load servers to add log addr", zap.Error(errServers))
-
-		return
-	}
-
-	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
-	defer cancelQuery()
-
-	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_add %s", addr))
-	remoteSrc.logger.Info("Added udp log address", zap.String("addr", addr))
-}
-
-func (remoteSrc *remoteSrcdsLogSource) removeLogAddress(ctx context.Context, addr string) {
-	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*10)
-	defer cancelServers()
-
-	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
-	if errServers != nil {
-		remoteSrc.logger.Error("Failed to load servers to del log addr", zap.Error(errServers))
-
-		return
-	}
-
-	queryCtx, cancelQuery := context.WithTimeout(ctx, time.Second*20)
-	defer cancelQuery()
-
-	query.RCON(queryCtx, remoteSrc.logger, servers, fmt.Sprintf("logaddress_del %s", addr))
-	remoteSrc.logger.Debug("Removed log address", zap.String("addr", addr))
-}
-
 // start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
@@ -145,11 +107,6 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	}()
 
 	remoteSrc.updateSecrets(ctx)
-
-	if remoteSrc.logAddrString != "" {
-		remoteSrc.addLogAddress(ctx, remoteSrc.logAddrString)
-		defer remoteSrc.removeLogAddress(ctx, remoteSrc.logAddrString)
-	}
 
 	var (
 		running        = atomic.NewBool(false)

@@ -458,7 +458,7 @@ func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRec
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
-				c, cancel := context.WithTimeout(ctx, time.Second*10)
+				c, cancel := context.WithTimeout(ctx, time.Second*120)
 
 				batchResults := db.conn.SendBatch(c, &batch)
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {

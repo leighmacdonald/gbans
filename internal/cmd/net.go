@@ -36,7 +36,9 @@ func netUpdateCmd() *cobra.Command {
 			}()
 			connCtx, cancelConn := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancelConn()
-			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
+			database := store.New(rootLogger, conf.DB.DSN, false)
+
+			rootLogger.Info("Connecting to database")
 			if errConnect := database.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
@@ -45,16 +47,19 @@ func netUpdateCmd() *cobra.Command {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
+
 			ctx := context.Background()
 			if errUpdate := ip2location.Update(ctx, conf.NetBans.CachePath, conf.NetBans.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
 			}
+			rootLogger.Info("Reading data")
 			blockListData, errRead := ip2location.Read(conf.NetBans.CachePath)
 			if errRead != nil {
 				rootLogger.Fatal("Failed to read data", zap.Error(errRead))
 			}
 			updateCtx, cancelUpdate := context.WithTimeout(context.Background(), time.Minute*30)
 			defer cancelUpdate()
+			rootLogger.Info("Starting import")
 			if errInsert := database.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 			}

@@ -2,12 +2,10 @@ package app
 
 import (
 	"context"
-	gerrors "errors"
 	"fmt"
 	"strings"
 
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/query"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -15,29 +13,28 @@ import (
 )
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
-func (app *App) OnFindExec(ctx context.Context, findOpts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
-	players, found := app.Find(findOpts)
-	if !found {
+func (app *App) OnFindExec(_ context.Context, findOpts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
+	state := app.state.current()
+
+	players := state.Find(findOpts)
+	if len(players) == 0 {
 		return consts.ErrPlayerNotFound
 	}
 
 	var err error
 
 	for _, player := range players {
-		var server store.Server
-		if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
-			err = gerrors.Join(err, errServer)
+		for _, server := range state {
+			if player.ServerID == server.ServerID {
+				resp, errRcon := app.state.rcon(player.ServerID, onFoundCmd(player))
+				if errRcon != nil {
+					app.log.Error("Bad rcon response", zap.Error(errRcon))
 
-			continue
-		}
+					continue
+				}
 
-		cmd := onFoundCmd(player)
-
-		_, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, cmd)
-		if errExecRCON != nil {
-			err = gerrors.Join(err, errExecRCON)
-
-			continue
+				app.log.Debug("Successful rcon response", zap.String("resp", resp))
+			}
 		}
 	}
 
@@ -77,52 +74,31 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 }
 
 // Say is used to send a message to the server via sm_say.
-func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string, message string) error {
-	var server store.Server
-	if errGetServer := app.db.GetServerByName(ctx, serverName, &server); errGetServer != nil {
-		return errors.Errorf("Failed to fetch server: %s", serverName)
+func (app *App) Say(_ context.Context, author steamid.SID64, serverName string, message string) error {
+	state := app.state.current()
+	servers := state.ServerIDsByName(serverName, true)
+
+	if len(servers) == 0 {
+		return ErrUnknownServer
 	}
 
-	msg := fmt.Sprintf(`sm_say %s`, message)
-	rconResponse, errExecRCON := query.ExecRCON(ctx, server.Addr(), server.RCON, msg)
-
-	if errExecRCON != nil {
-		return errors.Wrapf(errExecRCON, "Failed to exec say command")
-	}
-
-	responsePieces := strings.Split(rconResponse, "\n")
-	if len(responsePieces) < 2 {
-		return errors.Errorf("Invalid response")
-	}
-
+	app.state.broadcast(servers, fmt.Sprintf(`sm_say %s`, message))
 	app.log.Info("Server message sent", zap.Int64("author", author.Int64()), zap.String("msg", message))
 
 	return nil
 }
 
 // CSay is used to send a centered message to the server via sm_csay.
-func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName string, message string) error {
-	var (
-		servers []store.Server
-		err     error
-	)
+func (app *App) CSay(_ context.Context, author steamid.SID64, serverName string, message string) error {
+	state := app.state.current()
+	servers := state.ServerIDsByName(serverName, true)
 
-	if serverName == "*" {
-		servers, err = app.db.GetServers(ctx, false)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to fetch servers")
-		}
-	} else {
-		var server store.Server
-		if errS := app.db.GetServerByName(ctx, serverName, &server); errS != nil {
-			return errors.Wrapf(errS, "Failed to fetch server: %s", serverName)
-		}
-
-		servers = append(servers, server)
+	if len(servers) == 0 {
+		return ErrUnknownServer
 	}
 
-	// TODO check response
-	_ = query.RCON(ctx, app.log, servers, fmt.Sprintf(`sm_csay %s`, message))
+	app.state.broadcast(servers, fmt.Sprintf(`sm_csay %s`, message))
+
 	app.log.Info("Server center message sent", zap.Int64("author", author.Int64()),
 		zap.String("msg", message), zap.Int("servers", len(servers)))
 

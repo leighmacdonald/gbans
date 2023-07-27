@@ -42,7 +42,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	}()
 
 	errServe := httpServer.ListenAndServe()
-	if errServe != nil {
+	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
 		return errors.Wrap(errServe, "HTTP listener returned error")
 	}
 
