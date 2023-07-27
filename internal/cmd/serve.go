@@ -37,7 +37,7 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate)
+			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := database.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}

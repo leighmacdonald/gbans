@@ -51,14 +51,16 @@ type Store struct {
 	dsn         string
 	autoMigrate bool
 	migrated    bool
+	logQueries  bool
 }
 
-func New(rootLogger *zap.Logger, dsn string, autoMigrate bool) *Store {
+func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) *Store {
 	return &Store{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 		log:         rootLogger.Named("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
+		logQueries:  logQueries,
 	}
 }
 
@@ -108,7 +110,7 @@ func (tracer *dbQueryTracer) TraceQueryStart(
 	return ctx
 }
 
-func (tracer *dbQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
 }
 
 // Connect sets up underlying required services.
@@ -118,7 +120,9 @@ func (db *Store) Connect(ctx context.Context) error {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
 	}
 
-	cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log.Sugar()}
+	if db.logQueries {
+		cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log.Sugar()}
+	}
 
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
@@ -171,7 +175,7 @@ func (db *Store) truncateTable(ctx context.Context, table tableName) error {
 		return Err(errQueryArgs)
 	}
 
-	if _, errExec := db.Query(ctx, fmt.Sprintf(`BEGIN; %s; COMMIT;`, query), args...); errExec != nil {
+	if _, errExec := db.Query(ctx, query, args...); errExec != nil {
 		return Err(errExec)
 	}
 

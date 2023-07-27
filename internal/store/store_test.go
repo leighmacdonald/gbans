@@ -36,7 +36,7 @@ func TestMain(testMain *testing.M) {
 
 	conf.General.Mode = config.TestMode
 
-	database := store.New(logger, conf.DB.DSN, conf.DB.AutoMigrate)
+	database := store.New(logger, conf.DB.DSN, conf.DB.AutoMigrate, false)
 	if dbErr := database.Connect(testCtx); dbErr != nil {
 		logger.Fatal("Failed to setup store", zap.Error(dbErr))
 	}

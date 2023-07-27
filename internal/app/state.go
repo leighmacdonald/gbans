@@ -207,16 +207,6 @@ func (c *ServerDetailsCollection) ServerIDsByName(name string, wildcardOk bool) 
 	return servers
 }
 
-func (c *ServerDetailsCollection) findServerID(serverID int) (ServerDetails, bool) {
-	for _, server := range *c {
-		if server.ServerID == serverID {
-			return server, true
-		}
-	}
-
-	return ServerDetails{}, false
-}
-
 type (
 	UpdateStatusHandler func(serverID int, newState extra.Status)
 	UpdateMSLHandler    func(newState []ServerLocation)
@@ -622,6 +612,7 @@ func (c *ServerStateCollector) startStatus(ctx context.Context) {
 
 					maxVisible, errMaxVisible := c.maxVisiblePlayers(controller)
 					if errMaxVisible != nil {
+						log.Warn("Got invalid max players value", zap.Error(errMaxVisible))
 					}
 
 					c.onStatusUpdate(conf, status, maxVisible)

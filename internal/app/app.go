@@ -41,7 +41,6 @@ type App struct {
 	eb                   *eventBroadcaster
 	wordFilters          *wordFilters
 	mc                   *metricCollector
-	msl                  []ServerLocation
 }
 
 func New(conf *config.Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
