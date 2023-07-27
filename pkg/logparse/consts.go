@@ -334,6 +334,28 @@ const (
 	SouthernHospitality
 	BeggarsBazooka
 	PersianPersuader
+	SnackAttack
+	NeonAnnihilator
+	BackScatter
+	BigKill
+	ShortCircuitOrb
+
+	BatSpell
+	BoxingGloveSpell
+	Flare
+	FlyingGuillotine
+	GasPasser
+	Grenade
+	Jarate
+	LightningOrbSpell
+	MadMilk
+	MeteorShowerSpell
+	Needle
+	Rocket
+	RocketMangler
+	SandmanBall
+	SentryRocket
+	SkeletonSpawnSpell
 )
 
 // var backStabWeapons = []Weapon{
