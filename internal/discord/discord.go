@@ -18,8 +18,6 @@ type Bot struct {
 	log               *zap.Logger
 	session           *discordgo.Session
 	isReady           bool
-	onConnectUser     func()
-	onDisconnectUser  func()
 	commandHandlers   map[Cmd]CommandHandler
 	ColourLevels      LevelColors
 	unregisterOnStart bool
@@ -60,14 +58,6 @@ func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool,
 	bot.session.AddHandler(bot.onInteractionCreate)
 
 	return bot, nil
-}
-
-func (bot *Bot) SetOnConnect(fn func()) {
-	bot.onConnectUser = fn
-}
-
-func (bot *Bot) SetOnDisconnect(fn func()) {
-	bot.onDisconnectUser = fn
 }
 
 func (bot *Bot) RegisterHandler(cmd Cmd, handler CommandHandler) error {
@@ -117,21 +107,19 @@ func (bot *Bot) Start() error {
 		bot.botUnregisterSlashCommands("")
 	}
 
-	if errRegister := bot.botRegisterSlashCommands(bot.appID); errRegister != nil {
-		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
-	}
-
 	return nil
 }
 
 func (bot *Bot) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	bot.log.Info("Service state changed", zap.String("state", "ready"), zap.String("username",
 		fmt.Sprintf("%v#%v", session.State.User.Username, session.State.User.Discriminator)))
-
-	bot.isReady = true
 }
 
 func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
+	if errRegister := bot.botRegisterSlashCommands(bot.appID); errRegister != nil {
+		bot.log.Error("Failed to register discord slash commands", zap.Error(errRegister))
+	}
+
 	status := discordgo.UpdateStatusData{
 		IdleSince: nil,
 		Activities: []*discordgo.Activity{
@@ -154,19 +142,13 @@ func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 
 	bot.log.Info("Service state changed", zap.String("state", "connected"))
 
-	if bot.onConnectUser != nil {
-		bot.onConnectUser()
-	}
+	bot.isReady = true
 }
 
 func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.isReady = false
 
 	bot.log.Info("Service state changed", zap.String("state", "disconnected"))
-
-	if bot.onDisconnectUser != nil {
-		bot.onDisconnectUser()
-	}
 }
 
 // func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
