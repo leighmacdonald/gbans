@@ -122,6 +122,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	// Game server plugin routes
 	engine.POST("/api/server/auth", onSAPIPostServerAuth(app))
 
+	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
+
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request
@@ -135,7 +137,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate(app))
 		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(app))
 		serverAuth.POST("/api/state_update", onAPIPostServerState(app))
-		serverAuth.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 	}
 
 	connectionManager := newWSConnectionManager(ctx, app.log)
