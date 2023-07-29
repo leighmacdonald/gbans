@@ -333,7 +333,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 
 				app.bot.SendPayload(discord.Payload{
 					ChannelID: conf.Discord.LogChannelID,
-					Embed:     msgEmbed.MessageEmbed,
+					Embed:     msgEmbed.Truncate().MessageEmbed,
 				})
 
 			case <-ctx.Done():
@@ -460,7 +460,7 @@ func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Matc
 	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
 	msgEmbed.AddField("Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes())).MakeFieldInline()
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 }
 
 func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, logger *zap.Logger, database *store.Store) {

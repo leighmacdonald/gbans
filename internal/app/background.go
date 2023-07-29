@@ -162,7 +162,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			msgEmbed.AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline()
 			msgEmbed.AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline()
 
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
@@ -400,7 +400,7 @@ func (app *App) banSweeper(ctx context.Context) {
 
 							app.bot.SendPayload(discord.Payload{
 								ChannelID: app.conf.Discord.LogChannelID,
-								Embed:     msgEmbed.MessageEmbed,
+								Embed:     msgEmbed.Truncate().MessageEmbed,
 							})
 
 							log.Info("Ban expired", zap.String("type", banType),

@@ -368,7 +368,8 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			SetURL(player.ProfileURL).
 			SetColor(color).
 			SetImage(player.AvatarFull).
-			SetThumbnail(player.Avatar)
+			SetThumbnail(player.Avatar).
+			Truncate()
 
 		return msgEmbed.MessageEmbed, nil
 	}
@@ -418,7 +419,8 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 
 	msgEmbed := discord.
 		NewEmbed(fmt.Sprintf("IP History of: %s", person.PersonaName)).
-		SetDescription("IP history (20 max)")
+		SetDescription("IP history (20 max)").
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }
@@ -486,7 +488,7 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (
 
 	discord.AddFieldsSteamID(msgEmbed, ban.TargetID)
 
-	return msgEmbed, nil
+	return msgEmbed.Truncate(), nil
 }
 
 func makeOnSetSteam(app *App) discord.CommandHandler {
@@ -508,7 +510,8 @@ func makeOnSetSteam(app *App) discord.CommandHandler {
 		msgEmbed := discord.NewEmbed().
 			SetTitle("Steam Account Linked").
 			SetDescription("Your steam and discord accounts are now linked").
-			SetColor(app.bot.Colour.Success)
+			SetColor(app.bot.Colour.Success).
+			Truncate()
 
 		return msgEmbed.MessageEmbed, nil
 	}
@@ -546,7 +549,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 
 	discord.AddFieldsSteamID(msgEmbed, steamID)
 
-	return msgEmbed.MessageEmbed, nil
+	return msgEmbed.Truncate().MessageEmbed, nil
 }
 
 func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -580,10 +583,12 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 		return nil, errors.New("Error fetching asn asnNetworks")
 	}
 
-	msgEmbed := discord.NewEmbed("ASN Networks Unbanned Successfully").SetColor(app.bot.Colour.Success)
-
-	msgEmbed.AddField("ASN", asNumStr)
-	msgEmbed.AddField("Hosts", fmt.Sprintf("%d", asnNetworks.Hosts()))
+	msgEmbed := discord.
+		NewEmbed("ASN Networks Unbanned Successfully").
+		SetColor(app.bot.Colour.Success).
+		AddField("ASN", asNumStr).
+		AddField("Hosts", fmt.Sprintf("%d", asnNetworks.Hosts())).
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }
@@ -641,7 +646,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 			discord.AddFieldsSteamID(msgEmbed, targetSid64)
 		}
 
-		return msgEmbed.MessageEmbed, err
+		return msgEmbed.Truncate().MessageEmbed, err
 	}
 }
 
@@ -655,10 +660,12 @@ func makeOnSay(app *App) discord.CommandHandler {
 			return nil, discord.ErrCommandFailed
 		}
 
-		msgEmbed := discord.NewEmbed("Sent center message successfully").SetColor(app.bot.Colour.Success)
-
-		msgEmbed.AddField("Server", server)
-		msgEmbed.AddField("Message", msg)
+		msgEmbed := discord.
+			NewEmbed("Sent center message successfully").
+			SetColor(app.bot.Colour.Success).
+			AddField("Server", server).
+			AddField("Message", msg).
+			Truncate()
 
 		return msgEmbed.MessageEmbed, nil
 	}
@@ -677,10 +684,10 @@ func makeOnCSay(app *App) discord.CommandHandler {
 
 		msgEmbed := discord.
 			NewEmbed("Sent console message successfully").
-			SetColor(app.bot.Colour.Success)
-
-		msgEmbed.AddField("Server", server)
-		msgEmbed.AddField("Message", msg)
+			SetColor(app.bot.Colour.Success).
+			AddField("Server", server).
+			AddField("Message", msg).
+			Truncate()
 
 		return msgEmbed.MessageEmbed, nil
 	}
@@ -703,10 +710,10 @@ func makeOnPSay(app *App) discord.CommandHandler {
 
 		msgEmbed := discord.
 			NewEmbed("Sent private message successfully").
-			SetColor(app.bot.Colour.Success)
-
-		msgEmbed.AddField("Player", string(player))
-		msgEmbed.AddField("Message", msg)
+			SetColor(app.bot.Colour.Success).
+			AddField("Player", string(player)).
+			AddField("Message", msg).
+			Truncate()
 
 		return msgEmbed.MessageEmbed, nil
 	}
@@ -798,7 +805,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 			msgEmbed.SetDescription("No server states available")
 		}
 
-		return msgEmbed.MessageEmbed, nil
+		return msgEmbed.Truncate().MessageEmbed, nil
 	}
 }
 
@@ -864,7 +871,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 			msgEmbed.SetColor(app.bot.Colour.Error)
 		}
 
-		return msgEmbed.MessageEmbed, nil
+		return msgEmbed.Truncate().MessageEmbed, nil
 	}
 }
 
@@ -900,9 +907,9 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 
 	msgEmbed := discord.
 		NewEmbed("Filter Created Successfully").
-		SetColor(app.bot.Colour.Success)
-
-	msgEmbed.AddField("pattern", filter.Pattern)
+		SetColor(app.bot.Colour.Success).
+		AddField("pattern", filter.Pattern).
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }
@@ -927,7 +934,8 @@ func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	msgEmbed := discord.
 		NewEmbed("Filter Deleted Successfully").
 		SetColor(app.bot.Colour.Success).
-		AddField("filter", filter.Pattern)
+		AddField("filter", filter.Pattern).
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }
@@ -952,7 +960,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 		}
 	}
 
-	return msgEmbed.MessageEmbed, nil
+	return msgEmbed.Truncate().MessageEmbed, nil
 }
 
 //	func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
@@ -1115,7 +1123,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 		description += "`"
 		msgEmbed.SetDescription(description)
 
-		return msgEmbed.MessageEmbed, nil
+		return msgEmbed.Truncate().MessageEmbed, nil
 	}
 }
 
@@ -1154,13 +1162,14 @@ func makeOnFind(app *App) discord.CommandHandler {
 				return nil, errPerson
 			}
 
-			msgEmbed.AddField("Name", player.Player.Name)
-			msgEmbed.AddField("Server", server.ServerName).MakeFieldInline()
-			msgEmbed.AddField("steam", fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64()))
-			msgEmbed.AddField("connect", fmt.Sprintf("connect %s", server.Addr()))
+			msgEmbed.
+				AddField("Name", player.Player.Name).
+				AddField("Server", server.ServerName).MakeFieldInline().
+				AddField("steam", fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64())).
+				AddField("connect", fmt.Sprintf("connect %s", server.Addr()))
 		}
 
-		return msgEmbed.MessageEmbed, nil
+		return msgEmbed.Truncate().MessageEmbed, nil
 	}
 }
 
@@ -1210,7 +1219,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 		msgEmbed := discord.NewEmbed("Player muted successfully")
 		discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
 
-		return msgEmbed.MessageEmbed, nil
+		return msgEmbed.Truncate().MessageEmbed, nil
 	}
 }
 
@@ -1277,7 +1286,8 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		NewEmbed("ASN BanSteam Created Successfully").
 		SetColor(app.bot.Colour.Success).
 		AddField("ASNum", asNumStr).
-		AddField("Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts()))
+		AddField("Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts())).
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }
@@ -1340,7 +1350,10 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		}
 	}
 
-	msgEmbed := discord.NewEmbed("IP ban created successfully").SetColor(app.bot.Colour.Success)
+	msgEmbed := discord.
+		NewEmbed("IP ban created successfully").
+		SetColor(app.bot.Colour.Success).
+		Truncate()
 
 	return msgEmbed.MessageEmbed, nil
 }

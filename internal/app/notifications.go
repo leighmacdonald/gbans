@@ -55,7 +55,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 				msgEmbed.SetURL(payload.Link)
 			}
 
-			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.MessageEmbed})
+			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.Truncate().MessageEmbed})
 		}
 	}(discordIds, notification)
 

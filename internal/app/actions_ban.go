@@ -93,7 +93,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 
 		msgEmbed.AddField("Expires In", expIn)
 		msgEmbed.AddField("Expires At", expAt)
-		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.MessageEmbed})
+		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 	}()
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
@@ -223,7 +223,7 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 
 	app.bot.SendPayload(discord.Payload{
 		ChannelID: app.conf.Discord.LogChannelID,
-		Embed:     msgEmbed.MessageEmbed,
+		Embed:     msgEmbed.Truncate().MessageEmbed,
 	})
 
 	return true, nil
