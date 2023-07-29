@@ -281,7 +281,7 @@ func (c *serverStateCollector) rcon(serverID int, cmd string) (string, error) {
 	c.connectionsMu.RLock()
 
 	conn, found := c.connections[serverID]
-	if !found || conn == nil {
+	if !found || conn.RemoteConsole == nil {
 		c.connectionsMu.RUnlock()
 
 		return "", ErrUnknownServer
