@@ -95,6 +95,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		msgEmbed.AddField("Expires At", expAt)
 		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 	}()
+
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
 		if errKick := app.Kick(ctx, store.System,

@@ -332,19 +332,12 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var person store.Person
-		if errPerson := app.PersonBySID(ctx, req.SteamID, &person); errPerson != nil {
-			responseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
 		msgEmbed := discord.
 			NewEmbed("New User In-Game Report").
 			SetDescription(fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)).
-			SetAuthor(person.PersonaName, person.AvatarFull, app.ExtURL(person)).
-			AddField("server", req.ServerName).
-			Truncate()
+			AddField("server", req.ServerName)
+
+		app.addAuthor(ctx, msgEmbed, req.SteamID).Truncate()
 
 		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 
@@ -2124,8 +2117,9 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			NewEmbed("New User Report Created").
 			SetDescription(report.Description).
 			SetColor(app.bot.Colour.Success).
-			SetURL(app.ExtURL(report)).
-			SetAuthor(currentUser.Name, currentUser.Avatarfull, app.ExtURL(currentUser))
+			SetURL(app.ExtURL(report))
+
+		app.addAuthorUserProfile(msgEmbed, currentUser)
 
 		name := personSource.PersonaName
 
@@ -2255,9 +2249,9 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 			NewEmbed("New report message posted").
 			SetDescription(msg.Contents).
 			SetColor(app.bot.Colour.Success).
-			SetAuthor(person.Name, person.Avatarfull, app.ExtURL(person)).
-			SetURL(app.ExtURL(report)).
-			Truncate()
+			SetURL(app.ExtURL(report))
+
+		app.addAuthorUserProfile(msgEmbed, person).Truncate()
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -2333,9 +2327,9 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 			SetDescription(message.BodyMD).
 			SetColor(app.bot.Colour.Warn).
 			AddField("Old Message", existing.Contents).
-			SetURL(app.ExtURLRaw("/report/%d", existing.ParentID)).
-			SetAuthor("Author", curUser.Name, curUser.Avatarfull, app.ExtURL(curUser)).
-			Truncate()
+			SetURL(app.ExtURLRaw("/report/%d", existing.ParentID))
+
+		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -2386,8 +2380,9 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 		msgEmbed := discord.
 			NewEmbed("User report message deleted").
 			SetDescription(existing.Contents).
-			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser)).
-			SetColor(app.bot.Colour.Warn).
+			SetColor(app.bot.Colour.Warn)
+
+		app.addAuthorUserProfile(msgEmbed, curUser).
 			Truncate()
 
 		app.bot.SendPayload(discord.Payload{
@@ -3001,7 +2996,6 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			query.Limit = 1000
 		}
 
-		// TODO paging
 		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, query)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query messages history",
@@ -3220,9 +3214,9 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 
 		msgEmbed := discord.
 			NewEmbed("User appeal message deleted").
-			SetDescription(existing.Contents).
-			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser)).
-			Truncate()
+			SetDescription(existing.Contents)
+
+		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -3360,9 +3354,9 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			SetColor(app.bot.Colour.Info).
 			SetThumbnail(bannedPerson.Person.AvatarFull).
 			SetDescription(msg.Contents).
-			SetURL(app.ExtURL(bannedPerson.Ban)).
-			SetAuthor(curUserProfile.Name, curUserProfile.Avatarfull, app.ExtURL(curUserProfile)).
-			Truncate()
+			SetURL(app.ExtURL(bannedPerson.Ban))
+
+		app.addAuthorUserProfile(msgEmbed, curUserProfile).Truncate()
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
@@ -3437,9 +3431,9 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 		msgEmbed := discord.
 			NewEmbed("Ban appeal message edited").
 			SetDescription(util.DiffString(existing.Contents, message.BodyMD)).
-			SetColor(app.bot.Colour.Warn).
-			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser)).
-			Truncate()
+			SetColor(app.bot.Colour.Warn)
+
+		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,

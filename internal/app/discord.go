@@ -178,8 +178,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				if errGetProfile := app.PersonBySID(ctx, ban.Ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
-					msgEmbed.SetAuthor(fmt.Sprintf("<@%s>", authorProfile.DiscordID), authorProfile.Avatar,
-						fmt.Sprintf("https://steamcommunity.com/profiles/%s", authorProfile.SteamID))
+					app.addAuthor(ctx, msgEmbed, ban.Ban.SourceID)
 				}
 			}
 
@@ -325,14 +324,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				msgEmbed.AddField("Mod Note", ban.Ban.Note).MakeFieldInline()
 			}
 
-			var author store.Person
-			if ban.Ban.SourceID.Valid() {
-				if errAuthor := app.PersonBySID(ctx, ban.Ban.SourceID, &author); errAuthor != nil {
-					return nil, errAuthor
-				}
-
-				msgEmbed.SetAuthor(author.PersonaName, author.AvatarFull, app.ExtURL(author))
-			}
+			app.addAuthor(ctx, msgEmbed, ban.Ban.SourceID)
 		}
 
 		if player.IPAddr != nil {
@@ -469,14 +461,7 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (
 
 	msgEmbed.SetImage(target.AvatarFull)
 
-	if ban.SourceID.Valid() {
-		var author store.Person
-		if errPerson := app.PersonBySID(ctx, ban.SourceID, &author); errPerson != nil {
-			return nil, errPerson
-		}
-
-		msgEmbed.SetAuthor(author.PersonaName, author.AvatarFull, app.ExtURL(author))
-	}
+	app.addAuthor(ctx, msgEmbed, ban.SourceID)
 
 	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
 		msgEmbed.AddField("Expires In", "Permanent")
