@@ -1,13 +1,3 @@
-// Package config contains the functionality for reading in and loosely validating config files.
-// The configuration is exposed via package level public variables. These must never be changed
-// on the fly and instead configured via the config file or env vars
-//
-// Env variables will override the config values. They can all be set using the same format as shown to
-// map to the correct config keys:
-//
-//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
-//	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
-//	./gbans serve
 package app
 
 import (
@@ -28,9 +18,15 @@ import (
 
 type filterConfig struct {
 	Enabled     bool `mapstructure:"enabled"`
+	Dry         bool `mapstructure:"dry"`
 	PingDiscord bool `mapstructure:"ping_discord"`
 }
 
+// Config is the root config container
+//
+//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
+//	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
+//	./gbans serve
 type Config struct {
 	General generalConfig `mapstructure:"general"`
 	HTTP    httpConfig    `mapstructure:"http"`
@@ -266,6 +262,7 @@ func setDefaultConfigValues() {
 		"debug.skip_open_id_validation":            false,
 		"debug.write_unhandled_log_events":         false,
 		"filter.enabled":                           false,
+		"filter.dry":                               true,
 		"filter.ping_discord":                      false,
 		"discord.enabled":                          false,
 		"discord.app_id":                           0,

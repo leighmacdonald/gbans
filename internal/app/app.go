@@ -238,28 +238,36 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					continue
 				}
 
-				_, found := warnings[evt.SID]
-				if !found {
-					warnings[evt.SID] = []userWarning{}
-				}
-
-				warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
-
 				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[evt.SID]), conf.General.WarningLimit)
-				if !newWarn.MatchedFilter.IsEnabled {
-					title = "[DISABLED] Language Warning"
+				if app.conf.Filter.Dry {
+					title = "[DRYRUN] " + title
 				}
 
 				msgEmbed := discord.
 					NewEmbed(title).
 					SetURL(app.ExtURLRaw("/profiles/%d", evt.SID)).
 					SetColor(app.bot.Colour.Success).
-					SetImage(person.AvatarFull)
+					SetImage(person.AvatarFull).
+					AddField("Matched", newWarn.Matched).
+					AddField("Message", newWarn.userWarning.Message).
+					AddField("Pattern", newWarn.MatchedFilter.Pattern).
+					AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID)).
+					AddField("Server", newWarn.ServerEvent.Server.ServerName)
 
-				msgEmbed.AddField("Matched", newWarn.Matched)
-				msgEmbed.AddField("Message", newWarn.userWarning.Message)
+				discord.AddFieldsSteamID(msgEmbed, evt.SID)
 
-				if newWarn.MatchedFilter.IsEnabled {
+				if !newWarn.MatchedFilter.IsEnabled {
+					continue
+				}
+
+				if !app.conf.Filter.Dry {
+					_, found := warnings[evt.SID]
+					if !found {
+						warnings[evt.SID] = []userWarning{}
+					}
+
+					warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
+
 					if len(warnings[evt.SID]) > conf.General.WarningLimit {
 						log.Info("Warn limit exceeded",
 							zap.Int64("sid64", evt.SID.Int64()),
@@ -322,11 +330,6 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 						}
 					}
 				}
-
-				msgEmbed.AddField("Pattern", newWarn.MatchedFilter.Pattern)
-				discord.AddFieldsSteamID(msgEmbed, evt.SID)
-				msgEmbed.AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID))
-				msgEmbed.AddField("Server", newWarn.ServerEvent.Server.ServerName)
 
 				app.bot.SendPayload(discord.Payload{
 					ChannelID: conf.Discord.LogChannelID,
