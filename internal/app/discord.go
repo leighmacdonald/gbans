@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	embed "github.com/bernardonalves/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -57,72 +58,65 @@ func (app *App) registerDiscordHandlers() error {
 }
 
 func makeOnBan(app *App) discord.CommandHandler {
-	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		name := interaction.ApplicationCommandData().Options[0].Name
 		switch name {
 		case "steam":
-			return onBanSteam(ctx, app, session, interaction, response)
+			return onBanSteam(ctx, app, session, interaction)
 		case "ip":
-			return onBanIP(ctx, app, session, interaction, response)
+			return onBanIP(ctx, app, session, interaction)
 		case "asn":
-			return onBanASN(ctx, app, session, interaction, response)
+			return onBanASN(ctx, app, session, interaction)
 		default:
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 	}
 }
 
 func makeOnUnban(app *App) discord.CommandHandler {
-	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Options[0].Name {
 		case "steam":
-			return onUnbanSteam(ctx, app, session, interaction, response)
+			return onUnbanSteam(ctx, app, session, interaction)
 		case "ip":
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 			// return bot.onUnbanIP(ctx, session, interaction, response)
 		case "asn":
-			return onUnbanASN(ctx, app, session, interaction, response)
+			return onUnbanASN(ctx, app, session, interaction)
 		default:
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 	}
 }
 
 func makeOnFilter(app *App) discord.CommandHandler {
-	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Options[0].Name {
 		case "add":
-			return onFilterAdd(ctx, app, session, interaction, response)
+			return onFilterAdd(ctx, app, session, interaction)
 		case "del":
-			return onFilterDel(ctx, app, session, interaction, response)
+			return onFilterDel(ctx, app, session, interaction)
 		case "check":
-			return onFilterCheck(ctx, app, session, interaction, response)
+			return onFilterCheck(ctx, app, session, interaction)
 		default:
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 	}
 }
 
 func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
-		response *discord.Response,
-	) error {
+	) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		sid, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 
 		if errResolveSID != nil {
-			return consts.ErrInvalidSID
+			return nil, consts.ErrInvalidSID
 		}
 
 		player := store.NewPerson(sid)
 		if errGetPlayer := app.PersonBySID(ctx, sid, &player); errGetPlayer != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
 		ban := store.NewBannedPerson()
@@ -130,7 +124,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			if !errors.Is(errGetBanBySID, store.ErrNoResult) {
 				app.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
 
-				return discord.ErrCommandFailed
+				return nil, discord.ErrCommandFailed
 			}
 		}
 
@@ -150,19 +144,18 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			if !errors.Is(errGetBanNet, store.ErrNoResult) {
 				app.log.Error("Failed to get ban nets by addr", zap.Error(errGetBanNet))
 
-				return discord.ErrCommandFailed
+				return nil, discord.ErrCommandFailed
 			}
 		}
 
 		var (
-			color         = discord.Green
+			color         = app.bot.Colour.Success
 			banned        = false
 			muted         = false
 			reason        = ""
 			createdAt     = ""
 			authorProfile = store.NewPerson(sid)
-			author        *discordgo.MessageEmbedAuthor
-			embed         = discord.RespOk(response, "")
+			msgEmbed      = discord.NewEmbed()
 			expiry        time.Time
 		)
 
@@ -185,32 +178,29 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				if errGetProfile := app.PersonBySID(ctx, ban.Ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
-					author = &discordgo.MessageEmbedAuthor{
-						URL:     fmt.Sprintf("https://steamcommunity.com/profiles/%s", authorProfile.SteamID),
-						Name:    fmt.Sprintf("<@%s>", authorProfile.DiscordID),
-						IconURL: authorProfile.Avatar,
-					}
+					msgEmbed.SetAuthor(fmt.Sprintf("<@%s>", authorProfile.DiscordID), authorProfile.Avatar,
+						fmt.Sprintf("https://steamcommunity.com/profiles/%s", authorProfile.SteamID))
 				}
 			}
 
-			discord.AddLink(embed, app.conf.General.ExternalURL, ban.Ban)
+			msgEmbed.SetURL(app.ExtURL(ban.Ban))
 		}
 
 		banStateStr := "no"
 
 		if banned {
 			// #992D22 red
-			color = discord.Red
+			color = app.bot.Colour.Error
 			banStateStr = "banned"
 		}
 
 		if muted {
 			// #E67E22 orange
-			color = discord.Orange
+			color = app.bot.Colour.Warn
 			banStateStr = "muted"
 		}
 
-		discord.AddFieldInline(embed, "Ban/Muted", banStateStr)
+		msgEmbed.AddField("Ban/Muted", banStateStr)
 
 		// TODO move elsewhere
 		logData, errLogs := thirdparty.LogsTFOverview(ctx, sid)
@@ -222,7 +212,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			// ip = bannedNets[0].CIDR.String()
 			reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
 			expiry = bannedNets[0].ValidUntil
-			discord.AddFieldInline(embed, "Network Bans", fmt.Sprintf("%d", len(bannedNets)))
+			msgEmbed.AddField("Network Bans", fmt.Sprintf("%d", len(bannedNets)))
 		}
 
 		var (
@@ -276,30 +266,30 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			}
 		}
 
-		embed.Title = title
+		msgEmbed.Title = title
 		if player.RealName != "" {
-			discord.AddFieldInline(embed, "Real Name", player.RealName)
+			msgEmbed.AddField("Real Name", player.RealName)
 		}
 
 		cd := time.Unix(int64(player.TimeCreated), 0)
-		discord.AddFieldInline(embed, "Age", FmtDuration(cd))
-		discord.AddFieldInline(embed, "Private", fmt.Sprintf("%v", player.CommunityVisibilityState == 1))
-		discord.AddFieldsSteamID(embed, player.SteamID)
+		msgEmbed.AddField("Age", FmtDuration(cd))
+		msgEmbed.AddField("Private", fmt.Sprintf("%v", player.CommunityVisibilityState == 1))
+		discord.AddFieldsSteamID(msgEmbed, player.SteamID)
 
 		if player.VACBans > 0 {
-			discord.AddFieldInline(embed, "VAC Bans", fmt.Sprintf("count: %d days: %d", player.VACBans, player.DaysSinceLastBan))
+			msgEmbed.AddField("VAC Bans", fmt.Sprintf("count: %d days: %d", player.VACBans, player.DaysSinceLastBan))
 		}
 
 		if player.GameBans > 0 {
-			discord.AddFieldInline(embed, "Game Bans", fmt.Sprintf("count: %d", player.GameBans))
+			msgEmbed.AddField("Game Bans", fmt.Sprintf("count: %d", player.GameBans))
 		}
 
 		if player.CommunityBanned {
-			discord.AddFieldInline(embed, "Com. Ban", "true")
+			msgEmbed.AddField("Com. Ban", "true")
 		}
 
 		if player.EconomyBan != "" {
-			discord.AddFieldInline(embed, "Econ Ban", string(player.EconomyBan))
+			msgEmbed.AddField("Econ Ban", string(player.EconomyBan))
 		}
 
 		if len(oldBans) > 0 {
@@ -313,99 +303,107 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				}
 			}
 
-			discord.AddFieldInline(embed, "Total Mutes", fmt.Sprintf("%d", numMutes))
-			discord.AddFieldInline(embed, "Total Bans", fmt.Sprintf("%d", numBans))
+			msgEmbed.AddField("Total Mutes", fmt.Sprintf("%d", numMutes))
+			msgEmbed.AddField("Total Bans", fmt.Sprintf("%d", numBans))
 		}
 
+		msgEmbed.InlineAllFields()
+
 		if ban.Ban.BanID > 0 {
-			discord.AddFieldInline(embed, "Reason", reason)
-			discord.AddFieldInline(embed, "Created", FmtTimeShort(ban.Ban.CreatedOn))
+			msgEmbed.AddField("Reason", reason)
+			msgEmbed.AddField("Created", FmtTimeShort(ban.Ban.CreatedOn)).MakeFieldInline()
 
 			if time.Until(expiry) > time.Hour*24*365*5 {
-				discord.AddFieldInline(embed, "Expires", "Permanent")
+				msgEmbed.AddField("Expires", "Permanent").MakeFieldInline()
 			} else {
-				discord.AddFieldInline(embed, "Expires", FmtDuration(expiry))
+				msgEmbed.AddField("Expires", FmtDuration(expiry)).MakeFieldInline()
 			}
 
-			discord.AddFieldInline(embed, "Author", fmt.Sprintf("<@%s>", authorProfile.DiscordID))
+			msgEmbed.AddField("Author", fmt.Sprintf("<@%s>", authorProfile.DiscordID)).MakeFieldInline()
 
 			if ban.Ban.Note != "" {
-				discord.AddField(embed, "Mod Note", ban.Ban.Note)
+				msgEmbed.AddField("Mod Note", ban.Ban.Note).MakeFieldInline()
+			}
+
+			var author store.Person
+			if ban.Ban.SourceID.Valid() {
+				if errAuthor := app.PersonBySID(ctx, ban.Ban.SourceID, &author); errAuthor != nil {
+					return nil, errAuthor
+				}
+
+				msgEmbed.SetAuthor(author.PersonaName, author.AvatarFull, app.ExtURL(author))
 			}
 		}
 
 		if player.IPAddr != nil {
-			discord.AddFieldInline(embed, "Last IP", player.IPAddr.String())
+			msgEmbed.AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
 		}
 
 		if asn.ASName != "" {
-			discord.AddFieldInline(embed, "ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName))
+			msgEmbed.AddField("ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName)).MakeFieldInline()
 		}
 
 		if location.CountryCode != "" {
-			discord.AddFieldInline(embed, "City", location.CityName)
+			msgEmbed.AddField("City", location.CityName).MakeFieldInline()
 		}
 
 		if location.CountryName != "" {
-			discord.AddFieldInline(embed, "Country", location.CountryName)
+			msgEmbed.AddField("Country", location.CountryName).MakeFieldInline()
 		}
 
 		if proxy.CountryCode != "" {
-			discord.AddFieldInline(embed, "Proxy Type", string(proxy.ProxyType))
-			discord.AddFieldInline(embed, "Proxy", string(proxy.Threat))
+			msgEmbed.AddField("Proxy Type", string(proxy.ProxyType)).MakeFieldInline()
+			msgEmbed.AddField("Proxy", string(proxy.Threat)).MakeFieldInline()
 		}
 
 		if logData != nil && logData.Total > 0 {
-			discord.AddFieldInline(embed, "Logs.tf", fmt.Sprintf("%d", logData.Total))
+			msgEmbed.AddField("Logs.tf", fmt.Sprintf("%d", logData.Total)).MakeFieldInline()
 		}
 
-		embed.URL = player.ProfileURL
-		embed.Timestamp = createdAt
-		embed.Color = int(color)
-		embed.Image = &discordgo.MessageEmbedImage{URL: player.AvatarFull}
-		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: player.Avatar}
-		embed.Video = nil
-		embed.Author = author
+		if createdAt != "" {
+			msgEmbed.AddField("created at", createdAt).MakeFieldInline()
+		}
 
-		return nil
+		msgEmbed.
+			SetURL(player.ProfileURL).
+			SetColor(color).
+			SetImage(player.AvatarFull).
+			SetThumbnail(player.Avatar)
+
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnHistory(app *App) discord.CommandHandler {
-	return func(ctx context.Context, session *discordgo.Session,
-		interaction *discordgo.InteractionCreate, response *discord.Response,
-	) error {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Name {
 		case string(discord.CmdHistoryIP):
-			return onHistoryIP(ctx, app, session, interaction, response)
+			return onHistoryIP(ctx, app, session, interaction)
 		default:
 			// return bot.onHistoryChat(ctx, session, interaction, response)
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 	}
 }
 
-func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	response *discord.Response,
-) error {
+func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
 	steamID, errResolve := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolve != nil {
-		return consts.ErrInvalidSID
+		return nil, consts.ErrInvalidSID
 	}
 
 	person := store.NewPerson(steamID)
 	if errPersonBySID := app.PersonBySID(ctx, steamID, &person); errPersonBySID != nil {
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
 	ipRecords, errGetPersonIPHist := app.db.GetPersonIPHistory(ctx, steamID, 20)
 	if errGetPersonIPHist != nil && !errors.Is(errGetPersonIPHist, store.ErrNoResult) {
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
-	embed := discord.RespOk(response, fmt.Sprintf("IP History of: %s", person.PersonaName))
 	lastIP := net.IP{}
 
 	for _, ipRecord := range ipRecords {
@@ -418,9 +416,11 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		}
 	}
 
-	embed.Description = "IP history (20 max)"
+	msgEmbed := discord.
+		NewEmbed(fmt.Sprintf("IP History of: %s", person.PersonaName)).
+		SetDescription("IP history (20 max)")
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
 //
@@ -449,114 +449,143 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 //	return nil
 // }
 
-func createDiscordBanEmbed(ban store.BanSteam, response *discord.Response) *discordgo.MessageEmbed {
-	embed := discord.RespOk(response, "User Banned")
-	embed.Title = fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)
-	embed.Description = ban.Note
+func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (*embed.Embed, error) {
+	msgEmbed := discord.NewEmbed().
+		SetTitle(fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)).
+		SetDescription(ban.Note).
+		SetURL(app.ExtURL(ban)).
+		SetColor(app.bot.Colour.Success)
 
 	if ban.ReasonText != "" {
-		discord.AddField(embed, "Reason", ban.ReasonText)
+		msgEmbed.AddField("Reason", ban.ReasonText)
 	}
 
-	discord.AddFieldsSteamID(embed, ban.TargetID)
+	var target store.Person
+	if errTarget := app.PersonBySID(ctx, ban.TargetID, &target); errTarget != nil {
+		return nil, errTarget
+	}
+
+	msgEmbed.SetImage(target.AvatarFull)
+
+	if ban.SourceID.Valid() {
+		var author store.Person
+		if errPerson := app.PersonBySID(ctx, ban.SourceID, &author); errPerson != nil {
+			return nil, errPerson
+		}
+
+		msgEmbed.SetAuthor(author.PersonaName, author.AvatarFull, app.ExtURL(author))
+	}
 
 	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
-		discord.AddField(embed, "Expires In", "Permanent")
-		discord.AddField(embed, "Expires At", "Permanent")
+		msgEmbed.AddField("Expires In", "Permanent")
+		msgEmbed.AddField("Expires At", "Permanent")
 	} else {
-		discord.AddField(embed, "Expires In", FmtDuration(ban.ValidUntil))
-		discord.AddField(embed, "Expires At", FmtTimeShort(ban.ValidUntil))
+		msgEmbed.AddField("Expires In", FmtDuration(ban.ValidUntil))
+		msgEmbed.AddField("Expires At", FmtTimeShort(ban.ValidUntil))
 	}
 
-	return embed
+	discord.AddFieldsSteamID(msgEmbed, ban.TargetID)
+
+	return msgEmbed, nil
 }
 
 func makeOnSetSteam(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session,
-		interaction *discordgo.InteractionCreate, response *discord.Response,
-	) error {
+		interaction *discordgo.InteractionCreate,
+	) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 
 		steamID, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 		if errResolveSID != nil {
-			return consts.ErrInvalidSID
+			return nil, consts.ErrInvalidSID
 		}
 
 		errSetSteam := app.SetSteam(ctx, steamID, interaction.Member.User.ID)
 		if errSetSteam != nil {
-			return errSetSteam
+			return nil, errSetSteam
 		}
 
-		embed := discord.RespOk(response, "Steam Account Linked")
-		embed.Description = "Your steam and discord accounts are now linked"
+		msgEmbed := discord.NewEmbed().
+			SetTitle("Steam Account Linked").
+			SetDescription("Your steam and discord accounts are now linked").
+			SetColor(app.bot.Colour.Success)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
-func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[discord.OptUnbanReason].StringValue()
 
 	steamID, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil {
-		return consts.ErrInvalidSID
+		return nil, consts.ErrInvalidSID
 	}
 
 	found, errUnban := app.Unban(ctx, steamID, reason)
 	if errUnban != nil {
-		return errUnban
+		return nil, errUnban
 	}
 
 	if !found {
-		return errors.New("No ban found")
+		return nil, errors.New("No ban found")
 	}
 
-	embed := discord.RespOk(response, "User Unbanned Successfully")
-	discord.AddFieldsSteamID(embed, steamID)
+	msgEmbed := discord.
+		NewEmbed("User Unbanned Successfully").
+		SetColor(app.bot.Colour.Success)
 
-	return nil
+	var user store.Person
+	if errUser := app.PersonBySID(ctx, steamID, &user); errUser != nil {
+		app.log.Warn("Could not fetch unbanned person", zap.String("steam_id", steamID.String()), zap.Error(errUser))
+	} else {
+		msgEmbed.SetImage(user.AvatarFull).
+			SetURL(user.AvatarFull)
+	}
+
+	discord.AddFieldsSteamID(msgEmbed, steamID)
+
+	return msgEmbed.MessageEmbed, nil
 }
 
-func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	response *discord.Response,
-) error {
+func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[discord.OptASN].StringValue()
 
 	banExisted, errUnbanASN := app.UnbanASN(ctx, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, store.ErrNoResult) {
-			return errors.New("Ban for ASN does not exist")
+			return nil, errors.New("Ban for ASN does not exist")
 		}
 
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
 	if !banExisted {
-		return errors.New("Ban for ASN does not exist")
+		return nil, errors.New("Ban for ASN does not exist")
 	}
 
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
 	if errConv != nil {
-		return errors.New("Invalid ASN")
+		return nil, errors.New("Invalid ASN")
 	}
 
 	asnNetworks, errGetASNRecords := app.db.GetASNRecordsByNum(ctx, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
-			return errors.New("No asnNetworks found matching ASN")
+			return nil, errors.New("No asnNetworks found matching ASN")
 		}
 
-		return errors.New("Error fetching asn asnNetworks")
+		return nil, errors.New("Error fetching asn asnNetworks")
 	}
 
-	embed := discord.RespOk(response, "ASN Networks Unbanned Successfully")
+	msgEmbed := discord.NewEmbed("ASN Networks Unbanned Successfully").SetColor(app.bot.Colour.Success)
 
-	discord.AddField(embed, "ASN", asNumStr)
-	discord.AddField(embed, "Hosts", fmt.Sprintf("%d", asnNetworks.Hosts()))
+	msgEmbed.AddField("ASN", asNumStr)
+	msgEmbed.AddField("Hosts", fmt.Sprintf("%d", asnNetworks.Hosts()))
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
 func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discordgo.InteractionCreate) (store.Person, error) {
@@ -573,7 +602,7 @@ func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discord
 }
 
 func makeOnKick(app *App) discord.CommandHandler {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		var (
 			opts   = discord.OptionMap(interaction.ApplicationCommandData().Options)
 			target = store.StringSID(opts[discord.OptUserIdentifier].StringValue())
@@ -582,20 +611,22 @@ func makeOnKick(app *App) discord.CommandHandler {
 
 		targetSid64, errTarget := target.SID64(ctx)
 		if errTarget != nil {
-			return consts.ErrInvalidSID
+			return nil, consts.ErrInvalidSID
 		}
 
 		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 		if errAuthor != nil {
-			return errAuthor
+			return nil, errAuthor
 		}
 
 		state := app.state.current()
 		players := state.find(findOpts{SteamID: targetSid64})
 
 		if len(players) == 0 {
-			return consts.ErrPlayerNotFound
+			return nil, consts.ErrPlayerNotFound
 		}
+
+		msgEmbed := discord.NewEmbed("Users Kicked")
 
 		var err error
 
@@ -606,76 +637,78 @@ func makeOnKick(app *App) discord.CommandHandler {
 				continue
 			}
 
-			embed := discord.RespOk(response, "User Kicked")
-			discord.AddFieldsSteamID(embed, targetSid64)
-			discord.AddField(embed, "NameShort", player.Player.Name)
+			msgEmbed.AddField("Name", player.Player.Name)
+			discord.AddFieldsSteamID(msgEmbed, targetSid64)
 		}
 
-		return err
+		return msgEmbed.MessageEmbed, err
 	}
 }
 
 func makeOnSay(app *App) discord.CommandHandler {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		server := opts[discord.OptServerIdentifier].StringValue()
 		msg := opts[discord.OptMessage].StringValue()
 
 		if errSay := app.Say(ctx, "", server, msg); errSay != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
-		embed := discord.RespOk(response, "Sent center message successfully")
+		msgEmbed := discord.NewEmbed("Sent center message successfully").SetColor(app.bot.Colour.Success)
 
-		discord.AddField(embed, "Server", server)
-		discord.AddField(embed, "Message", msg)
+		msgEmbed.AddField("Server", server)
+		msgEmbed.AddField("Message", msg)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnCSay(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		server := opts[discord.OptServerIdentifier].StringValue()
 		msg := opts[discord.OptMessage].StringValue()
 
 		if errCSay := app.CSay(ctx, "", server, msg); errCSay != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
-		embed := discord.RespOk(response, "Sent console message successfully")
+		msgEmbed := discord.
+			NewEmbed("Sent console message successfully").
+			SetColor(app.bot.Colour.Success)
 
-		discord.AddField(embed, "Server", server)
-		discord.AddField(embed, "Message", msg)
+		msgEmbed.AddField("Server", server)
+		msgEmbed.AddField("Message", msg)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnPSay(app *App) discord.CommandHandler {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		player := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 		msg := opts[discord.OptMessage].StringValue()
 
 		playerSid, errPlayerSid := player.SID64(ctx)
 		if errPlayerSid != nil {
-			return errors.Wrap(errPlayerSid, "Failed to get player sid")
+			return nil, errors.Wrap(errPlayerSid, "Failed to get player sid")
 		}
 
 		if errPSay := app.PSay(ctx, playerSid, msg); errPSay != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
-		embed := discord.RespOk(response, "Sent private message successfully")
+		msgEmbed := discord.
+			NewEmbed("Sent private message successfully").
+			SetColor(app.bot.Colour.Success)
 
-		discord.AddField(embed, "Player", string(player))
-		discord.AddField(embed, "Message", msg)
+		msgEmbed.AddField("Player", string(player))
+		msgEmbed.AddField("Message", msg)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
@@ -704,18 +737,17 @@ func mapRegion(region string) string {
 
 func makeOnServers(app *App) discord.CommandHandler {
 	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	) (*discordgo.MessageEmbed, error) {
 		var (
 			state        = app.state.current()
 			currentState = state.sortRegion()
 			stats        = map[string]float64{}
 			used, total  = 0, 0
-			embed        = discord.RespOk(response, "Current Server Populations")
+			msgEmbed     = discord.NewEmbed("Current Server Populations")
 			regionNames  []string
 		)
 
-		embed.URL = app.conf.ExtURL("/servers")
+		msgEmbed.SetURL(app.ExtURLRaw("/servers"))
 
 		for k := range currentState {
 			regionNames = append(regionNames, k)
@@ -747,7 +779,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 
 			msg := strings.Join(counts, "    ")
 			if msg != "" {
-				discord.AddField(embed, mapRegion(region), fmt.Sprintf("```%s```", msg))
+				msgEmbed.AddField(mapRegion(region), fmt.Sprintf("```%s```", msg))
 			}
 		}
 
@@ -756,35 +788,36 @@ func makeOnServers(app *App) discord.CommandHandler {
 				continue
 			}
 
-			discord.AddField(embed, mapRegion(statName), fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100))
+			msgEmbed.AddField(mapRegion(statName), fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100))
 		}
 
-		discord.AddField(embed, "Global", fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
+		msgEmbed.AddField("Global", fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
 
 		if total == 0 {
-			discord.RespErr(response, "No server currentState available")
+			msgEmbed.SetColor(app.bot.Colour.Error)
+			msgEmbed.SetDescription("No server states available")
 		}
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnPlayers(app *App) discord.CommandHandler {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[discord.OptServerIdentifier].StringValue()
 		state := app.state.current()
 		serverStates := state.byName(serverName, false)
 
 		if len(serverStates) != 1 {
-			return ErrUnknownServer
+			return nil, ErrUnknownServer
 		}
 
 		serverState := serverStates[0]
 
 		var rows []string
 
-		embed := discord.RespOk(response, fmt.Sprintf("%s Current Players: %d / %d", serverState.Name, len(serverState.Players), serverState.MaxPlayers))
+		msgEmbed := discord.NewEmbed(fmt.Sprintf("%s Current Players: %d / %d", serverState.Name, len(serverState.Players), serverState.MaxPlayers))
 
 		if len(serverState.Players) > 0 {
 			sort.SliceStable(serverState.Players, func(i, j int) bool {
@@ -824,18 +857,19 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 					flag, player.SID, asStr, player.Ping, player.Name, player.SID, proxyStr))
 			}
 
-			embed.Description = strings.Join(rows, "\n")
+			msgEmbed.SetDescription(strings.Join(rows, "\n"))
+			msgEmbed.SetColor(app.bot.Colour.Success)
 		} else {
-			embed.Description = "No players :("
+			msgEmbed.SetDescription("No players :(")
+			msgEmbed.SetColor(app.bot.Colour.Error)
 		}
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	response *discord.Response,
-) error {
+) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	pattern := opts[discord.OptPattern].StringValue()
 	isRegex := opts[discord.OptIsRegex].BoolValue()
@@ -843,13 +877,13 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	if isRegex {
 		_, rxErr := regexp.Compile(pattern)
 		if rxErr != nil {
-			return errors.Errorf("Invalid regular expression: %v", rxErr)
+			return nil, errors.Errorf("Invalid regular expression: %v", rxErr)
 		}
 	}
 
 	author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 	if errAuthor != nil {
-		return errAuthor
+		return nil, errAuthor
 	}
 
 	filter := store.Filter{
@@ -861,56 +895,64 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		UpdatedOn: time.Now(),
 	}
 	if errFilterAdd := app.FilterAdd(ctx, &filter); errFilterAdd != nil {
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
-	embed := discord.RespOk(response, "Filter Created Successfully")
-	embed.Description = filter.Pattern
+	msgEmbed := discord.
+		NewEmbed("Filter Created Successfully").
+		SetColor(app.bot.Colour.Success)
 
-	return nil
+	msgEmbed.AddField("pattern", filter.Pattern)
+
+	return msgEmbed.MessageEmbed, nil
 }
 
-func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	response *discord.Response,
-) error {
+func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	wordID := opts["filter"].IntValue()
 
 	if wordID <= 0 {
-		return errors.New("Invalid filter id")
+		return nil, errors.New("Invalid filter id")
 	}
 
 	var filter store.Filter
 	if errGetFilter := app.db.GetFilterByID(ctx, wordID, &filter); errGetFilter != nil {
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
 	if errDropFilter := app.db.DropFilter(ctx, &filter); errDropFilter != nil {
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
-	discord.RespOk(response, "Filter Deleted Successfully")
+	msgEmbed := discord.
+		NewEmbed("Filter Deleted Successfully").
+		SetColor(app.bot.Colour.Success).
+		AddField("filter", filter.Pattern)
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
-func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	var (
 		opts    = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		message = opts[discord.OptMessage].StringValue()
 		matches = app.FilterCheck(message)
 	)
 
-	var title string
+	msgEmbed := discord.NewEmbed()
+
 	if len(matches) == 0 {
-		title = "No Match Found"
+		msgEmbed.SetTitle("No Matches Found")
+		msgEmbed.SetColor(app.bot.Colour.Success)
 	} else {
-		title = "Matched Found"
+		msgEmbed.SetTitle("Matched Found")
+		msgEmbed.SetColor(app.bot.Colour.Warn)
+		for _, match := range matches {
+			msgEmbed.AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
+		}
 	}
 
-	discord.RespOk(response, title)
-
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
 //	func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
@@ -1015,27 +1057,27 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		return nil
 //	}
 func makeOnLog(app *App) discord.CommandHandler {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *discord.Response) error {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 
 		matchID := opts[discord.OptMatchID].IntValue()
 		if matchID <= 0 {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
 		match, errMatch := app.db.MatchGetByID(ctx, int(matchID))
 		if errMatch != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
 		var server store.Server
 		if errServer := app.db.GetServer(ctx, match.ServerID, &server); errServer != nil {
-			return discord.ErrCommandFailed
+			return nil, discord.ErrCommandFailed
 		}
 
-		embed := discord.RespOk(response, fmt.Sprintf("%s - %s", server.ServerName, match.MapName))
-		embed.Color = int(discord.Green)
-		embed.URL = app.conf.ExtURL("/match/%d", match.MatchID)
+		msgEmbed := discord.NewEmbed(fmt.Sprintf("%s - %s", server.ServerName, match.MapName)).
+			SetColor(app.bot.Colour.Success).
+			SetURL(app.ExtURLRaw("/match/%d", match.MatchID))
 
 		redScore := 0
 		bluScore := 0
@@ -1048,14 +1090,14 @@ func makeOnLog(app *App) discord.CommandHandler {
 		top := match.TopPlayers()
 		found := 0
 
-		discord.AddFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
-		discord.AddFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
-		discord.AddFieldInline(embed, "Players", fmt.Sprintf("%d", len(top)))
+		msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
+		msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
+		msgEmbed.AddField("Players", fmt.Sprintf("%d", len(top))).MakeFieldInline()
 
 		for _, ts := range match.TeamSums {
-			discord.AddFieldInline(embed, fmt.Sprintf("%s Kills", ts.Team.String()), fmt.Sprintf("%d", ts.Kills))
-			discord.AddFieldInline(embed, fmt.Sprintf("%s Damage", ts.Team.String()), fmt.Sprintf("%d", ts.Damage))
-			discord.AddFieldInline(embed, fmt.Sprintf("%s Ubers", ts.Team.String()), fmt.Sprintf("%d", ts.Caps))
+			msgEmbed.AddField(fmt.Sprintf("%s Kills", ts.Team.String()), fmt.Sprintf("%d", ts.Kills)).MakeFieldInline()
+			msgEmbed.AddField(fmt.Sprintf("%s Damage", ts.Team.String()), fmt.Sprintf("%d", ts.Damage)).MakeFieldInline()
+			msgEmbed.AddField(fmt.Sprintf("%s Ubers", ts.Team.String()), fmt.Sprintf("%d", ts.Caps)).MakeFieldInline()
 			found++
 		}
 
@@ -1071,16 +1113,15 @@ func makeOnLog(app *App) discord.CommandHandler {
 		}
 
 		description += "`"
-		embed.Description = description
+		msgEmbed.SetDescription(description)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnFind(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
-		response *discord.Response,
-	) error {
+	) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(i.ApplicationCommandData().Options)
 		userIdentifier := opts[discord.OptUserIdentifier].StringValue()
 
@@ -1097,40 +1138,35 @@ func makeOnFind(app *App) discord.CommandHandler {
 		players := state.find(playerFindOpts)
 
 		if len(players) == 0 {
-			return consts.ErrUnknownID
+			return nil, consts.ErrUnknownID
 		}
+
+		msgEmbed := discord.NewEmbed("Player(s) Found")
 
 		for _, player := range players {
 			var server store.Server
 			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
-				return errors.Wrapf(errServer, "Failed to get server")
+				return nil, errors.Wrapf(errServer, "Failed to get server")
 			}
 
 			person := store.NewPerson(player.Player.SID)
 			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
-				return errPerson
+				return nil, errPerson
 			}
 
-			resp := discord.RespOk(response, "Player Found")
-			resp.Type = discordgo.EmbedTypeRich
-			resp.Image = &discordgo.MessageEmbedImage{URL: person.AvatarFull}
-			resp.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: person.Avatar}
-			resp.URL = fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64())
-			resp.Title = player.Player.Name
-
-			discord.AddFieldInline(resp, "Server", server.ServerName)
-			discord.AddFieldsSteamID(resp, player.Player.SID)
-			discord.AddField(resp, "Connect", fmt.Sprintf("steam://connect/%s", server.Addr()))
+			msgEmbed.AddField("Name", player.Player.Name)
+			msgEmbed.AddField("Server", server.ServerName).MakeFieldInline()
+			msgEmbed.AddField("steam", fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64()))
+			msgEmbed.AddField("connect", fmt.Sprintf("connect %s", server.Addr()))
 		}
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func makeOnMute(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-		resp *discord.Response,
-	) error {
+	) (*discordgo.MessageEmbed, error) {
 		var (
 			opts     = discord.OptionMap(interaction.ApplicationCommandData().Options)
 			playerID = store.StringSID(opts.String(discord.OptUserIdentifier))
@@ -1139,7 +1175,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 
 		reasonValueOpt, ok := opts[discord.OptBanReason]
 		if !ok {
-			return errors.New("Invalid mute reason")
+			return nil, errors.New("Invalid mute reason")
 		}
 
 		reason = store.Reason(reasonValueOpt.IntValue())
@@ -1148,7 +1184,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 
 		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 		if errAuthor != nil {
-			return errAuthor
+			return nil, errAuthor
 		}
 
 		var banSteam store.BanSteam
@@ -1164,23 +1200,23 @@ func makeOnMute(app *App) discord.CommandHandler {
 			store.NoComm,
 			&banSteam,
 		); errOpts != nil {
-			return errors.Wrapf(errOpts, "Failed to parse options")
+			return nil, errors.Wrapf(errOpts, "Failed to parse options")
 		}
 
 		if errBan := app.BanSteam(ctx, &banSteam); errBan != nil {
-			return errBan
+			return nil, errBan
 		}
 
-		response := discord.RespOk(resp, "Player muted successfully")
-		discord.AddFieldsSteamID(response, banSteam.TargetID)
+		msgEmbed := discord.NewEmbed("Player muted successfully")
+		discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
 
-		return nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 
 func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
-	interaction *discordgo.InteractionCreate, response *discord.Response,
-) error {
+	interaction *discordgo.InteractionCreate,
+) (*discordgo.MessageEmbed, error) {
 	var (
 		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		asNumStr = opts[discord.OptASN].StringValue()
@@ -1193,24 +1229,24 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 
 	if errGetPersonByDiscordID := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
-			return errors.New("Must set steam id. See /set_steam")
+			return nil, errors.New("Must set steam id. See /set_steam")
 		}
 
-		return errors.New("Error fetching author info")
+		return nil, errors.New("Error fetching author info")
 	}
 
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
 	if errConv != nil {
-		return errors.New("Invalid ASN")
+		return nil, errors.New("Invalid ASN")
 	}
 
 	asnRecords, errGetASNRecords := app.db.GetASNRecordsByNum(ctx, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
-			return errors.New("No asnRecords found matching ASN")
+			return nil, errors.New("No asnRecords found matching ASN")
 		}
 
-		return errors.New("Error fetching asn asnRecords")
+		return nil, errors.New("Error fetching asn asnRecords")
 	}
 
 	var banASN store.BanASN
@@ -1226,27 +1262,29 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		store.Banned,
 		&banASN,
 	); errOpts != nil {
-		return errors.Wrapf(errOpts, "Failed to parse options")
+		return nil, errors.Wrapf(errOpts, "Failed to parse options")
 	}
 
 	if errBanASN := app.BanASN(ctx, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, store.ErrDuplicate) {
-			return errors.New("Duplicate ASN ban")
+			return nil, errors.New("Duplicate ASN ban")
 		}
 
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
-	resp := discord.RespOk(response, "ASN BanSteam Created Successfully")
-	discord.AddField(resp, "ASNum", asNumStr)
-	discord.AddField(resp, "Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts()))
+	msgEmbed := discord.
+		NewEmbed("ASN BanSteam Created Successfully").
+		SetColor(app.bot.Colour.Success).
+		AddField("ASNum", asNumStr).
+		AddField("Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts()))
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
 func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
-	interaction *discordgo.InteractionCreate, response *discord.Response,
-) error {
+	interaction *discordgo.InteractionCreate,
+) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	target := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 	reason := store.Reason(opts[discord.OptBanReason].IntValue())
@@ -1254,7 +1292,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
 	if errParseCIDR != nil {
-		return errors.Wrap(errParseCIDR, "Invalid CIDR")
+		return nil, errors.Wrap(errParseCIDR, "Invalid CIDR")
 	}
 
 	duration := store.Duration(opts[discord.OptDuration].StringValue())
@@ -1263,10 +1301,10 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	author := store.NewPerson("")
 	if errGetPerson := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errors.Is(errGetPerson, store.ErrNoResult) {
-			return errors.New("Must set steam id. See /set_steam")
+			return nil, errors.New("Must set steam id. See /set_steam")
 		}
 
-		return errors.New("Error fetching author info")
+		return nil, errors.New("Error fetching author info")
 	}
 
 	var banCIDR store.BanCIDR
@@ -1282,18 +1320,18 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		store.Banned,
 		&banCIDR,
 	); errOpts != nil {
-		return errors.Wrapf(errOpts, "Failed to parse options")
+		return nil, errors.Wrapf(errOpts, "Failed to parse options")
 	}
 
 	if errBanNet := app.BanCIDR(ctx, &banCIDR); errBanNet != nil {
-		return errBanNet
+		return nil, errBanNet
 	}
 
 	state := app.state.current()
 	players := state.find(findOpts{CIDR: network})
 
 	if len(players) == 0 {
-		return consts.ErrPlayerNotFound
+		return nil, consts.ErrPlayerNotFound
 	}
 
 	for _, player := range players {
@@ -1302,15 +1340,15 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		}
 	}
 
-	discord.RespOk(response, "IP ban created successfully")
+	msgEmbed := discord.NewEmbed("IP ban created successfully").SetColor(app.bot.Colour.Success)
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }
 
 // onBanSteam !ban <id> <duration> [reason].
 func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
-	interaction *discordgo.InteractionCreate, response *discord.Response,
-) error {
+	interaction *discordgo.InteractionCreate,
+) (*discordgo.MessageEmbed, error) {
 	var (
 		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		target   = opts[discord.OptUserIdentifier].StringValue()
@@ -1321,7 +1359,7 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 
 	author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 	if errAuthor != nil {
-		return errAuthor
+		return nil, errAuthor
 	}
 
 	var banSteam store.BanSteam
@@ -1337,18 +1375,21 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		store.Banned,
 		&banSteam,
 	); errOpts != nil {
-		return errors.Wrapf(errOpts, "Failed to parse options")
+		return nil, errors.Wrapf(errOpts, "Failed to parse options")
 	}
 
 	if errBan := app.BanSteam(ctx, &banSteam); errBan != nil {
 		if errors.Is(errBan, store.ErrDuplicate) {
-			return errors.New("Duplicate ban")
+			return nil, errors.New("Duplicate ban")
 		}
 
-		return discord.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 
-	createDiscordBanEmbed(banSteam, response)
+	msgEmbed, errCreate := app.createDiscordBanEmbed(ctx, banSteam)
+	if errCreate != nil {
+		return nil, errCreate
+	}
 
-	return nil
+	return msgEmbed.MessageEmbed, nil
 }

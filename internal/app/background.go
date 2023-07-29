@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -143,29 +142,27 @@ func (app *App) showReportMeta(ctx context.Context) {
 				}
 			}
 
-			reportNotice := &discordgo.MessageEmbed{
-				URL:   app.conf.ExtURL("/admin/reports"),
-				Type:  discordgo.EmbedTypeRich,
-				Title: "User Report Stats",
-				Color: int(discord.Green),
-			}
+			msgEmbed := discord.
+				NewEmbed("User Report Stats").
+				SetColor(app.bot.Colour.Success).
+				SetURL(app.ExtURLRaw("/admin/reports"))
 
 			if meta.OpenWeek > 0 {
-				reportNotice.Color = int(discord.Red)
+				msgEmbed.SetColor(app.bot.Colour.Error)
 			} else if meta.Open3Days > 0 {
-				reportNotice.Color = int(discord.Orange)
+				msgEmbed.SetColor(app.bot.Colour.Warn)
 			}
 
-			reportNotice.Description = "Current Open Report Counts"
+			msgEmbed.SetDescription("Current Open Report Counts")
 
-			discord.AddFieldInline(reportNotice, "New", fmt.Sprintf(" %d", meta.Open1Day))
-			discord.AddFieldInline(reportNotice, "Total Open", fmt.Sprintf(" %d", meta.TotalOpen))
-			discord.AddFieldInline(reportNotice, "Total Closed", fmt.Sprintf(" %d", meta.TotalClosed))
-			discord.AddFieldInline(reportNotice, ">1 Day", fmt.Sprintf(" %d", meta.Open1Day))
-			discord.AddFieldInline(reportNotice, ">3 Days", fmt.Sprintf(" %d", meta.Open3Days))
-			discord.AddFieldInline(reportNotice, ">1 Week", fmt.Sprintf(" %d", meta.OpenWeek))
+			msgEmbed.AddField("New", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline()
+			msgEmbed.AddField("Total Open", fmt.Sprintf(" %d", meta.TotalOpen)).MakeFieldInline()
+			msgEmbed.AddField("Total Closed", fmt.Sprintf(" %d", meta.TotalClosed)).MakeFieldInline()
+			msgEmbed.AddField(">1 Day", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline()
+			msgEmbed.AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline()
+			msgEmbed.AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline()
 
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: reportNotice})
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
@@ -376,7 +373,7 @@ func (app *App) banSweeper(ctx context.Context) {
 							}
 
 							var person store.Person
-							if errPerson := app.db.GetOrCreatePersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
+							if errPerson := app.PersonBySID(ctx, ban.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired person", zap.Error(errPerson))
 
 								continue
@@ -386,6 +383,25 @@ func (app *App) banSweeper(ctx context.Context) {
 							if name == "" {
 								name = person.SteamID.String()
 							}
+
+							msgEmbed := discord.
+								NewEmbed("Steam Ban Expired").
+								SetColor(app.bot.Colour.Info).
+								AddField("Type", banType).
+								SetImage(person.AvatarFull).
+								AddField("Name", person.PersonaName).
+								SetURL(app.ExtURL(ban))
+
+							discord.AddFieldsSteamID(msgEmbed, person.SteamID)
+
+							if expiredBan.BanType == store.NoComm {
+								msgEmbed.SetColor(app.bot.Colour.Warn)
+							}
+
+							app.bot.SendPayload(discord.Payload{
+								ChannelID: app.conf.Discord.LogChannelID,
+								Embed:     msgEmbed.MessageEmbed,
+							})
 
 							log.Info("Ban expired", zap.String("type", banType),
 								zap.String("reason", store.ReasonString(ban.Reason)),

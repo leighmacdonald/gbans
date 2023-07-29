@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -71,20 +70,18 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 
 		if banSteam.BanType == store.NoComm {
 			title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
-			colour = int(discord.Orange)
+			colour = app.bot.Colour.Warn
 		} else {
 			title = fmt.Sprintf("User Banned (#%d)", banSteam.BanID)
-			colour = int(discord.Red)
+			colour = app.bot.Colour.Error
 		}
 
-		banNotice := &discordgo.MessageEmbed{
-			URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID),
-			Type:  discordgo.EmbedTypeRich,
-			Title: title,
-			Color: colour,
-		}
+		msgEmbed := discord.
+			NewEmbed(title).
+			SetColor(colour).
+			SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID))
 
-		discord.AddFieldsSteamID(banNotice, banSteam.TargetID)
+		discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
 
 		expIn := "Permanent"
 		expAt := "Permanent"
@@ -94,9 +91,9 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 			expAt = FmtTimeShort(banSteam.ValidUntil)
 		}
 
-		discord.AddField(banNotice, "Expires In", expIn)
-		discord.AddField(banNotice, "Expires At", expAt)
-		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: banNotice})
+		msgEmbed.AddField("Expires In", expIn)
+		msgEmbed.AddField("Expires At", expAt)
+		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.MessageEmbed})
 	}()
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
@@ -215,18 +212,18 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 
 	app.log.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
 
-	unbanNotice := &discordgo.MessageEmbed{
-		URL:   fmt.Sprintf("https://steamcommunity.com/profiles/%s", bannedPerson.Ban.TargetID),
-		Type:  discordgo.EmbedTypeRich,
-		Title: fmt.Sprintf("User Unbanned: %s (#%d)", bannedPerson.Person.PersonaName, bannedPerson.Ban.BanID),
-		Color: int(discord.Green),
-	}
-	discord.AddFieldsSteamID(unbanNotice, bannedPerson.Person.SteamID)
-	discord.AddField(unbanNotice, "Reason", reason)
+	msgEmbed := discord.
+		NewEmbed("User Unbanned").
+		SetColor(app.bot.Colour.Success).
+		SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", bannedPerson.Ban.TargetID)).
+		AddField("Name", bannedPerson.Person.PersonaName).AddField("ban_id", fmt.Sprintf("%d", bannedPerson.Ban.BanID))
+
+	discord.AddFieldsSteamID(msgEmbed, bannedPerson.Person.SteamID)
+	msgEmbed.AddField("Reason", reason)
 
 	app.bot.SendPayload(discord.Payload{
 		ChannelID: app.conf.Discord.LogChannelID,
-		Embed:     unbanNotice,
+		Embed:     msgEmbed.MessageEmbed,
 	})
 
 	return true, nil

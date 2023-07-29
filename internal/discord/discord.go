@@ -3,26 +3,58 @@ package discord
 import (
 	"fmt"
 
+	embed "github.com/bernardonalves/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-var (
-	ErrCommandFailed = errors.New("Command failed")
-	ErrTooLarge      = errors.Errorf("Max message length is %d", discordMaxMsgLen)
-)
+var ErrCommandFailed = errors.New("Command failed")
 
 type Bot struct {
 	log               *zap.Logger
 	session           *discordgo.Session
 	isReady           bool
 	commandHandlers   map[Cmd]CommandHandler
-	ColourLevels      LevelColors
+	Colour            LevelColors
 	unregisterOnStart bool
 	appID             string
 	extURL            string
+}
+
+const (
+	iconURL      = "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128"
+	providerName = "gbans"
+)
+
+type Payload struct {
+	ChannelID string
+	Embed     *discordgo.MessageEmbed
+}
+
+func NewEmbed(args ...string) *embed.Embed {
+	newEmbed := embed.
+		NewEmbed().
+		SetFooter(providerName, iconURL)
+
+	if len(args) == 2 {
+		newEmbed = newEmbed.SetTitle(args[0]).
+			SetDescription(args[1])
+	} else if len(args) == 1 {
+		newEmbed = newEmbed.SetTitle(args[0])
+	}
+
+	return newEmbed
+}
+
+func AddFieldsSteamID(embed *embed.Embed, steamID steamid.SID64) *embed.Embed {
+	embed.AddField("STEAM", string(steamid.SID64ToSID(steamID))).MakeFieldInline()
+	embed.AddField("STEAM3", string(steamid.SID64ToSID3(steamID))).MakeFieldInline()
+	embed.AddField("SID64", steamID.String()).MakeFieldInline()
+
+	return embed
 }
 
 func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool, extURL string) (*Bot, error) {
@@ -44,12 +76,13 @@ func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool,
 		appID:             appID,
 		extURL:            extURL,
 		commandHandlers:   map[Cmd]CommandHandler{},
-		ColourLevels: LevelColors{
-			Debug: 10170623,
-			Info:  3581519,
-			Warn:  14327864,
-			Error: 13631488,
-			Fatal: 13631488,
+		Colour: LevelColors{
+			Success: 302673,
+			Debug:   10170623,
+			Info:    3581519,
+			Warn:    14327864,
+			Error:   13631488,
+			Fatal:   13631488,
 		},
 	}
 	bot.session.AddHandler(bot.onReady)
@@ -169,27 +202,9 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 //	return nil
 //}
 
-func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response Response) error {
+func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response *discordgo.MessageEmbed) error {
 	resp := &discordgo.InteractionResponseData{
-		Content: "hi",
-	}
-
-	switch response.MsgType {
-	case MtString:
-		val, ok := response.Value.(string)
-		if ok && val != "" {
-			resp.Content = val
-			if len(resp.Content) > discordMaxMsgLen {
-				return ErrTooLarge
-			}
-		}
-	case MtEmbed:
-		embed, ok := response.Value.(*discordgo.MessageEmbed)
-		if !ok {
-			return errors.New("Failed to cast MessageEmbed")
-		}
-
-		resp.Embeds = append(resp.Embeds, embed)
+		Embeds: []*discordgo.MessageEmbed{response},
 	}
 
 	_, errResponseErr := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
@@ -221,9 +236,10 @@ func (bot *Bot) SendPayload(payload Payload) {
 
 // LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int).
 type LevelColors struct {
-	Debug int
-	Info  int
-	Warn  int
-	Error int
-	Fatal int
+	Debug   int
+	Success int
+	Info    int
+	Warn    int
+	Error   int
+	Fatal   int
 }

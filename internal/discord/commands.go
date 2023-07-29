@@ -493,11 +493,34 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 	return nil
 }
 
-type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate, r *Response) error
+type CommandOptions map[optionKey]*discordgo.ApplicationCommandInteractionDataOption
 
-const (
-	discordMaxMsgLen = 4000
-)
+type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
+
+// OptionMap will take the recursive discord slash commands and flatten them into a simple
+// map.
+func OptionMap(options []*discordgo.ApplicationCommandInteractionDataOption) CommandOptions {
+	optionM := make(CommandOptions, len(options))
+	for _, opt := range options {
+		optionM[optionKey(opt.Name)] = opt
+	}
+
+	return optionM
+}
+
+func (opts CommandOptions) String(key optionKey) string {
+	root, found := opts[key]
+	if !found {
+		return ""
+	}
+
+	val, ok := root.Value.(string)
+	if !ok {
+		return ""
+	}
+
+	return val
+}
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
@@ -505,9 +528,8 @@ const (
 
 func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	var (
-		data     = interaction.ApplicationCommandData()
-		command  = Cmd(data.Name)
-		response = Response{MsgType: MtString}
+		data    = interaction.ApplicationCommandData()
+		command = Cmd(data.Name)
 	)
 
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
@@ -534,9 +556,14 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 		commandCtx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*30)
 		defer cancelCommand()
 
-		if errHandleCommand := handler(commandCtx, session, interaction, &response); errHandleCommand != nil || response.Value == nil {
+		response, errHandleCommand := handler(commandCtx, session, interaction)
+		if errHandleCommand != nil || response == nil {
+			errEmbed := NewEmbed("Error Returned").
+				SetColor(bot.Colour.Error).
+				AddField("command", string(command)).
+				SetDescription(errHandleCommand.Error())
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-				Content: errHandleCommand.Error(),
+				Embeds: []*discordgo.MessageEmbed{errEmbed.MessageEmbed},
 			}); errFollow != nil {
 				bot.log.Error("Failed sending error response for interaction", zap.Error(errFollow))
 			}

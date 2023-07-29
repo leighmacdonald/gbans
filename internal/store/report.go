@@ -51,8 +51,8 @@ type Report struct {
 	UpdatedOn time.Time `json:"updated_on"`
 }
 
-func (report Report) ToURL(extURL string) string {
-	return fmt.Sprintf("%s/report/%d", extURL, report.ReportID)
+func (report Report) Path() string {
+	return fmt.Sprintf("/report/%d", report.ReportID)
 }
 
 func NewReport() Report {

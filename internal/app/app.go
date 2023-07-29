@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -166,6 +166,18 @@ func (app *App) Init(ctx context.Context) error {
 	return nil
 }
 
+type LinkablePath interface {
+	Path() string
+}
+
+func (app *App) ExtURL(obj LinkablePath) string {
+	return app.ExtURLRaw(obj.Path())
+}
+
+func (app *App) ExtURLRaw(path string, args ...any) string {
+	return strings.TrimRight(app.conf.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+}
+
 type newUserWarning struct {
 	ServerEvent serverEvent
 	Message     string
@@ -238,16 +250,14 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					title = "[DISABLED] Language Warning"
 				}
 
-				warnNotice := &discordgo.MessageEmbed{
-					URL:   conf.ExtURL("/profiles/%d", evt.SID),
-					Type:  discordgo.EmbedTypeRich,
-					Title: title,
-					Color: int(discord.Green),
-					Image: &discordgo.MessageEmbedImage{URL: person.AvatarFull},
-				}
+				msgEmbed := discord.
+					NewEmbed(title).
+					SetURL(app.ExtURLRaw("/profiles/%d", evt.SID)).
+					SetColor(app.bot.Colour.Success).
+					SetImage(person.AvatarFull)
 
-				discord.AddField(warnNotice, "Matched", newWarn.Matched)
-				discord.AddField(warnNotice, "Message", newWarn.userWarning.Message)
+				msgEmbed.AddField("Matched", newWarn.Matched)
+				msgEmbed.AddField("Message", newWarn.userWarning.Message)
 
 				if newWarn.MatchedFilter.IsEnabled {
 					if len(warnings[evt.SID]) > conf.General.WarningLimit {
@@ -294,15 +304,15 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 								zap.String("action", string(conf.General.WarningExceededAction)))
 						}
 
-						discord.AddField(warnNotice, "Name", person.PersonaName)
+						msgEmbed.AddField("Name", person.PersonaName)
 
 						if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
 							expIn = FmtDuration(banSteam.ValidUntil)
 							expAt = FmtTimeShort(banSteam.ValidUntil)
 						}
 
-						discord.AddField(warnNotice, "Expires In", expIn)
-						discord.AddField(warnNotice, "Expires At", expAt)
+						msgEmbed.AddField("Expires In", expIn)
+						msgEmbed.AddField("Expires At", expAt)
 					} else {
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
 							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
@@ -313,14 +323,14 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					}
 				}
 
-				discord.AddField(warnNotice, "Pattern", newWarn.MatchedFilter.Pattern)
-				discord.AddFieldsSteamID(warnNotice, evt.SID)
-				discord.AddFieldInt64Inline(warnNotice, "Filter ID", newWarn.MatchedFilter.FilterID)
-				discord.AddFieldInline(warnNotice, "Server", newWarn.ServerEvent.Server.ServerName)
+				msgEmbed.AddField("Pattern", newWarn.MatchedFilter.Pattern)
+				discord.AddFieldsSteamID(msgEmbed, evt.SID)
+				msgEmbed.AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID))
+				msgEmbed.AddField("Server", newWarn.ServerEvent.Server.ServerName)
 
 				app.bot.SendPayload(discord.Payload{
 					ChannelID: conf.Discord.LogChannelID,
-					Embed:     warnNotice,
+					Embed:     msgEmbed.MessageEmbed,
 				})
 
 			case <-ctx.Done():
@@ -406,7 +416,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 						log.Error("Failed to save match",
 							zap.String("server", evt.Server.ServerName), zap.Error(errSave))
 					} else {
-						sendDiscordMatchResults(curServer, completeMatch, app.conf, app.bot)
+						app.sendDiscordMatchResults(curServer, completeMatch)
 					}
 				}(match)
 
@@ -418,15 +428,13 @@ func (app *App) matchSummarizer(ctx context.Context) {
 	}
 }
 
-func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *Config, bot *discord.Bot) {
+func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Match) {
 	var (
-		embed = &discordgo.MessageEmbed{
-			Type:        discordgo.EmbedTypeRich,
-			Title:       fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerName, match.MapName),
-			Description: "Match results",
-			Color:       int(discord.Green),
-			URL:         conf.ExtURL("/log/%d", match.MatchID),
-		}
+		msgEmbed = discord.
+				NewEmbed(fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerName, match.MapName)).
+				SetDescription("Match results").
+				SetColor(app.bot.Colour.Success).
+				SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
 		redScore = 0
 		bluScore = 0
 	)
@@ -439,16 +447,17 @@ func sendDiscordMatchResults(server store.Server, match logparse.Match, conf *Co
 	found := 0
 
 	for _, teamStats := range match.TeamSums {
-		discord.AddFieldInline(embed, fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills))
-		discord.AddFieldInline(embed, fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage))
-		discord.AddFieldInline(embed, fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops))
+		msgEmbed.AddField(fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills)).MakeFieldInline()
+		msgEmbed.AddField(fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage)).MakeFieldInline()
+		msgEmbed.AddField(fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops)).MakeFieldInline()
 		found++
 	}
 
-	discord.AddFieldInline(embed, "Red Score", fmt.Sprintf("%d", redScore))
-	discord.AddFieldInline(embed, "Blu Score", fmt.Sprintf("%d", bluScore))
-	discord.AddFieldInline(embed, "Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes()))
-	bot.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: embed})
+	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
+	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
+	msgEmbed.AddField("Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes())).MakeFieldInline()
+
+	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 }
 
 func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, logger *zap.Logger, database *store.Store) {

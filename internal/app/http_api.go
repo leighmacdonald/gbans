@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -333,31 +332,20 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			return
 		}
 
-		embed := discord.RespOk(nil, "New User In-Game Report")
-		embed.Description = fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)
-		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-			Name:   "Reporter",
-			Value:  players[0].Player.Name,
-			Inline: true,
-		})
+		var person store.Person
+		if errPerson := app.PersonBySID(ctx, req.SteamID, &person); errPerson != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
 
-		if req.SteamID.String() != "" {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-				Name:   "ReporterSID",
-				Value:  players[0].Player.SID.String(),
-				Inline: true,
-			})
+			return
 		}
 
-		if req.ServerName != "" {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-				Name:   "Server",
-				Value:  req.ServerName,
-				Inline: true,
-			})
-		}
+		msgEmbed := discord.
+			NewEmbed("New User In-Game Report").
+			SetDescription(fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)).
+			SetAuthor(person.PersonaName, person.AvatarFull, app.ExtURL(person)).
+			AddField("server", req.ServerName)
 
-		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: embed})
+		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 
 		responseOK(ctx, http.StatusOK, gin.H{
 			"client":  req.Client,
@@ -950,7 +938,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			reason = store.ReasonString(bannedPerson.Ban.Reason)
 		}
 
-		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, bannedPerson.Ban.ToURL(app.conf.General.ExternalURL),
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.Ban),
 			time.Until(bannedPerson.Ban.ValidUntil).Round(time.Minute).String())
 
 		responseOK(ctx, http.StatusOK, resp)
@@ -1344,7 +1332,7 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 				Authors:     []string{app.conf.General.SiteName},
 				Description: "Players permanently banned for cheating",
 				Title:       fmt.Sprintf("%s Cheater List", app.conf.General.SiteName),
-				UpdateURL:   app.conf.ExtURL("/export/bans/tf2bd"),
+				UpdateURL:   app.ExtURLRaw("/export/bans/tf2bd"),
 			},
 			Players: []thirdparty.Players{},
 		}
@@ -2131,11 +2119,12 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusCreated, report)
 
-		embed := discord.RespOk(nil, "New user report created")
-		embed.Description = report.Description
-		embed.URL = report.ToURL(app.conf.General.ExternalURL)
-		discord.AddAuthorProfile(embed,
-			currentUser.SteamID, currentUser.Name, currentUser.ToURL(app.conf))
+		msgEmbed := discord.
+			NewEmbed("New User Report Created").
+			SetDescription(report.Description).
+			SetColor(app.bot.Colour.Success).
+			SetURL(app.ExtURL(report)).
+			SetAuthor(currentUser.Name, currentUser.Avatarfull, app.ExtURL(currentUser))
 
 		name := personSource.PersonaName
 
@@ -2143,24 +2132,23 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			name = report.TargetID.String()
 		}
 
-		discord.AddField(embed, "Subject", name)
-		discord.AddField(embed, "Reason", store.ReasonString(report.Reason))
+		msgEmbed.AddField("Subject", name)
+		msgEmbed.AddField("Reason", store.ReasonString(report.Reason))
 
 		if report.ReasonText != "" {
-			discord.AddField(embed, "Custom Reason", report.ReasonText)
+			msgEmbed.AddField("Custom Reason", report.ReasonText)
 		}
 
 		if report.DemoName != "" {
-			discord.AddField(embed, "Demo", app.conf.ExtURL("/demos/name/%s", report.DemoName))
-			discord.AddField(embed, "Demo Tick", fmt.Sprintf("%d", report.DemoTick))
+			msgEmbed.AddField("Demo", app.ExtURLRaw("/demos/name/%s", report.DemoName))
+			msgEmbed.AddField("Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 		}
 
-		discord.AddFieldsSteamID(embed, report.TargetID)
-		discord.AddLink(embed, app.conf.General.ExternalURL, report)
+		discord.AddFieldsSteamID(msgEmbed, report.TargetID)
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 
 		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
@@ -2262,17 +2250,16 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusCreated, msg)
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "New report message posted",
-			Description: msg.Contents,
-		}
-
-		discord.AddField(embed, "Author", report.SourceID.String())
-		discord.AddLink(embed, app.conf.General.ExternalURL, report)
+		msgEmbed := discord.
+			NewEmbed("New report message posted").
+			SetDescription(msg.Contents).
+			SetColor(app.bot.Colour.Success).
+			SetAuthor(person.Name, person.Avatarfull, app.ExtURL(person)).
+			SetURL(app.ExtURL(report))
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }
@@ -2339,20 +2326,17 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusCreated, message)
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "New report message edited",
-			Description: message.BodyMD,
-		}
-
-		discord.AddField(embed, "Old Message", existing.Contents)
-		discord.AddField(embed, "Report Link", app.conf.ExtURL("/report/%d", existing.ParentID))
-		discord.AddField(embed, "Author", curUser.SteamID.String())
-
-		embed.Image = &discordgo.MessageEmbedImage{URL: curUser.Avatarfull}
+		msgEmbed := discord.
+			NewEmbed("New report message edited").
+			SetDescription(message.BodyMD).
+			SetColor(app.bot.Colour.Warn).
+			AddField("Old Message", existing.Contents).
+			SetURL(app.ExtURLRaw("/report/%d", existing.ParentID)).
+			SetAuthor("Author", curUser.Name, curUser.Avatarfull, app.ExtURL(curUser))
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }
@@ -2396,16 +2380,15 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusNoContent, nil)
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "User report message deleted",
-			Description: existing.Contents,
-		}
-
-		discord.AddField(embed, "Author", curUser.SteamID.String())
+		msgEmbed := discord.
+			NewEmbed("User report message deleted").
+			SetDescription(existing.Contents).
+			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser)).
+			SetColor(app.bot.Colour.Warn)
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }
@@ -2714,10 +2697,10 @@ func onAPIPostNewsCreate(app *App) gin.HandlerFunc {
 
 		go app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed: &discordgo.MessageEmbed{
-				Title:       "News Created",
-				Description: fmt.Sprintf("News Posted: %s", entry.Title),
-			},
+			Embed: discord.
+				NewEmbed("News Created").
+				SetDescription(entry.BodyMD).
+				AddField("Title", entry.Title).MessageEmbed,
 		})
 	}
 }
@@ -2760,10 +2743,11 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed: &discordgo.MessageEmbed{
-				Title:       "News Updated",
-				Description: fmt.Sprintf("News Updated: %s", entry.Title),
-			},
+			Embed: discord.
+				NewEmbed("News Updated").
+				AddField("Title", entry.Title).
+				SetDescription(entry.BodyMD).
+				MessageEmbed,
 		})
 	}
 }
@@ -3230,14 +3214,14 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusNoContent, nil)
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "User appeal message deleted",
-			Description: existing.Contents,
-		}
-		discord.AddField(embed, "Author", curUser.SteamID.String())
+		msgEmbed := discord.
+			NewEmbed("User appeal message deleted").
+			SetDescription(existing.Contents).
+			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser))
+
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }
@@ -3347,8 +3331,8 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		userProfile := currentUserProfile(ctx)
-		if bannedPerson.Ban.AppealState != store.Open && userProfile.PermissionLevel < consts.PModerator {
+		curUserProfile := currentUserProfile(ctx)
+		if bannedPerson.Ban.AppealState != store.Open && curUserProfile.PermissionLevel < consts.PModerator {
 			responseErr(ctx, http.StatusForbidden, nil)
 			log.Warn("User tried to bypass posting restriction",
 				zap.Int64("ban_id", bannedPerson.Ban.BanID), zap.Int64("steam_id", bannedPerson.Person.SteamID.Int64()))
@@ -3356,7 +3340,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		msg := store.NewUserMessage(banID, userProfile.SteamID, request.Message)
+		msg := store.NewUserMessage(banID, curUserProfile.SteamID, request.Message)
 		if errSave := app.db.SaveBanMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
@@ -3366,20 +3350,17 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusCreated, msg)
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "New ban appeal message posted",
-			Description: msg.Contents,
-			Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: userProfile.Avatarfull},
-			Color:       app.bot.ColourLevels.Info,
-			URL:         app.conf.ExtURL("/ban/%d", banID),
-		}
-
-		discord.AddAuthorProfile(embed,
-			userProfile.SteamID, userProfile.Name, userProfile.ToURL(app.conf))
+		msgEmbed := discord.
+			NewEmbed("New ban appeal message posted").
+			SetColor(app.bot.Colour.Info).
+			SetThumbnail(bannedPerson.Person.AvatarFull).
+			SetDescription(msg.Contents).
+			SetURL(app.ExtURL(bannedPerson.Ban)).
+			SetAuthor(curUserProfile.Name, curUserProfile.Avatarfull, app.ExtURL(curUserProfile))
 
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }
@@ -3437,11 +3418,6 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		embed := &discordgo.MessageEmbed{
-			Title:       "Ban appeal message edited",
-			Description: util.DiffString(existing.Contents, message.BodyMD),
-		}
-
 		existing.Contents = message.BodyMD
 		if errSave := app.db.SaveBanMessage(ctx, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
@@ -3452,10 +3428,15 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 
 		responseOK(ctx, http.StatusCreated, message)
 
-		discord.AddField(embed, "Author", curUser.SteamID.String())
+		msgEmbed := discord.
+			NewEmbed("Ban appeal message edited").
+			SetDescription(util.DiffString(existing.Contents, message.BodyMD)).
+			SetColor(app.bot.Colour.Warn).
+			SetAuthor(curUser.Name, curUser.Avatarfull, app.ExtURL(curUser))
+
 		app.bot.SendPayload(discord.Payload{
 			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     embed,
+			Embed:     msgEmbed.MessageEmbed,
 		})
 	}
 }

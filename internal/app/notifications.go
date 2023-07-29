@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -51,15 +50,12 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 
 	go func(ids []string, payload NotificationPayload) {
 		for _, discordID := range ids {
-			embed := &discordgo.MessageEmbed{
-				Title:       "Notification",
-				Description: payload.Message,
-			}
+			msgEmbed := discord.NewEmbed("Notification", payload.Message)
 			if payload.Link != "" {
-				embed.URL = app.conf.ExtURL(payload.Link)
+				msgEmbed.SetURL(payload.Link)
 			}
 
-			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: embed})
+			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.MessageEmbed})
 		}
 	}(discordIds, notification)
 

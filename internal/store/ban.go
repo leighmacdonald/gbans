@@ -462,8 +462,8 @@ func (banSteam *BanSteam) Apply(opts BanSteamOpts) {
 }
 
 //goland:noinspection ALL
-func (banSteam BanSteam) ToURL(extURL string) string {
-	return fmt.Sprintf("%s/ban/%d", extURL, banSteam.BanID)
+func (banSteam BanSteam) Path() string {
+	return fmt.Sprintf("/ban/%d", banSteam.BanID)
 }
 
 //goland:noinspection ALL

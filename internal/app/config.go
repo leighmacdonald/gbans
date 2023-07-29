@@ -303,7 +303,3 @@ func setDefaultConfigValues() {
 		viper.SetDefault(configKey, value)
 	}
 }
-
-func (config *Config) ExtURL(path string, args ...any) string {
-	return strings.TrimRight(config.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
-}

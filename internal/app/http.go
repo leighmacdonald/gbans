@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -105,8 +106,8 @@ type userProfile struct {
 	Muted           bool             `json:"muted"`
 }
 
-func (p userProfile) ToURL(conf *Config) string {
-	return conf.ExtURL("/profile/%d", p.SteamID.Int64())
+func (p userProfile) Path() string {
+	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
 }
 
 // newUserProfile allocates a new default person instance.
