@@ -134,7 +134,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 
 	for index, r := range reasonCollection {
 		reasons[index] = &discordgo.ApplicationCommandOptionChoice{
-			Name:  store.ReasonString(r),
+			Name:  r.String(),
 			Value: r,
 		}
 	}

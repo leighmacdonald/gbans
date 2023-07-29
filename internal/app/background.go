@@ -404,12 +404,13 @@ func (app *App) banSweeper(ctx context.Context) {
 							})
 
 							log.Info("Ban expired", zap.String("type", banType),
-								zap.String("reason", store.ReasonString(ban.Reason)),
+								zap.String("reason", ban.Reason.String()),
 								zap.Int64("sid64", ban.TargetID.Int64()), zap.String("name", name))
 						}
 					}
 				}
 			}()
+
 			go func() {
 				defer waitGroup.Done()
 
@@ -427,6 +428,7 @@ func (app *App) banSweeper(ctx context.Context) {
 					}
 				}
 			}()
+
 			go func() {
 				defer waitGroup.Done()
 
@@ -444,6 +446,7 @@ func (app *App) banSweeper(ctx context.Context) {
 					}
 				}
 			}()
+
 			waitGroup.Wait()
 		case <-ctx.Done():
 			log.Debug("banSweeper shutting down")

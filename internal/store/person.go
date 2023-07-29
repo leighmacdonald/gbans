@@ -614,6 +614,8 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 	return nil
 }
 
+var errLimit = errors.New("Requested too many")
+
 type ChatHistoryQueryFilter struct {
 	QueryFilter
 	// TODO Index this string query
@@ -626,6 +628,10 @@ type ChatHistoryQueryFilter struct {
 }
 
 func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, int64, error) {
+	if query.Limit > 1000 {
+		return nil, 0, errLimit
+	}
+
 	count := db.sb.Select(
 		"count(m.person_message_id) as count").
 		From("person_messages m").

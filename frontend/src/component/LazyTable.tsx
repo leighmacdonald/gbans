@@ -1,117 +1,166 @@
-import {
-    createTableHeader,
-    defaultRenderer,
-    HeadingCell,
-    Order,
-    RowsPerPage
-} from './DataTable';
-import React, { useEffect, useMemo, useState } from 'react';
+import { defaultRenderer, HeadingCell, Order } from './DataTable';
+import React from 'react';
 import TableContainer from '@mui/material/TableContainer';
 import Table from '@mui/material/Table';
-import Pagination from '@mui/material/Pagination';
 import useTheme from '@mui/material/styles/useTheme';
-import Stack from '@mui/material/Stack';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 export interface LazyTableProps<T> {
     columns: HeadingCell<T>[];
-    defaultSortColumn: keyof T;
-    defaultSortOrder?: Order;
-    rowsPerPage: RowsPerPage;
-    preSelectIndex?: number;
+    sortColumn: keyof T;
+    onSortColumnChanged: (column: keyof T) => void;
+    onSortOrderChanged: (order: Order) => void;
+    sortOrder: Order;
     rows: T[];
 }
 
+export interface TableBodyRows<T> {
+    columns: HeadingCell<T>[];
+    rows: T[];
+}
+
+export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
+    return (
+        <TableBody>
+            {rows.map((row, idx) => {
+                return (
+                    <TableRow key={`row-${idx}`}>
+                        {columns.map((col: HeadingCell<T>, colIdx) => {
+                            const value = (col?.renderer ?? defaultRenderer)(
+                                row,
+                                row[col.sortKey as keyof T],
+                                col?.sortType ?? 'string'
+                            );
+                            return (
+                                <TableCell
+                                    key={`col-${colIdx}`}
+                                    align={col?.align ?? 'right'}
+                                    sx={{
+                                        width: col?.width ?? 'auto',
+                                        '&:hover': {
+                                            cursor: 'pointer'
+                                        }
+                                    }}
+                                >
+                                    {value}
+                                </TableCell>
+                            );
+                        })}
+                    </TableRow>
+                );
+            })}
+        </TableBody>
+    );
+};
+
+export interface LazyTableHeaderProps<T> {
+    columns: HeadingCell<T>[];
+    bgColor: string;
+    onSortColumnChanged: (column: keyof T) => void;
+    onSortOrderChanged: (order: Order) => void;
+    sortColumn: keyof T;
+    order: Order;
+}
+
+export const LazyTableHeader = <T,>({
+    columns,
+    bgColor,
+    sortColumn,
+    order,
+    onSortColumnChanged,
+    onSortOrderChanged
+}: LazyTableHeaderProps<T>) => {
+    return (
+        <TableHead>
+            <TableRow>
+                {columns.map((col) => {
+                    return (
+                        <TableCell
+                            align={col.align ?? 'right'}
+                            key={col.label}
+                            sx={{
+                                width: col?.width ?? 'auto',
+                                '&:hover': col.sortable
+                                    ? {
+                                          cursor: 'pointer'
+                                      }
+                                    : { cursor: 'default' },
+                                backgroundColor: bgColor
+                            }}
+                            onClick={() => {
+                                if (!col.sortable || col.virtual) {
+                                    return;
+                                }
+                                if (col.sortKey === sortColumn) {
+                                    onSortOrderChanged(
+                                        order === 'asc' ? 'desc' : 'asc'
+                                    );
+                                } else {
+                                    onSortColumnChanged(col.sortKey as keyof T);
+                                    onSortOrderChanged('desc');
+                                }
+                            }}
+                        >
+                            <Tooltip
+                                title={
+                                    col.tooltip instanceof Function
+                                        ? col.tooltip()
+                                        : col.tooltip
+                                }
+                                placement={'top'}
+                            >
+                                <Typography
+                                    padding={0}
+                                    sx={{
+                                        textDecoration:
+                                            col.sortKey != sortColumn
+                                                ? 'none'
+                                                : order == 'asc'
+                                                ? 'underline'
+                                                : 'overline'
+                                    }}
+                                    variant={'subtitle2'}
+                                >
+                                    {col.label}
+                                </Typography>
+                            </Tooltip>
+                        </TableCell>
+                    );
+                })}
+            </TableRow>
+        </TableHead>
+    );
+};
+
 export const LazyTable = <T,>({
     columns,
-    defaultSortOrder = 'desc',
-    preSelectIndex,
-    defaultSortColumn,
-    rowsPerPage,
-    rows
+    sortOrder,
+    sortColumn,
+    rows,
+    onSortColumnChanged,
+    onSortOrderChanged
 }: LazyTableProps<T>) => {
     const theme = useTheme();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, setPage] = useState(0);
-    const [order, setOrder] = useState<Order>(defaultSortOrder);
-    const [sortColumn, setSortColumn] = useState<keyof T>(defaultSortColumn);
-    const [pageCount] = useState(0);
-    const [rowPerPageCount] = useState(rowsPerPage ?? RowsPerPage.TwentyFive);
-
-    useEffect(() => {
-        if (!preSelectIndex || preSelectIndex <= 0) {
-            return;
-        }
-        const newVal = Math.ceil(preSelectIndex / rowPerPageCount);
-        setPage(newVal);
-    }, [preSelectIndex, rowPerPageCount]);
-
-    const tableHead = useMemo(() => {
-        return createTableHeader<T>(
-            columns,
-            theme.palette.background.paper,
-            setSortColumn,
-            sortColumn,
-            order,
-            setOrder
-        );
-    }, [columns, order, sortColumn, theme.palette.background.paper]);
 
     return (
-        <Stack>
-            <TableContainer>
-                <Table>
-                    {tableHead}
-                    <TableBody>
-                        {rows.map((row, idx) => {
-                            return (
-                                <TableRow key={`row-${idx}`}>
-                                    {columns.map(
-                                        (col: HeadingCell<T>, colIdx) => {
-                                            const value = (
-                                                col?.renderer ?? defaultRenderer
-                                            )(
-                                                row,
-                                                row[col.sortKey as keyof T],
-                                                col?.sortType ?? 'string'
-                                            );
-                                            return (
-                                                <TableCell
-                                                    key={`col-${colIdx}`}
-                                                    align={
-                                                        col?.align ?? 'right'
-                                                    }
-                                                    sx={{
-                                                        width:
-                                                            col?.width ??
-                                                            'auto',
-                                                        '&:hover': {
-                                                            cursor: 'pointer'
-                                                        }
-                                                    }}
-                                                >
-                                                    {value}
-                                                </TableCell>
-                                            );
-                                        }
-                                    )}
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <Pagination
-                variant={'text'}
-                count={pageCount}
-                showFirstButton
-                showLastButton
-                onChange={(_, newPage) => {
-                    setPage(newPage - 1);
-                }}
-            />
-        </Stack>
+        <TableContainer>
+            <Table>
+                <LazyTableHeader<T>
+                    columns={columns}
+                    sortColumn={sortColumn}
+                    onSortColumnChanged={onSortColumnChanged}
+                    order={sortOrder}
+                    bgColor={theme.palette.background.paper}
+                    onSortOrderChanged={onSortOrderChanged}
+                />
+                <LazyTableBody rows={rows} columns={columns} />
+            </Table>
+        </TableContainer>
     );
 };

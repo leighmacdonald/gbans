@@ -20,6 +20,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import { Heading } from '../component/Heading';
 import { LazyTable } from '../component/LazyTable';
 import { logErr } from '../util/errors';
+import { Order, RowsPerPage } from '../component/DataTable';
+import Pagination from '@mui/material/Pagination';
 
 const anyServer: Server = {
     server_name: 'Any',
@@ -49,11 +51,31 @@ export const AdminChat = () => {
     const [messageQuery, setMessageQuery] = useState<string>('');
     const [servers, setServers] = useState<Server[]>([]);
     const [rows, setRows] = useState<PersonMessage[]>([]);
+    const [pageCount, setPageCount] = useState(0);
+    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortColumn, setSortColumn] =
+        useState<keyof PersonMessage>('person_message_id');
+    const [page, setPage] = useState(0);
+    const [rowPerPageCount] = useState<number>(RowsPerPage.Fifty);
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, setTotalRows] = useState<number>(0);
+    const [totalRows, setTotalRows] = useState<number>(0);
     const [selectedServer, setSelectedServer] = useState<number>(
         anyServer.server_id
     );
+
+    // useEffect(() => {
+    //     if (!preSelectIndex || preSelectIndex <= 0) {
+    //         return;
+    //     }
+    //     const newVal = Math.ceil(preSelectIndex / rowPerPageCount);
+    //     setPage(newVal);
+    // }, [preSelectIndex, rowPerPageCount]);
+
+    useEffect(() => {
+        const pages = Math.ceil(totalRows / rowPerPageCount);
+        setPageCount(pages);
+    }, [rowPerPageCount, totalRows]);
 
     useEffect(() => {
         apiGetServers().then((resp) => {
@@ -84,6 +106,8 @@ export const AdminChat = () => {
         if (endDate) {
             opts.sent_before = endDate;
         }
+        opts.limit = rowPerPageCount;
+        opts.offset = page;
         try {
             const resp = await apiGetMessages(opts);
             setRows(resp.result?.messages || []);
@@ -91,7 +115,16 @@ export const AdminChat = () => {
         } catch (e) {
             logErr(e);
         }
-    }, [endDate, messageQuery, nameQuery, selectedServer, startDate, steamId]);
+    }, [
+        endDate,
+        messageQuery,
+        nameQuery,
+        page,
+        rowPerPageCount,
+        selectedServer,
+        startDate,
+        steamId
+    ]);
 
     return (
         <Grid container spacing={2} paddingTop={3}>
@@ -205,7 +238,22 @@ export const AdminChat = () => {
                             </Grid>
                         </Grid>
 
+                        <Pagination
+                            variant={'text'}
+                            page={page}
+                            count={pageCount}
+                            showFirstButton
+                            showLastButton
+                            onChange={(_, newPage) => {
+                                setPage(newPage - 1);
+                            }}
+                        />
+
                         <LazyTable<PersonMessage>
+                            sortOrder={sortOrder}
+                            sortColumn={sortColumn}
+                            onSortColumnChanged={setSortColumn}
+                            onSortOrderChanged={setSortOrder}
                             columns={[
                                 {
                                     label: 'ID',
@@ -252,8 +300,6 @@ export const AdminChat = () => {
                                     queryValue: (o) => o.body
                                 }
                             ]}
-                            defaultSortColumn={'created_on'}
-                            rowsPerPage={100}
                             rows={rows}
                         />
                     </Stack>

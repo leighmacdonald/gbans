@@ -893,7 +893,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 				}
 			} else {
 				resp.BanType = store.Banned
-				resp.Msg = store.ReasonString(asnBan.Reason)
+				resp.Msg = asnBan.Reason.String()
 				responseOK(ctx, http.StatusOK, resp)
 				log.Info("Player dropped", zap.String("drop_type", "asn"),
 					zap.Int64("sid64", steamID.Int64()))
@@ -929,7 +929,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		case bannedPerson.Ban.Reason == store.Custom && bannedPerson.Ban.ReasonText == "":
 			reason = "Banned"
 		default:
-			reason = store.ReasonString(bannedPerson.Ban.Reason)
+			reason = bannedPerson.Ban.Reason.String()
 		}
 
 		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.Ban),
@@ -2128,7 +2128,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 		}
 
 		msgEmbed.AddField("Subject", name)
-		msgEmbed.AddField("Reason", store.ReasonString(report.Reason))
+		msgEmbed.AddField("Reason", report.Reason.String())
 
 		if report.ReasonText != "" {
 			msgEmbed.AddField("Custom Reason", report.ReasonText)

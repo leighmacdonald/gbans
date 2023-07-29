@@ -30,8 +30,8 @@ type App struct {
 	db                   *store.Store
 	log                  *zap.Logger
 	logFileChan          chan *logFilePayload
-	warningChan          chan newUserWarning
 	notificationChan     chan NotificationPayload
+	incomingGameChat     chan store.PersonMessage
 	state                *serverStateCollector
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
@@ -49,8 +49,8 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		conf:                 conf,
 		log:                  logger,
 		logFileChan:          make(chan *logFilePayload, 10),
-		warningChan:          make(chan newUserWarning),
 		notificationChan:     make(chan NotificationPayload, 5),
+		incomingGameChat:     make(chan store.PersonMessage, 5),
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
 		patreon:              newPatreonManager(logger, conf, database),
@@ -179,23 +179,18 @@ func (app *App) ExtURLRaw(path string, args ...any) string {
 }
 
 type newUserWarning struct {
-	ServerEvent serverEvent
-	Message     string
+	userMessage store.PersonMessage
 	userWarning
 }
 
 // warnWorker handles tracking and applying warnings based on incoming events.
-func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintidx
+func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 	var (
-		log       = app.log.Named("warnWorker")
-		warnings  = map[steamid.SID64][]userWarning{}
-		eventChan = make(chan serverEvent)
-		ticker    = time.NewTicker(1 * time.Second)
+		log         = app.log.Named("warnWorker")
+		warnings    = map[steamid.SID64][]userWarning{}
+		ticker      = time.NewTicker(1 * time.Second)
+		warningChan = make(chan newUserWarning)
 	)
-
-	if errRegister := app.eb.Consume(eventChan, []logparse.EventType{logparse.Say, logparse.SayTeam}); errRegister != nil {
-		app.log.Fatal("Failed to register event reader", zap.Error(errRegister))
-	}
 
 	warningHandler := func() {
 		for {
@@ -203,7 +198,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 			case now := <-ticker.C:
 				for steamID := range warnings {
 					for warnIdx, warning := range warnings[steamID] {
-						if now.Sub(warning.CreatedOn) > conf.General.WarningTimeout {
+						if now.Sub(warning.CreatedOn) > app.conf.General.WarningTimeout {
 							if len(warnings[steamID]) > 1 {
 								warnings[steamID] = append(warnings[steamID][:warnIdx], warnings[steamID][warnIdx+1])
 							} else {
@@ -212,13 +207,8 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 						}
 					}
 				}
-			case newWarn := <-app.warningChan:
-				evt, ok := newWarn.ServerEvent.Event.(logparse.SayEvt)
-				if !ok {
-					continue
-				}
-
-				if !evt.SID.Valid() {
+			case newWarn := <-warningChan:
+				if !newWarn.userMessage.SteamID.Valid() {
 					continue
 				}
 
@@ -228,7 +218,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 				}
 
 				var person store.Person
-				if personErr := app.PersonBySID(ctx, evt.SID, &person); personErr != nil {
+				if personErr := app.PersonBySID(ctx, newWarn.userMessage.SteamID, &person); personErr != nil {
 					log.Error("Failed to get person for warning", zap.Error(personErr))
 
 					continue
@@ -238,40 +228,40 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 					continue
 				}
 
-				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[evt.SID]), conf.General.WarningLimit)
+				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[newWarn.userMessage.SteamID]), app.conf.General.WarningLimit)
 				if app.conf.Filter.Dry {
 					title = "[DRYRUN] " + title
 				}
 
 				msgEmbed := discord.
 					NewEmbed(title).
-					SetURL(app.ExtURLRaw("/profiles/%d", evt.SID)).
+					SetURL(app.ExtURLRaw("/profiles/%d", newWarn.userMessage.SteamID)).
 					SetColor(app.bot.Colour.Success).
 					SetImage(person.AvatarFull).
 					AddField("Matched", newWarn.Matched).
 					AddField("Message", newWarn.userWarning.Message).
 					AddField("Pattern", newWarn.MatchedFilter.Pattern).
 					AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID)).
-					AddField("Server", newWarn.ServerEvent.Server.ServerName)
+					AddField("Server", newWarn.userMessage.ServerName)
 
-				discord.AddFieldsSteamID(msgEmbed, evt.SID)
+				discord.AddFieldsSteamID(msgEmbed, newWarn.userMessage.SteamID)
 
 				if !newWarn.MatchedFilter.IsEnabled {
 					continue
 				}
 
 				if !app.conf.Filter.Dry {
-					_, found := warnings[evt.SID]
+					_, found := warnings[newWarn.userMessage.SteamID]
 					if !found {
-						warnings[evt.SID] = []userWarning{}
+						warnings[newWarn.userMessage.SteamID] = []userWarning{}
 					}
 
-					warnings[evt.SID] = append(warnings[evt.SID], newWarn.userWarning)
+					warnings[newWarn.userMessage.SteamID] = append(warnings[newWarn.userMessage.SteamID], newWarn.userWarning)
 
-					if len(warnings[evt.SID]) > conf.General.WarningLimit {
+					if len(warnings[newWarn.userMessage.SteamID]) > app.conf.General.WarningLimit {
 						log.Info("Warn limit exceeded",
-							zap.Int64("sid64", evt.SID.Int64()),
-							zap.Int("count", len(warnings[evt.SID])))
+							zap.Int64("sid64", newWarn.userMessage.SteamID.Int64()),
+							zap.Int("count", len(warnings[newWarn.userMessage.SteamID])))
 
 						var (
 							errBan   error
@@ -280,9 +270,9 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 							expAt    = expIn
 						)
 
-						if errNewBan := store.NewBanSteam(ctx, store.StringSID(conf.General.Owner.String()),
-							store.StringSID(evt.SID.String()),
-							store.Duration(conf.General.WarningExceededDurationValue),
+						if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
+							store.StringSID(newWarn.userMessage.SteamID.String()),
+							store.Duration(app.conf.General.WarningExceededDurationValue),
 							newWarn.WarnReason,
 							"",
 							"Automatic warning ban",
@@ -295,7 +285,7 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 							continue
 						}
 
-						switch conf.General.WarningExceededAction {
+						switch app.conf.General.WarningExceededAction {
 						case Gag:
 							banSteam.BanType = store.NoComm
 							errBan = app.BanSteam(ctx, &banSteam)
@@ -303,13 +293,13 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 							banSteam.BanType = store.Banned
 							errBan = app.BanSteam(ctx, &banSteam)
 						case Kick:
-							errBan = app.Kick(ctx, store.System, evt.SID, conf.General.Owner, newWarn.WarnReason)
+							errBan = app.Kick(ctx, store.System, newWarn.userMessage.SteamID, app.conf.General.Owner, newWarn.WarnReason)
 						}
 
 						if errBan != nil {
 							log.Error("Failed to apply warning action",
 								zap.Error(errBan),
-								zap.String("action", string(conf.General.WarningExceededAction)))
+								zap.String("action", string(app.conf.General.WarningExceededAction)))
 						}
 
 						msgEmbed.AddField("Name", person.PersonaName)
@@ -323,16 +313,16 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 						msgEmbed.AddField("Expires At", expAt)
 					} else {
 						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
-							"Further offenses will result in mutes/bans", len(warnings[evt.SID]))
+							"Further offenses will result in mutes/bans", len(warnings[newWarn.userMessage.SteamID]))
 
-						if errPSay := app.PSay(ctx, evt.SID, msg); errPSay != nil {
+						if errPSay := app.PSay(ctx, newWarn.userMessage.SteamID, msg); errPSay != nil {
 							log.Error("Failed to send user warning psay message", zap.Error(errPSay))
 						}
 					}
 				}
 
 				app.bot.SendPayload(discord.Payload{
-					ChannelID: conf.Discord.LogChannelID,
+					ChannelID: app.conf.Discord.LogChannelID,
 					Embed:     msgEmbed.Truncate().MessageEmbed,
 				})
 
@@ -346,25 +336,14 @@ func (app *App) warnWorker(ctx context.Context, conf *Config) { //nolint:maintid
 
 	for {
 		select {
-		case newServerEvent := <-eventChan:
-			evt, ok := newServerEvent.Results.Event.(logparse.SayEvt)
-			if !ok {
-				log.Error("Got invalid type?")
-
-				continue
-			}
-
-			if evt.Msg == "" {
-				continue
-			}
-
-			matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(evt.Msg)
+		case userMessage := <-app.incomingGameChat:
+			matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(userMessage.Body)
 			if matchedFilter != nil {
-				app.warningChan <- newUserWarning{
-					ServerEvent: newServerEvent,
+				warningChan <- newUserWarning{
+					userMessage: userMessage,
 					userWarning: userWarning{
 						WarnReason:    store.Language,
-						Message:       evt.Msg,
+						Message:       userMessage.Body,
 						Matched:       matchedWord,
 						MatchedFilter: matchedFilter,
 						CreatedOn:     time.Now(),
@@ -463,13 +442,13 @@ func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Matc
 	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 }
 
-func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, logger *zap.Logger, database *store.Store) {
+func (app *App) playerMessageWriter(ctx context.Context) {
 	var (
-		log             = logger.Named("playerMessageWriter")
+		log             = app.log.Named("playerMessageWriter")
 		serverEventChan = make(chan serverEvent)
 	)
 
-	if errRegister := broadcaster.Consume(serverEventChan, []logparse.EventType{
+	if errRegister := app.eb.Consume(serverEventChan, []logparse.EventType{
 		logparse.Say,
 		logparse.SayTeam,
 	}); errRegister != nil {
@@ -508,19 +487,19 @@ func playerMessageWriter(ctx context.Context, broadcaster *eventBroadcaster, log
 					CreatedOn:   newServerEvent.CreatedOn,
 				}
 
-				lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-				if errChat := database.AddChatHistory(lCtx, &msg); errChat != nil {
+				if errChat := app.db.AddChatHistory(ctx, &msg); errChat != nil {
 					log.Error("Failed to add chat history", zap.Error(errChat))
 				}
 
-				cancel()
-
 				log.Debug("Chat message",
+					zap.Int64("id", msg.PersonMessageID),
 					zap.String("server", evt.Server.ServerName),
 					zap.String("name", newServerEvent.Name),
 					zap.String("steam_id", newServerEvent.SID.String()),
 					zap.Bool("team", msg.Team),
 					zap.String("message", msg.Body))
+
+				app.incomingGameChat <- msg
 			}
 		}
 	}
@@ -686,12 +665,12 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.patreon.updater(ctx)
 	go app.banSweeper(ctx)
 	// go profileUpdater(ctx)
-	go app.warnWorker(ctx, app.conf)
+	go app.warnWorker(ctx)
 	go app.logReader(ctx, app.conf.Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)
 	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer(ctx)
-	go playerMessageWriter(ctx, app.eb, app.log, app.db)
+	go app.playerMessageWriter(ctx)
 	go app.playerConnectionWriter(ctx)
 	go app.steamGroupMembershipUpdater(ctx)
 	go app.localStatUpdater(ctx)

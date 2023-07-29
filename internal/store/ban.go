@@ -121,7 +121,7 @@ const (
 	BotHost
 )
 
-func ReasonString(reason Reason) string {
+func (r Reason) String() string {
 	return map[Reason]string{
 		Custom:           "Custom",
 		External:         "3rd party",
@@ -135,7 +135,7 @@ func ReasonString(reason Reason) string {
 		Profile:          "Profile",
 		ItemDescriptions: "Item Name or Descriptions",
 		BotHost:          "BotHost",
-	}[reason]
+	}[r]
 }
 
 type AppealState int
@@ -446,7 +446,7 @@ func (banCIDR *BanCIDR) Apply(opts BanCIDROpts) error {
 }
 
 func (banCIDR *BanCIDR) String() string {
-	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", banCIDR.CIDR, banCIDR.Origin, ReasonString(banCIDR.Reason))
+	return fmt.Sprintf("Net: %s Origin: %s Reason: %s", banCIDR.CIDR, banCIDR.Origin, banCIDR.Reason)
 }
 
 type BanSteam struct {

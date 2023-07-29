@@ -116,15 +116,17 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 		return consts.ErrInvalidTargetSID
 	}
 
-	var server []string
-	mu := &sync.RWMutex{}
+	var (
+		server   []string
+		serverMu = &sync.RWMutex{}
+	)
 
 	if errExec := app.OnFindExec(ctx, findOpts{SteamID: target}, func(info playerServerInfo) string {
-		mu.Lock()
+		serverMu.Lock()
 		server = append(server, fmt.Sprintf("%d", info.ServerID))
-		mu.Unlock()
+		serverMu.Unlock()
 
-		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, store.ReasonString(reason))
+		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
 	}); errExec != nil {
 		return errExec
 	}
@@ -153,15 +155,17 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 		return consts.ErrInvalidTargetSID
 	}
 
-	var users []string
-	mu := &sync.RWMutex{}
+	var (
+		users   []string
+		usersMu = &sync.RWMutex{}
+	)
 
 	if errExec := app.OnFindExec(ctx, findOpts{SteamID: target}, func(info playerServerInfo) string {
-		mu.Lock()
+		usersMu.Lock()
 		users = append(users, info.Player.Name)
-		mu.Unlock()
+		usersMu.Unlock()
 
-		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), store.ReasonString(reason))
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
 	}); errExec != nil {
 		return errExec
 	}

@@ -170,6 +170,21 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 		}
 	}(banNet.CIDR, banNet.Reason)
 
+	msgEmbed := discord.
+		NewEmbed("CIDR Banned Successfully").
+		SetColor(app.bot.Colour.Success).
+		AddField("cidr", banNet.CIDR.String()).
+		AddField("net_id", fmt.Sprintf("%d", banNet.NetID)).
+		AddField("Reason", banNet.Reason.String())
+
+	app.addTarget(ctx, msgEmbed, banNet.TargetID)
+	app.addAuthor(ctx, msgEmbed, banNet.SourceID)
+
+	app.bot.SendPayload(discord.Payload{
+		ChannelID: app.conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Truncate().MessageEmbed,
+	})
+
 	return nil
 }
 
@@ -214,13 +229,14 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 	app.log.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
 
 	msgEmbed := discord.
-		NewEmbed("User Unbanned").
+		NewEmbed("User Unbanned Successfully").
 		SetColor(app.bot.Colour.Success).
-		SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", bannedPerson.Ban.TargetID)).
-		AddField("Name", bannedPerson.Person.PersonaName).AddField("ban_id", fmt.Sprintf("%d", bannedPerson.Ban.BanID))
+		SetURL(app.ExtURL(bannedPerson.Ban)).
+		AddField("ban_id", fmt.Sprintf("%d", bannedPerson.Ban.BanID)).AddField("Reason", reason)
+
+	app.addTarget(ctx, msgEmbed, bannedPerson.Person.SteamID)
 
 	discord.AddFieldsSteamID(msgEmbed, bannedPerson.Person.SteamID)
-	msgEmbed.AddField("Reason", reason)
 
 	app.bot.SendPayload(discord.Payload{
 		ChannelID: app.conf.Discord.LogChannelID,
@@ -249,6 +265,22 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	}
 
 	app.log.Info("ASN unbanned", zap.Int64("ASN", asNum))
+
+	msgEmbed := discord.
+		NewEmbed("ASN Unbanned Successfully").
+		SetColor(app.bot.Colour.Success).
+		AddField("asn", asnNum).
+		AddField("ban_asn_id", fmt.Sprintf("%d", banASN.BanASNId)).
+		AddField("Reason", banASN.Reason.String())
+
+	if banASN.TargetID.Valid() {
+		app.addTarget(ctx, msgEmbed, banASN.TargetID)
+	}
+
+	app.bot.SendPayload(discord.Payload{
+		ChannelID: app.conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Truncate().MessageEmbed,
+	})
 
 	return true, nil
 }
