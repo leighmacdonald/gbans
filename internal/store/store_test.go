@@ -257,7 +257,7 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 			"76561198044052046",
 			"1M",
 			store.Cheating,
-			store.ReasonString(store.Cheating),
+			store.Cheating.String(),
 			"Mod Note",
 			store.System, 0, store.Banned, &banSteam), "Failed to create ban opts")
 
