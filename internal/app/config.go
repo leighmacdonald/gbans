@@ -2,10 +2,12 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/golib"
@@ -14,6 +16,8 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type filterConfig struct {
@@ -160,8 +164,8 @@ type ip2locationConf struct {
 	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
 }
 
-// Read reads in config file and ENV variables if set.
-func Read(conf *Config) error {
+// ReadConfig reads in config file and ENV variables if set.
+func ReadConfig(conf *Config, noFileOk bool) error {
 	const (
 		defaultWarnDuration = time.Hour * 24 * 7
 		defaultHTTPTimeout  = time.Second * 10
@@ -169,7 +173,7 @@ func Read(conf *Config) error {
 
 	setDefaultConfigValues()
 
-	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
+	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
 		return errors.Wrapf(errReadConfig, "Failed to read config file")
 	}
 
@@ -299,4 +303,33 @@ func setDefaultConfigValues() {
 	for configKey, value := range defaultConfig {
 		viper.SetDefault(configKey, value)
 	}
+}
+
+func MustCreateLogger(conf *Config) *zap.Logger {
+	var loggingConfig zap.Config
+	if conf.General.Mode == ReleaseMode {
+		loggingConfig = zap.NewProductionConfig()
+		loggingConfig.DisableCaller = true
+	} else {
+		loggingConfig = zap.NewDevelopmentConfig()
+		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+
+	if conf.Log.File != "" {
+		if util.Exists(conf.Log.File) {
+			if err := os.Remove(conf.Log.File); err != nil {
+				panic(fmt.Sprintf("Failed to remove log file: %v", err))
+			}
+		}
+
+		// loggingConfig.Level.SetLevel(zap.DebugLevel)
+		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, conf.Log.File)
+	}
+
+	l, errLogger := loggingConfig.Build()
+	if errLogger != nil {
+		panic("Failed to create log config")
+	}
+
+	return l.Named("gb")
 }

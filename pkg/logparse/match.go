@@ -20,17 +20,14 @@ var (
 
 func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 	return Match{
-		logger:            logger.Named(fmt.Sprintf("match-%d", serverID)),
-		ServerID:          serverID,
-		Title:             serverName,
-		PlayerSums:        MatchPlayerSums{},
-		MedicSums:         []*MatchMedicSum{},
-		TeamSums:          []*MatchTeamSum{},
-		ClassKills:        MatchPlayerClassSums{},
-		ClassKillsAssists: MatchPlayerClassSums{},
-		ClassDeaths:       MatchPlayerClassSums{},
-		CreatedOn:         time.Now(),
-		curRound:          -1,
+		logger:     logger.Named(fmt.Sprintf("match-%d", serverID)),
+		ServerID:   serverID,
+		Title:      serverName,
+		PlayerSums: MatchPlayerSums{},
+		MedicSums:  []*MatchMedicSum{},
+		TeamSums:   []*MatchTeamSum{},
+		CreatedOn:  time.Now(),
+		curRound:   -1,
 	}
 }
 
@@ -112,26 +109,22 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*MatchPlayerSum,
 //   - Simplify implementation of the maps with generics
 //   - Track players taking packs when they are close to 100% hp
 type Match struct {
-	logger            *zap.Logger
-	MatchID           int
-	ServerID          int
-	Title             string
-	MapName           string
-	PlayerSums        MatchPlayerSums
-	MedicSums         MatchMedicSums
-	TeamSums          MatchTeamSums
-	Rounds            MatchRoundSums
-	ClassKills        MatchPlayerClassSums
-	ClassKillsAssists MatchPlayerClassSums
-	ClassDeaths       MatchPlayerClassSums
-	Chat              []MatchChat
-	CreatedOn         time.Time
+	logger     *zap.Logger
+	MatchID    int
+	ServerID   int
+	Title      string
+	MapName    string
+	PlayerSums MatchPlayerSums
+	MedicSums  MatchMedicSums
+	TeamSums   MatchTeamSums
+	Rounds     MatchRoundSums
+	Chat       []MatchChat
+	CreatedOn  time.Time
 
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
-	inMatch    bool // We ignore most events until Round_Start event
-	inRound    bool
-	useRealDmg bool
-	curRound   int
+	inMatch  bool // We ignore most events until Round_Start event
+	inRound  bool
+	curRound int
 }
 
 type MatchChat struct {
@@ -142,12 +135,7 @@ type MatchChat struct {
 	CreatedAt time.Time
 }
 
-type MatchWeaponSum struct {
-	Weapon    Weapon
-	MatchID   int
-	SteamID   steamid.SID64
-	Kills     int
-	Deaths    int
+type WeaponInfo struct {
 	Damage    int64
 	Shots     int64
 	Hits      int64
@@ -156,38 +144,15 @@ type MatchWeaponSum struct {
 	BackStabs int
 }
 
-func NewMatchWeaponSum(steamID steamid.SID64, weapon Weapon) MatchWeaponSum {
-	return MatchWeaponSum{SteamID: steamID, Weapon: weapon}
-}
-
-type MatchWeaponSums []*MatchWeaponSum
-
-func (match *Match) GetWeaponSum(steamID steamid.SID64, weapon Weapon) *MatchWeaponSum {
-	player := match.getPlayer(steamID)
-	for _, existingWeapon := range player.Weapons {
-		if existingWeapon.Weapon == weapon {
-			return existingWeapon
-		}
-	}
-
-	newWeapon := NewMatchWeaponSum(steamID, weapon)
-
-	player.Weapons = append(player.Weapons, &newWeapon)
-
-	return &newWeapon
+func NewMatchWeaponSum() *WeaponInfo {
+	return &WeaponInfo{}
 }
 
 type MatchSummary struct {
-	MatchID     int       `json:"match_id"`
-	ServerID    int       `json:"server_id"`
-	MapName     string    `json:"map_name"`
-	CreatedOn   time.Time `json:"created_on"`
-	PlayerCount int       `json:"player_count"`
-	Kills       int       `json:"kills"`
-	Assists     int       `json:"assists"`
-	Damage      int       `json:"damage"`
-	Healing     int       `json:"healing"`
-	Airshots    int       `json:"airshots"`
+	MatchID   int       `json:"match_id"`
+	ServerID  int       `json:"server_id"`
+	MapName   string    `json:"map_name"`
+	CreatedOn time.Time `json:"created_on"`
 }
 
 type MatchSummaryCollection []*MatchSummary
@@ -204,7 +169,7 @@ func (match *Match) playerSlice() []MatchPlayerSum {
 func (match *Match) TopPlayers() []MatchPlayerSum {
 	players := match.playerSlice()
 	sort.SliceStable(players, func(i, j int) bool {
-		return players[i].Kills > players[j].Kills
+		return players[i].Kills() > players[j].Kills()
 	})
 
 	return players
@@ -341,7 +306,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.shotFired(evt.SID)
+		match.shotFired(evt.SID, evt.Weapon)
 
 	case ShotHit:
 		evt, ok := result.Event.(ShotHitEvt)
@@ -349,7 +314,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.shotHit(evt.SID)
+		match.shotHit(evt.SID, evt.Weapon)
 
 	case MedicDeath:
 		evt, ok := result.Event.(MedicDeathEvt)
@@ -406,7 +371,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.revenge(evt.SID)
+		match.revenge(evt.SID, evt.SID2)
 
 	case Damage:
 		evt, ok := result.Event.(DamageEvt)
@@ -414,10 +379,10 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		if match.useRealDmg {
-			match.damage(evt.SID, evt.SID2, evt.Realdamage, evt.Team, evt.Airshot)
+		if evt.Realdamage > 0 {
+			match.damage(evt.SID, evt.SID2, evt.Realdamage, evt.Airshot, evt.Weapon)
 		} else {
-			match.damage(evt.SID, evt.SID2, evt.Damage, evt.Team, evt.Airshot)
+			match.damage(evt.SID, evt.SID2, evt.Damage, evt.Airshot, evt.Weapon)
 		}
 
 	case Suicide:
@@ -434,7 +399,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.killed(evt.SID, evt.SID2, evt.Team)
+		match.killed(evt.SID, evt.SID2, evt.Team, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
 	case KilledCustom:
 		evt, ok := result.Event.(CustomKilledEvt)
@@ -442,7 +407,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.killedCustom(evt.SID, evt.SID2, evt.Customkill)
+		match.killedCustom(evt.SID, evt.SID2, evt.Customkill, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
 	case KillAssist:
 		evt, ok := result.Event.(KillAssistEvt)
@@ -537,8 +502,11 @@ func (match *Match) getPlayer(sid steamid.SID64) *MatchPlayerSum {
 		if errors.Is(err, consts.ErrUnknownID) {
 			t0 := time.Now()
 			newPs := &MatchPlayerSum{
-				SteamID:   sid,
-				TimeStart: &t0,
+				SteamID:    sid,
+				TimeStart:  &t0,
+				Team:       UNASSIGNED,
+				TargetInfo: map[steamid.SID64]*TargetSums{},
+				WeaponInfo: map[Weapon]*WeaponInfo{},
 			}
 
 			if match.inMatch {
@@ -672,20 +640,20 @@ func (match *Match) addClass(sid steamid.SID64, class PlayerClass) {
 	}
 }
 
-func (match *Match) shotFired(sid steamid.SID64) {
-	match.getPlayer(sid).Shots++
+func (match *Match) shotFired(sid steamid.SID64, weapon Weapon) {
+	match.getPlayer(sid).getWeaponSum(weapon).Shots++
 }
 
-func (match *Match) shotHit(sid steamid.SID64) {
-	match.getPlayer(sid).Hits++
+func (match *Match) shotHit(sid steamid.SID64, weapon Weapon) {
+	match.getPlayer(sid).getWeaponSum(weapon).Hits++
 }
 
 func (match *Match) assist(sid steamid.SID64) {
 	match.getPlayer(sid).Assists++
 }
 
-func (match *Match) joinTeam(_ steamid.SID64, _ Team) {
-	// TODO join a team
+func (match *Match) joinTeam(source steamid.SID64, team Team) {
+	match.getPlayer(source).Team = team
 }
 
 func (match *Match) addChat(sid steamid.SID64, name string, message string, team bool, created time.Time) {
@@ -699,12 +667,11 @@ func (match *Match) addChat(sid steamid.SID64, name string, message string, team
 }
 
 func (match *Match) domination(source steamid.SID64, target steamid.SID64) {
-	match.getPlayer(source).Dominations++
-	match.getPlayer(target).Dominated++
+	match.getPlayer(source).getTarget(target).Dominations++
 }
 
-func (match *Match) revenge(source steamid.SID64) {
-	match.getPlayer(source).Revenges++
+func (match *Match) revenge(source steamid.SID64, target steamid.SID64) {
+	match.getPlayer(source).getTarget(target).Revenges++
 }
 
 func (match *Match) builtObject(source steamid.SID64, _ string) {
@@ -731,25 +698,27 @@ func (match *Match) extinguishes(source steamid.SID64) {
 	match.getPlayer(source).Extinguishes++
 }
 
-func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, team Team, airShot bool) {
-	match.getPlayer(source).Damage += damage
+func (match *Match) damage(source steamid.SID64, target steamid.SID64, damage int64, airShot bool, weapon Weapon) {
+	player := match.getPlayer(source)
+	weaponSum := player.getWeaponSum(weapon)
+	weaponSum.Damage += damage
 
 	if airShot {
-		match.getPlayer(source).AirShots++
+		weaponSum.Airshots++
 	}
 
-	match.getPlayer(target).DamageTaken += damage
-	match.getTeamSum(team).Damage += damage
+	player.getTarget(target).DamageTaken += damage
 }
 
 func (match *Match) healed(source steamid.SID64, target steamid.SID64, amount int64) {
-	match.getPlayer(source).Healing += amount
-	match.getPlayer(target).HealingTaken += amount
+	player := match.getPlayer(source)
+	player.Healing += amount
+	player.getTarget(target).HealingTaken += amount
 }
 
 func (match *Match) pointCaptureBlocked(cp int, cpName string, pp SourcePlayerPosition) {
 	player := match.getPlayer(pp.SID)
-	player.CapturesBlocked = append(player.CapturesBlocked, PointCaptureBlocked{
+	player.CapturesBlocked = append(player.CapturesBlocked, &PointCaptureBlocked{
 		CP:       cp,
 		CPName:   cpName,
 		Position: pp.Pos,
@@ -758,7 +727,7 @@ func (match *Match) pointCaptureBlocked(cp int, cpName string, pp SourcePlayerPo
 
 func (match *Match) pointCapture(team Team, cp int, cpName string, players []SourcePlayerPosition) {
 	for _, p := range players {
-		match.getPlayer(p.SID).Captures = append(match.getPlayer(p.SID).Captures, PointCapture{
+		match.getPlayer(p.SID).Captures = append(match.getPlayer(p.SID).Captures, &PointCapture{
 			SteamID:  p.SID,
 			CP:       cp,
 			CPName:   cpName,
@@ -772,11 +741,9 @@ func (match *Match) pointCapture(team Team, cp int, cpName string, players []Sou
 //	match.getTeamSum(team).MidFights++
 //}
 
-func (match *Match) killed(source steamid.SID64, target steamid.SID64, team Team) {
+func (match *Match) killed(source steamid.SID64, target steamid.SID64, team Team, weapon Weapon, sourcePos Pos, targetPos Pos) {
 	if match.inRound {
-		match.getPlayer(source).Kills++
-		match.getPlayer(target).Deaths++
-		match.getTeamSum(team).Kills++
+		match.getPlayer(source).addKill(target, weapon, sourcePos, targetPos)
 
 		if team == BLU {
 			match.getRound().KillsBlu++
@@ -795,33 +762,34 @@ func (match *Match) firstHealAfterSpawn(source steamid.SID64, timeUntil float64)
 }
 
 func (match *Match) pickup(source steamid.SID64, item PickupItem, healing int64) {
-	switch item { //nolint:exhaustive
-	case ItemHPSmall:
-		fallthrough
-	case ItemHPMedium:
-		fallthrough
-	case ItemHPLarge:
-		p := match.getPlayer(source)
-		p.HealthPacks++
-		p.Healing += healing
+	player := match.getPlayer(source)
+
+	_, found := player.Pickups[item]
+	if !found {
+		player.Pickups[item] = 0
 	}
+
+	player.Pickups[item]++
+	player.Healing += healing
 }
 
-func (match *Match) killedCustom(source steamid.SID64, target steamid.SID64, custom string) {
+func (match *Match) killedCustom(source steamid.SID64, target steamid.SID64, custom string, weapon Weapon, sourcePos Pos, targetPos Pos) {
+	player := match.getPlayer(source)
+	weaponSum := player.getWeaponSum(weapon)
+
 	switch custom {
 	case "feign_death":
 		// Ignore DR
 		return
 	case "backstab":
-		match.getPlayer(source).BackStabs++
+		weaponSum.BackStabs++
 	case "headshot":
-		match.getPlayer(source).HeadShots++
+		weaponSum.Headshots++
 	default:
 		match.logger.Error("Custom kill type unknown", zap.String("type", custom))
 	}
 
-	match.getPlayer(source).Kills++
-	match.getPlayer(target).Deaths++
+	player.addKill(target, weapon, sourcePos, targetPos)
 }
 
 func (match *Match) drop(source steamid.SID64, team Team) {
@@ -873,33 +841,35 @@ type PointCapture struct {
 	Position Pos
 }
 
+type KillInfo struct {
+	Weapon    Weapon
+	SourcePos Pos
+	TargetPos Pos
+}
+
+type TargetSums struct {
+	SteamID      steamid.SID64
+	KilledInfo   []KillInfo
+	Dominations  int
+	DamageTaken  int64
+	HealingTaken int64
+	Revenges     int
+}
+
 type MatchPlayerSum struct {
 	MatchPlayerSumID  int
 	SteamID           steamid.SID64
 	Team              Team
 	TimeStart         *time.Time
 	TimeEnd           *time.Time
-	Kills             int
+	TargetInfo        map[steamid.SID64]*TargetSums
+	WeaponInfo        map[Weapon]*WeaponInfo
 	Assists           int
-	Deaths            int
 	Suicides          int
-	KDRatio           float32
-	KADRatio          float32
-	Dominations       int
-	Dominated         int
-	Revenges          int
-	Damage            int64
-	DamageTaken       int64
 	Healing           int64
-	HealingTaken      int64
-	HealthPacks       int
-	BackStabs         int
-	HeadShots         int
-	AirShots          int
-	Captures          []PointCapture
-	CapturesBlocked   []PointCaptureBlocked
-	Shots             int
-	Hits              int
+	Pickups           map[PickupItem]int
+	Captures          []*PointCapture
+	CapturesBlocked   []*PointCaptureBlocked
 	Extinguishes      int
 	BuildingBuilt     int
 	BuildingDetonated int // self-destruct buildings
@@ -907,7 +877,98 @@ type MatchPlayerSum struct {
 	BuildingDropped   int // Buildings destroyed while carrying
 	BuildingCarried   int // Building pickup count
 	Classes           []PlayerClass
-	Weapons           MatchWeaponSums
+}
+
+func (playerSum *MatchPlayerSum) getTarget(target steamid.SID64) *TargetSums {
+	tSum, found := playerSum.TargetInfo[target]
+	if !found {
+		tSum = &TargetSums{SteamID: target}
+		playerSum.TargetInfo[target] = tSum
+	}
+
+	return tSum
+}
+
+func (playerSum *MatchPlayerSum) Kills() int {
+	var total int
+	for _, target := range playerSum.TargetInfo {
+		total += len(target.KilledInfo)
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) Deaths() int {
+	var total int
+	for _, target := range playerSum.TargetInfo {
+		total += len(target.KilledInfo)
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) Damage() int64 {
+	var total int64
+	for _, weaponInfo := range playerSum.WeaponInfo {
+		total += weaponInfo.Damage
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) BackStabs() int {
+	var total int
+	for _, weaponInfo := range playerSum.WeaponInfo {
+		total += weaponInfo.BackStabs
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) HeadShots() int {
+	var total int
+	for _, weaponInfo := range playerSum.WeaponInfo {
+		total += weaponInfo.Headshots
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) AirShots() int {
+	var total int
+	for _, weaponInfo := range playerSum.WeaponInfo {
+		total += weaponInfo.Airshots
+	}
+
+	return total
+}
+
+func (playerSum *MatchPlayerSum) addKill(target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
+	targetInfo, found := playerSum.TargetInfo[target]
+	if !found {
+		targetInfo = &TargetSums{
+			SteamID: target,
+		}
+
+		playerSum.TargetInfo[target] = targetInfo
+	}
+
+	targetInfo.KilledInfo = append(targetInfo.KilledInfo, KillInfo{
+		Weapon:    weapon,
+		SourcePos: sourcePos,
+		TargetPos: targetPos,
+	})
+}
+
+func (playerSum *MatchPlayerSum) getWeaponSum(weapon Weapon) *WeaponInfo {
+	if existing, found := playerSum.WeaponInfo[weapon]; found {
+		return existing
+	}
+
+	newSum := NewMatchWeaponSum()
+	playerSum.WeaponInfo[weapon] = newSum
+
+	return newSum
 }
 
 func (playerSum *MatchPlayerSum) touch() {
@@ -950,7 +1011,7 @@ type MatchMedicSum struct {
 	DeathAfterCharge    int
 	MajorAdvLost        int
 	BiggestAdvLost      int
-	HealTargets         MatchPlayerClassSums
+	HealTargets         map[steamid.SID64]int
 }
 
 func newMatchMedicSum(steamID steamid.SID64) *MatchMedicSum {
@@ -964,27 +1025,6 @@ func newMatchMedicSum(steamID steamid.SID64) *MatchMedicSum {
 		},
 	}
 }
-
-type MatchClassSums struct {
-	SteamID  steamid.SID64
-	Scout    int
-	Soldier  int
-	Pyro     int
-	Demoman  int
-	Heavy    int
-	Engineer int
-	Medic    int
-	Sniper   int
-	Spy      int
-}
-
-func (classSum *MatchClassSums) Sum() int {
-	return classSum.Scout + classSum.Soldier + classSum.Pyro +
-		classSum.Demoman + classSum.Heavy + classSum.Engineer +
-		classSum.Medic + classSum.Spy + classSum.Sniper
-}
-
-type MatchPlayerClassSums []*MatchClassSums
 
 type MatchTeamSum struct {
 	MatchTeamID int

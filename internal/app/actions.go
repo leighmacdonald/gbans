@@ -189,7 +189,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 	servers := state.serverIDsByName(serverName, true)
 
 	if len(servers) == 0 {
-		return ErrUnknownServer
+		return errUnknownServer
 	}
 
 	app.state.broadcast(servers, fmt.Sprintf(`sm_say %s`, message))
@@ -214,7 +214,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 	servers := state.serverIDsByName(serverName, true)
 
 	if len(servers) == 0 {
-		return ErrUnknownServer
+		return errUnknownServer
 	}
 
 	app.state.broadcast(servers, fmt.Sprintf(`sm_csay %s`, message))

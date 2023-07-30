@@ -98,7 +98,7 @@ type baseServer struct {
 	Distance   float64  `json:"distance"`
 }
 
-var ErrUnknownServer = errors.New("Unknown server")
+var errUnknownServer = errors.New("Unknown server")
 
 type serverDetailsCollection []serverDetails
 
@@ -284,7 +284,7 @@ func (c *serverStateCollector) rcon(serverID int, cmd string) (string, error) {
 	if !found || conn.RemoteConsole == nil {
 		c.connectionsMu.RUnlock()
 
-		return "", ErrUnknownServer
+		return "", errUnknownServer
 	}
 
 	c.connectionsMu.RUnlock()
@@ -457,7 +457,7 @@ func (c *serverStateCollector) updateState(serverID int, update partialStateUpda
 
 	curState, ok := c.serverState[serverID]
 	if !ok {
-		return ErrUnknownServer
+		return errUnknownServer
 	}
 
 	if update.Hostname != "" {

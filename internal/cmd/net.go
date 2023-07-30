@@ -27,7 +27,7 @@ func netUpdateCmd() *cobra.Command {
 		Long:  `Updates ip2location dataset`,
 		Run: func(cmd *cobra.Command, args []string) {
 			var conf app.Config
-			if errConfig := app.Read(&conf); errConfig != nil {
+			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
 			rootLogger := app.MustCreateLogger(&conf)

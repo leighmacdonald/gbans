@@ -366,12 +366,17 @@ func (app *App) matchSummarizer(ctx context.Context) {
 
 	matches := map[int]logparse.Match{}
 
+	matchesMu := &sync.RWMutex{}
+
 	var curServer store.Server
 
 	for {
 		select {
 		case evt := <-eventChan:
+			matchesMu.RLock()
 			match, found := matches[evt.Server.ServerID]
+			matchesMu.RUnlock()
+
 			if !found && evt.EventType != logparse.MapLoad {
 				// Wait for new map
 				continue
@@ -382,27 +387,32 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				matches[evt.Server.ServerID] = logparse.NewMatch(log, evt.Server.ServerID, evt.Server.ServerNameLong)
 			}
 
+			matchesMu.Lock()
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt.Results); errApply != nil {
 				log.Error("Error applying event",
 					zap.String("server", evt.Server.ServerName),
 					zap.Error(errApply))
 			}
+			matchesMu.Unlock()
 
 			switch evt.EventType {
 			case logparse.LogStop:
 				fallthrough
 			case logparse.WGameOver:
 				go func(completeMatch logparse.Match) {
-					if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
-						log.Error("Failed to save match",
-							zap.String("server", evt.Server.ServerName), zap.Error(errSave))
-					} else {
-						app.sendDiscordMatchResults(curServer, completeMatch)
-					}
+					// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
+					//	log.Error("Failed to save match",
+					//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
+					// } else {
+					//
+					// }
+					app.sendDiscordMatchResults(curServer, completeMatch)
 				}(match)
 
+				matchesMu.Lock()
 				delete(matches, evt.Server.ServerID)
+				matchesMu.Unlock()
 			}
 		case <-ctx.Done():
 			return
@@ -477,6 +487,13 @@ func (app *App) playerMessageWriter(ctx context.Context) {
 					continue
 				}
 
+				var author store.Person
+				if errPerson := app.PersonBySID(ctx, newServerEvent.SID, &author); errPerson != nil {
+					log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
+
+					continue
+				}
+
 				msg := store.PersonMessage{
 					SteamID:     newServerEvent.SID,
 					PersonaName: newServerEvent.Name,
@@ -489,6 +506,8 @@ func (app *App) playerMessageWriter(ctx context.Context) {
 
 				if errChat := app.db.AddChatHistory(ctx, &msg); errChat != nil {
 					log.Error("Failed to add chat history", zap.Error(errChat))
+
+					continue
 				}
 
 				log.Debug("Chat message",

@@ -113,7 +113,7 @@ export const ServerList = () => {
                     },
                     {
                         label: 'Dist',
-                        tooltip: () => `Distance to the server`,
+                        tooltip: `Distance to the server`,
                         sortKey: 'distance',
                         sortable: true,
                         renderer: (obj) => {

@@ -7,8 +7,9 @@ import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import { TableSortLabel } from '@mui/material';
 
 export interface LazyTableProps<T> {
     columns: HeadingCell<T>[];
@@ -29,7 +30,7 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
         <TableBody>
             {rows.map((row, idx) => {
                 return (
-                    <TableRow key={`row-${idx}`}>
+                    <TableRow key={`row-${idx}`} hover>
                         {columns.map((col: HeadingCell<T>, colIdx) => {
                             const value = (col?.renderer ?? defaultRenderer)(
                                 row,
@@ -38,6 +39,8 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                             );
                             return (
                                 <TableCell
+                                    padding={'none'}
+                                    variant="body"
                                     key={`col-${colIdx}`}
                                     align={col?.align ?? 'right'}
                                     sx={{
@@ -81,8 +84,10 @@ export const LazyTableHeader = <T,>({
                 {columns.map((col) => {
                     return (
                         <TableCell
+                            variant="head"
                             align={col.align ?? 'right'}
                             key={col.label}
+                            sortDirection={order}
                             sx={{
                                 width: col?.width ?? 'auto',
                                 '&:hover': col.sortable
@@ -92,27 +97,22 @@ export const LazyTableHeader = <T,>({
                                     : { cursor: 'default' },
                                 backgroundColor: bgColor
                             }}
-                            onClick={() => {
-                                if (!col.sortable || col.virtual) {
-                                    return;
-                                }
-                                if (col.sortKey === sortColumn) {
-                                    onSortOrderChanged(
-                                        order === 'asc' ? 'desc' : 'asc'
-                                    );
-                                } else {
-                                    onSortColumnChanged(col.sortKey as keyof T);
-                                    onSortOrderChanged('desc');
-                                }
-                            }}
                         >
-                            <Tooltip
-                                title={
-                                    col.tooltip instanceof Function
-                                        ? col.tooltip()
-                                        : col.tooltip
-                                }
-                                placement={'top'}
+                            <TableSortLabel
+                                title={col.tooltip}
+                                active={sortColumn === col.sortKey}
+                                direction={order}
+                                onClick={() => {
+                                    if (col.sortKey) {
+                                        if (sortColumn == col.sortKey) {
+                                            onSortOrderChanged(
+                                                order == 'asc' ? 'desc' : 'asc'
+                                            );
+                                        } else {
+                                            onSortColumnChanged(col.sortKey);
+                                        }
+                                    }
+                                }}
                             >
                                 <Typography
                                     padding={0}
@@ -124,11 +124,11 @@ export const LazyTableHeader = <T,>({
                                                 ? 'underline'
                                                 : 'overline'
                                     }}
-                                    variant={'subtitle2'}
+                                    variant={'button'}
                                 >
                                     {col.label}
                                 </Typography>
-                            </Tooltip>
+                            </TableSortLabel>
                         </TableCell>
                     );
                 })}
@@ -149,8 +149,8 @@ export const LazyTable = <T,>({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
     return (
-        <TableContainer>
-            <Table>
+        <TableContainer component={Paper}>
+            <Table size={'small'}>
                 <LazyTableHeader<T>
                     columns={columns}
                     sortColumn={sortColumn}

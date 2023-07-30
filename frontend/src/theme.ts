@@ -63,6 +63,17 @@ export const createThemeByMode = (mode: PaletteMode) => {
 
     return createTheme({
         components: {
+            MuiTableCell: {
+                styleOverrides: {
+                    root: {
+                        borderLeft: '1px solid #9d312f',
+                        borderBottom: 'none',
+                        borderRight: '1px solid  #9d312f',
+                        paddingLeft: '6px',
+                        paddingRight: '6px'
+                    }
+                }
+            },
             MuiCssBaseline: {
                 styleOverrides: {
                     body: darkScrollbar()

@@ -25,7 +25,7 @@ func serveCmd() *cobra.Command {
 			defer stop()
 
 			var conf app.Config
-			if errConfig := app.Read(&conf); errConfig != nil {
+			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
 

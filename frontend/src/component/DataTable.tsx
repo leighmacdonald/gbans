@@ -40,7 +40,7 @@ export const stableSort = <T,>(
 export interface HeadingCell<T> {
     label: string;
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-    tooltip: string | (() => string);
+    tooltip: string;
     sortKey?: keyof T;
     width?: number | string;
     sortType?: 'number' | 'string' | 'date' | 'float';
@@ -243,14 +243,7 @@ export const DataTable = <T,>({
                                     }
                                 }}
                             >
-                                <Tooltip
-                                    title={
-                                        col.tooltip instanceof Function
-                                            ? col.tooltip()
-                                            : col.tooltip
-                                    }
-                                    placement={'top'}
-                                >
+                                <Tooltip title={col.tooltip} placement={'top'}>
                                     <Typography
                                         padding={0}
                                         sx={{

@@ -2913,14 +2913,14 @@ func onAPIGetMatches(app *App) gin.HandlerFunc {
 			return
 		}
 
-		matches, matchesErr := app.db.Matches(ctx, opts)
-		if matchesErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, nil)
+		// matches, matchesErr := app.db.Matches(ctx, opts)
+		// if matchesErr != nil {
+		//	responseErr(ctx, http.StatusInternalServerError, nil)
+		//
+		//	return
+		// }
 
-			return
-		}
-
-		responseOK(ctx, http.StatusOK, matches)
+		responseOK(ctx, http.StatusOK, nil)
 	}
 }
 

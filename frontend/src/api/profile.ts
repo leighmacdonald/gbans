@@ -185,7 +185,7 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
 }
 
 export interface pagedQueryResults<T> {
-    totalMessages: number;
+    total_messages: number;
     messages: T[];
 }
 

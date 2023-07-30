@@ -802,7 +802,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 		serverStates := state.byName(serverName, false)
 
 		if len(serverStates) != 1 {
-			return nil, ErrUnknownServer
+			return nil, errUnknownServer
 		}
 
 		serverState := serverStates[0]
@@ -1098,7 +1098,8 @@ func makeOnLog(app *App) discord.CommandHandler {
 			"N. K:D dmg heal sid\n"
 
 		for index, player := range top {
-			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.Kills, player.Deaths, player.Damage, player.Healing, player.SteamID.String())
+			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.Kills(), player.Deaths(), player.Damage(),
+				player.Healing, player.SteamID.String())
 
 			if index == 9 {
 				break

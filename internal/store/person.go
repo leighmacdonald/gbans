@@ -632,45 +632,52 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		return nil, 0, errLimit
 	}
 
-	count := db.sb.Select(
-		"count(m.person_message_id) as count").
+	count := db.sb.
+		Select(
+			"count(m.person_message_id) as count").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id")
 
-	builder := db.sb.Select(
-		"m.person_message_id",
-		"m.steam_id",
-		"m.server_id",
-		"m.body",
-		"m.team",
-		"m.created_on",
-		"m.persona_name",
-		"s.short_name").
+	builder := db.sb.
+		Select(
+			"m.person_message_id",
+			"m.steam_id ",
+			"m.server_id",
+			"m.body",
+			"m.team ",
+			"m.created_on",
+			"m.persona_name",
+			"s.short_name").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id")
+
 	if query.Offset > 0 {
 		builder = builder.Offset(query.Offset)
-		count = count.Offset(query.Offset)
 	}
 
 	if query.Limit > 0 {
 		builder = builder.Limit(query.Limit)
-		count = count.Limit(query.Limit)
 	}
+
+	prefix := "m."
+	if query.OrderBy == "short_name" {
+		prefix = "s."
+	}
+
+	query.OrderBy = prefix + query.OrderBy
 
 	if query.OrderBy != "" {
 		if query.Desc {
-			builder = builder.OrderBy(query.OrderBy + " DESC")
-			count = count.OrderBy(query.OrderBy + " DESC")
+			builder = builder.OrderBy(query.OrderBy+" DESC").GroupBy(query.OrderBy, "s.short_name", "m.person_message_id")
 		} else {
-			builder = builder.OrderBy(query.OrderBy + " ASC")
-			count = count.OrderBy(query.OrderBy + " DESC")
+			builder = builder.OrderBy(query.OrderBy+" ASC").GroupBy(query.OrderBy, "s.short_name", "m.person_message_id")
 		}
 	}
 
+	var ands sq.And
+
 	if query.ServerID > 0 {
-		builder = builder.Where(sq.Eq{"m.server_id": query.ServerID})
-		count = count.Where(sq.Eq{"m.server_id": query.ServerID})
+		ands = append(ands, sq.Eq{"m.server_id": query.ServerID})
 	}
 
 	if query.SteamID != "" {
@@ -679,29 +686,27 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			return nil, 0, errors.Wrap(steamid.ErrInvalidSID, "Invalid steam id in query")
 		}
 
-		builder = builder.Where(sq.Eq{"m.steam_id": sid.Int64()})
-		count = count.Where(sq.Eq{"m.steam_id": sid.Int64()})
+		ands = append(ands, sq.Eq{"m.steam_id": sid.Int64()})
 	}
 
 	if query.PersonaName != "" {
-		builder = builder.Where(sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
-		count = count.Where(sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
+		ands = append(ands, sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
 	}
 
 	if query.Query != "" {
-		builder = builder.Where(sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
-		count = count.Where(sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
+		ands = append(ands, sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
 	}
 
 	if query.SentBefore != nil {
-		builder = builder.Where(sq.Lt{"m.created_on": query.SentBefore})
-		count = count.Where(sq.Lt{"m.created_on": query.SentBefore})
+		ands = append(ands, sq.Lt{"m.created_on": query.SentBefore})
 	}
 
 	if query.SentAfter != nil {
-		builder = builder.Where(sq.Gt{"m.created_on": query.SentAfter})
-		count = count.Where(sq.Gt{"m.created_on": query.SentAfter})
+		ands = append(ands, sq.Gt{"m.created_on": query.SentAfter})
 	}
+
+	count = count.Where(ands)
+	builder = builder.Where(ands)
 
 	countQuery, countQueryArgs, countQueryErr := count.ToSql()
 	if countQueryErr != nil {
