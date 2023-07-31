@@ -65,7 +65,7 @@ func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, errServers := remoteSrc.db.GetServers(serversCtx, false)
+	servers, errServers := remoteSrc.db.GetServers(serversCtx, true)
 	if errServers != nil {
 		remoteSrc.logger.Error("Failed to load servers to update DNS", zap.Error(errServers))
 
@@ -171,7 +171,8 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 		parser = logparse.New()
 		ticker = time.NewTicker(remoteSrc.frequency)
 	)
-	// pc := newPlayerCache(remoteSrc.logger)
+
+	serverCache := map[string]store.Server{}
 
 	for {
 		select {
@@ -179,7 +180,8 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			running.Store(false)
 		case <-ticker.C:
 			remoteSrc.updateSecrets(ctx)
-			// remoteSrc.updateDNS()
+
+			serverCache = map[string]store.Server{}
 		case logPayload := <-msgIngressChan:
 			var serverName string
 
@@ -195,15 +197,19 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 			serverName = serverNameValue
 
-			var server store.Server
-			if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server); errServer != nil {
-				remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
+			server, serverFound := serverCache[serverName]
+			if !serverFound {
+				if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server); errServer != nil {
+					remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 
-				continue
+					continue
+				}
+
+				serverCache[serverName] = server
 			}
 
-			var event serverEvent
-			if errLogServerEvent := logToServerEvent(parser, server, logPayload.body, &event); errLogServerEvent != nil {
+			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
+			if errLogServerEvent != nil {
 				remoteSrc.logger.Debug("Failed to create serverEvent", zap.Error(errLogServerEvent))
 
 				continue
@@ -214,7 +220,11 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 	}
 }
 
-func logToServerEvent(parser *logparse.LogParser, server store.Server, msg string, event *serverEvent) error {
+func logToServerEvent(parser *logparse.LogParser, serverID int, serverName string, msg string) (serverEvent, error) {
+	event := serverEvent{
+		ServerID:   serverID,
+		ServerName: serverName,
+	}
 	// var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
 	//	if sid == "BOT" {
 	//		panic("fixme")
@@ -231,11 +241,10 @@ func logToServerEvent(parser *logparse.LogParser, server store.Server, msg strin
 	// }
 	parseResult, errParse := parser.Parse(msg)
 	if errParse != nil {
-		return errors.Wrapf(errParse, "Failed to parse log message")
+		return event, errors.Wrapf(errParse, "Failed to parse log message")
 	}
 
-	event.Server = server
 	event.Results = parseResult
 
-	return nil
+	return event, nil
 }

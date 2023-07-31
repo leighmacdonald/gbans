@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
 import MenuItem from '@mui/material/MenuItem';
 import {
@@ -26,6 +25,10 @@ import { TablePagination } from '@mui/material';
 import { useTimer } from 'react-timer-hook';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Box from '@mui/material/Box';
+import { DelayedTextInput } from '../component/DelayedTextInput';
 
 const anyServer: Server = {
     server_name: 'Any',
@@ -47,67 +50,106 @@ const anyServer: Server = {
     created_on: new Date()
 };
 
-export interface DelayedTextInputProps {
-    delay?: number;
-    onChange: (value: string) => void;
-    placeholder: string;
+interface ChatQueryState<T> {
+    startDate: Date | null;
+    endDate: Date | null;
+    steamId: string;
+    nameQuery: string;
+    messageQuery: string;
+    sortOrder: Order;
+    sortColumn: keyof T;
+    page: number;
+    rowPerPageCount: number;
+    selectedServer: number;
 }
 
-export const DelayedTextInput = ({
-    delay,
-    onChange,
-    placeholder
-}: DelayedTextInputProps) => {
-    const [value, setValue] = useState<string>('');
-    const { restart } = useTimer({
-        autoStart: false,
-        expiryTimestamp: new Date(),
-        onExpire: () => {
-            onChange(value.length <= 2 ? '' : value);
-            console.log(value);
-        }
-    });
+const localStorageKey = 'chat_query_state';
 
-    const onInputChange = (
-        event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-    ) => {
-        setValue(event.target.value);
-        const time = new Date();
-        time.setSeconds(time.getSeconds() + (delay ?? 2));
-        restart(time, true);
+const loadState = () => {
+    let config: ChatQueryState<PersonMessage> = {
+        startDate: null,
+        endDate: null,
+        sortOrder: 'desc',
+        sortColumn: 'person_message_id',
+        selectedServer: anyServer.server_id,
+        rowPerPageCount: RowsPerPage.Fifty,
+        nameQuery: '',
+        messageQuery: '',
+        steamId: '',
+        page: 0
     };
-
-    return (
-        <TextField
-            fullWidth
-            value={value}
-            placeholder={placeholder}
-            onChange={onInputChange}
-        />
-    );
+    const item = localStorage.getItem(localStorageKey);
+    if (item) {
+        config = JSON.parse(item);
+    }
+    return config;
 };
 
 export const AdminChat = () => {
-    const [startDate, setStartDate] = useState<Date | null>(null);
-    const [endDate, setEndDate] = useState<Date | null>(null);
-    const [steamId, setSteamId] = useState<string>('');
-    const [nameQuery, setNameQuery] = useState<string>('');
-    const [messageQuery, setMessageQuery] = useState<string>('');
+    const init = loadState();
+    const [startDate, setStartDate] = useState<Date | null>(init.startDate);
+    const [endDate, setEndDate] = useState<Date | null>(init.endDate);
+    const [steamId, setSteamId] = useState<string>(init.steamId);
+    const [nameQuery, setNameQuery] = useState<string>(init.nameQuery);
+    const [messageQuery, setMessageQuery] = useState<string>(init.messageQuery);
+    const [sortOrder, setSortOrder] = useState<Order>(init.sortOrder);
+    const [sortColumn, setSortColumn] = useState<keyof PersonMessage>(
+        init.sortColumn
+    );
     const [servers, setServers] = useState<Server[]>([]);
     const [rows, setRows] = useState<PersonMessage[]>([]);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof PersonMessage>('person_message_id');
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(init.page);
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Fifty
+        init.rowPerPageCount
     );
+    const [refreshTime, setRefreshTime] = useState<number>(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     //const [pageCount, setPageCount] = useState<number>(0);
 
+    const [nameValue, setNameValue] = useState<string>(init.nameQuery);
+    const [steamIDValue, setSteamIDValue] = useState<string>(init.steamId);
+    const [messageValue, setMessageValue] = useState<string>(init.messageQuery);
+
     const [selectedServer, setSelectedServer] = useState<number>(
-        anyServer.server_id
+        init.selectedServer
     );
+
+    const curTime = new Date();
+    curTime.setSeconds(curTime.getSeconds() + refreshTime);
+
+    const { isRunning, restart } = useTimer({
+        expiryTimestamp: curTime,
+        autoStart: false
+    });
+
+    const saveState = useCallback(() => {
+        localStorage.setItem(
+            localStorageKey,
+            JSON.stringify({
+                endDate,
+                steamId,
+                messageQuery,
+                nameQuery,
+                page,
+                rowPerPageCount,
+                selectedServer,
+                sortColumn,
+                sortOrder,
+                startDate
+            } as ChatQueryState<PersonMessage>)
+        );
+    }, [
+        endDate,
+        messageQuery,
+        nameQuery,
+        page,
+        rowPerPageCount,
+        selectedServer,
+        sortColumn,
+        sortOrder,
+        startDate,
+        steamId
+    ]);
 
     useEffect(() => {
         apiGetServers().then((resp) => {
@@ -123,7 +165,20 @@ export const AdminChat = () => {
         });
     }, []);
 
+    const restartTimer = useCallback(() => {
+        if (refreshTime <= 0) {
+            return;
+        }
+        const newTime = new Date();
+        newTime.setSeconds(newTime.getSeconds() + refreshTime);
+        restart(newTime, true);
+    }, [refreshTime, restart]);
+
     useEffect(() => {
+        if (isRunning) {
+            // wait for timer to exec
+            return;
+        }
         const opts: MessageQuery = {};
         if (selectedServer > 0) {
             opts.server_id = selectedServer;
@@ -156,6 +211,8 @@ export const AdminChat = () => {
             .catch((e) => {
                 logErr(e);
             });
+        saveState();
+        restartTimer();
     }, [
         endDate,
         messageQuery,
@@ -166,8 +223,24 @@ export const AdminChat = () => {
         sortColumn,
         sortOrder,
         startDate,
-        steamId
+        steamId,
+        isRunning,
+        restart,
+        restartTimer,
+        saveState
     ]);
+
+    const reset = () => {
+        setNameQuery('');
+        setNameValue('');
+        setSteamId('');
+        setSteamIDValue('');
+        setSelectedServer(anyServer.server_id);
+        setStartDate(null);
+        setEndDate(null);
+        setPage(0);
+        setRefreshTime(0);
+    };
 
     return (
         <Grid container spacing={2} paddingTop={3}>
@@ -187,6 +260,8 @@ export const AdminChat = () => {
                         >
                             <Grid xs={6} md={3}>
                                 <DelayedTextInput
+                                    value={nameValue}
+                                    setValue={setNameValue}
                                     placeholder={'Name'}
                                     onChange={(value) => {
                                         setNameQuery(value);
@@ -195,6 +270,8 @@ export const AdminChat = () => {
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <DelayedTextInput
+                                    value={steamIDValue}
+                                    setValue={setSteamIDValue}
                                     placeholder={'Steam ID'}
                                     onChange={(value) => {
                                         setSteamId(value);
@@ -203,6 +280,8 @@ export const AdminChat = () => {
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <DelayedTextInput
+                                    value={messageValue}
+                                    setValue={setMessageValue}
                                     placeholder={'Message'}
                                     onChange={(value) => {
                                         setMessageQuery(value);
@@ -266,6 +345,7 @@ export const AdminChat = () => {
                                     <Button
                                         variant={'contained'}
                                         color={'info'}
+                                        onClick={reset}
                                     >
                                         Reset
                                     </Button>
@@ -276,28 +356,69 @@ export const AdminChat = () => {
                 </Paper>
             </Grid>
 
-            <Grid xs={12}>
-                <TablePagination
-                    component="div"
-                    variant={'head'}
-                    page={page}
-                    count={totalRows}
-                    showFirstButton
-                    showLastButton
-                    rowsPerPage={rowPerPageCount}
-                    onRowsPerPageChange={(
-                        event: React.ChangeEvent<
-                            HTMLInputElement | HTMLTextAreaElement
-                        >
-                    ) => {
-                        setRowPerPageCount(parseInt(event.target.value, 10));
-                        setPage(0);
-                    }}
-                    onPageChange={(_, newPage) => {
-                        setPage(newPage);
-                    }}
-                />
+            <Grid
+                xs={12}
+                container
+                justifyContent="space-between"
+                alignItems="center"
+                flexDirection={{ xs: 'column', sm: 'row' }}
+            >
+                <Grid xs={3}>
+                    <Box sx={{ width: 120 }}>
+                        <FormControl fullWidth>
+                            <InputLabel id="auto-refresh-label">
+                                Auto-Refresh
+                            </InputLabel>
+                            <Select<number>
+                                labelId="auto-refresh-label"
+                                id="auto-refresh"
+                                label="Auto Refresh"
+                                value={refreshTime}
+                                onChange={(
+                                    event: SelectChangeEvent<number>
+                                ) => {
+                                    setRefreshTime(
+                                        event.target.value as number
+                                    );
+
+                                    restartTimer();
+                                }}
+                            >
+                                <MenuItem value={0}>Off</MenuItem>
+                                <MenuItem value={10}>5s</MenuItem>
+                                <MenuItem value={15}>15s</MenuItem>
+                                <MenuItem value={30}>30s</MenuItem>
+                                <MenuItem value={60}>60s</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </Grid>
+                <Grid xs={'auto'}>
+                    <TablePagination
+                        component="div"
+                        variant={'head'}
+                        page={page}
+                        count={totalRows}
+                        showFirstButton
+                        showLastButton
+                        rowsPerPage={rowPerPageCount}
+                        onRowsPerPageChange={(
+                            event: React.ChangeEvent<
+                                HTMLInputElement | HTMLTextAreaElement
+                            >
+                        ) => {
+                            setRowPerPageCount(
+                                parseInt(event.target.value, 10)
+                            );
+                            setPage(0);
+                        }}
+                        onPageChange={(_, newPage) => {
+                            setPage(newPage);
+                        }}
+                    />
+                </Grid>
             </Grid>
+
             <Grid xs={12}>
                 <Heading iconLeft={<ChatIcon />}>Chat Messages</Heading>
                 <LazyTable<PersonMessage>
@@ -314,8 +435,11 @@ export const AdminChat = () => {
                             label: 'Server',
                             tooltip: 'Server',
                             sortKey: 'server_id',
-                            align: 'center',
+                            align: 'left',
                             width: 100,
+                            onClick: (o) => {
+                                setSelectedServer(o.server_id);
+                            },
                             queryValue: (o) =>
                                 `${o.server_id} + ${o.server_name}`,
                             renderer: (row) => (
@@ -329,7 +453,7 @@ export const AdminChat = () => {
                             tooltip: 'Time the message was sent',
                             sortKey: 'created_on',
                             sortType: 'date',
-                            align: 'center',
+                            align: 'left',
                             width: 180,
                             queryValue: (o) => steamIdQueryValue(o.steam_id),
                             renderer: (row) => (
@@ -344,6 +468,10 @@ export const AdminChat = () => {
                             sortKey: 'persona_name',
                             width: 250,
                             align: 'left',
+                            onClick: (o) => {
+                                setSteamId(o.steam_id);
+                                setSteamIDValue(o.steam_id);
+                            },
                             queryValue: (o) => `${o.persona_name}`,
                             renderer: (row) => (
                                 <Typography variant={'body2'}>

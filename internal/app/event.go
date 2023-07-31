@@ -3,13 +3,13 @@ package app
 import (
 	"sync"
 
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
 // serverEvent is a flat struct encapsulating a parsed log event.
 type serverEvent struct {
-	Server store.Server
+	ServerID   int
+	ServerName string
 	*logparse.Results
 }
 

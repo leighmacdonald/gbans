@@ -39,15 +39,21 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                             );
                             return (
                                 <TableCell
-                                    padding={'none'}
                                     variant="body"
                                     key={`col-${colIdx}`}
                                     align={col?.align ?? 'right'}
-                                    sx={{
-                                        width: col?.width ?? 'auto',
-                                        '&:hover': {
-                                            cursor: 'pointer'
+                                    onClick={() => {
+                                        if (col.onClick) {
+                                            col.onClick(row);
                                         }
+                                    }}
+                                    sx={{
+                                        '&:hover': {
+                                            backgroundColour:
+                                                'yellow !important',
+                                            cursor: 'pointer'
+                                        },
+                                        width: col?.width ?? 'auto'
                                     }}
                                 >
                                     {value}
@@ -90,11 +96,6 @@ export const LazyTableHeader = <T,>({
                             sortDirection={order}
                             sx={{
                                 width: col?.width ?? 'auto',
-                                '&:hover': col.sortable
-                                    ? {
-                                          cursor: 'pointer'
-                                      }
-                                    : { cursor: 'default' },
                                 backgroundColor: bgColor
                             }}
                         >

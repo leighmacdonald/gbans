@@ -50,6 +50,7 @@ export interface HeadingCell<T> {
     // Custom cell render function for complex types
     renderer?: (obj: T, value: unknown, type: string) => ReactNode;
     queryValue?: (obj: T) => string;
+    onClick?: (row: T) => void;
 }
 
 export interface UserTableProps<T> {

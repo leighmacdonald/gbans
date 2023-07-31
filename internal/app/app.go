@@ -235,14 +235,14 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 				msgEmbed := discord.
 					NewEmbed(title).
-					SetURL(app.ExtURLRaw("/profiles/%d", newWarn.userMessage.SteamID)).
-					SetColor(app.bot.Colour.Success).
-					SetImage(person.AvatarFull).
+					SetColor(app.bot.Colour.Warn).
 					AddField("Matched", newWarn.Matched).
 					AddField("Message", newWarn.userWarning.Message).
 					AddField("Pattern", newWarn.MatchedFilter.Pattern).
 					AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID)).
 					AddField("Server", newWarn.userMessage.ServerName)
+
+				app.addAuthor(ctx, msgEmbed, newWarn.userMessage.SteamID)
 
 				discord.AddFieldsSteamID(msgEmbed, newWarn.userMessage.SteamID)
 
@@ -374,7 +374,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 		select {
 		case evt := <-eventChan:
 			matchesMu.RLock()
-			match, found := matches[evt.Server.ServerID]
+			match, found := matches[evt.ServerID]
 			matchesMu.RUnlock()
 
 			if !found && evt.EventType != logparse.MapLoad {
@@ -383,15 +383,15 @@ func (app *App) matchSummarizer(ctx context.Context) {
 			}
 
 			if evt.EventType == logparse.LogStart {
-				log.Info("New match created (new game)", zap.String("server", evt.Server.ServerName))
-				matches[evt.Server.ServerID] = logparse.NewMatch(log, evt.Server.ServerID, evt.Server.ServerNameLong)
+				log.Info("New match created (new game)", zap.String("server", evt.ServerName))
+				matches[evt.ServerID] = logparse.NewMatch(log, evt.ServerID, evt.ServerName)
 			}
 
 			matchesMu.Lock()
 			// Apply the update before any secondary side effects trigger
 			if errApply := match.Apply(evt.Results); errApply != nil {
 				log.Error("Error applying event",
-					zap.String("server", evt.Server.ServerName),
+					zap.String("server", evt.ServerName),
 					zap.Error(errApply))
 			}
 			matchesMu.Unlock()
@@ -411,7 +411,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				}(match)
 
 				matchesMu.Lock()
-				delete(matches, evt.Server.ServerID)
+				delete(matches, evt.ServerID)
 				matchesMu.Unlock()
 			}
 		case <-ctx.Done():
@@ -497,8 +497,8 @@ func (app *App) playerMessageWriter(ctx context.Context) {
 				msg := store.PersonMessage{
 					SteamID:     newServerEvent.SID,
 					PersonaName: newServerEvent.Name,
-					ServerName:  evt.Server.ServerNameLong,
-					ServerID:    evt.Server.ServerID,
+					ServerName:  evt.ServerName,
+					ServerID:    evt.ServerID,
 					Body:        newServerEvent.Msg,
 					Team:        newServerEvent.Team,
 					CreatedOn:   newServerEvent.CreatedOn,
@@ -512,7 +512,7 @@ func (app *App) playerMessageWriter(ctx context.Context) {
 
 				log.Debug("Chat message",
 					zap.Int64("id", msg.PersonMessageID),
-					zap.String("server", evt.Server.ServerName),
+					zap.String("server", evt.ServerName),
 					zap.String("name", newServerEvent.Name),
 					zap.String("steam_id", newServerEvent.SID.String()),
 					zap.Bool("team", msg.Team),
@@ -583,9 +583,10 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 }
 
 type logFilePayload struct {
-	Server store.Server
-	Lines  []string
-	Map    string
+	ServerID   int
+	ServerName string
+	Lines      []string
+	Map        string
 }
 
 // logReader is the fan-out orchestrator for game log events
@@ -629,8 +630,9 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 				}
 
 				newServerEvent := serverEvent{
-					Server:  logFile.Server,
-					Results: parseResult,
+					ServerName: logFile.ServerName,
+					ServerID:   logFile.ServerID,
+					Results:    parseResult,
 				}
 
 				if newServerEvent.EventType == logparse.IgnoredMsg {

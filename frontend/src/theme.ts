@@ -66,11 +66,11 @@ export const createThemeByMode = (mode: PaletteMode) => {
             MuiTableCell: {
                 styleOverrides: {
                     root: {
-                        borderLeft: '1px solid #9d312f',
+                        borderLeft: '0px solid #9d312f',
                         borderBottom: 'none',
-                        borderRight: '1px solid  #9d312f',
-                        paddingLeft: '6px',
-                        paddingRight: '6px'
+                        borderRight: '0px solid  #9d312f'
+                        // paddingLeft: '6px',
+                        // paddingRight: '6px'
                     }
                 }
             },

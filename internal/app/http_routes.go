@@ -224,7 +224,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		adminRoute.POST("/api/servers", onAPIPostServer(app))
 		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(app))
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(app))
-		adminRoute.GET("/api/servers", onAPIGetServers(app))
+		adminRoute.GET("/api/servers", onAPIGetServersAdmin(app))
 	}
 
 	return engine
