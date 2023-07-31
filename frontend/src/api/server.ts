@@ -66,6 +66,13 @@ export const cleanMapName = (name: string): string => {
     return b[0];
 };
 
+export interface ServerSimple {
+    server_id: number;
+    server_name: string;
+    server_name_long: string;
+    colour: string;
+}
+
 export interface Server extends TimeStamped {
     server_id: number;
     server_name: string;
@@ -82,6 +89,7 @@ export interface Server extends TimeStamped {
     reserved_slots: number;
     players_max: number;
     is_enabled: boolean;
+    colour: string;
 }
 
 export interface PlayerInfo {
@@ -173,8 +181,11 @@ export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
         opts
     );
 
+export const apiGetServersAdmin = async () =>
+    await apiCall<Server[]>(`/api/servers_admin`, 'GET');
+
 export const apiGetServers = async () =>
-    await apiCall<Server[]>(`/api/servers`, 'GET');
+    await apiCall<ServerSimple[]>(`/api/servers`, 'GET');
 
 export const apiDeleteServer = async (server_id: number) =>
     await apiCall(`/api/servers/${server_id}`, 'DELETE');

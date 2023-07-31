@@ -1853,13 +1853,43 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetServers(app *App) gin.HandlerFunc {
+func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		servers, errServers := app.db.GetServers(ctx, true)
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
+		}
+
+		responseOK(ctx, http.StatusOK, servers)
+	}
+}
+
+type serverInfoSafe struct {
+	ServerNameLong string `json:"server_name_long"`
+	ServerName     string `json:"server_name"`
+	ServerID       int    `json:"server_id"`
+	Colour         string `json:"colour"`
+}
+
+func onAPIGetServers(app *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		fullServers, errServers := app.db.GetServers(ctx, false)
+		if errServers != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		var servers []serverInfoSafe
+		for _, server := range fullServers {
+			servers = append(servers, serverInfoSafe{
+				ServerNameLong: server.ServerNameLong,
+				ServerName:     server.ServerName,
+				ServerID:       server.ServerID,
+				Colour:         "",
+			})
 		}
 
 		responseOK(ctx, http.StatusOK, servers)

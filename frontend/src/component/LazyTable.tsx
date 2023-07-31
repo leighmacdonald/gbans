@@ -49,8 +49,6 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                                     }}
                                     sx={{
                                         '&:hover': {
-                                            backgroundColour:
-                                                'yellow !important',
                                             cursor: 'pointer'
                                         },
                                         width: col?.width ?? 'auto'

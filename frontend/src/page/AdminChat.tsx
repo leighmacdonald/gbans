@@ -11,7 +11,8 @@ import {
     apiGetServers,
     MessageQuery,
     PersonMessage,
-    Server
+    Server,
+    ServerSimple
 } from '../api';
 import { steamIdQueryValue } from '../util/text';
 import Button from '@mui/material/Button';
@@ -46,8 +47,16 @@ const anyServer: Server = {
     players_max: 24,
     region: '',
     reserved_slots: 8,
+    colour: '',
     updated_on: new Date(),
     created_on: new Date()
+};
+
+const anyServerSimple: ServerSimple = {
+    server_name: 'Any',
+    server_id: 0,
+    server_name_long: 'Any',
+    colour: ''
 };
 
 interface ChatQueryState<T> {
@@ -96,7 +105,7 @@ export const AdminChat = () => {
     const [sortColumn, setSortColumn] = useState<keyof PersonMessage>(
         init.sortColumn
     );
-    const [servers, setServers] = useState<Server[]>([]);
+    const [servers, setServers] = useState<ServerSimple[]>([]);
     const [rows, setRows] = useState<PersonMessage[]>([]);
     const [page, setPage] = useState(init.page);
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
@@ -157,7 +166,7 @@ export const AdminChat = () => {
                 return;
             }
             setServers([
-                anyServer,
+                anyServerSimple,
                 ...resp.result.sort((a, b) => {
                     return a.server_name.localeCompare(b.server_name);
                 })

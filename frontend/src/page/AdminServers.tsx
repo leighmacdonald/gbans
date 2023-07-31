@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
 import { DataTable } from '../component/DataTable';
-import { apiGetServers, Server } from '../api';
+import { apiGetServersAdmin, Server } from '../api';
 import { ServerEditorModal } from '../component/ServerEditorModal';
 import { Nullable } from '../util/types';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -24,7 +24,7 @@ export const AdminServers = () => {
 
     const reload = useCallback(() => {
         setIsLoading(true);
-        apiGetServers().then((s) => {
+        apiGetServersAdmin().then((s) => {
             setServers(s.result || []);
             setIsLoading(false);
         });

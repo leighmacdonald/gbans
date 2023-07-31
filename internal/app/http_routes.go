@@ -114,6 +114,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
 
 	engine.GET("/media/:media_id", onGetMediaByID(app))
+	engine.GET("/api/servers", onAPIGetServers(app))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts(app))
@@ -224,7 +225,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		adminRoute.POST("/api/servers", onAPIPostServer(app))
 		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(app))
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(app))
-		adminRoute.GET("/api/servers", onAPIGetServersAdmin(app))
+		adminRoute.GET("/api/servers_admin", onAPIGetServersAdmin(app))
 	}
 
 	return engine
