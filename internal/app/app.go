@@ -235,12 +235,12 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 				msgEmbed := discord.
 					NewEmbed(title).
+					SetDescription(newWarn.userWarning.Message).
 					SetColor(app.bot.Colour.Warn).
-					AddField("Matched", newWarn.Matched).
-					AddField("Message", newWarn.userWarning.Message).
-					AddField("Pattern", newWarn.MatchedFilter.Pattern).
 					AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID)).
-					AddField("Server", newWarn.userMessage.ServerName)
+					AddField("Matched", newWarn.Matched).
+					AddField("Server", newWarn.userMessage.ServerName).InlineAllFields().
+					AddField("Pattern", newWarn.MatchedFilter.Pattern)
 
 				app.addAuthor(ctx, msgEmbed, newWarn.userMessage.SteamID)
 

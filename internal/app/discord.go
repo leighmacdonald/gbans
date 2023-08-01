@@ -856,7 +856,7 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 			msgEmbed.SetColor(app.bot.Colour.Error)
 		}
 
-		return msgEmbed.Truncate().MessageEmbed, nil
+		return msgEmbed.MessageEmbed, nil
 	}
 }
 

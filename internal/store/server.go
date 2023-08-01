@@ -209,11 +209,22 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 	return servers, nil
 }
 
-func (db *Store) GetServerByName(ctx context.Context, serverName string, server *Server) error {
-	query, args, errQueryArgs := db.sb.Select(columnsServer...).
+func (db *Store) GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
+	and := sq.And{sq.Eq{"short_name": serverName}}
+	if !disabledOk {
+		and = append(and, sq.Eq{"is_enabled": true})
+	}
+
+	if !deletedOk {
+		and = append(and, sq.Eq{"deleted": false})
+	}
+
+	builder := db.sb.
+		Select(columnsServer...).
 		From(string(tableServer)).
-		Where(sq.And{sq.Eq{"short_name": serverName}, sq.Eq{"deleted": false}}).
-		ToSql()
+		Where(and)
+
+	query, args, errQueryArgs := builder.ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}

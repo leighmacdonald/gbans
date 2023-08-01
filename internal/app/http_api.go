@@ -86,7 +86,7 @@ func onAPIPostLog(app *App) gin.HandlerFunc {
 		}
 
 		var server store.Server
-		if errServer := app.db.GetServerByName(ctx, upload.ServerName, &server); errServer != nil {
+		if errServer := app.db.GetServerByName(ctx, upload.ServerName, &server, false, false); errServer != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
 			return
@@ -136,7 +136,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 		}
 
 		var server store.Server
-		if errGetServer := app.db.GetServerByName(ctx, upload.ServerName, &server); errGetServer != nil {
+		if errGetServer := app.db.GetServerByName(ctx, upload.ServerName, &server, false, false); errGetServer != nil {
 			log.Error("Server not found", zap.String("server", util.SanitizeLog(upload.ServerName)))
 			responseErrUser(ctx, http.StatusNotFound, nil, "Server not found: %v", upload.ServerName)
 
@@ -742,7 +742,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 
 		var server store.Server
 
-		errGetServer := app.db.GetServerByName(ctx, request.ServerName, &server)
+		errGetServer := app.db.GetServerByName(ctx, request.ServerName, &server, true, false)
 		if errGetServer != nil {
 			log.Error("Failed to find server auth by name",
 				zap.String("name", request.ServerName), zap.Error(errGetServer))

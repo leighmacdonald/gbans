@@ -199,7 +199,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 			server, serverFound := serverCache[serverName]
 			if !serverFound {
-				if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server); errServer != nil {
+				if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server, true, false); errServer != nil {
 					remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
 
 					continue
