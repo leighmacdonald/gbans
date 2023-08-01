@@ -627,27 +627,71 @@ type ChatHistoryQueryFilter struct {
 	SentBefore *time.Time `json:"sent_before,omitempty"`
 }
 
+type dbIndex string
+
+const (
+	idxNameSearch    dbIndex = "name_search"
+	idxMessageSearch dbIndex = "message_search"
+)
+
+type tsQuery struct {
+	index dbIndex
+	term  string
+}
+
+func (lt tsQuery) ToSql() (string, []any, error) { // nolint:stylecheck
+	var (
+		args []any
+		err  error
+	)
+
+	if lt.index == "" || (lt.index != "message_search" && lt.index != "name_search") {
+		return "", nil, errors.New("Invalid index")
+	}
+
+	if lt.term == "" {
+		return "", nil, errors.New("Invalid term")
+	}
+
+	args = append(args, lt.term)
+
+	return fmt.Sprintf(`%s @@ websearch_to_tsquery('simple', ?)`, lt.index), args, err
+}
+
 func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, int64, error) {
 	if query.Limit > 1000 {
 		return nil, 0, errLimit
 	}
 
+	columns := []string{
+		"m.person_message_id",
+		"m.steam_id ",
+		"m.server_id",
+		"m.body",
+		"m.team ",
+		"m.created_on",
+		"m.persona_name",
+		"s.short_name",
+	}
+
+	countCols := []string{"count(m.created_on) as count"}
+
+	if query.Query != "" {
+		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.message_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) message_rank", query.Query))
+	}
+
+	if query.PersonaName != "" {
+		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.name_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) name_rank", query.PersonaName))
+	}
+
 	count := db.sb.
 		Select(
-			"count(m.person_message_id) as count").
+			countCols...).
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id")
 
 	builder := db.sb.
-		Select(
-			"m.person_message_id",
-			"m.steam_id ",
-			"m.server_id",
-			"m.body",
-			"m.team ",
-			"m.created_on",
-			"m.persona_name",
-			"s.short_name").
+		Select(columns...).
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id")
 
@@ -659,19 +703,43 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		builder = builder.Limit(query.Limit)
 	}
 
-	prefix := "m."
-	if query.OrderBy == "short_name" {
-		prefix = "s."
+	if query.OrderBy != "created_on" && query.OrderBy != "person_message_id" {
+		return nil, 0, errors.New("Sort only allowed on created_by")
 	}
+
+	prefix := "m."
 
 	query.OrderBy = prefix + query.OrderBy
 
 	if query.OrderBy != "" {
-		if query.Desc {
-			builder = builder.OrderBy(query.OrderBy+" DESC").GroupBy(query.OrderBy, "s.short_name", "m.person_message_id")
-		} else {
-			builder = builder.OrderBy(query.OrderBy+" ASC").GroupBy(query.OrderBy, "s.short_name", "m.person_message_id")
+		orderBy := []string{}
+		if query.Query != "" {
+			orderBy = append(orderBy, "message_rank")
 		}
+
+		if query.PersonaName != "" {
+			orderBy = append(orderBy, "name_rank")
+		}
+
+		orderBy = append(orderBy, query.OrderBy)
+
+		if query.Desc {
+			builder = builder.OrderBy(strings.Join(orderBy, ",") + " DESC")
+		} else {
+			builder = builder.OrderBy(strings.Join(orderBy, ",") + " ASC")
+		}
+
+		groupBy := []string{query.OrderBy, "m.created_on", "m.person_message_id", "s.short_name"}
+
+		if query.Query != "" {
+			groupBy = append(groupBy, "m.message_search")
+		}
+
+		if query.PersonaName != "" {
+			groupBy = append(groupBy, "m.name_search")
+		}
+
+		builder = builder.GroupBy(groupBy...)
 	}
 
 	var ands sq.And
@@ -690,11 +758,11 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	if query.PersonaName != "" {
-		ands = append(ands, sq.ILike{"m.persona_name": fmt.Sprintf("%%%s%%", strings.ToLower(query.PersonaName))})
+		ands = append(ands, tsQuery{index: idxNameSearch, term: query.PersonaName})
 	}
 
 	if query.Query != "" {
-		ands = append(ands, sq.ILike{"m.body": fmt.Sprintf("%%%s%%", strings.ToLower(query.Query))})
+		ands = append(ands, tsQuery{index: idxMessageSearch, term: query.Query})
 	}
 
 	if query.SentBefore != nil {
@@ -738,20 +806,31 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	for rows.Next() {
 		var (
-			message PersonMessage
-			steamID int64
+			message     PersonMessage
+			steamID     int64
+			messageRank float64
+			nameRank    float64
+			target      = []any{
+				&message.PersonMessageID,
+				&steamID,
+				&message.ServerID,
+				&message.Body,
+				&message.Team,
+				&message.CreatedOn,
+				&message.PersonaName,
+				&message.ServerName,
+			}
 		)
 
-		if errScan := rows.Scan(
-			&message.PersonMessageID,
-			&steamID,
-			&message.ServerID,
-			&message.Body,
-			&message.Team,
-			&message.CreatedOn,
-			&message.PersonaName,
-			&message.ServerName,
-		); errScan != nil {
+		if query.Query != "" {
+			target = append(target, &messageRank)
+		}
+
+		if query.PersonaName != "" {
+			target = append(target, &nameRank)
+		}
+
+		if errScan := rows.Scan(target...); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 

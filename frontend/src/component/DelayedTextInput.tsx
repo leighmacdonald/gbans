@@ -32,7 +32,7 @@ export const DelayedTextInput = ({
     ) => {
         setValue(event.target.value);
         const time = new Date();
-        time.setSeconds(time.getSeconds() + (delay ?? 2));
+        time.setSeconds(time.getSeconds() + (delay ?? 1));
         restart(time, true);
     };
 

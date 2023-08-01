@@ -242,6 +242,8 @@ export const AdminChat = () => {
         setRefreshTime(0);
         setSortColumn('person_message_id');
         setSortOrder('desc');
+        setMessageValue('');
+        setMessageQuery('');
     };
 
     return (
