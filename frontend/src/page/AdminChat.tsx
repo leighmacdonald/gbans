@@ -192,21 +192,12 @@ export const AdminChat = () => {
         if (selectedServer > 0) {
             opts.server_id = selectedServer;
         }
-        if (nameQuery) {
-            opts.persona_name = nameQuery;
-        }
-        if (messageQuery) {
-            opts.query = messageQuery;
-        }
-        if (steamId) {
-            opts.steam_id = steamId;
-        }
-        if (startDate) {
-            opts.sent_after = startDate;
-        }
-        if (endDate) {
-            opts.sent_before = endDate;
-        }
+
+        opts.persona_name = nameQuery;
+        opts.query = messageQuery;
+        opts.steam_id = steamId;
+        opts.sent_after = startDate ?? undefined;
+        opts.sent_before = endDate ?? undefined;
         opts.limit = rowPerPageCount;
         opts.offset = page * rowPerPageCount;
         opts.order_by = sortColumn;
@@ -249,6 +240,8 @@ export const AdminChat = () => {
         setEndDate(null);
         setPage(0);
         setRefreshTime(0);
+        setSortColumn('person_message_id');
+        setSortOrder('desc');
     };
 
     return (
@@ -462,6 +455,7 @@ export const AdminChat = () => {
                             tooltip: 'Time the message was sent',
                             sortKey: 'created_on',
                             sortType: 'date',
+                            sortable: true,
                             align: 'left',
                             width: 180,
                             queryValue: (o) => steamIdQueryValue(o.steam_id),

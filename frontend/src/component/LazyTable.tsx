@@ -97,22 +97,43 @@ export const LazyTableHeader = <T,>({
                                 backgroundColor: bgColor
                             }}
                         >
-                            <TableSortLabel
-                                title={col.tooltip}
-                                active={sortColumn === col.sortKey}
-                                direction={order}
-                                onClick={() => {
-                                    if (col.sortKey) {
-                                        if (sortColumn == col.sortKey) {
-                                            onSortOrderChanged(
-                                                order == 'asc' ? 'desc' : 'asc'
-                                            );
-                                        } else {
-                                            onSortColumnChanged(col.sortKey);
+                            {col.sortable ? (
+                                <TableSortLabel
+                                    title={col.tooltip}
+                                    active={sortColumn === col.sortKey}
+                                    direction={order}
+                                    onClick={() => {
+                                        if (col.sortKey) {
+                                            if (sortColumn == col.sortKey) {
+                                                onSortOrderChanged(
+                                                    order == 'asc'
+                                                        ? 'desc'
+                                                        : 'asc'
+                                                );
+                                            } else {
+                                                onSortColumnChanged(
+                                                    col.sortKey
+                                                );
+                                            }
                                         }
-                                    }
-                                }}
-                            >
+                                    }}
+                                >
+                                    <Typography
+                                        padding={0}
+                                        sx={{
+                                            textDecoration:
+                                                col.sortKey != sortColumn
+                                                    ? 'none'
+                                                    : order == 'asc'
+                                                    ? 'underline'
+                                                    : 'overline'
+                                        }}
+                                        variant={'button'}
+                                    >
+                                        {col.label}
+                                    </Typography>
+                                </TableSortLabel>
+                            ) : (
                                 <Typography
                                     padding={0}
                                     sx={{
@@ -127,7 +148,7 @@ export const LazyTableHeader = <T,>({
                                 >
                                     {col.label}
                                 </Typography>
-                            </TableSortLabel>
+                            )}
                         </TableCell>
                     );
                 })}
