@@ -1,21 +1,3 @@
-import { ChartOptions } from 'chart.js';
-
-export const makeChartOpts = (title: string) => {
-    const options: ChartOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top' as const
-            },
-            title: {
-                display: false,
-                text: title
-            }
-        }
-    };
-    return options;
-};
-
 export const Colors = [
     'rgb(37,204,247)',
     'rgb(253,114,114)',

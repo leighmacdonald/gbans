@@ -86,18 +86,6 @@ export const Home = (): JSX.Element => {
                         Donate
                     </Button>
 
-                    {/*<Button*/}
-                    {/*    startIcon={<EqualizerIcon />}*/}
-                    {/*    fullWidth*/}
-                    {/*    color={'primary'}*/}
-                    {/*    variant={'contained'}*/}
-                    {/*    onClick={() => {*/}
-                    {/*        navigate('/global_stats');*/}
-                    {/*    }}*/}
-                    {/*>*/}
-                    {/*    TF2 Stats*/}
-                    {/*</Button>*/}
-
                     <Button
                         startIcon={<VideocamIcon />}
                         fullWidth
