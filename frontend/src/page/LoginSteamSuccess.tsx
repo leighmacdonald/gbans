@@ -1,21 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import {
-    apiGetCurrentProfile,
-    refreshKey,
-    tokenKey,
-    writeAccessToken,
-    writeRefreshToken
-} from '../api';
+import React, { useEffect } from 'react';
+import { refreshKey, tokenKey } from '../api';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
-import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 const defaultLocation = '/';
 
 export const LoginSteamSuccess = () => {
-    const { setCurrentUser } = useCurrentUserCtx();
+    const { setRefreshToken, setToken } = useCurrentUserCtx();
     const navigate = useNavigate();
-    const [inProgress, setInProgress] = useState(true);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -24,49 +17,11 @@ export const LoginSteamSuccess = () => {
         if (!refresh || !token) {
             return;
         }
-        writeRefreshToken(refresh);
-        writeAccessToken(token);
+        setRefreshToken(refresh);
+        setToken(token);
 
-        const next_url = urlParams.get('next_url') ?? defaultLocation;
-        localStorage.removeItem('token'); // cleanup old key
-        apiGetCurrentProfile()
-            .then((response) => {
-                if (!response.status || !response.result) {
-                    return;
-                }
-                setCurrentUser(response.result);
-            })
-            .catch(() => {
-                setCurrentUser(GuestProfile);
-            })
-            .finally(() => {
-                setInProgress(false);
-                navigate(next_url);
-            });
+        navigate(urlParams.get('next_url') ?? defaultLocation);
+    });
 
-        // apiGetCurrentProfile()
-        //     .then((response) => {
-        //         // if (!response.status || !response.result) {
-        //         //     sendFlash('error', 'Failed to load profile :(');
-        //         //     return;
-        //         // }
-        //         setCurrentUser(response?.result || GuestProfile);
-        //     })
-        //     .catch(() => {
-        //         next_url = defaultLocation;
-        //     })
-        //     .finally(() => {
-        //         setInProgress(false);
-        //         navigate(next_url);
-        //     });
-        // eslint-disable-next-line
-    }, []);
-
-    return (
-        <>
-            {inProgress && (
-                <Typography variant={'h3'}>Logging In...</Typography>
-            )}
-        </>
-    );
+    return <>{<Typography variant={'h3'}>Logging In...</Typography>}</>;
 };

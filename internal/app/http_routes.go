@@ -48,8 +48,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
-	corsConfig.AllowHeaders = []string{"*"}
-	corsConfig.AllowWildcard = true
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	corsConfig.AllowWildcard = false
 	corsConfig.AllowCredentials = false
 
 	if app.conf.General.Mode != TestMode {

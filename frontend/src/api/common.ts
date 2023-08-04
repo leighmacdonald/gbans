@@ -58,6 +58,7 @@ export const apiCall = async <
     if (token != '' && token != null) {
         headers['Authorization'] = `Bearer ${token}`;
     }
+
     if (method !== 'GET' && body) {
         opts['body'] = JSON.stringify(body);
     }
@@ -90,9 +91,6 @@ export const apiCall = async <
 };
 
 export class ValidationException extends Error {}
-
-// Helper
-export const StringIsNumber = (value: unknown) => !isNaN(Number(value));
 
 export interface Pos {
     x: number;
