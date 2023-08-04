@@ -42,6 +42,12 @@ export const DelayedTextInput = ({
             value={value}
             placeholder={placeholder}
             onChange={onInputChange}
+            error={value.length > 0 && value.length < minLength}
+            helperText={
+                value.length > 0 && value.length < minLength
+                    ? `Minimum length: ${minLength}`
+                    : ''
+            }
         />
     );
 };

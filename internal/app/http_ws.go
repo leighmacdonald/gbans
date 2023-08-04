@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/mm"
-	"github.com/leighmacdonald/golib"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -213,7 +213,7 @@ func (cm *wsConnectionManager) pubLobbyList() []*pugLobby {
 	for _, l := range cm.lobbies {
 		lobbyVal, ok := l.(*pugLobby)
 		if !ok {
-			cm.logger.Warn("Failed to cast publobby")
+			cm.logger.Warn("Failed to cast pub lobby")
 
 			continue
 		}
@@ -289,7 +289,7 @@ func (cm *wsConnectionManager) createPugLobby(client *wsClient, opts createLobby
 	cm.Lock()
 	defer cm.Unlock()
 
-	lobbyID := golib.RandomString(tokenLen)
+	lobbyID := store.SecureRandomString(tokenLen)
 
 	_, found := cm.lobbies[lobbyID]
 	if found {

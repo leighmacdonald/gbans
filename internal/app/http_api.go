@@ -2934,7 +2934,7 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetMatches(app *App) gin.HandlerFunc {
+func onAPIGetMatches(_ *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var opts store.MatchesQueryOpts
 		if errBind := ctx.BindJSON(&opts); errBind != nil {
@@ -3036,7 +3036,7 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 		}
 
 		if messages == nil {
-			messages = store.PersonMessages{}
+			messages = []store.QueryChatHistoryResult{}
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{
@@ -3047,8 +3047,8 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 }
 
 type messageQueryResults struct {
-	TotalMessages int64                 `json:"total_messages"`
-	Messages      []store.PersonMessage `json:"messages"`
+	TotalMessages int64                          `json:"total_messages"`
+	Messages      []store.QueryChatHistoryResult `json:"messages"`
 }
 
 func onAPIGetMessageContext(app *App) gin.HandlerFunc {
@@ -3096,7 +3096,7 @@ func onAPIGetMessageContext(app *App) gin.HandlerFunc {
 		}
 
 		if messages == nil {
-			messages = store.PersonMessages{}
+			messages = []store.QueryChatHistoryResult{}
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{
@@ -3135,7 +3135,7 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 		}
 
 		if messages == nil {
-			messages = store.PersonMessages{}
+			messages = []store.QueryChatHistoryResult{}
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{

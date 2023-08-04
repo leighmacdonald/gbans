@@ -10,7 +10,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/gorilla/websocket v1.5.0
@@ -38,8 +38,8 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.21.0
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/atomic v1.11.0
-	go.uber.org/zap v1.24.0
-	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691
+	go.uber.org/zap v1.25.0
+	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
 
@@ -123,7 +123,7 @@ require (
 	golang.org/x/arch v0.4.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/mod v0.11.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect

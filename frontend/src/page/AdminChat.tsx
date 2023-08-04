@@ -30,6 +30,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
 import { DelayedTextInput } from '../component/DelayedTextInput';
+import { parseISO } from 'date-fns';
 
 const anyServer: Server = {
     server_name: 'Any',
@@ -60,8 +61,8 @@ const anyServerSimple: ServerSimple = {
 };
 
 interface ChatQueryState<T> {
-    startDate: Date | null;
-    endDate: Date | null;
+    startDate: Date | null | string;
+    endDate: Date | null | string;
     steamId: string;
     nameQuery: string;
     messageQuery: string;
@@ -90,14 +91,22 @@ const loadState = () => {
     const item = localStorage.getItem(localStorageKey);
     if (item) {
         config = JSON.parse(item);
+        if (config.startDate) {
+            config.startDate = parseISO(config.startDate as string);
+        }
+        if (config.endDate) {
+            config.endDate = parseISO(config.endDate as string);
+        }
     }
     return config;
 };
 
 export const AdminChat = () => {
     const init = loadState();
-    const [startDate, setStartDate] = useState<Date | null>(init.startDate);
-    const [endDate, setEndDate] = useState<Date | null>(init.endDate);
+    const [startDate, setStartDate] = useState<Date | null | string>(
+        init.startDate
+    );
+    const [endDate, setEndDate] = useState<Date | null | string>(init.endDate);
     const [steamId, setSteamId] = useState<string>(init.steamId);
     const [nameQuery, setNameQuery] = useState<string>(init.nameQuery);
     const [messageQuery, setMessageQuery] = useState<string>(init.messageQuery);
@@ -196,8 +205,8 @@ export const AdminChat = () => {
         opts.persona_name = nameQuery;
         opts.query = messageQuery;
         opts.steam_id = steamId;
-        opts.sent_after = startDate ?? undefined;
-        opts.sent_before = endDate ?? undefined;
+        opts.sent_after = (startDate as Date) ?? undefined;
+        opts.sent_before = (endDate as Date) ?? undefined;
         opts.limit = rowPerPageCount;
         opts.offset = page * rowPerPageCount;
         opts.order_by = sortColumn;
@@ -327,7 +336,7 @@ export const AdminChat = () => {
                                     sx={{ width: '100%' }}
                                     label="Date Start"
                                     format={'MM/dd/yyyy'}
-                                    value={startDate}
+                                    value={startDate as Date}
                                     onChange={(newValue: Date | null) => {
                                         setStartDate(newValue);
                                     }}
@@ -338,7 +347,7 @@ export const AdminChat = () => {
                                     sx={{ width: '100%' }}
                                     label="Date End"
                                     format="MM/dd/yyyy"
-                                    value={endDate}
+                                    value={endDate as Date}
                                     onChange={(newValue: Date | null) => {
                                         setEndDate(newValue);
                                     }}

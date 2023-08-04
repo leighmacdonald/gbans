@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -434,27 +434,23 @@ type userToken struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type personAuthClaims struct {
-	SteamID steamid.SID64 `json:"steam_id"`
-	jwt.StandardClaims
-}
-
 type serverAuthClaims struct {
 	ServerID int `json:"server_id"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
 
 func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
-	t0 := time.Now()
-	claims := &personAuthClaims{
-		SteamID: steamID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: t0.Add(authTokenLifetimeDuration).Unix(),
-			IssuedAt:  t0.Unix(),
-		},
+	nowTime := time.Now()
+	claims := &jwt.RegisteredClaims{
+		Issuer:    "gbans",
+		Subject:   steamID.String(),
+		ExpiresAt: jwt.NewNumericDate(nowTime.Add(authTokenLifetimeDuration)),
+		IssuedAt:  jwt.NewNumericDate(nowTime),
+		NotBefore: jwt.NewNumericDate(nowTime),
 	}
+
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
@@ -470,9 +466,10 @@ func newServerJWT(serverID int, cookieKey string) (string, error) {
 
 	claims := &serverAuthClaims{
 		ServerID: serverID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: curTime.Add(authTokenLifetimeDuration).Unix(),
-			IssuedAt:  curTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(curTime.Add(authTokenLifetimeDuration)),
+			IssuedAt:  jwt.NewNumericDate(curTime),
+			NotBefore: jwt.NewNumericDate(curTime),
 		},
 	}
 
@@ -571,7 +568,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 }
 
 func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
-	claims := &personAuthClaims{}
+	claims := &jwt.RegisteredClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, makeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
@@ -579,10 +576,7 @@ func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 			return "", consts.ErrAuthentication
 		}
 
-		var e *jwt.ValidationError
-
-		ok := errors.Is(errParseClaims, e)
-		if ok && e.Errors == jwt.ValidationErrorExpired {
+		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
 			return "", consts.ErrExpired
 		}
 
@@ -593,9 +587,10 @@ func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 		return "", consts.ErrAuthentication
 	}
 
-	if !claims.SteamID.Valid() {
+	sid := steamid.New(claims.Subject)
+	if !sid.Valid() {
 		return "", consts.ErrAuthentication
 	}
 
-	return claims.SteamID, nil
+	return sid, nil
 }

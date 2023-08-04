@@ -2,7 +2,9 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"net"
 	"strings"
 	"time"
@@ -10,7 +12,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
@@ -166,12 +167,29 @@ type PersonAuth struct {
 
 const refreshTokenLen = 80
 
+func SecureRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+
+	ret := make([]byte, n)
+
+	for currentChar := 0; currentChar < n; currentChar++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return ""
+		}
+
+		ret[currentChar] = letters[num.Int64()]
+	}
+
+	return string(ret)
+}
+
 func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
 	return PersonAuth{
 		PersonAuthID: 0,
 		SteamID:      sid64,
 		IPAddr:       addr,
-		RefreshToken: golib.RandomString(refreshTokenLen),
+		RefreshToken: SecureRandomString(refreshTokenLen),
 		CreatedOn:    time.Now(),
 	}
 }
@@ -622,9 +640,10 @@ type ChatHistoryQueryFilter struct {
 	PersonaName string `json:"persona_name,omitempty"`
 	SteamID     string `json:"steam_id,omitempty"`
 	// TODO Index this body query
-	ServerID   int        `json:"server_id,omitempty"`
-	SentAfter  *time.Time `json:"sent_after,omitempty"`
-	SentBefore *time.Time `json:"sent_before,omitempty"`
+	ServerID     int        `json:"server_id,omitempty"`
+	SentAfter    *time.Time `json:"sent_after,omitempty"`
+	SentBefore   *time.Time `json:"sent_before,omitempty"`
+	Unrestricted bool
 }
 
 type dbIndex string
@@ -634,31 +653,15 @@ const (
 	idxMessageSearch dbIndex = "message_search"
 )
 
-type tsQuery struct {
-	index dbIndex
-	term  string
+type QueryChatHistoryResult struct {
+	PersonMessage
+	messageRank float64
+	nameRank    float64
 }
 
-func (lt tsQuery) ToSql() (string, []any, error) { // nolint:stylecheck
-	var (
-		args []any
-		err  error
-	)
+const minQueryLen = 2
 
-	if lt.index == "" || (lt.index != "message_search" && lt.index != "name_search") {
-		return "", nil, errors.New("Invalid index")
-	}
-
-	if lt.term == "" {
-		return "", nil, errors.New("Invalid term")
-	}
-
-	args = append(args, lt.term)
-
-	return fmt.Sprintf(`%s @@ websearch_to_tsquery('simple', ?)`, lt.index), args, err
-}
-
-func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) (PersonMessages, int64, error) {
+func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) { //nolint:maintidx
 	if query.Limit > 1000 {
 		return nil, 0, errLimit
 	}
@@ -677,16 +680,23 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	countCols := []string{"count(m.created_on) as count"}
 
 	if query.Query != "" {
+		if len(query.Query) < minQueryLen {
+			return nil, 0, errors.New("Query value too short")
+		}
+
 		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.message_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) message_rank", query.Query))
 	}
 
 	if query.PersonaName != "" {
+		if len(query.Query) < minQueryLen {
+			return nil, 0, errors.New("Name value too short")
+		}
+
 		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.name_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) name_rank", query.PersonaName))
 	}
 
 	count := db.sb.
-		Select(
-			countCols...).
+		Select(countCols...).
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id")
 
@@ -701,6 +711,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	if query.Limit > 0 {
 		builder = builder.Limit(query.Limit)
+	} else {
+		builder = builder.Limit(50)
 	}
 
 	if query.OrderBy != "created_on" && query.OrderBy != "person_message_id" {
@@ -744,6 +756,22 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	var ands sq.And
 
+	now := time.Now()
+
+	if !query.Unrestricted {
+		unrTime := now.AddDate(0, 0, -14)
+		if query.SentAfter != nil && query.SentAfter.Before(unrTime) {
+			return nil, 0, errInvalidDuration
+		}
+	}
+	if query.SentAfter != nil && query.SentBefore != nil {
+		ands = append(ands, sq.Expr("'[?, ?]'::daterange @> m.created_on", query.SentAfter, query.SentBefore))
+	} else if query.SentAfter != nil {
+		ands = append(ands, sq.Expr("? > m.created_on", query.SentAfter))
+	} else if query.SentBefore != nil {
+		ands = append(ands, sq.Expr("? < m.created_on", query.SentBefore))
+	}
+
 	if query.ServerID > 0 {
 		ands = append(ands, sq.Eq{"m.server_id": query.ServerID})
 	}
@@ -758,11 +786,11 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	if query.PersonaName != "" {
-		ands = append(ands, tsQuery{index: idxNameSearch, term: query.PersonaName})
+		ands = append(ands, sq.Expr(`? @@ websearch_to_tsquery('simple', ?)`, idxNameSearch, query.PersonaName))
 	}
 
 	if query.Query != "" {
-		ands = append(ands, tsQuery{index: idxMessageSearch, term: query.Query})
+		ands = append(ands, sq.Expr(`? @@ websearch_to_tsquery('simple', ?)`, idxMessageSearch, query.Query))
 	}
 
 	if query.SentBefore != nil {
@@ -787,7 +815,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	if totalRows == 0 {
-		return PersonMessages{}, 0, nil
+		return []QueryChatHistoryResult{}, 0, nil
 	}
 
 	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
@@ -802,15 +830,13 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	defer rows.Close()
 
-	var messages PersonMessages
+	var messages []QueryChatHistoryResult
 
 	for rows.Next() {
 		var (
-			message     PersonMessage
-			steamID     int64
-			messageRank float64
-			nameRank    float64
-			target      = []any{
+			message QueryChatHistoryResult
+			steamID int64
+			target  = []any{
 				&message.PersonMessageID,
 				&steamID,
 				&message.ServerID,
@@ -823,11 +849,11 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		)
 
 		if query.Query != "" {
-			target = append(target, &messageRank)
+			target = append(target, &message.messageRank)
 		}
 
 		if query.PersonaName != "" {
-			target = append(target, &nameRank)
+			target = append(target, &message.nameRank)
 		}
 
 		if errScan := rows.Scan(target...); errScan != nil {
