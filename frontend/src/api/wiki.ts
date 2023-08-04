@@ -45,5 +45,5 @@ export const renderMarkdown = (md: string) =>
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
             .replace(/(media:\/\/)/gi, '/media/'),
-        { renderer: new WikiRenderer() }
+        { renderer: new WikiRenderer(), mangle: false }
     );

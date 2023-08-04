@@ -49,7 +49,7 @@ export const AdminNews = () => {
     }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {
-        setBodyHTML(marked(selectedNewsEntry.body_md));
+        setBodyHTML(marked(selectedNewsEntry.body_md, { mangle: false }));
     }, [selectedNewsEntry.body_md]);
 
     return (
