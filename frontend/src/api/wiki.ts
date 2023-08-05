@@ -1,5 +1,7 @@
 import { apiCall } from './common';
 import { marked, Renderer } from 'marked';
+import { gfmHeadingId } from 'marked-gfm-heading-id';
+import { mangle } from 'marked-mangle';
 
 export interface Page {
     slug: string;
@@ -40,10 +42,16 @@ class WikiRenderer extends Renderer {
     }
 }
 
+const options = {
+    prefix: 'gb-'
+};
+
+marked.use(gfmHeadingId(options), mangle());
+
 export const renderMarkdown = (md: string) =>
     marked(
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
             .replace(/(media:\/\/)/gi, '/media/'),
-        { renderer: new WikiRenderer(), mangle: false }
+        { renderer: new WikiRenderer() }
     );
