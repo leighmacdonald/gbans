@@ -2037,13 +2037,14 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 
 func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 	type createReport struct {
-		SourceID    store.StringSID `json:"source_id"`
-		TargetID    store.StringSID `json:"target_id"`
-		Description string          `json:"description"`
-		Reason      store.Reason    `json:"reason"`
-		ReasonText  string          `json:"reason_text"`
-		DemoName    string          `json:"demo_name"`
-		DemoTick    int             `json:"demo_tick"`
+		SourceID        store.StringSID `json:"source_id"`
+		TargetID        store.StringSID `json:"target_id"`
+		Description     string          `json:"description"`
+		Reason          store.Reason    `json:"reason"`
+		ReasonText      string          `json:"reason_text"`
+		DemoName        string          `json:"demo_name"`
+		DemoTick        int             `json:"demo_tick"`
+		PersonMessageID int64           `json:"person_message_id"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -2133,6 +2134,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 		parts := strings.Split(newReport.DemoName, "/")
 		report.DemoName = parts[len(parts)-1]
 		report.DemoTick = newReport.DemoTick
+		report.PersonMessageID = newReport.PersonMessageID
 
 		if errReportSave := app.db.SaveReport(ctx, &report); errReportSave != nil {
 			responseErrUser(ctx, http.StatusInternalServerError, nil, "Failed to save report")
@@ -3013,6 +3015,44 @@ func onAPIGetPersonConnections(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		messageID, errMessageID := getInt64Param(ctx, "person_message_id")
+		if errMessageID != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Debug("Got invalid person_message_id", zap.Error(errMessageID))
+
+			return
+		}
+
+		padding, errPadding := getIntParam(ctx, "padding")
+		if errPadding != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Debug("Got invalid padding", zap.Error(errPadding))
+
+			return
+		}
+
+		var msg store.QueryChatHistoryResult
+		if errMsg := app.db.GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		messages, errQuery := app.db.GetPersonMessageContext(ctx, msg.ServerID, messageID, padding)
+		if errQuery != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, messages)
+	}
+}
+
 func onAPIQueryMessages(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -3049,61 +3089,6 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 type messageQueryResults struct {
 	TotalMessages int64                          `json:"total_messages"`
 	Messages      []store.QueryChatHistoryResult `json:"messages"`
-}
-
-func onAPIGetMessageContext(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		messageID, errID := getInt64Param(ctx, "person_message_id")
-		if errID != nil {
-			log.Error("Invalid steam_id value", zap.Error(errID))
-			responseErr(ctx, http.StatusBadRequest, nil)
-
-			return
-		}
-
-		var message store.PersonMessage
-		if errMsg := app.db.GetPersonMessageByID(ctx, messageID, &message); errMsg != nil {
-			if errors.Is(errMsg, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, nil)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
-		after := message.CreatedOn.Add(-time.Hour)
-		before := message.CreatedOn.Add(time.Hour)
-
-		// TODO paging
-		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
-			ServerID:    message.ServerID,
-			SentAfter:   &after,
-			SentBefore:  &before,
-			QueryFilter: store.QueryFilter{},
-		})
-
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query messages history",
-				zap.Error(errChat), zap.Int64("person_message_id", messageID))
-			responseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
-		if messages == nil {
-			messages = []store.QueryChatHistoryResult{}
-		}
-
-		responseOK(ctx, http.StatusOK, messageQueryResults{
-			TotalMessages: totalMessages,
-			Messages:      messages,
-		})
-	}
 }
 
 func onAPIGetPersonMessages(app *App) gin.HandlerFunc {

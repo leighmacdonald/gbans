@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, JSX } from 'react';
+import React, { JSX, useCallback, useEffect, useState } from 'react';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
@@ -6,7 +6,15 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import { useNavigate } from 'react-router-dom';
-import { apiCreateReport, BanReason, BanReasons, PlayerProfile } from '../api';
+import {
+    apiCreateReport,
+    BanReason,
+    BanReasons,
+    PlayerProfile,
+    sessionKeyDemoName,
+    sessionKeyReportPersonMessageIdName,
+    sessionKeyReportSteamID
+} from '../api';
 import { ProfileSelectionInput } from './ProfileSelectionInput';
 import { MDEditor } from './MDEditor';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -14,23 +22,38 @@ import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import Stack from '@mui/material/Stack';
+import { PlayerMessageContext } from './PlayerMessageContext';
 
 export const ReportForm = (): JSX.Element => {
-    const [reason, setReason] = useState<BanReason>(BanReason.Cheating);
+    const [reason, setReason] = useState<BanReason>(
+        sessionStorage.getItem(sessionKeyReportPersonMessageIdName)
+            ? BanReason.Language
+            : BanReason.Cheating
+    );
     const [body, setBody] = useState<string>('');
     const [reasonText, setReasonText] = useState<string>('');
-    const [demoName, setDemoName] = useState(() => {
-        return localStorage.getItem('demoName') ?? '';
-    });
     const [demoTick, setDemoTick] = useState(0);
     const [profile, setProfile] = useState<PlayerProfile | null>();
-    const [inputSteamID, setInputSteamID] = useState<string>('');
+    const [inputSteamID, setInputSteamID] = useState<string>(
+        sessionStorage.getItem(sessionKeyReportSteamID) ?? ''
+    );
+    const [personMessageID] = useState(
+        parseInt(
+            sessionStorage.getItem(sessionKeyReportPersonMessageIdName) ?? '0',
+            10
+        )
+    );
+    const [demoName] = useState(
+        sessionStorage.getItem(sessionKeyDemoName) ?? ''
+    );
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
 
     useEffect(() => {
         return () => {
-            localStorage.removeItem('demoName');
+            sessionStorage.removeItem(sessionKeyDemoName);
+            sessionStorage.removeItem(sessionKeyReportPersonMessageIdName);
+            sessionStorage.removeItem(sessionKeyReportSteamID);
         };
     }, []);
 
@@ -52,7 +75,8 @@ export const ReportForm = (): JSX.Element => {
                     reason: reason,
                     reason_text: reasonText,
                     demo_name: demoName,
-                    demo_tick: demoTick
+                    demo_tick: demoTick,
+                    person_message_id: personMessageID
                 })
                     .then((response) => {
                         if (!response.status) {
@@ -69,7 +93,16 @@ export const ReportForm = (): JSX.Element => {
                     .catch(logErr);
             }
         },
-        [demoName, demoTick, navigate, profile, reason, reasonText, sendFlash]
+        [
+            demoName,
+            demoTick,
+            navigate,
+            personMessageID,
+            profile,
+            reason,
+            reasonText,
+            sendFlash
+        ]
     );
 
     return (
@@ -78,7 +111,7 @@ export const ReportForm = (): JSX.Element => {
             iconLeft={<EditNotificationsIcon />}
             spacing={2}
         >
-            <Box paddingLeft={2} paddingRight={2} marginTop={3} width={'100%'}>
+            <Box paddingLeft={2} paddingRight={2} paddingTop={3} width={'100%'}>
                 <ProfileSelectionInput
                     fullWidth
                     input={inputSteamID}
@@ -144,9 +177,6 @@ export const ReportForm = (): JSX.Element => {
                                 value={demoName}
                                 disabled={true}
                                 fullWidth
-                                onChange={(event) => {
-                                    setDemoName(event.target.value);
-                                }}
                             />
                         </FormControl>
                         <FormControl fullWidth>
@@ -160,6 +190,12 @@ export const ReportForm = (): JSX.Element => {
                             />
                         </FormControl>
                     </Stack>
+                )}
+                {personMessageID > 0 && (
+                    <PlayerMessageContext
+                        playerMessageId={personMessageID}
+                        padding={5}
+                    />
                 )}
             </Box>
             <MDEditor

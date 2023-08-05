@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"regexp"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -30,10 +31,10 @@ func (f *Filter) Init() {
 
 func (f *Filter) Match(value string) bool {
 	if f.IsRegex {
-		return f.Regex.MatchString(value)
+		return f.Regex.MatchString(strings.ToLower(value))
 	}
 
-	return f.Pattern == value
+	return f.Pattern == strings.ToLower(value)
 }
 
 func (db *Store) SaveFilter(ctx context.Context, filter *Filter) error {
@@ -148,4 +149,17 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 	}
 
 	return filters, nil
+}
+
+func (db *Store) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
+	query, args, errQuery := db.sb.
+		Insert("person_messages_filter").
+		Columns("person_message_id", "filter_id").
+		Values(messageID, filterID).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	return db.Exec(ctx, query, args...)
 }

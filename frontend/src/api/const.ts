@@ -7,6 +7,7 @@ export enum Team {
 export enum Weapon {
     ScatterGun
 }
+
 //
 export const EventTypeById = {
     0: 'unhandled',
@@ -153,6 +154,7 @@ export const PlayerClassNames: Record<PlayerClass, string> = {
     [PlayerClass.Spy]: 'spy',
     [PlayerClass.Unknown]: 'unknown'
 };
+
 export enum PickupItem {
     ItemHPSmall,
     ItemHPMedium,
@@ -161,3 +163,7 @@ export enum PickupItem {
     ItemAmmoMedium,
     ItemAmmoLarge
 }
+
+export const sessionKeyDemoName = 'demoName';
+export const sessionKeyReportPersonMessageIdName = 'rpmid';
+export const sessionKeyReportSteamID = 'report_steam_id';

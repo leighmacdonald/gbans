@@ -44,11 +44,12 @@ type Report struct {
 	Deleted      bool          `json:"deleted"`
 	// Note that we do not use a foreign key here since the demos are not sent until completion
 	// and reports can happen mid-game
-	DemoName  string    `json:"demo_name"`
-	DemoTick  int       `json:"demo_tick"`
-	DemoID    int       `json:"demo_id"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	DemoName        string    `json:"demo_name"`
+	DemoTick        int       `json:"demo_tick"`
+	DemoID          int       `json:"demo_id"`
+	PersonMessageID int64     `json:"person_message_id"`
+	CreatedOn       time.Time `json:"created_on"`
+	UpdatedOn       time.Time `json:"updated_on"`
 }
 
 func (report Report) Path() string {
@@ -71,10 +72,15 @@ func NewReport() Report {
 func (db *Store) insertReport(ctx context.Context, report *Report) error {
 	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason, 
-            reason_text, demo_name, demo_tick
+            reason_text, demo_name, demo_tick, person_message_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING report_id`
+
+	var msgID *int64
+	if report.PersonMessageID > 0 {
+		msgID = &report.PersonMessageID
+	}
 
 	if errQuery := db.QueryRow(ctx, query,
 		report.SourceID,
@@ -88,6 +94,7 @@ func (db *Store) insertReport(ctx context.Context, report *Report) error {
 		report.ReasonText,
 		report.DemoName,
 		report.DemoTick,
+		msgID,
 	).Scan(&report.ReportID); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -99,14 +106,19 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 	const query = `
 		UPDATE report 
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
-            deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10
+            deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10, person_message_id = $11
         WHERE report_id = $11`
 
 	report.UpdatedOn = time.Now()
 
+	var msgID *int64
+	if report.PersonMessageID > 0 {
+		msgID = &report.PersonMessageID
+	}
+
 	return Err(db.Exec(ctx, query, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
-		report.DemoName, report.DemoTick, report.ReportID))
+		report.DemoName, report.DemoTick, report.ReportID, msgID))
 }
 
 func (db *Store) SaveReport(ctx context.Context, report *Report) error {
@@ -228,7 +240,7 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 	builder := db.sb.
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",
 			"r.description", "r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text",
-			"r.demo_name", "r.demo_tick", "coalesce(d.demo_id, 0)").
+			"r.demo_name", "r.demo_tick", "coalesce(d.demo_id, 0)", "r.person_message_id").
 		From("report r").
 		Where(conditions).
 		LeftJoin("demo d on d.title = r.demo_name")
@@ -259,9 +271,10 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 
 	for rows.Next() {
 		var (
-			report   Report
-			sourceID int64
-			targetID int64
+			report          Report
+			sourceID        int64
+			targetID        int64
+			personMessageID *int64
 		)
 
 		if errScan := rows.Scan(
@@ -278,8 +291,13 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 			&report.DemoName,
 			&report.DemoTick,
 			&report.DemoID,
+			&personMessageID,
 		); errScan != nil {
 			return nil, Err(errScan)
+		}
+
+		if personMessageID != nil {
+			report.PersonMessageID = *personMessageID
 		}
 
 		report.SourceID = steamid.New(sourceID)
@@ -296,7 +314,8 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 	const query = `
 		SELECT 
 		   r.report_id, r.author_id, r.reported_id, r.report_status, r.description, 
-		   r.deleted, r.created_on, r.updated_on, r.reason, r.reason_text, r.demo_name, r.demo_tick, coalesce(d.demo_id, 0)
+		   r.deleted, r.created_on, r.updated_on, r.reason, r.reason_text, r.demo_name, r.demo_tick, 
+		   coalesce(d.demo_id, 0), coalesce(r.person_message_id, 0)
 		FROM report r
 		LEFT JOIN demo d on r.demo_name = d.title
 		WHERE deleted = false AND reported_id = $1 AND report_status <= $2 AND author_id = $3`
@@ -321,6 +340,7 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 			&report.DemoName,
 			&report.DemoTick,
 			&report.DemoID,
+			&report.PersonMessageID,
 		); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -336,7 +356,7 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 		SELECT 
 		   r.report_id, r.author_id, r.reported_id, r.report_status, r.description, 
 		   r.deleted, r.created_on, r.updated_on, r.reason, r.reason_text, r.demo_name, r.demo_tick, 
-		   coalesce(d.demo_id, 0)
+		   coalesce(d.demo_id, 0), coalesce(r.person_message_id, 0)
 		FROM report r
 		LEFT JOIN demo d on r.demo_name = d.title
 		WHERE deleted = false AND report_id = $1`
@@ -361,6 +381,7 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 			&report.DemoName,
 			&report.DemoTick,
 			&report.DemoID,
+			&report.PersonMessageID,
 		); errQuery != nil {
 		return Err(errQuery)
 	}

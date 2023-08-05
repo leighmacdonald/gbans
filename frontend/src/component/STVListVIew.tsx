@@ -162,7 +162,7 @@ export const STVListVIew = () => {
                                     <IconButton
                                         color={'error'}
                                         onClick={() => {
-                                            localStorage.setItem(
+                                            sessionStorage.setItem(
                                                 'demoName',
                                                 row.title
                                             );

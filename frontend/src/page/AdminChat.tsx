@@ -12,7 +12,9 @@ import {
     MessageQuery,
     PersonMessage,
     Server,
-    ServerSimple
+    ServerSimple,
+    sessionKeyReportPersonMessageIdName,
+    sessionKeyReportSteamID
 } from '../api';
 import { steamIdQueryValue } from '../util/text';
 import Button from '@mui/material/Button';
@@ -22,7 +24,7 @@ import { LazyTable } from '../component/LazyTable';
 import { logErr } from '../util/errors';
 import { Order, RowsPerPage } from '../component/DataTable';
 import { formatISO9075 } from 'date-fns/fp';
-import { TablePagination } from '@mui/material';
+import { Divider, IconButton, TablePagination } from '@mui/material';
 import { useTimer } from 'react-timer-hook';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -31,7 +33,15 @@ import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
 import { DelayedTextInput } from '../component/DelayedTextInput';
 import { parseISO } from 'date-fns';
-
+import FlagIcon from '@mui/icons-material/Flag';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import Menu from '@mui/material/Menu';
+import { useNavigate } from 'react-router-dom';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ReportIcon from '@mui/icons-material/Report';
+import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
+import ListItemText from '@mui/material/ListItemText';
+import HistoryIcon from '@mui/icons-material/History';
 const anyServer: Server = {
     server_name: 'Any',
     server_id: 0,
@@ -129,7 +139,7 @@ export const AdminChat = () => {
     const [messageValue, setMessageValue] = useState<string>(init.messageQuery);
 
     const [selectedServer, setSelectedServer] = useState<number>(
-        init.selectedServer
+        init.selectedServer ?? ''
     );
 
     const curTime = new Date();
@@ -386,7 +396,7 @@ export const AdminChat = () => {
                                 labelId="auto-refresh-label"
                                 id="auto-refresh"
                                 label="Auto Refresh"
-                                value={refreshTime}
+                                value={refreshTime ?? ''}
                                 onChange={(
                                     event: SelectChangeEvent<number>
                                 ) => {
@@ -498,12 +508,134 @@ export const AdminChat = () => {
                             tooltip: 'Message',
                             sortKey: 'body',
                             align: 'left',
-                            queryValue: (o) => o.body
+                            queryValue: (o) => o.body,
+                            renderer: (row) => {
+                                return (
+                                    <Grid container>
+                                        <Grid xs padding={1}>
+                                            <Typography variant={'body1'}>
+                                                {row.body}
+                                            </Typography>
+                                        </Grid>
+
+                                        {row.auto_filter_flagged && (
+                                            <Grid
+                                                xs={'auto'}
+                                                padding={1}
+                                                display="flex"
+                                                justifyContent="center"
+                                                alignItems="center"
+                                            >
+                                                <>
+                                                    <FlagIcon
+                                                        color={'error'}
+                                                        fontSize="small"
+                                                    />
+                                                </>
+                                            </Grid>
+                                        )}
+                                        <Grid
+                                            xs={'auto'}
+                                            display="flex"
+                                            justifyContent="center"
+                                            alignItems="center"
+                                        >
+                                            <ChatContextMenu
+                                                flagged={
+                                                    row.auto_filter_flagged
+                                                }
+                                                steamId={row.steam_id}
+                                                person_message_id={
+                                                    row.person_message_id
+                                                }
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                );
+                            }
                         }
                     ]}
                     rows={rows}
                 />
             </Grid>
         </Grid>
+    );
+};
+
+interface ChatContextMenuProps {
+    person_message_id: number;
+    flagged: boolean;
+    steamId: string;
+}
+
+const ChatContextMenu = ({
+    person_message_id,
+    flagged,
+    steamId
+}: ChatContextMenuProps) => {
+    const navigate = useNavigate();
+
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const onClickReport = () => {
+        sessionStorage.setItem(
+            sessionKeyReportPersonMessageIdName,
+            `${person_message_id}`
+        );
+        sessionStorage.setItem(sessionKeyReportSteamID, steamId);
+        navigate('/report');
+        handleClose();
+    };
+
+    return (
+        <>
+            <IconButton onClick={handleClick} size={'small'}>
+                <SettingsSuggestIcon color={'info'} />
+            </IconButton>
+            <Menu
+                id="chat-msg-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                }}
+            >
+                <MenuItem onClick={onClickReport} disabled={flagged}>
+                    <ListItemIcon>
+                        <ReportIcon fontSize="small" color={'error'} />
+                    </ListItemIcon>
+                    <ListItemText>Create Report (Full)</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={onClickReport} disabled={true}>
+                    <ListItemIcon>
+                        <ReportGmailerrorredIcon
+                            fontSize="small"
+                            color={'error'}
+                        />
+                    </ListItemIcon>
+                    <ListItemText>Create Report (1-Click)</ListItemText>
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleClose} disabled={true}>
+                    <ListItemIcon>
+                        <HistoryIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Message Context</ListItemText>
+                </MenuItem>
+            </Menu>
+        </>
     );
 };

@@ -142,6 +142,7 @@ export interface PersonMessage {
     body: string;
     team: boolean;
     created_on: Date;
+    auto_filter_flagged: boolean;
 }
 
 export const apiGetPersonConnections = async (steam_id: string) =>
@@ -161,9 +162,12 @@ export const apiGetPersonMessages = async (steam_id: string) => {
     return resp;
 };
 
-export const apiGetMessageContext = async (message_id: number) => {
+export const apiGetMessageContext = async (
+    messageId: number,
+    padding: number = 5
+) => {
     const resp = await apiCall<PersonMessage[]>(
-        `/api/message/${message_id}/context`,
+        `/api/message/${messageId}/context/${padding}`,
         'GET'
     );
     resp.result = resp.result?.map((msg) => {

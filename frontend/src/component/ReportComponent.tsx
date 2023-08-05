@@ -37,6 +37,8 @@ import Link from '@mui/material/Link';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Button from '@mui/material/Button';
 import { SourceBansList } from './SourceBansList';
+import { PlayerMessageContext } from './PlayerMessageContext';
+import { ContainerWithHeader } from './ContainerWithHeader';
 
 interface ReportComponentProps {
     report: Report;
@@ -321,6 +323,15 @@ export const ReportComponent = ({
                                 </Button>
                             </Stack>
                         </Paper>
+                    )}
+
+                    {report.person_message_id > 0 && (
+                        <ContainerWithHeader title={'Message Context'}>
+                            <PlayerMessageContext
+                                playerMessageId={report.person_message_id}
+                                padding={4}
+                            />
+                        </ContainerWithHeader>
                     )}
 
                     {currentUser.permission_level >=

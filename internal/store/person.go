@@ -640,29 +640,23 @@ type ChatHistoryQueryFilter struct {
 	PersonaName string `json:"persona_name,omitempty"`
 	SteamID     string `json:"steam_id,omitempty"`
 	// TODO Index this body query
-	ServerID     int        `json:"server_id,omitempty"`
-	SentAfter    *time.Time `json:"sent_after,omitempty"`
-	SentBefore   *time.Time `json:"sent_before,omitempty"`
-	Unrestricted bool
+	ServerID      int        `json:"server_id,omitempty"`
+	SentAfter     *time.Time `json:"sent_after,omitempty"`
+	SentBefore    *time.Time `json:"sent_before,omitempty"`
+	Unrestricted  bool       `json:"-"`
+	DontCalcTotal bool       `json:"-"`
+	FlaggedOnly   bool       `json:"flagged_only"`
 }
-
-type dbIndex string
-
-const (
-	idxNameSearch    dbIndex = "name_search"
-	idxMessageSearch dbIndex = "message_search"
-)
 
 type QueryChatHistoryResult struct {
 	PersonMessage
-	messageRank float64
-	nameRank    float64
+	AutoFilterFlagged bool `json:"auto_filter_flagged"`
 }
 
 const minQueryLen = 2
 
 func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) { //nolint:maintidx
-	if query.Limit > 1000 {
+	if query.Limit > 1000 && !query.Unrestricted {
 		return nil, 0, errLimit
 	}
 
@@ -675,6 +669,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		"m.created_on",
 		"m.persona_name",
 		"s.short_name",
+		"COUNT(f.person_message_id)::int::boolean as flagged",
 	}
 
 	countCols := []string{"count(m.created_on) as count"}
@@ -683,16 +678,12 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		if len(query.Query) < minQueryLen {
 			return nil, 0, errors.New("Query value too short")
 		}
-
-		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.message_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) message_rank", query.Query))
 	}
 
 	if query.PersonaName != "" {
-		if len(query.Query) < minQueryLen {
+		if len(query.PersonaName) < minQueryLen {
 			return nil, 0, errors.New("Name value too short")
 		}
-
-		columns = append(columns, fmt.Sprintf("ts_rank_cd(m.name_search, websearch_to_tsquery('simple', quote_literal(E'%s'::text))) name_rank", query.PersonaName))
 	}
 
 	count := db.sb.
@@ -703,7 +694,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	builder := db.sb.
 		Select(columns...).
 		From("person_messages m").
-		LeftJoin("server s on m.server_id = s.server_id")
+		LeftJoin("server s on m.server_id = s.server_id").
+		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id")
 
 	if query.Offset > 0 {
 		builder = builder.Offset(query.Offset)
@@ -716,7 +708,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	if query.OrderBy != "created_on" && query.OrderBy != "person_message_id" {
-		return nil, 0, errors.New("Sort only allowed on created_by")
+		return nil, 0, errors.New("Sort only allowed on created_on")
 	}
 
 	prefix := "m."
@@ -724,16 +716,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	query.OrderBy = prefix + query.OrderBy
 
 	if query.OrderBy != "" {
-		orderBy := []string{}
-		if query.Query != "" {
-			orderBy = append(orderBy, "message_rank")
-		}
-
-		if query.PersonaName != "" {
-			orderBy = append(orderBy, "name_rank")
-		}
-
-		orderBy = append(orderBy, query.OrderBy)
+		orderBy := []string{query.OrderBy}
 
 		if query.Desc {
 			builder = builder.OrderBy(strings.Join(orderBy, ",") + " DESC")
@@ -741,7 +724,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			builder = builder.OrderBy(strings.Join(orderBy, ",") + " ASC")
 		}
 
-		groupBy := []string{query.OrderBy, "m.created_on", "m.person_message_id", "s.short_name"}
+		groupBy := []string{query.OrderBy, "m.created_on", "m.person_message_id", "s.short_name", "f.person_message_id"}
 
 		if query.Query != "" {
 			groupBy = append(groupBy, "m.message_search")
@@ -764,11 +747,13 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			return nil, 0, errInvalidDuration
 		}
 	}
-	if query.SentAfter != nil && query.SentBefore != nil {
+
+	switch {
+	case query.SentAfter != nil && query.SentBefore != nil:
 		ands = append(ands, sq.Expr("'[?, ?]'::daterange @> m.created_on", query.SentAfter, query.SentBefore))
-	} else if query.SentAfter != nil {
+	case query.SentAfter != nil:
 		ands = append(ands, sq.Expr("? > m.created_on", query.SentAfter))
-	} else if query.SentBefore != nil {
+	case query.SentBefore != nil:
 		ands = append(ands, sq.Expr("? < m.created_on", query.SentBefore))
 	}
 
@@ -786,35 +771,34 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	if query.PersonaName != "" {
-		ands = append(ands, sq.Expr(`? @@ websearch_to_tsquery('simple', ?)`, idxNameSearch, query.PersonaName))
+		ands = append(ands, sq.Expr(`name_search @@ websearch_to_tsquery('simple', ?)`, query.PersonaName))
 	}
 
 	if query.Query != "" {
-		ands = append(ands, sq.Expr(`? @@ websearch_to_tsquery('simple', ?)`, idxMessageSearch, query.Query))
+		ands = append(ands, sq.Expr(`message_search @@ websearch_to_tsquery('simple', ?)`, query.Query))
 	}
 
-	if query.SentBefore != nil {
-		ands = append(ands, sq.Lt{"m.created_on": query.SentBefore})
-	}
-
-	if query.SentAfter != nil {
-		ands = append(ands, sq.Gt{"m.created_on": query.SentAfter})
+	if query.FlaggedOnly {
+		ands = append(ands, sq.Eq{"flagged": true})
 	}
 
 	count = count.Where(ands)
 	builder = builder.Where(ands)
 
-	countQuery, countQueryArgs, countQueryErr := count.ToSql()
-	if countQueryErr != nil {
-		return nil, 0, errors.Wrap(countQueryErr, "Failed to build count query")
-	}
-
 	var totalRows int64
-	if errCount := db.QueryRow(ctx, countQuery, countQueryArgs...).Scan(&totalRows); errCount != nil {
-		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
+
+	if !query.DontCalcTotal {
+		countQuery, countQueryArgs, countQueryErr := count.ToSql()
+		if countQueryErr != nil {
+			return nil, 0, errors.Wrap(countQueryErr, "Failed to build count query")
+		}
+
+		if errCount := db.QueryRow(ctx, countQuery, countQueryArgs...).Scan(&totalRows); errCount != nil {
+			return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
+		}
 	}
 
-	if totalRows == 0 {
+	if totalRows == 0 && !query.DontCalcTotal {
 		return []QueryChatHistoryResult{}, 0, nil
 	}
 
@@ -845,16 +829,9 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 				&message.CreatedOn,
 				&message.PersonaName,
 				&message.ServerName,
+				&message.AutoFilterFlagged,
 			}
 		)
-
-		if query.Query != "" {
-			target = append(target, &message.messageRank)
-		}
-
-		if query.PersonaName != "" {
-			target = append(target, &message.nameRank)
-		}
 
 		if errScan := rows.Scan(target...); errScan != nil {
 			return nil, 0, Err(errScan)
@@ -866,6 +843,85 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	return messages, totalRows, nil
+}
+
+func (db *Store) GetPersonMessage(ctx context.Context, messageID int64, msg *QueryChatHistoryResult) error {
+	const query = `
+			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
+			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			FROM person_messages m 
+			LEFT JOIN server s on m.server_id = s.server_id
+			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
+		 	WHERE m.person_message_id = $1
+			GROUP BY m.person_message_id, s.short_name
+		`
+
+	if errScan := db.conn.
+		QueryRow(ctx, query, messageID).
+		Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+			&msg.PersonaName, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
+		return errors.Wrap(errScan, "Failed to scan message result")
+	}
+
+	return nil
+}
+
+func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
+	const query = `
+		(
+			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
+			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			FROM person_messages m 
+			LEFT JOIN server s on m.server_id = s.server_id
+			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
+		 	WHERE m.server_id = $3 AND m.person_message_id >= $1 
+		 	GROUP BY m.person_message_id, s.short_name 
+		 	ORDER BY m.person_message_id ASC
+		 	
+		 	LIMIT $2+1
+		)
+		UNION
+		(
+			SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.team, m.created_on, 
+			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+		 	FROM person_messages m 
+		 	    LEFT JOIN server s on m.server_id = s.server_id 
+		 	LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
+		 	WHERE m.server_id = $3 AND  m.person_message_id < $1
+		 	GROUP BY m.person_message_id, s.short_name
+		 	ORDER BY m.person_message_id DESC
+		 	LIMIT $2
+		)
+		ORDER BY person_message_id DESC`
+
+	if paddedMessageCount > 1000 {
+		paddedMessageCount = 1000
+	}
+
+	if paddedMessageCount <= 0 {
+		paddedMessageCount = 5
+	}
+
+	rows, errRows := db.conn.Query(ctx, query, messageID, paddedMessageCount, serverID)
+	if errRows != nil {
+		return nil, errors.Wrap(errRows, "Failed to fetch message context")
+	}
+	defer rows.Close()
+
+	var messages []QueryChatHistoryResult
+
+	for rows.Next() {
+		var msg QueryChatHistoryResult
+
+		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+			&msg.PersonaName, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
+			return nil, errors.Wrap(errRows, "Failed to scan message result")
+		}
+
+		messages = append(messages, msg)
+	}
+
+	return messages, nil
 }
 
 func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error) {

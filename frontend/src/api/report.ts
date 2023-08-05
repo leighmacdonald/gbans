@@ -50,6 +50,7 @@ export interface Report extends TimeStamped {
     demo_name: string;
     demo_tick: number;
     demo_id: number;
+    person_message_id: number;
 }
 
 export interface ReportMessagesResponse {
@@ -72,6 +73,7 @@ export interface CreateReportRequest {
     reason_text: string;
     demo_name: string;
     demo_tick: number;
+    person_message_id: number;
 }
 
 export interface ReportWithAuthor {

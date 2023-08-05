@@ -156,7 +156,7 @@ func (app *App) Init(ctx context.Context) error {
 
 	// Load the filtered word set into memory
 	if app.conf.Filter.Enabled {
-		if errFilter := app.initFilters(ctx); errFilter != nil {
+		if errFilter := app.LoadFilters(ctx); errFilter != nil {
 			return errors.Wrap(errFilter, "Failed to load filters")
 		}
 
@@ -228,7 +228,7 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 					continue
 				}
 
-				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[newWarn.userMessage.SteamID]), app.conf.General.WarningLimit)
+				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[newWarn.userMessage.SteamID])+1, app.conf.General.WarningLimit)
 				if app.conf.Filter.Dry {
 					title = "[DRYRUN] " + title
 				}
@@ -339,6 +339,9 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 		case userMessage := <-app.incomingGameChat:
 			matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(userMessage.Body)
 			if matchedFilter != nil {
+				if errSaveMatch := app.db.AddMessageFilterMatch(ctx, userMessage.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
+					log.Error("Failed to save message match status", zap.Error(errSaveMatch))
+				}
 				warningChan <- newUserWarning{
 					userMessage: userMessage,
 					userWarning: userWarning{
@@ -663,7 +666,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 	}
 }
 
-func (app *App) initFilters(ctx context.Context) error {
+func (app *App) LoadFilters(ctx context.Context) error {
 	// TODO load external lists via http
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
@@ -678,6 +681,8 @@ func (app *App) initFilters(ctx context.Context) error {
 	}
 
 	app.wordFilters.importFilteredWords(words)
+
+	app.log.Debug("Loaded word filters", zap.Int("count", len(words)))
 
 	return nil
 }

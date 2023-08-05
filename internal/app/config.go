@@ -238,7 +238,7 @@ func setDefaultConfigValues() {
 		"general.steam_key":                        "",
 		"general.mode":                             "release",
 		"general.owner":                            76561198044052046,
-		"general.warning_timeout":                  time.Hour * 24,
+		"general.warning_timeout":                  time.Hour * 72,
 		"general.warning_limit":                    1,
 		"general.warning_exceeded_action":          Gag,
 		"general.warning_exceeded_duration":        "168h",
