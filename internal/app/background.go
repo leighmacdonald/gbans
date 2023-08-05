@@ -193,7 +193,7 @@ func demoCleaner(ctx context.Context, database *store.Store, logger *zap.Logger)
 
 			log.Info("Old demos flushed")
 		case <-ctx.Done():
-			log.Debug("profileUpdater shutting down")
+			log.Debug("demoCleaner shutting down")
 
 			return
 		}

@@ -54,6 +54,7 @@ import { STVPage } from './page/STVPage';
 import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
 import { NotificationsPage } from './page/NotificationsPage';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
+import { AdminNetworkPage } from './page/AdminNetworkPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -361,6 +362,22 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         }
                                                                     >
                                                                         <AdminFilters />
+                                                                    </PrivateRoute>
+                                                                </ErrorBoundary>
+                                                            }
+                                                        />
+                                                        <Route
+                                                            path={
+                                                                '/admin/network'
+                                                            }
+                                                            element={
+                                                                <ErrorBoundary>
+                                                                    <PrivateRoute
+                                                                        permission={
+                                                                            PermissionLevel.Editor
+                                                                        }
+                                                                    >
+                                                                        <AdminNetworkPage />
                                                                     </PrivateRoute>
                                                                 </ErrorBoundary>
                                                             }

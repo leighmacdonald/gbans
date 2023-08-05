@@ -35,6 +35,7 @@ import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import useTheme from '@mui/material/styles/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { Flashes } from './Flashes';
@@ -217,6 +218,11 @@ export const TopBar = () => {
                 to: '/admin/news',
                 text: 'News',
                 icon: <NewspaperIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/network',
+                text: 'IP/Network Tools',
+                icon: <TravelExploreIcon sx={colourOpts} />
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Admin) {
