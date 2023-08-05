@@ -67,17 +67,17 @@ func refreshFiltersCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to load filters", zap.Error(errFilters))
 			}
 
-			var q store.ChatHistoryQueryFilter
-			q.DontCalcTotal = true
-			q.OrderBy = "created_on"
-			q.Desc = false
-			q.Limit = 10000
-			q.Unrestricted = true
+			var query store.ChatHistoryQueryFilter
+			query.DontCalcTotal = true
+			query.OrderBy = "created_on"
+			query.Desc = false
+			query.Limit = 10000
+			query.Unrestricted = true
 
 			matches := 0
 
 			for {
-				messages, _, errMessages := database.QueryChatHistory(ctx, q)
+				messages, _, errMessages := database.QueryChatHistory(ctx, query)
 				if errMessages != nil {
 					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
 
@@ -97,10 +97,10 @@ func refreshFiltersCmd() *cobra.Command {
 					}
 				}
 
-				q.Offset += q.Limit
+				query.Offset += query.Limit
 
-				if q.Offset%(q.Offset*5) == 0 {
-					rootLogger.Info("Progress update", zap.Uint64("offset", q.Offset), zap.Int("matches", matches))
+				if query.Offset%(query.Offset*5) == 0 {
+					rootLogger.Info("Progress update", zap.Uint64("offset", query.Offset), zap.Int("matches", matches))
 				}
 			}
 

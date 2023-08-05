@@ -314,7 +314,9 @@ export const AdminChat = () => {
                             <Grid xs={6} md={3}>
                                 <Select<number>
                                     fullWidth
-                                    value={selectedServer}
+                                    value={
+                                        servers.length > 0 ? selectedServer : ''
+                                    }
                                     onChange={(event) => {
                                         servers
                                             .filter(
