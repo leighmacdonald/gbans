@@ -36,14 +36,16 @@ func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
-func useSecure() gin.HandlerFunc {
+func useSecure(mode RunMode) gin.HandlerFunc {
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
-			cspbuilder.DefaultSrc: {"'self'", "$NONCE"},
+			cspbuilder.DefaultSrc: {"'self'"},
 			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
-			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"},
+			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"}, // TODO  "'strict-dynamic'", "$NONCE",
 			cspbuilder.FontSrc:    {"'self'", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
 			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://avatars.steamstatic.com"},
+			cspbuilder.BaseURI:    {"'self'"},
+			cspbuilder.ObjectSrc:  {"'none'"},
 		},
 	}
 	secureMiddleware := secure.New(secure.Options{
@@ -68,7 +70,7 @@ func useSecure() gin.HandlerFunc {
 		PermissionsPolicy:       "",
 		CrossOriginOpenerPolicy: "",
 		ExpectCTHeader:          "",
-		IsDevelopment:           false,
+		IsDevelopment:           mode != ReleaseMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
@@ -100,7 +102,7 @@ type jsConfig struct {
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
 	engine.Use(httpErrorHandler(app.log), gin.Recovery())
-	engine.Use(useSecure())
+	engine.Use(useSecure(app.conf.General.Mode))
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
