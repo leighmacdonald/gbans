@@ -11,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/unrolled/secure"
+	"github.com/unrolled/secure/cspbuilder"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +24,7 @@ func prometheusHandler() gin.HandlerFunc {
 	}
 }
 
-func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
+func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(c *gin.Context) {
@@ -32,6 +34,61 @@ func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 			log.Error("Unhandled HTTP Error", zap.Error(ginErr))
 		}
 	}
+}
+
+func useSecure(logger *zap.Logger, conf Config) gin.HandlerFunc {
+	// log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	cspBuilder := cspbuilder.Builder{
+		Directives: map[string][]string{
+			cspbuilder.DefaultSrc: {"'self'", "$NONCE"},
+			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
+			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"},
+			cspbuilder.FontSrc:    {"'self'", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
+			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://avatars.steamstatic.com"},
+		},
+	}
+	secureMiddleware := secure.New(secure.Options{
+		AllowedHosts:            []string{},
+		AllowedHostsAreRegex:    false,
+		AllowRequestFunc:        nil,
+		HostsProxyHeaders:       []string{},
+		SSLRedirect:             false,
+		SSLTemporaryRedirect:    false,
+		SSLHost:                 "",
+		SSLProxyHeaders:         map[string]string{},
+		STSSeconds:              0,
+		STSIncludeSubdomains:    false,
+		STSPreload:              false,
+		ForceSTSHeader:          false,
+		FrameDeny:               true,
+		CustomFrameOptionsValue: "",
+		ContentTypeNosniff:      false,
+		BrowserXssFilter:        false,
+		ContentSecurityPolicy:   cspBuilder.MustBuild(),
+		ReferrerPolicy:          "",
+		PermissionsPolicy:       "",
+		CrossOriginOpenerPolicy: "",
+		ExpectCTHeader:          "",
+		IsDevelopment:           false,
+	})
+
+	secureFunc := func(ctx *gin.Context) {
+		err := secureMiddleware.Process(ctx.Writer, ctx.Request)
+		// If there was an error, do not continue.
+		if err != nil {
+			ctx.Abort()
+
+			return
+		}
+
+		// Avoid header rewrite if response is a redirection.
+		if status := ctx.Writer.Status(); status > 300 && status < 399 {
+			ctx.Abort()
+		}
+	}
+
+	return secureFunc
 }
 
 // jsConfig contains all the variables that we inject into the frontend at runtime.
@@ -44,8 +101,8 @@ type jsConfig struct {
 //nolint:contextcheck
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
-	engine.Use(ErrorHandler(app.log), gin.Recovery())
-
+	engine.Use(httpErrorHandler(app.log), gin.Recovery())
+	engine.Use(useSecure(app.log, *app.conf))
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
