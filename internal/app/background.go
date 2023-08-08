@@ -9,10 +9,12 @@ import (
 	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
@@ -237,61 +239,115 @@ func (app *App) notificationSender(ctx context.Context) {
 	}
 }
 
+func (app *App) updateProfiles(ctx context.Context, people store.People) error {
+	if len(people) > 100 {
+		return errors.New("100 people max per call")
+	}
+
+	var (
+		banStates           []steamweb.PlayerBanState
+		summaries           []steamweb.PlayerSummary
+		steamIDs            = people.ToSteamIDCollection()
+		errGroup, cancelCtx = errgroup.WithContext(ctx)
+	)
+
+	errGroup.Go(func() error {
+		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
+		if errBans != nil || len(newBanStates) != 1 {
+			return errors.Wrap(errBans, "Failed to fetch ban status from steamapi")
+		}
+
+		banStates = newBanStates
+
+		return nil
+	})
+
+	errGroup.Go(func() error {
+		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, steamIDs)
+		if errSummaries != nil {
+			return errors.Wrap(errSummaries, "Failed to fetch player summaries from steamapi")
+		}
+
+		summaries = newSummaries
+
+		return nil
+	})
+
+	if errFetch := errGroup.Wait(); errFetch != nil {
+		return errors.Wrap(errFetch, "Failed to fetch data from steamapi")
+	}
+
+	for _, curPerson := range people {
+		person := curPerson
+		person.UpdatedOnSteam = time.Now()
+
+		for _, newSummary := range summaries {
+			summary := newSummary
+			if person.SteamID != summary.SteamID {
+				continue
+			}
+
+			person.PlayerSummary = &summary
+
+			break
+		}
+
+		for _, banState := range banStates {
+			if person.SteamID != banState.SteamID {
+				continue
+			}
+
+			person.CommunityBanned = banState.CommunityBanned
+			person.VACBans = banState.NumberOfVACBans
+			person.GameBans = banState.NumberOfGameBans
+			person.EconomyBan = banState.EconomyBan
+			person.CommunityBanned = banState.CommunityBanned
+			person.DaysSinceLastBan = banState.DaysSinceLastBan
+		}
+
+		if errSavePerson := app.db.SavePerson(ctx, &person); errSavePerson != nil {
+			return errors.Wrap(errSavePerson, "Failed to save person")
+		}
+	}
+
+	return nil
+}
+
 // profileUpdater takes care of periodically querying the steam api for updates player summaries.
-// The 100 oldest profiles are updated on each execution
-// func profileUpdater(ctx context.Context) {
-//	var update = func() {
-//		localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-//		defer cancel()
-//		people, errGetExpired := store.GetExpiredProfiles(localCtx, 100)
-//		if errGetExpired != nil {
-//			logger.Error("Failed to get expired profiles", zap.Error(errGetExpired))
-//			return
-//		}
-//		if len(people) == 0 {
-//			return
-//		}
-//		var sids steamid.Collection
-//		for _, person := range people {
-//			sids = append(sids, person.SteamID)
-//		}
-//		summaries, errSummaries := steamweb.PlayerSummaries(sids)
-//		if errSummaries != nil {
-//			logger.Error("Failed to get player summaries", zap.Error(errSummaries))
-//			return
-//		}
-//		for _, summary := range summaries {
-//			// TODO batch update upserts
-//			sid, errSid := steamid.SID64FromString(summary.Steamid)
-//			if errSid != nil {
-//				logger.Error("Failed to parse steamid from webapi", zap.Error(errSid))
-//				continue
-//			}
-//			person := store.NewPerson(sid)
-//			if errGetPerson := store.GetOrCreatePersonBySteamID(localCtx, sid, &person); errGetPerson != nil {
-//				logger.Error("Failed to get person", zap.Error(errGetPerson))
-//				continue
-//			}
-//			person.PlayerSummary = &summary
-//			person.UpdatedOnSteam = config.Now()
-//			if errSavePerson := store.SavePerson(localCtx, &person); errSavePerson != nil {
-//				logger.Error("Failed to save person", zap.Error(errSavePerson))
-//				continue
-//			}
-//		}
-//	}
-//	update()
-//	ticker := time.NewTicker(time.Second * 60)
-//	for {
-//		select {
-//		case <-ticker.C:
-//			update()
-//		case <-ctx.Done():
-//			logger.Debug("profileUpdater shutting down")
-//			return
-//		}
-//	}
-// }
+// The 100 oldest profiles are updated on each execution.
+func (app *App) profileUpdater(ctx context.Context) {
+	var (
+		log    = app.log.Named("profileUpdate")
+		run    = make(chan any)
+		ticker = time.NewTicker(time.Second * 60)
+	)
+
+	for {
+		select {
+		case <-ticker.C:
+			run <- true
+		case <-run:
+			localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+			people, errGetExpired := app.db.GetExpiredProfiles(localCtx, 100)
+
+			if errGetExpired != nil || len(people) == 0 {
+				cancel()
+
+				continue
+			}
+
+			if errUpdate := app.updateProfiles(localCtx, people); errUpdate != nil {
+				log.Error("Failed to update profiles", zap.Error(errUpdate))
+			}
+
+			cancel()
+		case <-ctx.Done():
+			log.Debug("profileUpdater shutting down")
+
+			return
+		}
+	}
+}
 
 func (app *App) stateUpdater(ctx context.Context) {
 	var (

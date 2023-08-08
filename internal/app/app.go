@@ -194,11 +194,12 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 	warningHandler := func() {
 		for {
+			warnDur := app.conf.General.WarningTimeout.Duration()
 			select {
 			case now := <-ticker.C:
 				for steamID := range warnings {
 					for warnIdx, warning := range warnings[steamID] {
-						if now.Sub(warning.CreatedOn) > app.conf.General.WarningTimeout {
+						if now.Sub(warning.CreatedOn) > warnDur {
 							if len(warnings[steamID]) > 1 {
 								warnings[steamID] = append(warnings[steamID][:warnIdx], warnings[steamID][warnIdx+1])
 							} else {
@@ -272,7 +273,7 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 						if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
 							store.StringSID(newWarn.userMessage.SteamID.String()),
-							store.Duration(app.conf.General.WarningExceededDurationValue),
+							store.Duration(app.conf.General.WarningExceededDuration),
 							newWarn.WarnReason,
 							"",
 							"Automatic warning ban",
@@ -321,10 +322,12 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 					}
 				}
 
-				app.bot.SendPayload(discord.Payload{
-					ChannelID: app.conf.Discord.LogChannelID,
-					Embed:     msgEmbed.Truncate().MessageEmbed,
-				})
+				if app.conf.Filter.PingDiscord {
+					app.bot.SendPayload(discord.Payload{
+						ChannelID: app.conf.Discord.LogChannelID,
+						Embed:     msgEmbed.MessageEmbed,
+					})
+				}
 
 			case <-ctx.Done():
 				return
@@ -690,7 +693,7 @@ func (app *App) LoadFilters(ctx context.Context) error {
 func (app *App) startWorkers(ctx context.Context) {
 	go app.patreon.updater(ctx)
 	go app.banSweeper(ctx)
-	// go profileUpdater(ctx)
+	go app.profileUpdater(ctx)
 	go app.warnWorker(ctx)
 	go app.logReader(ctx, app.conf.Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)

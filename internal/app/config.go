@@ -43,10 +43,9 @@ type Config struct {
 }
 
 type dbConfig struct {
-	DSN          string        `mapstructure:"dsn"`
-	AutoMigrate  bool          `mapstructure:"auto_migrate"`
-	LogQueries   bool          `mapstructure:"log_queries"`
-	LogWriteFreq time.Duration `mapstructure:"log_write_freq"`
+	DSN         string `mapstructure:"dsn"`
+	AutoMigrate bool   `mapstructure:"auto_migrate"`
+	LogQueries  bool   `mapstructure:"log_queries"`
 }
 
 type patreonConfig struct {
@@ -58,15 +57,15 @@ type patreonConfig struct {
 }
 
 type httpConfig struct {
-	Host                  string `mapstructure:"host"`
-	Port                  int    `mapstructure:"port"`
-	TLS                   bool   `mapstructure:"tls"`
-	TLSAuto               bool   `mapstructure:"tls_auto"`
-	StaticPath            string `mapstructure:"static_path"`
-	CookieKey             string `mapstructure:"cookie_key"`
-	ClientTimeout         string `mapstructure:"client_timeout"`
-	ClientTimeoutDuration time.Duration
-	CorsOrigins           []string `mapstructure:"cors_origins"`
+	Host                  string         `mapstructure:"host"`
+	Port                  int            `mapstructure:"port"`
+	TLS                   bool           `mapstructure:"tls"`
+	TLSAuto               bool           `mapstructure:"tls_auto"`
+	StaticPath            string         `mapstructure:"static_path"`
+	CookieKey             string         `mapstructure:"cookie_key"`
+	ClientTimeout         string         `mapstructure:"client_timeout"`
+	ClientTimeoutDuration StringDuration `json:"client_timeout_duration"`
+	CorsOrigins           []string       `mapstructure:"cors_origins"`
 }
 
 // Addr returns the address in host:port format.
@@ -98,23 +97,33 @@ const (
 	Ban  Action = "ban"
 )
 
+type StringDuration string
+
+func (sb StringDuration) Duration() time.Duration {
+	duration, errDuration := store.ParseDuration(string(sb))
+	if errDuration != nil {
+		panic(errDuration)
+	}
+
+	return duration
+}
+
 type generalConfig struct {
-	SiteName                     string        `mapstructure:"site_name"`
-	SteamKey                     string        `mapstructure:"steam_key"`
-	Owner                        steamid.SID64 `mapstructure:"owner"`
-	Mode                         RunMode       `mapstructure:"mode"`
-	WarningTimeout               time.Duration `mapstructure:"warning_timeout"`
-	WarningLimit                 int           `mapstructure:"warning_limit"`
-	WarningExceededAction        Action        `mapstructure:"warning_exceeded_action"`
-	WarningExceededDurationValue string        `mapstructure:"warning_exceeded_duration"`
-	WarningExceededDuration      time.Duration `mapstructure:"-"`
-	UseUTC                       bool          `mapstructure:"use_utc"`
-	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
-	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
-	DefaultMaps                  []string      `mapstructure:"default_maps"`
-	ExternalURL                  string        `mapstructure:"external_url"`
-	BannedSteamGroupIds          []steamid.GID `mapstructure:"banned_steam_group_ids"`
-	BannedServersAddresses       []string      `mapstructure:"banned_server_addresses"`
+	SiteName                     string         `mapstructure:"site_name"`
+	SteamKey                     string         `mapstructure:"steam_key"`
+	Owner                        steamid.SID64  `mapstructure:"owner"`
+	Mode                         RunMode        `mapstructure:"mode"`
+	WarningTimeout               StringDuration `mapstructure:"warning_timeout"`
+	WarningLimit                 int            `mapstructure:"warning_limit"`
+	WarningExceededAction        Action         `mapstructure:"warning_exceeded_action"`
+	WarningExceededDuration      StringDuration `mapstructure:"warning_exceeded_duration"`
+	UseUTC                       bool           `mapstructure:"use_utc"`
+	ServerStatusUpdateFreq       string         `mapstructure:"server_status_update_freq"`
+	MasterServerStatusUpdateFreq string         `mapstructure:"master_server_status_update_freq"`
+	DefaultMaps                  []string       `mapstructure:"default_maps"`
+	ExternalURL                  string         `mapstructure:"external_url"`
+	BannedSteamGroupIds          []steamid.GID  `mapstructure:"banned_steam_group_ids"`
+	BannedServersAddresses       []string       `mapstructure:"banned_server_addresses"`
 }
 
 type discordConfig struct {
@@ -132,12 +141,11 @@ type discordConfig struct {
 }
 
 type LogConfig struct {
-	Level                string `mapstructure:"level"`
-	File                 string `mapstructure:"file"`
-	ReportCaller         bool   `mapstructure:"report_caller"`
-	FullTimestamp        bool   `mapstructure:"full_timestamp"`
-	SrcdsLogAddr         string `mapstructure:"srcds_log_addr"`
-	SrcdsLogExternalHost string `mapstructure:"srcds_log_external_host"`
+	Level         string `mapstructure:"level"`
+	File          string `mapstructure:"file"`
+	ReportCaller  bool   `mapstructure:"report_caller"`
+	FullTimestamp bool   `mapstructure:"full_timestamp"`
+	SrcdsLogAddr  string `mapstructure:"srcds_log_addr"`
 }
 
 type debugConfig struct {
@@ -165,11 +173,6 @@ type ip2locationConf struct {
 
 // ReadConfig reads in config file and ENV variables if set.
 func ReadConfig(conf *Config, noFileOk bool) error {
-	const (
-		defaultWarnDuration = time.Hour * 24 * 7
-		defaultHTTPTimeout  = time.Second * 10
-	)
-
 	setDefaultConfigValues()
 
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
@@ -183,20 +186,6 @@ func ReadConfig(conf *Config, noFileOk bool) error {
 	if strings.HasPrefix(conf.DB.DSN, "pgx://") {
 		conf.DB.DSN = strings.Replace(conf.DB.DSN, "pgx://", "postgres://", 1)
 	}
-
-	clientDuration, errClientDuration := store.ParseDuration(conf.HTTP.ClientTimeout)
-	if errClientDuration != nil {
-		clientDuration = defaultHTTPTimeout
-	}
-
-	conf.HTTP.ClientTimeoutDuration = clientDuration
-
-	warningDuration, errWarningDuration := store.ParseDuration(conf.General.WarningExceededDurationValue)
-	if errWarningDuration != nil {
-		warningDuration = defaultWarnDuration
-	}
-
-	conf.General.WarningExceededDuration = warningDuration
 
 	gin.SetMode(conf.General.Mode.String())
 
@@ -238,14 +227,13 @@ func setDefaultConfigValues() {
 		"general.steam_key":                        "",
 		"general.mode":                             "release",
 		"general.owner":                            76561198044052046,
-		"general.warning_timeout":                  time.Hour * 72,
-		"general.warning_limit":                    1,
+		"general.warning_timeout":                  "72h",
+		"general.warning_limit":                    2,
 		"general.warning_exceeded_action":          Gag,
 		"general.warning_exceeded_duration":        "168h",
 		"general.use_utc":                          true,
 		"general.server_status_update_freq":        "60s",
 		"general.master_server_status_update_freq": "1m",
-		"general.default_maps":                     []string{"pl_badwater"},
 		"general.external_url":                     "http://gbans.localhost:6006",
 		"general.banned_steam_group_ids":           []steamid.GID{},
 		"general.banned_server_addresses":          []string{},
@@ -292,11 +280,9 @@ func setDefaultConfigValues() {
 		"log.report_caller":                        false,
 		"log.full_timestamp":                       false,
 		"log.srcds_log_addr":                       ":27115",
-		"log.srcds_log_external_host":              "",
 		"database.dsn":                             "postgresql://gbans:gbans@localhost/gbans",
 		"database.auto_migrate":                    true,
 		"database.log_queries":                     false,
-		"database.log_write_freq":                  time.Second * 10,
 	}
 
 	for configKey, value := range defaultConfig {

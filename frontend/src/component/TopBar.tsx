@@ -7,8 +7,6 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import BlockIcon from '@mui/icons-material/Block';
 import ReportIcon from '@mui/icons-material/Report';
-import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
-import ImportExportIcon from '@mui/icons-material/ImportExport';
 import DnsIcon from '@mui/icons-material/Dns';
 import SubjectIcon from '@mui/icons-material/Subject';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -27,13 +25,9 @@ import Menu from '@mui/material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/Support';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
-import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import { useTheme } from '@mui/material/styles';
@@ -140,18 +134,18 @@ export const TopBar = () => {
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (currentUser.permission_level >= PermissionLevel.Admin) {
-            items.push({
-                to: '/pug',
-                text: 'PUGs',
-                icon: <SportsKabaddiIcon sx={topColourOpts} />
-            });
-            items.push({
-                to: '/logs',
-                text: 'Logs',
-                icon: <QueryStatsIcon sx={topColourOpts} />
-            });
-        }
+        // if (currentUser.permission_level >= PermissionLevel.Admin) {
+        //     items.push({
+        //         to: '/pug',
+        //         text: 'PUGs',
+        //         icon: <SportsKabaddiIcon sx={topColourOpts} />
+        //     });
+        //     items.push({
+        //         to: '/logs',
+        //         text: 'Logs',
+        //         icon: <QueryStatsIcon sx={topColourOpts} />
+        //     });
+        // }
         if (currentUser.ban_id > 0) {
             items.push({
                 to: `/ban/${currentUser.ban_id}`,
@@ -160,7 +154,7 @@ export const TopBar = () => {
             });
         }
         return items;
-    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
+    }, [currentUser.ban_id, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
@@ -186,11 +180,6 @@ export const TopBar = () => {
                 to: '/admin/filters',
                 text: 'Filtered Words',
                 icon: <SubjectIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/global_stats',
-                text: 'Global Stats',
-                icon: <BarChartIcon sx={colourOpts} />
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Moderator) {
@@ -226,25 +215,20 @@ export const TopBar = () => {
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Admin) {
-            items.push({
-                to: '/admin/people',
-                text: 'People',
-                icon: <PregnantWomanIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/import',
-                text: 'Import',
-                icon: <ImportExportIcon sx={colourOpts} />
-            });
+            // items.push({
+            //     to: '/admin/people',
+            //     text: 'People',
+            //     icon: <PregnantWomanIcon sx={colourOpts} />
+            // });
+            // items.push({
+            //     to: '/admin/import',
+            //     text: 'Import',
+            //     icon: <ImportExportIcon sx={colourOpts} />
+            // });
             items.push({
                 to: '/admin/servers',
                 text: 'Servers',
                 icon: <DnsIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/quickplay',
-                text: 'Quickplay',
-                icon: <VideogameAssetIcon sx={colourOpts} />
             });
         }
         return items;

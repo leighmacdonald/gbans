@@ -89,6 +89,16 @@ func NewPerson(sid64 steamid.SID64) Person {
 
 type People []Person
 
+func (p People) ToSteamIDCollection() steamid.Collection {
+	var collection steamid.Collection
+
+	for _, person := range p {
+		collection = append(collection, person.SteamID)
+	}
+
+	return collection
+}
+
 func (p People) AsMap() map[steamid.SID64]Person {
 	m := map[steamid.SID64]Person{}
 	for _, person := range p {
