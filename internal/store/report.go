@@ -107,7 +107,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 		UPDATE report 
 		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
             deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10, person_message_id = $11
-        WHERE report_id = $11`
+        WHERE report_id = $12`
 
 	report.UpdatedOn = time.Now()
 
@@ -118,7 +118,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 
 	return Err(db.Exec(ctx, query, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
 		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
-		report.DemoName, report.DemoTick, report.ReportID, msgID))
+		report.DemoName, report.DemoTick, msgID, report.ReportID))
 }
 
 func (db *Store) SaveReport(ctx context.Context, report *Report) error {
