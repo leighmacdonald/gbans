@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -107,7 +108,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 	remoteSrc.updateSecrets(ctx)
 
-	remoteSrc.logger.Info("Starting log reader", zap.String("listen_addr", remoteSrc.udpAddr.String()))
+	remoteSrc.logger.Info("Starting log reader", zap.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
 
 	var (
 		running        = atomic.NewBool(true)

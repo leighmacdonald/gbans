@@ -36,9 +36,7 @@ func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
-func useSecure(logger *zap.Logger, conf Config) gin.HandlerFunc {
-	// log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func useSecure() gin.HandlerFunc {
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
 			cspbuilder.DefaultSrc: {"'self'", "$NONCE"},
@@ -102,7 +100,8 @@ type jsConfig struct {
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
 	engine.Use(httpErrorHandler(app.log), gin.Recovery())
-	engine.Use(useSecure(app.log, *app.conf))
+	engine.Use(useSecure())
+
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
