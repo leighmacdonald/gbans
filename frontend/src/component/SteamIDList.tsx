@@ -1,7 +1,7 @@
 import React from 'react';
 import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import ListItem from '@mui/material/ListItem';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';

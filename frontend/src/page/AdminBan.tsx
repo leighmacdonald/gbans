@@ -13,7 +13,7 @@ import Box from '@mui/material/Box';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
 import { formatDuration, intervalToDuration } from 'date-fns';

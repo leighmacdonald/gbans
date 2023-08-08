@@ -1,6 +1,6 @@
 import React, { JSX } from 'react';
 import Alert from '@mui/material/Alert';
-import { AlertColor } from '@mui/material/Alert/Alert';
+import { AlertColor } from '@mui/material/Alert';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export interface Flash {

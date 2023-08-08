@@ -1,9 +1,14 @@
 import Grid from '@mui/material/Unstable_Grid2';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
-import { apiGetAppeals, AppealOverview, BanReason } from '../api';
+import {
+    apiGetAppeals,
+    AppealOverview,
+    AppealState,
+    appealStateString,
+    BanReason
+} from '../api';
 import { logErr } from '../util/errors';
-import { DataTable } from '../component/DataTable';
 import Paper from '@mui/material/Paper';
 import format from 'date-fns/format';
 import { Heading } from '../component/Heading';
@@ -11,9 +16,74 @@ import { steamIdQueryValue } from '../util/text';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import { PersonCell } from '../component/PersonCell';
+import { LazyTable } from '../component/LazyTable';
+import { Order, RowsPerPage } from '../component/DataTable';
+import { TablePagination } from '@mui/material';
+import Box from '@mui/material/Box';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import CardContent from '@mui/material/CardContent';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import { noop } from 'lodash-es';
+
+interface BasicStatCardProps {
+    title: string;
+    value: string | number;
+    desc: string;
+    actionLabel?: string;
+    onAction?: () => void;
+}
+
+const BasicStatCard = ({
+    title,
+    value,
+    desc,
+    actionLabel,
+    onAction
+}: BasicStatCardProps) => (
+    <Card sx={{ minWidth: 275 }} variant={'outlined'}>
+        <CardContent>
+            <Typography
+                sx={{ fontSize: 14 }}
+                color="text.secondary"
+                gutterBottom
+            >
+                {title}
+            </Typography>
+            <Typography variant="h1" component="div">
+                {value}
+            </Typography>
+            {/*<Typography sx={{ mb: 1.5 }} color="text.secondary">*/}
+            {/*    adjective*/}
+            {/*</Typography>*/}
+            <Typography variant="body2">{desc}</Typography>
+        </CardContent>
+        {actionLabel && (
+            <CardActions>
+                <Button size="small" onClick={onAction ?? noop}>
+                    {actionLabel}
+                </Button>
+            </CardActions>
+        )}
+    </Card>
+);
 
 export const AdminAppeals = () => {
+    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortColumn, setSortColumn] =
+        useState<keyof AppealOverview>('ban_id');
     const [appeals, setAppeals] = useState<AppealOverview[]>([]);
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
+        RowsPerPage.Fifty
+    );
+    const [page, setPage] = useState(0);
+    const [appealState, setAppealState] = useState<AppealState>(
+        AppealState.Any
+    );
+    const [totalRows] = useState<number>(0);
 
     useEffect(() => {
         apiGetAppeals()
@@ -23,18 +93,125 @@ export const AdminAppeals = () => {
             .catch(logErr);
     }, []);
 
+    const selectItems = useMemo(() => {
+        return [
+            AppealState.Any,
+            AppealState.Open,
+            AppealState.Denied,
+            AppealState.Accepted,
+            AppealState.Reduced,
+            AppealState.NoAppeal
+        ].map((as) => {
+            return (
+                <MenuItem value={as} key={`as-${as}`}>
+                    {appealStateString(as)}
+                </MenuItem>
+            );
+        });
+    }, []);
+
     return (
         <Grid container spacing={3} paddingTop={3}>
+            <Grid container spacing={2}>
+                <Grid xs={6} md={3}>
+                    <BasicStatCard
+                        value={'51'}
+                        title={'New/Open Appeals'}
+                        desc={'Recently created & open appeals'}
+                    />
+                </Grid>
+                <Grid xs={6} md={3}>
+                    <BasicStatCard value={'100'} title={'Denied'} desc={''} />
+                </Grid>
+                <Grid xs={6} md={3}>
+                    <BasicStatCard
+                        value={'92'}
+                        title={'Old'}
+                        desc={
+                            'Appeals with no activity for a while, but not resolved'
+                        }
+                    />
+                </Grid>
+                <Grid xs={6} md={3}>
+                    <BasicStatCard
+                        value={'205'}
+                        title={'Accepted'}
+                        desc={'Users with accept appeals'}
+                    />
+                </Grid>
+            </Grid>
+            <Grid
+                xs={12}
+                container
+                justifyContent="space-between"
+                alignItems="center"
+                flexDirection={{ xs: 'column', sm: 'row' }}
+            >
+                <Grid xs={3}>
+                    <Box sx={{ width: 120 }}>
+                        <FormControl fullWidth>
+                            <InputLabel id="appeal-state-label">
+                                Appeal State
+                            </InputLabel>
+                            <Select<AppealState>
+                                labelId="appeal-state-label"
+                                id="appeal-state"
+                                label="Appeal State"
+                                value={appealState ?? AppealState.Any}
+                                onChange={(
+                                    event: SelectChangeEvent<AppealState>
+                                ) => {
+                                    setAppealState(
+                                        event.target.value as AppealState
+                                    );
+                                }}
+                            >
+                                {selectItems}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </Grid>
+                <Grid xs={'auto'}>
+                    <TablePagination
+                        component="div"
+                        variant={'head'}
+                        page={page}
+                        count={totalRows}
+                        showFirstButton
+                        showLastButton
+                        rowsPerPage={rowPerPageCount}
+                        onRowsPerPageChange={(
+                            event: React.ChangeEvent<
+                                HTMLInputElement | HTMLTextAreaElement
+                            >
+                        ) => {
+                            setRowPerPageCount(
+                                parseInt(event.target.value, 10)
+                            );
+                            setPage(0);
+                        }}
+                        onPageChange={(_, newPage) => {
+                            setPage(newPage);
+                        }}
+                    />
+                </Grid>
+            </Grid>
             <Grid xs={12}>
                 <Paper>
                     <Heading>Recent Open Appeal Activity</Heading>
-                    <DataTable
+                    <LazyTable<AppealOverview>
+                        sortOrder={sortOrder}
+                        sortColumn={sortColumn}
+                        onSortColumnChanged={async (column) => {
+                            setSortColumn(column);
+                        }}
+                        onSortOrderChanged={async (direction) => {
+                            setSortOrder(direction);
+                        }}
                         columns={[
                             {
                                 label: '#',
                                 tooltip: 'Ban ID',
-                                virtual: true,
-                                virtualKey: 'ban.ban_id',
                                 sortable: true,
                                 align: 'left',
                                 queryValue: (o) => `${o.ban_id}`,
@@ -51,8 +228,6 @@ export const AdminAppeals = () => {
                             {
                                 label: 'Author',
                                 tooltip: 'Author',
-                                virtual: true,
-                                virtualKey: 'ban.source_id',
                                 sortable: true,
                                 align: 'left',
                                 queryValue: (o) =>
@@ -71,8 +246,6 @@ export const AdminAppeals = () => {
                             {
                                 label: 'Target',
                                 tooltip: 'Target',
-                                virtual: true,
-                                virtualKey: 'ban.target_id',
                                 sortable: true,
                                 align: 'left',
                                 queryValue: (o) =>
@@ -111,11 +284,9 @@ export const AdminAppeals = () => {
                             {
                                 label: 'Created',
                                 tooltip: 'Created On',
-                                sortType: 'date',
+                                sortable: true,
                                 align: 'left',
                                 width: '150px',
-                                virtual: true,
-                                virtualKey: 'created_on',
                                 renderer: (obj) => {
                                     return (
                                         <Typography variant={'body1'}>
@@ -130,9 +301,7 @@ export const AdminAppeals = () => {
                             {
                                 label: 'Updated',
                                 tooltip: 'Updated On',
-                                sortType: 'date',
-                                virtual: true,
-                                virtualKey: 'ban.updated_on',
+                                sortable: true,
                                 align: 'left',
                                 width: '150px',
                                 renderer: (obj) => {
@@ -147,8 +316,6 @@ export const AdminAppeals = () => {
                                 }
                             }
                         ]}
-                        defaultSortColumn={'created_on'}
-                        rowsPerPage={10}
                         rows={appeals}
                     />
                 </Paper>

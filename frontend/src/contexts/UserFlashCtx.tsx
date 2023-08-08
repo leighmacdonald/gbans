@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { Flash } from '../component/Flashes';
 import { noop } from 'lodash-es';
-import { AlertColor } from '@mui/material/Alert/Alert';
+import { AlertColor } from '@mui/material/Alert';
 
 export type CurrentFlashes = {
     flashes: Flash[];

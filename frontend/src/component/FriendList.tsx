@@ -7,7 +7,7 @@ import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import { Person } from '../api';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import { LoadingSpinner } from './LoadingSpinner';
 import { Heading } from './Heading';
 import Pagination from '@mui/material/Pagination';

@@ -1,4 +1,4 @@
-import Grid from '@mui/material/Grid/Grid';
+import Grid from '@mui/material/Unstable_Grid2';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -59,11 +59,11 @@ export const ChatView: FC<ChatViewProps> = ({ messages, sendMessage }) => {
 
     return (
         <ContainerWithHeader title={'Lobby Chat'}>
-            <Grid item>
-                <Grid item xs={12}>
+            <Grid>
+                <Grid xs={12}>
                     <UserMessagesView messages={messages} />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <Stack direction={'row'} padding={1} spacing={1}>
                         <TextField
                             fullWidth

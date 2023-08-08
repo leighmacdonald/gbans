@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState, JSX } from 'react';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import ThemeProvider from '@mui/material/styles/ThemeProvider';
+import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Home } from './page/Home';
 import { Settings } from './page/Settings';
@@ -39,7 +39,7 @@ import { ColourModeContext } from './contexts/ColourModeContext';
 import { AdminNews } from './page/AdminNews';
 import { WikiPage } from './page/WikiPage';
 import { MatchPage } from './page/MatchPage';
-import { AlertColor } from '@mui/material/Alert/Alert';
+import { AlertColor } from '@mui/material/Alert';
 import { MatchListPage } from './page/MatchListPage';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';

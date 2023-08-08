@@ -19,7 +19,7 @@ import {
 import styled from '@mui/system/styled';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from './Heading';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 
 export interface FileUploadModalProps {
     open: boolean;

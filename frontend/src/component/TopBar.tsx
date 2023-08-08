@@ -36,7 +36,7 @@ import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { Flashes } from './Flashes';
 import { useColourModeCtx } from '../contexts/ColourModeContext';

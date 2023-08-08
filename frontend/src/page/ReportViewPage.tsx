@@ -34,7 +34,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { SteamIDList } from '../component/SteamIDList';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Nullable } from '../util/types';
 import { BanSteamModal } from '../component/BanSteamModal';

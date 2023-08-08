@@ -10,6 +10,7 @@ import { parseDateTime } from '../util/text';
 import { IpRecord } from '../util/types';
 
 export enum AppealState {
+    Any = -1,
     Open,
     Denied,
     Accepted,
@@ -27,6 +28,8 @@ export const AppealStateCollection = [
 
 export const appealStateString = (as: AppealState): string => {
     switch (as) {
+        case AppealState.Any:
+            return 'Any';
         case AppealState.Open:
             return 'Open';
         case AppealState.Denied:

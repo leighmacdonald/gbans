@@ -2,7 +2,7 @@ import { defaultRenderer, HeadingCell, Order } from './DataTable';
 import React from 'react';
 import TableContainer from '@mui/material/TableContainer';
 import Table from '@mui/material/Table';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';

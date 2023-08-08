@@ -1,6 +1,6 @@
 import React from 'react';
 import { LoadingButton } from '@mui/lab';
-import useTheme from '@mui/material/styles/useTheme';
+import { useTheme } from '@mui/material/styles';
 import CircularProgress from '@mui/material/CircularProgress';
 
 export const LoadingSpinner = () => {
