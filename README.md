@@ -12,7 +12,7 @@
 gbans is a centralized game administration system for Team Fortress 2 that incorporates a global ban system similar to
 [sourcebans++](https://sbpp.dev) as well as some additional basic community tools like news & wikis.
 The project was initially only intended to be a more modern & secure replacement for sourcebans, but has evolved to
-handle more broader community aspects.
+handle broader community aspects.
 
 ## Stability / Usage Notice
 
@@ -72,13 +72,13 @@ Before we tag a 1.0.0 release, we will write some proper user-facing documentati
 
 ## Docker
 
-Docker is recommended to run gbans. You can find the official docker images at
-[dockerhub](https://hub.docker.com/repository/docker/leighmacdonald/gbans).
+Docker is recommended to run gbans. You can find the official docker images on
+[ghcr.io](https://github.com/leighmacdonald/gbans/pkgs/container/gbans).
 
 Assuming you have created your config file and have a database setup you can run it using something
 like:
 
-    docker run -it --rm -v `$(pwd)`/gbans.yml:/app/gbans.yml:ro leighmacdonald/gbans:latest
+    docker run -it --rm -v `$(pwd)`/gbans.yml:/app/gbans.yml:ro ghcr.io/leighmacdonald/gbans:latest
 
 There is also a docker-compose config you can use which provides the database as well.
 
