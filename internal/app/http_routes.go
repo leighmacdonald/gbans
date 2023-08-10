@@ -253,7 +253,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		// Moderator access
 		modRoute := modGrp.Use(authMiddleware(app, consts.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(app))
-		modRoute.GET("/api/connections/:steam_id", onAPIGetPersonConnections(app))
+		modRoute.POST("/api/connections", onAPIQueryPersonConnections(app))
 		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages(app))
 		modRoute.POST("/api/messages", onAPIQueryMessages(app))
 		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(app))

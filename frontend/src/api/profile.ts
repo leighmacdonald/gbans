@@ -219,3 +219,14 @@ export const apiGetNotifications = async (opts: NotificationsQuery) => {
         opts
     );
 };
+
+export interface PersonConnectionQuery extends QueryFilter<PersonConnection> {
+    cidr?: string;
+    steam_id?: string;
+    server_id?: number;
+    asn?: number;
+}
+
+export const apiGetConnections = async (opts: PersonConnectionQuery) => {
+    return await apiCall<UserNotification[]>(`/api/connections`, 'POST', opts);
+};

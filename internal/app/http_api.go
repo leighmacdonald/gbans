@@ -855,7 +855,6 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			SteamID:     steamid.SIDToSID64(request.SteamID),
 			PersonaName: request.Name,
 			CreatedOn:   time.Now(),
-			IPInfo:      store.PersonIPRecord{},
 		}); errAddHist != nil {
 			log.Error("Failed to add conn history", zap.Error(errAddHist))
 		}
@@ -2985,33 +2984,36 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetPersonConnections(app *App) gin.HandlerFunc {
+type connectionQueryResults struct {
+	TotalMessages int64                                `json:"total_messages"`
+	Connections   []store.QueryConnectionHistoryResult `json:"connections"`
+}
+
+func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamID, errID := getSID64Param(ctx, "steam_id")
-		if errID != nil {
-			log.Error("Invalid steam_id value", zap.Error(errID))
-			responseErr(ctx, http.StatusBadRequest, nil)
-
+		var query store.ConnectionHistoryQueryFilter
+		if !bind(ctx, &query) {
 			return
 		}
 
-		// TODO paging
-		ipHist, errIPHist := app.db.GetPersonIPHistory(ctx, steamID, 1000)
+		ipHist, totalCount, errIPHist := app.db.QueryConnectionHistory(ctx, query)
 		if errIPHist != nil && !errors.Is(errIPHist, store.ErrNoResult) {
-			log.Error("Failed to query connection history",
-				zap.Error(errIPHist), zap.Int64("sid64", steamID.Int64()))
+			log.Error("Failed to query connection history", zap.Error(errIPHist))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
 
 		if ipHist == nil {
-			ipHist = store.PersonConnections{}
+			ipHist = []store.QueryConnectionHistoryResult{}
 		}
 
-		responseOK(ctx, http.StatusOK, ipHist)
+		responseOK(ctx, http.StatusOK, connectionQueryResults{
+			TotalMessages: totalCount,
+			Connections:   ipHist,
+		})
 	}
 }
 

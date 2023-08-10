@@ -28,6 +28,7 @@ import CardContent from '@mui/material/CardContent';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import { noop } from 'lodash-es';
+import { addDays, isAfter, isBefore } from 'date-fns/fp';
 
 interface BasicStatCardProps {
     title: string;
@@ -93,6 +94,42 @@ export const AdminAppeals = () => {
             .catch(logErr);
     }, []);
 
+    const rows = useMemo(() => {
+        if (appealState == AppealState.Any) {
+            return appeals;
+        }
+        return appeals.filter((f) => f.appeal_state == appealState);
+    }, [appealState, appeals]);
+
+    const newAppeals = useMemo(() => {
+        return appeals.filter(
+            (value) =>
+                value.appeal_state == AppealState.Open &&
+                isAfter(addDays(-2, new Date()), value.updated_on)
+        ).length;
+    }, [appeals]);
+
+    const deniedAppeals = useMemo(() => {
+        return appeals.filter(
+            (value) =>
+                value.appeal_state == AppealState.Denied ||
+                value.appeal_state == AppealState.NoAppeal
+        ).length;
+    }, [appeals]);
+
+    const oldAppeals = useMemo(() => {
+        return appeals.filter(
+            (value) =>
+                value.appeal_state == AppealState.Open &&
+                isBefore(addDays(-2, new Date()), value.updated_on)
+        ).length;
+    }, [appeals]);
+
+    const resolvedAppeals = useMemo(() => {
+        return appeals.filter((value) => value.appeal_state != AppealState.Open)
+            .length;
+    }, [appeals]);
+
     const selectItems = useMemo(() => {
         return [
             AppealState.Any,
@@ -115,26 +152,33 @@ export const AdminAppeals = () => {
             <Grid container spacing={2}>
                 <Grid xs={6} md={3}>
                     <BasicStatCard
-                        value={'51'}
+                        value={newAppeals}
                         title={'New/Open Appeals'}
                         desc={'Recently created & open appeals'}
                     />
                 </Grid>
-                <Grid xs={6} md={3}>
-                    <BasicStatCard value={'100'} title={'Denied'} desc={''} />
-                </Grid>
+
                 <Grid xs={6} md={3}>
                     <BasicStatCard
-                        value={'92'}
-                        title={'Old'}
+                        value={oldAppeals}
+                        title={'Old/Open'}
                         desc={
-                            'Appeals with no activity for a while, but not resolved'
+                            'Appeals with no activity for >2days, but not resolved'
                         }
                     />
                 </Grid>
+
                 <Grid xs={6} md={3}>
                     <BasicStatCard
-                        value={'205'}
+                        value={deniedAppeals}
+                        title={'Denied'}
+                        desc={'Number of Denied & No Appeal '}
+                    />
+                </Grid>
+
+                <Grid xs={6} md={3}>
+                    <BasicStatCard
+                        value={resolvedAppeals}
                         title={'Accepted'}
                         desc={'Users with accept appeals'}
                     />
@@ -200,6 +244,7 @@ export const AdminAppeals = () => {
                 <Paper>
                     <Heading>Recent Open Appeal Activity</Heading>
                     <LazyTable<AppealOverview>
+                        rows={rows}
                         sortOrder={sortOrder}
                         sortColumn={sortColumn}
                         onSortColumnChanged={async (column) => {
@@ -316,7 +361,6 @@ export const AdminAppeals = () => {
                                 }
                             }
                         ]}
-                        rows={appeals}
                     />
                 </Paper>
             </Grid>

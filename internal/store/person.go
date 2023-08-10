@@ -205,12 +205,11 @@ func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
 }
 
 type PersonConnection struct {
-	PersonConnectionID int64          `json:"person_connection_id"`
-	IPAddr             net.IP         `json:"ip_addr"`
-	SteamID            steamid.SID64  `json:"steam_id"`
-	PersonaName        string         `json:"persona_name"`
-	CreatedOn          time.Time      `json:"created_on"`
-	IPInfo             PersonIPRecord `json:"ip_info"`
+	PersonConnectionID int64         `json:"person_connection_id"`
+	IPAddr             net.IP        `json:"ip_addr"`
+	SteamID            steamid.SID64 `json:"steam_id"`
+	PersonaName        string        `json:"persona_name"`
+	CreatedOn          time.Time     `json:"created_on"`
 }
 
 type PersonConnections []PersonConnection
@@ -548,7 +547,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 	query, args, errArgs := db.sb.
 		Select(profileColumns...).
 		From("person").
-		OrderBy("updated_on").
+		OrderBy("updated_on_steam").
 		Limit(limit).
 		ToSql()
 	if errArgs != nil {
@@ -640,6 +639,136 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 	msg.SteamID = steamid.New(steamID)
 
 	return nil
+}
+
+type ConnectionHistoryQueryFilter struct {
+	QueryFilter
+	CIDR    string        `json:"cidr"`
+	SteamID steamid.SID64 `json:"steam_id"`
+}
+
+type QueryConnectionHistoryResult struct {
+	PersonConnection
+}
+
+func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHistoryQueryFilter) ([]QueryConnectionHistoryResult, int64, error) {
+	if query.Limit > 1000 {
+		return nil, 0, errLimit
+	}
+
+	columns := []string{"c.person_connection_id", "c.steam_id", "c.ip_addr", "c.persona_name", "c.created_on"}
+	countCols := []string{"count(c.person_connection_id) as count"}
+
+	count := db.sb.
+		Select(countCols...).
+		From("person_connections c")
+
+	builder := db.sb.
+		Select(columns...).
+		From("person_connections c")
+
+	if query.Offset > 0 {
+		builder = builder.Offset(query.Offset)
+	}
+
+	if query.Limit > 0 {
+		builder = builder.Limit(query.Limit)
+	} else {
+		builder = builder.Limit(50)
+	}
+
+	if query.OrderBy != "person_connection_id" {
+		return nil, 0, errors.New("Sort only allowed on person_connection_id")
+	}
+
+	prefix := "c."
+
+	query.OrderBy = prefix + query.OrderBy
+
+	if query.OrderBy != "" {
+		orderBy := []string{query.OrderBy}
+
+		if query.Desc {
+			builder = builder.OrderBy(strings.Join(orderBy, ",") + " DESC")
+		} else {
+			builder = builder.OrderBy(strings.Join(orderBy, ",") + " ASC")
+		}
+
+		groupBy := []string{"c.person_connection_id", query.OrderBy}
+
+		builder = builder.GroupBy(groupBy...)
+	}
+
+	var ands sq.And
+
+	if query.SteamID != "" {
+		sid := steamid.New(query.SteamID)
+		if !sid.Valid() {
+			return nil, 0, errors.Wrap(steamid.ErrInvalidSID, "Invalid steam id in query")
+		}
+
+		ands = append(ands, sq.Eq{"c.steam_id": sid.Int64()})
+	}
+	//
+	//if query.Query != "" {
+	//	ands = append(ands, sq.Expr(`message_search @@ websearch_to_tsquery('simple', ?)`, query.Query))
+	//}
+
+	count = count.Where(ands)
+	builder = builder.Where(ands)
+
+	var totalRows int64
+
+	countQuery, countQueryArgs, countQueryErr := count.ToSql()
+	if countQueryErr != nil {
+		return nil, 0, errors.Wrap(countQueryErr, "Failed to build count query")
+	}
+
+	if errCount := db.QueryRow(ctx, countQuery, countQueryArgs...).Scan(&totalRows); errCount != nil {
+		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
+	}
+
+	if totalRows == 0 {
+		return []QueryConnectionHistoryResult{}, 0, nil
+	}
+
+	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
+	if rowsQueryErr != nil {
+		return nil, 0, errors.Wrap(rowsQueryErr, "Failed to build rows query")
+	}
+
+	rows, errQuery := db.Query(ctx, rowsQuery, rowsArgs...)
+	if errQuery != nil {
+		return nil, totalRows, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	var messages []QueryConnectionHistoryResult
+
+	for rows.Next() {
+		var (
+			connHistory QueryConnectionHistoryResult
+			steamID     int64
+			target      = []any{
+				&connHistory.PersonConnectionID,
+				&steamID,
+				&connHistory.IPAddr,
+				&connHistory.PersonConnectionID,
+				&connHistory.CreatedOn,
+			}
+		)
+
+		if errScan := rows.Scan(target...); errScan != nil {
+			return nil, 0, Err(errScan)
+		}
+
+		connHistory.SteamID = steamid.New(steamID)
+
+		messages = append(messages, connHistory)
+	}
+
+	return messages, totalRows, nil
 }
 
 var errLimit = errors.New("Requested too many")
@@ -941,10 +1070,7 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 			"pc.person_connection_id",
 			"pc.steam_id",
 			"pc.ip_addr",
-			"pc.created_on",
-			"coalesce(loc.city_name, '')",
-			"coalesce(loc.country_name, '')",
-			"coalesce(loc.country_code, '')").
+			"pc.created_on").
 		From("person_connections pc").
 		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
 		// Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
@@ -972,9 +1098,7 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 			steamID int64
 		)
 
-		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID, &conn.IPAddr, &conn.CreatedOn,
-			&conn.IPInfo.CityName, &conn.IPInfo.CountryName, &conn.IPInfo.CountryCode,
-		); errScan != nil {
+		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID, &conn.IPAddr, &conn.CreatedOn); errScan != nil {
 			return nil, Err(errScan)
 		}
 
