@@ -431,7 +431,7 @@ func (db *Store) loadLocation(ctx context.Context, records []ip2location.Locatio
 		}
 	}
 
-	db.log.Debug("Loaded Location4 records",
+	db.log.Info("Loaded Location4 records",
 		zap.Int("count", len(records)), zap.Duration("duration", time.Since(curTime)))
 
 	return nil
@@ -470,7 +470,7 @@ func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRec
 
 				batch = pgx.Batch{}
 
-				db.log.Debug(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
+				db.log.Info(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}

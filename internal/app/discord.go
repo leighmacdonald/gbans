@@ -995,7 +995,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		addFieldInline(embed, "KA:D", fmt.Sprintf("%.2f", kad))
 //		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
 //		addFieldInline(embed, "DamageTaken", fmt.Sprintf("%d", stats.DamageTaken))
-//		addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//		addFieldInline(embed, "MedicStats", fmt.Sprintf("%d", stats.MedicStats))
 //		addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
 //		addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //		addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
@@ -1022,7 +1022,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 //		addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 //		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-//		addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//		addFieldInline(embed, "MedicStats", fmt.Sprintf("%d", stats.MedicStats))
 //		addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
 //		addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //		addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
@@ -1043,7 +1043,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 //		addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 //		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-//		addFieldInline(embed, "Healing", fmt.Sprintf("%d", stats.Healing))
+//		addFieldInline(embed, "MedicStats", fmt.Sprintf("%d", stats.MedicStats))
 //		addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
 //		addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
 //		addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
@@ -1081,25 +1081,17 @@ func makeOnLog(app *App) discord.CommandHandler {
 		}
 
 		top := match.TopPlayers()
-		found := 0
 
 		msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
 		msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
 		msgEmbed.AddField("Players", fmt.Sprintf("%d", len(top))).MakeFieldInline()
 
-		for _, ts := range match.TeamSums {
-			msgEmbed.AddField(fmt.Sprintf("%s Kills", ts.Team.String()), fmt.Sprintf("%d", ts.Kills)).MakeFieldInline()
-			msgEmbed.AddField(fmt.Sprintf("%s Damage", ts.Team.String()), fmt.Sprintf("%d", ts.Damage)).MakeFieldInline()
-			msgEmbed.AddField(fmt.Sprintf("%s Ubers", ts.Team.String()), fmt.Sprintf("%d", ts.Caps)).MakeFieldInline()
-			found++
-		}
-
 		description := "`Top players\n" +
 			"N. K:D dmg heal sid\n"
 
 		for index, player := range top {
-			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.Kills(), player.Deaths(), player.Damage(),
-				player.Healing, player.SteamID.String())
+			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.KillCount(), player.Deaths(), player.Damage(),
+				player.HealingStats, player.SteamID.String())
 
 			if index == 9 {
 				break

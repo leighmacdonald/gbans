@@ -43,39 +43,20 @@ func useSecure(mode RunMode) gin.HandlerFunc {
 			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
 			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"}, // TODO  "'strict-dynamic'", "$NONCE",
 			cspbuilder.FontSrc:    {"'self'", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
-			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://avatars.steamstatic.com"},
+			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://*.steamstatic.com"},
 			cspbuilder.BaseURI:    {"'self'"},
 			cspbuilder.ObjectSrc:  {"'none'"},
 		},
 	}
 	secureMiddleware := secure.New(secure.Options{
-		AllowedHosts:            []string{},
-		AllowedHostsAreRegex:    false,
-		AllowRequestFunc:        nil,
-		HostsProxyHeaders:       []string{},
-		SSLRedirect:             false,
-		SSLTemporaryRedirect:    false,
-		SSLHost:                 "",
-		SSLProxyHeaders:         map[string]string{},
-		STSSeconds:              0,
-		STSIncludeSubdomains:    false,
-		STSPreload:              false,
-		ForceSTSHeader:          false,
-		FrameDeny:               true,
-		CustomFrameOptionsValue: "",
-		ContentTypeNosniff:      false,
-		BrowserXssFilter:        false,
-		ContentSecurityPolicy:   cspBuilder.MustBuild(),
-		ReferrerPolicy:          "",
-		PermissionsPolicy:       "",
-		CrossOriginOpenerPolicy: "",
-		ExpectCTHeader:          "",
-		IsDevelopment:           mode != ReleaseMode,
+		FrameDeny:             true,
+		ContentTypeNosniff:    true,
+		ContentSecurityPolicy: cspBuilder.MustBuild(),
+		IsDevelopment:         mode != ReleaseMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
 		err := secureMiddleware.Process(ctx.Writer, ctx.Request)
-		// If there was an error, do not continue.
 		if err != nil {
 			ctx.Abort()
 

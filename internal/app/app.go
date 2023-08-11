@@ -442,15 +442,6 @@ func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Matc
 		bluScore += round.Score.Blu
 	}
 
-	found := 0
-
-	for _, teamStats := range match.TeamSums {
-		msgEmbed.AddField(fmt.Sprintf("%s Kills", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Kills)).MakeFieldInline()
-		msgEmbed.AddField(fmt.Sprintf("%s Damage", teamStats.Team.String()), fmt.Sprintf("%d", teamStats.Damage)).MakeFieldInline()
-		msgEmbed.AddField(fmt.Sprintf("%s Ubers/Drops", teamStats.Team.String()), fmt.Sprintf("%d/%d", teamStats.Charges, teamStats.Drops)).MakeFieldInline()
-		found++
-	}
-
 	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
 	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
 	msgEmbed.AddField("Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes())).MakeFieldInline()

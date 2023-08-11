@@ -88,7 +88,7 @@ type Stats struct {
 //
 //		if errPlayerExec := db.QueryRow(ctx, playerQuery, match.MatchID, playerSum.SteamID.Int64(), playerSum.Team,
 //			playerSum.TimeStart, endTime, playerSum.Kills, playerSum.Assists, playerSum.Deaths, playerSum.Dominations,
-//			playerSum.Dominated, playerSum.Revenges, playerSum.Damage(), playerSum.DamageTaken, playerSum.Healing,
+//			playerSum.Dominated, playerSum.Revenges, playerSum.Damage(), playerSum.DamageTaken, playerSum.MedicStats,
 //			playerSum.HealingTaken, playerSum.Pickups, playerSum.BackStabs(), playerSum.HeadShots(), playerSum.AirShots(),
 //			playerSum.Captures, playerSum.Shots, playerSum.Extinguishes, playerSum.Hits, playerSum.BuildingDestroyed,
 //			playerSum.BuildingDestroyed).Scan(&playerSum.MatchPlayerSumID); errPlayerExec != nil {
@@ -107,7 +107,7 @@ type Stats struct {
 //			charges += mg
 //		}
 //
-//		if errMedExec := db.QueryRow(ctx, medicQuery, match.MatchID, medicSum.SteamID.Int64(), medicSum.Healing, charges, medicSum.Drops, medicSum.AvgTimeToBuild, medicSum.AvgTimeBeforeUse, medicSum.NearFullChargeDeath, medicSum.AvgUberLength, medicSum.DeathAfterCharge, medicSum.MajorAdvLost, medicSum.BiggestAdvLost).Scan(&medicSum.MatchMedicID); errMedExec != nil {
+//		if errMedExec := db.QueryRow(ctx, medicQuery, match.MatchID, medicSum.SteamID.Int64(), medicSum.MedicStats, charges, medicSum.Drops, medicSum.AvgTimeToBuild, medicSum.AvgTimeBeforeUse, medicSum.NearFullChargeDeath, medicSum.AvgUberLength, medicSum.DeathAfterCharge, medicSum.MajorAdvLost, medicSum.BiggestAdvLost).Scan(&medicSum.MatchMedicID); errMedExec != nil {
 //			return errors.Wrapf(errMedExec, "Failed to write medic sum")
 //		}
 //	}
@@ -175,7 +175,7 @@ type MatchesQueryOpts struct {
 //
 //	for rows.Next() {
 //		var m logparse.MatchSummary
-//		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.Healing, &m.Airshots); errScan != nil {
+//		if errScan := rows.Scan(&m.MatchID, &m.ServerID, &m.MapName, &m.CreatedOn /*&m.PlayerCount,*/, &m.Kills, &m.Assists, &m.Damage, &m.MedicStats, &m.Airshots); errScan != nil {
 //			return nil, errors.Wrapf(errScan, "Failed to scan match row")
 //		}
 //
@@ -217,13 +217,13 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID int) (*logparse.Match
 	//
 	// for playerRows.Next() {
 	//	var (
-	//		mpSum   = logparse.MatchPlayerSum{MatchPlayerSumID: matchID}
+	//		mpSum   = logparse.PlayerStats{MatchPlayerSumID: matchID}
 	//		steamID int64
 	//	)
 	//
 	//	if errRow := playerRows.Scan(&mpSum.MatchPlayerSumID, &steamID, &mpSum.Team, &mpSum.TimeStart, &mpSum.TimeEnd,
 	//		&mpSum.Kills, &mpSum.Assists, &mpSum.Deaths, &mpSum.Dominations, &mpSum.Dominated, &mpSum.Revenges,
-	//		&mpSum.Damage, &mpSum.DamageTaken, &mpSum.Healing, &mpSum.HealingTaken, &mpSum.Pickups, &mpSum.BackStabs,
+	//		&mpSum.Damage, &mpSum.DamageTaken, &mpSum.MedicStats, &mpSum.HealingTaken, &mpSum.Pickups, &mpSum.BackStabs,
 	//		&mpSum.HeadShots, &mpSum.AirShots, &mpSum.Captures, &mpSum.Shots, &mpSum.Extinguishes, &mpSum.Hits,
 	//		&mpSum.BuildingBuilt, &mpSum.BuildingDestroyed, &mpSum.KDRatio, &mpSum.KADRatio); errRow != nil {
 	//		return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
@@ -254,7 +254,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID int) (*logparse.Match
 	// for medicRows.Next() {
 	//	var steamID int64
 	//
-	//	medicSum := logparse.MatchMedicSum{MatchID: matchID, Charges: map[logparse.MedigunType]int{
+	//	medicSum := logparse.HealingStats{MatchID: matchID, Charges: map[logparse.MedigunType]int{
 	//		logparse.Uber:       0,
 	//		logparse.Kritzkrieg: 0,
 	//		logparse.Vaccinator: 0,
@@ -263,7 +263,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID int) (*logparse.Match
 	//
 	//	charges := 0
 	//
-	//	if errRow := medicRows.Scan(&medicSum.MatchMedicID, &steamID, &medicSum.Healing, &charges, &medicSum.Drops, &medicSum.AvgTimeToBuild, &medicSum.AvgTimeBeforeUse, &medicSum.NearFullChargeDeath, &medicSum.AvgUberLength, &medicSum.DeathAfterCharge, &medicSum.MajorAdvLost, &medicSum.BiggestAdvLost); errRow != nil {
+	//	if errRow := medicRows.Scan(&medicSum.MatchMedicID, &steamID, &medicSum.MedicStats, &charges, &medicSum.Drops, &medicSum.AvgTimeToBuild, &medicSum.AvgTimeBeforeUse, &medicSum.NearFullChargeDeath, &medicSum.AvgUberLength, &medicSum.DeathAfterCharge, &medicSum.MajorAdvLost, &medicSum.BiggestAdvLost); errRow != nil {
 	//		return nil, errors.Wrapf(errMedQuery, "Failed to scan match medics")
 	//	}
 	//

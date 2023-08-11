@@ -775,10 +775,8 @@ var errLimit = errors.New("Requested too many")
 
 type ChatHistoryQueryFilter struct {
 	QueryFilter
-	// TODO Index this string query
-	PersonaName string `json:"persona_name,omitempty"`
-	SteamID     string `json:"steam_id,omitempty"`
-	// TODO Index this body query
+	PersonaName   string     `json:"persona_name,omitempty"`
+	SteamID       string     `json:"steam_id,omitempty"`
 	ServerID      int        `json:"server_id,omitempty"`
 	SentAfter     *time.Time `json:"sent_after,omitempty"`
 	SentBefore    *time.Time `json:"sent_before,omitempty"`

@@ -348,7 +348,7 @@ type PickupEvt struct {
 	TimeStamp
 	SourcePlayer
 	Item    PickupItem
-	Healing int64 `json:"healing" mapstructure:"healing"`
+	Healing int `json:"healing" mapstructure:"healing"`
 }
 
 type ShotFiredEvt struct {
@@ -367,19 +367,20 @@ type DamageEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
-	Damage     int64    `json:"damage" mapstructure:"damage"`
-	Realdamage int64    `json:"realdamage" mapstructure:"realdamage"`
+	Damage     int      `json:"damage" mapstructure:"damage"`
+	Realdamage int      `json:"realdamage" mapstructure:"realdamage"`
 	Weapon     Weapon   `json:"weapon" mapstructure:"weapon"`
-	Healing    int64    `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
+	Healing    int      `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
 	Crit       CritType `json:"crit" mapstructure:"crit"`
-	Airshot    bool     `json:"airshot" mapstructure:"airshot"` // 1/0
+	Airshot    bool     `json:"airshot" mapstructure:"airshot"`   // 1/0
+	Headshot   bool     `json:"headshot" mapstructure:"headshot"` // 1/0
 }
 
 type HealedEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
-	Healing int64 `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
+	Healing int `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
 }
 
 type WGameOverEvt struct {
@@ -389,6 +390,7 @@ type WGameOverEvt struct {
 
 type WTeamFinalScoreEvt struct {
 	TimeStamp
-	Score   int `json:"score" mapstructure:"score"`
-	Players int `json:"players" mapstructure:"players"`
+	Team    Team `json:"team" mapstructure:"team"`
+	Score   int  `json:"score" mapstructure:"score"`
+	Players int  `json:"players" mapstructure:"players"`
 }
