@@ -710,9 +710,9 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 		ands = append(ands, sq.Eq{"c.steam_id": sid.Int64()})
 	}
 	//
-	//if query.Query != "" {
+	// if query.Query != "" {
 	//	ands = append(ands, sq.Expr(`message_search @@ websearch_to_tsquery('simple', ?)`, query.Query))
-	//}
+	// }
 
 	count = count.Where(ands)
 	builder = builder.Where(ands)

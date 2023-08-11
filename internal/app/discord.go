@@ -1091,7 +1091,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 
 		for index, player := range top {
 			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.KillCount(), player.Deaths(), player.Damage(),
-				player.HealingStats, player.SteamID.String())
+				player.HealingStats.Healing, player.SteamID.String())
 
 			if index == 9 {
 				break
