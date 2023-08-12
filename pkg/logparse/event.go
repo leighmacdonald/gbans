@@ -82,6 +82,11 @@ type RCONEvt struct {
 	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
+type MapStartedEvt struct {
+	TimeStamp
+	Map string `json:"map" mapstructure:"map"`
+}
+
 type JoinedTeamEvt struct {
 	TimeStamp
 	SourcePlayer

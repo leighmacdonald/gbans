@@ -98,11 +98,13 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			CowMangler:               "cow_mangler",
 			Crossbow:                 "crusaders_crossbow",
 			CrossbowBolt:             "tf_projectile_healing_bolt",
+			CrossingGuard:            "crossing_guard",
 			DeflectArrow:             "deflect_arrow",
 			DeflectFlare:             "deflect_flare",
 			DeflectFlareDetonator:    "deflect_flare_detonator",
 			DeflectGrenade:           "deflect_promode",
 			DeflectHunstmanBurning:   "deflect_huntsman_flyingburn",
+			DeflectLooseCannon:       "loose_cannon_reflect",
 			DeflectRocket:            "deflect_rocket",
 			DeflectRocketMangler:     "tf_projectile_energy_ball",
 			DeflectSticky:            "deflect_sticky",
@@ -116,6 +118,10 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			DragonsFury:              "dragons_fury",
 			DragonsFuryBonus:         "dragons_fury_bonus",
 			Enforcer:                 "enforcer",
+			EntBonesaw:               "tf_weapon_bonesaw",          // Bug? How does this extinguish?
+			EntFrontierKill:          "frontier_kill",              // ??
+			EntManmelter:             "tf_weapon_flaregun_revenge", // manmelter suck fire
+			EntSniperRifle:           "tf_weapon_sniperrifle",      // on extinguish? is it sydney?
 			Equalizer:                "unique_pickaxe",
 			EscapePlan:               "unique_pickaxe_escape",
 			EternalReward:            "eternal_reward",
@@ -136,9 +142,9 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			FreedomStaff:             "freedom_staff",
 			FrontierJustice:          "frontier_justice",
 			FryingPan:                "fryingpan",
-			GigerCounter:             "giger_counter",
 			GRU:                      "gloves_running_urgently",
 			GasPasser:                "tf_weapon_jar_gas",
+			GigerCounter:             "giger_counter",
 			GoldenWrench:             "wrench_golden",
 			Gunslinger:               "robot_arm",
 			GunslingerCombo:          "robot_arm_combo_kill",
@@ -165,6 +171,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Lollichop:                "lollichop",
 			LongHeatmaker:            "long_heatmaker",
 			LooseCannon:              "loose_cannon",
+			LooseCannonExplosion:     "loose_cannon_explosion", // donk?
 			LooseCannonImpact:        "loose_cannon_impact",
 			Lugermorph:               "maxgun",
 			Machina:                  "machina",
@@ -184,10 +191,10 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			NeonAnnihilator:          "annihilator",
 			NessiesNineIron:          "nessieclub",
 			Original:                 "quake_rl",
+			OverdoseSyringe:          "proto_syringe",
 			PDAEngineer:              "pda_engineer",
 			PainTrain:                "paintrain",
 			PanicAttack:              "panic_attack",
-			PrettyBoysPocketPistol:   "pep_pistol",
 			PersianPersuader:         "persian_persuader",
 			Phlog:                    "phlogistinator",
 			PistolEngy:               "pistol",
@@ -196,17 +203,18 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Pomson:                   "pomson",
 			PostalPummeler:           "mailbox",
 			Powerjack:                "powerjack",
+			PrettyBoysPocketPistol:   "pep_pistol",
 			Prinny:                   "prinny_machete",
 			ProRifle:                 "pro_rifle",
 			ProSMG:                   "pro_smg",
 			ProjectileArrow:          "tf_projectile_arrow",
 			ProjectileArrowFire:      "tf_projectile_arrow_fire",
+			ProjectileDragonsFury:    "tf_projectile_balloffire",
 			ProjectileGrenade:        "tf_projectile_pipe",
 			ProjectileJarGas:         "jar_gas", // tf_weapon_jar_gas ?
 			ProjectileRocket:         "tf_projectile_rocket",
 			ProjectileShortCircuit:   "tf_projectile_mechanicalarmorb",
 			ProjectileSticky:         "tf_projectile_pipe_remote",
-			OverdoseSyringe:          "proto_syringe",
 			PumpkinBomb:              "tf_pumpkin_bomb",
 			Quickiebomb:              "quickiebomb_launcher",
 			Rainblower:               "rainblower",
@@ -215,6 +223,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			ReserveShooter:           "reserve_shooter",
 			Revolver:                 "revolver",
 			RighteousBison:           "righteous_bison",
+			RocketLauncher:           "rocketlauncher",
 			SMG:                      "smg",
 			Sandman:                  "sandman",
 			SandmanBall:              "ball",
@@ -247,6 +256,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			SniperRifle:              "sniperrifle",
 			SodaPopper:               "soda_popper",
 			SolemnVow:                "solemn_vow",
+			SouthernComfort:          "southern_comfort_kill", // is this the bleed effect?
 			SouthernHospitality:      "southern_hospitality",
 			SplendidScreen:           "splendid_screen",
 			Spycicle:                 "spy_cicle",
@@ -257,6 +267,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			TFFlameThrower:           "tf_weapon_flamethrower",
 			TFMedigun:                "tf_weapon_medigun", // When used to extinguish
 			TauntDemoman:             "taunt_demoman",
+			TauntEngineer:            "taunt_engineer",
 			TauntGuitarKill:          "taunt_guitar_kill",
 			TauntGunslinger:          "robot_arm_blender_kill",
 			TauntHeavy:               "taunt_heavy",
@@ -271,15 +282,16 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			TheCAPPER:                "the_capper",
 			TheClassic:               "the_classic",
 			TheWinger:                "the_winger",
-			ThreeRuneBlade:           "scout_sword",
 			ThirdDegree:              "thirddegree",
+			ThreeRuneBlade:           "scout_sword",
 			TideTurner:               "tide_turner",
 			Tomislav:                 "tomislav",
 			TribalmansShiv:           "tribalkukri",
 			Ubersaw:                  "ubersaw",
-			UnknownWeapon:            "unknown",
 			UnarmedCombat:            "unarmed_combat",
+			UnknownWeapon:            "unknown",
 			VitaSaw:                  "battleneedle",
+			WangaPrick:               "voodoo_pin",
 			WarriorsSpirit:           "warrior_spirit",
 			WidowMaker:               "widowmaker",
 			World:                    "world",
@@ -477,6 +489,12 @@ func New() *LogParser {
 		// Map matching regex to known event types.
 		//nolint:lll
 		rxParsers: []regexEventMap{
+			// L 08/12/2023 - 08:29:57: Vote succeeded "Eternaween "
+			// L 08/12/2023 - 08:47:06: WARNING: ClientActive, but we don't know his SteamID?
+			// L 08/12/2023 - 08:47:05: VSCRIPT: Started VScript virtual machine using script language 'Squirrel'
+			// L 08/12/2023 - 08:47:05: Script not found (scripts/vscripts/mapspawn.nut)
+			// L 08/12/2023 - 08:47:05: "OMEGATRONIC<893><[U:1:918446193]><Red>" changed name to "butt cummer"
+			// L 08/12/2023 - 08:48:07: "sig_etc_ratelimit_exclude_commands" = ""
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`), LogStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`), LogStop},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+server_cvar:\s+"(?P<CVAR>.+?)"\s"(?P<value>.+?)"$`), CVAR},
@@ -519,7 +537,7 @@ func New() *LogParser {
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"\s+triggered "first_heal_after_spawn"\s+(?P<keypairs>.+?)$`), FirstHealAfterSpawn},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Team "(?P<team>.+?)" triggered "pointcaptured"\s+(?P<keypairs>.+?)$`), PointCaptured},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"\s+triggered "captureblocked"\s+(?P<keypairs>.+?)$`), CaptureBlocked},
-			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"\s+[Dd]isconnected \(reason "(?P<reason>.+?)$`), Disconnected},
+			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"\s+[Dd]isconnected \(reason "(?P<reason>(.|\n)*)"`), Disconnected},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+World triggered "Round_Overtime"`), WRoundOvertime},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+World triggered "Round_Start"`), WRoundStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+World triggered "Round_Setup_End"`), WRoundStart},
@@ -531,6 +549,7 @@ func New() *LogParser {
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+World triggered "Game_Paused"`), WPaused},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+World triggered "Game_Unpaused"`), WResumed},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Loading map "(?P<map>.+?)"$`), MapLoad},
+			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Started map "(?P<map>.+?)"\s+.+?$`), MapStarted},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Executing dedicated server config file (?P<config>.+?)$`), ServerConfigExec},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+STEAMAUTH: (?P<reason>.+?)$`), SteamAuth},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+"(?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>"\s+triggered "jarate_attack" against "(?P<name2>.+?)<(?P<pid2>\d+)><(?P<sid2>.+?)><(?P<team2>(Unassigned|Red|Blue)?)>" with "(?P<weapon>.+?)"\s+(?P<keypairs>.+?)$`), JarateAttack},
@@ -1275,6 +1294,15 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 				event = parsedEvent
 			case GasAttack:
 				var parsedEvent GasAttackEvt
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+
+				event = parsedEvent
+			case SteamAuth:
+				break
+			case MapStarted:
+				var parsedEvent MapStartedEvt
 				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
 					return nil, errUnmarshal
 				}

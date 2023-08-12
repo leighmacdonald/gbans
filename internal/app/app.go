@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -51,6 +53,7 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		eb: &eventBroadcaster[logparse.EventType, serverEvent]{
 			eventReaders:   map[logparse.EventType][]chan serverEvent{},
 			eventReadersMu: &sync.RWMutex{},
+			allEventsMu:    &sync.RWMutex{},
 		},
 		db:                   database,
 		conf:                 conf,
@@ -401,27 +404,123 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 	}
 }
 
-func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Match) {
-	var (
-		msgEmbed = discord.
-				NewEmbed(fmt.Sprintf("Match #%d - %s - %s", match.MatchID, server.ServerName, match.MapName)).
-				SetDescription("Match results").
-				SetColor(app.bot.Colour.Success).
-				SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
-		redScore = 0
-		bluScore = 0
-	)
+func defaultTable(writer io.Writer) *tablewriter.Table {
+	tbl := tablewriter.NewWriter(writer)
+	tbl.SetAutoFormatHeaders(true)
+	tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	tbl.SetCenterSeparator("")
+	tbl.SetColumnSeparator("")
+	tbl.SetRowSeparator("")
+	tbl.SetHeaderLine(false)
+	tbl.SetTablePadding(" ")
+	tbl.SetAlignment(tablewriter.ALIGN_LEFT)
 
-	for _, round := range match.Rounds {
-		redScore += round.Score.Red
-		bluScore += round.Score.Blu
+	return tbl
+}
+
+func infString(f float64) string {
+	if f == -1 {
+		return "∞"
 	}
 
+	return fmt.Sprintf("%.1f", f)
+}
+
+func matchASCIITable(match logparse.Match) string {
+	writerPlayers := &strings.Builder{}
+	tablePlayers := defaultTable(writerPlayers)
+	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K/D", "KA/D", "DA", "DA/M"})
+
+	players := match.TopPlayers()
+
+	for i, player := range players {
+		if i == 10 {
+			break
+		}
+
+		name := player.SteamID.String()
+		if player.Name != "" {
+			name = player.Name
+		}
+
+		tablePlayers.Append([]string{
+			name,
+			fmt.Sprintf("%d", player.KillCount()),
+			fmt.Sprintf("%d", player.Assists),
+			fmt.Sprintf("%d", player.Deaths()),
+			infString(player.KDRatio()),
+			infString(player.KDARatio()),
+			fmt.Sprintf("%d", player.Damage()),
+			fmt.Sprintf("%d", player.DamagePerMin()),
+		})
+	}
+
+	tablePlayers.Render()
+
+	writerHealers := &strings.Builder{}
+	tableHealers := defaultTable(writerPlayers)
+	tableHealers.SetHeader([]string{"Name", "A", "D", "Healing", "H/M", "Ub", "Dr"})
+
+	for i, player := range match.Healers() {
+		if i == 10 {
+			break
+		}
+
+		if player.HealingStats.Healing < 250 {
+			continue
+		}
+
+		name := player.SteamID.String()
+		if player.Name != "" {
+			name = player.Name
+		}
+
+		tableHealers.Append([]string{
+			name,
+			fmt.Sprintf("%d", player.Assists),
+			fmt.Sprintf("%d", player.Deaths()),
+			fmt.Sprintf("%d", player.HealingStats.Healing),
+			fmt.Sprintf("%d", player.HealingStats.HealingPerMin()),
+			fmt.Sprintf("%d", player.HealingStats.ChargesTotal()),
+			fmt.Sprintf("%d", player.HealingStats.DropsTotal()),
+		})
+	}
+
+	tableHealers.Render()
+
+	resp := "`" + strings.Trim(writerPlayers.String(), "\n") + " " + strings.Trim(writerHealers.String(), "\n") + "`"
+	if len(resp) > 4000 {
+		resp = resp[0:4000]
+	}
+
+	return resp
+}
+
+func (app *App) sendDiscordMatchResults(_ context.Context, match logparse.Match) {
+	state := app.state.current()
+	server, found := state.byServerID(match.ServerID)
+
+	if !found {
+		return
+	}
+
+	msgEmbed := discord.
+		NewEmbed(fmt.Sprintf("Match Summary - %s [#%d]", server.Name, match.MatchID)).
+		SetColor(app.bot.Colour.Success).
+		SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
+
+	msgEmbed.SetDescription(matchASCIITable(match))
+
+	redScore, bluScore := match.Scores()
 	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
 	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
-	msgEmbed.AddField("Duration", fmt.Sprintf("%.2f Minutes", time.Since(match.CreatedOn).Minutes())).MakeFieldInline()
+	msgEmbed.AddField("Map", server.Map).MakeFieldInline()
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
+	if match.TimeEnd != nil && match.CreatedOn != nil {
+		msgEmbed.AddField("Duration", match.TimeEnd.Sub(*match.CreatedOn).String()).MakeFieldInline()
+	}
+
+	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 }
 
 func (app *App) chatRecorder(ctx context.Context) {
@@ -430,10 +529,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 		serverEventChan = make(chan serverEvent)
 	)
 
-	if errRegister := app.eb.Consume(serverEventChan, []logparse.EventType{
-		logparse.Say,
-		logparse.SayTeam,
-	}); errRegister != nil {
+	if errRegister := app.eb.Consume(serverEventChan, logparse.Say, logparse.SayTeam); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 
 		return
@@ -468,10 +564,10 @@ func (app *App) chatRecorder(ctx context.Context) {
 
 				msg := store.PersonMessage{
 					SteamID:     newServerEvent.SID,
-					PersonaName: newServerEvent.Name,
+					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
 					ServerName:  evt.ServerName,
 					ServerID:    evt.ServerID,
-					Body:        newServerEvent.Msg,
+					Body:        strings.ToValidUTF8(newServerEvent.Msg, "_"),
 					Team:        newServerEvent.Team,
 					CreatedOn:   newServerEvent.CreatedOn,
 				}
@@ -482,13 +578,13 @@ func (app *App) chatRecorder(ctx context.Context) {
 					continue
 				}
 
-				log.Debug("Chat message",
-					zap.Int64("id", msg.PersonMessageID),
-					zap.String("server", evt.ServerName),
-					zap.String("name", newServerEvent.Name),
-					zap.String("steam_id", newServerEvent.SID.String()),
-					zap.Bool("team", msg.Team),
-					zap.String("message", msg.Body))
+				// log.Debug("Chat message",
+				//	zap.Int64("id", msg.PersonMessageID),
+				//	zap.String("server", evt.ServerName),
+				//	zap.String("name", newServerEvent.Name),
+				//	zap.String("steam_id", newServerEvent.SID.String()),
+				//	zap.Bool("team", msg.Team),
+				//	zap.String("message", msg.Body))
 
 				app.incomingGameChat <- msg
 			}
@@ -500,7 +596,7 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 	log := app.log.Named("playerConnectionWriter")
 
 	serverEventChan := make(chan serverEvent)
-	if errRegister := app.eb.Consume(serverEventChan, []logparse.EventType{logparse.Connected}); errRegister != nil {
+	if errRegister := app.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 
 		return

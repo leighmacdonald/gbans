@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/pkg/errors"
 )
 
 // serverEvent is a flat struct encapsulating a parsed log event.
@@ -23,20 +24,35 @@ type eventBroadcaster[T comparable, V eventInterface] struct {
 	eventReaders   map[T][]chan V
 	allEvents      []chan V
 	eventReadersMu *sync.RWMutex
+	allEventsMu    *sync.RWMutex
 }
 
-// Consume will register a channel to receive new log events as they come in.
-func (eb *eventBroadcaster[k, v]) Consume(serverEventChan chan v, msgTypes []k) error {
-	eb.eventReadersMu.Lock()
-	defer eb.eventReadersMu.Unlock()
+// Consume will register a channel to receive new log events as they come in. If no event keys
+// are provided, all events will be sent.
+func (eb *eventBroadcaster[k, v]) Consume(serverEventChan chan v, keys ...k) error {
+	if len(keys) > 0 {
+		eb.eventReadersMu.Lock()
+		for _, msgType := range keys {
+			_, found := eb.eventReaders[msgType]
+			if !found {
+				eb.eventReaders[msgType] = []chan v{}
+			}
 
-	for _, msgType := range msgTypes {
-		_, found := eb.eventReaders[msgType]
-		if !found {
-			eb.eventReaders[msgType] = []chan v{}
+			eb.eventReaders[msgType] = append(eb.eventReaders[msgType], serverEventChan)
+		}
+		eb.eventReadersMu.Unlock()
+	} else {
+		eb.allEventsMu.Lock()
+		for _, existing := range eb.allEvents {
+			if existing == serverEventChan {
+				eb.allEventsMu.Unlock()
+
+				return errors.New("Duplicate channel registration")
+			}
 		}
 
-		eb.eventReaders[msgType] = append(eb.eventReaders[msgType], serverEventChan)
+		eb.allEvents = append(eb.allEvents, serverEventChan)
+		eb.allEventsMu.Unlock()
 	}
 
 	return nil
@@ -46,11 +62,12 @@ func (eb *eventBroadcaster[k, v]) Consume(serverEventChan chan v, msgTypes []k) 
 func (eb *eventBroadcaster[k, v]) Emit(et k, event v) {
 	// Ensure we also send to Any handlers for all events.
 	for _, eventType := range []k{et} {
+		eb.allEventsMu.RLock()
 		eb.eventReadersMu.RLock()
 		specificReaders, specificReadersFound := eb.eventReaders[eventType]
-		eb.eventReadersMu.RUnlock()
 
 		readerChannels := eb.allEvents
+
 		if specificReadersFound {
 			readerChannels = append(readerChannels, specificReaders...)
 		}
@@ -58,6 +75,9 @@ func (eb *eventBroadcaster[k, v]) Emit(et k, event v) {
 		for _, reader := range readerChannels {
 			reader <- event
 		}
+
+		eb.eventReadersMu.RUnlock()
+		eb.allEventsMu.RUnlock()
 	}
 }
 

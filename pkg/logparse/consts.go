@@ -79,6 +79,7 @@ const (
 	MapLoad          EventType = 1008
 	ServerConfigExec EventType = 1009
 	SteamAuth        EventType = 1010
+	MapStarted       EventType = 1011
 
 	Any EventType = 10000
 )
@@ -189,6 +190,8 @@ const (
 	QuickFix
 )
 
+// TODO String()
+//
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 type Weapon int
 
@@ -234,12 +237,15 @@ const (
 	CowMangler
 	Crossbow
 	CrossbowBolt
+	CrossingGuard
 	DeflectArrow
 	DeflectFlare
 	DeflectFlareDetonator
 	DeflectGrenade
 	DeflectHunstmanBurning
+	DeflectLooseCannon
 	DeflectRocket
+	DeflectRocketMangler
 	DeflectSticky
 	Degreaser
 	DemoKatana
@@ -251,6 +257,10 @@ const (
 	DragonsFury
 	DragonsFuryBonus
 	Enforcer
+	EntBonesaw
+	EntFrontierKill
+	EntManmelter // Fire suck extinguish
+	EntSniperRifle
 	Equalizer
 	EscapePlan
 	EternalReward
@@ -271,13 +281,13 @@ const (
 	FreedomStaff
 	FrontierJustice
 	FryingPan
+	GRU
 	GasPasser
 	GigerCounter
 	GoldenWrench
-	GRU
 	Gunslinger
-	GunslingerKill
 	GunslingerCombo
+	GunslingerKill
 	HHHHeadtaker
 	HamShank
 	HolidayPunch
@@ -300,6 +310,7 @@ const (
 	Lollichop
 	LongHeatmaker
 	LooseCannon
+	LooseCannonExplosion
 	LooseCannonImpact
 	Lugermorph
 	Machina
@@ -319,10 +330,10 @@ const (
 	NeonAnnihilator
 	NessiesNineIron
 	Original
+	OverdoseSyringe
 	PDAEngineer
 	PainTrain
 	PanicAttack
-	PrettyBoysPocketPistol
 	PersianPersuader
 	Phlog
 	PistolEngy
@@ -331,24 +342,27 @@ const (
 	Pomson
 	PostalPummeler
 	Powerjack
+	PrettyBoysPocketPistol
 	Prinny
 	ProRifle
 	ProSMG
 	ProjectileArrow
 	ProjectileArrowFire
-	ProjectileJarGas
+	ProjectileDragonsFury
 	ProjectileGrenade
+	ProjectileJarGas
 	ProjectileRocket
+	ProjectileShortCircuit
 	ProjectileSticky
-	OverdoseSyringe
 	PumpkinBomb
 	Quickiebomb
 	Rainblower
+	RedTapeRecorder
 	RescueRanger
 	ReserveShooter
 	Revolver
 	RighteousBison
-	DeflectRocketMangler
+	RocketLauncher
 	SMG
 	Sandman
 	SandmanBall
@@ -363,13 +377,12 @@ const (
 	Sentry2
 	Sentry3
 	SentryRocket
+	Shahanshah
 	Shark
 	SharpDresser
 	SharpenedVolcanoFragment
-	Shahanshah
 	ShootingStar
 	ShortCircuit
-	ProjectileShortCircuit
 	ShortStop
 	ShotgunEngy
 	ShotgunHeavy
@@ -382,6 +395,7 @@ const (
 	SniperRifle
 	SodaPopper
 	SolemnVow
+	SouthernComfort
 	SouthernHospitality
 	SplendidScreen
 	Spycicle
@@ -392,6 +406,7 @@ const (
 	TFFlameThrower
 	TFMedigun
 	TauntDemoman
+	TauntEngineer
 	TauntGuitarKill
 	TauntGunslinger
 	TauntHeavy
@@ -407,6 +422,7 @@ const (
 	TheClassic
 	TheWinger
 	ThirdDegree
+	ThreeRuneBlade
 	TideTurner
 	Tomislav
 	TribalmansShiv
@@ -414,37 +430,11 @@ const (
 	UnarmedCombat
 	UnknownWeapon
 	VitaSaw
+	WangaPrick
 	WarriorsSpirit
 	WidowMaker
 	World
 	Wrangler
 	WrapAssassin
 	Wrench
-	RedTapeRecorder
-	ThreeRuneBlade
 )
-
-// var backStabWeapons = []Weapon{
-//	BigEarner,
-//	EternalReward,
-//	BlackRose,
-//	Knife,
-//	Kunai,
-//	Spycicle,
-//	SharpDresser,
-//	SniperRifle,
-//	Machina,
-//	Ambassador,
-//	DiamondBack,
-//	MarketGardener,
-//	// kgb
-//	Backburner,
-//	AwperHand,
-//	ProRifle,
-//	ShootingStar,
-//	TheClassic,
-//}
-
-// func IsCritWeapon(weapon Weapon) bool {
-//	return fp.Contains[Weapon](backStabWeapons, weapon)
-//}

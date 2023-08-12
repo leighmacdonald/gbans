@@ -171,6 +171,16 @@ func (c *serverDetailsCollection) sortRegion() map[string]serverDetailsCollectio
 	return serverMap
 }
 
+func (c *serverDetailsCollection) byServerID(serverID int) (serverDetails, bool) {
+	for _, server := range *c {
+		if server.ServerID == serverID {
+			return server, true
+		}
+	}
+
+	return serverDetails{}, false
+}
+
 func (c *serverDetailsCollection) byName(name string, wildcardOk bool) serverDetailsCollection {
 	var servers serverDetailsCollection
 

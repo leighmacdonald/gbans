@@ -32,70 +32,101 @@ func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 	return false
 }
 
-func (app *App) matchSummarizer(ctx context.Context) {
-	log := app.log.Named("matchSum")
+// activeMatch represents the current match on any given server instance.
+type activeMatch struct {
+	match          logparse.Match
+	cancel         context.CancelFunc
+	incomingEvents chan serverEvent
+	log            *zap.Logger
+	finalScores    int
+}
 
-	eventChan := make(chan serverEvent)
-	if errReg := app.eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
-		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
-	}
-
-	matches := map[int]logparse.Match{}
-
-	matchesMu := &sync.RWMutex{}
-
-	var curServer store.Server
+func (am *activeMatch) start(ctx context.Context) {
+	am.log.Debug("New match started", zap.String("server", am.match.Title))
+	defer am.log.Debug("active match closed")
 
 	for {
 		select {
-		case evt := <-eventChan:
-			matchesMu.RLock()
-			match, found := matches[evt.ServerID]
-			matchesMu.RUnlock()
-
-			if !found && evt.EventType != logparse.MapLoad {
-				// Wait for new map
-				continue
-			}
-
-			if evt.EventType == logparse.LogStart {
-				log.Info("New match created (new game)", zap.String("server", evt.ServerName))
-				matches[evt.ServerID] = logparse.NewMatch(log, evt.ServerID, evt.ServerName)
-			}
-
-			matchesMu.Lock()
-			// Apply the update before any secondary side effects trigger
-			if errApply := match.Apply(evt.Results); errApply != nil {
-				log.Error("Error applying event",
+		case evt := <-am.incomingEvents:
+			if errApply := am.match.Apply(evt.Results); errApply != nil && !errors.Is(errApply, logparse.ErrIgnored) {
+				am.log.Error("Error applying event",
 					zap.String("server", evt.ServerName),
 					zap.Error(errApply))
-			}
-			matchesMu.Unlock()
-
-			switch evt.EventType {
-			case logparse.LogStop:
-				fallthrough
-			case logparse.WGameOver:
-				time.Sleep(time.Second) // Wait for remaining events
-
-				go func(completeMatch logparse.Match) {
-					// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
-					//	log.Error("Failed to save match",
-					//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
-					// } else {
-					//
-					// }
-					app.sendDiscordMatchResults(curServer, completeMatch)
-				}(match)
-
-				matchesMu.Lock()
-				delete(matches, evt.ServerID)
-				matchesMu.Unlock()
 			}
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+// matchSummarizer is the central collection point for summarizing matches live from UDP log events.
+func (app *App) matchSummarizer(ctx context.Context) {
+	log := app.log.Named("matchSum")
+
+	eventChan := make(chan serverEvent, 100)
+	if errReg := app.eb.Consume(eventChan); errReg != nil {
+		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
+	}
+
+	matches := map[int]*activeMatch{}
+
+	for {
+		select {
+		case evt := <-eventChan:
+			match, exists := matches[evt.ServerID]
+			if !exists {
+				matchCtx, cancel := context.WithCancel(ctx)
+				match = &activeMatch{
+					match:          logparse.NewMatch(log, evt.ServerID, evt.ServerName),
+					cancel:         cancel,
+					log:            log.Named(fmt.Sprintf("match-%s", evt.ServerName)),
+					incomingEvents: make(chan serverEvent),
+				}
+
+				go match.start(matchCtx)
+
+				matches[evt.ServerID] = match
+			}
+
+			match.incomingEvents <- evt
+
+			switch evt.EventType {
+			case logparse.WTeamFinalScore:
+				match.finalScores++
+				if match.finalScores < 2 {
+					continue
+				}
+
+				fallthrough
+			case logparse.LogStop:
+				match.log.Info("Closing match")
+				match.cancel()
+
+				state := app.state.current()
+				server, found := state.byServerID(evt.ServerID)
+
+				if found && server.Name != "" {
+					match.match.Title = server.Name
+				}
+
+				go app.onMatchComplete(ctx, match.match)
+
+				delete(matches, evt.ServerID)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (app *App) onMatchComplete(ctx context.Context, match logparse.Match) {
+	// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
+	//	log.Error("Failed to save match",
+	//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
+	// } else {
+	//
+	// }
+	app.sendDiscordMatchResults(ctx, match)
 }
 
 func (app *App) steamGroupMembershipUpdater(ctx context.Context) {

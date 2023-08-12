@@ -8,3 +8,10 @@ This includes support for most of the extended output of the following plugins a
 - SupStats2
 - MedicStats
 
+## Match
+
+The additional match functionality will tally up data and give summarized data in a format
+that is fairly similar to logs.tf.
+
+    match := logparse.NewMatch(logger, serverID, serverName)
+    match.Apply(<event>)

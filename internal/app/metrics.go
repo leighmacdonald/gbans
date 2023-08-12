@@ -104,7 +104,7 @@ func logMetricsConsumer(ctx context.Context, collector *metricCollector, eb *eve
 	log := logger.Named("metricsConsumer")
 
 	eventChan := make(chan serverEvent)
-	if errRegister := eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errRegister != nil {
+	if errRegister := eb.Consume(eventChan); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
 
 		return

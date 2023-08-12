@@ -83,7 +83,7 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 4, playerAvgIQ.HealingStats.ChargesTotal())
 	require.Equal(t, 2, playerAvgIQ.HealingStats.DropsTotal())
 	require.Equal(t, 2850, playerAvgIQ.TargetInfo[playerVar.SteamID].HealingTaken)
-	require.Equal(t, 1005, playerAvgIQ.HealingStats.HealingPerSec())
+	require.Equal(t, 1005, playerAvgIQ.HealingStats.HealingPerMin())
 
 	red, blu := newMatch.Scores()
 	require.Equal(t, []int{3, 0}, []int{red, blu})
@@ -93,8 +93,8 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, float64(377), round.Length.Seconds())
 	require.Equal(t, 2, round.Score.Red)
 	require.Equal(t, 0, round.Score.Blu)
-	require.Equal(t, 3, round.UbersRed)
-	require.Equal(t, 2, round.UbersBlu)
+	require.Equal(t, float64(3), round.UbersRed)
+	require.Equal(t, float64(2), round.UbersBlu)
 	require.Equal(t, 20035, round.DamageRed)
 	require.Equal(t, 16960, round.DamageBlu)
 }

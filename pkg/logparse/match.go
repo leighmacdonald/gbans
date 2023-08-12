@@ -68,8 +68,8 @@ type Match struct {
 	PlayerSums MatchPlayerSums  `json:"player_sums"`
 	Rounds     []*MatchRoundSum `json:"rounds"`
 	Chat       []MatchChat      `json:"chat"`
-	CreatedOn  time.Time        `json:"created_on"`
-
+	CreatedOn  *time.Time       `json:"created_on"`
+	TimeEnd    *time.Time       `json:"time_end"`
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch  bool // We ignore most events until Round_Start event
 	inRound  bool
@@ -82,7 +82,6 @@ func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 		ServerID:   serverID,
 		Title:      serverName,
 		PlayerSums: MatchPlayerSums{},
-		CreatedOn:  time.Now(),
 		curRound:   -1,
 	}
 }
@@ -172,6 +171,22 @@ func (match *Match) TopPlayers() []PlayerStats {
 	return players
 }
 
+func (match *Match) Healers() []PlayerStats {
+	var healers []PlayerStats
+
+	for _, player := range match.playerSlice() {
+		if player.HealingStats != nil {
+			healers = append(healers, player)
+		}
+	}
+
+	sort.SliceStable(healers, func(i, j int) bool {
+		return healers[i].HealingStats.Healing > healers[j].HealingStats.Healing
+	})
+
+	return healers
+}
+
 // Apply is used to apply incoming event changes to the current match state
 // This is not threadsafe at all.
 func (match *Match) Apply(result *Results) error { //nolint:maintidx
@@ -204,6 +219,16 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		return ErrIgnored
 	case UnknownMsg:
 		return ErrUnhandled
+	case MapStarted:
+		evt, ok := result.Event.(MapStartedEvt)
+		if !ok {
+			return ErrInvalidType
+		}
+
+		match.MapName = evt.Map
+
+		return nil
+
 	case WRoundStart:
 		match.roundStart()
 
@@ -250,8 +275,10 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		// We should already know this, so just verify
 		red, blu := match.Scores()
 		if (evt.Team == RED && red != evt.Score) || (evt.Team == BLU && blu != evt.Score) {
-			match.logger.Error("Mismatched score counts")
+			match.logger.Warn("Mismatched score counts")
 		}
+
+		match.finalScore(evt)
 
 		return nil
 	case WIntermissionWinLimit:
@@ -262,10 +289,27 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.roundWin(evt.Winner)
+		match.roundWin(evt)
 
 		return nil
+	case WMiniRoundWin:
+		evt, ok := result.Event.(WMiniRoundWinEvt)
+		if !ok {
+			return ErrInvalidType
+		}
 
+		match.miniRoundWin(evt)
+
+		return nil
+	case WMiniRoundLen:
+		evt, ok := result.Event.(WMiniRoundLenEvt)
+		if !ok {
+			return ErrInvalidType
+		}
+
+		match.miniRoundLen(evt)
+
+		return nil
 	case Connected:
 		evt, ok := result.Event.(ConnectedEvt)
 		if !ok {
@@ -318,6 +362,11 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		}
 
 		match.spawnedAs(evt)
+
+		// If we started a match 1/2 way through, create a start time
+		if match.CreatedOn == nil {
+			match.CreatedOn = &evt.CreatedOn
+		}
 	case ChangeClass:
 		evt, ok := result.Event.(ChangeClassEvt)
 		if !ok {
@@ -333,7 +382,6 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		}
 
 		match.shotFired(evt)
-
 	case ShotHit:
 		evt, ok := result.Event.(ShotHitEvt)
 		if !ok {
@@ -510,9 +558,28 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		}
 
 		match.firstHealAfterSpawn(evt)
-
+	case JarateAttack:
+		return nil
+	case MilkAttack:
+		return nil
+	case GasAttack:
+		return nil
+	case Validated:
+		return nil
+	case ServerConfigExec:
+		return nil
+	case CVAR:
+		return nil
+	case RCON:
+		return nil
+	case WRoundSetupBegin:
+		return nil
+	case WMiniRoundSelected:
+		return nil
+	case SteamAuth:
+		return nil
 	default:
-		return errors.New("Unhandled apply event")
+		return errors.New(fmt.Sprintf("Unhandled apply event: %d %v", result.EventType, result.Event))
 	}
 
 	return nil
@@ -559,10 +626,10 @@ func (match *Match) roundStart() {
 	})
 }
 
-func (match *Match) roundWin(team Team) {
+func (match *Match) roundWin(evt WRoundWinEvt) {
 	round := match.getRound()
 	if round != nil {
-		round.RoundWinner = team
+		round.RoundWinner = evt.Winner
 	}
 
 	match.inMatch = true
@@ -572,6 +639,7 @@ func (match *Match) roundWin(team Team) {
 func (match *Match) gameOver(evt WGameOverEvt) {
 	match.inMatch = false
 	match.inRound = false
+	match.TimeEnd = &evt.CreatedOn
 
 	for _, player := range match.PlayerSums {
 		// Players disconnected before game end should already have this set
@@ -605,6 +673,10 @@ func (match *Match) spawnedAs(evt SpawnedAsEvt) {
 	}
 
 	playerSum := match.getPlayer(evt.CreatedOn, evt.SID)
+
+	if playerSum.Name == "" && evt.Name != "" {
+		playerSum.Name = evt.Name
+	}
 
 	if !fp.Contains[PlayerClass](playerSum.Classes, evt.Class) {
 		playerSum.Classes = append(playerSum.Classes, evt.Class)
@@ -757,7 +829,9 @@ func (match *Match) suicide(evt SuicideEvt) {
 
 func (match *Match) firstHealAfterSpawn(evt FirstHealAfterSpawnEvt) {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
-	player.HealingStats.FirstHealAfterSpawn = append(player.HealingStats.FirstHealAfterSpawn, evt.Time)
+	if player.HealingStats != nil {
+		player.HealingStats.FirstHealAfterSpawn = append(player.HealingStats.FirstHealAfterSpawn, evt.Time)
+	}
 }
 
 func (match *Match) pickup(evt PickupEvt) {
@@ -814,10 +888,20 @@ func (match *Match) medicCharge(evt ChargeDeployedEvt) {
 
 	medicSum.Charges[evt.Medigun]++
 
-	if evt.Team == RED {
-		match.getRound().UbersRed++
-	} else if evt.Team == BLU {
-		match.getRound().UbersBlu++
+	round := match.getRound()
+
+	if round != nil {
+		amount := 1.0
+		if evt.Medigun == Vaccinator {
+			// Vacc uber worth 25% of regular
+			amount = 0.25
+		}
+
+		if evt.Team == RED {
+			round.UbersRed += amount
+		} else if evt.Team == BLU {
+			round.UbersBlu += amount
+		}
 	}
 }
 
@@ -857,16 +941,29 @@ func (match *Match) Scores() (int, int) {
 
 func (match *Match) roundLen(evt WRoundLenEvt) {
 	round := match.getRound()
-	round.Length = time.Duration(evt.Seconds) * time.Second
+	if round != nil {
+		round.Length = time.Duration(evt.Seconds) * time.Second
+	}
 }
 
 func (match *Match) roundScore(evt WTeamScoreEvt) {
 	round := match.getRound()
-	if evt.Team == RED {
-		round.Score.Red = evt.Score
-	} else if evt.Team == BLU {
-		round.Score.Blu = evt.Score
+	if round != nil {
+		if evt.Team == RED {
+			round.Score.Red = evt.Score
+		} else if evt.Team == BLU {
+			round.Score.Blu = evt.Score
+		}
 	}
+}
+
+func (match *Match) finalScore(evt WTeamFinalScoreEvt) {
+}
+
+func (match *Match) miniRoundWin(evt WMiniRoundWinEvt) {
+}
+
+func (match *Match) miniRoundLen(evt WMiniRoundLenEvt) {
 }
 
 type PointCaptureBlocked struct {
@@ -902,6 +999,7 @@ type PlayerStats struct {
 	match             *Match
 	SteamID           steamid.SID64                  `json:"steam_id"`
 	Team              Team                           `json:"team"`
+	Name              string                         `json:"name"`
 	TimeStart         *time.Time                     `json:"time_start"`
 	TimeEnd           *time.Time                     `json:"time_end"`
 	TargetInfo        map[steamid.SID64]*TargetStats `json:"target_info"`
@@ -1128,8 +1226,8 @@ type MatchRoundSum struct {
 	Score       TeamScores    `json:"score"`
 	KillsBlu    int           `json:"kills_blu"`
 	KillsRed    int           `json:"kills_red"`
-	UbersBlu    int           `json:"ubers_blu"`
-	UbersRed    int           `json:"ubers_red"`
+	UbersBlu    float64       `json:"ubers_blu"`
+	UbersRed    float64       `json:"ubers_red"`
 	DamageBlu   int           `json:"damage_blu"`
 	DamageRed   int           `json:"damage_red"`
 	RoundWinner Team          `json:"round_winner,"`
@@ -1165,7 +1263,7 @@ func (ms *HealingStats) DropsTotal() int {
 	return len(ms.Drops)
 }
 
-func (ms *HealingStats) HealingPerSec() int {
+func (ms *HealingStats) HealingPerMin() int {
 	if ms.Healing <= 0 {
 		return 0
 	}
