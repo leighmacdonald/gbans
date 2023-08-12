@@ -436,19 +436,19 @@ func TestParseDominationEvt(t *testing.T) {
 func TestParseDisconnectedEvt(t *testing.T) {
 	t.Parallel()
 
+	// testLogLine(t, `L 02/21/2021 - 06:22:23: "Imperi<248><[U:1:1008044562]><Red>" disconnected (reason "Client left game (Steam auth ticket has been canceled)`,
+	//	logparse.DisconnectedEvt{
+	//		TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+	//		SourcePlayer: logparse.SourcePlayer{Name: "Imperi", PID: 248, SID: steamid.SID3ToSID64("[U:1:1008044562]"), Team: logparse.RED},
+	//		Reason:       "Client left game (Steam auth ticket has been canceled)",
+	//	})
+
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Cybermorphic<15><[U:1:901503117]><Unassigned>" Disconnected (reason "Disconnect by user.")`,
 		logparse.DisconnectedEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Cybermorphic", PID: 15, SID: steamid.New("[U:1:901503117]"), Team: logparse.SPEC},
 			Reason:       "Disconnect by user.",
 		})
-
-	//testLogLine(t, `L 02/21/2021 - 06:22:23: "Imperi<248><[U:1:1008044562]><Red>" disconnected (reason "Client left game (Steam auth ticket has been canceled)`,
-	//	logparse.DisconnectedEvt{
-	//		TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-	//		SourcePlayer: logparse.SourcePlayer{Name: "Imperi", PID: 248, SID: steamid.SID3ToSID64("[U:1:1008044562]"), Team: logparse.RED},
-	//		Reason:       "Client left game (Steam auth ticket has been canceled)",
-	//	})
 }
 
 func TestParseRevengeEvt(t *testing.T) {
