@@ -68,6 +68,8 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 1, playerTuna.AirShots())
 	require.Equal(t, 4053, playerTuna.DamageTaken())
 	require.Equal(t, 3, newMatch.RoundCount())
+	// require.Equal(t, 40.68, playerTuna.Accuracy(logparse.ProjectileRocket))
+	require.Equal(t, 43.48, playerTuna.AccuracyOverall())
 
 	playerDoctrine := newMatch.PlayerBySteamID(steamid.New(76561199050447792))
 	require.Equal(t, 18, playerDoctrine.HeadShots())
