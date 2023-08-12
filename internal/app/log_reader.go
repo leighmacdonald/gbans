@@ -34,7 +34,7 @@ const (
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	db            *store.Store
-	eb            *eventBroadcaster
+	eb            *eventBroadcaster[logparse.EventType, serverEvent]
 	logger        *zap.Logger
 	udpAddr       *net.UDPAddr
 	secretMap     map[int]string
@@ -42,7 +42,9 @@ type remoteSrcdsLogSource struct {
 	logAddrString string
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr string, broadcaster *eventBroadcaster) (*remoteSrcdsLogSource, error) {
+func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr string,
+	broadcaster *eventBroadcaster[logparse.EventType, serverEvent],
+) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
@@ -216,7 +218,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 
-			remoteSrc.eb.Emit(event)
+			remoteSrc.eb.Emit(event.EventType, event)
 		}
 	}
 }

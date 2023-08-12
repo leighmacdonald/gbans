@@ -5,18 +5,22 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -36,15 +40,18 @@ type App struct {
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *patreonManager
-	eb                   *eventBroadcaster
+	eb                   *eventBroadcaster[logparse.EventType, serverEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	application := App{
-		bot:                  bot,
-		eb:                   newEventBroadcaster(),
+		bot: bot,
+		eb: &eventBroadcaster[logparse.EventType, serverEvent]{
+			eventReaders:   map[logparse.EventType][]chan serverEvent{},
+			eventReadersMu: &sync.RWMutex{},
+		},
 		db:                   database,
 		conf:                 conf,
 		log:                  logger,
@@ -161,6 +168,38 @@ func (app *App) Init(ctx context.Context) error {
 		}
 
 		app.log.Info("Loaded filter list", zap.Int("count", len(app.wordFilters.wordFilters)))
+	}
+
+	return nil
+}
+
+func (app *App) StartHTTP(ctx context.Context) error {
+	app.log.Info("Service status changed", zap.String("state", "ready"))
+	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
+
+	if app.conf.General.Mode == ReleaseMode {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
+	httpServer := newHTTPServer(ctx, app)
+
+	go func() {
+		<-ctx.Done()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+
+		defer cancel()
+
+		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
+			app.log.Error("Error shutting down http service", zap.Error(errShutdown))
+		}
+	}()
+
+	errServe := httpServer.ListenAndServe()
+	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
+		return errors.Wrap(errServe, "HTTP listener returned error")
 	}
 
 	return nil
@@ -362,70 +401,6 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 	}
 }
 
-func (app *App) matchSummarizer(ctx context.Context) {
-	log := app.log.Named("matchSum")
-
-	eventChan := make(chan serverEvent)
-	if errReg := app.eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
-		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
-	}
-
-	matches := map[int]logparse.Match{}
-
-	matchesMu := &sync.RWMutex{}
-
-	var curServer store.Server
-
-	for {
-		select {
-		case evt := <-eventChan:
-			matchesMu.RLock()
-			match, found := matches[evt.ServerID]
-			matchesMu.RUnlock()
-
-			if !found && evt.EventType != logparse.MapLoad {
-				// Wait for new map
-				continue
-			}
-
-			if evt.EventType == logparse.LogStart {
-				log.Info("New match created (new game)", zap.String("server", evt.ServerName))
-				matches[evt.ServerID] = logparse.NewMatch(log, evt.ServerID, evt.ServerName)
-			}
-
-			matchesMu.Lock()
-			// Apply the update before any secondary side effects trigger
-			if errApply := match.Apply(evt.Results); errApply != nil {
-				log.Error("Error applying event",
-					zap.String("server", evt.ServerName),
-					zap.Error(errApply))
-			}
-			matchesMu.Unlock()
-
-			switch evt.EventType {
-			case logparse.LogStop:
-				fallthrough
-			case logparse.WGameOver:
-				go func(completeMatch logparse.Match) {
-					// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
-					//	log.Error("Failed to save match",
-					//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
-					// } else {
-					//
-					// }
-					app.sendDiscordMatchResults(curServer, completeMatch)
-				}(match)
-
-				matchesMu.Lock()
-				delete(matches, evt.ServerID)
-				matchesMu.Unlock()
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Match) {
 	var (
 		msgEmbed = discord.
@@ -449,9 +424,9 @@ func (app *App) sendDiscordMatchResults(server store.Server, match logparse.Matc
 	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
 }
 
-func (app *App) playerMessageWriter(ctx context.Context) {
+func (app *App) chatRecorder(ctx context.Context) {
 	var (
-		log             = app.log.Named("playerMessageWriter")
+		log             = app.log.Named("chatRecorder")
 		serverEventChan = make(chan serverEvent)
 	)
 
@@ -645,7 +620,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 					}
 				}
 
-				app.eb.Emit(newServerEvent)
+				app.eb.Emit(newServerEvent.EventType, newServerEvent)
 				emitted++
 			}
 
@@ -690,10 +665,9 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.initLogSrc(ctx)
 	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer(ctx)
-	go app.playerMessageWriter(ctx)
+	go app.chatRecorder(ctx)
 	go app.playerConnectionWriter(ctx)
 	go app.steamGroupMembershipUpdater(ctx)
-	go app.localStatUpdater(ctx)
 	go cleanupTasks(ctx, app.db, app.log)
 	go app.showReportMeta(ctx)
 	go app.notificationSender(ctx)
@@ -711,6 +685,68 @@ func (app *App) initLogSrc(ctx context.Context) {
 	logSrc.start(ctx)
 }
 
+// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
+func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
+	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
+		return errors.Wrapf(errGetPerson, "Failed to get person instance: %s", sid)
+	}
+
+	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24 {
+		summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{sid})
+		if errSummaries != nil {
+			return errors.Wrapf(errSummaries, "Failed to get Player summary: %v", errSummaries)
+		}
+
+		if len(summaries) > 0 {
+			s := summaries[0]
+			person.PlayerSummary = &s
+		} else {
+			app.log.Warn("Failed to update profile summary", zap.Error(errSummaries), zap.Int64("sid", sid.Int64()))
+			// return errors.Errorf("Failed to fetch Player summary for %d", sid)
+		}
+
+		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
+		if errBans != nil || len(vac) != 1 {
+			// return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
+			app.log.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
+		} else {
+			person.CommunityBanned = vac[0].CommunityBanned
+			person.VACBans = vac[0].NumberOfVACBans
+			person.GameBans = vac[0].NumberOfGameBans
+			person.EconomyBan = steamweb.EconBanNone
+			person.CommunityBanned = vac[0].CommunityBanned
+			person.DaysSinceLastBan = vac[0].DaysSinceLastBan
+		}
+
+		person.UpdatedOnSteam = time.Now()
+	}
+
+	person.SteamID = sid
+	if errSavePerson := app.db.SavePerson(ctx, person); errSavePerson != nil {
+		return errors.Wrapf(errSavePerson, "Failed to save person")
+	}
+
+	return nil
+}
+
+// resolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout.
+func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
+	localCtx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
+
+	sid64, errString := steamid.StringToSID64(sidStr)
+	if errString == nil && sid64.Valid() {
+		return sid64, nil
+	}
+
+	sid, errResolve := steamid.ResolveSID64(localCtx, sidStr)
+	if errResolve != nil {
+		return "", errors.Wrap(errResolve, "Failed to resolve vanity")
+	}
+
+	return sid, nil
+}
+
 // func SendUserNotification(pl NotificationPayload) {
 //	select {
 //	case notificationChan <- pl:
@@ -723,6 +759,67 @@ func initNetBans(ctx context.Context, conf *Config) error {
 	for _, banList := range conf.NetBans.Sources {
 		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, conf.NetBans.MaxAge); errImport != nil {
 			return errors.Wrap(errImport, "Failed to import net bans")
+		}
+	}
+
+	return nil
+}
+
+type NotificationHandler struct{}
+
+type NotificationPayload struct {
+	MinPerms consts.Privilege
+	Sids     steamid.Collection
+	Severity consts.NotificationSeverity
+	Message  string
+	Link     string
+}
+
+func (app *App) SendNotification(ctx context.Context, notification NotificationPayload) error {
+	// Collect all required ids
+	if notification.MinPerms >= consts.PUser {
+		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
+		if errIds != nil {
+			return errors.Wrap(errIds, "Failed to fetch steamids for notification")
+		}
+
+		notification.Sids = append(notification.Sids, sids...)
+	}
+
+	uniqueIds := fp.Uniq(notification.Sids)
+
+	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
+	if errPeople != nil && !errors.Is(errPeople, store.ErrNoResult) {
+		return errors.Wrap(errPeople, "Failed to fetch people for notification")
+	}
+
+	var discordIds []string
+
+	for _, p := range people {
+		if p.DiscordID != "" {
+			discordIds = append(discordIds, p.DiscordID)
+		}
+	}
+
+	go func(ids []string, payload NotificationPayload) {
+		for _, discordID := range ids {
+			msgEmbed := discord.NewEmbed("Notification", payload.Message)
+			if payload.Link != "" {
+				msgEmbed.SetURL(payload.Link)
+			}
+
+			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.Truncate().MessageEmbed})
+		}
+	}(discordIds, notification)
+
+	// Broadcast to
+	for _, sid := range uniqueIds {
+		// Todo, prep stmt at least.
+		if errSend := app.db.SendNotification(ctx, sid, notification.Severity,
+			notification.Message, notification.Link); errSend != nil {
+			app.log.Error("Failed to send notification", zap.Error(errSend))
+
+			break
 		}
 	}
 
