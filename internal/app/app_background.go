@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krayzpipes/cronticker/cronticker"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
@@ -30,6 +30,72 @@ func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 	}
 
 	return false
+}
+
+func (app *App) matchSummarizer(ctx context.Context) {
+	log := app.log.Named("matchSum")
+
+	eventChan := make(chan serverEvent)
+	if errReg := app.eb.Consume(eventChan, []logparse.EventType{logparse.Any}); errReg != nil {
+		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
+	}
+
+	matches := map[int]logparse.Match{}
+
+	matchesMu := &sync.RWMutex{}
+
+	var curServer store.Server
+
+	for {
+		select {
+		case evt := <-eventChan:
+			matchesMu.RLock()
+			match, found := matches[evt.ServerID]
+			matchesMu.RUnlock()
+
+			if !found && evt.EventType != logparse.MapLoad {
+				// Wait for new map
+				continue
+			}
+
+			if evt.EventType == logparse.LogStart {
+				log.Info("New match created (new game)", zap.String("server", evt.ServerName))
+				matches[evt.ServerID] = logparse.NewMatch(log, evt.ServerID, evt.ServerName)
+			}
+
+			matchesMu.Lock()
+			// Apply the update before any secondary side effects trigger
+			if errApply := match.Apply(evt.Results); errApply != nil {
+				log.Error("Error applying event",
+					zap.String("server", evt.ServerName),
+					zap.Error(errApply))
+			}
+			matchesMu.Unlock()
+
+			switch evt.EventType {
+			case logparse.LogStop:
+				fallthrough
+			case logparse.WGameOver:
+				time.Sleep(time.Second) // Wait for remaining events
+
+				go func(completeMatch logparse.Match) {
+					// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
+					//	log.Error("Failed to save match",
+					//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
+					// } else {
+					//
+					// }
+					app.sendDiscordMatchResults(curServer, completeMatch)
+				}(match)
+
+				matchesMu.Lock()
+				delete(matches, evt.ServerID)
+				matchesMu.Unlock()
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
@@ -507,109 +573,6 @@ func (app *App) banSweeper(ctx context.Context) {
 		case <-ctx.Done():
 			log.Debug("banSweeper shutting down")
 
-			return
-		}
-	}
-}
-
-func (app *App) localStatUpdater(ctx context.Context) {
-	log := app.log.Named("localStatUpdater")
-	build := func() {
-		if errBuild := app.db.BuildLocalTF2Stats(ctx); errBuild != nil {
-			log.Error("Error building local stats", zap.Error(errBuild))
-		}
-	}
-
-	saveTicker, errSaveTicker := cronticker.NewTicker("0 */5 * * * *")
-	if errSaveTicker != nil {
-		log.Fatal("Invalid save ticker cron format", zap.Error(errSaveTicker))
-
-		return
-	}
-
-	// Rebuild stats every hour
-	buildTicker, errBuildTicker := cronticker.NewTicker("0 * * * * *")
-	if errBuildTicker != nil {
-		log.Fatal("Invalid build ticker cron format", zap.Error(errBuildTicker))
-
-		return
-	}
-
-	build()
-
-	for {
-		select {
-		case <-buildTicker.C:
-			build()
-		case saveTime := <-saveTicker.C:
-			stats := store.NewLocalTF2Stats()
-			stats.CreatedOn = saveTime
-
-			servers, errServers := app.db.GetServers(ctx, false)
-			if errServers != nil {
-				log.Error("Failed to fetch servers to build local cache", zap.Error(errServers))
-
-				continue
-			}
-
-			serverNameMap := map[string]string{}
-			for _, server := range servers {
-				serverNameMap[fmt.Sprintf("%s:%d", server.Address, server.Port)] = server.ServerName
-
-				ipAddr, errIP := server.IP(ctx)
-				if errIP != nil {
-					continue
-				}
-
-				serverNameMap[fmt.Sprintf("%s:%d", ipAddr.String(), server.Port)] = server.ServerName
-			}
-
-			currentState := app.state.current()
-			for _, curState := range currentState {
-				sn := fmt.Sprintf("%s:%d", curState.Host, curState.Port)
-
-				serverName, nameFound := serverNameMap[sn]
-				if !nameFound {
-					log.Error("Cannot find server name", zap.String("name", serverName))
-
-					continue
-				}
-
-				stats.Servers[serverName] = curState.PlayerCount
-				stats.Players += curState.PlayerCount
-
-				_, foundRegion := stats.Regions[curState.Region]
-				if !foundRegion {
-					stats.Regions[curState.Region] = 0
-				}
-
-				stats.Regions[curState.Region] += curState.PlayerCount
-
-				mapType := guessMapType(curState.Map)
-
-				_, mapTypeFound := stats.MapTypes[mapType]
-				if !mapTypeFound {
-					stats.MapTypes[mapType] = 0
-				}
-
-				stats.MapTypes[mapType] += curState.PlayerCount
-
-				switch {
-				case curState.PlayerCount >= curState.MaxPlayers && curState.MaxPlayers > 0:
-					stats.CapacityFull++
-				case curState.PlayerCount == 0:
-					stats.CapacityEmpty++
-				default:
-					stats.CapacityPartial++
-				}
-			}
-
-			if errSave := app.db.SaveLocalTF2Stats(ctx, store.Live, stats); errSave != nil {
-				log.Error("Failed to save local stats state", zap.Error(errSave))
-
-				continue
-			}
-		case <-ctx.Done():
 			return
 		}
 	}

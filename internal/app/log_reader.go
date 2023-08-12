@@ -213,7 +213,9 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
 			if errLogServerEvent != nil {
-				remoteSrc.logger.Debug("Failed to create serverEvent", zap.Error(errLogServerEvent))
+				remoteSrc.logger.Debug("Failed to create serverEvent",
+					zap.String("body", logPayload.body),
+					zap.Error(errLogServerEvent))
 
 				continue
 			}

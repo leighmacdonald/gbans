@@ -10,43 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 const ctxKeyUserProfile = "user_profile"
-
-func (app *App) StartHTTP(ctx context.Context) error {
-	app.log.Info("Service status changed", zap.String("state", "ready"))
-	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
-
-	if app.conf.General.Mode == ReleaseMode {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
-	}
-
-	httpServer := newHTTPServer(ctx, app)
-
-	go func() {
-		<-ctx.Done()
-
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-
-		defer cancel()
-
-		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
-			app.log.Error("Error shutting down http service", zap.Error(errShutdown))
-		}
-	}()
-
-	errServe := httpServer.ListenAndServe()
-	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-		return errors.Wrap(errServe, "HTTP listener returned error")
-	}
-
-	return nil
-}
 
 func bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
