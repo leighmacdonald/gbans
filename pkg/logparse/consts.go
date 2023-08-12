@@ -49,16 +49,16 @@ const (
 
 	// World events not attached to specific players.
 
-	WRoundOvertime  EventType = 100
-	WRoundStart     EventType = 101
-	WRoundWin       EventType = 102
-	WRoundLen       EventType = 103
-	WTeamScore      EventType = 104
-	WTeamFinalScore EventType = 105
-	WGameOver       EventType = 106
-	WPaused         EventType = 107
-	WResumed        EventType = 108
-	// WRoundSetupEnd     EventType = 109.
+	WRoundOvertime        EventType = 100
+	WRoundStart           EventType = 101
+	WRoundWin             EventType = 102
+	WRoundLen             EventType = 103
+	WTeamScore            EventType = 104
+	WTeamFinalScore       EventType = 105
+	WGameOver             EventType = 106
+	WPaused               EventType = 107
+	WResumed              EventType = 108
+	WRoundSetupEnd        EventType = 109
 	WMiniRoundWin         EventType = 110 // World triggered "Mini_Round_Win" (winner "Blue") (round "round_a")
 	WMiniRoundLen         EventType = 111 // World triggered "Mini_Round_Length" (seconds "820.00")
 	WMiniRoundSelected    EventType = 112 // World triggered "Mini_Round_Selected" (round "Round_A")
@@ -194,169 +194,234 @@ type Weapon int
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers
 const (
-	UnknownWeapon Weapon = iota
-	AiFlamethrower
+	AiFlamethrower Weapon = iota + 1
 	Airstrike
 	Ambassador
 	Amputator
+	ApSap
 	Atomizer
 	AwperHand
-	Backburner
+	Axtinguisher
+	BabyFaceBlaster
+	BackScatter
 	BackScratcher
+	Backburner
 	Bat
+	BatOuttaHell
+	BatSpell
 	BazaarBargain
+	BeggarsBazooka
 	BigEarner
-	Blackbox
+	BigKill
 	BlackRose
+	Blackbox
+	BleedKill
 	Blutsauger
 	Bonesaw
+	BostonBasher
 	Bottle
+	BoxingGloveSpell
 	BrassBeast
+	BuildingCarriedDestroyed
 	Bushwacka
 	Caber
+	CaberExplosion
+	CandyCane
+	CharginTarge
+	ClaidheamhMor
 	Club
 	ConscientiousObjector
 	CowMangler
 	Crossbow
-	DeflectPromode
+	CrossbowBolt
+	DeflectArrow
+	DeflectFlare
+	DeflectFlareDetonator
+	DeflectGrenade
+	DeflectHunstmanBurning
 	DeflectRocket
+	DeflectSticky
 	Degreaser
 	DemoKatana
 	Detonator
 	DiamondBack
 	DirectHit
 	DisciplinaryAction
+	Dispenser
 	DragonsFury
 	DragonsFuryBonus
 	Enforcer
+	Equalizer
 	EscapePlan
 	EternalReward
+	EurekaEffect
+	EvictionNotice
+	Eyelander
 	FamilyBusiness
+	FanOWar
+	FireAxe
 	Fists
 	FistsOfSteel
 	FlameThrower
+	Flare
 	FlareGun
+	FlyingGuillotine
 	ForceANature
+	FortifiedCompound
+	FreedomStaff
 	FrontierJustice
 	FryingPan
+	GasPasser
+	GigerCounter
+	GoldenWrench
+	GRU
 	Gunslinger
+	GunslingerKill
 	GunslingerCombo
-	GunslingerTaunt
+	HHHHeadtaker
 	HamShank
+	HolidayPunch
+	HolyMackerel
 	HotHand
 	Huntsman
 	IronBomber
 	IronCurtain
 	Jag
+	JarBased
+	Jarate
+	KGB
 	Knife
 	Kukri
 	Kunai
 	Letranger
 	LibertyLauncher
+	LightningOrbSpell
 	LockNLoad
+	Lollichop
 	LongHeatmaker
 	LooseCannon
 	LooseCannonImpact
 	Lugermorph
 	Machina
 	MachinaPen
+	MadMilk
+	ManMelter
+	ManTreads
 	MarketGardener
 	Maul
+	Medigun
+	MeteorShowerSpell
 	MiniGun
 	MiniSentry
 	Natascha
 	NecroSmasher
+	Needle
+	NeonAnnihilator
+	NessiesNineIron
 	Original
-	PepPistol
+	PDAEngineer
+	PainTrain
+	PanicAttack
+	PrettyBoysPocketPistol
+	PersianPersuader
 	Phlog
-	Pistol
+	PistolEngy
 	PistolScout
+	Player // Finish off player
+	Pomson
+	PostalPummeler
 	Powerjack
-	ProjectilePipe
-	ProjectilePipeRemote
-	ProjectileRocket
+	Prinny
 	ProRifle
 	ProSMG
-	ProtoSyringe
+	ProjectileArrow
+	ProjectileArrowFire
+	ProjectileJarGas
+	ProjectileGrenade
+	ProjectileRocket
+	ProjectileSticky
+	OverdoseSyringe
+	PumpkinBomb
 	Quickiebomb
 	Rainblower
 	RescueRanger
 	ReserveShooter
 	Revolver
+	RighteousBison
+	DeflectRocketMangler
+	SMG
 	Sandman
+	SandmanBall
+	Sapper
+	Saxxy
 	Scattergun
 	ScorchShot
+	ScotsmansSkullcutter
+	ScottishHandshake
 	ScottishResistance
 	Sentry1
 	Sentry2
 	Sentry3
+	SentryRocket
+	Shark
 	SharpDresser
+	SharpenedVolcanoFragment
+	Shahanshah
 	ShootingStar
+	ShortCircuit
+	ProjectileShortCircuit
 	ShortStop
-	ShotgunPrimary
+	ShotgunEngy
+	ShotgunHeavy
 	ShotgunPyro
 	ShotgunSoldier
+	Shovel
+	SkeletonSpawnSpell
 	Sledgehammer
-	SMG
+	SnackAttack
 	SniperRifle
 	SodaPopper
+	SolemnVow
+	SouthernHospitality
+	SplendidScreen
 	Spycicle
+	SuicideWeapon
+	SunOnAStick
 	SydneySleeper
 	SyringeGun
+	TFFlameThrower
+	TFMedigun
+	TauntDemoman
+	TauntGuitarKill
+	TauntGunslinger
+	TauntHeavy
 	TauntMedic
+	TauntPyro
+	TauntScout   // Sandman
+	TauntSniper  // huntsman
+	TauntSoldier // Equalizer
+	TauntSoldierLumbricus
+	TauntSpy // knife skewer
 	Telefrag
+	TheCAPPER
 	TheClassic
+	TheWinger
+	ThirdDegree
+	TideTurner
 	Tomislav
+	TribalmansShiv
 	Ubersaw
+	UnarmedCombat
+	UnknownWeapon
+	VitaSaw
 	WarriorsSpirit
 	WidowMaker
 	World
 	Wrangler
 	WrapAssassin
 	Wrench
-	Sapper
-	JarBased
-	PanicAttack
-	PDAEngineer
-	TFMedigun
-	TFFlameThrower
-	Dispenser
-	TideTurner
-	BabyFaceBlaster
-	ClaidheamhMor
-	BatOuttaHell
-	FortifiedCompound
-	TheWinger
-	ShortCircuit
-	SplendidScreen
-	NessiesNineIron
-	BuildingCarriedDestroyed
-	SouthernHospitality
-	BeggarsBazooka
-	PersianPersuader
-	SnackAttack
-	NeonAnnihilator
-	BackScatter
-	BigKill
-	ShortCircuitOrb
-	BatSpell
-	BoxingGloveSpell
-	Flare
-	FlyingGuillotine
-	GasPasser
-	Grenade
-	Jarate
-	LightningOrbSpell
-	MadMilk
-	MeteorShowerSpell
-	Needle
-	Rocket
-	RocketMangler
-	SandmanBall
-	SentryRocket
-	SkeletonSpawnSpell
-	ManMelter
-	CrossbowBolt
+	RedTapeRecorder
+	ThreeRuneBlade
 )
 
 // var backStabWeapons = []Weapon{
