@@ -72,6 +72,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Backburner:               "backburner",
 			Bat:                      "bat",
 			BatOuttaHell:             "skullbat",
+			BatSaber:                 "batsaber",
 			BatSpell:                 "tf_projectile_spellbats",
 			BazaarBargain:            "bazaar_bargain",
 			BeggarsBazooka:           "dumpster_device",
@@ -86,6 +87,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Bottle:                   "bottle",
 			BoxingGloveSpell:         "tf_projectile_spellkartorb",
 			BrassBeast:               "brass_beast",
+			BreadBite:                "bread_bite",
 			BuildingCarriedDestroyed: "building_carried_destroyed",
 			Bushwacka:                "bushwacka",
 			Caber:                    "ullapool_caber",
@@ -121,7 +123,8 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			EntBonesaw:               "tf_weapon_bonesaw",          // Bug? How does this extinguish?
 			EntFrontierKill:          "frontier_kill",              // ??
 			EntManmelter:             "tf_weapon_flaregun_revenge", // manmelter suck fire
-			EntSniperRifle:           "tf_weapon_sniperrifle",      // on extinguish? is it sydney?
+			EntPickaxe:               "pickaxe",
+			EntSniperRifle:           "tf_weapon_sniperrifle", // on extinguish? is it sydney?
 			Equalizer:                "unique_pickaxe",
 			EscapePlan:               "unique_pickaxe_escape",
 			EternalReward:            "eternal_reward",
@@ -142,6 +145,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			FreedomStaff:             "freedom_staff",
 			FrontierJustice:          "frontier_justice",
 			FryingPan:                "fryingpan",
+			GoldenFryingPan:          "golden_fryingpan",
 			GRU:                      "gloves_running_urgently",
 			GasPasser:                "tf_weapon_jar_gas",
 			GigerCounter:             "giger_counter",
@@ -160,6 +164,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Jag:                      "wrench_jag",
 			JarBased:                 "tf_weapon_jar",
 			Jarate:                   "tf_projectile_jar",
+			JetpackStomp:             "rocketpack_stomp",
 			KGB:                      "gloves",
 			Knife:                    "knife",
 			Kukri:                    "kukri",

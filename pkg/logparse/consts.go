@@ -211,6 +211,7 @@ const (
 	Backburner
 	Bat
 	BatOuttaHell
+	BatSaber
 	BatSpell
 	BazaarBargain
 	BeggarsBazooka
@@ -225,6 +226,7 @@ const (
 	Bottle
 	BoxingGloveSpell
 	BrassBeast
+	BreadBite
 	BuildingCarriedDestroyed
 	Bushwacka
 	Caber
@@ -260,6 +262,7 @@ const (
 	EntBonesaw
 	EntFrontierKill
 	EntManmelter // Fire suck extinguish
+	EntPickaxe
 	EntSniperRifle
 	Equalizer
 	EscapePlan
@@ -281,6 +284,7 @@ const (
 	FreedomStaff
 	FrontierJustice
 	FryingPan
+	GoldenFryingPan
 	GRU
 	GasPasser
 	GigerCounter
@@ -299,6 +303,7 @@ const (
 	Jag
 	JarBased
 	Jarate
+	JetpackStomp
 	KGB
 	Knife
 	Kukri
