@@ -69,8 +69,10 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		state:                newServerStateCollector(logger),
 	}
 
-	if errReg := application.registerDiscordHandlers(); errReg != nil {
-		panic(errReg)
+	if conf.Discord.Enabled {
+		if errReg := application.registerDiscordHandlers(); errReg != nil {
+			panic(errReg)
+		}
 	}
 
 	return application
