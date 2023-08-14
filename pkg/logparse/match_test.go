@@ -85,8 +85,7 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 2850, playerAvgIQ.TargetInfo[playerVar.SteamID].HealingTaken)
 	require.Equal(t, 1005, playerAvgIQ.HealingStats.HealingPerMin())
 
-	red, blu := newMatch.Scores()
-	require.Equal(t, []int{3, 0}, []int{red, blu})
+	require.Equal(t, []int{3, 0}, []int{newMatch.TeamScores.Red, newMatch.TeamScores.Blu})
 
 	require.Equal(t, 3, newMatch.RoundCount())
 	round := newMatch.Rounds[1]

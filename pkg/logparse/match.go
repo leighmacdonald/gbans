@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -65,6 +66,7 @@ type Match struct {
 	ServerID   int              `json:"server_id"`
 	Title      string           `json:"title"`
 	MapName    string           `json:"map_name"`
+	TeamScores TeamScores       `json:"team_scores"`
 	PlayerSums MatchPlayerSums  `json:"player_sums"`
 	Rounds     []*MatchRoundSum `json:"rounds"`
 	Chat       []MatchChat      `json:"chat"`
@@ -78,7 +80,7 @@ type Match struct {
 
 func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
 	return Match{
-		logger:     logger.Named(fmt.Sprintf("match-%d", serverID)),
+		logger:     logger.Named(serverName),
 		ServerID:   serverID,
 		Title:      serverName,
 		PlayerSums: MatchPlayerSums{},
@@ -96,6 +98,32 @@ func (match *Match) PlayerBySteamID(sid64 steamid.SID64) *PlayerStats {
 
 func (match *Match) PlayerCount() int {
 	return len(match.PlayerSums)
+}
+
+func (match *Match) Winner() Team {
+	if match.TeamScores.Red > match.TeamScores.Blu {
+		return RED
+	} else if match.TeamScores.Blu > match.TeamScores.Red {
+		return BLU
+	}
+
+	if strings.HasPrefix(match.MapName, "pl_") {
+		var (
+			winner Team
+			length time.Duration
+		)
+
+		for _, round := range match.Rounds {
+			if round.Length > length {
+				length = round.Length
+				winner = round.RoundWinner
+			}
+		}
+
+		return winner
+	}
+
+	return UNASSIGNED
 }
 
 func (match *Match) MedicCount() int {
@@ -273,8 +301,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		}
 
 		// We should already know this, so just verify
-		red, blu := match.Scores()
-		if (evt.Team == RED && red != evt.Score) || (evt.Team == BLU && blu != evt.Score) {
+		if (evt.Team == RED && match.TeamScores.Red != evt.Score) || (evt.Team == BLU && match.TeamScores.Blu != evt.Score) {
 			match.logger.Warn("Mismatched score counts")
 		}
 
@@ -756,7 +783,13 @@ func (match *Match) extinguishes(evt ExtinguishedEvt) {
 func (match *Match) damage(evt DamageEvt) {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
 	weaponSum := player.getWeaponSum(evt.Weapon)
-	weaponSum.Damage += evt.Damage
+	dmg := evt.Damage
+
+	if evt.Realdamage > 0 {
+		dmg = evt.Realdamage
+	}
+
+	weaponSum.Damage += dmg
 
 	if evt.Airshot {
 		weaponSum.Airshots++
@@ -767,13 +800,13 @@ func (match *Match) damage(evt DamageEvt) {
 	}
 
 	target := player.getTarget(evt.SID2)
-	target.DamageTaken += evt.Damage
+	target.DamageTaken += dmg
 
 	if round := match.getRound(); round != nil {
 		if evt.Team == RED {
-			round.DamageRed += evt.Damage
+			round.DamageRed += dmg
 		} else if evt.Team == BLU {
-			round.DamageBlu += evt.Damage
+			round.DamageBlu += dmg
 		}
 	}
 }
@@ -924,21 +957,6 @@ func (match *Match) medicLostAdv(evt LostUberAdvantageEvt) {
 	}
 }
 
-func (match *Match) Scores() (int, int) {
-	var red, blu int
-
-	for _, round := range match.Rounds {
-		switch round.RoundWinner {
-		case BLU:
-			blu++
-		case RED:
-			red++
-		}
-	}
-
-	return red, blu
-}
-
 func (match *Match) roundLen(evt WRoundLenEvt) {
 	round := match.getRound()
 	if round != nil {
@@ -958,12 +976,25 @@ func (match *Match) roundScore(evt WTeamScoreEvt) {
 }
 
 func (match *Match) finalScore(evt WTeamFinalScoreEvt) {
+	if evt.Team == RED {
+		match.TeamScores.Red = evt.Score
+	} else if evt.Team == BLU {
+		match.TeamScores.Blu = evt.Score
+	}
 }
 
 func (match *Match) miniRoundWin(evt WMiniRoundWinEvt) {
+	round := match.getRound()
+	if round != nil {
+		round.RoundWinner = evt.Team
+	}
 }
 
 func (match *Match) miniRoundLen(evt WMiniRoundLenEvt) {
+	round := match.getRound()
+	if round != nil {
+		round.Length = time.Second * time.Duration(evt.Seconds)
+	}
 }
 
 type PointCaptureBlocked struct {
@@ -1017,6 +1048,8 @@ type PlayerStats struct {
 	BuildingDropped   int                            `json:"building_dropped"`   // Buildings destroyed while carrying
 	BuildingCarried   int                            `json:"building_carried"`   // Building pickup count
 	Classes           []PlayerClass                  `json:"classes"`
+	KillStreaks       []int                          `json:"kill_streaks"`
+	currentKillStreak int
 }
 
 func (player *PlayerStats) DamageTaken() int {
@@ -1163,6 +1196,14 @@ func (player *PlayerStats) AirShots() int {
 	return total
 }
 
+func (player *PlayerStats) resetKillStreak() {
+	if player.currentKillStreak >= 3 {
+		player.KillStreaks = append(player.KillStreaks, player.currentKillStreak)
+	}
+
+	player.currentKillStreak = 0
+}
+
 func (player *PlayerStats) addKill(target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
 	targetInfo, found := player.TargetInfo[target]
 	if !found {
@@ -1172,6 +1213,12 @@ func (player *PlayerStats) addKill(target steamid.SID64, weapon Weapon, sourcePo
 
 		player.TargetInfo[target] = targetInfo
 	}
+
+	if targetPlayer, ok := player.match.PlayerSums[target]; ok {
+		targetPlayer.resetKillStreak()
+	}
+
+	player.currentKillStreak++
 
 	targetInfo.KilledInfo = append(targetInfo.KilledInfo, KillInfo{
 		Weapon:    weapon,

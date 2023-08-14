@@ -32,9 +32,15 @@ type WMiniRoundSelectedEvt TimeStamp
 
 type WMiniRoundStartEvt TimeStamp
 
-type WMiniRoundWinEvt TimeStamp
+type WMiniRoundWinEvt struct {
+	TimeStamp
+	Team Team `json:"team" mapstructure:"team"`
+}
 
-type WMiniRoundLenEvt TimeStamp
+type WMiniRoundLenEvt struct {
+	TimeStamp
+	Seconds float64 `json:"seconds" mapstructure:"seconds"`
+}
 
 // SourcePlayer represents the player who initiated the event.
 type SourcePlayer struct {

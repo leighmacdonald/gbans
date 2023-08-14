@@ -43,7 +43,6 @@ type activeMatch struct {
 
 func (am *activeMatch) start(ctx context.Context) {
 	am.log.Debug("New match started", zap.String("server", am.match.Title))
-	defer am.log.Debug("active match closed")
 
 	for {
 		select {
@@ -63,7 +62,7 @@ func (am *activeMatch) start(ctx context.Context) {
 func (app *App) matchSummarizer(ctx context.Context) {
 	log := app.log.Named("matchSum")
 
-	eventChan := make(chan serverEvent, 100)
+	eventChan := make(chan serverEvent)
 	if errReg := app.eb.Consume(eventChan); errReg != nil {
 		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
@@ -79,7 +78,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				match = &activeMatch{
 					match:          logparse.NewMatch(log, evt.ServerID, evt.ServerName),
 					cancel:         cancel,
-					log:            log.Named(fmt.Sprintf("match-%s", evt.ServerName)),
+					log:            log.Named(evt.ServerName),
 					incomingEvents: make(chan serverEvent),
 				}
 
@@ -109,7 +108,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 					match.match.Title = server.Name
 				}
 
-				go app.onMatchComplete(ctx, match.match)
+				app.onMatchComplete(ctx, match.match)
 
 				delete(matches, evt.ServerID)
 			}

@@ -201,6 +201,7 @@ const (
 	Airstrike
 	Ambassador
 	Amputator
+	Apocofists
 	ApSap
 	Atomizer
 	AwperHand
@@ -225,6 +226,7 @@ const (
 	BostonBasher
 	Bottle
 	BoxingGloveSpell
+	BuffBanner
 	BrassBeast
 	BreadBite
 	BuildingCarriedDestroyed
@@ -260,6 +262,7 @@ const (
 	DragonsFuryBonus
 	Enforcer
 	EntBonesaw
+	EntBuilder // ?
 	EntFrontierKill
 	EntManmelter // Fire suck extinguish
 	EntPickaxe
@@ -341,6 +344,7 @@ const (
 	PanicAttack
 	PersianPersuader
 	Phlog
+	PipebombLauncher //
 	PistolEngy
 	PistolScout
 	Player // Finish off player

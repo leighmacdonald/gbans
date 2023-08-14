@@ -62,6 +62,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Airstrike:                "airstrike",
 			Ambassador:               "ambassador",
 			Amputator:                "amputator",
+			Apocofists:               "apocofists",
 			ApSap:                    "psapper", // promo sapper?
 			Atomizer:                 "atomizer",
 			AwperHand:                "awper_hand",
@@ -86,6 +87,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			BostonBasher:             "boston_basher",
 			Bottle:                   "bottle",
 			BoxingGloveSpell:         "tf_projectile_spellkartorb",
+			BuffBanner:               "buff_item",
 			BrassBeast:               "brass_beast",
 			BreadBite:                "bread_bite",
 			BuildingCarriedDestroyed: "building_carried_destroyed",
@@ -120,7 +122,8 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			DragonsFury:              "dragons_fury",
 			DragonsFuryBonus:         "dragons_fury_bonus",
 			Enforcer:                 "enforcer",
-			EntBonesaw:               "tf_weapon_bonesaw",          // Bug? How does this extinguish?
+			EntBonesaw:               "tf_weapon_bonesaw", // Bug? How does this extinguish?
+			EntBuilder:               "builder",
 			EntFrontierKill:          "frontier_kill",              // ??
 			EntManmelter:             "tf_weapon_flaregun_revenge", // manmelter suck fire
 			EntPickaxe:               "pickaxe",
@@ -202,6 +205,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			PanicAttack:              "panic_attack",
 			PersianPersuader:         "persian_persuader",
 			Phlog:                    "phlogistinator",
+			PipebombLauncher:         "pipebomblauncher",
 			PistolEngy:               "pistol",
 			PistolScout:              "pistol_scout",
 			Player:                   "player",
