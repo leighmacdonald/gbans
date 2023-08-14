@@ -42,19 +42,15 @@ type App struct {
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *patreonManager
-	eb                   *eventBroadcaster[logparse.EventType, serverEvent]
+	eb                   *fp.Broadcaster[logparse.EventType, serverEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	application := App{
-		bot: bot,
-		eb: &eventBroadcaster[logparse.EventType, serverEvent]{
-			eventReaders:   map[logparse.EventType][]chan serverEvent{},
-			eventReadersMu: &sync.RWMutex{},
-			allEventsMu:    &sync.RWMutex{},
-		},
+		bot:                  bot,
+		eb:                   fp.NewBroadcaster[logparse.EventType, serverEvent](),
 		db:                   database,
 		conf:                 conf,
 		log:                  logger,
@@ -431,7 +427,7 @@ func infString(f float64) string {
 func matchASCIITable(match logparse.Match) string {
 	writerPlayers := &strings.Builder{}
 	tablePlayers := defaultTable(writerPlayers)
-	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K/D", "KA/D", "DA", "DA/M"})
+	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K/D", "KA/D", "DA", "DA/M", "B/H/A/C"})
 
 	players := match.TopPlayers()
 
@@ -445,6 +441,10 @@ func matchASCIITable(match logparse.Match) string {
 			name = player.Name
 		}
 
+		if len(name) > 17 {
+			name = name[0:17]
+		}
+
 		tablePlayers.Append([]string{
 			name,
 			fmt.Sprintf("%d", player.KillCount()),
@@ -454,6 +454,8 @@ func matchASCIITable(match logparse.Match) string {
 			infString(player.KDARatio()),
 			fmt.Sprintf("%d", player.Damage()),
 			fmt.Sprintf("%d", player.DamagePerMin()),
+			fmt.Sprintf("%d/%d/%d/%d",
+				player.BackStabs(), player.HeadShots(), player.AirShots(), player.CaptureCount()),
 		})
 	}
 
@@ -477,6 +479,10 @@ func matchASCIITable(match logparse.Match) string {
 			name = player.Name
 		}
 
+		if len(name) > 17 {
+			name = name[0:17]
+		}
+
 		tableHealers.Append([]string{
 			name,
 			fmt.Sprintf("%d", player.Assists),
@@ -488,9 +494,38 @@ func matchASCIITable(match logparse.Match) string {
 		})
 	}
 
-	tableHealers.Render()
+	writerRounds := &strings.Builder{}
+	tableRounds := defaultTable(writerRounds)
+	tableRounds.SetHeader([]string{"#", "Win", "Len", "K R", "K B", "Dmg R", "Dmg B", "UB R", "UB B"})
 
-	resp := "`" + strings.Trim(writerPlayers.String(), "\n") + " " + strings.Trim(writerHealers.String(), "\n") + "`"
+	for index, round := range match.Rounds {
+		if round.RoundWinner != logparse.RED && round.RoundWinner != logparse.BLU {
+			continue
+		}
+
+		if index == 9 {
+			break
+		}
+
+		tableRounds.Append([]string{
+			fmt.Sprintf("%d", index+1),
+			round.RoundWinner.String(),
+			round.Length.String(),
+			fmt.Sprintf("%d", round.KillsBlu),
+			fmt.Sprintf("%d", round.KillsRed),
+			fmt.Sprintf("%d", round.DamageBlu),
+			fmt.Sprintf("%d", round.DamageRed),
+			fmt.Sprintf("%.1f", round.UbersRed),
+			fmt.Sprintf("%.1f", round.UbersBlu),
+		})
+	}
+
+	tableRounds.Render()
+
+	resp := fmt.Sprintf("`%s\n%s\n%s`",
+		strings.Trim(writerPlayers.String(), "\n"),
+		strings.Trim(writerHealers.String(), "\n"),
+		strings.Trim(writerRounds.String(), "\n"))
 	if len(resp) > 4000 {
 		resp = resp[0:4000]
 	}
@@ -513,9 +548,8 @@ func (app *App) sendDiscordMatchResults(_ context.Context, match logparse.Match)
 
 	msgEmbed.SetDescription(matchASCIITable(match))
 
-	redScore, bluScore := match.Scores()
-	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
-	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
+	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", match.TeamScores.Red)).MakeFieldInline()
+	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", match.TeamScores.Blu)).MakeFieldInline()
 	msgEmbed.AddField("Map", server.Map).MakeFieldInline()
 
 	if match.TimeEnd != nil && match.CreatedOn != nil {
@@ -638,7 +672,7 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 			conn := store.PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamID:     newServerEvent.SID,
-				PersonaName: newServerEvent.Name,
+				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
 				CreatedOn:   newServerEvent.CreatedOn,
 			}
 

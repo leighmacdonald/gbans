@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
@@ -34,7 +35,7 @@ const (
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
 	db            *store.Store
-	eb            *eventBroadcaster[logparse.EventType, serverEvent]
+	eb            *fp.Broadcaster[logparse.EventType, serverEvent]
 	logger        *zap.Logger
 	udpAddr       *net.UDPAddr
 	secretMap     map[int]string
@@ -43,7 +44,7 @@ type remoteSrcdsLogSource struct {
 }
 
 func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr string,
-	broadcaster *eventBroadcaster[logparse.EventType, serverEvent],
+	broadcaster *fp.Broadcaster[logparse.EventType, serverEvent],
 ) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
@@ -213,7 +214,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 
 			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
 			if errLogServerEvent != nil {
-				remoteSrc.logger.Debug("Failed to create serverEvent",
+				remoteSrc.logger.Error("Failed to create serverEvent",
 					zap.String("body", logPayload.body),
 					zap.Error(errLogServerEvent))
 
@@ -223,6 +224,13 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			remoteSrc.eb.Emit(event.EventType, event)
 		}
 	}
+}
+
+// serverEvent is a flat struct encapsulating a parsed log event.
+type serverEvent struct {
+	ServerID   int
+	ServerName string
+	*logparse.Results
 }
 
 func logToServerEvent(parser *logparse.LogParser, serverID int, serverName string, msg string) (serverEvent, error) {

@@ -544,7 +544,7 @@ func (c *serverStateCollector) maxVisiblePlayers(controller *rconController) (in
 
 func (c *serverStateCollector) startStatus(ctx context.Context) {
 	var (
-		logger             = c.log.Named("status_update")
+		logger             = c.log.Named("statusUpdate")
 		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
 	)
 
