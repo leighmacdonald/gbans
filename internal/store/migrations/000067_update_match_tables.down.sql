@@ -31,4 +31,6 @@ ALTER TABLE match_medic DROP COLUMN charge_kritz;
 ALTER TABLE match_medic DROP COLUMN charge_vacc;
 ALTER TABLE match_medic DROP COLUMN charge_quickfix;
 
+DROP TABLE IF EXISTS weapon;
+
 COMMIT;

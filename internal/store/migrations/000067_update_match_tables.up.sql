@@ -14,4 +14,11 @@ ALTER TABLE match_medic ADD column charge_kritz int not null default 0;
 ALTER TABLE match_medic ADD column charge_vacc int not null default 0;
 ALTER TABLE match_medic ADD column charge_quickfix int not null default 0;
 
+
+create table if not exists weapon (
+    weapon_id serial primary key,
+    key text unique,
+    name text unique
+);
+
 COMMIT;
