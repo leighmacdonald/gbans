@@ -11,12 +11,9 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestMatch(t *testing.T) {
-	testLogger, _ := zap.NewDevelopment()
-
 	testFilePath := golib.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
 	if testFilePath == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
@@ -29,7 +26,7 @@ func TestMatch(t *testing.T) {
 
 	var (
 		parser   = logparse.New()
-		newMatch = logparse.NewMatch(testLogger, 1, "test server")
+		newMatch = logparse.NewMatch(1, "test server")
 		rows     = strings.Split(string(body), "\n")
 	)
 

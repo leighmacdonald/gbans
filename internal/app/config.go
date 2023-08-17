@@ -297,6 +297,7 @@ func MustCreateLogger(conf *Config) *zap.Logger {
 		loggingConfig.DisableCaller = true
 	} else {
 		loggingConfig = zap.NewDevelopmentConfig()
+		loggingConfig.DisableStacktrace = true
 		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
 

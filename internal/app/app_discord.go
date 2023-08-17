@@ -1049,6 +1049,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
 //		return nil
 //	}
+
 func makeOnLog(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -1075,28 +1076,21 @@ func makeOnLog(app *App) discord.CommandHandler {
 		redScore := 0
 		bluScore := 0
 
-		for _, round := range match.Rounds {
-			redScore += round.Score.Red
-			bluScore += round.Score.Blu
-		}
-
-		top := match.TopPlayers()
-
 		msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
 		msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
-		msgEmbed.AddField("Players", fmt.Sprintf("%d", len(top))).MakeFieldInline()
+		msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
 
 		description := "`Top players\n" +
 			"N. K:D dmg heal sid\n"
-
-		for index, player := range top {
-			description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.KillCount(), player.Deaths(), player.Damage(),
-				player.HealingStats.Healing, player.SteamID.String())
-
-			if index == 9 {
-				break
-			}
-		}
+		//
+		// for index, player := range match.Players {
+		//	description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.KillCount(), player.Deaths(), player.Damage(),
+		//		player.HealingStats.Healing, player.SteamID.String())
+		//
+		//	if index == 9 {
+		//		break
+		//	}
+		// }
 
 		description += "`"
 		msgEmbed.SetDescription(description)

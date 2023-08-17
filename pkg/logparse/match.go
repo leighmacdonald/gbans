@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 var (
@@ -61,7 +60,6 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, er
 //   - Simplify implementation of the maps with generics
 //   - Track players taking packs when they are close to 100% hp
 type Match struct {
-	logger     *zap.Logger
 	MatchID    int              `json:"match_id"`
 	ServerID   int              `json:"server_id"`
 	Title      string           `json:"title"`
@@ -78,9 +76,8 @@ type Match struct {
 	curRound int
 }
 
-func NewMatch(logger *zap.Logger, serverID int, serverName string) Match {
+func NewMatch(serverID int, serverName string) Match {
 	return Match{
-		logger:     logger.Named(serverName),
 		ServerID:   serverID,
 		Title:      serverName,
 		PlayerSums: MatchPlayerSums{},
@@ -177,22 +174,23 @@ type MatchSummary struct {
 
 type MatchSummaryCollection []*MatchSummary
 
-func (match *Match) playerSlice() []PlayerStats {
+func (match *Match) playerSlice() []*PlayerStats {
 	var (
-		players = make([]PlayerStats, len(match.PlayerSums))
+		players = make([]*PlayerStats, len(match.PlayerSums))
 		index   int
 	)
 
 	for _, p := range match.PlayerSums {
-		players[index] = *p
+		players[index] = p
 		index++
 	}
 
 	return players
 }
 
-func (match *Match) TopPlayers() []PlayerStats {
+func (match *Match) TopPlayers() []*PlayerStats {
 	players := match.playerSlice()
+
 	sort.SliceStable(players, func(i, j int) bool {
 		return players[i].KillCount() > players[j].KillCount()
 	})
@@ -200,8 +198,8 @@ func (match *Match) TopPlayers() []PlayerStats {
 	return players
 }
 
-func (match *Match) Healers() []PlayerStats {
-	var healers []PlayerStats
+func (match *Match) Healers() []*PlayerStats {
+	var healers []*PlayerStats
 
 	for _, player := range match.playerSlice() {
 		if player.HealingStats != nil {
@@ -299,11 +297,6 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		evt, ok := result.Event.(WTeamFinalScoreEvt)
 		if !ok {
 			return ErrInvalidType
-		}
-
-		// We should already know this, so just verify
-		if (evt.Team == RED && match.TeamScores.Red != evt.Score) || (evt.Team == BLU && match.TeamScores.Blu != evt.Score) {
-			match.logger.Warn("Mismatched score counts")
 		}
 
 		match.finalScore(evt)
@@ -505,8 +498,9 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			return ErrInvalidType
 		}
 
-		match.killedCustom(evt)
-
+		if errKill := match.killedCustom(evt); errKill != nil {
+			return errKill
+		}
 	case KillAssist:
 		evt, ok := result.Event.(KillAssistEvt)
 		if !ok {
@@ -880,24 +874,26 @@ func (match *Match) pickup(evt PickupEvt) {
 	player.HealingPacks += evt.Healing
 }
 
-func (match *Match) killedCustom(evt CustomKilledEvt) {
+func (match *Match) killedCustom(evt CustomKilledEvt) error {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
 	weaponSum := player.getWeaponSum(evt.Weapon)
 
 	switch evt.Customkill {
 	case "feign_death":
 		// Ignore DR
-		return
+		return nil
 	case "backstab":
 		weaponSum.BackStabs++
 	case "headshot":
 		// This is taken from damage event instead to match logs.tf
 		// weaponSum.Headshots++
 	default:
-		match.logger.Error("Custom kill type unknown", zap.String("type", evt.Customkill))
+		return errors.Errorf("Custom kill type unknown: %s", evt.Customkill)
 	}
 
 	player.addKill(evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
+
+	return nil
 }
 
 func (match *Match) drop(evt MedicDeathEvt) {
@@ -1185,6 +1181,10 @@ func (player *PlayerStats) HealthPacks() int {
 
 func (player *PlayerStats) CaptureCount() int {
 	return len(player.Captures)
+}
+
+func (player *PlayerStats) CapturesBlockedCount() int {
+	return len(player.CapturesBlocked)
 }
 
 func (player *PlayerStats) Deaths() int {
