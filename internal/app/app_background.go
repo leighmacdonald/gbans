@@ -76,7 +76,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 			if !exists {
 				matchCtx, cancel := context.WithCancel(ctx)
 				match = &activeMatch{
-					match:          logparse.NewMatch(log, evt.ServerID, evt.ServerName),
+					match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
 					cancel:         cancel,
 					log:            log.Named(evt.ServerName),
 					incomingEvents: make(chan serverEvent),

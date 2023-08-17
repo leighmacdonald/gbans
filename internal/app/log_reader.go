@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
@@ -26,6 +24,8 @@ const (
 	s2aLogString2 srcdsPacket = 0x53
 )
 
+type LogEventHandler func(logparse.EventType, serverEvent)
+
 // remoteSrcdsLogSource handles reading inbound srcds log packets, and emitting a web.LogPayload
 // that can be further parsed/processed.
 //
@@ -34,17 +34,16 @@ const (
 // instances.
 type remoteSrcdsLogSource struct {
 	*sync.RWMutex
-	db            *store.Store
-	eb            *fp.Broadcaster[logparse.EventType, serverEvent]
+
 	logger        *zap.Logger
 	udpAddr       *net.UDPAddr
-	secretMap     map[int]string
+	secretMap     map[int]ServerIDMap // index = logsecret key
 	frequency     time.Duration
 	logAddrString string
+	onEvent       func(logparse.EventType, serverEvent)
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr string,
-	broadcaster *fp.Broadcaster[logparse.EventType, serverEvent],
+func newRemoteSrcdsLogSource(logger *zap.Logger, logAddr string, onEvent LogEventHandler,
 ) (*remoteSrcdsLogSource, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
@@ -53,44 +52,32 @@ func newRemoteSrcdsLogSource(logger *zap.Logger, database *store.Store, logAddr 
 
 	return &remoteSrcdsLogSource{
 		RWMutex:       &sync.RWMutex{},
-		eb:            broadcaster,
-		db:            database,
+		onEvent:       onEvent,
 		logger:        logger.Named("srcdsLog"),
 		udpAddr:       udpAddr,
-		secretMap:     map[int]string{},
+		secretMap:     map[int]ServerIDMap{},
 		logAddrString: logAddr,
 		frequency:     time.Minute * 5,
 	}, nil
 }
 
-func (remoteSrc *remoteSrcdsLogSource) updateSecrets(ctx context.Context) {
-	newServers := map[int]string{}
-	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
-
-	defer cancelServers()
-
-	servers, errServers := remoteSrc.db.GetServers(serversCtx, true)
-	if errServers != nil {
-		remoteSrc.logger.Error("Failed to load servers to update DNS", zap.Error(errServers))
-
-		return
-	}
-
-	for _, server := range servers {
-		newServers[server.LogSecret] = server.ServerName
-	}
-
+func (remoteSrc *remoteSrcdsLogSource) SetSecrets(secrets map[int]ServerIDMap) {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 
-	remoteSrc.secretMap = newServers
-	remoteSrc.logger.Debug("Updated secret mappings")
+	remoteSrc.secretMap = secrets
+	remoteSrc.logger.Debug("Updated server id map")
 }
 
-// start initiates the udp network log read loop. DNS names are used to
+type ServerIDMap struct {
+	ServerID   int
+	ServerName string
+}
+
+// Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
+func (remoteSrc *remoteSrcdsLogSource) Start(ctx context.Context) {
 	type newMsg struct {
 		source int64
 		body   string
@@ -108,8 +95,6 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 			remoteSrc.logger.Error("Failed to close connection cleanly", zap.Error(errConnClose))
 		}
 	}()
-
-	remoteSrc.updateSecrets(ctx)
 
 	remoteSrc.logger.Info("Starting log reader", zap.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
 
@@ -171,45 +156,21 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 		}
 	}()
 
-	var (
-		parser = logparse.New()
-		ticker = time.NewTicker(remoteSrc.frequency)
-	)
-
-	serverCache := map[string]store.Server{}
+	parser := logparse.New()
 
 	for {
 		select {
 		case <-ctx.Done():
 			running.Store(false)
-		case <-ticker.C:
-			remoteSrc.updateSecrets(ctx)
-
-			serverCache = map[string]store.Server{}
 		case logPayload := <-msgIngressChan:
-			var serverName string
-
 			remoteSrc.RLock()
-			serverNameValue, found := remoteSrc.secretMap[int(logPayload.source)]
+			server, found := remoteSrc.secretMap[int(logPayload.source)]
 			remoteSrc.RUnlock()
 
 			if !found {
 				remoteSrc.logger.Error("Rejecting unknown secret log author")
 
 				continue
-			}
-
-			serverName = serverNameValue
-
-			server, serverFound := serverCache[serverName]
-			if !serverFound {
-				if errServer := remoteSrc.db.GetServerByName(ctx, serverName, &server, true, false); errServer != nil {
-					remoteSrc.logger.Debug("Failed to get server by name", zap.Error(errServer))
-
-					continue
-				}
-
-				serverCache[serverName] = server
 			}
 
 			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
@@ -221,7 +182,7 @@ func (remoteSrc *remoteSrcdsLogSource) start(ctx context.Context) {
 				continue
 			}
 
-			remoteSrc.eb.Emit(event.EventType, event)
+			remoteSrc.onEvent(event.EventType, event)
 		}
 	}
 }
@@ -238,20 +199,6 @@ func logToServerEvent(parser *logparse.LogParser, serverID int, serverName strin
 		ServerID:   serverID,
 		ServerName: serverName,
 	}
-	// var resultToSource = func(sid string, results logparse.Results, nameKey string, player *model.Person) error {
-	//	if sid == "BOT" {
-	//		panic("fixme")
-	//		//player.SteamID = logparse.BotSid
-	//		//name, ok := results.Values[nameKey]
-	//		//if !ok {
-	//		//	return errors.New("Failed to parse bot name")
-	//		//}
-	//		//player.PersonaName = name.(string)
-	//		return nil
-	//	} else {
-	//		return db.GetOrCreatePersonBySteamID(ctx, steamid.SID3ToSID64(steamid.SID3(sid)), player)
-	//	}
-	// }
 	parseResult, errParse := parser.Parse(msg)
 	if errParse != nil {
 		return event, errors.Wrapf(errParse, "Failed to parse log message")

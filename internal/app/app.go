@@ -45,6 +45,7 @@ type App struct {
 	eb                   *fp.Broadcaster[logparse.EventType, serverEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
+	logListener          *remoteSrcdsLogSource
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
@@ -813,12 +814,43 @@ func (app *App) startWorkers(ctx context.Context) {
 
 // UDP log sink.
 func (app *App) initLogSrc(ctx context.Context) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.log, app.db, app.conf.Log.SrcdsLogAddr, app.eb)
+	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.log, app.conf.Log.SrcdsLogAddr, func(eventType logparse.EventType, event serverEvent) {
+		app.eb.Emit(event.EventType, event)
+	})
+
 	if errLogSrc != nil {
 		app.log.Fatal("Failed to setup udp log src", zap.Error(errLogSrc))
 	}
 
-	logSrc.start(ctx)
+	app.logListener = logSrc
+
+	// TODO run on server config changes
+	go app.updateSrcdsLogSecrets(ctx)
+
+	app.logListener.Start(ctx)
+}
+
+func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
+	newSecrets := map[int]ServerIDMap{}
+	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
+
+	defer cancelServers()
+
+	servers, errServers := app.db.GetServers(serversCtx, true)
+	if errServers != nil {
+		app.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
+
+		return
+	}
+
+	for _, server := range servers {
+		newSecrets[server.LogSecret] = ServerIDMap{
+			ServerID:   server.ServerID,
+			ServerName: server.ServerName,
+		}
+	}
+
+	app.logListener.SetSecrets(newSecrets)
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
