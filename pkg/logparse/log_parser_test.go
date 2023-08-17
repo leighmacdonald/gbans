@@ -645,7 +645,7 @@ func TestParseShotHitEvt(t *testing.T) {
 		logparse.ShotHitEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "z/", PID: 14, SID: steamid.New("[U:1:66656848]"), Team: logparse.BLU},
-			Weapon:       logparse.Blackbox,
+			Weapon:       logparse.BlackBox,
 		})
 }
 
@@ -701,7 +701,9 @@ func TestParseWMiniRoundWinEvt(t *testing.T) {
 
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Win" (winner "Blue") (round "round_b")`,
 		logparse.WMiniRoundWinEvt{
-			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
+			TimeStamp: logparse.TimeStamp{
+				CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
+			},
 		})
 }
 
@@ -710,7 +712,7 @@ func TestParseWMiniRoundLenEvt(t *testing.T) {
 
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Length" (seconds "340.62")`,
 		logparse.WMiniRoundLenEvt{
-			CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC),
+			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 		})
 }
 

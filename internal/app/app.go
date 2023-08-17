@@ -150,6 +150,10 @@ func (app *App) Init(ctx context.Context) error {
 		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
 	}
 
+	if errWeapons := app.db.LoadWeapons(ctx); errWeapons != nil {
+		app.log.Fatal("Failed to load weapons", zap.Error(errWeapons))
+	}
+
 	// Load in the external network block / ip ban lists to memory if enabled
 	if app.conf.NetBans.Enabled {
 		if errNetBans := initNetBans(ctx, app.conf); errNetBans != nil {

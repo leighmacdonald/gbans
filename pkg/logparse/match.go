@@ -155,6 +155,7 @@ type MatchChat struct {
 }
 
 type WeaponStats struct {
+	Kills     int
 	Damage    int
 	Shots     int
 	Hits      int
@@ -1027,6 +1028,7 @@ type TargetStats struct {
 }
 
 type PlayerStats struct {
+	MatchPlayerID     int `json:"match_player_id"`
 	match             *Match
 	SteamID           steamid.SID64                  `json:"steam_id"`
 	Team              Team                           `json:"team"`
@@ -1058,9 +1060,29 @@ func (player *PlayerStats) DamageTaken() int {
 	for _, ps := range player.match.PlayerSums {
 		if targetStats, found := ps.TargetInfo[player.SteamID]; found {
 			total += targetStats.DamageTaken
-
-			continue
 		}
+	}
+
+	return total
+}
+
+func (player *PlayerStats) HealingTaken() int {
+	var total int
+
+	for _, healer := range player.match.Healers() {
+		if targetStats, found := healer.TargetInfo[player.SteamID]; found {
+			total += targetStats.HealingTaken
+		}
+	}
+
+	return total
+}
+
+func (player *PlayerStats) Extinguishes() int {
+	var total int
+
+	for _, plr := range player.TargetInfo {
+		total += plr.Extinguishes
 	}
 
 	return total
@@ -1088,6 +1110,39 @@ func (player *PlayerStats) KillCount() int {
 	var total int
 	for _, target := range player.TargetInfo {
 		total += len(target.KilledInfo)
+	}
+
+	return total
+}
+
+func (player *PlayerStats) DominationCount() int {
+	var total int
+	for _, target := range player.TargetInfo {
+		total += target.Dominations
+	}
+
+	return total
+}
+
+func (player *PlayerStats) DominatedCount() int {
+	var total int
+
+	for _, gamePlayer := range player.match.PlayerSums {
+		if ti, found := gamePlayer.TargetInfo[player.SteamID]; found {
+			total += ti.Dominations
+		}
+	}
+
+	return total
+}
+
+func (player *PlayerStats) RevengeCount() int {
+	var total int
+
+	for _, gamePlayer := range player.match.PlayerSums {
+		if ti, found := gamePlayer.TargetInfo[player.SteamID]; found {
+			total += ti.Revenges
+		}
 	}
 
 	return total
@@ -1214,6 +1269,11 @@ func (player *PlayerStats) addKill(target steamid.SID64, weapon Weapon, sourcePo
 		player.TargetInfo[target] = targetInfo
 	}
 
+	ws := player.getWeaponSum(weapon)
+	if ws != nil {
+		ws.Kills++
+	}
+
 	if targetPlayer, ok := player.match.PlayerSums[target]; ok {
 		targetPlayer.resetKillStreak()
 	}
@@ -1282,6 +1342,7 @@ type MatchRoundSum struct {
 }
 
 type HealingStats struct {
+	MatchMedicID        int64 `json:"match_medic_id"`
 	player              *PlayerStats
 	FirstHealAfterSpawn []float64           `json:"first_heal_after_spawn"`
 	Healing             int                 `json:"healing"`
@@ -1304,6 +1365,15 @@ func (ms *HealingStats) ChargesTotal() int {
 	}
 
 	return total
+}
+
+func (ms *HealingStats) AverageUberLength() float64 {
+	var sum float64
+	for _, v := range ms.UberDurations {
+		sum += float64(v)
+	}
+
+	return math.Ceil(sum/float64(len(ms.UberDurations))*10000) / 100
 }
 
 func (ms *HealingStats) DropsTotal() int {

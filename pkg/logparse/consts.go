@@ -201,7 +201,7 @@ const (
 	Airstrike
 	Ambassador
 	Amputator
-	Apocofists
+	ApocoFists
 	ApSap
 	Atomizer
 	AwperHand
@@ -219,7 +219,7 @@ const (
 	BigEarner
 	BigKill
 	BlackRose
-	Blackbox
+	BlackBox
 	BleedKill
 	Blutsauger
 	Bonesaw
@@ -254,7 +254,7 @@ const (
 	Degreaser
 	DemoKatana
 	Detonator
-	DiamondBack
+	Diamondback
 	DirectHit
 	DisciplinaryAction
 	Dispenser
@@ -324,13 +324,13 @@ const (
 	Machina
 	MachinaPen
 	MadMilk
-	ManMelter
-	ManTreads
+	Manmelter
+	Mantreads
 	MarketGardener
 	Maul
 	Medigun
 	MeteorShowerSpell
-	MiniGun
+	Minigun
 	MiniSentry
 	Natascha
 	NecroSmasher
@@ -392,7 +392,7 @@ const (
 	SharpenedVolcanoFragment
 	ShootingStar
 	ShortCircuit
-	ShortStop
+	Shortstop
 	ShotgunEngy
 	ShotgunHeavy
 	ShotgunPyro
@@ -441,9 +441,512 @@ const (
 	VitaSaw
 	WangaPrick
 	WarriorsSpirit
-	WidowMaker
+	Widowmaker
 	World
 	Wrangler
 	WrapAssassin
 	Wrench
 )
+
+func (w Weapon) String() string { //nolint:maintidx
+	switch w {
+	case AiFlamethrower:
+		return "Nostromo Napalmer"
+	case Airstrike:
+		return "Air Strike"
+	case Ambassador:
+		return "Ambassador"
+	case Amputator:
+		return "Amputator"
+	case ApocoFists:
+		return "Apoco Fists"
+	case ApSap:
+		return "Ap-Sap"
+	case Atomizer:
+		return "Atomizer"
+	case AwperHand:
+		return "Awper and"
+	case Axtinguisher:
+		return "Axtinguisher"
+	case BabyFaceBlaster:
+		return "Baby Face's Blaster"
+	case BackScatter:
+		return "Back Scatter"
+	case BackScratcher:
+		return "Back Scratcher"
+	case Backburner:
+		return "Backburner"
+	case Bat:
+		return "Bat"
+	case BatOuttaHell:
+		return "Bat Outta Hell"
+	case BatSaber:
+		return "Bat Saber"
+	case BatSpell:
+		return "Bat Spell"
+	case BazaarBargain:
+		return "Bazaar Bargain"
+	case BeggarsBazooka:
+		return "Beggars Bazooka"
+	case BigEarner:
+		return "Big Earner"
+	case BigKill:
+		return "Big Kill"
+	case BlackRose:
+		return "Black Rose"
+	case BlackBox:
+		return "Black Box"
+	case BleedKill:
+		return "Bleed"
+	case Blutsauger:
+		return "Blutsauger"
+	case Bonesaw:
+		return "Bonesaw"
+	case BostonBasher:
+		return "Boston Basher"
+	case Bottle:
+		return "Bottle"
+	case BoxingGloveSpell:
+		return "Boxing Glove Spell"
+	case BuffBanner:
+		return "Buff Banner"
+	case BrassBeast:
+		return "Brass Beast"
+	case BreadBite:
+		return "Bread Bite"
+	case BuildingCarriedDestroyed:
+		return "Building Destroyed (Carried)"
+	case Bushwacka:
+		return "Bushwacka"
+	case Caber:
+		return "Caber"
+	case CaberExplosion:
+		return "Caber Explosion"
+	case CandyCane:
+		return "Candy Cane"
+	case CharginTarge:
+		return "Chargin' Targe"
+	case ClaidheamhMor:
+		return "Claidheamh Mòr"
+	case Club:
+		return "Club"
+	case ConscientiousObjector:
+		return "Conscientious Objector"
+	case CowMangler:
+		return "Cow Mangler 5000"
+	case Crossbow:
+		return "Crusader's Crossbow"
+	case CrossbowBolt:
+		return "Crusader's Crossbow Bolt"
+	case CrossingGuard:
+		return "Crossing Guard"
+	case DeflectArrow:
+		return "Deflect Arrow"
+	case DeflectFlare:
+		return "Deflect Flare"
+	case DeflectFlareDetonator:
+		return "Deflect Detonator"
+	case DeflectGrenade:
+		return "Deflect Grenade"
+	case DeflectHunstmanBurning:
+		return "Deflect Huntsman (Burning)"
+	case DeflectLooseCannon:
+		return "Deflect Loose Cannon"
+	case DeflectRocket:
+		return "Deflect Rocket"
+	case DeflectRocketMangler:
+		return "Deflect Cow Mangler 5000"
+	case DeflectSticky:
+		return "Deflect Sticky"
+	case Degreaser:
+		return "Degreaser"
+	case DemoKatana:
+		return "Half-Zatoichi"
+	case Detonator:
+		return "Detonator"
+	case Diamondback:
+		return "Diamondback"
+	case DirectHit:
+		return "Direct Hit"
+	case DisciplinaryAction:
+		return "Disciplinary Action"
+	case Dispenser:
+		return "Dispenser"
+	case DragonsFury:
+		return "Dragons Fury"
+	case DragonsFuryBonus:
+		return "Dragons Fury Bonus"
+	case Enforcer:
+		return "Enforcer"
+	case EntBonesaw:
+		return "Bonesaw (Ent)"
+	case EntBuilder:
+		return "Builder (Ent)"
+	case EntFrontierKill:
+		return "Frontier Kill (Ent)"
+	case EntManmelter:
+		return "Manmelter (Ent)"
+	case EntPickaxe:
+		return "Pickaxe (Ent)"
+	case EntSniperRifle:
+		return "Sniper Rifle (Ent)"
+	case Equalizer:
+		return "Equalizer"
+	case EscapePlan:
+		return "Escape Plan"
+	case EternalReward:
+		return "Your Eternal Reward"
+	case EurekaEffect:
+		return "Eureka Effect"
+	case EvictionNotice:
+		return "Eviction Notice"
+	case Eyelander:
+		return "Eyelander"
+	case FamilyBusiness:
+		return "Family Business"
+	case FanOWar:
+		return "Fan O'War"
+	case FireAxe:
+		return "Fire Axe"
+	case Fists:
+		return "Fists"
+	case FistsOfSteel:
+		return "Fists of Steel"
+	case FlameThrower:
+		return "Flame Thrower"
+	case Flare:
+		return "Flare"
+	case FlareGun:
+		return "Flare Gun"
+	case FlyingGuillotine:
+		return "Flying Guillotine"
+	case ForceANature:
+		return "Force-A-Nature"
+	case FortifiedCompound:
+		return "Fortified Compound"
+	case FreedomStaff:
+		return "Freedom Staff"
+	case FrontierJustice:
+		return "Frontier Justice"
+	case FryingPan:
+		return "Frying Pan"
+	case GoldenFryingPan:
+		return "Golden Frying Pan"
+	case GRU:
+		return "Gloves of Running Urgently"
+	case GasPasser:
+		return "Gas Passer"
+	case GigerCounter:
+		return "Giger Counter"
+	case GoldenWrench:
+		return "Golden Wrench"
+	case Gunslinger:
+		return "Gunslinger"
+	case GunslingerCombo:
+		return "Gunslinger Combo"
+	case GunslingerKill:
+		return "Gunslinger Kill"
+	case HHHHeadtaker:
+		return "Horseless Headless Horsemann's Headtaker"
+	case HamShank:
+		return "Ham Shank"
+	case HolidayPunch:
+		return "Holiday Punch"
+	case HolyMackerel:
+		return "Holy Mackerel"
+	case HotHand:
+		return "Hot Hand"
+	case Huntsman:
+		return "Huntsman"
+	case IronBomber:
+		return "Iron Bomber"
+	case IronCurtain:
+		return "Iron Curtain"
+	case Jag:
+		return "Jag"
+	case JarBased:
+		return "Jar Based"
+	case Jarate:
+		return "Jarate"
+	case JetpackStomp:
+		return "Jetpack Stomp"
+	case KGB:
+		return "Killing Gloves of Boxing"
+	case Knife:
+		return "Knife"
+	case Kukri:
+		return "Kukri"
+	case Kunai:
+		return "Kunai"
+	case Letranger:
+		return "L'Etranger"
+	case LibertyLauncher:
+		return "Liberty Launcher"
+	case LightningOrbSpell:
+		return "Lightning Orb Spell"
+	case LockNLoad:
+		return "Loch-n-Load"
+	case Lollichop:
+		return "Lollichop"
+	case LongHeatmaker:
+		return "Hitman's Heatmaker (Ent)"
+	case LooseCannon:
+		return "Loose Cannon"
+	case LooseCannonExplosion:
+		return "Loose Cannon Explosion"
+	case LooseCannonImpact:
+		return "Loose Cannon Impact"
+	case Lugermorph:
+		return "Lugermorph"
+	case Machina:
+		return "Machina"
+	case MachinaPen:
+		return "Machina Penetration"
+	case MadMilk:
+		return "Mad Milk"
+	case Manmelter:
+		return "Manmelter"
+	case Mantreads:
+		return "Mantreads"
+	case MarketGardener:
+		return "Market Gardener"
+	case Maul:
+		return "Maul"
+	case Medigun:
+		return "Medigun"
+	case MeteorShowerSpell:
+		return "Meteor Shower Spell"
+	case Minigun:
+		return "Minigun"
+	case MiniSentry:
+		return "Sentry (mini)"
+	case Natascha:
+		return "Natascha"
+	case NecroSmasher:
+		return "Necro Smasher"
+	case Needle:
+		return "Needle Gun"
+	case NeonAnnihilator:
+		return "Neon Annihilator"
+	case NessiesNineIron:
+		return "Nessie's Nine Iron"
+	case Original:
+		return "Original"
+	case OverdoseSyringe:
+		return "Overdose"
+	case PDAEngineer:
+		return "PDA"
+	case PainTrain:
+		return "Pain Train"
+	case PanicAttack:
+		return "Panic Attack"
+	case PersianPersuader:
+		return "Persian Persuader"
+	case Phlog:
+		return "Phlogistinator"
+	case PipebombLauncher:
+		return "Grenade Launcher"
+	case PistolEngy:
+		return "Pistol (Engy)"
+	case PistolScout:
+		return "Pistol (Scout)"
+	case Player: // Finish off player
+		return "Finished Off"
+	case Pomson:
+		return "Pomson 6000"
+	case PostalPummeler:
+		return "Postal Pummeler"
+	case Powerjack:
+		return "Powerjack"
+	case PrettyBoysPocketPistol:
+		return "Pretty Boy's Pocket Pistol"
+	case Prinny:
+		return "Prinny Machete"
+	case ProRifle:
+		return "Hitman's Heatmaker"
+	case ProSMG:
+		return "Cleaner's Carbine"
+	case ProjectileArrow:
+		return "Arrow"
+	case ProjectileArrowFire:
+		return "Arrow (Burning)"
+	case ProjectileDragonsFury:
+		return "Dragons Fury Ball"
+	case ProjectileGrenade:
+		return "Projectile Grenade"
+	case ProjectileJarGas:
+		return "Projectile Gas Passer"
+	case ProjectileRocket:
+		return "Projectile Rocket Launcher"
+	case ProjectileShortCircuit:
+		return "Projectile Short Circuit"
+	case ProjectileSticky:
+		return "Projectile Stickybomb"
+	case PumpkinBomb:
+		return "Pumpkin Bomb"
+	case Quickiebomb:
+		return "Quickiebomb Launcher"
+	case Rainblower:
+		return "Rainblower"
+	case RedTapeRecorder:
+		return "Red-Tape Recorder"
+	case RescueRanger:
+		return "Rescue Ranger"
+	case ReserveShooter:
+		return "Reserve Shooter"
+	case Revolver:
+		return "Revolver"
+	case RighteousBison:
+		return "Righteous Bison"
+	case RocketLauncher:
+		return "Rocket Launcher (Ent)"
+	case SMG:
+		return "SMG"
+	case Sandman:
+		return "Sandman"
+	case SandmanBall:
+		return "Sandman Ball"
+	case Sapper:
+		return "Sapper"
+	case Saxxy:
+		return "Saxxy"
+	case Scattergun:
+		return "Scattergun"
+	case ScorchShot:
+		return "Scorch Shot"
+	case ScotsmansSkullcutter:
+		return "Scotsman's Skullcutter"
+	case ScottishHandshake:
+		return "Scottish Handshake"
+	case ScottishResistance:
+		return "Scottish Resistance"
+	case Sentry1:
+		return "Sentry (Level 1)"
+	case Sentry2:
+		return "Sentry (Level 2)"
+	case Sentry3:
+		return "Sentry (Level 3)"
+	case SentryRocket:
+		return "Sentry (Rocket)"
+	case Shahanshah:
+		return "Shahanshah"
+	case Shark:
+		return "Shark"
+	case SharpDresser:
+		return "Sharp Dresser"
+	case SharpenedVolcanoFragment:
+		return "Sharpened Volcano Fragment"
+	case ShootingStar:
+		return "Shooting Star"
+	case ShortCircuit:
+		return "Short Circuit"
+	case Shortstop:
+		return "Shortstop"
+	case ShotgunEngy:
+		return "Shotgun (Engy)"
+	case ShotgunHeavy:
+		return "Shotgun (Heavy)"
+	case ShotgunPyro:
+		return "Shotgun (Pyro)"
+	case ShotgunSoldier:
+		return "Shotgun (Soldier)"
+	case Shovel:
+		return "Shovel"
+	case SkeletonSpawnSpell:
+		return "Skeleton Spawn Spell"
+	case Sledgehammer:
+		return "Homewrecker"
+	case SnackAttack:
+		return "Snack Attack"
+	case SniperRifle:
+		return "Sniper Rifle"
+	case SodaPopper:
+		return "Soda Popper"
+	case SolemnVow:
+		return "Solemn Vow"
+	case SouthernComfort:
+		return "Southern Comfort"
+	case SouthernHospitality:
+		return "Southern Hospitality"
+	case SplendidScreen:
+		return "Splendid Screen"
+	case Spycicle:
+		return "Spy-cicle"
+	case SuicideWeapon:
+		return "Suicide"
+	case SunOnAStick:
+		return "Sun-on-a-Stick"
+	case SydneySleeper:
+		return "Sydney Sleeper"
+	case SyringeGun:
+		return "Syringe Gun"
+	case TFFlameThrower:
+		return "Flame Thrower (Ent"
+	case TFMedigun:
+		return "Medigun (Ent)"
+	case TauntDemoman:
+		return "Taunt (Demoman)"
+	case TauntEngineer:
+		return "Taunt (Engineer)"
+	case TauntGuitarKill:
+		return "Taunt (Guitar)"
+	case TauntGunslinger:
+		return "Taunt (Gunslinger)"
+	case TauntHeavy:
+		return "Taunt (Heavy)"
+	case TauntMedic:
+		return "Taunt (Medic)"
+	case TauntPyro:
+		return "Taunt (Pyro)"
+	case TauntScout: // Sandman
+		return "Taunt (Scout)"
+	case TauntSniper: // huntsman
+		return "Taunt (Sniper)"
+	case TauntSoldier: // Equalizer
+		return "Taunt (Soldier)"
+	case TauntSoldierLumbricus:
+		return "Taunt (Soldier Lumbricus)"
+	case TauntSpy: // knife skewer
+		return "Taunt (Spy)"
+	case Telefrag:
+		return "Telefrag"
+	case TheCAPPER:
+		return "C.A.P.P.E.R"
+	case TheClassic:
+		return "Classic"
+	case TheWinger:
+		return "Winger"
+	case ThirdDegree:
+		return "Third Degree"
+	case ThreeRuneBlade:
+		return "Three-Rune Blade"
+	case TideTurner:
+		return "Tide Turner"
+	case Tomislav:
+		return "Tomislav"
+	case TribalmansShiv:
+		return "Tribalman's Shiv"
+	case Ubersaw:
+		return "Ubersaw"
+	case UnarmedCombat:
+		return "Unarmed Combat"
+	case VitaSaw:
+		return "Vita-Saw"
+	case WangaPrick:
+		return "Wanga Prick"
+	case WarriorsSpirit:
+		return "Warrior's Spirit"
+	case Widowmaker:
+		return "Widowmaker"
+	case World:
+		return "World"
+	case Wrangler:
+		return "Wrangler"
+	case WrapAssassin:
+		return "Wrap Assassin"
+	case Wrench:
+		return "Wrench"
+	default:
+		return "Unknown"
+	}
+}

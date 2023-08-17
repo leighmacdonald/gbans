@@ -18,6 +18,7 @@ import { cleanMapName } from '../api';
 import { tf2Fonts } from '../theme';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import StorageIcon from '@mui/icons-material/Storage';
+import { logErr } from '../util/errors';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }
@@ -153,11 +154,12 @@ export const ServerList = () => {
                                                     'Copied address to clipboard'
                                                 );
                                             })
-                                            .catch(() => {
+                                            .catch((e) => {
                                                 sendFlash(
                                                     'error',
                                                     'Failed to copy address'
                                                 );
+                                                logErr(e);
                                             });
                                     }}
                                 >

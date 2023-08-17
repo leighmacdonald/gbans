@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -49,82 +50,217 @@ type Stats struct {
 	ServersTotal  int `json:"servers_total"`
 }
 
-//
-// func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
-//	const query = `INSERT INTO match (server_id, map, created_on, title) VALUES ($1, $2, $3, $4) RETURNING match_id`
-//
-//	for _, p := range match.PlayerSums {
-//		var player Person
-//		if errPlayer := db.GetOrCreatePersonBySteamID(ctx, p.SteamID, &player); errPlayer != nil {
-//			return errors.Wrapf(errPlayer, "Failed to create person")
-//		}
-//	}
-//
-//	if errMatch := db.QueryRow(ctx, query, match.ServerID, match.MapName, match.CreatedOn, match.Title).
-//		Scan(&match.MatchID); errMatch != nil {
-//		return errors.Wrapf(errMatch, "Failed to setup match")
-//	}
-//
-//	const playerQuery = `INSERT INTO match_player (
-//			match_id, steam_id, team,
-//			time_start, time_end, kills, assists, deaths, dominations, dominated,
-//			revenges, damage, damage_taken, healing, healing_taken, health_packs,
-//			backstabs, headshots, airshots, captures, shots, extinguishes,
-//			hits, buildings, buildings_destroyed)
-//		VALUES (
-//			$1,  $2, $3,
-//		    $4,  $5, $6, $7, $8, $9, $10,
-//		    $11, $12, $13, $14, $15, $16,
-//		    $17, $18, $19, $20, $21, $22,
-//		    $23, $24, $25
-//		) RETURNING match_player_id`
-//
-//	for _, playerSum := range match.PlayerSums {
-//		endTime := &match.CreatedOn
-//		if playerSum.TimeEnd != nil {
-//			// Use match end time
-//			endTime = playerSum.TimeEnd
-//		}
-//
-//		if errPlayerExec := db.QueryRow(ctx, playerQuery, match.MatchID, playerSum.SteamID.Int64(), playerSum.Team,
-//			playerSum.TimeStart, endTime, playerSum.Kills, playerSum.Assists, playerSum.Deaths, playerSum.Dominations,
-//			playerSum.Dominated, playerSum.Revenges, playerSum.Damage(), playerSum.DamageTaken, playerSum.MedicStats,
-//			playerSum.HealingTaken, playerSum.Pickups, playerSum.BackStabs(), playerSum.HeadShots(), playerSum.AirShots(),
-//			playerSum.Captures, playerSum.Shots, playerSum.Extinguishes, playerSum.Hits, playerSum.BuildingDestroyed,
-//			playerSum.BuildingDestroyed).Scan(&playerSum.MatchPlayerSumID); errPlayerExec != nil {
-//			return errors.Wrapf(errPlayerExec, "Failed to write player sum")
-//		}
-//	}
-//
-//	const medicQuery = `INSERT INTO match_medic (
-//            match_id, steam_id, healing, charges, drops, avg_time_to_build, avg_time_before_use,
-//            near_full_charge_death, avg_uber_length, death_after_charge, major_adv_lost, biggest_adv_lost)
-//            VALUES ($1, $2, $3, $4, $5,$6, $7, $8, $9, $10,$11, $12) RETURNING match_medic_id`
-//
-//	for _, medicSum := range match.MedicSums {
-//		charges := 0
-//		for _, mg := range medicSum.Charges {
-//			charges += mg
-//		}
-//
-//		if errMedExec := db.QueryRow(ctx, medicQuery, match.MatchID, medicSum.SteamID.Int64(), medicSum.MedicStats, charges, medicSum.Drops, medicSum.AvgTimeToBuild, medicSum.AvgTimeBeforeUse, medicSum.NearFullChargeDeath, medicSum.AvgUberLength, medicSum.DeathAfterCharge, medicSum.MajorAdvLost, medicSum.BiggestAdvLost).Scan(&medicSum.MatchMedicID); errMedExec != nil {
-//			return errors.Wrapf(errMedExec, "Failed to write medic sum")
-//		}
-//	}
-//
-//	const teamQuery = `INSERT INTO match_team (
-//		match_id, team, kills, damage, charges, drops, caps, mid_fights
-//	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-//	RETURNING match_team_id`
-//	// FIXME team value unset
-//	for i, s := range match.TeamSums {
-//		if errTeamExec := db.QueryRow(ctx, teamQuery, match.MatchID, i+1, s.Kills, s.Damage, s.Charges, s.Drops, s.Caps, s.MidFights).Scan(&s.MatchTeamID); errTeamExec != nil {
-//			return errors.Wrapf(errTeamExec, "Failed to write team sum")
-//		}
-//	}
-//
-//	return nil
-// }
+func (db *Store) LoadWeapons(ctx context.Context) error {
+	const query = `INSERT INTO weapon (weapon_id, name) VALUES ($1, $2)`
+
+	index := 1
+
+	for {
+		weapon := logparse.Weapon(index)
+
+		if errSave := db.Exec(ctx, query, weapon, weapon.String()); errSave != nil && errors.Is(errSave, ErrDuplicate) {
+			return errSave
+		}
+
+		if weapon == logparse.Wrench {
+			break
+		}
+
+		index++
+	}
+
+	return nil
+}
+
+func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
+	const query = `
+		INSERT INTO match (server_id, map, created_on, title, match_raw, score_red, score_blu, time_end) 
+		VALUES ($1, $2, $3, $4, $5, $6,$7, $8) 
+		RETURNING match_id`
+
+	transaction, errTx := db.conn.Begin(ctx)
+	if errTx != nil {
+		return errors.Wrap(errTx, "Failed to create tx")
+	}
+
+	if errQuery := transaction.
+		QueryRow(ctx, query, match.ServerID, match.MapName, match.CreatedOn, match.Title, match,
+			match.TeamScores.Red, match.TeamScores.Blu, match.TimeEnd).
+		Scan(&match.MatchID); errQuery != nil {
+		_ = transaction.Rollback(ctx)
+
+		return errors.Wrap(errQuery, "Failed to save match")
+	}
+
+	for _, playerStats := range match.PlayerSums {
+		if !playerStats.SteamID.Valid() {
+			// TODO Why can this happen? stv host?
+			continue
+		}
+
+		var player Person
+		if errPlayer := db.GetOrCreatePersonBySteamID(ctx, playerStats.SteamID, &player); errPlayer != nil {
+			_ = transaction.Rollback(ctx)
+
+			return errors.Wrapf(errPlayer, "Failed to create person")
+		}
+	}
+
+	const playerQuery = `
+		INSERT INTO match_player (
+			match_id, steam_id, team, time_start, time_end, kills, assists, deaths, dominations, dominated,
+			revenges, damage_taken, healing_taken, health_packs, captures, extinguishes, buildings, buildings_destroyed)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
+		RETURNING match_player_id`
+
+	for _, playerSum := range match.PlayerSums {
+		if !playerSum.SteamID.Valid() {
+			// TODO Why can this happen? stv host?
+			continue
+		}
+
+		endTime := &match.CreatedOn
+
+		if playerSum.TimeEnd != nil {
+			// Use match end time
+			endTime = &match.TimeEnd
+		}
+
+		if errPlayerExec := transaction.
+			QueryRow(ctx, playerQuery, match.MatchID, playerSum.SteamID.Int64(), playerSum.Team, playerSum.TimeStart,
+				endTime, playerSum.KillCount(), playerSum.Assists, playerSum.Deaths(), playerSum.DominationCount(),
+				playerSum.DominatedCount(), playerSum.RevengeCount(), playerSum.DamageTaken(), playerSum.HealingTaken(),
+				playerSum.HealthPacks(), playerSum.CaptureCount(), playerSum.Extinguishes(), playerSum.BuildingBuilt,
+				playerSum.BuildingDestroyed).Scan(&playerSum.MatchPlayerID); errPlayerExec != nil {
+			_ = transaction.Rollback(ctx)
+
+			return errors.Wrapf(errPlayerExec, "Failed to write player sum")
+		}
+	}
+
+	const medicQuery = `
+		INSERT INTO match_medic (
+			match_id, steam_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost, 
+            charge_kritz, charge_quickfix, charge_uber, charge_vacc)
+        VALUES ($1, $2, $3, $4, $5,$6, $7, $8, $9, $10,$11, $12) 
+		RETURNING match_medic_id`
+
+	for _, medic := range match.Healers() {
+		stats := medic.HealingStats
+		if errMedExec := transaction.
+			QueryRow(ctx, medicQuery, match.MatchID, medic.SteamID.Int64(), stats.Healing,
+				stats.DropsTotal(), stats.NearFullChargeDeath, stats.AverageUberLength(), stats.MajorAdvLost, stats.BiggestAdvLost,
+				stats.Charges[logparse.Kritzkrieg], stats.Charges[logparse.QuickFix],
+				stats.Charges[logparse.Uber], stats.Charges[logparse.Vaccinator]).
+			Scan(&stats.MatchMedicID); errMedExec != nil {
+			_ = transaction.Rollback(ctx)
+
+			return errors.Wrapf(errMedExec, "Failed to write medic sum")
+		}
+	}
+
+	for _, player := range match.PlayerSums {
+		if errWi := saveMatchWeaponStats(ctx, transaction, match.MatchID, player); errWi != nil {
+			_ = transaction.Rollback(ctx)
+
+			return errWi
+		}
+	}
+
+	if errCommit := transaction.Commit(ctx); errCommit != nil {
+		return errors.Wrapf(errCommit, "Failed to commit match")
+	}
+
+	return nil
+}
+
+func saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, matchID int, player *logparse.PlayerStats) error {
+	const weaponQuery = `
+		INSERT INTO match_weapon (match_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING match_weapon_id`
+
+	for weapon, info := range player.WeaponInfo {
+		if _, errWeapon := transaction.
+			Exec(ctx, weaponQuery, matchID, weapon, info.Kills, info.Damage, info.Shots, info.Hits,
+				info.BackStabs, info.Headshots, info.Airshots); errWeapon != nil {
+			_ = transaction.Rollback(ctx)
+
+			return errors.Wrapf(errWeapon, "Failed to write weapon stats")
+		}
+	}
+
+	return nil
+}
+
+type Weapon struct {
+	WeaponID logparse.Weapon `json:"weapon_id"`
+	Key      string          `json:"key"`
+	Name     string          `json:"name"`
+}
+
+func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
+	if weapon.WeaponID > 0 {
+		updateQuery, updateArgs, errUpdateQuery := db.sb.
+			Update("weapon").
+			Set("name", weapon.Name).
+			Where(sq.Eq{"weapon_id": weapon.WeaponID}).
+			ToSql()
+
+		if errUpdateQuery != nil {
+			return errors.Wrap(errUpdateQuery, "Failed to make query")
+		}
+
+		if errSave := db.Exec(ctx, updateQuery, updateArgs...); errSave != nil {
+			return errSave
+		}
+
+		return nil
+	}
+
+	const wq = `INSERT INTO weapon (weapon_id, name) VALUES ($1, $2)`
+
+	if errSave := db.
+		Exec(ctx, wq, weapon.WeaponID, weapon.Name); errSave != nil {
+		return errSave
+	}
+
+	return nil
+}
+
+func (db *Store) Weapons(ctx context.Context) ([]Weapon, error) {
+	query, args, errQuery := db.sb.
+		Select("weapon_id", "key", "name").
+		From("weapon").
+		ToSql()
+
+	if errQuery != nil {
+		return nil, errors.Wrap(errQuery, "Failed to make weapons query")
+	}
+
+	rows, errRows := db.Query(ctx, query, args...)
+	if errRows != nil {
+		return nil, errRows
+	}
+	defer rows.Close()
+
+	var weapons []Weapon
+
+	for rows.Next() {
+		var weapon Weapon
+		if errScan := rows.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name); errScan != nil {
+			return nil, errors.Wrap(errScan, "Failed to scan weapon")
+		}
+
+		weapons = append(weapons, weapon)
+	}
+
+	if errRow := rows.Err(); errRow != nil {
+		return nil, errors.Wrap(errRow, "weapons rows error")
+	}
+
+	return weapons, nil
+}
 
 type MatchesQueryOpts struct {
 	QueryFilter
@@ -185,7 +321,7 @@ type MatchesQueryOpts struct {
 //	return matches, nil
 // }
 
-func (db *Store) MatchGetByID(ctx context.Context, matchID int) (*logparse.Match, error) {
+func (db *Store) MatchGetByID(_ context.Context, _ int) (*logparse.Match, error) {
 	// const query = `SELECT server_id, map, title, created_on  FROM match WHERE match_id = $1`
 	match := logparse.NewMatch(db.log, -1, "")
 	//

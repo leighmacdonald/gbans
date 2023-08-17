@@ -119,12 +119,13 @@ func (app *App) matchSummarizer(ctx context.Context) {
 }
 
 func (app *App) onMatchComplete(ctx context.Context, match logparse.Match) {
-	// if errSave := app.db.MatchSave(ctx, &completeMatch); errSave != nil {
-	//	log.Error("Failed to save match",
-	//		zap.String("server", evt.Server.ServerName), zap.Error(errSave))
-	// } else {
-	//
-	// }
+	if errSave := app.db.MatchSave(ctx, &match); errSave != nil {
+		app.log.Error("Failed to save match",
+			zap.Int("server", match.ServerID), zap.Error(errSave))
+
+		return
+	}
+
 	app.sendDiscordMatchResults(ctx, match)
 }
 
