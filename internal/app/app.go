@@ -42,16 +42,16 @@ type App struct {
 	bannedGroupMembers   map[steamid.GID]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *patreonManager
-	eb                   *fp.Broadcaster[logparse.EventType, serverEvent]
+	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
-	logListener          *remoteSrcdsLogSource
+	logListener          *logparse.UDPLogListener
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
 	application := App{
 		bot:                  bot,
-		eb:                   fp.NewBroadcaster[logparse.EventType, serverEvent](),
+		eb:                   fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
 		db:                   database,
 		conf:                 conf,
 		log:                  logger,
@@ -567,7 +567,7 @@ func (app *App) sendDiscordMatchResults(_ context.Context, match logparse.Match)
 func (app *App) chatRecorder(ctx context.Context) {
 	var (
 		log             = app.log.Named("chatRecorder")
-		serverEventChan = make(chan serverEvent)
+		serverEventChan = make(chan logparse.ServerEvent)
 	)
 
 	if errRegister := app.eb.Consume(serverEventChan, logparse.Say, logparse.SayTeam); errRegister != nil {
@@ -636,7 +636,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 func (app *App) playerConnectionWriter(ctx context.Context) {
 	log := app.log.Named("playerConnectionWriter")
 
-	serverEventChan := make(chan serverEvent)
+	serverEventChan := make(chan logparse.ServerEvent)
 	if errRegister := app.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
 		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
 
@@ -738,7 +738,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 					continue
 				}
 
-				newServerEvent := serverEvent{
+				newServerEvent := logparse.ServerEvent{
 					ServerName: logFile.ServerName,
 					ServerID:   logFile.ServerID,
 					Results:    parseResult,
@@ -814,7 +814,7 @@ func (app *App) startWorkers(ctx context.Context) {
 
 // UDP log sink.
 func (app *App) initLogSrc(ctx context.Context) {
-	logSrc, errLogSrc := newRemoteSrcdsLogSource(app.log, app.conf.Log.SrcdsLogAddr, func(eventType logparse.EventType, event serverEvent) {
+	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.conf.Log.SrcdsLogAddr, func(eventType logparse.EventType, event logparse.ServerEvent) {
 		app.eb.Emit(event.EventType, event)
 	})
 
@@ -831,7 +831,7 @@ func (app *App) initLogSrc(ctx context.Context) {
 }
 
 func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
-	newSecrets := map[int]ServerIDMap{}
+	newSecrets := map[int]logparse.ServerIDMap{}
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
 
 	defer cancelServers()
@@ -844,7 +844,7 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 	}
 
 	for _, server := range servers {
-		newSecrets[server.LogSecret] = ServerIDMap{
+		newSecrets[server.LogSecret] = logparse.ServerIDMap{
 			ServerID:   server.ServerID,
 			ServerName: server.ServerName,
 		}

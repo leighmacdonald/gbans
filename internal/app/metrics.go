@@ -101,10 +101,10 @@ func newMetricCollector() *metricCollector {
 }
 
 // logMetricsConsumer processes incoming log events and updated any associated metrics.
-func logMetricsConsumer(ctx context.Context, collector *metricCollector, eb *fp.Broadcaster[logparse.EventType, serverEvent], logger *zap.Logger) {
+func logMetricsConsumer(ctx context.Context, collector *metricCollector, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent], logger *zap.Logger) {
 	log := logger.Named("metricsConsumer")
 
-	eventChan := make(chan serverEvent)
+	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := eb.Consume(eventChan); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
 

@@ -56,14 +56,14 @@ func TestMatch(t *testing.T) {
 
 	require.Equal(t, 10, playerVar.Assists)
 	require.Equal(t, 14, playerVar.Deaths())
-	require.Equal(t, 5078, playerVar.Damage())
-	require.Equal(t, 294, playerVar.DamagePerMin())
-	require.Equal(t, 323, playerVar.DamageTakenPerMin())
+	require.Equal(t, 4796, playerVar.Damage())
+	require.Equal(t, 277, playerVar.DamagePerMin())
+	require.Equal(t, 260, playerVar.DamageTakenPerMin())
 
 	playerTuna := newMatch.PlayerBySteamID(steamid.New(76561198809011070))
 	require.Equal(t, 2, playerTuna.CaptureCount())
 	require.Equal(t, 1, playerTuna.AirShots())
-	require.Equal(t, 4053, playerTuna.DamageTaken())
+	require.Equal(t, 3709, playerTuna.DamageTaken())
 	require.Equal(t, 3, newMatch.RoundCount())
 	// require.Equal(t, 40.68, playerTuna.Accuracy(logparse.ProjectileRocket))
 	require.Equal(t, 43.48, playerTuna.AccuracyOverall())
@@ -91,6 +91,6 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 0, round.Score.Blu)
 	require.Equal(t, float64(3), round.UbersRed)
 	require.Equal(t, float64(2), round.UbersBlu)
-	require.Equal(t, 20035, round.DamageRed)
-	require.Equal(t, 16960, round.DamageBlu)
+	require.Equal(t, 14605, round.DamageRed)
+	require.Equal(t, 13801, round.DamageBlu)
 }

@@ -713,6 +713,7 @@ func TestParseWMiniRoundLenEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: World triggered "Mini_Round_Length" (seconds "340.62")`,
 		logparse.WMiniRoundLenEvt{
 			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+			Seconds:   340.62,
 		})
 }
 

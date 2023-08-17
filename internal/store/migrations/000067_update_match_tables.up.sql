@@ -60,4 +60,6 @@ CREATE INDEX ON match_medic (match_id);
 CREATE INDEX ON match_player (match_id);
 CREATE INDEX ON match_player (steam_id);
 
+ALTER TABLE match ADD CONSTRAINT map_not_empty_check CHECK (map != '');
+
 COMMIT;

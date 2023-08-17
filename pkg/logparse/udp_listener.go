@@ -1,4 +1,4 @@
-package app
+package logparse
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
@@ -24,44 +23,37 @@ const (
 	s2aLogString2 srcdsPacket = 0x53
 )
 
-type LogEventHandler func(logparse.EventType, serverEvent)
+type LogEventHandler func(EventType, ServerEvent)
 
-// remoteSrcdsLogSource handles reading inbound srcds log packets, and emitting a web.LogPayload
-// that can be further parsed/processed.
-//
-// On, start and every hour after, a new sv_logsecret value for every instance is randomly generated and
-// assigned remotely over rcon. This allows us to associate certain semi secret id's with specific server
-// instances.
-type remoteSrcdsLogSource struct {
+// UDPLogListener handles reading inbound srcds log packets.
+type UDPLogListener struct {
 	*sync.RWMutex
 
 	logger        *zap.Logger
 	udpAddr       *net.UDPAddr
 	secretMap     map[int]ServerIDMap // index = logsecret key
-	frequency     time.Duration
 	logAddrString string
-	onEvent       func(logparse.EventType, serverEvent)
+	onEvent       func(EventType, ServerEvent)
 }
 
-func newRemoteSrcdsLogSource(logger *zap.Logger, logAddr string, onEvent LogEventHandler,
-) (*remoteSrcdsLogSource, error) {
+func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandler,
+) (*UDPLogListener, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
 	}
 
-	return &remoteSrcdsLogSource{
+	return &UDPLogListener{
 		RWMutex:       &sync.RWMutex{},
 		onEvent:       onEvent,
 		logger:        logger.Named("srcdsLog"),
 		udpAddr:       udpAddr,
 		secretMap:     map[int]ServerIDMap{},
 		logAddrString: logAddr,
-		frequency:     time.Minute * 5,
 	}, nil
 }
 
-func (remoteSrc *remoteSrcdsLogSource) SetSecrets(secrets map[int]ServerIDMap) {
+func (remoteSrc *UDPLogListener) SetSecrets(secrets map[int]ServerIDMap) {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 
@@ -77,7 +69,7 @@ type ServerIDMap struct {
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *remoteSrcdsLogSource) Start(ctx context.Context) {
+func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 	type newMsg struct {
 		source int64
 		body   string
@@ -107,6 +99,8 @@ func (remoteSrc *remoteSrcdsLogSource) Start(ctx context.Context) {
 	)
 
 	go func() {
+		startTime := time.Now()
+
 		for running.Load() {
 			buffer := make([]byte, 1024)
 
@@ -149,14 +143,20 @@ func (remoteSrc *remoteSrcdsLogSource) Start(ctx context.Context) {
 				count++
 
 				if count%10000 == 0 {
+					rate := float64(count) / time.Since(startTime).Seconds()
+
 					remoteSrc.logger.Debug("UDP SRCDS Logger Packets",
-						zap.Uint64("count", count), zap.Uint64("errors", errCount))
+						zap.Uint64("count", count),
+						zap.Float64("messages/sec", rate),
+						zap.Uint64("errors", errCount))
+
+					startTime = time.Now()
 				}
 			}
 		}
 	}()
 
-	parser := logparse.New()
+	parser := New()
 
 	for {
 		select {
@@ -187,19 +187,20 @@ func (remoteSrc *remoteSrcdsLogSource) Start(ctx context.Context) {
 	}
 }
 
-// serverEvent is a flat struct encapsulating a parsed log event.
-type serverEvent struct {
+// ServerEvent is a flat struct encapsulating a parsed log event.
+type ServerEvent struct {
 	ServerID   int
 	ServerName string
-	*logparse.Results
+	*Results
 }
 
-func logToServerEvent(parser *logparse.LogParser, serverID int, serverName string, msg string) (serverEvent, error) {
-	event := serverEvent{
+func logToServerEvent(parser *LogParser, serverID int, serverName string, msg string) (ServerEvent, error) {
+	event := ServerEvent{
 		ServerID:   serverID,
 		ServerName: serverName,
 	}
 	parseResult, errParse := parser.Parse(msg)
+
 	if errParse != nil {
 		return event, errors.Wrapf(errParse, "Failed to parse log message")
 	}

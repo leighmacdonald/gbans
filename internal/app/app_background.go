@@ -36,7 +36,7 @@ func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 type activeMatch struct {
 	match          logparse.Match
 	cancel         context.CancelFunc
-	incomingEvents chan serverEvent
+	incomingEvents chan logparse.ServerEvent
 	log            *zap.Logger
 	finalScores    int
 }
@@ -62,7 +62,7 @@ func (am *activeMatch) start(ctx context.Context) {
 func (app *App) matchSummarizer(ctx context.Context) {
 	log := app.log.Named("matchSum")
 
-	eventChan := make(chan serverEvent)
+	eventChan := make(chan logparse.ServerEvent)
 	if errReg := app.eb.Consume(eventChan); errReg != nil {
 		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
@@ -79,7 +79,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 					match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
 					cancel:         cancel,
 					log:            log.Named(evt.ServerName),
-					incomingEvents: make(chan serverEvent),
+					incomingEvents: make(chan logparse.ServerEvent),
 				}
 
 				go match.start(matchCtx)
