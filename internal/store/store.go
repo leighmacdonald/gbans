@@ -15,6 +15,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -118,6 +119,12 @@ func (db *Store) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
+	}
+
+	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		pgxuuid.Register(conn.TypeMap())
+
+		return nil
 	}
 
 	if db.logQueries {

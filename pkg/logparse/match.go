@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -29,6 +30,28 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, er
 	}
 
 	return nil, consts.ErrUnknownID
+}
+
+type MatchChat struct {
+	SteamID   steamid.SID64
+	Name      string
+	Message   string
+	Team      bool
+	CreatedAt time.Time
+}
+
+type WeaponStats struct {
+	Kills     int
+	Damage    int
+	Shots     int
+	Hits      int
+	Airshots  int
+	Headshots int
+	BackStabs int
+}
+
+func NewWeaponStats() *WeaponStats {
+	return &WeaponStats{}
 }
 
 // Match and its related Match* structs are designed as a close to 1:1 mirror of the
@@ -60,7 +83,7 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, er
 //   - Simplify implementation of the maps with generics
 //   - Track players taking packs when they are close to 100% hp
 type Match struct {
-	MatchID    int              `json:"match_id"`
+	MatchID    uuid.UUID        `json:"match_id"`
 	ServerID   int              `json:"server_id"`
 	Title      string           `json:"title"`
 	MapName    string           `json:"map_name"`
@@ -77,7 +100,13 @@ type Match struct {
 }
 
 func NewMatch(serverID int, serverName string) Match {
+	newID, errID := uuid.NewV4()
+	if errID != nil {
+		panic(errID)
+	}
+
 	return Match{
+		MatchID:    newID,
 		ServerID:   serverID,
 		Title:      serverName,
 		PlayerSums: MatchPlayerSums{},
@@ -123,18 +152,6 @@ func (match *Match) Winner() Team {
 	return UNASSIGNED
 }
 
-func (match *Match) MedicCount() int {
-	var total int
-
-	for _, player := range match.PlayerSums {
-		if player.HealingStats != nil && fp.Contains(player.Classes, Medic) {
-			total++
-		}
-	}
-
-	return total
-}
-
 func (match *Match) ChatCount() int {
 	return len(match.Chat)
 }
@@ -142,37 +159,6 @@ func (match *Match) ChatCount() int {
 func (match *Match) RoundCount() int {
 	return len(match.Rounds)
 }
-
-type MatchChat struct {
-	SteamID   steamid.SID64
-	Name      string
-	Message   string
-	Team      bool
-	CreatedAt time.Time
-}
-
-type WeaponStats struct {
-	Kills     int
-	Damage    int
-	Shots     int
-	Hits      int
-	Airshots  int
-	Headshots int
-	BackStabs int
-}
-
-func NewWeaponStats() *WeaponStats {
-	return &WeaponStats{}
-}
-
-type MatchSummary struct {
-	MatchID   int       `json:"match_id"`
-	ServerID  int       `json:"server_id"`
-	MapName   string    `json:"map_name"`
-	CreatedOn time.Time `json:"created_on"`
-}
-
-type MatchSummaryCollection []*MatchSummary
 
 func (match *Match) playerSlice() []*PlayerStats {
 	var (
@@ -184,16 +170,6 @@ func (match *Match) playerSlice() []*PlayerStats {
 		players[index] = p
 		index++
 	}
-
-	return players
-}
-
-func (match *Match) TopPlayers() []*PlayerStats {
-	players := match.playerSlice()
-
-	sort.SliceStable(players, func(i, j int) bool {
-		return players[i].KillCount() > players[j].KillCount()
-	})
 
 	return players
 }
@@ -389,13 +365,11 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			match.CreatedOn = &evt.CreatedOn
 		}
 	case ChangeClass:
-		evt, ok := result.Event.(ChangeClassEvt)
+		// Spawned as is the better version of this
+		_, ok := result.Event.(ChangeClassEvt)
 		if !ok {
 			return ErrInvalidType
 		}
-
-		match.addClass(evt)
-
 	case ShotFired:
 		evt, ok := result.Event.(ShotFiredEvt)
 		if !ok {
@@ -612,23 +586,12 @@ func (match *Match) getPlayer(evtTime time.Time, sid steamid.SID64) *PlayerStats
 		return playerSum
 	}
 
-	newPs := newMatchPlayerSum(match, sid)
+	newPs := newMatchPlayerStats(match, sid)
 	newPs.TimeStart = &evtTime
 
 	match.PlayerSums[sid] = newPs
 
 	return newPs
-}
-
-func newMatchPlayerSum(match *Match, sid steamid.SID64) *PlayerStats {
-	return &PlayerStats{
-		match:      match,
-		SteamID:    sid,
-		Team:       UNASSIGNED,
-		TargetInfo: map[steamid.SID64]*TargetStats{},
-		WeaponInfo: map[Weapon]*WeaponStats{},
-		Pickups:    map[PickupItem]int{},
-	}
 }
 
 func (match *Match) getRound() *MatchRoundSum {
@@ -668,6 +631,8 @@ func (match *Match) gameOver(evt WGameOverEvt) {
 		if player.TimeEnd == nil {
 			player.TimeEnd = &evt.CreatedOn
 		}
+
+		player.onClassChangeOrGameEnd(evt.CreatedOn)
 	}
 }
 
@@ -677,8 +642,9 @@ func (match *Match) overtime() {
 
 func (match *Match) disconnected(evt DisconnectedEvt) {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
-	now := time.Now()
+	now := evt.CreatedOn
 	player.TimeEnd = &now
+	player.onClassChangeOrGameEnd(evt.CreatedOn)
 }
 
 func (match *Match) connected(evt ConnectedEvt) {
@@ -700,21 +666,14 @@ func (match *Match) spawnedAs(evt SpawnedAsEvt) {
 		playerSum.Name = evt.Name
 	}
 
-	if !fp.Contains[PlayerClass](playerSum.Classes, evt.Class) {
-		playerSum.Classes = append(playerSum.Classes, evt.Class)
-	}
-}
-
-func (match *Match) addClass(evt ChangeClassEvt) {
-	if evt.Class == Spectator {
-		return
+	if evt.Class != playerSum.currentClass {
+		playerSum.onClassChangeOrGameEnd(evt.CreatedOn)
+		playerSum.currentClass = evt.Class
+		newStats := playerSum.getClassStats()
+		newStats.startTime = evt.CreatedOn
 	}
 
-	playerSum := match.getPlayer(evt.CreatedOn, evt.SID)
-
-	if !fp.Contains[PlayerClass](playerSum.Classes, evt.Class) {
-		playerSum.Classes = append(playerSum.Classes, evt.Class)
-	}
+	playerSum.currentLifeStart = evt.CreatedOn
 }
 
 func (match *Match) shotFired(evt ShotFiredEvt) {
@@ -726,7 +685,12 @@ func (match *Match) shotHit(evt ShotHitEvt) {
 }
 
 func (match *Match) assist(evt KillAssistEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).Assists++
+	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player.Assists++
+
+	if classStats := player.getClassStats(); classStats != nil {
+		classStats.Assists++
+	}
 }
 
 func (match *Match) joinTeam(evt JoinedTeamEvt) {
@@ -744,11 +708,29 @@ func (match *Match) addChat(sid steamid.SID64, name string, message string, team
 }
 
 func (match *Match) domination(evt DominationEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).getTarget(evt.SID2).Dominations++
+	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	if cs := player.getClassStats(); cs != nil {
+		cs.Dominations++
+	}
+
+	target := player.getTarget(evt.SID2)
+	target.Dominations++
+
+	victim := match.getPlayer(evt.CreatedOn, evt.SID2)
+	if cs := victim.getClassStats(); cs != nil {
+		cs.Dominated++
+	}
 }
 
 func (match *Match) revenge(evt RevengeEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).getTarget(evt.SID2).Revenges++
+	player := match.getPlayer(evt.CreatedOn, evt.SID2)
+
+	target := player.getTarget(evt.SID2)
+	target.Revenges++
+
+	if cs := player.getClassStats(); cs != nil {
+		cs.Revenges++
+	}
 }
 
 func (match *Match) builtObject(evt BuiltObjectEvt) {
@@ -756,7 +738,9 @@ func (match *Match) builtObject(evt BuiltObjectEvt) {
 }
 
 func (match *Match) killedObject(evt KilledObjectEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).BuildingDestroyed++
+	if cs := match.getPlayer(evt.CreatedOn, evt.SID).getClassStats(); cs != nil {
+		cs.BuildingsDestroyed++
+	}
 }
 
 func (match *Match) dropObject(evt DropObjectEvt) {
@@ -777,14 +761,14 @@ func (match *Match) extinguishes(evt ExtinguishedEvt) {
 
 func (match *Match) damage(evt DamageEvt) {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	dmg := fp.FirstNonZero(evt.Realdamage, evt.Damage)
+
 	weaponSum := player.getWeaponSum(evt.Weapon)
-	dmg := evt.Damage
-
-	if evt.Realdamage > 0 {
-		dmg = evt.Realdamage
-	}
-
 	weaponSum.Damage += dmg
+
+	if cs := player.getClassStats(); cs != nil {
+		cs.Damage += dmg
+	}
 
 	if evt.Airshot {
 		weaponSum.Airshots++
@@ -797,6 +781,11 @@ func (match *Match) damage(evt DamageEvt) {
 	target := player.getTarget(evt.SID2)
 	target.DamageTaken += dmg
 
+	victim := match.getPlayer(evt.CreatedOn, evt.SID2)
+	if cs := victim.getClassStats(); cs != nil {
+		cs.DamageTaken += dmg
+	}
+
 	if round := match.getRound(); round != nil {
 		if evt.Team == RED {
 			round.DamageRed += dmg
@@ -808,9 +797,15 @@ func (match *Match) damage(evt DamageEvt) {
 
 func (match *Match) healed(evt HealedEvt) {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
+
 	medicStats := player.getMedicSum()
 	medicStats.Healing += evt.Healing
+
 	player.getTarget(evt.SID2).HealingTaken += evt.Healing
+
+	if cs := match.getPlayer(evt.CreatedOn, evt.SID2).getClassStats(); cs != nil {
+		cs.HealingTaken += evt.Healing
+	}
 }
 
 func (match *Match) pointCaptureBlocked(evt CaptureBlockedEvt) {
@@ -820,6 +815,10 @@ func (match *Match) pointCaptureBlocked(evt CaptureBlockedEvt) {
 		CPName:   evt.Cpname,
 		Position: evt.Position,
 	})
+
+	if cs := player.getClassStats(); cs != nil {
+		cs.CapturesBlocked++
+	}
 }
 
 func (match *Match) pointCapture(evt PointCapturedEvt) {
@@ -831,6 +830,10 @@ func (match *Match) pointCapture(evt PointCapturedEvt) {
 			CPName:   evt.Cpname,
 			Position: evtPlayer.Pos,
 		})
+
+		if cs := player.getClassStats(); cs != nil {
+			cs.Captures++
+		}
 	}
 }
 
@@ -841,7 +844,7 @@ func (match *Match) pointCapture(evt PointCapturedEvt) {
 func (match *Match) killed(evt KilledEvt) {
 	if match.inRound {
 		player := match.getPlayer(evt.CreatedOn, evt.SID)
-		player.addKill(evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
+		player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
 		if evt.Team == BLU {
 			match.getRound().KillsBlu++
@@ -891,7 +894,7 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 		return errors.Errorf("Custom kill type unknown: %s", evt.Customkill)
 	}
 
-	player.addKill(evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
+	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
 	return nil
 }
@@ -1023,31 +1026,68 @@ type TargetStats struct {
 	Extinguishes int           `json:"extinguishes"`
 }
 
+type PlayerClassStats struct {
+	startTime          time.Time
+	Kills              int `json:"kills"`
+	Assists            int `json:"assists"`
+	Deaths             int `json:"deaths"`
+	Playtime           int `json:"playtime"`
+	Dominations        int `json:"dominations"`
+	Dominated          int `json:"dominated"`
+	Revenges           int `json:"revenges"`
+	Damage             int `json:"damage"`
+	DamageTaken        int `json:"damage_taken"`
+	HealingTaken       int `json:"healing_taken"`
+	Captures           int `json:"captures"`
+	CapturesBlocked    int `json:"captures_blocked"`
+	BuildingsDestroyed int `json:"buildings_destroyed"`
+}
+
+type PlayerKillstreak struct {
+	PlayerClass PlayerClass
+	Killstreak  int
+	Duration    int
+}
+
 type PlayerStats struct {
-	MatchPlayerID     int `json:"match_player_id"`
+	MatchPlayerID     int64 `json:"match_player_id"`
 	match             *Match
-	SteamID           steamid.SID64                  `json:"steam_id"`
-	Team              Team                           `json:"team"`
-	Name              string                         `json:"name"`
-	TimeStart         *time.Time                     `json:"time_start"`
-	TimeEnd           *time.Time                     `json:"time_end"`
-	TargetInfo        map[steamid.SID64]*TargetStats `json:"target_info"`
-	WeaponInfo        map[Weapon]*WeaponStats        `json:"weapon_info"`
-	Assists           int                            `json:"assists"`
-	Suicides          int                            `json:"suicides"`
-	HealingPacks      int                            `json:"healing_packs"` // Healing from packs
-	HealingStats      *HealingStats                  `json:"healing_stats"`
-	Pickups           map[PickupItem]int             `json:"pickups"`
-	Captures          []*PointCapture                `json:"captures"`
-	CapturesBlocked   []*PointCaptureBlocked         `json:"captures_blocked"`
-	BuildingBuilt     int                            `json:"building_built"`
-	BuildingDetonated int                            `json:"building_detonated"` // self-destruct buildings
-	BuildingDestroyed int                            `json:"building_destroyed"` // Opposing team buildings
-	BuildingDropped   int                            `json:"building_dropped"`   // Buildings destroyed while carrying
-	BuildingCarried   int                            `json:"building_carried"`   // Building pickup count
-	Classes           []PlayerClass                  `json:"classes"`
-	KillStreaks       []int                          `json:"kill_streaks"`
+	SteamID           steamid.SID64                     `json:"steam_id"`
+	Team              Team                              `json:"team"`
+	Name              string                            `json:"name"`
+	TimeStart         *time.Time                        `json:"time_start"`
+	TimeEnd           *time.Time                        `json:"time_end"`
+	TargetInfo        map[steamid.SID64]*TargetStats    `json:"target_info"`
+	WeaponInfo        map[Weapon]*WeaponStats           `json:"weapon_info"`
+	Assists           int                               `json:"assists"`
+	Suicides          int                               `json:"suicides"`
+	HealingPacks      int                               `json:"healing_packs"` // Healing from packs
+	HealingStats      *HealingStats                     `json:"healing_stats"`
+	Pickups           map[PickupItem]int                `json:"pickups"`
+	Captures          []*PointCapture                   `json:"captures"`
+	CapturesBlocked   []*PointCaptureBlocked            `json:"captures_blocked"`
+	BuildingBuilt     int                               `json:"building_built"`
+	BuildingDetonated int                               `json:"building_detonated"` // self-destruct buildings
+	BuildingDestroyed int                               `json:"building_destroyed"` // Opposing team buildings
+	BuildingDropped   int                               `json:"building_dropped"`   // Buildings destroyed while carrying
+	BuildingCarried   int                               `json:"building_carried"`   // Building pickup count
+	Classes           map[PlayerClass]*PlayerClassStats `json:"classes"`
+	KillStreaks       []PlayerKillstreak                `json:"kill_streaks"`
 	currentKillStreak int
+	currentLifeStart  time.Time
+	currentClass      PlayerClass
+}
+
+func newMatchPlayerStats(match *Match, sid steamid.SID64) *PlayerStats {
+	return &PlayerStats{
+		match:      match,
+		SteamID:    sid,
+		Team:       UNASSIGNED,
+		TargetInfo: map[steamid.SID64]*TargetStats{},
+		WeaponInfo: map[Weapon]*WeaponStats{},
+		Pickups:    map[PickupItem]int{},
+		Classes:    map[PlayerClass]*PlayerClassStats{},
+	}
 }
 
 func (player *PlayerStats) DamageTaken() int {
@@ -1144,22 +1184,6 @@ func (player *PlayerStats) RevengeCount() int {
 	return total
 }
 
-func (player *PlayerStats) KDRatio() float64 {
-	if player.Deaths() <= 0 {
-		return -1
-	}
-
-	return math.Ceil((float64(player.KillCount())/float64(player.Deaths()))*100) / 100
-}
-
-func (player *PlayerStats) KDARatio() float64 {
-	if player.Deaths() <= 0 {
-		return -1
-	}
-
-	return math.Ceil((float64(player.KillCount()+player.Assists)/float64(player.Deaths()))*100) / 100
-}
-
 // HealthPacks calculates a total using multipliers the same as logs.tf.
 // small = 1, med = 2, full = 4.
 func (player *PlayerStats) HealthPacks() int {
@@ -1251,15 +1275,24 @@ func (player *PlayerStats) AirShots() int {
 	return total
 }
 
-func (player *PlayerStats) resetKillStreak() {
+func (player *PlayerStats) resetKillStreak(evtTime time.Time) {
+	duration := int(evtTime.Sub(player.currentLifeStart).Seconds())
+	if duration > 50000 {
+		return
+	}
+
 	if player.currentKillStreak >= 3 {
-		player.KillStreaks = append(player.KillStreaks, player.currentKillStreak)
+		player.KillStreaks = append(player.KillStreaks, PlayerKillstreak{
+			PlayerClass: player.currentClass,
+			Killstreak:  player.currentKillStreak,
+			Duration:    duration,
+		})
 	}
 
 	player.currentKillStreak = 0
 }
 
-func (player *PlayerStats) addKill(target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
+func (player *PlayerStats) addKill(evtTime time.Time, target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
 	targetInfo, found := player.TargetInfo[target]
 	if !found {
 		targetInfo = &TargetStats{
@@ -1275,7 +1308,15 @@ func (player *PlayerStats) addKill(target steamid.SID64, weapon Weapon, sourcePo
 	}
 
 	if targetPlayer, ok := player.match.PlayerSums[target]; ok {
-		targetPlayer.resetKillStreak()
+		targetPlayer.resetKillStreak(evtTime)
+
+		if classStats := targetPlayer.getClassStats(); classStats != nil {
+			classStats.Deaths++
+		}
+	}
+
+	if classStats := player.getClassStats(); classStats != nil {
+		classStats.Kills++
 	}
 
 	player.currentKillStreak++
@@ -1321,6 +1362,31 @@ func (player *PlayerStats) Accuracy(weapon Weapon) float64 {
 	}
 
 	return 0
+}
+
+func (player *PlayerStats) getClassStats() *PlayerClassStats {
+	if player.currentClass == Spectator {
+		return nil
+	}
+
+	stats, found := player.Classes[player.currentClass]
+	if !found {
+		stats = &PlayerClassStats{}
+		player.Classes[player.currentClass] = stats
+	}
+
+	return stats
+}
+
+// onClassChangeOrGameEnd updates the players playtime for their current class.
+func (player *PlayerStats) onClassChangeOrGameEnd(eventTime time.Time) {
+	if player.currentClass == Spectator {
+		return
+	}
+
+	if cs := player.getClassStats(); cs != nil {
+		cs.Playtime += int(eventTime.Sub(cs.startTime).Seconds())
+	}
 }
 
 type TeamScores struct {

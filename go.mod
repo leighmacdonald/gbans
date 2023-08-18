@@ -9,12 +9,14 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/gorilla/websocket v1.5.0
 	github.com/jackc/pgconn v1.14.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
+	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/leighmacdonald/bd v0.0.10
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
@@ -69,6 +71,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/gofrs/uuid/v5 v5.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect

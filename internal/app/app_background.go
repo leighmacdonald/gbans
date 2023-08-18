@@ -126,7 +126,17 @@ func (app *App) onMatchComplete(ctx context.Context, match logparse.Match) {
 		return
 	}
 
-	app.sendDiscordMatchResults(ctx, match)
+	var result store.MatchResult
+	if errResult := app.db.MatchGetByID(ctx, match.MatchID, &result); errResult != nil {
+		app.log.Error("Failed to load match", zap.Error(errResult))
+
+		return
+	}
+
+	app.bot.SendPayload(discord.Payload{
+		ChannelID: app.conf.Discord.PublicMatchLogChannelID,
+		Embed:     app.genDiscordMatchEmbed(result).MessageEmbed,
+	})
 }
 
 func (app *App) steamGroupMembershipUpdater(ctx context.Context) {

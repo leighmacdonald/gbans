@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/gofrs/uuid"
 	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -766,7 +767,7 @@ func makeOnServers(app *App) discord.CommandHandler {
 				stats[region+"total"] += float64(maxPlayers)
 				used += curState.PlayerCount
 				total += maxPlayers
-				counts = append(counts, fmt.Sprintf("%s: %2d/%2d", curState.NameShort, curState.PlayerCount, maxPlayers))
+				counts = append(counts, fmt.Sprintf("%s:   %2d/%2d  ", curState.NameShort, curState.PlayerCount, maxPlayers))
 			}
 
 			msg := strings.Join(counts, "    ")
@@ -1052,40 +1053,71 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 
 func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 	msgEmbed := discord.
-		NewEmbed(fmt.Sprintf("Match Summary - %s [#%d]", match.Title, match.MatchID)).
+		NewEmbed(fmt.Sprintf("Match - %s [%s]", match.Title, match.MatchID.String())).
 		SetColor(app.bot.Colour.Success).
-		SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
+		SetURL(app.ExtURLRaw("/log/%s", match.MatchID.String()))
 
 	msgEmbed.SetDescription(matchASCIITable(match))
 
 	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", match.TeamScores.Red)).MakeFieldInline()
 	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", match.TeamScores.Blu)).MakeFieldInline()
 	msgEmbed.AddField("Map", match.MapName).MakeFieldInline()
-	msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
+	msgEmbed.AddField("Chat Messages", fmt.Sprintf("%d", len(match.Chat))).MakeFieldInline()
 
+	msgCounts := map[steamid.SID64]int{}
+
+	for _, msg := range match.Chat {
+		count := msgCounts[msg.SteamID]
+		count++
+		msgCounts[msg.SteamID] = count
+	}
+
+	var (
+		chatSid   steamid.SID64
+		count     int
+		kathyName string
+	)
+
+	for sid, cnt := range msgCounts {
+		if cnt > count {
+			count = cnt
+			chatSid = sid
+		}
+	}
+
+	for _, player := range match.PlayerStats {
+		if player.SteamID == chatSid {
+			kathyName = player.Name
+
+			break
+		}
+	}
+
+	msgEmbed.AddField("Top Chatter", fmt.Sprintf("%s %d", kathyName, len(match.Chat))).MakeFieldInline()
+	msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
 	msgEmbed.AddField("Duration", match.TimeEnd.Sub(match.TimeStart).String()).MakeFieldInline()
 
-	return msgEmbed
+	return msgEmbed.Truncate()
 }
 
 func makeOnLog(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 
-		matchID := opts[discord.OptMatchID].IntValue()
-		if matchID <= 0 {
+		matchIDStr := opts[discord.OptMatchID].StringValue()
+
+		matchID, errMatchID := uuid.FromString(matchIDStr)
+		if errMatchID != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
 		var match store.MatchResult
 
-		if errMatch := app.db.MatchGetByID(ctx, int(matchID), &match); errMatch != nil {
+		if errMatch := app.db.MatchGetByID(ctx, matchID, &match); errMatch != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
-		msgEmbed := app.genDiscordMatchEmbed(match)
-
-		return msgEmbed.Truncate().MessageEmbed, nil
+		return app.genDiscordMatchEmbed(match).MessageEmbed, nil
 	}
 }
 

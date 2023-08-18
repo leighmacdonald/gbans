@@ -43,7 +43,7 @@ func TestParseFile(t *testing.T) {
 	}
 
 	var (
-		parser  = logparse.New()
+		parser  = logparse.NewLogParser()
 		results = make(map[int]*logparse.Results)
 	)
 
@@ -85,7 +85,7 @@ func TestParseUnhandledMsgEvt(t *testing.T) {
 func testLogLine(t *testing.T, line string, expected any) {
 	t.Helper()
 
-	parser := logparse.New()
+	parser := logparse.NewLogParser()
 	value1, err := parser.Parse(line)
 	require.NoError(t, err, "Failed to parse log line: %s", line)
 	require.EqualValues(t, expected, value1.Event, "Value mismatch")
@@ -776,7 +776,7 @@ func TestParseKVs(t *testing.T) {
 	t.Parallel()
 
 	var (
-		parser  = logparse.New()
+		parser  = logparse.NewLogParser()
 		keyMapA = map[string]any{}
 		keyMapB = map[string]any{}
 	)

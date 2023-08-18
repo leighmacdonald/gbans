@@ -127,17 +127,18 @@ type generalConfig struct {
 }
 
 type discordConfig struct {
-	Enabled                bool   `mapstructure:"enabled"`
-	AppID                  string `mapstructure:"app_id"`
-	AppSecret              string `mapstructure:"app_secret"`
-	LinkID                 string `mapstructure:"link_id"`
-	Token                  string `mapstructure:"token"`
-	GuildID                string `mapstructure:"guild_id"`
-	LogChannelID           string `mapstructure:"log_channel_id"`
-	PublicLogChannelEnable bool   `mapstructure:"public_log_channel_enable"`
-	PublicLogChannelID     string `mapstructure:"public_log_channel_id"`
-	ModPingRoleID          string `mapstructure:"mod_ping_role_id"`
-	UnregisterOnStart      bool   `mapstructure:"unregister_on_start"`
+	Enabled                 bool   `mapstructure:"enabled"`
+	AppID                   string `mapstructure:"app_id"`
+	AppSecret               string `mapstructure:"app_secret"`
+	LinkID                  string `mapstructure:"link_id"`
+	Token                   string `mapstructure:"token"`
+	GuildID                 string `mapstructure:"guild_id"`
+	LogChannelID            string `mapstructure:"log_channel_id"`
+	PublicLogChannelEnable  bool   `mapstructure:"public_log_channel_enable"`
+	PublicLogChannelID      string `mapstructure:"public_log_channel_id"`
+	PublicMatchLogChannelID string `mapstructure:"public_match_log_channel_id"`
+	ModPingRoleID           string `mapstructure:"mod_ping_role_id"`
+	UnregisterOnStart       bool   `mapstructure:"unregister_on_start"`
 }
 
 type LogConfig struct {
@@ -264,6 +265,7 @@ func setDefaultConfigValues() {
 		"discord.guild_id":                         "",
 		"discord.public_log_channel_enable":        false,
 		"discord.public_log_channel_id":            "",
+		"discord.public_match_log_channel_id":      "",
 		"discord.log_channel_id":                   "",
 		"discord.mod_ping_role_id":                 "",
 		"discord.unregister_on_start":              false,

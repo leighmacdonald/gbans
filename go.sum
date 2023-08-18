@@ -418,8 +418,6 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bernardonalves/discordgo-embed v0.0.0-20220315162723-10fc7a6984cc h1:f+yyKg67/fFKrlgf9+rrhqOvMaHCwRTmu7qVSkH9Xt8=
-github.com/bernardonalves/discordgo-embed v0.0.0-20220315162723-10fc7a6984cc/go.mod h1:+GMaZwGt4bsRXFTjU7GE9jRJWTbV0/2387b9kKWduEQ=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
 github.com/bwmarrin/discordgo v0.27.1 h1:ib9AIc/dom1E/fSIulrBwnez0CToJE113ZGt4HoliGY=
@@ -554,6 +552,8 @@ github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5x
 github.com/godbus/dbus/v5 v5.0.6/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/gofrs/uuid v4.0.0+incompatible h1:1SD/1F5pU8p29ybwgQSwpQk+mwdRrXCYuPhW6m+TnJw=
 github.com/gofrs/uuid v4.0.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
+github.com/gofrs/uuid/v5 v5.0.0 h1:p544++a97kEL+svbcFbCQVM9KFu0Yo25UoISXGNNH9M=
+github.com/gofrs/uuid/v5 v5.0.0/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
@@ -754,6 +754,8 @@ github.com/jackc/pgtype v0.0.0-20190828014616-a8802b16cc59/go.mod h1:MWlu30kVJrU
 github.com/jackc/pgtype v1.8.1-0.20210724151600-32e20a603178/go.mod h1:C516IlIV9NKqfsMCXTdChteoXmwgUceqaLfjg2e3NlM=
 github.com/jackc/pgtype v1.14.0 h1:y+xUdabmyMkJLyApYuPj38mW+aAIqCe5uuBB51rH3Vw=
 github.com/jackc/pgtype v1.14.0/go.mod h1:LUMuVrfsFfdKGLw+AFFVv6KtHOFMwRgDDzBt76IqCA4=
+github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2 h1:QWdhlQz98hUe1xmjADOl2mr8ERLrOqj0KWLdkrnNsRQ=
+github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2/go.mod h1:Ti7pyNDU/UpXKmBTeFgxTvzYDM9xHLiYKMsLdt4b9cg=
 github.com/jackc/pgx/v4 v4.0.0-20190420224344-cc3461e65d96/go.mod h1:mdxmSJJuR08CZQyj1PVQBHy9XOp5p8/SHH6a0psbY9Y=
 github.com/jackc/pgx/v4 v4.0.0-20190421002000-1b8f0016e912/go.mod h1:no/Y67Jkk/9WuGR0JG/JseM9irFbnEPbuWV2EELPNuM=
 github.com/jackc/pgx/v4 v4.0.0-pre1.0.20190824185557-6972a5742186/go.mod h1:X+GQnOEnf1dqHGpw7JmHqHc1NxDoalibchSk9/RWuDc=
@@ -810,8 +812,6 @@ github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhR
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0/go.mod h1:vmVJ0l/dxyfGW6FmdpVm2joNMFikkuWg0EoCKLGUMNw=
 github.com/leighmacdonald/bd v0.0.10 h1:R5iM59ond36xmubXlC6eRD33za5GEi0hBuufw9uiqgo=
 github.com/leighmacdonald/bd v0.0.10/go.mod h1:/7Pk3Ni6caZrf2GZPLXzOGKxe/ru38QWFlC4JyjXubw=
-github.com/leighmacdonald/discordgo-embed v0.0.0-20220113222025-bafe0c917646 h1:Vt7OoTSOOjwCe5BxGOfLZuWKNrR7PNO/5B0GW+cybII=
-github.com/leighmacdonald/discordgo-embed v0.0.0-20220113222025-bafe0c917646/go.mod h1:QWpCL4oPIw8x7kWituDBnoidw1GDzes7mwdPiXv/Bzw=
 github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89 h1:02OqTCqTgujZumT9xVJGbRxlxfxu8y6BELVw2XUcTnQ=
 github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89/go.mod h1:CeSSZ6/97+4vqbT5y1+WbNqpNBASL2IFntAYUvrPM8M=
 github.com/leighmacdonald/golib v1.1.0 h1:VONSqNme6IG2Uzb7IJKqzM9dqtUtMikbZuKMXGFnCL8=

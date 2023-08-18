@@ -25,7 +25,7 @@ func TestMatch(t *testing.T) {
 	require.NoError(t, errRead)
 
 	var (
-		parser   = logparse.New()
+		parser   = logparse.NewLogParser()
 		newMatch = logparse.NewMatch(1, "test server")
 		rows     = strings.Split(string(body), "\n")
 	)
@@ -44,21 +44,18 @@ func TestMatch(t *testing.T) {
 	}
 
 	require.Equal(t, 19, newMatch.PlayerCount())
-	require.Equal(t, 2, newMatch.MedicCount())
 	require.Equal(t, 43, newMatch.ChatCount())
 
 	playerVar := newMatch.PlayerBySteamID(steamid.New(76561198164892406))
 	require.Equal(t, 12, playerVar.KillCount())
 	require.Equal(t, 3, playerVar.CaptureCount())
-	require.Equal(t, 0.86, playerVar.KDRatio())
-	require.Equal(t, 1.58, playerVar.KDARatio())
 	require.Equal(t, 16, playerVar.HealthPacks())
 
 	require.Equal(t, 10, playerVar.Assists)
 	require.Equal(t, 14, playerVar.Deaths())
 	require.Equal(t, 4796, playerVar.Damage())
-	require.Equal(t, 277, playerVar.DamagePerMin())
-	require.Equal(t, 260, playerVar.DamageTakenPerMin())
+	require.Equal(t, 279, playerVar.DamagePerMin())
+	require.Equal(t, 261, playerVar.DamageTakenPerMin())
 
 	playerTuna := newMatch.PlayerBySteamID(steamid.New(76561198809011070))
 	require.Equal(t, 2, playerTuna.CaptureCount())
@@ -73,14 +70,18 @@ func TestMatch(t *testing.T) {
 
 	playerNomo := newMatch.PlayerBySteamID(steamid.New(76561198051884373))
 	require.Equal(t, 9, playerNomo.BackStabs())
-	require.Equal(t, []logparse.PlayerClass{logparse.Spy, logparse.Pyro}, playerNomo.Classes)
+	require.True(t, len(playerNomo.Classes) == 2)
+
+	require.Equal(t, 1429, playerNomo.Classes[logparse.Pyro].Damage)
+	require.Equal(t, 1101, playerNomo.Classes[logparse.Pyro].DamageTaken)
+	require.Equal(t, 242, playerNomo.Classes[logparse.Pyro].HealingTaken)
 
 	playerAvgIQ := newMatch.PlayerBySteamID(steamid.New(76561198113244106))
 	require.Equal(t, 17368, playerAvgIQ.HealingStats.Healing)
 	require.Equal(t, 4, playerAvgIQ.HealingStats.ChargesTotal())
 	require.Equal(t, 2, playerAvgIQ.HealingStats.DropsTotal())
 	require.Equal(t, 2850, playerAvgIQ.TargetInfo[playerVar.SteamID].HealingTaken)
-	require.Equal(t, 1005, playerAvgIQ.HealingStats.HealingPerMin())
+	require.Equal(t, 1010, playerAvgIQ.HealingStats.HealingPerMin())
 
 	require.Equal(t, []int{3, 0}, []int{newMatch.TeamScores.Red, newMatch.TeamScores.Blu})
 

@@ -429,15 +429,15 @@ func infString(f float64) string {
 	return fmt.Sprintf("%.1f", f)
 }
 
-func matchASCIITable(match logparse.Match) string {
+func matchASCIITable(match store.MatchResult) string {
 	writerPlayers := &strings.Builder{}
 	tablePlayers := defaultTable(writerPlayers)
-	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K/D", "KA/D", "DA", "DA/M", "B/H/A/C"})
+	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K:D", "KA:D", "DA", "DAm", "B H A C"})
 
 	players := match.TopPlayers()
 
 	for i, player := range players {
-		if i == 10 {
+		if i == 30 {
 			break
 		}
 
@@ -452,15 +452,15 @@ func matchASCIITable(match logparse.Match) string {
 
 		tablePlayers.Append([]string{
 			name,
-			fmt.Sprintf("%d", player.KillCount()),
+			fmt.Sprintf("%d", player.Kills),
 			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths()),
+			fmt.Sprintf("%d", player.Deaths),
 			infString(player.KDRatio()),
 			infString(player.KDARatio()),
-			fmt.Sprintf("%d", player.Damage()),
+			fmt.Sprintf("%d", player.Damage),
 			fmt.Sprintf("%d", player.DamagePerMin()),
-			fmt.Sprintf("%d/%d/%d/%d",
-				player.BackStabs(), player.HeadShots(), player.AirShots(), player.CaptureCount()),
+			fmt.Sprintf("%d %d %d %d",
+				player.Backstabs, player.Headshots, player.Airshots, player.Captures),
 		})
 	}
 
@@ -468,14 +468,10 @@ func matchASCIITable(match logparse.Match) string {
 
 	writerHealers := &strings.Builder{}
 	tableHealers := defaultTable(writerPlayers)
-	tableHealers.SetHeader([]string{"Name", "A", "D", "Healing", "H/M", "Ub", "Dr"})
+	tableHealers.SetHeader([]string{"Name", "A", "D", "Healing", "H/M", "U/K/Q/V", "Dr"})
 
-	for i, player := range match.Healers() {
-		if i == 10 {
-			break
-		}
-
-		if player.HealingStats.Healing < 250 {
+	for _, player := range match.PlayerStats {
+		if player.MedicStats == nil {
 			continue
 		}
 
@@ -491,77 +487,21 @@ func matchASCIITable(match logparse.Match) string {
 		tableHealers.Append([]string{
 			name,
 			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths()),
-			fmt.Sprintf("%d", player.HealingStats.Healing),
-			fmt.Sprintf("%d", player.HealingStats.HealingPerMin()),
-			fmt.Sprintf("%d", player.HealingStats.ChargesTotal()),
-			fmt.Sprintf("%d", player.HealingStats.DropsTotal()),
+			fmt.Sprintf("%d", player.Deaths),
+			fmt.Sprintf("%d", player.MedicStats.Healing),
+			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
+			fmt.Sprintf("%d/%d/%d/%d",
+				player.MedicStats.ChargesUber, player.MedicStats.ChargesKritz,
+				player.MedicStats.ChargesQuickfix, player.MedicStats.ChargesVacc),
+			fmt.Sprintf("%d", player.MedicStats.Drops),
 		})
 	}
 
-	writerRounds := &strings.Builder{}
-	tableRounds := defaultTable(writerRounds)
-	tableRounds.SetHeader([]string{"#", "Win", "Len", "K R", "K B", "Dmg R", "Dmg B", "UB R", "UB B"})
-
-	for index, round := range match.Rounds {
-		if round.RoundWinner != logparse.RED && round.RoundWinner != logparse.BLU {
-			continue
-		}
-
-		if index == 9 {
-			break
-		}
-
-		tableRounds.Append([]string{
-			fmt.Sprintf("%d", index+1),
-			round.RoundWinner.String(),
-			round.Length.String(),
-			fmt.Sprintf("%d", round.KillsBlu),
-			fmt.Sprintf("%d", round.KillsRed),
-			fmt.Sprintf("%d", round.DamageBlu),
-			fmt.Sprintf("%d", round.DamageRed),
-			fmt.Sprintf("%.1f", round.UbersRed),
-			fmt.Sprintf("%.1f", round.UbersBlu),
-		})
-	}
-
-	tableRounds.Render()
-
-	resp := fmt.Sprintf("`%s\n%s\n%s`",
+	resp := fmt.Sprintf("`%s\n%s`",
 		strings.Trim(writerPlayers.String(), "\n"),
-		strings.Trim(writerHealers.String(), "\n"),
-		strings.Trim(writerRounds.String(), "\n"))
-	if len(resp) > 4000 {
-		resp = resp[0:4000]
-	}
+		strings.Trim(writerHealers.String(), "\n"))
 
 	return resp
-}
-
-func (app *App) sendDiscordMatchResults(_ context.Context, match logparse.Match) {
-	state := app.state.current()
-	server, found := state.byServerID(match.ServerID)
-
-	if !found {
-		return
-	}
-
-	msgEmbed := discord.
-		NewEmbed(fmt.Sprintf("Match Summary - %s [#%d]", server.Name, match.MatchID)).
-		SetColor(app.bot.Colour.Success).
-		SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
-
-	msgEmbed.SetDescription(matchASCIITable(match))
-
-	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", match.TeamScores.Red)).MakeFieldInline()
-	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", match.TeamScores.Blu)).MakeFieldInline()
-	msgEmbed.AddField("Map", server.Map).MakeFieldInline()
-
-	if match.TimeEnd != nil && match.CreatedOn != nil {
-		msgEmbed.AddField("Duration", match.TimeEnd.Sub(*match.CreatedOn).String()).MakeFieldInline()
-	}
-
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
 }
 
 func (app *App) chatRecorder(ctx context.Context) {
@@ -721,7 +661,7 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 		}()
 	}
 
-	parser := logparse.New()
+	parser := logparse.NewLogParser()
 
 	// playerStateCache := newPlayerCache(app.logger)
 	for {
@@ -914,14 +854,6 @@ func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
 
 	return sid, nil
 }
-
-// func SendUserNotification(pl NotificationPayload) {
-//	select {
-//	case notificationChan <- pl:
-//	default:
-//		logger.Error("Failed to write user notification payload, channel full")
-//	}
-// }
 
 func initNetBans(ctx context.Context, conf *Config) error {
 	for _, banList := range conf.NetBans.Sources {

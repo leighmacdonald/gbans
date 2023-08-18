@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -2222,6 +2223,20 @@ func getIntParam(ctx *gin.Context, key string) (int, error) {
 	return util.StringToInt(valueStr), nil
 }
 
+func getUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
+	valueStr := ctx.Param(key)
+	if valueStr == "" {
+		return uuid.UUID{}, errors.Errorf("Failed to get %s", key)
+	}
+
+	parsedUUID, errString := uuid.FromString(valueStr)
+	if errString != nil {
+		return uuid.UUID{}, errors.Wrap(errString, "Failed to parse UUID")
+	}
+
+	return parsedUUID, nil
+}
+
 func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 	type req struct {
 		Message string `json:"message"`
@@ -2959,7 +2974,7 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		matchID, errID := getIntParam(ctx, "match_id")
+		matchID, errID := getUUIDParam(ctx, "match_id")
 		if errID != nil {
 			log.Error("Invalid match_id value", zap.Error(errID))
 			responseErr(ctx, http.StatusBadRequest, nil)
@@ -2967,7 +2982,10 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 			return
 		}
 
-		match, errMatch := app.db.MatchGetByID(ctx, matchID)
+		var match store.MatchResult
+
+		errMatch := app.db.MatchGetByID(ctx, matchID, &match)
+
 		if errMatch != nil {
 			if errors.Is(errMatch, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, nil)

@@ -155,7 +155,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 		}
 	}()
 
-	parser := New()
+	parser := NewLogParser()
 
 	rejects := map[int]time.Time{}
 

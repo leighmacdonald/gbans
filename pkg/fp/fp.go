@@ -86,3 +86,14 @@ func Reverse[S ~[]E, E any](s S) S {
 
 	return s
 }
+
+//nolint:ireturn
+func FirstNonZero[T Number](numbers ...T) T {
+	for _, curValue := range numbers {
+		if curValue > 0 {
+			return curValue
+		}
+	}
+
+	return 0
+}

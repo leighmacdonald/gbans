@@ -119,7 +119,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 		Required:    true,
 	}
 	optMatchID := &discordgo.ApplicationCommandOption{
-		Type:        discordgo.ApplicationCommandOptionInteger,
+		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        OptMatchID,
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
