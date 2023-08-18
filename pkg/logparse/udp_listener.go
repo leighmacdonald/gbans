@@ -36,8 +36,7 @@ type UDPLogListener struct {
 	onEvent       func(EventType, ServerEvent)
 }
 
-func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandler,
-) (*UDPLogListener, error) {
+func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
@@ -158,6 +157,8 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 	parser := New()
 
+	rejects := map[int]time.Time{}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -168,7 +169,12 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			remoteSrc.RUnlock()
 
 			if !found {
-				remoteSrc.logger.Error("Rejecting unknown secret log author")
+				lastTime, ok := rejects[int(logPayload.source)]
+				if !ok || time.Since(lastTime) > time.Minute*5 {
+					remoteSrc.logger.Error("Rejecting unknown secret log author")
+
+					rejects[int(logPayload.source)] = time.Now()
+				}
 
 				continue
 			}
