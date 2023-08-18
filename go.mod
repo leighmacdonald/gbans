@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/Depado/ginprom v1.7.11
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/bernardonalves/discordgo-embed v0.0.0-20220315162723-10fc7a6984cc
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/gin-contrib/cors v1.4.0
@@ -18,6 +17,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/leighmacdonald/bd v0.0.10
+	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.10
 	github.com/leighmacdonald/srcdsup v0.0.0-20221125023417-58782d27aca0

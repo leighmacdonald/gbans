@@ -3,8 +3,8 @@ package discord
 import (
 	"fmt"
 
-	embed "github.com/bernardonalves/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
+	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"

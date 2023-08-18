@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	embed "github.com/bernardonalves/discordgo-embed"
+	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"

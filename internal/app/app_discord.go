@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	embed "github.com/bernardonalves/discordgo-embed"
 	"github.com/bwmarrin/discordgo"
+	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -780,10 +780,10 @@ func makeOnServers(app *App) discord.CommandHandler {
 				continue
 			}
 
-			msgEmbed.AddField(mapRegion(statName), fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100))
+			msgEmbed.AddField(mapRegion(statName), fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100)).MakeFieldInline()
 		}
 
-		msgEmbed.AddField("Global", fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
+		msgEmbed.AddField("Global", fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100)).MakeFieldInline()
 
 		if total == 0 {
 			msgEmbed.SetColor(app.bot.Colour.Error)
@@ -1050,6 +1050,24 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 //		return nil
 //	}
 
+func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
+	msgEmbed := discord.
+		NewEmbed(fmt.Sprintf("Match Summary - %s [#%d]", match.Title, match.MatchID)).
+		SetColor(app.bot.Colour.Success).
+		SetURL(app.ExtURLRaw("/log/%d", match.MatchID))
+
+	msgEmbed.SetDescription(matchASCIITable(match))
+
+	msgEmbed.AddField("Red Score", fmt.Sprintf("%d", match.TeamScores.Red)).MakeFieldInline()
+	msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", match.TeamScores.Blu)).MakeFieldInline()
+	msgEmbed.AddField("Map", match.MapName).MakeFieldInline()
+	msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
+
+	msgEmbed.AddField("Duration", match.TimeEnd.Sub(match.TimeStart).String()).MakeFieldInline()
+
+	return msgEmbed
+}
+
 func makeOnLog(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -1059,41 +1077,13 @@ func makeOnLog(app *App) discord.CommandHandler {
 			return nil, discord.ErrCommandFailed
 		}
 
-		match, errMatch := app.db.MatchGetByID(ctx, int(matchID))
-		if errMatch != nil {
+		var match store.MatchResult
+
+		if errMatch := app.db.MatchGetByID(ctx, int(matchID), &match); errMatch != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
-		var server store.Server
-		if errServer := app.db.GetServer(ctx, match.ServerID, &server); errServer != nil {
-			return nil, discord.ErrCommandFailed
-		}
-
-		msgEmbed := discord.NewEmbed(fmt.Sprintf("%s - %s", server.ServerName, match.MapName)).
-			SetColor(app.bot.Colour.Success).
-			SetURL(app.ExtURLRaw("/match/%d", match.MatchID))
-
-		redScore := 0
-		bluScore := 0
-
-		msgEmbed.AddField("Red Score", fmt.Sprintf("%d", redScore)).MakeFieldInline()
-		msgEmbed.AddField("Blu Score", fmt.Sprintf("%d", bluScore)).MakeFieldInline()
-		msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
-
-		description := "`Top players\n" +
-			"N. K:D dmg heal sid\n"
-		//
-		// for index, player := range match.Players {
-		//	description += fmt.Sprintf("%d %d:%d %d %d %s\n", index+1, player.KillCount(), player.Deaths(), player.Damage(),
-		//		player.HealingStats.Healing, player.SteamID.String())
-		//
-		//	if index == 9 {
-		//		break
-		//	}
-		// }
-
-		description += "`"
-		msgEmbed.SetDescription(description)
+		msgEmbed := app.genDiscordMatchEmbed(match)
 
 		return msgEmbed.Truncate().MessageEmbed, nil
 	}
