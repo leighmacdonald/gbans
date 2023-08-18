@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
