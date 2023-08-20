@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -46,6 +47,7 @@ type App struct {
 	wordFilters          *wordFilters
 	mc                   *metricCollector
 	logListener          *logparse.UDPLogListener
+	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
@@ -60,6 +62,7 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		incomingGameChat:     make(chan store.PersonMessage, 5),
 		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
+		matchUUIDMap:         fp.NewMutexMap[int, uuid.UUID](),
 		patreon:              newPatreonManager(logger, conf, database),
 		wordFilters:          newWordFilters(),
 		mc:                   newMetricCollector(),
@@ -550,6 +553,8 @@ func (app *App) chatRecorder(ctx context.Context) {
 					continue
 				}
 
+				matchID, _ := app.matchUUIDMap.Get(evt.ServerID)
+
 				msg := store.PersonMessage{
 					SteamID:     newServerEvent.SID,
 					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
@@ -558,6 +563,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 					Body:        strings.ToValidUTF8(newServerEvent.Msg, "_"),
 					Team:        newServerEvent.Team,
 					CreatedOn:   newServerEvent.CreatedOn,
+					MatchID:     matchID,
 				}
 
 				if errChat := app.db.AddChatHistory(ctx, &msg); errChat != nil {

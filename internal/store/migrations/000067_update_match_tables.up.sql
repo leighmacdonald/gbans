@@ -150,8 +150,4 @@ CREATE TABLE IF NOT EXISTS match_player_class
 ALTER TABLE IF EXISTS person_messages
     ADD IF NOT EXISTS match_id uuid;
 
-ALTER TABLE IF EXISTS person_messages
-    ADD CONSTRAINT person_messages_match_match_id_fk
-        FOREIGN KEY (match_id) REFERENCES match;
-
 COMMIT;

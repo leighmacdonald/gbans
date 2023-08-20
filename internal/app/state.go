@@ -663,10 +663,10 @@ func (c *serverStateCollector) updateMSL(ctx context.Context) ([]serverLocation,
 		stats            = newGlobalTF2Stats()
 	)
 
-	for _, baseServer := range allServers {
+	for _, base := range allServers {
 		server := serverLocation{
 			LatLong: ip2location.LatLong{},
-			Server:  baseServer,
+			Server:  base,
 		}
 
 		stats.ServersTotal++

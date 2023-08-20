@@ -32,8 +32,8 @@ func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
 	return false
 }
 
-// activeMatch represents the current match on any given server instance.
-type activeMatch struct {
+// activeMatchContext represents the current match on any given server instance.
+type activeMatchContext struct {
 	match          logparse.Match
 	cancel         context.CancelFunc
 	incomingEvents chan logparse.ServerEvent
@@ -41,7 +41,7 @@ type activeMatch struct {
 	finalScores    int
 }
 
-func (am *activeMatch) start(ctx context.Context) {
+func (am *activeMatchContext) start(ctx context.Context) {
 	am.log.Debug("New match started", zap.String("server", am.match.Title))
 
 	for {
@@ -67,48 +67,50 @@ func (app *App) matchSummarizer(ctx context.Context) {
 		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
 	}
 
-	matches := map[int]*activeMatch{}
+	matches := map[int]*activeMatchContext{}
 
 	for {
 		select {
 		case evt := <-eventChan:
-			match, exists := matches[evt.ServerID]
+			matchContext, exists := matches[evt.ServerID]
 			if !exists {
-				matchCtx, cancel := context.WithCancel(ctx)
-				match = &activeMatch{
+				cancelCtx, cancel := context.WithCancel(ctx)
+				matchContext = &activeMatchContext{
 					match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
 					cancel:         cancel,
 					log:            log.Named(evt.ServerName),
 					incomingEvents: make(chan logparse.ServerEvent),
 				}
 
-				go match.start(matchCtx)
+				go matchContext.start(cancelCtx)
 
-				matches[evt.ServerID] = match
+				app.matchUUIDMap.Set(evt.ServerID, matchContext.match.MatchID)
+
+				matches[evt.ServerID] = matchContext
 			}
 
-			match.incomingEvents <- evt
+			matchContext.incomingEvents <- evt
 
 			switch evt.EventType {
 			case logparse.WTeamFinalScore:
-				match.finalScores++
-				if match.finalScores < 2 {
+				matchContext.finalScores++
+				if matchContext.finalScores < 2 {
 					continue
 				}
 
 				fallthrough
 			case logparse.LogStop:
-				match.log.Info("Closing match")
-				match.cancel()
+				matchContext.log.Info("Closing match")
+				matchContext.cancel()
 
 				state := app.state.current()
 				server, found := state.byServerID(evt.ServerID)
 
 				if found && server.Name != "" {
-					match.match.Title = server.Name
+					matchContext.match.Title = server.Name
 				}
 
-				app.onMatchComplete(ctx, match.match)
+				app.onMatchComplete(ctx, matchContext.match)
 
 				delete(matches, evt.ServerID)
 			}
