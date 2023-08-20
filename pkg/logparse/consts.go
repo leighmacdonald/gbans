@@ -239,6 +239,7 @@ const (
 	Club
 	ConscientiousObjector
 	CowMangler
+	Crocodile
 	Crossbow
 	CrossbowBolt
 	CrossingGuard
@@ -248,6 +249,7 @@ const (
 	DeflectGrenade
 	DeflectHunstmanBurning
 	DeflectLooseCannon
+	DeflectRescueRanger
 	DeflectRocket
 	DeflectRocketMangler
 	DeflectSticky
@@ -321,6 +323,7 @@ const (
 	LooseCannonExplosion
 	LooseCannonImpact
 	Lugermorph
+	Lunchbox
 	Machina
 	MachinaPen
 	MadMilk
@@ -363,6 +366,7 @@ const (
 	ProjectileRocket
 	ProjectileShortCircuit
 	ProjectileSticky
+	ProjectileWrapAssassin
 	PumpkinBomb
 	Quickiebomb
 	Rainblower
@@ -414,6 +418,7 @@ const (
 	SyringeGun
 	TFFlameThrower
 	TFMedigun
+	TauntArmageddon
 	TauntDemoman
 	TauntEngineer
 	TauntGuitarKill
@@ -773,15 +778,15 @@ func (w Weapon) String() string { //nolint:maintidx
 	case ProjectileDragonsFury:
 		return "Dragons Fury Ball"
 	case ProjectileGrenade:
-		return "Projectile Grenade"
+		return "Grenade"
 	case ProjectileJarGas:
-		return "Projectile Gas Passer"
+		return "Gas Passer"
 	case ProjectileRocket:
-		return "Projectile Rocket Launcher"
+		return "Rocket Launcher"
 	case ProjectileShortCircuit:
-		return "Projectile Short Circuit"
+		return "Short Circuit"
 	case ProjectileSticky:
-		return "Projectile Stickybomb"
+		return "Stickybomb"
 	case PumpkinBomb:
 		return "Pumpkin Bomb"
 	case Quickiebomb:

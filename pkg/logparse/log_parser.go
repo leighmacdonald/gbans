@@ -99,6 +99,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			Club:                     "club",
 			ConscientiousObjector:    "nonnonviolent_protest",
 			CowMangler:               "cow_mangler",
+			Crocodile:                "crocodile",
 			Crossbow:                 "crusaders_crossbow",
 			CrossbowBolt:             "tf_projectile_healing_bolt",
 			CrossingGuard:            "crossing_guard",
@@ -109,6 +110,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			DeflectHunstmanBurning:   "deflect_huntsman_flyingburn",
 			DeflectLooseCannon:       "loose_cannon_reflect",
 			DeflectRocket:            "deflect_rocket",
+			DeflectRescueRanger:      "rescue_ranger_reflect",
 			DeflectRocketMangler:     "tf_projectile_energy_ball",
 			DeflectSticky:            "deflect_sticky",
 			Degreaser:                "degreaser",
@@ -180,6 +182,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			LooseCannon:              "loose_cannon",
 			LooseCannonExplosion:     "loose_cannon_explosion", // donk?
 			LooseCannonImpact:        "loose_cannon_impact",
+			Lunchbox:                 "lunchbox",
 			Lugermorph:               "maxgun",
 			Machina:                  "machina",
 			MachinaPen:               "player_penetration",
@@ -223,6 +226,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			ProjectileRocket:         "tf_projectile_rocket",
 			ProjectileShortCircuit:   "tf_projectile_mechanicalarmorb",
 			ProjectileSticky:         "tf_projectile_pipe_remote",
+			ProjectileWrapAssassin:   "tf_projectile_ball_ornament",
 			PumpkinBomb:              "tf_pumpkin_bomb",
 			Quickiebomb:              "quickiebomb_launcher",
 			Rainblower:               "rainblower",
@@ -274,6 +278,7 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 			SyringeGun:               "syringegun_medic",
 			TFFlameThrower:           "tf_weapon_flamethrower",
 			TFMedigun:                "tf_weapon_medigun", // When used to extinguish
+			TauntArmageddon:          "armageddon",        // rainblower
 			TauntDemoman:             "taunt_demoman",
 			TauntEngineer:            "taunt_engineer",
 			TauntGuitarKill:          "taunt_guitar_kill",
