@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -216,6 +217,7 @@ type PersonConnections []PersonConnection
 
 type PersonMessage struct {
 	PersonMessageID int64         `json:"person_message_id"`
+	MatchID         uuid.UUID     `json:"match_id"`
 	SteamID         steamid.SID64 `json:"steam_id"`
 	PersonaName     string        `json:"persona_name"`
 	ServerName      string        `json:"server_name"`
@@ -588,13 +590,13 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 
 func (db *Store) AddChatHistory(ctx context.Context, message *PersonMessage) error {
 	const query = `INSERT INTO person_messages 
-    		(steam_id, server_id, body, team, created_on, persona_name) 
-			VALUES ($1, $2, $3, $4, $5, $6)
+    		(steam_id, server_id, body, team, created_on, persona_name, match_id) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING person_message_id`
 
 	if errScan := db.
 		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
-			message.CreatedOn, message.PersonaName).
+			message.CreatedOn, message.PersonaName, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
 		return Err(errScan)
 	}
@@ -611,6 +613,7 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 		"m.team",
 		"m.created_on",
 		"m.persona_name",
+		"m.match_id",
 		"s.short_name").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id").
@@ -631,6 +634,7 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 			&msg.Team,
 			&msg.CreatedOn,
 			&msg.PersonaName,
+			&msg.MatchID,
 			&msg.ServerName)
 	if errRow != nil {
 		return Err(errRow)
@@ -805,6 +809,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		"m.team ",
 		"m.created_on",
 		"m.persona_name",
+		"m.match_id",
 		"s.short_name",
 		"COUNT(f.person_message_id)::int::boolean as flagged",
 	}
@@ -965,6 +970,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 				&message.Team,
 				&message.CreatedOn,
 				&message.PersonaName,
+				&message.MatchID,
 				&message.ServerName,
 				&message.AutoFilterFlagged,
 			}
@@ -985,7 +991,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 func (db *Store) GetPersonMessage(ctx context.Context, messageID int64, msg *QueryChatHistoryResult) error {
 	const query = `
 			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			       m.persona_name, m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
 			FROM person_messages m 
 			LEFT JOIN server s on m.server_id = s.server_id
 			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
@@ -996,7 +1002,7 @@ func (db *Store) GetPersonMessage(ctx context.Context, messageID int64, msg *Que
 	if errScan := db.conn.
 		QueryRow(ctx, query, messageID).
 		Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
-			&msg.PersonaName, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
+			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
 		return errors.Wrap(errScan, "Failed to scan message result")
 	}
 
@@ -1007,7 +1013,7 @@ func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, mess
 	const query = `
 		(
 			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
 			FROM person_messages m 
 			LEFT JOIN server s on m.server_id = s.server_id
 			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
@@ -1020,7 +1026,7 @@ func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, mess
 		UNION
 		(
 			SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
 		 	FROM person_messages m 
 		 	    LEFT JOIN server s on m.server_id = s.server_id 
 		 	LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
@@ -1051,7 +1057,7 @@ func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, mess
 		var msg QueryChatHistoryResult
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
-			&msg.PersonaName, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
+			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
 			return nil, errors.Wrap(errRows, "Failed to scan message result")
 		}
 

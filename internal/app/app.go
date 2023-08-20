@@ -432,12 +432,12 @@ func infString(f float64) string {
 func matchASCIITable(match store.MatchResult) string {
 	writerPlayers := &strings.Builder{}
 	tablePlayers := defaultTable(writerPlayers)
-	tablePlayers.SetHeader([]string{"Name", "K", "A", "D", "K:D", "KA:D", "DA", "DAm", "B H A C"})
+	tablePlayers.SetHeader([]string{" ", "Name", "K", "A", "D", "KD", "KAD", "DA", "DAm", "B", "H", "A", "C"})
 
 	players := match.TopPlayers()
 
 	for i, player := range players {
-		if i == 30 {
+		if i == 15 {
 			break
 		}
 
@@ -446,11 +446,12 @@ func matchASCIITable(match store.MatchResult) string {
 			name = player.Name
 		}
 
-		if len(name) > 17 {
-			name = name[0:17]
+		if len(name) > 15 {
+			name = name[0:15]
 		}
 
 		tablePlayers.Append([]string{
+			player.Team.String()[0:1],
 			name,
 			fmt.Sprintf("%d", player.Kills),
 			fmt.Sprintf("%d", player.Assists),
@@ -459,8 +460,10 @@ func matchASCIITable(match store.MatchResult) string {
 			infString(player.KDARatio()),
 			fmt.Sprintf("%d", player.Damage),
 			fmt.Sprintf("%d", player.DamagePerMin()),
-			fmt.Sprintf("%d %d %d %d",
-				player.Backstabs, player.Headshots, player.Airshots, player.Captures),
+			fmt.Sprintf("%d", player.Backstabs),
+			fmt.Sprintf("%d", player.Headshots),
+			fmt.Sprintf("%d", player.Airshots),
+			fmt.Sprintf("%d", player.Captures),
 		})
 	}
 
@@ -468,10 +471,10 @@ func matchASCIITable(match store.MatchResult) string {
 
 	writerHealers := &strings.Builder{}
 	tableHealers := defaultTable(writerPlayers)
-	tableHealers.SetHeader([]string{"Name", "A", "D", "Healing", "H/M", "U/K/Q/V", "Dr"})
+	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Healing", "H/M", "U", "K", "Q", "V", "D"})
 
-	for _, player := range match.PlayerStats {
-		if player.MedicStats == nil {
+	for _, player := range match.Healers() {
+		if player.MedicStats.Healing < store.MinMedicHealing {
 			continue
 		}
 
@@ -485,17 +488,21 @@ func matchASCIITable(match store.MatchResult) string {
 		}
 
 		tableHealers.Append([]string{
+			player.Team.String()[0:1],
 			name,
 			fmt.Sprintf("%d", player.Assists),
 			fmt.Sprintf("%d", player.Deaths),
 			fmt.Sprintf("%d", player.MedicStats.Healing),
 			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
-			fmt.Sprintf("%d/%d/%d/%d",
-				player.MedicStats.ChargesUber, player.MedicStats.ChargesKritz,
-				player.MedicStats.ChargesQuickfix, player.MedicStats.ChargesVacc),
+			fmt.Sprintf("%d", player.MedicStats.ChargesUber),
+			fmt.Sprintf("%d", player.MedicStats.ChargesKritz),
+			fmt.Sprintf("%d", player.MedicStats.ChargesQuickfix),
+			fmt.Sprintf("%d", player.MedicStats.ChargesVacc),
 			fmt.Sprintf("%d", player.MedicStats.Drops),
 		})
 	}
+
+	tableHealers.Render()
 
 	resp := fmt.Sprintf("`%s\n%s`",
 		strings.Trim(writerPlayers.String(), "\n"),

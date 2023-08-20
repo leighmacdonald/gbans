@@ -411,20 +411,20 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 						optUserID,
 					},
 				},
-				{
-					Name:        string(CmdStatsServer),
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Description: "Get a servers stats",
-					Options: []*discordgo.ApplicationCommandOption{
-						optServerID,
-					},
-				},
-				{
-					Name:        string(CmdStatsGlobal),
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Description: "Get a global stats",
-					Options:     []*discordgo.ApplicationCommandOption{},
-				},
+				// {
+				//	Name:        string(CmdStatsServer),
+				//	Type:        discordgo.ApplicationCommandOptionSubCommand,
+				//	Description: "Get a servers stats",
+				//	Options: []*discordgo.ApplicationCommandOption{
+				//		optServerID,
+				//	},
+				// },
+				// {
+				//	Name:        string(CmdStatsGlobal),
+				//	Type:        discordgo.ApplicationCommandOptionSubCommand,
+				//	Description: "Get a global stats",
+				//	Options:     []*discordgo.ApplicationCommandOption{},
+				// },
 			},
 		},
 		{

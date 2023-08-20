@@ -142,11 +142,11 @@ type MatchResult struct {
 	TeamScores  logparse.TeamScores      `json:"team_scores"`
 	TimeStart   time.Time                `json:"time_start"`
 	TimeEnd     time.Time                `json:"time_end"`
-	PlayerStats []MatchPlayer            `json:"player_stats"`
+	PlayerStats []*MatchPlayer           `json:"player_stats"`
 	Chat        []QueryChatHistoryResult `json:"chat"`
 }
 
-func (match *MatchResult) TopPlayers() []MatchPlayer {
+func (match *MatchResult) TopPlayers() []*MatchPlayer {
 	players := match.PlayerStats
 
 	sort.SliceStable(players, func(i, j int) bool {
@@ -156,18 +156,34 @@ func (match *MatchResult) TopPlayers() []MatchPlayer {
 	return players
 }
 
+func (match *MatchResult) Healers() []*MatchPlayer {
+	var healers []*MatchPlayer
+
+	for _, player := range match.PlayerStats {
+		if player.MedicStats != nil {
+			healers = append(healers, player)
+		}
+	}
+
+	sort.SliceStable(healers, func(i, j int) bool {
+		return healers[i].MedicStats.Healing > healers[j].MedicStats.Healing
+	})
+
+	return healers
+}
+
 func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]MatchPlayerClass, error) {
 	const query = `
-		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id,c.kills, 
+		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
 		   c.assists, c.deaths, c.playtime, c.dominations, c.dominated, c.revenges, c.damage, c.damage_taken, c.healing_taken,
 		   c.captures, c.captures_blocked, c.buildings_destroyed
 		FROM match_player_class c
 		LEFT JOIN match_player mp on mp.match_player_id = c.match_player_id
 		WHERE mp.match_id = $1`
 
-	rows, errRows := db.Query(ctx, query, matchID)
-	if errRows != nil {
-		return nil, Err(errRows)
+	rows, errQuery := db.Query(ctx, query, matchID)
+	if errQuery != nil {
+		return nil, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -183,7 +199,7 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 		if errScan := rows.
 			Scan(&steamID, &stats.MatchPlayerClassID, &stats.MatchPlayerID, &stats.PlayerClass,
 				&stats.Kills, &stats.Assists, &stats.Deaths, &stats.Playtime, &stats.Dominations, &stats.Dominated,
-				&stats.Revenges, &stats.Damage, &stats.DamageTaken, stats.HealingTaken, &stats.Captures,
+				&stats.Revenges, &stats.Damage, &stats.DamageTaken, &stats.HealingTaken, &stats.Captures,
 				&stats.CapturesBlocked, &stats.BuildingDestroyed); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -196,6 +212,10 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 		}
 
 		results[sid] = append(res, stats)
+	}
+
+	if errRows := rows.Err(); errRows != nil {
+		return nil, Err(errRows)
 	}
 
 	return results, nil
@@ -241,48 +261,64 @@ func (db *Store) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID
 	return results, nil
 }
 
-func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]MatchPlayer, error) {
+func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*MatchPlayer, error) {
 	const queryPlayer = `
-		SELECT p.match_player_id,
-			   p.steam_id,
-			   p.team,
-			   p.time_start,
-			   p.time_end,
-			   coalesce(SUM(w.kills), 0)    as kills,
-			   coalesce(SUM(c.assists), 0)    as assists,
-			   coalesce(SUM(c.deaths), 0)    as deaths,
-			   coalesce(SUM(c.dominations), 0)    as dominations,
-			   coalesce(SUM(c.dominated), 0)    as dominated,
-			   coalesce(SUM(c.revenges), 0)    as revenges,
-			   coalesce(SUM(w.damage), 0)    as damage,
-			   coalesce(SUM(c.damage_taken), 0)    as damage_taken,
-			   coalesce(SUM(c.healing_taken), 0)    as healing_taken,
-			   p.health_packs,
-			   coalesce(SUM(w.backstabs), 0) as backstabs,
-			   coalesce(SUM(w.headshots), 0) as headshots,
-			   coalesce(SUM(w.airshots), 0)  as airshots,
-			   coalesce(SUM(c.captures), 0)    as captures,
-			   coalesce(SUM(c.captures_blocked), 0)    as captures_blocked,
-			   coalesce(SUM(w.shots), 0)     as shots,
-			   p.extinguishes,
-			   coalesce(SUM(w.hits), 0)      as hits,
-			   p.buildings,
-			   coalesce(SUM(c.buildings_destroyed), 0)    as buildings_destroyed,
-			   pe.personaname,
-			   pe.avatarhash
+		SELECT
+			p.match_player_id,
+			p.steam_id,
+			p.team,
+			p.time_start,
+			p.time_end,
+			coalesce(w.kills, 0) as kills,
+			coalesce(w.damage, 0) as damage,
+			coalesce(w.shots, 0) as shots,
+			coalesce(w.hits, 0) as hits,
+			coalesce(w.backstabs, 0) as backstabs,
+			coalesce(w.headshots, 0) as headshots,
+			coalesce(w.airshots, 0) as airshots,
+			coalesce(SUM(c.assists), 0)             as assists,
+			coalesce(SUM(c.deaths), 0)              as deaths,
+			coalesce(SUM(c.dominations), 0)         as dominations,
+			coalesce(SUM(c.dominated), 0)           as dominated,
+			coalesce(SUM(c.revenges), 0)            as revenges,
+			coalesce(SUM(c.damage_taken), 0)        as damage_taken,
+			coalesce(SUM(c.healing_taken), 0)       as healing_taken,
+			p.health_packs,
+			coalesce(SUM(c.captures), 0)            as captures,
+			coalesce(SUM(c.captures_blocked), 0)    as captures_blocked,
+			p.extinguishes,
+			p.buildings,
+			coalesce(SUM(c.buildings_destroyed), 0) as buildings_destroyed,
+			pe.personaname,
+			pe.avatarhash
 		FROM match_player p
-		LEFT JOIN match_weapon w on p.match_player_id = w.match_player_id
 		LEFT JOIN match_player_class c on c.match_player_id = p.match_player_id
 		LEFT JOIN person pe on p.steam_id = pe.steam_id
+		LEFT JOIN (
+			SELECT p.match_player_id,
+				coalesce(SUM(w.kills), 0)     as kills,
+				   coalesce(SUM(w.backstabs), 0) as backstabs,
+				   coalesce(SUM(w.headshots), 0) as headshots,
+				   coalesce(SUM(w.airshots), 0)  as airshots,
+				   coalesce(SUM(w.shots), 0)     as shots,
+				   coalesce(SUM(w.hits), 0)      as hits,
+				   coalesce(SUM(w.damage), 0)    as damage
+			FROM match_weapon w
+			LEFT JOIN match_player p on w.match_player_id = p.match_player_id
+			GROUP BY p.match_player_id, p.match_id
+			ORDER BY kills DESC
+		) w ON w.match_player_id = p.match_player_id
 		WHERE p.match_id = $1
-		GROUP BY p.match_player_id, pe.personaname, pe.avatarhash`
+		GROUP BY 
+			p.match_player_id, w.kills, w.damage, w.shots, w.hits, w.backstabs, w.headshots, w.airshots, pe.steam_id
+		ORDER BY w.kills DESC`
 
-	var players []MatchPlayer
+	var players []*MatchPlayer
 
 	playerRows, errPlayer := db.Query(ctx, queryPlayer, matchID)
 	if errPlayer != nil {
 		if errors.Is(errPlayer, ErrNoResult) {
-			return []MatchPlayer{}, nil
+			return []*MatchPlayer{}, nil
 		}
 
 		return nil, errors.Wrapf(errPlayer, "Failed to query match players")
@@ -292,16 +328,16 @@ func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]Matc
 
 	for playerRows.Next() {
 		var (
-			mpSum   = MatchPlayer{}
+			mpSum   = &MatchPlayer{}
 			steamID int64
 		)
 
 		if errRow := playerRows.
 			Scan(&mpSum.MatchPlayerID, &steamID, &mpSum.Team, &mpSum.TimeStart, &mpSum.TimeEnd,
-				&mpSum.Kills, &mpSum.Assists, &mpSum.Deaths, &mpSum.Dominations, &mpSum.Dominated, &mpSum.Revenges,
-				&mpSum.Damage, &mpSum.DamageTaken, &mpSum.HealingTaken, &mpSum.HealingPacks, &mpSum.Backstabs,
-				&mpSum.Headshots, &mpSum.Airshots, &mpSum.Captures, &mpSum.CapturesBlocked, &mpSum.Shots,
-				&mpSum.Extinguishes, &mpSum.Hits, &mpSum.BuildingBuilt, &mpSum.BuildingDestroyed, &mpSum.Name,
+				&mpSum.Kills, &mpSum.Damage, &mpSum.Shots, &mpSum.Hits, &mpSum.Backstabs,
+				&mpSum.Headshots, &mpSum.Airshots, &mpSum.Assists, &mpSum.Deaths, &mpSum.Dominations, &mpSum.Dominated, &mpSum.Revenges,
+				&mpSum.DamageTaken, &mpSum.HealingTaken, &mpSum.HealingPacks, &mpSum.Captures, &mpSum.CapturesBlocked,
+				&mpSum.Extinguishes, &mpSum.BuildingBuilt, &mpSum.BuildingDestroyed, &mpSum.Name,
 				&mpSum.AvatarHash); errRow != nil {
 			return nil, errors.Wrapf(errPlayer, "Failed to scan match players")
 		}
@@ -316,7 +352,7 @@ func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]Matc
 func (db *Store) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]MatchHealer, error) {
 	const query = `
 		SELECT m.match_medic_id,
-			   m.match_player_id,
+			   mp.steam_id,
 			   m.healing,
 			   m.drops,
 			   m.near_full_charge_death,
@@ -405,7 +441,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 		return errors.Wrap(errPlayerKillstreaks, "Failed to fetch player killstreak stats")
 	}
 
-	for _, player := range playerStats {
+	for _, player := range match.PlayerStats {
 		if killstreaks, found := playerKillstreaks[player.SteamID]; found {
 			player.Killstreaks = killstreaks
 		}
@@ -419,7 +455,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 	for steamID, stats := range medicStats {
 		localStats := stats
 
-		for _, player := range playerStats {
+		for _, player := range match.PlayerStats {
 			if player.SteamID == steamID {
 				player.MedicStats = &localStats
 
@@ -449,6 +485,8 @@ var (
 	ErrIncompleteMatch     = errors.New("Insufficient match data")
 	ErrInsufficientPlayers = errors.New("Insufficient match players")
 )
+
+const MinMedicHealing = 500
 
 func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	const (
@@ -530,7 +568,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errSave
 		}
 
-		if player.HealingStats != nil {
+		if player.HealingStats != nil && player.HealingStats.Healing >= MinMedicHealing {
 			if errSave := saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
 					db.log.Error("Failed to rollback tx", zap.Error(errRollback))
@@ -642,4 +680,356 @@ func saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *l
 	}
 
 	return nil
+}
+
+type PlayerClassStats struct {
+	Class              logparse.PlayerClass
+	ClassName          string
+	Kills              int
+	Assists            int
+	Deaths             int
+	Damage             int
+	Dominations        int
+	Dominated          int
+	Revenges           int
+	DamageTaken        int
+	HealingTaken       int
+	HealthPacks        int
+	Captures           int
+	CapturesBlocked    int
+	Extinguishes       int
+	BuildingsBuilt     int
+	BuildingsDestroyed int
+	Playtime           float64 // seconds
+}
+
+func (player PlayerClassStats) KDRatio() float64 {
+	if player.Deaths <= 0 {
+		return -1
+	}
+
+	return math.Ceil((float64(player.Kills)/float64(player.Deaths))*100) / 100
+}
+
+func (player PlayerClassStats) KDARatio() float64 {
+	if player.Deaths <= 0 {
+		return -1
+	}
+
+	return math.Ceil((float64(player.Kills+player.Assists)/float64(player.Deaths))*100) / 100
+}
+
+func (player PlayerClassStats) DamagePerMin() int {
+	return int(float64(player.Damage) / (player.Playtime / 60))
+}
+
+type PlayerClassStatsCollection []PlayerClassStats
+
+func (ps PlayerClassStatsCollection) Kills() int {
+	var total int
+	for _, class := range ps {
+		total += class.Kills
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Assists() int {
+	var total int
+	for _, class := range ps {
+		total += class.Assists
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Deaths() int {
+	var total int
+	for _, class := range ps {
+		total += class.Deaths
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Damage() int {
+	var total int
+	for _, class := range ps {
+		total += class.Damage
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) DamageTaken() int {
+	var total int
+	for _, class := range ps {
+		total += class.DamageTaken
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Captures() int {
+	var total int
+	for _, class := range ps {
+		total += class.Captures
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Dominations() int {
+	var total int
+	for _, class := range ps {
+		total += class.Dominations
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Dominated() int {
+	var total int
+	for _, class := range ps {
+		total += class.Dominated
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) Playtime() float64 {
+	var total float64
+	for _, class := range ps {
+		total += class.Playtime
+	}
+
+	return total
+}
+
+func (ps PlayerClassStatsCollection) DamagePerMin() int {
+	return int(float64(ps.Damage()) / (ps.Playtime() / 60))
+}
+
+func (ps PlayerClassStatsCollection) KDRatio() float64 {
+	if ps.Deaths() <= 0 {
+		return -1
+	}
+
+	return math.Ceil((float64(ps.Kills())/float64(ps.Deaths()))*100) / 100
+}
+
+func (ps PlayerClassStatsCollection) KDARatio() float64 {
+	if ps.Deaths() <= 0 {
+		return -1
+	}
+
+	return math.Ceil((float64(ps.Kills()+ps.Assists())/float64(ps.Deaths()))*100) / 100
+}
+
+func (db *Store) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (PlayerClassStatsCollection, error) {
+	const query = `
+		SELECT c.player_class_id,
+			   coalesce(SUM(c.kills), 0)               as kill,
+			   coalesce(SUM(c.damage), 0)              as damage,
+			   coalesce(SUM(c.assists), 0)             as assists,
+			   coalesce(SUM(c.deaths), 0)              as deaths,
+			   coalesce(SUM(c.dominations), 0)         as dominations,
+			   coalesce(SUM(c.dominated), 0)           as dominated,
+			   coalesce(SUM(c.revenges), 0)            as revenges,
+			   coalesce(SUM(c.damage_taken), 0)        as damage_taken,
+			   coalesce(SUM(c.healing_taken), 0)       as healing_taken,
+			   coalesce(SUM(p.health_packs), 0)        as health_packs,
+			   coalesce(SUM(c.captures), 0)            as captures,
+			   coalesce(SUM(c.captures_blocked), 0)    as captures_blocked,
+			   coalesce(SUM(p.extinguishes), 0)        as extinguishes,
+			   coalesce(SUM(p.buildings), 0)           as buildings_built,
+			   coalesce(SUM(c.buildings_destroyed), 0) as buildings_destroyed,
+			   coalesce(SUM(c.playtime), 0)            as playtime
+		FROM match_player p
+		LEFT JOIN match_player_class c on c.match_player_id = p.match_player_id
+		WHERE p.steam_id = $1 AND c.player_class_id != 0
+		GROUP BY p.steam_id, c.player_class_id
+		ORDER BY c.player_class_id`
+
+	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	var stats PlayerClassStatsCollection
+
+	for rows.Next() {
+		var class PlayerClassStats
+		if errScan := rows.
+			Scan(&class.Class, &class.Kills, &class.Damage, &class.Assists, &class.Deaths, &class.Dominations,
+				&class.Dominated, &class.Revenges, &class.DamageTaken, &class.HealingTaken, &class.HealthPacks,
+				&class.Captures, &class.CapturesBlocked, &class.Extinguishes, &class.BuildingsBuilt,
+				&class.BuildingsDestroyed, &class.Playtime); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		class.ClassName = class.Class.String()
+		stats = append(stats, class)
+	}
+
+	return stats, nil
+}
+
+type PlayerWeaponStats struct {
+	Weapon     logparse.Weapon
+	WeaponName string
+	Kills      int
+	Damage     int
+	Shots      int
+	Hits       int
+	Backstabs  int
+	Headshots  int
+	Airshots   int
+}
+
+func (ws PlayerWeaponStats) Accuracy() float64 {
+	if ws.Shots == 0 {
+		return 0
+	}
+
+	return math.Ceil(float64(ws.Hits)/float64(ws.Shots)*10000) / 100
+}
+
+func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error) {
+	const query = `
+		SELECT w.weapon_id,
+			   n.name,
+			   SUM(w.kills)     as kills,
+			   SUM(w.damage)     as damage,
+			   SUM(w.shots)     as shots,
+			   SUM(w.hits)      as hits,
+			   SUM(w.backstabs) as backstabs,
+			   SUM(w.headshots) as headshots,
+			   SUM(w.airshots)  as airshots
+		FROM match_player p
+		LEFT JOIN match_weapon w on p.match_player_id = w.match_player_id
+		LEFT JOIN weapon n on n.weapon_id = w.weapon_id
+		WHERE p.steam_id = $1
+		  AND w.weapon_id IS NOT NULL
+		GROUP BY w.weapon_id, n.name;`
+
+	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	var stats []PlayerWeaponStats
+
+	for rows.Next() {
+		var class PlayerWeaponStats
+		if errScan := rows.
+			Scan(&class.Weapon, &class.WeaponName, &class.Kills, &class.Damage, &class.Shots, &class.Hits,
+				&class.Backstabs, &class.Headshots, &class.Airshots); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		stats = append(stats, class)
+	}
+
+	return stats, nil
+}
+
+type PlayerKillstreakStats struct {
+	Class     logparse.PlayerClass `json:"class"`
+	ClassName string               `json:"class_name"`
+	Kills     int                  `json:"kills"`
+	Duration  int                  `json:"duration"`
+	CreatedOn time.Time            `json:"created_on"`
+}
+
+func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]PlayerKillstreakStats, error) {
+	const query = `
+		SELECT k.player_class_id,
+			   SUM(k.killstreak) as killstreak,
+			   SUM(k.duration)   as duration,
+			   m.created_on
+		FROM match_player p
+				 LEFT JOIN match_player_killstreak k on p.match_player_id = k.match_player_id
+				 LEFT JOIN match_player mp on mp.match_player_id = k.match_player_id
+				 LEFT JOIN match m on p.match_id = m.match_id
+		WHERE p.steam_id = $1
+		  AND k.player_class_id IS NOT NULL
+		GROUP BY k.match_killstreak_id, m.created_on, k.player_class_id
+		ORDER BY killstreak DESC
+		LIMIT 10;`
+
+	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	var stats []PlayerKillstreakStats
+
+	for rows.Next() {
+		var class PlayerKillstreakStats
+		if errScan := rows.
+			Scan(&class.Class, &class.Kills, &class.Duration, &class.CreatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		class.ClassName = class.Class.String()
+		stats = append(stats, class)
+	}
+
+	return stats, nil
+}
+
+type PlayerMedicStats struct {
+	Healing             int
+	Drops               int
+	NearFullChargeDeath int
+	AvgUberLength       float64
+	ChargesUber         int
+	ChargesKritz        int
+	ChargesVacc         int
+	ChargesQuickfix     int
+}
+
+func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]PlayerMedicStats, error) {
+	const query = `
+		SELECT coalesce(SUM(m.healing), 0)                as healing,
+			   coalesce(SUM(m.drops), 0)                  as drops,
+			   coalesce(SUM(m.near_full_charge_death), 0) as near_full_charge_death,
+			   coalesce(AVG(m.avg_uber_length), 0)        as avg_uber_length,
+			   coalesce(SUM(m.charge_uber), 0)            as charge_uber,
+			   coalesce(SUM(m.charge_kritz), 0)           as charge_kritz,
+			   coalesce(SUM(m.charge_vacc), 0)            as charge_vacc,
+			   coalesce(SUM(m.charge_quickfix), 0)        as charge_quickfix
+		FROM match_player p
+		LEFT JOIN match_medic m on p.match_player_id = m.match_player_id
+		WHERE p.steam_id = $1
+		GROUP BY p.steam_id`
+
+	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	var stats []PlayerMedicStats
+
+	for rows.Next() {
+		var class PlayerMedicStats
+		if errScan := rows.
+			Scan(&class.Healing, &class.Drops, &class.NearFullChargeDeath, &class.AvgUberLength,
+				&class.ChargesUber, &class.ChargesKritz, &class.ChargesVacc, &class.ChargesQuickfix); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		stats = append(stats, class)
+	}
+
+	return stats, nil
 }

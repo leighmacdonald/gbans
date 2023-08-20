@@ -19,13 +19,14 @@ create table match
     map        text                     not null
         constraint map_not_empty_check
             check (map <> ''::text),
-    created_on timestamp with time zone not null,
     title      text                     not null,
-    match_raw  jsonb                    not null DEFAULT '{}',
     score_red  integer default 0        not null,
     score_blu  integer default 0        not null,
+    time_red   integer default 0        not null,
+    time_blu   integer default 0        not null,
     winner     integer default 0        not null,
-    time_end   timestamp with time zone
+    time_start timestamp with time zone not null,
+    time_end   timestamp with time zone not null
 );
 
 create table match_player
@@ -145,5 +146,12 @@ CREATE TABLE IF NOT EXISTS match_player_class
     captures_blocked      INTEGER NOT NULL DEFAULT 0,
     buildings_destroyed   INTEGER NOT NULL DEFAULT 0
 );
+
+ALTER TABLE IF EXISTS person_messages
+    ADD IF NOT EXISTS match_id uuid;
+
+ALTER TABLE IF EXISTS person_messages
+    ADD CONSTRAINT person_messages_match_match_id_fk
+        FOREIGN KEY (match_id) REFERENCES match;
 
 COMMIT;

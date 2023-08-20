@@ -43,11 +43,7 @@ func (app *App) registerDiscordHandlers() error {
 		discord.CmdServers:  makeOnServers(app),
 		discord.CmdSetSteam: makeOnSetSteam(app),
 		discord.CmdUnban:    makeOnUnban(app),
-		// discord.CmdStats: onServers,
-		// discord.CmdStatsGlobal: onServers,
-		// discord.CmdStatsPlayer: onServers,
-		// discord.CmdStatsServer: ,
-
+		discord.CmdStats:    makeOnStats(app),
 	}
 	for k, v := range cmdMap {
 		if errRegister := app.bot.RegisterHandler(k, v); errRegister != nil {
@@ -949,60 +945,217 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 	return msgEmbed.Truncate().MessageEmbed, nil
 }
 
-//	func (bot *discord) onStats(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-//		switch interaction.Data.Options[0].Name {
-//		case string(cmdStatsPlayer):
-//			return bot.onStatsPlayer(ctx, session, interaction, response)
-//		case string(cmdStatsGlobal):
-//			return bot.onStatsGlobal(ctx, session, interaction, response)
-//		case string(cmdStatsServer):
-//			return bot.onStatsServer(ctx, session, interaction, response)
-//		default:
-//			return errCommandFailed
-//		}
-//	}
-//
-//	func (bot *discord) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-//		target := model.Target(interaction.Data.Options[0].Options[0].Value.(string))
-//		sid, errSid := target.SID64()
-//		if errSid != nil {
-//			return errSid
-//		}
-//		person := model.NewPerson(sid)
-//		if errPersonBySID := PersonBySID(ctx, bot.database, sid, "", &person); errPersonBySID != nil {
-//			return errCommandFailed
-//		}
-//		var stats model.PlayerStats
-//		if errStats := bot.database.GetPlayerStats(ctx, sid, &stats); errStats != nil {
-//			return errCommandFailed
-//		}
-//		kd := 0.0
-//		if stats.Deaths > 0 && stats.Kills > 0 {
-//			kd = float64(stats.Kills) / float64(stats.Deaths)
-//		}
-//		kad := 0.0
-//		if stats.Deaths > 0 && (stats.Kills+stats.Assists) > 0 {
-//			kad = float64(stats.Kills+stats.Assists) / float64(stats.Deaths)
-//		}
-//		acc := 0.0
-//		if stats.Hits > 0 && stats.Shots > 0 {
-//			acc = float64(stats.Hits) / float64(stats.Shots) * 100
-//		}
-//		embed := respOk(response, fmt.Sprintf("Player stats for %s (%d)", person.PersonaName, person.SteamID.Int64()))
-//		addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
-//		addFieldInline(embed, "Deaths", fmt.Sprintf("%d", stats.Deaths))
-//		addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
-//		addFieldInline(embed, "K:D", fmt.Sprintf("%.2f", kd))
-//		addFieldInline(embed, "KA:D", fmt.Sprintf("%.2f", kad))
-//		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
-//		addFieldInline(embed, "DamageTaken", fmt.Sprintf("%d", stats.DamageTaken))
-//		addFieldInline(embed, "MedicStats", fmt.Sprintf("%d", stats.MedicStats))
-//		addFieldInline(embed, "Shots", fmt.Sprintf("%d", stats.Shots))
-//		addFieldInline(embed, "Hits", fmt.Sprintf("%d", stats.Hits))
-//		addFieldInline(embed, "Accuracy", fmt.Sprintf("%.2f%%", acc))
-//		return nil
-//	}
-//
+func makeOnStats(app *App) discord.CommandHandler {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+		name := interaction.ApplicationCommandData().Options[0].Name
+		switch name {
+		case "player":
+			return onStatsPlayer(ctx, app, session, interaction)
+		// case string(cmdStatsGlobal):
+		//	return bot.onStatsGlobal(ctx, session, interaction, response)
+		// case string(cmdStatsServer):
+		//	return bot.onStatsServer(ctx, session, interaction, response)
+		default:
+			return nil, discord.ErrCommandFailed
+		}
+	}
+}
+
+func makeClassStatsTable(classes store.PlayerClassStatsCollection) string {
+	writer := &strings.Builder{}
+	table := defaultTable(writer)
+	table.SetHeader([]string{"Class", "K", "A", "D", "KD", "KAD", "DA", "DT", "Dom", "Time"})
+
+	table.Append([]string{
+		"total",
+		fmt.Sprintf("%d", classes.Kills()),
+		fmt.Sprintf("%d", classes.Assists()),
+		fmt.Sprintf("%d", classes.Deaths()),
+		infString(classes.KDRatio()),
+		infString(classes.KDARatio()),
+		fmt.Sprintf("%d", classes.Damage()),
+		// fmt.Sprintf("%d", classes.DamagePerMin()),
+		fmt.Sprintf("%d", classes.DamageTaken()),
+		// fmt.Sprintf("%d", classes.Captures()),
+		fmt.Sprintf("%d", classes.Dominations()),
+		// fmt.Sprintf("%d", classes.Dominated()),
+		fmt.Sprintf("%.1fh", (time.Duration(int64(classes.Playtime())) * time.Second).Hours()),
+	})
+
+	sort.SliceStable(classes, func(i, j int) bool {
+		return classes[i].Playtime > classes[j].Playtime
+	})
+
+	for _, player := range classes {
+		table.Append([]string{
+			player.ClassName,
+			fmt.Sprintf("%d", player.Kills),
+			fmt.Sprintf("%d", player.Assists),
+			fmt.Sprintf("%d", player.Deaths),
+			infString(player.KDRatio()),
+			infString(player.KDARatio()),
+			fmt.Sprintf("%d", player.Damage),
+			// fmt.Sprintf("%d", player.DamagePerMin()),
+			fmt.Sprintf("%d", player.DamageTaken),
+			// fmt.Sprintf("%d", player.Captures),
+			fmt.Sprintf("%d", player.Dominations),
+			// fmt.Sprintf("%d", player.Dominated),
+			fmt.Sprintf("%.1fh", (time.Duration(int64(player.Playtime)) * time.Second).Hours()),
+		})
+	}
+
+	table.Render()
+
+	return strings.Trim(writer.String(), "\n")
+}
+
+func makeWeaponStatsTable(weapons []store.PlayerWeaponStats) string {
+	writer := &strings.Builder{}
+	table := defaultTable(writer)
+	table.SetHeader([]string{"Weapon", "K", "Dmg", "Sh", "Hi", "Acc", "B", "H", "A"})
+
+	sort.SliceStable(weapons, func(i, j int) bool {
+		return weapons[i].Kills > weapons[j].Kills
+	})
+
+	for i, weapon := range weapons {
+		if i == 10 {
+			break
+		}
+
+		table.Append([]string{
+			weapon.WeaponName,
+			fmt.Sprintf("%d", weapon.Kills),
+			fmt.Sprintf("%d", weapon.Damage),
+			fmt.Sprintf("%d", weapon.Shots),
+			fmt.Sprintf("%d", weapon.Hits),
+			fmt.Sprintf("%.1f", weapon.Accuracy()),
+			fmt.Sprintf("%d", weapon.Backstabs),
+			fmt.Sprintf("%d", weapon.Headshots),
+			fmt.Sprintf("%d", weapon.Airshots),
+		})
+	}
+
+	table.Render()
+
+	return writer.String()
+}
+
+func makeKillstreakStatsTable(killstreaks []store.PlayerKillstreakStats) string {
+	writer := &strings.Builder{}
+	table := defaultTable(writer)
+	table.SetHeader([]string{"Ks", "Class", "Dur", "Date"})
+
+	sort.SliceStable(killstreaks, func(i, j int) bool {
+		return killstreaks[i].Kills > killstreaks[j].Kills
+	})
+
+	for index, killstreak := range killstreaks {
+		if index == 3 {
+			break
+		}
+
+		table.Append([]string{
+			fmt.Sprintf("%d", killstreak.Kills),
+			killstreak.Class.String(),
+			fmt.Sprintf("%d", killstreak.Duration),
+			killstreak.CreatedOn.Format(time.DateOnly),
+		})
+	}
+
+	table.Render()
+
+	return writer.String()
+}
+
+func makeMedicStatsTable(stats []store.PlayerMedicStats) string {
+	writer := &strings.Builder{}
+	table := defaultTable(writer)
+	table.SetHeader([]string{"Healing", "Drop", "NearFull", "AvgLen", "U", "K", "V", "Q"})
+
+	sort.SliceStable(stats, func(i, j int) bool {
+		return stats[i].Healing > stats[j].Healing
+	})
+
+	for i, ks := range stats {
+		if i == 3 {
+			break
+		}
+
+		table.Append([]string{
+			fmt.Sprintf("%d", ks.Healing),
+			fmt.Sprintf("%d", ks.Drops),
+			fmt.Sprintf("%d", ks.NearFullChargeDeath),
+			fmt.Sprintf("%.2f", ks.AvgUberLength),
+			fmt.Sprintf("%d", ks.ChargesUber),
+			fmt.Sprintf("%d", ks.ChargesKritz),
+			fmt.Sprintf("%d", ks.ChargesVacc),
+			fmt.Sprintf("%d", ks.ChargesQuickfix),
+		})
+	}
+
+	table.Render()
+
+	return writer.String()
+}
+
+func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	steamID, errResolveSID := resolveSID(ctx, opts[discord.OptUserIdentifier].StringValue())
+
+	if errResolveSID != nil {
+		return nil, consts.ErrInvalidSID
+	}
+
+	person := store.NewPerson(steamID)
+	errAuthor := app.PersonBySID(ctx, steamID, &person)
+
+	if errAuthor != nil {
+		return nil, errAuthor
+	}
+
+	//
+	// person, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
+	// if errAuthor != nil {
+	//	return nil, errAuthor
+	// }
+
+	classStats, errClassStats := app.db.StatsPlayerClass(ctx, person.SteamID)
+	if errClassStats != nil {
+		return nil, errors.Wrap(errClassStats, "Failed to fetch class stats")
+	}
+
+	weaponStats, errWeaponStats := app.db.StatsPlayerWeapons(ctx, person.SteamID)
+	if errWeaponStats != nil {
+		return nil, errors.Wrap(errWeaponStats, "Failed to fetch weapon stats")
+	}
+
+	killstreakStats, errKillstreakStats := app.db.StatsPlayerKillstreaks(ctx, person.SteamID)
+	if errKillstreakStats != nil {
+		return nil, errors.Wrap(errKillstreakStats, "Failed to fetch killstreak stats")
+	}
+
+	medicStats, errMedicStats := app.db.StatsPlayerMedic(ctx, person.SteamID)
+	if errMedicStats != nil {
+		return nil, errors.Wrap(errMedicStats, "Failed to fetch medic stats")
+	}
+
+	emb := discord.NewEmbed().
+		SetTitle("Overall Player Stats").
+		SetColor(app.bot.Colour.Success)
+
+	emb.SetDescription(fmt.Sprintf("Class Totals```%s```Healing```%s```Top Weapons```%s```Top Killstreaks```%s```",
+		makeClassStatsTable(classStats),
+		makeMedicStatsTable(medicStats),
+		makeWeaponStatsTable(weaponStats),
+		makeKillstreakStatsTable(killstreakStats),
+	))
+
+	app.addAuthorPerson(emb, person)
+
+	return emb.MessageEmbed, nil
+}
+
 //	func (bot *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
 //		serverIdStr := interaction.Data.Options[0].Options[0].Value.(string)
 //		var (
@@ -1053,7 +1206,7 @@ func onFilterCheck(_ context.Context, app *App, _ *discordgo.Session, interactio
 
 func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 	msgEmbed := discord.
-		NewEmbed(fmt.Sprintf("Match - %s [%s]", match.Title, match.MatchID.String())).
+		NewEmbed(fmt.Sprintf("%s [%s]", match.Title, match.MapName)).
 		SetColor(app.bot.Colour.Success).
 		SetURL(app.ExtURLRaw("/log/%s", match.MatchID.String()))
 
