@@ -80,6 +80,7 @@ create table match_medic
 CREATE TABLE IF NOT EXISTS weapon
 (
     weapon_id SERIAL PRIMARY KEY,
+    key       TEXT UNIQUE,
     name      TEXT UNIQUE
 );
 

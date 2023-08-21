@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetProfile, PermissionLevel, PlayerProfile } from '../api';
+import { apiGetProfile, PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
 import Stack from '@mui/material/Stack';
@@ -11,8 +11,6 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { MatchHistory } from '../component/MatchHistory';
-import RestoreIcon from '@mui/icons-material/Restore';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import SteamID from 'steamid';
@@ -157,17 +155,6 @@ export const Profile = () => {
                                 })}
                             </Grid>
                         </ContainerWithHeader>
-
-                        {currentUser.permission_level >=
-                            PermissionLevel.Admin && (
-                            <ContainerWithHeader
-                                title={'Match History'}
-                                iconLeft={<RestoreIcon />}
-                                marginTop={0}
-                            >
-                                <MatchHistory opts={matchOpts} />
-                            </ContainerWithHeader>
-                        )}
                     </Stack>
                 </Grid>
             </>

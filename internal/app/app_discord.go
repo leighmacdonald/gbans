@@ -4,6 +4,7 @@ import (
 	"context"
 	gerrors "errors"
 	"fmt"
+	"io"
 	"net"
 	"regexp"
 	"sort"
@@ -21,6 +22,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -1077,20 +1079,20 @@ func makeMedicStatsTable(stats []store.PlayerMedicStats) string {
 		return stats[i].Healing > stats[j].Healing
 	})
 
-	for i, ks := range stats {
-		if i == 3 {
+	for index, medicStats := range stats {
+		if index == 3 {
 			break
 		}
 
 		table.Append([]string{
-			fmt.Sprintf("%d", ks.Healing),
-			fmt.Sprintf("%d", ks.Drops),
-			fmt.Sprintf("%d", ks.NearFullChargeDeath),
-			fmt.Sprintf("%.2f", ks.AvgUberLength),
-			fmt.Sprintf("%d", ks.ChargesUber),
-			fmt.Sprintf("%d", ks.ChargesKritz),
-			fmt.Sprintf("%d", ks.ChargesVacc),
-			fmt.Sprintf("%d", ks.ChargesQuickfix),
+			fmt.Sprintf("%d", medicStats.Healing),
+			fmt.Sprintf("%d", medicStats.Drops),
+			fmt.Sprintf("%d", medicStats.NearFullChargeDeath),
+			fmt.Sprintf("%.2f", medicStats.AvgUberLength),
+			fmt.Sprintf("%d", medicStats.ChargesUber),
+			fmt.Sprintf("%d", medicStats.ChargesKritz),
+			fmt.Sprintf("%d", medicStats.ChargesVacc),
+			fmt.Sprintf("%d", medicStats.ChargesQuickfix),
 		})
 	}
 
@@ -1206,7 +1208,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 
 func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 	msgEmbed := discord.
-		NewEmbed(fmt.Sprintf("%s [%s]", match.Title, match.MapName)).
+		NewEmbed(strings.Join([]string{match.Title, match.MapName}, " | ")).
 		SetColor(app.bot.Colour.Success).
 		SetURL(app.ExtURLRaw("/log/%s", match.MatchID.String()))
 
@@ -1220,9 +1222,11 @@ func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 	msgCounts := map[steamid.SID64]int{}
 
 	for _, msg := range match.Chat {
-		count := msgCounts[msg.SteamID]
-		count++
-		msgCounts[msg.SteamID] = count
+		_, found := msgCounts[msg.SteamID]
+		if !found {
+			msgCounts[msg.SteamID] = 0
+		}
+		msgCounts[msg.SteamID]++
 	}
 
 	var (
@@ -1238,7 +1242,7 @@ func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 		}
 	}
 
-	for _, player := range match.PlayerStats {
+	for _, player := range match.Players {
 		if player.SteamID == chatSid {
 			kathyName = player.Name
 
@@ -1246,8 +1250,8 @@ func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 		}
 	}
 
-	msgEmbed.AddField("Top Chatter", fmt.Sprintf("%s %d", kathyName, len(match.Chat))).MakeFieldInline()
-	msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.PlayerStats))).MakeFieldInline()
+	msgEmbed.AddField("Top Chatter", fmt.Sprintf("%s (count: %d)", kathyName, count)).MakeFieldInline()
+	msgEmbed.AddField("Players", fmt.Sprintf("%d", len(match.Players))).MakeFieldInline()
 	msgEmbed.AddField("Duration", match.TimeEnd.Sub(match.TimeStart).String()).MakeFieldInline()
 
 	return msgEmbed.Truncate()
@@ -1318,6 +1322,145 @@ func makeOnFind(app *App) discord.CommandHandler {
 
 		return msgEmbed.Truncate().MessageEmbed, nil
 	}
+}
+
+func defaultTable(writer io.Writer) *tablewriter.Table {
+	tbl := tablewriter.NewWriter(writer)
+	tbl.SetAutoFormatHeaders(true)
+	tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	tbl.SetCenterSeparator("")
+	tbl.SetColumnSeparator("")
+	tbl.SetRowSeparator("")
+	tbl.SetHeaderLine(false)
+	tbl.SetTablePadding("")
+	tbl.SetAutoMergeCells(true)
+	tbl.SetAlignment(tablewriter.ALIGN_LEFT)
+
+	return tbl
+}
+
+func infString(f float64) string {
+	if f == -1 {
+		return "∞"
+	}
+
+	return fmt.Sprintf("%.1f", f)
+}
+
+const tableNameLen = 13
+
+func matchASCIITable(match store.MatchResult) string {
+	writerPlayers := &strings.Builder{}
+	tablePlayers := defaultTable(writerPlayers)
+	tablePlayers.SetHeader([]string{"T", "Name", "K", "A", "D", "KD", "KAD", "DA", "B/H/A/C"})
+
+	players := match.TopPlayers()
+
+	for i, player := range players {
+		if i == tableNameLen {
+			break
+		}
+
+		name := player.SteamID.String()
+		if player.Name != "" {
+			name = player.Name
+		}
+
+		if len(name) > tableNameLen {
+			name = name[0:tableNameLen]
+		}
+
+		tablePlayers.Append([]string{
+			player.Team.String()[0:1],
+			name,
+			fmt.Sprintf("%d", player.Kills),
+			fmt.Sprintf("%d", player.Assists),
+			fmt.Sprintf("%d", player.Deaths),
+			infString(player.KDRatio()),
+			infString(player.KDARatio()),
+			fmt.Sprintf("%d", player.Damage),
+			fmt.Sprintf("%d/%d/%d/%d", player.Backstabs, player.Headshots, player.Airshots, player.Captures),
+		})
+	}
+
+	tablePlayers.Render()
+
+	writerHealers := &strings.Builder{}
+	tableHealers := defaultTable(writerPlayers)
+	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Heal", "H/M", "U", "K", "Q", "V", "D"})
+
+	for _, player := range match.Healers() {
+		if player.MedicStats.Healing < store.MinMedicHealing {
+			continue
+		}
+
+		name := player.SteamID.String()
+		if player.Name != "" {
+			name = player.Name
+		}
+
+		if len(name) > tableNameLen {
+			name = name[0:tableNameLen]
+		}
+
+		tableHealers.Append([]string{
+			player.Team.String()[0:1],
+			name,
+			fmt.Sprintf("%d", player.Assists),
+			fmt.Sprintf("%d", player.Deaths),
+			fmt.Sprintf("%d", player.MedicStats.Healing),
+			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
+			fmt.Sprintf("%d", player.MedicStats.ChargesUber),
+			fmt.Sprintf("%d", player.MedicStats.ChargesKritz),
+			fmt.Sprintf("%d", player.MedicStats.ChargesQuickfix),
+			fmt.Sprintf("%d", player.MedicStats.ChargesVacc),
+			fmt.Sprintf("%d", player.MedicStats.Drops),
+		})
+	}
+
+	tableHealers.Render()
+
+	var topKs string
+
+	topKillstreaks := match.TopKillstreaks(3)
+
+	if len(topKillstreaks) > 0 {
+		writerKillstreak := &strings.Builder{}
+		tableKillstreaks := defaultTable(writerKillstreak)
+		tableKillstreaks.SetHeader([]string{" ", "Name", "K", "Class", "Playtime"})
+
+		for _, player := range topKillstreaks {
+			killstreak := player.BiggestKillstreak()
+
+			name := player.SteamID.String()
+			if player.Name != "" {
+				name = player.Name
+			}
+
+			if len(name) > 17 {
+				name = name[0:17]
+			}
+
+			tableHealers.Append([]string{
+				player.Team.String()[0:1],
+				name,
+				killstreak.PlayerClass.String(),
+				fmt.Sprintf("%d", killstreak.Killstreak),
+				(time.Duration(killstreak.Duration) * time.Second).String(),
+			})
+		}
+
+		tableKillstreaks.Render()
+
+		topKs = fmt.Sprintf("```%s```", strings.Trim(writerKillstreak.String(), "\n"))
+	}
+
+	resp := fmt.Sprintf("```%s``````%s```%s",
+		strings.Trim(writerPlayers.String(), "\n"),
+		strings.Trim(writerHealers.String(), "\n"),
+		topKs)
+
+	return resp
 }
 
 func makeOnMute(app *App) discord.CommandHandler {

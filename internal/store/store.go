@@ -18,6 +18,8 @@ import (
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -53,6 +55,7 @@ type Store struct {
 	autoMigrate bool
 	migrated    bool
 	logQueries  bool
+	weaponMap   fp.MutexMap[logparse.Weapon, int]
 }
 
 func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) *Store {
@@ -62,6 +65,7 @@ func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) 
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
+		weaponMap:   fp.NewMutexMap[logparse.Weapon, int](),
 	}
 }
 

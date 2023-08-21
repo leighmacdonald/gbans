@@ -91,7 +91,7 @@ type Match struct {
 	PlayerSums MatchPlayerSums  `json:"player_sums"`
 	Rounds     []*MatchRoundSum `json:"rounds"`
 	Chat       []MatchChat      `json:"chat"`
-	CreatedOn  *time.Time       `json:"created_on"`
+	TimeStart  *time.Time       `json:"time_start"`
 	TimeEnd    *time.Time       `json:"time_end"`
 	// inMatch is set to true when we start a round, many stat events are ignored until this is true
 	inMatch  bool // We ignore most events until Round_Start event
@@ -361,8 +361,8 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		match.spawnedAs(evt)
 
 		// If we started a match 1/2 way through, create a start time
-		if match.CreatedOn == nil {
-			match.CreatedOn = &evt.CreatedOn
+		if match.TimeStart == nil {
+			match.TimeStart = &evt.CreatedOn
 		}
 	case ChangeClass:
 		// Spawned as is the better version of this
@@ -1390,8 +1390,10 @@ func (player *PlayerStats) onClassChangeOrGameEnd(eventTime time.Time) {
 }
 
 type TeamScores struct {
-	Red int `json:"red"`
-	Blu int `json:"blu"`
+	Red     int `json:"red"`
+	RedTime int `json:"red_time"`
+	Blu     int `json:"blu"`
+	BluTime int `json:"blu_time"`
 }
 
 type MatchRoundSum struct {
@@ -1434,12 +1436,21 @@ func (ms *HealingStats) ChargesTotal() int {
 }
 
 func (ms *HealingStats) AverageUberLength() float64 {
+	if len(ms.UberDurations) == 0 {
+		return 0
+	}
+
 	var sum float64
 	for _, v := range ms.UberDurations {
 		sum += float64(v)
 	}
 
-	return math.Ceil(sum/float64(len(ms.UberDurations))*10000) / 100
+	val := math.Ceil(sum/float64(len(ms.UberDurations))*100) / 100
+	if val == math.NaN() {
+		return 0
+	}
+
+	return val
 }
 
 func (ms *HealingStats) DropsTotal() int {

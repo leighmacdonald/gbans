@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -86,6 +87,19 @@ type MatchPlayer struct {
 	Killstreaks       []MatchPlayerKillstreak `json:"killstreaks"`
 }
 
+func (player MatchPlayer) BiggestKillstreak() *MatchPlayerKillstreak {
+	var biggest *MatchPlayerKillstreak
+
+	for _, killstreakVal := range player.Killstreaks {
+		killstreak := killstreakVal
+		if biggest == nil || killstreak.Killstreak > biggest.Killstreak {
+			biggest = &killstreak
+		}
+	}
+
+	return biggest
+}
+
 func (player MatchPlayer) KDRatio() float64 {
 	if player.Deaths <= 0 {
 		return -1
@@ -103,7 +117,7 @@ func (player MatchPlayer) KDARatio() float64 {
 }
 
 func (player MatchPlayer) DamagePerMin() int {
-	return int(float64(player.Damage) / player.TimeEnd.Sub(player.TimeStart).Minutes())
+	return fp.Max[int](int(float64(player.Damage)/player.TimeEnd.Sub(player.TimeStart).Minutes()), 0)
 }
 
 type MatchHealer struct {
@@ -135,19 +149,19 @@ type MatchWeapon struct {
 }
 
 type MatchResult struct {
-	MatchID     uuid.UUID                `json:"match_id"`
-	ServerID    int                      `json:"server_id"`
-	Title       string                   `json:"title"`
-	MapName     string                   `json:"map_name"`
-	TeamScores  logparse.TeamScores      `json:"team_scores"`
-	TimeStart   time.Time                `json:"time_start"`
-	TimeEnd     time.Time                `json:"time_end"`
-	PlayerStats []*MatchPlayer           `json:"player_stats"`
-	Chat        []QueryChatHistoryResult `json:"chat"`
+	MatchID    uuid.UUID           `json:"match_id"`
+	ServerID   int                 `json:"server_id"`
+	Title      string              `json:"title"`
+	MapName    string              `json:"map_name"`
+	TeamScores logparse.TeamScores `json:"team_scores"`
+	TimeStart  time.Time           `json:"time_start"`
+	TimeEnd    time.Time           `json:"time_end"`
+	Players    []*MatchPlayer      `json:"players"`
+	Chat       PersonMessages      `json:"chat"`
 }
 
 func (match *MatchResult) TopPlayers() []*MatchPlayer {
-	players := match.PlayerStats
+	players := match.Players
 
 	sort.SliceStable(players, func(i, j int) bool {
 		return players[i].Kills > players[j].Kills
@@ -156,10 +170,30 @@ func (match *MatchResult) TopPlayers() []*MatchPlayer {
 	return players
 }
 
+func (match *MatchResult) TopKillstreaks(count int) []*MatchPlayer {
+	var killStreakPlayers []*MatchPlayer
+
+	for _, player := range match.Players {
+		if killStreak := player.BiggestKillstreak(); killStreak != nil {
+			killStreakPlayers = append(killStreakPlayers, player)
+		}
+	}
+
+	sort.SliceStable(killStreakPlayers, func(i, j int) bool {
+		return killStreakPlayers[i].BiggestKillstreak().Killstreak > killStreakPlayers[j].BiggestKillstreak().Killstreak
+	})
+
+	if len(killStreakPlayers) > count {
+		return killStreakPlayers[0:count]
+	}
+
+	return killStreakPlayers
+}
+
 func (match *MatchResult) Healers() []*MatchPlayer {
 	var healers []*MatchPlayer
 
-	for _, player := range match.PlayerStats {
+	for _, player := range match.Players {
 		if player.MedicStats != nil {
 			healers = append(healers, player)
 		}
@@ -406,15 +440,63 @@ func (db *Store) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[ste
 	return medics, nil
 }
 
+func (db *Store) matchGetChat(ctx context.Context, matchID uuid.UUID) (PersonMessages, error) {
+	const query = `
+		SELECT c.person_message_id, c.steam_id, c.server_id, c.body, c.persona_name, c.team, 
+		       c.created_on, c.match_id, COUNT(f.person_message_id)::int::boolean as flagged
+		FROM person_messages c
+		LEFT JOIN person_messages_filter f on c.person_message_id = f.person_message_id
+		WHERE c.match_id = $1
+		GROUP BY c.person_message_id
+		`
+
+	messages := PersonMessages{}
+
+	medicRows, errMedics := db.Query(ctx, query, matchID)
+	if errMedics != nil {
+		if errors.Is(errMedics, ErrNoResult) {
+			return messages, nil
+		}
+
+		return nil, errors.Wrapf(errMedics, "Failed to query match healers")
+	}
+
+	defer medicRows.Close()
+
+	for medicRows.Next() {
+		var (
+			msg     PersonMessage
+			steamID int64
+		)
+
+		if errRow := medicRows.
+			Scan(&msg.PersonMessageID, &steamID, &msg.ServerID, &msg.Body,
+				&msg.PersonaName, &msg.Team, &msg.CreatedOn,
+				&msg.MatchID, &msg.Flagged); errRow != nil {
+			return nil, errors.Wrapf(errMedics, "Failed to scan match healer")
+		}
+
+		msg.SteamID = steamid.New(steamID)
+		messages = append(messages, msg)
+	}
+
+	if medicRows.Err() != nil {
+		return messages, errors.Wrap(medicRows.Err(), "medicRows error returned")
+	}
+
+	return messages, nil
+}
+
 func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error {
 	const query = `
-		SELECT match_id, server_id, map, created_on, title, score_red, score_blu, time_end 
+		SELECT match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end 
 		FROM match WHERE match_id = $1`
 
 	if errMatch := db.
 		QueryRow(ctx, query, matchID).
-		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.TimeStart,
-			&match.Title, &match.TeamScores.Red, &match.TeamScores.Blu, &match.TimeEnd); errMatch != nil {
+		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.Title,
+			&match.TeamScores.Red, &match.TeamScores.Blu, &match.TeamScores.BluTime, &match.TeamScores.BluTime,
+			&match.TimeStart, &match.TimeEnd); errMatch != nil {
 		return errors.Wrapf(errMatch, "Failed to load root match")
 	}
 
@@ -423,7 +505,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 		return errors.Wrap(errPlayerStats, "Failed to fetch match players")
 	}
 
-	match.PlayerStats = playerStats
+	match.Players = playerStats
 
 	playerClasses, errPlayerClasses := db.matchGetPlayerClasses(ctx, matchID)
 	if errPlayerClasses != nil {
@@ -441,7 +523,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 		return errors.Wrap(errPlayerKillstreaks, "Failed to fetch player killstreak stats")
 	}
 
-	for _, player := range match.PlayerStats {
+	for _, player := range match.Players {
 		if killstreaks, found := playerKillstreaks[player.SteamID]; found {
 			player.Killstreaks = killstreaks
 		}
@@ -455,7 +537,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 	for steamID, stats := range medicStats {
 		localStats := stats
 
-		for _, player := range match.PlayerStats {
+		for _, player := range match.Players {
 			if player.SteamID == steamID {
 				player.MedicStats = &localStats
 
@@ -464,13 +546,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 		}
 	}
 
-	chat, _, errChat := db.QueryChatHistory(ctx, ChatHistoryQueryFilter{
-		ServerID:      match.ServerID,
-		SentAfter:     &match.TimeStart,
-		SentBefore:    &match.TimeEnd,
-		Unrestricted:  true,
-		DontCalcTotal: true,
-	})
+	chat, errChat := db.matchGetChat(ctx, matchID)
 
 	if errChat != nil && !errors.Is(errChat, ErrNoResult) {
 		return errors.Wrap(errMedics, "Failed to fetch match chat history")
@@ -492,12 +568,12 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	const (
 		minPlayers = 6
 		query      = `
-		INSERT INTO match (match_id, server_id, map, created_on, title, match_raw, score_red, score_blu, time_end) 
-		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9) 
+		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end) 
+		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10) 
 		RETURNING match_id`
 	)
 
-	if match.CreatedOn == nil || match.MapName == "" {
+	if match.TimeStart == nil || match.MapName == "" {
 		return ErrIncompleteMatch
 	}
 
@@ -511,8 +587,8 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	}
 
 	if errQuery := transaction.
-		QueryRow(ctx, query, match.MatchID, match.ServerID, match.MapName, match.CreatedOn, match.Title, match,
-			match.TeamScores.Red, match.TeamScores.Blu, match.TimeEnd).
+		QueryRow(ctx, query, match.MatchID, match.ServerID, match.MapName, match.Title,
+			match.TeamScores.Red, match.TeamScores.Blu, match.TeamScores.RedTime, match.TeamScores.BluTime, match.TimeStart, match.TimeEnd).
 		Scan(&match.MatchID); errQuery != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
 			db.log.Error("Failed to rollback tx", zap.Error(errRollback))
@@ -536,7 +612,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errors.Wrapf(errPlayer, "Failed to load person")
 		}
 
-		if errSave := saveMatchPlayerStats(ctx, transaction, match, player); errSave != nil {
+		if errSave := db.saveMatchPlayerStats(ctx, transaction, match, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
 			}
@@ -544,7 +620,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errSave
 		}
 
-		if errSave := saveMatchWeaponStats(ctx, transaction, player); errSave != nil {
+		if errSave := db.saveMatchWeaponStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
 			}
@@ -552,7 +628,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errSave
 		}
 
-		if errSave := saveMatchPlayerClassStats(ctx, transaction, player); errSave != nil {
+		if errSave := db.saveMatchPlayerClassStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
 			}
@@ -560,7 +636,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			return errSave
 		}
 
-		if errSave := saveMatchKillstreakStats(ctx, transaction, player); errSave != nil {
+		if errSave := db.saveMatchKillstreakStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
 			}
@@ -569,7 +645,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 		}
 
 		if player.HealingStats != nil && player.HealingStats.Healing >= MinMedicHealing {
-			if errSave := saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
+			if errSave := db.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
 					db.log.Error("Failed to rollback tx", zap.Error(errRollback))
 				}
@@ -586,7 +662,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	return nil
 }
 
-func saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
+func (db *Store) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
 	const playerQuery = `
 		INSERT INTO match_player (
 			match_id, steam_id, team, time_start, time_end, health_packs, extinguishes, buildings
@@ -611,7 +687,7 @@ func saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logpar
 	return nil
 }
 
-func saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
+func (db *Store) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
 	const medicQuery = `
 		INSERT INTO match_medic (
 			match_player_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost, 
@@ -631,15 +707,20 @@ func saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID 
 	return nil
 }
 
-func saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func (db *Store) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_weapon (match_player_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING player_weapon_id`
 
 	for weapon, info := range player.WeaponInfo {
+		weaponID, found := db.weaponMap.Get(weapon)
+		if !found {
+			return errors.New("Unknown weapon")
+		}
+
 		if _, errWeapon := transaction.
-			Exec(ctx, query, player.MatchPlayerID, weapon, info.Kills, info.Damage, info.Shots, info.Hits,
+			Exec(ctx, query, player.MatchPlayerID, weaponID, info.Kills, info.Damage, info.Shots, info.Hits,
 				info.BackStabs, info.Headshots, info.Airshots); errWeapon != nil {
 			return errors.Wrapf(errWeapon, "Failed to write weapon stats")
 		}
@@ -648,7 +729,7 @@ func saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logpa
 	return nil
 }
 
-func saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func (db *Store) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_player_class (
 			match_player_id, player_class_id, kills, assists, deaths, playtime, dominations, dominated, revenges, 
@@ -667,7 +748,7 @@ func saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *
 	return nil
 }
 
-func saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func (db *Store) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_player_killstreak (match_player_id, player_class_id, killstreak, duration) 
 		VALUES ($1, $2, $3, $4)`
@@ -899,7 +980,7 @@ func (ws PlayerWeaponStats) Accuracy() float64 {
 
 func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error) {
 	const query = `
-		SELECT w.weapon_id,
+		SELECT n.key,
 			   n.name,
 			   SUM(w.kills)     as kills,
 			   SUM(w.damage)     as damage,
@@ -913,7 +994,7 @@ func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([
 		LEFT JOIN weapon n on n.weapon_id = w.weapon_id
 		WHERE p.steam_id = $1
 		  AND w.weapon_id IS NOT NULL
-		GROUP BY w.weapon_id, n.name;`
+		GROUP BY w.weapon_id, n.weapon_id;`
 
 	rows, errQuery := db.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
@@ -951,14 +1032,14 @@ func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64
 		SELECT k.player_class_id,
 			   SUM(k.killstreak) as killstreak,
 			   SUM(k.duration)   as duration,
-			   m.created_on
+			   m.time_start
 		FROM match_player p
 				 LEFT JOIN match_player_killstreak k on p.match_player_id = k.match_player_id
 				 LEFT JOIN match_player mp on mp.match_player_id = k.match_player_id
 				 LEFT JOIN match m on p.match_id = m.match_id
 		WHERE p.steam_id = $1
 		  AND k.player_class_id IS NOT NULL
-		GROUP BY k.match_killstreak_id, m.created_on, k.player_class_id
+		GROUP BY k.match_killstreak_id, m.time_start, k.player_class_id
 		ORDER BY killstreak DESC
 		LIMIT 10;`
 

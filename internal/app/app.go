@@ -4,7 +4,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -23,7 +22,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -408,110 +406,6 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 			return
 		}
 	}
-}
-
-func defaultTable(writer io.Writer) *tablewriter.Table {
-	tbl := tablewriter.NewWriter(writer)
-	tbl.SetAutoFormatHeaders(true)
-	tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	tbl.SetCenterSeparator("")
-	tbl.SetColumnSeparator("")
-	tbl.SetRowSeparator("")
-	tbl.SetHeaderLine(false)
-	tbl.SetTablePadding(" ")
-	tbl.SetAlignment(tablewriter.ALIGN_LEFT)
-
-	return tbl
-}
-
-func infString(f float64) string {
-	if f == -1 {
-		return "∞"
-	}
-
-	return fmt.Sprintf("%.1f", f)
-}
-
-func matchASCIITable(match store.MatchResult) string {
-	writerPlayers := &strings.Builder{}
-	tablePlayers := defaultTable(writerPlayers)
-	tablePlayers.SetHeader([]string{" ", "Name", "K", "A", "D", "KD", "KAD", "DA", "DAm", "B", "H", "A", "C"})
-
-	players := match.TopPlayers()
-
-	for i, player := range players {
-		if i == 15 {
-			break
-		}
-
-		name := player.SteamID.String()
-		if player.Name != "" {
-			name = player.Name
-		}
-
-		if len(name) > 15 {
-			name = name[0:15]
-		}
-
-		tablePlayers.Append([]string{
-			player.Team.String()[0:1],
-			name,
-			fmt.Sprintf("%d", player.Kills),
-			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths),
-			infString(player.KDRatio()),
-			infString(player.KDARatio()),
-			fmt.Sprintf("%d", player.Damage),
-			fmt.Sprintf("%d", player.DamagePerMin()),
-			fmt.Sprintf("%d", player.Backstabs),
-			fmt.Sprintf("%d", player.Headshots),
-			fmt.Sprintf("%d", player.Airshots),
-			fmt.Sprintf("%d", player.Captures),
-		})
-	}
-
-	tablePlayers.Render()
-
-	writerHealers := &strings.Builder{}
-	tableHealers := defaultTable(writerPlayers)
-	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Healing", "H/M", "U", "K", "Q", "V", "D"})
-
-	for _, player := range match.Healers() {
-		if player.MedicStats.Healing < store.MinMedicHealing {
-			continue
-		}
-
-		name := player.SteamID.String()
-		if player.Name != "" {
-			name = player.Name
-		}
-
-		if len(name) > 17 {
-			name = name[0:17]
-		}
-
-		tableHealers.Append([]string{
-			player.Team.String()[0:1],
-			name,
-			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths),
-			fmt.Sprintf("%d", player.MedicStats.Healing),
-			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
-			fmt.Sprintf("%d", player.MedicStats.ChargesUber),
-			fmt.Sprintf("%d", player.MedicStats.ChargesKritz),
-			fmt.Sprintf("%d", player.MedicStats.ChargesQuickfix),
-			fmt.Sprintf("%d", player.MedicStats.ChargesVacc),
-			fmt.Sprintf("%d", player.MedicStats.Drops),
-		})
-	}
-
-	tableHealers.Render()
-
-	resp := fmt.Sprintf("`%s\n%s`",
-		strings.Trim(writerPlayers.String(), "\n"),
-		strings.Trim(writerHealers.String(), "\n"))
-
-	return resp
 }
 
 func (app *App) chatRecorder(ctx context.Context) {

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -42,7 +43,7 @@ type activeMatchContext struct {
 }
 
 func (am *activeMatchContext) start(ctx context.Context) {
-	am.log.Debug("New match started", zap.String("server", am.match.Title))
+	am.log.Info("Match started", zap.String("match_id", am.match.MatchID.String()))
 
 	for {
 		select {
@@ -53,6 +54,8 @@ func (am *activeMatchContext) start(ctx context.Context) {
 					zap.Error(errApply))
 			}
 		case <-ctx.Done():
+			am.log.Info("Match Closed", zap.String("match_id", am.match.MatchID.String()))
+
 			return
 		}
 	}
@@ -73,6 +76,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 		select {
 		case evt := <-eventChan:
 			matchContext, exists := matches[evt.ServerID]
+
 			if !exists {
 				cancelCtx, cancel := context.WithCancel(ctx)
 				matchContext = &activeMatchContext{
@@ -100,7 +104,6 @@ func (app *App) matchSummarizer(ctx context.Context) {
 
 				fallthrough
 			case logparse.LogStop:
-				matchContext.log.Info("Closing match")
 				matchContext.cancel()
 
 				state := app.state.current()
@@ -110,7 +113,16 @@ func (app *App) matchSummarizer(ctx context.Context) {
 					matchContext.match.Title = server.Name
 				}
 
-				app.onMatchComplete(ctx, matchContext.match)
+				if errSave := app.db.MatchSave(ctx, &matchContext.match); errSave != nil {
+					app.log.Error("Failed to save match",
+						zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
+
+					delete(matches, evt.ServerID)
+
+					continue
+				}
+
+				app.onMatchComplete(ctx, matchContext.match.MatchID)
 
 				delete(matches, evt.ServerID)
 			}
@@ -120,16 +132,9 @@ func (app *App) matchSummarizer(ctx context.Context) {
 	}
 }
 
-func (app *App) onMatchComplete(ctx context.Context, match logparse.Match) {
-	if errSave := app.db.MatchSave(ctx, &match); errSave != nil {
-		app.log.Error("Failed to save match",
-			zap.Int("server", match.ServerID), zap.Error(errSave))
-
-		return
-	}
-
+func (app *App) onMatchComplete(ctx context.Context, matchID uuid.UUID) {
 	var result store.MatchResult
-	if errResult := app.db.MatchGetByID(ctx, match.MatchID, &result); errResult != nil {
+	if errResult := app.db.MatchGetByID(ctx, matchID, &result); errResult != nil {
 		app.log.Error("Failed to load match", zap.Error(errResult))
 
 		return

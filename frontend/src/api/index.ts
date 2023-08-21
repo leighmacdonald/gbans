@@ -8,3 +8,4 @@ export * from './stats';
 export * from './auth';
 export * from './qp';
 export * from './demo';
+export * from './match';

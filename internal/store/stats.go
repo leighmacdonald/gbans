@@ -49,36 +49,48 @@ type Stats struct {
 }
 
 func (db *Store) LoadWeapons(ctx context.Context) error {
-	const query = `INSERT INTO weapon (weapon_id, name) VALUES ($1, $2)`
+	for weapon, name := range logparse.NewWeaponParser().NameMap() {
+		var newWeapon Weapon
+		if errWeapon := db.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
+			if !errors.Is(errWeapon, ErrNoResult) {
+				return errWeapon
+			}
 
-	index := 1
+			newWeapon.Key = weapon
+			newWeapon.Name = name
 
-	for {
-		weapon := logparse.Weapon(index)
-
-		if errSave := db.Exec(ctx, query, weapon, weapon.String()); errSave != nil && errors.Is(errSave, ErrDuplicate) {
-			return errSave
+			if errSave := db.SaveWeapon(ctx, &newWeapon); errSave != nil {
+				return Err(errSave)
+			}
 		}
 
-		if weapon == logparse.Wrench {
-			break
-		}
-
-		index++
+		db.weaponMap.Set(weapon, newWeapon.WeaponID)
 	}
 
 	return nil
 }
 
 type Weapon struct {
-	WeaponID logparse.Weapon `json:"weapon_id"`
+	WeaponID int             `json:"weapon_id"`
+	Key      logparse.Weapon `json:"key"`
 	Name     string          `json:"name"`
+}
+
+func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error {
+	const q = `SELECT weapon_id, key, name FROM weapon WHERE key = $1`
+
+	if errQuery := db.QueryRow(ctx, q, key).Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name); errQuery != nil {
+		return Err(errQuery)
+	}
+
+	return nil
 }
 
 func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 	if weapon.WeaponID > 0 {
 		updateQuery, updateArgs, errUpdateQuery := db.sb.
 			Update("weapon").
+			Set("key", weapon.Key).
 			Set("name", weapon.Name).
 			Where(sq.Eq{"weapon_id": weapon.WeaponID}).
 			ToSql()
@@ -94,11 +106,12 @@ func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 		return nil
 	}
 
-	const wq = `INSERT INTO weapon (weapon_id, name) VALUES ($1, $2)`
+	const wq = `INSERT INTO weapon (key, name) VALUES ($1, $2) RETURNING weapon_id`
 
 	if errSave := db.
-		Exec(ctx, wq, weapon.WeaponID, weapon.Name); errSave != nil {
-		return errSave
+		QueryRow(ctx, wq, weapon.Key, weapon.Name).
+		Scan(&weapon.WeaponID); errSave != nil {
+		return errors.Wrap(errSave, "Failed to insert weapon")
 	}
 
 	return nil

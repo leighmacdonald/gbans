@@ -1,355 +1,289 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-    apiGetMatch,
-    Match,
-    MatchMedicSum,
-    MatchPlayerSum,
-    MatchTeamSum
-} from '../api';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { UserTableProps, DataTable } from '../component/DataTable';
-import Typography from '@mui/material/Typography';
+import React, { useEffect, useState } from 'react';
+import { apiGetMatch, MatchPlayer, MatchResult, Team } from '../api';
+import { useNavigate, useParams } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { first } from 'lodash-es';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import Paper from '@mui/material/Paper';
-import { Heading } from '../component/Heading';
 import { logErr } from '../util/errors';
+import Grid from '@mui/material/Unstable_Grid2';
+import Typography from '@mui/material/Typography';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { PageNotFound } from './PageNotFound';
+import { LazyTable } from '../component/LazyTable';
+import { Order } from '../component/DataTable';
+import { PlayerClassImg } from '../component/PlayerClassImg';
 
 export const MatchPage = () => {
     const navigate = useNavigate();
-    const [match, setMatch] = useState<Match>();
+    const [match, setMatch] = useState<MatchResult>();
     const [loading, setLoading] = React.useState<boolean>(true);
-    const { match_id } = useParams();
-    const match_id_num = parseInt(match_id || 'x');
+    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortColumn, setSortColumn] = useState<keyof MatchPlayer>('kills');
+    const { match_id } = useParams<string>();
     const { sendFlash } = useUserFlashCtx();
 
-    if (isNaN(match_id_num) || match_id_num <= 0) {
+    if (!match_id || match_id == '') {
         sendFlash('error', 'Invalid match id');
         navigate('/404');
     }
 
     useEffect(() => {
-        if (match_id_num > 0) {
-            apiGetMatch(match_id_num)
-                .then((resp) => {
-                    if (!resp.status || !resp.result) {
-                        sendFlash(
-                            'error',
-                            resp.resp.status == 404
-                                ? 'Unknown match id'
-                                : 'Internal error'
-                        );
-                        navigate('/404');
-                        return;
-                    }
-                    setMatch(resp.result);
-                })
-                .catch(logErr)
-                .finally(() => {
-                    setLoading(false);
-                });
-        }
-    }, [match_id_num, navigate, sendFlash, setMatch]);
-
-    const playerTableDef: UserTableProps<MatchPlayerSum> = useMemo(() => {
-        return {
-            rowsPerPage: 100,
-            columnOrder: [
-                'SteamId',
-                'Kills',
-                'Assists',
-                'Deaths',
-                'Damage',
-                'KDRatio',
-                'KADRatio',
-                'DamageTaken',
-                'Healing',
-                'HealingTaken',
-                'Airshots',
-                'HeadShots',
-                'BackStabs'
-            ],
-            defaultSortColumn: 'Kills',
-            columns: [
-                {
-                    label: 'Profile',
-                    sortKey: 'SteamId',
-                    tooltip: 'Profile',
-                    align: 'left',
-                    renderer: (_, value) => {
-                        const p = first(
-                            (match?.Players || []).filter(
-                                (p) => p.steam_id == value
-                            )
-                        );
-                        return (
-                            <Typography
-                                variant={'button'}
-                                component={Link}
-                                to={`/profile/${p?.steam_id}`}
-                            >
-                                {p?.personaname ?? `${p?.steam_id}`}
-                            </Typography>
-                        );
-                    }
-                },
-                {
-                    label: 'K',
-                    sortKey: 'Kills',
-                    tooltip: 'Kills',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'A',
-                    sortKey: 'Assists',
-                    tooltip: 'Assists',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'D',
-                    sortKey: 'Deaths',
-                    tooltip: 'Deaths',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Dmg',
-                    sortKey: 'Damage',
-                    tooltip: 'Damage',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'KD',
-                    sortKey: 'KDRatio',
-                    tooltip: 'Kills:Death ratio',
-                    sortType: 'float',
-                    sortable: true
-                },
-                {
-                    label: 'KAD',
-                    sortKey: 'KADRatio',
-                    tooltip: 'Kills+Assists:Death ratio',
-                    sortType: 'float',
-                    sortable: true
-                },
-                {
-                    label: 'DT',
-                    sortKey: 'DamageTaken',
-                    tooltip: 'DTaken',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Healing',
-                    sortKey: 'Healing',
-                    tooltip: 'Healing',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'HT',
-                    sortKey: 'HealingTaken',
-                    tooltip: 'Healing Taken',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'AS',
-                    sortKey: 'Airshots',
-                    tooltip: 'Airshots',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'HS',
-                    sortKey: 'HeadShots',
-                    tooltip: 'Headshots',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'BS',
-                    sortKey: 'BackStabs',
-                    tooltip: 'Backstabs',
-                    sortable: true,
-                    sortType: 'number'
+        apiGetMatch(match_id as string)
+            .then((resp) => {
+                if (!resp.status || !resp.result) {
+                    //navigate('/404');
+                    return;
                 }
-            ],
-            rows: match?.PlayerSums || []
-        };
-    }, [match?.PlayerSums, match?.Players]);
+                setMatch(resp.result);
+            })
+            .catch(logErr)
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [match_id, navigate, sendFlash, setMatch]);
 
-    const medicTableDef: UserTableProps<MatchMedicSum> = useMemo(() => {
-        return {
-            rowsPerPage: 100,
-            columnOrder: [
-                'SteamId',
-                'Healing',
-                'Charges',
-                'Drops',
-                'NearFullChargeDeath'
-            ],
-            defaultSortColumn: 'Healing',
-            columns: [
-                {
-                    label: 'Profile',
-                    sortKey: 'SteamId',
-                    tooltip: 'Profile',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (_, value) => {
-                        const p = first(
-                            (match?.Players || []).filter(
-                                (p) => p.steam_id == value
-                            )
-                        );
-                        return (
-                            <Typography
-                                variant={'button'}
-                                component={Link}
-                                to={`/profile/${p?.steam_id}`}
-                            >
-                                {p?.personaname ?? `${p?.steam_id}`}
-                            </Typography>
-                        );
-                    }
-                },
-                {
-                    label: 'Healing',
-                    sortKey: 'Healing',
-                    tooltip: 'Healing',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Charges',
-                    sortKey: 'Charges',
-                    tooltip: 'Uber Charges',
-                    sortable: true,
-                    sortType: 'number',
-                    renderer: (value: { K: number } | unknown) => {
-                        return value
-                            ? Object.values(value as { K: number }).reduce(
-                                  (sum, current) => sum + current,
-                                  0
-                              )
-                            : 0;
-                    }
-                },
-                {
-                    label: 'Drops',
-                    sortKey: 'Drops',
-                    tooltip: 'Uber Drops',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Near Full Death',
-                    sortKey: 'NearFullChargeDeath',
-                    tooltip: 'Near full uber death',
-                    sortable: true,
-                    sortType: 'number'
-                }
-            ],
-            rows: match?.MedicSums || []
-        };
-    }, [match?.MedicSums, match?.Players]);
+    if (loading) {
+        return <LoadingSpinner />;
+    }
 
-    const teamTableDef: UserTableProps<MatchTeamSum> = useMemo(() => {
-        return {
-            rowsPerPage: 100,
-            columnOrder: [
-                'Team',
-                'Kills',
-                'Damage',
-                'Caps',
-                'Charges',
-                'Drops',
-                'MidFights'
-            ],
-            defaultSortColumn: 'Kills',
-            columns: [
-                {
-                    label: 'Team',
-                    sortKey: 'Team',
-                    tooltip: 'Team',
-                    align: 'left',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Kills',
-                    sortKey: 'Kills',
-                    tooltip: 'Total Kills',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Damage',
-                    sortKey: 'Damage',
-                    tooltip: 'Total Team Damage',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Caps',
-                    sortKey: 'Caps',
-                    tooltip: 'Total Captures',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Ubers',
-                    sortKey: 'Charges',
-                    tooltip: 'Total uber charges',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Drops',
-                    sortKey: 'Drops',
-                    tooltip: 'Total uber drops',
-                    sortable: true,
-                    sortType: 'number'
-                },
-                {
-                    label: 'Mid',
-                    sortKey: 'MidFights',
-                    tooltip: 'Midfight wins',
-                    sortable: true,
-                    sortType: 'number'
-                }
-            ],
-            rows: match?.TeamSums || []
-        };
-    }, [match?.TeamSums]);
-
+    if (!match) {
+        return <PageNotFound error={'Unknown match id'} />;
+    }
     return (
-        <Stack marginTop={3}>
-            {!loading && match?.MatchID && (
-                <Stack spacing={2}>
-                    <Paper>
-                        <Heading>
-                            {`Logs #${match?.MatchID} - ${match?.Title} - ${match?.MapName}`}
-                        </Heading>
-                        <DataTable {...playerTableDef} />
-                    </Paper>
-                    <Paper>
-                        <Heading>Healing</Heading>
-                        <DataTable {...medicTableDef} />
-                    </Paper>
-                    <Paper>
-                        <Heading>Team Scores</Heading>
-                        <DataTable {...teamTableDef} />
-                    </Paper>
-                </Stack>
-            )}
-            {loading && <LoadingSpinner />}
-        </Stack>
+        <ContainerWithHeader title={'Match Results'}>
+            <Grid container spacing={3} paddingTop={3}>
+                <Grid xs={6}>
+                    <Stack>
+                        <Typography variant={'subtitle1'}>
+                            {match.title}
+                        </Typography>
+                        <Typography variant={'subtitle2'}>
+                            {match.map_name}
+                        </Typography>
+                    </Stack>
+                </Grid>
+                <Grid xs={6}>
+                    <Stack>
+                        <Typography variant={'subtitle1'} textAlign={'right'}>
+                            {match.time_start.toString()}
+                        </Typography>
+                        <Typography variant={'subtitle2'} textAlign={'right'}>
+                            {match.time_end.toString()}
+                        </Typography>
+                    </Stack>
+                </Grid>
+                <Grid xs={5}>
+                    <Typography variant={'h1'}>BLU</Typography>
+                </Grid>
+                <Grid xs={1}>
+                    <Typography variant={'h1'}>
+                        {match.team_scores.blu}
+                    </Typography>
+                </Grid>
+                <Grid xs={1}>
+                    <Typography variant={'h1'}>
+                        {match.team_scores.red}
+                    </Typography>
+                </Grid>
+                <Grid xs={5}>
+                    <Typography variant={'h1'} textAlign={'right'}>
+                        RED
+                    </Typography>
+                </Grid>
+
+                <Grid xs={12}>
+                    <LazyTable<MatchPlayer>
+                        sortOrder={sortOrder}
+                        sortColumn={sortColumn}
+                        onSortColumnChanged={async (column) => {
+                            setSortColumn(column);
+                        }}
+                        onSortOrderChanged={async (direction) => {
+                            setSortOrder(direction);
+                        }}
+                        rows={match.players.filter((m) => m.classes != null)}
+                        columns={[
+                            {
+                                label: 'Team',
+                                tooltip: 'Team',
+                                sortKey: 'team',
+                                sortable: true,
+                                align: 'left',
+                                width: 100,
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.team == Team.RED ? 'RED' : 'BLU'}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'Name',
+                                tooltip: 'In Game Name',
+                                sortKey: 'name',
+                                sortable: true,
+                                align: 'left',
+                                width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {row.name}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'C',
+                                tooltip: 'Classes',
+                                sortKey: 'classes',
+                                align: 'left',
+                                //width: 50,
+                                renderer: (row) => (
+                                    <Stack direction={'row'}>
+                                        {row.classes ? (
+                                            row.classes.map((pc) => (
+                                                <PlayerClassImg
+                                                    key={`pc-${row.steam_id}-${pc.player_class}`}
+                                                    cls={pc.player_class}
+                                                />
+                                            ))
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </Stack>
+                                )
+                            },
+                            {
+                                label: 'K',
+                                tooltip: 'Kills',
+                                sortKey: 'kills',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.kills}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'A',
+                                tooltip: 'Assists',
+                                sortKey: 'assists',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.assists}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'D',
+                                tooltip: 'Deaths',
+                                sortKey: 'deaths',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.deaths}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'DA',
+                                tooltip: 'Damage',
+                                sortKey: 'damage',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.damage}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'DT',
+                                tooltip: 'Damage Taken',
+                                sortKey: 'damage_taken',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.damage_taken}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'HP',
+                                tooltip: 'Health Packs',
+                                sortKey: 'health_packs',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.health_packs}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'BS',
+                                tooltip: 'Backstabs',
+                                sortKey: 'backstabs',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.backstabs}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'HS',
+                                tooltip: 'Headshots',
+                                sortKey: 'headshots',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.headshots}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'AS',
+                                tooltip: 'Airshots',
+                                sortKey: 'airshots',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.airshots}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'CAP',
+                                tooltip: 'Point Captures',
+                                sortKey: 'captures',
+                                sortable: true,
+                                align: 'left',
+                                //width: 250,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.captures}
+                                    </Typography>
+                                )
+                            }
+                        ]}
+                    />
+                </Grid>
+            </Grid>
+        </ContainerWithHeader>
     );
 };

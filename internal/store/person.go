@@ -225,6 +225,7 @@ type PersonMessage struct {
 	Body            string        `json:"body"`
 	Team            bool          `json:"team"`
 	CreatedOn       time.Time     `json:"created_on"`
+	Flagged         bool          `json:"flagged"`
 }
 
 type PersonMessages []PersonMessage
