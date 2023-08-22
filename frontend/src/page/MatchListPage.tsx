@@ -6,7 +6,7 @@ import { Heading } from '../component/Heading';
 
 export const MatchListPage = (): JSX.Element => {
     return (
-        <Stack marginTop={3}>
+        <Stack>
             <Paper>
                 <Box>
                     <Heading>Match History</Heading>

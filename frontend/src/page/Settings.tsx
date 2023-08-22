@@ -4,7 +4,7 @@ import { ProfileSettings } from '../component/ProfileSettings';
 
 export const Settings = () => {
     return (
-        <Grid container spacing={2} paddingTop={3}>
+        <Grid container spacing={2}>
             <Grid xs={6} alignContent={'center'}>
                 <ProfileSettings />
             </Grid>

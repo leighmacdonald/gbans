@@ -8,7 +8,6 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import { TableSortLabel } from '@mui/material';
 
 export interface LazyTableProps<T> {
@@ -121,6 +120,7 @@ export const LazyTableHeader = <T,>({
                                     <Typography
                                         padding={0}
                                         sx={{
+                                            fontWeight: 'bold',
                                             textDecoration:
                                                 col.sortKey != sortColumn
                                                     ? 'none'
@@ -169,7 +169,7 @@ export const LazyTable = <T,>({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
     return (
-        <TableContainer component={Paper}>
+        <TableContainer>
             <Table size={'small'}>
                 <LazyTableHeader<T>
                     columns={columns}

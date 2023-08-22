@@ -51,7 +51,7 @@ export const ReportCreatePage = (): JSX.Element => {
     }, [canReport, currentUser]);
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={3}>
             <Grid xs={12} md={8}>
                 <Stack spacing={2}>
                     {canReport && <ReportForm />}

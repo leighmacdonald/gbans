@@ -53,7 +53,7 @@ export const AdminNews = () => {
     }, [selectedNewsEntry.body_md]);
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={2}>
             <Grid xs={8}>
                 <Paper elevation={1}>
                     <Stack spacing={3} padding={3}>

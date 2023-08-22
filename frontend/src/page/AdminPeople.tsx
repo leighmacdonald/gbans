@@ -17,7 +17,7 @@ export const AdminPeople = (): JSX.Element => {
     }, []);
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={2}>
             <Grid xs={12}>
                 <Paper elevation={1}>
                     <Stack padding={3}>

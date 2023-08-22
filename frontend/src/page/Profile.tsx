@@ -12,7 +12,6 @@ import Chip from '@mui/material/Chip';
 import { SteamIDList } from '../component/SteamIDList';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -25,13 +24,9 @@ export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = useState('');
-    const { currentUser } = useCurrentUserCtx();
+
     const { steam_id } = useParams();
     const { sendFlash } = useUserFlashCtx();
-
-    const matchOpts = useMemo(() => {
-        return { steam_id: profile?.player.steam_id, limit: 25 };
-    }, [profile?.player.steam_id]);
 
     useEffect(() => {
         if (!steam_id) {
@@ -159,10 +154,10 @@ export const Profile = () => {
                 </Grid>
             </>
         );
-    }, [currentUser.permission_level, error, matchOpts, profile]);
+    }, [error, profile]);
 
     return (
-        <Grid container paddingTop={3} spacing={3}>
+        <Grid container spacing={2}>
             {loading ? (
                 <Grid xs={12} alignContent={'center'}>
                     <LoadingSpinner />

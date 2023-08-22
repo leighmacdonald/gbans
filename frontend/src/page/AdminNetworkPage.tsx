@@ -94,7 +94,7 @@ export const AdminNetworkPage = () => {
     };
 
     return (
-        <Grid container padding={0} marginTop={2} spacing={1}>
+        <Grid container padding={0} spacing={2}>
             <Grid xs={9}>
                 <ContainerWithHeader title={'Network Query Tools'}>
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

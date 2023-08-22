@@ -61,7 +61,7 @@ export const NotificationsPage = () => {
         );
     }, [notifications, page]);
     return (
-        <Grid2 container spacing={2} marginTop={3}>
+        <Grid2 container spacing={2}>
             <Grid2 xs={3}>
                 <ContainerWithHeader title={'Manage'}>
                     <ButtonGroup orientation={'vertical'} variant="contained">

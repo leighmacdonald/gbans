@@ -148,7 +148,7 @@ export const AdminAppeals = () => {
     }, []);
 
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={3}>
             <Grid container spacing={2}>
                 <Grid xs={6} md={3}>
                     <BasicStatCard

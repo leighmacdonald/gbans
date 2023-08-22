@@ -225,7 +225,7 @@ export const AdminFilters = () => {
                     }}
                 />
             )}
-            <Grid container spacing={2} paddingTop={3}>
+            <Grid container spacing={2}>
                 <Grid xs={12}>
                     <ButtonGroup
                         variant="contained"

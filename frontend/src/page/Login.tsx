@@ -24,12 +24,7 @@ export const Login = ({ message }: LoginFormProps) => {
     }, [currentUser.steam_id]);
 
     return (
-        <Grid
-            container
-            marginTop={3}
-            justifyContent={'center'}
-            alignItems={'center'}
-        >
+        <Grid container justifyContent={'center'} alignItems={'center'}>
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Permission Denied'}

@@ -1,6 +1,7 @@
 import { PlayerClass, Team } from './const';
 import { TeamScores } from './stats';
 import { apiCall, QueryFilter } from './common';
+import { parseDateTime } from '../util/text';
 
 interface MatchHealer {
     match_medic_id: number;
@@ -50,8 +51,8 @@ export interface MatchPlayer {
     team: Team;
     name: string;
     avatar_hash: string;
-    time_start: string;
-    time_end: string;
+    time_start: Date;
+    time_end: Date;
     kills: number;
     assists: number;
     deaths: number;
@@ -95,8 +96,23 @@ export interface MatchResult {
 
 export interface MatchSummary {}
 
-export const apiGetMatch = async (match_id: string) =>
-    await apiCall<MatchResult>(`/api/log/${match_id}`, 'GET');
+export const apiGetMatch = async (match_id: string) => {
+    const match = await apiCall<MatchResult>(`/api/log/${match_id}`, 'GET');
+    if (match.result) {
+        match.result.time_start = parseDateTime(
+            match.result.time_start as unknown as string
+        );
+        match.result.time_end = parseDateTime(
+            match.result.time_end as unknown as string
+        );
+        match.result.players = match.result.players.map((p) => {
+            p.time_start = parseDateTime(p.time_start as unknown as string);
+            p.time_end = parseDateTime(p.time_end as unknown as string);
+            return p;
+        });
+    }
+    return match;
+};
 
 export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     steam_id?: string;

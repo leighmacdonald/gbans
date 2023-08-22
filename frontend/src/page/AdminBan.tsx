@@ -105,7 +105,7 @@ export const AdminBan = () => {
     }, [loadBansASN, loadBansCIDR, loadBansGroup, loadBansSteam]);
 
     return (
-        <Box marginTop={2}>
+        <Box>
             <BanSteamModal
                 open={banSteamModalOpen}
                 setOpen={setBanSteamModalOpen}

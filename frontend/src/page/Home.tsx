@@ -18,7 +18,7 @@ export const Home = (): JSX.Element => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
     return (
-        <Grid container spacing={3} paddingTop={3}>
+        <Grid container spacing={3}>
             <Grid xs={9}>
                 <NewsView itemsPerPage={3} />
             </Grid>

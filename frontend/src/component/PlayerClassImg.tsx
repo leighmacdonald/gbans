@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import demoClassImg from '../icons/class_demoman.png';
 import scoutClassImg from '../icons/class_scout.png';
 import engineerClassImg from '../icons/class_engineer.png';
@@ -13,13 +13,22 @@ import { PlayerClass, PlayerClassNames } from '../api';
 export interface PlayerClassImgProps {
     cls: PlayerClass;
     size?: number;
+    onMouseEnter?: MouseEventHandler | undefined;
+    onMouseLeave?: MouseEventHandler | undefined;
 }
 
-export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
+export const PlayerClassImg = ({
+    cls,
+    size = 24,
+    onMouseEnter,
+    onMouseLeave
+}: PlayerClassImgProps) => {
     switch (cls) {
         case PlayerClass.Demo:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={demoClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -29,6 +38,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Scout:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={scoutClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -38,6 +49,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Engineer:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={engineerClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -47,6 +60,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Pyro:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={pyroClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -56,6 +71,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Heavy:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={heavyClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -65,6 +82,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Sniper:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={sniperClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -74,6 +93,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Spy:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={spyClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -83,6 +104,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         case PlayerClass.Soldier:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={soldierClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}
@@ -92,6 +115,8 @@ export const PlayerClassImg = ({ cls, size = 24 }: PlayerClassImgProps) => {
         default:
             return (
                 <img
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
                     src={medicClassImg}
                     alt={PlayerClassNames[cls]}
                     width={size}

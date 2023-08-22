@@ -178,7 +178,7 @@ export const Servers = () => {
                 setSelectedRegion
             }}
         >
-            <Stack spacing={3} paddingTop={3}>
+            <Stack spacing={3}>
                 <Paper elevation={3}>
                     <ServerMap />
                 </Paper>

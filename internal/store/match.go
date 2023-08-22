@@ -716,7 +716,8 @@ func (db *Store) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, p
 	for weapon, info := range player.WeaponInfo {
 		weaponID, found := db.weaponMap.Get(weapon)
 		if !found {
-			return errors.New("Unknown weapon")
+			db.log.Error("Unknown weapon", zap.String("weapon", string(weapon)))
+			continue
 		}
 
 		if _, errWeapon := transaction.

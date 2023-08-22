@@ -84,7 +84,7 @@ export const WikiPage = (): JSX.Element => {
     }, [page.body_md, page.revision]);
 
     return (
-        <Grid container paddingTop={3} spacing={3}>
+        <Grid container spacing={3}>
             {loading && (
                 <Grid xs={12} alignContent={'center'}>
                     <Paper elevation={1}>

@@ -266,7 +266,7 @@ export const AdminChat = () => {
     };
 
     return (
-        <Grid container spacing={2} paddingTop={3}>
+        <Grid container spacing={2}>
             <Grid xs={12}>
                 <Paper elevation={1}>
                     <Stack>
@@ -446,119 +446,122 @@ export const AdminChat = () => {
 
             <Grid xs={12}>
                 <Heading iconLeft={<ChatIcon />}>Chat Messages</Heading>
-                <LazyTable<PersonMessage>
-                    sortOrder={sortOrder}
-                    sortColumn={sortColumn}
-                    onSortColumnChanged={async (column) => {
-                        setSortColumn(column);
-                    }}
-                    onSortOrderChanged={async (direction) => {
-                        setSortOrder(direction);
-                    }}
-                    columns={[
-                        {
-                            label: 'Server',
-                            tooltip: 'Server',
-                            sortKey: 'server_id',
-                            align: 'left',
-                            width: 100,
-                            onClick: (o) => {
-                                setSelectedServer(o.server_id);
+                <Paper>
+                    <LazyTable<PersonMessage>
+                        sortOrder={sortOrder}
+                        sortColumn={sortColumn}
+                        onSortColumnChanged={async (column) => {
+                            setSortColumn(column);
+                        }}
+                        onSortOrderChanged={async (direction) => {
+                            setSortOrder(direction);
+                        }}
+                        columns={[
+                            {
+                                label: 'Server',
+                                tooltip: 'Server',
+                                sortKey: 'server_id',
+                                align: 'left',
+                                width: 100,
+                                onClick: (o) => {
+                                    setSelectedServer(o.server_id);
+                                },
+                                queryValue: (o) =>
+                                    `${o.server_id} + ${o.server_name}`,
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.server_name}
+                                    </Typography>
+                                )
                             },
-                            queryValue: (o) =>
-                                `${o.server_id} + ${o.server_name}`,
-                            renderer: (row) => (
-                                <Typography variant={'button'}>
-                                    {row.server_name}
-                                </Typography>
-                            )
-                        },
-                        {
-                            label: 'Created',
-                            tooltip: 'Time the message was sent',
-                            sortKey: 'created_on',
-                            sortType: 'date',
-                            sortable: true,
-                            align: 'left',
-                            width: 180,
-                            queryValue: (o) => steamIdQueryValue(o.steam_id),
-                            renderer: (row) => (
-                                <Typography variant={'body1'}>
-                                    {`${formatISO9075(row.created_on)}`}
-                                </Typography>
-                            )
-                        },
-                        {
-                            label: 'Name',
-                            tooltip: 'Persona Name',
-                            sortKey: 'persona_name',
-                            width: 250,
-                            align: 'left',
-                            onClick: (o) => {
-                                setSteamId(o.steam_id);
-                                setSteamIDValue(o.steam_id);
+                            {
+                                label: 'Created',
+                                tooltip: 'Time the message was sent',
+                                sortKey: 'created_on',
+                                sortType: 'date',
+                                sortable: true,
+                                align: 'left',
+                                width: 180,
+                                queryValue: (o) =>
+                                    steamIdQueryValue(o.steam_id),
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {`${formatISO9075(row.created_on)}`}
+                                    </Typography>
+                                )
                             },
-                            queryValue: (o) => `${o.persona_name}`,
-                            renderer: (row) => (
-                                <Typography variant={'body2'}>
-                                    {row.persona_name}
-                                </Typography>
-                            )
-                        },
-                        {
-                            label: 'Message',
-                            tooltip: 'Message',
-                            sortKey: 'body',
-                            align: 'left',
-                            queryValue: (o) => o.body,
-                            renderer: (row) => {
-                                return (
-                                    <Grid container>
-                                        <Grid xs padding={1}>
-                                            <Typography variant={'body1'}>
-                                                {row.body}
-                                            </Typography>
-                                        </Grid>
+                            {
+                                label: 'Name',
+                                tooltip: 'Persona Name',
+                                sortKey: 'persona_name',
+                                width: 250,
+                                align: 'left',
+                                onClick: (o) => {
+                                    setSteamId(o.steam_id);
+                                    setSteamIDValue(o.steam_id);
+                                },
+                                queryValue: (o) => `${o.persona_name}`,
+                                renderer: (row) => (
+                                    <Typography variant={'body2'}>
+                                        {row.persona_name}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'Message',
+                                tooltip: 'Message',
+                                sortKey: 'body',
+                                align: 'left',
+                                queryValue: (o) => o.body,
+                                renderer: (row) => {
+                                    return (
+                                        <Grid container>
+                                            <Grid xs padding={1}>
+                                                <Typography variant={'body1'}>
+                                                    {row.body}
+                                                </Typography>
+                                            </Grid>
 
-                                        {row.auto_filter_flagged && (
+                                            {row.auto_filter_flagged && (
+                                                <Grid
+                                                    xs={'auto'}
+                                                    padding={1}
+                                                    display="flex"
+                                                    justifyContent="center"
+                                                    alignItems="center"
+                                                >
+                                                    <>
+                                                        <FlagIcon
+                                                            color={'error'}
+                                                            fontSize="small"
+                                                        />
+                                                    </>
+                                                </Grid>
+                                            )}
                                             <Grid
                                                 xs={'auto'}
-                                                padding={1}
                                                 display="flex"
                                                 justifyContent="center"
                                                 alignItems="center"
                                             >
-                                                <>
-                                                    <FlagIcon
-                                                        color={'error'}
-                                                        fontSize="small"
-                                                    />
-                                                </>
+                                                <ChatContextMenu
+                                                    flagged={
+                                                        row.auto_filter_flagged
+                                                    }
+                                                    steamId={row.steam_id}
+                                                    person_message_id={
+                                                        row.person_message_id
+                                                    }
+                                                />
                                             </Grid>
-                                        )}
-                                        <Grid
-                                            xs={'auto'}
-                                            display="flex"
-                                            justifyContent="center"
-                                            alignItems="center"
-                                        >
-                                            <ChatContextMenu
-                                                flagged={
-                                                    row.auto_filter_flagged
-                                                }
-                                                steamId={row.steam_id}
-                                                person_message_id={
-                                                    row.person_message_id
-                                                }
-                                            />
                                         </Grid>
-                                    </Grid>
-                                );
+                                    );
+                                }
                             }
-                        }
-                    ]}
-                    rows={rows}
-                />
+                        ]}
+                        rows={rows}
+                    />
+                </Paper>
             </Grid>
         </Grid>
     );

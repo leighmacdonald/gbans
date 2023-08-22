@@ -161,7 +161,7 @@ export const BanPage = (): JSX.Element => {
     }, [appealState, id, sendFlash]);
 
     return (
-        <Grid container paddingTop={3} spacing={2}>
+        <Grid container spacing={2}>
             <Grid xs={8}>
                 <Stack spacing={2}>
                     {canPost && messages.length == 0 && (
