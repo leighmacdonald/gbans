@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { apiGetMatch, MatchPlayer, MatchResult, Team } from '../api';
 import { useNavigate, useParams } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
@@ -42,6 +42,10 @@ export const MatchPage = () => {
             });
     }, [match_id, navigate, sendFlash, setMatch]);
 
+    const validRows = useMemo(() => {
+        return match ? match.players.filter((m) => m.classes != null) : [];
+    }, [match]);
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -49,6 +53,7 @@ export const MatchPage = () => {
     if (!match) {
         return <PageNotFound error={'Unknown match id'} />;
     }
+
     return (
         <ContainerWithHeader title={'Match Results'}>
             <Grid container spacing={3} paddingTop={3}>
@@ -101,7 +106,7 @@ export const MatchPage = () => {
                         onSortOrderChanged={async (direction) => {
                             setSortOrder(direction);
                         }}
-                        rows={match.players.filter((m) => m.classes != null)}
+                        rows={validRows}
                         columns={[
                             {
                                 label: 'Team',
