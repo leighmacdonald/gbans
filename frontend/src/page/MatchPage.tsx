@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     apiGetMatch,
+    MatchHealer,
     MatchPlayer,
     MatchPlayerClass,
     MatchResult,
@@ -16,7 +17,7 @@ import Typography from '@mui/material/Typography';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { PageNotFound } from './PageNotFound';
 import { LazyTable } from '../component/LazyTable';
-import { Order } from '../component/DataTable';
+import { compare, Order, stableSort } from '../component/DataTable';
 import { PlayerClassImg } from '../component/PlayerClassImg';
 import { Popover } from '@mui/material';
 import TableContainer from '@mui/material/TableContainer';
@@ -26,6 +27,8 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import { formatDistance } from 'date-fns';
 import SportsIcon from '@mui/icons-material/Sports';
+import { Heading } from '../component/Heading';
+import { PersonCell } from '../component/PersonCell';
 
 interface PlayerClassHoverStatsProps {
     stats: MatchPlayerClass;
@@ -166,12 +169,14 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
         </div>
     );
 };
+
+const blu = '#547d8c';
+const red = '#a7584b';
+
 export const MatchPage = () => {
     const navigate = useNavigate();
     const [match, setMatch] = useState<MatchResult>();
     const [loading, setLoading] = React.useState<boolean>(true);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof MatchPlayer>('kills');
     const { match_id } = useParams<string>();
     const { sendFlash } = useUserFlashCtx();
 
@@ -195,10 +200,6 @@ export const MatchPage = () => {
             });
     }, [match_id, navigate, sendFlash, setMatch]);
 
-    const validRows = useMemo(() => {
-        return match ? match.players.filter((m) => m.classes != null) : [];
-    }, [match]);
-
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -206,8 +207,7 @@ export const MatchPage = () => {
     if (!match) {
         return <PageNotFound error={'Unknown match id'} />;
     }
-    const blu = '#547d8c';
-    const red = '#a7584b';
+
     return (
         <ContainerWithHeader title={'Match Results'} iconLeft={<SportsIcon />}>
             <Grid container spacing={2}>
@@ -252,238 +252,424 @@ export const MatchPage = () => {
                         RED
                     </Typography>
                 </Grid>
-
                 <Grid xs={12} padding={0} paddingTop={1}>
-                    <LazyTable<MatchPlayer>
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
-                        onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
-                        }}
-                        onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
-                        }}
-                        rows={validRows}
-                        columns={[
-                            {
-                                label: 'Team',
-                                tooltip: 'Team',
-                                sortKey: 'team',
-                                sortable: true,
-                                align: 'left',
-                                width: 100,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'button'}
-                                        sx={{
-                                            backgroundColor:
-                                                row.team == Team.BLU ? blu : red
-                                        }}
-                                    >
-                                        {row.team == Team.RED ? 'RED' : 'BLU'}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'Name',
-                                tooltip: 'In Game Name',
-                                sortKey: 'name',
-                                sortable: true,
-                                align: 'left',
-                                width: 250,
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {row.name != ''
-                                            ? row.name
-                                            : row.steam_id}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'C',
-                                tooltip: 'Classes',
-                                sortKey: 'classes',
-                                align: 'left',
-                                //width: 50,
-                                renderer: (row) => (
-                                    <Stack direction={'row'}>
-                                        {row.classes ? (
-                                            row.classes.map((pc) => (
-                                                <PlayerClassHoverStats
-                                                    key={`pc-${row.steam_id}-${pc.player_class}`}
-                                                    stats={pc}
-                                                />
-                                            ))
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </Stack>
-                                )
-                            },
-                            {
-                                label: 'K',
-                                tooltip: 'Kills',
-                                sortKey: 'kills',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.kills}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'A',
-                                tooltip: 'Assists',
-                                sortKey: 'assists',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.assists}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'D',
-                                tooltip: 'Deaths',
-                                sortKey: 'deaths',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.deaths}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'DA',
-                                tooltip: 'Damage',
-                                sortKey: 'damage',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.damage}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'DT',
-                                tooltip: 'Damage Taken',
-                                sortKey: 'damage_taken',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.damage_taken}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'HP',
-                                tooltip: 'Health Packs',
-                                sortKey: 'health_packs',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.health_packs}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'BS',
-                                tooltip: 'Backstabs',
-                                sortKey: 'backstabs',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.backstabs}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'HS',
-                                tooltip: 'Headshots',
-                                sortKey: 'headshots',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.headshots}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'AS',
-                                tooltip: 'Airshots',
-                                sortKey: 'airshots',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.airshots}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'CAP',
-                                tooltip: 'Point Captures',
-                                sortKey: 'captures',
-                                sortable: true,
-                                align: 'left',
-                                //width: 250,
-                                renderer: (row) => (
-                                    <Typography
-                                        variant={'body2'}
-                                        sx={{ fontFamily: 'Monospace' }}
-                                    >
-                                        {row.captures}
-                                    </Typography>
-                                )
-                            }
-                        ]}
-                    />
+                    <Heading align={'center'}>Players</Heading>
+                </Grid>
+                <Grid xs={12} padding={0} paddingTop={1}>
+                    <MatchPlayersTable players={match.players} />
+                </Grid>
+                <Grid xs={12} padding={0}>
+                    <Heading align={'center'}>Healers</Heading>
+                </Grid>
+                <Grid xs={12} padding={0}>
+                    <MatchHealersTable players={match.players} />
                 </Grid>
             </Grid>
         </ContainerWithHeader>
+    );
+};
+
+interface MatchPlayersTableProps {
+    players: MatchPlayer[];
+}
+
+const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
+    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortColumn, setSortColumn] = useState<keyof MatchPlayer>('kills');
+
+    const validRows = useMemo(() => {
+        return stableSort(
+            players.filter((m) => m.classes != null),
+            compare(sortOrder, sortColumn)
+        );
+    }, [players, sortColumn, sortOrder]);
+
+    return (
+        <LazyTable<MatchPlayer>
+            sortOrder={sortOrder}
+            sortColumn={sortColumn}
+            onSortColumnChanged={async (column) => {
+                setSortColumn(column);
+            }}
+            onSortOrderChanged={async (direction) => {
+                setSortOrder(direction);
+            }}
+            rows={validRows}
+            columns={[
+                {
+                    label: 'Team',
+                    tooltip: 'Team',
+                    sortKey: 'team',
+                    sortable: true,
+                    align: 'left',
+                    width: '50px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'button'}
+                            sx={{
+                                color: row.team == Team.BLU ? blu : red
+                            }}
+                        >
+                            {row.team == Team.RED ? 'RED' : 'BLU'}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Name',
+                    tooltip: 'In Game Name',
+                    sortKey: 'name',
+                    sortable: true,
+                    align: 'left',
+                    //width: 250,
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.steam_id}
+                            personaname={
+                                row.name != '' ? row.name : row.steam_id
+                            }
+                            avatar={`https://avatars.akamai.steamstatic.com/${row.avatar_hash}.jpg`}
+                        />
+                        // <Typography variant={'body1'}>
+                        //     {row.name != '' ? row.name : row.steam_id}
+                        // </Typography>
+                    )
+                },
+                {
+                    label: 'C',
+                    tooltip: 'Classes',
+                    sortKey: 'classes',
+                    align: 'left',
+                    //width: 50,
+                    renderer: (row) => (
+                        <Stack direction={'row'}>
+                            {row.classes ? (
+                                row.classes.map((pc) => (
+                                    <PlayerClassHoverStats
+                                        key={`pc-${row.steam_id}-${pc.player_class}`}
+                                        stats={pc}
+                                    />
+                                ))
+                            ) : (
+                                <></>
+                            )}
+                        </Stack>
+                    )
+                },
+                {
+                    label: 'K',
+                    tooltip: 'Kills',
+                    sortKey: 'kills',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.kills}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'A',
+                    tooltip: 'Assists',
+                    sortKey: 'assists',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.assists}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'D',
+                    tooltip: 'Deaths',
+                    sortKey: 'deaths',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.deaths}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'DA',
+                    tooltip: 'Damage',
+                    sortKey: 'damage',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.damage}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'DT',
+                    tooltip: 'Damage Taken',
+                    sortKey: 'damage_taken',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.damage_taken}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'HP',
+                    tooltip: 'Total Health Packs',
+                    sortKey: 'health_packs',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.health_packs}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'BS',
+                    tooltip: 'Total Backstabs',
+                    sortKey: 'backstabs',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.backstabs}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'HS',
+                    tooltip: 'Total Headshots',
+                    sortKey: 'headshots',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.headshots}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'AS',
+                    tooltip: 'Total Airshots',
+                    sortKey: 'airshots',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.airshots}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'CAP',
+                    tooltip: 'Total Point Captures',
+                    sortKey: 'captures',
+                    sortable: true,
+                    align: 'left',
+                    width: '25px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'body2'}
+                            sx={{ fontFamily: 'Monospace' }}
+                        >
+                            {row.captures}
+                        </Typography>
+                    )
+                }
+            ]}
+        />
+    );
+};
+
+interface MatchHealersTableProps {
+    players: MatchPlayer[];
+}
+
+interface MedicRow extends MatchHealer {
+    steam_id: string;
+    team: Team;
+    name: string;
+    avatar_hash: string;
+    time_start: Date;
+    time_end: Date;
+}
+
+const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
+    const [sortOrder, setSortOrder] = useState<Order>('desc'),
+        [sortColumn, setSortColumn] = useState<keyof MedicRow>('healing'),
+        rows = useMemo(() => {
+            return players
+                .filter((p) => p.medic_stats)
+                .map((p): MedicRow => {
+                    return {
+                        match_player_id: p.match_player_id,
+                        steam_id: p.steam_id,
+                        avatar_hash: p.avatar_hash,
+                        name: p.name,
+                        team: p.team,
+                        time_start: p.time_start,
+                        time_end: p.time_end,
+                        healing: p.medic_stats?.healing ?? 0,
+                        avg_uber_length: p.medic_stats?.avg_uber_length ?? 0,
+                        biggest_adv_lost: p.medic_stats?.biggest_adv_lost ?? 0,
+                        charges_kritz: p.medic_stats?.charges_kritz ?? 0,
+                        charges_uber: p.medic_stats?.charges_uber ?? 0,
+                        charges_vacc: p.medic_stats?.charges_vacc ?? 0,
+                        charges_quickfix: p.medic_stats?.charges_quickfix ?? 0,
+                        drops: p.medic_stats?.drops ?? 0,
+                        match_medic_id: p.medic_stats?.match_medic_id ?? 0,
+                        major_adv_lost: p.medic_stats?.major_adv_lost ?? 0,
+                        near_full_charge_death:
+                            p.medic_stats?.near_full_charge_death ?? 0
+                    };
+                });
+        }, [players]),
+        validRows = useMemo(() => {
+            return stableSort(rows, compare(sortOrder, sortColumn));
+        }, [rows, sortColumn, sortOrder]);
+
+    return (
+        <LazyTable<MedicRow>
+            columns={[
+                {
+                    label: 'Team',
+                    tooltip: 'Team',
+                    sortKey: 'team',
+                    sortable: true,
+                    align: 'left',
+                    width: '50px',
+                    renderer: (row) => (
+                        <Typography
+                            variant={'button'}
+                            sx={{
+                                color: row.team == Team.BLU ? blu : red
+                            }}
+                        >
+                            {row.team == Team.RED ? 'RED' : 'BLU'}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Name',
+                    tooltip: 'In Game Name',
+                    sortKey: 'name',
+                    sortable: true,
+                    align: 'left',
+                    width: 250,
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.name != '' ? row.name : row.steam_id}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Healing',
+                    tooltip: 'Total healing',
+                    sortKey: 'healing',
+                    sortable: true,
+                    align: 'left',
+                    width: 250,
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>{row.healing}</Typography>
+                    )
+                },
+                {
+                    label: 'Uber',
+                    tooltip: 'Total Uber Deploys',
+                    sortKey: 'charges_uber',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.charges_uber}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Krit',
+                    tooltip: 'Total Kritz Deploys',
+                    sortKey: 'charges_kritz',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.charges_kritz}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Vacc',
+                    tooltip: 'Total Uber Deploys',
+                    sortKey: 'charges_vacc',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.charges_vacc}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Quickfix',
+                    tooltip: 'Total Uber Deploys',
+                    sortKey: 'charges_quickfix',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.charges_quickfix}
+                        </Typography>
+                    )
+                }
+            ]}
+            sortColumn={sortColumn}
+            onSortColumnChanged={async (column) => {
+                setSortColumn(column);
+            }}
+            onSortOrderChanged={async (direction) => {
+                setSortOrder(direction);
+            }}
+            sortOrder={sortOrder}
+            rows={validRows}
+        />
     );
 };

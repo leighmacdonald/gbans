@@ -3,7 +3,7 @@ import { TeamScores } from './stats';
 import { apiCall, QueryFilter } from './common';
 import { parseDateTime } from '../util/text';
 
-interface MatchHealer {
+export interface MatchHealer {
     match_medic_id: number;
     match_player_id: number;
     healing: number;
@@ -75,7 +75,7 @@ export interface MatchPlayer {
     headshots: number;
     shots: number;
     hits: number;
-    medic_stats?: MatchHealer;
+    medic_stats: MatchHealer | null;
     classes: MatchPlayerClass[];
     killstreaks: MatchPlayerKillstreak[];
 }

@@ -120,13 +120,7 @@ export const LazyTableHeader = <T,>({
                                     <Typography
                                         padding={0}
                                         sx={{
-                                            fontWeight: 'bold',
-                                            textDecoration:
-                                                col.sortKey != sortColumn
-                                                    ? 'none'
-                                                    : order == 'asc'
-                                                    ? 'underline'
-                                                    : 'overline'
+                                            fontWeight: 'bold'
                                         }}
                                         variant={'button'}
                                     >

@@ -22,6 +22,14 @@ export enum RowsPerPage {
     Hundred = 100
 }
 
+export const compare = <T,>(
+    order: Order,
+    orderBy: keyof T
+): ((a: T, b: T) => number) =>
+    order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+
 export const stableSort = <T,>(
     array: T[],
     comparator: (a: T, b: T) => number
@@ -85,7 +93,7 @@ export const defaultRenderer = (
     }
 };
 
-const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
+export const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
     b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 
 export type Order = 'asc' | 'desc';
