@@ -134,19 +134,11 @@ func (match *Match) Winner() Team {
 	}
 
 	if strings.HasPrefix(match.MapName, "pl_") {
-		var (
-			winner Team
-			length time.Duration
-		)
-
-		for _, round := range match.Rounds {
-			if round.Length > length {
-				length = round.Length
-				winner = round.RoundWinner
-			}
+		if match.TeamScores.RedTime > match.TeamScores.BluTime {
+			return BLU
+		} else {
+			return RED
 		}
-
-		return winner
 	}
 
 	return UNASSIGNED

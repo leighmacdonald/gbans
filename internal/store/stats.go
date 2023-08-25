@@ -657,3 +657,45 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 
 	return db.Exec(ctx, delQuery, delArgs...)
 }
+
+type PlayerStats struct {
+}
+
+func (db *Store) PlayerStats() error {
+	const query = `
+		SELECT count(m.match_id)            as                     matches,
+       sum(case when mp.team = m.winner then 1 else 0 end) wins,
+       sum(mp.health_packs)         as                     health_packs,
+       sum(mp.extinguishes)         as                     extinguishes,
+       sum(mp.buildings)            as                     buildings,
+       sum(mpc.kills)               as                     kill,
+       sum(mpc.assists)             as                     assists,
+       sum(mpc.damage)              as                     damage,
+       sum(mpc.damage_taken)        as                     damage_taken,
+       sum(mpc.playtime)            as                     playtime,
+       sum(mpc.captures)            as                     captures,
+       sum(mpc.captures_blocked)    as                     captures_blocked,
+       sum(mpc.dominated)           as                     dominated,
+       sum(mpc.dominations)         as                     dominations,
+       sum(mpc.revenges)            as                     revenges,
+       sum(mpc.deaths)              as                     deaths,
+       sum(mpc.buildings_destroyed) as                     buildings_destroyed,
+       sum(mpc.healing_taken)       as                     healing_taken,
+       sum(mm.healing)              as                     healing,
+       sum(mm.drops)                as                     drops,
+       sum(mm.charge_uber)          as                     charge_uber,
+       sum(mm.charge_kritz)         as                     charge_kritz,
+       sum(mm.charge_quickfix)      as                     charge_quickfix,
+       sum(mm.charge_vacc)          as                     charge_vacc
+
+FROM match_player mp
+         LEFT JOIN match m on m.match_id = mp.match_id
+         LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
+         LEFT JOIN match_medic mm on mp.match_player_id = mm.match_player_id
+
+WHERE mp.steam_id = 76561197960458725 AND
+      m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP;
+		
+`
+	return nil
+}

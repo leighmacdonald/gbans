@@ -1441,7 +1441,7 @@ func matchASCIITable(match store.MatchResult) string {
 				name = name[0:17]
 			}
 
-			tableHealers.Append([]string{
+			tableKillstreaks.Append([]string{
 				player.Team.String()[0:1],
 				name,
 				killstreak.PlayerClass.String(),
@@ -1452,7 +1452,7 @@ func matchASCIITable(match store.MatchResult) string {
 
 		tableKillstreaks.Render()
 
-		topKs = fmt.Sprintf("```%s```", strings.Trim(writerKillstreak.String(), "\n"))
+		topKs = fmt.Sprintf("\n```%s```", strings.Trim(writerKillstreak.String(), "\n"))
 	}
 
 	resp := fmt.Sprintf("```%s``````%s```%s",

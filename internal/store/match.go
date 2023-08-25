@@ -156,6 +156,7 @@ type MatchResult struct {
 	TeamScores logparse.TeamScores `json:"team_scores"`
 	TimeStart  time.Time           `json:"time_start"`
 	TimeEnd    time.Time           `json:"time_end"`
+	Winner     logparse.Team       `json:"winner"`
 	Players    []*MatchPlayer      `json:"players"`
 	Chat       PersonMessages      `json:"chat"`
 }
@@ -489,14 +490,14 @@ func (db *Store) matchGetChat(ctx context.Context, matchID uuid.UUID) (PersonMes
 
 func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error {
 	const query = `
-		SELECT match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end 
+		SELECT match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner
 		FROM match WHERE match_id = $1`
 
 	if errMatch := db.
 		QueryRow(ctx, query, matchID).
 		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.Title,
 			&match.TeamScores.Red, &match.TeamScores.Blu, &match.TeamScores.BluTime, &match.TeamScores.BluTime,
-			&match.TimeStart, &match.TimeEnd); errMatch != nil {
+			&match.TimeStart, &match.TimeEnd, &match.Winner); errMatch != nil {
 		return errors.Wrapf(errMatch, "Failed to load root match")
 	}
 
@@ -568,8 +569,8 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	const (
 		minPlayers = 6
 		query      = `
-		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end) 
-		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10) 
+		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner) 
+		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11) 
 		RETURNING match_id`
 	)
 
@@ -588,7 +589,8 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 
 	if errQuery := transaction.
 		QueryRow(ctx, query, match.MatchID, match.ServerID, match.MapName, match.Title,
-			match.TeamScores.Red, match.TeamScores.Blu, match.TeamScores.RedTime, match.TeamScores.BluTime, match.TimeStart, match.TimeEnd).
+			match.TeamScores.Red, match.TeamScores.Blu, match.TeamScores.RedTime, match.TeamScores.BluTime,
+			match.TimeStart, match.TimeEnd, match.Winner()).
 		Scan(&match.MatchID); errQuery != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
 			db.log.Error("Failed to rollback tx", zap.Error(errRollback))
