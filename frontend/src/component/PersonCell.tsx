@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 
 export interface PersonCellProps {
     steam_id: string;
@@ -17,8 +18,22 @@ export const PersonCell = ({
     personaname
 }: PersonCellProps) => {
     const navigate = useNavigate();
+    const theme = useTheme();
+
     return (
-        <Stack direction={'row'} alignItems={'center'}>
+        <Stack
+            direction={'row'}
+            alignItems={'center'}
+            onClick={() => {
+                navigate(`/profile/${steam_id}`);
+            }}
+            sx={{
+                '&:hover': {
+                    cursor: 'pointer',
+                    backgroundColor: theme.palette.background.default
+                }
+            }}
+        >
             <Avatar
                 alt={personaname}
                 src={avatar}
@@ -31,9 +46,6 @@ export const PersonCell = ({
                 alignItems={'center'}
                 display={'inline-block'}
                 marginLeft={2}
-                onClick={() => {
-                    navigate(`/profile/${steam_id}`);
-                }}
             >
                 <Typography variant={'body1'}>{personaname}</Typography>
             </Box>
