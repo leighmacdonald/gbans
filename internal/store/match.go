@@ -85,6 +85,7 @@ type MatchPlayer struct {
 	MedicStats        *MatchHealer            `json:"medic_stats"`
 	Classes           []MatchPlayerClass      `json:"classes"`
 	Killstreaks       []MatchPlayerKillstreak `json:"killstreaks"`
+	Weapons           []MatchPlayerWeapon     `json:"weapons"`
 }
 
 func (player MatchPlayer) BiggestKillstreak() *MatchPlayerKillstreak {
@@ -251,6 +252,62 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 
 	if errRows := rows.Err(); errRows != nil {
 		return nil, Err(errRows)
+	}
+
+	return results, nil
+}
+
+type MatchPlayerWeapon struct {
+	Weapon
+	Kills     int     `json:"kills"`
+	Damage    int     `json:"damage"`
+	Shots     int     `json:"shots"`
+	Hits      int     `json:"hits"`
+	Accuracy  float64 `json:"accuracy"`
+	Backstabs int     `json:"backstabs"`
+	Headshots int     `json:"headshots"`
+	Airshots  int     `json:"airshots"`
+}
+
+func (db *Store) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]MatchPlayerWeapon, error) {
+	const query = `
+		SELECT mp.steam_id, mw.weapon_id, w.name, w.key,  mw.kills, mw.damage, mw.shots, mw.hits, mw.backstabs, mw.headshots, mw.airshots
+		FROM match m
+		LEFT JOIN match_player mp on m.match_id = mp.match_id
+		LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
+		LEFT JOIN weapon w on w.weapon_id = mw.weapon_id
+		WHERE m.match_id = $1 and mw.weapon_id is not null
+		ORDER BY mw.kills DESC`
+
+	results := map[steamid.SID64][]MatchPlayerWeapon{}
+
+	rows, errRows := db.Query(ctx, query, matchID)
+	if errRows != nil {
+		return nil, Err(errRows)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			steamID int64
+			mpw     MatchPlayerWeapon
+		)
+
+		if errScan := rows.
+			Scan(&steamID, &mpw.WeaponID, &mpw.Weapon.Name, &mpw.Weapon.Key, &mpw.Kills, &mpw.Damage, &mpw.Shots,
+				&mpw.Hits, &mpw.Backstabs, &mpw.Headshots, &mpw.Airshots); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		sid := steamid.New(steamID)
+
+		res, found := results[sid]
+		if !found {
+			res = []MatchPlayerWeapon{}
+		}
+
+		results[sid] = append(res, mpw)
 	}
 
 	return results, nil
@@ -547,6 +604,23 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 		}
 	}
 
+	weaponStats, errWeapons := db.matchGetPlayerWeapons(ctx, matchID)
+	if errWeapons != nil {
+		return errors.Wrap(errMedics, "Failed to fetch match weapon stats")
+	}
+
+	for steamID, stats := range weaponStats {
+		localStats := stats
+
+		for _, player := range match.Players {
+			if player.SteamID == steamID {
+				player.Weapons = localStats
+
+				break
+			}
+		}
+	}
+
 	chat, errChat := db.matchGetChat(ctx, matchID)
 
 	if errChat != nil && !errors.Is(errChat, ErrNoResult) {
@@ -719,6 +793,7 @@ func (db *Store) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, p
 		weaponID, found := db.weaponMap.Get(weapon)
 		if !found {
 			db.log.Error("Unknown weapon", zap.String("weapon", string(weapon)))
+
 			continue
 		}
 

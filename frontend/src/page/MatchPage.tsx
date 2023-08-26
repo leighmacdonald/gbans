@@ -4,6 +4,7 @@ import {
     MatchHealer,
     MatchPlayer,
     MatchPlayerClass,
+    MatchPlayerWeapon,
     MatchResult,
     Team
 } from '../api';
@@ -29,6 +30,11 @@ import { formatDistance } from 'date-fns';
 import SportsIcon from '@mui/icons-material/Sports';
 import { Heading } from '../component/Heading';
 import { PersonCell } from '../component/PersonCell';
+import { useTheme } from '@mui/material/styles';
+import MasksIcon from '@mui/icons-material/Masks';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import TableHead from '@mui/material/TableHead';
 
 interface PlayerClassHoverStatsProps {
     stats: MatchPlayerClass;
@@ -59,6 +65,7 @@ const ClassStatRow = ({ name, value }: ClassStatRowProp) => {
         </TableRow>
     );
 };
+
 const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
     const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
 
@@ -169,6 +176,168 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
         </div>
     );
 };
+interface WeaponStatRowProps {
+    weaponStat: MatchPlayerWeapon;
+}
+
+const WeaponCell = ({
+    value,
+    width
+}: {
+    value: string | number;
+    width?: number | string;
+}) => {
+    return (
+        <TableCell width={width ?? 'auto'}>
+            <Typography
+                padding={0.5}
+                variant={'body2'}
+                sx={{ fontFamily: 'Monospace' }}
+            >
+                {value}
+            </Typography>
+        </TableCell>
+    );
+};
+
+const WeaponStatRow = ({ weaponStat }: WeaponStatRowProps) => {
+    return (
+        <TableRow>
+            <WeaponCell value={weaponStat.name} width={'400px'} />
+            <WeaponCell value={weaponStat.kills} />
+            <WeaponCell value={weaponStat.damage} />
+            <WeaponCell value={weaponStat.shots} />
+            <WeaponCell value={weaponStat.hits} />
+            <WeaponCell
+                value={`${
+                    !isNaN((weaponStat.hits / weaponStat.shots) * 100)
+                        ? ((weaponStat.hits / weaponStat.shots) * 100).toFixed(
+                              2
+                          )
+                        : 0
+                }%`}
+            />
+            <WeaponCell value={weaponStat.backstabs} />
+            <WeaponCell value={weaponStat.headshots} />
+            <WeaponCell value={weaponStat.airshots} />
+        </TableRow>
+    );
+};
+
+interface PlayerWeaponHoverStatsProps {
+    stats: MatchPlayerWeapon[];
+}
+
+const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
+    const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+
+    const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handlePopoverClose = () => {
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    return (
+        <div>
+            <div
+                onMouseEnter={handlePopoverOpen}
+                onMouseLeave={handlePopoverClose}
+            >
+                <InfoOutlinedIcon />
+            </div>
+            <Popover
+                id="mouse-over-popover"
+                sx={{
+                    pointerEvents: 'none'
+                }}
+                open={open}
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                }}
+                onClose={handlePopoverClose}
+                disableRestoreFocus
+            >
+                <ContainerWithHeader
+                    title={'Weapon Stats'}
+                    align={'space-between'}
+                >
+                    <TableContainer>
+                        <Table padding={'checkbox'} size={'small'}>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell variant="head" width={'400px'}>
+                                        <Typography variant={'button'}>
+                                            Weapon
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell variant="head">
+                                        <Typography variant={'button'}>
+                                            Kills
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            Damage
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            Shots
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            Hits
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            Acc%
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            BS
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            HS
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant={'button'}>
+                                            AS
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {stats.map((ws, index) => {
+                                    return (
+                                        <WeaponStatRow
+                                            weaponStat={ws}
+                                            key={`ws-${ws.damage}-${ws.weapon_id}-${index}`}
+                                        />
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </ContainerWithHeader>
+            </Popover>
+        </div>
+    );
+};
 
 const blu = '#547d8c';
 const red = '#a7584b';
@@ -178,6 +347,7 @@ export const MatchPage = () => {
     const [match, setMatch] = useState<MatchResult>();
     const [loading, setLoading] = React.useState<boolean>(true);
     const { match_id } = useParams<string>();
+    const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
 
     if (!match_id || match_id == '') {
@@ -199,6 +369,10 @@ export const MatchPage = () => {
                 setLoading(false);
             });
     }, [match_id, navigate, sendFlash, setMatch]);
+
+    const headerColour = useMemo(() => {
+        return theme.palette.common.white;
+    }, [theme.palette.common.white]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -229,21 +403,29 @@ export const MatchPage = () => {
                     </Stack>
                 </Grid>
                 <Grid xs={5} bgcolor={blu}>
-                    <Typography variant={'h1'} sx={{ fontWeight: 700 }}>
+                    <Typography
+                        variant={'h1'}
+                        sx={{ fontWeight: 700 }}
+                        color={headerColour}
+                    >
                         BLU
                     </Typography>
                 </Grid>
                 <Grid xs={1} bgcolor={blu}>
-                    <Typography variant={'h1'} textAlign={'right'}>
+                    <Typography
+                        variant={'h1'}
+                        textAlign={'right'}
+                        color={headerColour}
+                    >
                         {match.team_scores.blu}
                     </Typography>
                 </Grid>
-                <Grid xs={1} bgcolor={red}>
+                <Grid xs={1} bgcolor={red} color={headerColour}>
                     <Typography variant={'h1'}>
                         {match.team_scores.red}
                     </Typography>
                 </Grid>
-                <Grid xs={5} bgcolor={red}>
+                <Grid xs={5} bgcolor={red} color={headerColour}>
                     <Typography
                         variant={'h1'}
                         textAlign={'right'}
@@ -253,15 +435,19 @@ export const MatchPage = () => {
                     </Typography>
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
-                    <Heading align={'center'}>Players</Heading>
+                    <Heading align={'center'} iconLeft={<GpsFixedIcon />}>
+                        Players
+                    </Heading>
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
                     <MatchPlayersTable players={match.players} />
                 </Grid>
-                <Grid xs={12} padding={0}>
-                    <Heading align={'center'}>Healers</Heading>
+                <Grid xs={12} padding={0} paddingTop={1}>
+                    <Heading align={'center'} iconLeft={<MasksIcon />}>
+                        Healers
+                    </Heading>
                 </Grid>
-                <Grid xs={12} padding={0}>
+                <Grid xs={12} padding={0} paddingTop={1}>
                     <MatchHealersTable players={match.players} />
                 </Grid>
             </Grid>
@@ -276,6 +462,7 @@ interface MatchPlayersTableProps {
 const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof MatchPlayer>('kills');
+    const theme = useTheme();
 
     const validRows = useMemo(() => {
         return stableSort(
@@ -303,19 +490,24 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     sortable: true,
                     align: 'left',
                     width: '50px',
+                    style: (row) => {
+                        return {
+                            height: '100%',
+                            backgroundColor: row.team == Team.BLU ? blu : red,
+                            textAlign: 'center'
+                        };
+                    },
                     renderer: (row) => (
                         <Typography
                             variant={'button'}
-                            sx={{
-                                color: row.team == Team.BLU ? blu : red
-                            }}
+                            color={theme.palette.common.white}
                         >
                             {row.team == Team.RED ? 'RED' : 'BLU'}
                         </Typography>
                     )
                 },
                 {
-                    label: 'Name',
+                    label: 'Player Name',
                     tooltip: 'In Game Name',
                     sortKey: 'name',
                     sortable: true,
@@ -335,7 +527,7 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     )
                 },
                 {
-                    label: 'C',
+                    label: '',
                     tooltip: 'Classes',
                     sortKey: 'classes',
                     align: 'left',
@@ -353,6 +545,18 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                                 <></>
                             )}
                         </Stack>
+                    )
+                },
+                {
+                    label: '',
+                    tooltip: 'Detailed Weapon Stats',
+                    virtual: true,
+                    virtualKey: 'weapons',
+                    sortable: false,
+                    align: 'center',
+                    // width: '25px',
+                    renderer: (row) => (
+                        <PlayerWeaponHoverStats stats={row.weapons} />
                     )
                 },
                 {
@@ -567,6 +771,8 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
             return stableSort(rows, compare(sortOrder, sortColumn));
         }, [rows, sortColumn, sortOrder]);
 
+    const theme = useTheme();
+
     return (
         <LazyTable<MedicRow>
             columns={[
@@ -577,11 +783,18 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortable: true,
                     align: 'left',
                     width: '50px',
+                    style: (row) => {
+                        return {
+                            height: '100%',
+                            backgroundColor: row.team == Team.BLU ? blu : red,
+                            textAlign: 'center'
+                        };
+                    },
                     renderer: (row) => (
                         <Typography
                             variant={'button'}
                             sx={{
-                                color: row.team == Team.BLU ? blu : red
+                                color: theme.palette.common.white
                             }}
                         >
                             {row.team == Team.RED ? 'RED' : 'BLU'}
@@ -596,9 +809,13 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     align: 'left',
                     width: 250,
                     renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.name != '' ? row.name : row.steam_id}
-                        </Typography>
+                        <PersonCell
+                            steam_id={row.steam_id}
+                            personaname={
+                                row.name != '' ? row.name : row.steam_id
+                            }
+                            avatar={`https://avatars.akamai.steamstatic.com/${row.avatar_hash}.jpg`}
+                        />
                     )
                 },
                 {
@@ -657,6 +874,28 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     renderer: (row) => (
                         <Typography variant={'body1'}>
                             {row.charges_quickfix}
+                        </Typography>
+                    )
+                },
+                {
+                    label: 'Drops',
+                    tooltip: 'Total Drops',
+                    sortKey: 'drops',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>{row.drops}</Typography>
+                    )
+                },
+                {
+                    label: 'Avg. Len',
+                    tooltip: 'Average Uber Length',
+                    sortKey: 'avg_uber_length',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.avg_uber_length}
                         </Typography>
                     )
                 }

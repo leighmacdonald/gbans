@@ -7,13 +7,14 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
+import { SxProps, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import { LoadingSpinner } from './LoadingSpinner';
 import Select from '@mui/material/Select';
 import Pagination from '@mui/material/Pagination';
+import { Theme } from '@mui/material';
 
 export enum RowsPerPage {
     Ten = 10,
@@ -57,6 +58,7 @@ export interface HeadingCell<T> {
     sortable?: boolean;
     // Custom cell render function for complex types
     renderer?: (obj: T, value: unknown, type: string) => ReactNode;
+    style?: (obj: T) => SxProps<Theme> | undefined;
     queryValue?: (obj: T) => string;
     onClick?: (row: T) => void;
 }
@@ -192,16 +194,18 @@ export const DataTable = <T,>({
                                 row[col.sortKey as keyof T],
                                 col?.sortType ?? 'string'
                             );
+                            const style = {
+                                width: col?.width ?? 'auto',
+                                '&:hover': {
+                                    cursor: 'pointer'
+                                }
+                            };
+                            const userStyle = col?.style ? col.style(row) : {};
                             return (
                                 <TableCell
                                     key={`col-${colIdx}`}
                                     align={col?.align ?? 'right'}
-                                    sx={{
-                                        width: col?.width ?? 'auto',
-                                        '&:hover': {
-                                            cursor: 'pointer'
-                                        }
-                                    }}
+                                    sx={{ ...style, ...userStyle }}
                                 >
                                     {value}
                                 </TableCell>

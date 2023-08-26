@@ -18,6 +18,20 @@ export interface MatchHealer {
     biggest_adv_lost: number;
 }
 
+export interface MatchPlayerWeapon {
+    weapon_id: number;
+    key: string;
+    name: string;
+    kills: number;
+    damage: number;
+    shots: number;
+    hits: number;
+    accuracy: number;
+    backstabs: number;
+    headshots: number;
+    airshots: number;
+}
+
 export interface MatchPlayerClass {
     match_player_class_id: number;
     match_player_id: number;
@@ -78,6 +92,7 @@ export interface MatchPlayer {
     medic_stats: MatchHealer | null;
     classes: MatchPlayerClass[];
     killstreaks: MatchPlayerKillstreak[];
+    weapons: MatchPlayerWeapon[];
 }
 
 export interface PersonMessages {}

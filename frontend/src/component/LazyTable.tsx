@@ -36,22 +36,26 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                                 row[col.sortKey as keyof T],
                                 col?.sortType ?? 'string'
                             );
+                            const style = {
+                                paddingLeft: 0.5,
+                                paddingRight: 0.5,
+                                paddingTop: 0,
+                                paddingBottom: 0,
+                                width: col?.width ?? 'auto',
+                                ...(col?.style ? col.style(row) : {})
+                            };
                             return (
                                 <TableCell
                                     variant="body"
                                     key={`col-${colIdx}`}
                                     align={col?.align ?? 'right'}
+                                    padding={'none'}
                                     onClick={() => {
                                         if (col.onClick) {
                                             col.onClick(row);
                                         }
                                     }}
-                                    sx={{
-                                        '&:hover': {
-                                            cursor: 'pointer'
-                                        },
-                                        width: col?.width ?? 'auto'
-                                    }}
+                                    sx={style}
                                 >
                                     {value}
                                 </TableCell>
@@ -89,11 +93,15 @@ export const LazyTableHeader = <T,>({
                         <TableCell
                             variant="head"
                             align={col.align ?? 'right'}
-                            key={col.label}
+                            key={`${col.tooltip}-${col.label}-${
+                                col.sortKey as string
+                            }-${col.virtualKey}`}
                             sortDirection={order}
+                            padding={'none'}
                             sx={{
                                 width: col?.width ?? 'auto',
-                                backgroundColor: bgColor
+                                backgroundColor: bgColor,
+                                padding: 0.5
                             }}
                         >
                             {col.sortable ? (
