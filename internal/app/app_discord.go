@@ -1387,7 +1387,7 @@ func matchASCIITable(match store.MatchResult) string {
 
 	writerHealers := &strings.Builder{}
 	tableHealers := defaultTable(writerPlayers)
-	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Heal", "H/M", "U", "K", "Q", "V", "D"})
+	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Heal", "H/M", "Dr", "U/K/Q/V", "AUL"})
 
 	for _, player := range match.Healers() {
 		if player.MedicStats.Healing < store.MinMedicHealing {
@@ -1410,11 +1410,11 @@ func matchASCIITable(match store.MatchResult) string {
 			fmt.Sprintf("%d", player.Deaths),
 			fmt.Sprintf("%d", player.MedicStats.Healing),
 			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
-			fmt.Sprintf("%d", player.MedicStats.ChargesUber),
-			fmt.Sprintf("%d", player.MedicStats.ChargesKritz),
-			fmt.Sprintf("%d", player.MedicStats.ChargesQuickfix),
-			fmt.Sprintf("%d", player.MedicStats.ChargesVacc),
 			fmt.Sprintf("%d", player.MedicStats.Drops),
+			fmt.Sprintf("%d/%d/%d/%d", player.MedicStats.ChargesUber, player.MedicStats.ChargesKritz,
+				player.MedicStats.ChargesQuickfix, player.MedicStats.ChargesVacc),
+
+			fmt.Sprintf("%.1f", player.MedicStats.AvgUberLength),
 		})
 	}
 
@@ -1427,7 +1427,7 @@ func matchASCIITable(match store.MatchResult) string {
 	if len(topKillstreaks) > 0 {
 		writerKillstreak := &strings.Builder{}
 		tableKillstreaks := defaultTable(writerKillstreak)
-		tableKillstreaks.SetHeader([]string{" ", "Name", "K", "Class", "Playtime"})
+		tableKillstreaks.SetHeader([]string{" ", "Name", "Killstreak", "Class", "Duration"})
 
 		for _, player := range topKillstreaks {
 			killstreak := player.BiggestKillstreak()
@@ -1444,21 +1444,21 @@ func matchASCIITable(match store.MatchResult) string {
 			tableKillstreaks.Append([]string{
 				player.Team.String()[0:1],
 				name,
-				killstreak.PlayerClass.String(),
 				fmt.Sprintf("%d", killstreak.Killstreak),
+				killstreak.PlayerClass.String(),
 				(time.Duration(killstreak.Duration) * time.Second).String(),
 			})
 		}
 
 		tableKillstreaks.Render()
 
-		topKs = fmt.Sprintf("\n```%s```", strings.Trim(writerKillstreak.String(), "\n"))
+		topKs = writerKillstreak.String()
 	}
 
-	resp := fmt.Sprintf("```%s``````%s```%s",
+	resp := fmt.Sprintf("```%s\n%s\n%s```",
 		strings.Trim(writerPlayers.String(), "\n"),
 		strings.Trim(writerHealers.String(), "\n"),
-		topKs)
+		strings.Trim(topKs, "\n"))
 
 	return resp
 }
