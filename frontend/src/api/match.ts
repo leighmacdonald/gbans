@@ -109,8 +109,6 @@ export interface MatchResult {
     chat: PersonMessages[];
 }
 
-export interface MatchSummary {}
-
 export const apiGetMatch = async (match_id: string) => {
     const match = await apiCall<MatchResult>(`/api/log/${match_id}`, 'GET');
     if (match.result) {
@@ -137,5 +135,39 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     time_end?: Date;
 }
 
-export const apiGetMatches = async (opts: MatchesQueryOpts) =>
-    await apiCall<MatchSummary[], MatchesQueryOpts>(`/api/logs`, 'POST', opts);
+interface DataCount {
+    count: number;
+}
+
+interface MatchSummaryResults extends DataCount {
+    matches: MatchSummary[];
+}
+
+export const apiGetMatches = async (opts: MatchesQueryOpts) => {
+    const resp = await apiCall<MatchSummaryResults, MatchesQueryOpts>(
+        `/api/logs`,
+        'POST',
+        opts
+    );
+    if (resp.result) {
+        resp.result.matches = resp.result.matches.map((m) => {
+            m.time_start = parseDateTime(m.time_start as unknown as string);
+            m.time_end = parseDateTime(m.time_end as unknown as string);
+            return m;
+        });
+    }
+    return resp;
+};
+
+export interface MatchSummary {
+    match_id: string;
+    server_id: number;
+    is_winner: boolean;
+    short_name: string;
+    title: string;
+    map_name: string;
+    score_blu: number;
+    score_red: number;
+    time_start: Date;
+    time_end: Date;
+}

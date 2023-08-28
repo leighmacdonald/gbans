@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -53,39 +54,16 @@ type MatchPlayerClass struct {
 }
 
 type MatchPlayer struct {
-	MatchPlayerID     int64                   `json:"match_player_id"`
-	SteamID           steamid.SID64           `json:"steam_id"`
-	Team              logparse.Team           `json:"team"`
-	Name              string                  `json:"name"`
-	AvatarHash        string                  `json:"avatar_hash"`
-	TimeStart         time.Time               `json:"time_start"`
-	TimeEnd           time.Time               `json:"time_end"`
-	Kills             int                     `json:"kills"`
-	Assists           int                     `json:"assists"`
-	Deaths            int                     `json:"deaths"`
-	Suicides          int                     `json:"suicides"`
-	Dominations       int                     `json:"dominations"`
-	Dominated         int                     `json:"dominated"`
-	Revenges          int                     `json:"revenges"`
-	Damage            int                     `json:"damage"`
-	DamageTaken       int                     `json:"damage_taken"`
-	HealingTaken      int                     `json:"healing_taken"`
-	HealthPacks       int                     `json:"health_packs"`
-	HealingPacks      int                     `json:"healing_packs"` // Healing from packs
-	Captures          int                     `json:"captures"`
-	CapturesBlocked   int                     `json:"captures_blocked"`
-	Extinguishes      int                     `json:"extinguishes"`
-	BuildingBuilt     int                     `json:"building_built"`
-	BuildingDestroyed int                     `json:"building_destroyed"` // Opposing team buildings
-	Backstabs         int                     `json:"backstabs"`
-	Airshots          int                     `json:"airshots"`
-	Headshots         int                     `json:"headshots"`
-	Shots             int                     `json:"shots"`
-	Hits              int                     `json:"hits"`
-	MedicStats        *MatchHealer            `json:"medic_stats"`
-	Classes           []MatchPlayerClass      `json:"classes"`
-	Killstreaks       []MatchPlayerKillstreak `json:"killstreaks"`
-	Weapons           []MatchPlayerWeapon     `json:"weapons"`
+	MatchPlayerID int64 `json:"match_player_id"`
+	CommonPlayerStats
+	Team      logparse.Team `json:"team"`
+	TimeStart time.Time     `json:"time_start"`
+	TimeEnd   time.Time     `json:"time_end"`
+
+	MedicStats  *MatchHealer            `json:"medic_stats"`
+	Classes     []MatchPlayerClass      `json:"classes"`
+	Killstreaks []MatchPlayerKillstreak `json:"killstreaks"`
+	Weapons     []MatchPlayerWeapon     `json:"weapons"`
 }
 
 func (player MatchPlayer) BiggestKillstreak() *MatchPlayerKillstreak {
@@ -628,6 +606,24 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *Mat
 	}
 
 	match.Chat = chat
+
+	if match.Chat == nil {
+		match.Chat = PersonMessages{}
+	}
+
+	for _, player := range match.Players {
+		if player.Weapons == nil {
+			player.Weapons = []MatchPlayerWeapon{}
+		}
+
+		if player.Classes == nil {
+			player.Classes = []MatchPlayerClass{}
+		}
+
+		if player.Killstreaks == nil {
+			player.Killstreaks = []MatchPlayerKillstreak{}
+		}
+	}
 
 	return nil
 }
@@ -1191,4 +1187,169 @@ func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]P
 	}
 
 	return stats, nil
+}
+
+type CommonPlayerStats struct {
+	SteamID           steamid.SID64 `json:"steam_id"`
+	Name              string        `json:"name"`
+	AvatarHash        string        `json:"avatar_hash"`
+	Kills             int           `json:"kills"`
+	Assists           int           `json:"assists"`
+	Deaths            int           `json:"deaths"`
+	Suicides          int           `json:"suicides"`
+	Dominations       int           `json:"dominations"`
+	Dominated         int           `json:"dominated"`
+	Revenges          int           `json:"revenges"`
+	Damage            int           `json:"damage"`
+	DamageTaken       int           `json:"damage_taken"`
+	HealingTaken      int           `json:"healing_taken"`
+	HealthPacks       int           `json:"health_packs"`
+	HealingPacks      int           `json:"healing_packs"` // Healing from packs
+	Captures          int           `json:"captures"`
+	CapturesBlocked   int           `json:"captures_blocked"`
+	Extinguishes      int           `json:"extinguishes"`
+	BuildingBuilt     int           `json:"building_built"`
+	BuildingDestroyed int           `json:"building_destroyed"` // Opposing team buildings
+	Backstabs         int           `json:"backstabs"`
+	Airshots          int           `json:"airshots"`
+	Headshots         int           `json:"headshots"`
+	Shots             int           `json:"shots"`
+	Hits              int           `json:"hits"`
+}
+type PlayerStats struct {
+	CommonPlayerStats
+	PlayerMedicStats
+	MatchesTotal int           `json:"matches_total"`
+	MatchesWon   int           `json:"matches_won"`
+	PlayTime     time.Duration `json:"play_time"`
+}
+
+func (db *Store) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *PlayerStats) error {
+	const query = `
+		SELECT count(m.match_id)            as                     matches,
+			   sum(case when mp.team = m.winner then 1 else 0 end) wins,
+			   sum(mp.health_packs)         as                     health_packs,
+			   sum(mp.extinguishes)         as                     extinguishes,
+			   sum(mp.buildings)            as                     buildings,
+			   sum(mpc.kills)               as                     kill,
+			   sum(mpc.assists)             as                     assists,
+			   sum(mpc.damage)              as                     damage,
+			   sum(mpc.damage_taken)        as                     damage_taken,
+			   sum(mpc.playtime)            as                     playtime,
+			   sum(mpc.captures)            as                     captures,
+			   sum(mpc.captures_blocked)    as                     captures_blocked,
+			   sum(mpc.dominated)           as                     dominated,
+			   sum(mpc.dominations)         as                     dominations,
+			   sum(mpc.revenges)            as                     revenges,
+			   sum(mpc.deaths)              as                     deaths,
+			   sum(mpc.buildings_destroyed) as                     buildings_destroyed,
+			   sum(mpc.healing_taken)       as                     healing_taken,
+			   sum(mm.healing)              as                     healing,
+			   sum(mm.drops)                as                     drops,
+			   sum(mm.charge_uber)          as                     charge_uber,
+			   sum(mm.charge_kritz)         as                     charge_kritz,
+			   sum(mm.charge_quickfix)      as                     charge_quickfix,
+			   sum(mm.charge_vacc)          as                     charge_vacc
+		
+		FROM match_player mp
+				 LEFT JOIN match m on m.match_id = mp.match_id
+				 LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
+				 LEFT JOIN match_medic mm on mp.match_player_id = mm.match_player_id
+		
+		WHERE mp.steam_id = $1 AND
+			  m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
+
+	if errQuery := db.
+		QueryRow(ctx, query, steamID).
+		Scan(&stats.MatchesWon, &stats.MatchesWon, &stats.HealthPacks,
+			&stats.Extinguishes, &stats.BuildingBuilt, &stats.Kills, &stats.Assists, &stats.Damage, &stats.DamageTaken,
+			&stats.PlayTime, &stats.Captures, &stats.CapturesBlocked, &stats.Dominated, &stats.Dominations, &stats.Revenges,
+			&stats.Deaths, &stats.BuildingDestroyed, &stats.HealingTaken, &stats.Healing, &stats.Drops, &stats.ChargesUber,
+			&stats.ChargesKritz, &stats.ChargesQuickfix, &stats.ChargesVacc); errQuery != nil {
+		return Err(errQuery)
+	}
+
+	stats.SteamID = steamID
+
+	return nil
+}
+
+type MatchSummary struct {
+	MatchID   uuid.UUID `json:"match_id"`
+	ServerID  int       `json:"server_id"`
+	IsWinner  bool      `json:"is_winner"`
+	ShortName string    `json:"short_name"`
+	Title     string    `json:"title"`
+	MapName   string    `json:"map_name"`
+	ScoreBlu  int       `json:"score_blu"`
+	ScoreRed  int       `json:"score_red"`
+	TimeStart time.Time `json:"time_start"`
+	TimeEnd   time.Time `json:"time_end"`
+}
+
+func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error) {
+	builder := db.sb.
+		Select(
+			"m.match_id",
+			"m.server_id",
+			"case when mp.team = m.winner then true else false end as winner",
+			"s.short_name",
+			"m.title",
+			"m.map",
+			"m.score_blu",
+			"m.score_red",
+			"m.time_start",
+			"m.time_end").
+		From("match m").
+		LeftJoin("public.match_player mp on m.match_id = mp.match_id").
+		LeftJoin("public.server s on s.server_id = m.server_id")
+
+	if opts.Map != "" {
+		builder = builder.Where(sq.Eq{"m.map": opts.Map})
+	}
+
+	if opts.SteamID.Valid() {
+		builder = builder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
+	}
+
+	if opts.Desc {
+		builder = builder.OrderBy("m.match_id DESC")
+	} else {
+		builder = builder.OrderBy("m.match_id ASC")
+	}
+
+	if opts.Limit > 0 {
+		builder = builder.Limit(opts.Limit)
+	}
+
+	query, args, errQueryArgs := builder.ToSql()
+	if errQueryArgs != nil {
+		return nil, 0, errors.Wrapf(errQueryArgs, "Failed to build query")
+	}
+
+	rows, errQuery := db.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, 0, errors.Wrapf(errQuery, "Failed to query matches")
+	}
+
+	defer rows.Close()
+
+	var matches []MatchSummary
+
+	for rows.Next() {
+		var summary MatchSummary
+		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
+			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
+			&summary.TimeEnd); errScan != nil {
+			return nil, 0, errors.Wrapf(errScan, "Failed to scan match row")
+		}
+
+		matches = append(matches, summary)
+	}
+
+	if rows.Err() != nil {
+		db.log.Error("Matches rows error", zap.Error(rows.Err()))
+	}
+
+	return matches, 0, nil
 }

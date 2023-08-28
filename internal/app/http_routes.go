@@ -120,7 +120,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug", "/log/:match_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
+		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network",
 	}
 	for _, rt := range jsRoutes {

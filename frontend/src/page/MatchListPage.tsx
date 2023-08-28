@@ -1,17 +1,197 @@
-import React, { JSX } from 'react';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import { Heading } from '../component/Heading';
+import React, { JSX, useEffect, useState } from 'react';
+import { LazyTable } from '../component/LazyTable';
+import Grid from '@mui/material/Unstable_Grid2';
+import { Order, RowsPerPage } from '../component/DataTable';
+import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
+import Typography from '@mui/material/Typography';
+import { IconButton, TablePagination } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import Tooltip from '@mui/material/Tooltip';
+import { useNavigate, useParams } from 'react-router-dom';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import { PageNotFound } from './PageNotFound';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+
+interface MatchSummaryTableProps {
+    steam_id: string;
+}
+
+const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
+    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortColumn, setSortColumn] =
+        useState<keyof MatchSummary>('match_id');
+    const [rows, setRows] = useState<MatchSummary[]>([]);
+    const [totalRows, setTotalRows] = useState<number>(0);
+    const [page, setPage] = useState(0);
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
+        RowsPerPage.TwentyFive
+    );
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const opts: MatchesQueryOpts = {};
+        opts.steam_id = steam_id;
+        opts.limit = rowPerPageCount;
+        apiGetMatches(opts).then((resp) => {
+            if (!resp.result) {
+                return;
+            }
+            setTotalRows(resp.result.count);
+            setRows(resp.result.matches);
+        });
+    }, [rowPerPageCount, steam_id]);
+
+    return (
+        <Grid>
+            <Grid xs={'auto'}>
+                <TablePagination
+                    component="div"
+                    variant={'head'}
+                    page={page}
+                    count={totalRows}
+                    showFirstButton
+                    showLastButton
+                    rowsPerPage={rowPerPageCount}
+                    onRowsPerPageChange={(
+                        event: React.ChangeEvent<
+                            HTMLInputElement | HTMLTextAreaElement
+                        >
+                    ) => {
+                        setRowPerPageCount(parseInt(event.target.value, 10));
+                        setPage(0);
+                    }}
+                    onPageChange={(_, newPage) => {
+                        setPage(newPage);
+                    }}
+                />
+            </Grid>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Match History'}>
+                    <LazyTable
+                        sortOrder={sortOrder}
+                        sortColumn={sortColumn}
+                        onSortColumnChanged={async (column) => {
+                            setSortColumn(column);
+                        }}
+                        onSortOrderChanged={async (direction) => {
+                            setSortOrder(direction);
+                        }}
+                        rows={rows}
+                        columns={[
+                            {
+                                label: '',
+                                tooltip: 'View Match Details',
+                                sortKey: 'match_id',
+                                align: 'left',
+
+                                width: 40,
+                                renderer: (row) => (
+                                    <Tooltip title={'View Match'}>
+                                        <IconButton
+                                            color={'primary'}
+                                            onClick={() => {
+                                                navigate(
+                                                    `/log/${row.match_id}`
+                                                );
+                                            }}
+                                        >
+                                            <VisibilityIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                )
+                            },
+                            {
+                                label: 'Server Name',
+                                tooltip: 'Server Name',
+                                sortKey: 'title',
+                                align: 'left',
+                                width: '50%',
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.title}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'Map Name',
+                                tooltip: 'Map Name',
+                                sortKey: 'map_name',
+                                align: 'left',
+                                sortable: true,
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.map_name}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'RED',
+                                tooltip: 'RED Score',
+                                sortKey: 'score_red',
+                                align: 'left',
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.score_red}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'BLU',
+                                tooltip: 'BLU Score',
+                                sortKey: 'score_blu',
+                                align: 'left',
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.score_blu}
+                                    </Typography>
+                                )
+                            },
+                            {
+                                label: 'Won',
+                                tooltip: 'Won',
+                                sortKey: 'is_winner',
+                                align: 'left',
+                                sortable: true,
+                                renderer: (row) => {
+                                    return row.is_winner ? (
+                                        <CheckIcon color={'success'} />
+                                    ) : (
+                                        <CloseIcon color={'error'} />
+                                    );
+                                }
+                            },
+                            {
+                                label: 'Date',
+                                tooltip: 'Date',
+                                sortKey: 'time_start',
+                                align: 'left',
+                                renderer: (row) => (
+                                    <Typography variant={'button'}>
+                                        {row.time_start.toLocaleString()}
+                                    </Typography>
+                                )
+                            }
+                        ]}
+                    />
+                </ContainerWithHeader>
+            </Grid>
+        </Grid>
+    );
+};
 
 export const MatchListPage = (): JSX.Element => {
+    const { steam_id } = useParams<string>();
+
+    if (!steam_id) {
+        return <PageNotFound error={'Invalid steam id'} />;
+    }
+
     return (
-        <Stack>
-            <Paper>
-                <Box>
-                    <Heading>Match History</Heading>
-                </Box>
-            </Paper>
-        </Stack>
+        <Grid container>
+            <Grid xs={12}>
+                <MatchSummaryTable steam_id={steam_id} />
+            </Grid>
+        </Grid>
     );
 };

@@ -225,7 +225,9 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 }
                                                             />
                                                             <Route
-                                                                path={'/logs'}
+                                                                path={
+                                                                    '/logs/:steam_id'
+                                                                }
                                                                 element={
                                                                     <ErrorBoundary>
                                                                         <PrivateRoute

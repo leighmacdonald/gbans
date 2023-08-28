@@ -2950,7 +2950,14 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetMatches(_ *App) gin.HandlerFunc {
+type MatchQueryResults struct {
+	ResultsCount
+	Matches []store.MatchSummary `json:"matches"`
+}
+
+func onAPIGetMatches(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
 		var opts store.MatchesQueryOpts
 		if errBind := ctx.BindJSON(&opts); errBind != nil {
@@ -2959,14 +2966,18 @@ func onAPIGetMatches(_ *App) gin.HandlerFunc {
 			return
 		}
 
-		// matches, matchesErr := app.db.Matches(ctx, opts)
-		// if matchesErr != nil {
-		//	responseErr(ctx, http.StatusInternalServerError, nil)
-		//
-		//	return
-		// }
+		matches, totalCount, matchesErr := app.db.Matches(ctx, opts)
+		if matchesErr != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Error("Failed to perform query", zap.Error(matchesErr))
 
-		responseOK(ctx, http.StatusOK, nil)
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, MatchQueryResults{
+			ResultsCount: ResultsCount{Count: totalCount},
+			Matches:      matches,
+		})
 	}
 }
 
@@ -3002,9 +3013,13 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 	}
 }
 
+type ResultsCount struct {
+	Count int64 `json:"count"`
+}
+
 type connectionQueryResults struct {
-	TotalMessages int64                                `json:"total_messages"`
-	Connections   []store.QueryConnectionHistoryResult `json:"connections"`
+	ResultsCount
+	Connections []store.QueryConnectionHistoryResult `json:"connections"`
 }
 
 func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
@@ -3029,8 +3044,8 @@ func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 		}
 
 		responseOK(ctx, http.StatusOK, connectionQueryResults{
-			TotalMessages: totalCount,
-			Connections:   ipHist,
+			ResultsCount: ResultsCount{Count: totalCount},
+			Connections:  ipHist,
 		})
 	}
 }
@@ -3100,15 +3115,15 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{
-			TotalMessages: totalMessages,
-			Messages:      messages,
+			ResultsCount: ResultsCount{Count: totalMessages},
+			Messages:     messages,
 		})
 	}
 }
 
 type messageQueryResults struct {
-	TotalMessages int64                          `json:"total_messages"`
-	Messages      []store.QueryChatHistoryResult `json:"messages"`
+	ResultsCount
+	Messages []store.QueryChatHistoryResult `json:"messages"`
 }
 
 func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
@@ -3144,8 +3159,8 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{
-			TotalMessages: totalMessages,
-			Messages:      messages,
+			ResultsCount: ResultsCount{Count: totalMessages},
+			Messages:     messages,
 		})
 	}
 }
