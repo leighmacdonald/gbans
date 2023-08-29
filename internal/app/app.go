@@ -76,6 +76,25 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 	return application
 }
 
+func (app *App) initLogAddress() {
+	if app.conf.Debug.AddRCONLogAddress == "" {
+		return
+	}
+
+	time.Sleep(time.Second * 60)
+
+	for _, server := range app.state.connections {
+		if server.RemoteConsole == nil {
+			continue
+		}
+
+		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", app.conf.Debug.AddRCONLogAddress))
+		if errExec != nil {
+			app.log.Error("Failed to set logaddress")
+		}
+	}
+}
+
 type userWarning struct {
 	WarnReason    store.Reason
 	Message       string

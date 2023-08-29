@@ -506,6 +506,7 @@ func (app *App) stateUpdater(ctx context.Context) {
 			}
 
 			app.state.setServerConfigs(configs)
+			app.initLogAddress()
 		case <-ctx.Done():
 			return
 		}
