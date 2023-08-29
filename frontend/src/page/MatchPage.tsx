@@ -35,6 +35,9 @@ import MasksIcon from '@mui/icons-material/Masks';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TableHead from '@mui/material/TableHead';
+import bluLogoImg from '../icons/blu_logo.png';
+import redLogoImg from '../icons/red_logo.png';
+import Box from '@mui/material/Box';
 
 interface PlayerClassHoverStatsProps {
     stats: MatchPlayerClass;
@@ -80,7 +83,7 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
     const open = Boolean(anchorEl);
 
     return (
-        <div>
+        <Box display="flex" justifyContent="right" alignItems="center">
             <PlayerClassImg
                 cls={stats.player_class}
                 onMouseEnter={handlePopoverOpen}
@@ -173,7 +176,7 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
                     </TableContainer>
                 </ContainerWithHeader>
             </Popover>
-        </div>
+        </Box>
     );
 };
 interface WeaponStatRowProps {
@@ -241,13 +244,16 @@ const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
 
     const open = Boolean(anchorEl);
     return (
-        <div>
-            <div
+        <Box>
+            <Box
+                display="flex"
+                justifyContent="right"
+                alignItems="center"
                 onMouseEnter={handlePopoverOpen}
                 onMouseLeave={handlePopoverClose}
             >
                 <InfoOutlinedIcon />
-            </div>
+            </Box>
             <Popover
                 id="mouse-over-popover"
                 sx={{
@@ -335,7 +341,7 @@ const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
                     </TableContainer>
                 </ContainerWithHeader>
             </Popover>
-        </div>
+        </Box>
     );
 };
 
@@ -402,37 +408,52 @@ export const MatchPage = () => {
                         </Typography>
                     </Stack>
                 </Grid>
-                <Grid xs={5} bgcolor={blu}>
-                    <Typography
-                        variant={'h1'}
-                        sx={{ fontWeight: 700 }}
-                        color={headerColour}
-                    >
-                        BLU
-                    </Typography>
+                <Grid
+                    xs={5}
+                    bgcolor={blu}
+                    display="flex"
+                    justifyContent="left"
+                    alignItems="center"
+                >
+                    <img src={bluLogoImg} alt={'BLU Team'} />
                 </Grid>
-                <Grid xs={1} bgcolor={blu}>
+                <Grid
+                    xs={1}
+                    bgcolor={blu}
+                    display="flex"
+                    justifyContent="right"
+                    alignItems="center"
+                >
                     <Typography
                         variant={'h1'}
                         textAlign={'right'}
                         color={headerColour}
+                        sx={{ fontWeight: 900 }}
                     >
                         {match.team_scores.blu}
                     </Typography>
                 </Grid>
-                <Grid xs={1} bgcolor={red} color={headerColour}>
-                    <Typography variant={'h1'}>
+                <Grid
+                    xs={1}
+                    bgcolor={red}
+                    color={headerColour}
+                    display="flex"
+                    justifyContent="left"
+                    alignItems="center"
+                >
+                    <Typography variant={'h1'} sx={{ fontWeight: 900 }}>
                         {match.team_scores.red}
                     </Typography>
                 </Grid>
-                <Grid xs={5} bgcolor={red} color={headerColour}>
-                    <Typography
-                        variant={'h1'}
-                        textAlign={'right'}
-                        sx={{ fontWeight: 700 }}
-                    >
-                        RED
-                    </Typography>
+                <Grid
+                    xs={5}
+                    bgcolor={red}
+                    color={headerColour}
+                    display="flex"
+                    justifyContent="right"
+                    alignItems="center"
+                >
+                    <img src={redLogoImg} alt={'RED Team'} />
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
                     <Heading align={'center'} iconLeft={<GpsFixedIcon />}>
@@ -488,7 +509,7 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     tooltip: 'Team',
                     sortKey: 'team',
                     sortable: true,
-                    align: 'left',
+                    align: 'center',
                     width: '50px',
                     style: (row) => {
                         return {
@@ -533,7 +554,12 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     //width: 50,
                     renderer: (row) => (
-                        <Stack direction={'row'}>
+                        <Stack
+                            direction={'row'}
+                            display="flex"
+                            justifyContent="right"
+                            alignItems="center"
+                        >
                             {row.classes ? (
                                 row.classes.map((pc) => (
                                     <PlayerClassHoverStats
@@ -781,7 +807,7 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     tooltip: 'Team',
                     sortKey: 'team',
                     sortable: true,
-                    align: 'left',
+                    align: 'center',
                     width: '50px',
                     style: (row) => {
                         return {
