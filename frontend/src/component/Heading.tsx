@@ -2,6 +2,7 @@ import React, { FC, JSX } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { tf2Fonts } from '../theme';
 import Grid from '@mui/material/Unstable_Grid2';
+import Box from '@mui/material/Box';
 
 interface HeadingProps {
     children: JSX.Element[] | JSX.Element | string;
@@ -10,6 +11,18 @@ interface HeadingProps {
     iconRight?: React.ReactNode;
     align?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
 }
+
+interface VCenteredImageProps {
+    icon: React.ReactNode;
+}
+
+export const VCenteredElement = ({ icon }: VCenteredImageProps) => {
+    return (
+        <Box display="flex" justifyContent="right" alignItems="center">
+            {icon}
+        </Box>
+    );
+};
 
 export const Heading: FC<HeadingProps> = ({
     children,
@@ -32,9 +45,17 @@ export const Heading: FC<HeadingProps> = ({
                 ...tf2Fonts
             }}
         >
-            {iconLeft && <Grid paddingRight={1}>{iconLeft}</Grid>}
+            {iconLeft && (
+                <Grid paddingRight={1}>
+                    <VCenteredElement icon={iconLeft} />
+                </Grid>
+            )}
             <Grid>{children}</Grid>
-            {iconRight && <Grid paddingLeft={1}>{iconRight}</Grid>}
+            {iconRight && (
+                <Grid paddingLeft={1}>
+                    <VCenteredElement icon={iconRight} />
+                </Grid>
+            )}
         </Grid>
     );
 };
