@@ -1438,7 +1438,7 @@ func (ms *HealingStats) AverageUberLength() float64 {
 	}
 
 	val := math.Ceil(sum/float64(len(ms.UberDurations))*100) / 100
-	if val == math.NaN() {
+	if math.IsNaN(val) {
 		return 0
 	}
 

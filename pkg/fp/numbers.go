@@ -16,6 +16,7 @@ func Clamp[T Number](number T, min T, max T) T { //nolint:ireturn
 	if number > max {
 		return max
 	}
+
 	if number < min {
 		return min
 	}

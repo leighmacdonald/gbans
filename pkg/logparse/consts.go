@@ -228,7 +228,7 @@ const (
 	BuildingCarriedDestroyed Weapon = "building_carried_destroyed"
 	Bushwacka                Weapon = "bushwacka"
 	Caber                    Weapon = "ullapool_caber"
-	CaberExplosion           Weapon = "ullapool_caber_explosion"
+	CaberExplosion           Weapon = "ullapool_caber_explosion" //nolint:gosec
 	CandyCane                Weapon = "candy_cane"
 	CharginTarge             Weapon = "demoshield"
 	ClaidheamhMor            Weapon = "claidheamohmor"
