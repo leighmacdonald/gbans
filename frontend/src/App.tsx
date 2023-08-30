@@ -216,7 +216,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     <ErrorBoundary>
                                                                         <PrivateRoute
                                                                             permission={
-                                                                                PermissionLevel.Admin
+                                                                                PermissionLevel.User
                                                                             }
                                                                         >
                                                                             <MatchPage />
