@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v4
         with:
-          go-version: 'latest'
+          go-version: 'stable'
           cache: true
 
       - uses: actions/checkout@v3
