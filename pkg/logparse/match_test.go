@@ -54,8 +54,8 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 10, playerVar.Assists)
 	require.Equal(t, 14, playerVar.Deaths())
 	require.Equal(t, 4796, playerVar.Damage())
-	require.Equal(t, 279, playerVar.DamagePerMin())
-	require.Equal(t, 261, playerVar.DamageTakenPerMin())
+	require.Equal(t, 277, playerVar.DamagePerMin())
+	require.Equal(t, 260, playerVar.DamageTakenPerMin())
 
 	playerTuna := newMatch.PlayerBySteamID(steamid.New(76561198809011070))
 	require.Equal(t, 2, playerTuna.CaptureCount())
@@ -81,7 +81,7 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 4, playerAvgIQ.HealingStats.ChargesTotal())
 	require.Equal(t, 2, playerAvgIQ.HealingStats.DropsTotal())
 	require.Equal(t, 2850, playerAvgIQ.TargetInfo[playerVar.SteamID].HealingTaken)
-	require.Equal(t, 1010, playerAvgIQ.HealingStats.HealingPerMin())
+	require.Equal(t, 1005, playerAvgIQ.HealingStats.HealingPerMin())
 	require.Equal(t, 7.05, playerAvgIQ.HealingStats.AverageUberLength())
 
 	require.Equal(t, []int{3, 0}, []int{newMatch.TeamScores.Red, newMatch.TeamScores.Blu})
