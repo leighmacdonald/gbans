@@ -55,6 +55,7 @@ import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
 import { NotificationsPage } from './page/NotificationsPage';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
+import { StatsPage } from './page/Stats';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -167,6 +168,14 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 element={
                                                                     <ErrorBoundary>
                                                                         <STVPage />
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
+                                                            <Route
+                                                                path={'/stats'}
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <StatsPage />
                                                                     </ErrorBoundary>
                                                                 }
                                                             />

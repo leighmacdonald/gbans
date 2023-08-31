@@ -25,3 +25,13 @@ export interface TeamScores {
     blu: number;
     blu_time: number;
 }
+
+export interface MapUseDetail {
+    map: string;
+    playtime: number;
+    percent: number;
+}
+
+export const apiGetMapUsage = async () => {
+    return await apiCall<MapUseDetail[]>(`/api/stats/map`, 'GET');
+};

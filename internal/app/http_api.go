@@ -1896,6 +1896,19 @@ func onAPIGetServers(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIGetMapUsage(app *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		mapUsages, errServers := app.db.GetMapUsageStats(ctx)
+		if errServers != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, mapUsages)
+	}
+}
+
 type serverUpdateRequest struct {
 	ServerName      string  `json:"server_name"`
 	ServerNameShort string  `json:"server_name_short"`

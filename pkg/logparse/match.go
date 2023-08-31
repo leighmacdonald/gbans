@@ -361,6 +361,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		if !ok {
 			return ErrInvalidType
 		}
+
 		match.changeClass(evt)
 	case ShotFired:
 		evt, ok := result.Event.(ShotFiredEvt)

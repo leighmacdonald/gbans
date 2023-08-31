@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import PieChartIcon from '@mui/icons-material/PieChart';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -98,12 +99,24 @@ export const Home = (): JSX.Element => {
                         SourceTV
                     </Button>
 
+                    <Button
+                        startIcon={<PieChartIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/stats');
+                        }}
+                    >
+                        Map Stats
+                    </Button>
+
                     {window.gbans.discord_link_id != '' && (
                         <Button
                             component={Link}
                             startIcon={<MarkUnreadChatAltIcon />}
                             fullWidth
-                            color={'primary'}
+                            sx={{ backgroundColor: '#5865F2' }}
                             variant={'contained'}
                             href={`https://discord.gg/${window.gbans.discord_link_id}`}
                         >

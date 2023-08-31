@@ -607,3 +607,51 @@ func (db *Store) BuildLocalTF2Stats(ctx context.Context) error {
 
 	return db.Exec(ctx, delQuery, delArgs...)
 }
+
+type MapUseDetail struct {
+	Map      string  `json:"map"`
+	Playtime int64   `json:"playtime"`
+	Percent  float64 `json:"percent"`
+}
+
+func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
+	const query = `SELECT m.map, m.playtime, (m.playtime::float / s.total::float) * 100 percent
+		FROM (
+			SELECT SUM(extract('epoch' from m.time_end - m.time_start)) as playtime, m.map FROM match m
+			    LEFT JOIN public.match_player mp on m.match_id = mp.match_id 
+			GROUP BY m.map
+		) m CROSS JOIN (
+			SELECT SUM(extract('epoch' from mt.time_end - mt.time_start)) total FROM match mt
+			LEFT JOIN public.match_player mpt on mt.match_id = mpt.match_id
+		) s ORDER BY percent DESC`
+
+	var details []MapUseDetail
+
+	rows, errQuery := db.Query(ctx, query)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			mud     MapUseDetail
+			seconds int64
+		)
+
+		if errScan := rows.Scan(&mud.Map, &seconds, &mud.Percent); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		mud.Playtime = seconds
+
+		details = append(details, mud)
+	}
+
+	if rows.Err() != nil {
+		return nil, errors.Wrap(rows.Err(), "rows returned error")
+	}
+
+	return details, nil
+}
