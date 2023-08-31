@@ -1,0 +1,96 @@
+project_name: gbans
+
+env_files:
+  github_token: .github_releaser_token
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=releaser
+
+dockers:
+  - image_templates: ["ghcr.io/leighmacdonald/gbans:{{ .Version }}"]
+    dockerfile: docker/release.Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/leighmacdonald/gbans
+      - --label=org.opencontainers.image.source=https://github.com/leighmacdonald/gbans
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
+nfpms:
+  - maintainer: Leigh MacDonald <leigh.macdonald@gmail.com>
+    description: TF2 Community Backend
+    homepage: https://github.com/leighmacdonald/gbans
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}-{{.Version}}-{{- .Os }}
+    # use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+nightly:
+  name_template: '{{ incpatch .Version }}-devel'
+  tag_name: devel
+  publish_release: true
+  keep_single_release: true
+
+release:
+  github:
+    owner: leighmacdonald
+    name: gbans
+  ids:
+    - linux
+    - windows
+  draft: true
+  replace_existing_draft: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+#
+#signs:
+#  - artifacts: checksum
+
+announce:
+  discord:
+    enabled: true
+    message_template: 'gbans {{.Tag}} is out!'
+
+    # Set author of the embed.
+    # Defaults to `GoReleaser`
+    author: 'Leigh MacDonald'
+    # color: ''
+
+    # URL to an image to use as the icon for the embed.
+    # Defaults to `https://goreleaser.com/static/avatar.png`
+    # icon_url: ''
+
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
