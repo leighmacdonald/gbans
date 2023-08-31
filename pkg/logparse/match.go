@@ -357,11 +357,11 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 			match.TimeStart = &evt.CreatedOn
 		}
 	case ChangeClass:
-		// Spawned as is the better version of this
-		_, ok := result.Event.(ChangeClassEvt)
+		evt, ok := result.Event.(ChangeClassEvt)
 		if !ok {
 			return ErrInvalidType
 		}
+		match.changeClass(evt)
 	case ShotFired:
 		evt, ok := result.Event.(ShotFiredEvt)
 		if !ok {
@@ -658,14 +658,15 @@ func (match *Match) spawnedAs(evt SpawnedAsEvt) {
 		playerSum.Name = evt.Name
 	}
 
-	if evt.Class != playerSum.currentClass {
-		playerSum.onClassChangeOrGameEnd(evt.CreatedOn)
-		playerSum.currentClass = evt.Class
-		newStats := playerSum.getClassStats()
-		newStats.startTime = evt.CreatedOn
-	}
+	playerSum.setPlayerClass(evt.CreatedOn, evt.Class)
 
 	playerSum.currentLifeStart = evt.CreatedOn
+}
+
+func (match *Match) changeClass(evt ChangeClassEvt) {
+	player := match.getPlayer(evt.CreatedOn, evt.SID)
+
+	player.setPlayerClass(evt.CreatedOn, evt.Class)
 }
 
 func (match *Match) shotFired(evt ShotFiredEvt) {
@@ -1284,6 +1285,17 @@ func (player *PlayerStats) resetKillStreak(evtTime time.Time) {
 	player.currentKillStreak = 0
 }
 
+func (player *PlayerStats) setPlayerClass(evtTime time.Time, class PlayerClass) {
+	if class == player.currentClass && player.currentClass != Spectator {
+		return
+	}
+
+	player.onClassChangeOrGameEnd(evtTime)
+	player.currentClass = class
+	newStats := player.getClassStats()
+	newStats.startTime = evtTime
+}
+
 func (player *PlayerStats) addKill(evtTime time.Time, target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
 	targetInfo, found := player.TargetInfo[target]
 	if !found {
@@ -1372,10 +1384,6 @@ func (player *PlayerStats) getClassStats() *PlayerClassStats {
 
 // onClassChangeOrGameEnd updates the players playtime for their current class.
 func (player *PlayerStats) onClassChangeOrGameEnd(eventTime time.Time) {
-	if player.currentClass == Spectator {
-		return
-	}
-
 	if cs := player.getClassStats(); cs != nil {
 		cs.Playtime += int(eventTime.Sub(cs.startTime).Seconds())
 	}

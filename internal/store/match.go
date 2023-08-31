@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -1287,7 +1288,16 @@ type MatchSummary struct {
 	TimeEnd   time.Time `json:"time_end"`
 }
 
+func (m MatchSummary) Path() string {
+	return fmt.Sprintf("/log/%s", m.MatchID.String())
+}
+
 func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error) {
+	countBuilder := db.sb.Select("count(m.match_id) as count").
+		From("match m").
+		LeftJoin("public.match_player mp on m.match_id = mp.match_id").
+		LeftJoin("public.server s on s.server_id = m.server_id")
+
 	builder := db.sb.
 		Select(
 			"m.match_id",
@@ -1306,10 +1316,12 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 
 	if opts.Map != "" {
 		builder = builder.Where(sq.Eq{"m.map": opts.Map})
+		countBuilder = countBuilder.Where(sq.Eq{"m.map": opts.Map})
 	}
 
 	if opts.SteamID.Valid() {
 		builder = builder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
+		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
 	}
 
 	if opts.Desc {
@@ -1320,6 +1332,19 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 
 	if opts.Limit > 0 {
 		builder = builder.Limit(opts.Limit)
+	}
+
+	countQuery, countArgs, errCountArgs := countBuilder.ToSql()
+	if errCountArgs != nil {
+		return nil, 0, errors.Wrapf(errCountArgs, "Failed to build count query")
+	}
+
+	var count int64
+
+	if errCount := db.
+		QueryRow(ctx, countQuery, countArgs...).
+		Scan(&count); errCount != nil {
+		return nil, 0, Err(errCount)
 	}
 
 	query, args, errQueryArgs := builder.ToSql()
@@ -1351,5 +1376,5 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 		db.log.Error("Matches rows error", zap.Error(rows.Err()))
 	}
 
-	return matches, 0, nil
+	return matches, count, nil
 }

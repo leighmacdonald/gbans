@@ -37,6 +37,7 @@ func (app *App) registerDiscordHandlers() error {
 		discord.CmdHistory: makeOnHistory(app),
 		discord.CmdKick:    makeOnKick(app),
 		discord.CmdLog:     makeOnLog(app),
+		discord.CmdLogs:    makeOnLogs(app),
 		discord.CmdMute:    makeOnMute(app),
 		// discord.CmdCheckIP:  onCheckIp,
 		discord.CmdPlayers:  makeOnPlayers(app),
@@ -1255,6 +1256,43 @@ func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
 	msgEmbed.AddField("Duration", match.TimeEnd.Sub(match.TimeStart).String()).MakeFieldInline()
 
 	return msgEmbed.Truncate()
+}
+
+func makeOnLogs(app *App) discord.CommandHandler {
+	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
+		if errAuthor != nil {
+			return nil, errAuthor
+		}
+
+		matches, count, errMatch := app.db.Matches(ctx, store.MatchesQueryOpts{
+			SteamID:     author.SteamID,
+			QueryFilter: store.QueryFilter{Limit: 5},
+		})
+
+		if errMatch != nil {
+			return nil, discord.ErrCommandFailed
+		}
+
+		matchesWriter := &strings.Builder{}
+
+		for _, match := range matches {
+			status := ":x:"
+			if match.IsWinner {
+				status = ":white_check_mark:"
+			}
+
+			_, _ = matchesWriter.WriteString(fmt.Sprintf("%s [%s](%s) `%s` `%s`\n",
+				status, match.Title, app.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)))
+		}
+
+		msgEmbed := discord.
+			NewEmbed(fmt.Sprintf("Your most recent matches [%d total]", count)).
+			SetColor(app.bot.Colour.Success)
+		msgEmbed.SetDescription(matchesWriter.String())
+
+		return msgEmbed.MessageEmbed, nil
+	}
 }
 
 func makeOnLog(app *App) discord.CommandHandler {

@@ -35,6 +35,7 @@ const (
 	CmdHistoryChat Cmd = "chat"
 	CmdFilter      Cmd = "filter"
 	CmdLog         Cmd = "log"
+	CmdLogs        Cmd = "logs"
 )
 
 // type subCommandKey string
@@ -154,6 +155,11 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 			Options: []*discordgo.ApplicationCommandOption{
 				optMatchID,
 			},
+		},
+		{
+			Name:        string(CmdLogs),
+			Description: "Show a list of your recent logs",
+			Options:     []*discordgo.ApplicationCommandOption{},
 		},
 		{
 			Name:                     string(CmdFind),
