@@ -48,3 +48,4 @@ sm
 *.publickey.vdf
 .vscode
 *.smx
+/.github_releaser_token
