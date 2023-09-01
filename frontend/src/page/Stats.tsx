@@ -8,7 +8,6 @@ import Box from '@mui/material/Box';
 import { LazyTable } from '../component/LazyTable';
 import { Order, RowsPerPage } from '../component/DataTable';
 import MapIcon from '@mui/icons-material/Map';
-import { formatDistance } from 'date-fns';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 
@@ -116,21 +115,21 @@ export const StatsPage = (): JSX.Element => {
                                                 sortKey: 'map',
                                                 tooltip: 'Map'
                                             },
-                                            {
-                                                label: 'Playtime',
-                                                sortable: true,
-                                                sortKey: 'playtime',
-                                                tooltip: 'Total Playtime',
-                                                renderer: (obj) => {
-                                                    return formatDistance(
-                                                        0,
-                                                        obj.playtime * 1000,
-                                                        {
-                                                            includeSeconds: true
-                                                        }
-                                                    );
-                                                }
-                                            },
+                                            // {
+                                            //     label: 'Playtime',
+                                            //     sortable: true,
+                                            //     sortKey: 'playtime',
+                                            //     tooltip: 'Total Playtime',
+                                            //     renderer: (obj) => {
+                                            //         return formatDistance(
+                                            //             0,
+                                            //             obj.playtime * 1000,
+                                            //             {
+                                            //                 includeSeconds: true
+                                            //             }
+                                            //         );
+                                            //     }
+                                            // },
                                             {
                                                 label: 'Percent',
                                                 sortable: true,
