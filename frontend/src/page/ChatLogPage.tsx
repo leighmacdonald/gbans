@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import {
     apiGetMessages,
     apiGetServers,
+    defaultAvatarHash,
     MessageQuery,
     PermissionLevel,
     PersonMessage,
@@ -553,7 +554,11 @@ export const ChatLogPage = () => {
                                 renderer: (row) => (
                                     <PersonCell
                                         steam_id={row.steam_id}
-                                        avatar={`https://avatars.akamai.steamstatic.com/${row.avatar_hash}.jpg`}
+                                        avatar={`https://avatars.akamai.steamstatic.com/${
+                                            row.avatar_hash != ''
+                                                ? row.avatar_hash
+                                                : defaultAvatarHash
+                                        }.jpg`}
                                         personaname={row.persona_name}
                                         onClick={() => {
                                             setSteamId(row.steam_id);
