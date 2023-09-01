@@ -35,3 +35,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
           DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build gbans image
+        run: |
+          docker build . --tag ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
+          docker push ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
+
