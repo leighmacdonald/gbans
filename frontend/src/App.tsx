@@ -4,7 +4,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Home } from './page/Home';
-import { Settings } from './page/Settings';
 import { ReportCreatePage } from './page/ReportCreatePage';
 import { AdminReports } from './page/AdminReports';
 import { AdminImport } from './page/AdminImport';
@@ -56,6 +55,7 @@ import { NotificationsPage } from './page/NotificationsPage';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
 import { StatsPage } from './page/Stats';
+import { ProfileSettingsPage } from './page/ProfileSettingsPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -241,7 +241,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     <ErrorBoundary>
                                                                         <PrivateRoute
                                                                             permission={
-                                                                                PermissionLevel.Admin
+                                                                                PermissionLevel.User
                                                                             }
                                                                         >
                                                                             <MatchListPage />
@@ -318,7 +318,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                 PermissionLevel.User
                                                                             }
                                                                         >
-                                                                            <Settings />
+                                                                            <ProfileSettingsPage />
                                                                         </PrivateRoute>
                                                                     </ErrorBoundary>
                                                                 }
@@ -333,6 +333,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+
                                                             <Route
                                                                 path={'/report'}
                                                                 element={

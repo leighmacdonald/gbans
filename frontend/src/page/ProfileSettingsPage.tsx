@@ -2,7 +2,7 @@ import React, { JSX } from 'react';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import { ContainerWithHeader } from './ContainerWithHeader';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { discordLoginURL } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Stack from '@mui/material/Stack';
@@ -11,7 +11,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import AddLinkIcon from '@mui/icons-material/AddLink';
 import Tooltip from '@mui/material/Tooltip';
 
-export const ProfileSettings = (): JSX.Element => {
+export const ProfileSettingsPage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     const loginUrl = discordLoginURL();
     return (

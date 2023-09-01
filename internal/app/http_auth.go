@@ -170,12 +170,14 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 	}
 
 	fetchToken := func(ctx context.Context, code string) (string, error) {
+		// v, _ := go_oauth_pkce_code_verifier.CreateCodeVerifierFromBytes([]byte(code))
 		form := url.Values{}
 		form.Set("client_id", app.conf.Discord.AppID)
 		form.Set("client_secret", app.conf.Discord.AppSecret)
 		form.Set("redirect_uri", app.ExtURLRaw("/login/discord"))
 		form.Set("code", code)
 		form.Set("grant_type", "authorization_code")
+		// form.Set("state", state.String())
 		form.Set("scope", "identify")
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
@@ -204,6 +206,10 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 			return "", errors.Wrap(errJSON, "Failed to decode response body")
 		}
 
+		if atr.AccessToken == "" {
+			return "", errors.New("Empty token returned")
+		}
+
 		return atr.AccessToken, nil
 	}
 
@@ -211,6 +217,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		code := ctx.Query("code")
 		if code == "" {
 			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Error("Failed to get code from query")
 
 			return
 		}
@@ -218,6 +225,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		token, errToken := fetchToken(ctx, code)
 		if errToken != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Error("Failed to fetch token", zap.Error(errToken))
 
 			return
 		}
@@ -225,12 +233,14 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		discordID, errID := fetchDiscordID(ctx, token)
 		if errID != nil {
 			responseErr(ctx, http.StatusBadRequest, nil)
+			log.Error("Failed to fetch discord ID", zap.Error(errID))
 
 			return
 		}
 
 		if discordID == "" {
 			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Error("Empty discord id received")
 
 			return
 		}
@@ -246,6 +256,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 
 		if discordPerson.DiscordID != "" {
 			responseErr(ctx, http.StatusConflict, nil)
+			log.Error("Failed to update persons discord id")
 
 			return
 		}
@@ -267,7 +278,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		responseOK(ctx, http.StatusInternalServerError, nil)
+		responseOK(ctx, http.StatusOK, nil)
 
 		log.Info("Discord account linked successfully",
 			zap.String("discord_id", discordID), zap.Int64("sid64", sid.Int64()))
