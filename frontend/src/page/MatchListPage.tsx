@@ -12,6 +12,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { PageNotFound } from './PageNotFound';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 interface MatchSummaryTableProps {
     steam_id: string;
@@ -27,12 +30,18 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const { sendFlash } = useUserFlashCtx();
+    const { currentUser } = useCurrentUserCtx();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const opts: MatchesQueryOpts = {};
-        opts.steam_id = steam_id;
-        opts.limit = rowPerPageCount;
+        const opts: MatchesQueryOpts = {
+            steam_id: steam_id,
+            limit: rowPerPageCount,
+            offset: page * rowPerPageCount,
+            order_by: sortColumn,
+            desc: sortOrder == 'desc'
+        };
         apiGetMatches(opts).then((resp) => {
             if (!resp.result) {
                 return;
@@ -40,7 +49,16 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
             setTotalRows(resp.result.count);
             setRows(resp.result.matches);
         });
-    }, [rowPerPageCount, steam_id]);
+    }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
+
+    if (currentUser.steam_id != steam_id) {
+        sendFlash(
+            'error',
+            'Permission denied. Only your own match list is viewable'
+        );
+        navigate(`/logs/${currentUser.steam_id}`);
+        return;
+    }
 
     return (
         <Grid>
@@ -67,7 +85,10 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                 />
             </Grid>
             <Grid xs={12}>
-                <ContainerWithHeader title={'Match History'}>
+                <ContainerWithHeader
+                    title={'Match History'}
+                    iconLeft={<TimelineIcon />}
+                >
                     <LazyTable
                         sortOrder={sortOrder}
                         sortColumn={sortColumn}
@@ -84,7 +105,6 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                                 tooltip: 'View Match Details',
                                 sortKey: 'match_id',
                                 align: 'left',
-
                                 width: 40,
                                 renderer: (row) => (
                                     <Tooltip title={'View Match'}>
@@ -105,6 +125,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                                 label: 'Server Name',
                                 tooltip: 'Server Name',
                                 sortKey: 'title',
+                                sortable: true,
                                 align: 'left',
                                 width: '50%',
                                 renderer: (row) => (
@@ -165,6 +186,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                                 label: 'Date',
                                 tooltip: 'Date',
                                 sortKey: 'time_start',
+                                sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
                                     <Typography variant={'button'}>
@@ -181,7 +203,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
 };
 
 export const MatchListPage = (): JSX.Element => {
-    const { steam_id } = useParams<string>();
+    const { steam_id } = useParams();
 
     if (!steam_id) {
         return <PageNotFound error={'Invalid steam id'} />;

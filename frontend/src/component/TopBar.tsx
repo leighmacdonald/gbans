@@ -41,6 +41,7 @@ import { tf2Fonts } from '../theme';
 import Link from '@mui/material/Link';
 import Badge from '@mui/material/Badge';
 import MailIcon from '@mui/icons-material/Mail';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import {
     NotificationsProvider,
     useNotifications
@@ -163,7 +164,16 @@ export const TopBar = () => {
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
-            // { to: '/settings', text: 'Settings', icon: <SettingsIcon /> },
+            // {
+            //     to: '/settings',
+            //     text: 'Settings',
+            //     icon: <SettingsIcon sx={colourOpts} />
+            // },
+            {
+                to: `/logs/${currentUser?.steam_id}`,
+                text: 'Match History',
+                icon: <TimelineIcon sx={colourOpts} />
+            },
             {
                 to: '/logout',
                 text: 'Logout',

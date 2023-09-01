@@ -487,7 +487,11 @@ const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
 
     const validRows = useMemo(() => {
         return stableSort(
-            players.filter((m) => m.classes != null),
+            players.filter(
+                (m) =>
+                    m.classes != null &&
+                    !(m.kills == 0 && m.assists == 0 && m.deaths == 0)
+            ),
             compare(sortOrder, sortColumn)
         );
     }, [players, sortColumn, sortOrder]);

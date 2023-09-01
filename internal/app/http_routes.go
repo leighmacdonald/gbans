@@ -214,6 +214,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(app))
 		authed.GET("/api/auth/logout", onGetLogout(app))
 		authed.GET("/api/log/:match_id", onAPIGetMatch(app))
+		authed.POST("/api/logs", onAPIGetMatches(app))
 	}
 
 	editorGrp := engine.Group("/")
@@ -256,7 +257,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/bans/group", onAPIGetBansGroup(app))
 		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(app))
 		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(app))
-		modRoute.POST("/api/logs", onAPIGetMatches(app))
 	}
 
 	adminGrp := engine.Group("/")

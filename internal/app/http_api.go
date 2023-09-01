@@ -2979,6 +2979,22 @@ func onAPIGetMatches(app *App) gin.HandlerFunc {
 			return
 		}
 
+		// Don't let normal users query anybody but themselves
+		user := currentUserProfile(ctx)
+		if user.PermissionLevel <= consts.PUser {
+			if !opts.SteamID.Valid() {
+				responseErr(ctx, http.StatusBadRequest, nil)
+
+				return
+			}
+
+			if user.SteamID != opts.SteamID {
+				responseErr(ctx, http.StatusForbidden, nil)
+
+				return
+			}
+		}
+
 		matches, totalCount, matchesErr := app.db.Matches(ctx, opts)
 		if matchesErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
