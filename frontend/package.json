@@ -101,6 +101,7 @@
     "sass": "^1.66.0",
     "sass-loader": "^13.3.2",
     "steamid": "^2.0.0",
+    "string-to-color": "^2.2.2",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",

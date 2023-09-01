@@ -42,7 +42,7 @@ import { AlertColor } from '@mui/material/Alert';
 import { MatchListPage } from './page/MatchListPage';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { AdminChat } from './page/AdminChat';
+import { ChatLogPage } from './page/ChatLogPage';
 import { Login } from './page/Login';
 import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
@@ -469,17 +469,16 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                             />
                                                             <Route
                                                                 path={
-                                                                    '/admin/chat'
+                                                                    '/chatlogs'
                                                                 }
                                                                 element={
                                                                     <ErrorBoundary>
-                                                                        {' '}
                                                                         <PrivateRoute
                                                                             permission={
-                                                                                PermissionLevel.Moderator
+                                                                                PermissionLevel.User
                                                                             }
                                                                         >
-                                                                            <AdminChat />
+                                                                            <ChatLogPage />
                                                                         </PrivateRoute>
                                                                     </ErrorBoundary>
                                                                 }

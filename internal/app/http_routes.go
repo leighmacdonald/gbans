@@ -120,7 +120,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
 		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban", "/admin/reports", "/admin/news",
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
-		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/admin/chat", "/admin/appeals", "/login",
+		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
 	}
 	for _, rt := range jsRoutes {
@@ -215,6 +215,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/auth/logout", onGetLogout(app))
 		authed.GET("/api/log/:match_id", onAPIGetMatch(app))
 		authed.POST("/api/logs", onAPIGetMatches(app))
+		authed.POST("/api/messages", onAPIQueryMessages(app))
 	}
 
 	editorGrp := engine.Group("/")
@@ -240,7 +241,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(app))
 		modRoute.POST("/api/connections", onAPIQueryPersonConnections(app))
 		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages(app))
-		modRoute.POST("/api/messages", onAPIQueryMessages(app))
 		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(app))
 		modRoute.POST("/api/appeals", onAPIGetAppeals(app))
 		modRoute.POST("/api/bans/steam", onAPIGetBansSteam(app))

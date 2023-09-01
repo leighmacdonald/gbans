@@ -1,6 +1,6 @@
 import { PlayerClass, Team } from './const';
 import { TeamScores } from './stats';
-import { apiCall, QueryFilter } from './common';
+import { apiCall, DataCount, QueryFilter } from './common';
 import { parseDateTime } from '../util/text';
 
 export interface MatchHealer {
@@ -133,10 +133,6 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     map?: string;
     time_start?: Date;
     time_end?: Date;
-}
-
-interface DataCount {
-    count: number;
 }
 
 interface MatchSummaryResults extends DataCount {

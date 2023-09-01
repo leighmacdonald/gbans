@@ -3130,6 +3130,20 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			query.Limit = 1000
 		}
 
+		user := currentUserProfile(ctx)
+		if user.PermissionLevel <= consts.PUser {
+			query.Unrestricted = false
+			beforeLimit := time.Now().Add(-time.Minute * 20)
+
+			if query.SentBefore != nil && query.SentBefore.After(beforeLimit) {
+				query.SentBefore = &beforeLimit
+			}
+
+			if query.SentBefore == nil {
+				query.SentBefore = &beforeLimit
+			}
+		}
+
 		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, query)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query messages history",

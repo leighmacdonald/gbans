@@ -1,4 +1,10 @@
-import { apiCall, PermissionLevel, QueryFilter, TimeStamped } from './common';
+import {
+    apiCall,
+    DataCount,
+    PermissionLevel,
+    QueryFilter,
+    TimeStamped
+} from './common';
 import { parseDateTime } from '../util/text';
 
 export enum profileState {
@@ -143,6 +149,7 @@ export interface PersonMessage {
     team: boolean;
     created_on: Date;
     auto_filter_flagged: boolean;
+    avatar_hash: string;
 }
 
 export const apiGetPersonConnections = async (steam_id: string) =>
@@ -188,8 +195,7 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
     sent_before?: Date;
 }
 
-export interface pagedQueryResults<T> {
-    total_messages: number;
+export interface pagedQueryResults<T> extends DataCount {
     messages: T[];
 }
 

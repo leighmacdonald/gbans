@@ -219,6 +219,7 @@ type PersonMessage struct {
 	PersonMessageID int64         `json:"person_message_id"`
 	MatchID         uuid.UUID     `json:"match_id"`
 	SteamID         steamid.SID64 `json:"steam_id"`
+	AvatarHash      string        `json:"avatar_hash"`
 	PersonaName     string        `json:"persona_name"`
 	ServerName      string        `json:"server_name"`
 	ServerID        int           `json:"server_id"`
@@ -813,6 +814,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		"m.match_id",
 		"s.short_name",
 		"COUNT(f.person_message_id)::int::boolean as flagged",
+		"p.avatarhash",
 	}
 
 	countCols := []string{"count(m.created_on) as count"}
@@ -838,7 +840,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		Select(columns...).
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id").
-		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id")
+		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id").
+		LeftJoin("person p on p.steam_id = m.steam_id")
 
 	if query.Offset > 0 {
 		builder = builder.Offset(query.Offset)
@@ -867,7 +870,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			builder = builder.OrderBy(strings.Join(orderBy, ",") + " ASC")
 		}
 
-		groupBy := []string{query.OrderBy, "m.created_on", "m.person_message_id", "s.short_name", "f.person_message_id"}
+		groupBy := []string{query.OrderBy, "m.created_on", "m.person_message_id", "s.short_name", "f.person_message_id", "p.avatarhash"}
 
 		if query.Query != "" {
 			groupBy = append(groupBy, "m.message_search")
@@ -893,7 +896,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	switch {
 	case query.SentAfter != nil && query.SentBefore != nil:
-		ands = append(ands, sq.Expr("'[?, ?]'::daterange @> m.created_on", query.SentAfter, query.SentBefore))
+		ands = append(ands, sq.Expr("m.created_on BETWEEN ? AND ?", query.SentAfter, query.SentBefore))
 	case query.SentAfter != nil:
 		ands = append(ands, sq.Expr("? > m.created_on", query.SentAfter))
 	case query.SentBefore != nil:
@@ -963,6 +966,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		var (
 			message QueryChatHistoryResult
 			steamID int64
+			matchID []byte
 			target  = []any{
 				&message.PersonMessageID,
 				&steamID,
@@ -971,14 +975,19 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 				&message.Team,
 				&message.CreatedOn,
 				&message.PersonaName,
-				&message.MatchID,
+				&matchID,
 				&message.ServerName,
 				&message.AutoFilterFlagged,
+				&message.AvatarHash,
 			}
 		)
 
 		if errScan := rows.Scan(target...); errScan != nil {
 			return nil, 0, Err(errScan)
+		}
+
+		if matchID != nil {
+			message.MatchID = uuid.FromBytesOrNil(matchID)
 		}
 
 		message.SteamID = steamid.New(steamID)

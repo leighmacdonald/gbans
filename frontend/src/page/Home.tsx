@@ -14,6 +14,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import Link from '@mui/material/Link';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import PieChartIcon from '@mui/icons-material/PieChart';
+import ChatIcon from '@mui/icons-material/Chat';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -85,6 +86,18 @@ export const Home = (): JSX.Element => {
                         }}
                     >
                         Donate
+                    </Button>
+
+                    <Button
+                        startIcon={<ChatIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/chatlogs');
+                        }}
+                    >
+                        Chat Logs
                     </Button>
 
                     <Button

@@ -22,6 +22,10 @@ export interface apiResponse<T> {
     result?: T;
 }
 
+export interface DataCount {
+    count: number;
+}
+
 /**
  * All api requests are handled through this interface.
  *

@@ -2,7 +2,7 @@ import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
@@ -10,12 +10,14 @@ export interface PersonCellProps {
     steam_id: string;
     personaname: string;
     avatar: string;
+    onClick?: MouseEventHandler | undefined;
 }
 
 export const PersonCell = ({
     steam_id,
     avatar,
-    personaname
+    personaname,
+    onClick
 }: PersonCellProps) => {
     const navigate = useNavigate();
     const theme = useTheme();
@@ -24,9 +26,13 @@ export const PersonCell = ({
         <Stack
             direction={'row'}
             alignItems={'center'}
-            onClick={() => {
-                navigate(`/profile/${steam_id}`);
-            }}
+            onClick={
+                onClick != undefined
+                    ? onClick
+                    : () => {
+                          navigate(`/profile/${steam_id}`);
+                      }
+            }
             sx={{
                 '&:hover': {
                     cursor: 'pointer',

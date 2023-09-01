@@ -10,6 +10,7 @@ import {
     apiGetMessages,
     apiGetServers,
     MessageQuery,
+    PermissionLevel,
     PersonMessage,
     Server,
     ServerSimple,
@@ -42,6 +43,12 @@ import ReportIcon from '@mui/icons-material/Report';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import ListItemText from '@mui/material/ListItemText';
 import HistoryIcon from '@mui/icons-material/History';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import stc from 'string-to-color';
+import { PersonCell } from '../component/PersonCell';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import CircularProgress from '@mui/material/CircularProgress';
+
 const anyServer: Server = {
     server_name: 'Any',
     server_id: 0,
@@ -111,7 +118,7 @@ const loadState = () => {
     return config;
 };
 
-export const AdminChat = () => {
+export const ChatLogPage = () => {
     const init = loadState();
     const [startDate, setStartDate] = useState<Date | null | string>(
         init.startDate
@@ -133,7 +140,7 @@ export const AdminChat = () => {
     const [refreshTime, setRefreshTime] = useState<number>(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     //const [pageCount, setPageCount] = useState<number>(0);
-
+    const [loading, setLoading] = useState(false);
     const [nameValue, setNameValue] = useState<string>(init.nameQuery);
     const [steamIDValue, setSteamIDValue] = useState<string>(init.steamId);
     const [messageValue, setMessageValue] = useState<string>(init.messageQuery);
@@ -141,6 +148,7 @@ export const AdminChat = () => {
     const [selectedServer, setSelectedServer] = useState<number>(
         init.selectedServer ?? ''
     );
+    const { currentUser } = useCurrentUserCtx();
 
     const curTime = new Date();
     curTime.setSeconds(curTime.getSeconds() + refreshTime);
@@ -221,14 +229,22 @@ export const AdminChat = () => {
         opts.offset = page * rowPerPageCount;
         opts.order_by = sortColumn;
         opts.desc = sortOrder == 'desc';
+        setLoading(true);
         apiGetMessages(opts)
             .then((resp) => {
-                const count = resp.result?.total_messages || 0;
-                setRows(resp.result?.messages || []);
-                setTotalRows(count);
+                if (resp.result) {
+                    setRows(resp.result.messages || []);
+                    setTotalRows(resp.result.count);
+                    if (page * rowPerPageCount > resp.result.count) {
+                        setPage(0);
+                    }
+                }
             })
             .catch((e) => {
                 logErr(e);
+            })
+            .finally(() => {
+                setLoading(false);
             });
         saveState();
         restartTimer();
@@ -389,38 +405,57 @@ export const AdminChat = () => {
                 flexDirection={{ xs: 'column', sm: 'row' }}
             >
                 <Grid xs={3}>
-                    <Box sx={{ width: 120 }}>
-                        <FormControl fullWidth>
-                            <InputLabel id="auto-refresh-label">
-                                Auto-Refresh
-                            </InputLabel>
-                            <Select<number>
-                                labelId="auto-refresh-label"
-                                id="auto-refresh"
-                                label="Auto Refresh"
-                                value={refreshTime ?? ''}
-                                onChange={(
-                                    event: SelectChangeEvent<number>
-                                ) => {
-                                    setRefreshTime(
-                                        event.target.value as number
-                                    );
+                    {currentUser.permission_level >=
+                        PermissionLevel.Moderator && (
+                        <Box sx={{ width: 120 }}>
+                            <FormControl fullWidth>
+                                <InputLabel id="auto-refresh-label">
+                                    Auto-Refresh
+                                </InputLabel>
+                                <Select<number>
+                                    labelId="auto-refresh-label"
+                                    id="auto-refresh"
+                                    label="Auto Refresh"
+                                    value={refreshTime ?? ''}
+                                    onChange={(
+                                        event: SelectChangeEvent<number>
+                                    ) => {
+                                        setRefreshTime(
+                                            event.target.value as number
+                                        );
 
-                                    restartTimer();
-                                }}
-                            >
-                                <MenuItem value={0}>Off</MenuItem>
-                                <MenuItem value={10}>5s</MenuItem>
-                                <MenuItem value={15}>15s</MenuItem>
-                                <MenuItem value={30}>30s</MenuItem>
-                                <MenuItem value={60}>60s</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
+                                        restartTimer();
+                                    }}
+                                >
+                                    <MenuItem value={0}>Off</MenuItem>
+                                    <MenuItem value={10}>5s</MenuItem>
+                                    <MenuItem value={15}>15s</MenuItem>
+                                    <MenuItem value={30}>30s</MenuItem>
+                                    <MenuItem value={60}>60s</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    )}
                 </Grid>
                 <Grid xs={'auto'}>
                     <TablePagination
-                        component="div"
+                        SelectProps={{
+                            disabled: loading
+                        }}
+                        backIconButtonProps={
+                            loading
+                                ? {
+                                      disabled: loading
+                                  }
+                                : undefined
+                        }
+                        nextIconButtonProps={
+                            loading
+                                ? {
+                                      disabled: loading
+                                  }
+                                : undefined
+                        }
                         variant={'head'}
                         page={page}
                         count={totalRows}
@@ -445,8 +480,16 @@ export const AdminChat = () => {
             </Grid>
 
             <Grid xs={12}>
-                <Heading iconLeft={<ChatIcon />}>Chat Messages</Heading>
-                <Paper>
+                <ContainerWithHeader
+                    iconLeft={
+                        loading ? (
+                            <CircularProgress color="inherit" size={20} />
+                        ) : (
+                            <ChatIcon />
+                        )
+                    }
+                    title={'Chat Logs'}
+                >
                     <LazyTable<PersonMessage>
                         sortOrder={sortOrder}
                         sortColumn={sortColumn}
@@ -461,7 +504,7 @@ export const AdminChat = () => {
                                 label: 'Server',
                                 tooltip: 'Server',
                                 sortKey: 'server_id',
-                                align: 'left',
+                                align: 'center',
                                 width: 100,
                                 onClick: (o) => {
                                     setSelectedServer(o.server_id);
@@ -469,9 +512,15 @@ export const AdminChat = () => {
                                 queryValue: (o) =>
                                     `${o.server_id} + ${o.server_name}`,
                                 renderer: (row) => (
-                                    <Typography variant={'button'}>
+                                    <Button
+                                        fullWidth
+                                        variant={'text'}
+                                        sx={{
+                                            color: stc(row.server_name)
+                                        }}
+                                    >
                                         {row.server_name}
-                                    </Typography>
+                                    </Button>
                                 )
                             },
                             {
@@ -479,8 +528,8 @@ export const AdminChat = () => {
                                 tooltip: 'Time the message was sent',
                                 sortKey: 'created_on',
                                 sortType: 'date',
-                                sortable: true,
-                                align: 'left',
+                                sortable: false,
+                                align: 'center',
                                 width: 180,
                                 queryValue: (o) =>
                                     steamIdQueryValue(o.steam_id),
@@ -502,9 +551,14 @@ export const AdminChat = () => {
                                 },
                                 queryValue: (o) => `${o.persona_name}`,
                                 renderer: (row) => (
-                                    <Typography variant={'body2'}>
-                                        {row.persona_name}
-                                    </Typography>
+                                    <PersonCell
+                                        steam_id={row.steam_id}
+                                        avatar={`https://avatars.akamai.steamstatic.com/${row.avatar_hash}.jpg`}
+                                        personaname={row.persona_name}
+                                        onClick={() => {
+                                            setSteamId(row.steam_id);
+                                        }}
+                                    />
                                 )
                             },
                             {
@@ -561,7 +615,7 @@ export const AdminChat = () => {
                         ]}
                         rows={rows}
                     />
-                </Paper>
+                </ContainerWithHeader>
             </Grid>
         </Grid>
     );
