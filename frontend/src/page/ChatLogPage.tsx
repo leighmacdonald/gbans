@@ -154,6 +154,9 @@ export const ChatLogPage = () => {
     const curTime = new Date();
     curTime.setSeconds(curTime.getSeconds() + refreshTime);
 
+    const maxDate = new Date();
+    maxDate.setTime(maxDate.getTime() - 1000 * 60 * 20);
+
     const { isRunning, restart } = useTimer({
         expiryTimestamp: curTime,
         autoStart: false
@@ -362,6 +365,12 @@ export const ChatLogPage = () => {
 
                             <Grid xs={6} md={3}>
                                 <DesktopDatePicker
+                                    maxDate={
+                                        currentUser.permission_level <=
+                                        PermissionLevel.User
+                                            ? maxDate
+                                            : undefined
+                                    }
                                     sx={{ width: '100%' }}
                                     label="Date Start"
                                     format={'MM/dd/yyyy'}
@@ -373,6 +382,12 @@ export const ChatLogPage = () => {
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <DesktopDatePicker
+                                    maxDate={
+                                        currentUser.permission_level <=
+                                        PermissionLevel.User
+                                            ? maxDate
+                                            : undefined
+                                    }
                                     sx={{ width: '100%' }}
                                     label="Date End"
                                     format="MM/dd/yyyy"

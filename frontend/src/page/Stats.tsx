@@ -23,6 +23,7 @@ import Stack from '@mui/material/Stack';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
 
 interface MapUseChartProps {
     details: MapUseDetail[];
@@ -243,63 +244,57 @@ const WeaponsOverallContainer = () => {
                                         sortable: true,
                                         sortKey: 'kills',
                                         tooltip: 'Total Kills',
-                                        renderer: (obj) => {
-                                            return obj.kills;
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.kills, humanCount)
                                     },
                                     {
                                         label: 'Kills%',
                                         sortable: true,
                                         sortKey: 'kills_pct',
                                         tooltip: 'Percentage Of Overall Kills',
-                                        renderer: (obj) => {
-                                            return (
-                                                obj.kills_pct.toFixed(2) + ' %'
-                                            );
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.kills_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Shots',
                                         sortable: true,
                                         sortKey: 'shots',
                                         tooltip: 'Total Shots',
-                                        renderer: (obj) => {
-                                            return obj.shots > 0
-                                                ? obj.shots
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.shots, humanCount)
                                     },
                                     {
                                         label: 'Shots%',
                                         sortable: true,
                                         sortKey: 'shots_pct',
-                                        tooltip: 'Total Kills',
-                                        renderer: (obj) => {
-                                            return obj.shots_pct > 0
-                                                ? obj.shots_pct.toFixed(2) +
-                                                      ' %'
-                                                : '';
-                                        }
+                                        tooltip: 'Shot Hit Percentage',
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.shots_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Hits',
                                         sortable: true,
                                         sortKey: 'hits',
                                         tooltip: 'Total Hits',
-                                        renderer: (obj) => {
-                                            return obj.hits > 0 ? obj.hits : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.hits, humanCount)
                                     },
                                     {
                                         label: 'Hits%',
                                         sortable: true,
                                         sortKey: 'hits_pct',
                                         tooltip: 'Total Hits',
-                                        renderer: (obj) => {
-                                            return obj.hits_pct > 0
-                                                ? obj.hits_pct.toFixed(2) + ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.hits_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Acc%',
@@ -307,106 +302,88 @@ const WeaponsOverallContainer = () => {
                                         virtual: true,
                                         virtualKey: 'accuracy',
                                         tooltip: 'Overall Accuracy',
-                                        renderer: (obj) => {
-                                            return obj.shots > 0
-                                                ? (
-                                                      (obj.hits / obj.shots) *
-                                                      100
-                                                  ).toFixed(2) + ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.shots_pct, () =>
+                                                defaultFloatFmt(
+                                                    (obj.hits / obj.shots) * 100
+                                                )
+                                            )
                                     },
                                     {
                                         label: 'As',
                                         sortable: true,
                                         sortKey: 'airshots',
                                         tooltip: 'Total Airshots',
-                                        renderer: (obj) => {
-                                            return obj.airshots > 0
-                                                ? obj.airshots
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.airshots, humanCount)
                                     },
                                     {
                                         label: 'As%',
                                         sortable: true,
                                         sortKey: 'airshots_pct',
                                         tooltip: 'Total Airshot Percentage',
-                                        renderer: (obj) => {
-                                            return obj.airshots_pct > 0
-                                                ? obj.airshots_pct.toFixed(2) +
-                                                      ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.airshots_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Bs',
                                         sortable: true,
                                         sortKey: 'backstabs',
                                         tooltip: 'Total Backstabs',
-                                        renderer: (obj) => {
-                                            return obj.backstabs > 0
-                                                ? obj.backstabs
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.backstabs, humanCount)
                                     },
                                     {
                                         label: 'Bs%',
                                         sortable: true,
                                         sortKey: 'backstabs_pct',
                                         tooltip: 'Total Backstabs Percentage',
-                                        renderer: (obj) => {
-                                            return obj.backstabs_pct > 0
-                                                ? obj.backstabs_pct.toFixed(2) +
-                                                      ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.backstabs_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Hs',
                                         sortable: true,
                                         sortKey: 'headshots',
                                         tooltip: 'Total Headshots',
-                                        renderer: (obj) => {
-                                            return obj.headshots > 0
-                                                ? obj.headshots
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.headshots, humanCount)
                                     },
                                     {
                                         label: 'Hs%',
                                         sortable: true,
                                         sortKey: 'headshots_pct',
                                         tooltip: 'Total Headshot Percentage',
-                                        renderer: (obj) => {
-                                            return obj.headshots_pct > 0
-                                                ? obj.headshots_pct.toFixed(2) +
-                                                      ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.headshots_pct,
+                                                defaultFloatFmt
+                                            )
                                     },
                                     {
                                         label: 'Dmg',
                                         sortable: true,
                                         sortKey: 'damage',
                                         tooltip: 'Total Damage',
-                                        renderer: (obj) => {
-                                            return obj.damage > 0
-                                                ? obj.damage
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.damage, humanCount)
                                     },
                                     {
                                         label: 'Dmg%',
                                         sortable: true,
                                         sortKey: 'damage_pct',
                                         tooltip: 'Total Damage Percentage',
-                                        renderer: (obj) => {
-                                            return obj.damage_pct > 0
-                                                ? obj.damage_pct.toFixed(2) +
-                                                      ' %'
-                                                : '';
-                                        }
+                                        renderer: (obj) =>
+                                            fmtWhenGt(
+                                                obj.damage_pct,
+                                                defaultFloatFmt
+                                            )
                                     }
                                 ]}
                                 sortOrder={sortOrder}

@@ -76,6 +76,22 @@ export const stringHexNumber = (input: string) =>
             .toUpperCase()
     ).slice(-6); // "32EF01"     // 7
 
+const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
+    let u = -1;
+    const r = 10 ** dp;
+
+    // eslint-disable-next-line no-loops/no-loops
+    do {
+        count /= thresh;
+        ++u;
+    } while (
+        Math.round(Math.abs(count) * r) / r >= thresh &&
+        u < units.length - 1
+    );
+
+    return count.toFixed(dp) + ' ' + units[u];
+};
+
 export const humanFileSize = (bytes: number, si = false, dp = 1) => {
     const thresh = si ? 1000 : 1024;
 
@@ -86,17 +102,23 @@ export const humanFileSize = (bytes: number, si = false, dp = 1) => {
     const units = si
         ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
         : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-    let u = -1;
-    const r = 10 ** dp;
+    return humanize(bytes, thresh, dp, units);
+};
 
-    // eslint-disable-next-line no-loops/no-loops
-    do {
-        bytes /= thresh;
-        ++u;
-    } while (
-        Math.round(Math.abs(bytes) * r) / r >= thresh &&
-        u < units.length - 1
-    );
+export const humanCount = (count: number, dp: number = 1): string => {
+    if (Math.abs(count) < 1000) {
+        return `${count}`;
+    }
+    return humanize(count, 1000, dp, ['K', 'M', 'B', 'T', 'Q']);
+};
 
-    return bytes.toFixed(dp) + ' ' + units[u];
+export const defaultFloatFmt = (value: number) => `${value.toFixed(2)} %`;
+
+export const fmtWhenGt = (
+    value: number,
+    fmt?: (value: number) => string,
+    gt: number = 0,
+    fallback: string = ''
+) => {
+    return value > gt ? (fmt ? fmt(value) : `${value}`) : fallback;
 };
