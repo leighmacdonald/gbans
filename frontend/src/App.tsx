@@ -54,8 +54,9 @@ import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
 import { NotificationsPage } from './page/NotificationsPage';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
-import { StatsPage } from './page/Stats';
 import { ProfileSettingsPage } from './page/ProfileSettingsPage';
+import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
+import { StatsPage } from './page/StatsPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -171,14 +172,39 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+
                                                             <Route
                                                                 path={'/stats'}
                                                                 element={
                                                                     <ErrorBoundary>
-                                                                        <StatsPage />
+                                                                        <PrivateRoute
+                                                                            permission={
+                                                                                PermissionLevel.User
+                                                                            }
+                                                                        >
+                                                                            <StatsPage />
+                                                                        </PrivateRoute>
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+
+                                                            <Route
+                                                                path={
+                                                                    '/stats/weapon/:weapon_id'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <PrivateRoute
+                                                                            permission={
+                                                                                PermissionLevel.User
+                                                                            }
+                                                                        >
+                                                                            <StatsWeaponOverallPage />
+                                                                        </PrivateRoute>
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
+
                                                             <Route
                                                                 path={'/wiki'}
                                                                 element={

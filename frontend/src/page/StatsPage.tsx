@@ -21,9 +21,11 @@ import MapIcon from '@mui/icons-material/Map';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
+import Link from '@mui/material/Link';
+import Button from '@mui/material/Button';
+import { useNavigate } from 'react-router-dom';
 
 interface MapUseChartProps {
     details: MapUseDetail[];
@@ -174,6 +176,7 @@ const WeaponsOverallContainer = () => {
     const [sortColumn, setSortColumn] =
         useState<keyof WeaponsOverallResult>('kills_pct');
     const [page, setPage] = useState(1);
+    const navigate = useNavigate();
 
     useEffect(() => {
         apiGetWeaponsOverall()
@@ -188,10 +191,7 @@ const WeaponsOverallContainer = () => {
     }, []);
 
     const rows = useMemo(() => {
-        return stableSort<WeaponsOverallResult>(
-            details,
-            compare(sortOrder, sortColumn)
-        ).slice(
+        return stableSort(details ?? [], compare(sortOrder, sortColumn)).slice(
             (page - 1) * RowsPerPage.TwentyFive,
             (page - 1) * RowsPerPage.TwentyFive + RowsPerPage.TwentyFive
         );
@@ -230,11 +230,21 @@ const WeaponsOverallContainer = () => {
                                         renderer: (obj) => {
                                             return (
                                                 <Tooltip title={obj.key}>
-                                                    <Typography
-                                                        variant={'body2'}
+                                                    <Button
+                                                        fullWidth
+                                                        size={'small'}
+                                                        variant={'text'}
+                                                        component={Link}
+                                                        href={`/stats/weapon/${obj.weapon_id}`}
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            navigate(
+                                                                `/stats/weapon/${obj.weapon_id}`
+                                                            );
+                                                        }}
                                                     >
                                                         {obj.name}
-                                                    </Typography>
+                                                    </Button>
                                                 </Tooltip>
                                             );
                                         }

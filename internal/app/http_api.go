@@ -3117,7 +3117,7 @@ func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStatsWeapons(app *App) gin.HandlerFunc {
+func onAPIGetStatsWeaponsOverall(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -3135,6 +3135,49 @@ func onAPIGetStatsWeapons(app *App) gin.HandlerFunc {
 		}
 
 		responseOK(ctx, http.StatusOK, weaponStats)
+	}
+}
+
+func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type resp struct {
+		Weapon  store.Weapon               `json:"weapon"`
+		Players []store.PlayerWeaponResult `json:"players"`
+	}
+
+	return func(ctx *gin.Context) {
+		weaponID, errWeaponID := getIntParam(ctx, "weapon_id")
+		if errWeaponID != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+
+		var weapon store.Weapon
+
+		errWeapon := app.db.GetWeaponByID(ctx, weaponID, &weapon)
+
+		if errWeapon != nil {
+			responseErr(ctx, http.StatusNotFound, nil)
+
+			return
+		}
+
+		weaponStats, errChat := app.db.WeaponTopPlayers(ctx, weaponID)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.Error("Failed to query weapons stats",
+				zap.Error(errChat))
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []store.PlayerWeaponResult{}
+		}
+
+		responseOK(ctx, http.StatusOK, resp{Weapon: weapon, Players: weaponStats})
 	}
 }
 

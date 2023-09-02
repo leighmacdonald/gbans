@@ -87,6 +87,16 @@ func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon
 	return nil
 }
 
+func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error {
+	const q = `SELECT weapon_id, key, name FROM weapon WHERE weapon_id = $1`
+
+	if errQuery := db.QueryRow(ctx, q, weaponID).Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name); errQuery != nil {
+		return Err(errQuery)
+	}
+
+	return nil
+}
+
 func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 	if weapon.WeaponID > 0 {
 		updateQuery, updateArgs, errUpdateQuery := db.sb.
@@ -775,6 +785,67 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, er
 		}
 
 		results = append(results, wor)
+	}
+
+	return results, nil
+}
+
+type PlayerWeaponResult struct {
+	Rank        int           `json:"rank"`
+	SteamID     steamid.SID64 `json:"steam_id"`
+	Personaname string        `json:"personaname"`
+	AvatarHash  string        `json:"avatar_hash"`
+	Kills       int64         `json:"kills"`
+	Damage      int64         `json:"damage"`
+	Headshots   int64         `json:"headshots"`
+	Airshots    int64         `json:"airshots"`
+	Backstabs   int64         `json:"backstabs"`
+	Shots       int64         `json:"shots"`
+	Hits        int64         `json:"hits"`
+}
+
+func (db *Store) WeaponTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
+	const query = `
+		SELECT row_number() over (order by SUM(mw.kills) desc nulls last) as rank,
+		       p.steam_id, p.personaname, p.avatarhash,
+			   SUM(mw.kills) as kills, sum(mw.damage) as damage,
+			   sum(mw.shots) as shots, sum(mw.hits) as hits,
+			   sum(mw.backstabs) as backstabs,
+			   sum(mw.headshots) as headshots,
+			   sum(mw.airshots) as airshots
+		FROM match_weapon mw
+		LEFT JOIN weapon w on w.weapon_id = mw.weapon_id
+		LEFT JOIN match_player mp on mp.match_player_id = mw.match_player_id
+		LEFT JOIN person p on mp.steam_id = p.steam_id
+		WHERE w.weapon_id = $1
+		GROUP BY p.steam_id, w.weapon_id ORDER BY kills DESC
+		LIMIT 250`
+
+	rows, errQuery := db.Query(ctx, query, weaponID)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []PlayerWeaponResult
+
+	for rows.Next() {
+		var (
+			pwr   PlayerWeaponResult
+			sid64 int64
+		)
+
+		if errScan := rows.
+			Scan(&pwr.Rank, &sid64, &pwr.Personaname, &pwr.AvatarHash,
+				&pwr.Kills, &pwr.Damage,
+				&pwr.Shots, &pwr.Hits,
+				&pwr.Backstabs, &pwr.Headshots,
+				&pwr.Airshots); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		pwr.SteamID = steamid.New(sid64)
+		results = append(results, pwr)
 	}
 
 	return results, nil

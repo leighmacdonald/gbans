@@ -42,23 +42,55 @@ export interface Weapon {
     name: string;
 }
 
-export interface WeaponsOverallResult extends Weapon {
+export interface BaseWeaponStats {
     kills: number;
-    kills_pct: number;
     damage: number;
-    damage_pct: number;
     headshots: number;
-    headshots_pct: number;
     airshots: number;
-    airshots_pct: number;
     backstabs: number;
-    backstabs_pct: number;
     shots: number;
-    shots_pct: number;
     hits: number;
+}
+
+export interface WeaponsOverallResult extends Weapon, BaseWeaponStats {
+    kills_pct: number;
+    damage_pct: number;
+    headshots_pct: number;
+    airshots_pct: number;
+    backstabs_pct: number;
+    shots_pct: number;
     hits_pct: number;
 }
 
 export const apiGetWeaponsOverall = async () => {
     return await apiCall<WeaponsOverallResult[]>(`/api/stats/weapons`, 'GET');
+};
+
+export interface BaseWeaponStats {
+    kills: number;
+    damage: number;
+    headshots: number;
+    airshots: number;
+    backstabs: number;
+    shots: number;
+    hits: number;
+}
+
+export interface PlayerWeaponStats extends BaseWeaponStats {
+    steam_id: string;
+    personaname: string;
+    avatar_hash: string;
+    rank: number;
+}
+
+interface PlayerWeaponStatsResponse {
+    weapon: Weapon;
+    players: PlayerWeaponStats[];
+}
+
+export const apiGetPlayerWeaponStats = async (weapon_id: number) => {
+    return await apiCall<PlayerWeaponStatsResponse>(
+        `/api/stats/weapon/${weapon_id}`,
+        'GET'
+    );
 };
