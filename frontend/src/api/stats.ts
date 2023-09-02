@@ -35,3 +35,30 @@ export interface MapUseDetail {
 export const apiGetMapUsage = async () => {
     return await apiCall<MapUseDetail[]>(`/api/stats/map`, 'GET');
 };
+
+export interface Weapon {
+    weapon_id: number;
+    key: string;
+    name: string;
+}
+
+export interface WeaponsOverallResult extends Weapon {
+    kills: number;
+    kills_pct: number;
+    damage: number;
+    damage_pct: number;
+    headshots: number;
+    headshots_pct: number;
+    airshots: number;
+    airshots_pct: number;
+    backstabs: number;
+    backstabs_pct: number;
+    shots: number;
+    shots_pct: number;
+    hits: number;
+    hits_pct: number;
+}
+
+export const apiGetWeaponsOverall = async () => {
+    return await apiCall<WeaponsOverallResult[]>(`/api/stats/weapons`, 'GET');
+};

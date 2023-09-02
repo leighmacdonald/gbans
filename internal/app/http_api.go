@@ -3117,6 +3117,27 @@ func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIGetStatsWeapons(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		weaponStats, errChat := app.db.WeaponsOverall(ctx)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.Error("Failed to query weapons stats",
+				zap.Error(errChat))
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []store.WeaponsOverallResult{}
+		}
+
+		responseOK(ctx, http.StatusOK, weaponStats)
+	}
+}
+
 func onAPIQueryMessages(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 

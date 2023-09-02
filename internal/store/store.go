@@ -283,10 +283,8 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 		errMigration = migrator.Up()
 	}
 
-	if errMigration != nil {
-		if errMigration.Error() != "no change" {
-			return errors.Wrapf(errMigration, "Failed to perform migration")
-		}
+	if errMigration != nil && !errors.Is(errMigration, migrate.ErrNoChange) {
+		return errors.Wrapf(errMigration, "Failed to perform migration")
 	}
 
 	return nil

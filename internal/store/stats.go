@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -654,4 +655,127 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
 	}
 
 	return details, nil
+}
+
+type TopChatterResult struct {
+	Name    string
+	SteamID steamid.SID64
+	Count   int
+}
+
+func (db *Store) TopChatters(ctx context.Context, count int) ([]TopChatterResult, error) {
+	const query = `SELECT
+    	p.personaname, p.steam_id, count(person_message_id) as total
+		FROM person_messages m
+		LEFT JOIN public.person p on m.steam_id = p.steam_id
+		GROUP BY p.steam_id
+		ORDER BY total DESC
+		LIMIT $1`
+
+	rows, errRows := db.Query(ctx, query, count)
+	if errRows != nil {
+		return nil, Err(errRows)
+	}
+
+	defer rows.Close()
+
+	var results []TopChatterResult
+
+	for rows.Next() {
+		var (
+			tcr     TopChatterResult
+			steamID int64
+		)
+
+		if errScan := rows.Scan(&tcr.Name, &steamID, &tcr.Count); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		tcr.SteamID = steamid.New(steamID)
+		results = append(results, tcr)
+	}
+
+	return results, nil
+}
+
+type WeaponsOverallResult struct {
+	Weapon
+	Kills        int64   `json:"kills"`
+	KillsPct     float64 `json:"kills_pct"`
+	Damage       int64   `json:"damage"`
+	DamagePct    float64 `json:"damage_pct"`
+	Headshots    int64   `json:"headshots"`
+	HeadshotsPct float64 `json:"headshots_pct"`
+	Airshots     int64   `json:"airshots"`
+	AirshotsPct  float64 `json:"airshots_pct"`
+	Backstabs    int64   `json:"backstabs"`
+	BackstabsPct float64 `json:"backstabs_pct"`
+	Shots        int64   `json:"shots"`
+	ShotsPct     float64 `json:"shots_pct"`
+	Hits         int64   `json:"hits"`
+	HitsPct      float64 `json:"hits_pct"`
+}
+
+func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error) {
+	const query = `
+		SELECT 
+		    s.weapon_id, s.name, s.key, 
+		    s.kills, (s.kills::float / t.kills_total::float) * 100 kills_pct,
+		    s.hs,  (s.hs::float / t.headshots_total::float) * 100 hs_pct,
+		    s.airshots, (s.airshots::float / t.airshots_total::float) * 100 airshots_pct,
+		    s.bs, (s.bs::float / t.backstabs_total::float) * 100 bs_pct,
+			s.shots, (s.shots::float / t.shots_total::float) * 100 shots_pct,
+			s.hits, (s.hits::float / t.hits_total::float) * 100 hits_pct,
+			s.damage, (s.damage::float / t.damage_total::float) * 100 damage_pct
+		FROM (
+    		SELECT
+    		    w.weapon_id, w.key, w.name,
+             	SUM(mw.kills)  as kills,
+             	SUM(mw.damage)  as damage,
+             	SUM(mw.shots) as shots,
+             	SUM(mw.hits) as hits,
+             	SUM(headshots) as hs,
+             	SUM(airshots)  as airshots,
+             	SUM(backstabs) as bs
+      		FROM match_weapon mw
+    		LEFT JOIN public.weapon w on w.weapon_id = mw.weapon_id
+      		GROUP BY w.weapon_id
+		) s CROSS JOIN (
+			SELECT 
+			    SUM(mw.kills) as kills_total, 
+			    SUM(mw.damage) as damage_total,
+			    SUM(mw.shots) as shots_total,
+			    SUM(mw.hits) as hits_total,
+			    SUM(mw.airshots) as airshots_total,
+			    SUM(mw.backstabs) as backstabs_total,
+			    SUM(mw.headshots) as headshots_total
+            FROM match_weapon mw
+        ) t ;`
+
+	rows, errQuery := db.Query(ctx, query)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []WeaponsOverallResult
+
+	for rows.Next() {
+		var wor WeaponsOverallResult
+		if errScan := rows.
+			Scan(&wor.WeaponID, &wor.Name, &wor.Key,
+				&wor.Kills, &wor.KillsPct,
+				&wor.Headshots, &wor.HeadshotsPct,
+				&wor.Airshots, &wor.AirshotsPct,
+				&wor.Backstabs, &wor.BackstabsPct,
+				&wor.Shots, &wor.ShotsPct,
+				&wor.Hits, &wor.HitsPct,
+				&wor.Damage, &wor.DamagePct); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		results = append(results, wor)
+	}
+
+	return results, nil
 }

@@ -216,6 +216,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/log/:match_id", onAPIGetMatch(app))
 		authed.POST("/api/logs", onAPIGetMatches(app))
 		authed.POST("/api/messages", onAPIQueryMessages(app))
+		authed.GET("/api/stats/weapons", onAPIGetStatsWeapons(app))
 	}
 
 	editorGrp := engine.Group("/")
