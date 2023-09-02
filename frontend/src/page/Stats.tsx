@@ -251,7 +251,9 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'shots',
                                         tooltip: 'Total Shots',
                                         renderer: (obj) => {
-                                            return obj.shots;
+                                            return obj.shots > 0
+                                                ? obj.shots
+                                                : '';
                                         }
                                     },
                                     {
@@ -260,9 +262,10 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'shots_pct',
                                         tooltip: 'Total Kills',
                                         renderer: (obj) => {
-                                            return (
-                                                obj.shots_pct.toFixed(2) + ' %'
-                                            );
+                                            return obj.shots_pct > 0
+                                                ? obj.shots_pct.toFixed(2) +
+                                                      ' %'
+                                                : '';
                                         }
                                     },
                                     {
@@ -271,7 +274,9 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'airshots',
                                         tooltip: 'Total Airshots',
                                         renderer: (obj) => {
-                                            return obj.airshots;
+                                            return obj.airshots > 0
+                                                ? obj.airshots
+                                                : '';
                                         }
                                     },
                                     {
@@ -280,10 +285,10 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'airshots_pct',
                                         tooltip: 'Total Airshot Percentage',
                                         renderer: (obj) => {
-                                            return (
-                                                obj.airshots_pct.toFixed(2) +
-                                                ' %'
-                                            );
+                                            return obj.airshots_pct > 0
+                                                ? obj.airshots_pct.toFixed(2) +
+                                                      ' %'
+                                                : '';
                                         }
                                     },
                                     {
@@ -292,7 +297,9 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'backstabs',
                                         tooltip: 'Total Backstabs',
                                         renderer: (obj) => {
-                                            return obj.backstabs;
+                                            return obj.backstabs > 0
+                                                ? obj.backstabs
+                                                : '';
                                         }
                                     },
                                     {
@@ -301,10 +308,33 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'backstabs_pct',
                                         tooltip: 'Total Backstabs Percentage',
                                         renderer: (obj) => {
-                                            return (
-                                                obj.backstabs_pct.toFixed(2) +
-                                                ' %'
-                                            );
+                                            return obj.backstabs_pct > 0
+                                                ? obj.backstabs_pct.toFixed(2) +
+                                                      ' %'
+                                                : '';
+                                        }
+                                    },
+                                    {
+                                        label: 'Hs',
+                                        sortable: true,
+                                        sortKey: 'headshots',
+                                        tooltip: 'Total Headshots',
+                                        renderer: (obj) => {
+                                            return obj.headshots > 0
+                                                ? obj.headshots
+                                                : '';
+                                        }
+                                    },
+                                    {
+                                        label: 'Hs%',
+                                        sortable: true,
+                                        sortKey: 'headshots_pct',
+                                        tooltip: 'Total Headshot Percentage',
+                                        renderer: (obj) => {
+                                            return obj.headshots_pct > 0
+                                                ? obj.headshots_pct.toFixed(2) +
+                                                      ' %'
+                                                : '';
                                         }
                                     },
                                     {
@@ -313,7 +343,9 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'damage',
                                         tooltip: 'Total Damage',
                                         renderer: (obj) => {
-                                            return obj.damage;
+                                            return obj.damage > 0
+                                                ? obj.damage
+                                                : '';
                                         }
                                     },
                                     {
@@ -322,9 +354,10 @@ const WeaponsOverallContainer = () => {
                                         sortKey: 'damage_pct',
                                         tooltip: 'Total Damage Percentage',
                                         renderer: (obj) => {
-                                            return (
-                                                obj.damage_pct.toFixed(2) + ' %'
-                                            );
+                                            return obj.damage_pct > 0
+                                                ? obj.damage_pct.toFixed(2) +
+                                                      ' %'
+                                                : '';
                                         }
                                     }
                                 ]}
