@@ -21,6 +21,8 @@ import MapIcon from '@mui/icons-material/Map';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import InsightsIcon from '@mui/icons-material/Insights';
+import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 
 interface MapUseChartProps {
     details: MapUseDetail[];
@@ -223,7 +225,18 @@ const WeaponsOverallContainer = () => {
                                         sortable: true,
                                         sortKey: 'name',
                                         tooltip: 'Weapon Name',
-                                        align: 'left'
+                                        align: 'left',
+                                        renderer: (obj) => {
+                                            return (
+                                                <Tooltip title={obj.key}>
+                                                    <Typography
+                                                        variant={'body2'}
+                                                    >
+                                                        {obj.name}
+                                                    </Typography>
+                                                </Tooltip>
+                                            );
+                                        }
                                     },
                                     {
                                         label: 'Kills',
@@ -265,6 +278,41 @@ const WeaponsOverallContainer = () => {
                                             return obj.shots_pct > 0
                                                 ? obj.shots_pct.toFixed(2) +
                                                       ' %'
+                                                : '';
+                                        }
+                                    },
+                                    {
+                                        label: 'Hits',
+                                        sortable: true,
+                                        sortKey: 'hits',
+                                        tooltip: 'Total Hits',
+                                        renderer: (obj) => {
+                                            return obj.hits > 0 ? obj.hits : '';
+                                        }
+                                    },
+                                    {
+                                        label: 'Hits%',
+                                        sortable: true,
+                                        sortKey: 'hits_pct',
+                                        tooltip: 'Total Hits',
+                                        renderer: (obj) => {
+                                            return obj.hits_pct > 0
+                                                ? obj.hits_pct.toFixed(2) + ' %'
+                                                : '';
+                                        }
+                                    },
+                                    {
+                                        label: 'Acc%',
+                                        sortable: false,
+                                        virtual: true,
+                                        virtualKey: 'accuracy',
+                                        tooltip: 'Overall Accuracy',
+                                        renderer: (obj) => {
+                                            return obj.shots > 0
+                                                ? (
+                                                      (obj.hits / obj.shots) *
+                                                      100
+                                                  ).toFixed(2) + ' %'
                                                 : '';
                                         }
                                     },
