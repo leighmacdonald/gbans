@@ -119,7 +119,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                             personaname={
                                                 row.subject.personaname
                                             }
-                                            avatar={row.subject.avatar}
+                                            avatar_hash={row.subject.avatarhash}
                                         />
                                     )
                                 },

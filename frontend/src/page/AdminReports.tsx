@@ -162,7 +162,7 @@ export const AdminReports = () => {
                                             personaname={
                                                 row.subject.personaname
                                             }
-                                            avatar={row.subject.avatar}
+                                            avatar_hash={row.subject.avatar}
                                         ></PersonCell>
                                     )
                                 },
@@ -178,7 +178,7 @@ export const AdminReports = () => {
                                         <PersonCell
                                             steam_id={row.author.steam_id}
                                             personaname={row.author.personaname}
-                                            avatar={row.author.avatar}
+                                            avatar_hash={row.author.avatar}
                                         ></PersonCell>
                                     )
                                 }

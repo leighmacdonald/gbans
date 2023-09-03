@@ -1,59 +1,46 @@
-import React, { JSX, useEffect, useMemo, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetPlayerWeaponStats, PlayerWeaponStats, Weapon } from '../api';
-import { LoadingSpinner } from '../component/LoadingSpinner';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable } from '../component/LazyTable';
-import {
-    compare,
-    Order,
-    RowsPerPage,
-    stableSort
-} from '../component/DataTable';
-import Pagination from '@mui/material/Pagination';
-import Stack from '@mui/material/Stack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { apiGetPlayersOverall, PlayerWeaponStats } from '../api';
+import { compare, Order, RowsPerPage, stableSort } from './DataTable';
+import { ContainerWithHeader } from './ContainerWithHeader';
 import InsightsIcon from '@mui/icons-material/Insights';
+import Grid from '@mui/material/Unstable_Grid2';
+import { LoadingSpinner } from './LoadingSpinner';
+import Stack from '@mui/material/Stack';
+import Pagination from '@mui/material/Pagination';
+import { LazyTable } from './LazyTable';
 import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
-import { useParams } from 'react-router';
-import { PersonCell } from '../component/PersonCell';
+import { PersonCell } from './PersonCell';
 
-interface WeaponStatsContainerProps {
-    weapon_id: number;
-}
-
-const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
+export const PlayersOverallContainer = () => {
     const [details, setDetails] = useState<PlayerWeaponStats[]>([]);
     const [loading, setLoading] = useState(true);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortOrder, setSortOrder] = useState<Order>('asc');
     const [sortColumn, setSortColumn] =
-        useState<keyof PlayerWeaponStats>('kills');
-    const [weapon, setWeapon] = useState<Weapon>();
+        useState<keyof PlayerWeaponStats>('rank');
     const [page, setPage] = useState(1);
 
     useEffect(() => {
-        apiGetPlayerWeaponStats(weapon_id)
+        apiGetPlayersOverall()
             .then((resp) => {
                 if (resp.result) {
-                    setDetails(resp.result.players);
-                    setWeapon(resp.result.weapon);
+                    setDetails(resp.result);
                 }
             })
             .finally(() => {
                 setLoading(false);
             });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const rows = useMemo(() => {
         return stableSort(details ?? [], compare(sortOrder, sortColumn)).slice(
-            (page - 1) * RowsPerPage.Hundred,
-            (page - 1) * RowsPerPage.Hundred + RowsPerPage.Hundred
+            (page - 1) * RowsPerPage.TwentyFive,
+            (page - 1) * RowsPerPage.TwentyFive + RowsPerPage.TwentyFive
         );
     }, [details, page, sortColumn, sortOrder]);
 
     return (
         <ContainerWithHeader
-            title={`Top 250 Weapon Users: ${weapon?.name}`}
+            title={'Top 1000 Players By Kills'}
             iconLeft={<InsightsIcon />}
         >
             <Grid container>
@@ -65,9 +52,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             <Stack direction={'row-reverse'}>
                                 <Pagination
                                     page={page}
-                                    count={Math.ceil(
-                                        details.length / RowsPerPage.Hundred
-                                    )}
+                                    count={Math.ceil(details.length / 25)}
                                     showFirstButton
                                     showLastButton
                                     onChange={(_, newPage) => {
@@ -78,26 +63,32 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             <LazyTable<PlayerWeaponStats>
                                 columns={[
                                     {
-                                        label: '#',
+                                        label: 'Rank',
                                         sortable: true,
                                         sortKey: 'rank',
-                                        tooltip: 'Overall Rank',
                                         align: 'center',
+                                        tooltip: 'Overall Rank By Kills',
                                         renderer: (obj) => obj.rank
                                     },
                                     {
-                                        label: 'Player Name',
+                                        label: 'Name',
                                         sortable: true,
                                         sortKey: 'personaname',
-                                        tooltip: 'Player Name',
+                                        tooltip: 'Name',
                                         align: 'left',
-                                        renderer: (obj) => (
-                                            <PersonCell
-                                                avatar_hash={obj.avatar_hash}
-                                                personaname={obj.personaname}
-                                                steam_id={obj.steam_id}
-                                            />
-                                        )
+                                        renderer: (obj) => {
+                                            return (
+                                                <PersonCell
+                                                    steam_id={obj.steam_id}
+                                                    avatar_hash={
+                                                        obj.avatar_hash
+                                                    }
+                                                    personaname={
+                                                        obj.personaname
+                                                    }
+                                                />
+                                            );
+                                        }
                                     },
                                     {
                                         label: 'Kills',
@@ -106,14 +97,6 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         tooltip: 'Total Kills',
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.kills, humanCount)
-                                    },
-                                    {
-                                        label: 'Dmg',
-                                        sortable: true,
-                                        sortKey: 'damage',
-                                        tooltip: 'Total Damage',
-                                        renderer: (obj) =>
-                                            fmtWhenGt(obj.damage, humanCount)
                                     },
                                     {
                                         label: 'Shots',
@@ -127,7 +110,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         label: 'Hits',
                                         sortable: true,
                                         sortKey: 'hits',
-                                        tooltip: 'Total Shots Landed',
+                                        tooltip: 'Total Hits',
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.hits, humanCount)
                                     },
@@ -152,7 +135,6 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.airshots, humanCount)
                                     },
-
                                     {
                                         label: 'Bs',
                                         sortable: true,
@@ -161,7 +143,6 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.backstabs, humanCount)
                                     },
-
                                     {
                                         label: 'Hs',
                                         sortable: true,
@@ -169,6 +150,14 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         tooltip: 'Total Headshots',
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.headshots, humanCount)
+                                    },
+                                    {
+                                        label: 'Dmg',
+                                        sortable: true,
+                                        sortKey: 'damage',
+                                        tooltip: 'Total Damage',
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.damage, humanCount)
                                     }
                                 ]}
                                 sortOrder={sortOrder}
@@ -186,17 +175,5 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                 </Grid>
             </Grid>
         </ContainerWithHeader>
-    );
-};
-
-export const StatsWeaponOverallPage = (): JSX.Element => {
-    const { weapon_id } = useParams();
-
-    return (
-        <Grid container spacing={2}>
-            <Grid xs={12}>
-                <WeaponStatsContainer weapon_id={parseInt(weapon_id ?? '0')} />
-            </Grid>
-        </Grid>
     );
 };

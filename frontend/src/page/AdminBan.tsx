@@ -284,7 +284,7 @@ export const AdminBan = () => {
                                             <PersonCell
                                                 steam_id={row.target_id}
                                                 personaname={row.personaname}
-                                                avatar={row.avatar}
+                                                avatar_hash={row.avatar}
                                             />
                                         )
                                     },

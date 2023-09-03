@@ -66,6 +66,10 @@ export const apiGetWeaponsOverall = async () => {
     return await apiCall<WeaponsOverallResult[]>(`/api/stats/weapons`, 'GET');
 };
 
+export const apiGetPlayersOverall = async () => {
+    return await apiCall<PlayerWeaponStats[]>(`/api/stats/players`, 'GET');
+};
+
 export interface BaseWeaponStats {
     kills: number;
     damage: number;

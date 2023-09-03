@@ -33,7 +33,7 @@ export const AdminPeople = (): JSX.Element => {
                                         <PersonCell
                                             steam_id={row.steam_id}
                                             personaname={row.personaname}
-                                            avatar={row.avatar}
+                                            avatar_hash={row.avatar}
                                         />
                                     )
                                 }

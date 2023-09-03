@@ -708,8 +708,13 @@ func (db *Store) TopChatters(ctx context.Context, count int) ([]TopChatterResult
 	return results, nil
 }
 
+type RankedResult struct {
+	Rank int `json:"rank"`
+}
+
 type WeaponsOverallResult struct {
 	Weapon
+	RankedResult
 	Kills        int64   `json:"kills"`
 	KillsPct     float64 `json:"kills_pct"`
 	Damage       int64   `json:"damage"`
@@ -730,13 +735,13 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, er
 	const query = `
 		SELECT 
 		    s.weapon_id, s.name, s.key, 
-		    s.kills, (s.kills::float / t.kills_total::float) * 100 kills_pct,
-		    s.hs,  (s.hs::float / t.headshots_total::float) * 100 hs_pct,
-		    s.airshots, (s.airshots::float / t.airshots_total::float) * 100 airshots_pct,
-		    s.bs, (s.bs::float / t.backstabs_total::float) * 100 bs_pct,
-			s.shots, (s.shots::float / t.shots_total::float) * 100 shots_pct,
-			s.hits, (s.hits::float / t.hits_total::float) * 100 hits_pct,
-			s.damage, (s.damage::float / t.damage_total::float) * 100 damage_pct
+		    s.kills, case t.kills_total WHEN 0 THEN 0 ELSE (s.kills::float / t.kills_total::float) * 100 END kills_pct,
+		    s.hs,  case t.headshots_total WHEN 0 THEN 0 ELSE (s.hs::float / t.headshots_total::float) * 100 END hs_pct,
+		    s.airshots, case t.airshots_total WHEN 0 THEN 0 ELSE (s.airshots::float / t.airshots_total::float) * 100 END airshots_pct,
+		    s.bs, case t.backstabs_total WHEN 0 THEN 0 ELSE (s.bs::float / t.backstabs_total::float) * 100 END  bs_pct,
+			s.shots,  case t.shots_total WHEN 0 THEN 0 ELSE (s.shots::float / t.shots_total::float) * 100 END shots_pct,
+			s.hits, case t.hits_total WHEN 0 THEN 0 ELSE (s.hits::float / t.hits_total::float) * 100 END hits_pct,
+			s.damage, case t.damage_total WHEN 0 THEN 0 ELSE (s.damage::float / t.damage_total::float) * 100 END damage_pct
 		FROM (
     		SELECT
     		    w.weapon_id, w.key, w.name,
@@ -804,7 +809,7 @@ type PlayerWeaponResult struct {
 	Hits        int64         `json:"hits"`
 }
 
-func (db *Store) WeaponTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
+func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
 	const query = `
 		SELECT row_number() over (order by SUM(mw.kills) desc nulls last) as rank,
 		       p.steam_id, p.personaname, p.avatarhash,
@@ -846,6 +851,130 @@ func (db *Store) WeaponTopPlayers(ctx context.Context, weaponID int) ([]PlayerWe
 
 		pwr.SteamID = steamid.New(sid64)
 		results = append(results, pwr)
+	}
+
+	return results, nil
+}
+
+func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error) {
+	const query = `
+		SELECT
+			row_number() over (order by s.kills desc nulls last) as rank,
+			s.weapon_id, s.name, s.key,
+			s.kills,    case t.kills_total WHEN 0 THEN 0 ELSE (s.kills::float / t.kills_total::float) * 100 END kills_pct,
+			s.hs,       case t.headshots_total WHEN 0 THEN 0 ELSE (s.hs::float / t.headshots_total::float) * 100 END hs_pct,
+			s.airshots, case t.airshots_total WHEN 0 THEN 0 ELSE (s.airshots::float / t.airshots_total::float) * 100 END airshots_pct,
+			s.bs,	    case t.backstabs_total WHEN 0 THEN 0 ELSE (s.bs::float / t.backstabs_total::float) * 100 END  bs_pct,
+			s.shots,    case t.shots_total WHEN 0 THEN 0 ELSE (s.shots::float / t.shots_total::float) * 100 END shots_pct,
+			s.hits,     case t.hits_total WHEN 0 THEN 0 ELSE (s.hits::float / t.hits_total::float) * 100 END hits_pct,
+			s.damage,   case t.damage_total WHEN 0 THEN 0 ELSE (s.damage::float / t.damage_total::float) * 100 END damage_pct
+		FROM (
+			 SELECT
+				 w.weapon_id, w.key, w.name,
+				 SUM(mw.kills)  as kills,
+				 SUM(mw.damage)  as damage,
+				 SUM(mw.shots) as shots,
+				 SUM(mw.hits) as hits,
+				 SUM(headshots) as hs,
+				 SUM(airshots)  as airshots,
+				 SUM(backstabs) as bs
+			 FROM match_weapon mw
+			 LEFT JOIN weapon w on w.weapon_id = mw.weapon_id
+			 LEFT JOIN match_player mp on mw.match_player_id = mp.match_player_id
+			 WHERE mp.steam_id = $1
+			 GROUP BY w.weapon_id
+			 ORDER BY kills DESC
+		) s
+		CROSS JOIN (
+			SELECT
+				SUM(mw.kills) as kills_total,
+				SUM(mw.damage) as damage_total,
+				SUM(mw.shots) as shots_total,
+				SUM(mw.hits) as hits_total,
+				SUM(mw.airshots) as airshots_total,
+				SUM(mw.backstabs) as backstabs_total,
+				SUM(mw.headshots) as headshots_total
+			FROM match_weapon mw
+			LEFT JOIN match_player mp on mw.match_player_id = mp.match_player_id
+			WHERE mp.steam_id = $1
+		) t`
+
+	rows, errQuery := db.Query(ctx, query, steamID.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []WeaponsOverallResult
+
+	for rows.Next() {
+		var wor WeaponsOverallResult
+		if errScan := rows.
+			Scan(&wor.Rank,
+				&wor.WeaponID, &wor.Name, &wor.Key,
+				&wor.Kills, &wor.KillsPct,
+				&wor.Headshots, &wor.HeadshotsPct,
+				&wor.Airshots, &wor.AirshotsPct,
+				&wor.Backstabs, &wor.BackstabsPct,
+				&wor.Shots, &wor.ShotsPct,
+				&wor.Hits, &wor.HitsPct,
+				&wor.Damage, &wor.DamagePct); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		results = append(results, wor)
+	}
+
+	return results, nil
+}
+
+func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error) {
+	const query = `
+		SELECT
+			row_number() over (order by kills desc nulls last) as rank,
+			p.personaname, p.steam_id, p.avatarhash,
+			SUM(mw.kills)  as kills,
+			SUM(mw.damage)  as damage,
+			SUM(mw.shots) as shots,
+			SUM(mw.hits) as hits,
+			SUM(headshots) as hs,
+			SUM(airshots)  as airshots,
+			SUM(backstabs) as bs
+		FROM match_weapon mw
+		LEFT JOIN match_player mp on mw.match_player_id = mp.match_player_id
+		LEFT JOIN person p on mp.steam_id = p.steam_id
+		GROUP BY p.steam_id, mw.player_weapon_id
+		ORDER BY rank LIMIT $1`
+
+	rows, errQuery := db.Query(ctx, query, count)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []PlayerWeaponResult
+
+	for rows.Next() {
+		var (
+			wor   PlayerWeaponResult
+			sid64 int64
+		)
+
+		if errScan := rows.
+			Scan(&wor.Rank,
+				&wor.Personaname, &sid64, &wor.AvatarHash,
+				&wor.Kills,
+				&wor.Damage,
+				&wor.Shots,
+				&wor.Hits,
+				&wor.Headshots,
+				&wor.Airshots,
+				&wor.Backstabs); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		wor.SteamID = steamid.New(sid64)
+		results = append(results, wor)
 	}
 
 	return results, nil

@@ -78,7 +78,7 @@ export const PersonMessageTable = ({ messages }: PersonMessageTableProps) => {
                             <PersonCell
                                 steam_id={row.steam_id}
                                 personaname={row.persona_name}
-                                avatar={
+                                avatar_hash={
                                     'https://avatars.akamai.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb.jpg'
                                 }
                             ></PersonCell>

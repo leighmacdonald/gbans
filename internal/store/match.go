@@ -1311,7 +1311,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 			"m.time_start",
 			"m.time_end").
 		From("match m").
-		LeftJoin("public.match_player mp on m.match_id = mp.match_id").
+		LeftJoin("public.match_player mp on m.match_id = mp.match_id AND mp.time_end - mp.time_start > INTERVAL '60' second"). // TODO index?
 		LeftJoin("public.server s on s.server_id = m.server_id")
 
 	if opts.Map != "" {

@@ -3138,6 +3138,62 @@ func onAPIGetStatsWeaponsOverall(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIGetStatsPlayersOverall(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		weaponStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.Error("Failed to query weapons stats",
+				zap.Error(errChat))
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []store.PlayerWeaponResult{}
+		}
+
+		responseOK(ctx, http.StatusOK, weaponStats)
+	}
+}
+
+func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		steamIDVal, errSteamID := getInt64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+
+		steamID := steamid.New(steamIDVal)
+		if !steamID.Valid() {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+
+		weaponStats, errChat := app.db.WeaponsOverallByPlayer(ctx, steamID)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.Error("Failed to query weapons stats",
+				zap.Error(errChat))
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []store.WeaponsOverallResult{}
+		}
+
+		responseOK(ctx, http.StatusOK, weaponStats)
+	}
+}
+
 func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -3164,7 +3220,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 			return
 		}
 
-		weaponStats, errChat := app.db.WeaponTopPlayers(ctx, weaponID)
+		weaponStats, errChat := app.db.WeaponsOverallTopPlayers(ctx, weaponID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query weapons stats",
 				zap.Error(errChat))

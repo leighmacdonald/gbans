@@ -9,13 +9,13 @@ import { useTheme } from '@mui/material/styles';
 export interface PersonCellProps {
     steam_id: string;
     personaname: string;
-    avatar: string;
+    avatar_hash: string;
     onClick?: MouseEventHandler | undefined;
 }
 
 export const PersonCell = ({
     steam_id,
-    avatar,
+    avatar_hash,
     personaname,
     onClick
 }: PersonCellProps) => {
@@ -42,7 +42,7 @@ export const PersonCell = ({
         >
             <Avatar
                 alt={personaname}
-                src={avatar}
+                src={`https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`}
                 variant={'square'}
                 sx={{ height: '32px', width: '32px' }}
             />

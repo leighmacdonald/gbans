@@ -121,7 +121,7 @@ export const Home = (): JSX.Element => {
                             navigate('/stats');
                         }}
                     >
-                        Map Stats
+                        Stats
                     </Button>
 
                     {window.gbans.discord_link_id != '' && (
