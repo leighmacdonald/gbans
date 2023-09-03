@@ -932,19 +932,35 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 	const query = `
 		SELECT
 			row_number() over (order by kills desc nulls last) as rank,
-			p.personaname, p.steam_id, p.avatarhash,
-			SUM(mw.kills)  as kills,
-			SUM(mw.damage)  as damage,
-			SUM(mw.shots) as shots,
-			SUM(mw.hits) as hits,
-			SUM(headshots) as hs,
-			SUM(airshots)  as airshots,
-			SUM(backstabs) as bs
-		FROM match_weapon mw
-		LEFT JOIN match_player mp on mw.match_player_id = mp.match_player_id
-		LEFT JOIN person p on mp.steam_id = p.steam_id
-		GROUP BY p.steam_id, mw.player_weapon_id
-		ORDER BY rank LIMIT $1`
+			p.personaname,
+			p.steam_id,
+			p.avatarhash,
+			x.kills,
+			x.damage,
+			x.shots,
+			x.hits,
+			x.headshots,
+			x.airshots,
+			x.backstabs  
+		FROM person p
+		INNER JOIN (
+			SELECT
+				mp.steam_id,
+				sum(mw.kills) as kills,
+				sum(mw.shots) as shots,
+				sum(mw.hits) as hits,
+				sum(mw.airshots) as airshots,
+				sum(mw.backstabs) as backstabs,
+				sum(mw.headshots) as headshots,
+				sum(mw.damage) as damage
+			FROM match_player mp
+			LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
+			GROUP BY mp.steam_id
+		) x on p.steam_id = x.steam_id
+		
+		GROUP BY  p.steam_id, x.kills, x.damage, x.shots, x.hits, x.airshots, x.backstabs, x.headshots, x.damage
+		ORDER BY rank
+		LIMIT $1`
 
 	rows, errQuery := db.Query(ctx, query, count)
 	if errQuery != nil {

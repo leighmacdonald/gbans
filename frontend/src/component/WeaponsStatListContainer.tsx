@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { apiGetWeaponsOverall, WeaponsOverallResult } from '../api';
+import { apiError, apiResponse, WeaponsOverallResult } from '../api';
 import { compare, Order, RowsPerPage, stableSort } from './DataTable';
 import { useNavigate } from 'react-router-dom';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
 import { LoadingSpinner } from './LoadingSpinner';
 import Stack from '@mui/material/Stack';
@@ -14,7 +13,17 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
 
-export const WeaponsOverallContainer = () => {
+interface WeaponsOverallContainerProps {
+    fetchData: () => Promise<apiResponse<WeaponsOverallResult[]> & apiError>;
+    title: string;
+    icon: React.ReactNode;
+}
+
+export const WeaponsStatListContainer = ({
+    fetchData,
+    title,
+    icon
+}: WeaponsOverallContainerProps) => {
     const [details, setDetails] = useState<WeaponsOverallResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
@@ -24,7 +33,7 @@ export const WeaponsOverallContainer = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        apiGetWeaponsOverall()
+        fetchData()
             .then((resp) => {
                 if (resp.result) {
                     setDetails(resp.result);
@@ -33,7 +42,7 @@ export const WeaponsOverallContainer = () => {
             .finally(() => {
                 setLoading(false);
             });
-    }, []);
+    }, [fetchData]);
 
     const rows = useMemo(() => {
         return stableSort(details ?? [], compare(sortOrder, sortColumn)).slice(
@@ -43,10 +52,7 @@ export const WeaponsOverallContainer = () => {
     }, [details, page, sortColumn, sortOrder]);
 
     return (
-        <ContainerWithHeader
-            title={'Overall Weapon Info'}
-            iconLeft={<InsightsIcon />}
-        >
+        <ContainerWithHeader title={title} iconLeft={icon}>
             <Grid container>
                 <Grid xs={12}>
                     {loading ? (

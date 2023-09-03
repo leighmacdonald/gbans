@@ -57,6 +57,7 @@ import { AdminNetworkPage } from './page/AdminNetworkPage';
 import { ProfileSettingsPage } from './page/ProfileSettingsPage';
 import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
 import { StatsPage } from './page/StatsPage';
+import { PlayerStatsPage } from './page/PlayerStatsPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -187,7 +188,22 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
-
+                                                            <Route
+                                                                path={
+                                                                    '/stats/player/:steam_id'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <PrivateRoute
+                                                                            permission={
+                                                                                PermissionLevel.User
+                                                                            }
+                                                                        >
+                                                                            <PlayerStatsPage />
+                                                                        </PrivateRoute>
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
                                                             <Route
                                                                 path={
                                                                     '/stats/weapon/:weapon_id'

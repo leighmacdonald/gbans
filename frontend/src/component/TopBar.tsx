@@ -169,6 +169,11 @@ export const TopBar = () => {
             //     text: 'Settings',
             //     icon: <SettingsIcon sx={colourOpts} />
             // },
+            // {
+            //     to: `/stats/player/${currentUser?.steam_id}`,
+            //     text: 'Your Stats',
+            //     icon: <LegendToggleIcon sx={colourOpts} />
+            // },
             {
                 to: `/logs/${currentUser?.steam_id}`,
                 text: 'Match History',

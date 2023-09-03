@@ -1,9 +1,10 @@
 import React, { JSX } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
-
-import { WeaponsOverallContainer } from '../component/WeaponsOverallContainer';
+import InsightsIcon from '@mui/icons-material/Insights';
+import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 import { MapUsageContainer } from '../component/MapUsageContainer';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer';
+import { apiGetWeaponsOverall } from '../api';
 
 export const StatsPage = (): JSX.Element => {
     return (
@@ -12,7 +13,11 @@ export const StatsPage = (): JSX.Element => {
                 <PlayersOverallContainer />
             </Grid>
             <Grid xs={12}>
-                <WeaponsOverallContainer />
+                <WeaponsStatListContainer
+                    fetchData={apiGetWeaponsOverall}
+                    title={'Overall Weapon Stats'}
+                    icon={<InsightsIcon />}
+                />
             </Grid>
             <Grid xs={12}>
                 <MapUsageContainer />
