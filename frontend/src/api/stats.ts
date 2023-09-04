@@ -1,4 +1,4 @@
-import { apiCall } from './common';
+import { apiCall, DataCount } from './common';
 
 export interface DatabaseStats {
     bans: number;
@@ -67,7 +67,10 @@ export const apiGetWeaponsOverall = async () => {
 };
 
 export const apiGetPlayersOverall = async () => {
-    return await apiCall<PlayerWeaponStats[]>(`/api/stats/players`, 'GET');
+    return await apiCall<LazyResult<PlayerWeaponStats>>(
+        `/api/stats/players`,
+        'GET'
+    );
 };
 
 export interface BaseWeaponStats {
@@ -94,6 +97,42 @@ export interface BaseWeaponStats {
     captures_blocked: number;
     buildings_destroyed: number;
 }
+
+export interface GamePlayerClass {
+    player_class_id: number;
+    class_name: string;
+    class_key: string;
+}
+
+export interface PlayerClassOverallResult extends GamePlayerClass {
+    kills: number;
+    ka: number;
+    assists: number;
+    deaths: number;
+    kd: number;
+    kad: number;
+    dpm: number;
+    playtime: number;
+    dominations: number;
+    dominated: number;
+    revenges: number;
+    damage: number;
+    damage_taken: number;
+    captures: number;
+    captures_blocked: number;
+    buildings_destroyed: number;
+}
+
+export interface LazyResult<T> extends DataCount {
+    data: T[];
+}
+
+export const apiGetPlayerClassOverallStats = async (steam_id: string) => {
+    return await apiCall<LazyResult<PlayerClassOverallResult>>(
+        `/api/stats/player/${steam_id}/classes`,
+        'GET'
+    );
+};
 
 export interface PlayerWeaponStats extends BaseWeaponStats {
     steam_id: string;

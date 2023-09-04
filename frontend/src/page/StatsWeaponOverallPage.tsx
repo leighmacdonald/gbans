@@ -25,9 +25,9 @@ interface WeaponStatsContainerProps {
 const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
     const [details, setDetails] = useState<PlayerWeaponStats[]>([]);
     const [loading, setLoading] = useState(true);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
+    const [sortOrder, setSortOrder] = useState<Order>('asc');
     const [sortColumn, setSortColumn] =
-        useState<keyof PlayerWeaponStats>('kills');
+        useState<keyof PlayerWeaponStats>('rank');
     const [weapon, setWeapon] = useState<Weapon>();
     const [page, setPage] = useState(1);
 

@@ -1037,3 +1037,86 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 
 	return results, nil
 }
+
+type PlayerClass struct {
+	PlayerClassID int    `json:"player_class_id"`
+	ClassName     string `json:"class_name"`
+	ClassKey      string `json:"class_key"`
+}
+
+type PlayerClassOverallResult struct {
+	PlayerClass
+	Kills              int64   `json:"kills"`
+	KA                 int64   `json:"ka"`
+	Assists            int64   `json:"assists"`
+	Deaths             int64   `json:"deaths"`
+	KD                 float64 `json:"kd"`
+	KAD                float64 `json:"kad"`
+	DPM                float64 `json:"dpm"`
+	Playtime           int64   `json:"playtime"`
+	Dominations        int64   `json:"dominations"`
+	Dominated          int64   `json:"dominated"`
+	Revenges           int64   `json:"revenges"`
+	Damage             int64   `json:"damage"`
+	DamageTaken        int64   `json:"damage_taken"`
+	HealingTaken       int64   `json:"healing_taken"`
+	Captures           int64   `json:"captures"`
+	CapturesBlocked    int64   `json:"captures_blocked"`
+	BuildingsDestroyed int64   `json:"buildings_destroyed"`
+}
+
+func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error) {
+	const query = `
+		SELECT
+			c.player_class_id,
+			c.class_name,
+			c.class_key,
+			sum(pc.kills) as kills,
+			sum(pc.kills + pc.assists) as ka,
+			sum(pc.assists) as assists,
+			sum(pc.deaths) as deaths,
+			sum(pc.playtime) as playtime,
+			sum(pc.dominations) as dominations,
+			sum(pc.dominated) as dominated,
+			sum(pc.revenges) as revenges,
+			sum(pc.damage) as damage,
+			sum(pc.damage_taken) as damage_taken,
+			sum(pc.healing_taken) as healing_taken,
+			sum(pc.captures) as captures,
+			sum(pc.captures_blocked) as captures_blocked,
+			sum(pc.buildings_destroyed) as buildings_destroyed,
+			case sum(pc.deaths) WHEN 0 THEN 0 ELSE ( sum(pc.kills)::float / sum(pc.deaths)::float) END kd,
+			case sum(pc.deaths) WHEN 0 THEN 0 ELSE ((sum(pc.assists)::float +  sum(pc.kills)::float) / sum(pc.deaths)::float) END kad,
+			sum(pc.damage)::float / (sum(pc.playtime)::float / 60) as dpm
+		FROM match_player mp
+		INNER JOIN match_player_class pc on mp.match_player_id = pc.match_player_id
+		LEFT JOIN player_class c on pc.player_class_id = c.player_class_id
+		WHERE mp.steam_id = $1
+		GROUP BY c.player_class_id`
+
+	rows, errQuery := db.Query(ctx, query, steamID.Int64())
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []PlayerClassOverallResult
+
+	for rows.Next() {
+		var wor PlayerClassOverallResult
+
+		if errScan := rows.
+			Scan(&wor.PlayerClassID, &wor.ClassName, &wor.ClassKey,
+				&wor.Kills, &wor.KA, &wor.Assists, &wor.Deaths, &wor.Playtime,
+				&wor.Dominations, &wor.Dominated, &wor.Revenges, &wor.Damage, &wor.DamageTaken,
+				&wor.HealingTaken, &wor.Captures, &wor.CapturesBlocked, &wor.BuildingsDestroyed,
+				&wor.KD, &wor.KAD, &wor.DPM,
+			); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		results = append(results, wor)
+	}
+
+	return results, nil
+}

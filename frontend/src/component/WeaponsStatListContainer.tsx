@@ -86,6 +86,10 @@ export const WeaponsStatListContainer = ({
                                                         fullWidth
                                                         size={'small'}
                                                         variant={'text'}
+                                                        style={{
+                                                            justifyContent:
+                                                                'flex-start'
+                                                        }}
                                                         component={Link}
                                                         href={`/stats/weapon/${obj.weapon_id}`}
                                                         onClick={(event) => {

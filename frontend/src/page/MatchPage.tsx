@@ -844,7 +844,7 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                             personaname={
                                 row.name != '' ? row.name : row.steam_id
                             }
-                            avatar_hash={`https://avatars.akamai.steamstatic.com/${row.avatar_hash}.jpg`}
+                            avatar_hash={row.avatar_hash}
                         />
                     )
                 },
