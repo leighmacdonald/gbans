@@ -152,6 +152,14 @@ export const PlayersOverallContainer = () => {
                                             fmtWhenGt(obj.deaths, humanCount)
                                     },
                                     {
+                                        label: 'KAD',
+                                        sortable: true,
+                                        sortKey: 'kad',
+                                        tooltip: 'Kills+Assists:Deaths Ratio',
+                                        renderer: (obj) =>
+                                            fmtWhenGt(obj.kad, defaultFloatFmt)
+                                    },
+                                    {
                                         label: 'Sht',
                                         sortable: true,
                                         sortKey: 'shots',
@@ -178,7 +186,7 @@ export const PlayersOverallContainer = () => {
                                             )
                                     },
                                     {
-                                        label: 'As',
+                                        label: 'A',
                                         sortable: true,
                                         sortKey: 'airshots',
                                         tooltip: 'Total Airshots',
@@ -186,7 +194,7 @@ export const PlayersOverallContainer = () => {
                                             fmtWhenGt(obj.airshots, humanCount)
                                     },
                                     {
-                                        label: 'Bs',
+                                        label: 'B',
                                         sortable: true,
                                         sortKey: 'backstabs',
                                         tooltip: 'Total Backstabs',
@@ -194,7 +202,7 @@ export const PlayersOverallContainer = () => {
                                             fmtWhenGt(obj.backstabs, humanCount)
                                     },
                                     {
-                                        label: 'Hs',
+                                        label: 'H',
                                         sortable: true,
                                         sortKey: 'headshots',
                                         tooltip: 'Total Headshots',
@@ -220,7 +228,7 @@ export const PlayersOverallContainer = () => {
                                             )
                                     },
                                     {
-                                        label: 'DmgT',
+                                        label: 'DT',
                                         sortable: true,
                                         sortKey: 'damage_taken',
                                         tooltip: 'Total Damage Taken',
@@ -231,7 +239,7 @@ export const PlayersOverallContainer = () => {
                                             )
                                     },
                                     {
-                                        label: 'Dom',
+                                        label: 'DM',
                                         sortable: true,
                                         sortKey: 'dominations',
                                         tooltip: 'Total Dominations',
@@ -242,7 +250,7 @@ export const PlayersOverallContainer = () => {
                                             )
                                     },
                                     {
-                                        label: 'Cap',
+                                        label: 'CP',
                                         sortable: true,
                                         sortKey: 'captures',
                                         tooltip: 'Total Captures',
