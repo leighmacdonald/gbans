@@ -121,7 +121,7 @@ export const Home = (): JSX.Element => {
                             navigate('/stats');
                         }}
                     >
-                        Stats
+                        Stats (Beta)
                     </Button>
 
                     {window.gbans.discord_link_id != '' && (

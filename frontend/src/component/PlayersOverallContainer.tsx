@@ -236,7 +236,10 @@ export const PlayersOverallContainer = () => {
                                         sortKey: 'dominations',
                                         tooltip: 'Total Dominations',
                                         renderer: (obj) =>
-                                            fmtWhenGt(obj.damage, humanCount)
+                                            fmtWhenGt(
+                                                obj.dominations,
+                                                humanCount
+                                            )
                                     },
                                     {
                                         label: 'Cap',
