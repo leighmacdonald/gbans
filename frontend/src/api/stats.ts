@@ -63,7 +63,10 @@ export interface WeaponsOverallResult extends Weapon, BaseWeaponStats {
 }
 
 export const apiGetWeaponsOverall = async () => {
-    return await apiCall<WeaponsOverallResult[]>(`/api/stats/weapons`, 'GET');
+    return await apiCall<LazyResult<WeaponsOverallResult>>(
+        `/api/stats/weapons`,
+        'GET'
+    );
 };
 
 export const apiGetPlayersOverall = async () => {

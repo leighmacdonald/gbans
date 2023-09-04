@@ -81,6 +81,18 @@ export const LazyTableSimple = <T,>({
         <LoadingSpinner />
     ) : (
         <Stack>
+            <LazyTable<T>
+                columns={columns}
+                sortOrder={sortOrder}
+                sortColumn={sortColumn}
+                onSortColumnChanged={async (column) => {
+                    setSortColumn(column);
+                }}
+                onSortOrderChanged={async (direction) => {
+                    setSortOrder(direction);
+                }}
+                rows={rows}
+            />
             {showPager && (
                 <Stack direction={'row-reverse'}>
                     <TablePagination
@@ -98,18 +110,6 @@ export const LazyTableSimple = <T,>({
                     />
                 </Stack>
             )}
-            <LazyTable<T>
-                columns={columns}
-                sortOrder={sortOrder}
-                sortColumn={sortColumn}
-                onSortColumnChanged={async (column) => {
-                    setSortColumn(column);
-                }}
-                onSortOrderChanged={async (direction) => {
-                    setSortOrder(direction);
-                }}
-                rows={rows}
-            />
         </Stack>
     );
 };
