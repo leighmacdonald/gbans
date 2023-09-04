@@ -796,17 +796,32 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, er
 }
 
 type PlayerWeaponResult struct {
-	Rank        int           `json:"rank"`
-	SteamID     steamid.SID64 `json:"steam_id"`
-	Personaname string        `json:"personaname"`
-	AvatarHash  string        `json:"avatar_hash"`
-	Kills       int64         `json:"kills"`
-	Damage      int64         `json:"damage"`
-	Headshots   int64         `json:"headshots"`
-	Airshots    int64         `json:"airshots"`
-	Backstabs   int64         `json:"backstabs"`
-	Shots       int64         `json:"shots"`
-	Hits        int64         `json:"hits"`
+	Rank               int           `json:"rank"`
+	SteamID            steamid.SID64 `json:"steam_id"`
+	Personaname        string        `json:"personaname"`
+	AvatarHash         string        `json:"avatar_hash"`
+	KA                 int64         `json:"ka"`
+	Kills              int64         `json:"kills"`
+	Assists            int64         `json:"assists"`
+	Deaths             int64         `json:"deaths"`
+	KD                 float64       `json:"kd"`
+	KAD                float64       `json:"kad"`
+	DPM                float64       `json:"dpm"`
+	Shots              int64         `json:"shots"`
+	Hits               int64         `json:"hits"`
+	Accuracy           float64       `json:"accuracy"`
+	Airshots           int64         `json:"airshots"`
+	Backstabs          int64         `json:"backstabs"`
+	Headshots          int64         `json:"headshots"`
+	Playtime           int64         `json:"playtime"`
+	Dominations        int64         `json:"dominations"`
+	Dominated          int64         `json:"dominated"`
+	Revenges           int64         `json:"revenges"`
+	Damage             int64         `json:"damage"`
+	DamageTaken        int64         `json:"damage_taken"`
+	Captures           int64         `json:"captures"`
+	CapturesBlocked    int64         `json:"captures_blocked"`
+	BuildingsDestroyed int64         `json:"buildings_destroyed"`
 }
 
 func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
@@ -930,35 +945,63 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 
 func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error) {
 	const query = `
-		SELECT
-			row_number() over (order by kills desc nulls last) as rank,
-			p.personaname,
-			p.steam_id,
-			p.avatarhash,
-			x.kills,
-			x.damage,
-			x.shots,
-			x.hits,
-			x.headshots,
-			x.airshots,
-			x.backstabs  
+		SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
+			   p.personaname,
+			   p.steam_id,
+			   p.avatarhash,
+			   w.kills + c.assists as ka,
+			   w.kills,
+			   c.assists,
+			   c.deaths,
+			   case c.deaths WHEN 0 THEN -1 ELSE (w.kills::float / c.deaths::float) END kd,
+			   case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + w.kills::float) / c.deaths::float) END kad,
+			   c.damage::float / (c.playtime::float / 60) as dpm,
+			   w.shots,
+			   w.hits,
+			   case w.shots WHEN 0 THEN -1 ELSE (w.hits::float / w.shots::float) * 100 END acc,
+			   w.airshots,
+			   w.backstabs,
+			   w.headshots,
+			   c.playtime,
+			   c.dominations,
+			   c.dominated,
+			   c.revenges,
+			   c.damage,
+			   c.damage_taken,
+			   c.captures,
+			   c.captures_blocked,
+			   c.buildings_destroyed
 		FROM person p
-		INNER JOIN (
-			SELECT
-				mp.steam_id,
-				sum(mw.kills) as kills,
-				sum(mw.shots) as shots,
-				sum(mw.hits) as hits,
-				sum(mw.airshots) as airshots,
-				sum(mw.backstabs) as backstabs,
-				sum(mw.headshots) as headshots,
-				sum(mw.damage) as damage
-			FROM match_player mp
+		LEFT JOIN (
+			SELECT mp.steam_id,
+				   sum(mw.kills)     as kills,
+				   sum(mw.shots)     as shots,
+				   sum(mw.hits)      as hits,
+				   sum(mw.airshots)  as airshots,
+				   sum(mw.backstabs) as backstabs,
+				   sum(mw.headshots) as headshots
+			FROM  match_player mp
 			LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
 			GROUP BY mp.steam_id
-		) x on p.steam_id = x.steam_id
-		
-		GROUP BY  p.steam_id, x.kills, x.damage, x.shots, x.hits, x.airshots, x.backstabs, x.headshots, x.damage
+		) w ON w.steam_id = p.steam_id
+		LEFT JOIN (
+			SELECT mp.steam_id,
+				   SUM(mpc.assists) as assists,
+				   sum(mpc.deaths)              as deaths,
+				   sum(mpc.playtime)            as playtime,
+				   sum(mpc.dominations)         as dominations,
+				   sum(mpc.dominated)           as dominated,
+				   sum(mpc.revenges)            as revenges,
+				   sum(mpc.damage)        		as damage,
+				   sum(mpc.damage_taken)        as damage_taken,
+				   sum(mpc.healing_taken)       as healing_taken,
+				   sum(mpc.captures)            as captures,
+				   sum(mpc.captures_blocked)    as captures_blocked,
+				   sum(mpc.buildings_destroyed) as buildings_destroyed
+			FROM match_player mp
+			LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
+			GROUP BY mp.steam_id
+		) c ON c.steam_id = p.steam_id
 		ORDER BY rank
 		LIMIT $1`
 
@@ -979,13 +1022,12 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 		if errScan := rows.
 			Scan(&wor.Rank,
 				&wor.Personaname, &sid64, &wor.AvatarHash,
-				&wor.Kills,
-				&wor.Damage,
-				&wor.Shots,
-				&wor.Hits,
-				&wor.Headshots,
-				&wor.Airshots,
-				&wor.Backstabs); errScan != nil {
+				&wor.KA, &wor.Kills, &wor.Assists, &wor.Deaths, &wor.KD,
+				&wor.KAD, &wor.DPM, &wor.Shots, &wor.Hits, &wor.Accuracy,
+				&wor.Airshots, &wor.Backstabs, &wor.Headshots, &wor.Playtime, &wor.Dominations,
+				&wor.Dominated, &wor.Revenges, &wor.Damage, &wor.DamageTaken, &wor.Captures,
+				&wor.CapturesBlocked, &wor.BuildingsDestroyed,
+			); errScan != nil {
 			return nil, Err(errScan)
 		}
 

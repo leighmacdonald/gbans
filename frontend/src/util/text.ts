@@ -89,7 +89,7 @@ const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
         u < units.length - 1
     );
 
-    return count.toFixed(dp) + ' ' + units[u];
+    return count.toFixed(dp) + '' + units[u];
 };
 
 export const humanFileSize = (bytes: number, si = false, dp = 1) => {
@@ -112,13 +112,5 @@ export const humanCount = (count: number, dp: number = 1): string => {
     return humanize(count, 1000, dp, ['K', 'M', 'B', 'T', 'Q']);
 };
 
-export const defaultFloatFmt = (value: number) => `${value.toFixed(2)} %`;
-
-export const fmtWhenGt = (
-    value: number,
-    fmt?: (value: number) => string,
-    gt: number = 0,
-    fallback: string = ''
-) => {
-    return value > gt ? (fmt ? fmt(value) : `${value}`) : fallback;
-};
+export const defaultFloatFmtPct = (value: number) => `${value.toFixed(2)}%`;
+export const defaultFloatFmt = (value: number) => value.toFixed(2);

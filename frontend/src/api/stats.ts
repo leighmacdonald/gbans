@@ -71,13 +71,28 @@ export const apiGetPlayersOverall = async () => {
 };
 
 export interface BaseWeaponStats {
+    ka: number;
     kills: number;
-    damage: number;
-    headshots: number;
-    airshots: number;
-    backstabs: number;
+    assists: number;
+    deaths: number;
+    kd: number;
+    kad: number;
+    dpm: number;
     shots: number;
     hits: number;
+    accuracy: number;
+    airshots: number;
+    backstabs: number;
+    headshots: number;
+    playtime: number;
+    dominations: number;
+    dominated: number;
+    revenges: number;
+    damage: number;
+    damage_taken: number;
+    captures: number;
+    captures_blocked: number;
+    buildings_destroyed: number;
 }
 
 export interface PlayerWeaponStats extends BaseWeaponStats {

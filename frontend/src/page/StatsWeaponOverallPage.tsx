@@ -13,9 +13,10 @@ import {
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import InsightsIcon from '@mui/icons-material/Insights';
-import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
+import { defaultFloatFmtPct, humanCount } from '../util/text';
 import { useParams } from 'react-router';
 import { PersonCell } from '../component/PersonCell';
+import { fmtWhenGt } from '../component/PlayersOverallContainer';
 
 interface WeaponStatsContainerProps {
     weapon_id: number;
@@ -139,7 +140,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                                         tooltip: 'Overall Accuracy',
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.shots, () =>
-                                                defaultFloatFmt(
+                                                defaultFloatFmtPct(
                                                     (obj.hits / obj.shots) * 100
                                                 )
                                             )

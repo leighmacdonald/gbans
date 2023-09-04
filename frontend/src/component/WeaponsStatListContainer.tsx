@@ -11,7 +11,8 @@ import { LazyTable } from './LazyTable';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import { defaultFloatFmt, fmtWhenGt, humanCount } from '../util/text';
+import { defaultFloatFmtPct, humanCount } from '../util/text';
+import { fmtWhenGt } from './PlayersOverallContainer';
 
 interface WeaponsOverallContainerProps {
     fetchData: () => Promise<apiResponse<WeaponsOverallResult[]> & apiError>;
@@ -116,7 +117,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.kills_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -135,7 +136,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.shots_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -154,7 +155,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.hits_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -165,7 +166,7 @@ export const WeaponsStatListContainer = ({
                                         tooltip: 'Overall Accuracy',
                                         renderer: (obj) =>
                                             fmtWhenGt(obj.shots_pct, () =>
-                                                defaultFloatFmt(
+                                                defaultFloatFmtPct(
                                                     (obj.hits / obj.shots) * 100
                                                 )
                                             )
@@ -186,7 +187,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.airshots_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -205,7 +206,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.backstabs_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -224,7 +225,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.headshots_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     },
                                     {
@@ -243,7 +244,7 @@ export const WeaponsStatListContainer = ({
                                         renderer: (obj) =>
                                             fmtWhenGt(
                                                 obj.damage_pct,
-                                                defaultFloatFmt
+                                                defaultFloatFmtPct
                                             )
                                     }
                                 ]}
