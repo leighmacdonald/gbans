@@ -144,9 +144,9 @@ export interface PlayerWeaponStats extends BaseWeaponStats {
     rank: number;
 }
 
-interface PlayerWeaponStatsResponse {
+export interface PlayerWeaponStatsResponse
+    extends LazyResult<PlayerWeaponStats> {
     weapon: Weapon;
-    players: PlayerWeaponStats[];
 }
 
 export const apiGetPlayerWeaponStats = async (weapon_id: number) => {

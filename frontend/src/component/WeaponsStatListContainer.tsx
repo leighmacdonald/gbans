@@ -27,7 +27,7 @@ export const WeaponsStatListContainer = ({
                 <Grid xs={12}>
                     <LazyTableSimple<WeaponsOverallResult>
                         fetchData={() => apiGetWeaponsOverall()}
-                        defaultSortColumn={'ka'}
+                        defaultSortColumn={'kills'}
                         defaultSortDir={'desc'}
                         columns={[
                             {

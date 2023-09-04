@@ -3241,8 +3241,8 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type resp struct {
-		Weapon  store.Weapon               `json:"weapon"`
-		Players []store.PlayerWeaponResult `json:"players"`
+		LazyResult
+		Weapon store.Weapon `json:"weapon"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -3276,7 +3276,12 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 			weaponStats = []store.PlayerWeaponResult{}
 		}
 
-		responseOK(ctx, http.StatusOK, resp{Weapon: weapon, Players: weaponStats})
+		responseOK(ctx, http.StatusOK, resp{
+			LazyResult: LazyResult{
+				Count: len(weaponStats),
+				Data:  weaponStats,
+			}, Weapon: weapon,
+		})
 	}
 }
 

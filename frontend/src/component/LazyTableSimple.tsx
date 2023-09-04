@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import { LazyTable } from './LazyTable';
 import { LoadingSpinner } from './LoadingSpinner';
 import { TablePagination } from '@mui/material';
+import Box from '@mui/material/Box';
 
 export interface LazyFetchOpts<T> {
     column: keyof T;
@@ -25,6 +26,7 @@ interface LazyTableSimpleProps<T> {
     columns: HeadingCell<T>[];
     defaultSortColumn: keyof T;
     defaultSortDir?: Order;
+    defaultRowsPerPage?: RowsPerPage;
     paged?: boolean;
     showPager?: boolean;
 }
@@ -39,7 +41,8 @@ export const LazyTableSimple = <T,>({
     defaultSortColumn,
     defaultSortDir = 'desc',
     paged = false,
-    showPager = true
+    showPager = true,
+    defaultRowsPerPage = RowsPerPage.TwentyFive
 }: LazyTableSimpleProps<T>) => {
     const [data, setData] = useState<T[]>([]);
     const [count, setCount] = useState(0);
@@ -48,7 +51,7 @@ export const LazyTableSimple = <T,>({
     const [sortColumn, setSortColumn] = useState<keyof T>(defaultSortColumn);
     const [page, setPage] = useState(0);
     const [hasLoaded, setHasLoaded] = useState(false);
-    const [rowsPerPage, setRowsPerPage] = useState(RowsPerPage.TwentyFive);
+    const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
 
     useEffect(() => {
         setLoading(true);
@@ -78,7 +81,14 @@ export const LazyTableSimple = <T,>({
     }, [data, page, rowsPerPage, sortColumn, sortOrder]);
 
     return loading ? (
-        <LoadingSpinner />
+        <Box
+            height={400}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+        >
+            <LoadingSpinner />
+        </Box>
     ) : (
         <Stack>
             <LazyTable<T>
