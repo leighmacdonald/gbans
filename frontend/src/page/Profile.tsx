@@ -19,6 +19,8 @@ import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import LinkIcon from '@mui/icons-material/Link';
 import Box from '@mui/material/Box';
 import { PageNotFound } from './PageNotFound';
+import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
+import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -63,72 +65,82 @@ export const Profile = () => {
         }
         return (
             <>
-                <Grid xs={12}>
-                    <Stack spacing={3}>
-                        <Stack direction={'row'} spacing={3} marginTop={0}>
-                            <Box width={'100%'}>
-                                <ProfileInfoBox
-                                    profile={profile}
-                                    align={'flex-start'}
-                                />
-                            </Box>
-                            <SteamIDList steam_id={profile.player.steam_id} />
-                        </Stack>
-                        <ContainerWithHeader
-                            title={'Steam Community Status'}
-                            iconLeft={<LocalLibraryIcon />}
-                            marginTop={0}
-                        >
-                            <Stack
-                                direction="row"
-                                spacing={2}
-                                padding={2}
-                                justifyContent={'space-evenly'}
-                            >
-                                <Chip
-                                    color={
-                                        profile.player.vac_bans > 0
-                                            ? 'error'
-                                            : 'success'
-                                    }
-                                    label={'VAC'}
-                                />
-                                <Chip
-                                    color={
-                                        profile.player.game_bans > 0
-                                            ? 'error'
-                                            : 'success'
-                                    }
-                                    label={'Game Ban'}
-                                />
-                                <Chip
-                                    color={
-                                        profile.player.economy_ban != 'none'
-                                            ? 'error'
-                                            : 'success'
-                                    }
-                                    label={'Economy Ban'}
-                                />
-                                <Chip
-                                    color={
-                                        profile.player.community_banned
-                                            ? 'error'
-                                            : 'success'
-                                    }
-                                    label={'Community Ban'}
-                                />
-                            </Stack>
-                        </ContainerWithHeader>
-
-                        <ContainerWithHeader
-                            title={'External Links'}
-                            iconLeft={<LinkIcon />}
+                <Grid xs={8}>
+                    <Box width={'100%'}>
+                        <ProfileInfoBox
+                            profile={profile}
                             align={'flex-start'}
+                        />
+                    </Box>
+                </Grid>
+                <Grid xs={2}>
+                    <ContainerWithHeader
+                        title={'Status'}
+                        iconLeft={<LocalLibraryIcon />}
+                        marginTop={0}
+                    >
+                        <Stack
+                            spacing={1}
+                            padding={1}
+                            justifyContent={'space-evenly'}
                         >
-                            <Grid container spacing={1} paddingLeft={1}>
-                                {createExternalLinks(
-                                    profile.player.steam_id
-                                ).map((l) => {
+                            <Chip
+                                color={
+                                    profile.player.vac_bans > 0
+                                        ? 'error'
+                                        : 'success'
+                                }
+                                label={'VAC'}
+                            />
+                            <Chip
+                                color={
+                                    profile.player.game_bans > 0
+                                        ? 'error'
+                                        : 'success'
+                                }
+                                label={'Game Ban'}
+                            />
+                            <Chip
+                                color={
+                                    profile.player.economy_ban != 'none'
+                                        ? 'error'
+                                        : 'success'
+                                }
+                                label={'Economy Ban'}
+                            />
+                            <Chip
+                                color={
+                                    profile.player.community_banned
+                                        ? 'error'
+                                        : 'success'
+                                }
+                                label={'Community Ban'}
+                            />
+                        </Stack>
+                    </ContainerWithHeader>
+                </Grid>
+                <Grid xs={2}>
+                    <SteamIDList steam_id={profile.player.steam_id} />
+                </Grid>
+                <Grid xs={12}>
+                    <PlayerStatsOverallContainer
+                        steam_id={profile.player.steam_id}
+                    />
+                </Grid>
+                <Grid xs={12}>
+                    <PlayerClassStatsContainer
+                        steam_id={profile.player.steam_id}
+                    />
+                </Grid>
+                <Grid xs={12}>
+                    <ContainerWithHeader
+                        title={'External Links'}
+                        iconLeft={<LinkIcon />}
+                        align={'flex-start'}
+                    >
+                        <Grid container spacing={1} paddingLeft={1}>
+                            {createExternalLinks(profile.player.steam_id).map(
+                                (l) => {
                                     return (
                                         <Grid
                                             xs={4}
@@ -147,10 +159,10 @@ export const Profile = () => {
                                             </Button>
                                         </Grid>
                                     );
-                                })}
-                            </Grid>
-                        </ContainerWithHeader>
-                    </Stack>
+                                }
+                            )}
+                        </Grid>
+                    </ContainerWithHeader>
                 </Grid>
             </>
         );

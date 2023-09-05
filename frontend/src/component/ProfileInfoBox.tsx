@@ -25,7 +25,7 @@ export const ProfileInfoBox = ({ profile, align }: ProfileInfoBoxProps) => {
                     variant={'square'}
                     src={profile.player.avatarfull}
                     alt={'Profile Avatar'}
-                    sx={{ width: 184, height: 184 }}
+                    sx={{ width: 160, height: 160 }}
                 />
                 <Stack spacing={2} paddingTop={3}>
                     <Typography variant={'subtitle1'}>

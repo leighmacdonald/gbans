@@ -676,9 +676,9 @@ func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]Ap
 		b.created_on, b.updated_on, b.deleted, CASE WHEN b.report_id IS NULL THEN 0 ELSE report_id END,
 		b.unban_reason_text, b.is_enabled, b.appeal_state,
 		source.steam_id as source_steam_id, source.personaname as source_personaname,
-		source.avatar as source_avatar, source.avatarfull as source_avatarfull,
+		source.avatarhash as source_avatar,
 		target.steam_id as target_steam_id, target.personaname as target_personaname,
-		target.avatar as target_avatar, target.avatarfull as target_avatarfull
+		target.avatarhash as target_avatar
 	FROM ban b
 	LEFT JOIN person source on source.steam_id = b.source_id
 	LEFT JOIN person target on target.steam_id = b.target_id
@@ -721,8 +721,8 @@ func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]Ap
 			&overview.Reason, &overview.ReasonText, &overview.Note, &overview.ValidUntil,
 			&overview.Origin, &overview.CreatedOn, &overview.UpdatedOn, &overview.Deleted,
 			&overview.ReportID, &overview.UnbanReasonText, &overview.IsEnabled, &overview.AppealState,
-			&SourceSteamID, &overview.SourcePersonaName, &overview.SourceAvatar, &overview.SourceAvatarFull,
-			&TargetSteamID, &overview.TargetPersonaName, &overview.TargetAvatar, &overview.TargetAvatarFull,
+			&SourceSteamID, &overview.SourcePersonaName, &overview.SourceAvatar,
+			&TargetSteamID, &overview.TargetPersonaName, &overview.TargetAvatar,
 		); errScan != nil {
 			return nil, errors.Wrap(errScan, "Failed to scan appeal overview")
 		}

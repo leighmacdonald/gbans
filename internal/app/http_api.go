@@ -3123,7 +3123,7 @@ func onAPIGetStatsWeaponsOverall(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		weaponStats, errChat := app.db.WeaponsOverall(ctx)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats",
+			log.Error("Failed to query weapons stats (overall)",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3147,7 +3147,7 @@ func onAPIGetStatsPlayersOverall(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		weaponStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats",
+			log.Error("Failed to query stats players overall",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3182,7 +3182,7 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 
 		weaponStats, errChat := app.db.WeaponsOverallByPlayer(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats",
+			log.Error("Failed to query player weapons stats",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3206,15 +3206,8 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamIDVal, errSteamID := getInt64Param(ctx, "steam_id")
+		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-
-			return
-		}
-
-		steamID := steamid.New(steamIDVal)
-		if !steamID.Valid() {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
 			return
@@ -3222,7 +3215,7 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 
 		classStats, errChat := app.db.PlayerOverallClassStats(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats",
+			log.Error("Failed to query player class stats",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -3234,6 +3227,30 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 		}
 
 		responseOK(ctx, http.StatusOK, LazyResult{Count: len(classStats), Data: classStats})
+	}
+}
+
+func onAPIGetPlayerStatsOverall(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		steamID, errSteamID := getSID64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
+			return
+		}
+
+		var por store.PlayerOverallResult
+		if errChat := app.db.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			log.Error("Failed to query player stats overall",
+				zap.Error(errChat))
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		responseOK(ctx, http.StatusOK, por)
 	}
 }
 
@@ -3265,7 +3282,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 
 		weaponStats, errChat := app.db.WeaponsOverallTopPlayers(ctx, weaponID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats",
+			log.Error("Failed to get weapons overall top stats",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, nil)
 

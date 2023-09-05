@@ -284,7 +284,7 @@ export const AdminAppeals = () => {
                                             row.source_persona_name ||
                                             row.source_id.toString()
                                         }
-                                        avatar_hash={row.source_avatar_full}
+                                        avatar_hash={row.source_avatar}
                                     ></PersonCell>
                                 )
                             },
@@ -302,7 +302,7 @@ export const AdminAppeals = () => {
                                             row.target_persona_name ||
                                             row.target_id.toString()
                                         }
-                                        avatar_hash={row.target_avatar_full}
+                                        avatar_hash={row.target_avatar}
                                     ></PersonCell>
                                 )
                             },

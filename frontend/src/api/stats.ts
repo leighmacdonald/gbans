@@ -107,7 +107,11 @@ export interface GamePlayerClass {
     class_key: string;
 }
 
-export interface PlayerClassOverallResult extends GamePlayerClass {
+export interface PlayerClassOverallResult
+    extends GamePlayerClass,
+        MatchPlayerClassStats {}
+
+export interface MatchPlayerClassStats {
     kills: number;
     ka: number;
     assists: number;
@@ -125,6 +129,44 @@ export interface PlayerClassOverallResult extends GamePlayerClass {
     captures_blocked: number;
     buildings_destroyed: number;
 }
+
+export interface HealingStats {
+    healing: number;
+    drops: number;
+    near_full_charge_death: number;
+    avg_uber_len: number;
+    biggest_adv_lost: number;
+    major_adv_lost: number;
+    charges_uber: number;
+    charges_kritz: number;
+    charges_vacc: number;
+    charges_quick_fix: number;
+}
+
+export interface PlayerOverallResult
+    extends HealingStats,
+        MatchPlayerClassStats {
+    buildings: number;
+    extinguishes: number;
+    health_packs: number;
+    shots: number;
+    hits: number;
+    accuracy: number;
+    airshots: number;
+    backstabs: number;
+    headshots: number;
+    healing_taken: number;
+    wins: number;
+    matches: number;
+    win_rate: number;
+}
+
+export const apiGetPlayerStats = async (steam_id: string) => {
+    return await apiCall<PlayerOverallResult>(
+        `/api/stats/player/${steam_id}/overall`,
+        'GET'
+    );
+};
 
 export interface LazyResult<T> extends DataCount {
     data: T[];

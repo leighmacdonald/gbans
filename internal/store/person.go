@@ -140,12 +140,10 @@ type AppealOverview struct {
 	SourceSteamID     steamid.SID64 `json:"source_steam_id"`
 	SourcePersonaName string        `json:"source_persona_name"`
 	SourceAvatar      string        `json:"source_avatar"`
-	SourceAvatarFull  string        `json:"source_avatar_full"`
 
 	TargetSteamID     steamid.SID64 `json:"target_steam_id"`
 	TargetPersonaName string        `json:"target_persona_name"`
 	TargetAvatar      string        `json:"target_avatar"`
-	TargetAvatarFull  string        `json:"target_avatar_full"`
 }
 
 type UserMessage struct {

@@ -21,7 +21,7 @@ export const PlayerClassStatsContainer = ({
 }: PlayerClassStatsContainerProps) => {
     return (
         <ContainerWithHeader
-            title={'Overall Player Class Stats'}
+            title={'Player Overall Stats By Class'}
             iconLeft={<BarChartIcon />}
         >
             <Grid container>

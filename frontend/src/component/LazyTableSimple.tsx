@@ -9,9 +9,8 @@ import {
 } from './DataTable';
 import Stack from '@mui/material/Stack';
 import { LazyTable } from './LazyTable';
-import { LoadingSpinner } from './LoadingSpinner';
 import { TablePagination } from '@mui/material';
-import Box from '@mui/material/Box';
+import { LoadingPlaceholder } from './LoadingPlaceholder';
 
 export interface LazyFetchOpts<T> {
     column: keyof T;
@@ -81,14 +80,7 @@ export const LazyTableSimple = <T,>({
     }, [data, page, rowsPerPage, sortColumn, sortOrder]);
 
     return loading ? (
-        <Box
-            height={400}
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-        >
-            <LoadingSpinner />
-        </Box>
+        <LoadingPlaceholder />
     ) : (
         <Stack>
             <LazyTable<T>

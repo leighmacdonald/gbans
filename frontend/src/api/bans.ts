@@ -185,12 +185,10 @@ export interface AppealOverview extends IAPIBanRecord {
     source_steam_id: string;
     source_persona_name: string;
     source_avatar: string;
-    source_avatar_full: string;
 
     target_steam_id: string;
     target_persona_name: string;
     target_avatar: string;
-    target_avatar_full: string;
 }
 
 export interface IAPIBanGroupRecord extends BanBase {
