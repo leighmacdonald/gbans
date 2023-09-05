@@ -85,7 +85,7 @@ export const PlayerStatsOverallContainer = ({
             iconLeft={<BarChartIcon />}
         >
             <Grid container spacing={1}>
-                <Grid xs={4}>
+                <Grid xs={6} md={4}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (
@@ -174,7 +174,7 @@ export const PlayerStatsOverallContainer = ({
                         />
                     )}
                 </Grid>
-                <Grid xs={4}>
+                <Grid xs={6} md={4}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (
@@ -197,11 +197,11 @@ export const PlayerStatsOverallContainer = ({
                                     value: fmtWhenGt(stats.ka, humanCount)
                                 },
                                 {
-                                    label: 'KD',
+                                    label: 'K:D',
                                     value: defaultFloatFmt(stats.kd)
                                 },
                                 {
-                                    label: 'KAD',
+                                    label: 'KA:D',
                                     value: defaultFloatFmt(stats.kad)
                                 },
                                 {
@@ -246,7 +246,7 @@ export const PlayerStatsOverallContainer = ({
                         />
                     )}
                 </Grid>
-                <Grid xs={4}>
+                <Grid xs={6} md={4}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (

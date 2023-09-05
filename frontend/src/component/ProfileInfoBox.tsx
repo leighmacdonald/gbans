@@ -15,7 +15,7 @@ export interface ProfileInfoBoxProps {
 export const ProfileInfoBox = ({ profile, align }: ProfileInfoBoxProps) => {
     return (
         <ContainerWithHeader
-            title={profile.player.personaname}
+            title={'Profile'}
             iconLeft={<PregnantWomanIcon />}
             align={align}
             marginTop={0}
@@ -27,7 +27,10 @@ export const ProfileInfoBox = ({ profile, align }: ProfileInfoBoxProps) => {
                     alt={'Profile Avatar'}
                     sx={{ width: 160, height: 160 }}
                 />
-                <Stack spacing={2} paddingTop={3}>
+                <Stack spacing={2} paddingTop={0}>
+                    <Typography variant={'h1'}>
+                        {profile.player.personaname}
+                    </Typography>
                     <Typography variant={'subtitle1'}>
                         {profile.player.realname}
                     </Typography>

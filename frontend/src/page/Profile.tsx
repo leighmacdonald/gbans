@@ -65,7 +65,7 @@ export const Profile = () => {
         }
         return (
             <>
-                <Grid xs={8}>
+                <Grid xs={12} md={8}>
                     <Box width={'100%'}>
                         <ProfileInfoBox
                             profile={profile}
@@ -73,7 +73,7 @@ export const Profile = () => {
                         />
                     </Box>
                 </Grid>
-                <Grid xs={2}>
+                <Grid xs={6} md={2}>
                     <ContainerWithHeader
                         title={'Status'}
                         iconLeft={<LocalLibraryIcon />}
@@ -119,7 +119,7 @@ export const Profile = () => {
                         </Stack>
                     </ContainerWithHeader>
                 </Grid>
-                <Grid xs={2}>
+                <Grid xs={6} md={2}>
                     <SteamIDList steam_id={profile.player.steam_id} />
                 </Grid>
                 <Grid xs={12}>

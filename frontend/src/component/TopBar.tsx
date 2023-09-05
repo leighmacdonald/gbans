@@ -42,7 +42,7 @@ import Link from '@mui/material/Link';
 import Badge from '@mui/material/Badge';
 import MailIcon from '@mui/icons-material/Mail';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import LegendToggleIcon from '@mui/icons-material/LegendToggle';
+// import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 
 import {
     NotificationsProvider,
@@ -170,11 +170,11 @@ export const TopBar = () => {
             //     text: 'Settings',
             //     icon: <SettingsIcon sx={colourOpts} />
             // },
-            {
-                to: `/stats/player/${currentUser?.steam_id}`,
-                text: 'Your Stats',
-                icon: <LegendToggleIcon sx={colourOpts} />
-            },
+            // {
+            //     to: `/stats/player/${currentUser?.steam_id}`,
+            //     text: 'Your Stats',
+            //     icon: <LegendToggleIcon sx={colourOpts} />
+            // },
             {
                 to: `/logs/${currentUser?.steam_id}`,
                 text: 'Match History',
