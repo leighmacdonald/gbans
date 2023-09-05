@@ -257,6 +257,13 @@ export const PlayerStatsOverallContainer = ({
                                     value: fmtWhenGt(stats.healing, humanCount)
                                 },
                                 {
+                                    label: 'Damage Taken',
+                                    value: fmtWhenGt(
+                                        stats.damage_taken,
+                                        humanCount
+                                    )
+                                },
+                                {
                                     label: 'Healing Taken',
                                     value: fmtWhenGt(
                                         stats.healing_taken,
