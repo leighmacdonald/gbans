@@ -224,7 +224,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/logs", onAPIGetMatches(app))
 		authed.POST("/api/messages", onAPIQueryMessages(app))
 
-		authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(app))
+		authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(ctx, app))
 		authed.GET("/api/stats/weapon/:weapon_id", onAPIGetsStatsWeapon(app))
 		authed.GET("/api/stats/players", onAPIGetStatsPlayersOverall(ctx, app))
 		authed.GET("/api/stats/player/:steam_id/weapons", onAPIGetPlayerWeaponStatsOverall(app))

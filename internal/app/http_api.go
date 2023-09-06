@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -3118,72 +3117,51 @@ func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStatsWeaponsOverall(app *App) gin.HandlerFunc {
+func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	return func(ctx *gin.Context) {
-		weaponStats, errChat := app.db.WeaponsOverall(ctx)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query weapons stats (overall)",
-				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
+	updater := store.NewDataUpdater(log, time.Minute*10, func() ([]store.WeaponsOverallResult, error) {
+		weaponStats, errUpdate := app.db.WeaponsOverall(ctx)
+		if errUpdate != nil && !errors.Is(errUpdate, store.ErrNoResult) {
+			return nil, errors.Wrap(errUpdate, "Failed to update weapon stats")
 		}
 
 		if weaponStats == nil {
 			weaponStats = []store.WeaponsOverallResult{}
 		}
 
+		return weaponStats, nil
+	})
+
+	go updater.Start(ctx)
+
+	return func(ctx *gin.Context) {
+		stats := updater.Data()
+
 		responseOK(ctx, http.StatusOK, LazyResult{
-			Count: len(weaponStats),
-			Data:  weaponStats,
+			Count: len(stats),
+			Data:  stats,
 		})
 	}
 }
 
 func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc {
-	var (
-		updateChan = make(chan any)
-		log        = app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-		stats      []store.PlayerWeaponResult
-		statsMu    = &sync.RWMutex{}
-	)
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	go func() {
-		updateChan <- true
-	}()
-
-	go func() {
-		refreshTimer := time.NewTicker(time.Minute * 5)
-
-		for {
-			select {
-			case <-updateChan:
-				updatedStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
-				if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-					log.Error("Failed to query overall players overall",
-						zap.Error(errChat))
-
-					return
-				}
-
-				statsMu.Lock()
-				stats = updatedStats
-				statsMu.Unlock()
-			case <-refreshTimer.C:
-				updateChan <- true
-			case <-ctx.Done():
-				return
-			}
+	updater := store.NewDataUpdater(log, time.Minute*10, func() ([]store.PlayerWeaponResult, error) {
+		updatedStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			return nil, errors.Wrap(errChat, "Failed to query overall players overall")
 		}
-	}()
+
+		return updatedStats, nil
+	})
+
+	go updater.Start(ctx)
 
 	return func(ctx *gin.Context) {
-		statsMu.RLock()
-		outStats := stats
-		statsMu.RUnlock()
-		responseOK(ctx, http.StatusOK, LazyResult{Count: len(outStats), Data: outStats})
+		stats := updater.Data()
+		responseOK(ctx, http.StatusOK, LazyResult{Count: len(stats), Data: stats})
 	}
 }
 
@@ -3191,15 +3169,8 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamIDVal, errSteamID := getInt64Param(ctx, "steam_id")
+		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, nil)
-
-			return
-		}
-
-		steamID := steamid.New(steamIDVal)
-		if !steamID.Valid() {
 			responseErr(ctx, http.StatusBadRequest, nil)
 
 			return
