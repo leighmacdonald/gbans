@@ -4,6 +4,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import { MapUsageContainer } from '../component/MapUsageContainer';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
+import { apiGetWeaponsOverall } from '../api';
 
 export const StatsPage = (): JSX.Element => {
     return (
@@ -15,6 +16,7 @@ export const StatsPage = (): JSX.Element => {
                 <WeaponsStatListContainer
                     title={'Overall Weapon Stats'}
                     icon={<InsightsIcon />}
+                    fetchData={() => apiGetWeaponsOverall()}
                 />
             </Grid>
             <Grid xs={12}>

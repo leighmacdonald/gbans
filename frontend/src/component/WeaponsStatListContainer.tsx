@@ -1,5 +1,10 @@
 import React from 'react';
-import { apiGetWeaponsOverall, WeaponsOverallResult } from '../api';
+import {
+    apiError,
+    apiResponse,
+    LazyResult,
+    WeaponsOverallResult
+} from '../api';
 import { useNavigate } from 'react-router-dom';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -8,16 +13,20 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { defaultFloatFmtPct, humanCount } from '../util/text';
 import { fmtWhenGt } from './PlayersOverallContainer';
-import { LazyTableSimple } from './LazyTableSimple';
+import { LazyFetchOpts, LazyTableSimple } from './LazyTableSimple';
 
 interface WeaponsOverallContainerProps {
     title: string;
     icon: React.ReactNode;
+    fetchData: (
+        opts: LazyFetchOpts<WeaponsOverallResult>
+    ) => Promise<apiResponse<LazyResult<WeaponsOverallResult>> & apiError>;
 }
 
 export const WeaponsStatListContainer = ({
     title,
-    icon
+    icon,
+    fetchData
 }: WeaponsOverallContainerProps) => {
     const navigate = useNavigate();
 
@@ -26,7 +35,7 @@ export const WeaponsStatListContainer = ({
             <Grid container>
                 <Grid xs={12}>
                     <LazyTableSimple<WeaponsOverallResult>
-                        fetchData={() => apiGetWeaponsOverall()}
+                        fetchData={fetchData}
                         defaultSortColumn={'kills'}
                         defaultSortDir={'desc'}
                         columns={[

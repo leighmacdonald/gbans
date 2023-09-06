@@ -174,7 +174,6 @@ export const MapUsageContainer = () => {
                             value: maps[mapsKey]
                         });
                     }
-                    console.log(values);
                     setSeriesMode(values);
                 }
             })

@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetProfile, PlayerProfile } from '../api';
+import {
+    apiGetPlayerWeaponsOverall,
+    apiGetProfile,
+    PlayerProfile
+} from '../api';
 import { Nullable } from '../util/types';
 import { useParams } from 'react-router';
 import Stack from '@mui/material/Stack';
@@ -21,6 +25,8 @@ import Box from '@mui/material/Box';
 import { PageNotFound } from './PageNotFound';
 import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer';
+import InsightsIcon from '@mui/icons-material/Insights';
+import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -130,6 +136,15 @@ export const Profile = () => {
                 <Grid xs={12}>
                     <PlayerClassStatsContainer
                         steam_id={profile.player.steam_id}
+                    />
+                </Grid>
+                <Grid xs={12}>
+                    <WeaponsStatListContainer
+                        title={'Overall Player Weapon Stats'}
+                        icon={<InsightsIcon />}
+                        fetchData={() =>
+                            apiGetPlayerWeaponsOverall(profile?.player.steam_id)
+                        }
                     />
                 </Grid>
                 <Grid xs={12}>

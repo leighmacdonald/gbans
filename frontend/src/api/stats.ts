@@ -69,6 +69,12 @@ export const apiGetWeaponsOverall = async () => {
     );
 };
 
+export const apiGetPlayerWeaponsOverall = async (steam_id: string) => {
+    return await apiCall<LazyResult<WeaponsOverallResult>>(
+        `/api/stats/player/${steam_id}/weapons`,
+        'GET'
+    );
+};
 export const apiGetPlayersOverall = async () => {
     return await apiCall<LazyResult<PlayerWeaponStats>>(
         `/api/stats/players`,

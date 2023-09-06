@@ -3189,7 +3189,10 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 			weaponStats = []store.WeaponsOverallResult{}
 		}
 
-		responseOK(ctx, http.StatusOK, weaponStats)
+		responseOK(ctx, http.StatusOK, LazyResult{
+			Count: len(weaponStats),
+			Data:  weaponStats,
+		})
 	}
 }
 
