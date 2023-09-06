@@ -12,7 +12,7 @@ RUN yarn build
 FROM golang:1.21-alpine as build
 WORKDIR /build
 RUN apk add --no-cache make git gcc libc-dev
-COPY go.mod go.sum Makefile main.go ./
+COPY go.mod go.sum Makefile main.go default.pgo ./
 RUN go mod download
 COPY pkg pkg
 COPY internal internal
