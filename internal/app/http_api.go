@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -3141,24 +3142,48 @@ func onAPIGetStatsWeaponsOverall(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStatsPlayersOverall(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc {
+	var (
+		updateChan = make(chan any)
+		log        = app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+		stats      []store.PlayerWeaponResult
+		statsMu    = &sync.RWMutex{}
+	)
+
+	go func() {
+		updateChan <- true
+	}()
+
+	go func() {
+		refreshTimer := time.NewTicker(time.Minute * 5)
+
+		for {
+			select {
+			case <-updateChan:
+				updatedStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
+				if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+					log.Error("Failed to query overall players overall",
+						zap.Error(errChat))
+
+					return
+				}
+
+				statsMu.Lock()
+				stats = updatedStats
+				statsMu.Unlock()
+			case <-refreshTimer.C:
+				updateChan <- true
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 
 	return func(ctx *gin.Context) {
-		weaponStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query stats players overall",
-				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
-		if weaponStats == nil {
-			weaponStats = []store.PlayerWeaponResult{}
-		}
-
-		responseOK(ctx, http.StatusOK, LazyResult{Count: len(weaponStats), Data: weaponStats})
+		statsMu.RLock()
+		outStats := stats
+		statsMu.RUnlock()
+		responseOK(ctx, http.StatusOK, LazyResult{Count: len(outStats), Data: outStats})
 	}
 }
 
