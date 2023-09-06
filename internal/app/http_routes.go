@@ -8,6 +8,7 @@ import (
 
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -82,6 +83,11 @@ type jsConfig struct {
 //nolint:contextcheck
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
+
+	if app.conf.General.Mode != ReleaseMode {
+		pprof.Register(engine)
+	}
+
 	engine.Use(httpErrorHandler(app.log), gin.Recovery())
 	engine.Use(useSecure(app.conf.General.Mode))
 

@@ -31,7 +31,7 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 		Addr:           app.conf.HTTP.Addr(),
 		Handler:        createRouter(ctx, app),
 		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
