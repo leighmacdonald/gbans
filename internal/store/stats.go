@@ -1038,6 +1038,151 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 	return results, nil
 }
 
+type HealingOverallResult struct {
+	RankedResult
+	SteamID             steamid.SID64 `json:"steam_id"`
+	Personaname         string        `json:"personaname"`
+	AvatarHash          string        `json:"avatar_hash"`
+	Healing             int           `json:"healing"`
+	Drops               int           `json:"drops"`
+	NearFullChargeDeath int           `json:"near_full_charge_death"`
+	ChargesUber         int           `json:"charges_uber"`
+	ChargesKritz        int           `json:"charges_kritz"`
+	ChargesVacc         int           `json:"charges_vacc"`
+	ChargesQuickfix     int           `json:"charges_quickfix"`
+	AvgUberLength       float32       `json:"avg_uber_length"`
+	MajorAdvLost        int           `json:"major_adv_lost"`
+	BiggestAdvLost      int           `json:"biggest_adv_lost"`
+	Extinguishes        int64         `json:"extinguishes"`
+	HealthPacks         int64         `json:"health_packs"`
+	Assists             int64         `json:"assists"`
+	Deaths              int64         `json:"deaths"`
+	HPM                 float64       `json:"hpm"`
+	KA                  float64       `json:"ka"`
+	KAD                 float64       `json:"kad"`
+	Playtime            int64         `json:"playtime"`
+	Dominations         int64         `json:"dominations"`
+	Dominated           int64         `json:"dominated"`
+	Revenges            int64         `json:"revenges"`
+	DamageTaken         int64         `json:"damage_taken"`
+	DTM                 float64       `json:"dtm"`
+	Wins                int64         `json:"wins"`
+	Matches             int64         `json:"matches"`
+	WinRate             float64       `json:"win_rate"`
+}
+
+func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error) {
+	const query = `
+		SELECT
+            row_number() over (order by h.healing desc nulls last) as rank,
+            p.steam_id,
+            p.personaname,
+            p.avatarhash,
+            coalesce(h.healing, 0) as healing,
+            coalesce(h.drops, 0) as drops,
+            coalesce(h.near_full_charge_death, 0) as near_full_charge_death,
+            coalesce(h.avg_uber_length, 0) as avg_uber_length,
+            coalesce(h.major_adv_lost, 0) as major_adv_lost,
+            coalesce(h.biggest_adv_lost, 0) as biggest_adv_lost,
+            coalesce(h.charge_uber, 0) as charge_uber,
+            coalesce(h.charge_kritz, 0) as charge_kritz,
+            coalesce(h.charge_vacc, 0) as charge_vacc,
+            coalesce(h.charge_quickfix, 0) as charge_quickfix,
+            coalesce(h.extinguishes, 0) as extinguishes,
+            coalesce(h.health_packs, 0) as health_packs,
+            coalesce(c.assists, 0) as assists,
+            coalesce(c.kills, 0) + coalesce(c.assists, 0)  as ka,
+            coalesce(c.deaths, 0) as deaths,
+            case c.playtime WHEN 0 THEN 0 ELSE h.healing::float / (c.playtime::float / 60) END as hpm,
+            case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + c.kills::float) / c.deaths::float) END kad,
+            coalesce(c.playtime, 0) as playtime,
+            coalesce(c.dominations, 0) as dominations,
+            coalesce(c.dominated, 0) as dominated,
+            coalesce(c.revenges, 0) as revenges,
+            coalesce(c.damage_taken, 0) as damage_taken,
+            case c.playtime WHEN 0 THEN 0 ELSE c.damage_taken::float / (c.playtime::float / 60) END as dtm,
+            coalesce(mx.wins, 0) as wins,
+            coalesce(mx.matches, 0) as matches,
+            case mx.matches WHEN 0 THEN -1 ELSE (mx.wins::float / mx.matches::float) * 100 END as win_rate
+		FROM person p
+				 LEFT JOIN (SELECT mp.steam_id,
+								   sum(mm.healing)                as healing,
+								   sum(mm.drops)                  as drops,
+								   sum(mm.near_full_charge_death) as near_full_charge_death,
+								   sum(mm.avg_uber_length)        as avg_uber_length,
+								   sum(mm.major_adv_lost)         as major_adv_lost,
+								   sum(mm.biggest_adv_lost)       as biggest_adv_lost,
+								   sum(mm.charge_uber)            as charge_uber,
+								   sum(mm.charge_kritz)           as charge_kritz,
+								   sum(mm.charge_vacc)            as charge_vacc,
+								   sum(mm.charge_quickfix)        as charge_quickfix,
+								   sum(mp.buildings)              as buildings,
+								   sum(mp.health_packs)           as health_packs,
+								   sum(mp.extinguishes)           as extinguishes
+							FROM match_player mp
+									 LEFT JOIN match_medic mm on mp.match_player_id = mm.match_player_id
+							GROUP BY mp.steam_id) h ON h.steam_id = p.steam_id
+				 LEFT JOIN (SELECT mp.steam_id,
+								   sum(case when m.winner = mp.team then 1 else 0 end) as wins,
+								   count(m.match_id)                                   as matches
+							FROM match m
+									 LEFT JOIN match_player mp on m.match_id = mp.match_id
+							GROUP BY mp.steam_id) mx ON mx.steam_id = p.steam_id
+		
+				 LEFT JOIN (SELECT mp.steam_id,
+								   mpc.player_class_id,
+								   SUM(mpc.assists)             as assists,
+								   SUM(mpc.kills)               as kills,
+								   sum(mpc.deaths)              as deaths,
+								   sum(mpc.playtime)            as playtime,
+								   sum(mpc.dominations)         as dominations,
+								   sum(mpc.dominated)           as dominated,
+								   sum(mpc.revenges)            as revenges,
+								   sum(mpc.damage)              as damage,
+								   sum(mpc.damage_taken)        as damage_taken,
+								   sum(mpc.healing_taken)       as healing_taken,
+								   sum(mpc.captures)            as captures,
+								   sum(mpc.captures_blocked)    as captures_blocked,
+								   sum(mpc.buildings_destroyed) as buildings_destroyed
+							FROM match_player mp
+									 LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
+							GROUP BY mp.steam_id, mpc.player_class_id) c ON c.steam_id = p.steam_id and c.player_class_id = 7
+		ORDER BY rank
+		LIMIT $1`
+
+	rows, errQuery := db.Query(ctx, query, count)
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+	defer rows.Close()
+
+	var results []HealingOverallResult
+
+	for rows.Next() {
+		var (
+			wor   HealingOverallResult
+			sid64 int64
+		)
+
+		if errScan := rows.
+			Scan(&wor.Rank,
+				&sid64, &wor.Personaname, &wor.AvatarHash,
+				&wor.Healing, &wor.Drops, &wor.NearFullChargeDeath, &wor.AvgUberLength, &wor.MajorAdvLost,
+				&wor.BiggestAdvLost, &wor.ChargesUber, &wor.ChargesKritz, &wor.ChargesVacc, &wor.ChargesQuickfix,
+				&wor.Extinguishes, &wor.HealthPacks, &wor.Assists, &wor.KA, &wor.Deaths, &wor.HPM, &wor.KAD,
+				&wor.Playtime, &wor.Dominations, &wor.Dominated, &wor.Revenges,
+				&wor.DamageTaken, &wor.DTM, &wor.Wins, &wor.Matches, &wor.WinRate,
+			); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		wor.SteamID = steamid.New(sid64)
+		results = append(results, wor)
+	}
+
+	return results, nil
+}
+
 type PlayerClass struct {
 	PlayerClassID int    `json:"player_class_id"`
 	ClassName     string `json:"class_name"`

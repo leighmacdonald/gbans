@@ -75,9 +75,17 @@ export const apiGetPlayerWeaponsOverall = async (steam_id: string) => {
         'GET'
     );
 };
+
 export const apiGetPlayersOverall = async () => {
     return await apiCall<LazyResult<PlayerWeaponStats>>(
         `/api/stats/players`,
+        'GET'
+    );
+};
+
+export const apiGetHealersOverall = async () => {
+    return await apiCall<LazyResult<HealingOverallResult>>(
+        `/api/stats/healers`,
         'GET'
     );
 };
@@ -147,11 +155,38 @@ export interface HealingStats {
     charges_kritz: number;
     charges_vacc: number;
     charges_quick_fix: number;
+    hpm: number;
+}
+
+export interface HealingOverallResult extends HealingStats, WinSums {
+    rank: number;
+    steam_id: string;
+    personaname: string;
+    avatar_hash: string;
+    ka: number;
+    assists: number;
+    deaths: number;
+    kad: number;
+    playtime: number;
+    dominations: number;
+    dominated: number;
+    revenges: number;
+    damage_taken: number;
+    dtm: number;
+    extinguishes: number;
+    health_packs: number;
+}
+
+export interface WinSums {
+    wins: number;
+    matches: number;
+    win_rate: number;
 }
 
 export interface PlayerOverallResult
     extends HealingStats,
-        MatchPlayerClassStats {
+        MatchPlayerClassStats,
+        WinSums {
     buildings: number;
     extinguishes: number;
     health_packs: number;
@@ -162,9 +197,6 @@ export interface PlayerOverallResult
     backstabs: number;
     headshots: number;
     healing_taken: number;
-    wins: number;
-    matches: number;
-    win_rate: number;
 }
 
 export const apiGetPlayerStats = async (steam_id: string) => {

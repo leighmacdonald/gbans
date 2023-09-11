@@ -5,12 +5,16 @@ import { MapUsageContainer } from '../component/MapUsageContainer';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 import { apiGetWeaponsOverall } from '../api';
+import { HealersOverallContainer } from '../component/HealersOverallContainer';
 
 export const StatsPage = (): JSX.Element => {
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
                 <PlayersOverallContainer />
+            </Grid>
+            <Grid xs={12}>
+                <HealersOverallContainer />
             </Grid>
             <Grid xs={12}>
                 <WeaponsStatListContainer

@@ -3165,6 +3165,26 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	}
 }
 
+func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	updater := store.NewDataUpdater(log, time.Minute*10, func() ([]store.HealingOverallResult, error) {
+		updatedStats, errChat := app.db.HealersOverallByHealing(ctx, 250)
+		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+			return nil, errors.Wrap(errChat, "Failed to query overall healers overall")
+		}
+
+		return updatedStats, nil
+	})
+
+	go updater.Start(ctx)
+
+	return func(ctx *gin.Context) {
+		stats := updater.Data()
+		responseOK(ctx, http.StatusOK, LazyResult{Count: len(stats), Data: stats})
+	}
+}
+
 func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
