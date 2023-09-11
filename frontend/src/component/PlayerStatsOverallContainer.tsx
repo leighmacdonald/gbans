@@ -316,7 +316,7 @@ export const PlayerStatsOverallContainer = ({
                                 {
                                     label: 'Charges QuickFix',
                                     value: fmtWhenGt(
-                                        stats.charges_quick_fix,
+                                        stats.charges_quickfix,
                                         humanCount
                                     )
                                 }

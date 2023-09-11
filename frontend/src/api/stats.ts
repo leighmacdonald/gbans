@@ -154,7 +154,7 @@ export interface HealingStats {
     charges_uber: number;
     charges_kritz: number;
     charges_vacc: number;
-    charges_quick_fix: number;
+    charges_quickfix: number;
     hpm: number;
 }
 

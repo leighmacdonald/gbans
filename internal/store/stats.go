@@ -1276,7 +1276,7 @@ type PlayerOverallResult struct {
 	ChargesUber         int64   `json:"charges_uber"`
 	ChargesKritz        int64   `json:"charges_kritz"`
 	ChargesVacc         int64   `json:"charges_vacc"`
-	ChargesQuickFix     int64   `json:"charges_quick_fix"`
+	ChargesQuickfix     int64   `json:"charges_quickfix"`
 	Buildings           int64   `json:"buildings"`
 	Extinguishes        int64   `json:"extinguishes"`
 	HealthPacks         int64   `json:"health_packs"`
@@ -1404,7 +1404,7 @@ func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, 
 	if errQuery := db.
 		QueryRow(ctx, query, steamID.Int64()).Scan(
 		&por.Healing, &por.Drops, &por.NearFullChargeDeath, &por.AvgUberLen, &por.MajorAdvLost, &por.BiggestAdvLost,
-		&por.ChargesUber, &por.ChargesKritz, &por.ChargesVacc, &por.ChargesQuickFix, &por.Buildings, &por.Extinguishes,
+		&por.ChargesUber, &por.ChargesKritz, &por.ChargesVacc, &por.ChargesQuickfix, &por.Buildings, &por.Extinguishes,
 		&por.HealthPacks, &por.KA, &por.Kills, &por.Assists, &por.Deaths, &por.KD, &por.KAD, &por.DPM, &por.Shots, &por.Hits, &por.Accuracy, &por.Airshots, &por.Backstabs,
 		&por.Headshots, &por.Playtime, &por.Dominations, &por.Dominated, &por.Revenges, &por.Damage, &por.DamageTaken,
 		&por.Captures, &por.CapturesBlocked, &por.BuildingsDestroyed, &por.HealingTaken, &por.Wins, &por.Matches, &por.WinRate,

@@ -142,10 +142,10 @@ export const HealersOverallContainer = () => {
                             {
                                 label: 'Qf',
                                 sortable: true,
-                                sortKey: 'charges_quick_fix',
+                                sortKey: 'charges_quickfix',
                                 tooltip: 'Total Quick-Fix Charges',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.charges_quick_fix, humanCount)
+                                    fmtWhenGt(obj.charges_quickfix, humanCount)
                             },
                             {
                                 label: 'Va',
