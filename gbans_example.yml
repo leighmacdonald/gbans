@@ -1,11 +1,18 @@
 general:
+  # The site name. Shows in the copyright footer, in the title bar, and as the "logo" text.
   site_name: "gbans"
+  # Web API key from https://steamcommunity.com/dev. Be awqare that each Steam account can only have one API key, which
+  # needs to be linked to a URL. The key can be used, theoretically, on multiple sites, but any rate limiting will be
+  # shared amongst them all.
   steam_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  # The (decimal) SteamID64 for the primary admin. Use https://www.steamidfinder.com/ if you don't know it.
   owner: 76561198084134025
   # Run mode for the HTTP service
   # Should normally be "release"
   mode: "release" # release, debug, test
+  # How often the server page should refresh for anyone viewing it.
   server_status_update_freq: 10s
+  # The URL people will use to access the site. Be sure to check the schema!
   external_url: "http://gbans.localhost:6006"
 
 debug:
@@ -22,15 +29,19 @@ debug:
   write_unhandled_log_events: true
 
 http:
-  # Listen on this ip address
-  # 0.0.0.0 = Any
+  # Listen on this IP address. 0.0.0.0 will bind to all available interfaces. 127.0.0.1 can be used if using a reverse
+  # proxy, or a specific IP can be assigned if you have failover IPs.
   host: 0.0.0.0
   # Listen on this port
   port: 6006
+  # The path the frontend files are in. DO NOT change if using the official Docker image.
   static_path: ./dist/
+
   client_timeout: 20s
-  # Encryption key for cookies
+  # Encryption key for cookies. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
   cookie_key: change_me
+  # Used to let JS and cookies work properly. At a minimum, requires the same address as in
+  # general.external_url.
   cors_origins:
     - "https://gbans.localhost"
     - "https://gbans.localhost:6006"
@@ -40,22 +51,31 @@ database:
   dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
 
 word_filter:
+  # Enable or disable the word filter. If enabled, will monitor chat for people using naughty  words. Literally 1984.
   enabled: true
+  # How many warnings to give before a ban/mute.
   warnings: 2
+  # Whether to log warnings to a Discord channel.
   ping_discord: true
+  # Whether to use external sources in addition to manually defined rules.
   external_enabled: false
+  # A list of external sources. Should be a .txt file, with each word or phrase on a new line.
   external_sources:
-    - https://raw.githubusercontent.com/RobertJGabriel/Google-profanity-words/master/list.txt
+    - https://github.com/coffee-and-fun/google-profanity-words/blob/main/data/en.txt
 
 discord:
   # Enable optional discord integration
   enabled: false
+  # The app ID of your bot, as created through the developer site.
   app_id: 11111111111111111
+  # Your server's ID.
   guild_id: 111111111111111111
+  # The invite link for your community's server. Only the bit after the slash - don't include the main part of the URL.
   link_id:
   # Your discord bot token
   # See: https://discord.com/developers/applications
   token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  # Role IDs for mods who should be able to use commands.
   mod_role_ids: [1111111111111111, 2222222222222222222]
   # People in these channels automatically have moderator privilege
   # To find these, Right click the channel -> copy id
@@ -67,6 +87,7 @@ discord:
   public_log_channel_id: "444444444444444444"
 
 logging:
+  # NOTE: These settings are ignored in official images tagged as master, unless also a release image.
   # Set the debug log level
   level: debug
   # Force console colours when it cant guess. This is mostly useful on windows
@@ -83,9 +104,11 @@ logging:
 network_bans:
   enabled: true
   max_age: 1d
+  # Where to store IP2Location databases while being processed.
   cache_path: .cache
   ip2location:
     enabled: true
+    # The API token. NOTE: This is for ip2location.com, NOT ip2location.io
     token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     asn_enabled: true
     ip_enabled: true
