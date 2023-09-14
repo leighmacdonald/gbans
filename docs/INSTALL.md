@@ -2,6 +2,20 @@
 
 Basic installation overview of the gbans server and sourcemod plugin.
 
+## System Considerations
+
+Gbans is lightweight and can handle a small to moderately sized community with a dual-core CPU and 4GB of memory.
+
+Special considerations need to be made when using extended functionality: 
+
+- STV demo recording can fill space up quickly. STVs are stored in the database directly, and typically removed after 
+  two weeks. Allow 15GB or so per TF2 server instance for demo recordings. Space can be reduced by enabling TOAST compression in
+  Postgres. 
+- IP2Location is memory intensive when updating the dataset, requiring 10 to 12GB of memory. The process can be
+  sped up by using NVMe storage for the database. 
+
+Larger communities will inherently require more resources.
+
 ## Sourcemod Plugins
 
 The following extensions must be installed for gbans to work, see their documentation for up to date installation
@@ -13,6 +27,7 @@ instructions:
 
 ## gbans Server
 
+### Compile from source
 Precompiled binaries will be provided once the project is in a more stable state.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
@@ -30,6 +45,21 @@ Basic steps to build the binary packages:
     2. make
 
 You should now have a binary located at `./build/$platform/gbans`
+
+### Docker 
+
+```
+sudo docker run -d --restart unless-stopped \
+    -p 6006:6006 \
+    --dns=1.1.1.1 \
+    -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
+    --name gbans \
+    ghcr.io/leighmacdonald/gbans:master
+```
+
+Substitute `master` for a specific tag if desired, and `/home/ubuntu/gbans/gbans.yml` with the location of your config.
+
+This configuration will restart gbans unless explicitly stopped, and names the container for easy log access/stopping.
 
 ## Configuration
 
@@ -136,7 +166,9 @@ Example configuration for discord
       public_log_channel_id: "222222222222222222"
       report_log_channel_id: "111111111111111111"
 
-## Caddy w/cloudflare
+## Reverse Proxy
+
+### Caddy w/cloudflare
 
     example.com {
         reverse_proxy /* internal_host:6006
@@ -145,3 +177,54 @@ Example configuration for discord
             dns cloudfalre your_api_token
         }
     }
+
+## Apache 2.4
+
+Be sure to run `sudo a2enmod proxy_http ssl` first.
+    
+```
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+        ServerName example.com
+
+        ProxyPass / http://127.0.0.1:6006/
+        ProxyPassReverse / http://127.0.0.1:6006/
+
+        ServerAdmin your@email.com
+
+        #Can be disabled if wanted
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+        
+SSLCertificateFile /etc/cloudflare/example.com.pem
+SSLCertificateKeyFile /etc/cloudflare/example.com.key
+</VirtualHost>
+</IfModule>
+```
+If using Cloudflare to provide user location, you can use Origin Certificates to generate a long-lasting SSL certicate.
+  
+
+## IP2Location 
+
+To install the GeoLite2 databases, create an account on [IP2location Lite](https://lite.ip2location.com). After
+confirmation, you'll be given a download token for use in gbans.yaml.
+
+If using Docker, open a terminal with `docker exec -it gbans /bin/sh`, or if using a compiled binary, navigate to the
+folder. 
+
+Run `./gbans net update` to start the process. This will require around 12GB of memory (or a suitably large swapfile), 
+and does *not* need to be run on the host - a more powerful machine can run it, as long as the config is 
+mirrored and database access works.
+
+The process will take up to 30 minutes, depending on hardware, and will add around 2GB to the database when all's said
+and done.
+
+## Enabling User Location
+
+The Servers page lets users sort by range. Gbans does not use the locations API to get data from the browser. 
+Instead, you're required to use Cloudflare to get the location. Gbans must be proxied through Cloudflare to
+accomplish this, and setting that up is out of scope of this doc. 
+
+Once the domain is set up, go to the domain settings, the `Rules` dropdown, `Transform Rules`, and then the 
+`Managed Transforms` tab. Enable `Add visitor location headers`, and wait around 5 minutes for it to take effect. 
+You should then be able to see your location (more or less) on the servers page.
