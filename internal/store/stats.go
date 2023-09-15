@@ -955,7 +955,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 			   c.deaths,
 			   case c.deaths WHEN 0 THEN -1 ELSE (w.kills::float / c.deaths::float) END kd,
 			   case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + w.kills::float) / c.deaths::float) END kad,
-			   c.damage::float / (c.playtime::float / 60) as dpm,
+			   case c.playtime WHEN 0 THEN 0 ELSE c.damage::float / (c.playtime::float / 60) END as dpm,
 			   w.shots,
 			   w.hits,
 			   case w.shots WHEN 0 THEN -1 ELSE (w.hits::float / w.shots::float) * 100 END acc,
@@ -972,7 +972,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 			   c.captures_blocked,
 			   c.buildings_destroyed
 		FROM person p
-		LEFT JOIN (
+				 LEFT JOIN (
 			SELECT mp.steam_id,
 				   sum(mw.kills)     as kills,
 				   sum(mw.shots)     as shots,
@@ -981,10 +981,10 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 				   sum(mw.backstabs) as backstabs,
 				   sum(mw.headshots) as headshots
 			FROM  match_player mp
-			LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
+					  LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
 			GROUP BY mp.steam_id
 		) w ON w.steam_id = p.steam_id
-		LEFT JOIN (
+				 LEFT JOIN (
 			SELECT mp.steam_id,
 				   SUM(mpc.assists) as assists,
 				   sum(mpc.deaths)              as deaths,
@@ -999,7 +999,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 				   sum(mpc.captures_blocked)    as captures_blocked,
 				   sum(mpc.buildings_destroyed) as buildings_destroyed
 			FROM match_player mp
-			LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
+					 LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
 			GROUP BY mp.steam_id
 		) c ON c.steam_id = p.steam_id
 		ORDER BY rank
@@ -1329,7 +1329,7 @@ func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, 
 			   coalesce(c.deaths, 0),
 			   case c.deaths WHEN 0 THEN -1 ELSE (w.kills::float / c.deaths::float) END                      kd,
 			   case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + w.kills::float) / c.deaths::float) END kad,
-			   case c.damage WHEN 0 THEN 0 ELSE c.damage::float / (c.playtime::float / 60) END    as         dpm,
+			   case c.playtime WHEN 0 THEN 0 ELSE c.damage::float / (c.playtime::float / 60) END    as         dpm,
 			   coalesce(w.shots, 0),
 			   coalesce(w.hits, 0),
 			   case w.shots WHEN 0 THEN -1 ELSE (w.hits::float / w.shots::float) * 100 END                   acc,
