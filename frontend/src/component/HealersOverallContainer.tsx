@@ -28,7 +28,7 @@ export const HealersOverallContainer = () => {
                                 sortable: true,
                                 sortKey: 'rank',
                                 align: 'center',
-                                tooltip: 'Overall Rank By Kills',
+                                tooltip: 'Overall Rank By Healing',
                                 renderer: (obj) => obj.rank
                             },
                             {
