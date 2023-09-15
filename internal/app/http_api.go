@@ -3264,7 +3264,7 @@ func onAPIGetPlayerStatsOverall(app *App) gin.HandlerFunc {
 		if errChat := app.db.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, nil)
+			responseErr(ctx, http.StatusInternalServerError, por)
 
 			return
 		}

@@ -27,12 +27,14 @@ import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContaine
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { Login } from './Login';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = useState('');
-
+    const { currentUser } = useCurrentUserCtx();
     const { steam_id } = useParams();
     const { sendFlash } = useUserFlashCtx();
 
@@ -129,23 +131,33 @@ export const Profile = () => {
                     <SteamIDList steam_id={profile.player.steam_id} />
                 </Grid>
                 <Grid xs={12}>
-                    <PlayerStatsOverallContainer
-                        steam_id={profile.player.steam_id}
-                    />
+                    {currentUser.permission_level >= 10 ? (
+                        <PlayerStatsOverallContainer
+                            steam_id={profile.player.steam_id}
+                        />
+                    ) : (
+                        <Login message={'Please login to see player stats'} />
+                    )}
                 </Grid>
                 <Grid xs={12}>
-                    <PlayerClassStatsContainer
-                        steam_id={profile.player.steam_id}
-                    />
+                    {currentUser.permission_level >= 10 && (
+                        <PlayerClassStatsContainer
+                            steam_id={profile.player.steam_id}
+                        />
+                    )}
                 </Grid>
                 <Grid xs={12}>
-                    <WeaponsStatListContainer
-                        title={'Overall Player Weapon Stats'}
-                        icon={<InsightsIcon />}
-                        fetchData={() =>
-                            apiGetPlayerWeaponsOverall(profile?.player.steam_id)
-                        }
-                    />
+                    {currentUser.permission_level >= 10 && (
+                        <WeaponsStatListContainer
+                            title={'Overall Player Weapon Stats'}
+                            icon={<InsightsIcon />}
+                            fetchData={() =>
+                                apiGetPlayerWeaponsOverall(
+                                    profile?.player.steam_id
+                                )
+                            }
+                        />
+                    )}
                 </Grid>
                 <Grid xs={12}>
                     <ContainerWithHeader
