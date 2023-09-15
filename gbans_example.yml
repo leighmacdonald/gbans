@@ -10,10 +10,14 @@ general:
   # Run mode for the HTTP service
   # Should normally be "release"
   mode: "release" # release, debug, test
-  # How often the server page should refresh for anyone viewing it.
+  # How often the backend will poll the game servers for new player info / game state.
   server_status_update_freq: 10s
   # The URL people will use to access the site. Be sure to check the schema!
   external_url: "http://gbans.localhost:6006"
+
+  # A list of steam community group IDs of which their memebers will be banned from connecting.
+  # banned_steam_group_ids:
+  #  - 103582791429521412 # valve
 
 debug:
   # Ensure we don't clobber and configuration done
@@ -26,6 +30,7 @@ debug:
   # Skip validation of openid responses
   # This is mostly helpful to ignore mismatch hosts
   skip_open_id_validation: true
+  # When receiving a unknown log line over udp it will get written to ./unhandled_messages.log
   write_unhandled_log_events: true
 
 http:
@@ -36,9 +41,9 @@ http:
   port: 6006
   # The path the frontend files are in. DO NOT change if using the official Docker image.
   static_path: ./dist/
-
+  # Default timeout when making outboung http calls
   client_timeout: 20s
-  # Encryption key for cookies. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
+  # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
   cookie_key: change_me
   # Used to let JS and cookies work properly. At a minimum, requires the same address as in
   # general.external_url.
@@ -75,16 +80,19 @@ discord:
   # Your discord bot token
   # See: https://discord.com/developers/applications
   token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  # Role IDs for mods who should be able to use commands.
-  mod_role_ids: [1111111111111111, 2222222222222222222]
-  # People in these channels automatically have moderator privilege
-  # To find these, Right click the channel -> copy id
-  mod_channel_ids:
-    - "1111111111111111111"
-  mod_log_channel_id: "22222222222222222222"
+  # Channel used for announcing moderator level events, these can contain more sensitive information and should
+  # not generally be exposed.
   log_channel_id: "33333333333333333333"
+
+  # If enabled, announce bans/mutes to this channel. These contain minimal info and is suitable for public.
   public_log_channel_enable: true
+  # Discord channel ID
   public_log_channel_id: "444444444444444444"
+  # Separate channel for match results.
+  public_match_log_channel_id: "555555555555555555"
+  # Unregister all discord bot commands before recreating. This maybe help if your bot is timing out on commands or the commands
+  # are otherwise out of sync
+  unregister_on_start: false
 
 logging:
   # NOTE: These settings are ignored in official images tagged as master, unless also a release image.
@@ -98,7 +106,10 @@ logging:
   report_caller: false
   # Show full timestamps in the logs
   full_timestamp: false
+  # Listen on UDP host:port for incoming game log lines. This is required to be open for much functionality such as
+  # match history, stats, message logs and user warnings.
   srcds_log_addr: ":27115"
+  # The external host:port that srcds will use to connect eg: `logaddress_add sink.localhost:27115`
   srcds_log_external_host: "sink.localhost:27115"
 
 network_bans:
