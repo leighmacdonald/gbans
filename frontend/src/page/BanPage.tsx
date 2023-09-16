@@ -74,20 +74,12 @@ export const BanPage = (): JSX.Element => {
         }
         apiGetBanSteam(id, true)
             .then((banPerson) => {
-                if (!banPerson.status || !banPerson.result) {
-                    sendFlash('error', 'Failed to get ban, permission denied');
-                    navigate('/');
-                    return;
-                }
-                setAppealState(banPerson.result.ban.appeal_state);
-                setBan(banPerson.result);
+                setAppealState(banPerson.ban.appeal_state);
+                setBan(banPerson);
                 loadMessages();
             })
             .catch(() => {
-                sendFlash(
-                    'error',
-                    'Permission denied. Must login with banned account.'
-                );
+                sendFlash('error', 'Failed to get ban, permission denied');
                 navigate('/');
                 return;
             });
@@ -100,7 +92,7 @@ export const BanPage = (): JSX.Element => {
         }
         apiGetBanMessages(id)
             .then((response) => {
-                setMessages(response.result || []);
+                setMessages(response);
             })
             .catch(logErr);
     }, [id]);
@@ -112,17 +104,16 @@ export const BanPage = (): JSX.Element => {
             }
             apiCreateBanMessage(ban?.ban.ban_id, message)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', 'Failed to create message');
-                        return;
-                    }
                     setMessages([
                         ...messages,
-                        { author: currentUser, message: response.result }
+                        { author: currentUser, message: response }
                     ]);
                     onSuccess && onSuccess();
                 })
-                .catch(logErr);
+                .catch((e) => {
+                    sendFlash('error', 'Failed to create message');
+                    logErr(e);
+                });
         },
         [ban, messages, currentUser, sendFlash]
     );
@@ -151,13 +142,15 @@ export const BanPage = (): JSX.Element => {
         [loadMessages, sendFlash]
     );
     const onSaveAppealState = useCallback(() => {
-        apiSetBanAppealState(id, appealState).then((resp) => {
-            if (!resp.status) {
+        apiSetBanAppealState(id, appealState)
+            .then(() => {
+                sendFlash('success', 'Appeal state updated');
+            })
+            .catch((reason) => {
                 sendFlash('error', 'Could not set appeal state');
+                logErr(reason);
                 return;
-            }
-            sendFlash('success', 'Appeal state updated');
-        });
+            });
     }, [appealState, id, sendFlash]);
 
     return (

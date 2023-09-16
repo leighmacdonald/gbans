@@ -62,21 +62,18 @@ export const ReportViewPage = (): JSX.Element => {
     useEffect(() => {
         apiGetReport(id)
             .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash(
-                        'error',
-                        'Permission denied. Only report authors, subjects and mods can view reports'
-                    );
-                    navigate(`/report`);
-                    return;
-                }
-                if (!response.status || !response.result) {
-                    sendFlash('error', 'Failed to load report');
-                }
-                setReport(response.result);
-                setStateAction(response.result.report.report_status);
+                setReport(response);
+                setStateAction(response.report.report_status);
             })
-            .catch(logErr);
+            .catch((e) => {
+                sendFlash(
+                    'error',
+                    'Permission denied. Only report authors, subjects and mods can view reports'
+                );
+                logErr(e);
+                navigate(`/report`);
+                return;
+            });
     }, [report_id, setReport, id, sendFlash, navigate]);
 
     const loadBans = useCallback(() => {
@@ -100,14 +97,7 @@ export const ReportViewPage = (): JSX.Element => {
 
     const onSetReportState = useCallback(() => {
         apiReportSetState(id, stateAction)
-            .then((response) => {
-                if (!response.status) {
-                    sendFlash(
-                        'error',
-                        `Failed to set report state: ${response.error}`
-                    );
-                    return;
-                }
+            .then(() => {
                 sendFlash(
                     'success',
                     `State changed from ${reportStatusString(

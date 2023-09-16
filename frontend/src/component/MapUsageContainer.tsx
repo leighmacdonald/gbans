@@ -14,6 +14,7 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Tab from '@mui/material/Tab';
 import TabPanel from '@mui/lab/TabPanel';
+import { logErr } from '../util/errors';
 
 interface MapUseChartProps {
     details: SeriesData[];
@@ -143,39 +144,40 @@ export const MapUsageContainer = () => {
     useEffect(() => {
         apiGetMapUsage()
             .then((resp) => {
-                if (resp.result) {
-                    setSeries(
-                        resp.result.map((value1): SeriesData => {
-                            return {
-                                id: value1.map,
-                                value: value1.percent,
-                                label: value1.map
-                            };
-                        })
-                    );
-                    const maps: Record<string, number> = {};
+                setSeries(
+                    resp.map((value1): SeriesData => {
+                        return {
+                            id: value1.map,
+                            value: value1.percent,
+                            label: value1.map
+                        };
+                    })
+                );
+                const maps: Record<string, number> = {};
 
-                    // eslint-disable-next-line no-loops/no-loops
-                    for (let i = 0; i < resp.result.length; i++) {
-                        const key = resp.result[i].map
-                            .replace('workshop/', '')
-                            .split('_')[0];
-                        if (!maps[key]) {
-                            maps[key] = 0;
-                        }
-                        maps[key] += resp.result[i].percent;
+                // eslint-disable-next-line no-loops/no-loops
+                for (let i = 0; i < resp.length; i++) {
+                    const key = resp[i].map
+                        .replace('workshop/', '')
+                        .split('_')[0];
+                    if (!maps[key]) {
+                        maps[key] = 0;
                     }
-                    const values: SeriesData[] = [];
-                    // eslint-disable-next-line no-loops/no-loops
-                    for (const mapsKey in maps) {
-                        values.push({
-                            label: mapsKey,
-                            id: mapsKey,
-                            value: maps[mapsKey]
-                        });
-                    }
-                    setSeriesMode(values);
+                    maps[key] += resp[i].percent;
                 }
+                const values: SeriesData[] = [];
+                // eslint-disable-next-line no-loops/no-loops
+                for (const mapsKey in maps) {
+                    values.push({
+                        label: mapsKey,
+                        id: mapsKey,
+                        value: maps[mapsKey]
+                    });
+                }
+                setSeriesMode(values);
+            })
+            .catch((e) => {
+                logErr(e);
             })
             .finally(() => {
                 setLoading(false);

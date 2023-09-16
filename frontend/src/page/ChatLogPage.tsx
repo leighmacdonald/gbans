@@ -192,17 +192,16 @@ export const ChatLogPage = () => {
     ]);
 
     useEffect(() => {
-        apiGetServers().then((resp) => {
-            if (!resp.status || !resp.result) {
-                return;
-            }
-            setServers([
-                anyServerSimple,
-                ...resp.result.sort((a, b) => {
-                    return a.server_name.localeCompare(b.server_name);
-                })
-            ]);
-        });
+        apiGetServers()
+            .then((resp) => {
+                setServers([
+                    anyServerSimple,
+                    ...resp.sort((a: ServerSimple, b: ServerSimple) => {
+                        return a.server_name.localeCompare(b.server_name);
+                    })
+                ]);
+            })
+            .catch(logErr);
     }, []);
 
     const restartTimer = useCallback(() => {
@@ -236,12 +235,10 @@ export const ChatLogPage = () => {
         setLoading(true);
         apiGetMessages(opts)
             .then((resp) => {
-                if (resp.result) {
-                    setRows(resp.result.messages || []);
-                    setTotalRows(resp.result.count);
-                    if (page * rowPerPageCount > resp.result.count) {
-                        setPage(0);
-                    }
+                setRows(resp.messages || []);
+                setTotalRows(resp.count);
+                if (page * rowPerPageCount > resp.count) {
+                    setPage(0);
                 }
             })
             .catch((e) => {

@@ -14,6 +14,7 @@ import {
     UserNotification
 } from '../api';
 import { useCurrentUserCtx } from './CurrentUserCtx';
+import { logErr } from '../util/errors';
 
 export type NotificationState = {
     notifications: UserNotification[];
@@ -43,11 +44,11 @@ export const NotificationsProvider = ({
     useEffect(() => {
         if (currentUser.steam_id) {
             const query: NotificationsQuery = {};
-            apiGetNotifications(query).then((res) => {
-                if (res.status && res.result) {
-                    setNotifications(res.result);
-                }
-            });
+            apiGetNotifications(query)
+                .then((res) => {
+                    setNotifications(res);
+                })
+                .catch(logErr);
         }
     }, [currentUser.steam_id, notifications.length]);
 

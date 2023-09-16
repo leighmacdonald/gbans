@@ -1,4 +1,9 @@
-import { apiCall, QueryFilter, TimeStamped } from './common';
+import {
+    apiCall,
+    QueryFilter,
+    TimeStamped,
+    transformTimeStampedDates
+} from './common';
 import {
     communityVisibilityState,
     Person,
@@ -256,13 +261,15 @@ export interface BanPayloadASN extends BanBasePayload {
     as_num: number;
 }
 
-export const apiGetBansSteam = async (opts?: BansQueryFilter) => {
+export const apiGetBansSteam = async (
+    opts?: BansQueryFilter
+): Promise<IAPIBanRecordProfile[]> => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans/steam`,
         'POST',
         opts ?? {}
     );
-    return (resp.result ?? [])
+    return (resp ?? [])
         .map((b): IAPIBanRecordProfile => {
             return {
                 source_id: b.ban.source_id,
@@ -317,9 +324,9 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
         `/api/bans/steam/${ban_id}?deleted=${deleted}`,
         'GET'
     );
-    if (resp.result?.ban && resp.result?.person) {
-        resp.result.ban = applyDateTime(resp.result?.ban);
-        resp.result.person = applyDateTime(resp.result?.person);
+    if (resp?.ban && resp?.person) {
+        resp.ban = transformTimeStampedDates(resp?.ban);
+        resp.person = transformTimeStampedDates(resp?.person);
     }
     return resp;
 };
@@ -330,10 +337,7 @@ export const apiGetAppeals = async (opts?: BansQueryFilter) => {
         'POST',
         opts ?? {}
     );
-    if (resp.status && resp.result) {
-        resp.result = resp.result.map((r) => applyDateTime(r));
-    }
-    return resp;
+    return resp.map((r) => applyDateTime(r));
 };
 
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
@@ -379,15 +383,13 @@ export const apiGetBanMessages = async (ban_id: number) => {
         `/api/bans/${ban_id}/messages`,
         'GET'
     );
-    if (resp.result) {
-        resp.result = resp.result.map((r) => {
-            return {
-                message: applyDateTime(r.message),
-                author: applyDateTime(r.author)
-            };
-        });
-    }
-    return resp;
+
+    return resp.map((r) => {
+        return {
+            message: applyDateTime(r.message),
+            author: applyDateTime(r.author)
+        };
+    });
 };
 
 export interface CreateBanMessage {
@@ -418,10 +420,8 @@ export const apiGetBansCIDR = async (opts: QueryFilter<IAPIBanCIDRRecord>) => {
         'POST',
         opts
     );
-    if (resp.status && resp.result) {
-        resp.result = resp.result.map((record) => applyDateTime(record));
-    }
-    return resp;
+
+    return resp.map((record) => applyDateTime(record));
 };
 
 export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) => {
@@ -430,10 +430,8 @@ export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) => {
         'POST',
         opts
     );
-    if (resp.status && resp.result) {
-        resp.result = resp.result.map((record) => applyDateTime(record));
-    }
-    return resp;
+
+    return resp.map((record) => applyDateTime(record));
 };
 
 export const apiGetBansGroups = async (
@@ -444,10 +442,8 @@ export const apiGetBansGroups = async (
         'POST',
         opts
     );
-    if (resp.status && resp.result) {
-        resp.result = resp.result.map((record) => applyDateTime(record));
-    }
-    return resp;
+
+    return resp.map((record) => applyDateTime(record));
 };
 
 export const apiDeleteCIDRBan = async (
@@ -499,4 +495,4 @@ export interface sbBanRecord {
 }
 
 export const apiGetSourceBans = async (steam_id: string) =>
-    await apiCall<null, sbBanRecord[]>(`/api/sourcebans/${steam_id}`, 'GET');
+    await apiCall<sbBanRecord[]>(`/api/sourcebans/${steam_id}`, 'GET');

@@ -1,9 +1,7 @@
 import React, { JSX, useState } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
-    apiError,
     apiGetPlayerWeaponStats,
-    apiResponse,
     PlayerWeaponStatsResponse,
     Weapon
 } from '../api';
@@ -23,13 +21,9 @@ interface WeaponStatsContainerProps {
 const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
     const [weapon, setWeapon] = useState<Weapon>();
 
-    const fetchData = async (): Promise<
-        apiResponse<PlayerWeaponStatsResponse> & apiError
-    > => {
+    const fetchData = async (): Promise<PlayerWeaponStatsResponse> => {
         const resp = await apiGetPlayerWeaponStats(weapon_id);
-        if (resp.result) {
-            setWeapon(resp.result.weapon);
-        }
+        setWeapon(resp.weapon);
         return resp;
     };
 

@@ -15,6 +15,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
 
 interface MatchSummaryTableProps {
     steam_id: string;
@@ -42,13 +43,14 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
             order_by: sortColumn,
             desc: sortOrder == 'desc'
         };
-        apiGetMatches(opts).then((resp) => {
-            if (!resp.result) {
-                return;
-            }
-            setTotalRows(resp.result.count);
-            setRows(resp.result.matches);
-        });
+        apiGetMatches(opts)
+            .then((resp) => {
+                setTotalRows(resp.count);
+                setRows(resp.matches);
+            })
+            .catch((e) => {
+                logErr(e);
+            });
     }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
 
     if (currentUser.steam_id != steam_id) {

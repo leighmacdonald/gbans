@@ -12,7 +12,7 @@ export const AdminPeople = (): JSX.Element => {
 
     useEffect(() => {
         apiGetPeople().then((response) => {
-            setPeople(response.result || []);
+            setPeople(response || []);
         });
     }, []);
 

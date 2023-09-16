@@ -364,11 +364,7 @@ export const MatchPage = () => {
     useEffect(() => {
         apiGetMatch(match_id as string)
             .then((resp) => {
-                if (!resp.status || !resp.result) {
-                    //navigate('/404');
-                    return;
-                }
-                setMatch(resp.result);
+                setMatch(resp);
             })
             .catch(logErr)
             .finally(() => {

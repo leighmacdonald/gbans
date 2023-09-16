@@ -112,10 +112,7 @@ const FilterEditModal = ({
             pattern: pattern
         };
         try {
-            const resp = await apiSaveFilter(f);
-            if (resp.result) {
-                onSuccess(resp.result);
-            }
+            onSuccess(await apiSaveFilter(f));
         } catch (e) {
             logErr(e);
         }
@@ -184,10 +181,7 @@ export const AdminFilters = () => {
 
     const reset = () => {
         apiGetFilters().then((resp) => {
-            if (!resp.status) {
-                return;
-            }
-            setFilters(resp.result || []);
+            setFilters(resp || []);
         });
     };
 

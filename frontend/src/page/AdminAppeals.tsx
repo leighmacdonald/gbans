@@ -89,7 +89,7 @@ export const AdminAppeals = () => {
     useEffect(() => {
         apiGetAppeals()
             .then((response) => {
-                setAppeals(response.result || []);
+                setAppeals(response);
             })
             .catch(logErr);
     }, []);

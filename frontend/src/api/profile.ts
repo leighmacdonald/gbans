@@ -157,20 +157,6 @@ export interface PersonMessage {
 export const apiGetPersonConnections = async (steam_id: string) =>
     await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
 
-export const apiGetPersonMessages = async (steam_id: string) => {
-    const resp = await apiCall<PersonMessage[]>(
-        `/api/messages/${steam_id}`,
-        'GET'
-    );
-    resp.result = resp.result?.map((msg) => {
-        return {
-            ...msg,
-            created_on: parseDateTime(msg.created_on as unknown as string)
-        };
-    });
-    return resp;
-};
-
 export const apiGetMessageContext = async (
     messageId: number,
     padding: number = 5
@@ -179,13 +165,12 @@ export const apiGetMessageContext = async (
         `/api/message/${messageId}/context/${padding}`,
         'GET'
     );
-    resp.result = resp.result?.map((msg) => {
+    return resp.map((msg) => {
         return {
             ...msg,
             created_on: parseDateTime(msg.created_on as unknown as string)
         };
     });
-    return resp;
 };
 
 export interface MessageQuery extends QueryFilter<PersonMessage> {
@@ -207,8 +192,8 @@ export const apiGetMessages = async (opts: MessageQuery) => {
         'POST',
         opts
     );
-    if (resp.result?.messages) {
-        resp.result.messages = resp.result.messages.map((msg) => {
+    if (resp?.messages) {
+        resp.messages = resp.messages.map((msg) => {
             return {
                 ...msg,
                 created_on: parseDateTime(msg.created_on as unknown as string)

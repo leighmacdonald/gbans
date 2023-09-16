@@ -60,17 +60,17 @@ export const MDEditor = ({
                 setOpen={setOpen}
                 onSave={(v, onSuccess) => {
                     apiSaveMedia(v).then((resp) => {
-                        if (!resp || !resp.status || !resp.result) {
+                        if (!resp) {
                             sendFlash('error', 'Failed to save media');
                             return;
                         }
-                        if (!resp.result.author_id) {
+                        if (!resp.author_id) {
                             return;
                         }
                         setOpen(false);
                         const newBody =
                             bodyMD.slice(0, cursorPos) +
-                            `![${resp.result.name}](media://${resp.result.media_id})` +
+                            `![${resp.name}](media://${resp.media_id})` +
                             bodyMD.slice(cursorPos);
                         setBodyMD(newBody);
                         onSuccess && onSuccess();

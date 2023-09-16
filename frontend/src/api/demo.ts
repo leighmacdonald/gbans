@@ -21,14 +21,11 @@ export interface demoFilters {
 }
 
 export const apiGetDemos = async (opts: demoFilters) => {
-    const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', opts);
-    if (resp.result) {
-        resp.result = resp.result.map((row) => {
-            return {
-                ...row,
-                created_on: parseDateTime(row.created_on as unknown as string)
-            };
-        });
-    }
-    return resp;
+    const demos = await apiCall<DemoFile[]>('/api/demos', 'POST', opts);
+    return demos.map((d) => {
+        return {
+            ...d,
+            created_on: parseDateTime(d.created_on as unknown as string)
+        };
+    });
 };

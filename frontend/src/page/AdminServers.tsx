@@ -14,6 +14,7 @@ import CreateIcon from '@mui/icons-material/Create';
 import Stack from '@mui/material/Stack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteServerModal } from '../component/DeleteServerModal';
+import { logErr } from '../util/errors';
 
 export const AdminServers = () => {
     const [open, setOpen] = useState(false);
@@ -24,10 +25,14 @@ export const AdminServers = () => {
 
     const reload = useCallback(() => {
         setIsLoading(true);
-        apiGetServersAdmin().then((s) => {
-            setServers(s.result || []);
-            setIsLoading(false);
-        });
+        apiGetServersAdmin()
+            .then((s) => {
+                setServers(s || []);
+            })
+            .catch(logErr)
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, []);
 
     useEffect(() => {

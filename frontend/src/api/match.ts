@@ -1,6 +1,12 @@
 import { PlayerClass, Team } from './const';
 import { TeamScores } from './stats';
-import { apiCall, DataCount, QueryFilter } from './common';
+import {
+    apiCall,
+    DataCount,
+    MatchTimes,
+    QueryFilter,
+    transformMatchDates
+} from './common';
 import { parseDateTime } from '../util/text';
 
 export interface MatchHealer {
@@ -97,34 +103,19 @@ export interface MatchPlayer {
 
 export interface PersonMessages {}
 
-export interface MatchResult {
+export interface MatchResult extends MatchTimes {
     match_id: string;
     server_id: number;
     title: string;
     map_name: string;
     team_scores: TeamScores;
-    time_start: Date;
-    time_end: Date;
     players: MatchPlayer[];
     chat: PersonMessages[];
 }
 
 export const apiGetMatch = async (match_id: string) => {
     const match = await apiCall<MatchResult>(`/api/log/${match_id}`, 'GET');
-    if (match.result) {
-        match.result.time_start = parseDateTime(
-            match.result.time_start as unknown as string
-        );
-        match.result.time_end = parseDateTime(
-            match.result.time_end as unknown as string
-        );
-        match.result.players = match.result.players.map((p) => {
-            p.time_start = parseDateTime(p.time_start as unknown as string);
-            p.time_end = parseDateTime(p.time_end as unknown as string);
-            return p;
-        });
-    }
-    return match;
+    return transformMatchDates(match);
 };
 
 export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
@@ -145,17 +136,16 @@ export const apiGetMatches = async (opts: MatchesQueryOpts) => {
         'POST',
         opts
     );
-    if (resp.result) {
-        resp.result.matches = resp.result.matches.map((m) => {
-            m.time_start = parseDateTime(m.time_start as unknown as string);
-            m.time_end = parseDateTime(m.time_end as unknown as string);
-            return m;
-        });
-    }
+    resp.matches = resp.matches.map((m) => {
+        m.time_start = parseDateTime(m.time_start as unknown as string);
+        m.time_end = parseDateTime(m.time_end as unknown as string);
+        return m;
+    });
+
     return resp;
 };
 
-export interface MatchSummary {
+export interface MatchSummary extends MatchTimes {
     match_id: string;
     server_id: number;
     is_winner: boolean;

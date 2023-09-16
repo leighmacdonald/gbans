@@ -17,10 +17,7 @@ export const UserInit = () => {
         if (!emptyOrNullString(rt)) {
             apiGetCurrentProfile()
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        return;
-                    }
-                    setCurrentUser(response.result);
+                    setCurrentUser(response);
                 })
                 .catch(() => {
                     setCurrentUser(GuestProfile);

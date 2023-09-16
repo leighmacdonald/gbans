@@ -66,7 +66,7 @@ func responseOKUser(ctx *gin.Context, status int, data any, userMsg string, args
 }
 
 func responseOK(ctx *gin.Context, status int, data any) {
-	ctx.JSON(status, apiResponse{Status: true, Result: data})
+	ctx.JSON(status, data)
 }
 
 func onAPIPostLog(app *App) gin.HandlerFunc {
@@ -1156,9 +1156,9 @@ func onAPIGetResolveProfile(app *App) gin.HandlerFunc {
 
 func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		userProfile := currentUserProfile(ctx)
+		currentProfile := currentUserProfile(ctx)
 
-		notifications, errNot := app.db.GetPersonNotifications(ctx, userProfile.SteamID)
+		notifications, errNot := app.db.GetPersonNotifications(ctx, currentProfile.SteamID)
 		if errNot != nil {
 			if errors.Is(errNot, store.ErrNoResult) {
 				responseOK(ctx, http.StatusOK, []store.UserNotification{})
@@ -3068,10 +3068,6 @@ func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if ipHist == nil {
-			ipHist = []store.QueryConnectionHistoryResult{}
-		}
-
 		responseOK(ctx, http.StatusOK, connectionQueryResults{
 			ResultsCount: ResultsCount{Count: totalCount},
 			Connections:  ipHist,
@@ -3385,7 +3381,6 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		// TODO paging
 		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
 			SteamID: steamID.String(),
 			QueryFilter: store.QueryFilter{
@@ -3399,10 +3394,6 @@ func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
-		}
-
-		if messages == nil {
-			messages = []store.QueryChatHistoryResult{}
 		}
 
 		responseOK(ctx, http.StatusOK, messageQueryResults{

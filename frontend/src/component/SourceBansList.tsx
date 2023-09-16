@@ -9,6 +9,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Stack from '@mui/material/Stack';
+import { logErr } from '../util/errors';
 
 interface SourceBansListProps {
     steam_id: string;
@@ -20,12 +21,13 @@ export const SourceBansList = ({
     is_reporter
 }: SourceBansListProps): JSX.Element => {
     const [bans, setBans] = useState<sbBanRecord[]>([]);
+
     useEffect(() => {
-        apiGetSourceBans(steam_id).then((resp) => {
-            if (resp.result) {
-                setBans(resp.result);
-            }
-        });
+        apiGetSourceBans(steam_id)
+            .then((resp) => {
+                setBans(resp);
+            })
+            .catch(logErr);
     }, [steam_id]);
 
     if (!bans.length) {

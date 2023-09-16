@@ -5,6 +5,7 @@ import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { Heading } from './Heading';
 import { PersonMessageTable } from './PersonMessageTable';
 import { LoadingSpinner } from './LoadingSpinner';
+import { logErr } from '../util/errors';
 
 export interface UnbanASNModalProps
     extends ConfirmationModalProps<IAPIBanASNRecord> {
@@ -26,16 +27,16 @@ export const MessageContextModal = ({
         }
         apiGetMessageContext(messageId)
             .then((resp) => {
-                if (!resp.status) {
-                    return;
-                }
-                resp.result?.map((r, i) => {
+                resp.map((r: PersonMessage, i: number) => {
                     if (r.person_message_id == messageId) {
                         setSelectedMessageIndex(i);
                     }
                     return r;
                 });
-                setMessages(resp.result || []);
+                setMessages(resp);
+            })
+            .catch((e) => {
+                logErr(e);
             })
             .finally(() => {
                 setIsLoading(false);

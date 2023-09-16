@@ -31,7 +31,7 @@ export const AdminReports = () => {
     useEffect(() => {
         apiGetReports({})
             .then((response) => {
-                setReports(response.result || []);
+                setReports(response || []);
             })
             .catch(logErr);
     }, []);

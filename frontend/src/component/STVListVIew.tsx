@@ -40,7 +40,7 @@ export const STVListVIew = () => {
             server_ids: serverIds
         })
             .then((response) => {
-                setDemos(response.result ?? []);
+                setDemos(response);
             })
             .finally(() => {
                 setIsLoading(false);

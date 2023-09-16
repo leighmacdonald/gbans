@@ -17,11 +17,6 @@ export const LoginDiscordSuccess = () => {
             return;
         }
         apiLinkDiscord({ code })
-            .then((response) => {
-                if (!response.status) {
-                    return;
-                }
-            })
             .catch((e) => {
                 logErr(e);
             })

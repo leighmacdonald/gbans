@@ -70,9 +70,7 @@ export const PlayerStatsOverallContainer = ({
     useEffect(() => {
         apiGetPlayerStats(steam_id)
             .then((resp) => {
-                if (resp.result) {
-                    setStats(resp.result);
-                }
+                setStats(resp);
             })
             .finally(() => {
                 setLoading(false);

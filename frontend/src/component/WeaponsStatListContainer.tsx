@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-    apiError,
-    apiResponse,
-    LazyResult,
-    WeaponsOverallResult
-} from '../api';
+import { LazyResult, WeaponsOverallResult } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -20,7 +15,7 @@ interface WeaponsOverallContainerProps {
     icon: React.ReactNode;
     fetchData: (
         opts: LazyFetchOpts<WeaponsOverallResult>
-    ) => Promise<apiResponse<LazyResult<WeaponsOverallResult>> & apiError>;
+    ) => Promise<LazyResult<WeaponsOverallResult>>;
 }
 
 export const WeaponsStatListContainer = ({

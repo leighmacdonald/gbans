@@ -140,15 +140,15 @@ export const Servers = () => {
         onExpire: () => {
             apiGetServerStates()
                 .then((response) => {
-                    if (!response.status || !response.result) {
+                    if (!response) {
                         restart(nextExpiry());
                         return;
                     }
-                    setServers(response.result.servers || []);
+                    setServers(response.servers || []);
                     if (pos.lat == 0) {
                         setPos({
-                            lat: response.result.lat_long.latitude,
-                            lng: response.result.lat_long.longitude
+                            lat: response.lat_long.latitude,
+                            lng: response.lat_long.longitude
                         });
                     }
 

@@ -1,6 +1,8 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
 import { readAccessToken, readRefreshToken, refreshToken } from './auth';
+import { parseDateTime } from '../util/text';
+import { MatchResult } from './match';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -11,24 +13,16 @@ export enum PermissionLevel {
     Admin = 100
 }
 
-export interface apiError {
-    error?: string;
-}
-
-export interface apiResponse<T> {
-    status: boolean;
-    message?: string;
-    resp: Response;
-    result?: T;
-}
-
 export interface DataCount {
     count: number;
 }
 
+export class EmptyBody {}
+
 /**
  * All api requests are handled through this interface.
  *
+ * @param objectType
  * @param url
  * @param method
  * @param body
@@ -40,9 +34,9 @@ export const apiCall = async <
 >(
     url: string,
     method: string,
-    body?: TRequestBody,
+    body?: TRequestBody | undefined,
     isRefresh?: boolean
-): Promise<apiResponse<TResponse> & apiError> => {
+): Promise<TResponse> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
     };
@@ -80,26 +74,21 @@ export const apiCall = async <
         }
     }
     if (resp.status === 403 && token != '') {
-        return { status: resp.ok, resp: resp, error: 'Unauthorized' };
+        throw new Error('Permission Denied');
     }
-    const jsonText = await resp.text();
-    const json: apiResponse<TResponse> = JSON.parse(jsonText);
+
     if (!resp.ok) {
-        return {
-            status: resp.ok && json.status,
-            resp: resp,
-            error: (json as apiError).error || ''
-        };
+        throw new Error(`Invalid response`);
     }
-    return { result: json.result, resp, status: resp.ok && json.status };
+
+    return (await resp.json()) as TResponse;
 };
 
 export class ValidationException extends Error {}
 
-export interface Pos {
-    x: number;
-    y: number;
-    z: number;
+export interface MatchTimes {
+    time_start: Date;
+    time_end: Date;
 }
 
 export interface TimeStamped {
@@ -107,6 +96,32 @@ export interface TimeStamped {
     updated_on: Date;
     valid_until?: Date;
 }
+
+export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
+    item.created_on = parseDateTime(item.created_on as unknown as string);
+    item.updated_on = parseDateTime(item.created_on as unknown as string);
+    if (item.valid_until != undefined) {
+        item.valid_until = parseDateTime(item.valid_until as unknown as string);
+    }
+    return item;
+};
+
+export const transformTimeStampedDatesList = <T>(
+    items: (T & TimeStamped)[]
+) => {
+    return items.map(transformTimeStampedDates);
+};
+
+export const transformMatchDates = (item: MatchResult) => {
+    item.time_start = parseDateTime(item.time_start as unknown as string);
+    item.time_end = parseDateTime(item.time_end as unknown as string);
+    item.players = item.players.map((t) => {
+        t.time_start = parseDateTime(t.time_start as unknown as string);
+        t.time_end = parseDateTime(t.time_end as unknown as string);
+        return t;
+    });
+    return item;
+};
 
 export const renderDate = (d: Date | string): string => {
     switch (typeof d) {

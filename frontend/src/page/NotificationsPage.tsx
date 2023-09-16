@@ -39,7 +39,6 @@ const CB = ({ id }: CBProps) => {
                             prevState.splice(index, 1);
                         }
                     }
-                    console.log(prevState);
                     return prevState;
                 });
             }}

@@ -1,19 +1,26 @@
-import { apiCall, ValidationException } from './common';
+import {
+    apiCall,
+    TimeStamped,
+    transformTimeStampedDatesList,
+    ValidationException
+} from './common';
 
-export interface NewsEntry {
+export interface NewsEntry extends TimeStamped {
     news_id: number;
     title: string;
     body_md: string;
     is_published: boolean;
-    created_on?: string;
-    updated_on?: string;
 }
 
 export const apiGetNewsLatest = async () =>
-    await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST');
+    transformTimeStampedDatesList(
+        await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST')
+    );
 
 export const apiGetNewsAll = async () =>
-    await apiCall<NewsEntry[]>(`/api/news_all`, 'POST');
+    transformTimeStampedDatesList(
+        await apiCall<NewsEntry[]>(`/api/news_all`, 'POST')
+    );
 
 export const apiNewsSave = async (entry: NewsEntry) => {
     if (entry.body_md === '') {

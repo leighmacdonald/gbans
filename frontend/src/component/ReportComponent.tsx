@@ -10,8 +10,8 @@ import { useTheme } from '@mui/material/styles';
 import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
+    apiGetMessages,
     apiGetPersonConnections,
-    apiGetPersonMessages,
     apiGetReportMessages,
     apiUpdateReportMessage,
     BanReasons,
@@ -65,7 +65,7 @@ export const ReportComponent = ({
     const loadMessages = useCallback(() => {
         apiGetReportMessages(report.report_id)
             .then((response) => {
-                setMessages(response.result || []);
+                setMessages(response || []);
             })
             .catch(logErr);
     }, [report.report_id]);
@@ -74,17 +74,16 @@ export const ReportComponent = ({
         (message: string, onSuccess?: () => void) => {
             apiCreateReportMessage(report.report_id, message)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', 'Failed to save report message');
-                        return;
-                    }
                     setMessages([
                         ...messages,
-                        { author: currentUser, message: response.result }
+                        { author: currentUser, message: response }
                     ]);
                     onSuccess && onSuccess();
                 })
-                .catch(logErr);
+                .catch((e) => {
+                    sendFlash('error', 'Failed to save report message');
+                    logErr(e);
+                });
         },
         [report.report_id, messages, currentUser, sendFlash]
     );
@@ -104,15 +103,14 @@ export const ReportComponent = ({
     const onDelete = useCallback(
         (message_id: number) => {
             apiDeleteReportMessage(message_id)
-                .then((response) => {
-                    if (!response.status) {
-                        sendFlash('error', 'Failed to delete message');
-                        return;
-                    }
+                .then(() => {
                     sendFlash('success', 'Deleted message successfully');
                     loadMessages();
                 })
-                .catch(logErr);
+                .catch((e) => {
+                    sendFlash('error', 'Failed to delete message');
+                    logErr(e);
+                });
         },
         [loadMessages, sendFlash]
     );
@@ -124,15 +122,15 @@ export const ReportComponent = ({
     useEffect(() => {
         apiGetPersonConnections(report.target_id)
             .then((response) => {
-                setConnections(response.result || []);
+                setConnections(response);
             })
             .catch(logErr);
     }, [report]);
 
     useEffect(() => {
-        apiGetPersonMessages(report.target_id)
+        apiGetMessages({ steam_id: report.target_id, order_by: 'created_on' })
             .then((response) => {
-                setChatHistory(response.result || []);
+                setChatHistory(response.messages);
             })
             .catch(logErr);
     }, [report]);
