@@ -89,6 +89,8 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 	const query = `DELETE FROM filtered_word WHERE filter_id = $1`
 	if errExec := db.Exec(ctx, query, filter.FilterID); errExec != nil {
+		db.log.Error("Failed to delete filter", zap.Error(errExec))
+
 		return Err(errExec)
 	}
 
@@ -106,6 +108,8 @@ func (db *Store) GetFilterByID(ctx context.Context, wordID int64, filter *Filter
 	var authorID int64
 	if errQuery := db.QueryRow(ctx, query, wordID).Scan(&filter.FilterID, &authorID, &filter.Pattern,
 		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
+		db.log.Error("Failed to fetch filter", zap.Error(errQuery))
+
 		return Err(errQuery)
 	}
 

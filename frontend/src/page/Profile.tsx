@@ -189,7 +189,7 @@ export const Profile = () => {
                 </Grid>
             </>
         );
-    }, [error, profile]);
+    }, [currentUser.permission_level, error, profile]);
 
     return (
         <Grid container spacing={2}>

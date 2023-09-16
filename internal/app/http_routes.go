@@ -152,8 +152,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(app))
-	engine.POST("/api/server_query", onAPIPostServerQuery(app))
-	engine.GET("/api/server_stats", onAPIGetTF2Stats(app))
 
 	engine.GET("/demos/name/:demo_name", onAPIGetDemoDownloadByName(app))
 	engine.GET("/demos/:demo_id", onAPIGetDemoDownload(app))
@@ -181,7 +179,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		serverAuth.POST("/api/ping_mod", onAPIPostPingMod(app))
 		serverAuth.POST("/api/check", onAPIPostServerCheck(app))
 		serverAuth.POST("/api/demo", onAPIPostDemo(app))
-		serverAuth.POST("/api/log", onAPIPostLog(app))
 		// Duplicated since we need to authenticate via server middleware
 		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate(app))
 		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(app))

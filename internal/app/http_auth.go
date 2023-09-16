@@ -278,7 +278,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		responseOK(ctx, http.StatusOK, nil)
+		ctx.JSON(http.StatusOK, nil)
 
 		log.Info("Discord account linked successfully",
 			zap.String("discord_id", discordID), zap.Int64("sid64", sid.Int64()))
@@ -433,7 +433,7 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 			return
 		}
 
-		responseOK(ctx, http.StatusOK, userToken{
+		ctx.JSON(http.StatusOK, userToken{
 			AccessToken:  newAccessToken,
 			RefreshToken: newRefreshToken,
 		})
