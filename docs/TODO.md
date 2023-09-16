@@ -17,7 +17,7 @@ If you are looking for things to try implementing, this is a good place to look.
     - Show in reports/appeals if they exist.
 - (Maybe) Rate limiting. It's currently largely handled by frontend proxies though.
 - Finish networking query utilities in the admin area
-- Make inteface to query sourcebans data (using [bd-api](https://github.com/leighmacdonald/bd-api))
+- Make interface to query sourcebans data (using [bd-api](https://github.com/leighmacdonald/bd-api))
 - Add player search for mods (maybe users?)
 -
 
@@ -76,6 +76,11 @@ discourse depending on the community.
 
 - Use LazyTable
 - Add basic management functionality (delete/sort/search)
+
+## Wiki
+
+- Private pages
+- Store data in S3 buckets compat
 
 # Long term possibilities
 

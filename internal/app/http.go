@@ -10,15 +10,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"go.uber.org/zap"
 )
 
 const ctxKeyUserProfile = "user_profile"
 
-func bind(ctx *gin.Context, target any) bool {
+type apiError struct {
+	Message string `json:"message"`
+}
+
+func responseErr(ctx *gin.Context, statusCode int, err error) {
+	userErr := "API Error"
+	if err != nil {
+		userErr = err.Error()
+	}
+
+	ctx.JSON(statusCode, apiError{Message: userErr})
+}
+
+func bind(ctx *gin.Context, log *zap.Logger, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		responseErr(ctx, http.StatusBadRequest, gin.H{
-			"error": "Invalid request parameters",
-		})
+		responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+		log.Error("Failed to bind request", zap.Error(errBind))
 
 		return false
 	}
@@ -117,7 +130,7 @@ func checkPrivilege(ctx *gin.Context, person userProfile, allowedSteamIds steami
 		return true
 	}
 
-	responseErrUser(ctx, http.StatusUnauthorized, nil, consts.ErrPermissionDenied.Error())
+	ctx.JSON(http.StatusUnauthorized, consts.ErrPermissionDenied.Error())
 
 	return false
 }
