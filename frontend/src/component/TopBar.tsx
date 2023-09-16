@@ -13,7 +13,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import StorageIcon from '@mui/icons-material/Storage';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
-import ChatIcon from '@mui/icons-material/Chat';
 import ArticleIcon from '@mui/icons-material/Article';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -49,6 +48,7 @@ import {
     useNotifications
 } from '../contexts/NotificationsCtx';
 import SteamID from 'steamid';
+import { logErr } from '../util/errors';
 
 interface menuRoute {
     to: string;
@@ -215,11 +215,6 @@ export const TopBar = () => {
                 icon: <LiveHelpIcon sx={colourOpts} />
             });
             items.push({
-                to: '/admin/chat',
-                text: 'Chat History',
-                icon: <ChatIcon sx={colourOpts} />
-            });
-            items.push({
                 to: '/admin/news',
                 text: 'News',
                 icon: <NewspaperIcon sx={colourOpts} />
@@ -285,7 +280,7 @@ export const TopBar = () => {
             }
             return false;
         } catch (e) {
-            console.log(e);
+            logErr(e);
         }
         return false;
     }, [currentUser?.steam_id]);

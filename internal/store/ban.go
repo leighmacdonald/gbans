@@ -645,7 +645,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 
 	defer rows.Close()
 
-	var bans []BanSteam
+	bans := []BanSteam{}
 
 	for rows.Next() {
 		var (
@@ -698,7 +698,7 @@ func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]Ap
 	ORDER BY b.created_on DESC
 	`
 
-	var overviews []AppealOverview
+	overviews := []AppealOverview{}
 
 	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
@@ -805,7 +805,7 @@ func (db *Store) GetBansSteam(ctx context.Context, filter BansQueryFilter) ([]Ba
 		return nil, Err(errQueryBuilder)
 	}
 
-	var bans []BannedPerson
+	bans := []BannedPerson{}
 
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
@@ -864,7 +864,7 @@ func (db *Store) GetBansOlderThan(ctx context.Context, filter QueryFilter, since
 		return nil, Err(queryErr)
 	}
 
-	var bans []BanSteam
+	bans := []BanSteam{}
 
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
@@ -974,7 +974,7 @@ func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage
 
 	defer rows.Close()
 
-	var messages []UserMessage
+	messages := []UserMessage{}
 
 	for rows.Next() {
 		var (
@@ -1133,7 +1133,7 @@ func (db *Store) GetBanGroups(ctx context.Context) ([]BanGroup, error) {
 
 	defer rows.Close()
 
-	var groups []BanGroup
+	groups := []BanGroup{}
 
 	for rows.Next() {
 		var (

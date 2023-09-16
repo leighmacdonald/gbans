@@ -79,7 +79,7 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
         validationSchema: validationSchema,
         onSubmit: async (values) => {
             try {
-                const resp = await apiCreateBanGroup({
+                await apiCreateBanGroup({
                     note: values.note,
                     ban_type: values.banType,
                     duration: values.duration,
@@ -87,10 +87,6 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
                     reason_text: values.reasonText,
                     target_id: values.groupId
                 });
-                if (!resp.status || !resp.result) {
-                    sendFlash('error', 'Error saving ban');
-                    return;
-                }
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {
                 logErr(e);

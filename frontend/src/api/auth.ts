@@ -20,17 +20,13 @@ export const refreshToken = async () => {
             } as UserToken,
             true
         );
-        if (
-            !resp.status ||
-            !resp.result?.access_token ||
-            !resp.result?.refresh_token
-        ) {
+        if (!resp?.access_token || !resp?.refresh_token) {
             logErr('Failed to refresh auth token');
             return '';
         }
-        writeAccessToken(resp.result?.access_token);
-        writeRefreshToken(resp.result?.refresh_token);
-        return resp.result?.access_token;
+        writeAccessToken(resp?.access_token);
+        writeRefreshToken(resp?.refresh_token);
+        return resp?.access_token;
     } catch (e) {
         logErr(e);
         return '';

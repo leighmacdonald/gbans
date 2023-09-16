@@ -70,7 +70,7 @@ export const AdminBan = () => {
     const loadBansGroup = useCallback(() => {
         apiGetBansGroups({ desc: true, order_by: 'ban_group_id' }).then(
             (newGroupBans) => {
-                setBanGroups(newGroupBans.result || []);
+                setBanGroups(newGroupBans);
             }
         );
     }, []);
@@ -78,7 +78,7 @@ export const AdminBan = () => {
     const loadBansCIDR = useCallback(() => {
         apiGetBansCIDR({ desc: true, order_by: 'net_id' }).then(
             (newBansCIDR) => {
-                setBanCIDRs(newBansCIDR.result || []);
+                setBanCIDRs(newBansCIDR);
             }
         );
     }, []);
@@ -86,7 +86,7 @@ export const AdminBan = () => {
     const loadBansASN = useCallback(() => {
         apiGetBansASN({ desc: true, order_by: 'ban_asn_id' }).then(
             (newBansASN) => {
-                setBanASNs(newBansASN.result || []);
+                setBanASNs(newBansASN);
             }
         );
     }, []);

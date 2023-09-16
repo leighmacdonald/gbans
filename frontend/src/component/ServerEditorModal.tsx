@@ -91,15 +91,11 @@ export const ServerEditorModal = ({
         if (serverId > 0) {
             apiSaveServer(serverId, opts)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', `Failed to save server`);
-                        return;
-                    }
                     sendFlash(
                         'success',
-                        `Server saved successfully: ${response.result.server_name}`
+                        `Server saved successfully: ${response.server_name}`
                     );
-                    onSuccess && onSuccess(response.result);
+                    onSuccess && onSuccess(response);
                     setOpen(false);
                 })
                 .catch((err) => {
@@ -108,15 +104,11 @@ export const ServerEditorModal = ({
         } else {
             apiCreateServer(opts)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', `Failed to create server`);
-                        return;
-                    }
                     sendFlash(
                         'success',
-                        `Server created successfully: ${response.result.server_name}`
+                        `Server created successfully: ${response.server_name}`
                     );
-                    onSuccess && onSuccess(response.result);
+                    onSuccess && onSuccess(response);
                     setOpen(false);
                 })
                 .catch((err) => {

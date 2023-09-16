@@ -732,8 +732,10 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
 	}
 
+	messages := []QueryConnectionHistoryResult{}
+
 	if totalRows == 0 {
-		return []QueryConnectionHistoryResult{}, 0, nil
+		return messages, 0, nil
 	}
 
 	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
@@ -747,8 +749,6 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 	}
 
 	defer rows.Close()
-
-	var messages []QueryConnectionHistoryResult
 
 	for rows.Next() {
 		var (
@@ -942,8 +942,10 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		}
 	}
 
+	messages := []QueryChatHistoryResult{}
+
 	if totalRows == 0 && !query.DontCalcTotal {
-		return []QueryChatHistoryResult{}, 0, nil
+		return messages, 0, nil
 	}
 
 	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
@@ -957,8 +959,6 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	}
 
 	defer rows.Close()
-
-	var messages []QueryChatHistoryResult
 
 	for rows.Next() {
 		var (
@@ -1246,7 +1246,7 @@ type NotificationQuery struct {
 }
 
 func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserNotification, error) {
-	var notifications []UserNotification
+	notifications := []UserNotification{}
 
 	query, args, errQuery := db.sb.
 		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").

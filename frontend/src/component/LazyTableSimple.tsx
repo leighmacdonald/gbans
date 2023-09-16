@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { apiError, apiResponse, LazyResult } from '../api';
+import { LazyResult } from '../api';
 import {
     compare,
     HeadingCell,
@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import { LazyTable } from './LazyTable';
 import { TablePagination } from '@mui/material';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
+import { logErr } from '../util/errors';
 
 export interface LazyFetchOpts<T> {
     column: keyof T;
@@ -19,9 +20,7 @@ export interface LazyFetchOpts<T> {
 }
 
 interface LazyTableSimpleProps<T> {
-    fetchData: (
-        opts: LazyFetchOpts<T>
-    ) => Promise<apiResponse<LazyResult<T>> & apiError>;
+    fetchData: (opts: LazyFetchOpts<T>) => Promise<LazyResult<T>>;
     columns: HeadingCell<T>[];
     defaultSortColumn: keyof T;
     defaultSortDir?: Order;
@@ -61,10 +60,11 @@ export const LazyTableSimple = <T,>({
         }
         fetchData({ column: sortColumn, order: sortOrder, page: page })
             .then((resp) => {
-                if (resp.result) {
-                    setData(resp.result.data);
-                    setCount(resp.result.count);
-                }
+                setData(resp.data);
+                setCount(resp.count);
+            })
+            .catch((e) => {
+                logErr(e);
             })
             .finally(() => {
                 setLoading(false);

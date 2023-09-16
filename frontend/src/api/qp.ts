@@ -133,6 +133,5 @@ export const filterServerGameTypes = (
             }
         }
     }
-    console.log(matched.length);
     return matched;
 };

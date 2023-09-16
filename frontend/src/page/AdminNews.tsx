@@ -30,22 +30,23 @@ export const AdminNews = () => {
         news_id: 0,
         body_md: '',
         is_published: false,
-        title: ''
+        title: '',
+        created_on: new Date(),
+        updated_on: new Date()
     });
     const onSave = useCallback(() => {
         apiNewsSave(selectedNewsEntry)
             .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', 'Failed to save news');
-                    return;
-                }
-                setSelectedNewsEntry(response.result);
+                setSelectedNewsEntry(response);
                 sendFlash(
                     'success',
                     `News published successfully: ${selectedNewsEntry.title}`
                 );
             })
-            .catch(logErr);
+            .catch((e) => {
+                sendFlash('error', 'Failed to save news');
+                logErr(e);
+            });
     }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {

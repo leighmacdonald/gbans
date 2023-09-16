@@ -1,15 +1,13 @@
-import { apiCall } from './common';
+import { apiCall, TimeStamped } from './common';
 import { marked, Renderer } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { mangle } from 'marked-mangle';
 
-export interface Page {
+export interface Page extends TimeStamped {
     slug: string;
     title: string;
     body_md: string;
     revision: number;
-    created_on: Date;
-    updated_on: Date;
 }
 
 export const apiGetWikiPage = async (slug: string) =>

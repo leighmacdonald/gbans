@@ -41,10 +41,7 @@ export const ReportCreatePage = (): JSX.Element => {
                 desc: true
             })
                 .then((resp) => {
-                    if (!resp.status || !resp.result) {
-                        return;
-                    }
-                    setReportHistory(resp.result);
+                    setReportHistory(resp);
                 })
                 .catch(logErr);
         }

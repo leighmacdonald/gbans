@@ -16,13 +16,15 @@ interface NewsListProps {
 export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     const [news, setNews] = useState<NewsEntry[]>([]);
     const theme = useTheme();
+
     useEffect(() => {
         apiGetNewsAll()
             .then((r) => {
-                setNews(r.result || []);
+                setNews(r);
             })
             .catch(logErr);
     }, []);
+
     return (
         <Stack spacing={3} padding={3}>
             <List dense={true}>

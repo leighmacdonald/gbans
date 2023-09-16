@@ -82,7 +82,7 @@ export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
         validationSchema: validationSchema,
         onSubmit: async (values) => {
             try {
-                const resp = await apiCreateBanCIDR({
+                await apiCreateBanCIDR({
                     note: values.note,
                     ban_type: values.banType,
                     duration: values.duration,
@@ -91,10 +91,6 @@ export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
                     target_id: values.steam_id,
                     cidr: values.cidr
                 });
-                if (!resp.status || !resp.result) {
-                    sendFlash('error', 'Error saving ban');
-                    return;
-                }
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {
                 logErr(e);

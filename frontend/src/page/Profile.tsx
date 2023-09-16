@@ -51,11 +51,7 @@ export const Profile = () => {
             setLoading(true);
             apiGetProfile(id.toString())
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', 'Failed to load profile');
-                        return;
-                    }
-                    response && setProfile(response.result);
+                    setProfile(response);
                 })
                 .catch(logErr)
                 .finally(() => {

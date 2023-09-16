@@ -29,9 +29,7 @@ export const StatsPanel = () => {
     useEffect(() => {
         apiGetStats()
             .then((response) => {
-                if (response.status && response.result) {
-                    setStats(response.result);
-                }
+                setStats(response);
             })
             .catch(logErr);
     }, []);

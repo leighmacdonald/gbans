@@ -79,18 +79,12 @@ export const ReportForm = (): JSX.Element => {
                     person_message_id: personMessageID
                 })
                     .then((response) => {
-                        if (!response.status) {
-                            sendFlash(
-                                'error',
-                                `Failed to create report: ${response.error}`
-                            );
-                            return;
-                        }
-                        if (response.result) {
-                            navigate(`/report/${response.result.report_id}`);
-                        }
+                        navigate(`/report/${response.report_id}`);
                     })
-                    .catch(logErr);
+                    .catch((e) => {
+                        sendFlash('error', `Failed to create report`);
+                        logErr(e);
+                    });
             }
         },
         [

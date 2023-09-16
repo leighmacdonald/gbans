@@ -15,10 +15,7 @@ export const steamIdValidator = yup
         }
         try {
             const resp = await apiGetProfile(steamId);
-            if (!resp.status || !resp.result) {
-                return false;
-            }
-            const sid = new SteamID(resp.result.player.steam_id);
+            const sid = new SteamID(resp.player.steam_id);
             ctx.parent.value = sid.getSteamID64();
             return true;
         } catch (e) {

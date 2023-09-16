@@ -11,6 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Table from '@mui/material/Table';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
+import { logErr } from '../util/errors';
 
 interface PlayerMessageContextProps {
     playerMessageId: number;
@@ -27,9 +28,10 @@ export const PlayerMessageContext = ({
     useEffect(() => {
         apiGetMessageContext(playerMessageId, padding)
             .then((resp) => {
-                if (resp.result) {
-                    setMessages(resp.result);
-                }
+                setMessages(resp);
+            })
+            .catch((e) => {
+                logErr(e);
             })
             .finally(() => {
                 setLoading(false);

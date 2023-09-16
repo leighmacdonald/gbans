@@ -5,10 +5,11 @@ import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import { Pagination } from '@mui/material';
 import { SplitHeading } from './SplitHeading';
-import { parseDateTime, renderDate } from '../util/text';
+import { renderDate } from '../util/text';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { renderMarkdown } from '../api/wiki';
+import { logErr } from '../util/errors';
 
 export interface NewsViewProps {
     itemsPerPage: number;
@@ -20,13 +21,14 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
     const [page, setPage] = useState<number>(0);
 
     useEffect(() => {
-        apiGetNewsLatest().then((response) => {
-            if (!response.status || !response.result) {
+        apiGetNewsLatest()
+            .then((response) => {
+                setArticles(response);
+            })
+            .catch((e) => {
                 sendFlash('error', 'Failed to load news');
-                return;
-            }
-            setArticles(response.result);
-        });
+                logErr(e);
+            });
     }, [itemsPerPage, sendFlash]);
 
     return (
@@ -41,9 +43,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
                         <Paper elevation={1} key={`news_` + article.news_id}>
                             <SplitHeading
                                 left={article.title}
-                                right={renderDate(
-                                    parseDateTime(article.created_on)
-                                )}
+                                right={renderDate(article.created_on)}
                             />
                             <RenderedMarkdownBox
                                 bodyHTML={renderMarkdown(article.body_md)}

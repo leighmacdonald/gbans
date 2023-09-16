@@ -29,11 +29,7 @@ export const UnbanSteamModal = ({
             return;
         }
         apiDeleteBan(banId, reasonText)
-            .then((resp) => {
-                if (!resp.status) {
-                    sendFlash('error', `Failed to unban`);
-                    return;
-                }
+            .then(() => {
                 sendFlash('success', `Unbanned successfully`);
                 onSuccess && onSuccess(null);
             })

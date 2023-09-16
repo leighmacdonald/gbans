@@ -135,7 +135,7 @@ export const PugPage = () => {
                 case MsgType.wsMsgTypePugLobbyListStatesResponse: {
                     const lobbies = last.payload.lobbies as PugLobby[];
                     setLobbies(lobbies);
-                    console.log('state updated');
+
                     break;
                 }
                 case MsgType.wsMsgTypePugUserMessageResponse: {

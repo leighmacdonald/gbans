@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, JSX } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useParams } from 'react-router';
 import Typography from '@mui/material/Typography';
-import { log, logErr } from '../util/errors';
+import { logErr } from '../util/errors';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import {
     apiGetWikiPage,
@@ -42,16 +42,15 @@ export const WikiPage = (): JSX.Element => {
         setLoading(true);
         apiGetWikiPage(slug || 'home')
             .then((response) => {
-                if (!response.status || !response.result) {
-                    sendFlash('error', 'Failed to load wiki page');
-                    return;
-                }
-                setPage(response.result);
+                setPage(response);
             })
             .catch((e) => {
-                log(e);
+                sendFlash('error', 'Failed to load wiki page');
+                logErr(e);
+            })
+            .finally(() => {
+                setLoading(false);
             });
-        setLoading(false);
     }, [sendFlash, slug]);
 
     const onSave = useCallback(
@@ -61,15 +60,8 @@ export const WikiPage = (): JSX.Element => {
             newPage.body_md = new_body_md;
             apiSaveWikiPage(newPage)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        sendFlash('error', 'Failed to save wiki page');
-                        return;
-                    }
-                    setPage(response.result);
-                    sendFlash(
-                        'success',
-                        `Slug ${response.result.slug} updated`
-                    );
+                    setPage(response);
+                    sendFlash('success', `Slug ${response.slug} updated`);
                     setEditMode(false);
                 })
                 .catch(logErr);

@@ -36,12 +36,8 @@ export const ProfileSelectionInput = ({
             setLoading(true);
             apiGetProfile(input)
                 .then((response) => {
-                    if (!response.status || !response.result) {
-                        setLProfile(undefined);
-                        return;
-                    }
-                    onProfileSuccess(response.result);
-                    setLProfile(response.result);
+                    onProfileSuccess(response);
+                    setLProfile(response);
                     setLoading(false);
                 })
                 .catch((e) => {

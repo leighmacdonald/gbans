@@ -25,7 +25,7 @@ func (db *Store) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCI
 		FROM ban_net
 		WHERE $1 <<= cidr AND deleted = false AND is_enabled = true`
 
-	var nets []BanCIDR
+	nets := []BanCIDR{}
 
 	rows, errQuery := db.Query(ctx, query, ipAddr.String())
 	if errQuery != nil {
@@ -94,7 +94,7 @@ func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 		FROM ban_net
 		WHERE deleted = false`
 
-	var nets []BanCIDR
+	nets := []BanCIDR{}
 
 	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
@@ -204,7 +204,7 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 		FROM ban_net
 		WHERE valid_until < $1`
 
-	var bans []BanCIDR
+	bans := []BanCIDR{}
 
 	rows, errQuery := db.Query(ctx, query, time.Now())
 	if errQuery != nil {
@@ -244,7 +244,7 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 		FROM ban_asn
 		WHERE valid_until < $1 AND deleted = false`
 
-	var bans []BanASN
+	bans := []BanASN{}
 
 	rows, errQuery := db.conn.Query(ctx, query, time.Now())
 	if errQuery != nil {
@@ -289,7 +289,7 @@ func (db *Store) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2locati
 
 	defer rows.Close()
 
-	var records ip2location.ASNRecords
+	records := ip2location.ASNRecords{}
 
 	for rows.Next() {
 		var asnRecord ip2location.ASNRecord
@@ -549,7 +549,7 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 
 	defer rows.Close()
 
-	var records []BanASN
+	records := []BanASN{}
 
 	for rows.Next() {
 		var (

@@ -79,7 +79,7 @@ export const BanASNModal = ({ open, setOpen }: BanASNModalProps) => {
         validationSchema: validationSchema,
         onSubmit: async (values) => {
             try {
-                const resp = await apiCreateBanASN({
+                await apiCreateBanASN({
                     note: values.note,
                     ban_type: values.banType,
                     duration: values.duration,
@@ -88,10 +88,6 @@ export const BanASNModal = ({ open, setOpen }: BanASNModalProps) => {
                     target_id: values.steam_id,
                     as_num: values.asNum
                 });
-                if (!resp.status || !resp.result) {
-                    sendFlash('error', 'Error saving ban');
-                    return;
-                }
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {
                 logErr(e);
