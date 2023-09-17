@@ -19,6 +19,7 @@ services:
       GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
       GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
     command: ./gbans serve
+
   postgres:
     image: postgis/postgis:15-3.3
     restart: always
@@ -36,8 +37,25 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: docker.io/bitnami/minio:2023
+    restart: always
+    environment:
+      # *must* be >= 8 chars or minio will not start
+      - MINIO_ROOT_USER=gbansgbans
+      - MINIO_ROOT_PASSWORD=gbansgbans
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - 'minio_data:/bitnami/minio/data'
+    networks:
+      - prod_network
+
 volumes:
   dl_cache:
+  minio_data:
+    driver: local
 
 networks:
   prod_network:
