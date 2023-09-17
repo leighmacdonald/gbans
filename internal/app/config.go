@@ -40,6 +40,14 @@ type Config struct {
 	NetBans netBans       `mapstructure:"network_bans"`
 	Debug   debugConfig   `mapstructure:"debug"`
 	Patreon patreonConfig `mapstructure:"patreon"`
+	S3      s3Config      `mapstructure:"s3"`
+}
+
+type s3Config struct {
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	Endpoint  string `mapstructure:"endpoint"`
+	Region    string `mapstructure:"region"`
 }
 
 type dbConfig struct {
