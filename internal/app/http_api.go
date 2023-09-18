@@ -941,6 +941,7 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 			servers = append(servers, baseServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
+				IP:         srv.IP,
 				Name:       srv.Name,
 				NameShort:  srv.NameShort,
 				Region:     srv.Region,
