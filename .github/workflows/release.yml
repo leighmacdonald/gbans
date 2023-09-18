@@ -13,9 +13,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: git fetch --force --tags
       - uses: actions/setup-go@v4
         with:
-          go-version: 'latest'
+          go-version: 'stable'
           cache: true
 
       - run: go mod tidy
@@ -26,7 +29,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_PAT }}
 
-      - uses: goreleaser/goreleaser-action@v2
+      - uses: goreleaser/goreleaser-action@v5
         if: success() && startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
@@ -43,7 +46,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build gbans image
+      - name: Build & publish gbans image
         run: |
           docker build . --tag ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
           docker push ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
