@@ -69,11 +69,8 @@ release:
   replace_existing_draft: true
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  use: github-native
+  
 #
 #signs:
 #  - artifacts: checksum
