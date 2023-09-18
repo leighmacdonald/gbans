@@ -4,6 +4,7 @@ export interface BaseServer {
     server_id: number;
     host: string;
     port: number;
+    ip: string;
     name: string;
     name_short: string;
     region: string;

@@ -177,7 +177,7 @@ export const ServerList = () => {
                             return (
                                 <Button
                                     component={Link}
-                                    href={`steam://connect/${serverState.host}:${serverState.port}`}
+                                    href={`steam://connect/${serverState.ip}:${serverState.port}`}
                                     variant={'contained'}
                                     sx={{ minWidth: 100 }}
                                 >

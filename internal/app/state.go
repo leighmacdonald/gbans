@@ -28,10 +28,12 @@ import (
 // by admins.
 type serverDetails struct {
 	// Database
-	ServerID      int       `json:"server_id"`
-	NameShort     string    `json:"name_short"`
-	Name          string    `json:"name"`
-	Host          string    `json:"host"`
+	ServerID  int    `json:"server_id"`
+	NameShort string `json:"name_short"`
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	// IP is a distinct entry vs host since steam no longer allows steam:// protocol handler links to use a fqdn
+	IP            string    `json:"ip"`
 	Port          int       `json:"port"`
 	Enabled       bool      `json:"enabled"`
 	Region        string    `json:"region"`
@@ -84,6 +86,7 @@ type baseServer struct {
 	ServerID   int      `json:"server_id"`
 	Host       string   `json:"host"`
 	Port       int      `json:"port"`
+	IP         string   `json:"ip"`
 	Name       string   `json:"name"`
 	NameShort  string   `json:"name_short"`
 	Region     string   `json:"region"`
@@ -433,6 +436,12 @@ func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
 
 	for _, config := range configs {
 		if _, found := c.serverState[config.ServerID]; !found {
+			addr, errResolve := resolveIP(config.Host)
+			if errResolve != nil {
+				c.log.Warn("Failed to resolve server ip", zap.String("addr", addr), zap.Error(errResolve))
+				addr = config.Host
+			}
+
 			c.serverState[config.ServerID] = serverDetails{
 				ServerID:      config.ServerID,
 				Name:          config.DefaultHostname,
@@ -445,11 +454,26 @@ func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
 				Region:        config.Region,
 				Latitude:      config.Latitude,
 				Longitude:     config.Longitude,
+				IP:            addr,
 			}
 		}
 	}
 
 	c.configs = configs
+}
+
+func resolveIP(addr string) (string, error) {
+	ipAddr := net.ParseIP(addr)
+	if ipAddr != nil {
+		return ipAddr.String(), nil
+	}
+
+	ips, err := net.LookupIP(addr)
+	if err != nil || len(ips) == 0 {
+		return "", errors.Wrap(err, "Failed to resolve server dns")
+	}
+
+	return ips[0].String(), nil
 }
 
 type partialStateUpdate struct {
