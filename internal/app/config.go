@@ -44,10 +44,14 @@ type Config struct {
 }
 
 type s3Config struct {
-	AccessKey string `mapstructure:"access_key"`
-	SecretKey string `mapstructure:"secret_key"`
-	Endpoint  string `mapstructure:"endpoint"`
-	Region    string `mapstructure:"region"`
+	Enabled     bool   `mapstructure:"enabled"`
+	AccessKey   string `mapstructure:"access_key"`
+	SecretKey   string `mapstructure:"secret_key"`
+	Endpoint    string `mapstructure:"endpoint"`
+	Region      string `mapstructure:"region"`
+	SSL         bool   `mapstructure:"ssl"`
+	BucketMedia string `mapstructure:"bucket_media"`
+	BucketDemo  string `mapstructure:"bucket_demo"`
 }
 
 type dbConfig struct {
@@ -293,6 +297,14 @@ func setDefaultConfigValues() {
 		"database.dsn":                             "postgresql://gbans:gbans@localhost/gbans",
 		"database.auto_migrate":                    true,
 		"database.log_queries":                     false,
+		"s3.enabled":                               false,
+		"s3.access_key":                            "",
+		"s3.secret_key":                            "",
+		"s3.endpoint":                              "localhost:9001",
+		"s3.ssl":                                   false,
+		"s3.region":                                "",
+		"s3.bucket_media":                          "media",
+		"s3.bucket_demo":                           "demos",
 	}
 
 	for configKey, value := range defaultConfig {

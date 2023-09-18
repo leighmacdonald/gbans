@@ -2,6 +2,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -44,16 +45,18 @@ type App struct {
 	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
+	assetStore           *S3Client
 	logListener          *logparse.UDPLogListener
 	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
 }
 
-func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger) App {
+func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore *S3Client) App {
 	application := App{
 		bot:                  bot,
 		eb:                   fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
 		db:                   database,
 		conf:                 conf,
+		assetStore:           assetStore,
 		log:                  logger,
 		logFileChan:          make(chan *logFilePayload, 10),
 		notificationChan:     make(chan NotificationPayload, 5),
@@ -194,6 +197,58 @@ func (app *App) Init(ctx context.Context) error {
 		}
 
 		app.log.Info("Loaded filter list", zap.Int("count", len(app.wordFilters.wordFilters)))
+	}
+
+	if errMigrateS3 := app.migrateS3(ctx); errMigrateS3 != nil {
+		panic(errMigrateS3)
+	}
+
+	return nil
+}
+
+func (app *App) migrateS3(ctx context.Context) error {
+	const q = `SELECT media_id, author_id, mime_type, contents, name, size, deleted, created_on, updated_on
+		FROM media
+		where deleted = false`
+
+	rows, err := app.db.Query(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	if errBucket := app.assetStore.CreateBucketIfNotExists(ctx, "media"); errBucket != nil {
+		return errBucket
+	}
+
+	for rows.Next() {
+		var m store.Media
+		if scanErr := rows.Scan(&m.MediaID, &m.AuthorID, &m.MimeType, &m.Contents,
+			&m.Name, &m.Size, &m.Deleted, &m.CreatedOn, &m.UpdatedOn); scanErr != nil {
+			return scanErr
+		}
+
+		ass, errAss := store.NewAsset(m.Contents, "media", "")
+		if errAss != nil {
+			return errAss
+		}
+
+		ass.OldID = int64(m.MediaID)
+
+		if errSave := app.db.SaveAsset(ctx, &ass); errSave != nil {
+			return errSave
+		}
+
+		if errPut := app.assetStore.Put(ctx, "media", ass.Name, bytes.NewReader(m.Contents), m.Size, m.MimeType); errPut != nil {
+			return errPut
+		}
+
+		m.Asset = ass
+
+		if errSave := app.db.SaveMedia(ctx, &m); errSave != nil {
+			return errSave
+		}
 	}
 
 	return nil

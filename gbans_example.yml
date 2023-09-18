@@ -68,6 +68,18 @@ word_filter:
   external_sources:
     - https://github.com/coffee-and-fun/google-profanity-words/blob/main/data/en.txt
 
+# When enabled, will use s3-compatible backend for storing demos and media uploads. They will otherwise be served from the
+# database. The data will *not* also be duplicated in the local database when using s3.
+s3:
+  enabled: true
+  access_key: "xxxxxxxxxxxxxxxxxxxx"
+  secret_key: "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+  endpoint: "localhost:9001"
+  ssl: false
+  region: ""
+  bucket_media: media
+  bucket_demo: demos
+
 discord:
   # Enable optional discord integration
   enabled: false
