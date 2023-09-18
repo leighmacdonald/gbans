@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -1257,6 +1258,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		person := store.NewPerson(sid)
 		if errGetProfile := app.PersonBySID(requestCtx, sid, &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to create person", zap.Error(errGetProfile))
 
 			log.Error("Failed to create new profile", zap.Error(errGetProfile))
 
@@ -2690,6 +2692,23 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
 		}
 
+		asset, errAsset := store.NewAsset(content, app.conf.S3.BucketMedia, "")
+		if errAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			return
+		}
+
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+
+			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
+
+			return
+		}
+
+		media.Contents = nil
+
 		if !fp.Contains(MediaSafeMimeTypesImages, media.MimeType) {
 			responseErr(ctx, http.StatusBadRequest, errors.New("Invalid image format"))
 			log.Error("User tried uploading image with forbidden mimetype",
@@ -2710,6 +2729,12 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			return
+		}
+
+		if app.conf.S3.Enabled {
+			if errLoad := app.db.GetMediaByAssetID(ctx, media.Asset.AssetID, &media); errLoad != nil {
+				responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load new media"))
+			}
 		}
 
 		ctx.JSON(http.StatusCreated, media)

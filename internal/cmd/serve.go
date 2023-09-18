@@ -53,7 +53,12 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			application := app.New(&conf, database, bot, rootLogger)
+			s3Client, errClient := app.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
+			if errClient != nil {
+				panic(errClient)
+			}
+
+			application := app.New(&conf, database, bot, rootLogger, s3Client)
 
 			if errInit := application.Init(rootCtx); errInit != nil {
 				rootLogger.Fatal("Failed to init app", zap.Error(errInit))

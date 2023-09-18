@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/gofrs/uuid/v5"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -251,6 +253,57 @@ func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	demoFile.DemoID = 0
 
 	db.log.Info("Demo deleted:", zap.String("name", demoFile.Title))
+
+	return nil
+}
+
+type Asset struct {
+	AssetID  uuid.UUID `json:"asset_id"`
+	Bucket   string    `json:"bucket"`
+	Path     string    `json:"path"`
+	Name     string    `json:"name"`
+	MimeType string    `json:"mime_type"`
+	Size     int64     `json:"size"`
+	OldID    int64     `json:"old_id"` // Pre S3 id
+}
+
+func NewAsset(content []byte, bucket string, name string) (Asset, error) {
+	detectedMime := mimetype.Detect(content)
+
+	newID, errID := uuid.NewV4()
+	if errID != nil {
+		return Asset{}, errors.Wrap(errID, "Failed to generate a new asset ID")
+	}
+
+	if name == "" {
+		name = newID.String()
+	}
+
+	asset := Asset{
+		AssetID:  newID,
+		Bucket:   bucket,
+		Path:     "/",
+		Name:     name,
+		MimeType: detectedMime.String(),
+		Size:     int64(len(content)),
+	}
+
+	return asset, nil
+}
+
+func (db *Store) SaveAsset(ctx context.Context, asset *Asset) error {
+	query, args, errQueryArgs := db.sb.Insert("asset").
+		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
+		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID).
+		ToSql()
+
+	if errQueryArgs != nil {
+		return Err(errQueryArgs)
+	}
+
+	if err := db.Exec(ctx, query, args...); err != nil {
+		return Err(err)
+	}
 
 	return nil
 }

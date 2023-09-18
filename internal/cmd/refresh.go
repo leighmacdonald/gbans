@@ -62,7 +62,7 @@ func refreshFiltersCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			application := app.New(&conf, database, bot, rootLogger)
+			application := app.New(&conf, database, bot, rootLogger, nil)
 			if errFilters := application.LoadFilters(ctx); errFilters != nil {
 				rootLogger.Fatal("Failed to load filters", zap.Error(errFilters))
 			}

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"github.com/gofrs/uuid/v5"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ func NewMedia(author steamid.SID64, name string, mime string, content []byte) (M
 		Deleted:   false,
 		CreatedOn: curTime,
 		UpdatedOn: curTime,
+		Asset:     Asset{},
 	}, nil
 }
 
@@ -47,6 +49,7 @@ type Media struct {
 	Deleted   bool          `json:"deleted"`
 	CreatedOn time.Time     `json:"created_on"`
 	UpdatedOn time.Time     `json:"updated_on"`
+	Asset     Asset         `json:"asset"`
 }
 
 func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
@@ -109,34 +112,84 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 }
 
 func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
-	const query = `
+	if media.MediaID > 0 {
+		const query = `
+			UPDATE media 
+			SET author_id = $2, mime_type = $3, name = $4, contents = $5, size = $6, deleted = $7, updated_on = $8, asset_id = $9
+			WHERE media_id = $1`
+		if errQuery := db.Exec(ctx, query, media.MediaID, media.AuthorID, media.MimeType, media.Name,
+			media.Contents, media.Size, media.Deleted, media.UpdatedOn, media.Asset.AssetID); errQuery != nil {
+			return errQuery
+		}
+	} else {
+		const query = `
 		INSERT INTO media (
-		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on
+		    author_id, mime_type, name, contents, size, deleted, created_on, updated_on, asset_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING media_id
 	`
 
-	if errQuery := db.QueryRow(ctx, query,
-		media.AuthorID,
-		media.MimeType,
-		media.Name,
-		media.Contents,
-		media.Size,
-		media.Deleted,
-		media.CreatedOn,
-		media.UpdatedOn,
-	).Scan(&media.MediaID); errQuery != nil {
-		return Err(errQuery)
+		if errQuery := db.QueryRow(ctx, query,
+			media.AuthorID,
+			media.MimeType,
+			media.Name,
+			media.Contents,
+			media.Size,
+			media.Deleted,
+			media.CreatedOn,
+			media.UpdatedOn,
+			media.Asset.AssetID,
+		).Scan(&media.MediaID); errQuery != nil {
+			return Err(errQuery)
+		}
+
+		db.log.Info("Wiki media created",
+			zap.Int("wiki_media_id", media.MediaID),
+			zap.Int64("author_id", media.AuthorID.Int64()),
+			zap.String("name", util.SanitizeLog(media.Name)),
+			zap.Int64("size", media.Size),
+			zap.String("mime", util.SanitizeLog(media.MimeType)),
+		)
+	}
+	return nil
+}
+
+func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *Media) error {
+	const query = `
+		SELECT 
+		   m.media_id, m.author_id, m.name, m.size, m.mime_type, m.contents, m.deleted, m.created_on, m.updated_on,
+		   a.name, a.size, a.mime_type, a.path, a.bucket, a.old_id
+		FROM media m
+		LEFT JOIN asset a on a.asset_id = m.asset_id
+		WHERE deleted = false AND m.asset_id = $1`
+
+	media.Asset = Asset{AssetID: uuid}
+
+	var authorID int64
+
+	if errRow := db.
+		QueryRow(ctx, query, uuid).Scan(
+		&media.MediaID,
+		&authorID,
+		&media.Name,
+		&media.Size,
+		&media.MimeType,
+		&media.Contents,
+		&media.Deleted,
+		&media.CreatedOn,
+		&media.UpdatedOn,
+		&media.Asset.Name,
+		&media.Asset.Size,
+		&media.Asset.MimeType,
+		&media.Asset.Path,
+		&media.Asset.Bucket,
+		&media.Asset.OldID,
+	); errRow != nil {
+		return Err(errRow)
 	}
 
-	db.log.Info("Wiki media created",
-		zap.Int("wiki_media_id", media.MediaID),
-		zap.Int64("author_id", media.AuthorID.Int64()),
-		zap.String("name", util.SanitizeLog(media.Name)),
-		zap.Int64("size", media.Size),
-		zap.String("mime", util.SanitizeLog(media.MimeType)),
-	)
+	media.AuthorID = steamid.New(authorID)
 
 	return nil
 }
@@ -172,9 +225,11 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) error {
 	const query = `
 		SELECT 
-		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
-		FROM media
-		WHERE deleted = false AND media_id = $1`
+		   m.media_id, m.author_id, m.name, m.size, m.mime_type, m.contents, m.deleted, m.created_on, m.updated_on,
+		    a.name, a.size, a.mime_type, a.path, a.bucket, a.old_id
+		FROM media m
+		LEFT JOIN asset a on a.asset_id = m.asset_id
+		WHERE deleted = false AND m.media_id = $1`
 
 	var authorID int64
 
@@ -188,6 +243,12 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		&media.Deleted,
 		&media.CreatedOn,
 		&media.UpdatedOn,
+		&media.Asset.Name,
+		&media.Asset.Size,
+		&media.Asset.MimeType,
+		&media.Asset.Path,
+		&media.Asset.Bucket,
+		&media.Asset.OldID,
 	); errRow != nil {
 		return Err(errRow)
 	}
