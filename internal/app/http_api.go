@@ -1241,7 +1241,9 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		defer cancelRequest()
 
 		var req profileQuery
-		if !bind(ctx, log, &req) {
+		if errBind := ctx.Bind(&req); errBind != nil {
+			responseErr(ctx, http.StatusBadRequest, nil)
+
 			return
 		}
 
@@ -1255,6 +1257,8 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		person := store.NewPerson(sid)
 		if errGetProfile := app.PersonBySID(requestCtx, sid, &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to create new profile", zap.Error(errGetProfile))
 
 			return
 		}
