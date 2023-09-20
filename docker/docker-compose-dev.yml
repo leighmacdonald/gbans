@@ -23,6 +23,7 @@ services:
   postgres:
     image: postgis/postgis:15-3.3
     restart: always
+    shm_size: 1gb
     ports:
       - "5432:5432"
     environment:

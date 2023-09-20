@@ -50,6 +50,9 @@ export const renderMarkdown = (md: string) =>
     marked(
         md
             .replace(/(wiki:\/\/)/gi, '/wiki/')
-            .replace(/(media:\/\/)/gi, '/media/'),
+            .replace(
+                /(media:\/\/)/gi,
+                window.gbans.asset_url + '/' + window.gbans.bucket_media + '/'
+            ),
         { renderer: new WikiRenderer() }
     );
