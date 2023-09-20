@@ -2,12 +2,12 @@ package store
 
 import (
 	"context"
-	"github.com/gofrs/uuid/v5"
 	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -117,6 +117,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 			UPDATE media 
 			SET author_id = $2, mime_type = $3, name = $4, contents = $5, size = $6, deleted = $7, updated_on = $8, asset_id = $9
 			WHERE media_id = $1`
+
 		if errQuery := db.Exec(ctx, query, media.MediaID, media.AuthorID, media.MimeType, media.Name,
 			media.Contents, media.Size, media.Deleted, media.UpdatedOn, media.Asset.AssetID); errQuery != nil {
 			return errQuery
@@ -152,6 +153,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 			zap.String("mime", util.SanitizeLog(media.MimeType)),
 		)
 	}
+
 	return nil
 }
 

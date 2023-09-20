@@ -1,5 +1,6 @@
 import { apiCall } from './common';
 import { parseDateTime } from '../util/text';
+import { Asset } from './media';
 
 export interface DemoFile {
     demo_id: number;
@@ -12,6 +13,7 @@ export interface DemoFile {
     downloads: number;
     map_name: string;
     archive: boolean;
+    asset: Asset;
 }
 
 export interface demoFilters {

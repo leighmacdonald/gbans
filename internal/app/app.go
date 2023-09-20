@@ -201,15 +201,71 @@ func (app *App) Init(ctx context.Context) error {
 		app.log.Info("Loaded filter list", zap.Int("count", len(app.wordFilters.wordFilters)))
 	}
 
-	if errMigrateS3 := app.migrateS3(ctx); errMigrateS3 != nil {
+	if errMigrateS3 := app.migrateS3Media(ctx); errMigrateS3 != nil {
+		panic(errMigrateS3)
+	}
+
+	if errMigrateS3 := app.migrateS3Demo(ctx); errMigrateS3 != nil {
 		panic(errMigrateS3)
 	}
 
 	return nil
 }
 
-// TODO remove this eventually
-func (app *App) migrateS3(ctx context.Context) error {
+// TODO remove this eventually.
+func (app *App) migrateS3Demo(ctx context.Context) error {
+	if errBucket := app.assetStore.CreateBucketIfNotExists(ctx, app.conf.S3.BucketDemo); errBucket != nil {
+		return errBucket
+	}
+
+	demos, errDemos := app.db.GetDemos(ctx, store.GetDemosOptions{})
+	if errDemos != nil {
+		if errors.Is(errDemos, store.ErrNoResult) {
+			return nil
+		}
+
+		return errors.Wrap(errDemos, "Failed to get demos")
+	}
+
+	for _, demo := range demos {
+		var full store.DemoFile
+		if errFull := app.db.GetDemoByID(ctx, demo.DemoID, &full); errFull != nil {
+			app.log.Error("Failed to get demo", zap.Error(errFull))
+
+			continue
+		}
+
+		ass, errAss := store.NewAsset(full.Data, app.conf.S3.BucketDemo, demo.Title)
+		if errAss != nil {
+			return errors.Wrap(errAss, "Failed to create asset")
+		}
+
+		ass.MimeType = "application/octet-stream"
+		full.AssetID = ass.AssetID
+
+		if errSave := app.db.SaveAsset(ctx, &ass); errSave != nil {
+			return errors.Wrap(errSave, "Failed to save asset")
+		}
+
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, ass.Name,
+			bytes.NewReader(full.Data), ass.Size, ass.MimeType); errPut != nil {
+			return errPut
+		}
+
+		full.Size = int64(len(full.Data))
+
+		if errSaveMedia := app.db.SaveDemo(ctx, &full); errSaveMedia != nil {
+			return errors.Wrap(errSaveMedia, "Failed to save media")
+		}
+
+		app.log.Info("Migrated demo successfully", zap.String("name", full.Title))
+	}
+
+	return nil
+}
+
+// TODO remove this eventually.
+func (app *App) migrateS3Media(ctx context.Context) error {
 	if errBucket := app.assetStore.CreateBucketIfNotExists(ctx, app.conf.S3.BucketMedia); errBucket != nil {
 		return errBucket
 	}
@@ -219,55 +275,60 @@ func (app *App) migrateS3(ctx context.Context) error {
 			Limit: 100000,
 		},
 	})
-	if errReports != nil {
-		return errReports
+	if errReports != nil && !errors.Is(errReports, store.ErrNoResult) {
+		return errors.Wrap(errReports, "Failed to get reports")
 	}
 
 	findIdsRx := regexp.MustCompile(`!\[(.+?)]\(media://(\d+)\)`)
 
-	for _, report := range reports {
+	for _, reportVal := range reports {
+		report := reportVal
 		// Update links in message descriptions
 		findIds := findIdsRx.FindAllStringSubmatch(report.Description, -1)
-		for _, id := range findIds {
-			v, e := strconv.ParseInt(id[2], 10, 32)
-			if e != nil {
-				return e
+		for _, foundID := range findIds {
+			idValue, errParse := strconv.ParseInt(foundID[2], 10, 32)
+			if errParse != nil {
+				return errors.Wrap(errParse, "Failed to parse id value")
 			}
-			var m store.Media
-			if err := app.db.GetMediaByID(ctx, int(v), &m); err != nil {
+
+			var newMedia store.Media
+			if err := app.db.GetMediaByID(ctx, int(idValue), &newMedia); err != nil {
 				app.log.Error("Failed to get media to migrate")
+
 				continue
 			}
 
-			ass, errAss := store.NewAsset(m.Contents, app.conf.S3.BucketMedia, "")
+			ass, errAss := store.NewAsset(newMedia.Contents, app.conf.S3.BucketMedia, "")
 			if errAss != nil {
-				return errAss
+				return errors.Wrap(errAss, "Failed to create asset")
 			}
 
-			ass.OldID = int64(m.MediaID)
+			ass.OldID = int64(newMedia.MediaID)
 
 			if errSave := app.db.SaveAsset(ctx, &ass); errSave != nil {
-				return errSave
+				return errors.Wrap(errSave, "Failed to save asset")
 			}
 
-			if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, ass.Name, bytes.NewReader(m.Contents), m.Size, m.MimeType); errPut != nil {
+			if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, ass.Name, bytes.NewReader(newMedia.Contents), newMedia.Size, newMedia.MimeType); errPut != nil {
 				return errPut
 			}
 
-			m.Asset = ass
+			newMedia.Asset = ass
 
-			if errSaveMedia := app.db.SaveMedia(ctx, &m); errSaveMedia != nil {
-				return errSaveMedia
+			if errSaveMedia := app.db.SaveMedia(ctx, &newMedia); errSaveMedia != nil {
+				return errors.Wrap(errSaveMedia, "Failed to save media")
 			}
 
 			report.Description = strings.Replace(
 				report.Description,
-				fmt.Sprintf("![%s](media://%s)", id[1], id[2]),
-				fmt.Sprintf("![%s](media://%s)", id[1], ass.AssetID.String()), 1)
+				fmt.Sprintf("![%s](media://%s)", foundID[1], foundID[2]),
+				fmt.Sprintf("![%s](media://%s)", foundID[1], ass.AssetID.String()), 1)
 
 			if errSave := app.db.SaveReport(ctx, &report); errSave != nil {
-				return errSave
+				return errors.Wrap(errSave, "Failed to save report")
 			}
+
+			app.log.Info("Migrated report successfully", zap.Int64("id", report.ReportID))
 		}
 
 		// Update links in report messages
@@ -276,51 +337,58 @@ func (app *App) migrateS3(ctx context.Context) error {
 			continue
 		}
 
-		for _, msg := range msgs {
+		for _, message := range msgs {
+			msg := message
 			msgIds := findIdsRx.FindAllStringSubmatch(msg.Contents, -1)
-			for _, id := range msgIds {
-				v, e := strconv.ParseInt(id[2], 10, 32)
-				if e != nil {
-					return e
-				}
-				var m store.Media
-				if err := app.db.GetMediaByID(ctx, int(v), &m); err != nil {
-					app.log.Error("Failed to get media to migrate")
+
+			for _, msgID := range msgIds {
+				msgIDValue, errParse := strconv.ParseInt(msgID[2], 10, 32)
+				if errParse != nil {
+					app.log.Error("Failed to parse int media id", zap.Error(errParse))
+
 					continue
 				}
 
-				ass, errAss := store.NewAsset(m.Contents, app.conf.S3.BucketMedia, "")
-				if errAss != nil {
-					return errAss
+				var media store.Media
+				if err := app.db.GetMediaByID(ctx, int(msgIDValue), &media); err != nil {
+					app.log.Error("Failed to get media to migrate")
+
+					continue
 				}
 
-				ass.OldID = int64(m.MediaID)
+				ass, errAss := store.NewAsset(media.Contents, app.conf.S3.BucketMedia, "")
+				if errAss != nil {
+					return errors.Wrap(errAss, "Failed to create asset")
+				}
+
+				ass.OldID = int64(media.MediaID)
 
 				if errSave := app.db.SaveAsset(ctx, &ass); errSave != nil {
-					return errSave
+					return errors.Wrap(errSave, "Failed to save asset")
 				}
 
-				if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, ass.Name, bytes.NewReader(m.Contents), m.Size, m.MimeType); errPut != nil {
-					return errPut
+				if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, ass.Name, bytes.NewReader(media.Contents), media.Size, media.MimeType); errPut != nil {
+					return errors.Wrap(errPut, "Failed to store asset")
 				}
 
-				m.Asset = ass
+				media.Asset = ass
 
-				if errSaveMedia := app.db.SaveMedia(ctx, &m); errSaveMedia != nil {
-					return errSaveMedia
+				if errSaveMedia := app.db.SaveMedia(ctx, &media); errSaveMedia != nil {
+					return errors.Wrap(errSaveMedia, "Failed to update media")
 				}
 
 				msg.Contents = strings.Replace(
 					msg.Contents,
-					fmt.Sprintf("![%s](media://%s)", id[1], id[2]),
-					fmt.Sprintf("![%s](media://%s)", id[1], ass.AssetID.String()), 1)
+					fmt.Sprintf("![%s](media://%s)", msgID[1], msgID[2]),
+					fmt.Sprintf("![%s](media://%s)", msgID[1], ass.AssetID.String()), 1)
 
 				if errSave := app.db.SaveReportMessage(ctx, &msg); errSave != nil {
-					return errSave
+					return errors.Wrap(errSave, "Failed to save report message")
 				}
+
+				app.log.Info("Migrated report message successfully", zap.Int64("id", msg.MessageID))
 			}
 		}
-
 	}
 
 	return nil

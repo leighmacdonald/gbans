@@ -8,6 +8,17 @@ export interface BaseUploadedMedia extends TimeStamped {
     name: string;
     contents: Uint8Array;
     deleted: boolean;
+    asset: Asset;
+}
+
+export interface Asset {
+    asset_id: string;
+    bucket: string;
+    path: string;
+    name: string;
+    mime_type: string;
+    size: number;
+    old_id: number;
 }
 
 export interface MediaUploadResponse extends BaseUploadedMedia {

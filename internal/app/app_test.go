@@ -63,7 +63,7 @@ func TestApp(t *testing.T) {
 		}
 	})
 
-	app := New(&config, database, nil, zap.NewNop())
+	app := New(&config, database, nil, zap.NewNop(), nil)
 
 	t.Run("match_sum", testMatchSum(&app))
 }

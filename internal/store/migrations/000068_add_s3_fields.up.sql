@@ -45,4 +45,7 @@ ALTER TABLE media
 --         CHECK ((contents IS NOT NULL OR asset_id IS NOT NULL) AND NOT (contents IS NOT NULL AND asset_id IS NOT NULL));
 
 
+ALTER TABLE media
+    ALTER COLUMN contents drop not null;
+
 COMMIT;
