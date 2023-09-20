@@ -6,13 +6,14 @@ Basic installation overview of the gbans server and sourcemod plugin.
 
 Gbans is lightweight and can handle a small to moderately sized community with a dual-core CPU and 4GB of memory.
 
-Special considerations need to be made when using extended functionality: 
+Special considerations need to be made when using extended functionality:
 
-- STV demo recording can fill space up quickly. STVs are stored in the database directly, and typically removed after 
-  two weeks. Allow 15GB or so per TF2 server instance for demo recordings. Space can be reduced by enabling TOAST compression in
-  Postgres. 
+- STV demo recording can fill space up quickly. STVs are stored in the database directly, and typically removed after
+  two weeks. Allow 15GB or so per TF2 server instance for demo recordings. Space can be reduced by enabling TOAST
+  compression in
+  Postgres.
 - IP2Location is memory intensive when updating the dataset, requiring 10 to 12GB of memory. The process can be
-  sped up by using NVMe storage for the database. 
+  sped up by using NVMe storage for the database.
 
 Larger communities will inherently require more resources.
 
@@ -28,6 +29,7 @@ instructions:
 ## gbans Server
 
 ### Compile from source
+
 Precompiled binaries will be provided once the project is in a more stable state.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
@@ -46,7 +48,7 @@ Basic steps to build the binary packages:
 
 You should now have a binary located at `./build/$platform/gbans`
 
-### Docker 
+### Docker
 
 ```
 sudo docker run -d --restart unless-stopped \
@@ -61,6 +63,12 @@ Substitute `master` for a specific tag if desired, and `/home/ubuntu/gbans/gbans
 
 This configuration will restart gbans unless explicitly stopped, and names the container for easy log access/stopping.
 
+Note that docker defaults to 64MB shm which eventually becomes problematic once data exceeds the limits. If queries
+suddenly start to not return results, you probably need to increase this.
+
+You can add `shm_size: 512m` to the docker compose file for postgres, or `--shm-size=512m` if running docker command
+directly.
+
 ## Configuration
 
 ### Server
@@ -74,12 +82,14 @@ To start the server just run `./gbans serve`. It should show output similar to t
 successful.
 
 ```
-➜  gbans git:(master) ✗ ./gbans serve
-INFO[0000] Using config file: gbans.yaml 
-INFO[0000] Starting gbans service                       
-DEBU[0000] Ban sweeper routine started                  
-INFO[0000] Bot is now running.  Press CTRL-C to exit.   
-INFO[0000] Connected to session ws API                  
+{"level":"info","ts":1695203543.242712,"logger":"gb.db","msg":"Migration completed successfully"}
+{"level":"info","ts":1695203543.4707286,"logger":"gb.srcdsLog","msg":"Starting log reader","listen_addr":":27115/udp"}
+{"level":"info","ts":1695203543.4926925,"logger":"gb","msg":"Successfully created new bucket","name":"media"}
+{"level":"info","ts":1695203544.1639986,"logger":"gb","msg":"Service status changed","state":"ready"}
+{"level":"info","ts":1695203544.1639986,"logger":"gb.discord","msg":"Service state changed","state":"ready","username":"gbans-dev#0000"}
+{"level":"info","ts":1695203544.6317015,"logger":"gb.discord","msg":"Registered discord commands","count":18}
+{"level":"info","ts":1695203544.632212,"logger":"gb.discord","msg":"Service state changed","state":"connected"}
+     
 ```
 
 It's recommended to create a [systemd .service](https://freedesktop.org/software/systemd/man/systemd.service.html)
@@ -181,7 +191,7 @@ Example configuration for discord
 ## Apache 2.4
 
 Be sure to run `sudo a2enmod proxy_http ssl` first.
-    
+
 ```
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
@@ -201,19 +211,19 @@ SSLCertificateKeyFile /etc/cloudflare/example.com.key
 </VirtualHost>
 </IfModule>
 ```
-If using Cloudflare to provide user location, you can use Origin Certificates to generate a long-lasting SSL certicate.
-  
 
-## IP2Location 
+If using Cloudflare to provide user location, you can use Origin Certificates to generate a long-lasting SSL certicate.
+
+## IP2Location
 
 To install the GeoLite2 databases, create an account on [IP2location Lite](https://lite.ip2location.com). After
 confirmation, you'll be given a download token for use in gbans.yaml.
 
 If using Docker, open a terminal with `docker exec -it gbans /bin/sh`, or if using a compiled binary, navigate to the
-folder. 
+folder.
 
-Run `./gbans net update` to start the process. This will require around 12GB of memory (or a suitably large swapfile), 
-and does *not* need to be run on the host - a more powerful machine can run it, as long as the config is 
+Run `./gbans net update` to start the process. This will require around 12GB of memory (or a suitably large swapfile),
+and does *not* need to be run on the host - a more powerful machine can run it, as long as the config is
 mirrored and database access works.
 
 The process will take up to 30 minutes, depending on hardware, and will add around 2GB to the database when all's said
@@ -221,10 +231,10 @@ and done.
 
 ## Enabling User Location
 
-The Servers page lets users sort by range. Gbans does not use the locations API to get data from the browser. 
+The Servers page lets users sort by range. Gbans does not use the locations API to get data from the browser.
 Instead, you're required to use Cloudflare to get the location. Gbans must be proxied through Cloudflare to
-accomplish this, and setting that up is out of scope of this doc. 
+accomplish this, and setting that up is out of scope of this doc.
 
-Once the domain is set up, go to the domain settings, the `Rules` dropdown, `Transform Rules`, and then the 
-`Managed Transforms` tab. Enable `Add visitor location headers`, and wait around 5 minutes for it to take effect. 
+Once the domain is set up, go to the domain settings, the `Rules` dropdown, `Transform Rules`, and then the
+`Managed Transforms` tab. Enable `Add visitor location headers`, and wait around 5 minutes for it to take effect.
 You should then be able to see your location (more or less) on the servers page.

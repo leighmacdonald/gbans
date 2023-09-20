@@ -54,6 +54,15 @@ type s3Config struct {
 	BucketDemo  string `mapstructure:"bucket_demo"`
 }
 
+func (s s3Config) URL() string {
+	proto := "http"
+	if s.SSL {
+		proto += "s"
+	}
+
+	return fmt.Sprintf("%s://%s", proto, s.Endpoint)
+}
+
 type dbConfig struct {
 	DSN         string `mapstructure:"dsn"`
 	AutoMigrate bool   `mapstructure:"auto_migrate"`

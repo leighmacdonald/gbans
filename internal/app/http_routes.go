@@ -44,7 +44,7 @@ func useSecure(mode RunMode) gin.HandlerFunc {
 			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
 			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"}, // TODO  "'strict-dynamic'", "$NONCE",
 			cspbuilder.FontSrc:    {"'self'", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
-			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://*.steamstatic.com"},
+			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://*.steamstatic.com", "http://localhost:9000"},
 			cspbuilder.BaseURI:    {"'self'"},
 			cspbuilder.ObjectSrc:  {"'none'"},
 		},
@@ -78,6 +78,9 @@ type jsConfig struct {
 	SiteName        string `json:"site_name"`
 	DiscordClientID string `json:"discord_client_id"`
 	DiscordLinkID   string `json:"discord_link_id"`
+	AssetURL        string `json:"asset_url"`
+	BucketDemo      string `json:"bucket_demo"`
+	BucketMedia     string `json:"bucket_media"`
 }
 
 //nolint:contextcheck
@@ -136,6 +139,9 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 				SiteName:        app.conf.General.SiteName,
 				DiscordClientID: app.conf.Discord.AppID,
 				DiscordLinkID:   app.conf.Discord.LinkID,
+				AssetURL:        app.conf.S3.URL(),
+				BucketDemo:      app.conf.S3.BucketDemo,
+				BucketMedia:     app.conf.S3.BucketMedia,
 			})
 		})
 	}
