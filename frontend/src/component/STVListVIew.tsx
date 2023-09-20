@@ -185,7 +185,7 @@ export const STVListVIew = () => {
                                 return (
                                     <IconButton
                                         component={Link}
-                                        href={`/demos/${row.demo_id}`}
+                                        href={`${window.gbans.asset_url}/${window.gbans.bucket_demo}/${row.title}`}
                                         color={'primary'}
                                     >
                                         <FileDownloadIcon />

@@ -2707,6 +2707,14 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
+		if errSaveAsset := app.db.SaveAsset(ctx, &asset); errSaveAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
+		}
+
+		media.Asset = asset
+
 		media.Contents = nil
 
 		if !fp.Contains(MediaSafeMimeTypesImages, media.MimeType) {
@@ -2729,12 +2737,6 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			return
-		}
-
-		if app.conf.S3.Enabled {
-			if errLoad := app.db.GetMediaByAssetID(ctx, media.Asset.AssetID, &media); errLoad != nil {
-				responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load new media"))
-			}
 		}
 
 		ctx.JSON(http.StatusCreated, media)

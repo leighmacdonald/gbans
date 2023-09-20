@@ -70,7 +70,7 @@ export const MDEditor = ({
                         setOpen(false);
                         const newBody =
                             bodyMD.slice(0, cursorPos) +
-                            `![${resp.name}](media://${resp.media_id})` +
+                            `![${resp.asset.name}](media://${resp.asset.asset_id})` +
                             bodyMD.slice(cursorPos);
                         setBodyMD(newBody);
                         onSuccess && onSuccess();

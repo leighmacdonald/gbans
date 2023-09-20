@@ -3,11 +3,11 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
-	"github.com/gofrs/uuid/v5"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -28,6 +28,7 @@ type DemoFile struct {
 	MapName         string                                `json:"map_name"`
 	Archive         bool                                  `json:"archive"` // When true, will not get auto deleted when flushing old demos
 	Stats           map[steamid.SID64]srcdsup.PlayerStats `json:"stats"`
+	AssetID         uuid.UUID                             `json:"asset_id"`
 }
 
 // func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
@@ -106,7 +107,7 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 
 	builder := db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
-			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name").
+			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
 		OrderBy("created_on DESC").
@@ -145,11 +146,19 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 	defer rows.Close()
 
 	for rows.Next() {
-		var demoFile DemoFile
+		var (
+			demoFile DemoFile
+			uuidScan *uuid.UUID // TODO remove this and make column not-null once migrations are complete
+		)
+
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
-			&demoFile.ServerNameShort, &demoFile.ServerNameLong); errScan != nil {
-			return nil, Err(errQuery)
+			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		if uuidScan != nil {
+			demoFile.AssetID = *uuidScan
 		}
 
 		demos = append(demos, demoFile)
@@ -194,9 +203,9 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
 		Insert(string(tableDemo)).
-		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
+		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats", "asset_id").
 		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn,
-			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats).
+			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats, demoFile.AssetID).
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -222,6 +231,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 		Set("map_name", demoFile.MapName).
 		Set("archive", demoFile.Archive).
 		Set("stats", demoFile.Stats).
+		Set("asset_id", demoFile.AssetID).
 		Where(sq.Eq{"demo_id": demoFile.DemoID}).
 		ToSql()
 	if errQueryArgs != nil {
