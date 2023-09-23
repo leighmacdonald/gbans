@@ -48,19 +48,11 @@ type s3Config struct {
 	AccessKey   string `mapstructure:"access_key"`
 	SecretKey   string `mapstructure:"secret_key"`
 	Endpoint    string `mapstructure:"endpoint"`
+	ExternalURL string `mapstructure:"external_url"`
 	Region      string `mapstructure:"region"`
 	SSL         bool   `mapstructure:"ssl"`
 	BucketMedia string `mapstructure:"bucket_media"`
 	BucketDemo  string `mapstructure:"bucket_demo"`
-}
-
-func (s s3Config) URL() string {
-	proto := "http"
-	if s.SSL {
-		proto += "s"
-	}
-
-	return fmt.Sprintf("%s://%s", proto, s.Endpoint)
 }
 
 type dbConfig struct {
