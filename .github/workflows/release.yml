@@ -32,14 +32,13 @@ jobs:
       - uses: goreleaser/goreleaser-action@v5
         if: success() && startsWith(github.ref, 'refs/tags/')
         with:
-          distribution: goreleaser-pro
+          distribution: goreleaser
           version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
           DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
       - name: Build & publish gbans image
         run: |
