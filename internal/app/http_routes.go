@@ -37,14 +37,14 @@ func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
-func useSecure(mode RunMode) gin.HandlerFunc {
+func useSecure(mode RunMode, cspOrigin string) gin.HandlerFunc {
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
-			cspbuilder.DefaultSrc: {"'self'"},
+			cspbuilder.DefaultSrc: {"'self'", cspOrigin},
 			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
 			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com"}, // TODO  "'strict-dynamic'", "$NONCE",
 			cspbuilder.FontSrc:    {"'self'", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
-			cspbuilder.ImgSrc:     {"'self'", "data:", "https://*.tile.openstreetmap.org", "https://*.steamstatic.com", "http://localhost:9000"},
+			cspbuilder.ImgSrc:     append([]string{"'self'", "data:", "https://*.tile.openstreetmap.org", "https://*.steamstatic.com", "http://localhost:9000"}, cspOrigin),
 			cspbuilder.BaseURI:    {"'self'"},
 			cspbuilder.ObjectSrc:  {"'none'"},
 		},
@@ -78,9 +78,10 @@ type jsConfig struct {
 	SiteName        string `json:"site_name"`
 	DiscordClientID string `json:"discord_client_id"`
 	DiscordLinkID   string `json:"discord_link_id"`
-	AssetURL        string `json:"asset_url"`
-	BucketDemo      string `json:"bucket_demo"`
-	BucketMedia     string `json:"bucket_media"`
+	// External URL used to access S3 assets. media:// links are replaces with this url
+	AssetURL    string `json:"asset_url"`
+	BucketDemo  string `json:"bucket_demo"`
+	BucketMedia string `json:"bucket_media"`
 }
 
 //nolint:contextcheck
@@ -92,7 +93,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	}
 
 	engine.Use(httpErrorHandler(app.log), gin.Recovery())
-	engine.Use(useSecure(app.conf.General.Mode))
+	engine.Use(useSecure(app.conf.General.Mode, app.conf.S3.ExternalURL))
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
@@ -139,7 +140,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 				SiteName:        app.conf.General.SiteName,
 				DiscordClientID: app.conf.Discord.AppID,
 				DiscordLinkID:   app.conf.Discord.LinkID,
-				AssetURL:        app.conf.S3.URL(),
+				AssetURL:        app.conf.S3.ExternalURL,
 				BucketDemo:      app.conf.S3.BucketDemo,
 				BucketMedia:     app.conf.S3.BucketMedia,
 			})

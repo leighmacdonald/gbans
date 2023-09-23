@@ -71,13 +71,21 @@ word_filter:
 # When enabled, will use s3-compatible backend for storing demos and media uploads. They will otherwise be served from the
 # database. The data will *not* also be duplicated in the local database when using s3.
 s3:
-  enabled: true
+  # S3 Access Key (Username)
   access_key: "xxxxxxxxxxxxxxxxxxxx"
+  # S3 Secret Key (Password
   secret_key: "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+  # S3 API Endpoint
   endpoint: "localhost:9001"
+  # Use SSL (HTTPS) to access API
   ssl: false
+  # External URL users use to access the asset
+  external_url: "http://asset.localhost:9000"
+  # Optional S3 Region
   region: ""
+  # Name of the buckete used for storing media
   bucket_media: media
+  # Name of the buckete used for storing demos
   bucket_demo: demos
 
 discord:
