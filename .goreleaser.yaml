@@ -4,7 +4,8 @@ env_files:
   github_token: .github_releaser_token
 
 builds:
-  - env: [CGO_ENABLED=0]
+  - id: gbans
+    env: [CGO_ENABLED=0]
     goos:
       - linux
       - windows
@@ -12,20 +13,6 @@ builds:
       - amd64
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=releaser
-
-#dockers:
-#  - image_templates: ["ghcr.io/leighmacdonald/gbans:{{ .Version }}"]
-#    dockerfile: docker/release.Dockerfile
-#    build_flag_templates:
-#      - "--pull"
-#      - --label=org.opencontainers.image.title={{ .ProjectName }}
-#      - --label=org.opencontainers.image.description={{ .ProjectName }}
-#      - --label=org.opencontainers.image.url=https://github.com/leighmacdonald/gbans
-#      - --label=org.opencontainers.image.source=https://github.com/leighmacdonald/gbans
-#      - --label=org.opencontainers.image.version={{ .Version }}
-#      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
-#      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-#      - --label=org.opencontainers.image.licenses=MIT
 
 nfpms:
   - maintainer: Leigh MacDonald <leigh.macdonald@gmail.com>
@@ -38,25 +25,28 @@ nfpms:
       - apk
 
 archives:
-  - format: tar.gz
+  - builds:
+      - gbans
     name_template: >-
-      {{ .ProjectName }}-{{.Version}}-{{- .Os }}
-    # use zip for windows archives
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files
+      - LICENSE.md
+      - README.md
+      - gbans_example.yml
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        format: zip
 
 checksum:
   name_template: 'checksums.txt'
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
-
-nightly:
-  name_template: '{{ incpatch .Version }}-devel'
-  tag_name: devel
-  publish_release: true
-  keep_single_release: true
 
 release:
   github:
@@ -67,13 +57,23 @@ release:
     - windows
   draft: true
   replace_existing_draft: true
+  prerelease: auto
 
 changelog:
   use: github-native
-  
-#
+
 #signs:
 #  - artifacts: checksum
+#    args:
+#      [
+#        "--batch",
+#        "-u",
+#        "{{ .Env.GPG_FINGERPRINT }}",
+#        "--output",
+#        "${signature}",
+#        "--detach-sign",
+#        "${artifact}",
+#      ]
 
 announce:
   discord:
