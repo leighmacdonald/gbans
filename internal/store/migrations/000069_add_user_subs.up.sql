@@ -28,4 +28,15 @@ CREATE TABLE contest_entry
     updated_on       timestamptz not null
 );
 
+DROP TABLE IF EXISTS global_stats_players;
+DROP TABLE IF EXISTS global_stats_players_daily;
+DROP TABLE IF EXISTS global_stats_players_hourly;
+DROP TABLE IF EXISTS local_stats_players;
+DROP TABLE IF EXISTS local_stats_players_daily;
+DROP TABLE IF EXISTS local_stats_players_hourly;
+DROP TABLE IF EXISTS stats_global_alltime;
+DROP TABLE IF EXISTS stats_map_alltime;
+DROP TABLE IF EXISTS stats_player_alltime;
+DROP TABLE IF EXISTS stats_server_alltime;
+
 COMMIT;
