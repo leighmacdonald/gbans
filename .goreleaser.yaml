@@ -55,9 +55,6 @@ release:
   github:
     owner: leighmacdonald
     name: gbans
-  ids:
-    - linux
-    - windows
   draft: true
   replace_existing_draft: true
   prerelease: auto
