@@ -62,18 +62,17 @@ release:
 changelog:
   use: github-native
 
-#signs:
-#  - artifacts: checksum
-#    args:
-#      [
-#        "--batch",
-#        "-u",
-#        "{{ .Env.GPG_FINGERPRINT }}",
-#        "--output",
-#        "${signature}",
-#        "--detach-sign",
-#        "${artifact}",
-#      ]
+signs:
+  - artifacts: checksum
+    cms: gpg2
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
 
 announce:
   discord:
