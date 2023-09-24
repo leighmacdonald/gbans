@@ -41,6 +41,7 @@ import Link from '@mui/material/Link';
 import Badge from '@mui/material/Badge';
 import MailIcon from '@mui/icons-material/Mail';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 // import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 
 import {
@@ -223,6 +224,11 @@ export const TopBar = () => {
                 to: '/admin/network',
                 text: 'IP/Network Tools',
                 icon: <TravelExploreIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/contests',
+                text: 'Contests',
+                icon: <EmojiEventsIcon sx={colourOpts} />
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Admin) {

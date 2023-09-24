@@ -52,6 +52,7 @@ import { StatsPage } from './page/StatsPage';
 import { PlayerStatsPage } from './page/PlayerStatsPage';
 import { LoginSteamSuccess } from './page/LoginSteamSuccess';
 import { LogoutHandler } from './component/LogoutHandler';
+import { AdminContests } from './page/AdminContests';
 import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 
 export interface AppProps {
@@ -475,6 +476,22 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                             }
                                                                         >
                                                                             <AdminReports />
+                                                                        </PrivateRoute>
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
+                                                            <Route
+                                                                path={
+                                                                    '/admin/contests'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <PrivateRoute
+                                                                            permission={
+                                                                                PermissionLevel.Moderator
+                                                                            }
+                                                                        >
+                                                                            <AdminContests />
                                                                         </PrivateRoute>
                                                                     </ErrorBoundary>
                                                                 }
