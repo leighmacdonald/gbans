@@ -33,8 +33,8 @@ instructions:
 Precompiled binaries will be provided once the project is in a more stable state.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [golang 1.16+](https://golang.org/) gbans is written in go. Version >=1.16 is *REQUIRED* due to using iofs embed
-  features.
+- [golang 1.21+](https://golang.org/) gbans is written in go. Version >=1.21 is *REQUIRED* due to using profile guided
+  optimization features.
 - [PostgreSQL](https://www.postgresql.org/) is used as the data store. Version 12 is the only version currently tested
   against. However i believe anything 10 and up should work. Please let me know if this is not the case.
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
@@ -148,7 +148,6 @@ to be able to easily acquire these role and channel ids through your own discord
     - (Private) Moderation Channel
     - (Private) Bot Logs
     - (Private) Report Logs
-- Moderator Roles Ids
 
 You must also set an oauth2 redirect (Oauth2 -> Redirects -> Add) to point to your own server.
 

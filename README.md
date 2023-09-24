@@ -30,11 +30,10 @@ Before we tag a 1.0.0 release, we will write some proper user-facing documentati
     - [x] Multi server support
     - [x] Global bans & mutes
     - [x] [Docker support](https://hub.docker.com/repository/docker/leighmacdonald/gbans)
-    - [ ] Multi-tenant support
 - [ ] Import/Export of gbans databases
     - [ ] Backend linking of gbans services to enable use of other operators lists in real-time.
     - [x] [tf2_bot_detector](https://github.com/PazerOP/tf2_bot_detector) compatible player list
-- [x] Game support
+- [x] Game support, support for other games would be possible, but is not currently planned.
     - [x] Team Fortress 2
 - [ ] Blocking lists & types
     - [x] Valves source server banip config
@@ -47,12 +46,25 @@ Before we tag a 1.0.0 release, we will write some proper user-facing documentati
     - [ ] [FireHOL](https://github.com/firehol/blocklist-ipsets) databases
 - [x] Database support
     - [x] Postgresql w/PostGIS
-- [x] Relay game logs to central service
+- [x] Centralized UDP based logging
+    - [x] Message History
+    - [x] Connection History
+- [ ] Match Histories
+    - [ ] Stats
+        - [x] Overall
+        - [x] Per Weapon
+        - [ ] Per Maps
+        - [ ] Per Server
+        - [ ] Per Timeframe
+        - [ ] Daily position changes
+        - [ ] Charts
+    - [ ] "Skill" based scrambles using historical match data
 - [ ] SourceMod Plugin
     - [x] Game server authentication
     - [x] Restrict banned players from connecting
     - [x] Restrict muted/gagged players on join
     - [x] Dynamically load admins/mods/reserved slots from gbans
+    - [x] STV Recording. Uploads are done using the simple [srcdsup](https://github.com/leighmacdonald/srcdsup) tool.
     - [ ] `/gb_ban <player_id|steam_id> duration Reason` Ban a user
     - [ ] `/gb_unban` Unban a previously banned user
     - [ ] `/gb_kick` Kick a user
@@ -61,14 +73,19 @@ Before we tag a 1.0.0 release, we will write some proper user-facing documentati
     - [ ] CLI
     - [x] Discord
     - [x] Web
-    - [ ] Web
-        - [x] Server Browser
-        - [x] News
-        - [x] Wiki
-        - [x] User reports
-        - [x] Ban Appeals
-        - [ ] Quick Play
-        - [ ] Pug
+        - Public / Authenticated
+            - [x] Server Browser
+            - [x] News
+            - [x] Wiki
+            - [x] User reports
+            - [x] Ban Appeals
+        - Admin
+            - [x] Edit Word Filters
+            - [x] Ban player by steam/net/asn/group
+            - [x] Current Reports
+            - [x] Current Appeals
+            - [x] Edit News
+            - [x] Edit Servers
 
 ## Docker
 
