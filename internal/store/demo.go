@@ -143,6 +143,7 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 		if errors.Is(errQuery, ErrNoResult) {
 			return demos, nil
 		}
+
 		return nil, Err(errQuery)
 	}
 
