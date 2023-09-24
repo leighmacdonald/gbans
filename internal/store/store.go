@@ -88,6 +88,20 @@ func (queryFilter *QueryFilter) orderString() string {
 	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
+func NewTimeStamped() TimeStamped {
+	now := time.Now()
+
+	return TimeStamped{
+		CreatedOn: now,
+		UpdatedOn: now,
+	}
+}
+
+type TimeStamped struct {
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
+}
+
 const maxQuerySize = 1000
 
 func NewQueryFilter(query string) QueryFilter {
