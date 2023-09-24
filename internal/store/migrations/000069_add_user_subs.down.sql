@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS contest_entry;
+DROP TABLE IF EXISTS contest;
+
+COMMIT;
