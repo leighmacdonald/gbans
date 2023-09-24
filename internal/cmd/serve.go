@@ -55,7 +55,7 @@ func serveCmd() *cobra.Command {
 
 			s3Client, errClient := app.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
 			if errClient != nil {
-				panic(errClient)
+				rootLogger.Fatal("Failed to setup S3 client", zap.Error(errClient))
 			}
 
 			application := app.New(&conf, database, bot, rootLogger, s3Client)
