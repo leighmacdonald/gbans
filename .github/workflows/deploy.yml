@@ -45,8 +45,6 @@ jobs:
           version: 'latest'
           args: --timeout=10m
 
-      - run: make lint_golangci
-
   staticcheck:
     runs-on: ubuntu-20.04
     steps:
