@@ -103,7 +103,7 @@ type GetDemosOptions struct {
 }
 
 func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
-	var demos []DemoFile
+	demos := []DemoFile{}
 
 	builder := db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
@@ -140,6 +140,9 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
+		if errors.Is(errQuery, ErrNoResult) {
+			return demos, nil
+		}
 		return nil, Err(errQuery)
 	}
 
