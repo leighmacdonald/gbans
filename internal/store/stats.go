@@ -949,43 +949,43 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 			   p.personaname,
 			   p.steam_id,
 			   p.avatarhash,
-			   w.kills + c.assists as ka,
-			   w.kills,
-			   c.assists,
-			   c.deaths,
-			   case c.deaths WHEN 0 THEN -1 ELSE (w.kills::float / c.deaths::float) END kd,
-			   case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + w.kills::float) / c.deaths::float) END kad,
-			   case c.playtime WHEN 0 THEN 0 ELSE c.damage::float / (c.playtime::float / 60) END as dpm,
-			   w.shots,
-			   w.hits,
-			   case w.shots WHEN 0 THEN -1 ELSE (w.hits::float / w.shots::float) * 100 END acc,
-			   w.airshots,
-			   w.backstabs,
-			   w.headshots,
-			   c.playtime,
-			   c.dominations,
-			   c.dominated,
-			   c.revenges,
-			   c.damage,
-			   c.damage_taken,
-			   c.captures,
-			   c.captures_blocked,
-			   c.buildings_destroyed
+			   coalesce(w.kills, 0) + coalesce(c.assists, 0) as ka,
+			   coalesce(w.kills, 0),
+			   coalesce(c.assists, 0),
+			   coalesce(c.deaths, 0),
+			   case coalesce(c.deaths, 0) WHEN 0 THEN -1 ELSE (coalesce(w.kills, 0)::float / c.deaths::float) END kd,
+			   case coalesce(c.deaths, 0) WHEN 0 THEN -1 ELSE ((coalesce(c.assists, 0)::float + coalesce(w.kills,0)::float) / c.deaths::float) END kad,
+			   case coalesce(c.playtime, 0) WHEN 0 THEN 0 ELSE coalesce(c.damage, 0)::float / (c.playtime::float / 60) END as dpm,
+			   coalesce(w.shots, 0),
+			   coalesce(w.hits, 0),
+			   case coalesce(w.shots, 0) WHEN 0 THEN -1 ELSE (w.hits::float / w.shots::float) * 100 END acc,
+			   coalesce(w.airshots, 0),
+			   coalesce(w.backstabs, 0),
+			   coalesce(w.headshots, 0),
+			   coalesce(c.playtime, 0),
+			   coalesce(c.dominations, 0),
+			   coalesce(c.dominated, 0),
+			   coalesce(c.revenges, 0),
+			   coalesce(c.damage, 0),
+			   coalesce(c.damage_taken, 0),
+			   coalesce(c.captures, 0),
+			   coalesce( c.captures_blocked, 0),
+			   coalesce(c.buildings_destroyed, 0)
 		FROM person p
-				 LEFT JOIN (
-			SELECT mp.steam_id,
-				   sum(mw.kills)     as kills,
-				   sum(mw.shots)     as shots,
-				   sum(mw.hits)      as hits,
-				   sum(mw.airshots)  as airshots,
-				   sum(mw.backstabs) as backstabs,
-				   sum(mw.headshots) as headshots
-			FROM  match_player mp
-					  LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
-			GROUP BY mp.steam_id
+			LEFT JOIN (
+				SELECT mp.steam_id,
+					   sum(mw.kills)     as kills,
+					   sum(mw.shots)     as shots,
+					   sum(mw.hits)      as hits,
+					   sum(mw.airshots)  as airshots,
+					   sum(mw.backstabs) as backstabs,
+					   sum(mw.headshots) as headshots
+				FROM  match_player mp
+				LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
+				GROUP BY mp.steam_id
 		) w ON w.steam_id = p.steam_id
-				 LEFT JOIN (
-			SELECT mp.steam_id,
+			LEFT JOIN (
+				SELECT mp.steam_id,
 				   SUM(mpc.assists) as assists,
 				   sum(mpc.deaths)              as deaths,
 				   sum(mpc.playtime)            as playtime,
