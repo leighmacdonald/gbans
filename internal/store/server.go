@@ -184,7 +184,7 @@ func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server
 
 	rows, errQueryExec := db.Query(ctx, query, args...)
 	if errQueryExec != nil {
-		return []Server{}, errQueryExec
+		return []Server{}, Err(errQueryExec)
 	}
 
 	defer rows.Close()

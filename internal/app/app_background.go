@@ -482,7 +482,7 @@ func (app *App) stateUpdater(ctx context.Context) {
 			trigger <- true
 		case <-trigger:
 			servers, errServers := app.db.GetServers(ctx, false)
-			if errServers != nil {
+			if errServers != nil && !errors.Is(errServers, store.ErrNoResult) {
 				log.Error("Failed to fetch servers, cannot update state", zap.Error(errServers))
 
 				continue
