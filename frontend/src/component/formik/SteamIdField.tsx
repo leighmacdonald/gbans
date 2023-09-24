@@ -26,7 +26,7 @@ export const steamIdValidator = yup
     .label('Enter your steam_id')
     .required('steam_id is required');
 
-export interface SteamIDInputProps<T> {
+export interface BaseFormikInputProps<T> {
     id?: string;
     label?: string;
     initialValue?: string;
@@ -35,7 +35,6 @@ export interface SteamIDInputProps<T> {
     onProfileSuccess?: (profile: Nullable<PlayerProfile>) => void;
     formik: FormikState<T> & FormikHandlers;
 }
-
 export interface SteamIDInputValue {
     steam_id: string;
 }
@@ -44,7 +43,7 @@ export const SteamIdField = ({
     id,
     formik,
     isReadOnly
-}: SteamIDInputProps<SteamIDInputValue>) => {
+}: BaseFormikInputProps<SteamIDInputValue>) => {
     return (
         <TextField
             fullWidth

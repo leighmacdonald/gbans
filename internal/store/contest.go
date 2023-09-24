@@ -2,12 +2,13 @@ package store
 
 import (
 	"context"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type Contest struct {
