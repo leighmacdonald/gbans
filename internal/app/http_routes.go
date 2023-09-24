@@ -135,7 +135,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
-		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy",
+		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests",
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
