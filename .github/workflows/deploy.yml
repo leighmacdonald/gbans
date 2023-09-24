@@ -142,7 +142,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: snapshot
-          path: dist/*
+          path: build/*
           retention-days: 1
 
 
