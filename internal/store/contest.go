@@ -124,6 +124,48 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 	return nil
 }
 
+func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]*Contest, error) {
+	contests := []*Contest{}
+
+	builder := db.sb.
+		Select("contest_id", "title", "public", "description", "date_start",
+			"date_end", "max_submissions", "media_types", "deleted", "created_on", "updated_on").
+		From("contest")
+
+	if publicOnly {
+		builder = builder.Where(sq.Eq{"public": true})
+	}
+
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	rows, errRows := db.Query(ctx, query, args...)
+	if errRows != nil {
+		if errors.Is(errRows, ErrNoResult) {
+			return contests, nil
+		}
+
+		return nil, Err(errRows)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var contest Contest
+		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
+			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
+			&contest.Deleted, &contest.ContestID, &contest.UpdatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		contests = append(contests, &contest)
+	}
+
+	return contests, nil
+}
+
 func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
 	if contest.isNew {
 		return db.contestInsert(ctx, contest)
