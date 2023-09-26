@@ -22,6 +22,7 @@ import {
 import TextField from '@mui/material/TextField';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { DateTimeValidationError } from '@mui/x-date-pickers/models/validation';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
 
 export interface ModalContestEditorProps {
     open: boolean;
@@ -55,10 +56,7 @@ const validationSchema = yup.object({
     min_permission_level: permissionValidator()
 });
 
-export const ModalContestEditor = ({
-    open,
-    setOpen
-}: ModalContestEditorProps) => {
+export const AdminContestEditorPage = () => {
     const { sendFlash } = useUserFlashCtx();
     const defaultStartDate = new Date();
     const defaultEndDate = new Date();
@@ -116,53 +114,57 @@ export const ModalContestEditor = ({
     const formId = 'contestEditorForm';
 
     return (
-        <form onSubmit={formik.handleSubmit} id={formId}>
-            <Dialog
-                fullWidth
-                open={open}
-                onClose={() => {
-                    setOpen(false);
-                }}
-            >
-                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
-                    {`${
-                        formik.values.contest_id.length > 0 ? 'Edit' : 'Create'
-                    } A Contest`}
-                </DialogTitle>
+        <ContainerWithHeader title={'Edit Contest'}>
+            <form onSubmit={formik.handleSubmit} id={formId}>
+                <Dialog
+                    fullWidth
+                    open={open}
+                    onClose={() => {
+                        setOpen(false);
+                    }}
+                >
+                    <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                        {`${
+                            formik.values.contest_id.length > 0
+                                ? 'Edit'
+                                : 'Create'
+                        } A Contest`}
+                    </DialogTitle>
 
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <TitleField
-                            formik={formik}
-                            fullWidth
-                            isReadOnly={false}
-                        />
-                        <DescriptionField
-                            formik={formik}
-                            fullWidth
-                            isReadOnly={false}
-                        />
-                        <Stack direction={'row'}>
-                            <DateStartField
+                    <DialogContent>
+                        <Stack spacing={2}>
+                            <TitleField
                                 formik={formik}
                                 fullWidth
                                 isReadOnly={false}
                             />
-                            <DateEndField
+                            <DescriptionField
                                 formik={formik}
                                 fullWidth
                                 isReadOnly={false}
                             />
+                            <Stack direction={'row'}>
+                                <DateStartField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+                                <DateEndField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+                            </Stack>
                         </Stack>
-                    </Stack>
-                </DialogContent>
-                <ModalButtons
-                    formId={formId}
-                    setOpen={setOpen}
-                    inProgress={false}
-                />
-            </Dialog>
-        </form>
+                    </DialogContent>
+                    <ModalButtons
+                        formId={formId}
+                        setOpen={setOpen}
+                        inProgress={false}
+                    />
+                </Dialog>
+            </form>
+        </ContainerWithHeader>
     );
 };
 
