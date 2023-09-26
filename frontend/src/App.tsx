@@ -54,6 +54,7 @@ import { LoginSteamSuccess } from './page/LoginSteamSuccess';
 import { LogoutHandler } from './component/LogoutHandler';
 import { AdminContests } from './page/AdminContests';
 import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
+import { AdminContestEditorPage } from './page/AdminContestEditorPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -496,6 +497,24 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+                                                            <Route
+                                                                path={
+                                                                    '/admin/contests_edit'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <PrivateRoute
+                                                                            permission={
+                                                                                PermissionLevel.Moderator
+                                                                            }
+                                                                        >
+                                                                            <AdminContestEditorPage />
+                                                                        </PrivateRoute>
+                                                                    </ErrorBoundary>
+                                                                }
+                                                                <Route index />
+
+                                                            >
                                                             <Route
                                                                 path={
                                                                     '/admin/appeals'
