@@ -30,8 +30,6 @@ func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey s
 		return nil, errors.Wrap(err, "Failed to initialize minio client")
 	}
 
-	log.Info("Connecting to S3 endpoint", zap.String("endpoint", endpoint))
-
 	return &S3Client{Client: minioClient, log: log, region: region, ssl: useSSL}, nil
 }
 

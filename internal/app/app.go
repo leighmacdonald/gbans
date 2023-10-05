@@ -29,8 +29,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// BuildVersion holds the current git revision, as of build time.
-var BuildVersion = "master" //nolint:gochecknoglobals
+var (
+	BuildVersion = "master" //nolint:gochecknoglobals
+	BuildCommit  = ""
+	BuildDate    = ""
+)
 
 type App struct {
 	conf                 *Config
@@ -172,6 +175,11 @@ func firstTimeSetup(ctx context.Context, conf *Config, database *store.Store) er
 }
 
 func (app *App) Init(ctx context.Context) error {
+	app.log.Info("Starting gbans...",
+		zap.String("version", BuildVersion),
+		zap.String("commit", BuildCommit),
+		zap.String("date", BuildDate))
+
 	if setupErr := firstTimeSetup(ctx, app.conf, app.db); setupErr != nil {
 		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
 	}

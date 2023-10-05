@@ -17,7 +17,7 @@ export const Footer = (): JSX.Element => {
             <Stack>
                 <Typography variant={'subtitle2'} color={'text'}>
                     Copyright &copy; {window.gbans.site_name || 'gbans'}{' '}
-                    {new Date().getFullYear()}
+                    {window.gbans.build_version} {new Date().getFullYear()}
                 </Typography>
             </Stack>
         </Box>

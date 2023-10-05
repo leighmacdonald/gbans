@@ -15,7 +15,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=releaser
+      - -s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion={{.Version}} -X github.com/leighmacdonald/gbans/internal/app.BuildCommit={{.Commit}} -X github.com/leighmacdonald/gbans/internal/app.BuildDate={{.Date}} -X main.builtBy=releaser
 
 nfpms:
   - maintainer: Leigh MacDonald <leigh.macdonald@gmail.com>
