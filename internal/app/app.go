@@ -31,8 +31,8 @@ import (
 
 var (
 	BuildVersion = "master" //nolint:gochecknoglobals
-	BuildCommit  = ""
-	BuildDate    = ""
+	BuildCommit  = ""       //nolint:gochecknoglobals
+	BuildDate    = ""       //nolint:gochecknoglobals
 )
 
 type App struct {
