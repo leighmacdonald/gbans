@@ -168,6 +168,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/servers", onAPIGetServers(app))
 
 	engine.GET("/api/stats/map", onAPIGetMapUsage(app))
+	engine.POST("/api/demos", onAPIPostDemosQuery(app))
 
 	// Service discovery endpoints
 	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts(app))
@@ -221,7 +222,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(app))
 		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(app))
 		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(app))
-		authed.POST("/api/demos", onAPIPostDemosQuery(app))
 		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(app))
 		authed.GET("/api/auth/logout", onGetLogout(app))
 		authed.GET("/api/log/:match_id", onAPIGetMatch(app))

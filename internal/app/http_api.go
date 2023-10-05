@@ -83,6 +83,27 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			intStats[sid64] = PlayerStat
 		}
 
+		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, "")
+		if errAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			return
+		}
+
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name, bytes.NewReader(rawDemo), asset.Size, asset.MimeType); errPut != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+
+			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
+
+			return
+		}
+
+		if errSaveAsset := app.db.SaveAsset(ctx, &asset); errSaveAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
+		}
+
 		newDemo := store.DemoFile{
 			ServerID:  server.ServerID,
 			Title:     req.DemoName,
@@ -91,6 +112,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			CreatedOn: time.Now(),
 			MapName:   req.MapName,
 			Stats:     intStats,
+			AssetID:   asset.AssetID,
 		}
 
 		if errSave := app.db.SaveDemo(ctx, &newDemo); errSave != nil {
