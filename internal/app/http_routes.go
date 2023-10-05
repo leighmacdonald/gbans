@@ -79,9 +79,12 @@ type jsConfig struct {
 	DiscordClientID string `json:"discord_client_id"`
 	DiscordLinkID   string `json:"discord_link_id"`
 	// External URL used to access S3 assets. media:// links are replaces with this url
-	AssetURL    string `json:"asset_url"`
-	BucketDemo  string `json:"bucket_demo"`
-	BucketMedia string `json:"bucket_media"`
+	AssetURL     string `json:"asset_url"`
+	BucketDemo   string `json:"bucket_demo"`
+	BucketMedia  string `json:"bucket_media"`
+	BuildVersion string `json:"build_version"`
+	BuildCommit  string `json:"build_commit"`
+	BuildDate    string `json:"build_date"`
 }
 
 //nolint:contextcheck
@@ -143,6 +146,9 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 				AssetURL:        app.conf.S3.ExternalURL,
 				BucketDemo:      app.conf.S3.BucketDemo,
 				BucketMedia:     app.conf.S3.BucketMedia,
+				BuildVersion:    BuildVersion,
+				BuildCommit:     BuildCommit,
+				BuildDate:       BuildDate,
 			})
 		})
 	}

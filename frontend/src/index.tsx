@@ -13,6 +13,9 @@ declare global {
             asset_url: string;
             bucket_media: string;
             bucket_demo: string;
+            build_version: string;
+            build_date: string;
+            build_commit: string;
         };
     }
 }
