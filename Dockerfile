@@ -13,7 +13,7 @@ FROM alpine:latest
 
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 LABEL org.opencontainers.image.source="https://github.com/leighmacdonald/gbans"
-LABEL org.opencontainers.image.version="v0.3.2"
+LABEL org.opencontainers.image.version="v0.4.1"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.description="Centralized community backend for Team Fortress 2"
 
