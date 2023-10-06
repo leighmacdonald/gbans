@@ -6,17 +6,8 @@ COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
 COPY frontend frontend
 WORKDIR /build/frontend
-RUN yarn
+RUN yarn install --frozen-lockfile
 RUN yarn build
-
-FROM golang:1.21-alpine as build
-WORKDIR /build
-RUN apk add --no-cache make git gcc libc-dev
-COPY go.mod go.sum Makefile main.go default.pgo ./
-RUN go mod download
-COPY pkg pkg
-COPY internal internal
-RUN make build
 
 FROM alpine:latest
 
@@ -33,6 +24,6 @@ RUN apk add --no-cache dumb-init
 WORKDIR /app
 VOLUME ["/app/.cache"]
 COPY --from=frontend /build/dist ./dist/
-COPY --from=build /build/build/linux64/gbans .
+COPY /build/gbans_linux_amd64_v1/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]
