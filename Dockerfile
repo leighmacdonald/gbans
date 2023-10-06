@@ -24,6 +24,6 @@ RUN apk add --no-cache dumb-init
 WORKDIR /app
 VOLUME ["/app/.cache"]
 COPY --from=frontend /build/dist ./dist/
-COPY /build/gbans_linux_amd64_v1/gbans .
+COPY ./build/gbans_linux_amd64_v1/gbans .
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["./gbans", "serve"]
