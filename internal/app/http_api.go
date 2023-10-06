@@ -83,7 +83,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			intStats[sid64] = PlayerStat
 		}
 
-		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, "")
+		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, req.DemoName)
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
