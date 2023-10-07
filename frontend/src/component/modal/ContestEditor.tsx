@@ -1,14 +1,13 @@
 import React from 'react';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useFormik } from 'formik';
-import { apiContestSave, PermissionLevel } from '../api';
-import { logErr } from '../util/errors';
-import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import { Heading } from './Heading';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Stack from '@mui/material/Stack';
-import { BaseFormikInputProps } from './formik/SteamIdField';
-import { ModalButtons } from './formik/ModalButtons';
 import * as yup from 'yup';
 import {
     boolDefinedValidator,
@@ -18,16 +17,18 @@ import {
     minNumberValidator,
     minStringValidator,
     permissionValidator
-} from './formik/Validator';
+} from '../formik/Validator';
 import TextField from '@mui/material/TextField';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import { DateTimeValidationError } from '@mui/x-date-pickers/models/validation';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
-
-export interface ModalContestEditorProps {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-}
+import { DateTimeValidationError } from '@mui/x-date-pickers';
+import { BaseFormikInputProps } from '../formik/SteamIdField';
+import { Heading } from '../Heading';
+import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import { PermissionLevel, useContest } from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { apiContestSave } from '../../api';
+import { logErr } from '../../util/errors';
+import { LoadingSpinner } from '../LoadingSpinner';
 
 interface ContestEditorFormValues {
     contest_id: string;
@@ -56,74 +57,74 @@ const validationSchema = yup.object({
     min_permission_level: permissionValidator()
 });
 
-export const AdminContestEditorPage = () => {
-    const { sendFlash } = useUserFlashCtx();
-    const defaultStartDate = new Date();
-    const defaultEndDate = new Date();
-    defaultEndDate.setDate(defaultStartDate.getDate() + 1);
+export const ContestEditor = NiceModal.create(
+    ({ contest_id }: { contest_id?: number }) => {
+        const { loading, contest } = useContest(contest_id);
+        const modal = useModal();
+        const { sendFlash } = useUserFlashCtx();
 
-    const formik = useFormik<ContestEditorFormValues>({
-        initialValues: {
-            contest_id: '',
-            title: '',
-            description: '',
-            public: false,
-            date_start: defaultStartDate,
-            date_end: defaultEndDate,
-            max_submissions: 1,
-            media_types: [],
-            voting: false,
-            down_votes: false,
-            min_permission_level: PermissionLevel.User
-        },
-        validateOnBlur: true,
-        validateOnChange: false,
-        onReset: () => {
-            alert('reset!');
-        },
-        validationSchema: validationSchema,
-        onSubmit: async (values) => {
-            try {
-                const contest = await apiContestSave({
-                    contest_id: values.contest_id,
-                    date_start: values.date_start,
-                    date_end: values.date_end,
-                    description: values.description,
-                    title: values.title,
-                    voting: values.voting,
-                    down_votes: values.down_votes,
-                    max_submissions: values.max_submissions,
-                    media_types: values.media_types.join(','),
-                    public: values.public,
-                    min_permission_level: values.min_permission_level,
-                    deleted: false
-                });
-                sendFlash(
-                    'success',
-                    `Contest created successfully (${contest.contest_id}`
-                );
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error saving contest');
-            } finally {
-                setOpen(false);
+        const defaultStartDate = new Date();
+        const defaultEndDate = new Date();
+        defaultEndDate.setDate(defaultStartDate.getDate() + 1);
+
+        const formik = useFormik<ContestEditorFormValues>({
+            initialValues: {
+                contest_id: contest?.contest_id ?? '',
+                title: contest?.title ?? '',
+                description: contest?.description ?? '',
+                public: contest?.public ?? false,
+                date_start: contest?.date_start ?? defaultStartDate,
+                date_end: contest?.date_end ?? defaultEndDate,
+                max_submissions: contest?.max_submissions ?? 1,
+                media_types: contest?.media_types ?? [],
+                voting: contest?.voting ?? false,
+                down_votes: contest?.down_votes ?? false,
+                min_permission_level:
+                    contest?.min_permission_level ?? PermissionLevel.User
+            },
+            validateOnBlur: true,
+            validateOnChange: false,
+            onReset: () => {
+                alert('reset!');
+            },
+            validationSchema: validationSchema,
+            onSubmit: async (values) => {
+                try {
+                    const contest = await apiContestSave({
+                        contest_id: values.contest_id,
+                        date_start: values.date_start,
+                        date_end: values.date_end,
+                        description: values.description,
+                        title: values.title,
+                        voting: values.voting,
+                        down_votes: values.down_votes,
+                        max_submissions: values.max_submissions,
+                        media_types: values.media_types,
+                        public: values.public,
+                        min_permission_level: values.min_permission_level,
+                        deleted: false,
+                        num_entries: 0
+                    });
+                    sendFlash(
+                        'success',
+                        `Contest created successfully (${contest.contest_id}`
+                    );
+                } catch (e) {
+                    logErr(e);
+                    sendFlash('error', 'Error saving contest');
+                }
             }
-        }
-    });
+        });
 
-    const formId = 'contestEditorForm';
+        const formId = 'contestEditorForm';
 
-    return (
-        <ContainerWithHeader title={'Edit Contest'}>
+        return (
             <form onSubmit={formik.handleSubmit} id={formId}>
-                <Dialog
-                    fullWidth
-                    open={open}
-                    onClose={() => {
-                        setOpen(false);
-                    }}
-                >
-                    <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                <Dialog fullWidth {...muiDialogV5(modal)}>
+                    <DialogTitle
+                        component={Heading}
+                        iconLeft={loading ? <LoadingSpinner /> : <GavelIcon />}
+                    >
                         {`${
                             formik.values.contest_id.length > 0
                                 ? 'Edit'
@@ -157,16 +158,12 @@ export const AdminContestEditorPage = () => {
                             </Stack>
                         </Stack>
                     </DialogContent>
-                    <ModalButtons
-                        formId={formId}
-                        setOpen={setOpen}
-                        inProgress={false}
-                    />
+                    <DialogActions></DialogActions>
                 </Dialog>
             </form>
-        </ContainerWithHeader>
-    );
-};
+        );
+    }
+);
 
 interface DateEndInputValue {
     date_end: Date;
