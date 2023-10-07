@@ -35,6 +35,7 @@
     "@babel/core": "^7.22.11",
     "@babel/preset-env": "^7.22.14",
     "@date-io/date-fns": "^2.17.0",
+    "@ebay/nice-modal-react": "^1.2.13",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/base": "5.0.0-beta.13",
