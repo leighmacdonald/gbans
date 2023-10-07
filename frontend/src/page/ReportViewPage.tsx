@@ -124,7 +124,7 @@ export const ReportViewPage = (): JSX.Element => {
     };
 
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
             <Grid xs={12} md={8}>
                 {report && (
                     <ReportComponent

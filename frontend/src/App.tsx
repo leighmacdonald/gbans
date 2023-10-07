@@ -499,24 +499,6 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                             />
                                                             <Route
                                                                 path={
-                                                                    '/admin/contests_edit'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <PrivateRoute
-                                                                            permission={
-                                                                                PermissionLevel.Moderator
-                                                                            }
-                                                                        >
-                                                                            <AdminContestEditorPage />
-                                                                        </PrivateRoute>
-                                                                    </ErrorBoundary>
-                                                                }
-                                                                <Route index />
-
-                                                            >
-                                                            <Route
-                                                                path={
                                                                     '/admin/appeals'
                                                                 }
                                                                 element={
