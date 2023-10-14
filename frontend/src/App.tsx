@@ -55,6 +55,7 @@ import { LogoutHandler } from './component/LogoutHandler';
 import { AdminContests } from './page/AdminContests';
 import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 import { AdminContestEditorPage } from './page/AdminContestEditorPage';
+import { ContestListPage } from './page/ContestListPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -194,6 +195,17 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+                                                            <Route
+                                                                path={
+                                                                    '/contests'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <ContestListPage />
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
+
                                                             <Route
                                                                 path={'/stats'}
                                                                 element={

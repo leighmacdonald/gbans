@@ -15,6 +15,7 @@ import Link from '@mui/material/Link';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import ChatIcon from '@mui/icons-material/Chat';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 export const Home = (): JSX.Element => {
     const navigate = useNavigate();
@@ -86,6 +87,18 @@ export const Home = (): JSX.Element => {
                         }}
                     >
                         Donate
+                    </Button>
+
+                    <Button
+                        startIcon={<EmojiEventsIcon />}
+                        fullWidth
+                        color={'primary'}
+                        variant={'contained'}
+                        onClick={() => {
+                            navigate('/contests');
+                        }}
+                    >
+                        Contests
                     </Button>
 
                     <Button
