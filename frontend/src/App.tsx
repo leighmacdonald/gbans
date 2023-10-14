@@ -52,6 +52,7 @@ import { StatsPage } from './page/StatsPage';
 import { PlayerStatsPage } from './page/PlayerStatsPage';
 import { LoginSteamSuccess } from './page/LoginSteamSuccess';
 import { LogoutHandler } from './component/LogoutHandler';
+import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -178,6 +179,16 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 element={
                                                                     <ErrorBoundary>
                                                                         <LoginSteamSuccess />
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
+                                                            <Route
+                                                                path={
+                                                                    '/privacy-policy'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <PrivacyPolicyPage />
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
