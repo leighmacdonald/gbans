@@ -150,68 +150,72 @@ export const ContestEditor = NiceModal.create(
                     </DialogTitle>
 
                     <DialogContent>
-                        <Stack spacing={2}>
-                            <TitleField
-                                formik={formik}
-                                fullWidth
-                                isReadOnly={false}
-                            />
-                            <DescriptionField
-                                formik={formik}
-                                fullWidth
-                                isReadOnly={false}
-                            />
-                            <Stack direction={'row'} spacing={2}>
-                                <PublicField
+                        {loading ? (
+                            <LoadingSpinner />
+                        ) : (
+                            <Stack spacing={2}>
+                                <TitleField
                                     formik={formik}
                                     fullWidth
                                     isReadOnly={false}
                                 />
+                                <DescriptionField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+                                <Stack direction={'row'} spacing={2}>
+                                    <PublicField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
 
-                                <MaxSubmissionsField
-                                    formik={formik}
-                                    fullWidth
-                                    isReadOnly={false}
-                                />
-                                <MinPermissionLevelField
+                                    <MaxSubmissionsField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
+                                    <MinPermissionLevelField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
+                                </Stack>
+                                <Stack direction={'row'} spacing={2}>
+                                    <VotingField
+                                        fullWidth
+                                        formik={formik}
+                                        isReadOnly={false}
+                                    />
+
+                                    <DownVotesField
+                                        fullWidth
+                                        formik={formik}
+                                        isReadOnly={formik.values.voting}
+                                    />
+                                </Stack>
+
+                                <Stack direction={'row'} spacing={2}>
+                                    <DateStartField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
+                                    <DateEndField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
+                                </Stack>
+
+                                <MimeTypeField
                                     formik={formik}
                                     fullWidth
                                     isReadOnly={false}
                                 />
                             </Stack>
-                            <Stack direction={'row'} spacing={2}>
-                                <VotingField
-                                    fullWidth
-                                    formik={formik}
-                                    isReadOnly={false}
-                                />
-
-                                <DownVotesField
-                                    fullWidth
-                                    formik={formik}
-                                    isReadOnly={formik.values.voting}
-                                />
-                            </Stack>
-
-                            <Stack direction={'row'} spacing={2}>
-                                <DateStartField
-                                    formik={formik}
-                                    fullWidth
-                                    isReadOnly={false}
-                                />
-                                <DateEndField
-                                    formik={formik}
-                                    fullWidth
-                                    isReadOnly={false}
-                                />
-                            </Stack>
-
-                            <MimeTypeField
-                                formik={formik}
-                                fullWidth
-                                isReadOnly={false}
-                            />
-                        </Stack>
+                        )}
                     </DialogContent>
                     <DialogActions>
                         <CancelButton onClick={modal.hide} />

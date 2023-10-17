@@ -3815,3 +3815,29 @@ func onAPIGetContests(app *App) gin.HandlerFunc {
 		})
 	}
 }
+
+func onAPIGetContest(app *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		contestID, idErr := getUUIDParam(ctx, "contest_id")
+		if idErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var contest store.Contest
+		if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, contest)
+	}
+}

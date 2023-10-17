@@ -20,15 +20,22 @@ export const AdminContests = () => {
         await NiceModal.show(ModalContestEditor, {});
     }, []);
 
-    const onDeleteContest = useCallback(async (contest_id: string) => {
-        try {
-            await apiContestDelete(contest_id);
-            await modal.hide();
-        } catch (e) {
-            logErr(e);
-            throw e;
-        }
+    const onEditContest = useCallback(async (contest_id: string) => {
+        await NiceModal.show(ModalContestEditor, { contest_id });
     }, []);
+
+    const onDeleteContest = useCallback(
+        async (contest_id: string) => {
+            try {
+                await apiContestDelete(contest_id);
+                await modal.hide();
+            } catch (e) {
+                logErr(e);
+                throw e;
+            }
+        },
+        [modal]
+    );
 
     return (
         <>
@@ -103,7 +110,18 @@ export const AdminContests = () => {
                                 renderer: (obj) => {
                                     return (
                                         <ButtonGroup>
-                                            <IconButton color={'warning'}>
+                                            <IconButton
+                                                color={'warning'}
+                                                onClick={async () => {
+                                                    try {
+                                                        await onEditContest(
+                                                            obj.contest_id
+                                                        );
+                                                    } catch (e) {
+                                                        logErr(e);
+                                                    }
+                                                }}
+                                            >
                                                 <EditIcon />
                                             </IconButton>
                                             <IconButton
