@@ -184,6 +184,13 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 
+	// This allows use of the user profile on endpoints that have optional authentication
+	optionalAuth := engine.Group("/")
+	{
+		optionalAuth.Use(authMiddleware(app, consts.PGuest))
+		optionalAuth.GET("/api/contests", onAPIGetContests(app))
+	}
+
 	srvGrp := engine.Group("/")
 	{
 		// Server Auth Request

@@ -4,6 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import ClearIcon from '@mui/icons-material/Clear';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import CheckIcon from '@mui/icons-material/Check';
 
 interface onClickProps {
     onClick?: () => void;
@@ -42,6 +43,22 @@ export const SaveButton = ({
         </Button>
     );
 };
+export const ConfirmButton = ({
+    onClick,
+    disabled = false
+}: onClickProps & { disabled?: boolean }) => {
+    return (
+        <Button
+            startIcon={<CheckIcon />}
+            color={'success'}
+            variant={'contained'}
+            onClick={onClick ?? undefined}
+            disabled={disabled}
+        >
+            Confirm
+        </Button>
+    );
+};
 
 export const ClearButton = ({ onClick }: onClickProps) => {
     return (
@@ -56,17 +73,15 @@ export const ClearButton = ({ onClick }: onClickProps) => {
     );
 };
 
-export const ResetButton = ({ onClick, formId }: onClickProps) => {
-    return (
-        <Button
-            onClick={onClick}
-            startIcon={<RestartAltIcon />}
-            color={'warning'}
-            variant={'contained'}
-            type={'reset'}
-            form={formId}
-        >
-            Reset
-        </Button>
-    );
-};
+export const ResetButton = ({ onClick, formId }: onClickProps) => (
+    <Button
+        onClick={onClick}
+        startIcon={<RestartAltIcon />}
+        color={'warning'}
+        variant={'contained'}
+        type={'reset'}
+        form={formId}
+    >
+        Reset
+    </Button>
+);

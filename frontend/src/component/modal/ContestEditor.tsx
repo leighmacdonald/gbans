@@ -67,7 +67,7 @@ const validationSchema = yup.object({
 });
 
 export const ContestEditor = NiceModal.create(
-    ({ contest_id }: { contest_id?: number }) => {
+    ({ contest_id }: { contest_id?: string }) => {
         const { loading, contest } = useContest(contest_id);
         const modal = useModal();
         const { sendFlash } = useUserFlashCtx();

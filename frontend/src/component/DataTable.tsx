@@ -52,7 +52,7 @@ export interface HeadingCell<T> {
     tooltip: string;
     sortKey?: keyof T;
     width?: number | string;
-    sortType?: 'number' | 'string' | 'date' | 'float';
+    sortType?: 'number' | 'string' | 'date' | 'float' | 'boolean';
     virtual?: boolean;
     virtualKey?: string;
     sortable?: boolean;
@@ -82,6 +82,8 @@ export const defaultRenderer = (
     type: string
 ): ReactNode => {
     switch (type) {
+        case 'boolean':
+            return value ? 'Yes' : 'No';
         case 'date':
             return new Date(value as string).toDateString();
         case 'float':
