@@ -189,6 +189,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	{
 		optionalAuth.Use(authMiddleware(app, consts.PGuest))
 		optionalAuth.GET("/api/contests", onAPIGetContests(app))
+		optionalAuth.GET("/api/contests/:contest_id", onAPIGetContest(app))
 	}
 
 	srvGrp := engine.Group("/")
