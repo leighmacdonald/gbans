@@ -3755,3 +3755,21 @@ func onAPIPostContest(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, newContest)
 	}
 }
+
+func onAPIGetContests(app *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		publicOnly := currentUserProfile(ctx).PermissionLevel < consts.PModerator
+
+		contests, errContests := app.db.Contests(ctx, publicOnly)
+		if errContests != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: len(contests),
+			Data:  contests,
+		})
+	}
+}

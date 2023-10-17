@@ -13,7 +13,7 @@ import (
 
 type Contest struct {
 	TimeStamped
-	ContestID      uuid.UUID `json:"contest_id,omitempty"`
+	ContestID      uuid.UUID `json:"contest_id"`
 	Title          string    `json:"title"`
 	Description    string    `json:"description"`
 	Public         bool      `json:"public"`
@@ -21,7 +21,7 @@ type Contest struct {
 	DateEnd        time.Time `json:"date_end"`
 	MaxSubmissions int       `json:"max_submissions"`
 	MediaTypes     string    `json:"media_types"`
-	Deleted        bool      `json:"deleted"`
+	Deleted        bool      `json:"-"`
 	// Allow voting
 	Voting bool `json:"voting"`
 	// Minimum permission level allowed to vote
@@ -147,8 +147,8 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 	return nil
 }
 
-func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]*Contest, error) {
-	contests := []*Contest{}
+func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, error) {
+	contests := []Contest{}
 
 	builder := db.sb.
 		Select("contest_id", "title", "public", "description", "date_start",
@@ -181,11 +181,11 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]*Contest, err
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.ContestID, &contest.UpdatedOn); errScan != nil {
+			&contest.CreatedOn, &contest.UpdatedOn); errScan != nil {
 			return nil, Err(errScan)
 		}
 
-		contests = append(contests, &contest)
+		contests = append(contests, contest)
 	}
 
 	return contests, nil

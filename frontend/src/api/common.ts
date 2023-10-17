@@ -105,6 +105,18 @@ export interface MatchTimes {
     time_end: Date;
 }
 
+export interface DateRange {
+    date_start: Date;
+    date_end: Date;
+}
+
+export const transformDateRange = <T>(item: T & DateRange) => {
+    item.date_end = parseDateTime(item.date_end as unknown as string);
+    item.date_start = parseDateTime(item.date_start as unknown as string);
+
+    return item;
+};
+
 export interface TimeStamped {
     created_on: Date;
     updated_on: Date;

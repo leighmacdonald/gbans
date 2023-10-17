@@ -656,7 +656,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 			token = hdrToken
 		}
 
-		if level >= consts.PUser {
+		if level >= consts.PGuest {
 			sid, errFromToken := sid64FromJWTToken(token, app.conf.HTTP.CookieKey)
 			if errFromToken != nil {
 				if errors.Is(errFromToken, consts.ErrExpired) {
