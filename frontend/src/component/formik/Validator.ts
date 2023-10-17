@@ -15,19 +15,31 @@ export const minNumberValidator = (name: string, minimum = 1) =>
         .label(`Minimum ${name}`)
         .required(`${name} is required`);
 
+export const numberValidator = (name: string) =>
+    yup.number().label(name).required(`${name} is required`);
+
 export const dateDefinedValidator = (name = 'Date') =>
     yup.date().required(`${name} is required`);
 
-export const mimeTypesValidator = (minimum: number = 0) => {
+export const mimeTypesValidator = () => {
     return yup
-        .array()
-        .min(minimum)
+        .string()
         .label('Allowed mimetypes (none = all allowed)')
-        .test('valid-mime-format', 'Invalid mimetype format', (values) => {
-            values?.map(
-                (mime_type: string) => mime_type.split('/').length == 2
-            );
-        });
+        .test(
+            'valid-mime-format',
+            'Invalid mimetype format, must be comma separated list eg: application/gzip,image/gif  (no spaces allowed)',
+            (value) => {
+                if (!value) {
+                    return true;
+                }
+
+                const parts = value?.split(',');
+                return (
+                    parts?.filter((p) => p.match(/^\S+\/\S+$/)).length ==
+                    parts?.length
+                );
+            }
+        );
 };
 
 export const dateAfterValidator = (key: string, name = 'Date') =>
