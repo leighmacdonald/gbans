@@ -11,7 +11,7 @@ export interface Contest {
     date_start: Date;
     date_end: Date;
     max_submissions: number;
-    media_types: string[];
+    media_types: string;
     deleted: boolean;
     voting: boolean;
     min_permission_level: PermissionLevel;

@@ -56,6 +56,7 @@ import { AdminContests } from './page/AdminContests';
 import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 import { AdminContestEditorPage } from './page/AdminContestEditorPage';
 import { ContestListPage } from './page/ContestListPage';
+import NiceModal from '@ebay/nice-modal-react';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -141,6 +142,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                 <ThemeProvider theme={theme}>
                                     <NotificationsProvider>
                                         <React.StrictMode>
+                                            <NiceModal.Provider>
                                             <UserInit />
                                             <LogoutHandler />
                                             <CssBaseline />

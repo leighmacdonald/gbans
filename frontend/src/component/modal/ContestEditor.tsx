@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import {
     Dialog,
@@ -14,8 +14,8 @@ import {
     dateAfterValidator,
     dateDefinedValidator,
     mimeTypesValidator,
-    minNumberValidator,
     minStringValidator,
+    numberValidator,
     permissionValidator
 } from '../formik/Validator';
 import TextField from '@mui/material/TextField';
@@ -29,6 +29,15 @@ import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { apiContestSave } from '../../api';
 import { logErr } from '../../util/errors';
 import { LoadingSpinner } from '../LoadingSpinner';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
+import { CancelButton, ResetButton, SaveButton } from './Buttons';
 
 interface ContestEditorFormValues {
     contest_id: string;
@@ -38,7 +47,7 @@ interface ContestEditorFormValues {
     date_start: Date;
     date_end: Date;
     max_submissions: number;
-    media_types: string[];
+    media_types: string;
     voting: boolean;
     min_permission_level: PermissionLevel;
     down_votes: boolean;
@@ -50,7 +59,7 @@ const validationSchema = yup.object({
     public: boolDefinedValidator('Public'),
     date_start: dateDefinedValidator('Start date'),
     date_end: dateAfterValidator('date_start', 'End date'),
-    max_submissions: minNumberValidator('Submissions', 1),
+    max_submissions: numberValidator('Submissions'),
     media_types: mimeTypesValidator(),
     voting: boolDefinedValidator('Voting'),
     down_votes: boolDefinedValidator('Down votes'),
@@ -76,19 +85,21 @@ export const ContestEditor = NiceModal.create(
                 date_start: contest?.date_start ?? defaultStartDate,
                 date_end: contest?.date_end ?? defaultEndDate,
                 max_submissions: contest?.max_submissions ?? 1,
-                media_types: contest?.media_types ?? [],
+                media_types: contest?.media_types ?? '',
                 voting: contest?.voting ?? false,
                 down_votes: contest?.down_votes ?? false,
                 min_permission_level:
                     contest?.min_permission_level ?? PermissionLevel.User
             },
-            validateOnBlur: true,
+            validateOnBlur: false,
             validateOnChange: false,
             onReset: () => {
                 alert('reset!');
             },
+
             validationSchema: validationSchema,
             onSubmit: async (values) => {
+                console.log('submitted');
                 try {
                     const contest = await apiContestSave({
                         contest_id: values.contest_id,
@@ -109,12 +120,19 @@ export const ContestEditor = NiceModal.create(
                         'success',
                         `Contest created successfully (${contest.contest_id}`
                     );
+                    await modal.hide();
                 } catch (e) {
                     logErr(e);
                     sendFlash('error', 'Error saving contest');
                 }
             }
         });
+        //
+        // const onSave = useCallback(async () => {
+        //     console.log('submitting');
+        //     await formik.submitForm();
+        //     console.log('submitted');
+        // }, [formik]);
 
         const formId = 'contestEditorForm';
 
@@ -144,7 +162,39 @@ export const ContestEditor = NiceModal.create(
                                 fullWidth
                                 isReadOnly={false}
                             />
-                            <Stack direction={'row'}>
+                            <Stack direction={'row'} spacing={2}>
+                                <PublicField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+
+                                <MaxSubmissionsField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+                                <MinPermissionLevelField
+                                    formik={formik}
+                                    fullWidth
+                                    isReadOnly={false}
+                                />
+                            </Stack>
+                            <Stack direction={'row'} spacing={2}>
+                                <VotingField
+                                    fullWidth
+                                    formik={formik}
+                                    isReadOnly={false}
+                                />
+
+                                <DownVotesField
+                                    fullWidth
+                                    formik={formik}
+                                    isReadOnly={formik.values.voting}
+                                />
+                            </Stack>
+
+                            <Stack direction={'row'} spacing={2}>
                                 <DateStartField
                                     formik={formik}
                                     fullWidth
@@ -156,14 +206,92 @@ export const ContestEditor = NiceModal.create(
                                     isReadOnly={false}
                                 />
                             </Stack>
+
+                            <MimeTypeField
+                                formik={formik}
+                                fullWidth
+                                isReadOnly={false}
+                            />
                         </Stack>
                     </DialogContent>
-                    <DialogActions></DialogActions>
+                    <DialogActions>
+                        <CancelButton onClick={modal.hide} />
+                        <ResetButton onClick={formik.resetForm} />
+                        <SaveButton onClick={formik.submitForm} />
+                    </DialogActions>
                 </Dialog>
             </form>
         );
     }
 );
+
+interface MaxSubmissionsInputValue {
+    max_submissions: number;
+}
+
+const MaxSubmissionsField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<MaxSubmissionsInputValue>) => {
+    return (
+        <FormControl fullWidth>
+            <InputLabel id="max-subs-select-label">
+                Maximum Submissions Per User
+            </InputLabel>
+            <Select<number>
+                name={`max-subs`}
+                labelId={`max-subs-select-label`}
+                id={`max-subs-selects`}
+                disabled={isReadOnly ?? false}
+                label={'Maximum Submissions Per User'}
+                value={formik.values.max_submissions}
+                onChange={(event) => {
+                    console.log(event.target.value);
+                    formik.values.max_submissions = event.target
+                        .value as number;
+                }}
+            >
+                {[-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
+                    <MenuItem key={`max-subs-${c}`} value={c}>
+                        {c}
+                    </MenuItem>
+                ))}
+            </Select>
+            <FormHelperText>-1 indicates unlimited</FormHelperText>
+        </FormControl>
+    );
+};
+
+interface MinPermissionLevelInputValue {
+    min_permission_level: number;
+}
+
+const MinPermissionLevelField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<MinPermissionLevelInputValue>) => {
+    return (
+        <FormControl fullWidth>
+            <InputLabel id="plevel-label">
+                Minimum permissions required to submit
+            </InputLabel>
+            <Select<number>
+                name={`plevel`}
+                labelId={`plevel-label`}
+                id={`plevel`}
+                disabled={isReadOnly ?? false}
+                label={'Minimum permissions required to submit'}
+                value={formik.values.min_permission_level}
+                onChange={formik.handleChange}
+            >
+                <MenuItem value={PermissionLevel.User}>Logged In User</MenuItem>
+                <MenuItem value={PermissionLevel.Editor}>Editor</MenuItem>
+                <MenuItem value={PermissionLevel.Moderator}>Moderator</MenuItem>
+                <MenuItem value={PermissionLevel.Admin}>Admin</MenuItem>
+            </Select>
+        </FormControl>
+    );
+};
 
 interface DateEndInputValue {
     date_end: Date;
@@ -190,9 +318,7 @@ const DateStartField = ({
     formik,
     isReadOnly
 }: BaseFormikInputProps<DateStartInputValue>) => {
-    const [error, setError] = React.useState<DateTimeValidationError | null>(
-        null
-    );
+    const [error, setError] = useState<DateTimeValidationError | null>(null);
 
     return (
         <DateTimePicker
@@ -207,6 +333,82 @@ const DateStartField = ({
             value={formik.values.date_start}
             onChange={formik.handleChange}
         />
+    );
+};
+
+interface PublicFieldInputValue {
+    public: boolean;
+}
+
+const PublicField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<PublicFieldInputValue>) => {
+    return (
+        <FormGroup>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        id={'public-cb'}
+                        disabled={isReadOnly ?? false}
+                        value={formik.values.public}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                    />
+                }
+                label="Public"
+            />
+        </FormGroup>
+    );
+};
+
+interface VotingInputValue {
+    voting: boolean;
+}
+
+const VotingField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<VotingInputValue>) => {
+    return (
+        <FormGroup>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        id={'voting-cb'}
+                        disabled={isReadOnly ?? false}
+                        value={formik.values.voting}
+                        onChange={formik.handleChange}
+                    />
+                }
+                label="Voting Allowed"
+            />
+        </FormGroup>
+    );
+};
+
+interface DownVotesInputValue {
+    down_votes: boolean;
+}
+
+const DownVotesField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<DownVotesInputValue>) => {
+    return (
+        <FormGroup>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        id={'down_votes-cb'}
+                        disabled={isReadOnly ?? false}
+                        value={formik.values.down_votes}
+                        onChange={formik.handleChange}
+                    />
+                }
+                label="Down Votes Allowed"
+            />
+        </FormGroup>
     );
 };
 
@@ -227,6 +429,7 @@ const TitleField = ({
             label={'Title'}
             value={formik.values.title}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             error={formik.touched.title && Boolean(formik.errors.title)}
             helperText={formik.touched.title && formik.errors.title}
         />
@@ -252,10 +455,37 @@ const DescriptionField = ({
             label={'Description'}
             value={formik.values.description}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             error={
                 formik.touched.description && Boolean(formik.errors.description)
             }
             helperText={formik.touched.description && formik.errors.description}
+        />
+    );
+};
+
+interface MimeTypeInputValue {
+    media_types: string;
+}
+
+const MimeTypeField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<MimeTypeInputValue>) => {
+    return (
+        <TextField
+            fullWidth
+            disabled={isReadOnly ?? false}
+            name={'media_types'}
+            id={'media_types'}
+            label={'Mime Types Allowed'}
+            value={formik.values.media_types}
+            onChange={formik.handleChange}
+            //onBlur={formik.handleBlur}
+            error={
+                formik.touched.media_types && Boolean(formik.errors.media_types)
+            }
+            helperText={formik.touched.media_types && formik.errors.media_types}
         />
     );
 };
