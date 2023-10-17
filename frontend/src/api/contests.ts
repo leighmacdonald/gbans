@@ -25,7 +25,7 @@ export interface Contest extends DateRange {
 
 export const apiContestSave = async (contest: Contest) =>
     contest.contest_id == EmptyUUID
-        ? await apiCall<Contest, Contest>(`/api/contest`, 'POST', contest)
+        ? await apiCall<Contest, Contest>(`/api/contests`, 'POST', contest)
         : await apiCall<Contest, Contest>(
               `/api/contest/${contest.contest_id}`,
               'PUT',

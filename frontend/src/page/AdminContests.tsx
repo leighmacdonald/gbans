@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { apiContestDelete, apiContests } from '../api';
 import Button from '@mui/material/Button';
-import NiceModal from '@ebay/nice-modal-react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { ModalConfirm, ModalContestEditor } from '../component/modal';
 import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -14,6 +14,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { logErr } from '../util/errors';
 
 export const AdminContests = () => {
+    const modal = useModal(ModalConfirm);
+
     const onNewContest = useCallback(async () => {
         await NiceModal.show(ModalContestEditor, {});
     }, []);
@@ -21,6 +23,7 @@ export const AdminContests = () => {
     const onDeleteContest = useCallback(async (contest_id: string) => {
         try {
             await apiContestDelete(contest_id);
+            await modal.hide();
         } catch (e) {
             logErr(e);
             throw e;
@@ -120,6 +123,7 @@ export const AdminContests = () => {
                                                                     }
                                                             }
                                                         );
+                                                        await modal.hide();
                                                     } catch (e) {
                                                         logErr(e);
                                                     }

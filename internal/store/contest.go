@@ -129,7 +129,7 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
 			"created_on", "updated_on").
 		From("contest").
-		Where(sq.Eq{"contest_id": contestID}).
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}}).
 		ToSql()
 
 	if errQuery != nil {
@@ -140,8 +140,20 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 		Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.ContestID, &contest.UpdatedOn); errScan != nil {
+			&contest.CreatedOn, &contest.UpdatedOn); errScan != nil {
 		return Err(errScan)
+	}
+
+	return nil
+}
+
+func (db *Store) ContestDelete(ctx context.Context, contestID uuid.UUID) error {
+	const query = `
+		UPDATE contest SET deleted = true 
+    	WHERE contest_id = $1`
+
+	if errExec := db.Exec(ctx, query, contestID); errExec != nil {
+		return Err(errExec)
 	}
 
 	return nil
@@ -156,11 +168,12 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 			"created_on", "updated_on").
 		From("contest")
 
+	ands := sq.And{sq.Eq{"deleted": false}}
 	if publicOnly {
-		builder = builder.Where(sq.Eq{"public": true})
+		ands = append(ands, sq.Eq{"public": true})
 	}
 
-	query, args, errQuery := builder.ToSql()
+	query, args, errQuery := builder.Where(ands).ToSql()
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
