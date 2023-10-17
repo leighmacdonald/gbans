@@ -3725,3 +3725,33 @@ func onAPIPostServerState(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusNoContent, "")
 	}
 }
+
+func onAPIPostContest(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		newContest, _ := store.NewContest("", "", time.Now(), time.Now(), false)
+		if !bind(ctx, log, &newContest) {
+			return
+		}
+
+		if newContest.ContestID.IsNil() {
+			newID, errID := uuid.NewV4()
+			if errID != nil {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+				return
+			}
+
+			newContest.ContestID = newID
+		}
+
+		if errSave := app.db.ContestSave(ctx, &newContest); errSave != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, newContest)
+	}
+}

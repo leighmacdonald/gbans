@@ -36,3 +36,5 @@ export const PlayerClassNames: Record<PlayerClass, string> = {
 export const sessionKeyDemoName = 'demoName';
 export const sessionKeyReportPersonMessageIdName = 'rpmid';
 export const sessionKeyReportSteamID = 'report_steam_id';
+
+export const EmptyUUID = 'feb4bf16-7f55-4cb4-923c-4de69a093b79';
