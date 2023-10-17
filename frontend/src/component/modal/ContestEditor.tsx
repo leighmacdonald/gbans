@@ -24,7 +24,7 @@ import { DateTimeValidationError } from '@mui/x-date-pickers';
 import { BaseFormikInputProps } from '../formik/SteamIdField';
 import { Heading } from '../Heading';
 import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
-import { PermissionLevel, useContest } from '../../api';
+import { EmptyUUID, PermissionLevel, useContest } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { apiContestSave } from '../../api';
 import { logErr } from '../../util/errors';
@@ -78,7 +78,7 @@ export const ContestEditor = NiceModal.create(
 
         const formik = useFormik<ContestEditorFormValues>({
             initialValues: {
-                contest_id: contest?.contest_id ?? '',
+                contest_id: contest?.contest_id ?? EmptyUUID,
                 title: contest?.title ?? '',
                 description: contest?.description ?? '',
                 public: contest?.public ?? false,
@@ -93,16 +93,15 @@ export const ContestEditor = NiceModal.create(
             },
             validateOnBlur: false,
             validateOnChange: false,
-            onReset: () => {
-                alert('reset!');
-            },
-
             validationSchema: validationSchema,
             onSubmit: async (values) => {
                 console.log('submitted');
                 try {
                     const contest = await apiContestSave({
-                        contest_id: values.contest_id,
+                        contest_id:
+                            values.contest_id != ''
+                                ? values.contest_id
+                                : EmptyUUID,
                         date_start: values.date_start,
                         date_end: values.date_end,
                         description: values.description,

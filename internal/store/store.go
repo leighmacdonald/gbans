@@ -46,6 +46,9 @@ const (
 	tableDemo   tableName = "demo"
 )
 
+// EmptyUUID is used as a placeholder value for signaling the entity is new.
+const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
+
 type Store struct {
 	conn *pgxpool.Pool
 	log  *zap.Logger

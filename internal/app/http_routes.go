@@ -282,6 +282,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/bans/group", onAPIGetBansGroup(app))
 		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(app))
 		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(app))
+
+		modRoute.POST("/api/contest", onAPIPostContest(app))
 	}
 
 	adminGrp := engine.Group("/")

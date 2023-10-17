@@ -2,6 +2,7 @@ import { apiCall, PermissionLevel } from './common';
 import { useEffect, useState } from 'react';
 import { logErr } from '../util/errors';
 import { LazyResult } from './stats';
+import { EmptyUUID } from './const';
 
 export interface Contest {
     contest_id: string;
@@ -20,7 +21,7 @@ export interface Contest {
 }
 
 export const apiContestSave = async (contest: Contest) =>
-    contest.contest_id == ''
+    contest.contest_id == EmptyUUID
         ? await apiCall<Contest, Contest>(`/api/contest`, 'POST', contest)
         : await apiCall<Contest, Contest>(
               `/api/contest/${contest.contest_id}`,

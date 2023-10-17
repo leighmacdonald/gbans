@@ -13,7 +13,7 @@ import (
 
 type Contest struct {
 	TimeStamped
-	ContestID      uuid.UUID `json:"contest_id"`
+	ContestID      uuid.UUID `json:"contest_id,omitempty"`
 	Title          string    `json:"title"`
 	Description    string    `json:"description"`
 	Public         bool      `json:"public"`
@@ -81,22 +81,22 @@ func (c Contest) NewEntry(sid64 steamid.SID64, description string, asset Asset) 
 	return &entry, nil
 }
 
-func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (*Contest, error) {
+func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return nil, errors.Wrap(errID, "Failed to generate uuid")
+		return Contest{}, errors.Wrap(errID, "Failed to generate uuid")
 	}
 
 	if title == "" {
-		return nil, errors.New("Title cannot be empty")
+		return Contest{}, errors.New("Title cannot be empty")
 	}
 
 	if description == "" {
-		return nil, errors.New("Title cannot be empty")
+		return Contest{}, errors.New("Title cannot be empty")
 	}
 
 	if dateEnd.Before(dateStart) {
-		return nil, errors.New("End date cannot come before start date")
+		return Contest{}, errors.New("End date cannot come before start date")
 	}
 
 	contest := Contest{
@@ -116,7 +116,7 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 		isNew:              true,
 	}
 
-	return &contest, nil
+	return contest, nil
 }
 
 func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error {
@@ -192,7 +192,14 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]*Contest, err
 }
 
 func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
-	if contest.isNew {
+	if contest.ContestID == uuid.FromStringOrNil(EmptyUUID) {
+		newID, errID := uuid.NewV4()
+		if errID != nil {
+			return errors.Wrap(errID, "Failed to generate new uuidv4")
+		}
+
+		contest.ContestID = newID
+
 		return db.contestInsert(ctx, contest)
 	}
 
