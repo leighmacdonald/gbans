@@ -38,3 +38,13 @@ export const apiSaveMedia = async (upload: UserUploadedFile) =>
         'POST',
         upload
     );
+
+export const apiSaveContestEntryMedia = async (
+    contest_id: string,
+    upload: UserUploadedFile
+) =>
+    await apiCall<MediaUploadResponse, UserUploadedFile>(
+        `/api/contests/${contest_id}/upload`,
+        'POST',
+        upload
+    );

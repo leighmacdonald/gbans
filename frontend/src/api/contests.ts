@@ -52,6 +52,19 @@ export const apiContest = async (contest_id: string) => {
 export const apiContestDelete = async (contest_id: string) =>
     await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');
 
+export interface ContestEntry {
+    contest_id: string;
+    description: string;
+    asset_it: string;
+}
+
+export const apiContestEntrySave = async (entry: ContestEntry) => {
+    return await apiCall<Contest>(
+        `/api/contests/${entry.contest_id}/submit`,
+        'POST'
+    );
+};
+
 export const useContests = () => {
     const [loading, setLoading] = useState(false);
     const [contests, setContests] = useState<Contest[]>([]);

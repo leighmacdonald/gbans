@@ -2686,19 +2686,19 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
+type UserUploadedFile struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+	Mime    string `json:"mime"`
+	Size    int64  `json:"size"`
+}
+
 func onAPISaveMedia(app *App) gin.HandlerFunc {
 	MediaSafeMimeTypesImages := []string{
 		"image/gif",
 		"image/jpeg",
 		"image/png",
 		"image/webp",
-	}
-
-	type UserUploadedFile struct {
-		Content string `json:"content"`
-		Name    string `json:"name"`
-		Mime    string `json:"mime"`
-		Size    int64  `json:"size"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -2765,6 +2765,99 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			}
 
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, media)
+	}
+}
+
+func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		contestID, idErr := getUUIDParam(ctx, "contest_id")
+		if idErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var contest store.Contest
+		if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+			return
+		}
+
+		var req UserUploadedFile
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
+		if decodeErr != nil {
+			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		media, errMedia := store.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
+		if errMedia != nil {
+			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			log.Error("Invalid media uploaded", zap.Error(errMedia))
+		}
+
+		asset, errAsset := store.NewAsset(content, app.conf.S3.BucketMedia, "")
+		if errAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			return
+		}
+
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save user contest media"))
+
+			log.Error("Failed to save user contest entry media to s3 backend", zap.Error(errPut))
+
+			return
+		}
+
+		if errSaveAsset := app.db.SaveAsset(ctx, &asset); errSaveAsset != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+
+			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
+		}
+
+		media.Asset = asset
+
+		media.Contents = nil
+
+		if !contest.MimeTypeAcceptable(media.MimeType) {
+			responseErr(ctx, http.StatusBadRequest, errors.New("Invalid file format"))
+			log.Error("User tried uploading file with forbidden mimetype",
+				zap.String("mime", media.MimeType), zap.String("name", media.Name))
+
+			return
+		}
+
+		if errSave := app.db.SaveMedia(ctx, &media); errSave != nil {
+			log.Error("Failed to save user contest media", zap.Error(errSave))
+
+			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
+				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
+
+				return
+			}
+
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save user contest media"))
 
 			return
 		}

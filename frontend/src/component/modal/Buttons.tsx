@@ -73,7 +73,11 @@ export const ClearButton = ({ onClick }: onClickProps) => {
     );
 };
 
-export const ResetButton = ({ onClick, formId }: onClickProps) => (
+export const ResetButton = ({
+    onClick,
+    formId,
+    disabled = false
+}: onClickProps & { disabled?: boolean }) => (
     <Button
         onClick={onClick}
         startIcon={<RestartAltIcon />}
@@ -81,6 +85,7 @@ export const ResetButton = ({ onClick, formId }: onClickProps) => (
         variant={'contained'}
         type={'reset'}
         form={formId}
+        disabled={disabled}
     >
         Reset
     </Button>
