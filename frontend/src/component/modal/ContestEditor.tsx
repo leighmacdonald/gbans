@@ -75,10 +75,10 @@ export const ContestEditor = NiceModal.create(
         const defaultStartDate = useMemo(() => new Date(), []);
 
         const defaultEndDate = useMemo(() => {
-            const d = new Date();
-            d.setDate(defaultStartDate.getDate() + 1);
-            return d;
-        }, []);
+            const endDate = new Date();
+            endDate.setDate(defaultStartDate.getDate() + 1);
+            return endDate;
+        }, [defaultStartDate]);
 
         const formik = useFormik<ContestEditorFormValues>({
             initialValues: {

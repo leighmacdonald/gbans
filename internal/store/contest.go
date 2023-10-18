@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -30,6 +31,20 @@ type Contest struct {
 	// Allow down voting
 	DownVotes bool `json:"down_votes"`
 	isNew     bool
+}
+
+func (c Contest) MimeTypeAcceptable(mediaType string) bool {
+	if c.MediaTypes == "" {
+		return true
+	}
+
+	for _, validType := range strings.Split(c.MediaTypes, ",") {
+		if strings.EqualFold(validType, mediaType) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type ContestEntry struct {

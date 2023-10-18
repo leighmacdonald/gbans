@@ -179,14 +179,14 @@ func HourlyIndex(t time.Time) (time.Time, int) {
 // 	return curTime, curDay
 // }
 
-// currentHourlyTime calculates the absolute start of the current hour.
-func currentHourlyTime() time.Time {
-	now := time.Now()
-	year, mon, day := now.Date()
-	hour, _, _ := now.Clock()
-
-	return time.Date(year, mon, day, hour, 0, 0, 0, now.Location())
-}
+// // currentHourlyTime calculates the absolute start of the current hour.
+// func currentHourlyTime() time.Time {
+//	now := time.Now()
+//	year, mon, day := now.Date()
+//	hour, _, _ := now.Clock()
+//
+//	return time.Date(year, mon, day, hour, 0, 0, 0, now.Location())
+// }
 
 type MapUseDetail struct {
 	Map      string  `json:"map"`

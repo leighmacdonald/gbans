@@ -145,8 +145,8 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 			return Err(errQuery)
 		}
 
-		db.log.Info("Wiki media created",
-			zap.Int("wiki_media_id", media.MediaID),
+		db.log.Info("Media created",
+			zap.Int("media_id", media.MediaID),
 			zap.Int64("author_id", media.AuthorID.Int64()),
 			zap.String("name", util.SanitizeLog(media.Name)),
 			zap.Int64("size", media.Size),
