@@ -21,6 +21,7 @@ type Contest struct {
 	DateEnd        time.Time `json:"date_end"`
 	MaxSubmissions int       `json:"max_submissions"`
 	MediaTypes     string    `json:"media_types"`
+	NumEntries     int       `json:"num_entries"`
 	Deleted        bool      `json:"-"`
 	// Allow voting
 	Voting bool `json:"voting"`
@@ -163,20 +164,24 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 	contests := []Contest{}
 
 	builder := db.sb.
-		Select("contest_id", "title", "public", "description", "date_start",
-			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
-			"created_on", "updated_on").
-		From("contest")
+		Select("c.contest_id", "c.title", "c.public", "c.description", "c.date_start",
+			"c.date_end", "c.max_submissions", "c.media_types", "c.deleted", "c.voting", "c.min_permission_level",
+			"c.down_votes", "c.created_on", "c.updated_on", "count(ce.contest_entry_id) as num_entries").
+		From("contest c").
+		LeftJoin("contest_entry ce USING (contest_id)").
+		GroupBy("c.contest_id")
 
-	ands := sq.And{sq.Eq{"deleted": false}}
+	ands := sq.And{sq.Eq{"c.deleted": false}}
 	if publicOnly {
-		ands = append(ands, sq.Eq{"public": true})
+		ands = append(ands, sq.Eq{"c.public": true})
 	}
 
 	query, args, errQuery := builder.Where(ands).ToSql()
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
+
+	db.log.Info(query)
 
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
@@ -194,7 +199,7 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.CreatedOn, &contest.UpdatedOn); errScan != nil {
+			&contest.CreatedOn, &contest.UpdatedOn, &contest.NumEntries); errScan != nil {
 			return nil, Err(errScan)
 		}
 
@@ -261,6 +266,7 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 		Set("media_types", contest.MediaTypes).
 		Set("deleted", contest.Deleted).
 		Set("updated_on", contest.UpdatedOn).
+		Where(sq.Eq{"contest_id": contest.ContestID}).
 		ToSql()
 
 	if errQuery != nil {
