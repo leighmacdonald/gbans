@@ -3725,6 +3725,7 @@ func onAPIPostServerState(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusNoContent, "")
 	}
 }
+
 func onAPIDeleteContest(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -3765,6 +3766,54 @@ func onAPIDeleteContest(app *App) gin.HandlerFunc {
 		log.Info("Contest deleted",
 			zap.String("contest_id", contestID.String()),
 			zap.String("title", contest.Title))
+	}
+}
+
+func onAPIUpdateContest(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		contestID, idErr := getUUIDParam(ctx, "contest_id")
+		if idErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var contest store.Contest
+		if !bind(ctx, log, &contest) {
+			return
+		}
+
+		var origContest store.Contest
+
+		if errContest := app.db.ContestByID(ctx, contestID, &origContest); errContest != nil {
+			if errors.Is(errContest, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
+
+				return
+			}
+
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			log.Error("Error getting contest for deletion", zap.Error(errContest))
+
+			return
+		}
+
+		if errSave := app.db.ContestSave(ctx, &contest); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error updating contest", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.Status(http.StatusAccepted)
+
+		log.Info("Contest updated",
+			zap.String("contest_id", contestID.String()),
+			zap.String("title", origContest.Title))
 	}
 }
 

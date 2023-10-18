@@ -12,6 +12,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Grid from '@mui/material/Unstable_Grid2';
 import { logErr } from '../util/errors';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 export const AdminContests = () => {
     const modal = useModal(ModalConfirm);
@@ -50,7 +51,10 @@ export const AdminContests = () => {
                     </Button>
                 </Grid>
             </Grid>
-            <ContainerWithHeader title={'User Submission Contests'}>
+            <ContainerWithHeader
+                title={'User Submission Contests'}
+                iconLeft={<EmojiEventsIcon />}
+            >
                 <Stack>
                     <LazyTableSimple
                         fetchData={apiContests}
@@ -99,7 +103,10 @@ export const AdminContests = () => {
                                 sortType: 'date',
                                 label: 'date_end',
                                 tooltip: 'Ending date',
-                                align: 'left'
+                                align: 'left',
+                                renderer: (obj) => {
+                                    return obj.date_start.toISOString();
+                                }
                             },
                             {
                                 virtual: true,

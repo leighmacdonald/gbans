@@ -27,7 +27,7 @@ export const apiContestSave = async (contest: Contest) =>
     contest.contest_id == EmptyUUID
         ? await apiCall<Contest, Contest>(`/api/contests`, 'POST', contest)
         : await apiCall<Contest, Contest>(
-              `/api/contest/${contest.contest_id}`,
+              `/api/contests/${contest.contest_id}`,
               'PUT',
               contest
           );
@@ -41,8 +41,13 @@ export const apiContests = async () => {
     return resp;
 };
 
-export const apiContest = async (contest_id: string) =>
-    await apiCall<Contest>(`/api/contests/${contest_id}`, 'GET');
+export const apiContest = async (contest_id: string) => {
+    const contest = await apiCall<Contest>(
+        `/api/contests/${contest_id}`,
+        'GET'
+    );
+    return transformDateRange(contest);
+};
 
 export const apiContestDelete = async (contest_id: string) =>
     await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');

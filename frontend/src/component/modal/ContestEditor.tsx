@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFormik } from 'formik';
 import {
     Dialog,
@@ -6,7 +6,6 @@ import {
     DialogContent,
     DialogTitle
 } from '@mui/material';
-import GavelIcon from '@mui/icons-material/Gavel';
 import Stack from '@mui/material/Stack';
 import * as yup from 'yup';
 import {
@@ -38,6 +37,7 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 interface ContestEditorFormValues {
     contest_id: string;
@@ -72,9 +72,13 @@ export const ContestEditor = NiceModal.create(
         const modal = useModal();
         const { sendFlash } = useUserFlashCtx();
 
-        const defaultStartDate = new Date();
-        const defaultEndDate = new Date();
-        defaultEndDate.setDate(defaultStartDate.getDate() + 1);
+        const defaultStartDate = useMemo(() => new Date(), []);
+
+        const defaultEndDate = useMemo(() => {
+            const d = new Date();
+            d.setDate(defaultStartDate.getDate() + 1);
+            return d;
+        }, []);
 
         const formik = useFormik<ContestEditorFormValues>({
             initialValues: {
@@ -94,6 +98,7 @@ export const ContestEditor = NiceModal.create(
             validateOnBlur: false,
             validateOnChange: false,
             validationSchema: validationSchema,
+            enableReinitialize: true,
             onSubmit: async (values) => {
                 console.log('submitted');
                 try {
@@ -126,7 +131,7 @@ export const ContestEditor = NiceModal.create(
                 }
             }
         });
-        //
+
         // const onSave = useCallback(async () => {
         //     console.log('submitting');
         //     await formik.submitForm();
@@ -140,12 +145,14 @@ export const ContestEditor = NiceModal.create(
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle
                         component={Heading}
-                        iconLeft={loading ? <LoadingSpinner /> : <GavelIcon />}
+                        iconLeft={
+                            loading ? <LoadingSpinner /> : <EmojiEventsIcon />
+                        }
                     >
                         {`${
-                            formik.values.contest_id.length > 0
-                                ? 'Edit'
-                                : 'Create'
+                            formik.values.contest_id == EmptyUUID
+                                ? 'Create'
+                                : 'Edit'
                         } A Contest`}
                     </DialogTitle>
 
