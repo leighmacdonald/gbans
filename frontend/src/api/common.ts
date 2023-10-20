@@ -52,7 +52,7 @@ export const apiCall = async <
     TRequestBody = Record<string, unknown> | object
 >(
     url: string,
-    method: string,
+    method: string = 'GET',
     body?: TRequestBody | undefined,
     abortController?: AbortController,
     isRefresh?: boolean

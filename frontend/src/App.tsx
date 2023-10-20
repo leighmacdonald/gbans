@@ -57,6 +57,7 @@ import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 import { AdminContestEditorPage } from './page/AdminContestEditorPage';
 import { ContestListPage } from './page/ContestListPage';
 import NiceModal from '@ebay/nice-modal-react';
+import { ContestPage } from './page/ContestPage';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -207,6 +208,17 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
+
+                                                                <Route
+                                                                    path={
+                                                                        '/contests/:contest_id'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <ContestPage />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
 
                                                             <Route
                                                                 path={'/stats'}
@@ -668,6 +680,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                 </div>
                                                 <Footer />
                                             </Container>
+                                            </NiceModal.Provider>
                                         </React.StrictMode>
                                     </NotificationsProvider>
                                 </ThemeProvider>

@@ -5,10 +5,6 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
-import LinearProgress, {
-    LinearProgressProps
-} from '@mui/material/LinearProgress';
-import Box from '@mui/material/Box';
 import { Flag } from './Flag';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -19,22 +15,6 @@ import { tf2Fonts } from '../theme';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import StorageIcon from '@mui/icons-material/Storage';
 import { logErr } from '../util/errors';
-
-export const LinearProgressWithLabel = (
-    props: LinearProgressProps & { value: number }
-) => (
-    <Box display="flex" alignItems="center">
-        <Box width="100%" mr={1}>
-            <LinearProgress variant="determinate" {...props} />
-        </Box>
-        <Box minWidth={35}>
-            <Typography
-                variant="subtitle2"
-                color="textSecondary"
-            >{`${Math.round(props.value)}%`}</Typography>
-        </Box>
-    </Box>
-);
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();

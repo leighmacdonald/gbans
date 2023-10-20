@@ -135,7 +135,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/admin/import", "/admin/filters", "/404", "/logout", "/login/success", "/report/:report_id", "/wiki",
 		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
-		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests", "/contests",
+		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests", "/contests", "/contests/:contest_id",
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
@@ -190,6 +190,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		optionalAuth.Use(authMiddleware(app, consts.PGuest))
 		optionalAuth.GET("/api/contests", onAPIGetContests(app))
 		optionalAuth.GET("/api/contests/:contest_id", onAPIGetContest(app))
+		optionalAuth.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
 	}
 
 	srvGrp := engine.Group("/")
@@ -251,6 +252,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(app))
 
 		authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(app))
+		authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(app))
 	}
 
 	editorGrp := engine.Group("/")

@@ -21,6 +21,7 @@ type Contest struct {
 	DateStart      time.Time `json:"date_start"`
 	DateEnd        time.Time `json:"date_end"`
 	MaxSubmissions int       `json:"max_submissions"`
+	OwnSubmissions int       `json:"own_submissions"`
 	MediaTypes     string    `json:"media_types"`
 	NumEntries     int       `json:"num_entries"`
 	Deleted        bool      `json:"-"`
@@ -58,7 +59,6 @@ type ContestEntry struct {
 	Description    string        `json:"description"`
 	Placement      int           `json:"placement"`
 	Deleted        bool          `json:"deleted"`
-	isNew          bool
 }
 
 type ContestEntryVote struct {
@@ -68,33 +68,36 @@ type ContestEntryVote struct {
 	TimeStamped
 }
 
-func (c Contest) NewEntry(sid64 steamid.SID64, description string, asset Asset) (*ContestEntry, error) {
+func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description string) (ContestEntry, error) {
 	if c.ContestID.IsNil() {
-		return nil, errors.New("Invalid contest id")
+		return ContestEntry{}, errors.New("Invalid contest id")
+	}
+
+	if !steamID.Valid() {
+		return ContestEntry{}, consts.ErrInvalidSID
+	}
+
+	if description == "" {
+		return ContestEntry{}, errors.New("Description cannot be empty")
 	}
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return nil, errors.Wrap(errID, "Failed to generate uuid")
+		return ContestEntry{}, errors.Wrap(errID, "Failed to generate new uuidv4")
 	}
 
-	if description == "" {
-		return nil, errors.New("description cannot be empty")
-	}
-
-	entry := ContestEntry{
+	return ContestEntry{
 		TimeStamped:    NewTimeStamped(),
 		ContestEntryID: newID,
 		ContestID:      c.ContestID,
-		SteamID:        sid64,
-		AssetID:        asset.AssetID,
+		SteamID:        steamID,
+		Personaname:    "",
+		AvatarHash:     "",
+		AssetID:        assetID,
 		Description:    description,
 		Placement:      0,
 		Deleted:        false,
-		isNew:          true,
-	}
-
-	return &entry, nil
+	}, nil
 }
 
 func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
@@ -140,17 +143,13 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 		return errors.New("Invalid contest id")
 	}
 
-	query, args, errQuery := db.sb.
+	query, args := db.sb.
 		Select("contest_id", "title", "public", "description", "date_start",
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
 			"created_on", "updated_on").
 		From("contest").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}}).
-		ToSql()
-
-	if errQuery != nil {
-		return Err(errQuery)
-	}
+		MustSql()
 
 	if errScan := db.QueryRow(ctx, query, args...).
 		Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
@@ -196,8 +195,6 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 		return nil, Err(errQuery)
 	}
 
-	db.log.Info(query)
-
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
 		if errors.Is(errRows, ErrNoResult) {
@@ -222,6 +219,26 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 	}
 
 	return contests, nil
+}
+
+func (db *Store) ContestEntrySave(ctx context.Context, entry ContestEntry) error {
+	query, args, errQuery := db.sb.
+		Insert("contest_entry").
+		Columns("contest_entry_id", "contest_id", "steam_id", "asset_id", "description",
+			"placement", "deleted", "created_on", "updated_on").
+		Values(entry.ContestEntryID, entry.ContestID, entry.SteamID, entry.AssetID, entry.Description,
+			entry.Placement, entry.Deleted, entry.CreatedOn, entry.UpdatedOn).
+		ToSql()
+
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		return Err(errExec)
+	}
+
+	return nil
 }
 
 func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
@@ -298,9 +315,10 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error) {
 	query, args, errQuery := db.sb.
 		Select("c.contest_entry_id", "c.contest_id", "c.steam_id", "c.asset_id", "c.description",
-			"c.placement", "c.deleted", "c.created_on", "c.updated_on", "p.persona_name", "p.avatar_hash").
+			"c.placement", "c.deleted", "c.created_on", "c.updated_on", "p.personaname", "p.avatarhash").
 		From("contest_entry c").
 		LeftJoin("person p USING(steam_id)").
+		Where(sq.Eq{"contest_id": contestID}).
 		ToSql()
 
 	if errQuery != nil {
@@ -323,7 +341,7 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 	for rows.Next() {
 		var entry ContestEntry
 
-		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.Description,
+		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
 			&entry.Personaname, &entry.AvatarHash); errScan != nil {
 			return nil, Err(errScan)
