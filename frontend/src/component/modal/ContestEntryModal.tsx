@@ -22,12 +22,12 @@ import Button from '@mui/material/Button';
 import { fromByteArray } from 'base64-js';
 import { Nullable } from '../../util/types';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
-import { LinearProgressWithLabel } from '../ServerList';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
 
 interface ContestEntryFormValues {
     contest_id: string;
@@ -38,7 +38,7 @@ const validationSchema = yup.object({
     description: minStringValidator('Description', 1)
 });
 
-export const ContestEntry = NiceModal.create(
+export const ContestEntryModal = NiceModal.create(
     ({ contest_id }: { contest_id: string }) => {
         const [userUpload, setUserUpload] =
             useState<Nullable<UserUploadedFile>>();
@@ -106,7 +106,7 @@ export const ContestEntry = NiceModal.create(
         const formik = useFormik<ContestEntryFormValues>({
             initialValues: {
                 contest_id: contest?.contest_id ?? EmptyUUID,
-                description: ''
+                description: contest?.description ?? ''
             },
             validateOnBlur: false,
             validateOnChange: false,
@@ -119,14 +119,11 @@ export const ContestEntry = NiceModal.create(
                 }
 
                 try {
-                    const contest = await apiContestEntrySave({
-                        contest_id:
-                            values.contest_id != ''
-                                ? values.contest_id
-                                : EmptyUUID,
-                        description: values.description,
-                        asset_it: assetID
-                    });
+                    const contest = await apiContestEntrySave(
+                        values.contest_id != '' ? values.contest_id : EmptyUUID,
+                        values.description,
+                        assetID
+                    );
                     sendFlash(
                         'success',
                         `Entry created successfully (${contest.contest_id}`
@@ -178,7 +175,10 @@ export const ContestEntry = NiceModal.create(
                                             variant="contained"
                                             component="span"
                                             fullWidth
-                                            disabled={Boolean(userUpload)}
+                                            disabled={
+                                                Boolean(userUpload) ||
+                                                uploadInProgress
+                                            }
                                             startIcon={
                                                 uploadInProgress ? (
                                                     <CircularProgress

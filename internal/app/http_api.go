@@ -2773,27 +2773,75 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
+	type entryReq struct {
+		Description string    `json:"description"`
+		AssetID     uuid.UUID `json:"asset_id"`
+	}
+
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		contest, success := contestFromCtx(ctx, app)
+		if !success {
+			return
+		}
+
+		var req entryReq
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		steamID := currentUserProfile(ctx).SteamID
+
+		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
+		if errEntry != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+
+			return
+		}
+
+		if errSave := app.db.ContestEntrySave(ctx, entry); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save entry"))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, entry)
+
+		log.Info("New contest entry submitted", zap.String("contest_id", contest.ContestID.String()))
+	}
+}
+func contestFromCtx(ctx *gin.Context, app *App) (store.Contest, bool) {
+	contestID, idErr := getUUIDParam(ctx, "contest_id")
+	if idErr != nil {
+		responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+		return store.Contest{}, false
+	}
+
+	var contest store.Contest
+	if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
+		responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+		return store.Contest{}, false
+	}
+
+	if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
+		responseErr(ctx, http.StatusForbidden, consts.ErrNotFound)
+
+		return store.Contest{}, false
+	}
+
+	return contest, true
+}
+
 func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		contestID, idErr := getUUIDParam(ctx, "contest_id")
-		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
-			return
-		}
-
-		var contest store.Contest
-		if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			return
-		}
-
-		if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
+		contest, success := contestFromCtx(ctx, app)
+		if !success {
 			return
 		}
 
@@ -3866,31 +3914,12 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		contestID, idErr := getUUIDParam(ctx, "contest_id")
-		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
+		if _, success := contestFromCtx(ctx, app); !success {
 			return
 		}
 
 		var contest store.Contest
 		if !bind(ctx, log, &contest) {
-			return
-		}
-
-		var origContest store.Contest
-
-		if errContest := app.db.ContestByID(ctx, contestID, &origContest); errContest != nil {
-			if errors.Is(errContest, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
-			log.Error("Error getting contest for deletion", zap.Error(errContest))
-
 			return
 		}
 
@@ -3905,8 +3934,8 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 		ctx.Status(http.StatusAccepted)
 
 		log.Info("Contest updated",
-			zap.String("contest_id", contestID.String()),
-			zap.String("title", origContest.Title))
+			zap.String("contest_id", contest.ContestID.String()),
+			zap.String("title", contest.Title))
 	}
 }
 
@@ -3942,9 +3971,10 @@ func onAPIPostContest(app *App) gin.HandlerFunc {
 
 func onAPIGetContests(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		publicOnly := currentUserProfile(ctx).PermissionLevel < consts.PModerator
-
+		user := currentUserProfile(ctx)
+		publicOnly := user.PermissionLevel < consts.PModerator
 		contests, errContests := app.db.Contests(ctx, publicOnly)
+
 		if errContests != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -3960,26 +3990,29 @@ func onAPIGetContests(app *App) gin.HandlerFunc {
 
 func onAPIGetContest(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		contestID, idErr := getUUIDParam(ctx, "contest_id")
-		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
+		contest, success := contestFromCtx(ctx, app)
+		if !success {
 			return
 		}
 
-		var contest store.Contest
-		if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
+		ctx.JSON(http.StatusOK, contest)
+	}
+}
+
+func onAPIGetContestEntries(app *App) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		contest, success := contestFromCtx(ctx, app)
+		if !success {
+			return
+		}
+
+		entries, errEntries := app.db.ContestEntries(ctx, contest.ContestID)
+		if errEntries != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, contest)
+		ctx.JSON(http.StatusOK, entries)
 	}
 }

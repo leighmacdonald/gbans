@@ -4,12 +4,17 @@ import { apiContests, Contest } from '../api';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 import { logErr } from '../util/errors';
 import NiceModal from '@ebay/nice-modal-react';
 import { ModalContestEntry } from '../component/modal';
+import PublishIcon from '@mui/icons-material/Publish';
+import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
+import { isAfter } from 'date-fns/fp';
+import Link from '@mui/material/Link';
+import { Link as RouterLink } from 'react-router-dom';
 
 export const ContestListPage = () => {
     const onEnter = useCallback(async (contest_id: string) => {
@@ -32,7 +37,16 @@ export const ContestListPage = () => {
                                 sortable: true,
                                 label: 'Title',
                                 tooltip: 'Title',
-                                align: 'left'
+                                align: 'left',
+                                renderer: (contest) => (
+                                    <Link
+                                        component={RouterLink}
+                                        to={`/contests/${contest.contest_id}`}
+                                        variant={'button'}
+                                    >
+                                        {contest.title}
+                                    </Link>
+                                )
                             },
                             {
                                 sortKey: 'num_entries',
@@ -48,8 +62,8 @@ export const ContestListPage = () => {
                                 label: 'Starts',
                                 tooltip: 'Starting date',
                                 align: 'left',
-                                renderer: (obj) =>
-                                    format(obj.date_start, 'H:m dd/MM/yyyy')
+                                renderer: (contest) =>
+                                    format(contest.date_start, 'dd/MM/yy H:m')
                             },
                             {
                                 sortKey: 'date_end',
@@ -58,8 +72,8 @@ export const ContestListPage = () => {
                                 label: 'Ends',
                                 tooltip: 'Ending date',
                                 align: 'left',
-                                renderer: (obj) =>
-                                    format(obj.date_end, 'H:m dd/MM/yyyy')
+                                renderer: (contest) =>
+                                    format(contest.date_end, 'dd/MM/yy H:m')
                             },
                             {
                                 sortable: true,
@@ -68,8 +82,15 @@ export const ContestListPage = () => {
                                 label: 'Remaining',
                                 tooltip: 'Remaining Time',
                                 align: 'left',
-                                renderer: (obj) =>
-                                    formatDistanceToNow(obj.date_end)
+                                renderer: (contest) => {
+                                    if (isAfter(contest.date_end, new Date())) {
+                                        return 'Expired';
+                                    }
+
+                                    return formatDistanceToNowStrict(
+                                        contest.date_end
+                                    );
+                                }
                             },
                             {
                                 sortable: true,
@@ -79,7 +100,7 @@ export const ContestListPage = () => {
                                 tooltip: '',
                                 align: 'center',
                                 width: '200px',
-                                renderer: (obj) => {
+                                renderer: (contest) => {
                                     return (
                                         <ButtonGroup
                                             sx={{
@@ -91,9 +112,14 @@ export const ContestListPage = () => {
                                                 fullWidth
                                                 variant={'contained'}
                                                 color={'success'}
+                                                disabled={isAfter(
+                                                    contest.date_end,
+                                                    new Date()
+                                                )}
+                                                startIcon={<PublishIcon />}
                                                 onClick={async () => {
                                                     await onEnter(
-                                                        obj.contest_id
+                                                        contest.contest_id
                                                     );
                                                 }}
                                             >
