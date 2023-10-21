@@ -1,18 +1,18 @@
-import { Person, Team } from '../api';
 import Avatar from '@mui/material/Avatar';
-import React from 'react';
-import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
-import { useTheme } from '@mui/material/styles';
-import Grow from '@mui/material/Grow';
-import MenuList from '@mui/material/MenuList';
-import Popper from '@mui/material/Popper';
-import ClickAwayListener from '@mui/material/ClickAwayListener';
-import Paper from '@mui/material/Paper';
-import MenuItem from '@mui/material/MenuItem';
-import { useNavigate } from 'react-router-dom';
-import { createExternalLinks, to } from '../util/history';
 import Box from '@mui/material/Box';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import Grow from '@mui/material/Grow';
+import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Paper from '@mui/material/Paper';
+import Popper from '@mui/material/Popper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Person, Team } from '../api';
+import { createExternalLinks, to } from '../util/history';
 
 export const teamColour = (team: Team): string => {
     switch (team) {

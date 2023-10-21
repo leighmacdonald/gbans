@@ -1,8 +1,8 @@
-import React, { JSX } from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
+import React, { JSX } from 'react';
 import { useParams } from 'react-router-dom';
-import { PageNotFound } from './PageNotFound';
 import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
+import { PageNotFound } from './PageNotFound';
 
 export const PlayerStatsPage = (): JSX.Element => {
     const { steam_id } = useParams();

@@ -1,30 +1,30 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
-import { Heading } from '../component/Heading';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { DataTable, RowsPerPage } from '../component/DataTable';
-import { apiGetFilters, apiSaveFilter, Filter } from '../api/filters';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import { ConfirmDeleteFilterModal } from '../component/ConfirmDeleteFilterModal';
-import { Nullable } from '../util/types';
-import Button from '@mui/material/Button';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import EditIcon from '@mui/icons-material/Edit';
 import {
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle
 } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Switch from '@mui/material/Switch';
-import { logErr } from '../util/errors';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { apiGetFilters, apiSaveFilter, Filter } from '../api/filters';
+import { ConfirmDeleteFilterModal } from '../component/ConfirmDeleteFilterModal';
+import { DataTable, RowsPerPage } from '../component/DataTable';
+import { Heading } from '../component/Heading';
+import { logErr } from '../util/errors';
+import { Nullable } from '../util/types';
 
 interface FilterEditModalProps {
     open: boolean;

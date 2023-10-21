@@ -1,4 +1,22 @@
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import MasksIcon from '@mui/icons-material/Masks';
+import SportsIcon from '@mui/icons-material/Sports';
+import { Popover } from '@mui/material';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
+import { formatDistance } from 'date-fns';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
     apiGetMatch,
     MatchHealer,
@@ -8,36 +26,18 @@ import {
     MatchResult,
     Team
 } from '../api';
-import { useNavigate, useParams } from 'react-router-dom';
-import Stack from '@mui/material/Stack';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { LoadingSpinner } from '../component/LoadingSpinner';
-import { logErr } from '../util/errors';
-import Grid from '@mui/material/Unstable_Grid2';
-import Typography from '@mui/material/Typography';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { PageNotFound } from './PageNotFound';
-import { LazyTable } from '../component/LazyTable';
 import { compare, Order, stableSort } from '../component/DataTable';
-import { PlayerClassImg } from '../component/PlayerClassImg';
-import { Popover } from '@mui/material';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import { formatDistance } from 'date-fns';
-import SportsIcon from '@mui/icons-material/Sports';
 import { Heading } from '../component/Heading';
+import { LazyTable } from '../component/LazyTable';
+import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
-import { useTheme } from '@mui/material/styles';
-import MasksIcon from '@mui/icons-material/Masks';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import TableHead from '@mui/material/TableHead';
+import { PlayerClassImg } from '../component/PlayerClassImg';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
-import Box from '@mui/material/Box';
+import { logErr } from '../util/errors';
+import { PageNotFound } from './PageNotFound';
 
 interface PlayerClassHoverStatsProps {
     stats: MatchPlayerClass;

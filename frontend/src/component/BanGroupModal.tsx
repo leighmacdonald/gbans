@@ -1,31 +1,43 @@
-import React from 'react';
+import GavelIcon from '@mui/icons-material/Gavel';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import Stack from '@mui/material/Stack';
+import { useFormik } from 'formik';
+import React from 'react';
+import * as yup from 'yup';
 import {
     apiCreateBanGroup,
     BanType,
     Duration,
     IAPIBanGroupRecord
 } from '../api';
-import { ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
 import { logErr } from '../util/errors';
-import { useFormik } from 'formik';
-import * as yup from 'yup';
-import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import GavelIcon from '@mui/icons-material/Gavel';
-import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import { ConfirmationModalProps } from './ConfirmationModal';
+import { Heading } from './Heading';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
 } from './formik/DurationCustomField';
-import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
 import { ModalButtons } from './formik/ModalButtons';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
 import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
 import { SteamIdField, steamIdValidator } from './formik/SteamIdField';
 
 export interface BanGroupModalProps
-    extends ConfirmationModalProps<IAPIBanGroupRecord> {}
+    extends ConfirmationModalProps<IAPIBanGroupRecord> {
+    asnNum?: number;
+}
 
 interface BanGroupFormValues {
     steam_id: string;

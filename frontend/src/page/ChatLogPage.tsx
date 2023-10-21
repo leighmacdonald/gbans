@@ -1,11 +1,33 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
+import ChatIcon from '@mui/icons-material/Chat';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FlagIcon from '@mui/icons-material/Flag';
+import HistoryIcon from '@mui/icons-material/History';
+import ReportIcon from '@mui/icons-material/Report';
+import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import { Divider, IconButton, TablePagination } from '@mui/material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
-import MenuItem from '@mui/material/MenuItem';
+import { parseISO } from 'date-fns';
+import { formatISO9075 } from 'date-fns/fp';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTimer } from 'react-timer-hook';
+import stc from 'string-to-color';
 import {
     apiGetMessages,
     apiGetServers,
@@ -18,37 +40,15 @@ import {
     sessionKeyReportPersonMessageIdName,
     sessionKeyReportSteamID
 } from '../api';
-import { steamIdQueryValue } from '../util/text';
-import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { Order, RowsPerPage } from '../component/DataTable';
+import { DelayedTextInput } from '../component/DelayedTextInput';
 import { Heading } from '../component/Heading';
 import { LazyTable } from '../component/LazyTable';
-import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { formatISO9075 } from 'date-fns/fp';
-import { Divider, IconButton, TablePagination } from '@mui/material';
-import { useTimer } from 'react-timer-hook';
-import ChatIcon from '@mui/icons-material/Chat';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Box from '@mui/material/Box';
-import { DelayedTextInput } from '../component/DelayedTextInput';
-import { parseISO } from 'date-fns';
-import FlagIcon from '@mui/icons-material/Flag';
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import Menu from '@mui/material/Menu';
-import { useNavigate } from 'react-router-dom';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ReportIcon from '@mui/icons-material/Report';
-import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
-import ListItemText from '@mui/material/ListItemText';
-import HistoryIcon from '@mui/icons-material/History';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import stc from 'string-to-color';
 import { PersonCell } from '../component/PersonCell';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import CircularProgress from '@mui/material/CircularProgress';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { logErr } from '../util/errors';
+import { steamIdQueryValue } from '../util/text';
 
 const anyServer: Server = {
     server_name: 'Any',

@@ -1,15 +1,15 @@
-import React, { JSX } from 'react';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { discordLoginURL } from '../api';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import Stack from '@mui/material/Stack';
+import AddLinkIcon from '@mui/icons-material/AddLink';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import LinkIcon from '@mui/icons-material/Link';
-import AddLinkIcon from '@mui/icons-material/AddLink';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import React, { JSX } from 'react';
+import { discordLoginURL } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 export const ProfileSettingsPage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();

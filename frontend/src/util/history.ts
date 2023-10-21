@@ -1,5 +1,6 @@
 import { createBrowserHistory } from 'history';
 import SteamID from 'steamid';
+
 export default createBrowserHistory();
 
 export const to = (url: string) => {

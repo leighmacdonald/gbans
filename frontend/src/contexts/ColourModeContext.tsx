@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
 import { noop } from 'lodash-es';
+import React, { useContext } from 'react';
 
 export const ColourModeContext = React.createContext({
     toggleColorMode: () => {

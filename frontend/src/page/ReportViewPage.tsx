@@ -1,10 +1,22 @@
-import React, { useCallback, useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
+import GavelIcon from '@mui/icons-material/Gavel';
+import SendIcon from '@mui/icons-material/Send';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import { ReportComponent } from '../component/ReportComponent';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
+import React, { useCallback, useEffect, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     apiGetBansSteam,
@@ -19,27 +31,15 @@ import {
     reportStatusString,
     ReportWithAuthor
 } from '../api';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import SendIcon from '@mui/icons-material/Send';
-import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { logErr } from '../util/errors';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { BanSteamModal } from '../component/BanSteamModal';
 import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
+import { ReportComponent } from '../component/ReportComponent';
 import { SteamIDList } from '../component/SteamIDList';
-import { useTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
-import { BanSteamModal } from '../component/BanSteamModal';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import GavelIcon from '@mui/icons-material/Gavel';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();

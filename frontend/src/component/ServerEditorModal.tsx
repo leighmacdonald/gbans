@@ -1,15 +1,15 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { apiCreateServer, SaveServerOpts, Server, apiSaveServer } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { Heading } from './Heading';
 
 export interface ServerEditorModalProps extends ConfirmationModalProps<Server> {
     server: Nullable<Server>;

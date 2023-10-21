@@ -1,6 +1,16 @@
 {
-    "semi": true,
-    "trailingComma": "none",
-    "singleQuote": true,
-    "tabWidth": 4
+  "semi": true,
+  "trailingComma": "none",
+  "singleQuote": true,
+  "tabWidth": 4,
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports"
+  ],
+  "importOrder": [
+    "^@core/(.*)$",
+    "^@server/(.*)$",
+    "^@ui/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": false
 }

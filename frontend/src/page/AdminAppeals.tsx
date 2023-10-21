@@ -1,6 +1,21 @@
-import Grid from '@mui/material/Unstable_Grid2';
-import React, { useEffect, useMemo, useState } from 'react';
+import { TablePagination } from '@mui/material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import format from 'date-fns/format';
+import { addDays, isAfter, isBefore } from 'date-fns/fp';
+import { noop } from 'lodash-es';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     apiGetAppeals,
     AppealOverview,
@@ -8,27 +23,12 @@ import {
     appealStateString,
     BanReason
 } from '../api';
-import { logErr } from '../util/errors';
-import Paper from '@mui/material/Paper';
-import format from 'date-fns/format';
-import { Heading } from '../component/Heading';
-import { steamIdQueryValue } from '../util/text';
-import Button from '@mui/material/Button';
-import { Link } from 'react-router-dom';
-import { PersonCell } from '../component/PersonCell';
-import { LazyTable } from '../component/LazyTable';
 import { Order, RowsPerPage } from '../component/DataTable';
-import { TablePagination } from '@mui/material';
-import Box from '@mui/material/Box';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import CardContent from '@mui/material/CardContent';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import { noop } from 'lodash-es';
-import { addDays, isAfter, isBefore } from 'date-fns/fp';
+import { Heading } from '../component/Heading';
+import { LazyTable } from '../component/LazyTable';
+import { PersonCell } from '../component/PersonCell';
+import { logErr } from '../util/errors';
+import { steamIdQueryValue } from '../util/text';
 
 interface BasicStatCardProps {
     title: string;

@@ -1,8 +1,8 @@
-import { Duration } from '../../api';
-import React from 'react';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
 import TextField from '@mui/material/TextField';
+import { FormikHandlers, FormikState } from 'formik/dist/types';
+import React from 'react';
 import * as yup from 'yup';
+import { Duration } from '../../api';
 
 export const DurationCustomFieldValidator = yup
     .string()

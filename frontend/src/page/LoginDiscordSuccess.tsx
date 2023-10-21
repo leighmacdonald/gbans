@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { apiLinkDiscord } from '../api';
-import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiLinkDiscord } from '../api';
 import { logErr } from '../util/errors';
 
 export const LoginDiscordSuccess = () => {

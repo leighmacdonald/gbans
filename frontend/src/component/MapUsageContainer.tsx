@@ -1,20 +1,20 @@
-import { apiGetMapUsage } from '../api';
-import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart } from '@mui/x-charts';
-import { compare, Order, RowsPerPage, stableSort } from './DataTable';
-import { ContainerWithHeader } from './ContainerWithHeader';
 import MapIcon from '@mui/icons-material/Map';
-import Grid from '@mui/material/Unstable_Grid2';
-import Box from '@mui/material/Box';
-import { LoadingSpinner } from './LoadingSpinner';
-import Stack from '@mui/material/Stack';
-import Pagination from '@mui/material/Pagination';
-import { LazyTable } from './LazyTable';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
-import Tab from '@mui/material/Tab';
 import TabPanel from '@mui/lab/TabPanel';
+import Box from '@mui/material/Box';
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Grid from '@mui/material/Unstable_Grid2';
+import { PieChart } from '@mui/x-charts';
+import React, { useEffect, useMemo, useState } from 'react';
+import { apiGetMapUsage } from '../api';
 import { logErr } from '../util/errors';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import { compare, Order, RowsPerPage, stableSort } from './DataTable';
+import { LazyTable } from './LazyTable';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface MapUseChartProps {
     details: SeriesData[];

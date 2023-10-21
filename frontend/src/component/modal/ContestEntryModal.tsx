@@ -1,33 +1,33 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { useFormik } from 'formik';
+import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle
 } from '@mui/material';
-import * as yup from 'yup';
-import { minStringValidator } from '../formik/Validator';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import TextField from '@mui/material/TextField';
-import { BaseFormikInputProps } from '../formik/SteamIdField';
-import { Heading } from '../Heading';
-import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import { fromByteArray } from 'base64-js';
+import { useFormik } from 'formik';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import * as yup from 'yup';
 import { apiContestEntrySave, EmptyUUID, useContest } from '../../api';
+import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
-import { LoadingSpinner } from '../LoadingSpinner';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import Button from '@mui/material/Button';
-import { fromByteArray } from 'base64-js';
 import { Nullable } from '../../util/types';
-import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
-import Grid from '@mui/material/Unstable_Grid2';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { Heading } from '../Heading';
 import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { BaseFormikInputProps } from '../formik/SteamIdField';
+import { minStringValidator } from '../formik/Validator';
+import { CancelButton, ResetButton, SaveButton } from './Buttons';
 
 interface ContestEntryFormValues {
     contest_id: string;

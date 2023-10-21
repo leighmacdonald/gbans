@@ -1,5 +1,4 @@
-import { PlayerClass, Team } from './const';
-import { TeamScores } from './stats';
+import { parseDateTime } from '../util/text';
 import {
     apiCall,
     DataCount,
@@ -7,7 +6,8 @@ import {
     QueryFilter,
     transformMatchDates
 } from './common';
-import { parseDateTime } from '../util/text';
+import { PlayerClass, Team } from './const';
+import { TeamScores } from './stats';
 
 export interface MatchHealer {
     match_medic_id: number;

@@ -1,3 +1,4 @@
+import { parseDateTime } from '../util/text';
 import {
     apiCall,
     DataCount,
@@ -5,7 +6,6 @@ import {
     QueryFilter,
     TimeStamped
 } from './common';
-import { parseDateTime } from '../util/text';
 
 export const defaultAvatarHash = 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb';
 

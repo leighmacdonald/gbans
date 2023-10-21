@@ -1,5 +1,8 @@
+import { TablePagination } from '@mui/material';
+import Stack from '@mui/material/Stack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { LazyResult } from '../api';
+import { logErr } from '../util/errors';
 import {
     compare,
     HeadingCell,

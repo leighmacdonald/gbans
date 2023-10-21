@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
+import React, { useCallback } from 'react';
 import { apiDeleteFilter, Filter } from '../api/filters';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { Heading } from './Heading';
 
 export interface ConfirmDeleteFilterModalProps
     extends ConfirmationModalProps<Filter> {

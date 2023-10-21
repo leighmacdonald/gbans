@@ -1,8 +1,8 @@
+import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
+import IPCIDR from 'ip-cidr';
 import * as React from 'react';
 import { ChangeEvent, useState } from 'react';
-import FormControl from '@mui/material/FormControl';
-import IPCIDR from 'ip-cidr';
 
 export interface IPInputProps {
     id?: string;

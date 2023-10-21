@@ -1,5 +1,5 @@
-import darkScrollbar from '@mui/material/darkScrollbar';
 import { createTheme, PaletteMode, PaletteOptions } from '@mui/material';
+import darkScrollbar from '@mui/material/darkScrollbar';
 
 const baseFontSet = [
     '"Helvetica Neue"',

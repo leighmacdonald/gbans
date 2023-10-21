@@ -1,14 +1,14 @@
-import { apiGetSourceBans, sbBanRecord } from '../api';
-import React, { useEffect, useState, JSX } from 'react';
-import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
-import TableCell from '@mui/material/TableCell';
-import TableBody from '@mui/material/TableBody';
-import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import React, { useEffect, useState, JSX } from 'react';
+import { apiGetSourceBans, sbBanRecord } from '../api';
 import { logErr } from '../util/errors';
 
 interface SourceBansListProps {

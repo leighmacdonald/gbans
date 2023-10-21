@@ -1,9 +1,9 @@
-import React, { ChangeEvent, useState } from 'react';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
-import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import TextField from '@mui/material/TextField';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import React, { ChangeEvent, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';

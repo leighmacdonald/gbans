@@ -1,5 +1,3 @@
-import React, { JSX } from 'react';
-import Button from '@mui/material/Button';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import {
@@ -8,7 +6,9 @@ import {
     DialogContent,
     DialogTitle
 } from '@mui/material';
+import Button from '@mui/material/Button';
 import { Breakpoint } from '@mui/system';
+import React, { JSX } from 'react';
 
 export interface ConfirmationModalProps<T> {
     initialValue?: T;

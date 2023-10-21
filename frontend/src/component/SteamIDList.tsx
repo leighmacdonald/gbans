@@ -1,11 +1,11 @@
-import React from 'react';
-import ListItemText from '@mui/material/ListItemText';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import List from '@mui/material/List';
-import { useTheme } from '@mui/material/styles';
 import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import { useTheme } from '@mui/material/styles';
+import React from 'react';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import { ContainerWithHeader } from './ContainerWithHeader';
 
 export interface SteamIDListProps {

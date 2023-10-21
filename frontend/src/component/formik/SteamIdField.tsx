@@ -1,11 +1,11 @@
-import React from 'react';
 import TextField from '@mui/material/TextField';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
-import { Nullable } from '../../util/types';
-import { apiGetProfile, PlayerProfile } from '../../api';
-import * as yup from 'yup';
-import { logErr } from '../../util/errors';
+import React from 'react';
 import SteamID from 'steamid';
+import * as yup from 'yup';
+import { apiGetProfile, PlayerProfile } from '../../api';
+import { logErr } from '../../util/errors';
+import { Nullable } from '../../util/types';
 
 export const steamIdValidator = yup
     .string()

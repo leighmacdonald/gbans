@@ -1,21 +1,21 @@
-import React, { JSX, useEffect, useState } from 'react';
-import { LazyTable } from '../component/LazyTable';
-import Grid from '@mui/material/Unstable_Grid2';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
-import Typography from '@mui/material/Typography';
-import { IconButton, TablePagination } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import Tooltip from '@mui/material/Tooltip';
-import { useNavigate, useParams } from 'react-router-dom';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { PageNotFound } from './PageNotFound';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { IconButton, TablePagination } from '@mui/material';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import React, { JSX, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { Order, RowsPerPage } from '../component/DataTable';
+import { LazyTable } from '../component/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { PageNotFound } from './PageNotFound';
 
 interface MatchSummaryTableProps {
     steam_id: string;

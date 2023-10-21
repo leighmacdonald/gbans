@@ -1,18 +1,18 @@
-import React, { JSX, useState } from 'react';
+import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
+import React, { JSX, useState } from 'react';
+import { useParams } from 'react-router';
 import {
     apiGetPlayerWeaponStats,
     PlayerWeaponStatsResponse,
     Weapon
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import InsightsIcon from '@mui/icons-material/Insights';
-import { defaultFloatFmtPct, humanCount } from '../util/text';
-import { useParams } from 'react-router';
+import { RowsPerPage } from '../component/DataTable';
+import { LazyTableSimple } from '../component/LazyTableSimple';
 import { PersonCell } from '../component/PersonCell';
 import { fmtWhenGt } from '../component/PlayersOverallContainer';
-import { LazyTableSimple } from '../component/LazyTableSimple';
-import { RowsPerPage } from '../component/DataTable';
+import { defaultFloatFmtPct, humanCount } from '../util/text';
 
 interface WeaponStatsContainerProps {
     weapon_id: number;

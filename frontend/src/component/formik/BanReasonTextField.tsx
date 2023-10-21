@@ -1,8 +1,8 @@
-import React from 'react';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
 import TextField from '@mui/material/TextField';
-import { BanReason } from '../../api';
+import { FormikHandlers, FormikState } from 'formik/dist/types';
+import React from 'react';
 import * as yup from 'yup';
+import { BanReason } from '../../api';
 
 export const BanReasonTextFieldValidator = yup
     .string()

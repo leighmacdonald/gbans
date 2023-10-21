@@ -1,10 +1,12 @@
-import React, { JSX, useCallback, useEffect, useState } from 'react';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
+import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import Box from '@mui/material/Box';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import React, { JSX, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     apiCreateReport,
@@ -15,14 +17,12 @@ import {
     sessionKeyReportPersonMessageIdName,
     sessionKeyReportSteamID
 } from '../api';
-import { ProfileSelectionInput } from './ProfileSelectionInput';
-import { MDEditor } from './MDEditor';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
-import Stack from '@mui/material/Stack';
+import { MDEditor } from './MDEditor';
 import { PlayerMessageContext } from './PlayerMessageContext';
+import { ProfileSelectionInput } from './ProfileSelectionInput';
 
 export const ReportForm = (): JSX.Element => {
     const [reason, setReason] = useState<BanReason>(

@@ -1,6 +1,6 @@
 import NiceModal from '@ebay/nice-modal-react';
-import { ContestEditor } from './ContestEditor';
 import { Confirm } from './Confirm';
+import { ContestEditor } from './ContestEditor';
 import { ContestEntryModal } from './ContestEntryModal';
 
 export const ModalContestEditor = 'modal-contest-editor';

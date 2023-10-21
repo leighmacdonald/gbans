@@ -1,7 +1,7 @@
-import { apiCall, TimeStamped } from './common';
 import { marked, Renderer } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { mangle } from 'marked-mangle';
+import { apiCall, TimeStamped } from './common';
 
 export interface Page extends TimeStamped {
     slug: string;
@@ -67,5 +67,5 @@ export const renderMarkdown = (md: string) =>
                 /(media:\/\/)/gi,
                 window.gbans.asset_url + '/' + window.gbans.bucket_media + '/'
             ),
-        { renderer: new WikiRenderer(), gfm: true, async: true }
+        { renderer: new WikiRenderer(), gfm: true, async: false }
     );
