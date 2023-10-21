@@ -1,6 +1,7 @@
 import {
     apiCall,
     DateRange,
+    EmptyBody,
     PermissionLevel,
     TimeStamped,
     transformDateRange,
@@ -79,13 +80,20 @@ export const apiContestEntrySave = async (
     contest_id: string,
     description: string,
     asset_id: string
-) => {
-    return await apiCall<ContestEntry>(
-        `/api/contests/${contest_id}/submit`,
-        'POST',
-        { description, asset_id }
+) =>
+    await apiCall<ContestEntry>(`/api/contests/${contest_id}/submit`, 'POST', {
+        description,
+        asset_id
+    });
+
+export const apiContestEntryVote = async (
+    contest_id: string,
+    upvote: boolean
+) =>
+    await apiCall<EmptyBody>(
+        `/api/contests/${contest_id}/vote/${upvote ? 'up' : 'down'}`,
+        'GET'
     );
-};
 
 export const useContests = () => {
     const [loading, setLoading] = useState(false);
