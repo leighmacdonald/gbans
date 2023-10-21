@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import React, { useCallback, useState } from 'react';
 import { apiDeleteGroupBan, IAPIBanGroupRecord } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { Heading } from './Heading';
 
 export interface UnbanGroupModalProps

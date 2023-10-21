@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
+import React, { useCallback } from 'react';
 import { apiDeleteServer, Server } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { Heading } from './Heading';
 
 export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {

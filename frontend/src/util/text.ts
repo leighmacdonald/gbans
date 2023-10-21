@@ -1,7 +1,7 @@
-import format from 'date-fns/format';
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
-import { Person } from '../api';
+import format from 'date-fns/format';
 import SteamID from 'steamid';
+import { Person } from '../api';
 
 export const parseDateTime = (t: string): Date => {
     return parseISO(t);

@@ -1,20 +1,20 @@
-import React from 'react';
-import Typography from '@mui/material/Typography';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import IconButton from '@mui/material/IconButton';
+import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
-import { Flag } from './Flag';
+import Typography from '@mui/material/Typography';
+import React from 'react';
+import { cleanMapName } from '../api';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { LoadingSpinner } from './LoadingSpinner';
-import { DataTable, RowsPerPage } from './DataTable';
-import { cleanMapName } from '../api';
 import { tf2Fonts } from '../theme';
-import { ContainerWithHeader } from './ContainerWithHeader';
-import StorageIcon from '@mui/icons-material/Storage';
 import { logErr } from '../util/errors';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import { DataTable, RowsPerPage } from './DataTable';
+import { Flag } from './Flag';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();

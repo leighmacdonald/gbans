@@ -1,13 +1,33 @@
-import React, { useMemo, useState } from 'react';
-import { useFormik } from 'formik';
+import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle
 } from '@mui/material';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import FormHelperText from '@mui/material/FormHelperText';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { DateTimeValidationError } from '@mui/x-date-pickers';
+import { useFormik } from 'formik';
+import React, { useMemo, useState } from 'react';
 import * as yup from 'yup';
+import { EmptyUUID, PermissionLevel, useContest } from '../../api';
+import { apiContestSave } from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { logErr } from '../../util/errors';
+import { Heading } from '../Heading';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { BaseFormikInputProps } from '../formik/SteamIdField';
 import {
     boolDefinedValidator,
     dateAfterValidator,
@@ -17,27 +37,7 @@ import {
     numberValidator,
     permissionValidator
 } from '../formik/Validator';
-import TextField from '@mui/material/TextField';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import { DateTimeValidationError } from '@mui/x-date-pickers';
-import { BaseFormikInputProps } from '../formik/SteamIdField';
-import { Heading } from '../Heading';
-import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
-import { EmptyUUID, PermissionLevel, useContest } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { apiContestSave } from '../../api';
-import { logErr } from '../../util/errors';
-import { LoadingSpinner } from '../LoadingSpinner';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import { CancelButton, ResetButton, SaveButton } from './Buttons';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 interface ContestEditorFormValues {
     contest_id: string;

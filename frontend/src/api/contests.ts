@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { logErr } from '../util/errors';
 import {
     apiCall,
     DateRange,
@@ -7,10 +9,8 @@ import {
     transformDateRange,
     transformTimeStampedDates
 } from './common';
-import { useEffect, useState } from 'react';
-import { logErr } from '../util/errors';
-import { LazyResult } from './stats';
 import { EmptyUUID } from './const';
+import { LazyResult } from './stats';
 
 export interface Contest extends DateRange {
     contest_id: string;

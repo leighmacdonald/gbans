@@ -1,11 +1,11 @@
-import React, { JSX } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
 import InsightsIcon from '@mui/icons-material/Insights';
+import Grid from '@mui/material/Unstable_Grid2';
+import React, { JSX } from 'react';
+import { apiGetWeaponsOverall } from '../api';
+import { HealersOverallContainer } from '../component/HealersOverallContainer';
 import { MapUsageContainer } from '../component/MapUsageContainer';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
-import { apiGetWeaponsOverall } from '../api';
-import { HealersOverallContainer } from '../component/HealersOverallContainer';
 
 export const StatsPage = (): JSX.Element => {
     return (

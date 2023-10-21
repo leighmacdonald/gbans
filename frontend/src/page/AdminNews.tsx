@@ -1,23 +1,23 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
-import { NewsList } from '../component/NewsList';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
-import UnpublishedIcon from '@mui/icons-material/Unpublished';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import SaveIcon from '@mui/icons-material/Save';
+import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Tabs from '@mui/material/Tabs';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import React, { useCallback, useEffect, useState } from 'react';
 import { apiNewsSave, NewsEntry } from '../api/news';
+import { renderMarkdown } from '../api/wiki';
+import { NewsList } from '../component/NewsList';
 import { TabPanel } from '../component/TabPanel';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { renderMarkdown } from '../api/wiki';
 
 export const AdminNews = () => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
@@ -50,12 +50,12 @@ export const AdminNews = () => {
     }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {
-        renderMarkdown(selectedNewsEntry.body_md)
-            .then(setBodyHTML)
-            .catch((reason) => {
-                logErr(reason);
-                setBodyHTML('Error rendering markdown');
-            });
+        try {
+            setBodyHTML(renderMarkdown(selectedNewsEntry.body_md));
+        } catch (e) {
+            setBodyHTML('Error rendering markdown');
+            logErr(e);
+        }
     }, [selectedNewsEntry.body_md]);
 
     return (

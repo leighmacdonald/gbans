@@ -1,34 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import UndoIcon from '@mui/icons-material/Undo';
 import EditIcon from '@mui/icons-material/Edit';
-import Tooltip from '@mui/material/Tooltip';
 import GavelIcon from '@mui/icons-material/Gavel';
-import Box from '@mui/material/Box';
+import UndoIcon from '@mui/icons-material/Undo';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import Tabs from '@mui/material/Tabs';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
 import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import format from 'date-fns/format';
 import { formatDuration, intervalToDuration } from 'date-fns';
-import { TabPanel } from '../component/TabPanel';
-import { DataTable, RowsPerPage } from '../component/DataTable';
-import { PersonCell } from '../component/PersonCell';
-import { BanCIDRModal } from '../component/BanCIDRModal';
-import { BanASNModal } from '../component/BanASNModal';
-import { BanGroupModal } from '../component/BanGroupModal';
-import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
-import { UnbanASNModal } from '../component/UnbanASNModal';
-import { UnbanGroupModal } from '../component/UnbanGroupModal';
-import { UnbanSteamModal } from '../component/UnbanSteamModal';
-import { BanSteamModal } from '../component/BanSteamModal';
-import { steamIdQueryValue } from '../util/text';
+import format from 'date-fns/format';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     apiGetBansSteam,
     apiGetBansASN,
@@ -40,10 +28,22 @@ import {
     IAPIBanGroupRecord,
     IAPIBanRecordProfile
 } from '../api';
+import { BanASNModal } from '../component/BanASNModal';
+import { BanCIDRModal } from '../component/BanCIDRModal';
+import { BanGroupModal } from '../component/BanGroupModal';
+import { BanSteamModal } from '../component/BanSteamModal';
+import { DataTable, RowsPerPage } from '../component/DataTable';
 import {
     DataTableRelativeDateField,
     isPermanentBan
 } from '../component/DataTableRelativeDateField';
+import { PersonCell } from '../component/PersonCell';
+import { TabPanel } from '../component/TabPanel';
+import { UnbanASNModal } from '../component/UnbanASNModal';
+import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
+import { UnbanGroupModal } from '../component/UnbanGroupModal';
+import { UnbanSteamModal } from '../component/UnbanSteamModal';
+import { steamIdQueryValue } from '../util/text';
 
 export const AdminBan = () => {
     const theme = useTheme();

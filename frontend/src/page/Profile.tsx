@@ -30,6 +30,7 @@ import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer'
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { Login } from './Login';
 import { noop } from 'lodash-es';
+import { PageNotFound } from './PageNotFound';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);

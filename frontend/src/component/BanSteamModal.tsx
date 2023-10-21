@@ -1,32 +1,35 @@
-import React, { useMemo } from 'react';
-import Stack from '@mui/material/Stack';
-import { apiCreateBanSteam, BanReason, BanType, Duration } from '../api';
-import { Heading } from './Heading';
-import * as yup from 'yup';
-import { useFormik } from 'formik';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import Stack from '@mui/material/Stack';
+import { useFormik } from 'formik';
+import React, { useMemo } from 'react';
+import * as yup from 'yup';
+import { apiCreateBanSteam, BanReason, BanType, Duration } from '../api';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
+import { Heading } from './Heading';
+import {
+    BanReasonField,
+    BanReasonFieldValidator
+} from './formik/BanReasonField';
+import {
+    BanReasonTextField,
+    BanReasonTextFieldValidator
+} from './formik/BanReasonTextField';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import {
+    DurationCustomField,
+    DurationCustomFieldValidator
+} from './formik/DurationCustomField';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import { ModalButtons } from './formik/ModalButtons';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import { ReportIdField, ReportIdFieldValidator } from './formik/ReportIdField';
 import {
     SteamIdField,
     SteamIDInputValue,
     steamIdValidator
 } from './formik/SteamIdField';
-import { logErr } from '../util/errors';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
-import {
-    BanReasonField,
-    BanReasonFieldValidator
-} from './formik/BanReasonField';
-import { DurationField, DurationFieldValidator } from './formik/DurationField';
-import {
-    DurationCustomField,
-    DurationCustomFieldValidator
-} from './formik/DurationCustomField';
-import { NoteField, NoteFieldValidator } from './formik/NoteField';
-import { ReportIdField, ReportIdFieldValidator } from './formik/ReportIdField';
-import { ModalButtons } from './formik/ModalButtons';
-import {
     BanReasonTextField,
     BanReasonTextFieldValidator
 } from './formik/BanReasonTextField';

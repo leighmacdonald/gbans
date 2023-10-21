@@ -1,6 +1,6 @@
-import { LoadingSpinner } from './LoadingSpinner';
 import Box from '@mui/material/Box';
 import React from 'react';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export const LoadingPlaceholder = () => {
     return (

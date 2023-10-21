@@ -1,7 +1,7 @@
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import React, { JSX } from 'react';
 import { Heading } from './Heading';
-import Stack from '@mui/material/Stack';
-import Paper from '@mui/material/Paper';
 
 export type JustifyTypes =
     | 'flex-start'

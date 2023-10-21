@@ -1,7 +1,7 @@
-import React from 'react';
-import { App } from './App';
-import { createRoot } from 'react-dom/client';
 import { PaletteMode } from '@mui/material';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
 
 // extend window with our own items that we inject
 declare global {

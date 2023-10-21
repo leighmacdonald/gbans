@@ -1,18 +1,18 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import CheckIcon from '@mui/icons-material/Check';
 import {
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle
 } from '@mui/material';
-import { Heading } from '../Heading';
-import { LoadingSpinner } from '../LoadingSpinner';
 import Stack from '@mui/material/Stack';
-import { CancelButton, ConfirmButton } from './Buttons';
-import React, { useCallback, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import CheckIcon from '@mui/icons-material/Check';
+import React, { useCallback, useState } from 'react';
+import { Heading } from '../Heading';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { CancelButton, ConfirmButton } from './Buttons';
 
 export interface ConfirmProps {
     title?: string;

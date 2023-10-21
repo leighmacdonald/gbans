@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
+import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import React, { useCallback, useEffect, useState } from 'react';
 import { apiDeleteCIDRBan, IAPIBanCIDRRecord } from '../api';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 import { Heading } from './Heading';
 
 export interface UnbanCIDRModalProps

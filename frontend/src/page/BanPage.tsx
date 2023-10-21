@@ -1,5 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
+import AddModeratorIcon from '@mui/icons-material/AddModerator';
+import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
+import InfoIcon from '@mui/icons-material/Info';
+import { FormControl, Select } from '@mui/material';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import InputLabel from '@mui/material/InputLabel';
+import Link from '@mui/material/Link';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     apiCreateBanMessage,
@@ -18,33 +33,18 @@ import {
     PermissionLevel,
     UserMessage
 } from '../api';
-import { NotNull } from '../util/types';
-import { SteamIDList } from '../component/SteamIDList';
-import { ProfileInfoBox } from '../component/ProfileInfoBox';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import List from '@mui/material/List';
-import { MDEditor } from '../component/MDEditor';
-import { UserMessageView } from '../component/UserMessageView';
-import { logErr } from '../util/errors';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Button from '@mui/material/Button';
-import { UnbanSteamModal } from '../component/UnbanSteamModal';
-import { renderDateTime, renderTimeDistance } from '../util/text';
-import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
-import { FormControl, Select } from '@mui/material';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import InfoIcon from '@mui/icons-material/Info';
-import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
-import AddModeratorIcon from '@mui/icons-material/AddModerator';
+import { MDEditor } from '../component/MDEditor';
+import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SourceBansList } from '../component/SourceBansList';
+import { SteamIDList } from '../component/SteamIDList';
+import { UnbanSteamModal } from '../component/UnbanSteamModal';
+import { UserMessageView } from '../component/UserMessageView';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
+import { renderDateTime, renderTimeDistance } from '../util/text';
+import { NotNull } from '../util/types';
 
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();

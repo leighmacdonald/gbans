@@ -1,14 +1,14 @@
-import { defaultRenderer, HeadingCell, Order } from './DataTable';
-import React from 'react';
-import TableContainer from '@mui/material/TableContainer';
-import Table from '@mui/material/Table';
-import { useTheme } from '@mui/material/styles';
-import TableBody from '@mui/material/TableBody';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import Typography from '@mui/material/Typography';
 import { TableSortLabel } from '@mui/material';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import React from 'react';
+import { defaultRenderer, HeadingCell, Order } from './DataTable';
 
 export interface LazyTableProps<T> {
     columns: HeadingCell<T>[];

@@ -1,7 +1,7 @@
-import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
-import { Person, UserProfile } from './profile';
 import { Theme } from '@mui/material';
 import { BanReason } from './bans';
+import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
+import { Person, UserProfile } from './profile';
 
 export enum ReportStatus {
     Any = -1,

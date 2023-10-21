@@ -1,16 +1,14 @@
-import React from 'react';
+import GavelIcon from '@mui/icons-material/Gavel';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import Stack from '@mui/material/Stack';
+import { useFormik } from 'formik';
+import React from 'react';
+import * as yup from 'yup';
 import { apiCreateBanASN, BanReason, BanType, Duration } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
 import { logErr } from '../util/errors';
-import {
-    SteamIdField,
-    SteamIDInputValue,
-    steamIdValidator
-} from './formik/SteamIdField';
-import * as yup from 'yup';
-import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
+import { Heading } from './Heading';
+import { ASNumberField, ASNumberFieldValidator } from './formik/ASNumberField';
 import {
     BanReasonField,
     BanReasonFieldValidator
@@ -19,17 +17,19 @@ import {
     BanReasonTextField,
     BanReasonTextFieldValidator
 } from './formik/BanReasonTextField';
-import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
 } from './formik/DurationCustomField';
-import { NoteField, NoteFieldValidator } from './formik/NoteField';
-import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import GavelIcon from '@mui/icons-material/Gavel';
+import { DurationField, DurationFieldValidator } from './formik/DurationField';
 import { ModalButtons } from './formik/ModalButtons';
-import { useFormik } from 'formik';
-import { ASNumberField, ASNumberFieldValidator } from './formik/ASNumberField';
+import { NoteField, NoteFieldValidator } from './formik/NoteField';
+import {
+    SteamIdField,
+    SteamIDInputValue,
+    steamIdValidator
+} from './formik/SteamIdField';
 
 export interface BanASNModalProps {
     open: boolean;

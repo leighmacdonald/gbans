@@ -1,16 +1,16 @@
+import BarChartIcon from '@mui/icons-material/BarChart';
+import Grid from '@mui/material/Unstable_Grid2';
+import { formatDistance } from 'date-fns';
 import React from 'react';
 import {
     apiGetPlayerClassOverallStats,
     PlayerClassOverallResult
 } from '../api';
-import { ContainerWithHeader } from './ContainerWithHeader';
-import Grid from '@mui/material/Unstable_Grid2';
-import { LazyTableSimple } from './LazyTableSimple';
-import { fmtWhenGt } from './PlayersOverallContainer';
 import { defaultFloatFmt, humanCount } from '../util/text';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import { LazyTableSimple } from './LazyTableSimple';
 import { PlayerClassImg } from './PlayerClassImg';
-import { formatDistance } from 'date-fns';
+import { fmtWhenGt } from './PlayersOverallContainer';
 
 interface PlayerClassStatsContainerProps {
     steam_id: string;

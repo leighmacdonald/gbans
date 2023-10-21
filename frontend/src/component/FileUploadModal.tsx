@@ -1,14 +1,3 @@
-import React, { ChangeEvent, useCallback, useState, JSX } from 'react';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import { fromByteArray } from 'base64-js';
-import { Nullable } from '../util/types';
-import { logErr } from '../util/errors';
-import { UserUploadedFile } from '../api/media';
-import LinearProgress from '@mui/material/LinearProgress';
-import Paper from '@mui/material/Paper';
 import {
     Dialog,
     DialogActions,
@@ -16,10 +5,21 @@ import {
     DialogTitle,
     Divider
 } from '@mui/material';
-import styled from '@mui/system/styled';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { Heading } from './Heading';
+import Button from '@mui/material/Button';
+import LinearProgress from '@mui/material/LinearProgress';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import styled from '@mui/system/styled';
+import { fromByteArray } from 'base64-js';
+import React, { ChangeEvent, useCallback, useState, JSX } from 'react';
+import { UserUploadedFile } from '../api/media';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
+import { Nullable } from '../util/types';
+import { Heading } from './Heading';
 
 export interface FileUploadModalProps {
     open: boolean;

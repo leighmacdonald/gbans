@@ -1,14 +1,14 @@
 import React, { MouseEventHandler } from 'react';
-import demoClassImg from '../icons/class_demoman.png';
-import scoutClassImg from '../icons/class_scout.png';
-import engineerClassImg from '../icons/class_engineer.png';
-import pyroClassImg from '../icons/class_pyro.png';
-import heavyClassImg from '../icons/class_heavy.png';
-import sniperClassImg from '../icons/class_sniper.png';
-import spyClassImg from '../icons/class_spy.png';
-import soldierClassImg from '../icons/class_soldier.png';
-import medicClassImg from '../icons/class_medic.png';
 import { PlayerClass, PlayerClassNames } from '../api';
+import demoClassImg from '../icons/class_demoman.png';
+import engineerClassImg from '../icons/class_engineer.png';
+import heavyClassImg from '../icons/class_heavy.png';
+import medicClassImg from '../icons/class_medic.png';
+import pyroClassImg from '../icons/class_pyro.png';
+import scoutClassImg from '../icons/class_scout.png';
+import sniperClassImg from '../icons/class_sniper.png';
+import soldierClassImg from '../icons/class_soldier.png';
+import spyClassImg from '../icons/class_spy.png';
 
 export interface PlayerClassImgProps {
     cls: PlayerClass;

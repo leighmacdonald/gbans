@@ -1,11 +1,11 @@
-import React from 'react';
-import { apiGetHealersOverall, HealingOverallResult } from '../api';
-import { ContainerWithHeader } from './ContainerWithHeader';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
+import React from 'react';
+import { apiGetHealersOverall, HealingOverallResult } from '../api';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
-import { PersonCell } from './PersonCell';
+import { ContainerWithHeader } from './ContainerWithHeader';
 import { LazyTableSimple } from './LazyTableSimple';
+import { PersonCell } from './PersonCell';
 import { fmtWhenGt } from './PlayersOverallContainer';
 
 export const HealersOverallContainer = () => {

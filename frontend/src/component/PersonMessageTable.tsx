@@ -1,13 +1,13 @@
-import Button from '@mui/material/Button';
-import { steamIdQueryValue, stringHexNumber } from '../util/text';
-import { format } from 'date-fns';
-import IconButton from '@mui/material/IconButton';
-import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { DataTable, RowsPerPage } from './DataTable';
+import { format } from 'date-fns';
+import React, { useState } from 'react';
 import { PersonMessage } from '../api';
+import { steamIdQueryValue, stringHexNumber } from '../util/text';
+import { DataTable, RowsPerPage } from './DataTable';
 import { MessageContextModal } from './MessageContextModal';
 import { PersonCell } from './PersonCell';
 

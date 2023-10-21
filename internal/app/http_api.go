@@ -2812,6 +2812,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 		log.Info("New contest entry submitted", zap.String("contest_id", contest.ContestID.String()))
 	}
 }
+
 func contestFromCtx(ctx *gin.Context, app *App) (store.Contest, bool) {
 	contestID, idErr := getUUIDParam(ctx, "contest_id")
 	if idErr != nil {

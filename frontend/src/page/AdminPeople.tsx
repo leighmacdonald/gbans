@@ -1,8 +1,8 @@
-import React, { useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
 import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import React, { useEffect, useState, JSX } from 'react';
 import { apiGetPeople, Person } from '../api';
 import { DataTable } from '../component/DataTable';
 import { PersonCell } from '../component/PersonCell';

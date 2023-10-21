@@ -1,19 +1,19 @@
-import React, { useEffect, useState, JSX } from 'react';
-import { apiGetPlayerStats, PlayerOverallResult } from '../api';
-import { ContainerWithHeader } from './ContainerWithHeader';
-import Grid from '@mui/material/Unstable_Grid2';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
-import { LoadingPlaceholder } from './LoadingPlaceholder';
-import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
-import { formatDistance } from 'date-fns';
-import { fmtWhenGt } from './PlayersOverallContainer';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
+import { formatDistance } from 'date-fns';
+import React, { useEffect, useState, JSX } from 'react';
+import { apiGetPlayerStats, PlayerOverallResult } from '../api';
+import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
+import { ContainerWithHeader } from './ContainerWithHeader';
+import { LoadingPlaceholder } from './LoadingPlaceholder';
+import { fmtWhenGt } from './PlayersOverallContainer';
 
 interface PlayerStatsOverallContainerProps {
     steam_id: string;

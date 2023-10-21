@@ -1,12 +1,15 @@
-import React, { useCallback, useEffect, useState, JSX } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Box from '@mui/material/Box';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import React, { useCallback, useEffect, useState, JSX } from 'react';
 import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
@@ -23,22 +26,19 @@ import {
     ReportMessagesResponse,
     UserMessage
 } from '../api';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { logErr } from '../util/errors';
 import { renderMarkdown } from '../api/wiki';
-import { MDEditor } from './MDEditor';
-import { DataTable, RowsPerPage } from './DataTable';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { RenderedMarkdownBox } from './RenderedMarkdownBox';
-import { UserMessageView } from './UserMessageView';
-import { TabPanel } from './TabPanel';
-import { PersonMessageTable } from './PersonMessageTable';
-import Link from '@mui/material/Link';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import Button from '@mui/material/Button';
-import { SourceBansList } from './SourceBansList';
-import { PlayerMessageContext } from './PlayerMessageContext';
+import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import { DataTable, RowsPerPage } from './DataTable';
+import { MDEditor } from './MDEditor';
+import { PersonMessageTable } from './PersonMessageTable';
+import { PlayerMessageContext } from './PlayerMessageContext';
+import { RenderedMarkdownBox } from './RenderedMarkdownBox';
+import { SourceBansList } from './SourceBansList';
+import { TabPanel } from './TabPanel';
+import { UserMessageView } from './UserMessageView';
 
 interface ReportComponentProps {
     report: Report;
