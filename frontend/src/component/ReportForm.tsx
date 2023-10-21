@@ -1,3 +1,5 @@
+import React, { JSX, useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
@@ -6,8 +8,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import React, { JSX, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     apiCreateReport,
     BanReason,

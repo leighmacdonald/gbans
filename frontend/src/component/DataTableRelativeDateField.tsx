@@ -1,8 +1,8 @@
+import React from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDistanceStrict, intervalToDuration } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
-import React from 'react';
 
 export const isPermanentBan = (start: Date, end: Date): boolean => {
     const dur = intervalToDuration({

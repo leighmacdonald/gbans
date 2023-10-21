@@ -1,3 +1,5 @@
+import React, { useCallback, useMemo, JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
 import BlockIcon from '@mui/icons-material/Block';
@@ -34,8 +36,6 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback, useMemo, JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
 import SteamID from 'steamid';
 import { handleOnLogin, PermissionLevel, UserNotification } from '../api';
 import { useColourModeCtx } from '../contexts/ColourModeContext';

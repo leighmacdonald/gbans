@@ -1,3 +1,4 @@
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
@@ -18,7 +19,6 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { apiGetFilters, apiSaveFilter, Filter } from '../api/filters';
 import { ConfirmDeleteFilterModal } from '../component/ConfirmDeleteFilterModal';
 import { DataTable, RowsPerPage } from '../component/DataTable';

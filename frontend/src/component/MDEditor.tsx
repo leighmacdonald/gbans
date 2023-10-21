@@ -1,3 +1,4 @@
+import React, { useEffect, useState, JSX } from 'react';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
@@ -12,7 +13,6 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import React, { useEffect, useState, JSX } from 'react';
 import { apiSaveMedia } from '../api/media';
 import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';

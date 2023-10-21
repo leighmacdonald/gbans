@@ -7,9 +7,9 @@
     "@trivago/prettier-plugin-sort-imports"
   ],
   "importOrder": [
-    "^@core/(.*)$",
-    "^@server/(.*)$",
-    "^@ui/(.*)$",
+    "^react$",
+    "^react-.*$",
+    "<THIRD_PARTY_MODULES>",
     "^[./]"
   ],
   "importOrderSeparation": false

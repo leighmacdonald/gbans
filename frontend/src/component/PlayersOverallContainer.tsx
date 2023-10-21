@@ -1,8 +1,8 @@
+import React from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import React from 'react';
 import { apiGetPlayersOverall, PlayerWeaponStats } from '../api';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';

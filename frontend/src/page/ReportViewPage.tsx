@@ -1,3 +1,5 @@
+import React, { useCallback, useEffect, useState, JSX } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import GavelIcon from '@mui/icons-material/Gavel';
 import SendIcon from '@mui/icons-material/Send';
 import Avatar from '@mui/material/Avatar';
@@ -16,8 +18,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback, useEffect, useState, JSX } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import {
     apiGetBansSteam,
     apiGetReport,

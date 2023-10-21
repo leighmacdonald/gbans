@@ -1,8 +1,8 @@
+import React from 'react';
 import GavelIcon from '@mui/icons-material/Gavel';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { useFormik } from 'formik';
-import React from 'react';
 import * as yup from 'yup';
 import { apiCreateBanCIDR, BanReason, BanType, Duration } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';

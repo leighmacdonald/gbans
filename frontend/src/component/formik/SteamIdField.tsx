@@ -1,6 +1,6 @@
+import React from 'react';
 import TextField from '@mui/material/TextField';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
-import React from 'react';
 import SteamID from 'steamid';
 import * as yup from 'yup';
 import { apiGetProfile, PlayerProfile } from '../../api';

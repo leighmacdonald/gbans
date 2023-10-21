@@ -1,3 +1,4 @@
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -15,7 +16,6 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
 import { useFormik } from 'formik';
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import * as yup from 'yup';
 import { apiContestEntrySave, EmptyUUID, useContest } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';

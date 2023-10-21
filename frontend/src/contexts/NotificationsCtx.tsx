@@ -1,4 +1,3 @@
-import { noop } from 'lodash-es';
 import React, {
     createContext,
     Dispatch,
@@ -8,6 +7,7 @@ import React, {
     JSX,
     useEffect
 } from 'react';
+import { noop } from 'lodash-es';
 import {
     apiGetNotifications,
     NotificationsQuery,

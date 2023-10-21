@@ -1,3 +1,4 @@
+import React, { JSX } from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import AppBar from '@mui/material/AppBar';
@@ -8,7 +9,6 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
-import React, { JSX } from 'react';
 import { PlayerProfile } from '../api';
 import { Nullable } from '../util/types';
 import { FriendList } from './FriendList';

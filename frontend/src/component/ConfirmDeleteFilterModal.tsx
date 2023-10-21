@@ -1,5 +1,5 @@
-import Stack from '@mui/material/Stack';
 import React, { useCallback } from 'react';
+import Stack from '@mui/material/Stack';
 import { apiDeleteFilter, Filter } from '../api/filters';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';

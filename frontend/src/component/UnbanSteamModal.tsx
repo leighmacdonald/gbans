@@ -1,7 +1,7 @@
+import React, { useCallback, useState } from 'react';
 import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import React, { useCallback, useState } from 'react';
 import { apiDeleteBan } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';

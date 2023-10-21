@@ -1,9 +1,9 @@
+import React from 'react';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
 import SteamID from 'steamid';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { ContainerWithHeader } from './ContainerWithHeader';

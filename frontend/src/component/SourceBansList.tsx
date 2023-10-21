@@ -1,3 +1,4 @@
+import React, { useEffect, useState, JSX } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -7,7 +8,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState, JSX } from 'react';
 import { apiGetSourceBans, sbBanRecord } from '../api';
 import { logErr } from '../util/errors';
 

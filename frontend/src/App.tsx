@@ -70,6 +70,7 @@ import { ContestListPage } from './page/ContestListPage';
 import NiceModal from '@ebay/nice-modal-react';
 import { ContestPage } from './page/ContestPage';
 import { ErrorBoundary } from './component/ErrorBoundary';
+import { PrivateRoute } from './component/PrivateRoute';
 
 export interface AppProps {
     initialTheme: PaletteMode;

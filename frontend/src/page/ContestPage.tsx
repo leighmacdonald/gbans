@@ -1,3 +1,5 @@
+import React, { useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import InfoIcon from '@mui/icons-material/Info';
@@ -15,8 +17,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
-import React, { useCallback } from 'react';
-import { useParams } from 'react-router-dom';
 import { defaultAvatarHash, useContest, useContestEntries } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';

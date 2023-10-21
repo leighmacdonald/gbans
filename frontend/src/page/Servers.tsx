@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+import { useTimer } from 'react-timer-hook';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import LinearProgress, {
@@ -9,8 +11,6 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { LatLngLiteral } from 'leaflet';
 import { sum } from 'lodash-es';
-import React, { useState } from 'react';
-import { useTimer } from 'react-timer-hook';
 import { apiGetServerStates, BaseServer } from '../api';
 import { ServerFilters } from '../component/ServerFilters';
 import { ServerList } from '../component/ServerList';
