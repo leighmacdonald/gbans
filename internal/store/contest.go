@@ -352,3 +352,70 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 
 	return entries, nil
 }
+
+type ContentVoteRecord struct {
+	ContestEntryVoteID int64         `json:"contest_entry_vote_id"`
+	ContestEntryID     uuid.UUID     `json:"contest_entry_id"`
+	SteamID            steamid.SID64 `json:"steam_id"`
+	Vote               bool          `json:"vote"`
+	TimeStamped
+}
+
+func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error {
+	query, args, errQuery := db.sb.
+		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
+			"vote", "created_on", "updated_on").
+		Where(sq.And{sq.Eq{"contest_entry_id": contestEntryID}, sq.Eq{"steam_id": steamID}}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	if errExec := db.
+		QueryRow(ctx, query, args...).
+		Scan(&record.ContestEntryVoteID, &record.ContestEntryID,
+			&record.SteamID, &record.Vote, &record.CreatedOn, &record.UpdatedOn); errExec != nil {
+		return Err(errExec)
+	}
+
+	return nil
+}
+
+func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, upvote bool) error {
+	var record ContentVoteRecord
+	if errRecord := db.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
+		if !errors.Is(errRecord, ErrNoResult) {
+			return Err(errRecord)
+		}
+
+		record = ContentVoteRecord{
+			ContestEntryID: contestEntryID,
+			SteamID:        steamID,
+			Vote:           upvote,
+			TimeStamped:    NewTimeStamped(),
+		}
+
+		now := time.Now()
+
+		query, args, errQuery := db.sb.
+			Insert("contest_entry_vote").
+			Columns("contest_entry_id", "steam_id", "vote", "created_on", "updated_on").
+			Values(contestEntryID, steamID, upvote, now, now).ToSql()
+		if errQuery != nil {
+			return Err(errQuery)
+		}
+
+		if errExec := db.Exec(ctx, query, args...); errExec != nil {
+			return Err(errExec)
+		}
+
+		return nil
+	}
+
+	if record.Vote == upvote {
+		// No changes
+		return nil
+	}
+
+	return nil
+}
