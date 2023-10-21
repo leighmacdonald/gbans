@@ -4,7 +4,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
 import { isAfter } from 'date-fns/fp';
 import { defaultAvatarHash, useContest, useContestEntries } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -25,25 +24,7 @@ import Paper from '@mui/material/Paper';
 import Avatar from '@mui/material/Avatar';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { IconButton } from '@mui/material';
-
-interface InfoBarProps {
-    title: string;
-    value: string | number;
-    align?: 'left' | 'right';
-}
-
-export const InfoBar = ({ title, value, align = 'left' }: InfoBarProps) => {
-    return (
-        <Box>
-            <Typography variant={'subtitle1'} fontWeight={500} align={align}>
-                {title}
-            </Typography>
-            <Typography variant={'h3'} fontWeight={700} align={align}>
-                {value}
-            </Typography>
-        </Box>
-    );
-};
+import { InfoBar } from '../component/InfoBar';
 
 export const ContestPage = () => {
     const { contest_id } = useParams();
@@ -165,12 +146,13 @@ export const ContestPage = () => {
                                                 variant={'square'}
                                                 sx={{
                                                     height: '128px',
-                                                    width: '128px'
+                                                    width: '128px',
+                                                    padding: 2
                                                 }}
                                             />
 
                                             <Grid container>
-                                                <Grid xs={8}>
+                                                <Grid xs={8} padding={2}>
                                                     <Typography
                                                         variant={'body1'}
                                                     >

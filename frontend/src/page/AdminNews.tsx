@@ -8,16 +8,16 @@ import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import SaveIcon from '@mui/icons-material/Save';
-import { apiNewsSave, NewsEntry } from '../api/news';
-import { marked } from 'marked';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import { apiNewsSave, NewsEntry } from '../api/news';
 import { TabPanel } from '../component/TabPanel';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { renderMarkdown } from '../api/wiki';
 
 export const AdminNews = () => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
@@ -50,7 +50,12 @@ export const AdminNews = () => {
     }, [selectedNewsEntry, sendFlash]);
 
     useEffect(() => {
-        setBodyHTML(marked(selectedNewsEntry.body_md, { mangle: false }));
+        renderMarkdown(selectedNewsEntry.body_md)
+            .then(setBodyHTML)
+            .catch((reason) => {
+                logErr(reason);
+                setBodyHTML('Error rendering markdown');
+            });
     }, [selectedNewsEntry.body_md]);
 
     return (

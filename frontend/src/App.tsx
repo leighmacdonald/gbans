@@ -39,7 +39,6 @@ import { Login } from './page/Login';
 import { ErrorBoundary } from './component/ErrorBoundary';
 import { AdminFilters } from './page/AdminFilters';
 import { AdminAppeals } from './page/AdminAppeals';
-import { PugPage } from './pug/PugPage';
 import { UserInit } from './component/UserInit';
 import { STVPage } from './page/STVPage';
 import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
