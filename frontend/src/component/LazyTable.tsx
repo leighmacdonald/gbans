@@ -1,3 +1,4 @@
+import React from 'react';
 import { TableSortLabel } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -7,7 +8,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
 import { defaultRenderer, HeadingCell, Order } from './DataTable';
 
 export interface LazyTableProps<T> {

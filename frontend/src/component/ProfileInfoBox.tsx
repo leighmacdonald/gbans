@@ -1,9 +1,9 @@
+import React from 'react';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { format, fromUnixTime } from 'date-fns';
-import React from 'react';
 import { PlayerProfile } from '../api';
 import { ContainerWithHeader, JustifyTypes } from './ContainerWithHeader';
 

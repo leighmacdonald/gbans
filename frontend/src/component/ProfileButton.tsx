@@ -1,3 +1,5 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
@@ -9,8 +11,6 @@ import Popper from '@mui/material/Popper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Person, Team } from '../api';
 import { createExternalLinks, to } from '../util/history';
 

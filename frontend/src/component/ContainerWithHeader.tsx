@@ -1,6 +1,6 @@
+import React, { JSX } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import React, { JSX } from 'react';
 import { Heading } from './Heading';
 
 export type JustifyTypes =

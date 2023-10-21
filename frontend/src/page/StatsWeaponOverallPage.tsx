@@ -1,7 +1,7 @@
-import InsightsIcon from '@mui/icons-material/Insights';
-import Grid from '@mui/material/Unstable_Grid2';
 import React, { JSX, useState } from 'react';
 import { useParams } from 'react-router';
+import InsightsIcon from '@mui/icons-material/Insights';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
     apiGetPlayerWeaponStats,
     PlayerWeaponStatsResponse,

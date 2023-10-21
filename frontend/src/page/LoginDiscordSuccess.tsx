@@ -1,6 +1,6 @@
-import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Typography from '@mui/material/Typography';
 import { apiLinkDiscord } from '../api';
 import { logErr } from '../util/errors';
 

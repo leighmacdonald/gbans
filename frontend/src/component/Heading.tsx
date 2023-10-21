@@ -1,7 +1,7 @@
+import React, { FC, JSX } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import React, { FC, JSX } from 'react';
 import { tf2Fonts } from '../theme';
 
 interface HeadingProps {

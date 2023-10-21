@@ -1,9 +1,9 @@
+import React from 'react';
 import Box from '@mui/material/Box';
 import LinearProgress, {
     LinearProgressProps
 } from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
-import React from 'react';
 
 export const LinearProgressWithLabel = (
     props: LinearProgressProps & { value: number }

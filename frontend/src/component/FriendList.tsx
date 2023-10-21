@@ -1,3 +1,5 @@
+import React, { Suspense, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import Avatar from '@mui/material/Avatar';
@@ -12,8 +14,6 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Person } from '../api';
 import { filterPerson } from '../util/text';
 import { Heading } from './Heading';

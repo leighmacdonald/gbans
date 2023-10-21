@@ -1,6 +1,6 @@
+import React from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
-import React from 'react';
 import { apiGetHealersOverall, HealingOverallResult } from '../api';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';

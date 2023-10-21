@@ -1,10 +1,10 @@
+import React, { ChangeEvent, useState } from 'react';
+import { useTimer } from 'react-timer-hook';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
-import React, { ChangeEvent, useState } from 'react';
-import { useTimer } from 'react-timer-hook';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';

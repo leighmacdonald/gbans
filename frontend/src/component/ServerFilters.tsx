@@ -1,3 +1,4 @@
+import React, { ChangeEvent, useCallback, useEffect } from 'react';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
@@ -10,7 +11,6 @@ import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import styled from '@mui/system/styled';
 import { uniq } from 'lodash-es';
-import React, { ChangeEvent, useCallback, useEffect } from 'react';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { Heading } from './Heading';
 

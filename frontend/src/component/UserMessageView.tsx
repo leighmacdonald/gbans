@@ -1,3 +1,4 @@
+import React, { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -9,7 +10,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import { useTheme } from '@mui/material/styles';
 import { formatDistance, parseJSON } from 'date-fns';
-import React, { MouseEvent, useState } from 'react';
 import { UserMessage, UserProfile } from '../api';
 import { renderMarkdown } from '../api/wiki';
 import { MDEditor } from './MDEditor';

@@ -1,11 +1,11 @@
+import React, { useCallback, useEffect, useMemo, JSX } from 'react';
+import { useParams } from 'react-router';
 import ArticleIcon from '@mui/icons-material/Article';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import React, { useCallback, useEffect, useMemo, JSX } from 'react';
-import { useParams } from 'react-router';
 import { PermissionLevel } from '../api';
 import {
     apiGetWikiPage,

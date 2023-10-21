@@ -1,9 +1,9 @@
+import React from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import { LoadingButton } from '@mui/lab';
 import { DialogActions } from '@mui/material';
 import Button from '@mui/material/Button';
-import React from 'react';
 
 interface ModalButtonsProps {
     formId: string;

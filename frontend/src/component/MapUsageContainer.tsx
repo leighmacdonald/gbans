@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import MapIcon from '@mui/icons-material/Map';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
@@ -8,7 +9,6 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Grid from '@mui/material/Unstable_Grid2';
 import { PieChart } from '@mui/x-charts';
-import React, { useEffect, useMemo, useState } from 'react';
 import { apiGetMapUsage } from '../api';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';

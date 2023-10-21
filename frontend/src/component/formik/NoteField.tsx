@@ -1,6 +1,6 @@
+import React from 'react';
 import TextField from '@mui/material/TextField';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
-import React from 'react';
 import * as yup from 'yup';
 
 export const NoteFieldValidator = yup.string().label('Hidden Moderator Note');
