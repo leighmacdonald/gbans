@@ -17,6 +17,7 @@ export interface Contest extends DateRange {
     title: string;
     description: string;
     public: boolean;
+    hide_submissions: boolean;
     max_submissions: number;
     media_types: string;
     deleted: boolean;

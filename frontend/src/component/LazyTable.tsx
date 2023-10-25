@@ -1,6 +1,5 @@
 import React from 'react';
 import { TableFooter, TablePagination, TableSortLabel } from '@mui/material';
-import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -18,7 +17,7 @@ export interface LazyTableProps<T> {
     onSortOrderChanged: (order: Order) => void;
     sortOrder: Order;
     rows: T[];
-    showPager: boolean;
+    showPager?: boolean;
     onRowsPerPagerChange?: React.ChangeEventHandler<
         HTMLTextAreaElement | HTMLInputElement
     >;
@@ -26,9 +25,9 @@ export interface LazyTableProps<T> {
         event: React.MouseEvent<HTMLButtonElement> | null,
         page: number
     ) => void;
-    page: number;
-    count: number;
-    rowsPerPage: RowsPerPage;
+    page?: number;
+    count?: number;
+    rowsPerPage?: RowsPerPage;
 }
 
 export interface TableBodyRows<T> {
@@ -89,16 +88,14 @@ export interface LazyTableHeaderProps<T> {
     order: Order;
 }
 
-export const LazyTableHeader = <T,>(
-    {
-        columns,
-        bgColor,
-        sortColumn,
-        order,
-        onSortColumnChanged,
-        onSortOrderChanged
-    }: LazyTableHeaderProps<T>
-) => {
+export const LazyTableHeader = <T,>({
+    columns,
+    bgColor,
+    sortColumn,
+    order,
+    onSortColumnChanged,
+    onSortOrderChanged
+}: LazyTableHeaderProps<T>) => {
     return (
         <TableHead>
             <TableRow>
@@ -173,22 +170,20 @@ export const LazyTableHeader = <T,>(
     );
 };
 
-export const LazyTable = <T,>(
-    {
-        columns,
-        sortOrder,
-        sortColumn,
-        rows,
-        onSortColumnChanged,
-        onSortOrderChanged,
-        onRowsPerPagerChange,
-        onPageChange,
-        showPager,
-        page,
-        count,
-        rowsPerPage
-    }: LazyTableProps<T>
-) => {
+export const LazyTable = <T,>({
+    columns,
+    sortOrder,
+    sortColumn,
+    rows,
+    onSortColumnChanged,
+    onSortOrderChanged,
+    onRowsPerPagerChange,
+    onPageChange,
+    showPager,
+    page,
+    count,
+    rowsPerPage
+}: LazyTableProps<T>) => {
     const theme = useTheme();
 
     return (
@@ -203,10 +198,13 @@ export const LazyTable = <T,>(
                     onSortOrderChanged={onSortOrderChanged}
                 />
                 <LazyTableBody rows={rows} columns={columns} />
-                {showPager && (
+                {showPager &&
+                page != undefined &&
+                count != undefined &&
+                rowsPerPage != undefined &&
+                onPageChange != undefined ? (
                     <TableFooter>
                         <TableRow>
-                            {/*{showPager && <Stack direction={'row-reverse'}></Stack>}*/}
                             <TablePagination
                                 page={page}
                                 count={count}
@@ -218,6 +216,8 @@ export const LazyTable = <T,>(
                             />
                         </TableRow>
                     </TableFooter>
+                ) : (
+                    <></>
                 )}
             </Table>
         </TableContainer>

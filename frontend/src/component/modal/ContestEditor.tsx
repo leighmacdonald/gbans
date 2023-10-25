@@ -43,6 +43,7 @@ interface ContestEditorFormValues {
     contest_id: string;
     title: string;
     description: string;
+    hide_submissions: boolean;
     public: boolean;
     date_start: Date;
     date_end: Date;
@@ -62,6 +63,7 @@ const validationSchema = yup.object({
     max_submissions: numberValidator('Submissions'),
     media_types: mimeTypesValidator(),
     voting: boolDefinedValidator('Voting'),
+    hide_submissions: boolDefinedValidator('Hide Submissions'),
     down_votes: boolDefinedValidator('Down votes'),
     min_permission_level: permissionValidator()
 });
@@ -88,6 +90,7 @@ export const ContestEditor = NiceModal.create(
                 public: contest?.public ?? false,
                 date_start: contest?.date_start ?? defaultStartDate,
                 date_end: contest?.date_end ?? defaultEndDate,
+                hide_submissions: contest?.hide_submissions ?? false,
                 max_submissions: contest?.max_submissions ?? 1,
                 media_types: contest?.media_types ?? '',
                 voting: contest?.voting ?? false,
@@ -110,6 +113,7 @@ export const ContestEditor = NiceModal.create(
                         date_start: values.date_start,
                         date_end: values.date_end,
                         description: values.description,
+                        hide_submissions: values.hide_submissions,
                         title: values.title,
                         voting: values.voting,
                         down_votes: values.down_votes,
@@ -177,7 +181,11 @@ export const ContestEditor = NiceModal.create(
                                         fullWidth
                                         isReadOnly={false}
                                     />
-
+                                    <HideSubmissionsField
+                                        formik={formik}
+                                        fullWidth
+                                        isReadOnly={false}
+                                    />
                                     <MaxSubmissionsField
                                         formik={formik}
                                         fullWidth
@@ -367,6 +375,32 @@ const PublicField = ({
                     />
                 }
                 label="Public"
+            />
+        </FormGroup>
+    );
+};
+
+interface HideSubmissionsFieldInputValue {
+    hide_submissions: boolean;
+}
+
+const HideSubmissionsField = ({
+    formik,
+    isReadOnly
+}: BaseFormikInputProps<HideSubmissionsFieldInputValue>) => {
+    return (
+        <FormGroup>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        id={'hide_submissions-cb'}
+                        disabled={isReadOnly ?? false}
+                        value={formik.values.hide_submissions}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                    />
+                }
+                label="Hide Submissions"
             />
         </FormGroup>
     );

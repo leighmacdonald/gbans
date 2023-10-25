@@ -13,10 +13,12 @@ type FileInfo struct {
 	Title       string   `json:"title"`
 	UpdateURL   string   `json:"update_url"`
 }
+
 type LastSeen struct {
 	PlayerName string `json:"player_name,omitempty"`
 	Time       int    `json:"time,omitempty"`
 }
+
 type Players struct {
 	Attributes []string `json:"attributes"`
 	LastSeen   LastSeen `json:"last_seen,omitempty"`
