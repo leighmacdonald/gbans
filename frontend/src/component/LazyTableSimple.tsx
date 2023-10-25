@@ -36,17 +36,15 @@ interface LazyTableSimpleProps<T> {
  * Provides a slightly higher level "managed" table that can be used for simple use cases. If advanced filtering
  * is required, you should use the LazyTable directly for more control.
  */
-export const LazyTableSimple = <T,>(
-    {
-        fetchData,
-        columns,
-        defaultSortColumn,
-        defaultSortDir = 'desc',
-        paged = false,
-        showPager = true,
-        defaultRowsPerPage = RowsPerPage.TwentyFive
-    }: LazyTableSimpleProps<T>
-) => {
+export const LazyTableSimple = <T,>({
+    fetchData,
+    columns,
+    defaultSortColumn,
+    defaultSortDir = 'desc',
+    paged = false,
+    showPager = true,
+    defaultRowsPerPage = RowsPerPage.TwentyFive
+}: LazyTableSimpleProps<T>) => {
     const [data, setData] = useState<T[]>([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -101,7 +99,7 @@ export const LazyTableSimple = <T,>(
     );
 
     const onPagerRowsChange = useCallback(
-        () => (_, newPage: number) => {
+        () => (_: never, newPage: number) => {
             setPage(newPage);
         },
         []

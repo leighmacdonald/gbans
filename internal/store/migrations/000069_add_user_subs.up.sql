@@ -5,6 +5,7 @@ CREATE TABLE contest
     contest_id           uuid primary key     default gen_random_uuid(),
     title                text        not null unique,
     public               bool        not null default true,
+    hide_submissions     bool        not null default false,
     description          text        not null,
     date_start           timestamptz not null,
     date_end             timestamptz not null,

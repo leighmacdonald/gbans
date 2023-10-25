@@ -133,50 +133,64 @@ export const ContestPage = () => {
                         </Stack>
                     </ContainerWithHeader>
                 </Grid>
-                <Grid xs={12}>
-                    <Stack spacing={2}>
-                        {entries.map((value) => {
-                            return (
-                                <Stack key={value.contest_entry_id}>
-                                    <Paper elevation={2}>
-                                        <Stack direction={'row'}>
-                                            <Avatar
-                                                alt={value.personaname}
-                                                src={`https://avatars.akamai.steamstatic.com/${defaultAvatarHash}.jpg`}
-                                                variant={'square'}
-                                                sx={{
-                                                    height: '128px',
-                                                    width: '128px',
-                                                    padding: 2
-                                                }}
-                                            />
+                {contest.hide_submissions ? (
+                    <Grid xs={12}>
+                        <Paper>
+                            <Typography
+                                variant={'subtitle1'}
+                                align={'center'}
+                                padding={4}
+                            >
+                                Entries are hidden until contest has expired.
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                ) : (
+                    <Grid xs={12}>
+                        <Stack spacing={2}>
+                            {entries.map((value) => {
+                                return (
+                                    <Stack key={value.contest_entry_id}>
+                                        <Paper elevation={2}>
+                                            <Stack direction={'row'}>
+                                                <Avatar
+                                                    alt={value.personaname}
+                                                    src={`https://avatars.akamai.steamstatic.com/${defaultAvatarHash}.jpg`}
+                                                    variant={'square'}
+                                                    sx={{
+                                                        height: '128px',
+                                                        width: '128px',
+                                                        padding: 2
+                                                    }}
+                                                />
 
-                                            <Grid container>
-                                                <Grid xs={8} padding={2}>
-                                                    <Typography
-                                                        variant={'body1'}
-                                                    >
-                                                        {value.description}
-                                                    </Typography>
+                                                <Grid container>
+                                                    <Grid xs={8} padding={2}>
+                                                        <Typography
+                                                            variant={'body1'}
+                                                        >
+                                                            {value.description}
+                                                        </Typography>
+                                                    </Grid>
                                                 </Grid>
-                                            </Grid>
+                                            </Stack>
+                                        </Paper>
+                                        <Stack direction={'row'}>
+                                            <ButtonGroup fullWidth>
+                                                <IconButton color={'success'}>
+                                                    <ThumbUpIcon />
+                                                </IconButton>
+                                                <IconButton color={'error'}>
+                                                    <ThumbDownIcon />
+                                                </IconButton>
+                                            </ButtonGroup>
                                         </Stack>
-                                    </Paper>
-                                    <Stack direction={'row'}>
-                                        <ButtonGroup fullWidth>
-                                            <IconButton color={'success'}>
-                                                <ThumbUpIcon />
-                                            </IconButton>
-                                            <IconButton color={'error'}>
-                                                <ThumbDownIcon />
-                                            </IconButton>
-                                        </ButtonGroup>
                                     </Stack>
-                                </Stack>
-                            );
-                        })}
-                    </Stack>
-                </Grid>
+                                );
+                            })}
+                        </Stack>
+                    </Grid>
+                )}
             </Grid>
         )
     );

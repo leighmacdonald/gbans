@@ -25,7 +25,7 @@ const MapUseChart = ({ details }: MapUseChartProps) => {
         <PieChart
             height={600}
             width={600}
-            legend={{ hidden: true }}
+            slotProps={{ legend: { hidden: true } }}
             series={[
                 {
                     data: details,

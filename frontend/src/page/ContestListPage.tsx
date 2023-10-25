@@ -31,6 +31,7 @@ export const ContestListPage = () => {
                 <Grid xs={12}>
                     <LazyTableSimple<Contest>
                         fetchData={apiContests}
+                        showPager={true}
                         columns={[
                             {
                                 sortKey: 'title',

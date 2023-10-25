@@ -705,6 +705,8 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				BanID:           bannedPerson.Ban.BanID,
 			}
 			ctx.Set(ctxKeyUserProfile, profile)
+		} else {
+			ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 		}
 
 		ctx.Next()

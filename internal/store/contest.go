@@ -14,17 +14,18 @@ import (
 
 type Contest struct {
 	TimeStamped
-	ContestID      uuid.UUID `json:"contest_id"`
-	Title          string    `json:"title"`
-	Description    string    `json:"description"`
-	Public         bool      `json:"public"`
-	DateStart      time.Time `json:"date_start"`
-	DateEnd        time.Time `json:"date_end"`
-	MaxSubmissions int       `json:"max_submissions"`
-	OwnSubmissions int       `json:"own_submissions"`
-	MediaTypes     string    `json:"media_types"`
-	NumEntries     int       `json:"num_entries"`
-	Deleted        bool      `json:"-"`
+	ContestID       uuid.UUID `json:"contest_id"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	Public          bool      `json:"public"`
+	HideSubmissions bool      `json:"hide_submissions"` // Are user submissions visible for the public
+	DateStart       time.Time `json:"date_start"`
+	DateEnd         time.Time `json:"date_end"`
+	MaxSubmissions  int       `json:"max_submissions"`
+	OwnSubmissions  int       `json:"own_submissions"`
+	MediaTypes      string    `json:"media_types"`
+	NumEntries      int       `json:"num_entries"`
+	Deleted         bool      `json:"-"`
 	// Allow voting
 	Voting bool `json:"voting"`
 	// Minimum permission level allowed to vote
@@ -127,6 +128,7 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 		DateStart:          dateStart,
 		DateEnd:            dateEnd,
 		MaxSubmissions:     0,
+		HideSubmissions:    false,
 		MediaTypes:         "",
 		Deleted:            false,
 		Voting:             false,
@@ -146,7 +148,7 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 	query, args := db.sb.
 		Select("contest_id", "title", "public", "description", "date_start",
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
-			"created_on", "updated_on").
+			"created_on", "updated_on", "hide_submissions").
 		From("contest").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}}).
 		MustSql()
@@ -155,7 +157,7 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 		Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.CreatedOn, &contest.UpdatedOn); errScan != nil {
+			&contest.CreatedOn, &contest.UpdatedOn, &contest.HideSubmissions); errScan != nil {
 		return Err(errScan)
 	}
 
@@ -180,7 +182,8 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 	builder := db.sb.
 		Select("c.contest_id", "c.title", "c.public", "c.description", "c.date_start",
 			"c.date_end", "c.max_submissions", "c.media_types", "c.deleted", "c.voting", "c.min_permission_level",
-			"c.down_votes", "c.created_on", "c.updated_on", "count(ce.contest_entry_id) as num_entries").
+			"c.down_votes", "c.created_on", "c.updated_on", "count(ce.contest_entry_id) as num_entries",
+			"c.hide_submissions").
 		From("contest c").
 		LeftJoin("contest_entry ce USING (contest_id)").
 		GroupBy("c.contest_id")
@@ -211,7 +214,7 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.CreatedOn, &contest.UpdatedOn, &contest.NumEntries); errScan != nil {
+			&contest.CreatedOn, &contest.UpdatedOn, &contest.NumEntries, &contest.HideSubmissions); errScan != nil {
 			return nil, Err(errScan)
 		}
 
@@ -261,11 +264,11 @@ func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
 		Insert("contest").
 		Columns("contest_id", "title", "public", "description", "date_start",
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
-			"created_on", "updated_on").
+			"created_on", "updated_on", "hide_submissions").
 		Values(contest.ContestID, contest.Title, contest.Public, contest.Description, contest.DateStart,
 			contest.DateEnd, contest.MaxSubmissions, contest.MediaTypes, contest.Deleted,
 			contest.Voting, contest.MinPermissionLevel, contest.DownVotes,
-			contest.CreatedOn, contest.UpdatedOn).
+			contest.CreatedOn, contest.UpdatedOn, contest.HideSubmissions).
 		ToSql()
 
 	if errQuery != nil {
@@ -291,6 +294,7 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 		Set("description", contest.Description).
 		Set("date_start", contest.DateStart).
 		Set("date_end", contest.DateEnd).
+		Set("hide_submissions", contest.HideSubmissions).
 		Set("max_submissions", contest.MaxSubmissions).
 		Set("voting", contest.Voting).
 		Set("min_permission_level", contest.MinPermissionLevel).
