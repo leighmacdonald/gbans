@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { TablePagination } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import { LazyResult } from '../api';
 import { logErr } from '../util/errors';
@@ -37,15 +36,17 @@ interface LazyTableSimpleProps<T> {
  * Provides a slightly higher level "managed" table that can be used for simple use cases. If advanced filtering
  * is required, you should use the LazyTable directly for more control.
  */
-export const LazyTableSimple = <T,>({
-    fetchData,
-    columns,
-    defaultSortColumn,
-    defaultSortDir = 'desc',
-    paged = false,
-    showPager = true,
-    defaultRowsPerPage = RowsPerPage.TwentyFive
-}: LazyTableSimpleProps<T>) => {
+export const LazyTableSimple = <T,>(
+    {
+        fetchData,
+        columns,
+        defaultSortColumn,
+        defaultSortDir = 'desc',
+        paged = false,
+        showPager = true,
+        defaultRowsPerPage = RowsPerPage.TwentyFive
+    }: LazyTableSimpleProps<T>
+) => {
     const [data, setData] = useState<T[]>([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -92,6 +93,19 @@ export const LazyTableSimple = <T,>({
         );
     }, [data, page, rowsPerPage, sortColumn, sortOrder]);
 
+    const onPagerRowsPerPageChange = useCallback(
+        (event: { target: { value: string } }) => {
+            setRowsPerPage(parseInt(event.target.value));
+        },
+        []
+    );
+
+    const onPagerRowsChange = useCallback(
+        () => (_, newPage: number) => {
+            setPage(newPage);
+        },
+        []
+    );
     return loading ? (
         <LoadingPlaceholder />
     ) : (
@@ -106,25 +120,14 @@ export const LazyTableSimple = <T,>({
                 onSortOrderChanged={async (direction) => {
                     setSortOrder(direction);
                 }}
+                page={page}
+                count={count}
+                rowsPerPage={rowsPerPage}
                 rows={rows}
+                showPager={showPager}
+                onRowsPerPagerChange={onPagerRowsPerPageChange}
+                onPageChange={onPagerRowsChange}
             />
-            {showPager && (
-                <Stack direction={'row-reverse'}>
-                    <TablePagination
-                        page={page}
-                        count={count}
-                        showFirstButton
-                        showLastButton
-                        rowsPerPage={rowsPerPage}
-                        onRowsPerPageChange={(event) => {
-                            setRowsPerPage(parseInt(event.target.value));
-                        }}
-                        onPageChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
-                    />
-                </Stack>
-            )}
         </Stack>
     );
 };
