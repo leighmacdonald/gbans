@@ -5,8 +5,7 @@ import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { emptyOrNullString } from '../util/types';
 
 export const UserInit = () => {
-    const { setCurrentUser, currentUser, setRefreshToken } =
-        useCurrentUserCtx();
+    const { setCurrentUser, currentUser } = useCurrentUserCtx();
 
     useEffect(() => {
         if (currentUser.steam_id != GuestProfile.steam_id) {
@@ -23,9 +22,7 @@ export const UserInit = () => {
                     setCurrentUser(GuestProfile);
                 });
         }
-
-        // eslint-disable-next-line
-    }, [setRefreshToken]);
+    });
 
     return <></>;
 };

@@ -689,7 +689,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 			return
 		}
 
-		accessToken, errToken := newServerJWT(server.ServerID, app.conf.HTTP.CookieKey)
+		accessToken, errToken := newServerToken(server.ServerID, app.conf.HTTP.CookieKey)
 		if errToken != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to create new server access token", zap.Error(errToken))

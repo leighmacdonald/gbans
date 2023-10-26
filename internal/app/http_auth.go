@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,7 +34,7 @@ func (n *noOpDiscoveryCache) Put(_ string, _ openid.DiscoveredInfo) {}
 // Get always returns nil.
 //
 //nolint:ireturn
-func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
+func (n *noOpDiscoveryCache) Get(id string) openid.DiscoveredInfo {
 	return nil
 }
 
@@ -342,7 +343,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		accessToken, refreshToken, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, sid)
+		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			log.Error("Failed to create access token pair", zap.Error(errToken))
@@ -358,10 +359,22 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		}
 
 		query := parsedURL.Query()
-		query.Set("refresh", refreshToken)
-		query.Set("token", accessToken)
+		query.Set("refresh", tokens.refresh)
+		query.Set("token", tokens.access)
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
+
+		parsedExternal, errExternal := url.Parse(app.conf.General.ExternalURL)
+		if errExternal != nil {
+			ctx.Redirect(302, referralURL)
+			log.Error("Failed to parse ext url", zap.Error(errExternal))
+
+			return
+		}
+		// tODO max age checks
+		ctx.SetSameSite(http.SameSiteStrictMode)
+		ctx.SetCookie(fingerprintCookieName, tokens.fingerprint, 0, "/api", parsedExternal.Hostname(), app.conf.General.Mode == ReleaseMode, true)
+
 		ctx.Redirect(302, parsedURL.String())
 		log.Info("User logged in",
 			zap.Int64("sid64", sid.Int64()),
@@ -370,26 +383,52 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 	}
 }
 
-func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid steamid.SID64) (string, string, error) {
-	accessToken, errJWT := newUserJWT(sid, cookieKey)
+type userTokens struct {
+	access      string
+	refresh     string
+	fingerprint string
+}
+
+func fingerprintHash(fingerprint string) string {
+	hasher := sha256.New()
+
+	return fmt.Sprintf("%x", hasher.Sum([]byte(fingerprint)))
+}
+
+// makeTokens generates new jwt auth tokens
+// fingerprint is a random string used to prevent side-jacking.
+func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid steamid.SID64) (userTokens, error) {
+	if cookieKey == "" {
+		return userTokens{}, errors.New("cookieKey or fingerprint empty")
+	}
+
+	fingerprint := store.SecureRandomString(40)
+
+	accessToken, errJWT := newUserToken(sid, cookieKey, fingerprint, authTokenDuration)
 	if errJWT != nil {
-		return "", "", errors.Wrap(errJWT, "Failed to create new access token")
+		return userTokens{}, errors.Wrap(errJWT, "Failed to create new access token")
+	}
+
+	refreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
+	if errRefresh != nil {
+		return userTokens{}, errors.Wrap(errRefresh, "Failed to create new refresh token")
 	}
 
 	ipAddr := net.ParseIP(ctx.ClientIP())
-	refreshToken := store.NewPersonAuth(sid, ipAddr)
-
-	if errAuth := database.GetPersonAuth(ctx, sid, ipAddr, &refreshToken); errAuth != nil {
-		if !errors.Is(errAuth, store.ErrNoResult) {
-			return "", "", errors.Wrap(errAuth, "Failed to fetch refresh token")
-		}
-
-		if createErr := database.SavePersonAuth(ctx, &refreshToken); createErr != nil {
-			return "", "", errors.Wrap(errAuth, "Failed to create new refresh token")
-		}
+	if ipAddr == nil {
+		return userTokens{}, errors.New("Failed to parse IP")
 	}
 
-	return accessToken, refreshToken.RefreshToken, nil
+	personAuth := store.NewPersonAuth(sid, ipAddr, fingerprint)
+	if saveErr := database.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+		return userTokens{}, errors.Wrap(saveErr, "Failed to save new refresh token")
+	}
+
+	return userTokens{
+		access:      accessToken,
+		refresh:     refreshToken,
+		fingerprint: fingerprint,
+	}, nil
 }
 
 func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
@@ -398,34 +437,66 @@ func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	}
 }
 
+const fingerprintCookieName = "fingerprint"
+
 // onTokenRefresh handles generating new token pairs to access the api
 // NOTE: All error code paths must return 401 (Unauthorized).
 func onTokenRefresh(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var usrToken userToken
-		if errBind := ctx.BindJSON(&usrToken); errBind != nil {
+		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
+		if errCookie != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Error("Malformed user token", zap.Error(errBind))
+			log.Warn("Failed to get fingerprint cookie", zap.Error(errCookie))
 
 			return
 		}
 
-		if usrToken.RefreshToken == "" {
+		refreshTokenString, errToken := tokenFromHeader(ctx)
+		if errToken != nil {
+			ctx.AbortWithStatus(http.StatusForbidden)
+
+			return
+		}
+
+		userClaims := userAuthClaims{}
+
+		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, makeGetTokenKey(app.conf.HTTP.CookieKey))
+		if errParseClaims != nil {
+			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
+				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+
+				return
+			}
+
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+
+			return
+		}
+
+		claims, ok := refreshToken.Claims.(*userAuthClaims)
+		if !ok || !refreshToken.Valid {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+
+			return
+		}
+
+		if claims.Fingerprint != fingerprintHash(fingerprint) {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
 		var auth store.PersonAuth
-		if authError := app.db.GetPersonAuthByRefreshToken(ctx, usrToken.RefreshToken, &auth); authError != nil {
+		if authError := app.db.GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		newAccessToken, newRefreshToken, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, auth.SteamID)
+		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, auth.SteamID)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("Failed to create access token pair", zap.Error(errToken))
@@ -434,8 +505,8 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, userToken{
-			AccessToken:  newAccessToken,
-			RefreshToken: newRefreshToken,
+			AccessToken:  tokens.access,
+			RefreshToken: tokens.refresh,
 		})
 	}
 }
@@ -447,21 +518,35 @@ type userToken struct {
 
 type serverAuthClaims struct {
 	ServerID int `json:"server_id"`
+	// A random string which is used to fingerprint and prevent sidejacking
 	jwt.RegisteredClaims
 }
 
-const authTokenLifetimeDuration = time.Hour * 24 * 30 // 1 month
+type userAuthClaims struct {
+	// user context to prevent side-jacking
+	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
+	Fingerprint string `json:"fingerprint"`
+	jwt.RegisteredClaims
+}
 
-func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
+const (
+	authTokenDuration    = time.Minute * 15
+	refreshTokenDuration = time.Hour * 24 * 31
+)
+
+func newUserToken(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
-	claims := &jwt.RegisteredClaims{
-		Issuer:    "gbans",
-		Subject:   steamID.String(),
-		ExpiresAt: jwt.NewNumericDate(nowTime.Add(authTokenLifetimeDuration)),
-		IssuedAt:  jwt.NewNumericDate(nowTime),
-		NotBefore: jwt.NewNumericDate(nowTime),
-	}
 
+	claims := userAuthClaims{
+		Fingerprint: fingerprintHash(userContext),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "gbans",
+			Subject:   steamID.String(),
+			ExpiresAt: jwt.NewNumericDate(nowTime.Add(validDuration)),
+			IssuedAt:  jwt.NewNumericDate(nowTime),
+			NotBefore: jwt.NewNumericDate(nowTime),
+		},
+	}
 	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
@@ -472,13 +557,13 @@ func newUserJWT(steamID steamid.SID64, cookieKey string) (string, error) {
 	return signedToken, nil
 }
 
-func newServerJWT(serverID int, cookieKey string) (string, error) {
+func newServerToken(serverID int, cookieKey string) (string, error) {
 	curTime := time.Now()
 
 	claims := &serverAuthClaims{
 		ServerID: serverID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(curTime.Add(authTokenLifetimeDuration)),
+			ExpiresAt: jwt.NewNumericDate(curTime.Add(authTokenDuration)),
 			IssuedAt:  jwt.NewNumericDate(curTime),
 			NotBefore: jwt.NewNumericDate(curTime),
 		},
@@ -494,13 +579,29 @@ func newServerJWT(serverID int, cookieKey string) (string, error) {
 	return signedToken, nil
 }
 
+type authHeader struct {
+	Authorization string `header:"Authorization"`
+}
+
+func tokenFromHeader(ctx *gin.Context) (string, error) {
+	hdr := authHeader{}
+	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
+		return "", errors.Wrap(errBind, "Failed to bind auth header")
+	}
+
+	pcs := strings.Split(hdr.Authorization, " ")
+	if len(pcs) != 2 || pcs[1] == "" {
+		ctx.AbortWithStatus(http.StatusForbidden)
+
+		return "", errors.New("Invalid auth header")
+	}
+
+	return pcs[1], nil
+}
+
 // authMiddleware handles client authentication to the HTTP & websocket api.
 // websocket clients must pass the key as a query parameter called "token".
 func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
-	type header struct {
-		Authorization string `header:"Authorization"`
-	}
-
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -508,19 +609,14 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 		if ctx.FullPath() == "/ws" {
 			token = ctx.Query("token")
 		} else {
-			hdr := header{}
-			if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
+			hdrToken, errToken := tokenFromHeader(ctx)
+			if errToken != nil {
 				ctx.AbortWithStatus(http.StatusForbidden)
 
 				return
 			}
-			pcs := strings.Split(hdr.Authorization, " ")
-			if len(pcs) != 2 && level >= consts.PUser {
-				ctx.AbortWithStatus(http.StatusForbidden)
 
-				return
-			}
-			token = pcs[1]
+			token = hdrToken
 		}
 
 		if level >= consts.PUser {

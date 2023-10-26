@@ -11,19 +11,11 @@ import { AdminPeople } from './page/AdminPeople';
 import { Servers } from './page/Servers';
 import { AdminServers } from './page/AdminServers';
 import { Flash } from './component/Flashes';
-import { LoginSteamSuccess } from './page/LoginSteamSuccess';
 import { Profile } from './page/Profile';
 import { Footer } from './component/Footer';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { BanPage } from './page/BanPage';
-import {
-    PermissionLevel,
-    readRefreshToken,
-    readAccessToken,
-    UserProfile,
-    writeAccessToken,
-    writeRefreshToken
-} from './api';
+import { PermissionLevel, UserProfile } from './api';
 import { AdminBan } from './page/AdminBan';
 import { TopBar } from './component/TopBar';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
@@ -58,6 +50,8 @@ import { ProfileSettingsPage } from './page/ProfileSettingsPage';
 import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
 import { StatsPage } from './page/StatsPage';
 import { PlayerStatsPage } from './page/PlayerStatsPage';
+import { LoginSteamSuccess } from './page/LoginSteamSuccess';
+import { LogoutHandler } from './component/LogoutHandler';
 
 export interface AppProps {
     initialTheme: PaletteMode;
@@ -67,6 +61,13 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
     const [flashes, setFlashes] = useState<Flash[]>([]);
+    // const navigate = useNavigate();
+    //
+    // window.addEventListener('storage', (event: StorageEvent) => {
+    //     if (event.key === 'logout') {
+    //         navigate('/');
+    //     }
+    // });
 
     const saveUser = (profile: UserProfile) => {
         setCurrentUser(profile);
@@ -125,11 +126,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
         <CurrentUserCtx.Provider
             value={{
                 currentUser,
-                setCurrentUser: saveUser,
-                getToken: readAccessToken,
-                setToken: writeAccessToken,
-                getRefreshToken: readRefreshToken,
-                setRefreshToken: writeRefreshToken
+                setCurrentUser: saveUser
             }}
         >
             <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
@@ -141,6 +138,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                     <NotificationsProvider>
                                         <React.StrictMode>
                                             <UserInit />
+                                            <LogoutHandler />
                                             <CssBaseline />
                                             <Container maxWidth={'lg'}>
                                                 <TopBar />
@@ -173,7 +171,16 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     </ErrorBoundary>
                                                                 }
                                                             />
-
+                                                            <Route
+                                                                path={
+                                                                    '/login/success'
+                                                                }
+                                                                element={
+                                                                    <ErrorBoundary>
+                                                                        <LoginSteamSuccess />
+                                                                    </ErrorBoundary>
+                                                                }
+                                                            />
                                                             <Route
                                                                 path={'/stats'}
                                                                 element={
@@ -578,16 +585,6 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 element={
                                                                     <ErrorBoundary>
                                                                         <Login />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={
-                                                                    '/login/success'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <LoginSteamSuccess />
                                                                     </ErrorBoundary>
                                                                 }
                                                             />

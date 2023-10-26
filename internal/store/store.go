@@ -186,9 +186,12 @@ func (db *Store) truncateTable(ctx context.Context, table tableName) error {
 		return Err(errQueryArgs)
 	}
 
-	if _, errExec := db.Query(ctx, query, args...); errExec != nil {
+	rows, errExec := db.Query(ctx, query, args...)
+	if errExec != nil {
 		return Err(errExec)
 	}
+
+	rows.Close()
 
 	return nil
 }

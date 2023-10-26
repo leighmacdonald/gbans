@@ -174,8 +174,6 @@ type PersonAuth struct {
 	CreatedOn    time.Time     `json:"created_on"`
 }
 
-const refreshTokenLen = 80
-
 func SecureRandomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
 
@@ -193,12 +191,12 @@ func SecureRandomString(n int) string {
 	return string(ret)
 }
 
-func NewPersonAuth(sid64 steamid.SID64, addr net.IP) PersonAuth {
+func NewPersonAuth(sid64 steamid.SID64, addr net.IP, fingerPrint string) PersonAuth {
 	return PersonAuth{
 		PersonAuthID: 0,
 		SteamID:      sid64,
 		IPAddr:       addr,
-		RefreshToken: SecureRandomString(refreshTokenLen),
+		RefreshToken: fingerPrint,
 		CreatedOn:    time.Now(),
 	}
 }
@@ -1192,6 +1190,7 @@ func (db *Store) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 		Values(auth.SteamID.Int64(), auth.IPAddr.String(), auth.RefreshToken, auth.CreatedOn).
 		Suffix("RETURNING \"person_auth_id\"").
 		ToSql()
+
 	if errQuery != nil {
 		return Err(errQuery)
 	}

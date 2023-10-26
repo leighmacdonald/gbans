@@ -1,12 +1,5 @@
 import { createContext, useContext } from 'react';
-import {
-    PermissionLevel,
-    readAccessToken,
-    userKey,
-    UserProfile,
-    writeAccessToken,
-    writeRefreshToken
-} from '../api';
+import { PermissionLevel, userKey, UserProfile } from '../api';
 
 export const GuestProfile: UserProfile = {
     updated_on: new Date(),
@@ -24,10 +17,6 @@ export const GuestProfile: UserProfile = {
 export type CurrentUser = {
     currentUser: UserProfile;
     setCurrentUser: (profile: UserProfile) => void;
-    getToken: () => string;
-    setToken: (token: string) => void;
-    getRefreshToken: () => string;
-    setRefreshToken: (token: string) => void;
 };
 
 export const CurrentUserCtx = createContext<CurrentUser>({
@@ -38,11 +27,7 @@ export const CurrentUserCtx = createContext<CurrentUser>({
         } catch (e) {
             return;
         }
-    },
-    getToken: readAccessToken,
-    setToken: writeAccessToken,
-    getRefreshToken: readAccessToken,
-    setRefreshToken: writeRefreshToken
+    }
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

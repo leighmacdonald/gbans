@@ -43,7 +43,7 @@ package app_test
 //	p, _ := store.GetOrCreatePersonBySteamID(ctx, sid)
 //	p.PermissionLevel = pr
 //	_ = store.SavePerson(ctx, p)
-//	token, _ := web.newUserJWT(p.SteamID)
+//	token, _ := web.newUserToken(p.SteamID)
 //	return token
 // }
 //
