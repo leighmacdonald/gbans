@@ -1,17 +1,15 @@
 import React, { useEffect, JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { writeAccessToken, writeRefreshToken } from '../api';
+import { logout } from '../api';
 
 export const Logout = (): JSX.Element => {
-    const { setCurrentUser, setToken } = useCurrentUserCtx();
+    const { setCurrentUser } = useCurrentUserCtx();
 
     useEffect(() => {
-        setToken('');
+        logout();
         setCurrentUser(GuestProfile);
-        writeAccessToken('');
-        writeRefreshToken('');
-    }, [setCurrentUser, setToken]);
+    }, [setCurrentUser]);
 
     return <Navigate to={'/'} />;
 };

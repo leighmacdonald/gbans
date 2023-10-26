@@ -12,7 +12,7 @@
     }
   },
   "plugins": [
-    "prettier",
+    //"prettier",
     "@typescript-eslint",
     "no-loops",
     "jest",
@@ -22,13 +22,13 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
+    //"prettier",
     "plugin:jest/recommended",
     "plugin:react-hooks/recommended",
     "plugin:react/recommended"
   ],
   "rules": {
-    "prettier/prettier": 2,
+    //"prettier/prettier": 2,
     "@typescript-eslint/no-explicit-any": "warn",
     //"no-console": 2,
     "no-loops/no-loops": "warn",

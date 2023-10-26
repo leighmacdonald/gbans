@@ -1,9 +1,11 @@
 import { apiCall } from './common';
 import { logErr } from '../util/errors';
+import decodeJWT, { JwtPayload } from 'jwt-decode';
 
 export const refreshKey = 'refresh';
 export const tokenKey = 'token';
 export const userKey = 'user';
+export const logoutKey = 'logout';
 
 export interface UserToken {
     access_token: string;
@@ -33,12 +35,24 @@ export const refreshToken = async () => {
     }
 };
 
-export const writeAccessToken = (token: string) => {
-    try {
-        return sessionStorage.setItem(tokenKey, token);
-    } catch (e) {
-        return '';
+export const isTokenExpired = (token: string): boolean => {
+    if (!token || token == '') {
+        return true;
     }
+
+    const claims: JwtPayload = decodeJWT(token);
+    if (!claims || !claims.exp) {
+        return true;
+    }
+
+    const expirationTimeInSeconds = claims.exp * 1000;
+    const now = new Date();
+
+    return expirationTimeInSeconds <= now.getTime();
+};
+
+export const writeAccessToken = (token: string) => {
+    sessionStorage.setItem(tokenKey, token);
 };
 
 export const readAccessToken = () => {
@@ -50,11 +64,7 @@ export const readAccessToken = () => {
 };
 
 export const writeRefreshToken = (token: string) => {
-    try {
-        return localStorage.setItem(refreshKey, token);
-    } catch (e) {
-        return '';
-    }
+    localStorage.setItem(refreshKey, token);
 };
 
 export const readRefreshToken = () => {
@@ -65,10 +75,16 @@ export const readRefreshToken = () => {
     }
 };
 
-// export const handleOnLogout = (): void => {
-//     localStorage.clear();
-//     location.reload();
-// };
+export const writeLogoutKey = () => {
+    window.localStorage.setItem(logoutKey, Date.now().toString());
+    console.log('logout fired');
+};
+
+export const logout = (): void => {
+    writeAccessToken('');
+    writeRefreshToken('');
+    writeLogoutKey();
+};
 
 export const parseJwt = (token: string) => {
     const base64Payload = token.split('.')[1];
@@ -90,31 +106,30 @@ export const handleOnLogin = (returnPath: string): string => {
         returnUrl = `${returnUrl}:${window.location.port}`;
     }
     // Don't redirect loop to /login
-    const r = `${
+    const returnTo = `${
         window.location.protocol
     }//${returnUrl}/auth/callback?return_url=${
         returnPath !== '/login' ? returnPath : '/'
     }`;
-    return (
-        'https://steamcommunity.com/openid/login' +
-        '?openid.ns=' +
-        encodeURIComponent('http://specs.openid.net/auth/2.0') +
-        '&openid.mode=checkid_setup' +
-        '&openid.return_to=' +
-        encodeURIComponent(r) +
-        `&openid.realm=` +
-        encodeURIComponent(
+
+    return [
+        'https://steamcommunity.com/openid/login',
+        `?openid.ns=${encodeURIComponent('http://specs.openid.net/auth/2.0')}`,
+        '&openid.mode=checkid_setup',
+        `&openid.return_to=${encodeURIComponent(returnTo)}`,
+        `&openid.realm=${encodeURIComponent(
             `${window.location.protocol}//${window.location.hostname}`
-        ) +
-        '&openid.ns.sreg=' +
-        encodeURIComponent('http://openid.net/extensions/sreg/1.1') +
-        '&openid.claimed_id=' +
-        encodeURIComponent(
+        )}`,
+        `&openid.ns.sreg=${encodeURIComponent(
+            'http://openid.net/extensions/sreg/1.1'
+        )}`,
+        `&openid.claimed_id=${encodeURIComponent(
             'http://specs.openid.net/auth/2.0/identifier_select'
-        ) +
-        '&openid.identity=' +
-        encodeURIComponent('http://specs.openid.net/auth/2.0/identifier_select')
-    );
+        )}`,
+        `&openid.identity=${encodeURIComponent(
+            'http://specs.openid.net/auth/2.0/identifier_select'
+        )}`
+    ].join('');
 };
 
 export const discordLoginURL = () => {

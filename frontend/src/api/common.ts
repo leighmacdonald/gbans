@@ -1,6 +1,11 @@
 import { ReportStatus } from './report';
 import { format, parseISO } from 'date-fns';
-import { readAccessToken, readRefreshToken, refreshToken } from './auth';
+import {
+    isTokenExpired,
+    readAccessToken,
+    readRefreshToken,
+    refreshToken
+} from './auth';
 import { parseDateTime } from '../util/text';
 import { MatchResult } from './match';
 
@@ -45,15 +50,21 @@ export const apiCall = async <
         credentials: 'include',
         method: method.toUpperCase()
     };
-    const token = readAccessToken();
+
+    let token = readAccessToken();
     const refresh = readRefreshToken();
-    if (!token && refresh != '' && !isRefresh) {
-        if ((await refreshToken()) != '') {
-            return apiCall(url, method, body, true);
+    if (token == '' || isTokenExpired(token)) {
+        if (refresh != '' && !isTokenExpired(refresh)) {
+            token = await refreshToken();
         }
     }
 
-    if (token != '' && token != null) {
+    if (isRefresh) {
+        // Use the refresh token instead when performing a token refresh request
+        token = readRefreshToken();
+    }
+
+    if (token != '') {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
@@ -62,15 +73,13 @@ export const apiCall = async <
     }
     opts.headers = headers;
     const u = new URL(url, `${location.protocol}//${location.host}`);
-    if (u.port == '8080') {
-        u.port = '6006';
-    }
     const resp = await fetch(u, opts);
+
     if (resp.status == 401 && !isRefresh && refresh != '' && token != '') {
         // Try and refresh the token once
         if ((await refreshToken()) != '') {
             // Successful token refresh, make a single recursive retry
-            return apiCall(url, method, body, true);
+            return apiCall(url, method, body, false);
         }
     }
     if (resp.status === 403 && token != '') {
