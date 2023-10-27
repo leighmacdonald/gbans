@@ -154,7 +154,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	}
 
 	engine.GET("/auth/callback", onOpenIDCallback(app))
-	engine.POST("/api/auth/refresh", onTokenRefresh(app))
 	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(app))
 	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(app))
 	engine.GET("/metrics", prometheusHandler())
@@ -208,8 +207,9 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/ws", func(c *gin.Context) {
 			wsConnHandler(c.Writer, c.Request, connectionManager, currentUserProfile(c), app.log)
 		})
-
+		authed.POST("/api/auth/refresh", onTokenRefresh(app))
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))
+		authed.GET("/api/auth/logout", onAPILogout(app))
 		authed.GET("/api/current_profile", onAPICurrentProfile(app))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(app))
 		authed.POST("/api/report", onAPIPostReportCreate(app))
@@ -229,7 +229,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(app))
 		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(app))
 		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(app))
-		authed.GET("/api/auth/logout", onGetLogout(app))
+
 		authed.GET("/api/log/:match_id", onAPIGetMatch(app))
 		authed.POST("/api/logs", onAPIGetMatches(app))
 		authed.POST("/api/messages", onAPIQueryMessages(app))

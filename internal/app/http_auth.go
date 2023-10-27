@@ -93,16 +93,6 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 	}
 }
 
-func onGetLogout(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		// TODO Logout key / mark as invalid manually
-		log.Error("onGetLogout Unimplemented")
-		ctx.Redirect(http.StatusTemporaryRedirect, "/")
-	}
-}
-
 func referral(ctx *gin.Context) string {
 	referralURL, found := ctx.GetQuery("return_url")
 	if !found {
@@ -286,6 +276,47 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPILogout(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
+		if errCookie != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+
+			return
+		}
+
+		parsedExternal, errExternal := url.Parse(app.conf.General.ExternalURL)
+		if errExternal != nil {
+			ctx.Status(http.StatusInternalServerError)
+			log.Error("Failed to parse ext url", zap.Error(errExternal))
+
+			return
+		}
+
+		ctx.SetCookie(fingerprintCookieName, "", -1, "/api",
+			parsedExternal.Hostname(), app.conf.General.Mode == ReleaseMode, true)
+
+		auth := store.PersonAuth{}
+		if errGet := app.db.GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Warn("Failed to load person via fingerprint")
+
+			return
+		}
+
+		if errDelete := app.db.DeletePersonAuth(ctx, auth.PersonAuthID); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, nil)
+			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
+
+			return
+		}
+
+		ctx.Status(http.StatusNoContent)
+	}
+}
+
 func onOpenIDCallback(app *App) gin.HandlerFunc {
 	nonceStore := openid.NewSimpleNonceStore()
 	discoveryCache := &noOpDiscoveryCache{}
@@ -343,7 +374,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, sid)
+		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, sid, true)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			log.Error("Failed to create access token pair", zap.Error(errToken))
@@ -371,9 +402,9 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 
 			return
 		}
-		// tODO max age checks
+		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
-		ctx.SetCookie(fingerprintCookieName, tokens.fingerprint, 0, "/api", parsedExternal.Hostname(), app.conf.General.Mode == ReleaseMode, true)
+		ctx.SetCookie(fingerprintCookieName, tokens.fingerprint, int(refreshTokenDuration.Seconds()), "/api", parsedExternal.Hostname(), app.conf.General.Mode == ReleaseMode, true)
 
 		ctx.Redirect(302, parsedURL.String())
 		log.Info("User logged in",
@@ -397,7 +428,7 @@ func fingerprintHash(fingerprint string) string {
 
 // makeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid steamid.SID64) (userTokens, error) {
+func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
 	if cookieKey == "" {
 		return userTokens{}, errors.New("cookieKey or fingerprint empty")
 	}
@@ -409,19 +440,25 @@ func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid s
 		return userTokens{}, errors.Wrap(errJWT, "Failed to create new access token")
 	}
 
-	refreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
-	if errRefresh != nil {
-		return userTokens{}, errors.Wrap(errRefresh, "Failed to create new refresh token")
-	}
+	refreshToken := ""
 
-	ipAddr := net.ParseIP(ctx.ClientIP())
-	if ipAddr == nil {
-		return userTokens{}, errors.New("Failed to parse IP")
-	}
+	if createRefresh {
+		newRefreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
+		if errRefresh != nil {
+			return userTokens{}, errors.Wrap(errRefresh, "Failed to create new refresh token")
+		}
 
-	personAuth := store.NewPersonAuth(sid, ipAddr, fingerprint)
-	if saveErr := database.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-		return userTokens{}, errors.Wrap(saveErr, "Failed to save new refresh token")
+		ipAddr := net.ParseIP(ctx.ClientIP())
+		if ipAddr == nil {
+			return userTokens{}, errors.New("Failed to parse IP")
+		}
+
+		personAuth := store.NewPersonAuth(sid, ipAddr, fingerprint)
+		if saveErr := database.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+			return userTokens{}, errors.Wrap(saveErr, "Failed to save new createRefresh token")
+		}
+
+		refreshToken = newRefreshToken
 	}
 
 	return userTokens{
@@ -483,7 +520,8 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if claims.Fingerprint != fingerprintHash(fingerprint) {
+		hash := fingerprintHash(fingerprint)
+		if claims.Fingerprint != hash {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
@@ -496,24 +534,23 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 			return
 		}
 
-		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, auth.SteamID)
-		if errToken != nil {
+		tokens, errMakeToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, auth.SteamID, false)
+		if errMakeToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Error("Failed to create access token pair", zap.Error(errToken))
+			log.Error("Failed to create access token pair", zap.Error(errMakeToken))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, userToken{
-			AccessToken:  tokens.access,
-			RefreshToken: tokens.refresh,
+			AccessToken: tokens.access,
 		})
 	}
 }
 
 type userToken struct {
-	AccessToken  string `json:"access_token,omitempty"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 type serverAuthClaims struct {
