@@ -13,8 +13,8 @@ export interface Filter {
     updated_on?: Date;
 }
 
-export const apiGetFilters = async () =>
-    await apiCall<Filter[]>(`/api/filters`, 'GET');
+export const apiGetFilters = async (abortController?: AbortController) =>
+    await apiCall<Filter[]>(`/api/filters`, 'GET', undefined, abortController);
 
 export const apiSaveFilter = async (filter: Filter) =>
     await apiCall<Filter>(`/api/filters`, 'POST', filter);

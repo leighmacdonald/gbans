@@ -12,6 +12,7 @@ import { LazyTable } from './LazyTable';
 import { TablePagination } from '@mui/material';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { logErr } from '../util/errors';
+import { noop } from 'lodash-es';
 
 export interface LazyFetchOpts<T> {
     column: keyof T;
@@ -52,24 +53,33 @@ export const LazyTableSimple = <T,>({
     const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
 
     useEffect(() => {
-        setLoading(true);
-        if (!paged && hasLoaded) {
-            setData(data);
-            setLoading(false);
-            return;
-        }
-        fetchData({ column: sortColumn, order: sortOrder, page: page })
-            .then((resp) => {
-                setData(resp.data);
-                setCount(resp.count);
-            })
-            .catch((e) => {
+        const abortController = new AbortController();
+        const fetchNewData = async () => {
+            setLoading(true);
+            if (!paged && hasLoaded) {
+                setData(data);
+                setLoading(false);
+                return;
+            }
+            try {
+                const results = await fetchData({
+                    column: sortColumn,
+                    order: sortOrder,
+                    page: page
+                });
+                setData(results.data);
+                setCount(results.count);
+            } catch (e) {
                 logErr(e);
-            })
-            .finally(() => {
+            } finally {
                 setLoading(false);
                 setHasLoaded(true);
-            });
+            }
+        };
+
+        fetchNewData().then(noop);
+
+        return () => abortController.abort();
     }, [data, fetchData, hasLoaded, page, paged, sortColumn, sortOrder]);
 
     const rows = useMemo(() => {

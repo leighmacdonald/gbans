@@ -18,11 +18,15 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     const theme = useTheme();
 
     useEffect(() => {
-        apiGetNewsAll()
+        const abortController = new AbortController();
+
+        apiGetNewsAll(abortController)
             .then((r) => {
                 setNews(r);
             })
             .catch(logErr);
+
+        return () => abortController.abort();
     }, []);
 
     return (

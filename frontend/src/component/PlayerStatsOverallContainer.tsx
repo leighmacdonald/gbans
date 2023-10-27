@@ -68,13 +68,17 @@ export const PlayerStatsOverallContainer = ({
     const [stats, setStats] = useState<PlayerOverallResult>();
 
     useEffect(() => {
-        apiGetPlayerStats(steam_id)
+        const abortController = new AbortController();
+
+        apiGetPlayerStats(steam_id, abortController)
             .then((resp) => {
                 setStats(resp);
             })
             .finally(() => {
                 setLoading(false);
             });
+
+        return () => abortController.abort();
     }, [steam_id]);
 
     return (

@@ -16,11 +16,13 @@ export const ServerSelect = ({ setServerIDs }: ServerSelectProps) => {
     const [selectedServers, setSelectedServers] = useState<number[]>([0]);
 
     useEffect(() => {
-        apiGetServerStates()
+        const abortController = new AbortController();
+        apiGetServerStates(abortController)
             .then((servers) => {
                 setServers(servers?.servers || []);
             })
             .catch(logErr);
+        return () => abortController.abort();
     }, []);
 
     const containsAll = (f: number[]): boolean =>

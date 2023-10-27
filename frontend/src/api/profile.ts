@@ -95,14 +95,27 @@ export interface PlayerProfile {
 //     return value;
 // };
 
-export const apiGetProfile = async (query: string) =>
-    await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET');
+export const apiGetProfile = async (
+    query: string,
+    abortController?: AbortController
+) =>
+    await apiCall<PlayerProfile>(
+        `/api/profile?query=${query}`,
+        'GET',
+        undefined,
+        abortController
+    );
 
-export const apiGetCurrentProfile = async () =>
-    await apiCall<UserProfile>(`/api/current_profile`, 'GET');
+export const apiGetCurrentProfile = async (abortController: AbortController) =>
+    await apiCall<UserProfile>(
+        `/api/current_profile`,
+        'GET',
+        undefined,
+        abortController
+    );
 
-export const apiGetPeople = async () =>
-    await apiCall<Person[]>(`/api/players`, 'GET');
+export const apiGetPeople = async (abortController?: AbortController) =>
+    await apiCall<Person[]>(`/api/players`, 'GET', undefined, abortController);
 
 export const apiLinkDiscord = async (opts: { code: string }) =>
     await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
@@ -205,11 +218,15 @@ export const apiGetMessages = async (opts: MessageQuery) => {
 
 export type NotificationsQuery = QueryFilter<UserNotification>;
 
-export const apiGetNotifications = async (opts: NotificationsQuery) => {
+export const apiGetNotifications = async (
+    opts: NotificationsQuery,
+    abortController: AbortController
+) => {
     return await apiCall<UserNotification[]>(
         `/api/current_profile/notifications`,
         'POST',
-        opts
+        opts,
+        abortController
     );
 };
 

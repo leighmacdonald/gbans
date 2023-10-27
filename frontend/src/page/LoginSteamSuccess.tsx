@@ -17,29 +17,34 @@ export const LoginSteamSuccess = () => {
     const { setCurrentUser } = useCurrentUserCtx();
 
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const refresh = urlParams.get(refreshKey);
-        const token = urlParams.get(tokenKey);
+        const abortController = new AbortController();
 
-        if (!refresh || !token) {
-            navigate(defaultLocation);
+        const loadProfile = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refresh = urlParams.get(refreshKey);
+            const token = urlParams.get(tokenKey);
 
-            return;
-        }
+            if (!refresh || !token) {
+                navigate(defaultLocation);
 
-        writeRefreshToken(refresh);
-        writeAccessToken(token);
+                return;
+            }
+            try {
+                writeRefreshToken(refresh);
+                writeAccessToken(token);
 
-        apiGetCurrentProfile()
-            .then((response) => {
-                setCurrentUser(response);
-            })
-            .catch(() => {
+                const profile = await apiGetCurrentProfile(abortController);
+                setCurrentUser(profile);
+            } catch (e) {
                 setCurrentUser(GuestProfile);
-            })
-            .finally(() => {
+            } finally {
                 navigate(urlParams.get('next_url') ?? defaultLocation);
-            });
+            }
+        };
+
+        loadProfile();
+
+        return () => abortController.abort();
     });
 
     return <>{<Typography variant={'h3'}>Logging In...</Typography>}</>;

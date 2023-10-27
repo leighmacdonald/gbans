@@ -21,7 +21,7 @@ export const ConfirmDeleteFilterModal = ({
 
     const handleSubmit = useCallback(() => {
         if (!record.filter_id) {
-            logErr('filter_id not present, cannot delete');
+            logErr(new Error('filter_id not present, cannot delete'));
             return;
         }
         apiDeleteFilter(record.filter_id)

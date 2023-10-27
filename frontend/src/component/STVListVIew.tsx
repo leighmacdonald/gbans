@@ -18,6 +18,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import { useNavigate } from 'react-router-dom';
+import { logErr } from '../util/errors';
 
 export interface STVListVIewProps {
     demos: DemoFile[];
@@ -32,23 +33,34 @@ export const STVListVIew = () => {
     const { currentUser } = useCurrentUserCtx();
     const navigate = useNavigate();
 
-    const reload = useCallback(() => {
-        setIsLoading(true);
-        apiGetDemos({
-            steam_id: steamId,
-            map_name: mapName,
-            server_ids: serverIds
-        })
-            .then((response) => {
-                setDemos(response);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, [mapName, serverIds, steamId]);
+    const reload = useCallback(
+        (abortController: AbortController) => {
+            setIsLoading(true);
+            apiGetDemos(
+                {
+                    steam_id: steamId,
+                    map_name: mapName,
+                    server_ids: serverIds
+                },
+                abortController
+            )
+                .then((response) => {
+                    setDemos(response);
+                })
+                .catch((e) => {
+                    logErr(e);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        },
+        [mapName, serverIds, steamId]
+    );
 
     useEffect(() => {
-        reload();
+        const abortController = new AbortController();
+        reload(abortController);
+        return abortController.abort();
     }, [reload]);
 
     const loggedIn = useMemo(() => {

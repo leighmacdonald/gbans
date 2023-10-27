@@ -87,11 +87,15 @@ export const AdminAppeals = () => {
     const [totalRows] = useState<number>(0);
 
     useEffect(() => {
-        apiGetAppeals()
+        const abortController = new AbortController();
+
+        apiGetAppeals(undefined, abortController)
             .then((response) => {
                 setAppeals(response);
             })
             .catch(logErr);
+
+        return () => abortController.abort();
     }, []);
 
     const rows = useMemo(() => {

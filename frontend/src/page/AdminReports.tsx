@@ -29,11 +29,15 @@ export const AdminReports = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        apiGetReports({})
+        const abortController = new AbortController();
+
+        apiGetReports({}, abortController)
             .then((response) => {
                 setReports(response || []);
             })
             .catch(logErr);
+
+        return () => abortController.abort();
     }, []);
 
     const cachedReports = useMemo(() => {

@@ -10,8 +10,16 @@ export interface Page extends TimeStamped {
     revision: number;
 }
 
-export const apiGetWikiPage = async (slug: string) =>
-    await apiCall<Page>(`/api/wiki/slug/${slug}`, 'GET');
+export const apiGetWikiPage = async (
+    slug: string,
+    abortController?: AbortController
+) =>
+    await apiCall<Page>(
+        `/api/wiki/slug/${slug}`,
+        'GET',
+        undefined,
+        abortController
+    );
 
 export const apiSaveWikiPage = async (page: Page) =>
     await apiCall<Page>(`/api/wiki/slug`, 'POST', page);

@@ -20,6 +20,7 @@ import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
 import Box from '@mui/material/Box';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import ArticleIcon from '@mui/icons-material/Article';
+import { noop } from 'lodash-es';
 
 const defaultPage: Page = {
     slug: '',
@@ -39,19 +40,26 @@ export const WikiPage = (): JSX.Element => {
     const { sendFlash } = useUserFlashCtx();
 
     useEffect(() => {
+        const abortController = new AbortController();
         setLoading(true);
-        apiGetWikiPage(slug || 'home')
-            .then((response) => {
-                setPage(response);
-            })
-            .catch((e) => {
-                sendFlash('error', 'Failed to load wiki page');
+        const fetchWiki = async () => {
+            try {
+                const page = await apiGetWikiPage(
+                    slug || 'home',
+                    abortController
+                );
+                setPage(page);
+            } catch (e) {
                 logErr(e);
-            })
-            .finally(() => {
+            } finally {
                 setLoading(false);
-            });
-    }, [sendFlash, slug]);
+            }
+        };
+
+        fetchWiki().then(noop);
+
+        return () => abortController.abort();
+    }, [slug]);
 
     const onSave = useCallback(
         (new_body_md: string) => {

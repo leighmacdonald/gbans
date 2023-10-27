@@ -12,8 +12,13 @@ export enum Level {
 
 export const log = (msg: unknown, level: Level = Level.err): void => {
     if (runMode === 'development') {
-        // eslint-disable-next-line no-console
-        console.log(`[${level}] ${msg}`);
+        if (
+            Object.hasOwn(msg as object, 'message') &&
+            (msg as Error).name != 'AbortError'
+        ) {
+            // eslint-disable-next-line no-console
+            console.log(`[${level}] ${msg}`);
+        }
     } else {
         // TODO: Log client side errors on server
         noop();
@@ -21,5 +26,10 @@ export const log = (msg: unknown, level: Level = Level.err): void => {
 };
 
 export const logErr = (exception: unknown): void => {
+    if (Object.hasOwn(exception as object, 'name')) {
+        if ((exception as Error).name !== 'AbortError') {
+            return log(exception, Level.err);
+        }
+    }
     return log(exception, Level.err);
 };

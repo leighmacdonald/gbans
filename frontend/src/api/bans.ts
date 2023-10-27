@@ -262,12 +262,14 @@ export interface BanPayloadASN extends BanBasePayload {
 }
 
 export const apiGetBansSteam = async (
-    opts?: BansQueryFilter
+    opts?: BansQueryFilter,
+    abortController?: AbortController
 ): Promise<IAPIBanRecordProfile[]> => {
     const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
         `/api/bans/steam`,
         'POST',
-        opts ?? {}
+        opts ?? {},
+        abortController
     );
     return (resp ?? [])
         .map((b): IAPIBanRecordProfile => {
@@ -331,11 +333,15 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
     return resp;
 };
 
-export const apiGetAppeals = async (opts?: BansQueryFilter) => {
+export const apiGetAppeals = async (
+    opts?: BansQueryFilter,
+    abortController?: AbortController
+) => {
     const resp = await apiCall<AppealOverview[]>(
         `/api/appeals`,
         'POST',
-        opts ?? {}
+        opts ?? {},
+        abortController
     );
     return resp.map((r) => applyDateTime(r));
 };
@@ -414,33 +420,43 @@ export const apiUpdateBanMessage = async (
 export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
-export const apiGetBansCIDR = async (opts: QueryFilter<IAPIBanCIDRRecord>) => {
+export const apiGetBansCIDR = async (
+    opts: QueryFilter<IAPIBanCIDRRecord>,
+    abortController?: AbortController
+) => {
     const resp = await apiCall<IAPIBanCIDRRecord[]>(
         '/api/bans/cidr',
         'POST',
-        opts
+        opts,
+        abortController
     );
 
     return resp.map((record) => applyDateTime(record));
 };
 
-export const apiGetBansASN = async (opts: QueryFilter<IAPIBanASNRecord>) => {
+export const apiGetBansASN = async (
+    opts: QueryFilter<IAPIBanASNRecord>,
+    abortController?: AbortController
+) => {
     const resp = await apiCall<IAPIBanASNRecord[]>(
         '/api/bans/asn',
         'POST',
-        opts
+        opts,
+        abortController
     );
 
     return resp.map((record) => applyDateTime(record));
 };
 
 export const apiGetBansGroups = async (
-    opts: QueryFilter<IAPIBanGroupRecord>
+    opts: QueryFilter<IAPIBanGroupRecord>,
+    abortController?: AbortController
 ) => {
     const resp = await apiCall<IAPIBanGroupRecord[]>(
         '/api/bans/group',
         'POST',
-        opts
+        opts,
+        abortController
     );
 
     return resp.map((record) => applyDateTime(record));
