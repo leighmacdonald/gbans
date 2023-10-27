@@ -12,16 +12,24 @@ export const UserInit = () => {
             // Don't bother re-loading if we are already did in from the login success page
             return;
         }
-        const rt = readRefreshToken();
-        if (!emptyOrNullString(rt)) {
-            apiGetCurrentProfile()
-                .then((response) => {
-                    setCurrentUser(response);
-                })
-                .catch(() => {
+        const abortController = new AbortController();
+
+        const loadProfile = async () => {
+            try {
+                const rt = readRefreshToken();
+                if (!emptyOrNullString(rt)) {
+                    setCurrentUser(await apiGetCurrentProfile(abortController));
+                } else {
                     setCurrentUser(GuestProfile);
-                });
-        }
+                }
+            } catch (e) {
+                setCurrentUser(GuestProfile);
+            }
+        };
+
+        loadProfile();
+
+        return () => abortController.abort();
     });
 
     return <></>;
