@@ -15,6 +15,7 @@ import Stack from '@mui/material/Stack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteServerModal } from '../component/DeleteServerModal';
 import { logErr } from '../util/errors';
+import { noop } from 'lodash-es';
 
 export const AdminServers = () => {
     const [open, setOpen] = useState(false);
@@ -24,15 +25,22 @@ export const AdminServers = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const reload = useCallback(() => {
-        setIsLoading(true);
-        apiGetServersAdmin()
-            .then((s) => {
-                setServers(s || []);
-            })
-            .catch(logErr)
-            .finally(() => {
+        const abortController = new AbortController();
+
+        const fetchServers = async () => {
+            try {
+                setIsLoading(true);
+                setServers((await apiGetServersAdmin(abortController)) || []);
+            } catch (e) {
+                logErr(e);
+            } finally {
                 setIsLoading(false);
-            });
+            }
+        };
+
+        fetchServers().then(noop);
+
+        return () => abortController.abort();
     }, []);
 
     useEffect(() => {

@@ -10,6 +10,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { renderMarkdown } from '../api/wiki';
 import { logErr } from '../util/errors';
+import { noop } from 'lodash-es';
 
 export interface NewsViewProps {
     itemsPerPage: number;
@@ -21,14 +22,19 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
     const [page, setPage] = useState<number>(0);
 
     useEffect(() => {
-        apiGetNewsLatest()
-            .then((response) => {
+        const abortController = new AbortController();
+        const fetchNews = async () => {
+            try {
+                const response = await apiGetNewsLatest(abortController);
                 setArticles(response);
-            })
-            .catch((e) => {
-                sendFlash('error', 'Failed to load news');
-                logErr(e);
-            });
+            } catch (error) {
+                logErr(error);
+            }
+        };
+
+        fetchNews().then(noop);
+
+        return () => abortController.abort();
     }, [itemsPerPage, sendFlash]);
 
     return (

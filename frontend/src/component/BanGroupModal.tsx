@@ -73,9 +73,7 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
         },
         validateOnBlur: true,
         validateOnChange: false,
-        onReset: () => {
-            alert('reset!');
-        },
+        onReset: () => {},
         validationSchema: validationSchema,
         onSubmit: async (values) => {
             try {

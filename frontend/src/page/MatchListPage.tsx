@@ -36,6 +36,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const abortController = new AbortController();
         const opts: MatchesQueryOpts = {
             steam_id: steam_id,
             limit: rowPerPageCount,
@@ -43,7 +44,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
             order_by: sortColumn,
             desc: sortOrder == 'desc'
         };
-        apiGetMatches(opts)
+        apiGetMatches(opts, abortController)
             .then((resp) => {
                 setTotalRows(resp.count);
                 setRows(resp.matches);
@@ -51,6 +52,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
             .catch((e) => {
                 logErr(e);
             });
+        return () => abortController.abort();
     }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
 
     if (currentUser.steam_id != steam_id) {

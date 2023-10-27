@@ -130,11 +130,15 @@ interface MatchSummaryResults extends DataCount {
     matches: MatchSummary[];
 }
 
-export const apiGetMatches = async (opts: MatchesQueryOpts) => {
+export const apiGetMatches = async (
+    opts: MatchesQueryOpts,
+    abortController: AbortController
+) => {
     const resp = await apiCall<MatchSummaryResults, MatchesQueryOpts>(
         `/api/logs`,
         'POST',
-        opts
+        opts,
+        abortController
     );
     resp.matches = resp.matches.map((m) => {
         m.time_start = parseDateTime(m.time_start as unknown as string);

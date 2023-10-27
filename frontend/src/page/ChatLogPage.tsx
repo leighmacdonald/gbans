@@ -192,7 +192,9 @@ export const ChatLogPage = () => {
     ]);
 
     useEffect(() => {
-        apiGetServers()
+        const abortController = new AbortController();
+
+        apiGetServers(abortController)
             .then((resp) => {
                 setServers([
                     anyServerSimple,
@@ -202,6 +204,8 @@ export const ChatLogPage = () => {
                 ]);
             })
             .catch(logErr);
+
+        return () => abortController.abort();
     }, []);
 
     const restartTimer = useCallback(() => {

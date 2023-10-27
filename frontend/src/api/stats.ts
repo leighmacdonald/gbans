@@ -83,10 +83,14 @@ export const apiGetPlayersOverall = async () => {
     );
 };
 
-export const apiGetHealersOverall = async () => {
+export const apiGetHealersOverall = async (
+    abortController?: AbortController
+) => {
     return await apiCall<LazyResult<HealingOverallResult>>(
         `/api/stats/healers`,
-        'GET'
+        'GET',
+        undefined,
+        abortController
     );
 };
 
@@ -199,10 +203,15 @@ export interface PlayerOverallResult
     healing_taken: number;
 }
 
-export const apiGetPlayerStats = async (steam_id: string) => {
+export const apiGetPlayerStats = async (
+    steam_id: string,
+    abortController: AbortController
+) => {
     return await apiCall<PlayerOverallResult>(
         `/api/stats/player/${steam_id}/overall`,
-        'GET'
+        'GET',
+        undefined,
+        abortController
     );
 };
 

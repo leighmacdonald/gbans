@@ -179,14 +179,20 @@ export const AdminFilters = () => {
 
     const [selected, setSelected] = useState<Nullable<Filter>>();
 
-    const reset = () => {
-        apiGetFilters().then((resp) => {
-            setFilters(resp || []);
-        });
+    const reset = async (abortController?: AbortController) => {
+        try {
+            setFilters((await apiGetFilters(abortController)) ?? []);
+        } catch (e) {
+            logErr(e);
+        }
     };
 
     useEffect(() => {
-        reset();
+        const abortController = new AbortController();
+
+        reset(abortController);
+
+        return () => abortController.abort();
     }, []);
 
     return (

@@ -42,15 +42,26 @@ export const NotificationsProvider = ({
     const { currentUser } = useCurrentUserCtx();
 
     useEffect(() => {
-        if (currentUser.steam_id) {
-            const query: NotificationsQuery = {};
-            apiGetNotifications(query)
-                .then((res) => {
-                    setNotifications(res);
-                })
-                .catch(logErr);
-        }
-    }, [currentUser.steam_id, notifications.length]);
+        const abortController = new AbortController();
+        const fetchNotifications = async () => {
+            if (currentUser.steam_id != '') {
+                try {
+                    const query: NotificationsQuery = {};
+                    const notifications = await apiGetNotifications(
+                        query,
+                        abortController
+                    );
+                    setNotifications(notifications ?? []);
+                } catch (e) {
+                    logErr(e);
+                }
+            }
+        };
+
+        fetchNotifications().then(noop);
+
+        return () => abortController.abort();
+    }, [currentUser.steam_id]);
 
     return (
         <NotificationsCtx.Provider

@@ -29,6 +29,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { Login } from './Login';
+import { noop } from 'lodash-es';
 
 export const Profile = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
@@ -42,25 +43,32 @@ export const Profile = () => {
         if (!steam_id) {
             return;
         }
-        try {
-            const id = new SteamID(steam_id);
-            if (!id.isValidIndividual()) {
-                setError('Invalid Steam ID');
-                return;
+        const abortController = new AbortController();
+        const loadProfile = async () => {
+            try {
+                const id = new SteamID(steam_id);
+                if (!id.isValidIndividual()) {
+                    setError('Invalid Steam ID');
+                    return;
+                }
+                setLoading(true);
+                apiGetProfile(id.toString(), abortController)
+                    .then((response) => {
+                        setProfile(response);
+                    })
+                    .catch(logErr)
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            } catch (e) {
+                setError(`Invalid Steam ID: ${steam_id}`);
+                setLoading(false);
             }
-            setLoading(true);
-            apiGetProfile(id.toString())
-                .then((response) => {
-                    setProfile(response);
-                })
-                .catch(logErr)
-                .finally(() => {
-                    setLoading(false);
-                });
-        } catch (e) {
-            setError(`Invalid Steam ID: ${steam_id}`);
-            setLoading(false);
-        }
+        };
+
+        loadProfile().then(noop);
+
+        return () => abortController.abort();
     }, [sendFlash, steam_id]);
 
     const renderedProfile = useMemo(() => {

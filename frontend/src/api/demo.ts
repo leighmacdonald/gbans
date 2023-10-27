@@ -22,8 +22,16 @@ export interface demoFilters {
     server_ids: number[];
 }
 
-export const apiGetDemos = async (opts: demoFilters) => {
-    const demos = await apiCall<DemoFile[]>('/api/demos', 'POST', opts);
+export const apiGetDemos = async (
+    opts: demoFilters,
+    abortController: AbortController
+) => {
+    const demos = await apiCall<DemoFile[]>(
+        '/api/demos',
+        'POST',
+        opts,
+        abortController
+    );
     return demos.map((d) => {
         return {
             ...d,

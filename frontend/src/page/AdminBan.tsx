@@ -67,41 +67,51 @@ export const AdminBan = () => {
     const [value, setValue] = React.useState<number>(0);
     const navigate = useNavigate();
 
-    const loadBansGroup = useCallback(() => {
-        apiGetBansGroups({ desc: true, order_by: 'ban_group_id' }).then(
-            (newGroupBans) => {
-                setBanGroups(newGroupBans);
-            }
-        );
+    const loadBansGroup = useCallback((abortController: AbortController) => {
+        apiGetBansGroups(
+            { desc: true, order_by: 'ban_group_id' },
+            abortController
+        ).then((newGroupBans) => {
+            setBanGroups(newGroupBans);
+        });
     }, []);
 
-    const loadBansCIDR = useCallback(() => {
-        apiGetBansCIDR({ desc: true, order_by: 'net_id' }).then(
-            (newBansCIDR) => {
-                setBanCIDRs(newBansCIDR);
-            }
-        );
+    const loadBansCIDR = useCallback((abortController: AbortController) => {
+        apiGetBansCIDR(
+            { desc: true, order_by: 'net_id' },
+            abortController
+        ).then((newBansCIDR) => {
+            setBanCIDRs(newBansCIDR);
+        });
     }, []);
 
-    const loadBansASN = useCallback(() => {
-        apiGetBansASN({ desc: true, order_by: 'ban_asn_id' }).then(
-            (newBansASN) => {
-                setBanASNs(newBansASN);
-            }
-        );
+    const loadBansASN = useCallback((abortController: AbortController) => {
+        apiGetBansASN(
+            { desc: true, order_by: 'ban_asn_id' },
+            abortController
+        ).then((newBansASN) => {
+            setBanASNs(newBansASN);
+        });
     }, []);
 
-    const loadBansSteam = useCallback(() => {
-        apiGetBansSteam({ desc: true, order_by: 'ban_id' }).then((newBans) => {
+    const loadBansSteam = useCallback((abortController: AbortController) => {
+        apiGetBansSteam(
+            { desc: true, order_by: 'ban_id' },
+            abortController
+        ).then((newBans) => {
             setBans(newBans || []);
         });
     }, []);
 
     useEffect(() => {
-        loadBansSteam();
-        loadBansCIDR();
-        loadBansASN();
-        loadBansGroup();
+        const abortController = new AbortController();
+
+        loadBansSteam(abortController);
+        loadBansCIDR(abortController);
+        loadBansASN(abortController);
+        loadBansGroup(abortController);
+
+        return () => abortController.abort();
     }, [loadBansASN, loadBansCIDR, loadBansGroup, loadBansSteam]);
 
     return (

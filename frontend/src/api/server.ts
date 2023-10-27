@@ -70,8 +70,13 @@ interface UserServers {
     lat_long: Location;
 }
 
-export const apiGetServerStates = async () =>
-    await apiCall<UserServers>(`/api/servers/state`, 'GET');
+export const apiGetServerStates = async (abortController?: AbortController) =>
+    await apiCall<UserServers>(
+        `/api/servers/state`,
+        'GET',
+        undefined,
+        abortController
+    );
 
 export interface SaveServerOpts {
     server_name_short: string;
@@ -97,11 +102,21 @@ export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
         opts
     );
 
-export const apiGetServersAdmin = async () =>
-    await apiCall<Server[]>(`/api/servers_admin`, 'GET');
+export const apiGetServersAdmin = async (abortController: AbortController) =>
+    await apiCall<Server[]>(
+        `/api/servers_admin`,
+        'GET',
+        undefined,
+        abortController
+    );
 
-export const apiGetServers = async () =>
-    await apiCall<ServerSimple[]>(`/api/servers`, 'GET');
+export const apiGetServers = async (abortController: AbortController) =>
+    await apiCall<ServerSimple[]>(
+        `/api/servers`,
+        'GET',
+        undefined,
+        abortController
+    );
 
 export const apiDeleteServer = async (server_id: number) =>
     await apiCall(`/api/servers/${server_id}`, 'DELETE');
