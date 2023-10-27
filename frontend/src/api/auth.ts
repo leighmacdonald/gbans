@@ -1,4 +1,4 @@
-import { apiCall } from './common';
+import { apiCall, EmptyBody } from './common';
 import { logErr } from '../util/errors';
 import decodeJWT, { JwtPayload } from 'jwt-decode';
 
@@ -20,18 +20,16 @@ export const refreshToken = async () => {
             {
                 refresh_token: readRefreshToken()
             } as UserToken,
+            undefined,
             true
         );
-        if (!resp?.access_token || !resp?.refresh_token) {
+        if (!resp?.access_token) {
             logErr('Failed to refresh auth token');
-            return '';
+            return;
         }
         writeAccessToken(resp?.access_token);
-        writeRefreshToken(resp?.refresh_token);
-        return resp?.access_token;
     } catch (e) {
         logErr(e);
-        return '';
     }
 };
 
@@ -52,7 +50,11 @@ export const isTokenExpired = (token: string): boolean => {
 };
 
 export const writeAccessToken = (token: string) => {
-    sessionStorage.setItem(tokenKey, token);
+    if (token == '') {
+        sessionStorage.removeItem(tokenKey);
+    } else {
+        sessionStorage.setItem(tokenKey, token);
+    }
 };
 
 export const readAccessToken = () => {
@@ -64,7 +66,11 @@ export const readAccessToken = () => {
 };
 
 export const writeRefreshToken = (token: string) => {
-    localStorage.setItem(refreshKey, token);
+    if (token == '') {
+        localStorage.removeItem(refreshKey);
+    } else {
+        localStorage.setItem(refreshKey, token);
+    }
 };
 
 export const readRefreshToken = () => {
@@ -75,15 +81,27 @@ export const readRefreshToken = () => {
     }
 };
 
+// Calling writeLogoutKey will trigger a logout on any other currently open tabs using
+// a storage event listener. See: LogoutHandler.tsx
 export const writeLogoutKey = () => {
-    window.localStorage.setItem(logoutKey, Date.now().toString());
-    console.log('logout fired');
+    localStorage.setItem(logoutKey, Date.now().toString());
 };
 
-export const logout = (): void => {
-    writeAccessToken('');
-    writeRefreshToken('');
-    writeLogoutKey();
+export const logout = async (abortController?: AbortController) => {
+    try {
+        await apiCall<EmptyBody>(
+            '/api/auth/logout',
+            'GET',
+            undefined,
+            abortController
+        );
+    } catch (e) {
+        logErr(e);
+    } finally {
+        writeAccessToken('');
+        writeRefreshToken('');
+        writeLogoutKey();
+    }
 };
 
 export const parseJwt = (token: string) => {

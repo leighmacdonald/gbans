@@ -24,14 +24,28 @@ export interface DataCount {
 
 export class EmptyBody {}
 
+// isRefresh is to track if the token is being used as a auth refresh token. In that
+// case its returned instead of the standard access token.
+const getAccessToken = async (isRefresh: boolean) => {
+    if (
+        isTokenExpired(readAccessToken()) &&
+        !isTokenExpired(readRefreshToken()) &&
+        !isRefresh
+    ) {
+        await refreshToken();
+    }
+
+    return isRefresh ? readRefreshToken() : readAccessToken();
+};
+
 /**
  * All api requests are handled through this interface.
  *
- * @param objectType
  * @param url
  * @param method
  * @param body
  * @param isRefresh
+ * @param abortController
  */
 export const apiCall = async <
     TResponse,
@@ -40,57 +54,48 @@ export const apiCall = async <
     url: string,
     method: string,
     body?: TRequestBody | undefined,
+    abortController?: AbortController,
     isRefresh?: boolean
 ): Promise<TResponse> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
     };
-    const opts: RequestInit = {
+    const requestOptions: RequestInit = {
         mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
     };
 
-    let token = readAccessToken();
-    const refresh = readRefreshToken();
-    if (token == '' || isTokenExpired(token)) {
-        if (refresh != '' && !isTokenExpired(refresh)) {
-            token = await refreshToken();
-        }
+    const accessToken = await getAccessToken(isRefresh ?? false);
+
+    if (accessToken != '') {
+        headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    if (isRefresh) {
-        // Use the refresh token instead when performing a token refresh request
-        token = readRefreshToken();
-    }
-
-    if (token != '') {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
+    requestOptions.headers = headers;
 
     if (method !== 'GET' && body) {
-        opts['body'] = JSON.stringify(body);
+        requestOptions['body'] = JSON.stringify(body);
     }
-    opts.headers = headers;
-    const u = new URL(url, `${location.protocol}//${location.host}`);
-    const resp = await fetch(u, opts);
 
-    if (resp.status == 401 && !isRefresh && refresh != '' && token != '') {
-        // Try and refresh the token once
-        if ((await refreshToken()) != '') {
-            // Successful token refresh, make a single recursive retry
-            return apiCall(url, method, body, false);
-        }
+    if (abortController != undefined) {
+        requestOptions.signal = abortController.signal;
     }
-    if (resp.status === 403 && token != '') {
+
+    const response = await fetch(
+        new URL(url, `${location.protocol}//${location.host}`),
+        requestOptions
+    );
+
+    if (response.status === 403 && accessToken != '') {
         throw new Error('Permission Denied');
     }
 
-    if (!resp.ok) {
+    if (!response.ok) {
         throw new Error(`Invalid response`);
     }
 
-    return (await resp.json()) as TResponse;
+    return (await response.json()) as TResponse;
 };
 
 export class ValidationException extends Error {}
