@@ -1,12 +1,13 @@
 import { format, parseISO } from 'date-fns';
+import { parseDateTime } from '../util/text';
 import {
     isTokenExpired,
     readAccessToken,
     readRefreshToken,
     refreshToken
 } from './auth';
-import { parseDateTime } from '../util/text';
 import { MatchResult } from './match';
+import { ReportStatus } from './report';
 
 export enum PermissionLevel {
     Banned = 0,

@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Typography from '@mui/material/Typography';
 import {
     apiGetCurrentProfile,
     refreshKey,
@@ -6,8 +8,6 @@ import {
     writeAccessToken,
     writeRefreshToken
 } from '../api';
-import { useNavigate } from 'react-router-dom';
-import Typography from '@mui/material/Typography';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 const defaultLocation = '/';

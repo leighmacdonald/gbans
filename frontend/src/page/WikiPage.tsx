@@ -6,6 +6,7 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { noop } from 'lodash-es';
 import { PermissionLevel } from '../api';
 import {
     apiGetWikiPage,
@@ -20,7 +21,6 @@ import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { noop } from 'lodash-es';
 
 const defaultPage: Page = {
     slug: '',
