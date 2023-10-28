@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
+import { noop } from 'lodash-es';
 import { LazyResult } from '../api';
 import { logErr } from '../util/errors';
 import {
@@ -9,12 +10,8 @@ import {
     RowsPerPage,
     stableSort
 } from './DataTable';
-import Stack from '@mui/material/Stack';
 import { LazyTable } from './LazyTable';
-import { TablePagination } from '@mui/material';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
-import { logErr } from '../util/errors';
-import { noop } from 'lodash-es';
 
 export interface LazyFetchOpts<T> {
     column: keyof T;

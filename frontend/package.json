@@ -45,7 +45,7 @@
     "@mui/system": "^5.14.14",
     "@mui/x-charts": "^6.0.0-alpha.16",
     "@mui/x-date-pickers": "^6.16.3",
-    "@trivago/prettier-plugin-sort-imports": "^4.2.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.2.1",
     "@types/chai": "^4.3.9",
     "@types/jest": "^29.5.6",
     "@types/jquery": "^3.5.24",

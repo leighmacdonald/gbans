@@ -1,35 +1,34 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router';
+import InsightsIcon from '@mui/icons-material/Insights';
+import LinkIcon from '@mui/icons-material/Link';
+import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
+import { noop } from 'lodash-es';
+import SteamID from 'steamid';
 import {
     apiGetPlayerWeaponsOverall,
     apiGetProfile,
     PlayerProfile
 } from '../api';
-import { Nullable } from '../util/types';
-import { useParams } from 'react-router';
-import Stack from '@mui/material/Stack';
-import { logErr } from '../util/errors';
-import { createExternalLinks } from '../util/history';
-import Link from '@mui/material/Link';
-import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
-import { SteamIDList } from '../component/SteamIDList';
-import { LoadingSpinner } from '../component/LoadingSpinner';
-import { ProfileInfoBox } from '../component/ProfileInfoBox';
-import SteamID from 'steamid';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
-import LinkIcon from '@mui/icons-material/Link';
-import Box from '@mui/material/Box';
-import { PageNotFound } from './PageNotFound';
+import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer';
-import InsightsIcon from '@mui/icons-material/Insights';
+import { ProfileInfoBox } from '../component/ProfileInfoBox';
+import { SteamIDList } from '../component/SteamIDList';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
+import { createExternalLinks } from '../util/history';
+import { Nullable } from '../util/types';
 import { Login } from './Login';
-import { noop } from 'lodash-es';
 import { PageNotFound } from './PageNotFound';
 
 export const Profile = () => {

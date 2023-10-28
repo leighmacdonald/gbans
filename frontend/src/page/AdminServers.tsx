@@ -1,23 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
-import { DataTable } from '../component/DataTable';
-import { apiGetServersAdmin, Server } from '../api';
-import { ServerEditorModal } from '../component/ServerEditorModal';
-import { Nullable } from '../util/types';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+import CreateIcon from '@mui/icons-material/Create';
+import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import Button from '@mui/material/Button';
-import CreateIcon from '@mui/icons-material/Create';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import DeleteIcon from '@mui/icons-material/Delete';
+import Tooltip from '@mui/material/Tooltip';
+import Grid from '@mui/material/Unstable_Grid2';
+import { noop } from 'lodash-es';
+import { apiGetServersAdmin, Server } from '../api';
+import { DataTable } from '../component/DataTable';
 import { DeleteServerModal } from '../component/DeleteServerModal';
 import { ServerEditorModal } from '../component/ServerEditorModal';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
-import { noop } from 'lodash-es';
 
 export const AdminServers = () => {
     const [open, setOpen] = useState(false);

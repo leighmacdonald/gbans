@@ -1,6 +1,6 @@
-import { apiCall, EmptyBody } from './common';
-import { logErr } from '../util/errors';
 import decodeJWT, { JwtPayload } from 'jwt-decode';
+import { logErr } from '../util/errors';
+import { apiCall, EmptyBody } from './common';
 
 export const refreshKey = 'refresh';
 export const tokenKey = 'token';
