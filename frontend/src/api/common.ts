@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { parseDateTime } from '../util/text';
+import { emptyOrNullString } from '../util/types';
 import {
     isTokenExpired,
     readAccessToken,
@@ -38,6 +39,37 @@ const getAccessToken = async (isRefresh: boolean) => {
     return isRefresh ? readRefreshToken() : readAccessToken();
 };
 
+export enum ErrorCode {
+    InvalidMimetype,
+    DependencyMissing,
+    PermissionDenied,
+    Unknown
+}
+
+export class APIError extends Error {
+    public code: ErrorCode;
+
+    constructor(code: ErrorCode, message?: string, options?: ErrorOptions) {
+        if (emptyOrNullString(message)) {
+            switch (code) {
+                case ErrorCode.InvalidMimetype:
+                    message = 'Forbidden file format (mimetype)';
+                    break;
+                case ErrorCode.DependencyMissing:
+                    message = 'Dependency missing, cannot continue';
+                    break;
+                case ErrorCode.PermissionDenied:
+                    message = 'Permission Denied';
+                    break;
+                default:
+                    message = 'Unhandled Error';
+            }
+        }
+        super(message, options);
+        this.code = code;
+    }
+}
+
 /**
  * All api requests are handled through this interface.
  *
@@ -46,6 +78,7 @@ const getAccessToken = async (isRefresh: boolean) => {
  * @param body
  * @param isRefresh
  * @param abortController
+ * @throws APIError
  */
 export const apiCall = async <
     TResponse,
@@ -61,7 +94,7 @@ export const apiCall = async <
         'Content-Type': 'application/json; charset=UTF-8'
     };
     const requestOptions: RequestInit = {
-        mode: 'cors',
+        mode: 'same-origin',
         credentials: 'include',
         method: method.toUpperCase()
     };
@@ -86,13 +119,19 @@ export const apiCall = async <
         new URL(url, `${location.protocol}//${location.host}`),
         requestOptions
     );
-
-    if (response.status === 403 && accessToken != '') {
-        throw new Error('Permission Denied');
+    switch (response.status) {
+        case 415:
+            throw new APIError(ErrorCode.InvalidMimetype);
+        case 424:
+            throw new APIError(ErrorCode.DependencyMissing);
+        case 403:
+            if (accessToken != '') {
+                throw new APIError(ErrorCode.PermissionDenied);
+            }
     }
 
     if (!response.ok) {
-        throw new Error(`Invalid response`);
+        throw new APIError(ErrorCode.Unknown);
     }
 
     return (await response.json()) as TResponse;

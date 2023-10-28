@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -38,6 +38,12 @@ export const ContestPage = () => {
             logErr(e);
         }
     }, []);
+
+    const showEntries = useMemo(() => {
+        return (
+            contest && contest.hide_submissions && !isAfter(contest.date_end)
+        );
+    }, [contest]);
 
     if (!contest_id) {
         return <PageNotFound />;
@@ -133,7 +139,7 @@ export const ContestPage = () => {
                         </Stack>
                     </ContainerWithHeader>
                 </Grid>
-                {contest.hide_submissions ? (
+                {showEntries ? (
                     <Grid xs={12}>
                         <Paper>
                             <Typography

@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
@@ -16,8 +16,14 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
 import { useFormik } from 'formik';
+import { noop } from 'lodash-es';
 import * as yup from 'yup';
-import { apiContestEntrySave, EmptyUUID, useContest } from '../../api';
+import {
+    apiContestEntrySave,
+    APIError,
+    EmptyUUID,
+    useContest
+} from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
@@ -48,6 +54,7 @@ export const ContestEntryModal = NiceModal.create(
         const [uploadInProgress, setUploadInProgress] = useState(false);
         const [name, setName] = useState('');
         const [assetID, setAssetID] = useState('');
+        const [assetError, setAssetError] = useState('');
         const { loading, contest } = useContest(contest_id);
         const modal = useModal();
         const { sendFlash } = useUserFlashCtx();
@@ -94,19 +101,36 @@ export const ContestEntryModal = NiceModal.create(
             if (!userUpload) {
                 return;
             }
-            apiSaveContestEntryMedia(contest_id, userUpload)
-                .then((media) => {
+            const abortController = new AbortController();
+            const uploadMedia = async () => {
+                try {
+                    const media = await apiSaveContestEntryMedia(
+                        contest_id,
+                        userUpload
+                    );
                     setAssetID(media.asset.asset_id);
-                })
-                .catch((e) => {
-                    logErr(e);
-                });
+                    setAssetError('');
+                } catch (err) {
+                    if (err instanceof APIError) {
+                        setAssetError(err.message);
+                    } else {
+                        logErr(err);
+                    }
+                    setName('');
+                    setSubmittedOnce(false);
+                    setUserUpload(undefined);
+                }
+            };
+
+            uploadMedia().then(noop);
+
+            return () => abortController.abort();
         }, [contest_id, userUpload]);
 
         const formik = useFormik<ContestEntryFormValues>({
             initialValues: {
                 contest_id: contest?.contest_id ?? EmptyUUID,
-                description: contest?.description ?? ''
+                description: ''
             },
             validateOnBlur: false,
             validateOnChange: false,
@@ -120,7 +144,7 @@ export const ContestEntryModal = NiceModal.create(
 
                 try {
                     const contest = await apiContestEntrySave(
-                        values.contest_id != '' ? values.contest_id : EmptyUUID,
+                        values.contest_id,
                         values.description,
                         assetID
                     );
@@ -129,9 +153,12 @@ export const ContestEntryModal = NiceModal.create(
                         `Entry created successfully (${contest.contest_id}`
                     );
                     await modal.hide();
-                } catch (e) {
-                    logErr(e);
-                    sendFlash('error', 'Error saving entry');
+                } catch (err) {
+                    if (err instanceof APIError) {
+                        sendFlash('error', err.message);
+                    } else {
+                        logErr(err);
+                    }
                 }
             }
         });
@@ -217,6 +244,16 @@ export const ContestEntryModal = NiceModal.create(
                                         </Box>
                                     )}
                                 </Grid>
+                                {assetError != '' && (
+                                    <Grid xs={12}>
+                                        <Typography
+                                            variant={'body2'}
+                                            color={'error'}
+                                        >
+                                            {assetError}
+                                        </Typography>
+                                    </Grid>
+                                )}
                                 {submittedOnce && assetID == '' && (
                                     <Grid xs={12}>
                                         <Box display="flex" alignItems="center">
@@ -262,7 +299,6 @@ const DescriptionField = ({
             minRows={10}
             disabled={isReadOnly ?? false}
             name={'description'}
-            id={'description'}
             label={'Description'}
             value={formik.values.description}
             onChange={formik.handleChange}
