@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {
@@ -72,6 +73,8 @@ export const ContestEditor = NiceModal.create(
     ({ contest_id }: { contest_id?: string }) => {
         const { loading, contest } = useContest(contest_id);
         const modal = useModal();
+        const navigate = useNavigate();
+
         const { sendFlash } = useUserFlashCtx();
 
         const defaultStartDate = useMemo(() => new Date(), []);
@@ -99,11 +102,10 @@ export const ContestEditor = NiceModal.create(
                     contest?.min_permission_level ?? PermissionLevel.User
             },
             validateOnBlur: false,
-            validateOnChange: false,
+            validateOnChange: true,
             validationSchema: validationSchema,
             enableReinitialize: true,
             onSubmit: async (values) => {
-                console.log('submitted');
                 try {
                     const contest = await apiContestSave({
                         contest_id:
@@ -129,18 +131,13 @@ export const ContestEditor = NiceModal.create(
                         `Contest created successfully (${contest.contest_id}`
                     );
                     await modal.hide();
+                    navigate(`/contests/${contest.contest_id}`);
                 } catch (e) {
                     logErr(e);
                     sendFlash('error', 'Error saving contest');
                 }
             }
         });
-
-        // const onSave = useCallback(async () => {
-        //     console.log('submitting');
-        //     await formik.submitForm();
-        //     console.log('submitted');
-        // }, [formik]);
 
         const formId = 'contestEditorForm';
 
@@ -367,14 +364,13 @@ const PublicField = ({
             <FormControlLabel
                 control={
                     <Checkbox
-                        id={'public-cb'}
+                        checked={formik.values.public}
                         disabled={isReadOnly ?? false}
-                        value={formik.values.public}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
                     />
                 }
                 label="Public"
+                name={'public'}
+                onChange={formik.handleChange}
             />
         </FormGroup>
     );
@@ -393,14 +389,13 @@ const HideSubmissionsField = ({
             <FormControlLabel
                 control={
                     <Checkbox
-                        id={'hide_submissions-cb'}
                         disabled={isReadOnly ?? false}
-                        value={formik.values.hide_submissions}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
+                        checked={formik.values.hide_submissions}
                     />
                 }
                 label="Hide Submissions"
+                name={'hide_submissions'}
+                onChange={formik.handleChange}
             />
         </FormGroup>
     );
@@ -419,13 +414,13 @@ const VotingField = ({
             <FormControlLabel
                 control={
                     <Checkbox
-                        id={'voting-cb'}
                         disabled={isReadOnly ?? false}
-                        value={formik.values.voting}
-                        onChange={formik.handleChange}
+                        checked={formik.values.voting}
                     />
                 }
                 label="Voting Allowed"
+                name={'voting'}
+                onChange={formik.handleChange}
             />
         </FormGroup>
     );
@@ -444,13 +439,13 @@ const DownVotesField = ({
             <FormControlLabel
                 control={
                     <Checkbox
-                        id={'down_votes-cb'}
                         disabled={isReadOnly ?? false}
-                        value={formik.values.down_votes}
-                        onChange={formik.handleChange}
+                        checked={formik.values.down_votes}
                     />
                 }
                 label="Down Votes Allowed"
+                name={'down_votes'}
+                onChange={formik.handleChange}
             />
         </FormGroup>
     );

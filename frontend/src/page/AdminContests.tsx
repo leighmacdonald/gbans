@@ -89,6 +89,29 @@ export const AdminContests = () => {
                                 sortType: 'boolean'
                             },
                             {
+                                sortKey: 'hide_submissions',
+                                label: 'Hide Subs.',
+                                tooltip:
+                                    'Hide submissions from the public until contest is over',
+                                align: 'center',
+                                sortType: 'boolean'
+                            },
+                            {
+                                sortKey: 'voting',
+                                label: 'Voting',
+                                tooltip: 'User entry voting enabled',
+                                align: 'center',
+                                sortType: 'boolean'
+                            },
+                            {
+                                sortKey: 'down_votes',
+                                label: 'Down Votes',
+                                tooltip:
+                                    'If User entry voting enabled, this will enable/disable the ability to downvote',
+                                align: 'center',
+                                sortType: 'boolean'
+                            },
+                            {
                                 sortKey: 'date_start',
                                 sortType: 'date',
                                 label: 'date_start',

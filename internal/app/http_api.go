@@ -2792,11 +2792,26 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 			return
 		}
 
+		if contest.MediaTypes != "" {
+			var media store.Media
+			if errMedia := app.db.GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
+				responseErr(ctx, http.StatusFailedDependency, errors.New("Could not load media asset"))
+
+				return
+			}
+
+			if !contest.MimeTypeAcceptable(media.MimeType) {
+				responseErr(ctx, http.StatusFailedDependency, errors.New("Invalid Mime Type"))
+
+				return
+			}
+		}
+
 		steamID := currentUserProfile(ctx).SteamID
 
 		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
 		if errEntry != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not create content entry"))
 
 			return
 		}
@@ -2890,7 +2905,7 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 		media.Contents = nil
 
 		if !contest.MimeTypeAcceptable(media.MimeType) {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Invalid file format"))
+			responseErr(ctx, http.StatusUnsupportedMediaType, errors.New("Invalid file format"))
 			log.Error("User tried uploading file with forbidden mimetype",
 				zap.String("mime", media.MimeType), zap.String("name", media.Name))
 
@@ -3932,7 +3947,7 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Status(http.StatusAccepted)
+		ctx.JSON(http.StatusAccepted, contest)
 
 		log.Info("Contest updated",
 			zap.String("contest_id", contest.ContestID.String()),
