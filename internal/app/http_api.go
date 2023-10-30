@@ -760,9 +760,9 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if app.IsSteamGroupBanned(steamID) {
+		if parentID, banned := app.IsGroupBanned(steamID); banned {
 			resp.BanType = store.Banned
-			resp.Msg = "Group Banned"
+			resp.Msg = fmt.Sprintf("Group/Steam Friend Ban (source: %d)", parentID)
 			ctx.JSON(http.StatusOK, resp)
 			log.Info("Player dropped", zap.String("drop_type", "group"),
 				zap.Int64("sid64", steamID.Int64()))
