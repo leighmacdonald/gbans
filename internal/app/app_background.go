@@ -175,7 +175,7 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 		}
 
 		if len(friends) == 0 {
-			return newMap, nil
+			continue
 		}
 
 		var sids steamid.Collection
@@ -223,7 +223,7 @@ func (app *App) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Co
 		}
 
 		if len(members) == 0 {
-			return newMap, nil
+			continue
 		}
 
 		memberList := store.NewMembersList(group.GroupID.Int64(), members)
