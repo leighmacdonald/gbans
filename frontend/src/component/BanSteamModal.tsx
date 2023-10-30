@@ -30,6 +30,7 @@ import {
     BanReasonTextField,
     BanReasonTextFieldValidator
 } from './formik/BanReasonTextField';
+import { IncludeFriendsField } from './formik/IncludeFriendsField';
 
 export interface BanModalProps {
     open: boolean;
@@ -46,6 +47,7 @@ interface BanSteamFormValues extends SteamIDInputValue {
     duration: Duration;
     durationCustom: string;
     note: string;
+    include_friends: boolean;
 }
 
 const validationSchema = yup.object({
@@ -80,7 +82,8 @@ export const BanSteamModal = ({
             reason: BanReason.Cheating,
             steam_id: steamId ?? '',
             reasonText: '',
-            reportId: reportId
+            reportId: reportId,
+            include_friends: false
         },
         validateOnBlur: true,
         validateOnChange: false,
@@ -97,7 +100,8 @@ export const BanSteamModal = ({
                     reason: values.reason,
                     reason_text: values.reasonText,
                     report_id: values.reportId,
-                    target_id: values.steam_id
+                    target_id: values.steam_id,
+                    include_friends: values.include_friends
                 });
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {
@@ -108,7 +112,9 @@ export const BanSteamModal = ({
             }
         }
     });
+
     const formId = 'banSteamForm';
+
     return (
         <form onSubmit={formik.handleSubmit} id={formId}>
             <Dialog
@@ -133,6 +139,7 @@ export const BanSteamModal = ({
                         <BanTypeField formik={formik} />
                         <BanReasonField formik={formik} />
                         <BanReasonTextField formik={formik} />
+                        <IncludeFriendsField formik={formik} />
                         <DurationField formik={formik} />
                         <DurationCustomField formik={formik} />
                         <NoteField formik={formik} />

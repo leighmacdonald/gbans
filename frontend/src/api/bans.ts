@@ -177,6 +177,7 @@ export interface IAPIBanRecord extends BanBase {
     ban_id: number;
     report_id: number;
     ban_type: BanType;
+    include_friends: boolean;
 }
 
 export interface SimplePerson {
@@ -251,6 +252,7 @@ export interface BanBasePayload {
 
 export interface BanPayloadSteam extends BanBasePayload {
     report_id?: number;
+    include_friends: boolean;
 }
 
 export interface BanPayloadCIDR extends BanBasePayload {
@@ -301,7 +303,8 @@ export const apiGetBansSteam = async (
                 appeal_state: b.ban.appeal_state,
                 created_on: b.ban.created_on,
                 updated_on: b.ban.updated_on,
-                valid_until: b.ban.valid_until
+                valid_until: b.ban.valid_until,
+                include_friends: b.ban.include_friends
             };
         })
         .map(applyDateTime);

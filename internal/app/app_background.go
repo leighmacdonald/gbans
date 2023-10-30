@@ -161,20 +161,101 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 			updateChan <- true
 		case <-updateChan:
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
-			newMap := map[steamid.GID]steamid.Collection{}
+			newMap := map[int64]steamid.Collection{}
 			total := 0
 
-			for _, gid := range app.conf.General.BannedSteamGroupIds {
-				members, errMembers := steamweb.GetGroupMembers(localCtx, gid)
-				if errMembers != nil {
-					log.Warn("Failed to fetch group members", zap.Error(errMembers))
+			groups, errGroups := app.db.GetBanGroups(ctx)
+			if errGroups != nil {
+				if errors.Is(errGroups, store.ErrNoResult) {
 					cancel()
 
 					continue
 				}
 
-				newMap[gid] = members
+				log.Error("Failed to fetch banned groups", zap.Error(errGroups))
+				cancel()
+
+				continue
+			}
+
+			for _, group := range groups {
+				members, errMembers := steamweb.GetGroupMembers(localCtx, group.GroupID)
+				if errMembers != nil {
+					log.Error("Failed to fetch group members", zap.Error(errMembers))
+					cancel()
+
+					continue
+				}
+
+				if len(members) == 0 {
+					continue
+				}
+
+				memberList := store.NewMembersList(group.GroupID.Int64(), members)
+				if errSave := app.db.SaveMembersList(ctx, &memberList); errSave != nil {
+					log.Error("Failed to save banned groups member list", zap.Error(errGroups))
+					cancel()
+				}
+
+				newMap[group.GroupID.Int64()] = members
 				total += len(members)
+			}
+
+			opts := store.BansQueryFilter{
+				QueryFilter:        store.QueryFilter{Deleted: false},
+				IncludeFriendsOnly: true,
+			}
+
+			steamBans, errSteam := app.db.GetBansSteam(ctx, opts)
+			if errSteam != nil {
+				if errors.Is(errSteam, store.ErrNoResult) {
+					cancel()
+
+					continue
+				}
+
+				log.Error("Failed to fetch bans with friends included", zap.Error(errSteam))
+				cancel()
+
+				continue
+			}
+
+			for _, steamBan := range steamBans {
+				friends, errFriends := steamweb.GetFriendList(localCtx, steamBan.Ban.TargetID)
+				if errFriends != nil {
+					log.Error("Failed to fetch friends", zap.Error(errFriends))
+					cancel()
+
+					continue
+				}
+
+				if len(friends) == 0 {
+					continue
+				}
+
+				var sids steamid.Collection
+
+				for _, friend := range friends {
+					sids = append(sids, friend.SteamID)
+				}
+
+				memberList := store.NewMembersList(steamBan.Person.SteamID.Int64(), sids)
+				if errQuery := app.db.GetMembersList(ctx, steamBan.Person.SteamID.Int64(), &memberList); errQuery != nil {
+					if !errors.Is(errQuery, store.ErrNoResult) {
+						log.Error("Failed to fetch members list", zap.Error(errQuery))
+						cancel()
+
+						continue
+					}
+				}
+
+				if errSave := app.db.SaveMembersList(ctx, &memberList); errSave != nil {
+					log.Error("Failed to save banned groups member list", zap.Error(errGroups))
+					cancel()
+				}
+
+				newMap[steamBan.Person.SteamID.Int64()] = memberList.Members
+				total += len(friends)
 			}
 
 			app.bannedGroupMembersMu.Lock()
