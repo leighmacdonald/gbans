@@ -41,11 +41,11 @@ export interface BanCIDRModalProps {
 
 interface BanCIDRFormValues extends SteamIDInputValue {
     cidr: string;
-    banType: BanType;
+    ban_type: BanType;
     reason: BanReason;
-    reasonText: string;
+    reason_text: string;
     duration: Duration;
-    durationCustom: string;
+    duration_custom: string;
     note: string;
 }
 
@@ -65,13 +65,13 @@ export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
 
     const formik = useFormik<BanCIDRFormValues>({
         initialValues: {
-            banType: BanType.NoComm,
+            ban_type: BanType.NoComm,
             duration: Duration.dur2w,
-            durationCustom: '',
+            duration_custom: '',
             note: '',
             reason: BanReason.Cheating,
             steam_id: '',
-            reasonText: '',
+            reason_text: '',
             cidr: ''
         },
         validateOnBlur: true,
@@ -84,10 +84,10 @@ export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
             try {
                 await apiCreateBanCIDR({
                     note: values.note,
-                    ban_type: values.banType,
+                    ban_type: values.ban_type,
                     duration: values.duration,
                     reason: values.reason,
-                    reason_text: values.reasonText,
+                    reason_text: values.reason_text,
                     target_id: values.steam_id,
                     cidr: values.cidr
                 });
@@ -118,6 +118,11 @@ export const BanCIDRModal = ({ open, setOpen }: BanCIDRModalProps) => {
 
                 <DialogContent>
                     <Stack spacing={2}>
+                        <SteamIdField
+                            formik={formik}
+                            fullWidth
+                            isReadOnly={false}
+                        />
                         <SteamIdField
                             formik={formik}
                             fullWidth

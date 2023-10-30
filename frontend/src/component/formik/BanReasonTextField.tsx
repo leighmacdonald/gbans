@@ -18,23 +18,23 @@ export const BanReasonTextField = ({
 }: {
     formik: FormikState<{
         reason: BanReason;
-        reasonText: string;
+        reason_text: string;
     }> &
         FormikHandlers;
 }) => {
     return (
         <TextField
             fullWidth
-            id="reasonText"
-            name={'reasonText'}
+            id="reason_text"
+            name={'reason_text'}
             label="Custom Reason"
             disabled={formik.values.reason != BanReason.Custom}
-            value={formik.values.reasonText}
+            value={formik.values.reason_text}
             onChange={formik.handleChange}
             error={
-                formik.touched.reasonText && Boolean(formik.errors.reasonText)
+                formik.touched.reason_text && Boolean(formik.errors.reason_text)
             }
-            helperText={formik.touched.reasonText && formik.errors.reasonText}
+            helperText={formik.touched.reason_text && formik.errors.reason_text}
             variant="outlined"
         />
     );

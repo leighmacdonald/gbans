@@ -1061,7 +1061,7 @@ func (db *Store) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup 
 	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
 	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state, group_id
 	FROM ban_group
-	WHERE group_id = $1 AND is_enabled = true AND deleted = false`
+	WHERE group_id = $1 AND deleted = false`
 
 	var (
 		sourceID   int64
@@ -1113,7 +1113,7 @@ func (db *Store) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup
 		Scan(
 			&banGroup.BanGroupID,
 			&sourceID,
-			targetID,
+			&targetID,
 			&banGroup.GroupName,
 			&banGroup.IsEnabled,
 			&banGroup.Deleted,

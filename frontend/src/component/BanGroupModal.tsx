@@ -2,7 +2,6 @@ import React from 'react';
 import Stack from '@mui/material/Stack';
 import {
     apiCreateBanGroup,
-    BanReason,
     BanType,
     Duration,
     IAPIBanGroupRecord
@@ -15,11 +14,6 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import GavelIcon from '@mui/icons-material/Gavel';
-import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
-import {
-    BanReasonField,
-    BanReasonFieldValidator
-} from './formik/BanReasonField';
 import { DurationField, DurationFieldValidator } from './formik/DurationField';
 import {
     DurationCustomField,
@@ -28,31 +22,22 @@ import {
 import { NoteField, NoteFieldValidator } from './formik/NoteField';
 import { ModalButtons } from './formik/ModalButtons';
 import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
-import {
-    BanReasonTextField,
-    BanReasonTextFieldValidator
-} from './formik/BanReasonTextField';
+import { SteamIdField, steamIdValidator } from './formik/SteamIdField';
 
 export interface BanGroupModalProps
-    extends ConfirmationModalProps<IAPIBanGroupRecord> {
-    asnNum?: number;
-}
+    extends ConfirmationModalProps<IAPIBanGroupRecord> {}
 
 interface BanGroupFormValues {
-    groupId: string;
-    banType: BanType;
-    reason: BanReason;
-    reasonText: string;
+    steam_id: string;
+    group_id: string;
     duration: Duration;
-    durationCustom: string;
+    duration_custom: string;
     note: string;
 }
 
 const validationSchema = yup.object({
+    steam_id: steamIdValidator,
     groupId: GroupIdFieldValidator,
-    banType: BanTypeFieldValidator,
-    reason: BanReasonFieldValidator,
-    reasonText: BanReasonTextFieldValidator,
     duration: DurationFieldValidator,
     durationCustom: DurationCustomFieldValidator,
     note: NoteFieldValidator
@@ -63,27 +48,24 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
 
     const formik = useFormik<BanGroupFormValues>({
         initialValues: {
-            banType: BanType.NoComm,
+            steam_id: '',
             duration: Duration.dur2w,
-            durationCustom: '',
+            duration_custom: '',
             note: '',
-            reason: BanReason.Cheating,
-            groupId: '',
-            reasonText: ''
+            group_id: ''
         },
         validateOnBlur: true,
         validateOnChange: false,
-        onReset: () => {},
         validationSchema: validationSchema,
         onSubmit: async (values) => {
+            console.log('fire');
             try {
                 await apiCreateBanGroup({
+                    group_id: values.group_id,
                     note: values.note,
-                    ban_type: values.banType,
+                    ban_type: BanType.Banned,
                     duration: values.duration,
-                    reason: values.reason,
-                    reason_text: values.reasonText,
-                    target_id: values.groupId
+                    target_id: values.steam_id
                 });
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {
@@ -94,9 +76,11 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
             }
         }
     });
+
     const formId = 'banGroupForm';
+
     return (
-        <form onSubmit={formik.handleSubmit} id={'banForm'}>
+        <form onSubmit={formik.handleSubmit} id={formId}>
             <Dialog
                 fullWidth
                 open={open}
@@ -111,10 +95,8 @@ export const BanGroupModal = ({ open, setOpen }: BanGroupModalProps) => {
                 <DialogContent>
                     <Stack spacing={2}>
                         <Stack spacing={3} alignItems={'center'}>
+                            <SteamIdField fullWidth={true} formik={formik} />
                             <GroupIdField formik={formik} />
-                            <BanTypeField formik={formik} />
-                            <BanReasonField formik={formik} />
-                            <BanReasonTextField formik={formik} />
                             <DurationField formik={formik} />
                             <DurationCustomField formik={formik} />
                             <NoteField formik={formik} />

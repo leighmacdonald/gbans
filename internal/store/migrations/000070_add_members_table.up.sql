@@ -10,6 +10,8 @@ CREATE TABLE members
 
 CREATE UNIQUE INDEX members_parent_id_uindex ON members (parent_id);
 
+DROP INDEX IF EXISTS ban_group_group_id_uindex;
+
 ALTER TABLE ban
     ADD COLUMN include_friends bool default false;
 

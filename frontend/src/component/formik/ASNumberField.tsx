@@ -13,7 +13,7 @@ export const ASNumberField = ({
     formik
 }: {
     formik: FormikState<{
-        asNum: number;
+        as_num: number;
     }> &
         FormikHandlers;
 }) => {
@@ -22,12 +22,12 @@ export const ASNumberField = ({
             type={'number'}
             fullWidth
             label={'Autonomous System Number'}
-            id={'asNum'}
-            name={'asNum'}
-            value={formik.values.asNum}
+            id={'as_num'}
+            name={'as_num'}
+            value={formik.values.as_num}
             onChange={formik.handleChange}
-            error={formik.touched.asNum && Boolean(formik.errors.asNum)}
-            helperText={formik.touched.asNum && formik.errors.asNum}
+            error={formik.touched.as_num && Boolean(formik.errors.as_num)}
+            helperText={formik.touched.as_num && formik.errors.as_num}
         />
     );
 };

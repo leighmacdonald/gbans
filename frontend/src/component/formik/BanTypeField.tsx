@@ -17,7 +17,7 @@ export const BanTypeField = ({
     formik
 }: {
     formik: FormikState<{
-        banType: BanType;
+        ban_type: BanType;
     }> &
         FormikHandlers;
 }) => {
@@ -28,11 +28,13 @@ export const BanTypeField = ({
                 fullWidth
                 label={'Action Type'}
                 labelId="actionType-label"
-                id="banType"
-                name={'banType'}
-                value={formik.values.banType}
+                id="ban_type"
+                name={'ban_type'}
+                value={formik.values.ban_type}
                 onChange={formik.handleChange}
-                error={formik.touched.banType && Boolean(formik.errors.banType)}
+                error={
+                    formik.touched.ban_type && Boolean(formik.errors.ban_type)
+                }
                 defaultValue={BanType.Banned}
             >
                 {[BanType.Banned, BanType.NoComm].map((v) => (
@@ -42,7 +44,7 @@ export const BanTypeField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.banType && formik.errors.banType}
+                {formik.touched.ban_type && formik.errors.ban_type}
             </FormHelperText>
         </FormControl>
     );

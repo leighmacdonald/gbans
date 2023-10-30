@@ -13,7 +13,7 @@ export const DurationCustomField = ({
 }: {
     formik: FormikState<{
         duration: Duration;
-        durationCustom: string;
+        duration_custom: string;
     }> &
         FormikHandlers;
 }) => {
@@ -21,17 +21,17 @@ export const DurationCustomField = ({
         <TextField
             fullWidth
             label={'Custom Duration'}
-            id={'durationCustom'}
-            name={'durationCustom'}
+            id={'duration_custom'}
+            name={'duration_custom'}
             disabled={formik.values.duration != Duration.durCustom}
-            value={formik.values.durationCustom}
+            value={formik.values.duration_custom}
             onChange={formik.handleChange}
             error={
-                formik.touched.durationCustom &&
-                Boolean(formik.errors.durationCustom)
+                formik.touched.duration_custom &&
+                Boolean(formik.errors.duration_custom)
             }
             helperText={
-                formik.touched.durationCustom && formik.errors.durationCustom
+                formik.touched.duration_custom && formik.errors.duration_custom
             }
         />
     );

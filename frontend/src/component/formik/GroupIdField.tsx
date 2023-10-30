@@ -5,26 +5,26 @@ import * as yup from 'yup';
 
 export const GroupIdFieldValidator = yup
     .string()
-    .min(10, 'Must be positive integer');
+    .length(18, 'Must be positive integer');
 
 export const GroupIdField = ({
     formik
 }: {
     formik: FormikState<{
-        groupId: string;
+        group_id: string;
     }> &
         FormikHandlers;
 }) => {
     return (
         <TextField
             fullWidth
-            id="groupId"
-            name={'groupId'}
+            id="group_id"
+            name={'group_id'}
             label="Steam Group ID"
-            value={formik.values.groupId}
+            value={formik.values.group_id}
             onChange={formik.handleChange}
-            error={formik.touched.groupId && Boolean(formik.errors.groupId)}
-            helperText={formik.touched.groupId && formik.errors.groupId}
+            error={formik.touched.group_id && Boolean(formik.errors.group_id)}
+            helperText={formik.touched.group_id && formik.errors.group_id}
             variant="outlined"
         />
     );
