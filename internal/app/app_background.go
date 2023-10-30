@@ -18,19 +18,20 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (app *App) IsSteamGroupBanned(steamID steamid.SID64) bool {
+// IsGroupBanned checks membership in the currently known banned group members or friends of banned users marked with `include_friends`
+func (app *App) IsGroupBanned(steamID steamid.SID64) (int64, bool) {
 	app.bannedGroupMembersMu.RLock()
 	defer app.bannedGroupMembersMu.RUnlock()
 
-	for _, groupMembers := range app.bannedGroupMembers {
+	for parentID, groupMembers := range app.bannedGroupMembers {
 		for _, member := range groupMembers {
 			if steamID == member {
-				return true
+				return parentID, true
 			}
 		}
 	}
 
-	return false
+	return 0, false
 }
 
 // activeMatchContext represents the current match on any given server instance.
