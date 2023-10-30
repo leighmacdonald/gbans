@@ -37,12 +37,12 @@ export interface BanASNModalProps {
 }
 
 interface BanASNFormValues extends SteamIDInputValue {
-    asNum: number;
-    banType: BanType;
+    as_num: number;
+    ban_type: BanType;
     reason: BanReason;
-    reasonText: string;
+    reason_text: string;
     duration: Duration;
-    durationCustom: string;
+    duration_custom: string;
     note: string;
 }
 
@@ -62,14 +62,14 @@ export const BanASNModal = ({ open, setOpen }: BanASNModalProps) => {
 
     const formik = useFormik<BanASNFormValues>({
         initialValues: {
-            banType: BanType.NoComm,
+            ban_type: BanType.NoComm,
             duration: Duration.dur2w,
-            durationCustom: '',
+            duration_custom: '',
             note: '',
             reason: BanReason.Cheating,
             steam_id: '',
-            reasonText: '',
-            asNum: 0
+            reason_text: '',
+            as_num: 0
         },
         validateOnBlur: true,
         validateOnChange: false,
@@ -81,12 +81,12 @@ export const BanASNModal = ({ open, setOpen }: BanASNModalProps) => {
             try {
                 await apiCreateBanASN({
                     note: values.note,
-                    ban_type: values.banType,
+                    ban_type: values.ban_type,
                     duration: values.duration,
                     reason: values.reason,
-                    reason_text: values.reasonText,
+                    reason_text: values.reason_text,
                     target_id: values.steam_id,
-                    as_num: values.asNum
+                    as_num: values.as_num
                 });
                 sendFlash('success', 'Ban created successfully');
             } catch (e) {

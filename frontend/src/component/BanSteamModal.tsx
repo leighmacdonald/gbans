@@ -40,12 +40,12 @@ export interface BanModalProps {
 }
 
 interface BanSteamFormValues extends SteamIDInputValue {
-    reportId?: number;
-    banType: BanType;
+    report_id?: number;
+    ban_type: BanType;
     reason: BanReason;
-    reasonText: string;
+    reason_text: string;
     duration: Duration;
-    durationCustom: string;
+    duration_custom: string;
     note: string;
     include_friends: boolean;
 }
@@ -75,14 +75,14 @@ export const BanSteamModal = ({
 
     const formik = useFormik<BanSteamFormValues>({
         initialValues: {
-            banType: BanType.NoComm,
+            ban_type: BanType.NoComm,
             duration: Duration.dur2w,
-            durationCustom: '',
+            duration_custom: '',
             note: '',
             reason: BanReason.Cheating,
             steam_id: steamId ?? '',
-            reasonText: '',
-            reportId: reportId,
+            reason_text: '',
+            report_id: reportId,
             include_friends: false
         },
         validateOnBlur: true,
@@ -95,11 +95,11 @@ export const BanSteamModal = ({
             try {
                 await apiCreateBanSteam({
                     note: values.note,
-                    ban_type: values.banType,
+                    ban_type: values.ban_type,
                     duration: values.duration,
                     reason: values.reason,
-                    reason_text: values.reasonText,
-                    report_id: values.reportId,
+                    reason_text: values.reason_text,
+                    report_id: values.report_id,
                     target_id: values.steam_id,
                     include_friends: values.include_friends
                 });

@@ -12,7 +12,7 @@ export const ReportIdField = ({
     formik
 }: {
     formik: FormikState<{
-        reportId?: number;
+        report_id?: number;
     }> &
         FormikHandlers;
 }) => {
@@ -25,7 +25,7 @@ export const ReportIdField = ({
             name={'report_id'}
             disabled={true}
             hidden={true}
-            value={formik.values.reportId}
+            value={formik.values.report_id}
             onChange={formik.handleChange}
         />
     );

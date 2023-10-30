@@ -245,22 +245,29 @@ export interface BanBasePayload {
     target_id: string;
     duration: string;
     ban_type: BanType;
-    reason: number;
-    reason_text: string;
     note: string;
 }
 
-export interface BanPayloadSteam extends BanBasePayload {
+interface BanReasonPayload {
+    reason: number;
+    reason_text: string;
+}
+
+export interface BanPayloadSteam extends BanBasePayload, BanReasonPayload {
     report_id?: number;
     include_friends: boolean;
 }
 
-export interface BanPayloadCIDR extends BanBasePayload {
+export interface BanPayloadCIDR extends BanBasePayload, BanReasonPayload {
     cidr: string;
 }
 
-export interface BanPayloadASN extends BanBasePayload {
+export interface BanPayloadASN extends BanBasePayload, BanReasonPayload {
     as_num: number;
+}
+
+export interface BanPayloadGroup extends BanBasePayload {
+    group_id: string;
 }
 
 export const apiGetBansSteam = async (
@@ -370,8 +377,8 @@ export const apiCreateBanASN = async (p: BanPayloadASN) =>
         p
     );
 
-export const apiCreateBanGroup = async (p: BanBasePayload) =>
-    await apiCall<IAPIBanGroupRecord, BanBasePayload>(
+export const apiCreateBanGroup = async (p: BanPayloadGroup) =>
+    await apiCall<IAPIBanGroupRecord, BanPayloadGroup>(
         `/api/bans/group/create`,
         'POST',
         p

@@ -379,6 +379,23 @@ export const AdminBan = () => {
                                         }
                                     },
                                     {
+                                        label: 'Friends Incl.',
+                                        tooltip:
+                                            'Are friends also included in the ban',
+                                        align: 'left',
+                                        width: '150px',
+                                        sortKey: 'include_friends',
+                                        renderer: (row) => {
+                                            return (
+                                                <Typography variant={'body1'}>
+                                                    {row.include_friends
+                                                        ? 'yes'
+                                                        : 'no'}
+                                                </Typography>
+                                            );
+                                        }
+                                    },
+                                    {
                                         label: 'Rep.',
                                         tooltip: 'Report',
                                         sortable: false,
@@ -812,25 +829,17 @@ export const AdminBan = () => {
                                 )
                             },
                             {
-                                label: 'Reason',
-                                tooltip: 'Reason',
-                                sortKey: 'reason',
-                                sortable: true,
-                                align: 'left',
-                                queryValue: (o) => BanReason[o.reason],
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {BanReason[row.reason]}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'Custom Reason',
-                                tooltip: 'Custom',
-                                sortKey: 'reason_text',
+                                label: 'Note',
+                                tooltip: 'Mod Note',
+                                sortKey: 'note',
                                 sortable: false,
                                 align: 'left',
-                                queryValue: (o) => o.reason_text
+                                queryValue: (row) => row.note,
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {row.note}
+                                    </Typography>
+                                )
                             },
                             {
                                 label: 'Created',

@@ -259,7 +259,7 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 			store.Cheating,
 			store.Cheating.String(),
 			"Mod Note",
-			store.System, 0, store.Banned, &banSteam), "Failed to create ban opts")
+			store.System, 0, store.Banned, false, &banSteam), "Failed to create ban opts")
 
 		require.NoError(t, database.SaveBan(ctx, &banSteam), "Failed to add ban")
 

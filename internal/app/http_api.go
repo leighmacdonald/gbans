@@ -406,13 +406,11 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 
 func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
-		GroupID    steamid.GID     `json:"group_id"`
-		BanType    store.BanType   `json:"ban_type"`
-		Duration   string          `json:"duration"`
-		Note       string          `json:"note"`
-		Reason     store.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
+		TargetID store.StringSID `json:"target_id"`
+		GroupID  steamid.GID     `json:"group_id"`
+		BanType  store.BanType   `json:"ban_type"`
+		Duration string          `json:"duration"`
+		Note     string          `json:"note"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -420,6 +418,13 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
 		if !bind(ctx, log, &req) {
+			return
+		}
+
+		var existing store.BanGroup
+		if errExist := app.db.GetBanGroup(ctx, req.GroupID, &existing); errExist != nil && !errors.Is(errExist, store.ErrNoResult) {
+			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
+
 			return
 		}
 
@@ -432,9 +437,9 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			store.StringSID(sid.String()),
 			req.TargetID,
 			store.Duration(req.Duration),
-			req.Reason,
-			req.ReasonText,
+			store.Custom,
 			"",
+			req.Note,
 			store.Web,
 			req.GroupID,
 			"",
@@ -442,6 +447,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			log.Error("Failed to save group ban", zap.Error(errBanSteamGroup))
 
 			return
 		}
