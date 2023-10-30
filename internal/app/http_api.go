@@ -581,16 +581,17 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 
 func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		SourceID   store.StringSID `json:"source_id"`
-		TargetID   store.StringSID `json:"target_id"`
-		Duration   string          `json:"duration"`
-		BanType    store.BanType   `json:"ban_type"`
-		Reason     store.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		Note       string          `json:"note"`
-		ReportID   int64           `json:"report_id"`
-		DemoName   string          `json:"demo_name"`
-		DemoTick   int             `json:"demo_tick"`
+		SourceID       store.StringSID `json:"source_id"`
+		TargetID       store.StringSID `json:"target_id"`
+		Duration       string          `json:"duration"`
+		BanType        store.BanType   `json:"ban_type"`
+		Reason         store.Reason    `json:"reason"`
+		ReasonText     string          `json:"reason_text"`
+		Note           string          `json:"note"`
+		ReportID       int64           `json:"report_id"`
+		DemoName       string          `json:"demo_name"`
+		DemoTick       int             `json:"demo_tick"`
+		IncludeFriends bool            `json:"include_friends"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -624,6 +625,7 @@ func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 			origin,
 			req.ReportID,
 			req.BanType,
+			req.IncludeFriends,
 			&banSteam,
 		); errBanSteam != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)

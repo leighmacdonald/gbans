@@ -135,8 +135,6 @@ type generalConfig struct {
 	MasterServerStatusUpdateFreq string         `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string       `mapstructure:"default_maps"`
 	ExternalURL                  string         `mapstructure:"external_url"`
-	BannedSteamGroupIds          []steamid.GID  `mapstructure:"banned_steam_group_ids"`
-	BannedServersAddresses       []string       `mapstructure:"banned_server_addresses"`
 }
 
 type discordConfig struct {

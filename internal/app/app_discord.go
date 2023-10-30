@@ -1535,6 +1535,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 			store.Bot,
 			0,
 			store.NoComm,
+			false,
 			&banSteam,
 		); errOpts != nil {
 			return nil, errors.Wrapf(errOpts, "Failed to parse options")
@@ -1714,6 +1715,7 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		store.Bot,
 		0,
 		store.Banned,
+		false,
 		&banSteam,
 	); errOpts != nil {
 		return nil, errors.Wrapf(errOpts, "Failed to parse options")

@@ -44,7 +44,7 @@ type App struct {
 	notificationChan     chan NotificationPayload
 	incomingGameChat     chan store.PersonMessage
 	state                *serverStateCollector
-	bannedGroupMembers   map[steamid.GID]steamid.Collection
+	bannedGroupMembers   map[int64]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *patreonManager
 	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -66,7 +66,7 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		logFileChan:          make(chan *logFilePayload, 10),
 		notificationChan:     make(chan NotificationPayload, 5),
 		incomingGameChat:     make(chan store.PersonMessage, 5),
-		bannedGroupMembers:   map[steamid.GID]steamid.Collection{},
+		bannedGroupMembers:   map[int64]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
 		matchUUIDMap:         fp.NewMutexMap[int, uuid.UUID](),
 		patreon:              newPatreonManager(logger, conf, database),
@@ -548,6 +548,7 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 							store.System,
 							0,
 							store.NoComm,
+							false,
 							&banSteam); errNewBan != nil {
 							log.Error("Failed to create warning ban", zap.Error(errNewBan))
 
@@ -944,7 +945,6 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 
 		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
-			// return errors.Wrapf(errBans, "Failed to get Player ban state: %v", errBans)
 			app.log.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
 		} else {
 			person.CommunityBanned = vac[0].CommunityBanned
