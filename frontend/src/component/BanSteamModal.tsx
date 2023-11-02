@@ -22,6 +22,7 @@ import {
     DurationCustomFieldValidator
 } from './formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from './formik/DurationField';
+import { IncludeFriendsField } from './formik/IncludeFriendsField';
 import { ModalButtons } from './formik/ModalButtons';
 import { NoteField, NoteFieldValidator } from './formik/NoteField';
 import { ReportIdField, ReportIdFieldValidator } from './formik/ReportIdField';
@@ -30,10 +31,6 @@ import {
     SteamIDInputValue,
     steamIdValidator
 } from './formik/SteamIdField';
-    BanReasonTextField,
-    BanReasonTextFieldValidator
-} from './formik/BanReasonTextField';
-import { IncludeFriendsField } from './formik/IncludeFriendsField';
 
 export interface BanModalProps {
     open: boolean;

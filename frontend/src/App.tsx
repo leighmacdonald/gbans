@@ -45,6 +45,7 @@ import { MatchPage } from './page/MatchPage';
 import { NotificationsPage } from './page/NotificationsPage';
 import { PageNotFound } from './page/PageNotFound';
 import { PlayerStatsPage } from './page/PlayerStatsPage';
+import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
 import { Profile } from './page/Profile';
 import { ProfileSettingsPage } from './page/ProfileSettingsPage';
 import { ReportCreatePage } from './page/ReportCreatePage';
@@ -52,17 +53,6 @@ import { ReportViewPage } from './page/ReportViewPage';
 import { STVPage } from './page/STVPage';
 import { Servers } from './page/Servers';
 import { StatsPage } from './page/StatsPage';
-import { PlayerStatsPage } from './page/PlayerStatsPage';
-import { LoginSteamSuccess } from './page/LoginSteamSuccess';
-import { LogoutHandler } from './component/LogoutHandler';
-import { AdminContests } from './page/AdminContests';
-import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
-import { AdminContestEditorPage } from './page/AdminContestEditorPage';
-import { ContestListPage } from './page/ContestListPage';
-import NiceModal from '@ebay/nice-modal-react';
-import { ContestPage } from './page/ContestPage';
-import { ErrorBoundary } from './component/ErrorBoundary';
-import { PrivateRoute } from './component/PrivateRoute';
 import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
 import { WikiPage } from './page/WikiPage';
 import { createThemeByMode } from './theme';
@@ -145,70 +135,6 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                     <NotificationsProvider>
                                         <React.StrictMode>
                                             <NiceModal.Provider>
-                                            <UserInit />
-                                            <LogoutHandler />
-                                            <CssBaseline />
-                                            <Container maxWidth={'lg'}>
-                                                <TopBar />
-                                                <div style={{ marginTop: 24 }}>
-                                                    <ErrorBoundary>
-                                                        <Routes>
-                                                            <Route
-                                                                path={'/'}
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <Home />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={
-                                                                    '/servers'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <Servers />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={'/stv'}
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <STVPage />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={
-                                                                    '/login/success'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <LoginSteamSuccess />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={
-                                                                    '/privacy-policy'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <PrivacyPolicyPage />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
-                                                            <Route
-                                                                path={
-                                                                    '/contests'
-                                                                }
-                                                                element={
-                                                                    <ErrorBoundary>
-                                                                        <ContestListPage />
-                                                                    </ErrorBoundary>
-                                                                }
-                                                            />
                                                 <UserInit />
                                                 <LogoutHandler />
                                                 <CssBaseline />
@@ -221,6 +147,64 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                     >
                                                         <ErrorBoundary>
                                                             <Routes>
+                                                                <Route
+                                                                    path={'/'}
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <Home />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/servers'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <Servers />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/stv'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <STVPage />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/login/success'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <LoginSteamSuccess />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/privacy-policy'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivacyPolicyPage />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/contests'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <ContestListPage />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
                                                                 <Route
                                                                     path={'/'}
                                                                     element={

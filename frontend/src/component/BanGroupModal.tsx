@@ -15,15 +15,6 @@ import { logErr } from '../util/errors';
 import { ConfirmationModalProps } from './ConfirmationModal';
 import { Heading } from './Heading';
 import {
-    BanReasonField,
-    BanReasonFieldValidator
-} from './formik/BanReasonField';
-import {
-    BanReasonTextField,
-    BanReasonTextFieldValidator
-} from './formik/BanReasonTextField';
-import { BanTypeField, BanTypeFieldValidator } from './formik/BanTypeField';
-import {
     DurationCustomField,
     DurationCustomFieldValidator
 } from './formik/DurationCustomField';
@@ -31,7 +22,6 @@ import { DurationField, DurationFieldValidator } from './formik/DurationField';
 import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
 import { ModalButtons } from './formik/ModalButtons';
 import { NoteField, NoteFieldValidator } from './formik/NoteField';
-import { GroupIdField, GroupIdFieldValidator } from './formik/GroupIdField';
 import { SteamIdField, steamIdValidator } from './formik/SteamIdField';
 
 export interface BanGroupModalProps
