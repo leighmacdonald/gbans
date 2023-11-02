@@ -252,6 +252,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(app))
 
 		authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(app))
+		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(app))
 		authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(app))
 	}
 

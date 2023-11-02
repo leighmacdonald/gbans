@@ -2852,6 +2852,59 @@ func contestFromCtx(ctx *gin.Context, app *App) (store.Contest, bool) {
 	return contest, true
 }
 
+func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type voteResult struct {
+		CurrentVote string `json:"current_vote"`
+	}
+
+	return func(ctx *gin.Context) {
+		contest, success := contestFromCtx(ctx, app)
+		if !success {
+			return
+		}
+		contestEntryID, errContestEntryID := getUUIDParam(ctx, "contest_entry_id")
+		if errContestEntryID != nil {
+			ctx.JSON(http.StatusNotFound, consts.ErrNotFound)
+			log.Error("Invalid contest entry id option")
+
+			return
+		}
+
+		direction := strings.ToLower(ctx.Param("direction"))
+		if direction != "up" && direction != "down" {
+			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			log.Error("Invalid vote direction option")
+
+			return
+		}
+
+		if !contest.Voting || !contest.DownVotes && direction != "down" {
+			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			log.Error("Voting not enabled")
+
+			return
+		}
+
+		currentUser := currentUserProfile(ctx)
+
+		if errVote := app.db.ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
+			if errors.Is(errVote, store.ErrVoteDeleted) {
+				ctx.JSON(http.StatusOK, voteResult{""})
+
+				return
+			}
+
+			ctx.JSON(http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, voteResult{direction})
+	}
+}
+
 func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 

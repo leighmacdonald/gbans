@@ -37,7 +37,7 @@ CREATE TABLE contest_entry_vote
     contest_entry_vote_id bigserial primary key,
     contest_entry_id      uuid        not null references contest_entry on delete cascade on update cascade,
     steam_id              bigint      not null references person,
-    vote                  int         not null,
+    vote                  bool        not null,
     created_on            timestamptz not null,
     updated_on            timestamptz not null,
     UNIQUE (contest_entry_id, steam_id)
