@@ -74,6 +74,8 @@ export interface ContestEntry extends TimeStamped {
     placement: number;
     personaname: string;
     avatarhash: string;
+    votes_up: number;
+    votes_down: number;
 }
 
 export const apiContestEntrySave = async (
@@ -143,28 +145,4 @@ export const useContest = (contest_id?: string) => {
     }, [contest_id]);
 
     return { loading, contest };
-};
-
-export const useContestEntries = (contest_id: string) => {
-    const [loading, setLoading] = useState(false);
-    const [entries, setEntries] = useState<ContestEntry[]>([]);
-
-    useEffect(() => {
-        if (contest_id == '') {
-            setLoading(false);
-
-            return;
-        }
-
-        apiContestEntries(contest_id)
-            .then((entries) => {
-                setEntries(entries);
-            })
-            .catch(logErr)
-            .finally(() => {
-                setLoading(false);
-            });
-    }, [contest_id]);
-
-    return { loading, entries };
 };
