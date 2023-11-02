@@ -1,9 +1,9 @@
 import React, { JSX, useMemo } from 'react';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import { Link as RouterLink } from 'react-router-dom';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 
 export const Footer = (): JSX.Element => {

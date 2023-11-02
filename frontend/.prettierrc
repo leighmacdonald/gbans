@@ -3,6 +3,7 @@
   "trailingComma": "none",
   "singleQuote": true,
   "tabWidth": 4,
+  "endOfLine": "lf",
   "plugins": [
     "@trivago/prettier-plugin-sort-imports"
   ],
