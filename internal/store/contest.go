@@ -369,6 +369,7 @@ func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UU
 	query, args, errQuery := db.sb.
 		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
 			"vote", "created_on", "updated_on").
+		From("contest_entry_vote").
 		Where(sq.And{sq.Eq{"contest_entry_id": contestEntryID}, sq.Eq{"steam_id": steamID}}).
 		ToSql()
 	if errQuery != nil {
@@ -384,6 +385,8 @@ func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UU
 
 	return nil
 }
+
+var ErrVoteDeleted = errors.New("Vote deleted")
 
 func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, upvote bool) error {
 	var record ContentVoteRecord
@@ -410,15 +413,35 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 		}
 
 		if errExec := db.Exec(ctx, query, args...); errExec != nil {
-			return Err(errExec)
+			return errExec
 		}
 
 		return nil
 	}
 
 	if record.Vote == upvote {
-		// No changes
-		return nil
+		// Delete the vote when user presses vote button again once already voted
+		if errDelete := db.ContestEntryVoteDelete(ctx, record.ContestEntryVoteID); errDelete != nil {
+			return errDelete
+		}
+
+		return ErrVoteDeleted
+	}
+
+	return nil
+}
+
+func (db *Store) ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {
+	query, args, errQuery := db.sb.
+		Delete("contest_entry_vote").
+		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		return errExec
 	}
 
 	return nil

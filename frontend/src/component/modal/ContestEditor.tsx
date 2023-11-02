@@ -204,7 +204,7 @@ export const ContestEditor = NiceModal.create(
                                     <DownVotesField
                                         fullWidth
                                         formik={formik}
-                                        isReadOnly={formik.values.voting}
+                                        isReadOnly={!formik.values.voting}
                                     />
                                 </Stack>
 

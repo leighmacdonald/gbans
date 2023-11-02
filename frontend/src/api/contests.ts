@@ -3,7 +3,6 @@ import { logErr } from '../util/errors';
 import {
     apiCall,
     DateRange,
-    EmptyBody,
     PermissionLevel,
     TimeStamped,
     transformDateRange,
@@ -87,12 +86,19 @@ export const apiContestEntrySave = async (
         asset_id
     });
 
+interface VoteResult {
+    current_vote: string;
+}
+
 export const apiContestEntryVote = async (
     contest_id: string,
+    contest_entry_id: string,
     upvote: boolean
 ) =>
-    await apiCall<EmptyBody>(
-        `/api/contests/${contest_id}/vote/${upvote ? 'up' : 'down'}`,
+    await apiCall<VoteResult>(
+        `/api/contests/${contest_id}/vote/${contest_entry_id}/${
+            upvote ? 'up' : 'down'
+        }`,
         'GET'
     );
 

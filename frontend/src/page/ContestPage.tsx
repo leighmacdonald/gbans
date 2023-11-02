@@ -17,7 +17,12 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
-import { defaultAvatarHash, useContest, useContestEntries } from '../api';
+import {
+    apiContestEntryVote,
+    defaultAvatarHash,
+    useContest,
+    useContestEntries
+} from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
@@ -45,8 +50,27 @@ export const ContestPage = () => {
         );
     }, [contest]);
 
+    const vote = useCallback(
+        async (contest_entry_id: string, up_vote: boolean) => {
+            if (!contest?.contest_id) {
+                return;
+            }
+            try {
+                const resp = await apiContestEntryVote(
+                    contest?.contest_id,
+                    contest_entry_id,
+                    up_vote
+                );
+                console.log(resp);
+            } catch (e) {
+                logErr(e);
+            }
+        },
+        [contest?.contest_id]
+    );
+
     if (!contest_id) {
-        return <PageNotFound />;
+        return <PageNotFound error={'Invalid Contest ID'} />;
     }
 
     return loading ? (
@@ -154,13 +178,13 @@ export const ContestPage = () => {
                 ) : (
                     <Grid xs={12}>
                         <Stack spacing={2}>
-                            {entries.map((value) => {
+                            {entries.map((entry) => {
                                 return (
-                                    <Stack key={value.contest_entry_id}>
+                                    <Stack key={entry.contest_entry_id}>
                                         <Paper elevation={2}>
                                             <Stack direction={'row'}>
                                                 <Avatar
-                                                    alt={value.personaname}
+                                                    alt={entry.personaname}
                                                     src={`https://avatars.akamai.steamstatic.com/${defaultAvatarHash}.jpg`}
                                                     variant={'square'}
                                                     sx={{
@@ -175,18 +199,40 @@ export const ContestPage = () => {
                                                         <Typography
                                                             variant={'body1'}
                                                         >
-                                                            {value.description}
+                                                            {entry.description}
                                                         </Typography>
                                                     </Grid>
                                                 </Grid>
                                             </Stack>
                                         </Paper>
                                         <Stack direction={'row'}>
-                                            <ButtonGroup fullWidth>
-                                                <IconButton color={'success'}>
+                                            <ButtonGroup
+                                                fullWidth
+                                                disabled={contest.voting}
+                                            >
+                                                <IconButton
+                                                    color={'success'}
+                                                    onClick={async () => {
+                                                        await vote(
+                                                            entry.contest_entry_id,
+                                                            true
+                                                        );
+                                                    }}
+                                                >
                                                     <ThumbUpIcon />
                                                 </IconButton>
-                                                <IconButton color={'error'}>
+                                                <IconButton
+                                                    color={'error'}
+                                                    disabled={
+                                                        !contest.down_votes
+                                                    }
+                                                    onClick={async () => {
+                                                        await vote(
+                                                            entry.contest_entry_id,
+                                                            false
+                                                        );
+                                                    }}
+                                                >
                                                     <ThumbDownIcon />
                                                 </IconButton>
                                             </ButtonGroup>
