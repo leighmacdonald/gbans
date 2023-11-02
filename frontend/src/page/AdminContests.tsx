@@ -76,7 +76,7 @@ export const AdminContests = () => {
                             },
                             {
                                 sortKey: 'num_entries',
-                                label: 'num_entries',
+                                label: 'Entries',
                                 tooltip: 'num_entries',
                                 align: 'center',
                                 sortType: 'number'
@@ -114,7 +114,7 @@ export const AdminContests = () => {
                             {
                                 sortKey: 'date_start',
                                 sortType: 'date',
-                                label: 'date_start',
+                                label: 'Starting',
                                 tooltip: 'Starting date',
                                 align: 'left',
                                 renderer: (obj) => {
@@ -124,7 +124,7 @@ export const AdminContests = () => {
                             {
                                 sortKey: 'date_end',
                                 sortType: 'date',
-                                label: 'date_end',
+                                label: 'Ending',
                                 tooltip: 'Ending date',
                                 align: 'left',
                                 renderer: (obj) => {

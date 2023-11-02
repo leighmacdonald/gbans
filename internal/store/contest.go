@@ -60,6 +60,8 @@ type ContestEntry struct {
 	Description    string        `json:"description"`
 	Placement      int           `json:"placement"`
 	Deleted        bool          `json:"deleted"`
+	VotesUp        int           `json:"votes_up"`
+	VotesDown      int           `json:"votes_down"`
 }
 
 type ContestEntryVote struct {
@@ -317,21 +319,35 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 }
 
 func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error) {
-	query, args, errQuery := db.sb.
-		Select("c.contest_entry_id", "c.contest_id", "c.steam_id", "c.asset_id", "c.description",
-			"c.placement", "c.deleted", "c.created_on", "c.updated_on", "p.personaname", "p.avatarhash").
-		From("contest_entry c").
-		LeftJoin("person p USING(steam_id)").
-		Where(sq.Eq{"contest_id": contestID}).
-		ToSql()
-
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
+	query := `
+		SELECT
+		    c.contest_entry_id,
+		    c.contest_id,
+			   c.steam_id,
+			   c.asset_id,
+			   c.description,
+			   c.placement,
+			   c.deleted,
+			   c.created_on,
+			   c.updated_on,
+			   p.personaname,
+			   p.avatarhash,
+			   coalesce(v.votes_up, 0),
+			   coalesce(v.votes_down, 0)
+		FROM contest_entry c
+		LEFT JOIN (SELECT contest_entry_id,
+					 SUM(CASE WHEN vote THEN 1 ELSE 0 END)     as votes_up,
+					 SUM(CASE WHEN NOT vote THEN 1 ELSE 0 END) as votes_down
+			  FROM contest_entry_vote
+			  GROUP BY contest_entry_id
+			  ) v on v.contest_entry_id= c.contest_entry_id
+		LEFT JOIN person p USING (steam_id)
+		WHERE c.contest_id = $1
+		ORDER BY c.created_on DESC`
 
 	entries := []*ContestEntry{}
 
-	rows, errRows := db.Query(ctx, query, args...)
+	rows, errRows := db.Query(ctx, query, contestID)
 	if errRows != nil {
 		if errors.Is(errRows, ErrNoResult) {
 			return entries, nil
@@ -347,7 +363,7 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 
 		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
-			&entry.Personaname, &entry.AvatarHash); errScan != nil {
+			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown); errScan != nil {
 			return nil, Err(errScan)
 		}
 
@@ -388,7 +404,7 @@ func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UU
 
 var ErrVoteDeleted = errors.New("Vote deleted")
 
-func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, upvote bool) error {
+func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error {
 	var record ContentVoteRecord
 	if errRecord := db.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
 		if !errors.Is(errRecord, ErrNoResult) {
@@ -398,7 +414,7 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 		record = ContentVoteRecord{
 			ContestEntryID: contestEntryID,
 			SteamID:        steamID,
-			Vote:           upvote,
+			Vote:           vote,
 			TimeStamped:    NewTimeStamped(),
 		}
 
@@ -407,7 +423,7 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 		query, args, errQuery := db.sb.
 			Insert("contest_entry_vote").
 			Columns("contest_entry_id", "steam_id", "vote", "created_on", "updated_on").
-			Values(contestEntryID, steamID, upvote, now, now).ToSql()
+			Values(contestEntryID, steamID, vote, now, now).ToSql()
 		if errQuery != nil {
 			return Err(errQuery)
 		}
@@ -419,13 +435,17 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 		return nil
 	}
 
-	if record.Vote == upvote {
+	if record.Vote == vote {
 		// Delete the vote when user presses vote button again once already voted
 		if errDelete := db.ContestEntryVoteDelete(ctx, record.ContestEntryVoteID); errDelete != nil {
 			return errDelete
 		}
 
 		return ErrVoteDeleted
+	} else {
+		if errSave := db.ContestEntryVoteUpdate(ctx, record.ContestEntryVoteID, vote); errSave != nil {
+			return errSave
+		}
 	}
 
 	return nil
@@ -434,6 +454,24 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 func (db *Store) ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {
 	query, args, errQuery := db.sb.
 		Delete("contest_entry_vote").
+		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}).
+		ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		return errExec
+	}
+
+	return nil
+}
+
+func (db *Store) ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error {
+	query, args, errQuery := db.sb.
+		Update("contest_entry_vote").
+		Set("vote", newVote).
+		Set("updated_on", time.Now()).
 		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}).
 		ToSql()
 	if errQuery != nil {

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -6,7 +6,6 @@ import InfoIcon from '@mui/icons-material/Info';
 import PublishIcon from '@mui/icons-material/Publish';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import { IconButton } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -18,10 +17,11 @@ import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
 import {
+    apiContestEntries,
     apiContestEntryVote,
+    ContestEntry,
     defaultAvatarHash,
-    useContest,
-    useContestEntries
+    useContest
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';
@@ -34,7 +34,8 @@ import { PageNotFound } from './PageNotFound';
 export const ContestPage = () => {
     const { contest_id } = useParams();
     const { loading, contest } = useContest(contest_id);
-    const { entries } = useContestEntries(contest_id ?? '');
+    const [entries, setEntries] = useState<ContestEntry[]>([]);
+    const [entriesLoading, setEntriesLoading] = useState(false);
 
     const onEnter = useCallback(async (contest_id: string) => {
         try {
@@ -43,6 +44,25 @@ export const ContestPage = () => {
             logErr(e);
         }
     }, []);
+
+    const updateEntries = useCallback(() => {
+        if (!contest?.contest_id) {
+            return;
+        }
+        setEntriesLoading(true);
+        apiContestEntries(contest?.contest_id)
+            .then((entries) => {
+                setEntries(entries);
+            })
+            .catch(logErr)
+            .finally(() => {
+                setEntriesLoading(false);
+            });
+    }, [contest?.contest_id]);
+
+    useEffect(() => {
+        updateEntries();
+    }, [contest?.contest_id, updateEntries]);
 
     const showEntries = useMemo(() => {
         return (
@@ -56,17 +76,17 @@ export const ContestPage = () => {
                 return;
             }
             try {
-                const resp = await apiContestEntryVote(
+                await apiContestEntryVote(
                     contest?.contest_id,
                     contest_entry_id,
                     up_vote
                 );
-                console.log(resp);
+                updateEntries();
             } catch (e) {
                 logErr(e);
             }
         },
-        [contest?.contest_id]
+        [contest?.contest_id, updateEntries]
     );
 
     if (!contest_id) {
@@ -145,7 +165,7 @@ export const ContestPage = () => {
 
                             <InfoBar
                                 title={'Total Entries'}
-                                value={contest.num_entries}
+                                value={entries.length}
                                 align={'right'}
                             />
                             <Button
@@ -175,6 +195,8 @@ export const ContestPage = () => {
                             </Typography>
                         </Paper>
                     </Grid>
+                ) : entriesLoading ? (
+                    <LoadingSpinner />
                 ) : (
                     <Grid xs={12}>
                         <Stack spacing={2}>
@@ -205,12 +227,14 @@ export const ContestPage = () => {
                                                 </Grid>
                                             </Stack>
                                         </Paper>
-                                        <Stack direction={'row'}>
+                                        <Stack direction={'row'} padding={1}>
                                             <ButtonGroup
-                                                fullWidth
-                                                disabled={contest.voting}
+                                                disabled={!contest.voting}
                                             >
-                                                <IconButton
+                                                <Button
+                                                    size={'small'}
+                                                    variant={'contained'}
+                                                    startIcon={<ThumbUpIcon />}
                                                     color={'success'}
                                                     onClick={async () => {
                                                         await vote(
@@ -219,9 +243,14 @@ export const ContestPage = () => {
                                                         );
                                                     }}
                                                 >
-                                                    <ThumbUpIcon />
-                                                </IconButton>
-                                                <IconButton
+                                                    {entry.votes_up}
+                                                </Button>
+                                                <Button
+                                                    size={'small'}
+                                                    variant={'contained'}
+                                                    startIcon={
+                                                        <ThumbDownIcon />
+                                                    }
                                                     color={'error'}
                                                     disabled={
                                                         !contest.down_votes
@@ -233,8 +262,8 @@ export const ContestPage = () => {
                                                         );
                                                     }}
                                                 >
-                                                    <ThumbDownIcon />
-                                                </IconButton>
+                                                    {entry.votes_down}
+                                                </Button>
                                             </ButtonGroup>
                                         </Stack>
                                     </Stack>
