@@ -2864,6 +2864,7 @@ func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
 		if !success {
 			return
 		}
+
 		contestEntryID, errContestEntryID := getUUIDParam(ctx, "contest_entry_id")
 		if errContestEntryID != nil {
 			ctx.JSON(http.StatusNotFound, consts.ErrNotFound)

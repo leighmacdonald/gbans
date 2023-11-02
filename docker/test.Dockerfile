@@ -4,7 +4,7 @@ WORKDIR /build
 RUN apk add make git build-base dumb-init yarn
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
-RUN cd frontend && yarn
+RUN cd frontend && yarn install --frozen-lockfile
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
