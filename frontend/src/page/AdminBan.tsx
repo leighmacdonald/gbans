@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -28,10 +29,6 @@ import {
     IAPIBanGroupRecord,
     IAPIBanRecordProfile
 } from '../api';
-import { BanASNModal } from '../component/BanASNModal';
-import { BanCIDRModal } from '../component/BanCIDRModal';
-import { BanGroupModal } from '../component/BanGroupModal';
-import { BanSteamModal } from '../component/BanSteamModal';
 import { DataTable, RowsPerPage } from '../component/DataTable';
 import {
     DataTableRelativeDateField,
@@ -39,10 +36,17 @@ import {
 } from '../component/DataTableRelativeDateField';
 import { PersonCell } from '../component/PersonCell';
 import { TabPanel } from '../component/TabPanel';
-import { UnbanASNModal } from '../component/UnbanASNModal';
-import { UnbanCIDRModal } from '../component/UnbanCIDRModal';
-import { UnbanGroupModal } from '../component/UnbanGroupModal';
-import { UnbanSteamModal } from '../component/UnbanSteamModal';
+import {
+    ModalBanASN,
+    ModalBanCIDR,
+    ModalBanGroup,
+    ModalBanSteam
+} from '../component/modal';
+import { UnbanASNModal } from '../component/modal/UnbanASNModal';
+import { UnbanCIDRModal } from '../component/modal/UnbanCIDRModal';
+import { UnbanGroupModal } from '../component/modal/UnbanGroupModal';
+import { UnbanSteamModal } from '../component/modal/UnbanSteamModal';
+import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
 
 export const AdminBan = () => {
@@ -51,19 +55,6 @@ export const AdminBan = () => {
     const [banGroups, setBanGroups] = useState<IAPIBanGroupRecord[]>([]);
     const [banCIDRs, setBanCIDRs] = useState<IAPIBanCIDRRecord[]>([]);
     const [banASNs, setBanASNs] = useState<IAPIBanASNRecord[]>([]);
-    const [currentBan, setCurrentBan] = useState<IAPIBanRecordProfile>();
-    const [currentBanCIDR, setCurrentBanCIDR] = useState<IAPIBanCIDRRecord>();
-    const [currentBanASN, setCurrentBanASN] = useState<IAPIBanASNRecord>();
-    const [currentBanGroup, setCurrentBanGroup] =
-        useState<IAPIBanGroupRecord>();
-    const [banSteamModalOpen, setBanSteamModalOpen] = useState(false);
-    const [banCIDRModalOpen, setBanCIDRModalOpen] = useState(false);
-    const [banASNModalOpen, setBanASNModalOpen] = useState(false);
-    const [banGroupModalOpen, setBanGroupModalOpen] = useState(false);
-    const [unbanSteamModalOpen, setUnbanSteamModalOpen] = useState(false);
-    const [unbanCIDRModalOpen, setUnbanCIDRModalOpen] = useState(false);
-    const [unbanASNModalOpen, setUnbanASNModalOpen] = useState(false);
-    const [unbanGroupModalOpen, setUnbanGroupModalOpen] = useState(false);
     const [value, setValue] = React.useState<number>(0);
     const navigate = useNavigate();
 
@@ -71,36 +62,35 @@ export const AdminBan = () => {
         apiGetBansGroups(
             { desc: true, order_by: 'ban_group_id' },
             abortController
-        ).then((newGroupBans) => {
-            setBanGroups(newGroupBans);
-        });
+        )
+            .then((newGroupBans) => {
+                setBanGroups(newGroupBans);
+            })
+            .catch(logErr);
     }, []);
 
     const loadBansCIDR = useCallback((abortController: AbortController) => {
-        apiGetBansCIDR(
-            { desc: true, order_by: 'net_id' },
-            abortController
-        ).then((newBansCIDR) => {
-            setBanCIDRs(newBansCIDR);
-        });
+        apiGetBansCIDR({ desc: true, order_by: 'net_id' }, abortController)
+            .then((newBansCIDR) => {
+                setBanCIDRs(newBansCIDR);
+            })
+            .catch(logErr);
     }, []);
 
     const loadBansASN = useCallback((abortController: AbortController) => {
-        apiGetBansASN(
-            { desc: true, order_by: 'ban_asn_id' },
-            abortController
-        ).then((newBansASN) => {
-            setBanASNs(newBansASN);
-        });
+        apiGetBansASN({ desc: true, order_by: 'ban_asn_id' }, abortController)
+            .then((newBansASN) => {
+                setBanASNs(newBansASN);
+            })
+            .catch(logErr);
     }, []);
 
     const loadBansSteam = useCallback((abortController: AbortController) => {
-        apiGetBansSteam(
-            { desc: true, order_by: 'ban_id' },
-            abortController
-        ).then((newBans) => {
-            setBans(newBans || []);
-        });
+        apiGetBansSteam({ desc: true, order_by: 'ban_id' }, abortController)
+            .then((newBans) => {
+                setBans(newBans || []);
+            })
+            .catch(logErr);
     }, []);
 
     useEffect(() => {
@@ -116,90 +106,14 @@ export const AdminBan = () => {
 
     return (
         <Box>
-            <BanSteamModal
-                open={banSteamModalOpen}
-                setOpen={setBanSteamModalOpen}
-            />
-            <BanCIDRModal
-                open={banCIDRModalOpen}
-                setOpen={setBanCIDRModalOpen}
-            />
-            <BanASNModal open={banASNModalOpen} setOpen={setBanASNModalOpen} />
-            <BanGroupModal
-                open={banGroupModalOpen}
-                setOpen={setBanGroupModalOpen}
-            />
-            {currentBan && (
-                <UnbanSteamModal
-                    banId={currentBan.ban_id}
-                    personaName={currentBan.personaname}
-                    open={unbanSteamModalOpen}
-                    setOpen={setUnbanSteamModalOpen}
-                    onSuccess={() => {
-                        setUnbanSteamModalOpen(false);
-                        setBans((bans) => {
-                            return bans.filter(
-                                (b) => b.ban_id != currentBan?.ban_id
-                            );
-                        });
-                    }}
-                />
-            )}
-            {currentBanCIDR && (
-                <UnbanCIDRModal
-                    record={currentBanCIDR}
-                    open={unbanCIDRModalOpen}
-                    setOpen={setUnbanCIDRModalOpen}
-                    onSuccess={() => {
-                        setUnbanCIDRModalOpen(false);
-                        setBanCIDRs((bans) => {
-                            return bans.filter(
-                                (b) => b.net_id != currentBanCIDR?.net_id
-                            );
-                        });
-                    }}
-                />
-            )}
-            {currentBanASN && (
-                <UnbanASNModal
-                    record={currentBanASN}
-                    open={unbanASNModalOpen}
-                    setOpen={setUnbanASNModalOpen}
-                    onSuccess={() => {
-                        setUnbanASNModalOpen(false);
-                        setBanASNs((bans) => {
-                            return bans.filter(
-                                (b) => b.ban_asn_id != currentBanASN?.ban_asn_id
-                            );
-                        });
-                    }}
-                />
-            )}
-            {currentBanGroup && (
-                <UnbanGroupModal
-                    record={currentBanGroup}
-                    open={unbanGroupModalOpen}
-                    setOpen={setUnbanGroupModalOpen}
-                    onSuccess={() => {
-                        setUnbanGroupModalOpen(false);
-                        setBanGroups((bans) => {
-                            return bans.filter(
-                                (b) =>
-                                    b.ban_group_id !=
-                                    currentBanGroup?.ban_group_id
-                            );
-                        });
-                    }}
-                />
-            )}
             <ButtonGroup>
                 <Button
                     variant={'contained'}
                     color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
-                    onClick={() => {
-                        setBanSteamModalOpen(true);
+                    onClick={async () => {
+                        await NiceModal.show(ModalBanSteam, {});
                     }}
                 >
                     Steam
@@ -209,8 +123,8 @@ export const AdminBan = () => {
                     color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
-                    onClick={() => {
-                        setBanCIDRModalOpen(true);
+                    onClick={async () => {
+                        await NiceModal.show(ModalBanCIDR, {});
                     }}
                 >
                     CIDR
@@ -220,8 +134,8 @@ export const AdminBan = () => {
                     color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
-                    onClick={() => {
-                        setBanASNModalOpen(true);
+                    onClick={async () => {
+                        await NiceModal.show(ModalBanASN, {});
                     }}
                 >
                     ASN
@@ -231,8 +145,8 @@ export const AdminBan = () => {
                     color={'secondary'}
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
-                    onClick={() => {
-                        setBanGroupModalOpen(true);
+                    onClick={async () => {
+                        await NiceModal.show(ModalBanGroup, {});
                     }}
                 >
                     Group
@@ -447,10 +361,14 @@ export const AdminBan = () => {
                                                 </IconButton>
                                                 <IconButton
                                                     color={'success'}
-                                                    onClick={() => {
-                                                        setCurrentBan(row);
-                                                        setUnbanSteamModalOpen(
-                                                            true
+                                                    onClick={async () => {
+                                                        await NiceModal.show(
+                                                            UnbanSteamModal,
+                                                            {
+                                                                banId: row.ban_id,
+                                                                personaName:
+                                                                    row.personaname
+                                                            }
                                                         );
                                                     }}
                                                 >
@@ -631,9 +549,13 @@ export const AdminBan = () => {
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
-                                            onClick={() => {
-                                                setCurrentBanCIDR(row);
-                                                setUnbanCIDRModalOpen(true);
+                                            onClick={async () => {
+                                                await NiceModal.show(
+                                                    UnbanCIDRModal,
+                                                    {
+                                                        record: row
+                                                    }
+                                                );
                                             }}
                                         >
                                             <Tooltip title={'Remove CIDR Ban'}>
@@ -780,9 +702,13 @@ export const AdminBan = () => {
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
-                                            onClick={() => {
-                                                setCurrentBanASN(row);
-                                                setUnbanASNModalOpen(true);
+                                            onClick={async () => {
+                                                await NiceModal.show(
+                                                    UnbanASNModal,
+                                                    {
+                                                        record: row
+                                                    }
+                                                );
                                             }}
                                         >
                                             <Tooltip title={'Remove CIDR Ban'}>
@@ -922,9 +848,13 @@ export const AdminBan = () => {
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
-                                            onClick={() => {
-                                                setCurrentBanGroup(row);
-                                                setUnbanGroupModalOpen(true);
+                                            onClick={async () => {
+                                                await NiceModal.show(
+                                                    UnbanGroupModal,
+                                                    {
+                                                        record: row
+                                                    }
+                                                );
                                             }}
                                         >
                                             <Tooltip title={'Remove Ban'}>

@@ -3,16 +3,16 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Tooltip from '@mui/material/Tooltip';
-import { BaseFormikInputProps } from './BaseFormikInputProps';
+import { useFormikContext } from 'formik';
 
 interface IncludeFriendsFieldValue {
     include_friends: boolean;
 }
 
-export const IncludeFriendsField = ({
-    formik,
-    isReadOnly
-}: BaseFormikInputProps<IncludeFriendsFieldValue>) => {
+export const IncludeFriendsField = <T,>() => {
+    const { values, handleChange } = useFormikContext<
+        T & IncludeFriendsFieldValue
+    >();
     return (
         <FormGroup>
             <Tooltip
@@ -21,15 +21,10 @@ export const IncludeFriendsField = ({
                 }
             >
                 <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={formik.values.include_friends}
-                            disabled={isReadOnly ?? false}
-                        />
-                    }
+                    control={<Checkbox checked={values.include_friends} />}
                     label="Include Friends"
                     name={'include_friends'}
-                    onChange={formik.handleChange}
+                    onChange={handleChange}
                 />
             </Tooltip>
         </FormGroup>

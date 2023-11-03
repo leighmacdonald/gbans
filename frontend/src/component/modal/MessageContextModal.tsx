@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiGetMessageContext, IAPIBanASNRecord, PersonMessage } from '../api';
-import { logErr } from '../util/errors';
+import {
+    apiGetMessageContext,
+    IAPIBanASNRecord,
+    PersonMessage
+} from '../../api';
+import { logErr } from '../../util/errors';
+import { Heading } from '../Heading';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { PersonMessageTable } from '../PersonMessageTable';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import { Heading } from './Heading';
-import { LoadingSpinner } from './LoadingSpinner';
-import { PersonMessageTable } from './PersonMessageTable';
 
 export interface UnbanASNModalProps
     extends ConfirmationModalProps<IAPIBanASNRecord> {
     messageId: number;
 }
 
-export const MessageContextModal = ({
-    open,
-    setOpen,
-    messageId
-}: UnbanASNModalProps) => {
+export const MessageContextModal = ({ messageId }: UnbanASNModalProps) => {
     const [messages, setMessages] = useState<PersonMessage[]>([]);
     const [selectedMessageIndex, setSelectedMessageIndex] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -44,21 +44,9 @@ export const MessageContextModal = ({
     }, [messageId]);
 
     return (
-        <ConfirmationModal
-            fullWidth={true}
-            open={open}
-            setOpen={setOpen}
-            onSuccess={() => {
-                setOpen(false);
-            }}
-            onAccept={() => {
-                setOpen(false);
-            }}
-        >
+        <ConfirmationModal id={'modal-message-context'} fullWidth={true}>
             <Stack spacing={2}>
-                <Heading>
-                    <>Message Context (#{messageId})</>
-                </Heading>
+                <Heading>{`Message Context (#${messageId})`}</Heading>
                 <Stack spacing={3} alignItems={'center'}>
                     {(isLoading && <LoadingSpinner />) || (
                         <PersonMessageTable

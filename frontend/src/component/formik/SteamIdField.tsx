@@ -1,6 +1,6 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import SteamID from 'steamid';
 import * as yup from 'yup';
 import { apiGetProfile, PlayerProfile } from '../../api';
@@ -26,35 +26,33 @@ export const steamIdValidator = yup
     .label('Enter your steam_id')
     .required('steam_id is required');
 
-export interface BaseFormikInputProps<T> {
+export interface BaseFormikInputProps {
     id?: string;
     label?: string;
     initialValue?: string;
     fullWidth: boolean;
     isReadOnly?: boolean;
     onProfileSuccess?: (profile: Nullable<PlayerProfile>) => void;
-    formik: FormikState<T> & FormikHandlers;
 }
 export interface SteamIDInputValue {
     steam_id: string;
 }
 
-export const SteamIdField = ({
-    id,
-    formik,
-    isReadOnly
-}: BaseFormikInputProps<SteamIDInputValue>) => {
+export const SteamIdField = <T,>({ isReadOnly }: BaseFormikInputProps) => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & SteamIDInputValue
+    >();
     return (
         <TextField
             fullWidth
-            disabled={isReadOnly ?? false}
-            name={id ?? 'steam_id'}
-            id={id ?? 'steam_id'}
+            disabled={isReadOnly}
+            name={'steam_id'}
+            id={'steam_id'}
             label={'Steam ID / Profile'}
-            value={formik.values.steam_id}
-            onChange={formik.handleChange}
-            error={formik.touched.steam_id && Boolean(formik.errors.steam_id)}
-            helperText={formik.touched.steam_id && formik.errors.steam_id}
+            value={values.steam_id}
+            onChange={handleChange}
+            error={touched.steam_id && Boolean(errors.steam_id)}
+            //helperText={touched.steam_id && errors.steam_id}
         />
     );
 };

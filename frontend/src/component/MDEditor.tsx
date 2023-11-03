@@ -1,4 +1,4 @@
-import React, { useEffect, useState, JSX } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
@@ -13,10 +13,11 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import { apiSaveMedia } from '../api/media';
+import { noop } from 'lodash-es';
+import { apiSaveMedia, UserUploadedFile } from '../api/media';
 import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { FileUploadModal } from './FileUploadModal';
+import { logErr } from '../util/errors';
 import { TabPanel } from './TabPanel';
 
 interface MDEditorProps {
@@ -38,11 +39,10 @@ export const MDEditor = ({
     initialBodyMDValue,
     saveLabel,
     cancelLabel
-}: MDEditorProps): JSX.Element => {
+}: MDEditorProps) => {
     const [setTabValue, setTabSetTabValue] = useState(0);
     const [bodyHTML, setBodyHTML] = useState('');
     const [bodyMD, setBodyMD] = useState(initialBodyMDValue);
-    const [open, setOpen] = useState(false);
     const [cursorPos, setCursorPos] = useState(0);
     const { sendFlash } = useUserFlashCtx();
     const extraButtons = false;
@@ -53,30 +53,29 @@ export const MDEditor = ({
         setBodyHTML(renderMarkdown(bodyMD));
     }, [bodyMD]);
 
+    const onFileSave = useCallback(
+        async (v: UserUploadedFile, onSuccess: () => void) => {
+            try {
+                const resp = await apiSaveMedia(v);
+                if (!resp.author_id) {
+                    return;
+                }
+                const newBody =
+                    bodyMD.slice(0, cursorPos) +
+                    `![${resp.asset.name}](media://${resp.asset.asset_id})` +
+                    bodyMD.slice(cursorPos);
+                setBodyMD(newBody);
+                onSuccess && onSuccess();
+            } catch (e) {
+                logErr(e);
+                sendFlash('error', 'Failed to save media');
+            }
+        },
+        [bodyMD, cursorPos, sendFlash]
+    );
+
     return (
         <Stack>
-            <FileUploadModal
-                open={open}
-                setOpen={setOpen}
-                onSave={(v, onSuccess) => {
-                    apiSaveMedia(v).then((resp) => {
-                        if (!resp) {
-                            sendFlash('error', 'Failed to save media');
-                            return;
-                        }
-                        if (!resp.author_id) {
-                            return;
-                        }
-                        setOpen(false);
-                        const newBody =
-                            bodyMD.slice(0, cursorPos) +
-                            `![${resp.asset.name}](media://${resp.asset.asset_id})` +
-                            bodyMD.slice(cursorPos);
-                        setBodyMD(newBody);
-                        onSuccess && onSuccess();
-                    });
-                }}
-            />
             <Box
                 sx={{
                     borderBottom: 1,
@@ -103,7 +102,23 @@ export const MDEditor = ({
                                     aria-label="Upload Image Button"
                                     component="span"
                                     variant={'text'}
-                                    onClick={() => setOpen(true)}
+                                    onClick={async () => {
+                                        // const resp = await NiceModal.show<
+                                        //     UserUploadedFile,
+                                        //     FileUploadModalProps
+                                        // >(FileUploadModal, {});
+                                        // onFileSave(resp, onFileSave);
+                                        alert('fixme');
+                                        await onFileSave(
+                                            {
+                                                content: '',
+                                                name: '',
+                                                mime: '',
+                                                size: 0
+                                            },
+                                            noop
+                                        );
+                                    }}
                                     startIcon={<ImageIcon />}
                                 >
                                     Insert Image

@@ -1,6 +1,6 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const ASNumberFieldValidator = yup
@@ -9,14 +9,14 @@ export const ASNumberFieldValidator = yup
     .positive()
     .integer();
 
-export const ASNumberField = ({
-    formik
-}: {
-    formik: FormikState<{
-        as_num: number;
-    }> &
-        FormikHandlers;
-}) => {
+interface ASNumberFieldProps {
+    as_num: number;
+}
+
+export const ASNumberField = <T,>() => {
+    const { values, handleChange, touched, errors } = useFormikContext<
+        T & ASNumberFieldProps
+    >();
     return (
         <TextField
             type={'number'}
@@ -24,10 +24,10 @@ export const ASNumberField = ({
             label={'Autonomous System Number'}
             id={'as_num'}
             name={'as_num'}
-            value={formik.values.as_num}
-            onChange={formik.handleChange}
-            error={formik.touched.as_num && Boolean(formik.errors.as_num)}
-            helperText={formik.touched.as_num && formik.errors.as_num}
+            value={values.as_num}
+            onChange={handleChange}
+            error={touched.as_num && Boolean(errors.as_num)}
+            helperText={touched.as_num && errors.as_num && `${errors.as_num}`}
         />
     );
 };

@@ -1,37 +1,37 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { Duration } from '../../api';
+import { DurationInputField } from './DurationField';
 
 export const DurationCustomFieldValidator = yup
     .string()
     .label('Custom duration');
 
-export const DurationCustomField = ({
-    formik
-}: {
-    formik: FormikState<{
-        duration: Duration;
-        duration_custom: string;
-    }> &
-        FormikHandlers;
-}) => {
+export interface DurationCustomInputField {
+    duration_custom: string;
+}
+
+export const DurationCustomField = <T,>() => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & DurationCustomInputField & DurationInputField
+    >();
+
     return (
         <TextField
             fullWidth
             label={'Custom Duration'}
             id={'duration_custom'}
             name={'duration_custom'}
-            disabled={formik.values.duration != Duration.durCustom}
-            value={formik.values.duration_custom}
-            onChange={formik.handleChange}
-            error={
-                formik.touched.duration_custom &&
-                Boolean(formik.errors.duration_custom)
-            }
+            disabled={values.duration != Duration.durCustom}
+            value={values.duration_custom}
+            onChange={handleChange}
+            error={touched.duration_custom && Boolean(errors.duration_custom)}
             helperText={
-                formik.touched.duration_custom && formik.errors.duration_custom
+                touched.duration_custom &&
+                errors.duration_custom &&
+                `${errors.duration_custom}`
             }
         />
     );

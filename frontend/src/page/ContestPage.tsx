@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import InfoIcon from '@mui/icons-material/Info';
+import PageviewIcon from '@mui/icons-material/Pageview';
 import PublishIcon from '@mui/icons-material/Publish';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Paper from '@mui/material/Paper';
@@ -20,15 +20,19 @@ import {
     apiContestEntries,
     apiContestEntryVote,
     ContestEntry,
-    defaultAvatarHash,
     useContest
 } from '../api';
+import { Asset } from '../api/media';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { ModalContestEntry } from '../component/modal';
+import { PersonCell } from '../component/PersonCell';
+import { VCenterBox } from '../component/VCenterBox';
+import { ModalAssetViewer, ModalContestEntry } from '../component/modal';
+import { mediaType, MediaTypes } from '../component/modal/AssetViewer';
 import { logErr } from '../util/errors';
+import { humanCount } from '../util/text';
 import { PageNotFound } from './PageNotFound';
 
 export const ContestPage = () => {
@@ -36,7 +40,6 @@ export const ContestPage = () => {
     const { loading, contest } = useContest(contest_id);
     const [entries, setEntries] = useState<ContestEntry[]>([]);
     const [entriesLoading, setEntriesLoading] = useState(false);
-
     const onEnter = useCallback(async (contest_id: string) => {
         try {
             await NiceModal.show(ModalContestEntry, { contest_id });
@@ -89,6 +92,10 @@ export const ContestPage = () => {
         [contest?.contest_id, updateEntries]
     );
 
+    const onViewAsset = useCallback(async (asset: Asset) => {
+        await NiceModal.show(ModalAssetViewer, asset);
+    }, []);
+
     if (!contest_id) {
         return <PageNotFound error={'Invalid Contest ID'} />;
     }
@@ -110,7 +117,7 @@ export const ContestPage = () => {
                         ) : (
                             contest && (
                                 <Grid container>
-                                    <Grid xs={12}>
+                                    <Grid xs={12} minHeight={400}>
                                         <Typography
                                             variant={'body1'}
                                             padding={2}
@@ -204,30 +211,88 @@ export const ContestPage = () => {
                                 return (
                                     <Stack key={entry.contest_entry_id}>
                                         <Paper elevation={2}>
-                                            <Stack direction={'row'}>
-                                                <Avatar
-                                                    alt={entry.personaname}
-                                                    src={`https://avatars.akamai.steamstatic.com/${defaultAvatarHash}.jpg`}
-                                                    variant={'square'}
-                                                    sx={{
-                                                        height: '128px',
-                                                        width: '128px',
-                                                        padding: 2
-                                                    }}
-                                                />
-
-                                                <Grid container>
-                                                    <Grid xs={8} padding={2}>
-                                                        <Typography
-                                                            variant={'body1'}
-                                                        >
-                                                            {entry.description}
-                                                        </Typography>
-                                                    </Grid>
+                                            <Grid container>
+                                                <Grid xs={8} padding={2}>
+                                                    <Typography
+                                                        variant={'subtitle1'}
+                                                    >
+                                                        Description
+                                                    </Typography>
+                                                    <Typography
+                                                        variant={'body1'}
+                                                    >
+                                                        {entry.description != ''
+                                                            ? entry.description
+                                                            : 'No description provided'}
+                                                    </Typography>
                                                 </Grid>
-                                            </Stack>
+                                                <Grid xs={4} padding={2}>
+                                                    <PersonCell
+                                                        steam_id={
+                                                            entry.steam_id
+                                                        }
+                                                        personaname={
+                                                            entry.personaname
+                                                        }
+                                                        avatar_hash={
+                                                            entry.avatarhash
+                                                        }
+                                                    />
+                                                    <Typography
+                                                        variant={'subtitle1'}
+                                                    >
+                                                        File Details
+                                                    </Typography>
+                                                    <Typography
+                                                        variant={'body2'}
+                                                    >
+                                                        {entry.asset.name}
+                                                    </Typography>
+                                                    <Typography
+                                                        variant={'body2'}
+                                                    >
+                                                        {entry.asset.mime_type}
+                                                    </Typography>
+                                                    <Typography
+                                                        variant={'body2'}
+                                                    >
+                                                        {humanCount(
+                                                            entry.asset.size
+                                                        )}
+                                                    </Typography>
+                                                    {mediaType(
+                                                        entry.asset.mime_type
+                                                    ) != MediaTypes.other ? (
+                                                        <Button
+                                                            startIcon={
+                                                                <PageviewIcon />
+                                                            }
+                                                            fullWidth
+                                                            variant={
+                                                                'contained'
+                                                            }
+                                                            color={'success'}
+                                                            onClick={async () => {
+                                                                await onViewAsset(
+                                                                    entry.asset
+                                                                );
+                                                            }}
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    ) : (
+                                                        <Button>
+                                                            Download
+                                                        </Button>
+                                                    )}
+                                                </Grid>
+                                            </Grid>
                                         </Paper>
-                                        <Stack direction={'row'} padding={1}>
+                                        <Stack
+                                            direction={'row'}
+                                            padding={1}
+                                            spacing={2}
+                                        >
                                             <ButtonGroup
                                                 disabled={!contest.voting}
                                             >
@@ -265,6 +330,14 @@ export const ContestPage = () => {
                                                     {entry.votes_down}
                                                 </Button>
                                             </ButtonGroup>
+                                            <VCenterBox>
+                                                <Typography variant={'caption'}>
+                                                    {`Updated: ${format(
+                                                        entry.updated_on,
+                                                        'dd/MM/yy H:m'
+                                                    )}`}
+                                                </Typography>
+                                            </VCenterBox>
                                         </Stack>
                                     </Stack>
                                 );

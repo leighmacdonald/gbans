@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import NiceModal from '@ebay/nice-modal-react';
 import GavelIcon from '@mui/icons-material/Gavel';
 import SendIcon from '@mui/icons-material/Send';
 import Avatar from '@mui/material/Avatar';
@@ -31,11 +32,11 @@ import {
     reportStatusString,
     ReportWithAuthor
 } from '../api';
-import { BanSteamModal } from '../component/BanSteamModal';
 import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { ReportComponent } from '../component/ReportComponent';
 import { SteamIDList } from '../component/SteamIDList';
+import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -50,7 +51,6 @@ export const ReportViewPage = (): JSX.Element => {
     const [banHistory, setBanHistory] = useState<IAPIBanRecordProfile[]>([]);
     const [currentBan, setCurrentBan] =
         useState<Nullable<IAPIBanRecordProfile>>();
-    const [banModalOpen, setBanModalOpen] = useState<boolean>(false);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -293,16 +293,32 @@ export const ReportViewPage = (): JSX.Element => {
                                                 </Select>
                                             </FormControl>
                                             <ButtonGroup fullWidth>
-                                                <Button
-                                                    variant={'contained'}
-                                                    color={'error'}
-                                                    startIcon={<GavelIcon />}
-                                                    onClick={() => {
-                                                        setBanModalOpen(true);
-                                                    }}
-                                                >
-                                                    Ban Player
-                                                </Button>
+                                                {report && (
+                                                    <Button
+                                                        variant={'contained'}
+                                                        color={'error'}
+                                                        startIcon={
+                                                            <GavelIcon />
+                                                        }
+                                                        onClick={async () => {
+                                                            await NiceModal.show(
+                                                                ModalBanSteam,
+                                                                {
+                                                                    reportId:
+                                                                        report
+                                                                            .report
+                                                                            .report_id,
+                                                                    steamId:
+                                                                        report
+                                                                            ?.subject
+                                                                            .steam_id
+                                                                }
+                                                            );
+                                                        }}
+                                                    >
+                                                        Ban Player
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant={'contained'}
                                                     color={'warning'}
@@ -317,16 +333,6 @@ export const ReportViewPage = (): JSX.Element => {
                                 </List>
                             </Paper>
                         </>
-                    )}
-                    {report?.subject.steam_id ? (
-                        <BanSteamModal
-                            reportId={report.report.report_id}
-                            open={banModalOpen}
-                            setOpen={setBanModalOpen}
-                            steamId={report?.subject.steam_id}
-                        />
-                    ) : (
-                        <></>
                     )}
                 </Stack>
             </Grid>

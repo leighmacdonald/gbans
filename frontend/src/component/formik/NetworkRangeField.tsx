@@ -1,6 +1,6 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const NetworkRangeFieldValidator = yup
@@ -22,24 +22,24 @@ export const NetworkRangeFieldValidator = yup
         return true;
     });
 
-export const NetworkRangeField = ({
-    formik
-}: {
-    formik: FormikState<{
-        cidr: string;
-    }> &
-        FormikHandlers;
-}) => {
+export interface CIDRInputFieldProps {
+    cidr: string;
+}
+
+export const NetworkRangeField = <T,>() => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & CIDRInputFieldProps
+    >();
     return (
         <TextField
             fullWidth
             label={'CIDR Network Range'}
             id={'cidr'}
             name={'cidr'}
-            value={formik.values.cidr}
-            onChange={formik.handleChange}
-            error={formik.touched.cidr && Boolean(formik.errors.cidr)}
-            helperText={formik.touched.cidr && formik.errors.cidr}
+            value={values.cidr}
+            onChange={handleChange}
+            error={touched.cidr && Boolean(errors.cidr)}
+            helperText={touched.cidr && errors.cidr && `${errors.cidr}`}
         />
     );
 };

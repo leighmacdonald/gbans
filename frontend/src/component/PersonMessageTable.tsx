@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -8,8 +9,8 @@ import { format } from 'date-fns';
 import { PersonMessage } from '../api';
 import { steamIdQueryValue, stringHexNumber } from '../util/text';
 import { DataTable, RowsPerPage } from './DataTable';
-import { MessageContextModal } from './MessageContextModal';
 import { PersonCell } from './PersonCell';
+import { ModalMessageContext } from './modal';
 
 export interface PersonMessageTableProps {
     messages: PersonMessage[];
@@ -19,17 +20,9 @@ export interface PersonMessageTableProps {
 export const PersonMessageTable = ({ messages }: PersonMessageTableProps) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [menuOpen, setMenuOpen] = React.useState<boolean>(false);
-    const [selectedMessageId, setSelectedMessageId] = useState<number>(0);
-    const [contextOpen, setContextOpen] = useState<boolean>(false);
     return (
         <>
-            <MessageContextModal
-                open={contextOpen}
-                setOpen={setContextOpen}
-                messageId={selectedMessageId}
-            />
             <DataTable
-                preSelectIndex={selectedMessageId}
                 columns={[
                     {
                         label: 'Server',
@@ -122,13 +115,14 @@ export const PersonMessageTable = ({ messages }: PersonMessageTableProps) => {
                                         }}
                                     >
                                         <MenuItem
-                                            onClick={() => {
-                                                setSelectedMessageId(
-                                                    row.person_message_id
+                                            onClick={async () => {
+                                                await NiceModal.show(
+                                                    ModalMessageContext,
+                                                    {
+                                                        messageId:
+                                                            row.person_message_id
+                                                    }
                                                 );
-                                                setContextOpen(true);
-                                                setMenuOpen(false);
-                                                setAnchorEl(null);
                                             }}
                                         >
                                             Context

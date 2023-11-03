@@ -30,5 +30,4 @@ export const CurrentUserCtx = createContext<CurrentUser>({
     }
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const useCurrentUserCtx = () => useContext(CurrentUserCtx);

@@ -4,7 +4,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { BanType } from '../../api';
 
@@ -13,14 +13,15 @@ export const BanTypeFieldValidator = yup
     .label('Select a ban type')
     .required('ban type is required');
 
-export const BanTypeField = ({
-    formik
-}: {
-    formik: FormikState<{
-        ban_type: BanType;
-    }> &
-        FormikHandlers;
-}) => {
+interface BanTypeFieldProps {
+    ban_type: BanType;
+}
+
+export const BanTypeField = <T,>() => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & BanTypeFieldProps
+    >();
+
     return (
         <FormControl fullWidth>
             <InputLabel id="actionType-label">Action Type</InputLabel>
@@ -30,11 +31,9 @@ export const BanTypeField = ({
                 labelId="actionType-label"
                 id="ban_type"
                 name={'ban_type'}
-                value={formik.values.ban_type}
-                onChange={formik.handleChange}
-                error={
-                    formik.touched.ban_type && Boolean(formik.errors.ban_type)
-                }
+                value={values.ban_type}
+                onChange={handleChange}
+                error={touched.ban_type && Boolean(errors.ban_type)}
                 defaultValue={BanType.Banned}
             >
                 {[BanType.Banned, BanType.NoComm].map((v) => (
@@ -44,7 +43,7 @@ export const BanTypeField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.ban_type && formik.errors.ban_type}
+                {touched.ban_type && errors.ban_type && `${errors.ban_type}`}
             </FormHelperText>
         </FormControl>
     );
