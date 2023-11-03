@@ -4,7 +4,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { Duration, Durations } from '../../api';
 
@@ -13,14 +13,14 @@ export const DurationFieldValidator = yup
     .label('Ban/Mute duration')
     .required('Duration is required');
 
-export const DurationField = ({
-    formik
-}: {
-    formik: FormikState<{
-        duration: Duration;
-    }> &
-        FormikHandlers;
-}) => {
+export interface DurationInputField {
+    duration: Duration;
+}
+
+export const DurationField = <T,>() => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & DurationInputField
+    >();
     return (
         <FormControl fullWidth>
             <InputLabel id="duration-label">Duration</InputLabel>
@@ -30,11 +30,9 @@ export const DurationField = ({
                 labelId="duration-label"
                 id="duration"
                 name={'duration'}
-                value={formik.values.duration}
-                onChange={formik.handleChange}
-                error={
-                    formik.touched.duration && Boolean(formik.errors.duration)
-                }
+                value={values.duration}
+                onChange={handleChange}
+                error={touched.duration && Boolean(errors.duration)}
             >
                 {Durations.map((v) => (
                     <MenuItem key={`time-${v}`} value={v}>
@@ -43,7 +41,9 @@ export const DurationField = ({
                 ))}
             </Select>
             <FormHelperText>
-                {formik.touched.duration && formik.errors.duration}
+                {touched.duration &&
+                    errors.duration &&
+                    errors.duration.toString()}
             </FormHelperText>
         </FormControl>
     );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useModal } from '@ebay/nice-modal-react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
 import { LoadingButton } from '@mui/lab';
@@ -6,36 +7,33 @@ import { DialogActions } from '@mui/material';
 import Button from '@mui/material/Button';
 
 interface ModalButtonsProps {
-    formId: string;
-    setOpen: (closed: boolean) => void;
+    modalID?: string;
 
-    inProgress: boolean;
+    inProgress?: boolean;
 }
 
-export const ModalButtons = ({
-    formId,
-    setOpen,
-    inProgress
-}: ModalButtonsProps) => {
+export const ModalButtons = ({ modalID, inProgress }: ModalButtonsProps) => {
+    const modal = useModal();
     return (
         <DialogActions>
-            <LoadingButton
-                loading={inProgress}
-                variant={'contained'}
-                color={'success'}
-                startIcon={<CheckIcon />}
-                type={'submit'}
-                form={formId}
-            >
-                Accept
-            </LoadingButton>
-
+            {inProgress != undefined && (
+                <LoadingButton
+                    loading={inProgress}
+                    variant={'contained'}
+                    color={'success'}
+                    startIcon={<CheckIcon />}
+                    type={'submit'}
+                    form={modalID}
+                >
+                    Accept
+                </LoadingButton>
+            )}
             <Button
                 variant={'contained'}
                 color={'warning'}
                 startIcon={<ClearIcon />}
                 type={'reset'}
-                form={formId}
+                form={modalID}
             >
                 Reset
             </Button>
@@ -44,10 +42,8 @@ export const ModalButtons = ({
                 color={'error'}
                 startIcon={<ClearIcon />}
                 type={'button'}
-                form={formId}
-                onClick={() => {
-                    setOpen(false);
-                }}
+                form={modalID}
+                onClick={modal.hide}
             >
                 Cancel
             </Button>

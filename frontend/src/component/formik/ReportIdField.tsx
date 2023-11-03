@@ -1,6 +1,6 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const ReportIdFieldValidator = yup
@@ -8,14 +8,12 @@ export const ReportIdFieldValidator = yup
     .min(0, 'Must be positive integer')
     .nullable();
 
-export const ReportIdField = ({
-    formik
-}: {
-    formik: FormikState<{
-        report_id?: number;
-    }> &
-        FormikHandlers;
-}) => {
+interface ReportIdFieldProps {
+    report_id: number;
+}
+
+export const ReportIdField = () => {
+    const { values, handleChange } = useFormikContext<ReportIdFieldProps>();
     return (
         <TextField
             sx={{ display: 'none' }}
@@ -25,8 +23,8 @@ export const ReportIdField = ({
             name={'report_id'}
             disabled={true}
             hidden={true}
-            value={formik.values.report_id}
-            onChange={formik.handleChange}
+            value={values.report_id}
+            onChange={handleChange}
         />
     );
 };

@@ -1,18 +1,18 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const NoteFieldValidator = yup.string().label('Hidden Moderator Note');
 
-export const NoteField = ({
-    formik
-}: {
-    formik: FormikState<{
-        note: string;
-    }> &
-        FormikHandlers;
-}) => {
+export interface NoteInputFieldProps {
+    note: string;
+}
+
+export const NoteField = <T,>() => {
+    const { values, touched, errors, handleChange } = useFormikContext<
+        T & NoteInputFieldProps
+    >();
     return (
         <TextField
             fullWidth
@@ -20,10 +20,10 @@ export const NoteField = ({
             name={'note'}
             label="Moderator Notes (hidden from public)"
             multiline
-            value={formik.values.note}
-            onChange={formik.handleChange}
-            error={formik.touched.note && Boolean(formik.errors.note)}
-            helperText={formik.touched.note && formik.errors.note}
+            value={values.note}
+            onChange={handleChange}
+            error={touched.note && Boolean(errors.note)}
+            helperText={touched.note && errors.note && `${errors.note}`}
             rows={10}
             variant="outlined"
         />

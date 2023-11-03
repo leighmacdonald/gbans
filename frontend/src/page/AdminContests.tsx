@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiContestDelete, apiContests } from '../api';
+import { apiContestDelete, apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ModalConfirm, ModalContestEditor } from '../component/modal';
@@ -17,12 +17,15 @@ import { logErr } from '../util/errors';
 export const AdminContests = () => {
     const modal = useModal(ModalConfirm);
 
-    const onNewContest = useCallback(async () => {
-        await NiceModal.show(ModalContestEditor, {});
-    }, []);
-
-    const onEditContest = useCallback(async (contest_id: string) => {
-        await NiceModal.show(ModalContestEditor, { contest_id });
+    const onEditContest = useCallback(async (contest_id?: string) => {
+        try {
+            await NiceModal.show<Contest>(
+                ModalContestEditor,
+                contest_id ? { contest_id } : {}
+            );
+        } catch (e) {
+            logErr(e);
+        }
     }, []);
 
     const onDeleteContest = useCallback(
@@ -44,7 +47,9 @@ export const AdminContests = () => {
                 <Grid xs={12}>
                     <Button
                         variant={'contained'}
-                        onClick={onNewContest}
+                        onClick={async () => {
+                            await onEditContest();
+                        }}
                         color={'success'}
                     >
                         Create New Contest
@@ -107,7 +112,7 @@ export const AdminContests = () => {
                                 sortKey: 'down_votes',
                                 label: 'Down Votes',
                                 tooltip:
-                                    'If User entry voting enabled, this will enable/disable the ability to downvote',
+                                    'If User entry voting enabled, this will enable/disable the ability to down vote',
                                 align: 'center',
                                 sortType: 'boolean'
                             },

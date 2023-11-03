@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import NiceModal from '@ebay/nice-modal-react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 import InfoIcon from '@mui/icons-material/Info';
@@ -38,8 +39,8 @@ import { MDEditor } from '../component/MDEditor';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SourceBansList } from '../component/SourceBansList';
 import { SteamIDList } from '../component/SteamIDList';
-import { UnbanSteamModal } from '../component/UnbanSteamModal';
 import { UserMessageView } from '../component/UserMessageView';
+import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -49,7 +50,6 @@ import { NotNull } from '../util/types';
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
     const [messages, setMessages] = useState<AuthorMessage[]>([]);
-    const [unbanOpen, setUnbanOpen] = useState<boolean>(false);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Open
     );
@@ -381,23 +381,19 @@ export const BanPage = (): JSX.Element => {
                                 >
                                     Ext. Chat Logs
                                 </Button>
-                                {ban && ban?.ban.ban_id > 0 && (
-                                    <UnbanSteamModal
-                                        banId={ban?.ban.ban_id}
-                                        personaName={
-                                            ban?.person.personaname ??
-                                            ban?.person.steam_id.toString()
-                                        }
-                                        open={unbanOpen}
-                                        setOpen={setUnbanOpen}
-                                    />
-                                )}
                                 <ButtonGroup fullWidth variant={'contained'}>
                                     <Button color={'warning'}>Edit Ban</Button>
                                     <Button
                                         color={'success'}
-                                        onClick={() => {
-                                            setUnbanOpen(true);
+                                        onClick={async () => {
+                                            // TODO make work
+                                            await NiceModal.show(
+                                                ModalBanSteam,
+                                                {
+                                                    steamId:
+                                                        ban?.person.steam_id
+                                                }
+                                            );
                                         }}
                                     >
                                         Unban

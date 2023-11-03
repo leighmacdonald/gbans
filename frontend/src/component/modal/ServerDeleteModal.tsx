@@ -1,17 +1,15 @@
 import React, { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteServer, Server } from '../api';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { apiDeleteServer, Server } from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { Heading } from '../Heading';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
-import { Heading } from './Heading';
 
 export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {
     server: Server;
 }
 
-export const DeleteServerModal = ({
-    open,
-    setOpen,
+export const ServerDeleteModal = ({
     onSuccess,
     server
 }: DeleteServerModalProps) => {
@@ -30,14 +28,7 @@ export const DeleteServerModal = ({
 
     return (
         <ConfirmationModal
-            open={open}
-            setOpen={setOpen}
-            onSuccess={() => {
-                setOpen(false);
-            }}
-            onCancel={() => {
-                setOpen(false);
-            }}
+            id={'modal-server-delete'}
             onAccept={() => {
                 handleSubmit();
             }}

@@ -164,7 +164,7 @@ export interface TimeStamped {
 
 export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
     item.created_on = parseDateTime(item.created_on as unknown as string);
-    item.updated_on = parseDateTime(item.created_on as unknown as string);
+    item.updated_on = parseDateTime(item.updated_on as unknown as string);
     if (item.valid_until != undefined) {
         item.valid_until = parseDateTime(item.valid_until as unknown as string);
     }

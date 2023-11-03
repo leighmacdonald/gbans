@@ -9,6 +9,7 @@ import {
     transformTimeStampedDates
 } from './common';
 import { EmptyUUID } from './const';
+import { Asset } from './media';
 import { LazyResult } from './stats';
 
 export interface Contest extends DateRange {
@@ -52,16 +53,19 @@ export const apiContest = async (contest_id: string) => {
     return transformDateRange(contest);
 };
 
-export const apiContestEntries = async (contest_id: string) =>
-    (
-        await apiCall<ContestEntry[]>(
+export const apiContestEntries = async (contest_id: string) => {
+    try {
+        const entries = await apiCall<ContestEntry[]>(
             `/api/contests/${contest_id}/entries`,
             'GET'
-        )
-    ).map((value) => {
-        return transformTimeStampedDates(value);
-    });
-
+        );
+        const mapped = entries.map(transformTimeStampedDates);
+        return mapped;
+    } catch (e) {
+        logErr(e);
+        return [];
+    }
+};
 export const apiContestDelete = async (contest_id: string) =>
     await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');
 
@@ -69,13 +73,14 @@ export interface ContestEntry extends TimeStamped {
     contest_id: string;
     contest_entry_id: string;
     description: string;
-    asset_it: string;
+    asset_id: string;
     steam_id: string;
     placement: number;
     personaname: string;
     avatarhash: string;
     votes_up: number;
     votes_down: number;
+    asset: Asset;
 }
 
 export const apiContestEntrySave = async (

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import CreateIcon from '@mui/icons-material/Create';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -12,16 +13,12 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { noop } from 'lodash-es';
 import { apiGetServersAdmin, Server } from '../api';
 import { DataTable } from '../component/DataTable';
-import { DeleteServerModal } from '../component/DeleteServerModal';
-import { ServerEditorModal } from '../component/ServerEditorModal';
+import { ModalServerDelete, ModalServerEditor } from '../component/modal';
+import { ServerEditorModal } from '../component/modal/ServerEditorModal';
 import { logErr } from '../util/errors';
-import { Nullable } from '../util/types';
 
 export const AdminServers = () => {
-    const [open, setOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [servers, setServers] = useState<Server[]>([]);
-    const [selectedServer, setSelectedServer] = useState<Nullable<Server>>();
     const [isLoading, setIsLoading] = useState(false);
 
     const reload = useCallback(() => {
@@ -50,20 +47,6 @@ export const AdminServers = () => {
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <ServerEditorModal
-                    setOpen={setOpen}
-                    open={open}
-                    server={selectedServer}
-                    onSuccess={reload}
-                />
-                {selectedServer && (
-                    <DeleteServerModal
-                        server={selectedServer}
-                        open={deleteModalOpen}
-                        setOpen={setDeleteModalOpen}
-                        onSuccess={reload}
-                    />
-                )}
                 <Stack spacing={2}>
                     <ButtonGroup>
                         <Button
@@ -71,9 +54,8 @@ export const AdminServers = () => {
                             color={'secondary'}
                             startIcon={<CreateIcon />}
                             sx={{ marginRight: 2 }}
-                            onClick={() => {
-                                setSelectedServer(null);
-                                setOpen(true);
+                            onClick={async () => {
+                                await NiceModal.show(ServerEditorModal, {});
                             }}
                         >
                             Create Server
@@ -157,9 +139,13 @@ export const AdminServers = () => {
                                         <ButtonGroup fullWidth>
                                             <IconButton
                                                 color={'warning'}
-                                                onClick={() => {
-                                                    setSelectedServer(row);
-                                                    setOpen(true);
+                                                onClick={async () => {
+                                                    await NiceModal.show(
+                                                        ModalServerEditor,
+                                                        {
+                                                            server: row
+                                                        }
+                                                    );
                                                 }}
                                             >
                                                 <Tooltip title={'Edit Server'}>
@@ -168,9 +154,11 @@ export const AdminServers = () => {
                                             </IconButton>
                                             <IconButton
                                                 color={'warning'}
-                                                onClick={() => {
-                                                    setSelectedServer(row);
-                                                    setDeleteModalOpen(true);
+                                                onClick={async () => {
+                                                    await NiceModal.show(
+                                                        ModalServerDelete,
+                                                        { server: row }
+                                                    );
                                                 }}
                                             >
                                                 <Tooltip

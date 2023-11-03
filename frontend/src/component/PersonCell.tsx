@@ -42,7 +42,11 @@ export const PersonCell = ({
         >
             <Avatar
                 alt={personaname}
-                src={`https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`}
+                src={
+                    avatar_hash.startsWith('https://')
+                        ? avatar_hash
+                        : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
+                }
                 variant={'square'}
                 sx={{ height: '32px', width: '32px' }}
             />

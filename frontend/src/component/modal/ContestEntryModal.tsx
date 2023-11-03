@@ -15,7 +15,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
-import { useFormik } from 'formik';
+import { Formik, useFormikContext } from 'formik';
 import { noop } from 'lodash-es';
 import * as yup from 'yup';
 import {
@@ -127,16 +127,8 @@ export const ContestEntryModal = NiceModal.create(
             return () => abortController.abort();
         }, [contest_id, userUpload]);
 
-        const formik = useFormik<ContestEntryFormValues>({
-            initialValues: {
-                contest_id: contest?.contest_id ?? EmptyUUID,
-                description: ''
-            },
-            validateOnBlur: false,
-            validateOnChange: false,
-            validationSchema: validationSchema,
-            enableReinitialize: true,
-            onSubmit: async (values) => {
+        const onSubmit = useCallback(
+            async (values: ContestEntryFormValues) => {
                 setSubmittedOnce(true);
                 if (assetID == '') {
                     return;
@@ -160,13 +152,25 @@ export const ContestEntryModal = NiceModal.create(
                         logErr(err);
                     }
                 }
-            }
-        });
+            },
+            [assetID, modal, sendFlash]
+        );
 
         const formId = 'contestSubmitForm';
 
         return (
-            <form onSubmit={formik.handleSubmit} id={formId}>
+            <Formik
+                onSubmit={onSubmit}
+                id={formId}
+                initialValues={{
+                    contest_id: contest?.contest_id ?? EmptyUUID,
+                    description: ''
+                }}
+                validateOnBlur={false}
+                validateOnChange={false}
+                validationSchema={validationSchema}
+                enableReinitialize={true}
+            >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle
                         component={Heading}
@@ -184,7 +188,6 @@ export const ContestEntryModal = NiceModal.create(
                             <Grid container spacing={2}>
                                 <Grid xs={12}>
                                     <DescriptionField
-                                        formik={formik}
                                         fullWidth
                                         isReadOnly={false}
                                     />
@@ -271,27 +274,19 @@ export const ContestEntryModal = NiceModal.create(
                         )}
                     </DialogContent>
                     <DialogActions>
-                        <CancelButton onClick={modal.hide} />
-                        <ResetButton onClick={formik.resetForm} />
-                        <SaveButton
-                            onClick={formik.submitForm}
-                            disabled={uploadInProgress}
-                        />
+                        <CancelButton />
+                        <ResetButton />
+                        <SaveButton disabled={uploadInProgress} />
                     </DialogActions>
                 </Dialog>
-            </form>
+            </Formik>
         );
     }
 );
 
-interface DescriptionInputValue {
-    description: string;
-}
-
-const DescriptionField = ({
-    formik,
-    isReadOnly
-}: BaseFormikInputProps<DescriptionInputValue>) => {
+const DescriptionField = ({ isReadOnly }: BaseFormikInputProps) => {
+    const { errors, touched, values, handleChange, handleBlur } =
+        useFormikContext<ContestEntryFormValues>();
     return (
         <TextField
             fullWidth
@@ -300,13 +295,11 @@ const DescriptionField = ({
             disabled={isReadOnly ?? false}
             name={'description'}
             label={'Description'}
-            value={formik.values.description}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={
-                formik.touched.description && Boolean(formik.errors.description)
-            }
-            helperText={formik.touched.description && formik.errors.description}
+            value={values.description}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.description && Boolean(errors.description)}
+            helperText={touched.description && errors.description}
         />
     );
 };

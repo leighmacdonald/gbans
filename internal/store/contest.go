@@ -62,6 +62,7 @@ type ContestEntry struct {
 	Deleted        bool          `json:"deleted"`
 	VotesUp        int           `json:"votes_up"`
 	VotesDown      int           `json:"votes_down"`
+	Asset          Asset         `json:"asset"`
 }
 
 type ContestEntryVote struct {
@@ -321,27 +322,36 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error) {
 	query := `
 		SELECT
-		    c.contest_entry_id,
-		    c.contest_id,
-			   c.steam_id,
-			   c.asset_id,
-			   c.description,
-			   c.placement,
-			   c.deleted,
-			   c.created_on,
-			   c.updated_on,
-			   p.personaname,
-			   p.avatarhash,
-			   coalesce(v.votes_up, 0),
-			   coalesce(v.votes_down, 0)
+			c.contest_entry_id,
+			c.contest_id,
+			c.steam_id,
+			c.asset_id,
+			c.description,
+			c.placement,
+			c.deleted,
+			c.created_on,
+			c.updated_on,
+			p.personaname,
+			p.avatarhash,
+			coalesce(v.votes_up, 0),
+			coalesce(v.votes_down, 0),
+			a.size,
+			a.path,
+			a.bucket,
+			a.mime_type,
+			a.name,
+			a.asset_id
 		FROM contest_entry c
-		LEFT JOIN (SELECT contest_entry_id,
-					 SUM(CASE WHEN vote THEN 1 ELSE 0 END)     as votes_up,
-					 SUM(CASE WHEN NOT vote THEN 1 ELSE 0 END) as votes_down
-			  FROM contest_entry_vote
-			  GROUP BY contest_entry_id
-			  ) v on v.contest_entry_id= c.contest_entry_id
-		LEFT JOIN person p USING (steam_id)
+		LEFT JOIN (
+			SELECT 
+			    contest_entry_id,
+				SUM(CASE WHEN vote THEN 1 ELSE 0 END)     as votes_up,
+				SUM(CASE WHEN NOT vote THEN 1 ELSE 0 END) as votes_down
+			FROM contest_entry_vote
+			GROUP BY contest_entry_id
+			) v USING(contest_entry_id)
+		LEFT JOIN person p USING(steam_id)
+		LEFT JOIN public.asset a USING(asset_id)
 		WHERE c.contest_id = $1
 		ORDER BY c.created_on DESC`
 
@@ -363,7 +373,9 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 
 		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
-			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown); errScan != nil {
+			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown,
+			&entry.Asset.Size, &entry.Asset.Path, &entry.Asset.Bucket,
+			&entry.Asset.MimeType, &entry.Asset.Name, &entry.Asset.AssetID); errScan != nil {
 			return nil, Err(errScan)
 		}
 
