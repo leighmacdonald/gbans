@@ -7,6 +7,6 @@ COPY frontend/yarn.lock yarn.lock
 RUN cd frontend && yarn install --frozen-lockfile
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY internal pkg ./
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["make", "test"]
