@@ -1,4 +1,4 @@
-import decodeJWT, { JwtPayload } from 'jwt-decode';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { logErr } from '../util/errors';
 import { apiCall, EmptyBody } from './common';
 
@@ -27,7 +27,7 @@ export const refreshToken = async () => {
             logErr('Failed to refresh auth token');
             return;
         }
-        writeAccessToken(resp?.access_token);
+        writeAccessToken(resp.access_token);
     } catch (e) {
         logErr(e);
     }
@@ -38,7 +38,7 @@ export const isTokenExpired = (token: string): boolean => {
         return true;
     }
 
-    const claims: JwtPayload = decodeJWT(token);
+    const claims: JwtPayload = jwtDecode(token);
     if (!claims || !claims.exp) {
         return true;
     }
