@@ -1,72 +1,59 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
-import FormControl from '@mui/material/FormControl';
+import React, { useCallback } from 'react';
+import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import { apiDeleteCIDRBan, IAPIBanCIDRRecord } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { Heading } from '../Heading';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { Formik } from 'formik';
+import { apiDeleteCIDRBan } from '../../api';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
+import { CancelButton, SaveButton } from './Buttons';
+import { UnbanFormValues, UnbanModalProps } from './UnbanSteamModal';
 
-export interface UnbanCIDRModalProps
-    extends ConfirmationModalProps<IAPIBanCIDRRecord> {
-    record: IAPIBanCIDRRecord;
-}
+export const UnbanCIDRModal = NiceModal.create(({ banId }: UnbanModalProps) => {
+    const modal = useModal();
 
-export const UnbanCIDRModal = NiceModal.create(
-    ({ onSuccess, record }: UnbanCIDRModalProps) => {
-        const [reasonText, setReasonText] = useState<string>('');
-        const { sendFlash } = useUserFlashCtx();
-
-        useEffect(() => {
-            setReasonText('');
-        }, [record]);
-
-        const handleSubmit = useCallback(() => {
-            if (reasonText == '') {
-                sendFlash('error', 'Reason cannot be empty');
+    const onSubmit = useCallback(
+        async (values: UnbanFormValues) => {
+            if (values.reason_text == '') {
+                modal.reject({ error: 'Reason cannot be empty' });
+                await modal.hide();
                 return;
             }
-            apiDeleteCIDRBan(record.net_id, reasonText)
-                .then(() => {
-                    sendFlash('success', `Unbanned successfully`);
-                    onSuccess && onSuccess(record);
-                })
-                .catch((err) => {
-                    sendFlash('error', `Failed to unban: ${err}`);
-                });
-        }, [reasonText, record, sendFlash, onSuccess]);
+            try {
+                await apiDeleteCIDRBan(banId, values.reason_text);
+                modal.resolve();
+            } catch (e) {
+                modal.reject(e);
+            } finally {
+                await modal.hide();
+            }
+        },
+        [banId, modal]
+    );
 
-        return (
-            <ConfirmationModal
-                id={'modal-unban-cidr'}
-                onAccept={() => {
-                    handleSubmit();
-                }}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Stack spacing={2}>
-                    <Heading>
-                        <>
-                            Unban CIDR (#{record.net_id}):
-                            {record.cidr.IP}
-                        </>
-                    </Heading>
-                    <Stack spacing={3} alignItems={'center'}>
-                        <FormControl fullWidth>
-                            <TextField
-                                label={'Reason'}
-                                id={'reasonText'}
-                                value={reasonText}
-                                onChange={(evt) => {
-                                    setReasonText(evt.target.value);
-                                }}
-                            />
-                        </FormControl>
+    return (
+        <Formik<UnbanFormValues>
+            initialValues={{ reason_text: '' }}
+            onSubmit={onSubmit}
+        >
+            <Dialog {...muiDialogV5(modal)}>
+                <DialogTitle>Unban CIDR (#{banId})</DialogTitle>
+
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <BanReasonTextField paired={false} />
                     </Stack>
-                </Stack>
-            </ConfirmationModal>
-        );
-    }
-);
+                </DialogContent>
+
+                <DialogActions>
+                    <CancelButton />
+                    <SaveButton />
+                </DialogActions>
+            </Dialog>
+        </Formik>
+    );
+});

@@ -114,3 +114,12 @@ export const humanCount = (count: number, dp: number = 1): string => {
 
 export const defaultFloatFmtPct = (value: number) => `${value.toFixed(2)}%`;
 export const defaultFloatFmt = (value: number) => value.toFixed(2);
+
+export const isValidHttpURL = (value: string): boolean => {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+};

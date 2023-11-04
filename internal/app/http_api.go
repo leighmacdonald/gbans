@@ -406,11 +406,13 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 
 func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID store.StringSID `json:"target_id"`
-		GroupID  steamid.GID     `json:"group_id"`
-		BanType  store.BanType   `json:"ban_type"`
-		Duration string          `json:"duration"`
-		Note     string          `json:"note"`
+		TargetID   store.StringSID `json:"target_id"`
+		GroupID    steamid.GID     `json:"group_id"`
+		BanType    store.BanType   `json:"ban_type"`
+		Duration   string          `json:"duration"`
+		Reason     store.Reason    `json:"reason"`
+		ReasonText string          `json:"reason_text"`
+		Note       string          `json:"note"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -437,8 +439,8 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			store.StringSID(sid.String()),
 			req.TargetID,
 			store.Duration(req.Duration),
-			store.Custom,
-			"",
+			req.Reason,
+			req.ReasonText,
 			req.Note,
 			store.Web,
 			req.GroupID,

@@ -77,7 +77,7 @@ export const BanSteamModal = NiceModal.create(
         const onSumit = useCallback(
             async (values: BanSteamFormValues) => {
                 try {
-                    await apiCreateBanSteam({
+                    const ban_record = await apiCreateBanSteam({
                         note: values.note,
                         ban_type: values.ban_type,
                         duration: values.duration,
@@ -87,12 +87,13 @@ export const BanSteamModal = NiceModal.create(
                         target_id: values.steam_id,
                         include_friends: values.include_friends
                     });
+                    modal.resolve(ban_record);
                     sendFlash('success', 'Ban created successfully');
+                    await modal.hide();
                 } catch (e) {
                     logErr(e);
+                    modal.reject(e);
                     sendFlash('error', 'Error saving ban');
-                } finally {
-                    await modal.hide();
                 }
             },
             [modal, sendFlash]

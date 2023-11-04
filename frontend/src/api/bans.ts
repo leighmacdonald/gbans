@@ -249,7 +249,7 @@ export interface BanBasePayload {
 }
 
 interface BanReasonPayload {
-    reason: number;
+    reason: BanReason;
     reason_text: string;
 }
 
@@ -266,7 +266,7 @@ export interface BanPayloadASN extends BanBasePayload, BanReasonPayload {
     as_num: number;
 }
 
-export interface BanPayloadGroup extends BanBasePayload {
+export interface BanPayloadGroup extends BanBasePayload, BanReasonPayload {
     group_id: string;
 }
 

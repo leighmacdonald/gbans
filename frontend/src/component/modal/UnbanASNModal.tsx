@@ -1,64 +1,59 @@
-import React, { useCallback, useState } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
+import React, { useCallback } from 'react';
+import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import { apiDeleteASNBan, IAPIBanASNRecord } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { Heading } from '../Heading';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { Formik } from 'formik';
+import { apiDeleteASNBan } from '../../api';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
+import { CancelButton, SaveButton } from './Buttons';
+import { UnbanFormValues, UnbanModalProps } from './UnbanSteamModal';
 
-export interface UnbanASNModalProps
-    extends ConfirmationModalProps<IAPIBanASNRecord> {
-    record: IAPIBanASNRecord;
-}
+export const UnbanASNModal = NiceModal.create(({ banId }: UnbanModalProps) => {
+    const modal = useModal();
 
-export const UnbanASNModal = NiceModal.create(
-    ({ onSuccess, record }: UnbanASNModalProps) => {
-        const [reasonText, setReasonText] = useState<string>('');
-        const { sendFlash } = useUserFlashCtx();
-
-        const handleSubmit = useCallback(() => {
-            if (reasonText == '') {
-                sendFlash('error', 'Reason cannot be empty');
+    const onSubmit = useCallback(
+        async (values: UnbanFormValues) => {
+            if (values.reason_text == '') {
+                modal.reject({ error: 'Reason cannot be empty' });
+                await modal.hide();
                 return;
             }
-            apiDeleteASNBan(record.as_num, reasonText)
-                .then(() => {
-                    sendFlash('success', `Unbanned successfully`);
-                    onSuccess && onSuccess(record);
-                })
-                .catch((err) => {
-                    sendFlash('error', `Failed to unban: ${err}`);
-                });
-        }, [reasonText, record, sendFlash, onSuccess]);
-        return (
-            <ConfirmationModal
-                id={'modal-unban-asn'}
-                onAccept={() => {
-                    handleSubmit();
-                }}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Stack spacing={2}>
-                    <Heading>
-                        <>
-                            Unban ASN (#{record.ban_asn_id}): {record.as_num}
-                        </>
-                    </Heading>
-                    <Stack spacing={3} alignItems={'center'}>
-                        <TextField
-                            fullWidth
-                            label={'Reason'}
-                            id={'reasonText'}
-                            value={reasonText}
-                            onChange={(evt) => {
-                                setReasonText(evt.target.value);
-                            }}
-                        />
+            try {
+                await apiDeleteASNBan(banId, values.reason_text);
+                modal.resolve();
+            } catch (e) {
+                modal.reject(e);
+            } finally {
+                await modal.hide();
+            }
+        },
+        [banId, modal]
+    );
+
+    return (
+        <Formik<UnbanFormValues>
+            initialValues={{ reason_text: '' }}
+            onSubmit={onSubmit}
+        >
+            <Dialog {...muiDialogV5(modal)}>
+                <DialogTitle>Unban ASN (#{banId})</DialogTitle>
+
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <BanReasonTextField paired={false} />
                     </Stack>
-                </Stack>
-            </ConfirmationModal>
-        );
-    }
-);
+                </DialogContent>
+
+                <DialogActions>
+                    <CancelButton />
+                    <SaveButton />
+                </DialogActions>
+            </Dialog>
+        </Formik>
+    );
+});

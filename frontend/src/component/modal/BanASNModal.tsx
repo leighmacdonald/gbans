@@ -11,8 +11,6 @@ import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiCreateBanASN, BanReason, BanType, Duration } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import { ASNumberField, ASNumberFieldValidator } from '../formik/ASNumberField';
 import {
@@ -64,12 +62,11 @@ export const validationSchema = yup.object({
 });
 
 export const BanASNModal = NiceModal.create(() => {
-    const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
     const onSubmit = useCallback(
         async (values: BanASNFormValues) => {
             try {
-                await apiCreateBanASN({
+                const record = await apiCreateBanASN({
                     note: values.note,
                     ban_type: values.ban_type,
                     duration: values.duration,
@@ -78,15 +75,14 @@ export const BanASNModal = NiceModal.create(() => {
                     target_id: values.steam_id,
                     as_num: values.as_num
                 });
-                sendFlash('success', 'Ban created successfully');
+                modal.resolve(record);
             } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error saving ban');
+                modal.resolve(e);
             } finally {
                 await modal.hide();
             }
         },
-        [sendFlash, modal]
+        [modal]
     );
 
     const formId = 'banASNForm';
